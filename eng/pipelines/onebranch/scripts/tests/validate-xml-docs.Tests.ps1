@@ -1162,6 +1162,156 @@ Describe 'validate-xml-docs.ps1' {
         }
     }
 
+    Context 'dependency documentation' {
+
+        BeforeAll {
+            <#
+                Builds the shape the packaged gate hits when a sibling package was not built this
+                run: a public member referencing a type that lives in another package of this
+                repository. Written as a package so the ref/ folder establishes the public API
+                surface, which is what makes the unresolved reference an error rather than
+                information.
+            #>
+            function New-PackageReferencingSibling {
+                $staging = New-TestDirectory
+                New-Item -ItemType Directory -Path (Join-Path $staging 'lib/net8.0') -Force | Out-Null
+                New-Item -ItemType Directory -Path (Join-Path $staging 'ref/net8.0') -Force | Out-Null
+
+                '<doc><members><member name="T:Microsoft.Data.SqlClient.Widget"><summary>W.</summary>' +
+                '<remarks>R.</remarks><see cref="T:Microsoft.SqlServer.Server.Sibling" /></member></members></doc>' |
+                    Set-Content -LiteralPath (Join-Path $staging 'lib/net8.0/Microsoft.Data.SqlClient.xml') -Encoding utf8
+                '<doc><members><member name="T:Microsoft.Data.SqlClient.Widget"><summary>W.</summary>' +
+                '<see cref="T:Microsoft.SqlServer.Server.Sibling" /></member></members></doc>' |
+                    Set-Content -LiteralPath (Join-Path $staging 'ref/net8.0/Microsoft.Data.SqlClient.xml') -Encoding utf8
+
+                $packages = New-TestDirectory
+                Add-Type -AssemblyName System.IO.Compression.FileSystem
+                [System.IO.Compression.ZipFile]::CreateFromDirectory($staging, (Join-Path $packages 'P.1.0.0.nupkg'))
+                return $packages
+            }
+
+            function New-SiblingDocumentation {
+                param([string]$Member = 'T:Microsoft.SqlServer.Server.Sibling')
+
+                $path = New-TestDirectory
+                "<doc><members><member name=""$Member""><summary>S.</summary></member></members></doc>" |
+                    Set-Content -LiteralPath (Join-Path $path 'Microsoft.SqlServer.Server.xml') -Encoding utf8
+                return $path
+            }
+        }
+
+        It 'reports a cref into a package that was not built without dependency documentation' {
+            # Establishes the defect the parameter exists to address, so the test below is shown to
+            # be suppressing a real finding rather than passing for an unrelated reason.
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -PackagesPath (New-PackageReferencingSibling) -ExtractPath (New-TestDirectory) `
+                -ReportPath $report -ReportOnly
+
+            $finding = @((Get-Report -Path $report).Findings |
+                    Where-Object { $_.Cref -eq 'T:Microsoft.SqlServer.Server.Sibling' })[0]
+            $finding.Category | Should -Be 'missing-public-uid'
+        }
+
+        It 'resolves that cref against the dependency documentation' {
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            { & $scriptPath -PackagesPath (New-PackageReferencingSibling) -ExtractPath (New-TestDirectory) `
+                    -DependencyDocumentationPath (New-SiblingDocumentation) -ReportPath $report } |
+                Should -Not -Throw
+
+            @((Get-Report -Path $report).Findings.Cref) | Should -Not -Contain 'T:Microsoft.SqlServer.Server.Sibling'
+        }
+
+        It 'still reports a cref the dependency documentation does not contain' {
+            # The parameter supplies members to resolve against; it does not exempt the namespace.
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -PackagesPath (New-PackageReferencingSibling) -ExtractPath (New-TestDirectory) `
+                -DependencyDocumentationPath (New-SiblingDocumentation -Member 'T:Microsoft.SqlServer.Server.Other') `
+                -ReportPath $report -ReportOnly
+
+            $finding = @((Get-Report -Path $report).Findings |
+                    Where-Object { $_.Cref -eq 'T:Microsoft.SqlServer.Server.Sibling' })[0]
+            $finding.Category | Should -Be 'missing-public-uid'
+        }
+
+        It 'does not validate the dependency documentation itself' {
+            # A defect in an already-published package cannot be fixed by the run that reports it.
+            $dependency = New-TestDirectory
+            '<doc><members><member name="T:Microsoft.SqlServer.Server.Sibling"><summary>S.</summary>' +
+            '<see cref="T:System.Byte[]" /></member></members></doc>' |
+                Set-Content -LiteralPath (Join-Path $dependency 'Microsoft.SqlServer.Server.xml') -Encoding utf8
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            # T:System.Byte[] is an invalid-docid, and would be an error had the file been validated.
+            { & $scriptPath -PackagesPath (New-PackageReferencingSibling) -ExtractPath (New-TestDirectory) `
+                    -DependencyDocumentationPath $dependency -ReportPath $report } | Should -Not -Throw
+
+            $result = Get-Report -Path $report
+            @($result.Findings.Cref) | Should -Not -Contain 'T:System.Byte[]'
+            $result.DependencyDocumentationFiles | Should -Be 1
+            # Counted separately, so the summary still describes only what was validated.
+            $result.FilesValidated | Should -Be 2
+        }
+
+        It 'does not let dependency documentation establish the public API surface' {
+            # Public classification must describe this build's surface. A member is public because
+            # this run emitted it into ref/, never because a dependency package did.
+            $docs = New-DocumentationDirectory `
+                -Members @('T:Microsoft.Data.SqlClient.SqlConnection') `
+                -Crefs @('T:Microsoft.Data.SqlClient.DoesNotExist')
+            $dependency = New-TestDirectory
+            New-Item -ItemType Directory -Path (Join-Path $dependency 'ref/net8.0') -Force | Out-Null
+            '<doc><members><member name="T:Microsoft.Data.SqlClient.Sample"><summary>S.</summary></member></members></doc>' |
+                Set-Content -LiteralPath (Join-Path $dependency 'ref/net8.0/Other.xml') -Encoding utf8
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -DocumentationPath $docs -DependencyDocumentationPath $dependency -ReportPath $report
+
+            $finding = @((Get-Report -Path $report).Findings |
+                    Where-Object { $_.Cref -eq 'T:Microsoft.Data.SqlClient.DoesNotExist' })[0]
+            $finding.Category | Should -Be 'missing-local-uid'
+            $finding.Severity | Should -Be 'info'
+        }
+
+        It 'resolves a namespace cref against the dependency documentation' {
+            # A namespace has no member entry of its own, so it resolves against the namespaces the
+            # indexed members occupy -- which must include those the dependencies contribute.
+            $docs = New-DocumentationDirectory `
+                -Members @('T:Microsoft.Data.SqlClient.SqlConnection') `
+                -Crefs @('N:Microsoft.SqlServer.Server')
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            { & $scriptPath -DocumentationPath $docs `
+                    -DependencyDocumentationPath (New-SiblingDocumentation) -ReportPath $report } |
+                Should -Not -Throw
+
+            @((Get-Report -Path $report).Findings.Cref) | Should -Not -Contain 'N:Microsoft.SqlServer.Server'
+        }
+
+        It 'fails when the dependency documentation path does not exist' {
+            $docs = New-DocumentationDirectory
+
+            { & $scriptPath -DocumentationPath $docs `
+                    -DependencyDocumentationPath (Join-Path (New-TestDirectory) 'absent') } |
+                Should -Throw '*Dependency documentation path*was not found*'
+        }
+
+        It 'does not resolve against dependencies when nothing is under validation' {
+            # An index built from dependencies alone would describe members this build never
+            # emitted, so supplying them cannot by itself enable local resolution.
+            $snippets = New-SnippetDirectory -Crefs @('T:Microsoft.SqlServer.Server.Sibling')
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            { & $scriptPath -SnippetsDirectory $snippets `
+                    -DependencyDocumentationPath (New-SiblingDocumentation) -ReportPath $report } |
+                Should -Not -Throw
+
+            (Get-Report -Path $report).DocumentationFiles | Should -Be 0
+        }
+    }
+
     Context 'allowlist' {
 
         It 'exempts an allowlisted cref' {

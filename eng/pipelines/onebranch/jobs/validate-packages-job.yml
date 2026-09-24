@@ -108,6 +108,12 @@ jobs:
       - name: xmlDocsExtractRoot
         value: '$(Pipeline.Workspace)/validate-xml-docs-extract'
 
+      # Documentation of packages this run depends on but did not build, collected so that the
+      # packaged XML documentation gate can resolve references into them.  Unused when every
+      # referenced package was built this run.
+      - name: xmlDocsDependencyRoot
+        value: '$(Pipeline.Workspace)/validate-xml-docs-dependencies'
+
     steps:
       - template: /eng/pipelines/onebranch/steps/script-output-environment-variables-step.yml@self
 
@@ -196,6 +202,26 @@ jobs:
       # Validate the XML documentation as a consumer receives it.  Only the assembled package shows
       # which XML actually landed in each lib/ and ref/ target framework, a mapping that has
       # silently changed before without any earlier check noticing.
+      #
+      # A package carries only its own documentation, so a cref from the SqlClient package into
+      # Microsoft.SqlServer.Server resolves against the SqlServer package in the drop.  When
+      # SqlServer was not built there is no such package, and those references would be reported as
+      # unresolvable even though a consumer resolves them perfectly well against the published
+      # package the build depends on.  Collect that package's documentation so the gate judges the
+      # same thing a consumer would.
+      - ${{ if eq(parameters.buildSqlServer, false) }}:
+        - task: PowerShell@2
+          displayName: 'Collect dependency XML documentation - SqlServer'
+          inputs:
+            targetType: filePath
+            pwsh: true
+            filePath: $(REPO_ROOT)/eng/pipelines/onebranch/scripts/restore-package-documentation.ps1
+            arguments: >-
+              -PackageId "Microsoft.SqlServer.Server"
+              -Version "${{ parameters.sqlServerPackageVersion }}"
+              -DestinationPath "$(xmlDocsDependencyRoot)"
+              -ConfigFile "$(REPO_ROOT)/NuGet.config"
+
       - template: /eng/pipelines/onebranch/steps/validate-xml-docs-step.yml@self
         parameters:
           displayName: 'Validate packaged XML documentation'
@@ -203,6 +229,12 @@ jobs:
           documentationPath: ''
           packagesPath: '$(packagesRoot)'
           extractPath: '$(xmlDocsExtractRoot)'
+          # Empty when SqlServer was built this run: its package is then in the drop, and
+          # resolution against a published copy would mask a reference the build itself broke.
+          ${{ if eq(parameters.buildSqlServer, true) }}:
+            dependencyDocumentationPath: ''
+          ${{ else }}:
+            dependencyDocumentationPath: '$(xmlDocsDependencyRoot)'
           reportPath: '$(JOB_OUTPUT)/validation/xml-docs-packages.json'
           failOn:
             - error

@@ -47,6 +47,15 @@ parameters:
   - name: extractPath
     type: string
 
+  # XML documentation supplied only so that references resolve against it; it is never itself
+  # validated.  A package carries only its own documentation, so a cref from one package into a
+  # sibling package resolves against nothing when that sibling was not built this run.  Pass the
+  # documentation of the dependency version the packages under validation declare.  Pass '' when
+  # every referenced package was built in the same run.
+  - name: dependencyDocumentationPath
+    type: string
+    default: ''
+
   # Path of the JSON report to write.  Written before gating, so it survives a failing run.
   - name: reportPath
     type: string
@@ -107,6 +116,7 @@ steps:
                    ' -DocumentationPath "${{ parameters.documentationPath }}"' +
                    ' -PackagesPath "${{ parameters.packagesPath }}"' +
                    ' -ExtractPath "${{ parameters.extractPath }}"' +
+                   ' -DependencyDocumentationPath "${{ parameters.dependencyDocumentationPath }}"' +
                    ' -ProjectPath "${{ parameters.projectPath }}"' +
                    ' -ProjectSearchRoot "${{ parameters.projectSearchRoot }}"'
 
