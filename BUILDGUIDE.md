@@ -157,6 +157,7 @@ dotnet build -t:<test_target> [optional_parameters]
 |----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
 | `Test`                     | Runs all tests in the repository for all platforms supported by the host OS. _This will take a considerable amount of time and is not recommended_. |
 | `TestAbstractions`         | Runs all tests for Microsoft.Data.SqlClient.Extensions.Abstractions                                                                                 |
+| `TestAkvProvider`          | Runs the unit test project for Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.                                                      |
 | `TestAzure`                | Runs all tests for Microsoft.Data.SqlClient.Extensions.Azure                                                                                        |
 | `TestSqlClient`            | Runs all tests for Microsoft.Data.SqlClient.                                                                                                        |
 | `TestSqlClientFunctional`  | Runs the "functional" test project for Microsoft.Data.SqlClient. These are a mix of unit and integration tests against live servers.                |
@@ -280,6 +281,37 @@ Package Microsoft.Data.SqlClient.Extensions.Azure without building it beforehand
 ```bash
 dotnet build -t:PackAzure -p:PackBuild=false
 ```
+
+### Release Source Link Symbols
+
+To reproduce release symbol generation locally, set `BuildForRelease` in the environment before
+packing. `build.proj` launches child `dotnet` processes, so passing only
+`-p:BuildForRelease=true` to the orchestrator does not enable it in those processes.
+
+```powershell
+$env:BuildForRelease = 'true'
+dotnet build build.proj -t:PackSqlClient -p:Configuration=Release
+Remove-Item Env:\BuildForRelease
+```
+
+The `.nupkg` and matching `.snupkg` are written to
+`artifacts/Microsoft.Data.SqlClient/Project-Release/`. Inspect them together with
+[PackageValidator](tools/PackageValidator/README.md) or NuGet Package Explorer.
+
+To fail validation on missing source coverage or non-portable source paths:
+
+```powershell
+dotnet run --project tools\PackageValidator\src\PackageValidator.csproj -- `
+  artifacts\Microsoft.Data.SqlClient\Project-Release `
+  --fail-on missing-source-link --fail-on untracked-source --fail-on non-deterministic-source-path
+```
+
+Tracked source paths in the PDBs must match the Source Link document map; generated sources must
+be embedded. Keep the repository root configured in `RepositoryInfo.targets` as the source root:
+adding a separate `src/` root without source-control metadata can remap tracked files to `/_1/`
+while Source Link only maps `/_/`. NuGet Package Explorer reports this as
+**Contains untracked sources (obj)** for both Source Link and Deterministic, even when all `obj`
+sources are embedded and the compiler's deterministic flag is enabled.
 
 ## Versioning
 
@@ -493,7 +525,7 @@ The top-level flags control global runner behavior:
 | `WaitForProfiler` | Pauses at startup and prints the process ID so you can attach an external profiler (e.g. `dotnet-trace`) before benchmarks run. |
 | `UseNativeMemoryAndETWProfiler` | Attaches the `NativeMemoryProfiler` and `EtwProfiler` BenchmarkDotNet diagnosers. Windows only; has no effect on other OSes. |
 
-Some benchmarks (e.g. `DataTypeReaderRunner`, `DataTypeReaderAsyncRunner`) also
+Some benchmarks (e.g. `DataTypeReaderRunner`) also
 read per-type test values from `datatypes.json` in the `PerformanceTests`
 directory. Like `runnerconfig.jsonc`, this file's location can be overridden
 with the `DATATYPES_CONFIG` environment variable.

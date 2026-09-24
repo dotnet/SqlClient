@@ -133,7 +133,7 @@ stages:
               dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
               platformDisplayName: ${{ platform.displayName }}
               platformDotnet: ${{ platform.dotnet }}
-              platformImage: ${{ platform.image }}
+              poolImage: ${{ platform.image }}
               poolName: ${{ parameters.poolName }}
               testResultsArtifactBaseName: ${{ parameters.testResultsArtifactBaseName }}
 
@@ -148,12 +148,27 @@ stages:
               dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
               platformDisplayName: ${{ platform.displayName }}
               platformDotnet: ${{ platform.dotnet }}
-              platformImage: ${{ platform.image }}
+              poolImage: ${{ platform.image }}
               poolName: ${{ parameters.poolName }}
               testResultsArtifactBaseName: ${{ parameters.testResultsArtifactBaseName }}
 
               packageShortName: "Azure"
               testDisplayName: "azure"
+
+          # TestAkvProvider
+          - template: /eng/pipelines/pr/jobs/test-buildproj-job.yml@self
+            parameters:
+              buildConfiguration: ${{ parameters.buildConfiguration }}
+              buildSuffix: ${{ parameters.buildSuffix }}
+              dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+              platformDisplayName: ${{ platform.displayName }}
+              platformDotnet: ${{ platform.dotnet }}
+              poolImage: ${{ platform.image }}
+              poolName: ${{ parameters.poolName }}
+              testResultsArtifactBaseName: ${{ parameters.testResultsArtifactBaseName }}
+
+              packageShortName: "AkvProvider"
+              testDisplayName: "akvprovider"
 
           # TestSqlClientFunctional
           - template: /eng/pipelines/pr/jobs/test-buildproj-job.yml@self
@@ -163,7 +178,7 @@ stages:
               dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
               platformDisplayName: ${{ platform.displayName }}
               platformDotnet: ${{ platform.dotnet }}
-              platformImage: ${{ platform.image }}
+              poolImage: ${{ platform.image }}
               poolName: ${{ parameters.poolName }}
               testResultsArtifactBaseName: ${{ parameters.testResultsArtifactBaseName }}
 
@@ -182,7 +197,7 @@ stages:
 
               platformDisplayName: ${{ platform.displayName }}
               platformDotnet: ${{ platform.dotnet }}
-              platformImage: ${{ platform.image }}
+              poolImage: ${{ platform.image }}
               platformOperatingSystem: ${{ platform.operatingSystem }}
               poolName: ${{ parameters.poolName }}
 
@@ -217,7 +232,7 @@ stages:
 
                 platformDisplayName: ${{ platform.displayName }}
                 platformDotnet: ${{ platform.dotnet }}
-                platformImage: ${{ platform.image }}
+                poolImage: ${{ platform.image }}
                 platformOperatingSystem: ${{ platform.operatingSystem }}
                 poolName: ${{ parameters.poolName }}
 
@@ -246,7 +261,7 @@ stages:
 
               platformDisplayName: ${{ platform.displayName }}
               platformDotnet: ${{ platform.dotnet }}
-              platformImage: ${{ platform.image }}
+              poolImage: ${{ platform.image }}
               platformOperatingSystem: ${{ platform.operatingSystem }}
               poolName: ${{ parameters.poolName }}
 
@@ -275,7 +290,7 @@ stages:
 
               platformDisplayName: ${{ platform.displayName }}
               platformDotnet: ${{ platform.dotnet }}
-              platformImage: ${{ platform.image }}
+              poolImage: ${{ platform.image }}
               platformOperatingSystem: ${{ platform.operatingSystem }}
               poolName: ${{ parameters.poolName }}
 
@@ -301,7 +316,7 @@ stages:
               dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
               platformDisplayName: ${{ platform.displayName }}
               platformDotnet: ${{ platform.dotnet }}
-              platformImage: ${{ platform.image }}
+              poolImage: ${{ platform.image }}
               poolName: ${{ parameters.poolName }}
               testResultsArtifactBaseName: ${{ parameters.testResultsArtifactBaseName }}
 

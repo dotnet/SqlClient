@@ -4,6 +4,7 @@
 
 using System;
 using System.Security.Cryptography;
+using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
 using Xunit;
@@ -56,6 +57,110 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             Exception ex1 = Assert.Throws<ArgumentException>(() => _fixture.AkvStoreProvider.EncryptColumnEncryptionKey(_fixture.AkvKeyUrl, MasterKeyEncAlgo, new byte[] { }));
             Assert.Matches($@"Internal error. Empty 'columnEncryptionKey' specified.", ex1.Message);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
+        public async Task VerifyRejectsNullOrEmptySignature()
+        {
+            SqlColumnEncryptionAzureKeyVaultProvider azureKeyProvider = new SqlColumnEncryptionAzureKeyVaultProvider(
+                new SqlClientCustomTokenCredential());
+
+            string nullMessage = $@"Value cannot be null.\s+\(?Parameter (name: )?'?signature('\))?";
+            string emptyMessage = $@"Internal error. Empty 'signature' specified.";
+
+            Exception syncNull = Assert.Throws<ArgumentNullException>(
+                () => azureKeyProvider.VerifyColumnMasterKeyMetadata(_fixture.AkvKeyUrl, true, null));
+            Assert.Matches(nullMessage, syncNull.Message);
+
+            Exception syncEmpty = Assert.Throws<ArgumentException>(
+                () => azureKeyProvider.VerifyColumnMasterKeyMetadata(_fixture.AkvKeyUrl, true, new byte[] { }));
+            Assert.Matches(emptyMessage, syncEmpty.Message);
+
+            Exception asyncNull = await Assert.ThrowsAsync<ArgumentNullException>(
+                () => azureKeyProvider.VerifyColumnMasterKeyMetadataAsync(_fixture.AkvKeyUrl, true, null));
+            Assert.Matches(nullMessage, asyncNull.Message);
+
+            Exception asyncEmpty = await Assert.ThrowsAsync<ArgumentException>(
+                () => azureKeyProvider.VerifyColumnMasterKeyMetadataAsync(_fixture.AkvKeyUrl, true, new byte[] { }));
+            Assert.Matches(emptyMessage, asyncEmpty.Message);
+        }
+
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData(" ")]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
+        public async Task SignAndVerifyAsyncRejectInvalidAKVPath(string masterKeyPath)
+        {
+            SqlColumnEncryptionAzureKeyVaultProvider azureKeyProvider = new SqlColumnEncryptionAzureKeyVaultProvider(
+                new SqlClientCustomTokenCredential());
+
+            ArgumentException signException = await Assert.ThrowsAnyAsync<ArgumentException>(
+                () => azureKeyProvider.SignColumnMasterKeyMetadataAsync(masterKeyPath, false));
+
+            ArgumentException verifyException = await Assert.ThrowsAnyAsync<ArgumentException>(
+                () => azureKeyProvider.VerifyColumnMasterKeyMetadataAsync(masterKeyPath, false, encryptedCek));
+
+            // The message is not anchored, so it matches whether or not the operation is flagged as
+            // a system operation and prefixes the text with "Internal error.".
+            string expectedMessage = masterKeyPath == null
+                ? "Azure Key Vault key path cannot be null."
+                : "Invalid Azure Key Vault key path specified";
+
+            Assert.Matches(expectedMessage, signException.Message);
+            Assert.Matches(expectedMessage, verifyException.Message);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
+        public async Task AsyncApisValidateArguments()
+        {
+            ArgumentException ex1 = await Assert.ThrowsAsync<ArgumentException>(
+                () => _fixture.AkvStoreProvider.DecryptColumnEncryptionKeyAsync(_fixture.AkvKeyUrl, BadMasterKeyEncAlgo, cek));
+            Assert.Matches($@"Invalid key encryption algorithm specified: 'BadMasterKeyAlgorithm'. Expected value: 'RSA_OAEP' or 'RSA-OAEP'.\s+\(?Parameter (name: )?'?encryptionAlgorithm('\))?", ex1.Message);
+
+            ArgumentNullException ex2 = await Assert.ThrowsAsync<ArgumentNullException>(
+                () => _fixture.AkvStoreProvider.EncryptColumnEncryptionKeyAsync(_fixture.AkvKeyUrl, null, cek));
+            Assert.Matches($@"Internal error. Key encryption algorithm cannot be null.\s+\(?Parameter (name: )?'?encryptionAlgorithm('\))?", ex2.Message);
+
+            ArgumentException ex3 = await Assert.ThrowsAsync<ArgumentException>(
+                () => _fixture.AkvStoreProvider.EncryptColumnEncryptionKeyAsync(_fixture.AkvKeyUrl, MasterKeyEncAlgo, new byte[] { }));
+            Assert.Matches($@"Internal error. Empty 'columnEncryptionKey' specified.", ex3.Message);
+
+            ArgumentNullException ex4 = await Assert.ThrowsAsync<ArgumentNullException>(
+                () => _fixture.AkvStoreProvider.DecryptColumnEncryptionKeyAsync(_fixture.AkvKeyUrl, MasterKeyEncAlgo, null));
+            Assert.Matches($@"Value cannot be null.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?", ex4.Message);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
+        public async Task AsyncDecryptionRejectsInvalidAlgorithmVersion()
+        {
+            byte[] encryptedCekLocal = ColumnEncryptionKey.GenerateInvalidEncryptedCek(encryptedCek, ColumnEncryptionKey.ECEKCorruption.ALGORITHM_VERSION);
+
+            ArgumentException ex = await Assert.ThrowsAsync<ArgumentException>(
+                () => _fixture.AkvStoreProvider.DecryptColumnEncryptionKeyAsync(_fixture.AkvKeyUrl, MasterKeyEncAlgo, encryptedCekLocal));
+            Assert.Matches($@"Specified encrypted column encryption key contains an invalid encryption algorithm version '10'. Expected version is '01'.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?", ex.Message);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
+        public async Task AsyncDecryptionRejectsInvalidSignature()
+        {
+            byte[] encryptedCekLocal = ColumnEncryptionKey.GenerateInvalidEncryptedCek(encryptedCek, ColumnEncryptionKey.ECEKCorruption.SIGNATURE);
+            string errorMessage =
+                $@"The specified encrypted column encryption key signature does not match the signature computed with the column master key \(Asymmetric key in Azure Key Vault\) in '{_fixture.AkvKeyUrl}'. The encrypted column encryption key may be corrupt, or the specified path may be incorrect.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
+
+            ArgumentException ex = await Assert.ThrowsAsync<ArgumentException>(
+                () => _fixture.AkvStoreProvider.DecryptColumnEncryptionKeyAsync(_fixture.AkvKeyUrl, MasterKeyEncAlgo, encryptedCekLocal));
+            Assert.Matches(errorMessage, ex.Message);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
+        public async Task AsyncDecryptionRejectsInvalidCipherTextLength()
+        {
+            byte[] encryptedCekLocal = ColumnEncryptionKey.GenerateInvalidEncryptedCek(encryptedCek, ColumnEncryptionKey.ECEKCorruption.CEK_LENGTH);
+            string errorMessage = $@"The specified encrypted column encryption key's ciphertext length: 251 does not match the ciphertext length: 256 when using column master key \(Azure Key Vault key\) in '{_fixture.AkvKeyUrl}'. The encrypted column encryption key may be corrupt, or the specified Azure Key Vault key path may be incorrect.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?";
+
+            ArgumentException ex = await Assert.ThrowsAsync<ArgumentException>(
+                () => _fixture.AkvStoreProvider.DecryptColumnEncryptionKeyAsync(_fixture.AkvKeyUrl, MasterKeyEncAlgo, encryptedCekLocal));
+            Assert.Matches(errorMessage, ex.Message);
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]

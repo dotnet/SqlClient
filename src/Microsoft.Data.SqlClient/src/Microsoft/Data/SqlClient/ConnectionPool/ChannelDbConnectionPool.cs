@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Data.Common;
 using System.Diagnostics;
@@ -61,18 +62,19 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
     internal sealed class ChannelDbConnectionPool : IDbConnectionPool, IDisposable
     {
         #region Fields
-        // Limits synchronous operations which depend on async operations on managed
-        // threads from blocking on all available threads, which would stop async tasks
-        // from being scheduled and cause deadlocks. Use ProcessorCount/2 as a balance
-        // between sync and async tasks.
-        private static SemaphoreSlim _syncOverAsyncSemaphore = new(Math.Max(1, Environment.ProcessorCount / 2));
-
         /// <summary>
         /// Tracks the number of instances of this class. Used to generate unique IDs for each instance.
         /// </summary>
         private static int _instanceCount;
 
         private readonly int _instanceId = Interlocked.Increment(ref _instanceCount);
+
+        /// <summary>
+        /// Serializes emancipated-connection sweeps. Held for the duration of a sweep, including the
+        /// routing of every reclaimed connection, so that a connection this sweep has selected
+        /// cannot be claimed by another sweep before it is returned.
+        /// </summary>
+        private readonly object _reclaimSweepGate = new();
 
         /// <summary>
         /// Tracks all connections currently managed by this pool, whether idle or busy.
@@ -201,6 +203,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 Pruner = new PoolPruner(this, PoolGroupOptions.IdleTimeout);
             }
 
+            Reclaimer = new PoolReclaimer(this, _timeProvider);
+
             State = Running;
 
             SqlClientEventSource.Log.TryPoolerTraceEvent(
@@ -289,6 +293,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// on return regardless of this flag, since it is bound to a transaction either way.
         /// </summary>
         private bool HasTransactionAffinity => PoolGroupOptions.HasTransactionAffinity;
+
+        /// <summary>
+        /// Drives background sweeps for emancipated connections. Unlike <see cref="Pruner"/> this is
+        /// always present, since reclamation applies to every pool configuration. Internal rather
+        /// than private so tests can drive the timer bookkeeping directly.
+        /// </summary>
+        internal PoolReclaimer Reclaimer { get; }
 
         /// <summary>
         /// The most recently launched warmup/replenishment loop task, exposed so tests can await a
@@ -540,7 +551,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         }
 
         /// <inheritdoc />
-        public void ReturnInternalConnection(DbConnectionInternal connection, DbConnection owningObject)
+        public void ReturnInternalConnection(DbConnectionInternal connection, DbConnection? owningObject)
         {
             Metrics.SoftDisconnectRequest();
 
@@ -693,7 +704,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 connection.SetReturnedTime(_timeProvider.GetUtcNow().UtcDateTime);
             }
 
-            if (!IsLiveConnection(connection, probeLiveness))
+            // Match V1: check token expiry on general checkout, not return. An expired connection
+            // may remain idle, but will be discarded before it can be reused outside its transaction.
+            if (!IsLiveConnection(connection, probeLiveness, checkAccessTokenExpiry: false))
             {
                 RemoveConnection(connection);
                 return;
@@ -763,6 +776,19 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             {
                 SqlClientEventSource.Log.TryPoolerTraceEvent(
                     "ChannelDbConnectionPool.Shutdown | INFO | {0}, Pruner.Dispose threw, continuing shutdown: {1}", Id, ex);
+            }
+
+            // Best effort: ITimer.Dispose does not wait for a sweep already in flight. Late
+            // reclaims are handled by _idleChannel.Complete() below, after which connections are
+            // destroyed rather than pooled.
+            try
+            {
+                Reclaimer.Dispose();
+            }
+            catch (Exception ex)
+            {
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "ChannelDbConnectionPool.Shutdown | INFO | {0}, Reclaimer.Dispose threw, continuing shutdown: {1}", Id, ex);
             }
 
             // Dispose the error state so its exit timer is released. Otherwise a timer scheduled
@@ -909,11 +935,23 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             if (taskCompletionSource is null)
             {
                 // We're on the caller's thread, so the ambient transaction is directly observable.
+                Transaction? currentTransaction = ADP.GetCurrentTransaction();
+
+                // Fast path: when the pool can satisfy the request immediately, do it here rather
+                // than entering GetInternalConnection, which allocates a Task<DbConnectionInternal>
+                // and a timer-backed CancellationTokenSource before it knows whether it will ever
+                // need to wait. See TryGetPooledConnectionInline.
+                connection = TryGetPooledConnectionInline(owningObject, currentTransaction);
+                if (connection is not null)
+                {
+                    return true;
+                }
+
                 var task = GetInternalConnection(
                         owningObject,
                         async: false,
                         timeout,
-                        ADP.GetCurrentTransaction());
+                        currentTransaction);
 
                 // When running synchronously, we are guaranteed that the task is already completed.
                 // We don't need to guard the managed threadpool at this spot because we pass the async flag as false
@@ -945,28 +983,20 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             //
             // The ambient transaction is captured by the caller, on the caller's thread, and handed
             // to us in the TaskCompletionSource's AsyncState (see SqlConnection.InternalOpenAsync).
-            //
-            // We must not read Transaction.Current inside the Task.Run below. A
-            // TransactionScope created with TransactionScopeAsyncFlowOption.Enabled stores the
-            // transaction in an AsyncLocal, which does flow onto the pool's worker thread, so that
-            // would appear to work. But Enabled is not the default: a plain TransactionScope keeps
-            // the transaction in thread-static storage, which does not flow, and reading
-            // Transaction.Current on the worker would silently fail to enlist. The WaitHandle pool
-            // enlists correctly in that case, so this is also a compatibility requirement.
-            // AsyncState is correct under both options.
-            //
-            // This does not make the suppressed-flow pattern work -- the caller's own scope is
-            // still broken past the first await -- but it keeps the connection in the transaction
-            // the caller intended rather than silently running outside it.
-            //
-            // Note that we deliberately do not assign Transaction.Current on the thread pool
-            // thread either. That assignment writes to thread-static storage which is *not* unwound
-            // when the ExecutionContext is restored, so it would outlive this open and be observed
-            // by unrelated work later scheduled onto the same thread pool thread -- including the
-            // login-time auto-enlistment that non-pooled connections perform against
-            // Transaction.Current. The WaitHandle pool can get away with assigning it because it
-            // processes pending opens on a dedicated non-thread-pool thread.
+            // Do not read Transaction.Current in the Task.Run below: a plain TransactionScope keeps
+            // the transaction in thread-static storage, which does not flow to the worker, so the
+            // enlistment would silently be skipped. Do not assign Transaction.Current there either;
+            // that storage is not unwound afterwards and would leak into later work on that thread.
             Transaction? ambientTransaction = taskCompletionSource.Task.AsyncState as Transaction;
+
+            // Fast path: return true rather than completing the TaskCompletionSource, so
+            // InternalOpenAsync takes its sync branch and skips a thread pool dispatch.
+            DbConnectionInternal? pooled = TryGetPooledConnectionInline(owningObject, ambientTransaction);
+            if (pooled is not null)
+            {
+                connection = pooled;
+                return true;
+            }
 
             Task.Run(async () =>
             {
@@ -1236,9 +1266,21 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// Whether to poll the physical connection to confirm it is still alive. Pass false when
         /// running on a thread that must not block; the remaining checks are all cheap and local.
         /// </param>
+        /// <param name="checkAccessTokenExpiry">
+        /// Validate the token before general checkout, but not when returning a connection to the pool.
+        /// </param>
         /// <returns>Returns true if the connection is live and unexpired, otherwise returns false.</returns>
-        private bool IsLiveConnection(DbConnectionInternal connection, bool probeLiveness = true)
+        private bool IsLiveConnection(DbConnectionInternal connection, bool probeLiveness = true, bool checkAccessTokenExpiry = true)
         {
+            if (checkAccessTokenExpiry && connection.IsAccessTokenExpired)
+            {
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "ChannelDbConnectionPool.IsLiveConnection | INFO | {0}, Connection {1}, will not be reused because its access token has expired or is about to expire.",
+                    Id,
+                    connection.ObjectID);
+                return false;
+            }
+
             // Connection has been sitting idle longer than the configured idle timeout.
             // Checked before the (potentially expensive) liveness probe so an idle-expired
             // connection is discarded without an SNI round-trip.
@@ -1347,7 +1389,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             // Removing a connection from the pool opens a free slot.
             // Write a null to the idle connection channel to wake up a waiter, who can now open a new
-            // connection. Statement order is important since we have synchronous completions on the channel.
+            // connection.
             _idleChannel.TryWrite(null);
 
             connection.Dispose();
@@ -1399,6 +1441,66 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Attempts to satisfy a connection request from connections the pool already holds,
+        /// without blocking, waiting, or opening a physical connection.
+        /// </summary>
+        /// <remarks>
+        /// The fast path shared by the sync and async entry points of
+        /// <see cref="TryGetConnection"/>: it tries the transacted store, then the idle channel, and
+        /// returns null if neither can satisfy the request. It is kept separate from
+        /// <see cref="GetInternalConnection"/> because that method allocates a
+        /// <see cref="Task{TResult}"/> and a timer-backed <see cref="CancellationTokenSource"/> even
+        /// when it completes synchronously. It never calls
+        /// <see cref="OpenNewInternalConnection"/>, which would block on network I/O.
+        /// </remarks>
+        /// <param name="owningConnection">The DbConnection that will own this internal connection.</param>
+        /// <param name="ambientTransaction">The ambient transaction captured on the caller's thread,
+        /// or null when the caller is not inside a transaction.</param>
+        /// <returns>An activated connection ready to be handed to the caller, or null when the pool
+        /// cannot satisfy the request without waiting or opening.</returns>
+        /// <exception cref="Exception">
+        /// Propagates any exception from activating or enlisting the connection. The connection is
+        /// returned to the pool before the exception escapes (see <see cref="PrepareConnection"/>).
+        /// </exception>
+        private DbConnectionInternal? TryGetPooledConnectionInline(
+            DbConnection owningConnection,
+            Transaction? ambientTransaction)
+        {
+            // When automatic enlistment is disabled the connection must never be bound to the
+            // ambient transaction, so we neither consult the transacted store nor hand the
+            // transaction to activation. Mirrors GetInternalConnection.
+            Transaction? transaction = HasTransactionAffinity ? ambientTransaction : null;
+
+            DbConnectionInternal? connection = null;
+
+            // A connection already enlisted in our transaction is always preferred, since reusing
+            // it avoids promoting the transaction to a distributed one.
+            if (transaction is not null)
+            {
+                connection = GetFromTransactedPool(transaction);
+            }
+
+            // GetIdleConnection only returns connections that passed IsLiveConnection, and
+            // GetFromTransactedPool has already probed liveness, so no further validation is
+            // needed here. GetInternalConnection re-checks after its channel wait because that
+            // wait can hand back a connection that bypassed both filters.
+            connection ??= GetIdleConnection();
+
+            if (connection is null)
+            {
+                return null;
+            }
+
+            // Counted before activation for the same reason as GetInternalConnection: if
+            // PrepareConnection fails it returns the connection to the pool, which emits the
+            // matching soft disconnect. Counting after would leave that disconnect unpaired and
+            // drive the active-soft-connects gauge negative.
+            Metrics.SoftConnectRequest();
+            PrepareConnection(owningConnection, connection, transaction);
+            return connection;
         }
 
         /// <summary>
@@ -1460,7 +1562,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         {
                             // Skip the liveness/idle/generation gate at the bottom of the loop:
                             // GetFromTransactedPool has already probed liveness, and a transacted
-                            // connection is exempt from idle-timeout, load-balance and
+                            // connection is exempt from token-expiry, idle-timeout, load-balance and
                             // clear-generation eviction because closing it would abort its
                             // (possibly distributed) transaction.
                             break;
@@ -1483,13 +1585,24 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     // If we're at max capacity and couldn't open a connection. Block on the idle channel with a
                     // timeout. Note that Channels guarantee fair FIFO behavior to callers of ReadAsync
                     // (first-come, first-served), which is crucial to us.
-                    if (async)
+                    //
+                    // Registering with the reclaimer is what keeps a leaked connection from stranding
+                    // us here forever; it sweeps on a timer while anyone is parked and routes what it
+                    // reclaims back through this channel. Sweeping inline instead would cost an
+                    // O(MaxPoolSize) walk on every saturated acquire in applications that never leak.
+                    if (connection is null)
                     {
-                        connection ??= await _idleChannel.ReadAsync(cancellationToken).ConfigureAwait(false);
-                    }
-                    else
-                    {
-                        connection ??= ReadChannelSyncOverAsync(cancellationToken);
+                        Reclaimer.EnterParkedWait();
+                        try
+                        {
+                            connection = async
+                                ? await _idleChannel.ReadAsync(cancellationToken).ConfigureAwait(false)
+                                : ReadChannelSyncOverAsync(cancellationToken);
+                        }
+                        finally
+                        {
+                            Reclaimer.ExitParkedWait();
+                        }
                     }
                 }
                 catch (OperationCanceledException)
@@ -1527,36 +1640,123 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         }
 
         /// <summary>
+        /// Reclaims connections whose owning <see cref="DbConnection"/> has been garbage collected
+        /// without being closed or disposed. Such connections are still tracked by the pool but can
+        /// never be returned by their owner, so without this sweep they would leak pool slots.
+        /// </summary>
+        internal void ReclaimEmancipatedConnections()
+        {
+            // One sweep at a time, so nothing else can claim a connection between the point it is
+            // found emancipated and the PrePush that claims it. TryEnter rather than Enter: whatever
+            // the in-flight sweep reclaims lands in the idle channel either way.
+            bool sweeping = false;
+            try
+            {
+                Monitor.TryEnter(_reclaimSweepGate, ref sweeping);
+                if (!sweeping)
+                {
+                    return;
+                }
+
+                SweepEmancipatedConnections();
+            }
+            finally
+            {
+                if (sweeping)
+                {
+                    Monitor.Exit(_reclaimSweepGate);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Body of <see cref="ReclaimEmancipatedConnections"/>. Must be called with
+        /// <see cref="_reclaimSweepGate"/> held.
+        /// </summary>
+        private void SweepEmancipatedConnections()
+        {
+            List<DbConnectionInternal>? reclaimed = null;
+
+            // No collection-level lock, unlike WaitHandleDbConnectionPool's scan under lock
+            // (_objectList): each slot is read individually, so the walk can see a slot that was
+            // concurrently emptied or refilled. Safe here because a connection is only emancipated
+            // while checked out, and a checked-out connection is not in the idle channel, so neither
+            // the pruner nor Clear can remove it underneath us. A concurrently replaced slot costs
+            // this sweep a miss, never a connection resurrected after removal.
+            foreach (DbConnectionInternal connection in _connectionSlots)
+            {
+                // IsEmancipated is only stable under the connection lock, which guards the
+                // PrePush/PostPop that move it in and out of the pool. TryEnter rather than Enter: a
+                // connection someone else holds is mid-handout or mid-return, so it is not
+                // emancipated anyway and blocking on it would only stall that caller.
+                bool locked = false;
+                try
+                {
+                    Monitor.TryEnter(connection, ref locked);
+
+                    if (locked && connection.IsEmancipated)
+                    {
+                        (reclaimed ??= new List<DbConnectionInternal>()).Add(connection);
+                    }
+                }
+                finally
+                {
+                    if (locked)
+                    {
+                        Monitor.Exit(connection);
+                    }
+                }
+            }
+
+            if (reclaimed is null)
+            {
+                return;
+            }
+
+            int returned = 0;
+            foreach (DbConnectionInternal connection in reclaimed)
+            {
+                try
+                {
+                    connection.DetachCurrentTransactionIfEnded();
+                    ReturnInternalConnection(connection, owningObject: null);
+                }
+                catch (Exception ex)
+                {
+                    // One connection failing to return must not strand the rest of the sweep.
+                    SqlClientEventSource.Log.TryPoolerTraceEvent(
+                        "ChannelDbConnectionPool.ReclaimEmancipatedConnections | ERR | {0}, Connection {1}, Return threw: {2}.",
+                        Id,
+                        connection.ObjectID,
+                        ex);
+
+                    continue;
+                }
+
+                Metrics.ReclaimedConnectionRequest();
+                returned++;
+            }
+
+            if (returned > 0)
+            {
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "ChannelDbConnectionPool.ReclaimEmancipatedConnections | INFO | {0}, Reclaimed {1} emancipated connection(s).",
+                    Id,
+                    returned);
+            }
+        }
+
+        /// <summary>
         /// Performs a blocking synchronous read from the idle connection channel.
         /// </summary>
         /// <param name="cancellationToken">Cancels the read operation.</param>
         /// <returns>The connection read from the channel.</returns>
         private DbConnectionInternal? ReadChannelSyncOverAsync(CancellationToken cancellationToken)
         {
-            // If there are no connections in the channel, then ReadAsync will block until one is available.
-            // Channels doesn't offer a sync API, so running ReadAsync synchronously on this thread may spawn
-            // additional new async work items in the managed thread pool if there are no items available in the
-            // channel. We need to ensure that we don't block all available managed threads with these child
-            // tasks or we could deadlock. Prefer to block the current user-owned thread, and limit throughput
-            // to the managed threadpool.
-
-            _syncOverAsyncSemaphore.Wait(cancellationToken);
-            try
-            {
-                ConfiguredValueTaskAwaitable<DbConnectionInternal?>.ConfiguredValueTaskAwaiter awaiter =
-                    _idleChannel.ReadAsync(cancellationToken).ConfigureAwait(false).GetAwaiter();
-                using ManualResetEventSlim mres = new ManualResetEventSlim(false, 0);
-
-                // Cancellation happens through the ReadAsync call, which will complete the task.
-                // Even a failed task will complete and set the ManualResetEventSlim.
-                awaiter.UnsafeOnCompleted(() => mres.Set());
-                mres.Wait(CancellationToken.None);
-                return awaiter.GetResult();
-            }
-            finally
-            {
-                _syncOverAsyncSemaphore.Release();
-            }
+            // Channel has no blocking read. Block on the Task rather than an opaque primitive: the
+            // idle channel is created without AllowSynchronousContinuations, so the completing
+            // continuation is queued, and Task blocking lets the thread pool inject a worker to run it.
+            return _idleChannel.ReadAsync(cancellationToken).AsTask().GetAwaiter().GetResult();
         }
 
         /// <summary>

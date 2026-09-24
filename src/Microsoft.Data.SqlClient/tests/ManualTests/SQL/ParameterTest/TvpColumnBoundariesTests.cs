@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     [Collection("ParameterBaselineTests")]
     public class TvpColumnBoundariesTests
     {
-        [Trait("Category", "flaky")]
+        [Trait("category", "flaky")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void TvpColumnBoundariesTest()
         {

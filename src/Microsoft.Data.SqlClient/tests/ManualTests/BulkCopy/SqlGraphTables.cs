@@ -12,6 +12,39 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
     [Trait("Set", "2")]
     public class SqlGraphTables
     {
+        /// <summary>
+        /// Verifies that copying to a SQL Graph table without graph aliases in the mappings does not
+        /// require alias resolution.
+        /// </summary>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsAtLeastSQL2017))]
+        public void WriteToServer_CopyToSqlGraphNodeTableBySourceOrdinal_Succeeds()
+        {
+            string connectionString = DataTestUtility.TCPConnectionString;
+
+            using SqlConnection dstConn = new(connectionString);
+            using DataTable nodes = new()
+            {
+                Columns = { new DataColumn("Name", typeof(string)) }
+            };
+
+            dstConn.Open();
+
+            for (int i = 0; i < 5; i++)
+            {
+                nodes.Rows.Add($"Name {i}");
+            }
+
+            using Table dstNodeTable = new(dstConn, "SqlGraphNodeTableByOrdinal", "([Name] VARCHAR(100)) AS NODE");
+            using SqlBulkCopy nodeCopy = new(dstConn);
+
+            nodeCopy.DestinationTableName = dstNodeTable.Name;
+            nodeCopy.ColumnMappings.Add(0, "Name");
+            nodeCopy.WriteToServer(nodes);
+
+            using SqlCommand verifyCommand = new($"SELECT COUNT(*) FROM {dstNodeTable.Name}", dstConn);
+            Assert.Equal(5, (int)verifyCommand.ExecuteScalar());
+        }
+
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsAtLeastSQL2017))]
         public void WriteToServer_CopyToSqlGraphNodeTable_Succeeds()
         {
@@ -169,6 +202,176 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
                     Assert.Equal(name, physicalNodeId);
                 }
             }
+        }
+
+        /// <summary>
+        /// Reuses one SqlBulkCopy after graph alias mappings have been resolved, then changes those
+        /// mappings to ordinary destination columns. This guards against stale resolved graph
+        /// canonical names being reused on the next operation.
+        /// </summary>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsAtLeastSQL2017))]
+        public void WriteToServer_ReuseAfterAliasMappingsThenOrdinaryMappings_Succeeds()
+        {
+            string connectionString = DataTestUtility.TCPConnectionString;
+
+            using SqlConnection dstConn = new(connectionString);
+            dstConn.Open();
+
+            using Table srcNodeTable = new(dstConn, "SqlGraph_ReuseAliasFirstNodes", "(Id INT PRIMARY KEY IDENTITY(1,1), [Name] VARCHAR(100)) AS NODE");
+            using Table dstEdgeTable = new(dstConn, "SqlGraph_ReuseAliasFirstEdges", "([Description] VARCHAR(100)) AS EDGE");
+            using Table dstNormalTable = new(dstConn, "SqlGraph_ReuseAliasFirstNormal", "([Description] VARCHAR(100), [ToId] NVARCHAR(MAX) NOT NULL, [FromId] NVARCHAR(MAX) NOT NULL)");
+            using DataTable edges = CreateEdgeSourceData(dstConn, srcNodeTable.Name);
+
+            using SqlBulkCopy edgeCopy = new(dstConn);
+            edgeCopy.ColumnMappings.Add("Description", "Description");
+            edgeCopy.ColumnMappings.Add("ToId", "$to_id");
+            edgeCopy.ColumnMappings.Add("FromId", "$from_id");
+
+            edgeCopy.DestinationTableName = dstEdgeTable.Name;
+            edgeCopy.WriteToServer(edges);
+
+            edgeCopy.ColumnMappings[0].SourceColumn = "Description";
+            edgeCopy.ColumnMappings[1].DestinationColumn = "ToId";
+            edgeCopy.ColumnMappings[2].DestinationColumn = "FromId";
+            edgeCopy.DestinationTableName = dstNormalTable.Name;
+            edgeCopy.WriteToServer(edges);
+
+            VerifyNormalEdgeData(dstConn, dstNormalTable.Name, edges);
+        }
+
+        /// <summary>
+        /// Reuses one SqlBulkCopy after ordinary mappings, then changes those mappings to graph
+        /// aliases. This ensures alias-resolution bypass state is recomputed for each operation.
+        /// </summary>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsAtLeastSQL2017))]
+        public void WriteToServer_ReuseAfterOrdinaryMappingsThenAliasMappings_Succeeds()
+        {
+            string connectionString = DataTestUtility.TCPConnectionString;
+
+            using SqlConnection dstConn = new(connectionString);
+            dstConn.Open();
+
+            using Table srcNodeTable = new(dstConn, "SqlGraph_ReuseOrdinaryFirstNodes", "(Id INT PRIMARY KEY IDENTITY(1,1), [Name] VARCHAR(100)) AS NODE");
+            using Table dstNormalTable = new(dstConn, "SqlGraph_ReuseOrdinaryFirstNormal", "([Description] VARCHAR(100), [ToId] NVARCHAR(MAX) NOT NULL, [FromId] NVARCHAR(MAX) NOT NULL)");
+            using Table dstEdgeTable = new(dstConn, "SqlGraph_ReuseOrdinaryFirstEdges", "([Description] VARCHAR(100)) AS EDGE");
+            using DataTable edges = CreateEdgeSourceData(dstConn, srcNodeTable.Name);
+
+            using SqlBulkCopy edgeCopy = new(dstConn);
+            edgeCopy.ColumnMappings.Add("Description", "Description");
+            edgeCopy.ColumnMappings.Add("ToId", "ToId");
+            edgeCopy.ColumnMappings.Add("FromId", "FromId");
+
+            edgeCopy.DestinationTableName = dstNormalTable.Name;
+            edgeCopy.WriteToServer(edges);
+
+            edgeCopy.ColumnMappings[0].SourceColumn = "Description";
+            edgeCopy.ColumnMappings[1].DestinationColumn = "$to_id";
+            edgeCopy.ColumnMappings[2].DestinationColumn = "$from_id";
+            edgeCopy.DestinationTableName = dstEdgeTable.Name;
+            edgeCopy.WriteToServer(edges);
+
+            VerifyGraphEdgeData(dstConn, dstEdgeTable.Name, edges);
+        }
+
+        /// <summary>
+        /// Exercises CacheMetadata with graph alias mappings against a real SQL Graph edge table,
+        /// including reuse of the cached alias result set on a later operation.
+        /// </summary>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsAtLeastSQL2017))]
+        public void WriteToServer_CacheMetadataWithSqlGraphAliasMappings_Succeeds()
+        {
+            string connectionString = DataTestUtility.TCPConnectionString;
+
+            using SqlConnection dstConn = new(connectionString);
+            dstConn.Open();
+
+            using Table srcNodeTable = new(dstConn, "SqlGraph_CacheAliasNodes", "(Id INT PRIMARY KEY IDENTITY(1,1), [Name] VARCHAR(100)) AS NODE");
+            using Table dstEdgeTable = new(dstConn, "SqlGraph_CacheAliasEdges", "([Description] VARCHAR(100)) AS EDGE");
+            using DataTable edges = CreateEdgeSourceData(dstConn, srcNodeTable.Name);
+
+            using SqlBulkCopy cachedCopy = new(dstConn, SqlBulkCopyOptions.CacheMetadata, null);
+
+            cachedCopy.DestinationTableName = dstEdgeTable.Name;
+            cachedCopy.ColumnMappings.Add("Description", "Description");
+            cachedCopy.ColumnMappings.Add("ToId", "$to_id");
+            cachedCopy.ColumnMappings.Add("FromId", "$from_id");
+            cachedCopy.WriteToServer(edges);
+            VerifyGraphEdgeData(dstConn, dstEdgeTable.Name, edges);
+
+            cachedCopy.ColumnMappings[0].SourceColumn = "Description";
+            cachedCopy.ColumnMappings[1].DestinationColumn = "$to_id";
+            cachedCopy.ColumnMappings[2].DestinationColumn = "$from_id";
+            cachedCopy.WriteToServer(edges);
+            VerifyGraphEdgeRowCount(dstConn, dstEdgeTable.Name, edges.Rows.Count * 2);
+        }
+
+        private static DataTable CreateEdgeSourceData(SqlConnection connection, string nodeTableName)
+        {
+            using SqlCommand insertSampleNodes = new($"INSERT INTO {nodeTableName} ([Name]) VALUES ('A'), ('B'), ('C')", connection);
+            insertSampleNodes.ExecuteNonQuery();
+
+            DataTable edges = new()
+            {
+                Columns =
+                {
+                    new DataColumn("Description", typeof(string)),
+                    new DataColumn("ToId", typeof(string)),
+                    new DataColumn("FromId", typeof(string))
+                }
+            };
+
+            using SqlCommand nodeQuery = new($"SELECT $node_id FROM {nodeTableName} ORDER BY Id", connection);
+            using SqlDataReader reader = nodeQuery.ExecuteReader();
+            Assert.True(reader.Read());
+            string firstNodeId = reader.GetString(0);
+
+            Assert.True(reader.Read());
+            string secondNodeId = reader.GetString(0);
+            edges.Rows.Add("First edge", firstNodeId, secondNodeId);
+
+            Assert.True(reader.Read());
+            string thirdNodeId = reader.GetString(0);
+            edges.Rows.Add("Second edge", secondNodeId, thirdNodeId);
+
+            return edges;
+        }
+
+        private static void VerifyGraphEdgeData(SqlConnection connection, string edgeTableName, DataTable expectedEdges)
+        {
+            using SqlCommand verificationCommand = new($"SELECT [Description], $to_id, $from_id FROM {edgeTableName} ORDER BY [Description]", connection);
+            using SqlDataReader reader = verificationCommand.ExecuteReader();
+
+            foreach (DataRow expectedRow in expectedEdges.Select(filterExpression: null, sort: "Description"))
+            {
+                Assert.True(reader.Read());
+                Assert.Equal(expectedRow["Description"], reader.GetString(0));
+                Assert.Equal(expectedRow["ToId"], reader.GetString(1));
+                Assert.Equal(expectedRow["FromId"], reader.GetString(2));
+            }
+
+            Assert.False(reader.Read());
+        }
+
+        private static void VerifyNormalEdgeData(SqlConnection connection, string tableName, DataTable expectedEdges)
+        {
+            using SqlCommand verificationCommand = new($"SELECT [Description], [ToId], [FromId] FROM {tableName} ORDER BY [Description]", connection);
+            using SqlDataReader reader = verificationCommand.ExecuteReader();
+
+            foreach (DataRow expectedRow in expectedEdges.Select(filterExpression: null, sort: "Description"))
+            {
+                Assert.True(reader.Read());
+                Assert.Equal(expectedRow["Description"], reader.GetString(0));
+                Assert.Equal(expectedRow["ToId"], reader.GetString(1));
+                Assert.Equal(expectedRow["FromId"], reader.GetString(2));
+            }
+
+            Assert.False(reader.Read());
+        }
+
+        private static void VerifyGraphEdgeRowCount(SqlConnection connection, string edgeTableName, int expectedRows)
+        {
+            using SqlCommand countCommand = new($"SELECT COUNT(*) FROM {edgeTableName}", connection);
+            Assert.Equal(expectedRows, (int)countCommand.ExecuteScalar());
         }
     }
 }

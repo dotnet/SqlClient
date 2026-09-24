@@ -1,0 +1,147 @@
+﻿<docs>
+  <members name="RegisteredApplication">
+    <RegisteredApplication>
+      <summary>
+        Specifies the known application identifiers that Microsoft.Data.SqlClient reports for user agent telemetry.
+      </summary>
+      <remarks>
+        <para>
+          Production applications that meet the bar are welcome to reserve an identifier here.
+        </para>
+        <para>
+          Identifier reservations are as follows:
+        </para>
+        <list type="bullet">
+          <item>
+            <description>0x0001-0x7FFF: Microsoft-defined large-scale applications.</description>
+          </item>
+          <item>
+            <description>0x8000-0xBFFF: Reserved for small-scale use.</description>
+          </item>
+          <item>
+            <description>0xC000-0xFFFF: Public and developer use.</description>
+          </item>
+        </list>
+        <para>
+          An unregistered identifier may still be reported by casting a value to this type.
+        </para>
+      </remarks>
+    </RegisteredApplication>
+    <Unknown>
+      <summary>
+        No application identity is reported. This is the default.
+      </summary>
+      <value>
+        0
+      </value>
+    </Unknown>
+    <EntityFrameworkCore>
+      <summary>
+        The Microsoft Entity Framework Core SQL Server provider.
+      </summary>
+      <value>
+        1
+      </value>
+    </EntityFrameworkCore>
+    <SemanticKernel>
+      <summary>
+        Microsoft Semantic Kernel.
+      </summary>
+      <value>
+        2
+      </value>
+    </SemanticKernel>
+    <ManagementStudio>
+      <summary>
+        Microsoft SQL Server Management Studio.
+      </summary>
+      <value>
+        3
+      </value>
+    </ManagementStudio>
+    <SqlManagementObjects>
+      <summary>
+        Microsoft SQL Server Management Objects.
+      </summary>
+      <value>
+        4
+      </value>
+    </SqlManagementObjects>
+    <DataTierApplicationFramework>
+      <summary>
+        Microsoft SQL Server Data-Tier Application Framework.
+      </summary>
+      <value>
+        5
+      </value>
+    </DataTierApplicationFramework>
+    <SqlToolsService>
+      <summary>
+        Microsoft SQL Tools Service.
+      </summary>
+      <value>
+        6
+      </value>
+    </SqlToolsService>
+    <AspNetCoreDistributedSqlServerCache>
+      <summary>
+        Microsoft ASP.NET Core distributed SQL Server cache.
+      </summary>
+      <value>
+        7
+      </value>
+    </AspNetCoreDistributedSqlServerCache>
+    <EntityFramework>
+      <summary>
+        Microsoft Entity Framework 6 SQL Server provider.
+      </summary>
+      <value>
+        8
+      </value>
+    </EntityFramework>
+    <AzureFunctionsSqlExtension>
+      <summary>
+        Microsoft Azure Functions SQL extension.
+      </summary>
+      <value>
+        9
+      </value>
+    </AzureFunctionsSqlExtension>
+    <OrleansAdoNet>
+      <summary>
+        Microsoft Orleans ADO.NET providers.
+      </summary>
+      <value>
+        10
+      </value>
+    </OrleansAdoNet>
+    <DurableTaskSqlServer>
+      <summary>
+        Microsoft Durable Task SQL Server provider.
+      </summary>
+      <value>
+        11
+      </value>
+    </DurableTaskSqlServer>
+    <SqlPackage>
+      <summary>
+        The <c>sqlpackage</c> command-line tool.
+      </summary>
+      <value>
+        12
+      </value>
+      <remarks>
+        <c>sqlpackage</c> is built on the Data-Tier Application Framework, but reports its own identifier so that
+        command-line use can be told apart from other callers of that framework.
+      </remarks>
+    </SqlPackage>
+    <DataApiBuilder>
+      <summary>
+        Microsoft Data API builder.
+      </summary>
+      <value>
+        13
+      </value>
+    </DataApiBuilder>
+  </members>
+</docs>
