@@ -15,7 +15,7 @@ at all, infer the PR from the current branch.
 | Input | How to resolve it |
 | --- | --- |
 | **PR** | A PR number or URL in the request. If absent, infer it from the current branch (see step 1). |
-| **Repository** | An explicit `owner/name` in the request; otherwise infer from the git remote of the current workspace. |
+| **Repository** | Taken from the PR URL when one was given, since a URL already names its repository. Otherwise an explicit `owner/name` in the request, otherwise inferred from the git remote of the current workspace. |
 | **Author filter** | A name, regex, or comma-separated list in the request. Default no filtering. Never applies to Copilot suppressed findings unless it names Copilot. |
 | **Test scope** | A hint about which tests to run. Default is to choose targeted tests yourself. |
 | **Tooling** | A preferred access path (for example "use the GitHub MCP server" or "use gh"). See Tool selection. |
@@ -100,12 +100,12 @@ often served by different paths:
 | Identify repo and PR | All steps | Resolve the repo and confirm the PR exists and is readable. When the PR was inferred from the branch, confirm the match before anything else. |
 | Look up PRs by branch | Step 1 | Only when no PR was supplied. Confirm the path can search PRs by head branch. |
 | Read review threads with resolved state | Steps 2, 7 | Fetch one page of review threads and confirm an `isResolved` (or equivalent) field is present, along with the paging information needed to reach the rest. A path that returns review comments but not their resolved state cannot drive this skill on its own. |
-| Read full review bodies | Step 3 | Fetch the body text and state of every review on the PR. This is a different field from review threads, and both human review-body feedback and Copilot's suppressed feedback exist only here. A path that lists review comments but cannot return review bodies will silently miss both. |
+| Read full review bodies | Step 3 | Fetch the body text, state and author of every review on the PR, and confirm the author carries a type (`Bot` or `User`) and not just a login. Step 3b needs that type to identify the Copilot reviewer, so a path returning bodies without it passes this check and then finds no suppressed findings at all — a silent zero that looks identical to a PR having none. This is also a different field from review threads, and both human review-body feedback and Copilot's suppressed feedback exist only here. |
 | Read discussion comments | Step 4 | Fetch one page of PR issue comments, and confirm you can page through the rest. Always required. |
 | Read and edit local files | Step 6 | Confirm the workspace is the right repository and is writable. |
 | Workspace is clean enough to edit | Steps 6, 9 | Inspect the index and the working tree. Record every path already staged or modified before this run started, including untracked files. Anything already there belongs to the user, not to this run. |
 | Workspace is on the PR's branch | Steps 6, 9 | Confirm the checked-out branch is the PR's head branch, that local HEAD matches the PR's head commit, and that the workspace can reach the head repository, which is a fork whenever the PR comes from one. Never assume the workspace is already on the right branch or at the right commit: a mismatch means every edit, commit and push would land on whatever happens to be checked out. |
-| Authorship of the PR itself | Steps 6, 10 | Determine whether the authenticated user is the PR's author. Acting on someone else's PR is a different posture; see step 1. |
+| Authorship of the PR itself | Steps 6, 10 | Determine which account each path is authenticated as, not just "the authenticated user". Paths are chosen per capability and can be different accounts, so establish the principal for every path that will write — commit, push, reply, resolve — and compare the PR's author against the account that will actually act, not against whichever client happened to read. A mismatch means full mode would be selected on someone else's behalf, or comments would appear under an account the user did not expect. Report each principal. |
 | Run tests/builds | Step 6 | Confirm the needed runner exists, for example that `dotnet` is on PATH. |
 | Identify comment authorship | Steps 10, 11 | Confirm the path reports author type, not just login: `__typename` of `Bot` or `User` in GraphQL, `user.type` in REST. Resolution decisions depend on this, so a path that cannot distinguish bots from humans must not be used to drive step 11. |
 | Commit and push | Step 9 | Confirm the git remote name (do not assume `origin`) and check push permission without pushing. |
@@ -211,7 +211,11 @@ Skipping an approval gate:
 1. Establish scope
 - Do this before pre-flight. Most pre-flight checks need to know which repository and PR
   they are checking, so they cannot run until scope is settled.
-- Resolve the repository from the request, or infer it from the git remote.
+- Resolve the repository, in this order: from the PR URL if the request gave one, then
+  from an explicit `owner/name`, then from the git remote. A URL identifies its own
+  repository, so never pair a URL's PR number with a repository taken from somewhere else
+  — that silently targets whatever PR happens to carry that number here.
+- If an explicit repository contradicts the URL, stop and ask rather than choosing one.
 - Discover the correct git remote name from the current repository and store it for later commands.
 - Use that discovered remote name for push and any other git operations that require a remote; do not assume `origin`.
 - Resolve the PR number from the request (accept a number or a URL).
@@ -249,6 +253,10 @@ Skipping an approval gate:
   - Say plainly which mode the run is in, because analysis-only changes what the later
     steps can deliver.
 - Establish whether the authenticated user is the PR's author:
+  - Judge this against the account that will post replies and push, which pre-flight
+    identified per path. When the write paths run as different accounts, or as an account
+    other than the one that read the PR, say so and treat the writing account as the one
+    that matters.
   - When they are, this is the normal case: fix the feedback and reply as the author.
   - When they are not, this is someone else's PR. Select analysis-only mode, so steps 6
     and 9 are skipped and nothing is edited or committed, and draft everything without
@@ -372,8 +380,11 @@ Skipping an approval gate:
 - Identify comments that are non-actionable or ambiguous.
 - Merge duplicates across sources. The same request often arrives twice, for example as a
   review body and again as a discussion comment. Combine them into one item that lists
-  every source it came from, then plan and fix it once. Do not count it twice, and do not
-  write two separate answers to the same question.
+  every source it came from, then plan and fix it once. Do not count it twice.
+- Merging affects the work, never the answers. Keep every destination the item arrived
+  through: if the same point was raised in two review threads, both reviewers still get a
+  reply in their own thread. Write one explanation and post it to each destination, rather
+  than answering one reviewer and leaving the other looking ignored.
 - Check whether each item is already addressed before planning any edit. Feedback is often
   fixed by the PR author, or by a later commit, while the thread stays open. Compare the
   request against the current state of the code on the PR's head. If it is already
@@ -422,12 +433,15 @@ Recognising an author's self-tag:
 - Promote author commentary out of that category when it genuinely asks for something even without a self-tag: an open question put to reviewers, a flagged TODO, or a decision the author says they want challenged. Say why you promoted it, and classify it normally from then on.
 - Tag every item with its source or sources from the Feedback sources table, and for review threads whether the authorship is bot or human. This determines where its reply goes in step 10 and whether it may be resolved in step 11.
 
-8. Produce a final report
+8. Draft findings and replies
+- This step prepares the report; it does not publish it. The commit, push, reply and
+  resolve outcomes it must eventually carry have not happened yet, so anything written
+  here about them would be invented. Step 12 produces the report once they are known.
 - Give review threads, review bodies, Copilot suppressed findings and discussion comments their own sections, and label every item with its source.
 - Include evidence for each item: file location, change summary, validation result.
 - Draft a distinct reply for every item of feedback that this run acted on, rejected, or needs something from the reviewer for, addressing that exact item's request, context, and outcome.
 - Every reply must state plainly what was changed to address the feedback, why the feedback is rejected, or that no action was required and why. An informational item takes the third form; forcing it into the first two would misrepresent the outcome.
-- Do not draft replies for items classified Author Commentary, for operational noise, or for a duplicate already answered through another source. Answering the author's own explanation of their own code adds nothing.
+- Do not draft replies for items classified Author Commentary, for operational noise, or for a duplicate already answered through another source. Answering the author's own explanation of their own code adds nothing. A merged duplicate is answered once per destination it arrived through, not once overall.
 - Already Addressed items need a reply only when they are bot-authored threads that could be resolved. Give those a short no-action reply saying the request was already satisfied and by what, so step 11 has the posted reply it requires. Everywhere else, an Already Addressed item is reported but not replied to: a human's thread whose request someone else satisfied is waiting on that human, and another comment adds nothing.
 
 9. Commit changes
@@ -481,6 +495,16 @@ Recognising an author's self-tag:
 - Author commentary threads are human-authored and so are never resolvable here, including when the user is the PR's author. Closing your own explanatory note is the author's own call to make outside this skill.
 - Report which threads were resolved and which were deliberately left open, with the reason.
 - If resolution is unavailable, list the bot threads that would have been resolved and let the user do it.
+
+12. Produce the final report
+- Do this last, once the gated actions have either run or been declined, so every outcome
+  reported is one that actually happened.
+- Take the findings and replies drafted in step 8 and add what steps 9 to 11 produced:
+  which gates were approved, pre-approved or declined, what was committed and pushed,
+  which replies were posted and where, and which threads were resolved or left open.
+- Report an action that did not happen as not having happened, and say why — declined,
+  unavailable, or not reached. Never describe an intended action as a completed one.
+- Follow the Output Format below.
 
 ## Output Format
 1. PR Scope
