@@ -559,6 +559,38 @@ Describe 'validate-xml-docs.ps1' {
             $finding.Message | Should -BeLike "*was emitted as 'P:'*"
         }
 
+        <#
+            An overload that was never emitted shares its prefix with the overload that was, so
+            matching on the identifier alone would advise replacing a prefix with itself. It is a
+            member this build does not contain, not a mistyped prefix.
+        #>
+        It 'reports an overload that was not emitted as a missing member' {
+            $docs = New-DocumentationDirectory `
+                -Members @('M:Microsoft.Data.SqlClient.SqlCommand.ExecuteReader') `
+                -Crefs @('M:Microsoft.Data.SqlClient.SqlCommand.ExecuteReader(System.String)')
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -DocumentationPath $docs -ReportPath $report -ReportOnly
+
+            $findings = @((Get-Report -Path $report).Findings)
+            $findings.Count | Should -Be 1
+            $findings[0].Category | Should -Be 'missing-local-uid'
+        }
+
+        It 'still names the expected prefix when an overload carries the wrong member kind' {
+            $docs = New-DocumentationDirectory `
+                -Members @('P:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout') `
+                -Crefs @('M:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout(System.String)')
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -DocumentationPath $docs -ReportPath $report -ReportOnly
+
+            $findings = @((Get-Report -Path $report).Findings)
+            $findings.Count | Should -Be 1
+            $findings[0].Category | Should -Be 'mismatched-docid-prefix'
+            $findings[0].Message | Should -BeLike "*was emitted as 'P:'*"
+        }
+
         It 'does not resolve a namespace cref against the member index' {
             # The compiler never emits a <member> entry for a namespace, so an N: cref must not be
             # treated as an unresolved reference.
