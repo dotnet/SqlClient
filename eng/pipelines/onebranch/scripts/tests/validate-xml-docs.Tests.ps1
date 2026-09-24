@@ -771,7 +771,9 @@ Describe 'validate-xml-docs.ps1' {
             $project = New-Project -GeneratesDocumentation
             $report = Join-Path (New-TestDirectory) 'report.json'
 
-            & $scriptPath -DocumentationPath $path -ProjectPath $project -ReportPath $report -ReportOnly
+            # Throws because the file could not be read; the report is still written beforehand.
+            { & $scriptPath -DocumentationPath $path -ProjectPath $project -ReportPath $report -ReportOnly } |
+                Should -Throw '*could not read 1 file*'
 
             $categories = @((Get-Report -Path $report).Findings.Category)
             $categories | Should -Contain 'malformed-xml'
@@ -1004,13 +1006,38 @@ Describe 'validate-xml-docs.ps1' {
             $finding.Category | Should -Be 'malformed-xml'
         }
 
+        It 'fails on malformed XML even in report-only mode' {
+            # Report-only downgrades findings, but a file that could not be parsed was never
+            # examined, so suppressing it would report an all-clear for content nobody read.
+            $path = New-TestDirectory
+            '<docs><members>' | Set-Content -LiteralPath (Join-Path $path 'Broken.xml') -Encoding utf8
+
+            { & $scriptPath -SnippetsDirectory $path -ReportOnly } |
+                Should -Throw '*could not read 1 file*'
+        }
+
+        It 'still downgrades ordinary findings in report-only mode alongside readable files' {
+            # The malformed-XML rule must not make report-only useless for everything else.
+            $snippets = New-SnippetDirectory -Crefs @('T:System.Byte[]')
+
+            { & $scriptPath -SnippetsDirectory $snippets -ReportOnly } | Should -Not -Throw
+        }
+
         It 'continues past a malformed file to validate the rest' {
             $path = New-TestDirectory
             '<docs><members>' | Set-Content -LiteralPath (Join-Path $path 'Broken.xml') -Encoding utf8
             '<docs><members name="S"><S><see cref="T:System.Byte[]" /></S></members></docs>' |
                 Set-Content -LiteralPath (Join-Path $path 'Good.xml') -Encoding utf8
+            $report = Join-Path (New-TestDirectory) 'report.json'
 
-            { & $scriptPath -SnippetsDirectory $path } | Should -Throw '*failed with 2 issues*'
+            # The unreadable file decides the failure message, but the readable one is still
+            # validated and its finding recorded.
+            { & $scriptPath -SnippetsDirectory $path -ReportPath $report } |
+                Should -Throw '*could not read 1 file*'
+
+            $categories = @((Get-Report -Path $report).Findings.Category)
+            $categories | Should -Contain 'malformed-xml'
+            $categories | Should -Contain 'invalid-docid'
         }
 
         It 'fails when no input paths are supplied' {
