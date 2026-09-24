@@ -163,6 +163,15 @@
                                        reference.
       mismatched-docid-prefix warning  As above, but referenced from a member that is not public,
                                        or from any member when the public API surface is unknown.
+      enum-field-remarks      error    An enum field carries <remarks>, which the documentation
+                                       build discards, rendering only the summary. The text
+                                       reaches no page and nothing else reports its loss, so it is
+                                       folded into the field's <summary> instead. Fields are
+                                       identified from the enum declarations in source, so a
+                                       platform-variant block documenting the type is unaffected.
+                                       In generated documentation only public fields are reported,
+                                       since the implementation assembly documents internal
+                                       P/Invoke enums that reach no published page.
       missing-external-uid    warning  Cref is absent from the supplied Learn xref map.
       unprefixed-cref         info     Cref carries no "T:"/"M:"/... prefix. Legal; the compiler
                                        binds it. Reported for visibility only.
@@ -231,6 +240,7 @@ $script:CategorySeverities = [ordered]@{
     'lib-ref-documentation-identical' = 'error'
     'missing-public-uid'     = 'error'
     'mismatched-public-docid-prefix' = 'error'
+    'enum-field-remarks'     = 'error'
     'missing-local-uid'      = 'info'
     'mismatched-docid-prefix' = 'warning'
     'missing-documentation'  = 'error'
@@ -674,6 +684,113 @@ function Test-ProjectGeneratesDocumentation {
 }
 
 <#
+    Returns the enum types declared in a source tree, each mapped to the names of its members.
+
+    The documentation build silently discards <remarks> on an enum field, so recognizing those
+    fields is what makes that loss detectable. Neither a snippet nor generated documentation says
+    which types are enums, so the declarations themselves are the only authority.
+
+    Member names are collected as well as type names because a snippet identifies a member only by
+    its element name, and a snippet may hold more than one block for the same type -- a platform
+    variant such as <SqlConnectionIPAddressPreferenceNetfx> documents the type, not a field. Asking
+    whether the name is a declared member separates the two without guessing from the name.
+#>
+function Get-EnumDeclaration {
+    param([Parameter(Mandatory)][string]$SearchRoot)
+
+    # Anchored at the start of a line and allowing only attributes and modifiers before the
+    # keyword, so the word "enum" inside an identifier, a comment or a string is not mistaken for a
+    # declaration.
+    $declaration = [regex]::new(
+        '^\s*(?:\[[^\]]*\]\s*)*(?:(?:public|internal|protected|private|static|partial|new)\s+)*' +
+        'enum\s+([A-Za-z_][A-Za-z0-9_]*)',
+        [System.Text.RegularExpressions.RegexOptions]::Multiline)
+
+    # Comments are removed before the body is read so that a commented-out entry, or an identifier
+    # inside a doc comment, cannot be taken for a member.
+    $blockComment = [regex]::new('/\*[\s\S]*?\*/')
+    $lineComment = [regex]::new('//[^\r\n]*')
+
+    $declarations = [System.Collections.Generic.Dictionary[string, System.Collections.Generic.HashSet[string]]]::new(
+        [System.StringComparer]::Ordinal)
+
+    foreach ($source in Get-ChildItem -LiteralPath $SearchRoot -Filter '*.cs' -File -Recurse -ErrorAction SilentlyContinue) {
+        $text = [System.IO.File]::ReadAllText($source.FullName)
+
+        foreach ($match in $declaration.Matches($text)) {
+            $name = $match.Groups[1].Value
+
+            $open = $text.IndexOf('{', $match.Index + $match.Length)
+            if ($open -lt 0) {
+                continue
+            }
+
+            # Tracked rather than assumed: an attribute or an initializer inside the body may carry
+            # braces of its own, and stopping at the first one would truncate the member list.
+            $depth = 0
+            $close = -1
+            for ($index = $open; $index -lt $text.Length; $index++) {
+                if ($text[$index] -eq '{') {
+                    $depth++
+                }
+                elseif ($text[$index] -eq '}') {
+                    $depth--
+                    if ($depth -eq 0) {
+                        $close = $index
+                        break
+                    }
+                }
+            }
+
+            if ($close -lt 0) {
+                continue
+            }
+
+            $body = $text.Substring($open + 1, $close - $open - 1)
+            $body = $blockComment.Replace($body, ' ')
+            $body = $lineComment.Replace($body, ' ')
+
+            if (-not $declarations.ContainsKey($name)) {
+                $declarations[$name] = [System.Collections.Generic.HashSet[string]]::new(
+                    [System.StringComparer]::Ordinal)
+            }
+
+            # Split on commas that separate members, ignoring those inside an attribute or an
+            # initializer expression.
+            $depth = 0
+            $start = 0
+            $entries = [System.Collections.Generic.List[string]]::new()
+            for ($index = 0; $index -lt $body.Length; $index++) {
+                switch ($body[$index]) {
+                    '[' { $depth++ }
+                    '(' { $depth++ }
+                    ']' { $depth-- }
+                    ')' { $depth-- }
+                    ',' {
+                        if ($depth -eq 0) {
+                            $entries.Add($body.Substring($start, $index - $start))
+                            $start = $index + 1
+                        }
+                    }
+                }
+            }
+            $entries.Add($body.Substring($start))
+
+            foreach ($entry in $entries) {
+                # An entry is an optional attribute list followed by the member name, which is
+                # where the identifier is taken from; anything after '=' is its value.
+                $member = [regex]::Match($entry, '^\s*(?:\[[^\]]*\]\s*)*([A-Za-z_][A-Za-z0-9_]*)')
+                if ($member.Success) {
+                    [void]$declarations[$name].Add($member.Groups[1].Value)
+                }
+            }
+        }
+    }
+
+    return $declarations
+}
+
+<#
     Returns the documentation files referenced by a project's sources.
 
     Snippets reach the compiler through <include file='...'/> in a doc comment, so the references
@@ -927,6 +1044,26 @@ if (-not [string]::IsNullOrWhiteSpace($ProjectPath)) {
     if ($snippetFiles.Count -gt 0) {
         $snippetFiles = @($snippetFiles | Where-Object { $referencedSnippets.Contains($_) })
     }
+}
+
+# Enum declarations, used to detect documentation the build will discard. Taken from whichever
+# source tree the caller identified: the project's own directory when one project is in view, and
+# the search root when the inputs span several, as they do for a whole package drop. Left null when
+# neither was supplied, which disables the rule rather than guessing at the declarations.
+$script:EnumDeclarations = $null
+$enumSearchRoot = if (-not [string]::IsNullOrWhiteSpace($ProjectPath)) {
+    [System.IO.Path]::GetDirectoryName((Resolve-Path -LiteralPath $ProjectPath).Path)
+}
+elseif (-not [string]::IsNullOrWhiteSpace($ProjectSearchRoot)) {
+    (Resolve-Path -LiteralPath $ProjectSearchRoot).Path
+}
+else {
+    $null
+}
+
+if ($null -ne $enumSearchRoot) {
+    $script:EnumDeclarations = Get-EnumDeclaration -SearchRoot $enumSearchRoot
+    Write-Host "Enum types declared under '$enumSearchRoot': $($script:EnumDeclarations.Count)."
 }
 $documentationRoots = [System.Collections.Generic.List[string]]::new()
 
@@ -1246,6 +1383,84 @@ foreach ($entry in $documents) {
         }
 
         Test-Cref -Cref $crefAttribute.Value -Context $context
+    }
+}
+
+# The documentation build discards <remarks> on an enum field, rendering only the summary. Text
+# written there is therefore lost without trace: it neither appears on the published page nor is
+# reported by anything the author sees. Fold it into the field's <summary> instead.
+if ($null -ne $script:EnumDeclarations -and $script:EnumDeclarations.Count -gt 0) {
+    foreach ($entry in $documents) {
+        foreach ($element in $entry.Document.Descendants()) {
+            if ($element.Name.LocalName -ne 'remarks') {
+                continue
+            }
+
+            # A snippet nests member elements under <members name="Type">, naming each member by
+            # its element name; generated documentation names each member by a documentation ID.
+            # Both identify a field of an enum, so both are recognized.
+            $owner = $null
+
+            $parent = $element.Parent
+            while ($null -ne $parent) {
+                if ($parent.Name.LocalName -eq 'member') {
+                    # A documentation ID states the member kind outright, so an F: prefix on a
+                    # member of a declared enum settles it without consulting the member list.
+                    #
+                    # Restricted to the public API surface, because generated documentation also
+                    # describes internal types -- the implementation assembly documents its own
+                    # P/Invoke enums -- and no text is lost from a page that is never published.
+                    # Left unreported when the surface is unknown rather than escalated on a guess,
+                    # matching how every other resolution rule here treats an unknown surface.
+                    $nameAttribute = $parent.Attribute('name')
+                    if ($null -ne $nameAttribute -and
+                        $nameAttribute.Value.StartsWith('F:', [System.StringComparison]::Ordinal) -and
+                        $null -ne $script:PublicUids -and
+                        $script:PublicUids.Contains($nameAttribute.Value)) {
+
+                        $identifier = $nameAttribute.Value.Substring(2)
+                        $lastDot = $identifier.LastIndexOf('.')
+                        if ($lastDot -gt 0) {
+                            $containing = $identifier.Substring(0, $lastDot)
+                            $typeName = $containing.Substring($containing.LastIndexOf('.') + 1)
+                            if ($script:EnumDeclarations.ContainsKey($typeName)) {
+                                $owner = $nameAttribute.Value
+                            }
+                        }
+                    }
+                    break
+                }
+
+                if ($parent.Name.LocalName -eq 'members') {
+                    break
+                }
+
+                $grandparent = $parent.Parent
+                if ($null -ne $grandparent -and $grandparent.Name.LocalName -eq 'members') {
+                    $nameAttribute = $grandparent.Attribute('name')
+                    if ($null -ne $nameAttribute -and
+                        $script:EnumDeclarations.ContainsKey($nameAttribute.Value) -and
+                        $script:EnumDeclarations[$nameAttribute.Value].Contains($parent.Name.LocalName)) {
+
+                        $owner = "$($nameAttribute.Value).$($parent.Name.LocalName)"
+                    }
+                    break
+                }
+
+                $parent = $grandparent
+            }
+
+            if ($null -eq $owner) {
+                continue
+            }
+
+            $lineInfo = [System.Xml.IXmlLineInfo]$element
+            $lineNumber = if ($lineInfo.HasLineInfo()) { $lineInfo.LineNumber } else { 0 }
+            Add-Finding -Category 'enum-field-remarks' -Path $entry.Path `
+                -LineNumber $lineNumber -Member $owner -Message (
+                "Enum field '$owner' carries <remarks>, which the documentation build discards. " +
+                'Fold the text into the summary so it reaches the published page.')
+        }
     }
 }
 
