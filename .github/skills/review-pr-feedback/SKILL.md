@@ -84,7 +84,11 @@ gap rather than silently falling back.
 
 ## Pre-flight validation
 
-Before gathering any feedback, confirm the paths you intend to use actually work. Probe
+Run this after step 1 has settled and confirmed which repository and PR are in scope, and
+before gathering any feedback. Most checks below name the PR, so they cannot be performed
+any earlier; the branch and authorship rows in particular depend on facts step 1 resolves.
+
+Confirm the paths you intend to use actually work. Probe
 only with cheap, read-only, side-effect-free calls — never validate a write path by
 performing a real write.
 
@@ -205,7 +209,8 @@ Skipping an approval gate:
 
 ## Task
 1. Establish scope
-- Complete Tool selection and Pre-flight validation above before continuing.
+- Do this before pre-flight. Most pre-flight checks need to know which repository and PR
+  they are checking, so they cannot run until scope is settled.
 - Resolve the repository from the request, or infer it from the git remote.
 - Discover the correct git remote name from the current repository and store it for later commands.
 - Use that discovered remote name for push and any other git operations that require a remote; do not assume `origin`.
@@ -221,7 +226,11 @@ Skipping an approval gate:
   matches the branch, or more than one open PR matches.
 - State the inferred PR — number, title and state — and get the user's confirmation before
   going further. This run posts public comments and resolves threads, so acting on the
-  wrong PR is not silently recoverable.
+  wrong PR is not silently recoverable. Until that confirmation, read only what identifying
+  the PR requires; everything else waits.
+- With scope settled and confirmed, complete Tool selection and Pre-flight validation now,
+  before gathering any feedback. The remaining bullets of this step supply the branch and
+  authorship facts that the last few pre-flight rows check, so finish them first.
 - Check the workspace against the PR before planning any edit:
   - Compare the checked-out branch with the PR's head branch, and the workspace's remotes
     with the PR's head repository. A PR from a fork needs that fork reachable.
@@ -278,6 +287,13 @@ Skipping an approval gate:
   request too. Bare approvals such as "LGTM" with no request are informational.
 - Skip the boilerplate a bot wraps around its findings, such as Copilot's overview,
   file tables and marketing footer. Keep only its substantive assessment.
+- Look inside collapsed sections rather than only at the top of the body. Copilot nests
+  real findings in `<details>` blocks, sometimes two deep, under headings such as
+  "Previously missed" or "Resolved since last review", each carrying a file, a line and a
+  full description. Read them all.
+- Do not trust a bot's own summary of how much it found. A Copilot body can report
+  "Findings: None" in its header while a collapsed section below carries a finding that
+  was never posted as a review comment. The body is the evidence; the header is not.
 - Mark a body written by the PR's own author as author commentary, unless it tags the
   author's own handle, which makes it actionable instead. A review the author submits on
   their own PR is usually a walkthrough for reviewers, often a short framing note such as
