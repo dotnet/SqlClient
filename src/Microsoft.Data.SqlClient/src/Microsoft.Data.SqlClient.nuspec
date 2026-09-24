@@ -138,7 +138,7 @@
     <!-- lib/net462 - These contain the implementation -->
     <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\Microsoft.Data.SqlClient.dll" target="lib\net462\" exclude="" />
     <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\Microsoft.Data.SqlClient.pdb" target="lib\net462\" exclude="" />
-    <file src="Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\net462\Microsoft.Data.SqlClient.xml" target="lib\net462\" exclude="" />
+    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\Microsoft.Data.SqlClient.xml" target="lib\net462\" exclude="" />
 
     <!-- lib/net462 Localized Resources -->
     <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\cs\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\cs\" exclude="" />
