@@ -384,11 +384,12 @@ Recognising an author's self-tag:
 
 11. Resolve threads, non-human feedback only
 - Resolving is a gated action, separate from the reply gate. See Approvals.
-- Work out which threads qualify. A thread qualifies only when every comment in it was authored by a bot, its reply from step 10 was posted successfully, and its classification is terminal — Fixed, Rejected, Already Addressed or Informational.
+- Work out which threads qualify. Judge authorship from the snapshot step 2 recorded, before this run posted anything. A thread qualifies only when every comment in that snapshot was authored by a bot, its reply from step 10 was posted successfully, and its classification is terminal — Fixed, Rejected, Already Addressed or Informational.
+- Disregard your own replies from step 10 when deciding whether a thread is bot-only. They are this run's output, and counting them would make every replied-to thread look human-involved, so replying would permanently disqualify the very threads it was meant to conclude. Any other human participant still disqualifies the thread.
 - Never resolve a thread whose outcome is Needs Clarification or Blocked, even when it is bot-only and has been replied to. Those statuses mean the request is still open, and resolving one hides an unanswered question behind a reply that did not answer it.
 - Show the user that list, each entry with its author and the reason it qualifies, and ask for approval to resolve. Approval of the replies in step 10 does not authorise this.
-- Never resolve a thread that any human participated in. Leave it open so the human can judge the reply and accept or reject it themselves. This holds even when the fix is obviously correct and fully applied, and it holds even if the user approves the resolve gate — approval cannot promote a human thread into a resolvable one.
-- A bot-opened thread that a human later commented in counts as human. Treat it as human.
+- Never resolve a thread that any human other than your own step 10 reply participated in. Leave it open so the human can judge the reply and accept or reject it themselves. This holds even when the fix is obviously correct and fully applied, and it holds even if the user approves the resolve gate — approval cannot promote a human thread into a resolvable one.
+- A bot-opened thread that a human other than you later commented in counts as human. Treat it as human.
 - Decide from the author type recorded in step 2, never from the login alone. If the type is missing or ambiguous for any comment in a thread, treat that thread as human and leave it unresolved.
 - Never resolve anything that came from step 3 or step 4; review-body feedback, suppressed findings and discussion comments have no thread and no resolved state.
 - Author commentary threads are human-authored and so are never resolvable here, including when the user is the PR's author. Closing your own explanatory note is the author's own call to make outside this skill.
@@ -491,7 +492,7 @@ Recognising an author's self-tag:
 - After each terminal step, verify the bash session is still alive; if it died, report it immediately, start a new session, and continue from the last confirmed checkpoint.
 - Use the discovered git remote name consistently anywhere a remote is required.
 - Do not post generic batch replies; each reply must be tailored to the specific comment content and its exact resolution status. The single summary comment is the one exception, and it must still address each item it covers individually.
-- Never resolve a review thread a human participated in, regardless of how complete the fix is. Resolution there is the human's decision to make.
+- Never resolve a review thread that a human other than your own reply participated in, regardless of how complete the fix is. Resolution there is the human's decision to make.
 - Treat unknown or ambiguous authorship as human.
 - Reply to every item of feedback this run engaged with, including ones you reject; rejections need a reason and are recorded as Rejected.
 - Page through every collection you read; never treat a first page as a complete count.
