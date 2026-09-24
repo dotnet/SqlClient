@@ -390,6 +390,33 @@ function Test-Cref {
         return
     }
 
+    # Those braces must pair up. An unmatched or misnested one leaves an identifier that names
+    # nothing, and it would otherwise survive: the generic argument list is read from the first
+    # brace to the last, so a missing delimiter silently yields a different set of arguments than
+    # the text suggests, or none at all.
+    $depth = 0
+    foreach ($character in $body.ToCharArray()) {
+        if ($character -eq '{') {
+            $depth++
+        }
+        elseif ($character -eq '}') {
+            $depth--
+
+            # A closing brace with nothing open cannot be balanced by anything later, and leaving
+            # the count negative reports it below.
+            if ($depth -lt 0) {
+                break
+            }
+        }
+    }
+
+    if ($depth -ne 0) {
+        Add-Finding @Context -Category 'invalid-docid' -Cref $Cref -Message (
+            "Cref '$trimmed' has unbalanced braces around its generic arguments. Documentation " +
+            'IDs pair every { with a later }.')
+        return
+    }
+
     $signatureStart = $body.IndexOf('(')
     $namePart = if ($signatureStart -ge 0) { $body.Substring(0, $signatureStart) } else { $body }
 
