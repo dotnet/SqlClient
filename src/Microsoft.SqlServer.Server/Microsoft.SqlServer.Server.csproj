@@ -14,9 +14,13 @@
     Deliberately unconditional.  The net46 target consists of type forwarders, so its documentation
     file has no members in it, but keeping the setting free of a TargetFramework condition means
     the project gives one unambiguous answer to whether it produces documentation.
+
+    IncludesDocumentationSnippets opts this project into the compile inputs declared in
+    src/Directory.Build.targets, so editing one of those snippets rebuilds the documentation file.
   -->
   <PropertyGroup>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <IncludesDocumentationSnippets>true</IncludesDocumentationSnippets>
   </PropertyGroup>
 
   <!-- Versioning ====================================================== -->
