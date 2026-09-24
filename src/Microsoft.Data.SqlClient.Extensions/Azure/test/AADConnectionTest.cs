@@ -7,11 +7,11 @@
 // This file has intentionally not been tidied up or modernized.  Its content will be absorbed into
 // new unit and/or integration tests in the future.
 
-using System.Text.RegularExpressions;
-
 namespace Microsoft.Data.SqlClient.Extensions.Azure.Test;
 
-// These tests were migrated from MDS ManualTests AADConnectionTest.cs.
+/// <summary>
+/// Covers Entra authentication scenarios migrated from MDS ManualTests AADConnectionTest.cs.
+/// </summary>
 public class AADConnectionTest
 {
     [ConditionalFact(
@@ -48,26 +48,33 @@ public class AADConnectionTest
         Assert.Contains(expectedMessage, e.Message);
     }
 
+    /// <summary>
+    /// Invalid managed identity IDs must fail authentication for both open paths, without relying
+    /// on credential error wording that varies across Azure SDK versions and host environments.
+    /// </summary>
     [ConditionalTheory(
         typeof(Config),
         nameof(Config.HasPasswordConnectionString),
         nameof(Config.HasUserManagedIdentityClientId))]
-    [InlineData("2445343 2343253")]
-    [InlineData("2445343$#^@@%2343253")]
-    public static void ActiveDirectoryManagedIdentityWithInvalidUserIdMustFail(string userId)
+    [InlineData("2445343 2343253", false)]
+    [InlineData("2445343 2343253", true)]
+    [InlineData("2445343$#^@@%2343253", false)]
+    [InlineData("2445343$#^@@%2343253", true)]
+    public static async Task ActiveDirectoryManagedIdentityWithInvalidUserIdMustFail(string userId, bool async)
     {
-        // connection fails with expected error message.
         string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
         string connStrWithNoCred = RemoveKeysInConnStr(Config.PasswordConnectionString, credKeys) +
         $"Authentication=Active Directory Managed Identity; User Id={userId}";
 
-        SqlException e = Assert.Throws<SqlException>(() => ConnectAndDisconnect(connStrWithNoCred));
+        using SqlConnection connection = new(connStrWithNoCred);
+        SqlException e = async
+            ? await Assert.ThrowsAsync<SqlException>(() => connection.OpenAsync())
+            : Assert.Throws<SqlException>(() => connection.Open());
 
-        Regex expected = new(
-            @"(\[Managed Identity\]|ManagedIdentityCredential) Authentication unavailable",
-            RegexOptions.IgnoreCase);
-
-        Assert.Matches(expected, e.GetBaseException().Message);
+        Assert.Contains(
+            "Failed to acquire access token for ActiveDirectoryManagedIdentity: Azure.Identity error:",
+            e.Message,
+            StringComparison.Ordinal);
     }
 
     [ConditionalFact(
