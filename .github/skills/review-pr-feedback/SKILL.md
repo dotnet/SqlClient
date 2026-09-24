@@ -198,10 +198,13 @@ Skipping an approval gate:
 - Extract thread id, file path, line/startLine, comment url, author login, and body.
 - Also record, for every comment in the thread, whether its author is a bot or a human,
   using the author type field rather than the login. Step 11 depends on this.
-- Mark a thread as author commentary when the PR's own author opened it. Authors routinely
-  annotate their own diff to walk reviewers through a change, and those threads are
-  explanation, not requests. A reply from the author inside someone else's thread is not
-  commentary; that is a response to feedback.
+- Mark a thread as author commentary when the PR's own author opened it and did not tag
+  themselves in it. Authors routinely annotate their own diff to walk reviewers through a
+  change, and those threads are explanation, not requests. A reply from the author inside
+  someone else's thread is not commentary; that is a response to feedback.
+- An author who tags their own handle is flagging work for themselves, not explaining.
+  Treat that as actionable feedback rather than commentary. See step 7 for how to
+  recognise the tag without being fooled by quoted text.
 - If an author filter was given, apply it case-insensitively.
 
 3. Always gather review body feedback
@@ -222,9 +225,10 @@ Skipping an approval gate:
   request too. Bare approvals such as "LGTM" with no request are informational.
 - Skip the boilerplate a bot wraps around its findings, such as Copilot's overview,
   file tables and marketing footer. Keep only its substantive assessment.
-- Mark a body written by the PR's own author as author commentary. A review the author
-  submits on their own PR is a walkthrough for reviewers, often a short framing note such
-  as "Comments to aid review" attached to a set of explanatory inline comments.
+- Mark a body written by the PR's own author as author commentary, unless it tags the
+  author's own handle, which makes it actionable instead. A review the author submits on
+  their own PR is usually a walkthrough for reviewers, often a short framing note such as
+  "Comments to aid review" attached to a set of explanatory inline comments.
 - Apply the author filter if one was given.
 
 3b. Copilot suppressed findings
@@ -295,11 +299,21 @@ Skipping an approval gate:
 7. Classify each item
 - Fixed: change implemented and validated in this run.
 - Already Addressed: the request was satisfied before this run, by the PR author or a later commit. Cite the evidence, usually a commit or the current state of the code. Never report this as Fixed; claiming someone else's work is both wrong and misleading about what this run did.
-- Author Commentary: the PR's author explaining their own change to reviewers, through a thread they opened on their own diff or a review body on their own PR. Not actionable by default: it answers questions rather than asking them, and there is nothing to fix, reply to or resolve.
+- Author Commentary: the PR's author explaining their own change to reviewers, through a thread they opened on their own diff or a review body on their own PR, without tagging themselves. Not actionable by default: it answers questions rather than asking them, and there is nothing to fix, reply to or resolve.
 - Needs Clarification: ambiguous, conflicting, or insufficiently specified.
 - Blocked: external dependency, permission, or missing context.
 - Informational: captured only, with no change required.
-- Promote author commentary out of that category only when it genuinely asks for something: an open question put to reviewers, a flagged TODO, or a decision the author says they want challenged. Say why you promoted it, and classify it normally from then on.
+
+Recognising an author's self-tag:
+
+- A self-tag makes author feedback actionable. When the PR's author writes `@` followed by their own handle, they are marking work they intend to do, which is how authors separate "something I have identified and want fixed" from "context for reviewers". Never classify a self-tagged item as Author Commentary; classify it like any other actionable feedback.
+- Detect the self-tag only in text the author actually wrote. Ignore any mention inside a
+  quoted line beginning with `>`, inside a fenced code block, or inside inline code.
+  Authors routinely quote a reviewer who tagged them and then answer underneath, so a
+  naive match on the handle finds the reviewer's words rather than the author's and
+  produces a false positive nearly every time.
+- Tagging someone else is not a self-tag. An author asking a named reviewer a question is judged on content by the promotion rule below.
+- Promote author commentary out of that category when it genuinely asks for something even without a self-tag: an open question put to reviewers, a flagged TODO, or a decision the author says they want challenged. Say why you promoted it, and classify it normally from then on.
 - Tag every item with its source or sources from the Feedback sources table, and for review threads whether the authorship is bot or human. This determines where its reply goes in step 10 and whether it may be resolved in step 11.
 
 8. Produce a final report
@@ -356,7 +370,7 @@ Skipping an approval gate:
 - Access paths used, one line per capability (read, edit, test, commit/push, reply/resolve)
 - Capabilities pre-flight found unavailable, and the resulting limits on this run
 - Feedback found per source, each stated explicitly including zero counts:
-  - Review threads (unresolved), and how many of those are author commentary
+  - Review threads (unresolved), and how many of those are author commentary or author self-tagged
   - Review bodies (actionable / informational / author commentary)
   - Copilot suppressed findings
   - Discussion comments (actionable / informational / operational noise set aside)
@@ -448,6 +462,7 @@ Skipping an approval gate:
 - Reply to every item of feedback this run engaged with, including ones you reject; rejections need a reason.
 - Never claim credit for a fix someone else made; that is what Already Addressed is for.
 - Do not treat the PR author's explanation of their own change as a request. Read it for context, report it as Author Commentary, and act on it only when it actually asks for something.
+- Treat an author tagging their own handle as actionable work they have assigned themselves, never as commentary, and never match that tag inside quoted or code text.
 - Never edit, commit or push while the workspace is on a branch other than the PR's.
 - Do not treat pipeline commands, CI status, coverage reports or stale-bot notices as feedback.
 - Count an item once when it arrives through several sources, listing every source it came from.
