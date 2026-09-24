@@ -141,8 +141,14 @@
                                        because a reference may legitimately resolve elsewhere: to
                                        another target framework, or to a sibling assembly that this
                                        run did not include.
-      mismatched-docid-prefix warning  Cref names a real member but with the wrong kind prefix,
-                                       such as M: on a property or T: on a member.
+      mismatched-public-docid-prefix
+                              error    Cref names a real member but with the wrong kind prefix,
+                                       such as M: on a property, and is referenced from a public
+                                       API member. The wrong prefix produces a UID that matches
+                                       nothing, so the published page carries an unresolved
+                                       reference.
+      mismatched-docid-prefix warning  As above, but referenced from a member that is not public,
+                                       or from any member when the public API surface is unknown.
       missing-external-uid    warning  Cref is absent from the supplied Learn xref map.
       unprefixed-cref         info     Cref carries no "T:"/"M:"/... prefix. Legal; the compiler
                                        binds it. Reported for visibility only.
@@ -208,6 +214,7 @@ $script:CategorySeverities = [ordered]@{
     'ref-documentation-untrimmed'    = 'error'
     'lib-ref-documentation-identical' = 'error'
     'missing-public-uid'     = 'error'
+    'mismatched-public-docid-prefix' = 'error'
     'missing-local-uid'      = 'info'
     'mismatched-docid-prefix' = 'warning'
     'missing-documentation'  = 'error'
@@ -485,20 +492,21 @@ function Test-Cref {
                 if ($script:LocalUidsByBody.ContainsKey($namePart) -or $script:LocalUidsByBody.ContainsKey($body)) {
                     $key = if ($script:LocalUidsByBody.ContainsKey($body)) { $body } else { $namePart }
                     $actual = ($script:LocalUidsByBody[$key] | Sort-Object) -join ', '
-                    Add-Finding @Context -Category 'mismatched-docid-prefix' -Cref $Cref -Message (
-                        "Cref '$trimmed' uses prefix '${prefix}:', but '$key' was emitted as " +
-                        "'$actual'. Use the prefix matching the member kind.")
+                    $message = "Cref '$trimmed' uses prefix '${prefix}:', but '$key' was emitted " +
+                        "as '$actual'. Use the prefix matching the member kind."
+
+                    # Classified the same way as an unresolvable reference below, and for the same
+                    # reason: the wrong prefix produces a UID that matches nothing, so from a
+                    # public member it leaves an unresolved reference on the published page.
+                    if (Test-ContainingMemberIsPublic -Context $Context) {
+                        Add-Finding @Context -Category 'mismatched-public-docid-prefix' -Cref $Cref -Message $message
+                    }
+                    else {
+                        Add-Finding @Context -Category 'mismatched-docid-prefix' -Cref $Cref -Message $message
+                    }
                 }
                 else {
-                    # Severity follows the member that holds the reference, not the reference
-                    # itself: a public member's page is published, so a reference it cannot resolve
-                    # becomes a visible xref-not-found. An internal member is never published, so
-                    # the same reference reaches no reader.
-                    $containingMemberIsPublic = $null -ne $script:PublicUids -and
-                        -not [string]::IsNullOrEmpty($Context.Member) -and
-                        $script:PublicUids.Contains($Context.Member)
-
-                    if ($containingMemberIsPublic) {
+                    if (Test-ContainingMemberIsPublic -Context $Context) {
                         Add-Finding @Context -Category 'missing-public-uid' -Cref $Cref -Message (
                             "Cref '$trimmed' names this repository but no matching documented " +
                             'member was emitted by the build. It is referenced from a public API ' +
@@ -667,6 +675,26 @@ function Get-DocIdAlias {
     }
 
     return , $found
+}
+
+<#
+    Reports whether the member holding a cref is part of the published API surface.
+
+    Severity follows the member that holds a reference, not the reference itself: a public member's
+    page is published, so a reference it cannot resolve becomes a visible xref-not-found. An
+    internal member is never published, so the same reference reaches no reader. Every rule that
+    reports an unresolvable reference uses this, so they cannot classify the same situation
+    differently.
+
+    Answers false when no reference documentation identified the surface, which leaves such a
+    finding at its lower severity rather than escalating on a guess.
+#>
+function Test-ContainingMemberIsPublic {
+    param([Parameter(Mandatory)][hashtable]$Context)
+
+    return $null -ne $script:PublicUids -and
+        -not [string]::IsNullOrEmpty($Context.Member) -and
+        $script:PublicUids.Contains($Context.Member)
 }
 
 function Resolve-InputPaths {

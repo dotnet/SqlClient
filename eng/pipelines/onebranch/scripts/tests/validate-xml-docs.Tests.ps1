@@ -368,6 +368,67 @@ Describe 'validate-xml-docs.ps1' {
                 Should -Throw '*failed with 1 issue*'
         }
 
+        It 'reports a wrong-kind prefix from a public member as an error' {
+            # Same classification as an unresolvable reference, and for the same reason: the wrong
+            # prefix produces a UID that matches nothing, so a public member's page carries an
+            # unresolved reference.
+            $staging = New-TestDirectory
+            New-Item -ItemType Directory -Path (Join-Path $staging 'lib/net8.0') -Force | Out-Null
+            New-Item -ItemType Directory -Path (Join-Path $staging 'ref/net8.0') -Force | Out-Null
+
+            '<doc><members>' +
+            '<member name="P:Microsoft.Data.SqlClient.Widget.Size"><summary>S.</summary></member>' +
+            '<member name="T:Microsoft.Data.SqlClient.Widget"><summary>W.</summary>' +
+            '<see cref="M:Microsoft.Data.SqlClient.Widget.Size" /></member></members></doc>' |
+                Set-Content -LiteralPath (Join-Path $staging 'lib/net8.0/Microsoft.Data.SqlClient.xml') -Encoding utf8
+            '<doc><members>' +
+            '<member name="P:Microsoft.Data.SqlClient.Widget.Size"><summary>S.</summary></member>' +
+            '<member name="T:Microsoft.Data.SqlClient.Widget"><summary>W.</summary></member>' +
+            '</members></doc>' |
+                Set-Content -LiteralPath (Join-Path $staging 'ref/net8.0/Microsoft.Data.SqlClient.xml') -Encoding utf8
+
+            $packages = New-TestDirectory
+            Add-Type -AssemblyName System.IO.Compression.FileSystem
+            [System.IO.Compression.ZipFile]::CreateFromDirectory($staging, (Join-Path $packages 'P.1.0.0.nupkg'))
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -PackagesPath $packages -ExtractPath (New-TestDirectory) `
+                -ReportPath $report -ReportOnly
+
+            $finding = @((Get-Report -Path $report).Findings |
+                    Where-Object { $_.Category -like 'mismatched*' })[0]
+            $finding.Category | Should -Be 'mismatched-public-docid-prefix'
+            $finding.Severity | Should -Be 'error'
+        }
+
+        It 'reports a wrong-kind prefix from a non-public member as a warning' {
+            $staging = New-TestDirectory
+            New-Item -ItemType Directory -Path (Join-Path $staging 'lib/net8.0') -Force | Out-Null
+            New-Item -ItemType Directory -Path (Join-Path $staging 'ref/net8.0') -Force | Out-Null
+
+            # The holder is absent from ref/, so it is not part of the public API surface.
+            '<doc><members>' +
+            '<member name="P:Microsoft.Data.SqlClient.Widget.Size"><summary>S.</summary></member>' +
+            '<member name="T:Microsoft.Data.SqlClient.Internals"><summary>I.</summary>' +
+            '<see cref="M:Microsoft.Data.SqlClient.Widget.Size" /></member></members></doc>' |
+                Set-Content -LiteralPath (Join-Path $staging 'lib/net8.0/Microsoft.Data.SqlClient.xml') -Encoding utf8
+            '<doc><members><member name="P:Microsoft.Data.SqlClient.Widget.Size"><summary>S.</summary></member></members></doc>' |
+                Set-Content -LiteralPath (Join-Path $staging 'ref/net8.0/Microsoft.Data.SqlClient.xml') -Encoding utf8
+
+            $packages = New-TestDirectory
+            Add-Type -AssemblyName System.IO.Compression.FileSystem
+            [System.IO.Compression.ZipFile]::CreateFromDirectory($staging, (Join-Path $packages 'P.1.0.0.nupkg'))
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -PackagesPath $packages -ExtractPath (New-TestDirectory) `
+                -ReportPath $report -ReportOnly
+
+            $finding = @((Get-Report -Path $report).Findings |
+                    Where-Object { $_.Category -like 'mismatched*' })[0]
+            $finding.Category | Should -Be 'mismatched-docid-prefix'
+            $finding.Severity | Should -Be 'warning'
+        }
+
         It 'names the expected prefix when a cref uses the wrong member kind' {
             $docs = New-DocumentationDirectory `
                 -Members @('P:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout') `
