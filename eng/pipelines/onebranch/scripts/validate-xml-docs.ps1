@@ -393,9 +393,10 @@ function Test-Cref {
         # report the distinct offenders once rather than once per parameter.
         $aliases = [System.Collections.Generic.List[string]]::new()
         foreach ($argument in (Split-DocIdArguments -Arguments $arguments)) {
-            $core = Get-DocIdCoreTypeName -TypeName $argument
-            if ($script:CSharpAliases.Contains($core) -and -not $aliases.Contains($core)) {
-                $aliases.Add($core)
+            foreach ($alias in (Get-DocIdAlias -TypeName $argument)) {
+                if (-not $aliases.Contains($alias)) {
+                    $aliases.Add($alias)
+                }
             }
         }
         if ($aliases.Count -gt 0) {
@@ -452,7 +453,11 @@ function Test-Cref {
         }
 
         if ($isLocal) {
-            if (-not $script:LocalUids.Contains($trimmed)) {
+            # Compared against the normalized UID rather than the original: the whitespace rule
+            # above rewrote $body, so a cref whose only defect is whitespace still resolves here
+            # and is reported once, for the whitespace, instead of also as a prefix mismatch.
+            $normalized = "${prefix}:$body"
+            if (-not $script:LocalUids.Contains($normalized)) {
                 # The same member under a different prefix is the common case here: a cref written
                 # as M: for a property, or T: for a member, names something real but produces a UID
                 # that matches nothing. Say which prefix was expected rather than reporting a bare
@@ -609,6 +614,41 @@ function Test-IsReferenceDocumentationPath {
     return $false
 }
 
+<#
+    Returns every C# alias used anywhere in a documentation ID parameter.
+
+    Generic arguments are inspected recursively rather than discarded, because an alias nested
+    inside one, as in List{string}, is just as wrong as an alias at the top level and would
+    otherwise pass unreported.
+#>
+function Get-DocIdAlias {
+    param([Parameter(Mandatory)][AllowEmptyString()][string]$TypeName)
+
+    $found = [System.Collections.Generic.List[string]]::new()
+
+    $core = Get-DocIdCoreTypeName -TypeName $TypeName
+    if ($script:CSharpAliases.Contains($core)) {
+        $found.Add($core)
+    }
+
+    # Recurse into the generic argument list, which Get-DocIdCoreTypeName deliberately drops.
+    $trimmedType = $TypeName.Trim()
+    $braceIndex = $trimmedType.IndexOf('{')
+    if ($braceIndex -ge 0) {
+        $closeIndex = $trimmedType.LastIndexOf('}')
+        if ($closeIndex -gt $braceIndex) {
+            $inner = $trimmedType.Substring($braceIndex + 1, $closeIndex - $braceIndex - 1)
+            foreach ($argument in (Split-DocIdArguments -Arguments $inner)) {
+                foreach ($alias in (Get-DocIdAlias -TypeName $argument)) {
+                    $found.Add($alias)
+                }
+            }
+        }
+    }
+
+    return , $found
+}
+
 function Resolve-InputPaths {
     param(
         [string[]]$Paths,
@@ -742,14 +782,18 @@ if (-not [string]::IsNullOrWhiteSpace($PackagesPath)) {
         throw "No .nupkg files were found under '$PackagesPath'."
     }
 
+    # Cleared wholesale rather than per package. Removing only the destinations for the current
+    # packages would leave expansions from an earlier invocation in place, and the whole extraction
+    # root is scanned below, so that stale XML would be validated and its members added to the
+    # local UID index.
+    if (Test-Path -LiteralPath $ExtractPath) {
+        Remove-Item -LiteralPath $ExtractPath -Recurse -Force
+    }
     New-Item -ItemType Directory -Force -Path $ExtractPath | Out-Null
 
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     foreach ($package in $packages) {
         $destination = Join-Path $ExtractPath $package.BaseName
-        if (Test-Path -LiteralPath $destination) {
-            Remove-Item -LiteralPath $destination -Recurse -Force
-        }
 
         Write-Host "Expanding $($package.Name)"
         [System.IO.Compression.ZipFile]::ExtractToDirectory($package.FullName, $destination)

@@ -159,7 +159,7 @@
           parameters.Add("@pname", Convert.ToInt32(0));
         </code>
         <para>
-          If you do not perform this conversion, the compiler assumes that you are trying to call the <see cref="M:Microsoft.Data.SqlClient.SqlParameterCollection.Add(System.String,System.String)" /> overload.
+          If you do not perform this conversion, the compiler assumes that you are trying to call the <see cref="M:Microsoft.Data.SqlClient.SqlParameterCollection.Add(System.String,System.Data.SqlDbType)" /> overload.
         </para>
       </remarks>
       <example>

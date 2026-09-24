@@ -278,7 +278,7 @@
       </summary>
       <example>
         <para>
-          The following code fragment uses the <see cref="F:Microsoft.Data.SqlClient.SqlClientFactory.Instance" /> property to retrieve a <see cref="T:Microsoft.Data.SqlClient.SqlClientFactory" /> instance, and then return a strongly typed <see cref="T:System.Data.Common.DbCommand" /> instance:
+          The following code fragment uses the <see cref="F:Microsoft.Data.SqlClient.SqlClientFactory.Instance" /> field to retrieve a <see cref="T:Microsoft.Data.SqlClient.SqlClientFactory" /> instance, and then return a strongly typed <see cref="T:System.Data.Common.DbCommand" /> instance:
         </para>
         <code language="c#">
           SqlClientFactory newFactory = SqlClientFactory.Instance;

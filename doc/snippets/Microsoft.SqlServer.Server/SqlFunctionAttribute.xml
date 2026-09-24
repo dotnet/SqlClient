@@ -176,7 +176,7 @@
         Indicates whether the function requires access to data stored in the system catalogs or virtual system tables of SQL Server.
       </summary>
       <value>
-        <see cref="F:Microsoft.SqlServer.Server.DataAccessKind.None" />: Does not access system data. <see cref="F:Microsoft.SqlServer.Server.DataAccessKind.Read" />: Only reads system data.</value>
+        <see cref="F:Microsoft.SqlServer.Server.SystemDataAccessKind.None" />: Does not access system data. <see cref="F:Microsoft.SqlServer.Server.SystemDataAccessKind.Read" />: Only reads system data.</value>
       <remarks>
         The default is <see cref="F:Microsoft.SqlServer.Server.SystemDataAccessKind.None" />.
       </remarks>
