@@ -78,21 +78,29 @@ def apply_affinity(proc, cpus):
             return
         if os.name == "nt":  # Windows
             import ctypes
+            from ctypes import wintypes
 
-            # SetProcessAffinityMask takes a single-word mask that only addresses CPUs 0-63;
-            # higher indices require processor-group APIs.  Rather than set a mask that would
-            # silently pin to the wrong CPUs, skip pinning with a warning.
-            if any(c >= 64 for c in cpus):
-                print(f"WARNING: CPU index >= 64 in {cpus}; SetProcessAffinityMask cannot address "
-                      f"processor groups, so pid {proc.pid} runs without CPU pinning.",
+            # The mask is pointer-sized (32 or 64 bits) and cannot span processor groups.
+            mask_bits = ctypes.sizeof(ctypes.c_size_t) * 8
+            if any(c >= mask_bits for c in cpus):
+                print(f"WARNING: CPU index >= {mask_bits} in {cpus}; SetProcessAffinityMask "
+                      f"cannot address it with a {mask_bits}-bit mask or span processor groups, "
+                      f"so pid {proc.pid} runs without CPU pinning.",
                       file=sys.stderr)
                 return
             mask = 0
             for c in cpus:
                 mask |= (1 << c)
-            handle = int(proc._handle)  # noqa: SLF001  (Popen exposes the OS handle here)
-            if ctypes.windll.kernel32.SetProcessAffinityMask(handle, ctypes.c_size_t(mask)) == 0:
-                print(f"WARNING: SetProcessAffinityMask failed for pid {proc.pid}.", file=sys.stderr)
+            kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+            set_affinity = kernel32.SetProcessAffinityMask
+            set_affinity.argtypes = [wintypes.HANDLE, ctypes.c_size_t]
+            set_affinity.restype = wintypes.BOOL
+            handle = wintypes.HANDLE(int(proc._handle))  # noqa: SLF001 (Popen's OS handle)
+            if not set_affinity(handle, ctypes.c_size_t(mask)):
+                error = ctypes.get_last_error()
+                print(f"WARNING: SetProcessAffinityMask failed for pid {proc.pid}, "
+                      f"mask {mask:#x}: [WinError {error}] {ctypes.FormatError(error).strip()}",
+                      file=sys.stderr)
     except Exception as exc:  # noqa: BLE001
         print(f"WARNING: could not pin pid {getattr(proc, 'pid', '?')} to CPUs {cpus}: {exc}",
               file=sys.stderr)
