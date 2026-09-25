@@ -4,6 +4,9 @@
 
 const fs = require('node:fs');
 
+const TEMPLATE_PLACEHOLDER_PATTERN =
+    /<\s*(?:list|fields?|values?|authors?|types?|versions?|areas?|results?|details?|descriptions?|summaries?|items?|labels?|[^>\r\n]*\s[^>\r\n]*|[^>\r\n]*[|\/][^>\r\n]*)\s*>/i;
+
 function proseOnly(body) {
     let fence;
     return body.replace(/<!--[\s\S]*?(?:-->|$)/g, '').split('\n').map(line => {
@@ -26,7 +29,7 @@ function proseOnly(body) {
 function meaningful(value) {
     const text = value.replace(/[*_`]/g, '').trim();
     return /[\p{L}\p{N}]/u.test(text) &&
-        !/^<[\s\S]*>$/.test(text) &&
+        !TEMPLATE_PLACEHOLDER_PATTERN.test(text) &&
         !/^(?:todo|tbd|test(?: message)?(?: please ignore)?|placeholder)$/i.test(text);
 }
 

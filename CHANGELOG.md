@@ -6,7 +6,55 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 > **Note:** Releases are sorted in reverse chronological order (newest first).
 
+## [Stable Release 7.1.0] - 2026-09-17
+
+General availability of Microsoft.Data.SqlClient 7.1. The sections below list the changes since [7.1.0-preview3](release-notes/7.1/7.1.0-preview3.md). See the [7.1.0 release notes](release-notes/7.1/7.1.0.md) for the cumulative list of changes since the 7.0.3 stable release.
+
+### Added
+
+- Added a `RegisteredApplication` enum and a matching `SqlConnection.RegisteredApplication` property that let a library or tool identify itself to SQL Server through version 2 of the TDS USERAGENT feature extension. The payload also carries a new driver-owned 64-bit *Driver Properties* flag field; bit 0 reports whether connection pool V2 is enabled for the process. Application identity is client-supplied telemetry and must never be used for authorization or any other security decision. The value must be set before `Open`/`OpenAsync` and is not part of the connection pool key.
+  ([#3201](https://github.com/dotnet/SqlClient/issues/3201), [#4632](https://github.com/dotnet/SqlClient/pull/4632))
+
+### Changed
+
+- `SqlConnectionStringBuilder.TransparentNetworkIPResolution` is now marked `[Obsolete]`, directing callers to `MultiSubnetFailover`. There is no runtime behavior change: connection string defaults are untouched and no new AppContext switches were introduced. The only visible effect is a `CS0618` build warning for code that references the property.
+  ([#4494](https://github.com/dotnet/SqlClient/issues/4494), [#4576](https://github.com/dotnet/SqlClient/pull/4576))
+
+- Unified the exception message raised when conflicting token-based and SSPI authentication properties are set on the same `SqlConnection`, and documented the complete set of properties that conflict with `AccessToken`.
+  ([#4629](https://github.com/dotnet/SqlClient/pull/4629))
+
+- Documentation corrections for `SqlDataRecord`, `SqlMetaData`, and the LCID 1033 locale name.
+  ([#1805](https://github.com/dotnet/SqlClient/issues/1805),
+   [#4440](https://github.com/dotnet/SqlClient/pull/4440),
+   [#4646](https://github.com/dotnet/SqlClient/pull/4646))
+
+- Updated `Microsoft.Data.SqlClient.SNI` and `Microsoft.Data.SqlClient.SNI.runtime` to v7.1.0 (was v7.1.0-preview3.26226.3).
+  ([#4698](https://github.com/dotnet/SqlClient/pull/4698))
+
+### Fixed
+
+- Fixed a pooled connection being returned to the pool in a broken state after a `TransactionScope` rollback — for example, when distributed transaction promotion fails on .NET 8+ where implicit distributed transactions are disabled by default. Connection reset now preserves the transaction when the pooled connection is either a delegated transaction root or enlisted in a transaction.
+  ([#4001](https://github.com/dotnet/SqlClient/issues/4001), [#4557](https://github.com/dotnet/SqlClient/pull/4557))
+
+- Fixed `GetSchema("DataTypes")` never reporting the SQL Server 2025 `json` type against Azure SQL. The decision now uses the `json` support flag negotiated through the TDS `FEATUREEXTACK` token instead of a server version string comparison.
+  ([#4592](https://github.com/dotnet/SqlClient/issues/4592), [#4682](https://github.com/dotnet/SqlClient/pull/4682))
+
+- Fixed a malformed UNC pipe path being composed for IPv6 literal server names over Named Pipes in managed SNI, which could trigger an access violation inside LSASS on Windows and force a reboot. IPv6 literals are now transcribed to their `.ipv6-literal.net` form. (net8.0/net9.0 only)
+  ([#4523](https://github.com/dotnet/SqlClient/issues/4523), [#4558](https://github.com/dotnet/SqlClient/pull/4558))
+
+- Fixed configurable retry logic installing a permanent, process-wide assembly-resolution handler that could interfere with unrelated assembly loading. The handler is now installed only while an explicitly configured custom retry provider is resolved and constructed, and probes `AppContext.BaseDirectory` instead of the current working directory. (net8.0/net9.0 only)
+  ([#2214](https://github.com/dotnet/SqlClient/issues/2214), [#4547](https://github.com/dotnet/SqlClient/pull/4547))
+
+- Fixed open/close throughput regressions in the opt-in connection pool V2 (`Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2`). The default pool is unaffected.
+  ([#4543](https://github.com/dotnet/SqlClient/pull/4543))
+
+### Companion packages
+
+- Released `Microsoft.Data.SqlClient.Extensions.Azure` 7.1.0 with an internal Entra ID authority parsing clarification and no behavior change. See [release notes](release-notes/Extensions/Azure/7.1/7.1.0.md).
+- Released version-aligned `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider`, `Microsoft.Data.SqlClient.Extensions.Abstractions`, and `Microsoft.Data.SqlClient.Internal.Logging` 7.1.0 with no functional or API changes since preview3. See the [Azure Key Vault provider](release-notes/add-ons/AzureKeyVaultProvider/7.1/7.1.0.md), [Abstractions](release-notes/Extensions/Abstractions/7.1/7.1.0.md), and [Logging](release-notes/Internal/Logging/7.1/7.1.0.md) release notes.
+
 ## [Stable Release 7.0.3] - 2026-09-10
+
 
 ### Changed
 
@@ -227,7 +275,7 @@ See the [full release notes](release-notes/7.1/7.1.0-preview2.md) for detailed d
 - `SqlVector<float>` now serializes and deserializes multibyte values as little-endian explicitly.
   ([#3861](https://github.com/dotnet/SqlClient/pull/3861))
 
-- Updated the bundled .NET 10 SDK to `10.0.300`.
+- Updated the .NET 10 SDK used to build the repository to `10.0.300`.
   ([#4287](https://github.com/dotnet/SqlClient/pull/4287))
 
 - Re-shipped `Microsoft.Data.SqlClient.Extensions.Azure` as `7.1.0-preview2`, adding Windows Account Manager (WAM) broker support for Entra ID authentication on Windows. See [release notes](release-notes/Extensions/Azure/7.1/7.1.0-preview2.md).

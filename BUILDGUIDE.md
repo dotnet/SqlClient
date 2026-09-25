@@ -282,6 +282,37 @@ Package Microsoft.Data.SqlClient.Extensions.Azure without building it beforehand
 dotnet build -t:PackAzure -p:PackBuild=false
 ```
 
+### Release Source Link Symbols
+
+To reproduce release symbol generation locally, set `BuildForRelease` in the environment before
+packing. `build.proj` launches child `dotnet` processes, so passing only
+`-p:BuildForRelease=true` to the orchestrator does not enable it in those processes.
+
+```powershell
+$env:BuildForRelease = 'true'
+dotnet build build.proj -t:PackSqlClient -p:Configuration=Release
+Remove-Item Env:\BuildForRelease
+```
+
+The `.nupkg` and matching `.snupkg` are written to
+`artifacts/Microsoft.Data.SqlClient/Project-Release/`. Inspect them together with
+[PackageValidator](tools/PackageValidator/README.md) or NuGet Package Explorer.
+
+To fail validation on missing source coverage or non-portable source paths:
+
+```powershell
+dotnet run --project tools\PackageValidator\src\PackageValidator.csproj -- `
+  artifacts\Microsoft.Data.SqlClient\Project-Release `
+  --fail-on missing-source-link --fail-on untracked-source --fail-on non-deterministic-source-path
+```
+
+Tracked source paths in the PDBs must match the Source Link document map; generated sources must
+be embedded. Keep the repository root configured in `RepositoryInfo.targets` as the source root:
+adding a separate `src/` root without source-control metadata can remap tracked files to `/_1/`
+while Source Link only maps `/_/`. NuGet Package Explorer reports this as
+**Contains untracked sources (obj)** for both Source Link and Deterministic, even when all `obj`
+sources are embedded and the compiler's deterministic flag is enabled.
+
 ## Versioning
 
 Versioning can be accomplished by using a mix of different parameters to the `build.proj` targets:

@@ -76,6 +76,28 @@ test('requires every check row and non-placeholder values', () => {
     }
 });
 
+test('rejects embedded template placeholders in rows and prose sections', () => {
+    const unfinished = [
+        [summary.replace('Missing: SQL Server version', 'Missing: <list>'), /check row/],
+        [summary.replace(
+            'Cancellation leaves the operation running. Investigate the async cancellation path; P1.',
+            'Cancellation leaves the operation running. Investigate <the affected component>; P1.'
+        ), /Analysis/],
+        [summary.replace(
+            '- Ask the author for their SQL Server version.',
+            '- Ask the author for their <missing details>.'
+        ), /Next Steps/],
+    ];
+    for (const [body, message] of unfinished) {
+        assert.throws(() => validateTriageOutput(output(body)), message);
+    }
+
+    validateTriageOutput(output(summary.replace(
+        'Cancellation leaves the operation running.',
+        'Cancellation leaves the operation running; SqlDataReader.GetFieldValue<T>() is affected.'
+    )));
+});
+
 test('requires populated Analysis and Next Steps sections', () => {
     assert.throws(() => validateTriageOutput(output(summary.replace(
         'Cancellation leaves the operation running. Investigate the async cancellation path; P1.', ''

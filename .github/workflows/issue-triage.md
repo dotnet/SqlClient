@@ -140,45 +140,24 @@ Do NOT post intermediate findings. Do NOT post separate comments for
 area detection, duplicate checking, or environment validation.
 Everything goes into the single triage summary at the end.
 
-## Safe-output submission
+### Safe-output preparation
 
-Every successful `safeoutputs` call queues a real write; it is NOT a dry run.
-Never test a write tool with a placeholder, `test` message, `-`, or `@-`.
-Do not experiment with alternative comment calls after a submission error.
+Every successful safe-output call queues a real action and consumes its
+per-run allowance. Never call `add_comment` with test, placeholder, diagnostic,
+or partial content, even to check whether the tool works.
 
-Finish all analysis and compose the complete Markdown summary in
-`/tmp/gh-aw/agent/triage-summary.md` using the file-writing tool. Before any
-write intent, check that it starts with the Triage Summary heading, has all
-five populated check rows, and contains meaningful Analysis and Next Steps
-sections. Replace every template placeholder; do not wrap the summary in a
-code fence or quote.
+Finish the analysis and prepare the complete summary before calling
+`add_comment`. When using the `safeoutputs` CLI, inspect
+`safeoutputs add_comment --help` to confirm its arguments without consuming
+the allowance. The target argument is `item_number`, not `issue_number`.
+For a multi-line summary saved to a temporary file, use the allowed `jq -Rs`
+command to construct the JSON payload with `item_number` and `body`, then
+submit it once through `safeoutputs add_comment .`.
 
-Use the allowed `jq` command to JSON-encode the entire file without shell
-interpolation of its contents:
-
-```bash
-jq -Rs '{body: .}' /tmp/gh-aw/agent/triage-summary.md > /tmp/gh-aw/agent/triage-summary.json
-jq -e 'type == "object" and (.body | type == "string" and length > 0)' /tmp/gh-aw/agent/triage-summary.json
-```
-
-Run these local preparation/check commands first and confirm both succeed.
-Only then submit the finished payload exactly once:
-
-```bash
-safeoutputs add_comment . < /tmp/gh-aw/agent/triage-summary.json
-```
-
-The standalone `.` reads a JSON object from stdin. `-` and `@-` are NOT
-stdin sentinels. Do not use `--body -`, `--body @-`, hand-escaped Markdown
-in shell arguments, or raw GitHub writes. The comment target defaults to
-the triggering issue; do not override the target.
-
-If preparation or submission fails, stop without changing labels. Report
-the failure through `safeoutputs report_incomplete` with the actual error;
-do not call `add_comment` again, send a substitute comment, or claim success.
-Only queue the permitted label action after the final comment is accepted.
-The safe-output job validates the result before any comments or labels are
-published and rejects placeholders or mixed success/incomplete outcomes.
+If preparation or submission fails, inspect the error before retrying.
+Do not repeatedly retry a denied command or probe with a write. If the
+failure cannot be resolved with the available tools, call `report_incomplete`
+with the actual error and stop without submitting placeholder content.
 
 ---
 

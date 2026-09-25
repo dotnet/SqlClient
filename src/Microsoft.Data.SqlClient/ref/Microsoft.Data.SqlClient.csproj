@@ -74,6 +74,7 @@
       <PowerShellCommand>
         dotnet tool run pwsh --
           -NonInteractive
+          -NoProfile
           -ExecutionPolicy Unrestricted
           -Command "$(RepoRoot)tools\intellisense\TrimDocs.ps1 -inputFile '$(DocumentationFile)' -outputFile '$(DocumentationFile)'"
       </PowerShellCommand>
