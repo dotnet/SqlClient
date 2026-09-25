@@ -174,6 +174,54 @@ dotnet build ./src/Microsoft.Data.SqlClient/ref/Microsoft.Data.SqlClient.csproj 
 
 Validation is offline by design; it needs no network access and no xref map download.
 
+### Validating Learn Preview Output
+
+Local validation proves that XML is well formed and that references resolve, but it does not prove that Open Publishing rendered every documentation element. After an API docs ingestion PR is available in [dotnet/sqlclient-api-docs](https://github.com/dotnet/sqlclient-api-docs), compare the Learn previews with the source XML before approving the update.
+
+1. Find the latest **Learn Build status** comment and record the commit it validated. Do not use preview links from an older comment.
+2. Enumerate every changed API XML file in the PR. The bot comment lists only the first 25 files, including framework indexes and package metadata, so its table is not the complete API-page list:
+
+   ```bash
+   gh api repos/dotnet/sqlclient-api-docs/pulls/<pr>/files --paginate \
+     --jq '.[] | select(.filename | test("/xml/.+/.+\\.xml$")) | .filename'
+   ```
+
+3. Open every API type preview. Use the `FullName` from the file's `<Type>` element as the lowercase API slug, preserve the `branch=pr-en-us-<pr>` query, and select the matching view:
+   - Main provider: `sqlclient-dotnet-core-<version>`
+   - Azure Key Vault provider: `akvprovider-dotnet-core-<version>`
+4. Follow the preview's own links to every changed member or overload. Do not derive explicit-interface or operator URLs by string replacement; Learn uses special slugs for some members. Enum fields intentionally have no standalone pages and must be checked in the type's fields table.
+5. Compare the rendered content through the entire publication path:
+   - Local snippet or source XML
+   - The `<include>` path on the public declaration
+   - Generated or packaged XML documentation
+   - The API docs PR XML
+   - The rendered type and member previews
+6. Check summaries, remarks, examples, parameters, returns or values, exceptions, overload descriptions, code samples, and xrefs. A healthy type landing page is not proof that each overload page is complete.
+7. Classify expected renderer transformations before reporting a discrepancy:
+   - Learn adds display signatures to xrefs, such as `GetSchema()`.
+   - Markdown tables become separate cells and included snippets become rendered code.
+   - `To be added.` placeholders are suppressed.
+   - `<remarks>` on enum fields are discarded; move required text into `<summary>`.
+8. Treat content present in a snippet but absent from generated XML as a source or build-wiring problem. Common causes include an `<include>` XPath that matches nothing or too much, documentation attached only to a ref declaration, and `lib/` packaging from trimmed `ref/` XML.
+
+The review site requires Microsoft authentication. On a corp-joined Windows device running WSL, the Linux browser may not have the required session. Launch a separate Windows Edge profile with Chrome DevTools Protocol enabled so Edge can use seamless Entra SSO:
+
+```bash
+EDGE="/mnt/c/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"
+"$EDGE" --remote-debugging-port=9222 --remote-allow-origins=* \
+  --user-data-dir=C:\\Temp\\edge-cdp-profile \
+  --no-first-run --no-default-browser-check about:blank
+```
+
+Drive the browser from the Windows side because the Windows firewall can block WSL-to-Windows access to the debugging port:
+
+```bash
+/mnt/c/Windows/System32/curl.exe -s http://localhost:9222/json/version
+/mnt/c/Windows/System32/curl.exe -s http://localhost:9222/json
+```
+
+Never automate credentials or copy authentication tokens. Navigate the authenticated browser through CDP and capture the rendered article text or DOM for comparison. Keep crawl output outside the repository.
+
 ### Trimmed vs. Full Documentation
 
 The driver package ships **two** XML documentation files per target framework, and they are deliberately different:
