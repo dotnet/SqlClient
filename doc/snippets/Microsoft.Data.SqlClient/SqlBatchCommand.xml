@@ -104,7 +104,7 @@
     </CreateParameter>
     <CanCreateParameter>
       <summary>
-        Returns whether the <see cref="P:Microsoft.Data.SqlClient.SqlBatchCommand.CreateParameter" /> method is implemented.
+        Returns whether the <see cref="M:Microsoft.Data.SqlClient.SqlBatchCommand.CreateParameter" /> method is implemented.
       </summary>
     </CanCreateParameter>
     <CommandText>

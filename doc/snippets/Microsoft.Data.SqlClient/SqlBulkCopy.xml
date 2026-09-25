@@ -539,7 +539,7 @@ Transact-SQL `INSERT … SELECT` statement to copy the data.
           While the bulk copy operation is in progress, the associated destination <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> is busy serving it, and no other operations can be performed on the connection.
         </para>
         <para>
-          The <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnMappings" /> collection maps from the <see cref="T:System.Data.DataTable" /> columns to the destination database table.
+          The <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnMappings" /> collection maps from the <see cref="T:System.Data.DataTable" /> columns to the destination database table.
         </para>
       </remarks>
       <example>

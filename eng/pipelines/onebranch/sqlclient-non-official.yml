@@ -17,8 +17,8 @@ parameters:
   # When true, any SDL errors will break the build.  When false, SDL errors will be logged but
   # will not break the build.  TSA bug filing is always disabled in the non-official pipeline
   # (see the tsa block in globalSdl).
-  - name: breakOnSdlError
-    displayName: Break on SDL error
+  - name: failOnSdlError
+    displayName: Fail on SDL errors
     type: boolean
     default: true
 
@@ -27,6 +27,19 @@ parameters:
     displayName: Enable debug output
     type: boolean
     default: false
+
+  # When true, validation findings fail the build.  When false, they are reported as warnings and
+  # the build continues.
+  #
+  # Validation covers XML documentation cross-references, localized resources, and the produced
+  # NuGet packages.  Those gates run at several points across the build, so a hard failure at the
+  # first one prevents the rest from running.  Set this false to let a single run reach every gate
+  # and report all findings at once, which is the practical way to assess a newly added gate or a
+  # backlog of known findings.
+  - name: failOnValidationError
+    displayName: Fail on validation errors
+    type: boolean
+    default: true
 
   # True to publish symbols to private and public servers.
   - name: publishSymbols
@@ -161,7 +174,7 @@ extends:
       #
       # https://eng.ms/docs/products/onebranch/securitycompliancegovernanceandpolicies/sdlforcontainerizedworkflows/customizesdlforcontainerbuilds
 
-      # Snapshot of the SDL analyzer findings that pre-existed the breakOnSdlError rollout, so
+      # Snapshot of the SDL analyzer findings that pre-existed the failOnSdlError rollout, so
       # builds only break on NEW findings.  Generated from the SDL analysis artifacts of a full
       # non-official run and kept under .config/ alongside the other SDL tool configs
       # (CredScan/PoliCheck/TSA).
@@ -180,8 +193,8 @@ extends:
         # variable.
         enabled: true
 
-        # APIScan errors break the build when breakOnSdlError is set.
-        break: ${{ parameters.breakOnSdlError }}
+        # APIScan errors break the build when failOnSdlError is set.
+        break: ${{ parameters.failOnSdlError }}
 
         # Use pre-release mode for non-official pipelines.
         modeType: prerelease
@@ -196,7 +209,7 @@ extends:
 
       armory:
         enabled: true
-        break: ${{ parameters.breakOnSdlError }}
+        break: ${{ parameters.failOnSdlError }}
 
       asyncSdl:
         # Disabling this as it complicates the build process with minimal gain
@@ -204,7 +217,7 @@ extends:
 
       binskim:
         enabled: true
-        break: ${{ parameters.breakOnSdlError }}
+        break: ${{ parameters.failOnSdlError }}
 
       codeql:
         # CodeQL 3000 is configured under the `compiled` key; `enabled` is a sub-property of
@@ -221,17 +234,17 @@ extends:
         # Only useful for repos with ECMAscript - which we do not have.
         enabled: false
         # Break value is wired preemptively so it takes effect if eslint is ever enabled.
-        break: ${{ parameters.breakOnSdlError }}
+        break: ${{ parameters.failOnSdlError }}
 
       policheck:
         enabled: true
-        break: ${{ parameters.breakOnSdlError }}
+        break: ${{ parameters.failOnSdlError }}
         exclusionsFile: '$(REPO_ROOT)\.config\PolicheckExclusions.xml'
 
       psscriptanalyzer:
         # Static analysis of the repository's PowerShell scripts (e.g. under eng/).
         enabled: true
-        break: ${{ parameters.breakOnSdlError }}
+        break: ${{ parameters.failOnSdlError }}
 
       roslyn:
         # Enabling Roslyn SDL analysis here requires that our .NET builds _produce_ Roslyn findings.
@@ -242,7 +255,7 @@ extends:
         # may log processing errors (for example, Post Analysis's SDL artifact report) even though
         # Roslyn collection and Guardian policy ingestion succeed.
         enabled: true
-        break: ${{ parameters.breakOnSdlError }}
+        break: ${{ parameters.failOnSdlError }}
 
       publishLogs:
         enabled: true
@@ -265,20 +278,20 @@ extends:
         #   SDL scans and iterate on fixes before they land.  We do not want it filing (or
         #   updating) bug work items -- that would create churn and duplicate the bugs owned by
         #   the official pipeline, where TSA is hardcoded enabled.  Here, findings surface
-        #   directly in the build instead, gated by breakOnSdlError.
+        #   directly in the build instead, gated by failOnSdlError.
         #
         # Interaction with other SDL tool defaults:
         #   OneBranch derives each SDL tool's DEFAULT `break` value from whether TSA is enabled --
         #   per the OneBranch "Customize SDL" docs, most tools default to `break: false` when TSA
         #   is enabled and `break: true` when it is disabled.  We do NOT rely on that implicit
-        #   coupling: every tool above sets `break: ${{ parameters.breakOnSdlError }}` explicitly,
+        #   coupling: every tool above sets `break: ${{ parameters.failOnSdlError }}` explicitly,
         #   which overrides the TSA-derived default.  We have hit bugs in OneBranch's implicit
         #   break-altering logic in the past, so both `tsa.enabled` and each tool's `break` are
         #   set explicitly to keep the behaviour deterministic.
         #
-        # Otherwise independent of breakOnSdlError:
-        #   Aside from that default-flipping, TSA and breakOnSdlError are orthogonal.  Disabling
-        #   TSA here does not by itself force breaking -- breakOnSdlError is what controls whether
+        # Otherwise independent of failOnSdlError:
+        #   Aside from that default-flipping, TSA and failOnSdlError are orthogonal.  Disabling
+        #   TSA here does not by itself force breaking -- failOnSdlError is what controls whether
         #   findings fail the build.
         enabled: false
         # Keep this in sync with Official even though TSA is disabled here.
@@ -300,6 +313,7 @@ extends:
         parameters:
           isOfficial: false # This is a non-official pipeline.
           buildSqlServer: ${{ parameters.buildSqlServer }}
+          failOnValidationError: ${{ parameters.failOnValidationError }}
 
           abstractionsArtifactsName: '${{ variables.abstractionsArtifactsName }}'
           akvProviderArtifactsName: '${{ variables.akvProviderArtifactsName }}'

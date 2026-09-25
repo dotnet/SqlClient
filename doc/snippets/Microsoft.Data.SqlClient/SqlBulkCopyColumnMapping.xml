@@ -159,7 +159,7 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
         The string value of the <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.DestinationColumn" /> property.
       </value>
       <remarks>
-        The <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.DestinationColumn" /> and <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.DestinationOrdinal" /> properties are mutually exclusive. The last value set takes precedence.
+        The <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.DestinationColumn" /> and <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.DestinationOrdinal" /> properties are mutually exclusive. The last value set takes precedence.
       </remarks>
       <example>
         <format type="text/markdown">
@@ -184,7 +184,7 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
         The integer value of the <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.DestinationOrdinal" /> property, or -1 if the property has not been set.
       </value>
       <remarks>
-        The <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.DestinationColumn" /> and <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.DestinationOrdinal" /> properties are mutually exclusive. The last value set takes precedence.
+        The <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.DestinationColumn" /> and <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.DestinationOrdinal" /> properties are mutually exclusive. The last value set takes precedence.
       </remarks>
       <example>
         <format type="text/markdown">
@@ -209,7 +209,7 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
         The string value of the <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.SourceColumn" /> property.
       </value>
       <remarks>
-        The <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.SourceColumn" /> and <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.SourceOrdinal" /> properties are mutually exclusive. The last value set takes precedence.
+        The <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.SourceColumn" /> and <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.SourceOrdinal" /> properties are mutually exclusive. The last value set takes precedence.
       </remarks>
       <example>
         <format type="text/markdown">
@@ -234,7 +234,7 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
         The integer value of the <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.SourceOrdinal" /> property.
       </value>
       <remarks>
-        The <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.SourceColumn" /> and <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.SourceOrdinal" /> properties are mutually exclusive. The last value set takes precedence.
+        The <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.SourceColumn" /> and <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping.SourceOrdinal" /> properties are mutually exclusive. The last value set takes precedence.
       </remarks>
       <example>
         <format type="text/markdown">

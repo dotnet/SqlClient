@@ -11,7 +11,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseBefore"]/SqlClientConnectionCloseBefore/*'/>
     public sealed class SqlClientConnectionCloseBefore : IReadOnlyList<KeyValuePair<string, object>>
     {
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseBefore"]//*'/>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseBefore"]/Name/*'/>
         public const string Name = "Microsoft.Data.SqlClient.WriteConnectionCloseBefore";
 
         internal SqlClientConnectionCloseBefore(
