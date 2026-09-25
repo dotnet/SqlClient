@@ -3253,15 +3253,32 @@ namespace Microsoft.Data.SqlClient
                     }
                     bool ParsedDoneToken = false;
 
+                    // DONE tokens are always consumed here, and so are ERROR and INFO tokens.
+                    //
+                    // ERROR/INFO tokens are never part of a result set's row stream - they are
+                    // surfaced on the command/connection - so consuming them as soon as they
+                    // appear is safe. It is also required: the server may report an error only
+                    // *after* the current result set has already been terminated by a DONE
+                    // token, for example when a T-SQL error is rethrown from a CATCH block with
+                    // THROW, or when a batch ends with RAISERROR after a SELECT. Stopping at
+                    // such an ERROR token would leave it unconsumed, Read() would report no
+                    // more rows, and the error would later be discarded by the RunBehavior.Clean
+                    // drain performed when the reader is closed - silently losing it.
+                    // See https://github.com/dotnet/SqlClient/issues/4321.
+                    //
+                    // The remaining tokens (SESSIONSTATE/ENVCHANGE/ORDER) continue to be
+                    // consumed only before the first DONE token. Once the current result set
+                    // has been terminated they describe the *next* result set and must be left
+                    // in the stream for NextResult() to process.
                     while (b == TdsEnums.SQLDONE ||
                             b == TdsEnums.SQLDONEPROC ||
                             b == TdsEnums.SQLDONEINPROC ||
-                            !ParsedDoneToken && (
+                            b == TdsEnums.SQLERROR ||
+                            b == TdsEnums.SQLINFO ||
+                            (!ParsedDoneToken && (
                                 b == TdsEnums.SQLSESSIONSTATE ||
                                 b == TdsEnums.SQLENVCHANGE ||
-                                b == TdsEnums.SQLORDER ||
-                                b == TdsEnums.SQLERROR ||
-                                b == TdsEnums.SQLINFO))
+                                b == TdsEnums.SQLORDER)))
                     {
                         if (b == TdsEnums.SQLDONE ||
                             b == TdsEnums.SQLDONEPROC ||
