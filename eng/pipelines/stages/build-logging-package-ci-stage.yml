@@ -67,6 +67,19 @@ parameters:
     - detailed
     - diagnostic
 
+  # The C# project reference type to use when building and packing the packages.
+  - name: referenceType
+    type: string
+    values:
+      # Reference sibling packages as NuGet packages.
+      - Package
+      # Reference sibling packages as C# projects.
+      - Project
+
+  # True when building on the internal ADO.Net project.
+  - name: isInternalBuild
+    type: boolean
+
 stages:
 
   - stage: build_logging_package_stage
@@ -100,3 +113,5 @@ stages:
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+          referenceType: ${{ parameters.referenceType }}
+          isInternalBuild: ${{ parameters.isInternalBuild }}
