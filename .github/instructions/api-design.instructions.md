@@ -15,10 +15,10 @@ Microsoft.Data.SqlClient follows strict API design guidelines to ensure:
 ### Structure
 ```
 src/Microsoft.Data.SqlClient/
-├── netcore/ref/          # .NET Core/.NET public APIs
-│   └── Microsoft.Data.SqlClient.cs
-└── netfx/ref/            # .NET Framework public APIs
-    └── Microsoft.Data.SqlClient.cs
+└── ref/                              # Unified public API declarations
+    ├── Microsoft.Data.SqlClient.csproj
+    ├── Microsoft.Data.SqlClient.cs
+    └── Microsoft.Data.SqlTypes.cs     # Other namespace-specific files alongside
 ```
 
 ### API Surface
@@ -32,8 +32,8 @@ The reference assemblies do **not** use C# nullable context (`#nullable enable`)
 
 ### Updating Public APIs
 When adding or modifying public APIs:
-1. Update reference assembly in BOTH `netcore/ref/` and `netfx/ref/`
-2. Ensure signatures match across platforms
+1. Update the corresponding sources under `src/Microsoft.Data.SqlClient/ref/`
+2. Ensure signatures match the implementation for each affected framework, including conditional declarations
 3. Add XML documentation
 4. Consider backward compatibility
 5. Do not use nullable annotations (`?`) in ref assemblies (see above)

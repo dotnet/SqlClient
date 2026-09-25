@@ -11,9 +11,9 @@
 
 ## 📚 Project Overview
 This project is a .NET data provider for SQL Server, enabling .NET applications to interact with SQL Server databases. It supports various features like connection pooling, transaction management, and asynchronous operations.
-The project builds from a **single unified project** at `src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj`. It targets `net8.0` and `net9.0` on all supported hosts, and adds `net462` only when building on Windows. The legacy `netfx/` and `netcore/` directories are being phased out — only their `ref/` folders (which define the public API surface) remain active.
+The project builds from a **single unified project** at `src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj`. Its framework and platform selection is defined by the project and imported build files. Public API declarations are unified under `src/Microsoft.Data.SqlClient/ref/`; the legacy `netfx/` and `netcore/` directories are no longer used.
 The project includes:
-- **Public APIs**: Defined in `netcore/ref/` and `netfx/ref/` directories.
+- **Public APIs**: Defined by `src/Microsoft.Data.SqlClient/ref/Microsoft.Data.SqlClient.csproj` and the reference source files beside it.
 - **Implementations**: All source code in `src/Microsoft.Data.SqlClient/src/`.
 - **Tests**: Located in the `tests/` directory, covering unit and integration tests.
   - **Unit Tests**: Located in `src/Microsoft.Data.SqlClient/tests/UnitTests/`.
@@ -137,7 +137,7 @@ When a new issue is created, follow these steps:
 
 ## 🧠 Contextual Awareness
 - All source code is in `src/Microsoft.Data.SqlClient/src/`. Do NOT add code to legacy `netfx/src/` or `netcore/src/` directories.
-- Only `ref/` folders in `netcore/ref/` and `netfx/ref/` remain active for defining the public API surface.
+- Public API changes must update the unified `src/Microsoft.Data.SqlClient/ref/` sources for each affected target framework.
 - Check for platform-specific differences using file suffixes (`.netfx.cs`, `.netcore.cs`, `.windows.cs`, `.unix.cs`) and conditional compilation (`#if NETFRAMEWORK`, `#if NET`, `#if _WINDOWS`, `#if _UNIX`).
 - Respect API compatibility rules across .NET versions
 - Do not introduce breaking changes without proper justification and documentation

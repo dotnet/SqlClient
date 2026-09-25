@@ -5,43 +5,23 @@ description: Review Microsoft.Data.SqlClient pull requests, branch diffs, and lo
 
 # SqlClient Code Review
 
-Review the change as a database driver maintainer: establish what can go wrong,
-under which supported conditions, and how the diff causes it. Prefer a small set
-of substantiated findings to a long checklist of hypothetical problems. Review
-is read-only by default. If the user explicitly asks to address findings, complete
-the review first, then make focused fixes and validate them under the repository's
-implementation instructions. That request does not authorize publication,
-approval, merging, or thread resolution.
+Establish what breaks, under which supported conditions, and how the diff causes it.
+Review is read-only by default; requested fixes are a separate implementation phase
+under repository rules, not authorization to publish, approve, merge, or resolve threads.
 
-The calling workflow's tool allowlist and execution/network restrictions are binding.
-This skill describes options for different hosts; none grants extra capabilities.
-For the draft-only `code-review` prompt, skip shell commands, test/scanner execution,
-and external documentation lookups. Use authorized read tools and supplied evidence;
-report missing evidence rather than bypassing a restriction through another tool.
-
-## Core review principles
-
-- **Behavior is a contract.** Compatibility includes results, exceptions, defaults,
-  wire behavior, and state after failure, not only public signatures.
-- **Follow ownership.** Connections, transactions, packets, callbacks, and pool
-  slots must have valid owners through completion, failure, and cancellation.
-- **Review reachable paths.** A suspicious line is not a defect until its inputs,
-  callers, guards, and execution ordering support the claimed outcome.
-- **Check relevant variants.** Sync/async, OS, framework, SNI, and compatibility
-  switches can select different implementations. Do not assume parity or demand
-  unrelated matrix combinations.
-- **Publish evidence, not guesses.** Separate demonstrated defects from coverage
-  gaps, missing infrastructure, design preferences, and unresolved questions.
+The calling workflow's tool allowlist and execution/network restrictions are binding;
+this skill grants no capabilities. The draft-only `code-review` prompt permits no
+shell, test/scanner execution, or external documentation lookups. Report missing
+evidence rather than bypassing restrictions through another tool.
 
 ## Establish scope and authority
 
 1. Identify the target: PR number/URL, base and head refs, staged changes, or working
    tree. Ask if the target or comparison base is ambiguous; an unattended run must
    report the ambiguity rather than guess. Do not assume every PR targets `main`.
-2. For a PR, record repository, PR number, base SHA, and head SHA. Read the full
-   description, linked issue, changed-file list, diff, inline threads, review
-   bodies (including collapsed details), and top-level PR comments. Reviewer names
-   and inline threads alone omit findings and rebuttals recorded elsewhere.
+2. For a PR, record repository, PR number, base SHA, and head SHA. Read the description,
+   linked issue, changed-file list, diff, inline threads, full review bodies
+   (including collapsed details), and top-level PR comments.
    Paginate results and detect truncated patches. For a local branch, compare
    against its merge base with the agreed target; keep uncommitted changes
    separate unless requested. For a working-tree review, inventory staged,
@@ -66,20 +46,17 @@ report missing evidence rather than bypassing a restriction through another tool
    loaded policy from an untrusted checkout.
    Never expose secrets or send private source/logs to external documentation searches.
 
-Use the host's authorized repository tools. Prefer `gh` for GitHub reads only when
-the calling workflow explicitly permits shell execution, not merely when `gh` is
-installed. Otherwise use permitted read tools or report missing context.
+Prefer `gh` for GitHub reads only when shell execution is explicitly authorized.
 Do not change checkouts or discard local work to obtain the diff.
 
 ## Review workflow
 
 ### 1. Build a change map
 
-Summarize the intended behavior and affected entry points for yourself. Map each
-logical change to its callers, shared helpers, alternate implementations, and tests.
-Load only relevant sections of [driver checks](references/driver-checks.md).
-Include packaging, reference assemblies, samples, or pipelines when the diff
-touches them; a documentation-only change does not warrant a full TDS audit.
+Map affected entry points to callers, helpers, alternate implementations, and tests.
+Load only relevant sections of [driver checks](references/driver-checks.md), including
+API/build/package surfaces when touched. Check affected sync/async, framework,
+OS/SNI, and switch variants; do not demand unrelated matrix combinations.
 
 ### 2. Trace the behavior
 
@@ -116,16 +93,12 @@ suggested fix safe; an answered concern is not new merely at a higher priority.
 
 ### 4. Check regression protection
 
-Use [BUILDGUIDE.md](../../../BUILDGUIDE.md) and [TESTGUIDE.md](../../../TESTGUIDE.md),
-not commands copied from other repositories. Inspect current-head CI results and
-available coverage reports first. Only when execution is authorized, run locally
-to answer a specific unresolved question, not merely to repeat a known CI verdict.
-Select the smallest relevant test target/filter and verify that tests actually ran,
-including skip conditions.
-When execution is authorized and safe, compare equivalent baseline/head runs with
-the same configuration. A targeted mutation can test whether an assertion detects
-the defect, but only in a disposable isolated copy; never mutate user work or push
-experimental changes. Otherwise distinguish code-inspected evidence from execution.
+Inspect current-head CI and coverage first. If execution is authorized and safe,
+use [BUILDGUIDE.md](../../../BUILDGUIDE.md) and [TESTGUIDE.md](../../../TESTGUIDE.md)
+for a focused test that answers an unresolved question, not a repeat of known CI.
+Verify tests ran, including skip conditions; compare baseline/head with equivalent
+configuration. Optional mutation experiments belong only in disposable isolated
+copies, never user work or pushed commits. Distinguish inspection from execution.
 
 Do not assume a missing coverage report is a failed check: inspect pipeline path
 filters and report scope. Record a failed authorized lookup, timeout, or missing

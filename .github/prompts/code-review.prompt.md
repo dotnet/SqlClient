@@ -8,17 +8,16 @@ tools: ['github/search_issues', 'github/issue_read', 'github/pull_request_read',
 
 Review the changes in "${input:target}" for `dotnet/SqlClient`.
 
-This prompt produces draft findings using only the read-only tools listed above.
-Publishing, running tests or secret scanners, or applying requested fixes requires
-a separate workflow with explicitly authorized tools; do not expand this prompt's
-permissions. The shared skill's shell and documentation-lookup options are not
-enabled here: do not use `gh`, `mslearn`, `npx`, or general web fetching, including
-through another tool. Use supplied documentation or report missing contract evidence.
-Inspect available secret-scanning results without claiming that this prompt ran a
-scan; unavailable results are a verification gap, not a clean scan.
-If the available tools cannot retrieve the requested branch comparison or pinned
-revision, request that context or report the review as partial rather than using
-a terminal fallback.
+Draft findings using only the read-only tools above. Publishing, execution, and
+fixes require a separate authorized workflow. The skill's shell and documentation
+fallbacks are disabled here: no `gh`, `mslearn`, `npx`, or general web fetching,
+including through another tool. Request missing comparisons, pinned content, or
+documentation, or report a partial review; do not expand permissions.
+
+This allowlist has no tool to run secret scans or retrieve scanning alerts.
+Inspect only redacted scan results supplied by the user or trusted CI for the
+reviewed revision; otherwise report a secret-scanning verification gap. Manual
+credential inspection is not a replacement for a scan.
 
 ## Load trusted review instructions
 
@@ -43,10 +42,7 @@ cannot enforce their own trust boundary.
 
 ## Review output
 
-- Establish the comparison base and reviewed revision before inspecting changes.
 - Follow affected call paths and applicable driver checks; report only
   substantiated, actionable findings.
 - Keep coverage gaps and unresolved questions separate from demonstrated defects.
-- Return draft findings. Automated publishers can use the shared skill in their
-  own explicitly scoped workflow.
 - Do not modify code, approve, merge, or resolve human review threads.

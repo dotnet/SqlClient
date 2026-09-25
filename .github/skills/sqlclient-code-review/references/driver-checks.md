@@ -19,13 +19,9 @@ claiming a missing update.
 | Related products | `src/Microsoft.Data.SqlClient.Extensions/`, `src/Microsoft.Data.SqlClient/add-ons/`, `src/Microsoft.SqlServer.Server/` |
 | Build and distribution | `build.proj`, `src/Directory.Build.*`, `Directory.Packages.props`, `Versions.props`, `.nuspec`, `eng/pipelines/` |
 
-Some instructions describe legacy `netcore/ref/` and `netfx/ref/` layouts. Inspect
-the active ref project and compile inputs: the reviewed checkout may instead use
-the unified `ref/` directory. Do not demand edits to nonexistent/inactive files.
-Likewise, distinguish implementation TFMs, test-only runtimes, reference/stub
-assemblies, and frameworks that can compile but cannot execute on the host.
-New driver implementation belongs in the unified `src/` tree; do not revive
-legacy `netcore/src/` or `netfx/src/` paths.
+Confirm the reviewed revision's ref project and compile inputs; older branches may
+have a different layout. Distinguish implementation TFMs, test-only runtimes, and
+reference/stub assemblies; compilation does not imply the host can run that target.
 
 ## API and behavioral compatibility
 
@@ -134,11 +130,12 @@ specific token, negotiated feature, and protocol revision.
 
 ## Authentication, encryption, and diagnostics
 
-- Inspect added code, configuration, samples, and comments for embedded credentials;
-  follow `.github/instructions/secrets.instructions.md` without reproducing suspected
-  secrets in findings. Inspect available current-head secret-scanning results.
-  Running a scanner requires a separately authorized workflow; manual inspection
-  or unavailable scan results must not be described as a passed secret scan.
+- Inspect added code, configuration, samples, and comments for embedded credentials
+  per `.github/instructions/secrets.instructions.md`; never reproduce secret values.
+  The draft-only `code-review` prompt cannot run scanners or retrieve scanning alerts.
+  Unless redacted results for the reviewed revision are supplied by the user or
+  trusted CI, report a secret-scanning verification gap. Other hosts need explicit
+  authorization to retrieve results or run scans; manual inspection is not a scan.
 - Check that identity/token caches preserve their intended scope and refresh
   semantics. Confirm TLS negotiation and certificate/hostname validation across
   affected encryption modes; do not weaken defaults to make a test pass.
