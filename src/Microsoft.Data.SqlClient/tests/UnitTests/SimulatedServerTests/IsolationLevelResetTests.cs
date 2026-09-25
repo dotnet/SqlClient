@@ -89,7 +89,9 @@ public sealed class IsolationLevelResetTests
                 Encrypt = SqlConnectionEncryptOption.Optional,
                 Pooling = false,
 #if NETFRAMEWORK
+                #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
                 TransparentNetworkIPResolution = false,
+                #pragma warning restore 618
 #endif
             }.ConnectionString);
         connection.Open();
@@ -109,7 +111,9 @@ public sealed class IsolationLevelResetTests
                 Encrypt = SqlConnectionEncryptOption.Optional,
                 Pooling = false,
 #if NETFRAMEWORK
+                #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
                 TransparentNetworkIPResolution = false,
+                #pragma warning restore 618
 #endif
             }.ConnectionString);
         connection.Open();
