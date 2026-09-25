@@ -39,8 +39,8 @@ public class AzureDependencyTests
     }
 
     /// <summary>
-    /// Guards the extension's restored NuGet dependencies even when a referenced package
-    /// contributes no assembly references.
+    /// Guards against direct and transitive Azure.Identity dependencies in the restored
+    /// test graph, even when a package contributes no assembly references.
     /// </summary>
     [Fact]
     public void AzureExtension_RestoreGraphDoesNotDependOnAzureIdentity()
@@ -60,6 +60,9 @@ public class AzureDependencyTests
 
             Assert.Contains(dependencies, dependency => string.Equals(dependency, "Azure.Core", StringComparison.OrdinalIgnoreCase));
             Assert.DoesNotContain(dependencies, dependency => string.Equals(dependency, "Azure.Identity", StringComparison.OrdinalIgnoreCase));
+            Assert.DoesNotContain(
+                target.Value.EnumerateObject(),
+                library => library.Name.StartsWith("Azure.Identity/", StringComparison.OrdinalIgnoreCase));
         }
     }
 }
