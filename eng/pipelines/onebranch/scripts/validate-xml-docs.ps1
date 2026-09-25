@@ -179,6 +179,12 @@
                                        beside it, so the loss is otherwise silent. Usually the
                                        name attribute in the path differs in case from the one the
                                        snippet declares.
+      unexpected-documentation-element
+                              error    A generated member contains an unrecognized top-level
+                                       container around standard documentation elements. This
+                                       usually means an <include> path matched a member container
+                                       rather than that member's summary, remarks and other
+                                       documentation elements.
       missing-external-uid    warning  Cref is absent from the supplied Learn xref map.
       unprefixed-cref         info     Cref carries no "T:"/"M:"/... prefix. Legal; the compiler
                                        binds it. Reported for visibility only.
@@ -255,6 +261,7 @@ $script:CategorySeverities = [ordered]@{
     'mismatched-public-docid-prefix' = 'error'
     'enum-field-remarks'     = 'error'
     'unresolved-include'     = 'error'
+    'unexpected-documentation-element' = 'error'
     'missing-local-uid'      = 'info'
     'mismatched-docid-prefix' = 'warning'
     'missing-documentation'  = 'error'
@@ -1443,6 +1450,87 @@ foreach ($entry in $documents) {
             "Documentation for '$member' was not included: the compiler found nothing at " +
             "'$requested', so the member has no documentation. Check the path against the " +
             'snippet, including the case of any name attribute.')
+    }
+}
+
+# An include path can match too much as well as nothing. Selecting every child of <members>, for
+# example, copies the type and property containers into one compiler-generated <member> rather than
+# copying the type's summary and remarks. The compiler preserves those unknown elements without an
+# error, but Open Publishing ignores them and produces an undocumented API page.
+$supportedMemberElements = [System.Collections.Generic.HashSet[string]]::new(
+    [string[]]@(
+        'a',
+        'altmember',
+        'block',
+        'br',
+        'c',
+        'code',
+        'description',
+        'devdoc',
+        'example',
+        'exception',
+        'exclude',
+        'filterpriority',
+        'format',
+        'include',
+        'inheritdoc',
+        'item',
+        'list',
+        'listheader',
+        'note',
+        'overloads',
+        'param',
+        'paramref',
+        'para',
+        'permission',
+        'preliminary',
+        'remarks',
+        'returns',
+        'see',
+        'seealso',
+        'summary',
+        'term',
+        'threadsafety',
+        'throws',
+        'typeparam',
+        'typeparamref',
+        'value'
+    ),
+    [System.StringComparer]::OrdinalIgnoreCase)
+
+foreach ($entry in $documents) {
+    if ($entry.Kind -ne 'documentation') {
+        continue
+    }
+
+    foreach ($memberElement in $entry.Document.Descendants('member')) {
+        $nameAttribute = $memberElement.Attribute('name')
+        $member = if ($null -ne $nameAttribute) { $nameAttribute.Value } else { '' }
+
+        foreach ($element in $memberElement.Elements()) {
+            if ($supportedMemberElements.Contains($element.Name.LocalName)) {
+                continue
+            }
+
+            # XML documentation is extensible, and this repository uses metadata elements such as
+            # <related>, <content>, and <devnote>. The silent-loss signature is narrower: an unknown
+            # element wrapping standard documentation elements copied from a snippet member.
+            $nestedDocumentationElement = $element.Elements() |
+                Where-Object { $supportedMemberElements.Contains($_.Name.LocalName) } |
+                Select-Object -First 1
+            if ($null -eq $nestedDocumentationElement) {
+                continue
+            }
+
+            $lineInfo = [System.Xml.IXmlLineInfo]$element
+            $lineNumber = if ($lineInfo.HasLineInfo()) { $lineInfo.LineNumber } else { 0 }
+            Add-Finding -Category 'unexpected-documentation-element' -Path $entry.Path `
+                -LineNumber $lineNumber -Member $member -Message (
+                "Documentation for '$member' contains unexpected top-level container " +
+                "'<$($element.Name.LocalName)>' around '<$($nestedDocumentationElement.Name.LocalName)>'. " +
+                'Check whether an <include> path selected a member container instead of that ' +
+                "member's documentation elements.")
+        }
     }
 }
 

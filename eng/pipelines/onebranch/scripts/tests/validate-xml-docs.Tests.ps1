@@ -1521,6 +1521,7 @@ Describe 'validate-xml-docs.ps1' {
                 'mismatched-public-docid-prefix'  = 'error'
                 'enum-field-remarks'              = 'error'
                 'unresolved-include'              = 'error'
+                'unexpected-documentation-element' = 'error'
                 'missing-documentation'           = 'error'
                 'missing-local-uid'               = 'info'
                 'mismatched-docid-prefix'         = 'warning'
@@ -1811,6 +1812,45 @@ namespace Contoso
 
             @((Get-Report -Path $report).Findings |
                 Where-Object { $_.Category -eq 'unresolved-include' }).Count | Should -Be 2
+        }
+    }
+
+    Context 'unexpected documentation elements' {
+
+        It 'reports member containers emitted by an over-broad include' {
+            # Selecting every child of <members> copies the type and property containers into the
+            # compiler output instead of their summary and remarks, so Learn receives no type docs.
+            $docs = New-TestDirectory
+            '<doc><members>' +
+            '<member name="T:Microsoft.Data.SqlClient.Options">' +
+            '<Options><summary>Options.</summary></Options>' +
+            '<Setting><summary>Setting.</summary></Setting>' +
+            '</member></members></doc>' |
+                Set-Content -LiteralPath (Join-Path $docs 'Microsoft.Data.SqlClient.xml') -Encoding utf8
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            { & $scriptPath -DocumentationPath $docs -ReportPath $report } | Should -Throw
+
+            $findings = @((Get-Report -Path $report).Findings |
+                    Where-Object { $_.Category -eq 'unexpected-documentation-element' })
+            $findings.Count | Should -Be 2
+            $findings.Member | Should -Contain 'T:Microsoft.Data.SqlClient.Options'
+            ($findings.Message -join "`n") | Should -BeLike '*<Options>*'
+            ($findings.Message -join "`n") | Should -BeLike '*<Setting>*'
+        }
+
+        It 'accepts compiler-supported top-level documentation elements' {
+            $docs = New-TestDirectory
+            '<doc><members><member name="M:Microsoft.Data.SqlClient.Sample.Run(System.String)">' +
+            '<summary>Runs.</summary><remarks>Details.</remarks><param name="value">Value.</param>' +
+            '<returns>Result.</returns><exception cref="T:System.Exception">Failure.</exception>' +
+            '<throws>Failure conditions.</throws><example>Example.</example>' +
+            '<seealso cref="T:System.String" /><related href="article">Article.</related>' +
+            '<content>Internal source note.</content><devnote>Implementation note.</devnote>' +
+            '</member></members></doc>' |
+                Set-Content -LiteralPath (Join-Path $docs 'Microsoft.Data.SqlClient.xml') -Encoding utf8
+
+            { & $scriptPath -DocumentationPath $docs } | Should -Not -Throw
         }
     }
 

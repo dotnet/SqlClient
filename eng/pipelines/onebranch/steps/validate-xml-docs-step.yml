@@ -72,7 +72,9 @@ parameters:
   # The error severity covers malformed-xml, unresolved-cref, invalid-docid, unknown-namespace-root,
   # stale-allowlist-entry, missing-documentation, the two public resolution categories above, and
   # the three package layout categories (lib-documentation-trimmed, ref-documentation-untrimmed,
-  # lib-ref-documentation-identical).
+  # lib-ref-documentation-identical).  It also covers documentation content that the compiler or
+  # Learn would silently discard: enum-field-remarks, unresolved-include and
+  # unexpected-documentation-element.
   #
   # The warning severity covers mismatched-docid-prefix, unexpected-documentation and
   # missing-external-uid.  missing-local-uid, documentation-not-expected and unprefixed-cref are
