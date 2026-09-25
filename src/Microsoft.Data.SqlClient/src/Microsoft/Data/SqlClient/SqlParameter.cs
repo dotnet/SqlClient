@@ -773,7 +773,17 @@ namespace Microsoft.Data.SqlClient
                 switch (elementType)
                 {
                     case MetaType.SqlVectorElementType.Float32:
-                        return SqlVector<float>.CreateNull(elementCount);
+                        return SqlVector<float>.CreateNullFromServer(elementCount);
+                    case MetaType.SqlVectorElementType.Float16:
+                        #if NET
+                        return SqlVector<Half>.CreateNullFromServer(elementCount);
+                        #else
+                        // System.Half is unavailable, so a float16 vector has no faithful
+                        // strongly typed representation and is surfaced as single precision.
+                        // A float16 column may declare more dimensions than can be sent as
+                        // float32, so the server's count is taken as given.
+                        return SqlVector<float>.CreateNullFromServer(elementCount);
+                        #endif
                     default:
                         throw SQL.VectorTypeNotSupported(elementType.ToString());
                 }
@@ -782,6 +792,13 @@ namespace Microsoft.Data.SqlClient
             {
                 case MetaType.SqlVectorElementType.Float32:
                     return new SqlVector<float>((byte[])_sqlBufferReturnValue.Value);
+                case MetaType.SqlVectorElementType.Float16:
+                    #if NET
+                    return new SqlVector<Half>((byte[])_sqlBufferReturnValue.Value);
+                    #else
+                    // Widening binary16 to binary32 is exact, so no information is lost.
+                    return SqlVector<float>.FromTdsPayload((byte[])_sqlBufferReturnValue.Value);
+                    #endif
                 default:
                     throw SQL.VectorTypeNotSupported(elementType.ToString());
             }
@@ -2385,11 +2402,18 @@ namespace Microsoft.Data.SqlClient
                     {
                         value = ((ISqlVector)value).VectorPayload;
                     }
+                    #if NET
+                    else if (currentType == typeof(SqlVector<Half>))
+                    {
+                        value = ((ISqlVector)value).VectorPayload;
+                    }
+                    #endif
                     else if (currentType == typeof(string) && destinationType.SqlDbType == SqlDbTypeExtensions.Vector)
                     {
                         try
                         {
-                            value = ((ISqlVector)new SqlVector<float>(JsonSerializer.Deserialize<float[]>((string)value))).VectorPayload;
+                            value = ((ISqlVector)SqlVector<float>.CreateForConversion(
+                                JsonSerializer.Deserialize<float[]>((string)value))).VectorPayload;
                         }
                         catch (Exception ex) when (ex is ArgumentNullException || ex is JsonException)
                         {
