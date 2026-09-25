@@ -25,6 +25,9 @@
   </ItemGroup>
 
   <!-- Content files to copy to output directory -->
+  <Target Name="CopyRunnerConfig" BeforeTargets="Compile">
+    <Copy SourceFiles="runnerconfig.default.jsonc" DestinationFiles="runnerconfig.jsonc" Condition="!Exists('runnerconfig.jsonc')" />
+  </Target>
   <ItemGroup>
     <None Include="datatypes.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="runnerconfig.jsonc" CopyToOutputDirectory="PreserveNewest" />

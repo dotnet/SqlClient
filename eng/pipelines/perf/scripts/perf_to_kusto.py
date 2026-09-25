@@ -40,7 +40,8 @@ _CONFIG_EXCLUDED_KEYS = frozenset(("ConnectionString", "Benchmarks"))
 def _load_runner_config(path):
     """Return the runner's boolean feature flags as a dict for the PerfRun.Config column.
 
-    The benchmark runner is driven by a .jsonc config (see PerformanceTests/runnerconfig.jsonc).
+    The benchmark runner is driven by a JSON/JSONC config (see
+    PerformanceTests/runnerconfig.default.jsonc).
     Only its top-level *boolean* flags describe the SqlClient behaviour a run exercised
     (e.g. UseManagedSniOnWindows, UseOptimizedAsyncBehaviour), so those are the values worth
     recording alongside the results.  ConnectionString and Benchmarks are excluded, and any
@@ -77,9 +78,8 @@ def _parse_config_overrides(pairs):
     """Parse repeated ``--config-override NAME=VALUE`` items into a ``{flag: bool}`` dict.
 
     The perf pipeline can set a handful of SqlClient behaviour flags (e.g. UseConnectionPoolV2)
-    at queue time. Those values are applied to the runner config the benchmarks actually run
-    against, but the checked-in ``runnerconfig.jsonc`` this script reads still holds the defaults,
-    so the queue-time values are threaded in here to keep ``PerfRun.Config`` faithful to the run.
+    at queue time. These overrides are a compatibility fallback for older result artifacts that do
+    not contain the generated runner config used by the benchmark process.
 
     Only boolean values are accepted (Config is a flat ``{flag: bool}`` map); a non-boolean value
     is warned about and skipped so a typo never injects a non-bool. Later duplicates win."""
@@ -338,9 +338,7 @@ def main(argv=None):
     parser.add_argument("--config-override", action="append", default=[],
                         metavar="NAME=BOOL",
                         help="Override or add a PerfRun.Config boolean flag (repeatable). Values "
-                             "supplied here win over those read from --runner-config, so the pipeline "
-                             "records the flags it actually set (e.g. UseConnectionPoolV2=true) "
-                             "regardless of the checked-in runnerconfig.jsonc defaults.")
+                             "supplied here win over those read from --runner-config.")
     args = parser.parse_args(argv)
 
     config = _load_runner_config(args.runner_config)
