@@ -51,7 +51,7 @@ permissions:
   pull-requests: read
 
 tools:
-  bash: [cat, find, grep]
+  bash: [cat, find, grep, jq]
   github:
     min-integrity: none
 
@@ -115,6 +115,25 @@ workflow is permitted to manage.
 Do NOT post intermediate findings. Do NOT post separate comments for
 area detection, duplicate checking, or environment validation.
 Everything goes into the single triage summary at the end.
+
+### Safe-output preparation
+
+Every successful safe-output call queues a real action and consumes its
+per-run allowance. Never call `add_comment` with test, placeholder, diagnostic,
+or partial content, even to check whether the tool works.
+
+Finish the analysis and prepare the complete summary before calling
+`add_comment`. When using the `safeoutputs` CLI, inspect
+`safeoutputs add_comment --help` to confirm its arguments without consuming
+the allowance. The target argument is `item_number`, not `issue_number`.
+For a multi-line summary saved to a temporary file, use the allowed `jq -Rs`
+command to construct the JSON payload with `item_number` and `body`, then
+submit it once through `safeoutputs add_comment .`.
+
+If preparation or submission fails, inspect the error before retrying.
+Do not repeatedly retry a denied command or probe with a write. If the
+failure cannot be resolved with the available tools, call `report_incomplete`
+with the actual error and stop without submitting placeholder content.
 
 ---
 
