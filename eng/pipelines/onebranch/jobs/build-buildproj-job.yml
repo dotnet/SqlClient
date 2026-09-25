@@ -39,6 +39,12 @@ parameters:
   - name: projectPath
     type: string
 
+  # Directory containing the documentation snippets referenced by this project. An empty path
+  # disables source validation for projects that do not consume snippets.
+  - name: documentationSnippetsPath
+    type: string
+    default: ''
+
   # Signing Parameters -----------------------------------------------------
   # @TODO: Signing Parameters Object
 
@@ -158,12 +164,12 @@ jobs:
       # cross-reference is reported in seconds against the file and line a developer edits, rather
       # than surfacing much later as an xref-not-found warning during API docs ingestion.
       #
-      # Restricted to the packages whose sources incorporate doc/snippets content.
-      - ${{ if or(eq(parameters.packageShortName, 'SqlClient'), eq(parameters.packageShortName, 'SqlServer')) }}:
+      # Enabled only for projects whose callers identify a documentation snippet directory.
+      - ${{ if ne(parameters.documentationSnippetsPath, '') }}:
         - template: /eng/pipelines/onebranch/steps/validate-xml-docs-step.yml@self
           parameters:
             displayName: 'Validate XML documentation sources'
-            snippetsDirectory: '$(Build.SourcesDirectory)/doc/snippets'
+            snippetsDirectory: '${{ parameters.documentationSnippetsPath }}'
             documentationPath: ''
             packagesPath: ''
             extractPath: ''

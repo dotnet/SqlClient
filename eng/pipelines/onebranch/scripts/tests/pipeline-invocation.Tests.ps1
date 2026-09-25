@@ -14,6 +14,8 @@
 
 BeforeAll {
     $script:repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..' '..' '..' '..' '..')).Path
+    $script:jobsPath = Join-Path $script:repoRoot 'eng/pipelines/onebranch/jobs'
+    $script:stagesPath = Join-Path $script:repoRoot 'eng/pipelines/onebranch/stages'
     $script:stepsPath = Join-Path $script:repoRoot 'eng/pipelines/onebranch/steps'
     $script:scriptsPath = Join-Path $script:repoRoot 'eng/pipelines/onebranch/scripts'
 
@@ -88,6 +90,32 @@ Describe 'Validation step templates' {
         # Defaulting an unrecognised value to report-only would silently disable gating.
         $content = Get-Content -LiteralPath (Join-Path $script:stepsPath $Template) -Raw
         $content | Should -Match 'Unexpected failOnValidationError value'
+    }
+
+    It 'enables source validation from the configured snippet path' {
+        $content = Get-Content -LiteralPath (Join-Path $script:jobsPath 'build-buildproj-job.yml') -Raw
+
+        $content | Should -Match "\$\{\{ if ne\(parameters\.documentationSnippetsPath, ''\) \}\}"
+        $content | Should -Match "snippetsDirectory: '\$\{\{ parameters\.documentationSnippetsPath \}\}'"
+    }
+
+    It 'configures every snippet-consuming project with an existing directory' {
+        $content = Get-Content -LiteralPath (Join-Path $script:stagesPath 'build-stages.yml') -Raw
+        $expectedPaths = @(
+            'doc/snippets'
+            'src/Microsoft.Data.SqlClient.Extensions/Abstractions/doc'
+            'src/Microsoft.Data.SqlClient.Extensions/Azure/doc'
+        )
+        $matches = [regex]::Matches(
+            $content,
+            "documentationSnippetsPath: '\`$\(REPO_ROOT\)/([^']+)'")
+        $configuredPaths = @($matches | ForEach-Object { $_.Groups[1].Value })
+
+        $configuredPaths.Count | Should -Be 4
+        foreach ($path in $expectedPaths) {
+            $configuredPaths | Should -Contain $path
+            Test-Path -LiteralPath (Join-Path $script:repoRoot $path) | Should -BeTrue
+        }
     }
 }
 

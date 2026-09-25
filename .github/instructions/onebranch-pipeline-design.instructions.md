@@ -31,7 +31,7 @@ Respect this graph when modifying build stages:
 Validation runs in three places and shares one gating switch.
 
 - **Localization** — `steps/validate-localization-step.yml`, in the SqlClient build job before the driver is built. Reports missing or obsolete keys, empty localized values whose English value is non-empty, and untranslated resources. Approved identical translations are listed by culture and resource key in `.config/LocalizationValidationAllowlist.json`.
-- **XML documentation** — `steps/validate-xml-docs-step.yml`, three times per run: snippet sources before the build, generated documentation after it, and the assembled packages in `package_validation`. Reports malformed documentation IDs, unresolved cross-references, and `lib/` vs `ref/` documentation-trimming defects.
+- **XML documentation** — `steps/validate-xml-docs-step.yml`, in three modes: snippet sources before each snippet-consuming project is built (SqlClient, SqlServer, Abstractions, and Azure), generated documentation after documented projects are built, and assembled packages in `package_validation`. Reports malformed documentation IDs, unresolved cross-references, and `lib/` vs `ref/` documentation-trimming defects.
 - **Packages** — `steps/validate-packages-step.yml`, in `package_validation`. Runs `tools/PackageValidator` across the whole drop so its cross-package version and dependency rules apply.
 
 ### `failOnValidationError`

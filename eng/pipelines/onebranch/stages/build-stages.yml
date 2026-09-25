@@ -139,6 +139,7 @@ stages:
             shouldSignPackage: ${{ parameters.isOfficial }}
             failOnValidationError: ${{ parameters.failOnValidationError }}
             projectPath: '$(REPO_ROOT)/src/Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj'
+            documentationSnippetsPath: '$(REPO_ROOT)/doc/snippets'
             signingAppRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
             signingAppRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
             signingAuthAkvName: '${{ parameters.signingAuthAkvName }}'
@@ -182,6 +183,7 @@ stages:
           shouldSignPackage: ${{ parameters.isOfficial }}
           failOnValidationError: ${{ parameters.failOnValidationError }}
           projectPath: '$(REPO_ROOT)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj'
+          documentationSnippetsPath: '$(REPO_ROOT)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/doc'
           signingAppRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
           signingAppRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
           signingAuthAkvName: '${{ parameters.signingAuthAkvName }}'
@@ -230,6 +232,7 @@ stages:
           shouldSignPackage: ${{ parameters.isOfficial }}
           failOnValidationError: ${{ parameters.failOnValidationError }}
           projectPath: '$(REPO_ROOT)/src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj'
+          documentationSnippetsPath: '$(REPO_ROOT)/doc/snippets'
           signingAppRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
           signingAppRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
           signingAuthAkvName: '${{ parameters.signingAuthAkvName }}'
@@ -270,6 +273,7 @@ stages:
           shouldSignPackage: ${{ parameters.isOfficial }}
           failOnValidationError: ${{ parameters.failOnValidationError }}
           projectPath: '$(REPO_ROOT)/src/Microsoft.Data.SqlClient.Extensions/Azure/src/Azure.csproj'
+          documentationSnippetsPath: '$(REPO_ROOT)/src/Microsoft.Data.SqlClient.Extensions/Azure/doc'
           signingAppRegistrationClientId: '${{ parameters.signingAppRegistrationClientId }}'
           signingAppRegistrationTenantId: '${{ parameters.signingAppRegistrationTenantId }}'
           signingAuthAkvName: '${{ parameters.signingAuthAkvName }}'
