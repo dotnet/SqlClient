@@ -1,12 +1,11 @@
 # PackageCompatibility Tool
 
-A minimal console application that verifies that a set of SqlClient packages can coexist without
-transitive dependency conflicts, API surface mismatches, or broken runtime functionality.  It forces
-the AKV provider type to load (pulling in that assembly and its transitive dependencies) and then
-opens a `SqlConnection` to confirm that the resolved package graph works end-to-end against a real
-SQL Server instance.
+A minimal console application for smoke-testing a selected set of SqlClient package versions.
+It references the AKV provider type and opens a `SqlConnection` against a real SQL Server instance.
+A successful connection validates the exercised authentication and network paths, not every API or
+transitive dependency in the package graph.
 
-The following SqlClient packages are verified, either directly or transitively:
+The app references these SqlClient packages:
 
 - `Microsoft.Data.SqlClient`
 - `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider`
@@ -17,7 +16,7 @@ The following SqlClient packages are verified, either directly or transitively:
 
 ## Purpose
 
-This tool is a smoke test for inter-package compatibility across the SqlClient suite.  It catches
+This tool is a smoke test for inter-package compatibility across the SqlClient suite. It can reveal
 problems such as:
 
 - Assembly binding conflicts caused by mismatched transitive dependencies.
@@ -26,13 +25,17 @@ problems such as:
 
 Specifically, it:
 
-1. Instantiates `SqlColumnEncryptionAzureKeyVaultProvider` to force the AKV provider assembly and
-   all its transitive dependencies to load alongside SqlClient.
+1. References `typeof(SqlColumnEncryptionAzureKeyVaultProvider)` without constructing a provider or
+   performing Key Vault operations.
 2. Opens a `SqlConnection` using a connection string you provide, exercising the authentication
    and network code paths end-to-end.
 
 The app is designed to run against both **published NuGet packages** and **locally-built packages**
-(via the `packages/` directory configured in `NuGet.config`).
+(via the [`packages/`](packages/) directory configured in [NuGet.config](NuGet.config)).
+
+Run the commands below from `tools/PackageCompatibility/src`. The app targets `net481` and `net10.0`,
+so `dotnet run` requires a framework selection. The examples use `-f net10.0`; use `-f net481` to
+exercise .NET Framework on Windows.
 
 ## How This Differs From the Existing Test Suite
 
@@ -41,16 +44,15 @@ complements — but does not replace — those tests.  The key differences are:
 
 ### Heterogeneous package versions
 
-The test projects reference sibling packages via project references or a shared `Directory.Packages.
-props` file.  Every test run uses a **single, uniform version set** derived from whatever is
-currently checked out.  You cannot ask the test suite to run `SqlClient 7.0.1` against
-`AkvProvider 7.1.0-preview1` without editing project files.
+The main build orchestrator uses one `PackageVersionSqlClient` value for the SqlClient family,
+with a separate `PackageVersionSqlServer` value. Its package-mode test targets do not expose
+independent version switches for every family package.
 
 This tool accepts any combination of independent version numbers — including versions that have not
 been published yet — at the command line:
 
 ```bash
-dotnet run \
+dotnet run -f net10.0 \
   -p:SqlClientVersion=7.0.1 \
   -p:AkvProviderVersion=7.1.0-preview1 \
   -- -c "<connection string>"
@@ -61,19 +63,21 @@ against the last published SqlClient release?"* without modifying any source fil
 
 ### Pre-release and locally-built packages
 
-Because NuGet resolves packages from the `packages/` local feed before falling back to NuGet.org,
-you can drop pre-release `.nupkg` files in that folder and reference them immediately — even before
-they have been published.  The existing tests have no equivalent mechanism; they can only reference
-packages that are either checked out as source or already published to a configured feed.
+You can drop pre-release `.nupkg` files in `tools/PackageCompatibility/packages/` and reference them
+immediately — even before they have been published. NuGet can resolve the SqlClient package IDs from
+either that local feed or NuGet.org; source order does not guarantee preference for a local copy.
+Use a unique package version to distinguish local builds. The main test suite also supports local
+packages through `ReferenceType=Package`; this tool is useful for independently selecting versions.
 
-### End-to-end runtime coverage across the full package graph
+### Connectivity with a selected package graph
 
-The test suite exercises individual classes and APIs in isolation.  Functional and manual tests do
-open real connections, but they always run against the packages as built from source in the current
-branch.
+Unit and functional tests exercise individual classes and APIs without a live SQL Server.
+Manual tests open real server connections. These projects can run against source projects or
+package references.
 
-This tool loads every package in the dependency graph simultaneously in a single process and then
-opens a live `SqlConnection`.  This catches a class of failures that isolated tests miss:
+This tool opens a live `SqlConnection` using the selected package versions. Assemblies load as needed
+by the exercised code paths; merely referencing a package does not exercise all its dependencies.
+It can expose issues such as:
 
 - **Binding redirect conflicts**: two packages pulling in incompatible versions of a shared
   dependency (`Azure.Core`, `Microsoft.Identity.*`, etc.) that only manifest when all packages are
@@ -85,10 +89,12 @@ opens a live `SqlConnection`.  This catches a class of failures that isolated te
 
 ### Diagnostic console output
 
-When a connection fails, the tool can emit structured TDS-level and authentication trace output via
-the `--log` and `--trace` flags.  This output is written directly to the console and requires no
-test harness or log configuration — useful for quickly diagnosing authentication failures in CI
-environments or on developer machines where full test infrastructure is unavailable.
+Use `--log-events` (or `-l`) to write SqlClient EventSource events to the console during the run.
+`--trace` (or `-t`) pauses before connecting and prints a `dotnet-trace` attachment command; it
+does not start trace collection itself.
+
+`--verbose` (or `-v`) includes exception details and the full connection string. Do not capture or
+share verbose output containing real credentials.
 
 The test suite's diagnostics are routed through `EventSource`/`DiagnosticListener` and are only
 visible if a listener is attached (e.g. via `dotnet-trace` or a custom test initializer).
@@ -101,11 +107,12 @@ visible if a listener is attached (e.g. via `dotnet-trace` or a custom test init
   for connectivity tests, but unit and functional tests run without a server.
 - It does not cover every authentication mode automatically.  You must provide a suitable connection
   string for each mode you want to validate.
+- It does not encrypt or decrypt data through the AKV provider, or validate every referenced assembly.
 
 ## Project Layout
 
 - `src/` contains the tool source files and project file.
-- `test/` is reserved for tests.
+- `test/` contains the tool's xUnit v3 tests.
 
 ## Authentication Modes
 
@@ -122,9 +129,9 @@ exercised during the connectivity test.  Use different modes to broaden coverage
 | Entra ID — service principal | `ActiveDirectoryServicePrincipal` | `Microsoft.Data.SqlClient` + `Extensions.Azure` (requires `AzureVersion`) |
 | Entra ID — managed identity | `ActiveDirectoryManagedIdentity` | `Microsoft.Data.SqlClient` + `Extensions.Azure` (requires `AzureVersion`) |
 
-> **Note:** All Entra ID modes require the `Extensions.Azure` package to be referenced (pass
-> `-p:AzureVersion=<version>`).  Without it, SqlClient will throw at runtime because no
-> authentication provider is registered for those modes.
+> **Note:** Starting with SqlClient 7.0, driver-provided Entra ID authentication requires
+> `Extensions.Azure` (pass `-p:AzureVersion=<version>`). This app does not register a custom
+> authentication provider, so those modes fail without the extension.
 
 ## Build Parameters
 
@@ -142,9 +149,9 @@ Package versions are controlled through build properties. Pass them on the comma
 
 ## Local Package Source
 
-The `NuGet.config` adds a `packages/` directory as a local package source. To test against packages
-that haven't been published to NuGet yet, copy the `.nupkg` files into this folder and specify the
-matching version via the build properties above.
+The [NuGet.config](NuGet.config) adds `tools/PackageCompatibility/packages/` as a local package source,
+relative to that config file (not the shell's working directory). Copy locally built `.nupkg` files into
+this folder and specify their matching versions via the build properties above.
 
 NuGet will cache copies of the packages it finds in `packages/` after a successful restore.  If you
 update the `.nupkg` files in `packages/` without incrementing their version numbers (and referencing
@@ -160,8 +167,12 @@ dotnet nuget locals all --clear
 The app has built-in help:
 
 ```bash
-dotnet run -- --help
+dotnet run -f net10.0 -- --help
+```
 
+Example output:
+
+```text
 Description:
   Package Compatibility Tester
   ----------------------------
@@ -175,19 +186,19 @@ Description:
 The app requires a connection string.  Use SQL authentication for a basic connectivity check:
 
 ```bash
-dotnet run -- -c "Server=myserver;Database=mydb;User ID=sa;Password=<pw>;Encrypt=Mandatory;TrustServerCertificate=true"
+dotnet run -f net10.0 -- -c "Server=myserver;Database=mydb;User ID=sa;Password=<pw>;Encrypt=Mandatory;TrustServerCertificate=true"
 ```
 
 To exercise Entra ID flows, include an `Authentication` keyword and reference the `Extensions.Azure`
 package:
 
 ```bash
-dotnet run -p:AzureVersion=1.0.0 -- -c "Server=myserver.database.windows.net;Database=mydb;Authentication=ActiveDirectoryDefault"
+dotnet run -f net10.0 -p:AzureVersion=1.0.0 -- -c "Server=myserver.database.windows.net;Database=mydb;Authentication=ActiveDirectoryDefault"
 ```
 
-On success the app emits to standard out:
+Example success output (package versions and server details vary):
 
-```bash
+```text
 Package Compatibility Tester
 ----------------------------
 
@@ -196,7 +207,7 @@ Packages used:
   AKV Provider:  7.0.0
   Azure:         1.1.0-preview1
   Logging:       1.0.1
-  SqlClient:     7.1.0.preview1
+  SqlClient:     7.1.0-preview1
   SqlServer:     1.0.0
 
 Connection details:
@@ -206,13 +217,12 @@ Connection details:
 
 Testing connectivity...
 Connected successfully!
-    Server version: 12.00.1017
+  Server version: 12.00.1017
 ```
 
 Errors will be emitted to standard error:
 
-```bash
-Testing connectivity...
+```text
 Connection failed:
   Cannot find an authentication provider for 'ActiveDirectoryPassword'.
 ```
@@ -222,32 +232,33 @@ Connection failed:
 Run a basic SQL authentication check using the default package versions:
 
 ```bash
-dotnet run -- -c "Server=myserver;Database=mydb;User ID=sa;Password=<pw>;Encrypt=Mandatory;TrustServerCertificate=true"
+dotnet run -f net10.0 -- -c "Server=myserver;Database=mydb;User ID=sa;Password=<pw>;Encrypt=Mandatory;TrustServerCertificate=true"
 ```
 
-Run with no `Azure` package — Entra ID modes will fail at runtime if specified in the connection
-string, which is itself useful for confirming the error path:
+Run with no `Azure` package. With SqlClient 7.0 or later, driver-provided Entra ID modes fail
+if specified in the connection string, which is useful for confirming the error path:
 
 ```bash
-dotnet run -- -c "<connection string>"
+dotnet run -f net10.0 -- -c "<connection string>"
 ```
 
 Include the `Azure` package to enable Entra ID authentication flows:
 
 ```bash
-dotnet run -p:AzureVersion=1.0.0-preview1 -- -c "<connection string>"
+dotnet run -f net10.0 -p:AzureVersion=1.0.0-preview1 -- -c "<connection string>"
 ```
 
-Run against locally-built packages (drop `.nupkg` files into `packages/` first):
+Run against locally-built packages (copy `.nupkg` files to `tools/PackageCompatibility/packages/`
+first, then run this command from `tools/PackageCompatibility/src`):
 
 ```bash
-dotnet run -p:SqlClientVersion=7.1.0-preview1 -- -c "<connection string>"
+dotnet run -f net10.0 -p:SqlClientVersion=7.1.0-preview1 -- -c "<connection string>"
 ```
 
-Override all five package versions at once:
+Override all six package versions at once:
 
 ```bash
-dotnet run \
+dotnet run -f net10.0 \
   -p:AbstractionsVersion=1.0.1 \
   -p:AkvProviderVersion=7.1.0-preview1 \
   -p:AzureVersion=1.0.0 \
@@ -259,8 +270,10 @@ dotnet run \
 
 ## Prerequisites
 
-- [.NET 10.0 SDK](https://dotnet.microsoft.com/download) and .NET Framework 4.8.1 or later.
+- The .NET SDK pinned in [global.json](global.json), plus the .NET 10 runtime for `net10.0`.
+- Windows and .NET Framework 4.8.1 to run the `net481` target.
 - A SQL Server or Azure SQL instance reachable from the machine running the tool.
-- For Entra ID authentication modes: Azure credentials available to `DefaultAzureCredential`
-  (e.g. Azure CLI login, environment variables, or managed identity), and the `AzureVersion`
-  build property set so the `Extensions.Azure` package is included.
+- For Entra ID authentication: credentials appropriate to the selected mode, plus `AzureVersion`
+  for the extension package when using SqlClient 7.0 or later. `ActiveDirectoryDefault` uses the
+  `DefaultAzureCredential` chain (for example, Azure CLI login or managed identity); other modes
+  have their own credential requirements.

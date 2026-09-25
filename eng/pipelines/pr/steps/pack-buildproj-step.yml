@@ -27,9 +27,9 @@ parameters:
       - Release
 
   # Suffix to apply to the generated packages such that the package will be considered a prerelease
-  # version. The resulting package version will look like: `1.2.3-suffix888.1` where 1.2.3 is the
-  # default version specified in Versions.props, suffix is this parameter, and 888.1 is the build
-  # number for the currently executing build.
+  # version. For a stable NextVersion of 1.2.3, the resulting package version is
+  # `1.2.3-suffix.888.1`; an existing prerelease tag is retained before the suffix.
+  # Here suffix is this parameter, and 888.1 is the build number.
   - name: buildSuffix
     type: string
 
@@ -55,5 +55,5 @@ steps:
       arguments: >-
         -t:Pack${{ parameters.packageShortName }}
         -p:Configuration=${{ parameters.buildConfiguration }}
-        -p:BuildNumber='$(Build.BuildNumber)'
-        -p:BuildSuffix='${{ parameters.buildSuffix }}'
+        -p:BuildNumber="$(Build.BuildNumber)"
+        -p:BuildSuffix="${{ parameters.buildSuffix }}"
