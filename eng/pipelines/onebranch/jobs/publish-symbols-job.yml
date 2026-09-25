@@ -17,7 +17,6 @@ parameters:
   - name: artifactName
     type: string
 
-  # The full NuGet package name (e.g. Microsoft.Data.SqlClient.Internal.Logging).
   - name: packageFullName
     type: string
 

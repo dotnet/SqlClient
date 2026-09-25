@@ -31,6 +31,13 @@ parameters:
     - name: azureSubscription
       type: string
 
+    # Hosts probed for reachability.  Both symbol servers are probed from
+    # the same agent, so a difference between them isolates the destination rather than the
+    # caller -- which is what distinguishes an egress block from a service rejection.
+    - name: reachabilityProbeHosts
+      type: string
+      default: 'symbolrequestppe.trafficmanager.net,symbolrequestprod.trafficmanager.net'
+
     # Package name, typically the name of the nuget package being built
     - name: packageName
       type: string
@@ -134,6 +141,21 @@ steps:
           SymbolsMaximumWaitTime: 60
           SymbolsProduct: '${{ parameters.packageName }}'
           SymbolsVersion: '${{ parameters.version }}'
+
+    # Probe reachability before attempting the publish request, so that a failure can be
+    # diagnosed from evidence: the probe distinguishes a transport failure from an HTTP
+    # response, and reports the socket error, without assigning ownership.  This runs inside
+    # the same container as the publish request, which is the environment that matters.
+    - task: PowerShell@2
+      displayName: 'Probe symbol server reachability'
+      # An unreachable endpoint is a finding to report, not a reason to skip the publish
+      # attempt -- the two results are read together.
+      continueOnError: true
+      inputs:
+        targetType: filePath
+        filePath: '$(Build.SourcesDirectory)/eng/pipelines/onebranch/scripts/test-endpoint-reachability.ps1'
+        arguments: '-HostName "${{ parameters.reachabilityProbeHosts }}"'
+        pwsh: true
 
     # Step 2 - Publish: Request the Symbols Publishing Pipeline to publish the uploaded
     # symbols to SymWeb and/or MSDL. The -ArtifactName argument must match the

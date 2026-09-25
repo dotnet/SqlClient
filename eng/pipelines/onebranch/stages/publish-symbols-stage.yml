@@ -27,10 +27,6 @@ parameters:
   - name: publishSymbols
     type: boolean
 
-  # ── Build parameters (used to conditionally include per-package jobs) ───
-
-  # Whether Microsoft.SqlServer.Server was built this run (its symbols are only published when it
-  # was built).  The SqlClient family is always built, so its symbols are always published.
   - name: buildSqlServer
     type: boolean
 
@@ -185,3 +181,4 @@ stages:
             symbolsPublishServer: '${{ parameters.symbolsPublishServer }}'
             symbolsPublishTokenUri: '${{ parameters.symbolsPublishTokenUri }}'
             symbolsUploadAccount: '${{ parameters.symbolsUploadAccount }}'
+
