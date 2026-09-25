@@ -54,12 +54,20 @@ $body
     function New-DocumentationDirectory {
         param(
             [string[]]$Members = @('T:Microsoft.Data.SqlClient.SqlConnection'),
-            [string[]]$Crefs = @()
+            [string[]]$Crefs = @(),
+            [string[]]$InlineXrefs = @()
         )
 
         $path = New-TestDirectory
         $memberXml = ($Members | ForEach-Object { "    <member name=""$_""><summary>Doc.</summary></member>" }) -join "`n"
         $crefXml = ($Crefs | ForEach-Object { "      <see cref=""$_"" />" }) -join "`n"
+        $inlineXrefXml = if ($InlineXrefs.Count -eq 0) {
+            ''
+        }
+        else {
+            $tokens = $InlineXrefs | ForEach-Object { "<xref:$_>" }
+            "`n      <remarks><format type=""text/markdown""><![CDATA[$($tokens -join ' ')]]></format></remarks>"
+        }
 
         @"
 <doc>
@@ -68,7 +76,7 @@ $body
 $memberXml
     <member name="T:Microsoft.Data.SqlClient.Sample">
       <summary>Sample.</summary>
-$crefXml
+$crefXml$inlineXrefXml
     </member>
   </members>
 </doc>
@@ -702,6 +710,49 @@ Describe 'validate-xml-docs.ps1' {
             $snippets = New-SnippetDirectory -Crefs @('T:Microsoft.Data.SqlClient.AnythingAtAll')
 
             { & $scriptPath -SnippetsDirectory $snippets } | Should -Not -Throw
+        }
+
+        It 'rejects a bare inline xref to a parameterized method' {
+            $target = 'Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer'
+            $docs = New-DocumentationDirectory `
+                -Members @("M:$target(System.Data.DataTable)") `
+                -InlineXrefs @($target)
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -DocumentationPath $docs -ReportPath $report -ReportOnly
+
+            $findings = @((Get-Report -Path $report).Findings)
+            $findings.Count | Should -Be 1
+            $findings[0].Category | Should -Be 'bare-parameterized-method-xref'
+            $findings[0].Message | Should -BeLike "*<xref:$target%2A>*"
+        }
+
+        It 'accepts an overload-family inline xref to a parameterized method' {
+            $target = 'Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer'
+            $docs = New-DocumentationDirectory `
+                -Members @("M:$target(System.Data.DataTable)") `
+                -InlineXrefs @("$target%2A")
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -DocumentationPath $docs -ReportPath $report
+
+            @((Get-Report -Path $report).Findings) | Should -BeNullOrEmpty
+        }
+
+        It 'accepts exact inline xrefs to types, properties and parameterless methods' {
+            $targets = @(
+                'Microsoft.Data.SqlClient.SqlConnection',
+                'Microsoft.Data.SqlClient.SqlConnection.ConnectionString',
+                'Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection.Clear')
+            $docs = New-DocumentationDirectory `
+                -Members @("T:$($targets[0])", "P:$($targets[1])", "M:$($targets[2])") `
+                -InlineXrefs $targets
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -DocumentationPath $docs -ReportPath $report
+
+            @((Get-Report -Path $report).Findings) | Should -BeNullOrEmpty
+            (Get-Report -Path $report).InlineXrefsValidated | Should -Be 3
         }
 
         It 'ignores non-documentation XML found in a scanned directory' {
@@ -1512,6 +1563,7 @@ Describe 'validate-xml-docs.ps1' {
                 'malformed-xml'                   = 'error'
                 'unresolved-cref'                 = 'error'
                 'invalid-docid'                   = 'error'
+                'bare-parameterized-method-xref'  = 'error'
                 'unknown-namespace-root'          = 'error'
                 'stale-allowlist-entry'           = 'error'
                 'lib-documentation-trimmed'       = 'error'

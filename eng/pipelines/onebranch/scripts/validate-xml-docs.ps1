@@ -134,6 +134,11 @@
                                        to downgrade.
       unresolved-cref         error    Compiler could not bind the cref and emitted a "!:" prefix.
       invalid-docid           error    Documentation ID violates the documentation-ID grammar.
+      bare-parameterized-method-xref
+                              error    A Markdown <xref:...> token names a parameterized method
+                                       without a signature or the encoded overload wildcard %2A.
+                                       Open Publishing treats the bare name as an exact UID, which
+                                       does not exist for a parameterized method.
       unknown-namespace-root  error    Leading identifier is not an allowed namespace root.
       stale-allowlist-entry   error    Allowlisted cref no longer appears in any validated file.
       lib-documentation-trimmed
@@ -252,6 +257,7 @@ $script:CategorySeverities = [ordered]@{
     'malformed-xml'          = 'error'
     'unresolved-cref'        = 'error'
     'invalid-docid'          = 'error'
+    'bare-parameterized-method-xref' = 'error'
     'unknown-namespace-root' = 'error'
     'stale-allowlist-entry'  = 'error'
     'lib-documentation-trimmed'      = 'error'
@@ -1278,6 +1284,7 @@ if ($documentationRequested -and $malformedByKind['documentation'] -eq 0) {
 $script:LocalUids = $null
 $script:LocalUidsByBody = [System.Collections.Generic.Dictionary[string, System.Collections.Generic.HashSet[string]]]::new(
     [System.StringComparer]::Ordinal)
+$script:ParameterizedMethodNames = $null
 
 # Members that form the published API surface. A reference assembly contains the public API and
 # nothing else, so its documentation is exactly that set. Left null when no reference documentation
@@ -1292,6 +1299,8 @@ $script:LocalNamespaces = $null
 if ($documentationDocuments.Count -gt 0) {
     $script:LocalUids = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
     $script:LocalNamespaces = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+    $script:ParameterizedMethodNames = [System.Collections.Generic.HashSet[string]]::new(
+        [System.StringComparer]::Ordinal)
     # Dependency documentation is indexed alongside, so a cref into a package this run did not
     # build resolves. Gated on documentation being present rather than on the dependencies: with
     # nothing under validation there is no cref to resolve, and an index built from dependencies
@@ -1318,6 +1327,13 @@ if ($documentationDocuments.Count -gt 0) {
             # told apart from one naming a member that was never emitted at all.
             if ($uid.Length -gt 2 -and $uid[1] -eq ':') {
                 $body = $uid.Substring(2)
+                if ($uid[0] -eq 'M') {
+                    $parameterList = $body.IndexOf('(')
+                    if ($parameterList -gt 0) {
+                        [void]$script:ParameterizedMethodNames.Add($body.Substring(0, $parameterList))
+                    }
+                }
+
                 if (-not $script:LocalUidsByBody.ContainsKey($body)) {
                     $script:LocalUidsByBody[$body] = [System.Collections.Generic.HashSet[string]]::new(
                         [System.StringComparer]::Ordinal)
@@ -1409,6 +1425,68 @@ foreach ($entry in $documents) {
         }
 
         Test-Cref -Cref $crefAttribute.Value -Context $context
+    }
+}
+
+# Markdown documentation embedded in CDATA uses <xref:UID> tokens rather than XML elements with
+# cref attributes. The compiler copies these tokens verbatim, so it cannot bind or validate them.
+# Open Publishing treats a bare method name as an exact UID. Parameterized methods have signatures
+# in their UIDs, so their bare names resolve only when written as an overload-family reference
+# ending in the URL-encoded wildcard %2A.
+$inlineXrefCount = 0
+foreach ($entry in $documents) {
+    foreach ($textNode in $entry.Document.DescendantNodes()) {
+        if ($textNode -isnot [System.Xml.Linq.XText]) {
+            continue
+        }
+
+        foreach ($match in [regex]::Matches($textNode.Value, '<xref:([^>\s]+)>')) {
+            $inlineXrefCount++
+            $target = $match.Groups[1].Value
+
+            if ($ignoredCrefs.Contains($target)) {
+                [void]$observedIgnoredCrefs.Add($target)
+                continue
+            }
+
+            # Source mode has no emitted member index, so it cannot distinguish a parameterless
+            # method, property or type from a parameterized method. Generated documentation mode
+            # provides that authority and is where this rule runs.
+            if ($null -eq $script:ParameterizedMethodNames -or
+                $target.EndsWith('%2A', [System.StringComparison]::OrdinalIgnoreCase) -or
+                $script:LocalUidsByBody.ContainsKey($target) -or
+                -not $script:ParameterizedMethodNames.Contains($target)) {
+                continue
+            }
+
+            $member = ''
+            $ancestor = $textNode.Parent
+            while ($null -ne $ancestor) {
+                if ($ancestor.Name.LocalName -eq 'member') {
+                    $nameAttribute = $ancestor.Attribute('name')
+                    if ($null -ne $nameAttribute) {
+                        $member = $nameAttribute.Value
+                    }
+                    break
+                }
+                if ($ancestor.Name.LocalName -eq 'members') {
+                    $nameAttribute = $ancestor.Attribute('name')
+                    if ($null -ne $nameAttribute) {
+                        $member = $nameAttribute.Value
+                    }
+                    break
+                }
+                $ancestor = $ancestor.Parent
+            }
+
+            $lineInfo = [System.Xml.IXmlLineInfo]$textNode
+            Add-Finding -Category 'bare-parameterized-method-xref' -Path $entry.Path `
+                -LineNumber $(if ($lineInfo.HasLineInfo()) { $lineInfo.LineNumber } else { 0 }) `
+                -Member $member -Cref $target -Message (
+                    "Inline xref '$target' names a parameterized method without a signature. " +
+                    "Open Publishing resolves it as an exact UID, which does not exist. Use " +
+                    "'<xref:$target%2A>' to link to the method's overload page.")
+        }
     }
 }
 
@@ -1761,6 +1839,7 @@ if (-not [string]::IsNullOrWhiteSpace($ReportPath)) {
         DocumentationFiles = $documentationDocuments.Count
         DependencyDocumentationFiles = $dependencyDocuments.Count
         CrefsValidated   = $crefCount
+        InlineXrefsValidated = $inlineXrefCount
         LocalUids        = if ($null -ne $script:LocalUids) { $script:LocalUids.Count } else { 0 }
         CountsByCategory = $countsByCategory
         Findings         = $findings
@@ -1827,7 +1906,7 @@ foreach ($finding in $findings) {
     Write-Host "##vso[task.logissue type=$issueType$location]$($finding.Category): $detail"
 }
 
-$summary = "XML documentation validation examined $crefCount cref(s) across $($documents.Count) file(s)."
+$summary = "XML documentation validation examined $crefCount cref(s) and $inlineXrefCount inline xref(s) across $($documents.Count) file(s)."
 foreach ($category in $countsByCategory.Keys) {
     if ($countsByCategory[$category] -gt 0) {
         $summary += " $category=$($countsByCategory[$category]);"
