@@ -169,8 +169,11 @@ To also resolve references against the members the build actually emitted, which
 
 ```powershell
 dotnet build ./src/Microsoft.Data.SqlClient/ref/Microsoft.Data.SqlClient.csproj -c Release
-./eng/pipelines/onebranch/scripts/validate-xml-docs.ps1 -DocumentationPath ./artifacts/Microsoft.Data.SqlClient.ref
+./eng/pipelines/onebranch/scripts/validate-xml-docs.ps1 -DocumentationPath ./artifacts/Microsoft.Data.SqlClient.ref/Project-Release
 ```
+
+Use the configuration-specific directory so stale outputs from another reference mode or build
+configuration are not included in the result.
 
 Validation is offline by design; it needs no network access and no xref map download.
 

@@ -250,6 +250,24 @@ jobs:
           projectPath: '${{ parameters.projectPath }}'
           projectSearchRoot: ''
 
+      # SqlClient builds its reference assembly into a sibling output tree. Validate it separately
+      # before packing so malformed ref documentation is attributed to the source build rather than
+      # surfacing only after the assembled package is extracted in package_validation.
+      - ${{ if eq(parameters.packageShortName, 'SqlClient') }}:
+        - template: /eng/pipelines/onebranch/steps/validate-xml-docs-step.yml@self
+          parameters:
+            displayName: 'Validate generated reference XML documentation'
+            snippetsDirectory: ''
+            documentationPath: '$(BUILD_OUTPUT)/Microsoft.Data.SqlClient.ref/Package-Release'
+            packagesPath: ''
+            extractPath: ''
+            reportPath: '$(JOB_OUTPUT)/validation/xml-docs-generated-ref.json'
+            failOn:
+              - error
+            failOnValidationError: ${{ parameters.failOnValidationError }}
+            projectPath: '$(REPO_ROOT)/src/Microsoft.Data.SqlClient/ref/Microsoft.Data.SqlClient.csproj'
+            projectSearchRoot: ''
+
       - ${{ if eq(parameters.shouldSignPackage, true) }}:
           # ESRP sign the DLLs.
           - template: /eng/pipelines/onebranch/steps/esrp-dll-signing-step.yml@self
