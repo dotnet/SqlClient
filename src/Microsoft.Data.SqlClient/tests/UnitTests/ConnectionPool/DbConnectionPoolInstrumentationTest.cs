@@ -687,20 +687,19 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         /// <summary>
-        /// Verifies that a connection whose owner was collected without being closed is reclaimed
-        /// and counted, in both pool implementations.
+        /// Verifies that repeated reclamation and normal returns balance every checkout without
+        /// diagnostic gauge drift, across both pools and synchronous/asynchronous acquisition.
         /// </summary>
         /// <remarks>
         /// This covers the counters only. The reclamation behavior itself is asserted by
         /// <see cref="DbConnectionPoolReclamationTest"/>.
-        ///
-        /// The two pools agree on every counter except activeSoftConnections; see the assertion
-        /// below.
         /// </remarks>
         [Theory]
-        [InlineData(PoolImplementation.WaitHandle)]
-        [InlineData(PoolImplementation.Channel)]
-        public void EmancipatedConnection_IsReclaimedAndCounted(PoolImplementation implementation)
+        [InlineData(PoolImplementation.WaitHandle, false)]
+        [InlineData(PoolImplementation.WaitHandle, true)]
+        [InlineData(PoolImplementation.Channel, false)]
+        [InlineData(PoolImplementation.Channel, true)]
+        public void EmancipatedConnection_IsReclaimedAndCounted(PoolImplementation implementation, bool async)
         {
             // Arrange
             FakeSqlClientMetrics metrics = new();
@@ -712,63 +711,92 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 maxPoolSize: 1,
                 timeProvider: fakeTime);
 
-            DbConnectionInternal leaked = CheckOutAndAbandonOwner(pool);
+            DbConnectionInternal? physicalConnection = null;
+            const int cycles = 3;
+            for (int cycle = 0; cycle < cycles; cycle++)
+            {
+                DbConnectionInternal leaked = CheckOutAndAbandonOwner(pool);
+                physicalConnection ??= leaked;
+                Assert.Same(physicalConnection, leaked);
+                AssertCounters(
+                    metrics,
+                    hardConnects: 1,
+                    softConnects: 2 * cycle + 1,
+                    softDisconnects: 2 * cycle,
+                    pooledConnections: 1,
+                    reclaimedConnections: cycle,
+                    activeConnections: 1);
+
+                CollectAbandonedOwners();
+                Assert.True(leaked.IsEmancipated);
+
+                // The pool's only slot is occupied by a connection nobody can return.
+                DbConnectionInternal? reclaimed = null;
+                Exception? failure = null;
+                SqlConnection waitingOwner = new();
+                Thread caller = new(() =>
+                {
+                    try
+                    {
+                        TaskCompletionSource<DbConnectionInternal>? completion = async ? new() : null;
+                        bool completed = pool.TryGetConnection(
+                            waitingOwner,
+                            completion,
+                            TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                            out reclaimed);
+                        if (!completed)
+                        {
+                            Assert.True(async);
+                            reclaimed = completion!.Task.GetAwaiter().GetResult();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        failure = ex;
+                    }
+                })
+                {
+                    IsBackground = true,
+                    Name = nameof(EmancipatedConnection_IsReclaimedAndCounted)
+                };
+                caller.Start();
+
+                AdvanceUntil(fakeTime, () => caller.Join(TimeSpan.Zero), "the caller should be served by the reclaimed connection");
+                Assert.Null(failure);
+
+                // Reclamation balances the abandoned checkout, so activeSoftConnections stays at one.
+                Assert.Same(leaked, reclaimed);
+                AssertCounters(
+                    metrics,
+                    hardConnects: 1,
+                    softConnects: 2 * cycle + 2,
+                    softDisconnects: 2 * cycle + 1,
+                    pooledConnections: 1,
+                    reclaimedConnections: cycle + 1,
+                    activeConnections: 1);
+
+                pool.ReturnInternalConnection(reclaimed!, waitingOwner);
+                AssertCounters(
+                    metrics,
+                    hardConnects: 1,
+                    softConnects: 2 * cycle + 2,
+                    softDisconnects: 2 * cycle + 2,
+                    pooledConnections: 1,
+                    freeConnections: 1,
+                    reclaimedConnections: cycle + 1);
+
+                GC.KeepAlive(waitingOwner);
+            }
+
+            pool.Shutdown();
+            pool.Clear();
             AssertCounters(
                 metrics,
                 hardConnects: 1,
-                softConnects: 1,
-                pooledConnections: 1,
-                activeConnections: 1);
-
-            CollectAbandonedOwners();
-            Assert.True(leaked.IsEmancipated);
-
-            // Act - the pool's only slot is occupied by a connection nobody can return, so this
-            // request can only be served by reclaiming it.
-            DbConnectionInternal? reclaimed = null;
-            Exception? failure = null;
-            SqlConnection waitingOwner = new();
-            Thread caller = new(() =>
-            {
-                try
-                {
-                    Assert.True(pool.TryGetConnection(
-                        waitingOwner,
-                        null,
-                        TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
-                        out reclaimed));
-                }
-                catch (Exception ex)
-                {
-                    failure = ex;
-                }
-            })
-            {
-                IsBackground = true,
-                Name = nameof(EmancipatedConnection_IsReclaimedAndCounted)
-            };
-            caller.Start();
-
-            AdvanceUntil(fakeTime, () => caller.Join(TimeSpan.Zero), "the caller should be served by the reclaimed connection");
-            Assert.Null(failure);
-
-            // Assert - the same physical connection was handed out again, with no second connect.
-            // The two pools disagree on softDisconnects: the channel pool routes reclamation
-            // through ReturnInternalConnection, so the leaked checkout is balanced and
-            // activeSoftConnections settles back to one. WaitHandle reclaims without that
-            // accounting, so its gauge drifts up by one per leaked connection. Tracked by #4555;
-            // asserted here so the drift is pinned rather than assumed.
-            Assert.Same(leaked, reclaimed);
-            AssertCounters(
-                metrics,
-                hardConnects: 1,
-                softConnects: 2,
-                softDisconnects: implementation == PoolImplementation.Channel ? 1 : 0,
-                pooledConnections: 1,
-                reclaimedConnections: 1,
-                activeConnections: 1);
-
-            GC.KeepAlive(waitingOwner);
+                hardDisconnects: 1,
+                softConnects: 2 * cycles,
+                softDisconnects: 2 * cycles,
+                reclaimedConnections: cycles);
         }
 
         /// <summary>

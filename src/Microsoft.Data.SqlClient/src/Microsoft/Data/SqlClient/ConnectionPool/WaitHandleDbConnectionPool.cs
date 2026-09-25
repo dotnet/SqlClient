@@ -1525,6 +1525,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                 Metrics.ReclaimedConnectionRequest();
 
+                // PrePush already claimed this checkout under the connection lock. Balance it
+                // here; ReturnInternalConnection would attempt to claim it a second time.
+                Metrics.SoftDisconnectRequest();
+
                 emancipatedObjectFound = true;
 
                 obj.DetachCurrentTransactionIfEnded();
