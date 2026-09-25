@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Tracing;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -1806,6 +1807,8 @@ namespace Microsoft.Data.SqlClient.Internal
         /// <param name="commandText">The SQL command text being executed.</param>
         /// <param name="message">A formatted trace message with additional context.</param>
         [Event(BeginExecuteEventId, Keywords = Keywords.ExecutionTrace, Task = Tasks.ExecuteCommand, Opcode = EventOpcode.Start)]
+        [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026",
+            Justification = "The payload is only int and string values, which EventSource writes without reflection.")]
         public void BeginExecute(int objectId, string dataSource, string database, string commandText, string message)
         {
             WriteEvent(BeginExecuteEventId, objectId, dataSource, database, commandText, message);
@@ -1822,6 +1825,8 @@ namespace Microsoft.Data.SqlClient.Internal
         /// <param name="sqlExceptionNumber">The SQL exception number, or 0 if no exception occurred.</param>
         /// <param name="message">A formatted trace message with additional context.</param>
         [Event(EndExecuteEventId, Keywords = Keywords.ExecutionTrace, Task = Tasks.ExecuteCommand, Opcode = EventOpcode.Stop)]
+        [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026",
+            Justification = "The payload is only int and string values, which EventSource writes without reflection.")]
         public void EndExecute(int objectId, int compositestate, int sqlExceptionNumber, string message)
         {
             WriteEvent(EndExecuteEventId, objectId, compositestate, sqlExceptionNumber, message);
