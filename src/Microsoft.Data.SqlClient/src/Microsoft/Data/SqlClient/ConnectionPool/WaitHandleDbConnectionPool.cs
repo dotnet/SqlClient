@@ -51,6 +51,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
     {
 
         private static int _objectTypeCount;
+        private readonly PoolPruningGuard _pruningGuard = new();
 
         public int Id => Interlocked.Increment(ref _objectTypeCount);
 
@@ -536,6 +537,22 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         private DbConnectionInternal CreateObject(DbConnection owningObject, DbConnectionInternal oldConnection, TimeoutTimer timeout)
         {
+            if (!_pruningGuard.TryEnter())
+            {
+                return null;
+            }
+            try
+            {
+                return CreateObjectCore(owningObject, oldConnection, timeout);
+            }
+            finally
+            {
+                _pruningGuard.Exit();
+            }
+        }
+
+        private DbConnectionInternal CreateObjectCore(DbConnection owningObject, DbConnectionInternal oldConnection, TimeoutTimer timeout)
+        {
             DbConnectionInternal newObj = null;
 
             try
@@ -783,6 +800,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     {
                         if (next.Completion.Task.IsCompleted)
                         {
+                            _pruningGuard.Exit();
                             continue;
                         }
 
@@ -817,22 +835,29 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                             caughtException = e;
                         }
 
-                        if (caughtException != null)
+                        try
                         {
-                            next.Completion.TrySetException(caughtException);
-                        }
-                        else if (timeout)
-                        {
-                            next.Completion.TrySetException(ADP.ExceptionWithStackTrace(ADP.PooledOpenTimeout()));
-                        }
-                        else
-                        {
-                            Debug.Assert(connection != null, "connection should never be null in success case");
-                            if (!next.Completion.TrySetResult(connection))
+                            if (caughtException != null)
                             {
-                                // if the completion was cancelled, lets try and get this connection back for the next try
-                                ReturnInternalConnection(connection, next.Owner);
+                                next.Completion.TrySetException(caughtException);
                             }
+                            else if (timeout)
+                            {
+                                next.Completion.TrySetException(ADP.ExceptionWithStackTrace(ADP.PooledOpenTimeout()));
+                            }
+                            else
+                            {
+                                Debug.Assert(connection != null, "connection should never be null in success case");
+                                if (!next.Completion.TrySetResult(connection))
+                                {
+                                    // if the completion was cancelled, lets try and get this connection back for the next try
+                                    ReturnInternalConnection(connection, next.Owner);
+                                }
+                            }
+                        }
+                        finally
+                        {
+                            _pruningGuard.Exit();
                         }
                     }
                 }
@@ -873,6 +898,28 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         public bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal> taskCompletionSource, TimeoutTimer timeout, out DbConnectionInternal connection)
         {
+            if (!_pruningGuard.TryEnter())
+            {
+                connection = null;
+                return true;
+            }
+            bool pending = false;
+            try
+            {
+                return TryGetConnectionCore(owningObject, taskCompletionSource, timeout, out connection, out pending);
+            }
+            finally
+            {
+                if (!pending)
+                {
+                    _pruningGuard.Exit();
+                }
+            }
+        }
+
+        private bool TryGetConnectionCore(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal> taskCompletionSource, TimeoutTimer timeout, out DbConnectionInternal connection, out bool pending)
+        {
+            pending = false;
             uint waitForMultipleObjectsTimeout = 0;
             bool allowCreate = false;
 
@@ -933,6 +980,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     taskCompletionSource,
                     timeout);
             _pendingOpens.Enqueue(pendingGetConnection);
+            // Transfer the admission to the worker, including cancelled requests still queued.
+            pending = true;
 
             // it is better to StartNew too many times than not enough
             if (_pendingOpensWaiting == 0)
@@ -1160,6 +1209,22 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <param name="timeout">Overall timeout budget for this connection request.</param>
         /// <returns>A new inner connection that is attached to the <paramref name="owningObject"/></returns>
         public DbConnectionInternal ReplaceConnection(DbConnection owningObject, DbConnectionInternal oldConnection, TimeoutTimer timeout)
+        {
+            if (!_pruningGuard.TryEnter())
+            {
+                return null;
+            }
+            try
+            {
+                return ReplaceConnectionCore(owningObject, oldConnection, timeout);
+            }
+            finally
+            {
+                _pruningGuard.Exit();
+            }
+        }
+
+        private DbConnectionInternal ReplaceConnectionCore(DbConnection owningObject, DbConnectionInternal oldConnection, TimeoutTimer timeout)
         {
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.ReplaceConnection|RES|CPOOL> {0}, replacing connection.", Id);
             DbConnectionInternal newConnection = UserCreateRequest(owningObject, timeout, oldConnection);
@@ -1553,6 +1618,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 QueuePoolCreateRequest();
             }
         }
+
+        public bool TryPrune() => _pruningGuard.TryPrune(this);
 
         public void Shutdown()
         {

@@ -267,17 +267,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         IDbConnectionPool pool = entry.Value;
                         if (pool != null)
                         {
-                            // Actually prune the pool if there are no connections in the pool and no errors occurred.
-                            // Empty pool during pruning indicates zero or low activity, but
-                            //  an error state indicates the pool needs to stay around to
-                            //  throttle new connection attempts.
-                            if ((!pool.ErrorOccurred) && (0 == pool.Count))
+                            // Count alone misses admitted requests and physical creation that
+                            // has not entered inventory. Retirement must exclude new admission
+                            // atomically, while retaining blocking-period error throttling.
+                            if (pool.TryPrune())
                             {
-                                // Order is important here.  First we remove the pool
-                                // from the collection of pools so no one will try
-                                // to use it while we're processing and finally we put the
-                                // pool into a list of pools to be released when they
-                                // are completely empty.
+                                // The retired pool rejects admission even for callers that
+                                // fetched it before the collection is replaced below.
                                 SqlConnectionFactory connectionFactory = pool.ConnectionFactory;
 
                                 connectionFactory.QueuePoolForRelease(pool, false);
