@@ -46,11 +46,11 @@
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="8.16.0" />
         <dependency id="System.Buffers" version="4.6.1" />
         <dependency id="System.Data.Common" version="4.3.0" />
-        <dependency id="System.Diagnostics.DiagnosticSource" version="10.0.3" />
+        <dependency id="System.Diagnostics.DiagnosticSource" version="10.0.10" />
         <dependency id="System.Memory" version="4.6.3" />
         <dependency id="System.Runtime.InteropServices.RuntimeInformation" version="4.3.0" />
         <dependency id="System.Security.Cryptography.Pkcs" version="8.0.1" />
-        <dependency id="System.Text.Json" version="10.0.3" />
+        <dependency id="System.Text.Json" version="10.0.10" />
         <dependency id="System.Threading.Channels" version="10.0.3" />
         <dependency id="System.Threading.RateLimiting" version="8.0.0" />
         <dependency id="System.ValueTuple" version="4.6.2" />
@@ -93,7 +93,7 @@
         <dependency id="Microsoft.SqlServer.Server" version="$SqlServerVersionRange$" />
         <dependency id="System.Configuration.ConfigurationManager" version="8.0.1" exclude="Compile" />
         <dependency id="System.Security.Cryptography.Pkcs" version="8.0.1" />
-        <dependency id="System.Text.Json" version="10.0.3" />
+        <dependency id="System.Text.Json" version="10.0.10" />
         <dependency id="System.Threading.Channels" version="10.0.3" />
         <dependency id="System.Threading.RateLimiting" version="8.0.0" />
       </group>

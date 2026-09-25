@@ -52,7 +52,7 @@ Reference one (latest stable) version unconditionally:
 
 ```xml
 <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
-<PackageVersion Include="Azure.Identity"  Version="1.17.1" />
+<PackageVersion Include="Azure.Core"      Version="1.62.0" />
 ```
 
 ### 3. Polyfills — **conditional presence, single version**
@@ -149,7 +149,7 @@ Pinning everything to the latest major (e.g. `10.x` unconditionally) forces ever
 
 ### Independent packages don't have this problem
 
-`Newtonsoft.Json 13.x`, `Azure.Identity 1.17.x`, etc. aren't tied to a runtime version. Customers don't have a "matching" version in mind, and the package's own multi-targeted assets handle TFM selection internally. One version is simpler and avoids needless conditional blocks.
+`Newtonsoft.Json 13.x`, `Azure.Core 1.62.x`, etc. aren't tied to a runtime version. Customers don't have a "matching" version in mind, and the package's own multi-targeted assets handle TFM selection internally. One version is simpler and avoids needless conditional blocks.
 
 ### Framework-provided assemblies win at runtime anyway
 

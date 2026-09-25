@@ -32,6 +32,15 @@
     </Content>
   </ItemGroup>
 
+  <Target Name="IncludeRestoreGraphForDependencyTests" BeforeTargets="AssignTargetPaths">
+    <ItemGroup>
+      <Content Include="$(ProjectAssetsFile)">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <TargetPath>Azure.Test.project.assets.json</TargetPath>
+      </Content>
+    </ItemGroup>
+  </Target>
+
   <!-- References ====================================================== -->
   <!-- Test target references -->
   <ItemGroup>
