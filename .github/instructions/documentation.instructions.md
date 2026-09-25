@@ -208,10 +208,13 @@ The review site requires Microsoft authentication. On a corp-joined Windows devi
 
 ```bash
 EDGE="/mnt/c/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"
-"$EDGE" --remote-debugging-port=9222 --remote-allow-origins=* \
+"$EDGE" --remote-debugging-port=9222 --remote-allow-origins=http://localhost:9222 \
   --user-data-dir=C:\\Temp\\edge-cdp-profile \
   --no-first-run --no-default-browser-check about:blank
 ```
+
+Omit `--remote-allow-origins` when the CDP client sends no `Origin` header. Otherwise, allow only
+the exact origin used by that client; never use a wildcard with an authenticated browser profile.
 
 Drive the browser from the Windows side because the Windows firewall can block WSL-to-Windows access to the debugging port:
 
