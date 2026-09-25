@@ -68,6 +68,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private static int _instanceCount;
 
         private readonly int _instanceId = Interlocked.Increment(ref _instanceCount);
+        private readonly PoolPruningGuard _pruningGuard = new();
 
         /// <summary>
         /// Serializes emancipated-connection sweeps. Held for the duration of a sweep, including the
@@ -410,7 +411,26 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         }
 
         /// <inheritdoc />
-        public DbConnectionInternal ReplaceConnection(
+        public DbConnectionInternal? ReplaceConnection(
+            DbConnection owningObject,
+            DbConnectionInternal oldConnection,
+            TimeoutTimer timeout)
+        {
+            if (!_pruningGuard.TryEnter())
+            {
+                return null;
+            }
+            try
+            {
+                return ReplaceConnectionCore(owningObject, oldConnection, timeout);
+            }
+            finally
+            {
+                _pruningGuard.Exit();
+            }
+        }
+
+        private DbConnectionInternal ReplaceConnectionCore(
             DbConnection owningObject,
             DbConnectionInternal oldConnection,
             TimeoutTimer timeout)
@@ -872,6 +892,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         public void Dispose() => Shutdown();
 
         /// <inheritdoc />
+        public bool TryPrune() => _pruningGuard.TryPrune(this);
+
+        /// <inheritdoc />
         public void Startup()
         {
             // State is set to Running in the constructor, and PoolPruner (when present, i.e.
@@ -918,6 +941,33 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             TimeoutTimer timeout,
             out DbConnectionInternal? connection)
         {
+            if (!_pruningGuard.TryEnter())
+            {
+                connection = null;
+                return true;
+            }
+            bool pending = false;
+            try
+            {
+                return TryGetConnectionCore(owningObject, taskCompletionSource, timeout, out connection, out pending);
+            }
+            finally
+            {
+                if (!pending)
+                {
+                    _pruningGuard.Exit();
+                }
+            }
+        }
+
+        private bool TryGetConnectionCore(
+            DbConnection owningObject,
+            TaskCompletionSource<DbConnectionInternal>? taskCompletionSource,
+            TimeoutTimer timeout,
+            out DbConnectionInternal? connection,
+            out bool pending)
+        {
+            pending = false;
             // Short-circuit when the pool is not Running (i.e., shut down or never started).
             // Returning (true, null) matches WaitHandleDbConnectionPool.TryGetConnection and tells
             // the caller "completed; no connection available" without entering the channel path,
@@ -1000,15 +1050,15 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             Task.Run(async () =>
             {
-                if (taskCompletionSource.Task.IsCompleted)
-                {
-                    return;
-                }
-
                 DbConnectionInternal? connection = null;
 
                 try
                 {
+                    if (taskCompletionSource.Task.IsCompleted)
+                    {
+                        return;
+                    }
+
                     connection = await GetInternalConnection(
                         owningObject,
                         async: true,
@@ -1036,7 +1086,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     // task.
                     taskCompletionSource.TrySetException(e);
                 }
+                finally
+                {
+                    _pruningGuard.Exit();
+                }
             });
+            pending = true;
 
             connection = null;
             return false;
@@ -1057,6 +1112,25 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// Thrown when the cancellation token is cancelled before the connection operation completes.
         /// </exception>
         private DbConnectionInternal? OpenNewInternalConnection(
+            DbConnection? owningConnection,
+            CancellationToken cancellationToken,
+            TimeoutTimer timeout)
+        {
+            if (!_pruningGuard.TryEnter())
+            {
+                return null;
+            }
+            try
+            {
+                return OpenNewInternalConnectionCore(owningConnection, cancellationToken, timeout);
+            }
+            finally
+            {
+                _pruningGuard.Exit();
+            }
+        }
+
+        private DbConnectionInternal? OpenNewInternalConnectionCore(
             DbConnection? owningConnection,
             CancellationToken cancellationToken,
             TimeoutTimer timeout)
