@@ -117,6 +117,29 @@ Describe 'Validation step templates' {
             Test-Path -LiteralPath (Join-Path $script:repoRoot $path) | Should -BeTrue
         }
     }
+
+    It 'validates generated SqlClient reference documentation before packing' {
+        $content = Get-Content -LiteralPath (Join-Path $script:jobsPath 'build-buildproj-job.yml') -Raw
+
+        $content | Should -Match "\$\{\{ if eq\(parameters\.packageShortName, 'SqlClient'\) \}\}"
+        $content | Should -Match "displayName: 'Validate generated reference XML documentation'"
+        $content | Should -Match "documentationPath: '\`$\(BUILD_OUTPUT\)/Microsoft\.Data\.SqlClient\.ref/Package-Release'"
+        $content | Should -Match "projectPath: '\`$\(REPO_ROOT\)/src/Microsoft\.Data\.SqlClient/ref/Microsoft\.Data\.SqlClient\.csproj'"
+
+        $buildIndex = $content.IndexOf(
+            '/eng/pipelines/onebranch/steps/build-buildproj-step.yml@self',
+            [System.StringComparison]::Ordinal)
+        $referenceValidationIndex = $content.IndexOf(
+            "displayName: 'Validate generated reference XML documentation'",
+            [System.StringComparison]::Ordinal)
+        $packIndex = $content.IndexOf(
+            '/eng/pipelines/onebranch/steps/pack-buildproj-step.yml@self',
+            [System.StringComparison]::Ordinal)
+
+        $buildIndex | Should -BeGreaterOrEqual 0
+        $referenceValidationIndex | Should -BeGreaterThan $buildIndex
+        $packIndex | Should -BeGreaterThan $referenceValidationIndex
+    }
 }
 
 Describe 'Validation scripts under the pipeline invocation form' {

@@ -1817,6 +1817,51 @@ namespace Contoso
 
     Context 'unexpected documentation elements' {
 
+        It 'rejects an over-broad include after the compiler expands it' {
+            $projectDirectory = New-TestDirectory
+            $projectPath = Join-Path $projectDirectory 'ReferenceDocs.csproj'
+            $snippetPath = Join-Path $projectDirectory 'ReferenceDocs.xml'
+
+            @'
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+</Project>
+'@ | Set-Content -LiteralPath $projectPath -Encoding utf8
+
+            @'
+<docs>
+  <members name="Sample">
+    <Sample>
+      <summary>Sample type.</summary>
+    </Sample>
+  </members>
+</docs>
+'@ | Set-Content -LiteralPath $snippetPath -Encoding utf8
+
+            @'
+/// <include file='ReferenceDocs.xml' path='docs/members[@name="Sample"]/*' />
+public class Sample { }
+'@ | Set-Content -LiteralPath (Join-Path $projectDirectory 'Sample.cs') -Encoding utf8
+
+            & dotnet build $projectPath --configuration Release --nologo --ignore-failed-sources |
+                Out-Null
+            $LASTEXITCODE | Should -Be 0
+
+            $documentationPath = Join-Path $projectDirectory 'bin/Release/net8.0'
+            $report = Join-Path $projectDirectory 'report.json'
+
+            { & $scriptPath -DocumentationPath $documentationPath -ReportPath $report } |
+                Should -Throw '*XML documentation validation failed with 1 issue*'
+
+            $finding = (Get-Report -Path $report).Findings | Select-Object -First 1
+            $finding.Category | Should -Be 'unexpected-documentation-element'
+            $finding.Member | Should -Be 'T:Sample'
+            $finding.Message | Should -BeLike '*<Sample>*'
+        }
+
         It 'reports member containers emitted by an over-broad include' {
             # Selecting every child of <members> copies the type and property containers into the
             # compiler output instead of their summary and remarks, so Learn receives no type docs.
