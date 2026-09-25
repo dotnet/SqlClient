@@ -11269,9 +11269,10 @@ namespace Microsoft.Data.SqlClient
 
                 // TvpColumnMetaData for each column (look for defaults in this loop
                 SmiDefaultFieldsProperty defaults = (SmiDefaultFieldsProperty)metaData.ExtendedProperties[SmiPropertySelector.DefaultFields];
+                SmiComputedFieldsProperty computedFields = (SmiComputedFieldsProperty)metaData.ExtendedProperties[SmiPropertySelector.ComputedFields];
                 for (int i = 0; i < metaData.FieldMetaData.Count; i++)
                 {
-                    WriteTvpColumnMetaData(metaData.FieldMetaData[i], defaults[i], stateObj);
+                    WriteTvpColumnMetaData(metaData.FieldMetaData[i], defaults[i], computedFields[i], stateObj);
                 }
 
                 // optional OrderUnique metadata
@@ -11283,7 +11284,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Write a single TvpColumnMetaData stream to the server
-        private void WriteTvpColumnMetaData(SmiExtendedMetaData md, bool isDefault, TdsParserStateObject stateObj)
+        private void WriteTvpColumnMetaData(SmiExtendedMetaData md, bool isDefault, bool isComputed, TdsParserStateObject stateObj)
         {
             // User Type
             if (SqlDbType.Timestamp == md.SqlDbType)
@@ -11300,6 +11301,10 @@ namespace Microsoft.Data.SqlClient
             if (isDefault)
             {
                 status |= TdsEnums.TVP_DEFAULT_COLUMN;
+            }
+            if (isComputed)
+            {
+                status |= TdsEnums.TVP_COMPUTED_COLUMN;
             }
             WriteUnsignedShort(status, stateObj);
 
