@@ -713,6 +713,8 @@ public class TransactedConnectionPoolTest
 
         public void Shutdown() => throw new NotImplementedException();
 
+        public bool TryPrune() => throw new NotImplementedException();
+
         public void TransactionEnded(Transaction transaction, DbConnectionInternal transactedObject)
         {
             throw new NotImplementedException();

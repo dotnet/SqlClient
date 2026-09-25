@@ -149,8 +149,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <param name="owningObject">The connection whose internal connection should be replaced.</param>
         /// <param name="oldConnection">The internal connection currently associated with the owning object.</param>
         /// <param name="timeout">The overall timeout budget for this connection request.</param>
-        /// <returns>A reference to the new DbConnectionInternal.</returns>
-        DbConnectionInternal ReplaceConnection(DbConnection owningObject, DbConnectionInternal oldConnection, TimeoutTimer timeout);
+        /// <returns>The new connection, or null if the pool was retired before admission.</returns>
+        DbConnectionInternal? ReplaceConnection(DbConnection owningObject, DbConnectionInternal oldConnection, TimeoutTimer timeout);
 
         /// <summary>
         /// Returns an internal connection to the pool.
@@ -178,6 +178,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// Shuts down the connection pool releasing any resources. Should be called once when the pool is no longer needed.
         /// </summary>
         void Shutdown();
+
+        /// <summary>
+        /// Atomically stops admission and shuts down an empty, error-free pool only when no
+        /// requests or background creation are in flight. On success the group may remove it.
+        /// </summary>
+        bool TryPrune();
 
         /// <summary>
         /// Informs the pool that a transaction has ended. The pool will commit and reset any internal
