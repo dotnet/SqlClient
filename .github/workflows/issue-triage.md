@@ -56,6 +56,30 @@ tools:
     min-integrity: none
 
 safe-outputs:
+  steps:
+    - name: Checkout trusted triage validator
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        ref: ${{ github.sha }}
+        path: triage-validator
+        sparse-checkout: .github/scripts
+        persist-credentials: false
+    - name: Validate triage output before publishing
+      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+      env:
+        GH_AW_AGENT_OUTPUT: ${{ steps.setup-agent-output-env.outputs.GH_AW_AGENT_OUTPUT }}
+      with:
+        script: |
+          const path = require('node:path');
+          const fs = require('node:fs');
+          const { validateTriageOutput } = require(path.join(process.env.GITHUB_WORKSPACE,
+            'triage-validator', '.github', 'scripts', 'validate-triage-output.cjs'));
+          const filename = process.env.GH_AW_AGENT_OUTPUT;
+          if (!filename) {
+            throw new Error('Missing agent output; refusing to publish unvalidated triage output.');
+          }
+          validateTriageOutput(JSON.parse(fs.readFileSync(filename, 'utf8')));
+          core.info('Triage output validated before safe-output publication.');
   # One triage summary per run. `hide-older-comments` collapses previous
   # summaries so only the latest is visible.
   add-comment:
