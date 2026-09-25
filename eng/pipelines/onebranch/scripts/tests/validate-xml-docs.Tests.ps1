@@ -766,6 +766,46 @@ Describe 'validate-xml-docs.ps1' {
                 '</member></members></doc>'
         }
 
+        It 'keeps packages apart when one root name extends another' {
+            # A root compared without a trailing separator prefix-matches any sibling whose name
+            # merely extends it. Contoso.Widgetref extends Contoso.Widget, so its lib/ path reads
+            # as "ref/lib/net8.0/..." relative to the shorter root, and the leading segment makes
+            # it look like reference documentation -- which is what defines the public API
+            # surface. A cref that fails to resolve from there is then reported as an error
+            # against a public member rather than as information.
+            $staging = New-TestDirectory
+            $unresolved = '<doc><assembly><name>A</name></assembly><members>' +
+                '<member name="T:Microsoft.Data.SqlClient.Holder"><summary>H.</summary>' +
+                '<see cref="T:Microsoft.Data.SqlClient.Absent" /></member></members></doc>'
+
+            $widget = Join-Path $staging 'Contoso.Widget'
+            New-Item -ItemType Directory -Path (Join-Path $widget 'lib/net8.0') -Force | Out-Null
+            Set-Content -LiteralPath (Join-Path $widget 'lib/net8.0/Contoso.xml') `
+                -Value $script:FullXml -Encoding utf8
+
+            # No ref/ folder of its own, so nothing here legitimately defines a public surface.
+            $widgetref = Join-Path $staging 'Contoso.Widgetref'
+            New-Item -ItemType Directory -Path (Join-Path $widgetref 'lib/net8.0') -Force | Out-Null
+            Set-Content -LiteralPath (Join-Path $widgetref 'lib/net8.0/Other.xml') `
+                -Value $unresolved -Encoding utf8
+
+            $packages = New-TestDirectory
+            Add-Type -AssemblyName System.IO.Compression.FileSystem
+            foreach ($name in 'Contoso.Widget', 'Contoso.Widgetref') {
+                [System.IO.Compression.ZipFile]::CreateFromDirectory(
+                    (Join-Path $staging $name), (Join-Path $packages "$name.nupkg"))
+            }
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -PackagesPath $packages -ExtractPath (New-TestDirectory) `
+                -ReportPath $report -ReportOnly
+
+            $finding = @((Get-Report -Path $report).Findings |
+                    Where-Object { $_.Cref -eq 'T:Microsoft.Data.SqlClient.Absent' })[0]
+            $finding.Category | Should -Be 'missing-local-uid'
+            $finding.Severity | Should -Be 'info'
+        }
+
         It 'accepts a full lib/ XML paired with a trimmed ref/ XML' {
             $packages = New-LayoutPackage -Files @{
                 'lib/net8.0/Microsoft.Data.SqlClient.xml' = $script:FullXml

@@ -55,8 +55,8 @@
     have the full documentation.
   -->
   <!--
-    Forward slashes because this path is also passed through to pwsh, where a backslash is an
-    escape character rather than a separator on non-Windows hosts.  Windows accepts either.
+    Forward slashes because this path is also passed through to pwsh, where a backslash is not a
+    path separator on non-Windows hosts.  Windows accepts either.
   -->
   <PropertyGroup>
     <TrimDocsScript>$(RepoRoot)tools/intellisense/TrimDocs.ps1</TrimDocsScript>

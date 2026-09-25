@@ -189,6 +189,12 @@
                               warning  Documentation was found for a project that does not set
                                        GenerateDocumentationFile. The project and the build
                                        disagree; the documentation is still validated.
+      documentation-not-expected
+                              info     No documentation was found, and none was expected: the
+                                       project does not set GenerateDocumentationFile, or it
+                                       references no documentation snippets. Stated rather than
+                                       passed over in silence, so a run shows why nothing was
+                                       checked.
 
 .EXAMPLE
     ./validate-xml-docs.ps1 -SnippetsDirectory ./doc/snippets
@@ -875,7 +881,12 @@ function Test-IsReferenceDocumentationPath {
     param([Parameter(Mandatory)][string]$Path)
 
     foreach ($packageRoot in $script:ExpandedPackageRoots.Keys) {
-        $rootFull = (Resolve-Path -LiteralPath $packageRoot).Path
+        # Compared with a trailing separator so that one package root cannot prefix-match another
+        # whose name merely extends it, such as Microsoft.Data.SqlClient against
+        # Microsoft.Data.SqlClient.Extensions. The segment check below would discard such a path
+        # anyway, but bounding the comparison at a directory boundary makes that independent of it.
+        $rootFull = (Resolve-Path -LiteralPath $packageRoot).Path.TrimEnd([char]'/', [char]'\') +
+            [System.IO.Path]::DirectorySeparatorChar
         if (-not $Path.StartsWith($rootFull, [System.StringComparison]::OrdinalIgnoreCase)) {
             continue
         }
@@ -1562,7 +1573,10 @@ if ($script:ExpandedPackageRoots.Count -gt 0) {
 
     foreach ($packageRoot in $script:ExpandedPackageRoots.Keys) {
         $packageName = $script:ExpandedPackageRoots[$packageRoot]
-        $rootFull = (Resolve-Path -LiteralPath $packageRoot).Path
+        # Trailing separator for the same reason as in Test-IsReferenceDocumentationPath: it keeps
+        # one package root from prefix-matching another whose name extends it.
+        $rootFull = (Resolve-Path -LiteralPath $packageRoot).Path.TrimEnd([char]'/', [char]'\') +
+            [System.IO.Path]::DirectorySeparatorChar
 
         # Index the documentation this package contains by folder kind, target framework and file
         # name, so lib/net8.0/X.xml can be matched with ref/net8.0/X.xml.
