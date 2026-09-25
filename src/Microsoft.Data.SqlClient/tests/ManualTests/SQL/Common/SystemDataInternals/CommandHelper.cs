@@ -25,6 +25,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
         public static FieldInfo s_rowsAffectedBySpDescribeParameterEncryption = s_sqlCommand.GetField(@"_rowsAffectedBySpDescribeParameterEncryption", BindingFlags.Instance | BindingFlags.NonPublic);
         public static FieldInfo s_sleepDuringRunExecuteReaderTdsForSpDescribeParameterEncryption = s_sqlCommand.GetField(@"_sleepDuringRunExecuteReaderTdsForSpDescribeParameterEncryption", BindingFlags.Static | BindingFlags.NonPublic);
         public static FieldInfo s_sleepAfterReadDescribeEncryptionParameterResults = s_sqlCommand.GetField(@"_sleepAfterReadDescribeEncryptionParameterResults", BindingFlags.Static | BindingFlags.NonPublic);
+        public static FieldInfo s_forceInternalEndQuery = s_sqlCommand.GetField(@"_forceInternalEndQuery", BindingFlags.Static | BindingFlags.NonPublic);
+
+        /// <summary>
+        /// True when the loaded Microsoft.Data.SqlClient exposes the DEBUG-only
+        /// _forceInternalEndQuery hook. Tests that depend on the hook should gate on this so they
+        /// report as skipped against a Release driver rather than silently passing.
+        /// </summary>
+        public static bool IsForceInternalEndQuerySupported() => s_forceInternalEndQuery is not null;
 
         internal static void CompletePendingReadWithSuccess(SqlCommand command, bool resetForcePendingReadsToWait)
         {
