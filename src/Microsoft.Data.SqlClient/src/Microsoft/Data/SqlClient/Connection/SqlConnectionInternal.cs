@@ -2001,7 +2001,7 @@ namespace Microsoft.Data.SqlClient.Connection
                 _currentSessionData._tdsVersion = Capabilities.TdsVersion;
             }
         }
-        
+
         /// <summary>
         /// Selects the <see cref="TimeoutTimer"/> that governs the login phase based on
         /// <see cref="LocalAppContextSwitches.UseOverallConnectTimeoutForPoolWait"/>.
@@ -2270,7 +2270,7 @@ namespace Microsoft.Data.SqlClient.Connection
             _timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.ProcessConnectionAuth);
             _timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.PostLogin);
 
-            CompleteLogin(!ConnectionOptions.Pooling);
+            CompleteLogin(!ConnectionOptions.Pooling, timeout);
 
             _timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.PostLogin);
         }
@@ -2306,7 +2306,41 @@ namespace Microsoft.Data.SqlClient.Connection
             return true;
         }
 
-        private void CompleteLogin(bool enlistOK) // @TODO: Rename as per guidelines
+        /// <summary>
+        /// Converts what remains of the login budget into the whole-second timeout used for the
+        /// corrective post-recovery <c>USE</c> batch.
+        /// </summary>
+        /// <param name="timeout">The timer governing the current login attempt.</param>
+        /// <returns>The batch timeout in seconds, where zero means no timeout.</returns>
+        /// <exception cref="SqlException">Thrown when the login budget is already exhausted.</exception>
+        /// <remarks>
+        /// Bounding the batch by the remaining budget, rather than restarting a full
+        /// ConnectTimeout, keeps a slow login followed by a stalled batch from overrunning the
+        /// caller's connect timeout by another interval. The batch API takes whole seconds, so a
+        /// sub-second remainder is raised to one second instead of being left as zero, which the
+        /// parser would read as no timeout at all; the batch can therefore outlive the remaining
+        /// budget by under a second, the same floor <c>Login</c> applies.
+        /// </remarks>
+        internal static int GetCorrectiveBatchTimeoutSeconds(TimeoutTimer timeout)
+        {
+            if (timeout.IsInfinite)
+            {
+                return 0;
+            }
+
+            if (timeout.IsExpired)
+            {
+                throw SQL.CR_ReconnectTimeout();
+            }
+
+            long remainingSeconds = timeout.MillisecondsRemaining / 1000;
+
+            return remainingSeconds < 1
+                ? 1
+                : (int)Math.Min(remainingSeconds, int.MaxValue);
+        }
+
+        private void CompleteLogin(bool enlistOK, TimeoutTimer timeout) // @TODO: Rename as per guidelines
         {
             _parser.Run(
                 RunBehavior.UntilDone,
@@ -2368,6 +2402,53 @@ namespace Microsoft.Data.SqlClient.Connection
                     _currentSessionData._encrypted = isEncrypted;
                 }
 
+                // The opt-in diagnostic compares the database captured before the
+                // connection dropped with the database observed during the recovery
+                // login. If they differ, align the connection before discarding the
+                // recovery snapshot.
+                string recoveredDatabase = null;
+                if (_recoverySessionData != null
+                    && LocalAppContextSwitches.VerifyRecoveredDatabaseContext)
+                {
+                    recoveredDatabase = _recoverySessionData._database
+                        ?? _recoverySessionData._initialDatabase;
+                }
+
+                // Compare ordinally: a case-sensitive server can host databases whose
+                // names differ only by case, so a case-insensitive match would treat
+                // two distinct recovery targets as equal and skip the correction.
+                if (recoveredDatabase != null
+                    && !string.Equals(CurrentDatabase, recoveredDatabase, StringComparison.Ordinal))
+                {
+                    int batchTimeoutSeconds = GetCorrectiveBatchTimeoutSeconds(timeout);
+
+                    // The server is not on the expected database.  Force it there.
+                    string safeName = SqlConnection.FixupDatabaseTransactionName(recoveredDatabase);
+                    _parser._physicalStateObj.SniContext = SniContext.Snix_Login;
+                    Task executeTask = _parser.TdsExecuteSQLBatch(
+                        $"USE {safeName}",
+                        batchTimeoutSeconds,
+                        notificationRequest: null,
+                        _parser._physicalStateObj,
+                        sync: true);
+                    Debug.Assert(executeTask == null, "Shouldn't get a task when doing sync writes");
+                    _parser.Run(
+                        RunBehavior.UntilDone,
+                        cmdHandler: null,
+                        dataStream: null,
+                        bulkCopyHandler: null,
+                        _parser._physicalStateObj);
+                    _parser._physicalStateObj.SniContext = SniContext.Snix_Login;
+
+                    // The USE command triggers an ENV_CHANGE that updates CurrentDatabase,
+                    // but set it explicitly in case the response is unexpected.
+                    CurrentDatabase = recoveredDatabase;
+                }
+
+                // Cleared only after the corrective USE. OnEnvChange treats a null
+                // recovery snapshot on a not-yet-open connection as a login-time change
+                // and would capture the recovered database as _originalDatabase, which a
+                // later pool reset would then restore instead of the initial catalog.
                 _recoverySessionData = null;
             }
 

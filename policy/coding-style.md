@@ -15,8 +15,10 @@ The general rule we follow is "_use Visual Studio defaults_".
 
 1. Text files should be UTF-8 encoded, no BOM, and use Unix line endings (LF).  The exception is
    Windows script files, which may use CRLF.
-1. Lines should be a maximum of 100 characters.  Exceptions are made for long content such as URLs,
-   and when breaking text would be less readable.
+1. Lines should be a maximum of 100 characters.  Prefer filling lines to their full width rather
+   than breaking unnecessarily short; short-wrapped lines waste vertical space and hurt
+   readability.  Exceptions are made for long content such as URLs, and when breaking text would
+   be less readable.
 1. We use [Allman style](http://en.wikipedia.org/wiki/Indent_style#Allman_style) braces, where each
    brace begins on a new line. A single line statement block can go without braces but the block
    must be properly indented on its own line and must not be nested in other statement blocks that
@@ -57,6 +59,9 @@ The general rule we follow is "_use Visual Studio defaults_".
    instead of literal characters. Literal non-ASCII characters occasionally get garbled by a tool
    or editor.
 1. When using labels (for goto), indent the label one less than the current indentation.
+1. We encourage the use of `#region` / `#endregion` to group related members within a class (e.g.
+   nested types, helpers, constants, test groups). Regions improve navigability in large files and
+   make the logical structure visible at a glance.
 1. When using a single-statement if, we follow these conventions:
    - Never use single-line form (for example: `if (source == null) throw new
      ArgumentNullException("source");`)

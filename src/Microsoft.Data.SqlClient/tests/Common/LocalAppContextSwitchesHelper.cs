@@ -66,6 +66,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     private readonly bool? _useManagedNetworkingOriginal;
     #endif
     private readonly bool? _useMinimumLoginTimeoutOriginal;
+    private readonly bool? _verifyRecoveredDatabaseContextOriginal;
 
     #endregion
 
@@ -136,6 +137,8 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             #endif
             _useMinimumLoginTimeoutOriginal =
                 GetSwitchValue("s_useMinimumLoginTimeout");
+            _verifyRecoveredDatabaseContextOriginal =
+                GetSwitchValue("s_verifyRecoveredDatabaseContext");
         }
         catch
         {
@@ -174,7 +177,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
                 "s_useLegacyFailoverAlternationOnLoginSqlErrors",
                 _useLegacyFailoverAlternationOnLoginSqlErrorsOriginal);
             SetSwitchValue(
-                "s_legacyRowVersionNullBehavior", 
+                "s_legacyRowVersionNullBehavior",
                 _legacyRowVersionNullBehaviorOriginal);
             SetSwitchValue(
                 "s_legacyVarTimeZeroScaleBehaviour",
@@ -214,6 +217,9 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             SetSwitchValue(
                 "s_useMinimumLoginTimeout",
                 _useMinimumLoginTimeoutOriginal);
+            SetSwitchValue(
+                "s_verifyRecoveredDatabaseContext",
+                _verifyRecoveredDatabaseContextOriginal);
         }
         finally
         {
@@ -398,6 +404,15 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     {
         get => GetSwitchPropertyValue(nameof(UseMinimumLoginTimeout));
         set => SetSwitchValue("s_useMinimumLoginTimeout", value);
+    }
+
+    /// <summary>
+    /// Get or set the VerifyRecoveredDatabaseContext switch value.
+    /// </summary>
+    public bool? VerifyRecoveredDatabaseContext
+    {
+        get => GetSwitchPropertyValue(nameof(VerifyRecoveredDatabaseContext));
+        set => SetSwitchValue("s_verifyRecoveredDatabaseContext", value);
     }
 
     #endregion

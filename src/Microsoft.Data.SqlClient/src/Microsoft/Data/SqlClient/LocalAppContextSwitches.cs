@@ -155,7 +155,14 @@ internal static class LocalAppContextSwitches
     /// </summary>
     private const string UseMinimumLoginTimeoutString =
         "Switch.Microsoft.Data.SqlClient.UseOneSecFloorInTimeoutCalculationDuringLogin";
-    
+
+    /// <summary>
+    /// The name of the app context switch that controls whether to verify
+    /// and correct the database context after session recovery.
+    /// </summary>
+    private const string VerifyRecoveredDatabaseContextString =
+        "Switch.Microsoft.Data.SqlClient.VerifyRecoveredDatabaseContext";
+
     #endregion
 
     #region Switch Values
@@ -178,7 +185,7 @@ internal static class LocalAppContextSwitches
     // GOTCHA: These fields are accessed via reflection by the
     // LocalAppContextSwitchesHelper test helper class.  If you rename them, be
     // sure to update the test helper as well.
-    
+
     #if NETFRAMEWORK
     /// <summary>
     /// The cached value of the DisableTnirByDefault switch.
@@ -269,6 +276,11 @@ internal static class LocalAppContextSwitches
     /// The cached value of the UseMinimumLoginTimeout switch.
     /// </summary>
     private static SwitchValue s_useMinimumLoginTimeout = SwitchValue.None;
+
+    /// <summary>
+    /// The cached value of the VerifyRecoveredDatabaseContext switch.
+    /// </summary>
+    private static SwitchValue s_verifyRecoveredDatabaseContext = SwitchValue.None;
 
     #endregion
 
@@ -669,6 +681,24 @@ internal static class LocalAppContextSwitches
             defaultValue: true,
             ref s_useMinimumLoginTimeout);
 
+    /// <summary>
+    /// When set to true, the driver verifies after a successful session
+    /// recovery that the server is on the same database the session was
+    /// using before the connection dropped.  If there is a mismatch the
+    /// driver issues a USE command to correct the server.  This prevents
+    /// silent database context loss across transparent reconnections.
+    ///
+    /// This switch is intended for diagnostic and test scenarios.  It only
+    /// applies when session recovery data is available and does not enable
+    /// recovery for connections that cannot be recovered.  The default value
+    /// is false, so normal connection behavior is unchanged.
+    /// </summary>
+    public static bool VerifyRecoveredDatabaseContext =>
+        AcquireAndReturn(
+            VerifyRecoveredDatabaseContextString,
+            defaultValue: false,
+            ref s_verifyRecoveredDatabaseContext);
+
     #endregion
 
     #region Helpers
@@ -677,10 +707,10 @@ internal static class LocalAppContextSwitches
     /// Acquires the value of the specified app context switch and stores it
     /// in the given reference.  Applies the default value if the switch isn't
     /// set.
-    /// 
+    ///
     /// If the cached value is already set, it is returned immediately without
     /// attempting to re-acquire it.
-    /// 
+    ///
     /// No attempt is made to prevent multiple threads from acquiring the same
     /// switch value simultaneously.  The worst that can happen is that the
     /// switch is acquired more than once, and the last acquired value wins.
@@ -713,6 +743,6 @@ internal static class LocalAppContextSwitches
         switchValue = acquiredValue ? SwitchValue.True : SwitchValue.False;
         return acquiredValue;
     }
-    
+
     #endregion
 }
