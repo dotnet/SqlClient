@@ -26,9 +26,23 @@ Respect this graph when modifying build stages:
 5. `Microsoft.Data.SqlClient.Extensions.Azure` — depends on Abstractions + Logging
 6. `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider` — depends on SqlClient + Abstractions + Logging
 
-## Localization Validation
+## Validation
 
-The SqlClient build job runs `steps/validate-localization-step.yml` before building the driver. Validation always fails the build for missing or obsolete keys, empty localized values whose English value is non-empty, and untranslated resources. Approved identical translations are listed by culture and resource key in `.config/LocalizationValidationAllowlist.json`.
+Validation runs in three places and shares one gating switch.
+
+- **Localization** — `steps/validate-localization-step.yml`, in the SqlClient build job before the driver is built. Reports missing or obsolete keys, empty localized values whose English value is non-empty, and untranslated resources. Approved identical translations are listed by culture and resource key in `.config/LocalizationValidationAllowlist.json`.
+- **XML documentation** — `steps/validate-xml-docs-step.yml`, three times per run: snippet sources before the build, generated documentation after it, and the assembled packages in `package_validation`. Reports malformed documentation IDs, unresolved cross-references, and `lib/` vs `ref/` documentation-trimming defects.
+- **Packages** — `steps/validate-packages-step.yml`, in `package_validation`. Runs `tools/PackageValidator` across the whole drop so its cross-package version and dependency rules apply.
+
+### `failOnValidationError`
+
+All three honour the `failOnValidationError` queue-time parameter, which defaults to `true`.
+
+When `false`, findings are logged as warnings and the build continues. This exists because the gates span jobs that depend on one another: a hard failure in an early gate aborts the build stage, so the later gates never run and a single run cannot show the full picture. Turning it off lets one run exercise every gate at once, which is how a newly added gate or a known backlog of findings is assessed.
+
+Report-only affects *findings* only. Malformed or missing inputs, and a validator that fails to run, still fail the step — neither produced findings worth reporting.
+
+The parameter is exposed at queue time only by `sqlclient-non-official.yml`. `sqlclient-official.yml` hardcodes it to `true` at its `build-stages.yml` call site, so an official run cannot be started with validation downgraded. Stages, jobs and steps declare it with no default and simply honour what they are given — the policy lives in one place rather than being re-asserted at every level.
 
 ## Build Stages
 
@@ -146,7 +160,7 @@ Variable groups:
 ## SDL and Compliance
 
 - TSA: enabled only in official pipeline; disabled in non-official to avoid spurious alerts
-- ApiScan: enabled in both; `break` follows the `breakOnSdlError` parameter
+- ApiScan: enabled in both; `break` follows the `failOnSdlError` parameter
 - Each package is registered with APIScan under its own name/version pair, so the `globalSdl.apiscan` blocks deliberately omit `softwareName`/`versionNumber`. `build-buildproj-job.yml` is the single place they are set, via `ob_sdl_apiscan_softwareName` (the package's `packageFullName`) and `ob_sdl_apiscan_versionNumber` (the `apiScanSoftwareVersion` parameter)
 - `compute-versions.ps1` derives APIScan registration versions as major.minor from the effective canonical package versions and publishes them as stage outputs. A package name/version pair must still be registered with APIScan before releasing a new major.minor. Consume these as runtime `$(...)` references so values such as `1.0` remain strings rather than being coerced to numbers by template expressions
 - Jobs that produce no assemblies (symbol publishing, signed-package validation, version computation) set `ob_sdl_apiscan_enabled: false` rather than reporting a name/version

@@ -8,6 +8,8 @@
   <!-- Compiler Options ================================================ -->
   <PropertyGroup>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- Opt into the documentation snippet compile inputs declared in src/Directory.Build.targets. -->
+    <IncludesDocumentationSnippets>true</IncludesDocumentationSnippets>
   </PropertyGroup>
 
   <!-- Versioning ====================================================== -->
@@ -52,6 +54,14 @@
     them in the xml files, though, because those are the source for the docs site, which needs to
     have the full documentation.
   -->
+  <!--
+    Forward slashes because this path is also passed through to pwsh, where a backslash is an
+    escape character rather than a separator on non-Windows hosts.  Windows accepts either.
+  -->
+  <PropertyGroup>
+    <TrimDocsScript>$(RepoRoot)tools/intellisense/TrimDocs.ps1</TrimDocsScript>
+  </PropertyGroup>
+
   <!-- Verifies that dotnet local tools have been restored (pwsh is required for doc trimming). -->
   <Target Name="_CheckPwshToolRestored">
     <Exec Command="dotnet tool run pwsh -- -Version"
@@ -64,11 +74,24 @@
            Text="The 'pwsh' dotnet local tool is not available. Run 'dotnet tool restore' from the repository root before building." />
   </Target>
 
-  <!-- This target runs after Build, and trims XML documentation generated in the $(OutputPath) of the project where this target is included.-->
+  <!--
+    Produces two documentation files: the trimmed one the package's ref/ folder ships, and an
+    untrimmed copy under untrimmed/ that the API docs pipeline consumes.
+
+    The compiler's own output in the intermediate directory is never modified.  That matters
+    because an isolated analyzer build redirects bin but deliberately shares obj (see build.proj),
+    so rewriting the intermediate file in place would leave the shared copy trimmed and a later
+    real build would publish trimmed text as though it were the full text.
+  -->
   <Target Name="TrimDocsForIntelliSense"
-          AfterTargets="Build"
+          AfterTargets="CoreCompile"
+          BeforeTargets="CopyFilesToOutputDirectory"
           DependsOnTargets="_CheckPwshToolRestored"
+          Inputs="$(DocumentationFile);$(TrimDocsScript)"
+          Outputs="$(IntermediateOutputPath)trimmed/$(TargetName).xml"
           Condition="'$(IsCrossTargetingBuild)' != 'true' AND '$(GenerateDocumentationFile)' == 'true'">
+
+    <MakeDir Directories="$(IntermediateOutputPath)trimmed" />
 
     <PropertyGroup>
       <PowerShellCommand>
@@ -76,7 +99,7 @@
           -NonInteractive
           -NoProfile
           -ExecutionPolicy Unrestricted
-          -Command "$(RepoRoot)tools\intellisense\TrimDocs.ps1 -inputFile '$(DocumentationFile)' -outputFile '$(DocumentationFile)'"
+          -Command "$(TrimDocsScript) -inputFile '$(DocumentationFile)' -outputFile '$(IntermediateOutputPath)trimmed/$(TargetName).xml'"
       </PowerShellCommand>
 
       <!-- Convert more than one whitespace character into one space -->
@@ -85,6 +108,46 @@
 
     <Message Text=">>> Trimming documentation file from generated documentation file: $(PowerShellCommand)"/>
     <Exec Command="$(PowerShellCommand)" ConsoleToMsBuild="true" />
+  </Target>
+
+  <!--
+    Points the documentation file that CopyFilesToOutputDirectory publishes at the trimmed copy.
+
+    Redirecting the copy source rather than overwriting the copy result is what makes this survive
+    an incremental build: that task skips unchanged files by comparing timestamp and size, so a
+    trimmed file written over its output would differ from the intermediate source and be replaced
+    with the untrimmed text on the next build.
+
+    Deliberately has no Inputs/Outputs.  It must run on every build, including those where the trim
+    itself was up to date, or the untrimmed intermediate file would be published instead.
+  -->
+  <Target Name="PublishTrimmedDocsForIntelliSense"
+          DependsOnTargets="TrimDocsForIntelliSense"
+          BeforeTargets="CopyFilesToOutputDirectory"
+          Condition="'$(IsCrossTargetingBuild)' != 'true' AND '$(GenerateDocumentationFile)' == 'true'">
+
+    <ItemGroup>
+      <DocFileItem Remove="@(DocFileItem)" />
+      <DocFileItem Include="$(IntermediateOutputPath)trimmed/$(TargetName).xml" />
+    </ItemGroup>
+  </Target>
+
+  <!--
+    Publishes the untrimmed documentation beside the trimmed copy.
+
+    Keyed on the output path rather than on intermediate state, so a build writing to a different
+    output directory produces its own copy instead of being considered up to date because some
+    earlier build wrote one elsewhere.
+  -->
+  <Target Name="CopyUntrimmedDocsForApiDocs"
+          AfterTargets="CopyFilesToOutputDirectory"
+          Inputs="$(DocumentationFile)"
+          Outputs="$(OutputPath)untrimmed/$(TargetName).xml"
+          Condition="'$(IsCrossTargetingBuild)' != 'true' AND '$(GenerateDocumentationFile)' == 'true'">
+
+    <Copy SourceFiles="$(DocumentationFile)"
+          DestinationFiles="$(OutputPath)untrimmed/$(TargetName).xml"
+          SkipUnchangedFiles="true" />
   </Target>
 
   <!-- References ====================================================== -->

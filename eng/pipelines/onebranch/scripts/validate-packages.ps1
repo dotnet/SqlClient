@@ -59,6 +59,11 @@
     dotnet executable to invoke. Defaults to the dotnet command resolved from PATH. This parameter
     primarily supports isolated testing.
 
+.PARAMETER ReportOnly
+    Report gate findings as warnings without failing. This suppresses only the --fail-on gate: a
+    run in which PackageValidator itself failed still fails the step, because it produced no
+    trustworthy findings to report.
+
 .EXAMPLE
     ./validate-packages.ps1 `
         -ValidatorPath ./PackageValidator.dll `
@@ -115,7 +120,10 @@ param(
 
     [Parameter(HelpMessage = "dotnet executable to invoke.")]
     [ValidateNotNullOrEmpty()]
-    [string]$DotnetPath = "dotnet"
+    [string]$DotnetPath = "dotnet",
+
+    [Parameter(HelpMessage = "Report gate findings as warnings without failing the build.")]
+    [switch]$ReportOnly
 )
 
 Set-StrictMode -Version Latest
@@ -136,6 +144,7 @@ Write-Host "SqlClientFileVersion:    ${SqlClientFileVersion}"
 Write-Host "SqlServerPackageVersion: ${SqlServerPackageVersion}"
 Write-Host "SqlServerFileVersion:    ${SqlServerFileVersion}"
 Write-Host "FailOn:                  $($failOnTokens -join ', ')"
+Write-Host "ReportOnly:              ${ReportOnly}"
 Write-Host "===================================="
 
 if (-not (Test-Path -LiteralPath $ValidatorPath)) {
@@ -206,7 +215,18 @@ if ($exitCode -eq 0) {
     Write-Host "Package validation passed."
 }
 elseif ($exitCode -eq 2) {
-    throw "Package validation failed: one or more findings matched the gate ($($failOnTokens -join ', '))."
+    $message = "Package validation failed: one or more findings matched the gate ($($failOnTokens -join ', '))."
+    if (-not $ReportOnly) {
+        throw $message
+    }
+
+    # Report-only suppresses a tripped gate, but not a validator that failed to run: the latter
+    # produced no trustworthy findings, so there is nothing to downgrade to a warning.
+    Write-Host "##vso[task.logissue type=warning]${message} Running in report-only mode, so the build is not failed."
+
+    # task.logissue attaches an issue to the timeline record but leaves the task result untouched,
+    # so a step reporting only warnings would still render as a clean success.
+    Write-Host '##vso[task.complete result=SucceededWithIssues;]'
 }
 else {
     throw "PackageValidator exited unexpectedly with code ${exitCode}."

@@ -32,13 +32,15 @@ Invoke-Pester ./publish-symbols.Tests.ps1 -Output Detailed
 | Area                  | What's tested                                                    |
 | --------------------- | ---------------------------------------------------------------- |
 | Version computation   | Canonical output parsing, effective package selection, target version composition, and failures |
-| Localization validation | Missing, obsolete, or empty strings, English-value matches, and culture-specific allowlisting |
+| Localization validation | Missing, obsolete, or empty strings, English-value matches, culture-specific allowlisting, and report-only mode |
 | Parameter validation  | Empty strings rejected for all mandatory parameters              |
 | URL construction      | Base URL, register URL, request URL built from parameters        |
 | Request bodies        | Registration body, default publish flags, flag overrides         |
 | Error handling        | Token failure, registration failure, publish failure, status failure — all verify expanded URI in error message |
 | Status validation     | Detects Failed/Cancelled results, respects PublishToInternal/PublishToPublic flags, passes on Succeeded/Pending |
-| Package validation    | Wildcard vs per-id version expectations, SqlServer omitted when unbuilt, gate tokens, report written before gating, exit-code handling |
+| Package validation    | Wildcard vs per-id version expectations, SqlServer omitted when unbuilt, gate tokens, report written before gating, exit-code handling, report-only mode suppressing the gate but not a broken validator |
+| XML docs validation   | Every documentation-ID defect form reported by the API Docs build (array `T:` UIDs, empty parentheses, C# aliases, embedded whitespace, misspelled namespace roots) plus valid controls, compiler-unresolved `!:` crefs, local UID and wrong-prefix resolution, package expansion, allowlisting and staleness, report-only mode |
+| XML docs lib/ref layout | Full `lib/` XML paired with trimmed `ref/` XML accepted; trimmed `lib/`, untrimmed `ref/`, and byte-identical `lib`/`ref` rejected; per-target-framework isolation; packages without a `ref/` folder ignored |
 | Package signatures    | Every package and symbol package verified, all failures reported before throwing |
 | Assembly signatures   | Package expansion, native binaries under `runtimes/` included, stale expansions replaced, all unsigned assemblies reported |
 
@@ -51,3 +53,7 @@ Invoke-Pester ./publish-symbols.Tests.ps1 -Output Detailed
   it is absent. Only the signature lookup is substituted; package expansion and reporting run for
   real against packages built in the test's temporary directory.
 - Tests validate scripts in the parent directory relative to this directory.
+- Validation scripts accept `-ReportOnly`, which downgrades findings to warnings. The pipelines
+  drive it from the `failOnValidationError` parameter (inverted). Report-only suppresses
+  *findings* only: malformed or missing inputs, and a validator that fails to run, still fail the
+  step, because neither produced findings worth reporting.
