@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Text;
@@ -445,7 +446,7 @@ namespace Microsoft.Data.SqlClient
 
                 foreach (DbColumn col in colSchema)
                 {
-                    resultTable.Columns.Add(col.ColumnName, col.DataType);
+                    AddColumn(resultTable, col);
                 }
 
                 if (firstResultAvailable)
@@ -464,6 +465,13 @@ namespace Microsoft.Data.SqlClient
             }
             return resultTable;
         }
+
+#if NET
+        [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2072",
+            Justification = "DataColumn only reflects over INullable column types, and no schema collection columns are INullable.")]
+#endif
+        private static void AddColumn(DataTable table, DbColumn column) =>
+            table.Columns.Add(column.ColumnName, column.DataType);
         #endregion
 
         #region GetSchema Helpers: PrepareCollection Population Method
