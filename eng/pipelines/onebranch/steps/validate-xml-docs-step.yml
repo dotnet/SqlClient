@@ -69,10 +69,11 @@ parameters:
   # mismatched-docid-prefix.  A finding takes the lower form when no reference documentation
   # identified the surface, so an unknown surface is never escalated on a guess.
   #
-  # The error severity covers malformed-xml, unresolved-cref, invalid-docid, unknown-namespace-root,
-  # stale-allowlist-entry, missing-documentation, the two public resolution categories above, and
-  # the three package layout categories (lib-documentation-trimmed, ref-documentation-untrimmed,
-  # lib-ref-documentation-identical).  It also covers documentation content that the compiler or
+  # The error severity covers malformed-xml, unresolved-cref, invalid-docid,
+  # bare-parameterized-method-xref, unknown-namespace-root, stale-allowlist-entry,
+  # missing-documentation, the two public resolution categories above, and the three package
+  # layout categories (lib-documentation-trimmed, ref-documentation-untrimmed,
+  # lib-ref-documentation-identical). It also covers documentation content that the compiler or
   # Learn would silently discard: enum-field-remarks, unresolved-include and
   # unexpected-documentation-element.
   #

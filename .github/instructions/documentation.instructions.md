@@ -157,6 +157,23 @@ A `cref` may be written unqualified (`<see cref="SqlConnection.Open"/>`), in whi
 
 Array, pointer and by-reference markers are legal *inside* a member signature (`M:...Decrypt(System.Byte[])`); they are only invalid as the whole target of a `T:` reference.
 
+Markdown inside `<format type="text/markdown">` uses `<xref:UID>` tokens rather than `cref`
+attributes. The compiler copies these tokens verbatim and cannot validate them. A parameterized
+method has no bare UID, even when it has only one overload, so link to its overload page with the
+URL-encoded wildcard `%2A`:
+
+```xml
+<!-- Wrong: Open Publishing looks for an exact UID that does not exist. -->
+<xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer>
+
+<!-- Right: links to the method's overload page. -->
+<xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer%2A>
+```
+
+Types, properties, fields, events, and parameterless methods may continue to use their exact bare
+UIDs. Generated-document validation indexes the emitted members and rejects a bare inline xref when
+that index proves the target is a parameterized method.
+
 ### Validating Cross-References Locally
 
 `eng/pipelines/onebranch/scripts/validate-xml-docs.ps1` enforces the rules above. It runs in the OneBranch build jobs against snippet sources, generated documentation, and the assembled packages, so run it before pushing documentation changes:
