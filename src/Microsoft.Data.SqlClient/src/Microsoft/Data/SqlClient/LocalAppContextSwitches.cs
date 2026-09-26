@@ -66,6 +66,13 @@ internal static class LocalAppContextSwitches
         "Switch.Microsoft.Data.SqlClient.UseLegacyFailoverAlternationOnLoginSqlErrors";
 
     /// <summary>
+    /// The name of the app context switch that controls whether pooled connections
+    /// reset a changed SQL Server session transaction isolation level before reuse.
+    /// </summary>
+    private const string EnableTransactionIsolationLevelResetString =
+        "Switch.Microsoft.Data.SqlClient.EnableTransactionIsolationLevelReset";
+
+    /// <summary>
     /// The name of the app context switch that controls whether to preserve
     /// legacy behavior where Timestamp/RowVersion fields return empty byte
     /// arrays instead of null.
@@ -207,6 +214,11 @@ internal static class LocalAppContextSwitches
     /// The cached value of the UseLegacyFailoverAlternationOnLoginSqlErrors switch.
     /// </summary>
     private static SwitchValue s_useLegacyFailoverAlternationOnLoginSqlErrors = SwitchValue.None;
+
+    /// <summary>
+    /// The cached value of the EnableTransactionIsolationLevelReset switch.
+    /// </summary>
+    private static SwitchValue s_enableTransactionIsolationLevelReset = SwitchValue.None;
 
     /// <summary>
     /// The cached value of the LegacyRowVersionNullBehavior switch.
@@ -457,6 +469,19 @@ internal static class LocalAppContextSwitches
             UseLegacyFailoverAlternationOnLoginSqlErrorsString,
             defaultValue: false,
             ref s_useLegacyFailoverAlternationOnLoginSqlErrors);
+
+    /// <summary>
+    /// When set to true, a pooled connection whose session transaction isolation
+    /// level was changed by a transaction is reset to READ COMMITTED before the
+    /// connection is handed to a later caller.
+    ///
+    /// The default value of this switch is false.
+    /// </summary>
+    public static bool EnableTransactionIsolationLevelReset =>
+        AcquireAndReturn(
+            EnableTransactionIsolationLevelResetString,
+            defaultValue: false,
+            ref s_enableTransactionIsolationLevelReset);
 
     /// <summary>
     /// In System.Data.SqlClient and Microsoft.Data.SqlClient prior to 3.0.0 a
