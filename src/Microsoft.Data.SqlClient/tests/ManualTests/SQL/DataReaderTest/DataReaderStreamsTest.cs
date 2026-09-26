@@ -89,7 +89,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         using (XmlReader xmlReader = await reader.GetFieldValueAsync<XmlReader>(1))
                         {
                             isAsync = xmlReader.Settings.Async;
-                            outputXml = GetXmlDocumentContents(xmlReader);
+                            outputXml = GetXmlReaderContents(xmlReader);
                         }
                     }
                 }
@@ -207,7 +207,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         using (XmlReader xmlReader = reader.GetFieldValue<XmlReader>(1))
                         {
                             isAsync = xmlReader.Settings.Async;
-                            outputXml = GetXmlDocumentContents(xmlReader);
+                            outputXml = GetXmlReaderContents(xmlReader);
                         }
                     }
                 }
@@ -364,7 +364,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         using (XmlReader xmlReader = reader.GetXmlReader(1))
                         {
                             isAsync = xmlReader.Settings.Async;
-                            outputXml = GetXmlDocumentContents(xmlReader);
+                            outputXml = GetXmlReaderContents(xmlReader);
                         }
                     }
                 }
@@ -481,7 +481,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     // get a clean reader over the same field and check that the value is empty
                     using (XmlReader xmlReader = GetValue<XmlReader>(reader, 0, accessorType))
                     {
-                        Assert.Equal(GetXmlDocumentContents(xmlReader), string.Empty);
+                        Assert.Equal(GetXmlReaderContents(xmlReader), string.Empty);
                     }
 
                     using (TextReader textReader = GetValue<TextReader>(reader, 1, accessorType))
@@ -1169,6 +1169,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (XmlWriter xmlWriter = XmlWriter.Create(stringWriter, settings))
             {
                 int index = 1;
+                // Purposefully start with root-level text to confuse the encoding-detection logic
+                // in XmlTextReaderImpl so it would assume UTF-8. This ensures tests will fail if a
+                // SqlDataReader creates an XmlReader over a UTF-16LE stream without explicitly
+                // specifying the encoding.
+                xmlWriter.WriteString("foo");
                 xmlWriter.WriteStartElement("root");
                 while (buffer.Length / 2 < (packetSize * forcedPacketCount))
                 {
@@ -1232,15 +1237,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return queryBuilder.ToString();
         }
 
-        private static string GetXmlDocumentContents(XmlReader xmlReader)
+        private static string GetXmlReaderContents(XmlReader xmlReader)
         {
-            string outputXml;
-            XmlDocument document = new XmlDocument();
-            document.Load(xmlReader);
-
             XmlWriterSettings settings = new XmlWriterSettings
             {
-                ConformanceLevel = ConformanceLevel.Document,
+                ConformanceLevel = ConformanceLevel.Fragment,
                 Encoding = Encoding.Unicode,
                 Indent = true,
                 OmitXmlDeclaration = true
@@ -1250,10 +1251,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (StringWriter stringWriter = new StringWriter(buffer))
             using (XmlWriter xmlWriter = XmlWriter.Create(stringWriter, settings))
             {
-                document.WriteContentTo(xmlWriter);
+                xmlWriter.WriteNode(xmlReader, defattr: false);
             }
-            outputXml = buffer.ToString();
-            return outputXml;
+            return buffer.ToString();
         }
 
         private static byte[] GetStreamContents(Stream stream)
