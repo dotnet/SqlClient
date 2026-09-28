@@ -330,39 +330,46 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
             switches.UseConnectionPoolV2 = poolV2;
             string cs = BuildPooledConnString($"IsoLeakTest-DetachedRoot-{async}-{poolV2}");
             using SqlConnection connection = new(cs);
-            int spid;
-            const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
-            using (var scope = new TransactionScope(
-                TransactionScopeOption.RequiresNew,
-                new TransactionOptions { IsolationLevel = System.Transactions.IsolationLevel.Serializable },
-                TransactionScopeAsyncFlowOption.Enabled))
+            try
             {
+                int spid;
+                const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+                using (var scope = new TransactionScope(
+                    TransactionScopeOption.RequiresNew,
+                    new TransactionOptions { IsolationLevel = System.Transactions.IsolationLevel.Serializable },
+                    TransactionScopeAsyncFlowOption.Enabled))
+                {
+                    await OpenConnection(connection, async);
+                    spid = await GetSpid(connection, async);
+                    object inner = typeof(SqlConnection).GetProperty("InnerConnection", flags).GetValue(connection);
+                    Type type = inner.GetType();
+                    PropertyInfo root = type.GetProperty("IsTransactionRoot", flags);
+                    PropertyInfo enlisted = type.GetProperty("EnlistedTransaction", flags);
+                    Assert.True((bool)root.GetValue(inner));
+                    Assert.NotNull(enlisted.GetValue(inner));
+
+                    // Deterministically enter the root-only window through the same detach method
+                    // used by DetachCurrentTransactionIfEnded, without racing a completion callback.
+                    type.GetMethod("DetachTransaction", flags).Invoke(inner, new object[] { Transaction.Current, true });
+                    Assert.Null(enlisted.GetValue(inner));
+                    Assert.True((bool)root.GetValue(inner));
+                    type.GetMethod("Activate", flags, null, new[] { typeof(Transaction) }, null)
+                        .Invoke(inner, new object[] { null });
+
+                    using SqlCommand count = new("SELECT @@TRANCOUNT;", connection);
+                    Assert.Equal(1, Convert.ToInt32(async ? await count.ExecuteScalarAsync() : count.ExecuteScalar()));
+                    Assert.Equal("Serializable", await GetIso(connection, async));
+                    scope.Complete();
+                }
+                connection.Close();
                 await OpenConnection(connection, async);
-                spid = await GetSpid(connection, async);
-                object inner = typeof(SqlConnection).GetProperty("InnerConnection", flags).GetValue(connection);
-                Type type = inner.GetType();
-                PropertyInfo root = type.GetProperty("IsTransactionRoot", flags);
-                PropertyInfo enlisted = type.GetProperty("EnlistedTransaction", flags);
-                Assert.True((bool)root.GetValue(inner));
-                Assert.NotNull(enlisted.GetValue(inner));
-
-                // Deterministically enter the root-only window through the same detach method
-                // used by DetachCurrentTransactionIfEnded, without racing a completion callback.
-                type.GetMethod("DetachTransaction", flags).Invoke(inner, new object[] { Transaction.Current, true });
-                Assert.Null(enlisted.GetValue(inner));
-                Assert.True((bool)root.GetValue(inner));
-                type.GetMethod("Activate", flags, null, new[] { typeof(Transaction) }, null)
-                    .Invoke(inner, new object[] { null });
-
-                using SqlCommand count = new("SELECT @@TRANCOUNT;", connection);
-                Assert.Equal(1, Convert.ToInt32(async ? await count.ExecuteScalarAsync() : count.ExecuteScalar()));
-                Assert.Equal("Serializable", await GetIso(connection, async));
-                scope.Complete();
+                Assert.Equal(spid, await GetSpid(connection, async));
+                Assert.Equal("ReadCommitted", await GetIso(connection, async));
             }
-            connection.Close();
-            await OpenConnection(connection, async);
-            Assert.Equal(spid, await GetSpid(connection, async));
-            Assert.Equal("ReadCommitted", await GetIso(connection, async));
+            finally
+            {
+                SqlConnection.ClearPool(connection);
+            }
         }
     }
 }
