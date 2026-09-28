@@ -54,12 +54,14 @@ jobs:
           echo "::error::Milestone '${{ github.event.pull_request.milestone.title }}' is ${{ github.event.pull_request.milestone.state }}. Please assign an open milestone."
           exit 1
 
-      - name: Checkout scripts
+      - name: Checkout milestone check inputs
         if: github.event.pull_request.milestone != null
         uses: actions/checkout@v6
         with:
-          # Only the scripts directory is needed; skip full history.
-          sparse-checkout: .github/scripts
+          # Only the scripts and canonical SqlClient version file are needed.
+          sparse-checkout: |
+            .github/scripts
+            src/Microsoft.Data.SqlClient/Versions.props
           sparse-checkout-cone-mode: false
 
       - name: Check milestone matches target branch

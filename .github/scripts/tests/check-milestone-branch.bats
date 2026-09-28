@@ -28,13 +28,20 @@ setup() {
   export DEFAULT_BRANCH="main"
   export GITHUB_REPOSITORY="dotnet/SqlClient"
   export GH_TOKEN="fake-token"
+  export SQLCLIENT_VERSIONS_FILE="${STUB_DIR}/Versions.props"
   export MOCK_MILESTONES=$'1.0.0\n2.0.1\n7.1.0\n8.0.0-preview1\n8.0.0-preview2\n8.0.0'
 
+  mock_next_version "7.1.0"
   mock_release_branches "release/6.1" "release/7.0"
 }
 
 teardown() {
   rm -rf "${STUB_DIR}"
+}
+
+# Write the canonical version property's contents to a per-test fixture.
+mock_next_version() {
+  printf '<Project>\n  <PropertyGroup>\n    <SqlClientNextVersion>%s</SqlClientNextVersion>\n  </PropertyGroup>\n</Project>\n' "$1" > "${SQLCLIENT_VERSIONS_FILE}"
 }
 
 # Install a 'gh' mock that reports the given release branches.
@@ -168,6 +175,15 @@ MOCK
   [[ "$output" == *"active line is 7.1"* ]]
 }
 
+@test "fails when the default-branch milestone differs from SqlClientNextVersion" {
+  export MILESTONE_TITLE="7.1.0"
+  export BASE_REF="main"
+  mock_next_version "7.1.1"
+  run bash "${SCRIPT}"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"PR milestone does not match SqlClientNextVersion"* ]]
+}
+
 @test "fails when no configured milestone series is active" {
   mock_release_branches "release/7.0"
   export MOCK_MILESTONES=$'1.0.0'
@@ -182,6 +198,7 @@ MOCK
   mock_release_branches "release/6.1" "release/7.0" "release/7.1"
   export MILESTONE_TITLE="8.0.0-preview1"
   export BASE_REF="main"
+  mock_next_version "8.0.0-preview1"
   run bash "${SCRIPT}"
   [ "$status" -eq 0 ]
   [[ "$output" == *"still in development"* ]]
@@ -220,6 +237,7 @@ MOCK
 @test "does not call the API when the PR targets a release branch" {
   export MILESTONE_TITLE="7.0.3"
   export BASE_REF="release/7.0"
+  mock_next_version "7.0.3"
   run bash "${SCRIPT}"
   [ "$status" -eq 0 ]
   [ ! -f "${STUB_DIR}/gh.log" ]
@@ -230,9 +248,19 @@ MOCK
 @test "passes when the milestone matches the target release branch" {
   export MILESTONE_TITLE="7.0.3"
   export BASE_REF="release/7.0"
+  mock_next_version "7.0.3"
   run bash "${SCRIPT}"
   [ "$status" -eq 0 ]
   [[ "$output" == *"matches target branch 'release/7.0'"* ]]
+}
+
+@test "fails when the release-branch milestone differs from SqlClientNextVersion" {
+  export MILESTONE_TITLE="7.1.0"
+  export BASE_REF="release/7.1"
+  mock_next_version "7.1.1"
+  run bash "${SCRIPT}"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"PR milestone does not match SqlClientNextVersion"* ]]
 }
 
 @test "fails when the milestone belongs to a different release branch" {
@@ -275,9 +303,19 @@ MOCK
 @test "skips integration branch targets" {
   export MILESTONE_TITLE="7.0.3"
   export BASE_REF="dev/paul/some-feature"
+  mock_next_version "7.1.0"
   run bash "${SCRIPT}"
   [ "$status" -eq 0 ]
   [[ "$output" == *"integration branch"* ]]
+}
+
+@test "fails closed when SqlClientNextVersion is missing" {
+  export MILESTONE_TITLE="7.1.0"
+  export BASE_REF="main"
+  printf '<Project />\n' > "${SQLCLIENT_VERSIONS_FILE}"
+  run bash "${SCRIPT}"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Expected exactly one SqlClientNextVersion"* ]]
 }
 
 @test "skips milestones that are not major.minor.patch" {
