@@ -117,6 +117,8 @@ validate_next_version() {
     echo "::error::The PR milestone does not match SqlClientNextVersion in '${versions_file}'. Update the version or assign the matching milestone."
     return 1
   fi
+
+  echo "::notice::Milestone '${MILESTONE_TITLE}' matches SqlClientNextVersion."
 }
 
 # -- Derive the candidate release branch from the milestone -------------------

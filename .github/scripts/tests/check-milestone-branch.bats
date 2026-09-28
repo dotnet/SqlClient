@@ -144,6 +144,7 @@ MOCK
   run bash "${SCRIPT}"
   [ "$status" -eq 0 ]
   [[ "$output" == *"::notice::"* ]]
+  [[ "$output" == *"Milestone '7.1.0' matches SqlClientNextVersion."* ]]
   [[ "$output" == *"still in development"* ]]
 }
 
@@ -261,6 +262,7 @@ MOCK
   mock_next_version "7.0.3"
   run bash "${SCRIPT}"
   [ "$status" -eq 0 ]
+  [[ "$output" == *"Milestone '7.0.3' matches SqlClientNextVersion."* ]]
   [[ "$output" == *"matches target branch 'release/7.0'"* ]]
 }
 
