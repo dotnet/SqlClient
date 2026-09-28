@@ -25,7 +25,7 @@ public class LocalAppContextSwitchesTest
         // LocalAppContextSwitches caches each switch value on first access for
         // the lifetime of the process.  Other tests running in parallel may
         // already have triggered caching, or may use LocalAppContextSwitchesHelper
-        // to mutate the cached fields via reflection.  To make this test
+        // to mutate the cached values.  To make this test
         // deterministic, acquire the helper (which serializes against every
         // other helper user via a process-wide semaphore) and reset each
         // cached field to None so the properties re-read from AppContext.
