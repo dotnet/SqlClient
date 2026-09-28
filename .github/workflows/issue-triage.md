@@ -154,10 +154,11 @@ For a multi-line summary saved to a temporary file, use the allowed `jq -Rs`
 command to construct the JSON payload with `item_number` and `body`, then
 submit it once through `safeoutputs add_comment .`.
 
-If preparation or submission fails, inspect the error before retrying.
-Do not repeatedly retry a denied command or probe with a write. If the
-failure cannot be resolved with the available tools, call `report_incomplete`
-with the actual error and stop without submitting placeholder content.
+If preparation fails, inspect and correct it before attempting submission.
+Once `add_comment` has been attempted, never retry it, even if its result is
+ambiguous or reports an error. Report the actual error via `report_incomplete`
+and stop without changing labels; do not probe with another write. Only
+manage labels after the completed comment is accepted.
 
 ---
 

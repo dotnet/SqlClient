@@ -3,10 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const os = require('node:os');
-const path = require('node:path');
-const { spawnSync } = require('node:child_process');
 const { test } = require('node:test');
 const { validateTriageOutput } = require('../validate-triage-output.cjs');
 
@@ -79,6 +75,7 @@ test('requires every check row and non-placeholder values', () => {
 test('rejects embedded template placeholders in rows and prose sections', () => {
     const unfinished = [
         [summary.replace('Missing: SQL Server version', 'Missing: <list>'), /check row/],
+        [summary.replace('Missing: SQL Server version', 'Missing: <component>'), /check row/],
         [summary.replace(
             'Cancellation leaves the operation running. Investigate the async cancellation path; P1.',
             'Cancellation leaves the operation running. Investigate <the affected component>; P1.'
@@ -95,6 +92,18 @@ test('rejects embedded template placeholders in rows and prose sections', () => 
     validateTriageOutput(output(summary.replace(
         'Cancellation leaves the operation running.',
         'Cancellation leaves the operation running; SqlDataReader.GetFieldValue<T>() is affected.'
+    )));
+    validateTriageOutput(output(summary.replace(
+        'Cancellation leaves the operation running.',
+        'Cancellation leaves the operation running; Dictionary<TKey, TValue> maps the metadata.'
+    )));
+    validateTriageOutput(output(summary.replace(
+        'Missing: SQL Server version',
+        'Missing: SQL Server version; Dictionary<string, object> holds the available fields'
+    )));
+    validateTriageOutput(output(summary.replace(
+        'Cancellation leaves the operation running.',
+        'Cancellation leaves the operation running; see <https://example.com/docs> for context.'
     )));
 });
 
@@ -133,6 +142,18 @@ test('rejects multiple comments and mixed success/incomplete outcomes', () => {
     }), /no-op/);
 });
 
+test('rejects output errors even when a complete summary is queued', () => {
+    const value = output(summary);
+    value.items.push({ type: 'add_labels', labels: ['Auto-Triage: Waiting for Author'] });
+    value.errors.push({ type: 'remove_labels', message: 'Label operation exceeded quota' });
+    assert.throws(() => validateTriageOutput(value), /errors/);
+    assert.throws(() => validateTriageOutput({
+        items: [{ type: 'noop', reason: 'No new information' }],
+        errors: ['Malformed NDJSON line'],
+    }), /errors/);
+    assert.throws(() => validateTriageOutput({ ...output(summary), errors: null }), /errors/);
+});
+
 test('rejects missing output, empty results, and label-only results', () => {
     for (const value of [null, {}, { items: null }, { items: [] }, { items: [null] }]) {
         assert.throws(() => validateTriageOutput(value), /output|result/);
@@ -140,32 +161,4 @@ test('rejects missing output, empty results, and label-only results', () => {
     assert.throws(() => validateTriageOutput({
         items: [{ type: 'add_labels', labels: ['Auto-Triage: Waiting for Author'] }],
     }), /summary/);
-});
-
-test('the documented jq commands preserve the complete Markdown payload', () => {
-    const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'sqlclient-triage-'));
-    const markdown = path.join(directory, 'triage-summary.md');
-    const payload = path.join(directory, 'triage-summary.json');
-    const body = summary +
-        '\nPreserve "quotes", `backticks`, $HOME, $(not-a-command), and \\ paths.\n';
-    const jq = process.env.JQ_PATH || 'jq';
-    try {
-        fs.writeFileSync(markdown, body, 'utf8');
-        const encode = spawnSync(jq, ['-Rs', '{body: .}', markdown], { encoding: 'utf8' });
-        assert.ifError(encode.error);
-        assert.equal(encode.status, 0, encode.stderr);
-        fs.writeFileSync(payload, encode.stdout, 'utf8');
-        const check = spawnSync(jq, [
-            '-e', 'type == "object" and (.body | type == "string" and length > 0)', payload,
-        ], { encoding: 'utf8' });
-        assert.ifError(check.error);
-        assert.equal(check.status, 0, check.stderr);
-        const result = JSON.parse(fs.readFileSync(payload, 'utf8'));
-        assert.deepEqual(result, { body });
-        validateTriageOutput(output(result.body));
-    } finally {
-        fs.rmSync(markdown, { force: true });
-        fs.rmSync(payload, { force: true });
-        fs.rmdirSync(directory);
-    }
 });

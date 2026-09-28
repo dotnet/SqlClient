@@ -4,8 +4,24 @@
 
 const fs = require('node:fs');
 
-const TEMPLATE_PLACEHOLDER_PATTERN =
-    /<\s*(?:list|fields?|values?|authors?|types?|versions?|areas?|results?|details?|descriptions?|summaries?|items?|labels?|[^>\r\n]*\s[^>\r\n]*|[^>\r\n]*[|\/][^>\r\n]*)\s*>/i;
+const TEMPLATE_PLACEHOLDER_PATTERN = /<([^<>\r\n]+)>/g;
+const TEMPLATE_FIELD_PATTERN =
+    /^(?:list|fields?|values?|authors?|types?|versions?|areas?|results?|details?|descriptions?|summaries?|items?|labels?)$/i;
+const GENERIC_ARGUMENTS_PATTERN =
+    /^[A-Za-z_][\w.?\[\]]*(?:\s*,\s*[A-Za-z_][\w.?\[\]]*)*$/;
+
+function hasTemplatePlaceholder(text) {
+    return [...text.matchAll(TEMPLATE_PLACEHOLDER_PATTERN)].some((match) => {
+        const contents = match[1];
+        const value = contents.trim();
+        if (contents !== value || /^(?:https?:\/\/|mailto:)\S+$/i.test(value)) {
+            return false;
+        }
+        return TEMPLATE_FIELD_PATTERN.test(value) ||
+            !GENERIC_ARGUMENTS_PATTERN.test(value) ||
+            !/[A-Za-z_][\w.]*$/.test(text.slice(0, match.index));
+    });
+}
 
 function proseOnly(body) {
     let fence;
@@ -29,7 +45,8 @@ function proseOnly(body) {
 function meaningful(value) {
     const text = value.replace(/[*_`]/g, '').trim();
     return /[\p{L}\p{N}]/u.test(text) &&
-        !TEMPLATE_PLACEHOLDER_PATTERN.test(text) &&
+        !/^<[\s\S]*>$/.test(text) &&
+        !hasTemplatePlaceholder(text) &&
         !/^(?:todo|tbd|test(?: message)?(?: please ignore)?|placeholder)$/i.test(text);
 }
 
@@ -37,6 +54,10 @@ function validateTriageOutput(output) {
     if (!output || !Array.isArray(output.items) || output.items.length === 0 ||
         output.items.some(item => !item || typeof item.type !== 'string')) {
         throw new Error('Missing or malformed triage output: expected non-empty result items.');
+    }
+    if (output.errors !== undefined &&
+        (!Array.isArray(output.errors) || output.errors.length > 0)) {
+        throw new Error('Triage output contains errors; refusing to publish a partial safe-output batch.');
     }
 
     const comments = output.items.filter(item => item.type === 'add_comment');

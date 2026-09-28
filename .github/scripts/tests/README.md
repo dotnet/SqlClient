@@ -3,8 +3,7 @@
 ## Agentic triage output tests
 
 `validate-triage-output.test.cjs` uses the built-in Node.js test runner (Node.js
-20 or newer) and `jq`, both preinstalled on the CI runner. No npm dependencies
-are needed. Run it from the repository root:
+20 or newer). No npm dependencies are needed. Run it from the repository root:
 
 ```bash
 node --test .github/scripts/tests/validate-triage-output.test.cjs
@@ -14,9 +13,8 @@ These tests also run in `verify-aw-lock.yml`. They cover the validation gate
 before triage comments and labels are published: complete summaries, explicit
 no-op/failure results, placeholder comments, unfinished templates, quoted/fenced
 examples, duplicate comments, and mixed success/incomplete outcomes.
-They also exercise the workflow's exact `jq` encoding/check expressions with
-quotes, backticks, backslashes, shell-like text, and newlines. Set `JQ_PATH` to
-the full jq executable path if it is not on your local `PATH`.
+They also reject partial safe-output batches with recorded errors while
+allowing C# generic type syntax in completed summaries.
 
 ## Shell script tests
 
