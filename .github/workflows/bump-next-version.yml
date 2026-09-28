@@ -1,0 +1,58 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+#
+# Propose the next SqlClient version after its GitHub milestone is closed.
+# GitHub does not run pull_request workflows for PRs created with GITHUB_TOKEN;
+# the generated PR must be validated manually before merge.
+
+name: Propose next SqlClient version
+
+on:
+  milestone:
+    types: [closed]
+  schedule:
+    - cron: '17 9 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: propose-next-sqlclient-version
+  cancel-in-progress: false
+
+jobs:
+  propose:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Check out trusted automation from the default branch
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: automation
+          sparse-checkout: .github/scripts/bump-next-version.sh
+          sparse-checkout-cone-mode: false
+
+      - name: Check out branch to update
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: target
+          fetch-depth: 0
+
+      - name: Propose next version
+        working-directory: target
+        env:
+          CLOSED_MILESTONE: ${{ github.event.milestone.title }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" == "milestone" ]]; then
+            bash "$GITHUB_WORKSPACE/automation/.github/scripts/bump-next-version.sh"
+          else
+            bash "$GITHUB_WORKSPACE/automation/.github/scripts/bump-next-version.sh" --sync
+          fi
