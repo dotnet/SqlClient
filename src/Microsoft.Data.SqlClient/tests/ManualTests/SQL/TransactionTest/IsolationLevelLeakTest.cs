@@ -212,18 +212,14 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
         /// scrubbing the isolation level on the return path would silently downgrade the transaction
         /// for the connections that follow. This test fails without the enlistment gate.
         /// <para>
-        /// Restricted to on-prem SQL Server. On Azure SQL DB the second Open observes ReadCommitted
-        /// regardless of this fix, because Azure resets the session isolation level inside
-        /// sp_reset_connection_keep_transaction. That is issue #146 itself, addressed separately by
-        /// PR #4335, so asserting it here would report a pre-existing unrelated bug rather than a
-        /// regression in this change.
+        /// The unconditional reassertion from #146 also protects Azure SQL DB, where
+        /// sp_reset_connection_keep_transaction resets the session isolation level.
         /// </para>
         /// </remarks>
         /// <param name="async">When true, exercises the asynchronous API surface.</param>
         [ConditionalTheory(
             typeof(DataTestUtility),
             nameof(DataTestUtility.AreConnStringsSetup),
-            nameof(DataTestUtility.IsNotAzureServer),
             nameof(DataTestUtility.IsNotAzureSynapse))]
         [InlineData(false)]
         [InlineData(true)]
@@ -262,6 +258,67 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
             finally
             {
                 SqlConnection.ClearAllPools();
+            }
+        }
+
+        /// <summary>
+        /// Exercises real transacted-pool reassertion starting with an untracked session, then
+        /// verifies post-completion scrubbing obeys the switch. Clearing the flag models the
+        /// cookie-enlistment starting state; this does not force distributed promotion.
+        /// </summary>
+        /// <param name="async">Whether to open and query asynchronously.</param>
+        /// <param name="poolV2">Whether to use the channel pool.</param>
+        /// <param name="resetEnabled">Whether post-completion scrubbing is enabled.</param>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup),
+            nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [InlineData(false, false, false)]
+        [InlineData(false, false, true)]
+        [InlineData(true, false, false)]
+        [InlineData(true, false, true)]
+        [InlineData(false, true, false)]
+        [InlineData(false, true, true)]
+        [InlineData(true, true, false)]
+        [InlineData(true, true, true)]
+        public static async Task TransactionScope_ReassertionTracksPreviouslyUntrackedSession(
+            bool async, bool poolV2, bool resetEnabled)
+        {
+            using LocalAppContextSwitchesHelper switches = new();
+            switches.EnableTransactionIsolationLevelReset = resetEnabled;
+            switches.UseConnectionPoolV2 = poolV2;
+            string cs = BuildPooledConnString($"IsoLeakTest-ReassertTrack-{async}-{poolV2}-{resetEnabled}");
+            using SqlConnection connection = new(cs);
+            try
+            {
+                int spid;
+                using (var scope = new TransactionScope(
+                    TransactionScopeOption.RequiresNew,
+                    new TransactionOptions { IsolationLevel = System.Transactions.IsolationLevel.Serializable },
+                    TransactionScopeAsyncFlowOption.Enabled))
+                {
+                    await OpenConnection(connection, async);
+                    spid = await GetSpid(connection, async);
+                    Assert.Equal("Serializable", await GetIso(connection, async));
+                    const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+                    object inner = typeof(SqlConnection).GetProperty("InnerConnection", flags).GetValue(connection);
+                    FieldInfo dirty = inner.GetType().GetField("_isolationLevelDirty", flags);
+                    dirty.SetValue(inner, false);
+                    connection.Close();
+
+                    await OpenConnection(connection, async);
+                    Assert.Equal(spid, await GetSpid(connection, async));
+                    Assert.Equal("Serializable", await GetIso(connection, async));
+                    Assert.True((bool)dirty.GetValue(inner));
+                    scope.Complete();
+                }
+                connection.Close();
+
+                await OpenConnection(connection, async);
+                Assert.Equal(spid, await GetSpid(connection, async));
+                Assert.Equal(resetEnabled ? "ReadCommitted" : "Serializable", await GetIso(connection, async));
+            }
+            finally
+            {
+                SqlConnection.ClearPool(connection);
             }
         }
 

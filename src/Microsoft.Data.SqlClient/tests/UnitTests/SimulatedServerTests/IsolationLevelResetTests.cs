@@ -22,6 +22,60 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests;
 public sealed class IsolationLevelResetTests
 {
     /// <summary>
+    /// Models a session without a local Begin (such as an already-promoted enlistment).
+    /// Reasserting a non-default level must track the change even when scrubbing is disabled;
+    /// a subsequent activation may scrub it only when the reset switch is enabled.
+    /// </summary>
+    /// <param name="level">The ambient isolation level to reassert.</param>
+    /// <param name="resetEnabled">Whether a later activation may scrub the session.</param>
+    [Theory]
+    [InlineData(System.Transactions.IsolationLevel.ReadUncommitted, false)]
+    [InlineData(System.Transactions.IsolationLevel.ReadUncommitted, true)]
+    [InlineData(System.Transactions.IsolationLevel.RepeatableRead, false)]
+    [InlineData(System.Transactions.IsolationLevel.RepeatableRead, true)]
+    [InlineData(System.Transactions.IsolationLevel.Serializable, false)]
+    [InlineData(System.Transactions.IsolationLevel.Serializable, true)]
+    [InlineData(System.Transactions.IsolationLevel.Snapshot, false)]
+    [InlineData(System.Transactions.IsolationLevel.Snapshot, true)]
+    [InlineData(System.Transactions.IsolationLevel.ReadCommitted, false)]
+    [InlineData(System.Transactions.IsolationLevel.ReadCommitted, true)]
+    [InlineData(System.Transactions.IsolationLevel.Unspecified, false)]
+    [InlineData(System.Transactions.IsolationLevel.Unspecified, true)]
+    [InlineData(System.Transactions.IsolationLevel.Chaos, false)]
+    [InlineData(System.Transactions.IsolationLevel.Chaos, true)]
+    public void ReassertSessionIsolationLevel_TracksChangesForOptInReset(
+        System.Transactions.IsolationLevel level, bool resetEnabled)
+    {
+        using LocalAppContextSwitchesHelper switches = new();
+        switches.EnableTransactionIsolationLevelReset = resetEnabled;
+        using TdsServer server = new(new TdsServerArguments());
+        server.Start();
+        using SqlConnection connection = OpenConnection(server);
+        SqlConnectionInternal inner = (SqlConnectionInternal)connection.InnerConnection;
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        FieldInfo dirty = typeof(SqlConnectionInternal).GetField("_isolationLevelDirty", flags)!;
+        Assert.False((bool)dirty.GetValue(inner)!);
+        int batches = 0;
+        server.OnSQLBatchCompleted = _ => Interlocked.Increment(ref batches);
+
+        typeof(SqlConnectionInternal).GetMethod("ReassertSessionIsolationLevel", flags)!
+            .Invoke(inner, new object[] { level, 15 });
+
+        bool changesLevel = level == System.Transactions.IsolationLevel.ReadUncommitted ||
+            level == System.Transactions.IsolationLevel.RepeatableRead ||
+            level == System.Transactions.IsolationLevel.Serializable ||
+            level == System.Transactions.IsolationLevel.Snapshot;
+        Assert.Equal(changesLevel ? 1 : 0, Volatile.Read(ref batches));
+        Assert.Equal(changesLevel, (bool)dirty.GetValue(inner)!);
+
+        inner.ActivateConnection(null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)));
+
+        Assert.Equal(changesLevel ? (resetEnabled ? 2 : 1) : 0, Volatile.Read(ref batches));
+        Assert.Equal(changesLevel && !resetEnabled, (bool)dirty.GetValue(inner)!);
+        Assert.False(inner.IsConnectionDoomed);
+    }
+
+    /// <summary>
     /// Ensures a reset batch reaches the server and leaves the physical connection usable.
     /// </summary>
     [Fact]

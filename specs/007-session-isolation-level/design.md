@@ -66,12 +66,12 @@ since 2017 with production impact.
 | | |
 |---|---|
 | Code path | `SqlConnectionInternal.Activate()` — the pool **checkout** path, before enlistment |
-| Mechanism | Track `_isolationLevelDirty` when a TM `Begin` sets a non-default level; on the next checkout, if the connection is neither enlisted nor an active delegated root, issue `SET TRANSACTION ISOLATION LEVEL READ COMMITTED;` |
+| Mechanism | Track `_isolationLevelDirty` when a TM `Begin` or successful ambient reassertion sets a non-default level; on the next checkout, if the connection is neither enlisted nor an active delegated root, issue `SET TRANSACTION ISOLATION LEVEL READ COMMITTED;` |
 | Direction | **Scrub** stale session state on the way out of the pool |
 | App context switch | `Switch.Microsoft.Data.SqlClient.EnableTransactionIsolationLevelReset` (default `false`; the fix is initially opt-in) |
 | Error handling | Synapse dedicated pools are skipped up front; any reset failure dooms the connection so an unknown isolation level is never handed to the caller |
 | Timeout | The reset uses the caller's remaining `Open` budget, including time consumed in the pool. `Command Timeout` does not apply; `Connect Timeout=0` remains intentionally infinite. Existing pool-wait/login compatibility behavior is unchanged. |
-| Cost | **One extra round trip on `Open()`**, paid only when a previous `Begin` raised the isolation level *and* the connection is actually reused. The queued `sp_reset_connection` rides this batch's TDS header instead of the caller's first command, so the reset is not billed twice — but the batch itself is an exchange the legacy path did not make. |
+| Cost | **One extra round trip on `Open()`**, paid only when a previous `Begin` or reassertion set a tracked non-default level *and* the connection is eligible for reset and actually reused. The queued `sp_reset_connection` rides this batch's TDS header instead of the caller's first command, so the reset is not billed twice — but the batch itself is an exchange the legacy path did not make. |
 
 ---
 
@@ -129,6 +129,40 @@ documented `TransactionScope` `Serializable` default silently run read-committed
 | Activation | Unconditional; no compatibility switch |
 | Cost | One extra round trip on a pooled re-checkout with a reset pending and one of the mapped non-default levels, on all back ends |
 
+#### Measured cost
+
+`TransactionScopeIsolationRunner` (perf pipeline build `169256`, baseline MDS 7.0.2 vs this
+branch, medians of three interleaved reps, `OpensPerScope = 5` — one enlist plus four pooled
+re-checkouts):
+
+| Benchmark | Baseline 7.0.2 | With fix |
+|---|---|---|
+| `OpensOutsideScope` | 1.680 ms | 1.635 ms |
+| `OpensInsideScope_ReadCommitted` | 2.016 ms | 1.958 ms |
+| `OpensInsideScope_Serializable` | 2.058 ms | 2.579 ms |
+| `OpensInsideScope_SerializableAsync` | 2.679 ms | 3.060 ms |
+
+The binary-independent signal is the within-build gap between `_Serializable` and
+`_ReadCommitted`, which varies only by whether the re-assert fires: **+0.04 ms** on the baseline
+(noise, neither re-asserts) versus **+0.62 ms** with the fix. That is roughly **0.15 ms and 8 KB
+per re-assert**, with Gen0 rising from 7 to 11 per iteration. The runner targets `localhost`, so
+these are loopback numbers and represent a floor; over a real network each re-assert costs
+approximately one additional round trip.
+
+The `_ReadCommitted` row is flat against baseline, confirming the skip is genuinely free rather
+than merely cheap.
+
+#### Alternatives considered
+
+- **Gate on Azure SQL DB.** Rejected: the behavior is a server-version detail, not a contract,
+  and an on-prem configuration that begins honoring the reset would silently regress.
+- **Defer the `SET` so it prefixes the user's next batch.** This would fold the extra exchange
+  into work already being sent. Rejected for now: it needs a command-execution hook that does not
+  exist today, and it would reorder the level change relative to anything not issued through
+  `SqlCommand`. Worth revisiting as an optimization once the pooling rewrite settles.
+- **Re-assert only when the level differs from `READ COMMITTED`.** This is what ships — see the
+  isolation-level mapping above.
+
 ---
 
 ## 4. Side-by-side comparison
@@ -140,13 +174,14 @@ documented `TransactionScope` `Serializable` default silently run read-committed
 | Who is harmed | An **unrelated later** pool consumer | The **same caller**, next `Open()` in the scope |
 | Affected servers | On-prem SQL Server (reset does not clear) | Azure SQL DB (reset does clear) |
 | API surface | `SqlTransaction` **and** `TransactionScope` | `TransactionScope` only |
-| Trigger | TM `Begin` set a non-default level | Re-enlist short-circuit with a pending reset |
+| Trigger | TM `Begin` or ambient reassertion set a non-default level | Re-enlist short-circuit with a pending reset |
 | Code path | `Activate()` (pool **checkout**, neither enlisted nor a delegated root) | `Enlist()` (pool **checkout**, re-attaching to the same transaction) |
 | T-SQL emitted | `SET ... READ COMMITTED` (fixed value) | `SET ... <ambient level>` (dynamic value) |
 | Trigger condition | `_isolationLevelDirty` | `_parser._fResetConnection` on the equal-transaction branch |
 | Activation | Opt-in via `EnableTransactionIsolationLevelReset` (default `false`) | Unconditional; independent of the #96 switch |
 | Direction of fix | **Scrub** session state | **Re-assert** session state |
 | `Snapshot` handling | Reset to `READ COMMITTED` like any other non-default level after the transaction ends | Re-assert `SNAPSHOT` inside the same transaction |
+| `ReadCommitted` handling | Does not mark the session dirty | **Skipped** — the reset already lands there |
 
 ---
 
@@ -181,13 +216,13 @@ into that behavior without changing the #146 path.
 ## 6. Why the two PRs should still be reviewed together
 
 - They touch the same file (`SqlConnectionInternal.cs`) and add tests to the same folder
-  (`tests/ManualTests/SQL/TransactionTest/`), so they **will conflict textually** and should be
-  sequenced.
+  (`tests/ManualTests/SQL/TransactionTest/`), so their combined activation/enlistment behavior
+  must be validated when integrating the second fix.
 - Both rest on the same `sp_reset_connection` premise, which a reviewer need only validate once.
 - With both merged the end-to-end behavior becomes coherent:
   - inside a live scope, the ambient level is honored on every open (#4335);
   - once the transaction ends and the connection is vended again, the stale level is scrubbed
-    (#4330).
+    when the reset switch is enabled (#4330).
 - The #96 switch controls only its stale-session scrub; opting in does not alter the #146
   re-enlistment behavior.
 
@@ -233,11 +268,21 @@ Domain references: [Azure Private Endpoint DNS zones](https://learn.microsoft.co
 (public and US Government) and Azure CLI cloud metadata (`synapseAnalyticsEndpoint` for
 `AzureCloud`, `AzureChinaCloud`, and `AzureUSGovernment`).
 
-### Suggested review order
+#### Dirty-tracking interaction
 
-1. **#4330** first — broader blast radius (all servers, both `SqlTransaction` and
-   `TransactionScope`), long-standing and frequently requested, and self-contained on the
-   activate path.
-2. **#4335** second — reconcile the overlapping activation/enlistment changes and rerun both
-   regression suites. Its non-default-level reassertion is unconditional, not Azure-gated.
-   The broader remaining-budget work for pre-existing in-open calls remains tracked in #4582.
+#4330 sets `_isolationLevelDirty` in `ExecuteTransaction2005` on a TM `Begin` carrying a
+non-default level. In the common delegated case that `Begin` is the first `Open()` inside the
+scope — the same event that establishes the level #4335 later re-asserts — so the re-assert
+re-writes an already-tracked value and nothing goes untracked.
+
+For a connection that joined an **already-promoted** transaction via
+`PropagateTransactionCookie`, no local `Begin` runs. The integrated reassertion path therefore
+also sets `_isolationLevelDirty` after a successful non-default `SET`, so the next eligible
+checkout can scrub that level when the #96 switch is enabled.
+
+### Integration order
+
+**#4335 merged first.** #4330 merges that main revision and validates both regression suites
+together. Reassertion remains unconditional, while scrubbing remains opt-in. The reset uses
+the remaining caller timeout; broader remaining-budget work for other in-open calls, including
+reassertion, remains tracked in #4582.
