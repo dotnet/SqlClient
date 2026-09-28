@@ -88,6 +88,7 @@ bats .github/scripts/tests/
 bats .github/scripts/tests/extract-hotfix-versions.bats
 bats .github/scripts/tests/cherry-pick-to-release.bats
 bats .github/scripts/tests/check-milestone-branch.bats
+bats .github/scripts/tests/check-milestone-version.bats
 bats .github/scripts/tests/recheck-milestones-for-release-branch.bats
 ```
 
@@ -116,7 +117,8 @@ bats --formatter pretty .github/scripts/tests/
 | ---- | ----- | ------ |
 | `extract-hotfix-versions.bats` | 18 | Label parsing, version extraction, matrix JSON output, edge cases (malformed labels, duplicates, `labeled` vs `closed` events) |
 | `cherry-pick-to-release.bats` | 15 | Branch derivation, already-applied detection, clean cherry-pick, conflict handling, milestone lookup, PR creation, duplicate skip logic |
-| `check-milestone-branch.bats` | 30 | Milestone/next-version matching on default and release branches, stale preview rejection, milestone version parsing, state-independent active development-line selection, rejection of earlier and later series on the default branch, fail-closed handling when no series is active, release-branch derivation, integration-branch and non-semver skips, API invocation assertions, API failure handling |
+| `check-milestone-branch.bats` | 26 | Milestone version parsing, state-independent active development-line selection, rejection of earlier and later series on the default branch, fail-closed handling when no series is active, release-branch derivation, integration-branch and non-semver skips, API invocation assertions, API failure handling |
+| `check-milestone-version.bats` | 8 | Stable and preview version/milestone matching, stale preview rejection, missing/duplicate version handling, missing version file, integration-branch and non-semver skips |
 | `recheck-milestones-for-release-branch.bats` | 17 | Release-branch name parsing, matching open PRs by milestone, run lookup by head SHA and PR association, fork fallback, re-run invocation, and failure reporting |
 
 ## How the Tests Work

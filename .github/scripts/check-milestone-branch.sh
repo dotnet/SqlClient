@@ -7,8 +7,8 @@
 #
 # check-milestone-branch.sh
 #
-# Validates that a pull request's milestone matches the next SqlClient version
-# and is consistent with the branch the pull request targets.
+# Validates that a pull request's milestone is consistent with the branch the
+# pull request targets.
 #
 # OVERVIEW
 # --------
@@ -67,8 +67,6 @@
 #   Emits ::notice:: on success/skip and ::error:: on failure.
 #   Exits 0 when the milestone and target branch agree (or the check is
 #   skipped), and 1 when they conflict.
-#   SQLCLIENT_VERSIONS_FILE optionally overrides the canonical Versions.props
-#   path, primarily for tests.
 #
 # USAGE
 #   Called from the check-milestone.yml workflow. Can also be run locally:
@@ -96,31 +94,6 @@ fi
 : "${DEFAULT_BRANCH:?DEFAULT_BRANCH environment variable is required}"
 : "${GITHUB_REPOSITORY:?GITHUB_REPOSITORY environment variable is required}"
 
-validate_next_version() {
-  local versions_file="${SQLCLIENT_VERSIONS_FILE:-src/Microsoft.Data.SqlClient/Versions.props}"
-  local next_version
-
-  if [[ ! -r "${versions_file}" ]]; then
-    echo "::error::Unable to read SqlClient version file '${versions_file}'."
-    return 1
-  fi
-
-  if ! next_version=$(sed -nE 's/.*<SqlClientNextVersion>([^<]+)<\/SqlClientNextVersion>.*/\1/p' "${versions_file}"); then
-    echo "::error::Unable to read SqlClientNextVersion from '${versions_file}'."
-    return 1
-  fi
-  if [[ -z "${next_version}" || "${next_version}" == *$'\n'* ]]; then
-    echo "::error::Expected exactly one SqlClientNextVersion in '${versions_file}'."
-    return 1
-  fi
-  if [[ "${MILESTONE_TITLE}" != "${next_version}" ]]; then
-    echo "::error::The PR milestone does not match SqlClientNextVersion in '${versions_file}'. Update the version or assign the matching milestone."
-    return 1
-  fi
-
-  echo "::notice::Milestone '${MILESTONE_TITLE}' matches SqlClientNextVersion."
-}
-
 # -- Derive the candidate release branch from the milestone -------------------
 # Accepts "X.Y.Z" with an optional pre-release/build suffix, e.g. "8.0.0-preview1".
 if [[ "${MILESTONE_TITLE}" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)([-+].*)?$ ]]; then
@@ -147,10 +120,6 @@ fi
 if [[ "${BASE_REF}" == release/* ]]; then
   if [[ "${BASE_REF}" != "${RELEASE_BRANCH}" ]]; then
     echo "::error::Milestone '${MILESTONE_TITLE}' belongs to '${RELEASE_BRANCH}', but this PR targets '${BASE_REF}'. Retarget the PR or assign the milestone that matches '${BASE_REF}'."
-    exit 1
-  fi
-
-  if ! validate_next_version; then
     exit 1
   fi
 
@@ -235,10 +204,6 @@ if (( 10#${MAJOR} != 10#${ACTIVE_MAJOR} || 10#${MINOR} != 10#${ACTIVE_MINOR} ));
   else
     echo "::error::Milestone '${MILESTONE_TITLE}' is for the ${MAJOR}.${MINOR} line, which is no longer in development on '${DEFAULT_BRANCH}'; the active line is ${ACTIVE_MAJOR}.${ACTIVE_MINOR}. Assign a milestone from the active ${ACTIVE_MAJOR}.${ACTIVE_MINOR} line."
   fi
-  exit 1
-fi
-
-if ! validate_next_version; then
   exit 1
 fi
 

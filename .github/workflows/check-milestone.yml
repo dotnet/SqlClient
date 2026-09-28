@@ -64,6 +64,14 @@ jobs:
             src/Microsoft.Data.SqlClient/Versions.props
           sparse-checkout-cone-mode: false
 
+      - name: Check milestone matches next SqlClient version
+        if: github.event.pull_request.milestone != null
+        env:
+          MILESTONE_TITLE: ${{ github.event.pull_request.milestone.title }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: bash "${GITHUB_WORKSPACE}/.github/scripts/check-milestone-version.sh"
+
       - name: Check milestone matches target branch
         if: github.event.pull_request.milestone != null
         env:
