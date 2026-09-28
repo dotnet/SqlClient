@@ -29,39 +29,32 @@
   <!-- References ====================================================== -->
   <!-- Test target reference -->
   <!--
-    This project supports the driver at the same repo commit, so it always references the
-    in-repo driver: the project in Project mode, or the package built from this commit in
-    Package mode.
+    This project deliberately touches the driver's PUBLIC API only, so it can be compiled against
+    any released Microsoft.Data.SqlClient version, not just the driver at this repo commit.  That
+    is what lets the perf pipeline pin a released baseline (see MdsPackageVersion below).
+
+    Helpers that need driver INTERNALS live in Microsoft.Data.SqlClient.TestCommon.Internals
+    instead, which carries the InternalsVisibleTo grant and is locked to the same-commit driver.
+    Keep that separation: adding an internals dependency here would silently break every consumer
+    that pins an older baseline.
   -->
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj"
                       Condition="'$(ReferenceType)' != 'Package'" />
+    <!-- In Package mode the perf pipeline can pin a specific released MDS version (e.g. a     -->
+    <!-- performance baseline) by passing -p:MdsPackageVersion=<version>. That property flows  -->
+    <!-- to every project in the build, so this project must honour it too; otherwise the      -->
+    <!-- CPM-managed (unpublished, in-development) version is used here and restore fails with -->
+    <!-- NU1102/NU1605 for consumers that pinned an older baseline. Under Central Package      -->
+    <!-- Management a plain Version is ignored, so VersionOverride is used; when               -->
+    <!-- MdsPackageVersion is empty the CPM-managed version applies. The two Includes are      -->
+    <!-- mutually exclusive on whether MdsPackageVersion was provided.                         -->
     <PackageReference Include="Microsoft.Data.SqlClient"
-                      Condition="'$(ReferenceType)' == 'Package'"
-                      GeneratePathProperty="true"
-                      ExcludeAssets="compile" />
-    <!--
-      In Package mode the compiler must bind against the implementation assembly rather than the
-      public-only ref assembly, so the InternalsVisibleTo grant covering LocalAppContextSwitches is
-      usable.  ExcludeAssets="compile" drops the ref assembly in favour of the explicit Reference
-      below.
-    -->
-    <!--
-      @TODO: This is a hack for now, the windows and unix nuget files are the same, so we just pick
-          one and use it for all scenarios. Remove this silliness when unsupported binaries are removed
-    -->
-    <Reference Include="Microsoft.Data.SqlClient"
-               Condition="'$(ReferenceType)' == 'Package'"
-               HintPath="$(PkgMicrosoft_Data_SqlClient)/runtimes/win/lib/$(_SqlClientPackageTfm)/Microsoft.Data.SqlClient.dll" />
+                      Condition="'$(ReferenceType)' == 'Package' and '$(MdsPackageVersion)' == ''" />
+    <PackageReference Include="Microsoft.Data.SqlClient"
+                      Condition="'$(ReferenceType)' == 'Package' and '$(MdsPackageVersion)' != ''"
+                      VersionOverride="$(MdsPackageVersion)" />
   </ItemGroup>
-
-  <!-- Map this project's TFM to the closest TFM shipped in the driver package, which currently
-       ships net462/net8.0/net9.0. -->
-  <PropertyGroup Condition="'$(ReferenceType)' == 'Package'">
-    <_SqlClientPackageTfm Condition="'$(TargetFramework)' == 'net8.0'">net8.0</_SqlClientPackageTfm>
-    <_SqlClientPackageTfm Condition="'$(TargetFramework)' == 'net462'">net462</_SqlClientPackageTfm>
-    <_SqlClientPackageTfm Condition="'$(_SqlClientPackageTfm)' == ''">net9.0</_SqlClientPackageTfm>
-  </PropertyGroup>
 
   <!-- References for netfx -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net462'">

@@ -1,0 +1,70 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Microsoft.Data.SqlClient.TestCommon.Internals</AssemblyName>
+    <RootNamespace>Microsoft.Data.SqlClient.TestCommon.Internals</RootNamespace>
+
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <!--
+      This is a shared helper library, not a test project. IsTestProject prevents test adapters
+      (e.g. dotnet test) from discovering this assembly.
+    -->
+    <IsTestProject>false</IsTestProject>
+  </PropertyGroup>
+
+  <!-- Strong name signing ============================================= -->
+  <!-- Sign with the test key so signed test assemblies can reference this project. -->
+  <PropertyGroup Condition="'$(TestSigningKeyPath)' != ''">
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(TestSigningKeyPath)</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+
+  <!-- Target Frameworks =============================================== -->
+  <PropertyGroup>
+    <TargetFrameworks>net462;net8.0;net9.0;net10.0</TargetFrameworks>
+  </PropertyGroup>
+
+  <!-- References ====================================================== -->
+  <!--
+    This project binds to driver INTERNALS (LocalAppContextSwitches and its cached switch fields)
+    under an InternalsVisibleTo grant, so it only ever supports the driver at the same repo commit:
+    the project in Project mode, or the package built from this commit in Package mode.  It must
+    therefore never honour MdsPackageVersion - an older released driver neither grants IVT to this
+    assembly nor guarantees the internal field shape.
+
+    That restriction is exactly why these helpers do not live in Microsoft.Data.SqlClient.TestCommon:
+    that project touches public API only, so it can be pinned to an arbitrary released version (the
+    perf baseline pass does this via MdsPackageVersion).  Keeping the two apart lets consumers that
+    need only public API - notably PerformanceTests - build against any driver version.
+  -->
+  <ItemGroup>
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj"
+                      Condition="'$(ReferenceType)' != 'Package'" />
+    <PackageReference Include="Microsoft.Data.SqlClient"
+                      Condition="'$(ReferenceType)' == 'Package'"
+                      GeneratePathProperty="true"
+                      ExcludeAssets="compile" />
+    <!--
+      In Package mode the compiler must bind against the implementation assembly rather than the
+      public-only ref assembly, so the InternalsVisibleTo grant covering LocalAppContextSwitches is
+      usable.  ExcludeAssets="compile" drops the ref assembly in favour of the explicit Reference
+      below.
+    -->
+    <!--
+      @TODO: This is a hack for now, the windows and unix nuget files are the same, so we just pick
+          one and use it for all scenarios. Remove this silliness when unsupported binaries are removed
+    -->
+    <Reference Include="Microsoft.Data.SqlClient"
+               Condition="'$(ReferenceType)' == 'Package'"
+               HintPath="$(PkgMicrosoft_Data_SqlClient)/runtimes/win/lib/$(_SqlClientPackageTfm)/Microsoft.Data.SqlClient.dll" />
+  </ItemGroup>
+
+  <!-- Map this project's TFM to the closest TFM shipped in the driver package, which currently
+       ships net462/net8.0/net9.0. -->
+  <PropertyGroup Condition="'$(ReferenceType)' == 'Package'">
+    <_SqlClientPackageTfm Condition="'$(TargetFramework)' == 'net8.0'">net8.0</_SqlClientPackageTfm>
+    <_SqlClientPackageTfm Condition="'$(TargetFramework)' == 'net462'">net462</_SqlClientPackageTfm>
+    <_SqlClientPackageTfm Condition="'$(_SqlClientPackageTfm)' == ''">net9.0</_SqlClientPackageTfm>
+  </PropertyGroup>
+</Project>
