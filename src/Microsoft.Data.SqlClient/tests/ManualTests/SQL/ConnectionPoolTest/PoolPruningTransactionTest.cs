@@ -79,6 +79,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             internal int PruningPasses { get; private set; }
             internal Exception Failure { get; private set; }
 
+            /// <summary>
+            /// Enables exactly one matching physical-creation callback to trigger pruning.
+            /// </summary>
             internal void Arm() => Volatile.Write(ref _armed, 1);
 
             protected override void OnEventSourceCreated(EventSource eventSource)

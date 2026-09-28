@@ -290,6 +290,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// <summary>
         /// Clears only this isolated test group and drains its factory's deferred cleanup.
         /// </summary>
+        /// <param name="factory">The isolated factory whose pruning passes process deferred cleanup.</param>
+        /// <param name="pool">The pool identifying the test group to clear.</param>
         private static void Drain(PruningConnectionFactory factory, IDbConnectionPool pool)
         {
             pool.PoolGroup.Clear();
@@ -302,6 +304,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// <summary>
         /// Registers a chosen pool implementation without changing the process-wide pool switch.
         /// </summary>
+        /// <param name="factory">The isolated factory in which to register the pool.</param>
+        /// <param name="channel">Whether to create a Channel pool instead of a WaitHandle pool.</param>
+        /// <param name="minPoolSize">The minimum connection count used to exercise replenishment.</param>
+        /// <param name="start">Whether to start the pool immediately after registration.</param>
+        /// <param name="connectionTimeout">The connection acquisition timeout, in seconds.</param>
+        /// <param name="blockingPeriod">The policy controlling throttling after a creation failure.</param>
+        /// <returns>The registered pool, started only when requested.</returns>
         private static IDbConnectionPool CreatePool(
             PruningConnectionFactory factory, bool channel, int minPoolSize = 0, bool start = true,
             int connectionTimeout = 10, string blockingPeriod = "NeverBlock")
@@ -327,6 +336,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// <summary>
         /// Acquires through the actual sync or queued async pool entry point with a bounded wait.
         /// </summary>
+        /// <param name="pool">The pool from which to acquire a connection.</param>
+        /// <param name="owner">The logical connection that will own the acquired connection.</param>
+        /// <param name="async">Whether to allow acquisition to complete through the pending-open worker.</param>
+        /// <returns>The acquired connection, or null if the pool is no longer running and rejects acquisition.</returns>
         private static async Task<DbConnectionInternal?> Acquire(IDbConnectionPool pool, SqlConnection owner, bool async)
         {
             var completion = async ? new TaskCompletionSource<DbConnectionInternal>() : null;
