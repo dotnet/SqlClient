@@ -8,6 +8,10 @@ using System.Text.Json.Serialization;
 
 namespace Microsoft.Data.SqlClient;
 
+/// <summary>
+/// Source-generated JSON metadata. Each <c>[JsonSerializable]</c> type gets a property named after its CLR type:
+/// <c>float[]</c> → <c>SingleArray</c>, <c>ReadOnlyMemory&lt;float&gt;</c> → <c>ReadOnlyMemorySingle</c>, <c>List&lt;byte&gt;</c> → <c>ListByte</c>.
+/// </summary>
 [JsonSerializable(typeof(float[]))]
 [JsonSerializable(typeof(ReadOnlyMemory<float>))]
 [JsonSerializable(typeof(List<byte>))]
