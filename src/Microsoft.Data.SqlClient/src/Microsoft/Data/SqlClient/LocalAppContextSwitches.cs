@@ -29,12 +29,14 @@ internal static class LocalAppContextSwitches
         "Switch.Microsoft.Data.SqlClient.DisableTNIRByDefaultInConnectionString";
     #endif
 
+    #if NET
     /// <summary>
     /// The name of the app context switch that controls whether SqlClient
     /// reads app.config.
     /// </summary>
     private const string EnableAppConfigString =
         "Switch.Microsoft.Data.SqlClient.EnableAppConfig";
+    #endif
 
     /// <summary>
     /// The name of the app context switch that controls whether
@@ -193,10 +195,12 @@ internal static class LocalAppContextSwitches
     private static SwitchValue s_disableTnirByDefault = SwitchValue.None;
     #endif
 
+    #if NET
     /// <summary>
     /// The cached value of the EnableAppConfig switch.
     /// </summary>
     private static SwitchValue s_enableAppConfig = SwitchValue.None;
+    #endif
 
     /// <summary>
     /// The cached value of the EnableMultiSubnetFailoverByDefault switch.
@@ -348,6 +352,7 @@ internal static class LocalAppContextSwitches
             ref s_disableTnirByDefault);
     #endif
 
+    #if NET
     /// <summary>
     /// When set to false, SqlClient does not read app.config.  Configurable
     /// retry logic, authentication providers and switch overrides are then not
@@ -366,6 +371,12 @@ internal static class LocalAppContextSwitches
             EnableAppConfigString,
             defaultValue: true,
             ref s_enableAppConfig);
+    #else
+    /// <summary>
+    /// Trimming does not apply to .NET Framework, so app.config is always read.
+    /// </summary>
+    public static bool EnableAppConfig => true;
+    #endif
 
     /// <summary>
     /// When set to true, the default value for MultiSubnetFailover connection

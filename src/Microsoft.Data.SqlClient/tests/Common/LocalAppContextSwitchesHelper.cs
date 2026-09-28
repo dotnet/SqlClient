@@ -43,7 +43,9 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     #if NETFRAMEWORK
     private readonly bool? _disableTnirByDefaultOriginal;
     #endif
+    #if NET
     private readonly bool? _enableAppConfigOriginal;
+    #endif
     private readonly bool? _enableMultiSubnetFailoverByDefaultOriginal;
     #if NET
     private readonly bool? _globalizationInvariantModeOriginal;
@@ -98,8 +100,10 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             _disableTnirByDefaultOriginal =
                 GetSwitchValue("s_disableTnirByDefault");
             #endif
+            #if NET
             _enableAppConfigOriginal =
                 GetSwitchValue("s_enableAppConfig");
+            #endif
             _enableMultiSubnetFailoverByDefaultOriginal =
                 GetSwitchValue("s_enableMultiSubnetFailoverByDefault");
             #if NET
@@ -162,9 +166,11 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
                 "s_disableTnirByDefault",
                 _disableTnirByDefaultOriginal);
             #endif
+            #if NET
             SetSwitchValue(
                 "s_enableAppConfig",
                 _enableAppConfigOriginal);
+            #endif
             SetSwitchValue(
                 "s_enableMultiSubnetFailoverByDefault",
                 _enableMultiSubnetFailoverByDefaultOriginal);
@@ -248,6 +254,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     }
     #endif
 
+    #if NET
     /// <summary>
     /// Get or set the EnableAppConfig switch value.
     /// </summary>
@@ -256,6 +263,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
         get => GetSwitchPropertyValue(nameof(EnableAppConfig));
         set => SetSwitchValue("s_enableAppConfig", value);
     }
+    #endif
 
     /// <summary>
     /// Get or set the EnableMultiSubnetFailoverByDefault switch value.

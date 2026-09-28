@@ -182,9 +182,7 @@ namespace Microsoft.Data.SqlClient.LocalDb
                     {
                         Dictionary<string, InstanceInfo> tempConfigurableInstances =
                             new Dictionary<string, InstanceInfo>(StringComparer.OrdinalIgnoreCase);
-                        object section = LocalAppContextSwitches.EnableAppConfig
-                            ? ConfigurationManager.GetSection("system.data.localdb")
-                            : null;
+                        object section = ConfigurationManager.GetSection("system.data.localdb");
                         if (section is not null)
                         {
                             // Validate section type

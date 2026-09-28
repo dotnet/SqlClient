@@ -31,7 +31,6 @@ public class LocalAppContextSwitchesTest
         // cached field to None so the properties re-read from AppContext.
         using LocalAppContextSwitchesHelper switchesHelper = new();
 
-        switchesHelper.EnableAppConfig = null;
         switchesHelper.EnableMultiSubnetFailoverByDefault = null;
         switchesHelper.IgnoreServerProvidedFailoverPartner = null;
         switchesHelper.UseLegacyFailoverAlternationOnLoginSqlErrors = null;
@@ -46,6 +45,7 @@ public class LocalAppContextSwitchesTest
         switchesHelper.UseLegacyIdleTimeoutBehavior = null;
         switchesHelper.UseMinimumLoginTimeout = null;
         #if NET
+        switchesHelper.EnableAppConfig = null;
         switchesHelper.GlobalizationInvariantMode = null;
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
@@ -70,8 +70,8 @@ public class LocalAppContextSwitchesTest
         Assert.False(switchesHelper.IgnoreServerProvidedFailoverPartner);
         Assert.False(switchesHelper.UseLegacyFailoverAlternationOnLoginSqlErrors);
         Assert.False(switchesHelper.EnableMultiSubnetFailoverByDefault);
-        Assert.True(switchesHelper.EnableAppConfig);
         #if NET
+        Assert.True(switchesHelper.EnableAppConfig);
         Assert.False(switchesHelper.GlobalizationInvariantMode);
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
