@@ -40,7 +40,7 @@ mock_next_version() {
   mock_next_version "8.0.0-preview2"
   run bash "${SCRIPT}"
   [ "$status" -eq 1 ]
-  [[ "$output" == *"does not match SqlClientNextVersion"* ]]
+  [[ "$output" == *"expected '8.0.0-preview2', actual '8.0.0-preview1'"* ]]
 }
 
 @test "passes when a stable milestone matches" {
