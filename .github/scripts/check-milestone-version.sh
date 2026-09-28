@@ -17,10 +17,13 @@
 #   DEFAULT_BRANCH   The repository's default branch.
 #
 # SQLCLIENT_VERSIONS_FILE optionally overrides the canonical Versions.props
-# path, primarily for tests.
+# path. SQLCLIENT_VERSION_PROPERTY overrides the property name when checking
+# legacy release branches.
 #
 #################################################################################
 set -euo pipefail
+
+source "$(dirname "${BASH_SOURCE[0]}")/read-sqlclient-version.sh"
 
 : "${MILESTONE_TITLE:?MILESTONE_TITLE environment variable is required}"
 : "${BASE_REF:?BASE_REF environment variable is required}"
@@ -37,22 +40,13 @@ if [[ "${BASE_REF}" != "${DEFAULT_BRANCH}" && "${BASE_REF}" != release/* ]]; the
 fi
 
 versions_file="${SQLCLIENT_VERSIONS_FILE:-src/Microsoft.Data.SqlClient/Versions.props}"
-if [[ ! -r "${versions_file}" ]]; then
-  echo "::error::Unable to read SqlClient version file '${versions_file}'."
-  exit 1
-fi
-
-if ! next_version=$(sed -nE 's/.*<SqlClientNextVersion>([^<]+)<\/SqlClientNextVersion>.*/\1/p' "${versions_file}"); then
-  echo "::error::Unable to read SqlClientNextVersion from '${versions_file}'."
-  exit 1
-fi
-if [[ -z "${next_version}" || "${next_version}" == *$'\n'* ]]; then
-  echo "::error::Expected exactly one SqlClientNextVersion in '${versions_file}'."
+version_property="${SQLCLIENT_VERSION_PROPERTY:-SqlClientNextVersion}"
+if ! next_version=$(read_sqlclient_version "${versions_file}" "${version_property}"); then
   exit 1
 fi
 if [[ "${MILESTONE_TITLE}" != "${next_version}" ]]; then
-  echo "::error::Milestone version '${MILESTONE_TITLE}' does not match next SqlClient version '${next_version}'. Update the version or assign the matching milestone."
+  echo "::error::Milestone version '${MILESTONE_TITLE}' does not match next SqlClient version '${next_version}' (${version_property}). Update the version or assign the matching milestone."
   exit 1
 fi
 
-echo "::notice::Milestone '${MILESTONE_TITLE}' matches SqlClientNextVersion."
+echo "::notice::Milestone '${MILESTONE_TITLE}' matches next SqlClient version '${next_version}' (${version_property})."

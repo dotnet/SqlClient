@@ -33,14 +33,21 @@ mock_next_version() {
 @test "passes and logs success when a preview milestone matches" {
   run bash "${SCRIPT}"
   [ "$status" -eq 0 ]
-  [[ "$output" == *"::notice::Milestone '8.0.0-preview1' matches SqlClientNextVersion."* ]]
+  [[ "$output" == *"::notice::Milestone '8.0.0-preview1' matches next SqlClient version '8.0.0-preview1' (SqlClientNextVersion)."* ]]
 }
 
 @test "fails when a stale preview milestone no longer matches" {
   mock_next_version "8.0.0-preview2"
   run bash "${SCRIPT}"
   [ "$status" -eq 1 ]
-  [[ "$output" == *"Milestone version '8.0.0-preview1' does not match next SqlClient version '8.0.0-preview2'"* ]]
+  [[ "$output" == *"Milestone version '8.0.0-preview1' does not match next SqlClient version '8.0.0-preview2' (SqlClientNextVersion)"* ]]
+}
+
+@test "fails when the version property is duplicated on one line" {
+  printf '<SqlClientNextVersion>8.0.0-preview1</SqlClientNextVersion><SqlClientNextVersion>8.0.0-preview1</SqlClientNextVersion>\n' > "${SQLCLIENT_VERSIONS_FILE}"
+  run bash "${SCRIPT}"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Expected exactly one SqlClientNextVersion"* ]]
 }
 
 @test "passes when a stable milestone matches" {
@@ -48,7 +55,36 @@ mock_next_version() {
   mock_next_version "7.1.1"
   run bash "${SCRIPT}"
   [ "$status" -eq 0 ]
-  [[ "$output" == *"::notice::Milestone '7.1.1' matches SqlClientNextVersion."* ]]
+  [[ "$output" == *"::notice::Milestone '7.1.1' matches next SqlClient version '7.1.1' (SqlClientNextVersion)."* ]]
+}
+
+@test "passes when the milestone matches on a release branch" {
+  export MILESTONE_TITLE="7.1.1"
+  export BASE_REF="release/7.1"
+  mock_next_version "7.1.1"
+  run bash "${SCRIPT}"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Milestone '7.1.1' matches next SqlClient version '7.1.1' (SqlClientNextVersion)."* ]]
+}
+
+@test "fails when the milestone differs on a release branch" {
+  export MILESTONE_TITLE="7.1.1"
+  export BASE_REF="release/7.1"
+  mock_next_version "7.1.2"
+  run bash "${SCRIPT}"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Milestone version '7.1.1' does not match next SqlClient version '7.1.2' (SqlClientNextVersion)"* ]]
+}
+
+@test "uses the configured legacy version property on release branches" {
+  export MILESTONE_TITLE="7.0.3"
+  export BASE_REF="release/7.0"
+  export SQLCLIENT_VERSION_PROPERTY="MdsVersionDefault"
+  export SQLCLIENT_VERSIONS_FILE="${STUB_DIR}/LegacyVersions.props"
+  printf '<MdsVersionDefault>7.0.3</MdsVersionDefault>\n' > "${SQLCLIENT_VERSIONS_FILE}"
+  run bash "${SCRIPT}"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Milestone '7.0.3' matches next SqlClient version '7.0.3' (MdsVersionDefault)."* ]]
 }
 
 @test "fails closed when SqlClientNextVersion is missing" {
