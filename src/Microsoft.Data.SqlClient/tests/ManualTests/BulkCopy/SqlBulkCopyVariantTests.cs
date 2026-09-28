@@ -14,13 +14,14 @@ using Xunit;
 namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
 {
     /// <summary>
-    /// Verifies money identity and decimal fidelity through synchronous and asynchronous bulk copy.
+    /// Verifies sql_variant base-type, value, and null preservation across bulk-copy source and execution modes.
     /// </summary>
     [Trait("Set", "2")]
     public class SqlBulkCopyVariantTests
     {
         /// <summary>
-        /// Reader sources retain smallmoney identity, including mixed variant rows and sequential access.
+        /// Guards against widening smallmoney to money when bulk copy reads a typed column or mixed
+        /// sql_variant rows. Covers buffered/sequential sources and synchronous/asynchronous writes.
         /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [InlineData(false, false, false)]
@@ -33,8 +34,14 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         [InlineData(true, true, true)]
         public async Task ReaderRetainsSmallMoneyType(bool variant, bool sequential, bool async)
         {
+            // Exercise the signed smallmoney limits, its smallest increment, and nulls.
             decimal?[] values = { -214748.3648m, -1.2345m, 0m, 0.0001m, 214748.3647m, null };
+            // Alternate source types to expose subtype metadata leaking between rows.
             string[] types = variant ? new[] { "smallmoney", "money", "numeric" } : new[] { "smallmoney" };
+            // Six integer digits cover smallmoney's limits; eight fractional digits distinguish
+            // numeric metadata from money's fixed scale of four. Use the same metadata for parameters.
+            const byte NumericPrecision = 14;
+            const byte NumericScale = 8;
             int count = values.Length * types.Length;
             using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
             connection.Open();
@@ -45,17 +52,20 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
             command.CommandText = string.Join(" UNION ALL ", Enumerable.Range(0, count).Select(i =>
             {
                 string type = types[i % types.Length];
-                string cast = $"CAST(@p{i} AS {(type == "numeric" ? "numeric(29,8)" : type)})";
+                // Cast on the server so the reader receives the intended TDS subtype, not SqlMoney
+                // parameters (which cannot distinguish money from smallmoney).
+                string cast = $"CAST(@p{i} AS {(type == "numeric" ? $"numeric({NumericPrecision},{NumericScale})" : type)})";
                 return $"SELECT {i} AS Id, {(variant ? $"CAST({cast} AS sql_variant)" : cast)} AS Val";
             }));
             for (int i = 0; i < count; i++)
             {
                 SqlParameter parameter = command.Parameters.Add($"@p{i}", SqlDbType.Decimal);
-                parameter.Precision = 29;
-                parameter.Scale = 8;
+                parameter.Precision = NumericPrecision;
+                parameter.Scale = NumericScale;
                 parameter.Value = (object)values[i / types.Length] ?? DBNull.Value;
             }
 
+            // Only the source reader uses sequential access; SqlBulkCopy consumes Id before Val.
             using (SqlDataReader reader = command.ExecuteReader(sequential ? CommandBehavior.SequentialAccess : CommandBehavior.Default))
             using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connection)
             {
@@ -75,7 +85,8 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
             }
 
             using SqlCommand verify = new SqlCommand(
-                $"SELECT Id, Val, SQL_VARIANT_PROPERTY(Val, 'BaseType') FROM {destination.Name} ORDER BY Id", connection);
+                $"SELECT Id, Val, SQL_VARIANT_PROPERTY(Val, 'BaseType'), SQL_VARIANT_PROPERTY(Val, 'Scale') FROM {destination.Name} ORDER BY Id", connection);
+            // Verification is buffered, but keep all accesses in ordinal order for clarity.
             using SqlDataReader result = verify.ExecuteReader();
             for (int i = 0; i < count; i++)
             {
@@ -84,7 +95,6 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
                 decimal? expected = values[i / types.Length];
                 if (expected.HasValue)
                 {
-                    Assert.Equal(types[i % types.Length], result.GetString(2));
                     Assert.Equal(expected.Value, result.GetDecimal(1));
                     if (types[i % types.Length] != "numeric")
                     {
@@ -94,6 +104,8 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
                     {
                         Assert.IsType<SqlDecimal>(result.GetSqlValue(1));
                     }
+                    Assert.Equal(types[i % types.Length], result.GetString(2));
+                    Assert.Equal(types[i % types.Length] == "numeric" ? NumericScale : 4, result.GetInt32(3));
                 }
                 else
                 {
@@ -105,7 +117,8 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         }
 
         /// <summary>
-        /// Mixed variant rows preserve money, numeric, and null values for each supported source path.
+        /// Reproduces SqlMoney being flattened to decimal before bulk-copy serialization. Every source
+        /// overload must preserve money identity and nulls without reclassifying ordinary decimals as money.
         /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [InlineData("DataTable", false)]
@@ -132,6 +145,8 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
             };
             if (source != "MoneyDataTable" && source != "MoneySqlDataReader")
             {
+                // Typed money sources cannot carry numeric controls; other sources include extra
+                // fractional precision and decimal's upper limit to catch rounding or money coercion.
                 values = values.Concat(new object[] { 1.23m, 1.23456789m, decimal.MaxValue, new SqlDecimal(-1.23456789m) }).ToArray();
             }
 
@@ -195,6 +210,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
                     using (SqlCommand command = sourceConnection.CreateCommand())
                     {
                         sourceConnection.Open();
+                        // Money columns expose CLR decimals; variant columns carry per-row type metadata.
                         command.CommandText = string.Join(" UNION ALL ", Enumerable.Range(0, values.Length)
                             .Select(i => $"SELECT {i} AS Id, @p{i} AS Val"));
                         for (int i = 0; i < values.Length; i++)
@@ -232,17 +248,17 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
                 }
                 else if (expected is SqlMoney money)
                 {
-                    Assert.Equal("money", result.GetString(2));
                     Assert.Equal(money, Assert.IsType<SqlMoney>(result.GetSqlValue(1)));
                     Assert.Equal(money.Value, result.GetDecimal(1));
+                    Assert.Equal("money", result.GetString(2));
                     Assert.Equal(4, result.GetInt32(3));
                 }
                 else
                 {
                     decimal number = expected is SqlDecimal sqlDecimal ? sqlDecimal.Value : (decimal)expected;
-                    Assert.Equal("numeric", result.GetString(2));
                     Assert.IsType<SqlDecimal>(result.GetSqlValue(1));
                     Assert.Equal(number, result.GetDecimal(1));
+                    Assert.Equal("numeric", result.GetString(2));
                     Assert.Equal((int)new SqlDecimal(number).Scale, result.GetInt32(3));
                 }
             }

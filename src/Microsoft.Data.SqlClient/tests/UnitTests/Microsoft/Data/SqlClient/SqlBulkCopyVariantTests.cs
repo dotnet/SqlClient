@@ -34,6 +34,8 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [InlineData(long.MaxValue)]
         public void MoneyRetainsTypeAndPayload(long scaledValue)
         {
+            // Money is a signed 64-bit integer scaled by 10,000. Validation must not flatten it
+            // to decimal, since the writer would then choose the numeric variant token.
             SqlMoney money = new SqlMoney(scaledValue / 10000m);
             object value = ValidateVariant(money);
             Assert.Equal(money, Assert.IsType<SqlMoney>(value));
@@ -42,6 +44,8 @@ namespace Microsoft.Data.SqlClient.UnitTests
             int start = state._outBytesUsed;
             Assert.Null(_parser.WriteSqlVariantDataRowValue(value, state));
 
+            // Four-byte length, type token, zero property bytes, then eight payload bytes.
+            // TDS money puts the high 32-bit word first; each word is little-endian.
             Assert.Equal(14, state._outBytesUsed - start);
             Assert.Equal(10, BitConverter.ToInt32(state._outBuff, start));
             Assert.Equal(TdsEnums.SQLMONEY, state._outBuff[start + 4]);
@@ -65,6 +69,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             int start = state._outBytesUsed;
             _parser.WriteSqlVariantMoney(new SqlMoney(scaledValue / 10000m), state, isSmallMoney: true);
 
+            // Smallmoney has the same variant header but a single signed 32-bit scaled payload.
             Assert.Equal(10, state._outBytesUsed - start);
             Assert.Equal(6, BitConverter.ToInt32(state._outBuff, start));
             Assert.Equal(TdsEnums.SQLMONEY4, state._outBuff[start + 4]);
@@ -85,6 +90,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(SqlBuffer.StorageType.Money, clone.VariantInternalStorageType);
             Assert.Equal(new SqlMoney(-1.2345m), clone.SqlMoney);
 
+            // Reuse the original for money and null while the clone retains its smallmoney identity.
             buffer.Clear();
             Assert.False(buffer.IsSmallMoney);
             buffer.SetToMoney(12300);
@@ -113,6 +119,8 @@ namespace Microsoft.Data.SqlClient.UnitTests
             {
                 baseTI = new SqlMetaDataPriv { tdsType = (byte)tdsType, length = length }
             };
+            // Always Encrypted normalizes both subtypes to eight bytes. This encodes -1.2345;
+            // the original type/length, including nullable SQLMONEYN, must determine the subtype.
             byte[] normalized = { 0xff, 0xff, 0xff, 0xff, 0xc7, 0xcf, 0xff, 0xff };
 
             Assert.True(_parser.DeserializeUnencryptedValue(buffer, normalized, metadata, _parser._physicalStateObj, 0x01));
@@ -121,7 +129,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         }
 
         /// <summary>
-        /// Both decimal representations remain numeric, even when the value also fits in money.
+        /// CLR decimal and SqlDecimal remain numeric without losing fractional precision to money's scale.
         /// </summary>
         [Theory]
         [InlineData(false)]
@@ -136,6 +144,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             int start = state._outBytesUsed;
             Assert.Null(_parser.WriteSqlVariantDataRowValue(value, state));
 
+            // Numeric has two property bytes (precision and scale); eight fractional digits must survive.
             Assert.Equal(25, state._outBytesUsed - start);
             Assert.Equal(21, BitConverter.ToInt32(state._outBuff, start));
             Assert.Equal(TdsEnums.SQLNUMERICN, state._outBuff[start + 4]);
@@ -146,6 +155,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         /// <summary>
         /// Supplies the null representations accepted by the bulk-copy variant writer.
         /// </summary>
+        /// <returns>CLR null, database null, and typed SQL null inputs.</returns>
         public static IEnumerable<object?[]> NullValues()
         {
             yield return new object?[] { null };
@@ -164,6 +174,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             int start = state._outBytesUsed;
             Assert.Null(_parser.WriteSqlVariantDataRowValue(value, state));
 
+            // A null variant is only a zero length prefix: no type token or payload follows it.
             Assert.Equal(4, state._outBytesUsed - start);
             Assert.Equal(0, BitConverter.ToInt32(state._outBuff, start));
         }
