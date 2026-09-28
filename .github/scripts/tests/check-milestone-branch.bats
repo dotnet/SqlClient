@@ -184,6 +184,16 @@ MOCK
   [[ "$output" == *"PR milestone does not match SqlClientNextVersion"* ]]
 }
 
+@test "fails when a stale preview milestone targets the default branch" {
+  mock_release_branches "release/6.1" "release/7.0" "release/7.1"
+  export MILESTONE_TITLE="8.0.0-preview1"
+  export BASE_REF="main"
+  mock_next_version "8.0.0-preview2"
+  run bash "${SCRIPT}"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"PR milestone does not match SqlClientNextVersion"* ]]
+}
+
 @test "fails when no configured milestone series is active" {
   mock_release_branches "release/7.0"
   export MOCK_MILESTONES=$'1.0.0'
