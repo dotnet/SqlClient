@@ -384,7 +384,7 @@ namespace Microsoft.Data.ProviderBase
 
         #region Public/Internal Methods
 
-        internal void ActivateConnection(Transaction transaction)
+        internal void ActivateConnection(Transaction transaction, TimeoutTimer timeout)
         {
             // Internal method called from the connection pooler so we don't expose
             // the Activate method publicly.
@@ -396,8 +396,10 @@ namespace Microsoft.Data.ProviderBase
             // active-connections gauge negative.
             Metrics.EnterActiveConnection();
 
-            Activate(transaction);
+            Activate(transaction, timeout);
         }
+
+        protected virtual void Activate(Transaction transaction, TimeoutTimer timeout) => Activate(transaction);
 
         internal void AddWeakReference(object value, int tag)
         {

@@ -2,8 +2,14 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
+using System.Reflection;
 using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Connection;
+using Microsoft.Data.SqlClient.Tests.Common;
+using Microsoft.Extensions.Time.Testing;
 using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
 
@@ -28,7 +34,7 @@ public sealed class IsolationLevelResetTests
         server.OnSQLBatchCompleted = _ => Interlocked.Increment(ref batchCount);
 
         SqlConnectionInternal internalConnection = (SqlConnectionInternal)connection.InnerConnection;
-        internalConnection.ResetSessionIsolationLevel();
+        internalConnection.ResetSessionIsolationLevel(TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)));
 
         Assert.Equal(1, Volatile.Read(ref batchCount));
         Assert.False(internalConnection.IsConnectionDoomed);
@@ -53,7 +59,7 @@ public sealed class IsolationLevelResetTests
 
         SqlConnectionInternal internalConnection = (SqlConnectionInternal)connection.InnerConnection;
         SqlException exception = Assert.Throws<SqlException>(
-            internalConnection.ResetSessionIsolationLevel);
+            () => internalConnection.ResetSessionIsolationLevel(TimeoutTimer.StartNew(TimeSpan.FromSeconds(15))));
 
         Assert.Equal((int)errorNumber, exception.Number);
         Assert.True(internalConnection.IsConnectionDoomed);
@@ -73,10 +79,168 @@ public sealed class IsolationLevelResetTests
 
         SqlConnectionInternal internalConnection = (SqlConnectionInternal)connection.InnerConnection;
         internalConnection.DoomThisConnection();
-        internalConnection.ResetSessionIsolationLevel();
+        internalConnection.ResetSessionIsolationLevel(TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)));
 
         Assert.Equal(0, Volatile.Read(ref batchCount));
         Assert.True(internalConnection.IsConnectionDoomed);
+    }
+
+    /// <summary>
+    /// Verifies that both pools pass the remaining checkout budget to the reset batch on their
+    /// sync and async paths, independently of Command Timeout and the legacy pool-wait switch.
+    /// </summary>
+    /// <param name="poolV2">Whether to use the channel pool.</param>
+    /// <param name="async">Whether to acquire through the async pool path.</param>
+    /// <param name="overallTimeout">Whether the legacy pool wait uses the overall budget.</param>
+    /// <param name="waitForConnection">Whether to consume the budget while queued behind an owner.</param>
+    [Theory]
+    [InlineData(false, false, false, false)]
+    [InlineData(false, true, false, false)]
+    [InlineData(false, false, true, false)]
+    [InlineData(false, true, true, false)]
+    [InlineData(true, false, false, false)]
+    [InlineData(true, true, false, false)]
+    [InlineData(true, false, true, false)]
+    [InlineData(true, true, true, false)]
+    [InlineData(false, true, false, true)]
+    [InlineData(false, true, true, true)]
+    [InlineData(true, true, false, true)]
+    [InlineData(true, true, true, true)]
+    public async Task PooledReset_UsesRemainingOpenBudget(bool poolV2, bool async, bool overallTimeout, bool waitForConnection)
+    {
+        using LocalAppContextSwitchesHelper switches = new();
+        switches.UseConnectionPoolV2 = poolV2;
+        switches.UseOverallConnectTimeoutForPoolWait = overallTimeout;
+        switches.EnableTransactionIsolationLevelReset = true;
+        using TdsServer server = new(new TdsServerArguments());
+        server.Start();
+        SqlConnectionStringBuilder builder = new()
+        {
+            DataSource = $"127.0.0.1,{server.EndPoint.Port}",
+            Encrypt = SqlConnectionEncryptOption.Optional,
+            Pooling = true,
+            MaxPoolSize = 1,
+            ConnectTimeout = 30,
+            CommandTimeout = 0,
+            ApplicationName = Guid.NewGuid().ToString()
+        };
+        using SqlConnection first = new(builder.ConnectionString);
+        first.Open();
+        SqlConnectionInternal inner = (SqlConnectionInternal)first.InnerConnection;
+        var pool = inner.Pool;
+        // The simulated server does not implement TM_BEGIN_XACT; seed the resulting dirty state.
+        typeof(SqlConnectionInternal).GetField("_isolationLevelDirty", BindingFlags.Instance | BindingFlags.NonPublic)!
+            .SetValue(inner, true);
+        if (!waitForConnection)
+        {
+            first.Close();
+        }
+
+        int observedTimeout = -1;
+        int batches = 0;
+        server.OnSQLBatchCompleted = _ =>
+        {
+            observedTimeout = inner.Parser._physicalStateObj.GetTimeoutRemaining();
+            Interlocked.Increment(ref batches);
+        };
+        var clock = new FakeTimeProvider(DateTimeOffset.UtcNow);
+        TimeoutTimer timeout = TimeoutTimer.StartNew(TimeSpan.FromSeconds(30), clock);
+        if (!waitForConnection)
+        {
+            clock.Advance(TimeSpan.FromMilliseconds(28_750));
+        }
+        using SqlConnection owner = new(builder.ConnectionString);
+        TaskCompletionSource<DbConnectionInternal>? completion = async ? new() : null;
+        DbConnectionInternal? acquired = null;
+        try
+        {
+            bool completed = pool.TryGetConnection(owner, completion, timeout, out acquired);
+            if (waitForConnection)
+            {
+                Assert.False(completed);
+                Assert.False(completion!.Task.IsCompleted);
+                clock.Advance(TimeSpan.FromMilliseconds(28_750));
+                first.Close();
+            }
+            if (!completed)
+            {
+                Assert.NotNull(completion);
+                Task winner = await Task.WhenAny(completion!.Task, Task.Delay(TimeSpan.FromSeconds(10)));
+                Assert.Same(completion.Task, winner);
+                acquired = await completion.Task;
+            }
+            Assert.Same(inner, acquired);
+            Assert.Equal(1, Volatile.Read(ref batches));
+            Assert.InRange(observedTimeout, 1, 1250);
+        }
+        finally
+        {
+            if (acquired is not null)
+            {
+                pool.ReturnInternalConnection(acquired, owner);
+            }
+            SqlConnection.ClearPool(first);
+        }
+    }
+
+    /// <summary>
+    /// Verifies finite, exhausted, and intentionally infinite Open budgets without substituting
+    /// Command Timeout or rounding a subsecond remainder up to a fresh timeout.
+    /// </summary>
+    /// <param name="connectTimeout">The configured connection timeout in seconds.</param>
+    /// <param name="commandTimeout">An unrelated user command timeout in seconds.</param>
+    /// <param name="consumedMilliseconds">Time consumed before reset.</param>
+    [Theory]
+    [InlineData(30, 0, 29750)]
+    [InlineData(30, 1, 0)]
+    [InlineData(1, 30, 1000)]
+    [InlineData(0, 1, 60000)]
+    [InlineData(0, 0, 60000)]
+    public void ResetSessionIsolationLevel_UsesOpenBudget(int connectTimeout, int commandTimeout, int consumedMilliseconds)
+    {
+        using TdsServer server = new(new TdsServerArguments());
+        server.Start();
+        using SqlConnection connection = new(new SqlConnectionStringBuilder
+        {
+            DataSource = $"127.0.0.1,{server.EndPoint.Port}",
+            Encrypt = SqlConnectionEncryptOption.Optional,
+            Pooling = false,
+            ConnectTimeout = connectTimeout,
+            CommandTimeout = commandTimeout
+        }.ConnectionString);
+        connection.Open();
+        SqlConnectionInternal inner = (SqlConnectionInternal)connection.InnerConnection;
+        int observedTimeout = -1;
+        int batches = 0;
+        server.OnSQLBatchCompleted = _ =>
+        {
+            observedTimeout = inner.Parser._physicalStateObj.GetTimeoutRemaining();
+            Interlocked.Increment(ref batches);
+        };
+        var clock = new FakeTimeProvider();
+        TimeoutTimer timeout = TimeoutTimer.StartNew(TimeSpan.FromSeconds(connectTimeout), clock);
+        clock.Advance(TimeSpan.FromMilliseconds(consumedMilliseconds));
+        if (!timeout.IsInfinite && timeout.MillisecondsRemaining == 0)
+        {
+            Assert.Throws<InvalidOperationException>(() => inner.ResetSessionIsolationLevel(timeout));
+            Assert.True(inner.IsConnectionDoomed);
+            Assert.Equal(0, Volatile.Read(ref batches));
+        }
+        else
+        {
+            inner.ResetSessionIsolationLevel(timeout);
+            Assert.Equal(1, Volatile.Read(ref batches));
+            if (timeout.IsInfinite)
+            {
+                Assert.Equal(Timeout.Infinite, observedTimeout);
+            }
+            else
+            {
+                Assert.InRange(observedTimeout, Math.Max(1, timeout.MillisecondsRemainingInt - 1000),
+                    timeout.MillisecondsRemainingInt);
+            }
+            Assert.False(inner.IsConnectionDoomed);
+        }
     }
 
     /// <summary>

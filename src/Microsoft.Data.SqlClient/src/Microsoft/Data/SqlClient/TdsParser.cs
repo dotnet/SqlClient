@@ -9952,7 +9952,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal Task TdsExecuteSQLBatch(string text, int timeout, SqlNotificationRequest notificationRequest, TdsParserStateObject stateObj, bool sync, bool callerHasConnectionLock = false, byte[] enclavePackage = null)
+        internal Task TdsExecuteSQLBatch(string text, int timeout, SqlNotificationRequest notificationRequest, TdsParserStateObject stateObj, bool sync, bool callerHasConnectionLock = false, byte[] enclavePackage = null, TimeoutTimer executionTimeout = null)
         {
             if (TdsParserState.Broken == State || TdsParserState.Closed == State)
             {
@@ -10002,7 +10002,23 @@ namespace Microsoft.Data.SqlClient
                 //  accidentally execute after the transaction has completed on a different thread.
                 _connHandler.CheckEnlistedTransactionBinding();
 
-                stateObj.SetTimeoutSeconds(timeout);
+                if (executionTimeout is null)
+                {
+                    stateObj.SetTimeoutSeconds(timeout);
+                }
+                else if (executionTimeout.IsInfinite)
+                {
+                    stateObj.SetTimeoutMilliseconds(0);
+                }
+                else
+                {
+                    long remaining = executionTimeout.MillisecondsRemaining;
+                    if (remaining == 0)
+                    {
+                        throw ADP.PooledOpenTimeout();
+                    }
+                    stateObj.SetTimeoutMilliseconds(remaining);
+                }
 
                 if ((!_fMARS) && (_physicalStateObj.HasOpenResult))
                 {

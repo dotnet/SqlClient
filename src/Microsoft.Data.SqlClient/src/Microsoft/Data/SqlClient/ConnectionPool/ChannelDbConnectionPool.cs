@@ -426,7 +426,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             {
                 // Carry the old connection's enlistment over to the replacement so that a connection
                 // replaced mid-transaction stays bound to the same transaction.
-                PrepareConnection(owningObject, newConnection, oldConnection.EnlistedTransaction);
+                PrepareConnection(owningObject, newConnection, oldConnection.EnlistedTransaction, timeout);
 
                 // newConnection came from the idle channel, so it already holds a slot of its own.
                 // Releasing oldConnection's slot here keeps the pool's count accurate. This is
@@ -489,7 +489,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                     // Carry the old connection's enlistment over to the replacement so that a
                     // connection replaced mid-transaction stays bound to the same transaction.
-                    newConnection.ActivateConnection(oldConnection.EnlistedTransaction);
+                    newConnection.ActivateConnection(oldConnection.EnlistedTransaction, timeout);
 
                     // Place new into old's slot
                     bool replaced = _connectionSlots.TryReplace(oldConnection, newConnection);
@@ -939,7 +939,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 // than entering GetInternalConnection, which allocates a Task<DbConnectionInternal>
                 // and a timer-backed CancellationTokenSource before it knows whether it will ever
                 // need to wait. See TryGetPooledConnectionInline.
-                connection = TryGetPooledConnectionInline(owningObject, currentTransaction);
+                connection = TryGetPooledConnectionInline(owningObject, currentTransaction, timeout);
                 if (connection is not null)
                 {
                     return true;
@@ -989,7 +989,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             // Fast path: return true rather than completing the TaskCompletionSource, so
             // InternalOpenAsync takes its sync branch and skips a thread pool dispatch.
-            DbConnectionInternal? pooled = TryGetPooledConnectionInline(owningObject, ambientTransaction);
+            DbConnectionInternal? pooled = TryGetPooledConnectionInline(owningObject, ambientTransaction, timeout);
             if (pooled is not null)
             {
                 connection = pooled;
@@ -1445,6 +1445,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <param name="owningConnection">The DbConnection that will own this internal connection.</param>
         /// <param name="ambientTransaction">The ambient transaction captured on the caller's thread,
         /// or null when the caller is not inside a transaction.</param>
+        /// <param name="timeout">The caller's remaining Open budget, including activation.</param>
         /// <returns>An activated connection ready to be handed to the caller, or null when the pool
         /// cannot satisfy the request without waiting or opening.</returns>
         /// <exception cref="Exception">
@@ -1453,7 +1454,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </exception>
         private DbConnectionInternal? TryGetPooledConnectionInline(
             DbConnection owningConnection,
-            Transaction? ambientTransaction)
+            Transaction? ambientTransaction,
+            TimeoutTimer timeout)
         {
             // When automatic enlistment is disabled the connection must never be bound to the
             // ambient transaction, so we neither consult the transacted store nor hand the
@@ -1485,7 +1487,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // matching soft disconnect. Counting after would leave that disconnect unpaired and
             // drive the active-soft-connects gauge negative.
             Metrics.SoftConnectRequest();
-            PrepareConnection(owningConnection, connection, transaction);
+            PrepareConnection(owningConnection, connection, transaction, timeout);
             return connection;
         }
 
@@ -1617,7 +1619,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // the pool, which emits the matching soft disconnect. Counting after would leave that
             // disconnect unpaired and drive the active-soft-connects gauge negative.
             Metrics.SoftConnectRequest();
-            PrepareConnection(owningConnection, connection, transaction);
+            PrepareConnection(owningConnection, connection, transaction, timeout);
 
             SqlClientEventSource.Log.TryPoolerTraceEvent(
                 "ChannelDbConnectionPool.GetInternalConnection | INFO | {0}, Connection {1}, Obtained.", Id, connection.ObjectID);
@@ -1752,10 +1754,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <param name="owningObject">The owning DbConnection instance.</param>
         /// <param name="connection">The DbConnectionInternal to be activated.</param>
         /// <param name="transaction">The transaction to enlist the connection in, or null to activate cleanly.</param>
+        /// <param name="timeout">The caller's remaining Open budget.</param>
         /// <exception cref="Exception">
         /// Thrown when any exception occurs during connection activation.
         /// </exception>
-        private void PrepareConnection(DbConnection owningObject, DbConnectionInternal connection, Transaction? transaction = null)
+        private void PrepareConnection(DbConnection owningObject, DbConnectionInternal connection, Transaction? transaction, TimeoutTimer timeout)
         {
             lock (connection)
             {
@@ -1765,7 +1768,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             try
             {
-                connection.ActivateConnection(transaction);
+                connection.ActivateConnection(transaction, timeout);
             }
             catch
             {

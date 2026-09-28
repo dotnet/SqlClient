@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.SqlClient.Tests.Common;
@@ -31,9 +32,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     /// both reach.
     /// </para>
     /// <para>
-    /// Azure Synapse is excluded throughout: dedicated SQL pools reject every isolation level except
-    /// READ UNCOMMITTED, so the Serializable setup these tests depend on cannot run there, and the
-    /// driver deliberately skips the reset for those endpoints. AreConnStringsSetup and
+    /// Azure Synapse is excluded throughout: dedicated pools reject the reset statement, and
+    /// their user-database session DMV does not support the observations asserted here.
+    /// Dedicated and serverless behavior require separate coverage. AreConnStringsSetup and
     /// IsNotAzureServer do not filter Synapse out on their own, because IsNotAzureServer only
     /// recognizes .database.* host names.
     /// </para>
@@ -94,11 +95,12 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
         /// pool handed back the same physical connection.
         /// </summary>
         /// <param name="connection">An open connection.</param>
+        /// <param name="async">Whether to execute the query asynchronously.</param>
         /// <returns>The value of @@SPID for the current session.</returns>
-        private static int GetSpid(SqlConnection connection)
+        private static async Task<int> GetSpid(SqlConnection connection, bool async)
         {
             using SqlCommand command = new SqlCommand("SELECT @@SPID;", connection);
-            return Convert.ToInt32(command.ExecuteScalar());
+            return Convert.ToInt32(async ? await command.ExecuteScalarAsync() : command.ExecuteScalar());
         }
 
         /// <summary>
@@ -106,15 +108,16 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
         /// sys.dm_exec_sessions rather than by driver state, so the assertion reflects the server.
         /// </summary>
         /// <param name="connection">An open connection.</param>
+        /// <param name="async">Whether to execute the query asynchronously.</param>
         /// <param name="transaction">
         /// Transaction to run the query under. Required when the connection has an active
         /// SqlTransaction, because SqlCommand rejects a command that omits it.
         /// </param>
         /// <returns>The session isolation level name, for example "ReadCommitted".</returns>
-        private static string GetIso(SqlConnection connection, SqlTransaction transaction = null)
+        private static async Task<string> GetIso(SqlConnection connection, bool async, SqlTransaction transaction = null)
         {
             using SqlCommand command = new SqlCommand(GetIsoSql, connection, transaction);
-            return (string)command.ExecuteScalar();
+            return (string)(async ? await command.ExecuteScalarAsync() : command.ExecuteScalar());
         }
 
         /// <summary>
@@ -147,17 +150,17 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
             using (SqlConnection c = new SqlConnection(cs))
             {
                 await OpenConnection(c, async);
-                spid1 = GetSpid(c);
+                spid1 = await GetSpid(c, async);
                 using SqlTransaction tx = c.BeginTransaction(isolationLevel);
-                Assert.Equal(expectedName, GetIso(c, tx));
+                Assert.Equal(expectedName, await GetIso(c, async, tx));
                 tx.Rollback();
             }
 
             using (SqlConnection c = new SqlConnection(cs))
             {
                 await OpenConnection(c, async);
-                Assert.Equal(spid1, GetSpid(c)); // pool reuse
-                Assert.Equal("ReadCommitted", GetIso(c));
+                Assert.Equal(spid1, await GetSpid(c, async)); // pool reuse
+                Assert.Equal("ReadCommitted", await GetIso(c, async));
             }
         }
 
@@ -186,16 +189,16 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
             using (SqlConnection c = new SqlConnection(cs))
             {
                 await OpenConnection(c, async);
-                spid1 = GetSpid(c);
-                Assert.Equal("Serializable", GetIso(c));
+                spid1 = await GetSpid(c, async);
+                Assert.Equal("Serializable", await GetIso(c, async));
                 scope.Complete();
             }
 
             using (SqlConnection c = new SqlConnection(cs))
             {
                 await OpenConnection(c, async);
-                Assert.Equal(spid1, GetSpid(c));
-                Assert.Equal("ReadCommitted", GetIso(c));
+                Assert.Equal(spid1, await GetSpid(c, async));
+                Assert.Equal("ReadCommitted", await GetIso(c, async));
             }
         }
 
@@ -241,16 +244,16 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
                     using (SqlConnection c = new SqlConnection(cs))
                     {
                         await OpenConnection(c, async);
-                        spid1 = GetSpid(c);
-                        Assert.Equal("Serializable", GetIso(c));
+                        spid1 = await GetSpid(c, async);
+                        Assert.Equal("Serializable", await GetIso(c, async));
                     }
 
                     // Same scope, connection returned to the transacted pool and vended again.
                     using (SqlConnection c = new SqlConnection(cs))
                     {
                         await OpenConnection(c, async);
-                        Assert.Equal(spid1, GetSpid(c));
-                        Assert.Equal("Serializable", GetIso(c));
+                        Assert.Equal(spid1, await GetSpid(c, async));
+                        Assert.Equal("Serializable", await GetIso(c, async));
                     }
 
                     scope.Complete();
@@ -287,23 +290,79 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
                 using (SqlConnection c = new SqlConnection(cs))
                 {
                     await OpenConnection(c, async);
-                    spid1 = GetSpid(c);
+                    spid1 = await GetSpid(c, async);
                     using SqlTransaction tx = c.BeginTransaction(IsolationLevel.Serializable);
-                    Assert.Equal("Serializable", GetIso(c, tx));
+                    Assert.Equal("Serializable", await GetIso(c, async, tx));
                     tx.Rollback();
                 }
 
                 using (SqlConnection c = new SqlConnection(cs))
                 {
                     await OpenConnection(c, async);
-                    Assert.Equal(spid1, GetSpid(c));
-                    Assert.Equal("Serializable", GetIso(c));
+                    Assert.Equal(spid1, await GetSpid(c, async));
+                    Assert.Equal("Serializable", await GetIso(c, async));
                 }
+
             }
             finally
             {
                 SqlConnection.ClearAllPools();
             }
+        }
+
+        /// <summary>
+        /// Exercises activation after detaching the enlistment of a real delegated transaction.
+        /// The live server transaction must retain its isolation, and the dirty session must still
+        /// be reset when it is reused after that transaction completes.
+        /// </summary>
+        /// <param name="async">Whether to open connections and execute queries asynchronously.</param>
+        /// <param name="poolV2">Whether to use the channel pool.</param>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup),
+            nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [InlineData(false, false)]
+        [InlineData(true, false)]
+        [InlineData(false, true)]
+        [InlineData(true, true)]
+        public static async Task DelegatedRoot_DetachedEnlistmentDefersResetUntilCompletion(bool async, bool poolV2)
+        {
+            using LocalAppContextSwitchesHelper switches = new();
+            switches.EnableTransactionIsolationLevelReset = true;
+            switches.UseConnectionPoolV2 = poolV2;
+            string cs = BuildPooledConnString($"IsoLeakTest-DetachedRoot-{async}-{poolV2}");
+            using SqlConnection connection = new(cs);
+            int spid;
+            const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+            using (var scope = new TransactionScope(
+                TransactionScopeOption.RequiresNew,
+                new TransactionOptions { IsolationLevel = System.Transactions.IsolationLevel.Serializable },
+                TransactionScopeAsyncFlowOption.Enabled))
+            {
+                await OpenConnection(connection, async);
+                spid = await GetSpid(connection, async);
+                object inner = typeof(SqlConnection).GetProperty("InnerConnection", flags).GetValue(connection);
+                Type type = inner.GetType();
+                PropertyInfo root = type.GetProperty("IsTransactionRoot", flags);
+                PropertyInfo enlisted = type.GetProperty("EnlistedTransaction", flags);
+                Assert.True((bool)root.GetValue(inner));
+                Assert.NotNull(enlisted.GetValue(inner));
+
+                // Deterministically enter the root-only window through the same detach method
+                // used by DetachCurrentTransactionIfEnded, without racing a completion callback.
+                type.GetMethod("DetachTransaction", flags).Invoke(inner, new object[] { Transaction.Current, true });
+                Assert.Null(enlisted.GetValue(inner));
+                Assert.True((bool)root.GetValue(inner));
+                type.GetMethod("Activate", flags, null, new[] { typeof(Transaction) }, null)
+                    .Invoke(inner, new object[] { null });
+
+                using SqlCommand count = new("SELECT @@TRANCOUNT;", connection);
+                Assert.Equal(1, Convert.ToInt32(async ? await count.ExecuteScalarAsync() : count.ExecuteScalar()));
+                Assert.Equal("Serializable", await GetIso(connection, async));
+                scope.Complete();
+            }
+            connection.Close();
+            await OpenConnection(connection, async);
+            Assert.Equal(spid, await GetSpid(connection, async));
+            Assert.Equal("ReadCommitted", await GetIso(connection, async));
         }
     }
 }

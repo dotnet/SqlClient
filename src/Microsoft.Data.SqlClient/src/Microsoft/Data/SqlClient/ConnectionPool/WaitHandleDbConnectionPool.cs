@@ -1157,7 +1157,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 // that disconnect unpaired and drive the active-soft-connects gauge negative.
                 // Counted inside this branch so that no connection vended means no soft connect.
                 Metrics.SoftConnectRequest();
-                PrepareConnection(owningObject, obj, transaction);
+                PrepareConnection(owningObject, obj, transaction, timeout);
             }
 
             connection = obj;
@@ -1165,7 +1165,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             return true;
         }
 
-        private void PrepareConnection(DbConnection owningObject, DbConnectionInternal obj, Transaction transaction)
+        private void PrepareConnection(DbConnection owningObject, DbConnectionInternal obj, Transaction transaction, TimeoutTimer timeout)
         {
             lock (obj)
             {   // Protect against Clear and ReclaimEmancipatedObjects, which call IsEmancipated, which is affected by PrePush and PostPop
@@ -1173,7 +1173,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
             try
             {
-                obj.ActivateConnection(transaction);
+                obj.ActivateConnection(transaction, timeout);
             }
             catch
             {
@@ -1199,7 +1199,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             if (newConnection != null)
             {
                 Metrics.SoftConnectRequest();
-                PrepareConnection(owningObject, newConnection, oldConnection.EnlistedTransaction);
+                PrepareConnection(owningObject, newConnection, oldConnection.EnlistedTransaction, timeout);
                 oldConnection.DeactivateConnection();
                 oldConnection.Dispose();
 

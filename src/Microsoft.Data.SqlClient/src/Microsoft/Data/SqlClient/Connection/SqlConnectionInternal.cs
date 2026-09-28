@@ -2090,6 +2090,9 @@ namespace Microsoft.Data.SqlClient.Connection
         #region Protected Methods
 
         protected override void Activate(Transaction transaction)
+            => Activate(transaction, TimeoutTimer.StartNew(TimeSpan.FromSeconds(ConnectionOptions.ConnectTimeout)));
+
+        protected override void Activate(Transaction transaction, TimeoutTimer timeout)
         {
             #if NETFRAMEWORK
             // Demand for unspecified failover pooled connections
@@ -2111,18 +2114,14 @@ namespace Microsoft.Data.SqlClient.Connection
             //    callback thread while holding a lock on the connection. That path deliberately
             //    avoids socket work on a thread it does not own.
             //
-            // Activate always runs on the thread performing the checkout, and by then the previous
-            // transaction has ended, so neither constraint applies. It also means the cost is only
-            // paid by connections that are actually reused.
-            //
-            // EnlistedTransaction is non-null here only when the connection is being re-vended into
-            // a transaction it is already enlisted in; scrubbing then would hit the same #146
-            // problem, so it is skipped.
+            // A delegated root can remain active after EnlistedTransaction has been detached.
+            // Preserve the dirty flag until both forms of transaction ownership have ended.
             if (_isolationLevelDirty &&
                 LocalAppContextSwitches.EnableTransactionIsolationLevelReset &&
-                EnlistedTransaction is null)
+                EnlistedTransaction is null &&
+                !IsTransactionRoot)
             {
-                ResetSessionIsolationLevel();
+                ResetSessionIsolationLevel(timeout);
             }
 
             // When we're required to automatically enlist in transactions and there is one we
@@ -4053,7 +4052,7 @@ namespace Microsoft.Data.SqlClient.Connection
 
         // Issues "SET TRANSACTION ISOLATION LEVEL READ COMMITTED;" on the physical state object so
         // this user of the pooled connection observes the default session isolation level.
-        internal void ResetSessionIsolationLevel()
+        internal void ResetSessionIsolationLevel(TimeoutTimer timeout)
         {
             if (IsConnectionDoomed)
             {
@@ -4066,15 +4065,8 @@ namespace Microsoft.Data.SqlClient.Connection
             // flag's value stops mattering.
             _isolationLevelDirty = false;
 
-            // Azure Synapse Analytics dedicated SQL pools reject every isolation level except
-            // READ UNCOMMITTED with error 104409, so the session can never have been elevated away
-            // from that level and there is nothing to scrub. Skipping up front avoids spending a
-            // round trip on a statement that can only fail there.
-            //
-            // This is also the one endpoint where the defect cannot be repaired if it ever did
-            // occur: READ COMMITTED - the statement this method issues - is itself rejected with
-            // 104409, so there is no legal statement that could restore the default. Skipping is
-            // the only correct behavior rather than a best-effort compromise.
+            // Dedicated Synapse pools reject this SET statement with error 104409. Their effective
+            // isolation is controlled by the service/database configuration, not this reset.
             if (ADP.IsAzureSynapseDedicatedPoolEndpoint(ConnectionOptions.DataSource))
             {
                 Debug.Fail("A dedicated Synapse connection should never require an isolation level reset.");
@@ -4085,13 +4077,13 @@ namespace Microsoft.Data.SqlClient.Connection
             {
                 _parser.TdsExecuteSQLBatch(
                     text: "SET TRANSACTION ISOLATION LEVEL READ COMMITTED;",
-                    // Bounded by the connection's command timeout. Passing 0 here would map to
-                    // long.MaxValue in TdsParserStateObject.SetTimeoutMilliseconds, which would let
-                    // an unresponsive server block SqlConnection.Open indefinitely.
-                    timeout: ConnectionOptions.CommandTimeout,
+                    // Use the caller's remaining Open budget, including time spent in the pool.
+                    // Only Connect Timeout=0 intentionally permits an unlimited reset.
+                    timeout: 0,
                     notificationRequest: null,
                     stateObj: _parser._physicalStateObj,
-                    sync: true);
+                    sync: true,
+                    executionTimeout: timeout);
                 _parser.Run(RunBehavior.UntilDone, null, null, null, _parser._physicalStateObj);
             }
             catch (Exception e) when (ADP.IsCatchableExceptionType(e))

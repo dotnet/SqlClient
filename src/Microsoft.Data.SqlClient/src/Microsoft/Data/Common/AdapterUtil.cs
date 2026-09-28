@@ -847,6 +847,12 @@ namespace Microsoft.Data.Common
         private const string ONDEMAND_PREFIX = "-ondemand";
         private const string AZURE_SYNAPSE = ".sql.azuresynapse.";
         private const string AZURE_SYNAPSE_ONDEMAND = ONDEMAND_PREFIX + AZURE_SYNAPSE;
+        private static readonly string[] s_synapseSqlDomains =
+        {
+            ".sql.azuresynapse.net",
+            ".sql.azuresynapse.azure.cn",
+            ".sql.azuresynapse.usgovcloudapi.net"
+        };
         private const string FABRIC_DATAWAREHOUSE = "datawarehouse.fabric.microsoft.com";
         private const string PBI_DATAWAREHOUSE = "datawarehouse.pbidedicated.microsoft.com";
         private const string PBI_DATAWAREHOUSE2 = ".pbidedicated.microsoft.com";
@@ -903,15 +909,54 @@ namespace Microsoft.Data.Common
         /// </summary>
         /// <remarks>Dedicated pools are addressed as "&lt;workspace&gt;.sql.azuresynapse.net", while
         /// serverless (on-demand) pools carry an "-ondemand" suffix on the workspace name and are
-        /// therefore excluded here. The domain is matched as a substring rather than a suffix so that
-        /// top-level domains the driver does not enumerate, such as sovereign clouds, are still
-        /// classified; a host that merely embeds the domain is classified too, which is benign because
-        /// a false positive only skips an optimization.</remarks>
+        /// therefore excluded here, including Private Link names. Match only known public, China,
+        /// and US Government domains: a false positive would suppress a correctness fix.
+        /// Custom aliases and future cloud domains are not classified as dedicated.</remarks>
         internal static bool IsAzureSynapseDedicatedPoolEndpoint(string dataSource)
         {
-            return dataSource is not null
-                && dataSource.IndexOf(AZURE_SYNAPSE, StringComparison.OrdinalIgnoreCase) >= 0
-                && dataSource.IndexOf(AZURE_SYNAPSE_ONDEMAND, StringComparison.OrdinalIgnoreCase) < 0;
+            if (string.IsNullOrEmpty(dataSource))
+            {
+                return false;
+            }
+
+            string host = dataSource.Trim();
+            if (host.StartsWith("tcp:", StringComparison.OrdinalIgnoreCase))
+            {
+                host = host.Substring(4);
+            }
+            int port = host.IndexOf(',');
+            if (port >= 0)
+            {
+                host = host.Substring(0, port);
+            }
+            int instance = host.IndexOf('\\');
+            if (instance >= 0)
+            {
+                host = host.Substring(0, instance);
+            }
+            host = host.TrimEnd();
+            if (host.EndsWith(".", StringComparison.Ordinal))
+            {
+                host = host.Substring(0, host.Length - 1);
+            }
+
+            foreach (string domain in s_synapseSqlDomains)
+            {
+                if (!host.EndsWith(domain, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+                string workspace = host.Substring(0, host.Length - domain.Length);
+                const string privateLink = ".privatelink";
+                if (workspace.EndsWith(privateLink, StringComparison.OrdinalIgnoreCase))
+                {
+                    workspace = workspace.Substring(0, workspace.Length - privateLink.Length);
+                }
+                return workspace.Length > 0
+                    && workspace.IndexOf('.') < 0
+                    && !workspace.EndsWith(ONDEMAND_PREFIX, StringComparison.OrdinalIgnoreCase);
+            }
+            return false;
         }
 
         internal static bool IsAzureSqlServerEndpoint(string dataSource)

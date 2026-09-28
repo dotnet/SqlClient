@@ -43,6 +43,7 @@ public class LocalAppContextSwitchesTest
         switchesHelper.UseCompatibilityAsyncBehaviour = null;
         switchesHelper.UseCompatibilityProcessSni = null;
         switchesHelper.UseConnectionPoolV2 = null;
+        switchesHelper.UseOverallConnectTimeoutForPoolWait = null;
         switchesHelper.UseLegacyIdleTimeoutBehavior = null;
         switchesHelper.UseMinimumLoginTimeout = null;
         #if NET

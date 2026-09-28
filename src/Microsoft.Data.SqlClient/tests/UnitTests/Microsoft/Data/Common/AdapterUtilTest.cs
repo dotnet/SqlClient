@@ -94,15 +94,26 @@ public class AdapterUtilTest
     [InlineData("MYWORKSPACE.SQL.AZURESYNAPSE.NET", true)]
     [InlineData("tcp:myworkspace.sql.azuresynapse.net,1433", true)]
     [InlineData("myworkspace.sql.azuresynapse.net\\instance", true)]
-    // The domain is matched as a substring rather than a suffix, so top-level domains that are not
-    // enumerated anywhere in the driver - including sovereign clouds - are still classified.
     [InlineData("myworkspace.sql.azuresynapse.azure.cn", true)]
-    // The domain is matched as a substring, so an embedding host is also classified.
-    [InlineData("myworkspace.sql.azuresynapse.net.example", true)]
+    [InlineData("myworkspace.sql.azuresynapse.usgovcloudapi.net", true)]
+    [InlineData("myworkspace.privatelink.sql.azuresynapse.net", true)]
+    [InlineData("tcp:MYWORKSPACE.privatelink.sql.azuresynapse.azure.cn,1433", true)]
+    [InlineData("myworkspace.privatelink.sql.azuresynapse.usgovcloudapi.net\\instance", true)]
+    [InlineData(" tcp:myworkspace.sql.azuresynapse.net. ,1433", true)]
+    [InlineData("myworkspace.sql.azuresynapse.net.example", false)]
+    [InlineData("myworkspace.sql.azuresynapse.azure.cn.example", false)]
+    [InlineData("myworkspace.sql.azuresynapse.unknown", false)]
+    [InlineData("other.myworkspace.sql.azuresynapse.net", false)]
     // Serverless / on-demand pools use the same suffix but carry an "-ondemand" workspace suffix.
     [InlineData("myworkspace-ondemand.sql.azuresynapse.net", false)]
     [InlineData("MYWORKSPACE-ONDEMAND.SQL.AZURESYNAPSE.NET", false)]
     [InlineData("tcp:myworkspace-ondemand.sql.azuresynapse.net,1433", false)]
+    [InlineData("myworkspace-ondemand.privatelink.sql.azuresynapse.net", false)]
+    [InlineData("tcp:MYWORKSPACE-ONDEMAND.privatelink.sql.azuresynapse.net,1433", false)]
+    [InlineData("myworkspace-ondemand.privatelink.sql.azuresynapse.azure.cn", false)]
+    [InlineData("myworkspace-ondemand.privatelink.sql.azuresynapse.usgovcloudapi.net\\instance", false)]
+    [InlineData("myworkspace-ondemand.sql.azuresynapse.azure.cn", false)]
+    [InlineData("myworkspace-ondemand.sql.azuresynapse.usgovcloudapi.net", false)]
     // Unrelated endpoints.
     [InlineData("myserver.database.windows.net", false)]
     [InlineData("myserver-ondemand.database.windows.net", false)]
