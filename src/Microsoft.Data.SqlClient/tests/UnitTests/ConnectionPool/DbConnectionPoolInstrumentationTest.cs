@@ -713,18 +713,20 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             DbConnectionInternal? physicalConnection = null;
             const int cycles = 3;
-            for (int cycle = 0; cycle < cycles; cycle++)
+            for (int cycle = 1; cycle <= cycles; cycle++)
             {
                 DbConnectionInternal leaked = CheckOutAndAbandonOwner(pool);
                 physicalConnection ??= leaked;
                 Assert.Same(physicalConnection, leaked);
+                // Prior cycles each balanced two checkouts and reclaimed one. This cycle's first
+                // checkout is still active, on the single physical connection retained by the pool.
                 AssertCounters(
                     metrics,
                     hardConnects: 1,
-                    softConnects: 2 * cycle + 1,
-                    softDisconnects: 2 * cycle,
+                    softConnects: 2 * cycle - 1,
+                    softDisconnects: 2 * (cycle - 1),
                     pooledConnections: 1,
-                    reclaimedConnections: cycle,
+                    reclaimedConnections: cycle - 1,
                     activeConnections: 1);
 
                 CollectAbandonedOwners();
@@ -738,6 +740,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 {
                     try
                     {
+                        // Sync acquisition blocks this worker; async acquisition may either finish
+                        // inline or return a pending request through the completion source.
                         TaskCompletionSource<DbConnectionInternal>? completion = async ? new() : null;
                         bool completed = pool.TryGetConnection(
                             waitingOwner,
@@ -746,6 +750,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                             out reclaimed);
                         if (!completed)
                         {
+                            // Wait on the worker while the test thread drives timer-based reclaim.
                             Assert.True(async);
                             reclaimed = completion!.Task.GetAwaiter().GetResult();
                         }
@@ -764,32 +769,37 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 AdvanceUntil(fakeTime, () => caller.Join(TimeSpan.Zero), "the caller should be served by the reclaimed connection");
                 Assert.Null(failure);
 
-                // Reclamation balances the abandoned checkout, so activeSoftConnections stays at one.
                 Assert.Same(leaked, reclaimed);
+                // Each cycle now has two checkouts and one reclamation. Reclaiming balances the
+                // abandoned checkout, leaving only the new owner active and no free connection.
                 AssertCounters(
                     metrics,
                     hardConnects: 1,
-                    softConnects: 2 * cycle + 2,
-                    softDisconnects: 2 * cycle + 1,
+                    softConnects: 2 * cycle,
+                    softDisconnects: 2 * cycle - 1,
                     pooledConnections: 1,
-                    reclaimedConnections: cycle + 1,
+                    reclaimedConnections: cycle,
                     activeConnections: 1);
 
                 pool.ReturnInternalConnection(reclaimed!, waitingOwner);
+                // Normal return balances the second checkout without counting reclamation again.
+                // The same physical connection is now free, and both active gauges are zero.
                 AssertCounters(
                     metrics,
                     hardConnects: 1,
-                    softConnects: 2 * cycle + 2,
-                    softDisconnects: 2 * cycle + 2,
+                    softConnects: 2 * cycle,
+                    softDisconnects: 2 * cycle,
                     pooledConnections: 1,
                     freeConnections: 1,
-                    reclaimedConnections: cycle + 1);
+                    reclaimedConnections: cycle);
 
                 GC.KeepAlive(waitingOwner);
             }
 
             pool.Shutdown();
             pool.Clear();
+            // Clearing the idle pool closes its sole physical connection. All gauges return to
+            // zero; cumulative checkout/return and reclamation totals remain unchanged.
             AssertCounters(
                 metrics,
                 hardConnects: 1,

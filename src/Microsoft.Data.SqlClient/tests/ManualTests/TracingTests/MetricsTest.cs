@@ -280,7 +280,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             long reclaimed = SqlClientEventSourceProps.ReclaimedConnections;
             InternalConnectionWrapper physicalConnection = null;
 
-            for (int cycle = 0; cycle < 3; cycle++)
+            for (int cycle = 1; cycle <= 3; cycle++)
             {
                 InternalConnectionWrapper abandoned = AbandonConnection(connectionString, async);
                 physicalConnection ??= abandoned;
@@ -300,13 +300,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 Assert.True(abandoned.IsInternalConnectionOf(connection));
                 Assert.True(physicalConnection.IsInternalConnectionOf(connection));
-                Assert.Equal(reclaimed + cycle + 1, SqlClientEventSourceProps.ReclaimedConnections);
-                Assert.Equal(connects + 2 * cycle + 2, SqlClientEventSourceProps.SoftConnects);
-                Assert.Equal(disconnects + 2 * cycle + 1, SqlClientEventSourceProps.SoftDisconnects);
+                // Each cycle reclaims one abandoned checkout of the same physical connection.
+                Assert.Equal(reclaimed + cycle, SqlClientEventSourceProps.ReclaimedConnections);
+                // Each cycle checks out twice: once to abandon the owner, then once to reuse.
+                Assert.Equal(connects + 2 * cycle, SqlClientEventSourceProps.SoftConnects);
+                // All checkouts except the current one have ended, including the abandoned one.
+                Assert.Equal(disconnects + 2 * cycle - 1, SqlClientEventSourceProps.SoftDisconnects);
+                // Only the current owner contributes to the active gauge above its baseline.
                 Assert.Equal(active + 1, SqlClientEventSourceProps.ActiveSoftConnections);
 
                 connection.Close();
-                Assert.Equal(disconnects + 2 * cycle + 2, SqlClientEventSourceProps.SoftDisconnects);
+                // Normal close balances the second checkout, without recounting reclamation.
+                Assert.Equal(disconnects + 2 * cycle, SqlClientEventSourceProps.SoftDisconnects);
+                // No checkout from this test remains active after close.
                 Assert.Equal(active, SqlClientEventSourceProps.ActiveSoftConnections);
             }
         }
