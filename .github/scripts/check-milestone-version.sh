@@ -51,7 +51,7 @@ if [[ -z "${next_version}" || "${next_version}" == *$'\n'* ]]; then
   exit 1
 fi
 if [[ "${MILESTONE_TITLE}" != "${next_version}" ]]; then
-  echo "::error::PR milestone version mismatch: expected '${next_version}', actual '${MILESTONE_TITLE}'. Update the version or assign the matching milestone."
+  echo "::error::Milestone version '${MILESTONE_TITLE}' does not match next SqlClient version '${next_version}'. Update the version or assign the matching milestone."
   exit 1
 fi
 
