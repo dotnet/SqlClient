@@ -1977,12 +1977,22 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 return;
             }
 
+            // Hold a pruning admission from before scheduling until the loop exits, so a queued
+            // warmup keeps the pool from being pruned before the loop starts creating.
+            if (!_pruningGuard.TryEnter())
+            {
+                Interlocked.Exchange(ref _warmupLoopRunning, 0);
+                return;
+            }
+
+            bool scheduled = false;
             try
             {
                 // Fire-and-forget on the thread pool so warmup never blocks the caller. The loop
                 // absorbs its own exceptions and always releases the single-loop guard on exit. The
                 // task is published so tests can await a warmup pass to a deterministic completion.
                 WarmupLoopTask = Task.Run(RunWarmupLoopAsync);
+                scheduled = true;
 
                 SqlClientEventSource.Log.TryPoolerTraceEvent(
                     "ChannelDbConnectionPool.RequestWarmup | INFO | {0}, Scheduled warmup loop. Count={1}, MinPoolSize={2}", Id, Count, MinPoolSize);
@@ -1994,7 +2004,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 // below-minimum trigger will try again. Release the guard for every exception, but
                 // only absorb catchable ones - a non-catchable exception (e.g. OutOfMemoryException)
                 // must not be swallowed into a pool that keeps running in a potentially corrupted state.
-                Interlocked.Exchange(ref _warmupLoopRunning, 0);
+                // Once scheduled, the loop owns both guards and releases them itself.
+                if (!scheduled)
+                {
+                    _pruningGuard.Exit();
+                    Interlocked.Exchange(ref _warmupLoopRunning, 0);
+                }
                 if (!ADP.IsCatchableExceptionType(ex))
                 {
                     throw;
@@ -2137,7 +2152,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             {
                 // Always release the single-loop guard, whatever exit path we took, so a future
                 // below-minimum trigger can start a new loop. Interlocked.Exchange mirrors the
-                // Interlocked.CompareExchange acquire in RequestWarmup.
+                // Interlocked.CompareExchange acquire in RequestWarmup. The pruning admission
+                // acquired in RequestWarmup is released first so the loop no longer blocks pruning.
+                _pruningGuard.Exit();
                 Interlocked.Exchange(ref _warmupLoopRunning, 0);
             }
         }

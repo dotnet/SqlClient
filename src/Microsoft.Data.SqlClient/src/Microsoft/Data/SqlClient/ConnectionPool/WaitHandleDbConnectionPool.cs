@@ -1423,6 +1423,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
             finally
             {
+                // Release the admission acquired by QueuePoolCreateRequest.
+                _pruningGuard.Exit();
                 SqlClientEventSource.Log.TryPoolerScopeLeaveEvent(scopeID);
             }
         }
@@ -1522,10 +1524,23 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         private void QueuePoolCreateRequest()
         {
-            if (State is Running)
+            // The admission is transferred to PoolCreateRequest so a queued replenishment keeps
+            // the pool from being pruned before the worker runs.
+            if (State is Running && _pruningGuard.TryEnter())
             {
-                // Make sure we're at quota by posting a callback to the threadpool.
-                ThreadPool.QueueUserWorkItem(_poolCreateRequest);
+                bool queued = false;
+                try
+                {
+                    // Make sure we're at quota by posting a callback to the threadpool.
+                    queued = ThreadPool.QueueUserWorkItem(_poolCreateRequest);
+                }
+                finally
+                {
+                    if (!queued)
+                    {
+                        _pruningGuard.Exit();
+                    }
+                }
             }
         }
 
