@@ -1161,51 +1161,102 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
                   THROW;
               END CATCH";
 
+        // Sync/async shims. Every test below is a [ConditionalTheory] over a bool "async" flag so
+        // the sync and async reader paths are exercised by one test body instead of two
+        // near-identical copies; these shims are the only place the branch appears.
+
+        /// <summary>
+        /// Opens <paramref name="connection"/> on the sync or async path.
+        /// </summary>
+        /// <param name="connection">The connection to open. Side effect: it is left open.</param>
+        /// <param name="async"><see langword="true"/> to use the async overload.</param>
+        /// <returns>A task that completes once the connection is open.</returns>
+        private static async Task OpenAsync(SqlConnection connection, bool async)
+        {
+            if (async)
+            {
+                await connection.OpenAsync();
+            }
+            else
+            {
+                connection.Open();
+            }
+        }
+
+        /// <summary>
+        /// Executes <paramref name="command"/> on the sync or async path.
+        /// </summary>
+        /// <param name="command">The command to execute.</param>
+        /// <param name="async"><see langword="true"/> to use the async overload.</param>
+        /// <returns>The reader, which the caller owns and must dispose.</returns>
+        private static async Task<SqlDataReader> ExecuteReaderAsync(SqlCommand command, bool async)
+        {
+            if (async)
+            {
+                return await command.ExecuteReaderAsync();
+            }
+
+            return command.ExecuteReader();
+        }
+
+        /// <summary>
+        /// Advances <paramref name="reader"/> by one row on the sync or async path.
+        /// </summary>
+        /// <param name="reader">The reader to advance. Side effect: the reader's position moves.</param>
+        /// <param name="async"><see langword="true"/> to use the async overload.</param>
+        /// <returns><see langword="true"/> if a row was read; otherwise <see langword="false"/>.</returns>
+        private static async Task<bool> ReadAsync(SqlDataReader reader, bool async)
+        {
+            if (async)
+            {
+                return await reader.ReadAsync();
+            }
+
+            return reader.Read();
+        }
+
+        /// <summary>
+        /// Advances <paramref name="reader"/> to the next result set on the sync or async path.
+        /// </summary>
+        /// <param name="reader">The reader to advance. Side effect: the reader's position moves.</param>
+        /// <param name="async"><see langword="true"/> to use the async overload.</param>
+        /// <returns><see langword="true"/> if another result set exists; otherwise <see langword="false"/>.</returns>
+        private static async Task<bool> NextResultAsync(SqlDataReader reader, bool async)
+        {
+            if (async)
+            {
+                return await reader.NextResultAsync();
+            }
+
+            return reader.NextResult();
+        }
+
         /// <summary>
         /// Regression guard for issue #4321: an error rethrown by THROW inside a CATCH block
         /// reaches the client after the DONE token that closed the TRY block's result set, and
         /// must still be raised as a <see cref="SqlException"/> from <see cref="SqlDataReader.Read"/>
         /// rather than being silently dropped so the batch looks like it returned no rows.
+        ///
+        /// The TRY block's result set is empty, so no row can be returned and the first
+        /// read is the one that reaches the trailing error - the caller makes no "extra" call to
+        /// observe it.
         /// </summary>
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void ErrorRethrownFromCatchBlock_IsSurfacedByRead()
+        /// <param name="async"><see langword="true"/> to exercise the async read path.</param>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [InlineData(false)]
+        [InlineData(true)]
+        public static async Task ErrorRethrownFromCatchBlock_IsSurfacedByRead(bool async)
         {
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
-            connection.Open();
+            await OpenAsync(connection, async);
             using SqlCommand command = connection.CreateCommand();
             command.CommandText = RethrowFromCatchBatch;
 
-            SqlException ex = Assert.Throws<SqlException>(() =>
-            {
-                using SqlDataReader reader = command.ExecuteReader();
-                while (reader.Read())
-                {
-                }
-            });
+            // Executing the batch succeeds; only the read is expected to throw, so it is the
+            // single statement under assertion.
+            using SqlDataReader reader = await ExecuteReaderAsync(command, async);
 
-            Assert.Equal(8134, ex.Number);
-        }
-
-        /// <summary>
-        /// Asynchronous counterpart of <see cref="ErrorRethrownFromCatchBlock_IsSurfacedByRead"/>.
-        /// Sync and async reads drain the token stream through different internal paths, so the
-        /// fix for issue #4321 is asserted separately on each to guarantee parity.
-        /// </summary>
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static async Task ErrorRethrownFromCatchBlock_IsSurfacedByReadAsync()
-        {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
-            await connection.OpenAsync();
-            using SqlCommand command = connection.CreateCommand();
-            command.CommandText = RethrowFromCatchBatch;
-
-            SqlException ex = await Assert.ThrowsAsync<SqlException>(async () =>
-            {
-                using SqlDataReader reader = await command.ExecuteReaderAsync();
-                while (await reader.ReadAsync())
-                {
-                }
-            });
+            SqlException ex = await Assert.ThrowsAsync<SqlException>(() => ReadAsync(reader, async));
 
             Assert.Equal(8134, ex.Number);
         }
@@ -1216,11 +1267,14 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
         /// the rethrown error would leave the caller unable to distinguish "the insert failed" from
         /// "the insert succeeded and output no rows", so the error must be raised.
         /// </summary>
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void ErrorRethrownFromCatchBlock_AfterOutputClause_IsSurfacedByRead()
+        /// <param name="async"><see langword="true"/> to exercise the async read path.</param>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [InlineData(false)]
+        [InlineData(true)]
+        public static async Task ErrorRethrownFromCatchBlock_AfterOutputClause_IsSurfacedByRead(bool async)
         {
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
-            connection.Open();
+            await OpenAsync(connection, async);
 
             using Table table = new(connection, "DataReaderTest_Issue4321_Output", "([Id] INT NOT NULL)");
 
@@ -1233,13 +1287,11 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
                        THROW;
                    END CATCH";
 
-            SqlException ex = Assert.Throws<SqlException>(() =>
-            {
-                using SqlDataReader reader = command.ExecuteReader();
-                while (reader.Read())
-                {
-                }
-            });
+            // The OUTPUT clause yields an (empty) result set, so execution succeeds and the
+            // first read is what surfaces the rethrown error.
+            using SqlDataReader reader = await ExecuteReaderAsync(command, async);
+
+            SqlException ex = await Assert.ThrowsAsync<SqlException>(() => ReadAsync(reader, async));
 
             Assert.Equal(8134, ex.Number);
         }
@@ -1250,49 +1302,45 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
         /// always surfaced correctly. Ensures the change did not shift error handling onto the
         /// trailing-token path only.
         /// </summary>
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void ErrorWithoutTryCatch_IsStillSurfacedByRead()
+        /// <param name="async"><see langword="true"/> to exercise the async read path.</param>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [InlineData(false)]
+        [InlineData(true)]
+        public static async Task ErrorWithoutTryCatch_IsStillSurfacedByRead(bool async)
         {
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
-            connection.Open();
+            await OpenAsync(connection, async);
             using SqlCommand command = connection.CreateCommand();
             command.CommandText = "SELECT 1/0;";
 
-            SqlException ex = Assert.Throws<SqlException>(() =>
-            {
-                using SqlDataReader reader = command.ExecuteReader();
-                while (reader.Read())
-                {
-                }
-            });
+            using SqlDataReader reader = await ExecuteReaderAsync(command, async);
+
+            SqlException ex = await Assert.ThrowsAsync<SqlException>(() => ReadAsync(reader, async));
 
             Assert.Equal(8134, ex.Number);
         }
 
         /// <summary>
         /// Ensures the fix for issue #4321 does not over-report: a query that legitimately matches
-        /// no rows must still complete with zero rows and no exception, on both the sync and async
-        /// read paths.
+        /// no rows must still complete with zero rows and no exception.
         /// </summary>
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static async Task EmptyResultSetWithoutError_ReturnsNoRows()
+        /// <param name="async"><see langword="true"/> to exercise the async read path.</param>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [InlineData(false)]
+        [InlineData(true)]
+        public static async Task EmptyResultSetWithoutError_ReturnsNoRows(bool async)
         {
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
-            await connection.OpenAsync();
+            await OpenAsync(connection, async);
 
-            using (SqlCommand command = connection.CreateCommand())
-            {
-                command.CommandText = "SELECT 1 AS Value WHERE 1 = 0;";
-                using SqlDataReader reader = command.ExecuteReader();
-                Assert.False(reader.Read());
-            }
+            using SqlCommand command = connection.CreateCommand();
+            command.CommandText = "SELECT 1 AS Value WHERE 1 = 0;";
 
-            using (SqlCommand command = connection.CreateCommand())
-            {
-                command.CommandText = "SELECT 1 AS Value WHERE 1 = 0;";
-                using SqlDataReader reader = await command.ExecuteReaderAsync();
-                Assert.False(await reader.ReadAsync());
-            }
+            using SqlDataReader reader = await ExecuteReaderAsync(command, async);
+
+            // No rows, no error, no further result sets.
+            Assert.False(await ReadAsync(reader, async));
+            Assert.False(await NextResultAsync(reader, async));
         }
 
         /// <summary>
@@ -1301,22 +1349,27 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
         /// now consumes, and must continue to be delivered through
         /// <see cref="SqlConnection.InfoMessage"/> instead of being thrown.
         /// </summary>
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void TrailingInfoMessage_IsRaisedAsInfoNotError()
+        /// <param name="async"><see langword="true"/> to exercise the async read path.</param>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [InlineData(false)]
+        [InlineData(true)]
+        public static async Task TrailingInfoMessage_IsRaisedAsInfoNotError(bool async)
         {
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
             List<string> messages = new();
             connection.InfoMessage += (_, e) => messages.Add(e.Message);
-            connection.Open();
+            await OpenAsync(connection, async);
 
             using SqlCommand command = connection.CreateCommand();
             command.CommandText = "SELECT 1 AS Value; PRINT 'trailing-info';";
 
-            using (SqlDataReader reader = command.ExecuteReader())
+            using (SqlDataReader reader = await ExecuteReaderAsync(command, async))
             {
-                Assert.True(reader.Read());
+                // Exactly one row, then a clean end of result set - the trailing PRINT must not
+                // throw and must not be mistaken for a row.
+                Assert.True(await ReadAsync(reader, async));
                 Assert.Equal(1, reader.GetInt32(0));
-                Assert.False(reader.Read());
+                Assert.False(await ReadAsync(reader, async));
             }
 
             Assert.Contains("trailing-info", messages);
@@ -1326,67 +1379,62 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
         /// Ensures multi-result-set iteration is unchanged by the fix for issue #4321. Each result
         /// set is delimited by its own COLMETADATA token, which bounds how far the trailing-token
         /// loop may scan, so rows must not bleed between sets and NextResult must still report the
-        /// end of the batch. Verified on both the sync and async paths.
+        /// end of the batch.
         /// </summary>
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static async Task MultipleResultSets_AreUnaffected()
+        /// <param name="async"><see langword="true"/> to exercise the async read path.</param>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [InlineData(false)]
+        [InlineData(true)]
+        public static async Task MultipleResultSets_AreUnaffected(bool async)
         {
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
-            await connection.OpenAsync();
+            await OpenAsync(connection, async);
 
-            using (SqlCommand command = connection.CreateCommand())
-            {
-                command.CommandText = "SELECT 1 AS Value; SELECT 2 AS Value;";
-                using SqlDataReader reader = command.ExecuteReader();
+            using SqlCommand command = connection.CreateCommand();
+            command.CommandText = "SELECT 1 AS Value; SELECT 2 AS Value;";
 
-                Assert.True(reader.Read());
-                Assert.Equal(1, reader.GetInt32(0));
-                Assert.False(reader.Read());
+            using SqlDataReader reader = await ExecuteReaderAsync(command, async);
 
-                Assert.True(reader.NextResult());
-                Assert.True(reader.Read());
-                Assert.Equal(2, reader.GetInt32(0));
-                Assert.False(reader.Read());
+            // Result set 1 holds exactly one row, carrying 1.
+            Assert.True(await ReadAsync(reader, async));
+            Assert.Equal(1, reader.GetInt32(0));
+            Assert.False(await ReadAsync(reader, async));
 
-                Assert.False(reader.NextResult());
-            }
+            // Result set 2 holds exactly one row, carrying 2.
+            Assert.True(await NextResultAsync(reader, async));
+            Assert.True(await ReadAsync(reader, async));
+            Assert.Equal(2, reader.GetInt32(0));
+            Assert.False(await ReadAsync(reader, async));
 
-            using (SqlCommand command = connection.CreateCommand())
-            {
-                command.CommandText = "SELECT 1 AS Value; SELECT 2 AS Value;";
-                using SqlDataReader reader = await command.ExecuteReaderAsync();
-
-                Assert.True(await reader.ReadAsync());
-                Assert.Equal(1, reader.GetInt32(0));
-                Assert.False(await reader.ReadAsync());
-
-                Assert.True(await reader.NextResultAsync());
-                Assert.True(await reader.ReadAsync());
-                Assert.Equal(2, reader.GetInt32(0));
-                Assert.False(await reader.ReadAsync());
-
-                Assert.False(await reader.NextResultAsync());
-            }
+            // ... and the batch ends there.
+            Assert.False(await NextResultAsync(reader, async));
         }
 
         /// <summary>
         /// Ensures rows already produced before a failure are not lost by the fix for issue #4321:
         /// when an error token follows a completed set of rows, the reader must hand those rows to
-        /// the caller first and only then raise the <see cref="SqlException"/>.
+        /// the caller first and only then raise the <see cref="SqlException"/>. The throwing read
+        /// is the same one that would otherwise have reported the end of the result set.
         /// </summary>
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void RowsThenTrailingError_DeliversRowsThenThrows()
+        /// <param name="async"><see langword="true"/> to exercise the async read path.</param>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [InlineData(false)]
+        [InlineData(true)]
+        public static async Task RowsThenTrailingError_DeliversRowsThenThrows(bool async)
         {
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
-            connection.Open();
+            await OpenAsync(connection, async);
             using SqlCommand command = connection.CreateCommand();
             command.CommandText = "SELECT 1 AS Value; RAISERROR('trailing-error', 16, 1);";
 
-            using SqlDataReader reader = command.ExecuteReader();
-            Assert.True(reader.Read());
+            using SqlDataReader reader = await ExecuteReaderAsync(command, async);
+
+            // The row that was already produced is delivered normally.
+            Assert.True(await ReadAsync(reader, async));
             Assert.Equal(1, reader.GetInt32(0));
 
-            SqlException ex = Assert.Throws<SqlException>(() => reader.Read());
+            // The read that would otherwise have returned false raises the error instead.
+            SqlException ex = await Assert.ThrowsAsync<SqlException>(() => ReadAsync(reader, async));
             Assert.Equal(50000, ex.Number);
         }
 
