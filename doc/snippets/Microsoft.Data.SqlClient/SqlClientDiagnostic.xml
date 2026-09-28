@@ -98,6 +98,11 @@
         The command object that is executing.
       </summary>
     </Command>
+    <BatchCommands>
+      <summary>
+        The commands that make up the batch when the command is executing as part of a <see cref="T:Microsoft.Data.SqlClient.SqlBatch" />, or <see langword="null" /> when it is not.
+      </summary>
+    </BatchCommands>
   </members>
   <members name="SqlClientCommandAfter">
     <SqlClientCommandAfter>
@@ -130,6 +135,11 @@
         An IDictionary of statistic information about the event that has completed.
       </summary>
     </Statistics>
+    <BatchCommands>
+      <summary>
+        The commands that make up the batch when the command is executing as part of a <see cref="T:Microsoft.Data.SqlClient.SqlBatch" />, or <see langword="null" /> when it is not.
+      </summary>
+    </BatchCommands>
   </members>
   <members name="SqlClientCommandError">
     <SqlClientCommandError>
@@ -162,6 +172,11 @@
         The exception object that caused the command execution to fail.
       </summary>
     </Exception>
+    <BatchCommands>
+      <summary>
+        The commands that make up the batch when the command is executing as part of a <see cref="T:Microsoft.Data.SqlClient.SqlBatch" />, or <see langword="null" /> when it is not.
+      </summary>
+    </BatchCommands>
   </members>
   <members name="SqlClientConnectionOpenBefore">
     <SqlClientConnectionOpenBefore>
