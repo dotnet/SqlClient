@@ -166,9 +166,6 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private static readonly SqlDiagnosticListener s_diagnosticListener = new();
 
-        // Shared by all commands when app.config is not read.
-        private static SqlRetryLogicBaseProvider s_noneRetryProvider;
-
         /// <summary>
         /// Connection that will be used to process the current instance.
         /// </summary>
@@ -768,7 +765,7 @@ namespace Microsoft.Data.SqlClient
             {
                 _retryLogicProvider ??= LocalAppContextSwitches.EnableAppConfig
                     ? SqlConfigurableRetryLogicManager.CommandProvider
-                    : LazyInitializer.EnsureInitialized(ref s_noneRetryProvider, SqlConfigurableRetryFactory.CreateNoneRetryProvider);
+                    : SqlConfigurableRetryFactory.NoneRetryProvider;
                 return _retryLogicProvider;
             }
             set => _retryLogicProvider = value;
