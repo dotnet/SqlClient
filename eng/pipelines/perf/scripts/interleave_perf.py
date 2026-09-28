@@ -180,13 +180,38 @@ class Runner:
         self.baseline_runner_config = baseline_runner_config
         self.current_runner_config = current_runner_config
 
-    def list_units(self):
-        cmd = ["dotnet", os.path.join(self.current_dir, self.assembly)]
+    def _list_units_for(self, exe_dir):
+        cmd = ["dotnet", os.path.join(exe_dir, self.assembly)]
         env = dict(os.environ)
         env["PERF_LIST_BENCHMARKS"] = "1"
         env.pop("PERF_BENCHMARK", None)
         out = subprocess.check_output(cmd, cwd=self.work_dir, env=env, text=True)
         return [line.strip() for line in out.splitlines() if line.strip()]
+
+    def list_units(self):
+        """Units to compare, plus those only one side can run.
+
+        The two variants are not always the same build: a source baseline can be an older
+        release tag whose benchmark registry differs from the candidate's.  Enumerating only
+        the candidate would hand the baseline a unit it does not define, and its Program exits
+        2 for an unknown PERF_BENCHMARK, failing the whole run over a benchmark that simply did
+        not exist yet.  Enumerate both and pair only the intersection, reporting the rest.
+
+        Returns (shared, current_only, baseline_only), each ordered as the candidate (or, for
+        baseline_only, the baseline) enumerated them.
+        """
+        current = self._list_units_for(self.current_dir)
+        # The switch-under-test mode points both variants at one build, so skip the second
+        # enumeration: it would spawn another process only to return the same list.
+        if os.path.abspath(self.baseline_dir) == os.path.abspath(self.current_dir):
+            return current, [], []
+        baseline = self._list_units_for(self.baseline_dir)
+        baseline_set = set(baseline)
+        current_set = set(current)
+        shared = [u for u in current if u in baseline_set]
+        current_only = [u for u in current if u not in baseline_set]
+        baseline_only = [u for u in baseline if u not in current_set]
+        return shared, current_only, baseline_only
 
     def _run_one(self, variant, exe_dir, unit, rep, agg_dir):
         cwd = os.path.join(self.work_dir, f"rep{rep}", variant, unit)
@@ -411,11 +436,26 @@ def main(argv=None):
                     baseline_runner_config=args.baseline_runner_config,
                     current_runner_config=args.current_runner_config)
 
-    units = runner.list_units()
+    units, current_only, baseline_only = runner.list_units()
+    # Units only one side defines cannot be compared, but they are not an error: benchmarks are
+    # added and renamed over time and a source baseline can predate those changes.  Name them so a
+    # shrinking comparison is visible in the log rather than looking like a clean run.
+    if current_only:
+        print(f"Units only in the current build, not compared ({len(current_only)}): "
+              f"{', '.join(current_only)}")
+    if baseline_only:
+        print(f"Units only in the baseline build, not compared ({len(baseline_only)}): "
+              f"{', '.join(baseline_only)}")
     if not units:
-        print("ERROR: no enabled benchmark units were reported by the current build.", file=sys.stderr)
+        if current_only or baseline_only:
+            print("ERROR: the baseline and current builds share no enabled benchmark units, so "
+                  "there is nothing to compare. Choose a baseline whose benchmark registry "
+                  "overlaps this branch's.", file=sys.stderr)
+        else:
+            print("ERROR: no enabled benchmark units were reported by the current build.",
+                  file=sys.stderr)
         return 1
-    print(f"Enabled units ({len(units)}): {', '.join(units)}")
+    print(f"Compared units ({len(units)}): {', '.join(units)}")
 
     entries, confirmed, unconfirmed = orchestrate(
         runner, units, results_dir, args.threshold, args.reps)
@@ -432,6 +472,10 @@ def main(argv=None):
             "confirmationRuns": args.reps,
             "confirmedRegressions": len(confirmed),
             "unconfirmedRegressions": len(unconfirmed),
+            # Benchmarks only one build defines, so they could not be paired.  Recorded so a
+            # comparison covering fewer units than the branch defines is auditable after the fact.
+            "currentOnlyUnits": current_only,
+            "baselineOnlyUnits": baseline_only,
             "entries": entries,
         }, fh, indent=2)
     # Surface the comparison as the top-level run summary (collect-results attaches results/*.md).

@@ -24,11 +24,10 @@ param(
     [string]$Configuration = "Release",
     [string]$Framework = "net9.0",
     [string]$ResultsSubdir = "perf-results",
-    [string]$BaselineVersion = "",
-    # Alternative to -BaselineVersion: benchmark against Microsoft.Data.SqlClient built from ANOTHER
-    # git ref of this repository (e.g. 'main') instead of a released NuGet package.  Used by the PR
-    # perf pipeline, which compares the branch under test against the source it would merge into.
-    # The two baseline selectors are mutually exclusive.
+    # Benchmark against Microsoft.Data.SqlClient built from ANOTHER git ref of this repository
+    # (e.g. 'main', or a release tag such as 'v7.1.0').  The baseline ref's OWN test projects are
+    # built against its OWN driver source, because test projects only support the driver at the
+    # same repo commit.
     [string]$BaselineSourceRef = "",
     # Remote used to obtain the baseline ref when it cannot be fetched from the copied checkout's own
     # 'origin' (e.g. the source tree reached the VM without its .git directory, or origin needs auth).
@@ -55,11 +54,11 @@ param(
     [string]$UseOptimizedAsyncBehaviour = "",
     [ValidateSet("", "true", "false")]
     [string]$UseConnectionPoolV2 = "",
-    # Alternative to -BaselineVersion/-BaselineSourceRef: an A/B experiment on ONE runner-config
+    # Alternative to -BaselineSourceRef: an A/B experiment on ONE runner-config
     # switch. Both passes build the SAME source; only the named switch differs (baseline=false,
     # current=true), which is the only way to compare a switch whose value is latched process-wide
     # (e.g. UseConnectionPoolV2 is read and cached the first time a pool is created). Mutually
-    # exclusive with the other two baseline selectors, and overrides the matching -Use* flag (which
+    # exclusive with the source baseline selector, and overrides the matching -Use* flag (which
     # would otherwise be ambiguous: one value cannot describe two passes).  ValidateSet restricts it
     # to switches this script knows how to stamp, so a typo fails fast at binding time instead of
     # silently writing an inert key and reporting a meaningless zero-delta comparison.
@@ -136,7 +135,6 @@ Write-Host "  Configuration   : $Configuration"
 Write-Host "  Framework       : $Framework"
 Write-Host "  Results dir     : $ResultsDir"
 Write-Host "  Run mode        : $RunMode (confirmation runs: $ConfirmationRuns)"
-Write-Host "  Baseline ver    : $(if ($BaselineVersion) { $BaselineVersion } else { '<none, current-only>' })"
 Write-Host "  Baseline ref    : $(if ($BaselineSourceRef) { $BaselineSourceRef } else { '<none>' })"
 Write-Host "  Switch A/B      : $(if ($SwitchUnderTest) { "$SwitchUnderTest (baseline=false vs current=true)" } else { '<none>' })"
 Write-Host "  SQL_SERVER      : $SqlServer"
@@ -149,11 +147,8 @@ if (-not (Test-Path $PerfProject)) {
 }
 # The two baseline selectors describe different builds of the same "baseline" pass, so requesting
 # both is always a mistake; fail fast rather than silently honouring one of them.
-if ((-not [string]::IsNullOrEmpty($BaselineVersion)) -and (-not [string]::IsNullOrEmpty($BaselineSourceRef))) {
-    throw "-BaselineVersion and -BaselineSourceRef are mutually exclusive."
-}
-if ((-not [string]::IsNullOrEmpty($SwitchUnderTest)) -and ((-not [string]::IsNullOrEmpty($BaselineVersion)) -or (-not [string]::IsNullOrEmpty($BaselineSourceRef)))) {
-    throw "-SwitchUnderTest is mutually exclusive with -BaselineVersion and -BaselineSourceRef: it compares the SAME source build with one switch flipped, so mixing in a source change would make the delta unattributable."
+if ((-not [string]::IsNullOrEmpty($SwitchUnderTest)) -and (-not [string]::IsNullOrEmpty($BaselineSourceRef))) {
+    throw "-SwitchUnderTest is mutually exclusive with -BaselineSourceRef: it compares the SAME source build with one switch flipped, so mixing in a source change would make the delta unattributable."
 }
 # UseManagedSniOnWindows only selects an implementation on Windows.  PowerShell Core also runs on
 # Linux, so check the host rather than assume this script implies Windows: off-Windows both passes
@@ -402,31 +397,14 @@ if (-not [string]::IsNullOrEmpty($SwitchUnderTest)) {
 # 4 & 5. Run the benchmarks, pinned to the reserved client CPU set.
 #
 # Two passes are executed so the pipeline can compare the branch under test against a baseline:
-#   * baseline  -> either Microsoft.Data.SqlClient restored from NuGet.org at $BaselineVersion
-#                  (ReferenceType=Package + CPM VersionOverride), or - when $BaselineSourceRef is
-#                  given instead - the driver built from another git ref of this repository (e.g.
-#                  'main', used by the PR perf pipeline).  Skipped when neither is given.
+#   * baseline  -> the driver built from another git ref of this repository (e.g. 'main', used by
+#                  the PR perf pipeline, or a release tag).  Skipped when $BaselineSourceRef is
+#                  not given.
 #   * current   -> Microsoft.Data.SqlClient built from the source tree in this repo (ProjectReference).
 #
 # Each pass runs from its own directory; its BenchmarkDotNet artifacts are collected into
 # results\<label>\.
 ####################################################################################################
-
-# NuGet.config on the VM exposes only the governed feed; the baseline package (and its public deps)
-# live on NuGet.org.  Central Package Management rejects multiple unmapped sources (NU1507), so the
-# baseline restore uses a dedicated single-source config pointing only at NuGet.org.
-$BaselineNuGetConfig = Join-Path $RepoRoot "perf-baseline-nuget.config"
-function Write-BaselineNuGetConfig {
-    @'
-<?xml version="1.0" encoding="utf-8"?>
-<configuration>
-  <packageSources>
-    <clear />
-    <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
-  </packageSources>
-</configuration>
-'@ | Set-Content -Path $BaselineNuGetConfig -Encoding UTF8
-}
 
 # --- Source baseline (-BaselineSourceRef) ---------------------------------------------------------
 # Materialises another git ref of THIS repository (e.g. 'main') next to the checkout so the baseline
@@ -527,9 +505,19 @@ function Initialize-BaselineSource {
             Write-Host "Fetching baseline ref '$Ref' from the checkout's origin ..."
             # Fetch into a private remote-tracking namespace so an existing local branch of the same
             # name (the checkout may itself be on 'main') is never used in place of the fetched ref.
+            #
+            # The ref may be a branch (the PR pipeline passes 'main') or a tag (the main pipeline
+            # passes a 'v<version>' release tag), and a branch-only refspec silently fails for the
+            # latter - sending every tagged run to the public fallback clone even when origin is
+            # reachable.  Try heads first, then tags, mapping both into the same private namespace.
             $exit = Invoke-GitNetwork "fetch" @(
                 "-C", $RepoRoot, "fetch", "--no-tags", "--depth", "1", "origin",
                 "+refs/heads/${Ref}:refs/remotes/perfbaseline/$Ref")
+            if ($exit -ne 0) {
+                $exit = Invoke-GitNetwork "fetch-tag" @(
+                    "-C", $RepoRoot, "fetch", "--no-tags", "--depth", "1", "origin",
+                    "+refs/tags/${Ref}:refs/remotes/perfbaseline/$Ref")
+            }
             if ($exit -eq 0) {
                 & git -C $RepoRoot worktree prune 2>&1 | Out-Null
                 & git -C $RepoRoot worktree add --detach $BaselineSrcDir "refs/remotes/perfbaseline/$Ref" 2>&1 | Out-Null
@@ -562,6 +550,19 @@ function Initialize-BaselineSource {
     $baselineProject = Join-Path $BaselineSrcDir "src\Microsoft.Data.SqlClient\tests\PerformanceTests\Microsoft.Data.SqlClient.PerformanceTests.csproj"
     if (-not (Test-Path $baselineProject)) {
         throw "Baseline source tree at $BaselineSrcDir has no performance test project ($baselineProject)."
+    }
+
+    # Interleaved execution drives the benchmark app through the PERF_LIST_BENCHMARKS /
+    # PERF_BENCHMARK harness protocol (see interleave_perf.py).  Releases before v7.1.0-preview3
+    # predate it: their Program always runs the entire suite and ignores both variables, so every
+    # requested unit would silently run everything and the baseline/candidate pairing would be
+    # meaningless.  Fail loudly here rather than producing an invalid comparison or a timeout.
+    $baselineProgram = Join-Path $BaselineSrcDir "src\Microsoft.Data.SqlClient\tests\PerformanceTests\Program.cs"
+    if (-not (Test-Path $baselineProgram) -or
+        -not (Select-String -Path $baselineProgram -Pattern "PERF_LIST_BENCHMARKS" -Quiet)) {
+        throw ("Baseline ref '$Ref' predates the perf harness protocol " +
+               "(PERF_LIST_BENCHMARKS/PERF_BENCHMARK). Its benchmark app cannot be driven a unit " +
+               "at a time, so it cannot be compared against. Use a baseline of v7.1.0 or later.")
     }
 
     # Label recorded in the comparison output so a run states exactly which baseline commit it used.
@@ -741,16 +742,7 @@ $BaselineLabel = ""
 $BaselineProject = $PerfProject
 $BaselineBuildArgs = @()
 
-if (-not [string]::IsNullOrEmpty($BaselineVersion)) {
-    # Released package baseline: candidate's perf project, MDS swapped to a NuGet package reference.
-    Write-BaselineNuGetConfig
-    $BaselineLabel = $BaselineVersion
-    $BaselineBuildArgs = @(
-        "-p:ReferenceType=Package",
-        "-p:MdsPackageVersion=$BaselineVersion",
-        "-p:RestoreConfigFile=$BaselineNuGetConfig"
-    )
-} elseif (-not [string]::IsNullOrEmpty($BaselineSourceRef)) {
+if (-not [string]::IsNullOrEmpty($BaselineSourceRef)) {
     # Source baseline: build the baseline ref's OWN perf project so the driver under measurement is
     # that ref's source (ProjectReference), exactly as the candidate pass builds this branch's.
     $baselineSource = Initialize-BaselineSource -Ref $BaselineSourceRef
@@ -843,7 +835,7 @@ if ((-not [string]::IsNullOrEmpty($BaselineLabel)) -and ($RunMode -eq "interleav
 
 } else {
     # --- No baseline: current-only run (no comparison) --------------------------------------------
-    Write-Host "Neither -BaselineVersion nor -BaselineSourceRef supplied; running current only (no comparison)."
+    Write-Host "No -BaselineSourceRef supplied; running current only (no comparison)."
     Invoke-PerfPass "current" $PerfProject @()
 }
 

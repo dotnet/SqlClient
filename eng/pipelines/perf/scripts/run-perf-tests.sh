@@ -38,11 +38,9 @@ export PYTHONDONTWRITEBYTECODE=1
 configuration="Release"
 framework="net9.0"
 resultsSubDir="perf-results"
-baselineVersion=""
-# Alternative to --baseline-version: benchmark against Microsoft.Data.SqlClient built from ANOTHER
-# git ref of this repository (e.g. 'main') instead of a released NuGet package.  Used by the PR perf
-# pipeline, which compares the branch under test against the source it would merge into.  The two
-# baseline selectors are mutually exclusive.
+# Benchmark against Microsoft.Data.SqlClient built from ANOTHER git ref of this repository (e.g.
+# 'main', or a release tag such as 'v7.1.0').  The baseline ref's OWN test projects are built against
+# its OWN driver source, because test projects only support the driver at the same repo commit.
 baselineSourceRef=""
 # Remote used to obtain the baseline ref when it cannot be fetched from the copied checkout's own
 # 'origin' (e.g. the source tree reached the VM without its .git directory, or origin needs auth).
@@ -65,11 +63,11 @@ confirmationRuns="3"
 useManagedSniOnWindows=""
 useOptimizedAsyncBehaviour=""
 useConnectionPoolV2=""
-# Alternative to --baseline-version/--baseline-source-ref: an A/B experiment on ONE runner-config
+# Alternative to --baseline-source-ref: an A/B experiment on ONE runner-config
 # switch.  Both passes build the SAME source; only the named switch differs (baseline=false,
 # current=true), which is the only way to compare a switch whose value is latched process-wide (e.g.
 # UseConnectionPoolV2 is read and cached the first time a pool is created).  Mutually exclusive with
-# the other two baseline selectors, and overrides the matching --use-* flag (which would otherwise be
+# the source baseline selector, and overrides the matching --use-* flag (which would otherwise be
 # ambiguous: one value cannot describe two passes).
 switchUnderTest=""
 # Runner-config switches this script is allowed to A/B.  Restricted to a known list so a typo fails
@@ -79,7 +77,7 @@ SUPPORTED_SWITCHES=("UseConnectionPoolV2" "UseOptimizedAsyncBehaviour" "UseManag
 
 usage() {
     echo "Usage: $0 [--configuration <cfg>] [--framework <tfm>] [--results-subdir <dir>]" \
-         "[--baseline-version <ver> | --baseline-source-ref <ref> [--baseline-repo-url <url>] |" \
+         "[--baseline-source-ref <ref> [--baseline-repo-url <url>] |" \
          "--switch-under-test <${SUPPORTED_SWITCHES[*]}>]" \
          "[--regression-threshold <pct>] [--fail-on-regression]" \
          "[--run-mode interleaved|sequential] [--confirmation-runs <N>]" \
@@ -92,7 +90,6 @@ while [[ $# -gt 0 ]]; do
         --configuration) configuration="$2"; shift 2 ;;
         --framework)     framework="$2";     shift 2 ;;
         --results-subdir) resultsSubDir="$2"; shift 2 ;;
-        --baseline-version) baselineVersion="$2"; shift 2 ;;
         --baseline-source-ref) baselineSourceRef="$2"; shift 2 ;;
         --baseline-repo-url) baselineRepoUrl="$2"; shift 2 ;;
         --switch-under-test) switchUnderTest="$2"; shift 2 ;;
@@ -116,14 +113,10 @@ case "${runMode}" in
     *) echo "ERROR: --run-mode must be 'interleaved' or 'sequential' (got '${runMode}')." >&2
        usage; exit 2 ;;
 esac
-# The three baseline selectors describe different builds/configs of the same "baseline" pass, so
-# requesting more than one is always a mistake; fail fast rather than silently honouring one of them.
-if [[ -n "${baselineVersion}" && -n "${baselineSourceRef}" ]]; then
-    echo "ERROR: --baseline-version and --baseline-source-ref are mutually exclusive." >&2
-    usage; exit 2
-fi
-if [[ -n "${switchUnderTest}" && ( -n "${baselineVersion}" || -n "${baselineSourceRef}" ) ]]; then
-    echo "ERROR: --switch-under-test is mutually exclusive with --baseline-version and --baseline-source-ref: it compares the SAME source build with one switch flipped, so mixing in a source change would make the delta unattributable." >&2
+# The baseline selectors describe different builds/configs of the same "baseline" pass, so requesting
+# more than one is always a mistake; fail fast rather than silently honouring one of them.
+if [[ -n "${switchUnderTest}" && -n "${baselineSourceRef}" ]]; then
+    echo "ERROR: --switch-under-test is mutually exclusive with --baseline-source-ref: it compares the SAME source build with one switch flipped, so mixing in a source change would make the delta unattributable." >&2
     usage; exit 2
 fi
 if [[ -n "${switchUnderTest}" ]]; then
@@ -192,8 +185,7 @@ echo "  Perf project   : ${PERF_PROJECT}"
 echo "  Configuration  : ${configuration}"
 echo "  Framework      : ${framework}"
 echo "  Results dir    : ${RESULTS_DIR}"
-echo "  Baseline ver   : ${baselineVersion:-<none, current-only>}"
-echo "  Baseline ref   : ${baselineSourceRef:-<none>}"
+echo "  Baseline ref   : ${baselineSourceRef:-<none, current-only>}"
 echo "  Switch A/B     : ${switchUnderTest:-<none>}${switchUnderTest:+ (baseline=false vs current=true)}"
 echo "  Run mode       : ${runMode} (confirmation runs: ${confirmationRuns})"
 echo "  SQL_SERVER     : ${SQL_SERVER:-<unset, will default to localhost>}"
@@ -483,32 +475,15 @@ fi
 # 4 & 5. Run the benchmarks, pinned to the reserved client CPU set.
 #
 # Two passes are executed so the pipeline can compare the branch under test against a baseline:
-#   * baseline  -> either Microsoft.Data.SqlClient restored from NuGet.org at ${baselineVersion}
-#                  (ReferenceType=Package + CPM VersionOverride), or - when ${baselineSourceRef} is
-#                  given instead - the driver built from another git ref of this repository (e.g.
-#                  'main', used by the PR perf pipeline).  Skipped when neither is given.
+#   * baseline  -> the driver built from another git ref of this repository (e.g. 'main', used by
+#                  the PR perf pipeline, or a release tag).  Skipped when ${baselineSourceRef} is
+#                  not given.
 #   * current   -> Microsoft.Data.SqlClient built from the source tree in this repo (ProjectReference).
 #
 # BenchmarkDotNet writes its artifacts to ./BenchmarkDotNet.Artifacts relative to the working
 # directory, so each pass runs from its own directory and its artifacts are collected into
 # results/<label>/.
 ####################################################################################################
-
-# NuGet.config on the VM exposes only the governed feed; the baseline package (and its public deps)
-# live on NuGet.org.  Central Package Management rejects multiple unmapped sources (NU1507), so the
-# baseline restore uses a dedicated single-source config pointing only at NuGet.org.
-BASELINE_NUGET_CONFIG="${REPO_ROOT}/perf-baseline-nuget.config"
-write_baseline_nuget_config() {
-    cat > "${BASELINE_NUGET_CONFIG}" <<'XML'
-<?xml version="1.0" encoding="utf-8"?>
-<configuration>
-  <packageSources>
-    <clear />
-    <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
-  </packageSources>
-</configuration>
-XML
-}
 
 # --- Source baseline (--baseline-source-ref) ------------------------------------------------------
 # Materialises another git ref of THIS repository (e.g. 'main') next to the checkout so the baseline
@@ -583,8 +558,15 @@ prepare_baseline_source() {
         echo "Fetching baseline ref '${ref}' from the checkout's origin ..."
         # Fetch into a private remote-tracking namespace so an existing local branch of the same name
         # (the checkout may itself be on 'main') is never used in place of the fetched ref.
+        #
+        # The ref may be a branch (the PR pipeline passes 'main') or a tag (the main pipeline passes
+        # a 'v<version>' release tag), and a branch-only refspec silently fails for the latter -
+        # sending every tagged run to the public fallback clone even when origin is reachable.  Try
+        # heads first, then tags, mapping both into the same private namespace.
         if git_net fetch -C "${REPO_ROOT}" fetch --no-tags --depth 1 origin \
-                "+refs/heads/${ref}:refs/remotes/perfbaseline/${ref}"; then
+                "+refs/heads/${ref}:refs/remotes/perfbaseline/${ref}" \
+           || git_net fetch-tag -C "${REPO_ROOT}" fetch --no-tags --depth 1 origin \
+                "+refs/tags/${ref}:refs/remotes/perfbaseline/${ref}"; then
             git -C "${REPO_ROOT}" worktree prune >/dev/null 2>&1 || true
             if git -C "${REPO_ROOT}" worktree add --detach "${BASELINE_SRC_DIR}" \
                     "refs/remotes/perfbaseline/${ref}" >"${DIAG_DIR}/git-worktree.log" 2>&1; then
@@ -617,6 +599,19 @@ prepare_baseline_source() {
     BASELINE_PERF_PROJECT="${BASELINE_SRC_DIR}/src/Microsoft.Data.SqlClient/tests/PerformanceTests/Microsoft.Data.SqlClient.PerformanceTests.csproj"
     if [[ ! -f "${BASELINE_PERF_PROJECT}" ]]; then
         echo "ERROR: baseline source tree at ${BASELINE_SRC_DIR} has no performance test project (${BASELINE_PERF_PROJECT})." >&2
+        exit 1
+    fi
+
+    # Interleaved execution drives the benchmark app through the PERF_LIST_BENCHMARKS /
+    # PERF_BENCHMARK harness protocol (see interleave_perf.py).  Releases before v7.1.0-preview3
+    # predate it: their Program always runs the entire suite and ignores both variables, so every
+    # requested unit would silently run everything and the baseline/candidate pairing would be
+    # meaningless.  Fail loudly here rather than producing an invalid comparison or a timeout.
+    local baseline_program="${BASELINE_SRC_DIR}/src/Microsoft.Data.SqlClient/tests/PerformanceTests/Program.cs"
+    if ! grep -q "PERF_LIST_BENCHMARKS" "${baseline_program}" 2>/dev/null; then
+        echo "ERROR: baseline ref '${ref}' predates the perf harness protocol (PERF_LIST_BENCHMARKS/PERF_BENCHMARK)." >&2
+        echo "       Its benchmark app cannot be driven a unit at a time, so it cannot be compared against." >&2
+        echo "       Use a baseline of v7.1.0 or later." >&2
         exit 1
     fi
 
@@ -747,16 +742,7 @@ baselineLabel=""
 baselineProject="${PERF_PROJECT}"
 baselineBuildArgs=()
 
-if [[ -n "${baselineVersion}" ]]; then
-    # Released package baseline: candidate's perf project, MDS swapped to a NuGet package reference.
-    write_baseline_nuget_config
-    baselineLabel="${baselineVersion}"
-    baselineBuildArgs=(
-        -p:ReferenceType=Package
-        -p:MdsPackageVersion="${baselineVersion}"
-        -p:RestoreConfigFile="${BASELINE_NUGET_CONFIG}"
-    )
-elif [[ -n "${baselineSourceRef}" ]]; then
+if [[ -n "${baselineSourceRef}" ]]; then
     # Source baseline: build the baseline ref's OWN perf project so the driver under measurement is
     # that ref's source (ProjectReference), exactly as the candidate pass builds this branch's.
     prepare_baseline_source "${baselineSourceRef}"
@@ -858,7 +844,7 @@ elif [[ -n "${baselineLabel}" ]]; then
 
 else
     # --- No baseline: current-only run (no comparison) --------------------------------------------
-    echo "Neither --baseline-version nor --baseline-source-ref supplied; running current only (no comparison)."
+    echo "No --baseline-source-ref supplied; running current only (no comparison)."
     run_pass "current" "${PERF_PROJECT}"
 fi
 

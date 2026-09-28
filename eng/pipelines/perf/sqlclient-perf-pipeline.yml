@@ -74,10 +74,26 @@ parameters:
   # The released Microsoft.Data.SqlClient version the branch under test is benchmarked against.
   # Manually managed: bump this after each stable release (e.g. to the latest 7.0.x).  Overridable
   # at queue time.  Set to an empty string to skip the baseline pass and run current-only.
+  #
+  # This is resolved to the matching 'v<version>' release tag and built FROM SOURCE, so the
+  # baseline pass uses that release's own test projects against its own driver.  Test projects only
+  # support the driver at the same repo commit, so the baseline must not be a released package
+  # compiled against this commit's test code.
+  #
+  # Minimum v7.1.0: interleaved runs drive the benchmark app through the PERF_LIST_BENCHMARKS /
+  # PERF_BENCHMARK harness protocol, which earlier releases do not implement.  The run scripts
+  # fail fast if an older tag is supplied.
   - name: baselineVersion
     displayName: Baseline Version
     type: string
-    default: 7.0.2
+    default: 7.1.0
+
+  # Remote used to obtain the baseline tag when it cannot be fetched from the VM copy of the
+  # checkout's own 'origin' (e.g. the source tree reached the VM without its .git directory).
+  - name: baselineRepoUrl
+    displayName: Baseline Repository URL (fallback)
+    type: string
+    default: https://github.com/dotnet/SqlClient.git
 
   # Percent slowdown (current vs baseline mean) that the comparison flags as a regression.
   - name: regressionThreshold
@@ -180,15 +196,16 @@ variables:
     - name: PerfArgsCommon
       value: '--configuration Release --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }} --use-managed-sni-on-windows ${{ lower(parameters.useManagedSniOnWindows) }} --use-optimized-async-behaviour ${{ lower(parameters.useOptimizedAsyncBehaviour) }} --use-connection-pool-v2 ${{ lower(parameters.useConnectionPoolV2) }}'
 
-  # Baseline-version flag, omitted entirely when no baseline is requested: on bash an empty value
-  # would let arg parsing consume the following flag as the baseline version and corrupt every
-  # subsequent argument, so both platforms omit it symmetrically.
+  # Source-baseline flags, omitted entirely when no baseline is requested: on bash an empty value
+  # would let arg parsing consume the following flag as the baseline ref and corrupt every
+  # subsequent argument, so both platforms omit them symmetrically.  The requested release version
+  # is resolved to its 'v<version>' git tag so the baseline builds from that release's own source.
   - ${{ if and(eq(parameters.platform, 'windows'), ne(parameters.baselineVersion, '')) }}:
     - name: PerfArgsBaseline
-      value: '-BaselineVersion ${{ parameters.baselineVersion }}'
+      value: '-BaselineSourceRef v${{ parameters.baselineVersion }} -BaselineRepoUrl ${{ parameters.baselineRepoUrl }}'
   - ${{ elseif ne(parameters.baselineVersion, '') }}:
     - name: PerfArgsBaseline
-      value: '--baseline-version ${{ parameters.baselineVersion }}'
+      value: '--baseline-source-ref v${{ parameters.baselineVersion }} --baseline-repo-url ${{ parameters.baselineRepoUrl }}'
   - ${{ else }}:
     - name: PerfArgsBaseline
       value: ''

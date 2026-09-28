@@ -152,7 +152,7 @@ variables:
   # argument STYLE differs by platform.  Assembling the final args from these per-platform chunks
   # keeps the single testScriptArgs below readable.  No baseline-selector args appear here at all:
   # --switch-under-test IS the baseline selector for this pipeline, and the run scripts reject it
-  # being combined with --baseline-version / --baseline-source-ref.
+  # being combined with --baseline-source-ref.
   - ${{ if eq(parameters.platform, 'windows') }}:
     - name: PerfArgsCommon
       value: '-Configuration Release -Framework ${{ parameters.dotnetFramework }} -ResultsSubdir perf-results -RegressionThreshold ${{ parameters.regressionThreshold }} -RunMode ${{ parameters.benchmarkRunMode }} -ConfirmationRuns ${{ parameters.confirmationRuns }} -SwitchUnderTest ${{ parameters.switchUnderTest }}'
