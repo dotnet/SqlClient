@@ -368,6 +368,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             {
             }
 
+            /// <summary>
+            /// Counts creation attempts and invokes the test hook before returning an uncounted mock connection.
+            /// </summary>
+            /// <param name="options">Connection options supplied by the factory; unused by the mock.</param>
+            /// <param name="poolKey">The requesting pool's key; unused by the mock.</param>
+            /// <param name="poolGroupProviderInfo">Provider metadata for the pool group; unused by the mock.</param>
+            /// <param name="pool">The pool requesting creation; unused by the mock.</param>
+            /// <param name="owningConnection">The logical owner supplied by the factory; unused by the mock.</param>
+            /// <param name="timeout">The creation deadline; unused by the mock because no network connection is opened.</param>
+            /// <returns>A mock physical connection for the caller to register in the pool.</returns>
             protected override DbConnectionInternal CreateConnection(
                 SqlConnectionOptions options,
                 ConnectionPoolKey poolKey,

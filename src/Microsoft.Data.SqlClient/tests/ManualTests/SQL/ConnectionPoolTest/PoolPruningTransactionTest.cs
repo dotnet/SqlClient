@@ -84,6 +84,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             /// </summary>
             internal void Arm() => Volatile.Write(ref _armed, 1);
 
+            /// <summary>
+            /// Enables SqlClient tracing to observe physical creation before pool inventory publication.
+            /// </summary>
+            /// <param name="eventSource">The source to enable only when it is the SqlClient event source.</param>
             protected override void OnEventSourceCreated(EventSource eventSource)
             {
                 if (eventSource.Name == "Microsoft.Data.SqlClient.EventSource")
@@ -92,6 +96,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
             }
 
+            /// <summary>
+            /// Runs pruning once at the armed creation boundary and captures callback failures for assertion.
+            /// </summary>
+            /// <param name="eventData">The event inspected for the physical-creation marker without retaining its payload.</param>
             protected override void OnEventWritten(EventWrittenEventArgs eventData)
             {
                 if (Volatile.Read(ref _armed) == 0 ||
