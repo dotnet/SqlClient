@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.Threading;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
@@ -15,7 +16,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests;
 public sealed class IsolationLevelResetTests
 {
     /// <summary>
-    /// Ensures a successful reset batch leaves the physical connection usable.
+    /// Ensures a reset batch reaches the server and leaves the physical connection usable.
     /// </summary>
     [Fact]
     public void ResetSessionIsolationLevel_Success_KeepsConnectionUsable()
@@ -23,10 +24,13 @@ public sealed class IsolationLevelResetTests
         using TdsServer server = new(new TdsServerArguments());
         server.Start();
         using SqlConnection connection = OpenConnection(server);
+        int batchCount = 0;
+        server.OnSQLBatchCompleted = _ => Interlocked.Increment(ref batchCount);
 
         SqlConnectionInternal internalConnection = (SqlConnectionInternal)connection.InnerConnection;
         internalConnection.ResetSessionIsolationLevel();
 
+        Assert.Equal(1, Volatile.Read(ref batchCount));
         Assert.False(internalConnection.IsConnectionDoomed);
     }
 
@@ -56,24 +60,22 @@ public sealed class IsolationLevelResetTests
     }
 
     /// <summary>
-    /// Ensures an already-doomed connection does not issue a reset batch.
+    /// Ensures an already-doomed connection does not send any SQL batch to the server.
     /// </summary>
     [Fact]
     public void ResetSessionIsolationLevel_ConnectionAlreadyDoomed_SkipsReset()
     {
-        using TransientTdsErrorTdsServer server = new(
-            new TransientTdsErrorTdsServerArguments
-            {
-                ErrorClass = 16
-            });
+        using TdsServer server = new(new TdsServerArguments());
         server.Start();
         using SqlConnection connection = OpenConnection(server);
-        server.SetErrorBehavior(true, errorNumber: 50000);
+        int batchCount = 0;
+        server.OnSQLBatchCompleted = _ => Interlocked.Increment(ref batchCount);
 
         SqlConnectionInternal internalConnection = (SqlConnectionInternal)connection.InnerConnection;
         internalConnection.DoomThisConnection();
         internalConnection.ResetSessionIsolationLevel();
 
+        Assert.Equal(0, Volatile.Read(ref batchCount));
         Assert.True(internalConnection.IsConnectionDoomed);
     }
 
