@@ -253,20 +253,22 @@ is only paid by connections that are actually reused.
 
 ### Endpoint classification boundary
 
-The dedicated Synapse exemption recognizes public, China, and US Government workspace names,
-including their `privatelink` forms; `-ondemand` workspace names remain eligible for the reset.
-Matching is anchored to the full hostname, after stripping TCP/port/instance syntax and an
-optional trailing DNS dot. A name such as `workspace.sql.azuresynapse.net.example` is not exempt:
-skipping its reset could preserve the original isolation leak, not merely miss an optimization.
+The dedicated Synapse exemption matches the `.sql.azuresynapse.` host segment, consistent with
+`IsAzureSynapseOnDemandEndpoint`, rather than a list of cloud domain suffixes. Only the host is
+inspected (protocol prefix, instance/pipe name and port are stripped), and the segment must
+directly follow a single workspace label, optionally followed by `.privatelink`. Workspace names
+ending in `-ondemand` (serverless, including Private Link) remain eligible for the reset. Names
+that merely contain the segment elsewhere (for example `contoso.workspace.sql.azuresynapse.net`
+or `workspace.example.sql.azuresynapse.net`) are not exempt.
 
-Custom aliases and future cloud suffixes are not detected as dedicated endpoints. They follow
-the normal opt-in reset path; a rejection dooms the connection and fails `Open`, rather than
-silently handing out a potentially dirty session. This static classification does not establish
-runtime capabilities of arbitrary TDS endpoints.
-
-Domain references: [Azure Private Endpoint DNS zones](https://learn.microsoft.com/azure/private-link/private-endpoint-dns)
-(public and US Government) and Azure CLI cloud metadata (`synapseAnalyticsEndpoint` for
-`AzureCloud`, `AzureChinaCloud`, and `AzureUSGovernment`).
+Because labels after the segment are not validated, any cloud suffix, including future or custom
+ones such as `workspace.sql.azuresynapse.net.example`, is treated as a dedicated endpoint and
+skips the reset. This is a deliberate tradeoff: it avoids maintaining a suffix list and covers
+sovereign clouds, at the cost of skipping the opt-in reset for a non-Synapse server that happens
+to use such a DNS name. Custom aliases that do not contain the segment are not detected; they
+follow the normal opt-in reset path, where a rejection dooms the connection and fails `Open`
+rather than silently handing out a potentially dirty session. This static classification does
+not establish runtime capabilities of arbitrary TDS endpoints.
 
 #### Dirty-tracking interaction
 
