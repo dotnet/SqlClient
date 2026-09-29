@@ -363,7 +363,13 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     public bool? UseManagedNetworking
     {
         get => LocalAppContextSwitches.UseManagedNetworking;
-        set => LocalAppContextSwitches.s_useManagedNetworking = ToSwitchValue(value);
+        set
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                LocalAppContextSwitches.s_useManagedNetworking = ToSwitchValue(value);
+            }
+        }
     }
     #endif
 
