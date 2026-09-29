@@ -905,27 +905,52 @@ namespace Microsoft.Data.Common
         /// ".sql.azuresynapse." host segment rather than a list of cloud domains. Dedicated pools are
         /// addressed as "&lt;workspace&gt;.sql.azuresynapse.&lt;cloud suffix&gt;", while serverless
         /// (on-demand) pools carry an "-ondemand" suffix on the workspace name, including Private Link
-        /// names ("&lt;workspace&gt;-ondemand.privatelink.sql.azuresynapse...."), and are excluded.</remarks>
+        /// names ("&lt;workspace&gt;-ondemand.privatelink.sql.azuresynapse...."), and are excluded.
+        /// Only the host name is inspected: the protocol prefix, port and instance/pipe name are
+        /// ignored, and the segment must directly follow the workspace label (optionally followed by
+        /// ".privatelink"). Because no list of cloud suffixes is maintained, labels after the
+        /// segment are not validated, so a custom DNS name such as
+        /// "&lt;workspace&gt;.sql.azuresynapse.net.example" is still treated as Synapse.</remarks>
         internal static bool IsAzureSynapseDedicatedPoolEndpoint(string dataSource)
         {
-            if (string.IsNullOrEmpty(dataSource))
+            string host = GetDataSourceHost(dataSource);
+            int synapse = host.IndexOf(AZURE_SYNAPSE, StringComparison.OrdinalIgnoreCase);
+            if (synapse <= 0)
             {
                 return false;
             }
 
-            int synapse = dataSource.IndexOf(AZURE_SYNAPSE, StringComparison.OrdinalIgnoreCase);
-            if (synapse < 0)
-            {
-                return false;
-            }
-
-            string workspace = dataSource.Substring(0, synapse);
+            string workspace = host.Substring(0, synapse);
             const string privateLink = ".privatelink";
             if (workspace.EndsWith(privateLink, StringComparison.OrdinalIgnoreCase))
             {
                 workspace = workspace.Substring(0, workspace.Length - privateLink.Length);
             }
-            return !workspace.EndsWith(ONDEMAND_PREFIX, StringComparison.OrdinalIgnoreCase);
+            // Synapse workspace names cannot contain '.', so the segment must follow a single label.
+            return workspace.Length > 0
+                && workspace.IndexOf('.') < 0
+                && !workspace.EndsWith(ONDEMAND_PREFIX, StringComparison.OrdinalIgnoreCase);
+        }
+
+        // Extracts the host from a data source of the form "[protocol:]host[\instance][,port]",
+        // including named pipe forms such as "np:\\host\pipe\sql\query".
+        private static string GetDataSourceHost(string dataSource)
+        {
+            if (string.IsNullOrEmpty(dataSource))
+            {
+                return string.Empty;
+            }
+
+            string host = dataSource.Trim();
+            int colon = host.IndexOf(':');
+            if (colon >= 0)
+            {
+                host = host.Substring(colon + 1).TrimStart();
+            }
+            host = host.TrimStart('\\');
+
+            int end = host.IndexOfAny(new[] { '\\', ',' });
+            return end >= 0 ? host.Substring(0, end).Trim() : host.Trim();
         }
 
         internal static bool IsAzureSqlServerEndpoint(string dataSource)

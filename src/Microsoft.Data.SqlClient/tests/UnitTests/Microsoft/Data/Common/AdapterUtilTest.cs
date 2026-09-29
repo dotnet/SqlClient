@@ -116,6 +116,14 @@ public class AdapterUtilTest
     [InlineData("myserver.database.windows.net", false)]
     [InlineData("myserver-ondemand.database.windows.net", false)]
     [InlineData("sql.azuresynapse.net", false)]
+    // Only the host is inspected, and the Synapse segment must directly follow the workspace label.
+    [InlineData("np:\\\\myworkspace.sql.azuresynapse.net\\pipe\\sql\\query", true)]
+    [InlineData("evil.myworkspace.sql.azuresynapse.net", false)]
+    [InlineData("myworkspace.evil.privatelink.sql.azuresynapse.net", false)]
+    [InlineData("myserver.contoso.com\\myworkspace.sql.azuresynapse.net", false)]
+    [InlineData("tcp:myserver.contoso.com,1433\\x.sql.azuresynapse.net", false)]
+    [InlineData("np:\\\\myserver\\pipe\\x.sql.azuresynapse.net\\query", false)]
+    [InlineData(".sql.azuresynapse.net", false)]
     [InlineData("localhost", false)]
     [InlineData("", false)]
     public void IsAzureSynapseDedicatedPoolEndpoint_ClassifiesDataSource(string dataSource, bool expected) =>

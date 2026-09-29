@@ -204,6 +204,9 @@
   <data name="ADP_PooledOpenTimeout" xml:space="preserve">
     <value>已超過連接逾時的設定。在取得集區連接之前超過逾時等待的時間，可能的原因為所有的共用連接已在使用中，並已達共用集區大小的最大值。</value>
   </data>
+  <data name="ADP_IsolationLevelResetTimeout" xml:space="preserve">
+    <value>已超過連接逾時的設定。在重設共用連接的交易隔離等級之前，已超過連接逾時的時間。</value>
+  </data>
   <data name="ADP_NonPooledOpenTimeout" xml:space="preserve">
     <value>嘗試開啟連線時發生逾時。已超過嘗試開啟連線前所經過的時間。這可能是過多同時非共用連線嘗試所造成。</value>
   </data>

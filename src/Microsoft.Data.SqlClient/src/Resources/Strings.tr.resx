@@ -204,6 +204,9 @@
   <data name="ADP_PooledOpenTimeout" xml:space="preserve">
     <value>Zaman aşımı süresi sona erdi.  Havuzdan bağlantı alınmadan zaman aşımı süresi doldu.  Bu durum, havuza alınmamış tüm bağlantılar kullanımda olduğundan ve havuz boyutu üst sınırına ulaşıldığından olabilir.</value>
   </data>
+  <data name="ADP_IsolationLevelResetTimeout" xml:space="preserve">
+    <value>Zaman aşımı süresi sona erdi.  Havuza alınmış bağlantının işlem yalıtım düzeyi sıfırlanamadan bağlantı zaman aşımı süresi doldu.</value>
+  </data>
   <data name="ADP_NonPooledOpenTimeout" xml:space="preserve">
     <value>Bağlantı açılmaya çalışılırken zaman aşımı oluştu.  Bağlantı açılmaya çalışılırken geçen süre aşıldı.  Bu, aynı anda çok fazla sayıda havuza alınmamış bağlantı denemesi nedeniyle oluşmuş olabilir.</value>
   </data>
