@@ -78,6 +78,7 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
         /// </summary>
         /// <param name="connection">The connection to open.</param>
         /// <param name="async">When true, uses OpenAsync; otherwise uses Open.</param>
+        /// <returns>A task that completes when the connection is open.</returns>
         private static async Task OpenConnection(SqlConnection connection, bool async)
         {
             if (async)

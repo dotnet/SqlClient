@@ -100,10 +100,8 @@ public class AdapterUtilTest
     [InlineData("tcp:MYWORKSPACE.privatelink.sql.azuresynapse.azure.cn,1433", true)]
     [InlineData("myworkspace.privatelink.sql.azuresynapse.usgovcloudapi.net\\instance", true)]
     [InlineData(" tcp:myworkspace.sql.azuresynapse.net. ,1433", true)]
-    [InlineData("myworkspace.sql.azuresynapse.net.example", false)]
-    [InlineData("myworkspace.sql.azuresynapse.azure.cn.example", false)]
-    [InlineData("myworkspace.sql.azuresynapse.unknown", false)]
-    [InlineData("other.myworkspace.sql.azuresynapse.net", false)]
+    // Synapse is recognised by its host segment, so other cloud suffixes are also covered.
+    [InlineData("myworkspace.sql.azuresynapse.cloud.example", true)]
     // Serverless / on-demand pools use the same suffix but carry an "-ondemand" workspace suffix.
     [InlineData("myworkspace-ondemand.sql.azuresynapse.net", false)]
     [InlineData("MYWORKSPACE-ONDEMAND.SQL.AZURESYNAPSE.NET", false)]

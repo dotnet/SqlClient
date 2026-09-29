@@ -4175,15 +4175,25 @@ namespace Microsoft.Data.SqlClient.Connection
 
             try
             {
-                _parser.TdsExecuteSQLBatch(
+                // Use the caller's remaining Open budget, including time spent in the pool.
+                // Only Connect Timeout=0 intentionally permits an unlimited reset.
+                long timeoutMilliseconds = 0;
+                if (!timeout.IsInfinite)
+                {
+                    timeoutMilliseconds = timeout.MillisecondsRemaining;
+                    if (timeoutMilliseconds == 0)
+                    {
+                        // A zero value would mean "no timeout" to the parser, so fail before sending.
+                        throw ADP.IsolationLevelResetTimeout();
+                    }
+                }
+
+                _parser.TdsExecuteSQLBatchWithMillisecondTimeout(
                     text: "SET TRANSACTION ISOLATION LEVEL READ COMMITTED;",
-                    // Use the caller's remaining Open budget, including time spent in the pool.
-                    // Only Connect Timeout=0 intentionally permits an unlimited reset.
-                    timeout: 0,
+                    timeoutMilliseconds: timeoutMilliseconds,
                     notificationRequest: null,
                     stateObj: _parser._physicalStateObj,
-                    sync: true,
-                    executionTimeout: timeout);
+                    sync: true);
                 _parser.Run(RunBehavior.UntilDone, null, null, null, _parser._physicalStateObj);
             }
             catch (Exception e) when (ADP.IsCatchableExceptionType(e))

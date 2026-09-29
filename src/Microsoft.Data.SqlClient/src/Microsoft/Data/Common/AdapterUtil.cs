@@ -847,12 +847,6 @@ namespace Microsoft.Data.Common
         private const string ONDEMAND_PREFIX = "-ondemand";
         private const string AZURE_SYNAPSE = ".sql.azuresynapse.";
         private const string AZURE_SYNAPSE_ONDEMAND = ONDEMAND_PREFIX + AZURE_SYNAPSE;
-        private static readonly string[] s_synapseSqlDomains =
-        {
-            ".sql.azuresynapse.net",
-            ".sql.azuresynapse.azure.cn",
-            ".sql.azuresynapse.usgovcloudapi.net"
-        };
         private const string FABRIC_DATAWAREHOUSE = "datawarehouse.fabric.microsoft.com";
         private const string PBI_DATAWAREHOUSE = "datawarehouse.pbidedicated.microsoft.com";
         private const string PBI_DATAWAREHOUSE2 = ".pbidedicated.microsoft.com";
@@ -907,11 +901,11 @@ namespace Microsoft.Data.Common
         /// Determines whether the data source addresses an Azure Synapse Analytics <em>dedicated</em>
         /// SQL pool.
         /// </summary>
-        /// <remarks>Dedicated pools are addressed as "&lt;workspace&gt;.sql.azuresynapse.net", while
-        /// serverless (on-demand) pools carry an "-ondemand" suffix on the workspace name and are
-        /// therefore excluded here, including Private Link names. Match only known public, China,
-        /// and US Government domains: a false positive would suppress a correctness fix.
-        /// Custom aliases and future cloud domains are not classified as dedicated.</remarks>
+        /// <remarks>Like <see cref="IsAzureSynapseOnDemandEndpoint"/>, this recognises Synapse by the
+        /// ".sql.azuresynapse." host segment rather than a list of cloud domains. Dedicated pools are
+        /// addressed as "&lt;workspace&gt;.sql.azuresynapse.&lt;cloud suffix&gt;", while serverless
+        /// (on-demand) pools carry an "-ondemand" suffix on the workspace name, including Private Link
+        /// names ("&lt;workspace&gt;-ondemand.privatelink.sql.azuresynapse...."), and are excluded.</remarks>
         internal static bool IsAzureSynapseDedicatedPoolEndpoint(string dataSource)
         {
             if (string.IsNullOrEmpty(dataSource))
@@ -919,44 +913,19 @@ namespace Microsoft.Data.Common
                 return false;
             }
 
-            string host = dataSource.Trim();
-            if (host.StartsWith("tcp:", StringComparison.OrdinalIgnoreCase))
+            int synapse = dataSource.IndexOf(AZURE_SYNAPSE, StringComparison.OrdinalIgnoreCase);
+            if (synapse < 0)
             {
-                host = host.Substring(4);
-            }
-            int port = host.IndexOf(',');
-            if (port >= 0)
-            {
-                host = host.Substring(0, port);
-            }
-            int instance = host.IndexOf('\\');
-            if (instance >= 0)
-            {
-                host = host.Substring(0, instance);
-            }
-            host = host.TrimEnd();
-            if (host.EndsWith(".", StringComparison.Ordinal))
-            {
-                host = host.Substring(0, host.Length - 1);
+                return false;
             }
 
-            foreach (string domain in s_synapseSqlDomains)
+            string workspace = dataSource.Substring(0, synapse);
+            const string privateLink = ".privatelink";
+            if (workspace.EndsWith(privateLink, StringComparison.OrdinalIgnoreCase))
             {
-                if (!host.EndsWith(domain, StringComparison.OrdinalIgnoreCase))
-                {
-                    continue;
-                }
-                string workspace = host.Substring(0, host.Length - domain.Length);
-                const string privateLink = ".privatelink";
-                if (workspace.EndsWith(privateLink, StringComparison.OrdinalIgnoreCase))
-                {
-                    workspace = workspace.Substring(0, workspace.Length - privateLink.Length);
-                }
-                return workspace.Length > 0
-                    && workspace.IndexOf('.') < 0
-                    && !workspace.EndsWith(ONDEMAND_PREFIX, StringComparison.OrdinalIgnoreCase);
+                workspace = workspace.Substring(0, workspace.Length - privateLink.Length);
             }
-            return false;
+            return !workspace.EndsWith(ONDEMAND_PREFIX, StringComparison.OrdinalIgnoreCase);
         }
 
         internal static bool IsAzureSqlServerEndpoint(string dataSource)
@@ -1399,6 +1368,9 @@ namespace Microsoft.Data.Common
 #region DbConnectionPool and related
         internal static Exception PooledOpenTimeout()
             => ADP.InvalidOperation(StringsHelper.GetString(Strings.ADP_PooledOpenTimeout));
+
+        internal static Exception IsolationLevelResetTimeout()
+            => ADP.InvalidOperation(StringsHelper.GetString(Strings.ADP_IsolationLevelResetTimeout));
 
         internal static Exception NonPooledOpenTimeout()
             => ADP.TimeoutException(StringsHelper.GetString(Strings.ADP_NonPooledOpenTimeout));
