@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 > **Note:** Releases are sorted in reverse chronological order (newest first).
 
+## [Stable Release 7.1.1] - 2026-09-29
+
+### Fixed
+
+- Fixed an `ArgumentException` when sending zero-valued `decimal` or `SqlDecimal` parameters whose precision equals their scale. Nonzero precision validation and support for large decimal values are unchanged.
+  ([#4715](https://github.com/dotnet/SqlClient/issues/4715), [#4721](https://github.com/dotnet/SqlClient/pull/4721), [#4732](https://github.com/dotnet/SqlClient/pull/4732))
+
+- Fixed connection pool V2 handing out pooled connections with expired or nearly expired access tokens. This affects only applications that opt in to connection pool V2.
+  ([#4734](https://github.com/dotnet/SqlClient/pull/4734), [#4739](https://github.com/dotnet/SqlClient/pull/4739))
+
+- Fixed connection opens failing when `ClearPool` or `ClearAllPools` races with an in-flight open. Requests already admitted to the cleared pool can finish, and connections returned to the retired pool are discarded rather than reused.
+  ([#4714](https://github.com/dotnet/SqlClient/issues/4714), [#4718](https://github.com/dotnet/SqlClient/pull/4718), [#4740](https://github.com/dotnet/SqlClient/pull/4740))
+
+- Released version-aligned `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider`, `Microsoft.Data.SqlClient.Extensions.Azure`, `Microsoft.Data.SqlClient.Extensions.Abstractions`, and `Microsoft.Data.SqlClient.Internal.Logging` 7.1.1 with no functional or API changes. See the [release notes](release-notes/7.1/7.1.1.md#companion-package-release-notes).
+
 ## [Stable Release 7.1.0] - 2026-09-17
 
 General availability of Microsoft.Data.SqlClient 7.1. The sections below list the changes since [7.1.0-preview3](release-notes/7.1/7.1.0-preview3.md). See the [7.1.0 release notes](release-notes/7.1/7.1.0.md) for the cumulative list of changes since the 7.0.3 stable release.

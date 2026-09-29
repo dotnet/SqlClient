@@ -1,9 +1,10 @@
 # Microsoft.Data.SqlClient Release Notes
 
-The latest stable release is [Microsoft.Data.SqlClient 7.1](7.1).
+The latest stable release is [Microsoft.Data.SqlClient 7.1.1](7.1/7.1.1.md).
 
 ## Release Information
 
+- [Microsoft.Data.SqlClient 7.1.1](7.1/7.1.1.md)
 - [Microsoft.Data.SqlClient 7.1](7.1)
 - [Microsoft.Data.SqlClient 7.0](7.0)
 - [Microsoft.Data.SqlClient 6.1](6.1)
@@ -23,10 +24,11 @@ The latest stable release is [Microsoft.Data.SqlClient 7.1](7.1).
 # Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider Release Notes
 
 The latest stable release is
-[Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 7.1](add-ons/AzureKeyVaultProvider/7.1).
+[Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 7.1.1](add-ons/AzureKeyVaultProvider/7.1/7.1.1.md).
 
 ## Release Information
 
+- [Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 7.1.1](add-ons/AzureKeyVaultProvider/7.1/7.1.1.md)
 - [Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 7.1](add-ons/AzureKeyVaultProvider/7.1)
 - [Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 7.0](add-ons/AzureKeyVaultProvider/7.0)
 - [Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 6.1](add-ons/AzureKeyVaultProvider/6.1)
@@ -41,10 +43,11 @@ The latest stable release is
 # Microsoft.Data.SqlClient.Extensions.Abstractions Release Notes
 
 The latest release is
-[Microsoft.Data.SqlClient.Extensions.Abstractions 7.1](Extensions/Abstractions/7.1).
+[Microsoft.Data.SqlClient.Extensions.Abstractions 7.1.1](Extensions/Abstractions/7.1/7.1.1.md).
 
 ## Release Information
 
+- [Microsoft.Data.SqlClient.Extensions.Abstractions 7.1.1](Extensions/Abstractions/7.1/7.1.1.md)
 - [Microsoft.Data.SqlClient.Extensions.Abstractions 7.1](Extensions/Abstractions/7.1)
 - [Microsoft.Data.SqlClient.Extensions.Abstractions 7.0](Extensions/Abstractions/7.0)
 - [Microsoft.Data.SqlClient.Extensions.Abstractions 1.0](Extensions/Abstractions/1.0)
@@ -52,10 +55,11 @@ The latest release is
 # Microsoft.Data.SqlClient.Extensions.Azure Release Notes
 
 The latest release is
-[Microsoft.Data.SqlClient.Extensions.Azure 7.1](Extensions/Azure/7.1).
+[Microsoft.Data.SqlClient.Extensions.Azure 7.1.1](Extensions/Azure/7.1/7.1.1.md).
 
 ## Release Information
 
+- [Microsoft.Data.SqlClient.Extensions.Azure 7.1.1](Extensions/Azure/7.1/7.1.1.md)
 - [Microsoft.Data.SqlClient.Extensions.Azure 7.1](Extensions/Azure/7.1)
 - [Microsoft.Data.SqlClient.Extensions.Azure 7.0](Extensions/Azure/7.0)
 - [Microsoft.Data.SqlClient.Extensions.Azure 1.0](Extensions/Azure/1.0)
@@ -64,10 +68,11 @@ The latest release is
 # Microsoft.Data.SqlClient.Internal.Logging Release Notes
 
 The latest release is
-[Microsoft.Data.SqlClient.Internal.Logging 7.1](Internal/Logging/7.1).
+[Microsoft.Data.SqlClient.Internal.Logging 7.1.1](Internal/Logging/7.1/7.1.1.md).
 
 ## Release Information
 
+- [Microsoft.Data.SqlClient.Internal.Logging 7.1.1](Internal/Logging/7.1/7.1.1.md)
 - [Microsoft.Data.SqlClient.Internal.Logging 7.1](Internal/Logging/7.1)
 - [Microsoft.Data.SqlClient.Internal.Logging 7.0](Internal/Logging/7.0)
 - [Microsoft.Data.SqlClient.Internal.Logging 1.0](Internal/Logging/1.0)
