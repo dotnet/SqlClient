@@ -15,7 +15,7 @@ at all, infer the PR from the current branch.
 | Input | How to resolve it |
 | --- | --- |
 | **PR** | A PR number or URL in the request. If absent, infer it from the current branch (see step 1). |
-| **Repository** | Taken from the PR URL when one was given, since a URL already names its repository. Otherwise an explicit `owner/name` in the request, otherwise inferred from the git remote of the current workspace. |
+| **Repository** | Taken from the PR URL when one was given, since a URL already names its repository. Otherwise an explicit `owner/name` in the request, otherwise taken from the PR that branch inference selects (see step 1), not from a remote chosen in advance. |
 | **Author filter** | A name, regex, or comma-separated list in the request. Default no filtering. Never applies to Copilot suppressed findings unless it names Copilot. |
 | **Test scope** | A hint about which tests to run. Default is to choose targeted tests yourself. |
 | **Tooling** | A preferred access path (for example "use the GitHub MCP server" or "use gh"). See Tool selection. |
@@ -216,20 +216,31 @@ Skipping an approval gate:
 1. Establish scope
 - Do this before pre-flight. Most pre-flight checks need to know which repository and PR
   they are checking, so they cannot run until scope is settled.
-- Resolve the repository, in this order: from the PR URL if the request gave one, then
-  from an explicit `owner/name`, then from the git remote. A URL identifies its own
-  repository, so never pair a URL's PR number with a repository taken from somewhere else
-  — that silently targets whatever PR happens to carry that number here.
+- Resolve the repository from the PR URL if the request gave one, otherwise from an
+  explicit `owner/name`. A URL identifies its own repository, so never pair a URL's PR
+  number with a repository taken from somewhere else — that silently targets whatever PR
+  happens to carry that number here.
 - If an explicit repository contradicts the URL, stop and ask rather than choosing one.
-- Discover the correct git remote name from the current repository and store it for later commands.
-- Use that discovered remote name for push and any other git operations that require a remote; do not assume `origin`.
+- When the request names neither, do not settle on a repository from a remote before the
+  PR is found. A fork checkout is the ordinary case for a contributor, and its remotes
+  name the fork while the PR lives in the upstream repository, so committing to one
+  repository up front and searching it finds nothing. Leave the repository open until
+  branch inference below selects a PR, then take it from that PR.
+- Enumerate the remotes and keep them for that search and for push. Remote names in a
+  clone are arbitrary, so never assume `origin`.
 - Resolve the PR number from the request (accept a number or a URL).
 - If the request names no PR, infer it from the workspace's current branch:
-  - Read the current branch name and find the PR whose head branch matches it.
+  - Read the current branch name and search for a PR whose head branch matches it, across
+    every repository the remotes point at and the upstream or parent of each, since a PR
+    is commonly opened against the parent of the fork the workspace was cloned from.
   - Prefer an open PR. If the only matches are merged or closed, say so explicitly, since
     replying to or resolving feedback on a closed PR is rarely intended.
   - If the branch belongs to a fork, match on the head repository as well as the branch
     name so a same-named branch in another fork cannot be picked up by mistake.
+  - Take the repository from the PR the search selects: its base repository is the one to
+    read, comment and resolve in, and the remote pointing at its head repository is the
+    one to push to. Name both when reporting scope, so a fork flow is visible rather than
+    assumed.
 - Stop and ask the user which PR to use when inference cannot give a single confident
   answer: no branch (detached HEAD), the branch is the repository's default branch, no PR
   matches the branch, or more than one open PR matches.
@@ -281,14 +292,19 @@ Skipping an approval gate:
 2. Gather review thread feedback
 - Query the PR's review threads through the validated read path, paging through every one of them. See Gathering completely.
 - Keep only unresolved threads where isResolved is false.
-- Extract file path, line/startLine, comment url, author login, and body.
+- Extract the thread's file path and line/startLine, and for every comment in it the url,
+  author login and body. Page through the thread's comments and read all of them:
+  reviewers routinely add a new request in a reply, and collecting only the root comment
+  leaves that request unassessed, unplanned and unanswered while the run reports the
+  thread as fully covered. Treat the latest outstanding request in the thread as the one
+  to act on, and the earlier comments as its context.
 - Record every identifier the thread carries, not just the one your read path happens to
   use: the GraphQL thread id and the numeric id of its root review comment. Replying may
   run through a different path than reading, and a REST reply needs the numeric comment id
   while thread resolution needs the GraphQL thread id. Capturing only one of them can
   strand step 10 or step 11 with no way to act.
-- Also record, for every comment in the thread, whether its author is a bot or a human,
-  using the author type field rather than the login. Step 11 depends on this.
+- Record with each of those comments whether its author is a bot or a human, using the
+  author type field rather than the login. Step 11 depends on this.
 - Mark a thread as author commentary when the PR's own author opened it and did not tag
   themselves in it. Authors routinely annotate their own diff to walk reviewers through a
   change, and those threads are explanation, not requests. A reply from the author inside
@@ -400,9 +416,15 @@ Skipping an approval gate:
   fixed by the PR author, or by a later commit, while the thread stays open. Compare the
   request against the current state of the code on the PR's head. If it is already
   handled, record it as Already Addressed with that evidence and plan no change.
-- Leave author commentary out of the planned work. Read it first, though: it usually
-  explains why the code looks the way it does, and that context often changes how other
-  feedback should be addressed.
+- Apply step 7's promotion test to author commentary before excluding any of it.
+  Commentary that genuinely asks for something — an open question put to reviewers, a
+  flagged TODO, a decision the author says they want challenged — is promoted here and
+  planned like any other actionable item. Leaving the promotion to step 7 is too late:
+  step 5 has already dropped the item from the plan and step 6 has already implemented
+  without it, so it would surface as actionable only after the work was done.
+- Leave the commentary that survives that test out of the planned work. Read it first,
+  though: it usually explains why the code looks the way it does, and that context often
+  changes how other feedback should be addressed.
 - Ask the user to confirm the plan before proceeding, showing a concise summary of proposed changes and rationale, with each item's source shown.
 
 6. Implement and verify
@@ -441,7 +463,7 @@ Recognising an author's self-tag:
   Authors routinely quote a reviewer who tagged them and then answer underneath, so a
   naive match on the handle finds the reviewer's words rather than the author's.
 - Tagging someone else is not a self-tag. An author asking a named reviewer a question is judged on content by the promotion rule below.
-- Promote author commentary out of that category when it genuinely asks for something even without a self-tag: an open question put to reviewers, a flagged TODO, or a decision the author says they want challenged. Say why you promoted it, and classify it normally from then on.
+- Promote author commentary out of that category when it genuinely asks for something even without a self-tag: an open question put to reviewers, a flagged TODO, or a decision the author says they want challenged. Say why you promoted it, and classify it normally from then on. Step 5 applies this same test before planning, so an item promoted there arrives here already actionable; this is the definition it uses, not a second test.
 - Tag every item with its source or sources from the Feedback sources table, and for review threads whether the authorship is bot or human. This determines where its reply goes in step 10 and whether it may be resolved in step 11.
 
 8. Draft findings and replies
@@ -515,7 +537,8 @@ Who gets a reply, stated once:
   and step 11 to keep a prior reply from counting as human participation. As with the
   summary marker, it is a convenience and not a credential, so confirm authorship before
   trusting it.
-- Cover all non-thread feedback in exactly one new PR comment, not one comment per item.
+- Cover in exactly one new PR comment the non-thread feedback that step 8 decided needs a
+  reply this run, not one comment per item.
   This single comment covers the review-body feedback and Copilot suppressed findings from
   step 3 and the discussion comments from step 4, because none of them has a thread to
   reply in. Group it by source, name the source of each item, list each with its file and
@@ -525,13 +548,17 @@ Who gets a reply, stated once:
   later runs can recognise it as this skill's own output and exclude it in step 4. Without
   the marker the comment becomes input to the next run. The marker is a convenience, not a
   credential: step 4 must confirm authorship before trusting it.
-- If no non-thread feedback was found, post no summary comment.
+- Post no summary comment when that set is empty, whether because no non-thread feedback
+  was found, because every item was already answered by an earlier run and nothing
+  changed, or because all that remains is author commentary. Posting one anyway would
+  repeat unchanged answers on every rerun, which is exactly the noise step 8 exists to
+  prevent.
 - If a write path is unavailable, output the exact reply text for each target so the user can post it manually.
 
 11. Resolve threads, non-human feedback only
 - Resolving is a gated action, separate from the reply gate. See Approvals.
 - Work out which threads qualify. Judge authorship from the snapshot step 2 recorded, before this run posted anything. A thread qualifies only when every comment in that snapshot was authored by a bot or by this skill, a reply covering the current request and outcome exists on it from this run or an earlier one, and its classification is terminal — Fixed, Rejected, Already Addressed or Informational.
-- Re-fetch each candidate thread immediately before resolving it, and compare against the snapshot. A run takes time, and a human can comment while it is in progress. If anyone other than you has commented since the snapshot, drop that thread from the list, say so, and leave it open: they have now engaged, and the reply they are owed is theirs to judge.
+- Re-fetch each candidate thread immediately before resolving it, and compare against the snapshot. A run takes time, and a human can comment while it is in progress. If any comment this run did not itself post has appeared since the snapshot, drop that thread from the list, say so, and leave it open: someone has now engaged, and the reply they are owed is theirs to judge. Decide that by the comment ids this run posted, never by the account they came from — a comment the user writes by hand arrives under the same login as this skill's replies and is genuine human participation.
 - For a thread classified Fixed, confirm the change is actually on the PR's head before resolving it. A fix that exists only in the local workspace is not visible to anyone reading the PR, and push can be declined or unavailable, so Fixed on its own does not mean fixed here. If the commit was never pushed, leave the thread open, say the fix is local only, and tell the user what to push.
 - Disregard this skill's own replies when deciding whether a thread is bot-only, whether they were posted by this run or by an earlier one. Identify them by comment id, not by author: this run knows the ids it posted, and an earlier run's reply is recognisable by the marker it carries. Counting them would make every replied-to thread look human-involved, so replying would permanently disqualify the very threads it was meant to conclude. Exempting the whole account instead would be wider than intended: a comment the user writes by hand comes from the same account and is genuine human participation.
 - A reply posted by an earlier run satisfies the reply requirement below, provided it still covers the current request and outcome. Resolution is often declined or unavailable on the run that replies, and step 8 will not repeat an unchanged answer, so requiring a reply from this run specifically would leave those threads unresolvable for ever.
@@ -685,7 +712,7 @@ Workspace and git
 
 - Never edit or commit while the workspace is on a branch, or at a commit, other than the PR's head as it stood before this run began. Pushing commits this run created is how that head moves forward, so it is permitted and expected; pushing anything else is not.
 - Stage only files this run changed; leave the user's pre-existing and untracked work uncommitted.
-- Use the discovered git remote name consistently anywhere a remote is required.
+- Push to the remote that points at the PR's head repository, and name it explicitly wherever a remote is required; never assume `origin`.
 - Keep behavior-compatible edits unless feedback explicitly requires change.
 
 Paths and failures
