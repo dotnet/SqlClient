@@ -1,6 +1,6 @@
 ---
 name: review-pr-feedback
-description: Collects PR feedback from every source — review threads, review bodies including Copilot's hidden low-confidence suppressed findings, and discussion comments — applies fixes, replies to every item, and resolves only bot-authored threads. Infers the PR from the current branch when none is given, and asks for explicit approval before committing, pushing, replying or resolving. Works through whichever GitHub access path is available (gh CLI, GitHub MCP server, or other). Invoke explicitly with /review-pr-feedback.
+description: Collects PR feedback from every source — review threads, review bodies including Copilot's hidden low-confidence suppressed findings, and discussion comments — applies fixes, replies to every item, and resolves only bot-authored threads. Infers the PR from the current branch when none is given, and asks for explicit approval before committing, pushing, replying or resolving unless the user has explicitly pre-approved that action. Works through whichever GitHub access path is available (gh CLI, GitHub MCP server, or other). Invoke explicitly with /review-pr-feedback.
 disable-model-invocation: true
 argument-hint: "[pr-number-or-url] [repo owner/name] [author filter] [test scope]"
 ---
@@ -84,9 +84,11 @@ gap rather than silently falling back.
 
 ## Pre-flight validation
 
-Run this after step 1 has settled and confirmed which repository and PR are in scope, and
+Run this once step 1 has settled and confirmed which repository and PR are in scope, and
 before gathering any feedback. Most checks below name the PR, so they cannot be performed
-any earlier; the branch and authorship rows in particular depend on facts step 1 resolves.
+any earlier. The workspace, branch and authorship rows are where those facts are gathered,
+using a validated path; the rest of step 1 then interprets them when it decides whether
+the workspace may be edited and which run mode applies.
 
 Confirm the paths you intend to use actually work. Probe
 only with cheap, read-only, side-effect-free calls — never validate a write path by
@@ -172,7 +174,10 @@ to follow.
 ## Approvals
 
 Four actions change something outside this workspace and are gated. Each one needs the
-user's explicit approval, every time:
+user's explicit approval, every time. The single exception is an action the user has
+explicitly pre-approved, defined in Skipping an approval gate below; nothing else — not a
+previous run, not a previous turn, not an approval of a different action — stands in for
+that approval:
 
 | Gated action | Step | Show before asking |
 | --- | --- | --- |
@@ -208,6 +213,9 @@ Skipping an approval gate:
   conversation, or in a previous run of this skill, applies to that action then, not to
   this one now. Reuse it only when the user has clearly said it should carry forward, such
   as "for the rest of this session, never ask before replying".
+- That carry-forward is the user overriding the gate deliberately, not the skill inferring
+  that an earlier yes still stands. Nothing carries on its own, so if the instruction has
+  to be interpreted to cover this action, it does not cover it.
 - When in doubt about whether an instruction was meant as standing approval, ask.
 - Record in the report which gates were approved, which were pre-approved by explicit
   instruction, and which were declined.
@@ -248,9 +256,14 @@ Skipping an approval gate:
   going further. This run posts public comments and resolves threads, so acting on the
   wrong PR is not silently recoverable. Until that confirmation, read only what identifying
   the PR requires; everything else waits.
-- With scope settled and confirmed, complete Tool selection and Pre-flight validation now,
-  before gathering any feedback. The remaining bullets of this step supply the branch and
-  authorship facts that the last few pre-flight rows check, so finish them first.
+- With scope settled and confirmed, complete Tool selection and Pre-flight validation next,
+  before gathering any feedback. Pre-flight is where the workspace, branch, HEAD and
+  per-path principal facts are gathered, since each of them needs a validated path to read
+  it.
+- The remaining bullets of this step then interpret what pre-flight found: they decide
+  whether the workspace may be edited and which run mode applies. The order is confirm the
+  PR, run pre-flight, then decide — they never ask for a fact pre-flight has not gathered
+  yet.
 - Check the workspace against the PR before planning any edit:
   - Compare the checked-out branch with the PR's head branch, and the workspace's remotes
     with the PR's head repository. A PR from a fork needs that fork reachable.
@@ -336,6 +349,11 @@ Skipping an approval gate:
   real findings in `<details>` blocks, sometimes two deep, under headings such as
   "Previously missed" or "Resolved since last review", each carrying a file, a line and a
   full description. Read them all.
+- Leave the suppressed-feedback block to step 3b, which is its only collector. It is a
+  collapsed section like the others, so reading it here as ordinary body text would report
+  the same finding twice — once under review body and once under suppressed — and break
+  the per-source counts the report promises. Recognise it by the wording step 3b defines,
+  and skip it in this pass.
 - Treat a "Previously missed" entry as feedback that has already been raised and not yet
   acted on, and act on it now. It is a re-report, not a new finding: the same item can
   appear in review after review while it stays unaddressed, so seeing one usually means
@@ -365,6 +383,8 @@ Skipping an approval gate:
   is nested inside another collapsed section such as "Review details".
 - Each entry is a `**path:line**` marker, followed by the finding text, optionally
   followed by a fenced snippet of the code it refers to. Extract path, line and full text.
+  This step is the sole collector of that block — step 3a deliberately leaves it alone —
+  so each suppressed finding is counted exactly once, under this source.
 - Collect across all Copilot reviews on the PR, not just the newest. Re-reviews repeat
   earlier findings, so deduplicate on path, line and substance.
 - Apply the author filter only if the user's filter explicitly names Copilot; a filter
@@ -432,7 +452,9 @@ Skipping an approval gate:
 - Before editing, compare the files you plan to change against the pre-existing changes
   pre-flight recorded. If any planned file already has staged or unstaged edits, stop and
   put the choice to the user: let them commit or stash first, drop that file from the
-  plan, or continue knowing their work will be altered. Never silently edit over it.
+  plan, or continue knowing their work will be altered and that step 9 cannot separate it
+  again — staging that path carries their earlier hunks into this run's commit. Never
+  silently edit over it.
 - Apply required code or test updates with smallest safe change set.
 - Run targeted checks first.
 - If a test scope was given, use the `generate-mstest-filter` skill to build a focused filter for it.
@@ -513,12 +535,19 @@ Who gets a reply, stated once:
 - Commit and push are two separate gated actions. See Approvals.
 - If any changes were made, draft a commit message that references the PR and summarizes the resolution.
 - Stage only the files this run changed, naming each one explicitly. Never stage by
-  wildcard or stage everything, and never use a commit that sweeps in unstaged work. The
-  user's pre-existing edits and untracked files must survive this run untouched and
+  wildcard or stage everything, and never use a commit that sweeps in unstaged work.
+- Files this run did not change, including untracked ones, must survive untouched and
   uncommitted — they are frequently unrelated notes or work in progress, and committing
   them to a public PR is not recoverable by deleting the file afterwards.
+- Naming a path is not isolation. If the user chose in step 6 to keep editing a file that
+  already carried uncommitted work, staging that path stages their earlier hunks with it,
+  and naming the file does not separate them. Never let that happen silently: name the
+  file when asking for approval, say plainly that its pre-existing work will go into this
+  commit, and get approval on that basis. Offer the alternatives again — stash or commit
+  their work first, or drop the file from the commit — since this is the last point at
+  which it can be kept out.
 - Show the user the exact message and the files it covers, then ask for approval to commit. Do not commit until they approve.
-- If anything else was staged or modified before this run, say so when you ask, and confirm it is being left alone.
+- If anything else was staged or modified before this run, say so when you ask, and confirm which of it is being left alone and which, if any, the user has agreed to include.
 - Ask separately for approval to push, showing the discovered remote name, the branch and the commits involved. Approval to commit is not approval to push.
 - If push is declined or unavailable, leave the commit local and tell the user the exact command to push it themselves.
 - Push before replying where possible, so replies can link to the pushed commit. If the push was declined, say so in the replies rather than linking to a commit the reviewer cannot see.
@@ -694,7 +723,7 @@ Classification
 
 Approvals
 
-- Commit, push, reply and resolve each require the user's explicit approval for that specific action, every time. See Approvals.
+- Commit, push, reply and resolve each require the user's explicit approval for that specific action, every time, unless the user explicitly pre-approved that action. See Approvals.
 - Never treat approval of one action as approval of another, and never carry an approval across turns or runs unless the user clearly said it should carry forward.
 - Treat anything short of an unambiguous yes as a no, and never perform a gated action the user was not shown in full beforehand.
 - Never act on an inferred PR without confirming it with the user first.
@@ -711,7 +740,7 @@ Replying and resolving
 Workspace and git
 
 - Never edit or commit while the workspace is on a branch, or at a commit, other than the PR's head as it stood before this run began. Pushing commits this run created is how that head moves forward, so it is permitted and expected; pushing anything else is not.
-- Stage only files this run changed; leave the user's pre-existing and untracked work uncommitted.
+- Stage only files this run changed; leave the user's pre-existing and untracked work uncommitted, and where a file cannot be separated, disclose it at the commit gate rather than committing it quietly. See step 9.
 - Push to the remote that points at the PR's head repository, and name it explicitly wherever a remote is required; never assume `origin`.
 - Keep behavior-compatible edits unless feedback explicitly requires change.
 
