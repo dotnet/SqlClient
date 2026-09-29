@@ -14,6 +14,9 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests;
 
+/// <summary>
+/// Tests that <see cref="SqlException"/> instances correctly roundtrip when serialized.
+/// </summary>
 public class SqlExceptionTests
 {
     private static SqlError ExampleSqlError =>
@@ -28,6 +31,15 @@ public class SqlExceptionTests
             exception: new ArgumentNullException(paramName: "param", message: "Associated exception"),
             batchIndex: 0);
 
+    /// <summary>
+    /// Verifies that when a <see cref="SqlException"/> is roundtripped correctly through a
+    /// serialization process.
+    /// </summary>
+    /// <remarks>
+    /// This serialization process (BinaryFormatter) is not available on netcore due to safety
+    /// concerns. These concerns do not apply in this test, since the test maintains control
+    /// over the entire payload.
+    /// </remarks>
     [Fact]
     public void Serialization_RoundTrips()
     {
