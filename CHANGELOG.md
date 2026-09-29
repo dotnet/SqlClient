@@ -19,6 +19,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Fixed connection opens failing when `ClearPool` or `ClearAllPools` races with an in-flight open. Requests already admitted to the cleared pool can finish, and connections returned to the retired pool are discarded rather than reused.
   ([#4714](https://github.com/dotnet/SqlClient/issues/4714), [#4718](https://github.com/dotnet/SqlClient/pull/4718), [#4740](https://github.com/dotnet/SqlClient/pull/4740))
 
+### Companion packages
+
 - Released version-aligned `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider`, `Microsoft.Data.SqlClient.Extensions.Azure`, `Microsoft.Data.SqlClient.Extensions.Abstractions`, and `Microsoft.Data.SqlClient.Internal.Logging` 7.1.1 with no functional or API changes. See the [release notes](release-notes/7.1/7.1.1.md#companion-package-release-notes).
 
 ## [Stable Release 7.1.0] - 2026-09-17
