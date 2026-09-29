@@ -29,14 +29,11 @@
   <!--
     This project binds to driver INTERNALS (LocalAppContextSwitches and its cached switch fields)
     under an InternalsVisibleTo grant, so it only ever supports the driver at the same repo commit:
-    the project in Project mode, or the package built from this commit in Package mode.  It must
-    therefore never honour MdsPackageVersion - an older released driver neither grants IVT to this
-    assembly nor guarantees the internal field shape.
+    the project in Project mode, or the package built from this commit in Package mode.
 
     That restriction is exactly why these helpers do not live in Microsoft.Data.SqlClient.TestCommon:
-    that project touches public API only, so it can be pinned to an arbitrary released version (the
-    perf baseline pass does this via MdsPackageVersion).  Keeping the two apart lets consumers that
-    need only public API - notably PerformanceTests - build against any driver version.
+    that project touches public API only, so it can be pinned to an arbitrary released version.
+    Keeping the two apart lets consumers that need only public API build against any driver version.
   -->
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj"
