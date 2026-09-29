@@ -30,9 +30,10 @@ namespace Microsoft.Data.SqlClient
         internal const string DataDirectory = "|datadirectory|";
 
         #if NETFRAMEWORK
-        private const string ConnectionStringQuoteValuePattern = "^[^\"'=;\\s\\p{Cc}]*$";           // generally do not quote the value if it matches the pattern
-
-        private static readonly Regex s_connectionStringQuoteValueRegex = new Regex(ConnectionStringQuoteValuePattern, RegexOptions.Compiled);
+        private static readonly Regex s_connectionStringQuoteValueRegex = new Regex(
+            // Generally, do not quote the value if it matches the pattern
+            "^[^\"'=;\\s\\p{Cc}]*$",
+            RegexOptions.Compiled);
         #endif
 
         internal readonly bool _hasPasswordKeyword;

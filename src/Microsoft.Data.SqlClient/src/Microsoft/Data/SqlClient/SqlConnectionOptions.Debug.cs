@@ -16,28 +16,43 @@ namespace Microsoft.Data.SqlClient
     internal sealed partial class SqlConnectionOptions
     {
         #if DEBUG
-        private const string ConnectionStringValidKeyPattern = "^(?![;\\s])[^\\p{Cc}]+(?<!\\s)$"; // key not allowed to start with semi-colon or space or contain non-visible characters or end with space
-        private const string ConnectionStringValidValuePattern = "^[^\u0000]*$";                    // value not allowed to contain embedded null
-        private const string ConnectionStringPattern =                     // may not contain embedded null except trailing last value
-            "([\\s;]*"                                                 // leading whitespace and extra semicolons
-            + "(?![\\s;])"                                             // key does not start with space or semicolon
-            + "(?<key>([^=\\s\\p{Cc}]|\\s+[^=\\s\\p{Cc}]|\\s+==|==)+)" // allow any visible character for keyname except '=' which must quoted as '=='
-            + "\\s*=(?!=)\\s*"                                         // the equal sign divides the key and value parts
+        private static readonly Regex s_connectionStringValidKeyRegex = new Regex(
+            // Key must not start with semi-colon or space, contain non-visible characters, or end with space.
+            "^(?![;\\s])[^\\p{Cc}]+(?<!\\s)$",
+            RegexOptions.Compiled);
+        private static readonly Regex s_connectionStringValidValueRegex = new Regex(
+            // Value must not contain embedded null.
+            "^[^\u0000]*$",
+            RegexOptions.Compiled);
+        private static readonly Regex s_connectionStringRegex = new Regex(
+            // Leading whitespace and extra semicolons.
+            "([\\s;]*"
+            // Key does not start with space or semicolon.
+            + "(?![\\s;])"
+            // Allow any visible character for key name (except for '=', which must be quoted as '==').
+            + "(?<key>([^=\\s\\p{Cc}]|\\s+[^=\\s\\p{Cc}]|\\s+==|==)+)"
+            // The equals sign divides the key and value parts.
+            + "\\s*=(?!=)\\s*"
             + "(?<value>"
-            + "(\"([^\"\u0000]|\"\")*\")"                              // double-quoted string, " must be quoted as ""
+            // Double-quoted string: " must be quoted as "".
+            + "(\"([^\"\u0000]|\"\")*\")"
             + "|"
-            + "('([^'\u0000]|'')*')"                                   // single-quoted string, ' must be quoted as ''
+            // Single-quoted string: ' must be quoted as ''.
+            + "('([^'\u0000]|'')*')"
             + "|"
-            + "((?![\"'\\s])"                                          // unquoted value must not start with " or ' or space, would also like = but too late to change
-            + "([^;\\s\\p{Cc}]|\\s+[^;\\s\\p{Cc}])*"                   // control characters must be quoted
-            + "(?<![\"']))"                                            // unquoted value must not stop with " or '
-            + ")(\\s*)(;|[\u0000\\s]*$)"                               // whitespace after value up to semicolon or end-of-line
-            + ")*"                                                     // repeat the key-value pair
-            + "[\\s;]*[\u0000\\s]*";                                   // trailing whitespace/semicolons (DataSourceLocator), embedded nulls are allowed only in the end
-
-        private static readonly Regex s_connectionStringValidKeyRegex = new Regex(ConnectionStringValidKeyPattern, RegexOptions.Compiled);
-        private static readonly Regex s_connectionStringValidValueRegex = new Regex(ConnectionStringValidValuePattern, RegexOptions.Compiled);
-        private static readonly Regex ConnectionStringRegex = new Regex(ConnectionStringPattern, RegexOptions.ExplicitCapture | RegexOptions.Compiled);
+            // Unquoted value must not start with " or ' or space. Would also like =, but too late to change.
+            + "((?![\"'\\s])"
+            // Control characters must be quoted.
+            + "([^;\\s\\p{Cc}]|\\s+[^;\\s\\p{Cc}])*"
+            // Unquoted value must not end with " or '.
+            + "(?<![\"']))"
+            // Whitespace after value, up to semicolon or end-of-line.
+            + ")(\\s*)(;|[\u0000\\s]*$)"
+            // Repeat the key-value pair.
+            + ")*"
+            // Trailing whitespace/semicolons (DataSourceLocator). Embedded nulls are only allowed at the end.
+            + "[\\s;]*[\u0000\\s]*",
+            RegexOptions.ExplicitCapture | RegexOptions.Compiled);
         #endif
 
         [Conditional("DEBUG")]
@@ -131,7 +146,7 @@ namespace Microsoft.Data.SqlClient
             IReadOnlyDictionary<string, string> synonyms)
         {
             var parseTable = new Dictionary<string, string>();
-            Regex parser = ConnectionStringRegex;
+            Regex parser = s_connectionStringRegex;
 
             const int KeyIndex = 1, ValueIndex = 2;
             Debug.Assert(KeyIndex == parser.GroupNumberFromName("key"), "wrong key index");
