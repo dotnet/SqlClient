@@ -87,6 +87,15 @@ mock_next_version() {
   [[ "$output" == *"Milestone '7.0.3' matches next SqlClient version '7.0.3' (MdsVersionDefault)."* ]]
 }
 
+@test "treats configured property names as literal strings" {
+  export MILESTONE_TITLE="7.0.3"
+  export SQLCLIENT_VERSION_PROPERTY="Mds.Version"
+  printf '<Mds.Version>7.0.3</Mds.Version><MdsXVersion>9.9.9</MdsXVersion>\n' > "${SQLCLIENT_VERSIONS_FILE}"
+  run bash "${SCRIPT}"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Milestone '7.0.3' matches next SqlClient version '7.0.3' (Mds.Version)."* ]]
+}
+
 @test "fails closed when SqlClientNextVersion is missing" {
   printf '<Project />\n' > "${SQLCLIENT_VERSIONS_FILE}"
   run bash "${SCRIPT}"
