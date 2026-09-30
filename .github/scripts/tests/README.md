@@ -123,21 +123,20 @@ bats --formatter pretty .github/scripts/tests/
 
 ## How the Tests Work
 
-All test files use the same general approach:
+The test files use temporary fixtures and, when a script invokes external commands, command mocks:
 
-1. **`setup()`** creates a temporary directory and populates it with mock `git` and `gh` executables
-   — simple shell scripts that echo predetermined responses. Environment variables (`VERSION`,
-   `MERGE_COMMIT_SHA`, etc.) are set to known values.
+1. **`setup()`** creates a temporary directory and sets environment variables to known values.
+   Tests write fixture files there or place mock executables earlier on `$PATH` when the script
+   invokes commands such as `git` or `gh`.
 
 2. **`@test` blocks** call `run bash "$SCRIPT"` to execute the script under test in a subshell. The
-   mocks intercept all `git` and `gh` invocations, so no real repository or GitHub API access is
-   needed.
+   fixtures and command mocks keep tests isolated from the repository and GitHub API.
 
 3. **Assertions** check `$status` (exit code) and `$output` (combined stdout/stderr) for expected
    values, error messages, GitHub Actions output file writes via `$GITHUB_OUTPUT`, or other
    workflow commands such as `::error::` and `::notice::`.
 
-4. **`teardown()`** removes the temporary directory and mock binaries.
+4. **`teardown()`** removes the temporary directory and its fixtures or mock binaries.
 
 ### Example mock
 
