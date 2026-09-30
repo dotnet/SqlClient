@@ -98,6 +98,15 @@ Describe 'test-endpoint-reachability.ps1 Failure Reporting' {
         $source | Should -Not -Match "'BLOCKED"
     }
 
+    It 'Should not claim the destinations share a network path' {
+        # Routing, address family, firewalls and host-based policy can all differ per
+        # endpoint, so only the agent and the identity may be described as common.
+        $source = Get-Content -Path $scriptPath -Raw
+
+        $source | Should -Not -Match 'network path are common'
+        $source | Should -Not -Match 'same network path'
+    }
+
     It 'Should list every probed host in the summary' {
         $output = & $scriptPath -HostName "127.0.0.1,$($script:unresolvableHost)" -Port $script:closedPort -TimeoutSeconds 3 6>&1 | Out-String
 

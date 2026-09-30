@@ -177,9 +177,10 @@ $unreachable = @($results | Where-Object { -not $_.Tcp })
 
 if ($unreachable.Count -gt 0 -and $reachable.Count -gt 0) {
     Write-Host ""
-    Write-Host "Some hosts are reachable from this agent and others are not. The agent, identity"
-    Write-Host "and network path are common to both, so the difference lies somewhere specific to"
-    Write-Host "the hosts that failed. Use the socket errors above to narrow it further."
+    Write-Host "Some hosts are reachable from this agent and others are not. The agent and the"
+    Write-Host "identity are common to both, so the difference lies in something specific to the"
+    Write-Host "hosts that failed -- which may be their routing, address family, firewall or"
+    Write-Host "host-based policy. Use the socket errors above to narrow it further."
 }
 
 Write-Host "==============="

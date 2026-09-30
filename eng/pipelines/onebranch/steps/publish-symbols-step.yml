@@ -38,8 +38,8 @@ parameters:
       default: false
 
     # Hosts probed for reachability when debug is enabled.  Both symbol servers are probed
-    # from the same agent, so a difference between them isolates the destination rather than
-    # the caller -- which is what distinguishes an egress block from a service rejection.
+    # from the same agent under the same identity, so a difference between them narrows the
+    # cause to something specific to the host that failed.
     - name: reachabilityProbeHosts
       type: string
       default: 'symbolrequestppe.trafficmanager.net,symbolrequestprod.trafficmanager.net'
