@@ -469,24 +469,66 @@ function Test-Cref {
         return
     }
 
+    # The parentheses must pair up too, and a documentation ID carries at most one parameter list,
+    # so they form a single matched pair that never nests. That is checked here rather than left to
+    # the signature reading below, which takes the argument text from the first '(' to the last
+    # ')': a stray delimiter anywhere between them is swallowed into that text instead of being
+    # reported, so M:System.String.IndexOf(System.Char)) yields the argument 'System.Char)', which
+    # names no type and reaches the published documentation as an unresolved xref.
+    $parenthesisDepth = 0
+    $deepestParenthesisDepth = 0
+    $parameterLists = 0
+    foreach ($character in $body.ToCharArray()) {
+        if ($character -eq '(') {
+            $parenthesisDepth++
+            if ($parenthesisDepth -eq 1) {
+                $parameterLists++
+            }
+            if ($parenthesisDepth -gt $deepestParenthesisDepth) {
+                $deepestParenthesisDepth = $parenthesisDepth
+            }
+        }
+        elseif ($character -eq ')') {
+            $parenthesisDepth--
+
+            # A closing parenthesis with nothing open cannot be balanced by anything later, and
+            # leaving the count negative reports it below.
+            if ($parenthesisDepth -lt 0) {
+                break
+            }
+        }
+    }
+
+    if ($parenthesisDepth -gt 0) {
+        Add-Finding @Context -Category 'invalid-docid' -Cref $Cref -Message (
+            "Cref '$trimmed' has an unterminated parameter list.")
+        return
+    }
+
+    if ($parenthesisDepth -lt 0) {
+        Add-Finding @Context -Category 'invalid-docid' -Cref $Cref -Message (
+            "Cref '$trimmed' has a ')' that closes no parameter list. Documentation IDs pair " +
+            'every ( with a later ).')
+        return
+    }
+
+    if ($deepestParenthesisDepth -gt 1 -or $parameterLists -gt 1) {
+        Add-Finding @Context -Category 'invalid-docid' -Cref $Cref -Message (
+            "Cref '$trimmed' has more than one parameter list. A documentation ID writes one " +
+            'matched pair of parentheses, which never nests.')
+        return
+    }
+
     $signatureStart = $body.IndexOf('(')
     $namePart = if ($signatureStart -ge 0) { $body.Substring(0, $signatureStart) } else { $body }
 
     if ($signatureStart -ge 0) {
         # The conversion-operator return marker (~) trails the parameter list, so the argument text
-        # ends at the last ')' rather than at the end of the body.
+        # ends at the last ')' rather than at the end of the body. The scan above leaves exactly
+        # one matched pair, so that ')' is this list's own and the arithmetic below cannot ask
+        # Substring for a negative length; an exception there would abandon the run without writing
+        # the report that report-only mode exists to produce.
         $signatureEnd = $body.LastIndexOf(')')
-
-        # Catches a missing ')' and one that precedes the '(', which is not a parameter list at
-        # all. LastIndexOf answers -1 when the character is absent, which is below every valid
-        # opening position, so both forms fail this comparison. Reaching the arithmetic below with
-        # either would ask Substring for a negative length, and the resulting exception would
-        # abandon the run without writing the report that report-only mode exists to produce.
-        if ($signatureEnd -lt $signatureStart) {
-            Add-Finding @Context -Category 'invalid-docid' -Cref $Cref -Message (
-                "Cref '$trimmed' has an unterminated parameter list.")
-            return
-        }
 
         $arguments = $body.Substring($signatureStart + 1, $signatureEnd - $signatureStart - 1)
 

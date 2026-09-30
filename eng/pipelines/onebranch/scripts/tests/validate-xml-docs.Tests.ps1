@@ -195,7 +195,65 @@ Describe 'validate-xml-docs.ps1' {
             $report | Should -Exist
             $finding = (Get-Report -Path $report).Findings | Select-Object -First 1
             $finding.Category | Should -Be 'invalid-docid'
-            $finding.Message | Should -BeLike '*unterminated parameter list*'
+            $finding.Message | Should -BeLike "*')' that closes no parameter list*"
+        }
+
+        <#
+            The argument text is read from the first '(' to the last ')', so a closing parenthesis
+            with nothing open was swallowed into it rather than reported: the extra-closer form
+            below yielded the argument 'System.Char)', which names no type and would have reached
+            Open Publishing as an xref-not-found.
+        #>
+        It 'rejects a closing parenthesis that closes no parameter list' -ForEach @(
+            @{ Cref = 'M:Microsoft.Data.SqlClient.Sample.Use(System.Char))' }
+            @{ Cref = 'M:Microsoft.Data.SqlClient.Sample.Use)' }
+        ) {
+            $snippets = New-SnippetDirectory -Crefs @($Cref)
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -SnippetsDirectory $snippets -ReportPath $report -ReportOnly
+
+            $findings = @((Get-Report -Path $report).Findings)
+            $findings.Count | Should -Be 1
+            $findings[0].Category | Should -Be 'invalid-docid'
+            $findings[0].Message | Should -BeLike "*')' that closes no parameter list*"
+        }
+
+        <#
+            Both forms balance, so a count alone accepts them. A documentation ID writes one
+            parameter list and never nests it, and the argument text of either form names no type.
+        #>
+        It 'rejects nested and repeated parameter lists' -ForEach @(
+            @{ Cref = 'M:Microsoft.Data.SqlClient.Sample.Use((System.Char))' }
+            @{ Cref = 'M:Microsoft.Data.SqlClient.Sample.Use(System.Char)(System.Int32)' }
+        ) {
+            $snippets = New-SnippetDirectory -Crefs @($Cref)
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -SnippetsDirectory $snippets -ReportPath $report -ReportOnly
+
+            $findings = @((Get-Report -Path $report).Findings)
+            $findings.Count | Should -Be 1
+            $findings[0].Category | Should -Be 'invalid-docid'
+            $findings[0].Message | Should -BeLike '*more than one parameter list*'
+        }
+
+        <#
+            The controls for the rules above. Each carries exactly one matched pair, including the
+            conversion operator whose return marker trails it.
+        #>
+        It 'accepts a well-formed parameter list' -ForEach @(
+            @{ Cref = 'M:Microsoft.Data.SqlClient.Sample.Use(System.Char)' }
+            @{ Cref = 'M:Microsoft.Data.SqlClient.Sample.Use(System.Char,System.Int32)' }
+            @{ Cref = 'M:Microsoft.Data.SqlClient.Sample.Use(System.Collections.Generic.List{System.String})' }
+            @{ Cref = 'M:Microsoft.Data.SqlClient.Sample.op_Implicit(System.Byte)~System.Decimal' }
+        ) {
+            $snippets = New-SnippetDirectory -Crefs @($Cref)
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -SnippetsDirectory $snippets -ReportPath $report -ReportOnly
+
+            @((Get-Report -Path $report).Findings) | Should -BeNullOrEmpty
         }
 
         It 'rejects a C# alias in a method signature' {
