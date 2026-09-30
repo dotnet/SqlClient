@@ -113,13 +113,13 @@ bats --formatter pretty .github/scripts/tests/
 
 ## Test Files
 
-| File | Tests | Covers |
-| ---- | ----- | ------ |
-| `extract-hotfix-versions.bats` | 18 | Label parsing, version extraction, matrix JSON output, edge cases (malformed labels, duplicates, `labeled` vs `closed` events) |
-| `cherry-pick-to-release.bats` | 15 | Branch derivation, already-applied detection, clean cherry-pick, conflict handling, milestone lookup, PR creation, duplicate skip logic |
-| `check-milestone-branch.bats` | 26 | Milestone version parsing, state-independent active development-line selection, rejection of earlier and later series on the default branch, fail-closed handling when no series is active, release-branch derivation, integration-branch and non-semver skips, API invocation assertions, API failure handling |
-| `check-milestone-version.bats` | 12 | Stable and preview version/milestone matching, stale preview rejection, default/release branch cases, legacy property override, same-line duplicate version rejection, missing version handling, integration-branch and non-semver skips |
-| `recheck-milestones-for-release-branch.bats` | 17 | Release-branch name parsing, matching open PRs by milestone, run lookup by head SHA and PR association, fork fallback, re-run invocation, and failure reporting |
+| File | Purpose |
+| ---- | ------- |
+| `extract-hotfix-versions.bats` | Tests hotfix label parsing and version matrix generation. |
+| `cherry-pick-to-release.bats` | Tests hotfix cherry-pick and pull request automation. |
+| `check-milestone-branch.bats` | Tests milestone validation against the pull request target branch. |
+| `check-milestone-version.bats` | Tests milestone validation against the canonical SqlClient version. |
+| `recheck-milestones-for-release-branch.bats` | Tests milestone rechecks when a release branch is created. |
 
 ## How the Tests Work
 
