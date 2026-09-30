@@ -28,12 +28,16 @@
       4. Queries the publishing status for confirmation.
 
     Diagnostics emitted on every run:
-      - The commands executed. Secrets are always redacted; no switch relaxes this.
-      - The token's SHA-256 fingerprint and its header/payload claims (aud, appid, oid,
-        tid, roles, exp, ...), which identify the principal and audience the service sees.
-        The signature segment is never decoded or logged.
       - On a failed call, the HTTP status code and any service correlation identifiers
-        (such as mise-correlation-id) alongside the response body.
+        (such as mise-correlation-id) alongside the response body. This is failure-only
+        output and is never gated, because it exists to explain a failure that has
+        already happened.
+
+    Additional diagnostics emitted only under -VerboseDiagnostics:
+      - The commands executed, with secrets redacted.
+      - Only the token payload claims needed to diagnose audience, principal, tenant,
+        permission, and expiry failures (aud, appid, tid, roles/scp, and exp). The header
+        and signature segments are never decoded or logged.
 
     For more details on the Symbols Publishing Pipeline, see:
     https://www.osgwiki.com/wiki/Symbols_Publishing_Pipeline_to_SymWeb_and_MSDL
@@ -58,6 +62,14 @@
 
 .PARAMETER PublishToPublic
     Whether to publish symbols to the public symbol server. Defaults to $true.
+
+.PARAMETER VerboseDiagnostics
+    Emit the additional diagnostics listed above: the commands executed and the token's
+    identifying claims. Off by default, so a routine run stays quiet and the identity
+    metadata is not retained in every build log.
+
+    This switch controls only whether those diagnostics are written. Redaction does not
+    consult it.
 
 .EXAMPLE
     .\publish-symbols.ps1 `
@@ -120,17 +132,18 @@ param(
     [bool]$PublishToInternal = $true,
 
     [Parameter(Mandatory = $false, HelpMessage = "Publish symbols to the public symbol server.")]
-    [bool]$PublishToPublic = $true
+    [bool]$PublishToPublic = $true,
+
+    [Parameter(Mandatory = $false, HelpMessage = "Emit command and token-claim diagnostics. Never relaxes redaction.")]
+    [switch]$VerboseDiagnostics
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 # --- Command logging helpers ---
-# Every command this script runs is echoed to the log. Secrets within those commands are
-# always replaced with $redactedPlaceholder: no switch, parameter or pipeline setting can
-# cause a credential to be written to the log. Identity is reported instead through the
-# token's fingerprint and claims, which are not secrets.
+# The formatters below substitute $redactedPlaceholder for secret-bearing values. They take
+# no parameter that varies this, so the redacted form is the only form they produce.
 $redactedPlaceholder = '<redacted>'
 
 function Format-HeaderTable {
@@ -161,22 +174,25 @@ function Format-RestCommand {
 function Write-CommandLog {
     param([string]$Command)
 
+    # Gated here rather than at each call site, so a call site cannot bypass the gate by
+    # forgetting the check.
+    if (-not $VerboseDiagnostics) {
+        return
+    }
+
     Write-Host "   [command] ${Command}"
 }
 
 # --- Token diagnostics ---
-# The access token itself is a credential and is never logged. Its SHA-256 fingerprint and
-# its header/payload claims are
-# not credentials: they identify which principal and audience the service sees, which is what
-# an authorization failure turns on. The signature segment is never decoded or logged.
+# The access token itself is a credential and is never logged. Only the payload claims needed
+# to diagnose audience, principal, tenant, permission, and expiry failures are reported, and
+# only under -VerboseDiagnostics, so a routine run does not retain identity metadata in the
+# build log. The header and signature segments are never decoded or logged.
 
 # Claims worth reporting, in the order they are printed. Anything outside this list is skipped
 # so that unexpected or personal claims are not written to the log.
 $tokenClaimAllowList = @(
-    'typ', 'alg', 'kid',
-    'ver', 'iss', 'aud', 'tid', 'appid', 'appidacr', 'azp', 'azpacr',
-    'oid', 'sub', 'idtyp', 'roles', 'scp',
-    'iat', 'nbf', 'exp'
+    'aud', 'appid', 'tid', 'roles', 'scp', 'exp'
 )
 
 # Response headers that carry the service-side correlation identifiers support teams ask for.
@@ -188,18 +204,6 @@ $diagnosticResponseHeaders = @(
     'ActivityId',
     'WWW-Authenticate'
 )
-
-function Get-Sha256Hex {
-    param([string]$Value)
-
-    $sha256 = [System.Security.Cryptography.SHA256]::Create()
-    try {
-        $hash = $sha256.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($Value))
-    } finally {
-        $sha256.Dispose()
-    }
-    return (($hash | ForEach-Object { $_.ToString('x2') }) -join '')
-}
 
 function ConvertFrom-Base64Url {
     param([string]$Value)
@@ -223,8 +227,12 @@ function Format-ClaimValue {
     if ($Name -in @('iat', 'nbf', 'exp')) {
         $seconds = [int64]0
         if ([int64]::TryParse([string]$Value, [ref]$seconds)) {
-            $utc = [System.DateTimeOffset]::FromUnixTimeSeconds($seconds).UtcDateTime.ToString('u')
-            return "${Value} (${utc})"
+            try {
+                $utc = [System.DateTimeOffset]::FromUnixTimeSeconds($seconds).UtcDateTime.ToString('u')
+                return "${Value} (${utc})"
+            } catch {
+                return "${Value} (<timestamp unavailable>)"
+            }
         }
     }
 
@@ -234,28 +242,32 @@ function Format-ClaimValue {
 function Write-TokenDiagnostics {
     param([string]$Token)
 
-    Write-Host "=== Access Token Diagnostics ==="
-    Write-Host "SHA-256: $(Get-Sha256Hex $Token)"
-    Write-Host "Length:  $($Token.Length)"
-
-    $segments = $Token.Split('.')
-    if ($segments.Count -lt 3) {
-        Write-Host "Claims:  unavailable (token is not a three-segment JWT)"
-        Write-Host "==============================="
+    # Gated here rather than at the call site, so a call site cannot bypass the gate by
+    # forgetting the check.
+    if (-not $VerboseDiagnostics) {
         return
     }
 
-    # Index 0 is the header and index 1 is the payload. Index 2 is the signature and is
-    # deliberately never touched.
-    foreach ($part in @(@{ Name = 'Header'; Index = 0 }, @{ Name = 'Payload'; Index = 1 })) {
-        try {
-            $decoded = ConvertFrom-Base64Url $segments[$part.Index] | ConvertFrom-Json
-        } catch {
-            Write-Host "$($part.Name):  could not be decoded ($_)"
-            continue
+    Write-Host "=== Access Token Diagnostics ==="
+    try {
+        $segments = $Token.Split('.')
+        if ($segments.Count -lt 3) {
+            Write-Host "Claims:  unavailable (token is not a three-segment JWT)"
+            return
         }
 
-        Write-Host "$($part.Name):"
+        # Index 1 is the payload. The header and signature segments are deliberately never touched.
+        try {
+            $decoded = ConvertFrom-Base64Url $segments[1] | ConvertFrom-Json
+            if ($null -eq $decoded) {
+                throw "decoded payload is null"
+            }
+        } catch {
+            Write-Host "Payload: unavailable ($($_.Exception.Message))"
+            return
+        }
+
+        Write-Host "Payload:"
         foreach ($claimName in $tokenClaimAllowList) {
             $property = $decoded.PSObject.Properties[$claimName]
             if ($null -eq $property) {
@@ -263,9 +275,11 @@ function Write-TokenDiagnostics {
             }
             Write-Host ("  {0,-9}: {1}" -f $claimName, (Format-ClaimValue -Name $claimName -Value $property.Value))
         }
+    } catch {
+        Write-Host "Claims:  unavailable ($($_.Exception.Message))"
+    } finally {
+        Write-Host "==============================="
     }
-
-    Write-Host "==============================="
 }
 
 # --- HTTP failure diagnostics ---
@@ -339,6 +353,8 @@ Write-Host "PublishProjectName: ${PublishProjectName}"
 Write-Host "ArtifactName:       ${ArtifactName}"
 Write-Host "PublishToInternal:  ${PublishToInternal}"
 Write-Host "PublishToPublic:    ${PublishToPublic}"
+# Reported so a quiet log is self-explaining: a reader can see the diagnostics were off.
+Write-Host "VerboseDiagnostics: ${VerboseDiagnostics}"
 Write-Host "=================================="
 
 

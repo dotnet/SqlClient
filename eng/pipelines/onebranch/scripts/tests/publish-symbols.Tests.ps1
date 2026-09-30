@@ -363,11 +363,19 @@ Describe 'publish-symbols.ps1 Command Logging' {
             return @{ publishToInternalServerResult = 1; publishToPublicServerResult = 1 }
         }
 
-        $script:output = (& $scriptPath `
-            -PublishServer 'srv' `
-            -PublishTokenUri 'https://token-uri' `
-            -PublishProjectName 'proj' `
-            -ArtifactName 'art' 6>&1 | Out-String)
+        function Invoke-ScriptForCommandLog {
+            param([switch]$WithVerboseDiagnostics)
+
+            return (& $scriptPath `
+                -PublishServer 'srv' `
+                -PublishTokenUri 'https://token-uri' `
+                -PublishProjectName 'proj' `
+                -ArtifactName 'art' `
+                -VerboseDiagnostics:$WithVerboseDiagnostics 6>&1 | Out-String)
+        }
+
+        $script:output = Invoke-ScriptForCommandLog -WithVerboseDiagnostics
+        $script:defaultOutput = Invoke-ScriptForCommandLog
     }
 
     It 'Should log the token acquisition command' {
@@ -385,8 +393,8 @@ Describe 'publish-symbols.ps1 Command Logging' {
     }
 
     It 'Should never emit the access token anywhere in the log' {
-        # The whole point of the redaction: no switch, parameter or setting may put a
-        # credential in a retained build log.
+        # Asserted with diagnostics at their most verbose, which is the setting most likely
+        # to leak a credential.
         $script:output | Should -Not -BeLike '*super-secret-token*'
     }
 
@@ -400,6 +408,27 @@ Describe 'publish-symbols.ps1 Command Logging' {
     It 'Should not offer a switch that disables redaction' {
         # Guards against the unredacted-logging path being reintroduced.
         Get-Content -Path $scriptPath -Raw | Should -Not -Match 'LogUnredactedCommands'
+    }
+
+    Context 'Without -VerboseDiagnostics' {
+
+        It 'Should log no commands by default' {
+            # Matched as a regex: under -BeLike, '[command]' is a character class that
+            # matches any one of those letters, so it would match almost any output.
+            $script:defaultOutput | Should -Not -Match '\[command\]'
+            $script:defaultOutput | Should -Not -BeLike '*az account get-access-token*'
+            $script:defaultOutput | Should -Not -BeLike '*Invoke-RestMethod -Method*'
+        }
+
+        It 'Should still report the publishing progress' {
+            # Gating the diagnostics must not silence the operational log.
+            $script:defaultOutput | Should -BeLike '*Registering request*'
+            $script:defaultOutput | Should -BeLike '*VerboseDiagnostics: False*'
+        }
+
+        It 'Should still never emit the access token' {
+            $script:defaultOutput | Should -Not -BeLike '*super-secret-token*'
+        }
     }
 }
 Describe 'publish-symbols.ps1 Token Diagnostics' {
@@ -422,7 +451,7 @@ Describe 'publish-symbols.ps1 Token Diagnostics' {
         }
 
         function Invoke-ScriptWithToken {
-            param([string]$Token)
+            param([string]$Token, [switch]$WithVerboseDiagnostics = $true)
 
             Mock -CommandName 'az' -MockWith { $global:LASTEXITCODE = 0; return $Token }.GetNewClosure()
 
@@ -430,7 +459,8 @@ Describe 'publish-symbols.ps1 Token Diagnostics' {
                 -PublishServer 'srv' `
                 -PublishTokenUri 'https://token-uri' `
                 -PublishProjectName 'proj' `
-                -ArtifactName 'art' 6>&1 | Out-String)
+                -ArtifactName 'art' `
+                -VerboseDiagnostics:$WithVerboseDiagnostics 6>&1 | Out-String)
         }
     }
 
@@ -440,29 +470,15 @@ Describe 'publish-symbols.ps1 Token Diagnostics' {
             $script:output = Invoke-ScriptWithToken -Token $script:jwt
         }
 
-        It 'Should log the SHA-256 fingerprint of the token' {
-            $sha256 = [System.Security.Cryptography.SHA256]::Create()
-            try {
-                $expected = (($sha256.ComputeHash([Text.Encoding]::UTF8.GetBytes($script:jwt)) |
-                    ForEach-Object { $_.ToString('x2') }) -join '')
-            } finally {
-                $sha256.Dispose()
-            }
-
-            $script:output | Should -BeLike "*SHA-256: ${expected}*"
-        }
-
-        It 'Should log the identifying payload claims' {
+        It 'Should log only the payload claims needed for troubleshooting' {
             $script:output | Should -BeLike '*aud*: api://test-audience*'
             $script:output | Should -BeLike '*appid*: test-appid*'
-            $script:output | Should -BeLike '*oid*: test-oid*'
-            $script:output | Should -BeLike '*idtyp*: app*'
+            $script:output | Should -BeLike '*tid*: test-tenant*'
             $script:output | Should -BeLike '*roles*: SymbolPublisher*'
-        }
-
-        It 'Should log the header claims' {
-            $script:output | Should -BeLike '*alg*: RS256*'
-            $script:output | Should -BeLike '*kid*: test-kid*'
+            $script:output | Should -Not -BeLike '*oid*: test-oid*'
+            $script:output | Should -Not -BeLike '*idtyp*: app*'
+            $script:output | Should -Not -BeLike '*alg*: RS256*'
+            $script:output | Should -Not -BeLike '*kid*: test-kid*'
         }
 
         It 'Should render lifetime claims with a UTC timestamp' {
@@ -480,7 +496,45 @@ Describe 'publish-symbols.ps1 Token Diagnostics' {
         It 'Should report that claims are unavailable rather than failing' {
             $output = Invoke-ScriptWithToken -Token 'not-a-jwt'
             $output | Should -BeLike '*Claims:  unavailable (token is not a three-segment JWT)*'
-            $output | Should -BeLike '*SHA-256: *'
+            $output | Should -BeLike '*Registering request*'
+        }
+    }
+
+    Context 'Invalid JWT diagnostics' {
+
+        It 'Should continue publishing when the decoded payload is null' {
+            $nullPayload = New-Base64Url 'null'
+            $output = Invoke-ScriptWithToken -Token "$header.$nullPayload.signature"
+
+            $output | Should -BeLike '*Payload: unavailable (decoded payload is null)*'
+            $output | Should -BeLike '*Registering request*'
+        }
+
+        It 'Should continue publishing when exp is outside the supported timestamp range' {
+            $outOfRangePayload = New-Base64Url '{"aud":"api://test-audience","exp":9223372036854775807}'
+            $output = Invoke-ScriptWithToken -Token "$header.$outOfRangePayload.signature"
+
+            $output | Should -BeLike '*exp*: 9223372036854775807 (<timestamp unavailable>)*'
+            $output | Should -BeLike '*Registering request*'
+        }
+    }
+
+    Context 'Without -VerboseDiagnostics' {
+
+        BeforeAll {
+            $script:quietOutput = Invoke-ScriptWithToken -Token $script:jwt -WithVerboseDiagnostics:$false
+        }
+
+        It 'Should emit no token diagnostics by default' {
+            $script:quietOutput | Should -Not -BeLike '*Access Token Diagnostics*'
+            $script:quietOutput | Should -Not -BeLike '*api://test-audience*'
+            $script:quietOutput | Should -Not -BeLike '*test-appid*'
+            $script:quietOutput | Should -Not -BeLike '*SymbolPublisher*'
+        }
+
+        It 'Should still publish and still withhold the signature segment' {
+            $script:quietOutput | Should -BeLike '*Registering request*'
+            $script:quietOutput | Should -Not -BeLike "*$($script:signatureSegment)*"
         }
     }
 }

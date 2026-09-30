@@ -6,13 +6,12 @@ Pester tests for PowerShell scripts used by OneBranch pipeline steps.
 
 - PowerShell 7+, as restored by `dotnet tool restore` from `dotnet-tools.json`. Windows
   PowerShell 5.1 is not supported: these scripts and tests use types that exist only in
-  PowerShell Core, such as `Microsoft.PowerShell.Commands.HttpResponseException`, and the
-  pipeline invokes them exclusively through `pwsh`.
+  PowerShell Core, such as `Microsoft.PowerShell.Commands.HttpResponseException`.
 - [Pester v5](https://pester.dev/) (`Install-Module Pester -MinimumVersion 5.0 -Scope CurrentUser`)
 
 ## Running the Tests
 
-Restore the pinned PowerShell first, so the tests run on the same version the pipeline uses:
+Restore the repository-pinned PowerShell first:
 
 ```console
 dotnet tool restore
@@ -20,20 +19,20 @@ dotnet tool restore
 
 From this directory:
 
-```powershell
-Invoke-Pester ./publish-symbols.Tests.ps1
+```console
+dotnet tool run pwsh -NoProfile -Command "Invoke-Pester ./publish-symbols.Tests.ps1"
 ```
 
 Or from the repository root:
 
-```powershell
-Invoke-Pester ./eng/pipelines/onebranch/scripts/tests/
+```console
+dotnet tool run pwsh -NoProfile -Command "Invoke-Pester ./eng/pipelines/onebranch/scripts/tests/"
 ```
 
 For detailed output:
 
-```powershell
-Invoke-Pester ./publish-symbols.Tests.ps1 -Output Detailed
+```console
+dotnet tool run pwsh -NoProfile -Command "Invoke-Pester ./publish-symbols.Tests.ps1 -Output Detailed"
 ```
 
 ## Test Coverage
@@ -50,7 +49,8 @@ Invoke-Pester ./publish-symbols.Tests.ps1 -Output Detailed
 | Package validation    | Wildcard vs per-id version expectations, SqlServer omitted when unbuilt, gate tokens, report written before gating, exit-code handling |
 | Package signatures    | Every package and symbol package verified, all failures reported before throwing |
 | Assembly signatures   | Package expansion, native binaries under `runtimes/` included, stale expansions replaced, all unsigned assemblies reported |
-| Token diagnostics     | SHA-256 fingerprint, allow-listed JWT claims, signature segment never logged |
+| Token diagnostics     | Minimal troubleshooting claims, malformed payload handling, gated off by default, header/signature segments never logged |
+| Command logging       | Commands logged only under `-VerboseDiagnostics`, `Authorization` redacted unconditionally either way |
 | HTTP failure detail   | Status code and correlation ids captured, exception and inner-exception types reported, explicit when no response was received |
 | Endpoint reachability | Comma-separated and array host lists, DNS failure distinguished from connection failure, socket error code and errno reported, never throws |
 
