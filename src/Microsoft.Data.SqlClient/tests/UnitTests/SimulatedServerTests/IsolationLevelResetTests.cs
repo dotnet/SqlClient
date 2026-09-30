@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.ProviderBase;
@@ -52,26 +51,23 @@ public sealed class IsolationLevelResetTests
         server.Start();
         using SqlConnection connection = OpenConnection(server);
         SqlConnectionInternal inner = (SqlConnectionInternal)connection.InnerConnection;
-        const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
-        FieldInfo dirty = typeof(SqlConnectionInternal).GetField("_isolationLevelDirty", flags)!;
-        Assert.False((bool)dirty.GetValue(inner)!);
+        Assert.False(inner.IsolationLevelDirty);
         int batches = 0;
         server.OnSQLBatchCompleted = _ => Interlocked.Increment(ref batches);
 
-        typeof(SqlConnectionInternal).GetMethod("ReassertSessionIsolationLevel", flags)!
-            .Invoke(inner, new object[] { level, 15 });
+        inner.ReassertSessionIsolationLevel(level, 15);
 
         bool changesLevel = level == System.Transactions.IsolationLevel.ReadUncommitted ||
             level == System.Transactions.IsolationLevel.RepeatableRead ||
             level == System.Transactions.IsolationLevel.Serializable ||
             level == System.Transactions.IsolationLevel.Snapshot;
         Assert.Equal(changesLevel ? 1 : 0, Volatile.Read(ref batches));
-        Assert.Equal(changesLevel, (bool)dirty.GetValue(inner)!);
+        Assert.Equal(changesLevel, inner.IsolationLevelDirty);
 
         inner.ActivateConnection(null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)));
 
         Assert.Equal(changesLevel ? (resetEnabled ? 2 : 1) : 0, Volatile.Read(ref batches));
-        Assert.Equal(changesLevel && !resetEnabled, (bool)dirty.GetValue(inner)!);
+        Assert.Equal(changesLevel && !resetEnabled, inner.IsolationLevelDirty);
         Assert.False(inner.IsConnectionDoomed);
     }
 
@@ -183,8 +179,7 @@ public sealed class IsolationLevelResetTests
         SqlConnectionInternal inner = (SqlConnectionInternal)first.InnerConnection;
         var pool = inner.Pool;
         // The simulated server does not implement TM_BEGIN_XACT; seed the resulting dirty state.
-        typeof(SqlConnectionInternal).GetField("_isolationLevelDirty", BindingFlags.Instance | BindingFlags.NonPublic)!
-            .SetValue(inner, true);
+        inner.IsolationLevelDirty = true;
         if (!waitForConnection)
         {
             first.Close();

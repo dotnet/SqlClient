@@ -847,6 +847,8 @@ namespace Microsoft.Data.Common
         private const string ONDEMAND_PREFIX = "-ondemand";
         private const string AZURE_SYNAPSE = ".sql.azuresynapse.";
         private const string AZURE_SYNAPSE_ONDEMAND = ONDEMAND_PREFIX + AZURE_SYNAPSE;
+        private const string PRIVATELINK = ".privatelink";
+        private static readonly char[] s_dataSourceHostTerminators = { '\\', ',' };
         private const string FABRIC_DATAWAREHOUSE = "datawarehouse.fabric.microsoft.com";
         private const string PBI_DATAWAREHOUSE = "datawarehouse.pbidedicated.microsoft.com";
         private const string PBI_DATAWAREHOUSE2 = ".pbidedicated.microsoft.com";
@@ -913,45 +915,75 @@ namespace Microsoft.Data.Common
         /// "&lt;workspace&gt;.sql.azuresynapse.net.example" is still treated as Synapse.</remarks>
         internal static bool IsAzureSynapseDedicatedPoolEndpoint(string dataSource)
         {
-            string host = GetDataSourceHost(dataSource);
-            int synapse = host.IndexOf(AZURE_SYNAPSE, StringComparison.OrdinalIgnoreCase);
-            if (synapse <= 0)
+            if (string.IsNullOrEmpty(dataSource))
             {
                 return false;
             }
 
-            string workspace = host.Substring(0, synapse);
-            const string privateLink = ".privatelink";
-            if (workspace.EndsWith(privateLink, StringComparison.OrdinalIgnoreCase))
+            GetDataSourceHostRange(dataSource, out int hostStart, out int hostEnd);
+            int synapse = dataSource.IndexOf(AZURE_SYNAPSE, hostStart, hostEnd - hostStart, StringComparison.OrdinalIgnoreCase);
+            if (synapse <= hostStart)
             {
-                workspace = workspace.Substring(0, workspace.Length - privateLink.Length);
+                return false;
             }
+
+            int workspaceEnd = synapse;
+            if (EndsWithOrdinalIgnoreCase(dataSource, hostStart, workspaceEnd, PRIVATELINK))
+            {
+                workspaceEnd -= PRIVATELINK.Length;
+            }
+
+            int workspaceLength = workspaceEnd - hostStart;
             // Synapse workspace names cannot contain '.', so the segment must follow a single label.
-            return workspace.Length > 0
-                && workspace.IndexOf('.') < 0
-                && !workspace.EndsWith(ONDEMAND_PREFIX, StringComparison.OrdinalIgnoreCase);
+            return workspaceLength > 0
+                && dataSource.IndexOf('.', hostStart, workspaceLength) < 0
+                && !EndsWithOrdinalIgnoreCase(dataSource, hostStart, workspaceEnd, ONDEMAND_PREFIX);
         }
 
-        // Extracts the host from a data source of the form "[protocol:]host[\instance][,port]",
-        // including named pipe forms such as "np:\\host\pipe\sql\query".
-        private static string GetDataSourceHost(string dataSource)
+        // Locates, without allocating, the host within a data source of the form
+        // "[protocol:]host[\instance][,port]", including named pipe forms such as
+        // "np:\\host\pipe\sql\query". The host occupies [start, end) of dataSource.
+        private static void GetDataSourceHostRange(string dataSource, out int start, out int end)
         {
-            if (string.IsNullOrEmpty(dataSource))
-            {
-                return string.Empty;
-            }
+            start = 0;
+            end = dataSource.Length;
+            TrimRange(dataSource, ref start, ref end);
 
-            string host = dataSource.Trim();
-            int colon = host.IndexOf(':');
+            int colon = dataSource.IndexOf(':', start, end - start);
             if (colon >= 0)
             {
-                host = host.Substring(colon + 1).TrimStart();
+                start = colon + 1;
+                TrimRange(dataSource, ref start, ref end);
             }
-            host = host.TrimStart('\\');
+            while (start < end && dataSource[start] == '\\')
+            {
+                start++;
+            }
 
-            int end = host.IndexOfAny(new[] { '\\', ',' });
-            return end >= 0 ? host.Substring(0, end).Trim() : host.Trim();
+            int separator = dataSource.IndexOfAny(s_dataSourceHostTerminators, start, end - start);
+            if (separator >= 0)
+            {
+                end = separator;
+            }
+            TrimRange(dataSource, ref start, ref end);
         }
+
+        private static void TrimRange(string value, ref int start, ref int end)
+        {
+            while (start < end && char.IsWhiteSpace(value[start]))
+            {
+                start++;
+            }
+            while (end > start && char.IsWhiteSpace(value[end - 1]))
+            {
+                end--;
+            }
+        }
+
+        // Returns whether value[start, end) ends with suffix, using an ordinal, case-insensitive comparison.
+        private static bool EndsWithOrdinalIgnoreCase(string value, int start, int end, string suffix)
+            => end - start >= suffix.Length
+                && string.Compare(value, end - suffix.Length, suffix, 0, suffix.Length, StringComparison.OrdinalIgnoreCase) == 0;
 
         internal static bool IsAzureSqlServerEndpoint(string dataSource)
         {

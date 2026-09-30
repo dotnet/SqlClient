@@ -399,8 +399,6 @@ namespace Microsoft.Data.ProviderBase
             Activate(transaction, timeout);
         }
 
-        protected virtual void Activate(Transaction transaction, TimeoutTimer timeout) => Activate(transaction);
-
         internal void AddWeakReference(object value, int tag)
         {
             if (ReferenceCollection is null)
@@ -880,6 +878,15 @@ namespace Microsoft.Data.ProviderBase
         /// </summary>
         /// <param name="transaction">The transaction in which the connection should enlist.</param>
         protected abstract void Activate(Transaction transaction);
+
+        /// <summary>
+        /// Activates the connection, preparing it for active use, within the caller's remaining
+        /// open timeout. The default implementation ignores <paramref name="timeout"/> and calls
+        /// <see cref="Activate(Transaction)"/>.
+        /// </summary>
+        /// <param name="transaction">The transaction in which the connection should enlist.</param>
+        /// <param name="timeout">The remaining time budget of the open operation.</param>
+        protected virtual void Activate(Transaction transaction, TimeoutTimer timeout) => Activate(transaction);
 
         /// <summary>
         /// Cleanup connection's transaction-specific structures (currently used by Delegated transaction).

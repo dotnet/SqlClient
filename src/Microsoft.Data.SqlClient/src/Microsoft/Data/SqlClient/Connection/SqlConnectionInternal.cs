@@ -307,6 +307,16 @@ namespace Microsoft.Data.SqlClient.Connection
         // next user.
         private bool _isolationLevelDirty;
 
+        /// <summary>
+        /// Gets or sets whether a session transaction isolation level change is pending reset.
+        /// Exposed for tests that must observe or seed this state.
+        /// </summary>
+        internal bool IsolationLevelDirty
+        {
+            get => _isolationLevelDirty;
+            set => _isolationLevelDirty = value;
+        }
+
 
 
         // @TODO: Rename to match naming conventions
@@ -2511,7 +2521,7 @@ namespace Microsoft.Data.SqlClient.Connection
         // the next batch in this pooled connection observes the System.Transactions
         // ambient isolation level even after sp_reset_connection_keep_transaction
         // resets the session.
-        private void ReassertSessionIsolationLevel(System.Transactions.IsolationLevel sysIso, int timeout)
+        internal void ReassertSessionIsolationLevel(System.Transactions.IsolationLevel sysIso, int timeout)
         {
             string isoSql;
             switch (sysIso)
@@ -2569,7 +2579,11 @@ namespace Microsoft.Data.SqlClient.Connection
                     bulkCopyHandler: null,
                     _parser._physicalStateObj);
 
-                // Cookie-based enlistment need not have issued a local Begin to mark this session.
+                // This SET changed the session level directly. The connection may never have sent a
+                // TM Begin request that marks the session dirty; for example, promoted (distributed)
+                // transactions are joined by propagating a DTC transaction token instead (see
+                // PropagateTransactionCookie). Mark the session here so the next pooled checkout
+                // resets it.
                 if (!ADP.IsAzureSynapseDedicatedPoolEndpoint(ConnectionOptions.DataSource))
                 {
                     _isolationLevelDirty = true;
