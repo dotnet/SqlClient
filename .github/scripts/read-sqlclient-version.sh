@@ -35,7 +35,20 @@ read_sqlclient_version() {
     return 1
   fi
 
-  if ! version=$(sed -nE "s/.*<${version_property}>([^<]*)<\\/${version_property}>.*/\\1/p" "${versions_file}"); then
+  if ! version=$(awk \
+      -v opening_tag="<${version_property}>" \
+      -v closing_tag="</${version_property}>" '
+    {
+      value_start = index($0, opening_tag)
+      if (value_start > 0) {
+        remaining = substr($0, value_start + length(opening_tag))
+        value_end = index(remaining, closing_tag)
+        if (value_end > 0) {
+          print substr(remaining, 1, value_end - 1)
+        }
+      }
+    }
+  ' "${versions_file}"); then
     echo "::error::Unable to read ${version_property} from '${versions_file}'." >&2
     return 1
   fi
