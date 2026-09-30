@@ -9,15 +9,18 @@ namespace Microsoft.Data.SqlClient;
 /// <summary>
 /// Windows-only portion of <see cref="ActiveDirectoryAuthenticationProvider"/>. Kept in a
 /// separate file so the Windows-specific P/Invoke helpers (console-window discovery, root-owner
-/// lookup) live next to the broker plumbing they support. The other half of the partial class
-/// lives in <c>ActiveDirectoryAuthenticationProvider.cs</c> and is fully cross-platform.
+/// lookup) live next to the broker plumbing they support. The other halves of the partial class
+/// live in <c>ActiveDirectoryAuthenticationProvider.cs</c> and
+/// <c>ActiveDirectoryAuthenticationProvider.Broker.cs</c> and are fully cross-platform.
 /// </summary>
 /// <remarks>
 /// Responsibilities of this part:
 /// <list type="bullet">
 ///   <item><description>
 ///     Resolve the parent window handle handed to MSAL's WAM broker (and to the embedded WebView
-///     on .NET Framework) via <c>WithParentActivityOrWindow</c>.
+///     on .NET Framework) via <c>WithParentActivityOrWindow</c>. Windows is the only platform
+///     where MSAL requires a real handle: it throws <c>window_handle_required</c> when the
+///     handle is zero, whereas the Linux and macOS brokers ignore the value entirely.
 ///   </description></item>
 ///   <item><description>
 ///     Honor the caller-supplied <c>SetParentActivityOrWindowFunc</c> callback when present, and
