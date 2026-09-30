@@ -3126,7 +3126,13 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                     }
                 }
 
-                _parserLock = _connection.GetOpenTdsConnection()._parserLock;
+                // At the conclusion of a successful reconnect, the SqlConnection's internal
+                // connection will have changed - and with it, its parser. Refresh the internal
+                // variables to ensure that we have a reference to the new parser.
+                internalConnection = _connection.GetOpenTdsConnection();
+                _parser = _connection.Parser;
+                _parser._asyncWrite = _isAsyncBulkCopy;
+                _parserLock = internalConnection._parserLock;
                 _parserLock.Wait(canReleaseFromAnyThread: _isAsyncBulkCopy);
             }
 
