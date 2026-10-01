@@ -2,9 +2,12 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using Microsoft.SqlServer.TDS;
+using Microsoft.SqlServer.TDS.ColMetadata;
 using Microsoft.SqlServer.TDS.Done;
 using Microsoft.SqlServer.TDS.EndPoint;
 using Microsoft.SqlServer.TDS.Info;
@@ -23,15 +26,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests;
 [Collection(SimulatedServerTestCollection.Name)]
 public sealed class HasRowsTests
 {
+    private const ushort AltMetadataId = 1;
     private readonly ITestOutputHelper _output;
 
     public HasRowsTests(ITestOutputHelper output) => _output = output;
 
     /// <summary>
     /// Covers the single-token boundary, multiple tokens, and empty results with
-    /// both synchronous and asynchronous readers.
+    /// both synchronous and asynchronous readers, including alternate metadata.
     /// </summary>
-    /// <returns>INFO count, placement after metadata, async flag, and row presence.</returns>
+    /// <returns>INFO count, placement, async flag, regular row presence, and alternate metadata flag.</returns>
     public static IEnumerable<object[]> InfoTokenCases()
     {
         foreach (int infoCount in new[] { 0, 1, 2, 3, 10 })
@@ -40,8 +44,11 @@ public sealed class HasRowsTests
             {
                 foreach (bool useAsync in new[] { false, true })
                 {
-                    yield return new object[] { infoCount, afterMetadata, useAsync, false };
-                    yield return new object[] { infoCount, afterMetadata, useAsync, true };
+                    foreach (bool useAlternateMetadata in new[] { false, true })
+                    {
+                        yield return new object[] { infoCount, afterMetadata, useAsync, false, useAlternateMetadata };
+                        yield return new object[] { infoCount, afterMetadata, useAsync, true, useAlternateMetadata };
+                    }
                 }
             }
         }
@@ -53,10 +60,10 @@ public sealed class HasRowsTests
     [Theory]
     [MemberData(nameof(InfoTokenCases))]
     public async Task HasRows_WithInfoTokens_ReflectsRowPresence(
-        int infoCount, bool afterMetadata, bool useAsync, bool returnsRow)
+        int infoCount, bool afterMetadata, bool useAsync, bool returnsRow, bool useAlternateMetadata)
     {
         TdsServerArguments arguments = new();
-        InfoQueryEngine engine = new(arguments, infoCount, afterMetadata, returnsRow);
+        InfoQueryEngine engine = new(arguments, infoCount, afterMetadata, returnsRow, useAlternateMetadata);
         using TdsServer server = new(engine, arguments);
         server.Start();
 
@@ -105,26 +112,40 @@ public sealed class HasRowsTests
         }
         bool hasRowsAfterRead = reader.HasRows;
         Assert.False(useAsync ? await reader.ReadAsync() : reader.Read());
-        Assert.Equal(infoCount, infoMessages.Count);
-        for (int i = 0; i < infoCount; i++)
+        if (!useAlternateMetadata || returnsRow)
         {
-            Assert.Equal($"Info message {i}", infoMessages[i]);
+            Assert.Equal(infoCount, infoMessages.Count);
         }
 
         _output.WriteLine(
-            $"INFO count={infoCount}, after metadata={afterMetadata}, async={useAsync}, returns row={returnsRow}: " +
+            $"INFO count={infoCount}, after metadata={afterMetadata}, async={useAsync}, returns row={returnsRow}, alternate metadata={useAlternateMetadata}: " +
             $"HasRows before Read={hasRowsBeforeRead}, Read={read}, " +
             $"HasRows after Read={hasRowsAfterRead}, INFO received={infoMessages.Count}");
 
         Assert.Equal(returnsRow, hasRowsBeforeRead);
         Assert.Equal(returnsRow, hasRowsAfterRead);
         Assert.Equal(returnsRow, reader.HasRows);
+        if (useAlternateMetadata)
+        {
+            Assert.True(useAsync ? await reader.NextResultAsync() : reader.NextResult());
+            Assert.True(reader.HasRows);
+            Assert.Equal("sum", reader.GetName(0));
+            Assert.True(useAsync ? await reader.ReadAsync() : reader.Read());
+            Assert.Equal(42, reader.GetInt32(0));
+            Assert.False(useAsync ? await reader.ReadAsync() : reader.Read());
+            Assert.True(reader.HasRows);
+        }
         Assert.False(useAsync ? await reader.NextResultAsync() : reader.NextResult());
+        Assert.Equal(infoCount, infoMessages.Count);
+        for (int i = 0; i < infoCount; i++)
+        {
+            Assert.Equal($"Info message {i}", infoMessages[i]);
+        }
     }
 
     /// <summary>
     /// Inserts INFO tokens into the existing SELECT 1 response and optionally
-    /// removes its row to exercise empty result sets.
+    /// removes its row or adds an alternate result set.
     /// </summary>
     private sealed class InfoQueryEngine : QueryEngine
     {
@@ -132,17 +153,20 @@ public sealed class HasRowsTests
         private readonly int _infoCount;
         private readonly bool _afterMetadata;
         private readonly bool _returnsRow;
+        private readonly bool _useAlternateMetadata;
 
-        internal InfoQueryEngine(TdsServerArguments arguments, int infoCount, bool afterMetadata, bool returnsRow)
+        internal InfoQueryEngine(TdsServerArguments arguments, int infoCount, bool afterMetadata, bool returnsRow, bool useAlternateMetadata)
             : base(arguments)
         {
             _infoCount = infoCount;
             _afterMetadata = afterMetadata;
             _returnsRow = returnsRow;
+            _useAlternateMetadata = useAlternateMetadata;
         }
 
         /// <summary>
-        /// Places messages immediately before or after SELECT 1's column metadata.
+        /// Places messages before or after normal/alternate metadata, keeping ALTROW
+        /// separate from the regular result set.
         /// </summary>
         /// <param name="session">The connected test session.</param>
         /// <param name="batchRequest">The batch to execute.</param>
@@ -165,7 +189,14 @@ public sealed class HasRowsTests
                     }
                 }
 
-                int insertAt = _afterMetadata ? 1 : 0;
+                if (_useAlternateMetadata)
+                {
+                    TDSColMetadataToken metadata = Assert.IsType<TDSColMetadataToken>(response[0][0]);
+                    response[0].Insert(1, new AltMetadataToken(metadata.Columns[0]));
+                    response[0].Insert(response[0].Count - 1, new AltRowToken(metadata));
+                }
+
+                int insertAt = _afterMetadata ? (_useAlternateMetadata ? 2 : 1) : 0;
                 for (int i = 0; i < _infoCount; i++)
                 {
                     response[0].Insert(insertAt + i, new TDSInfoToken(30000, 0, 0, $"Info message {i}"));
@@ -173,6 +204,63 @@ public sealed class HasRowsTests
             }
 
             return response;
+        }
+    }
+
+    /// <summary>
+    /// Writes a little-endian token field without flushing the TDS response.
+    /// Disposing a BinaryWriter on the response stream would end the message early.
+    /// </summary>
+    /// <param name="destination">The server response stream.</param>
+    /// <param name="value">The unsigned 16-bit field value.</param>
+    private static void WriteUInt16(Stream destination, ushort value)
+    {
+        destination.WriteByte((byte)value);
+        destination.WriteByte((byte)(value >> 8));
+    }
+
+    /// <summary>
+    /// Writes the deprecated ALTMETADATA format for one aggregate column.
+    /// The test server has no built-in serializer for this token.
+    /// </summary>
+    private sealed class AltMetadataToken : TDSPacketToken
+    {
+        private readonly TDSColumnData _column;
+
+        internal AltMetadataToken(TDSColumnData column) => _column = column;
+
+        public override bool Inflate(Stream source) => throw new NotSupportedException();
+
+        /// <summary>Serializes the aggregate header followed by standard column metadata.</summary>
+        /// <param name="destination">The server response stream.</param>
+        public override void Deflate(Stream destination)
+        {
+            destination.WriteByte(TdsEnums.SQLALTMETADATA);
+            WriteUInt16(destination, 1); // Column count, not byte length.
+            WriteUInt16(destination, AltMetadataId);
+            destination.WriteByte(0); // No COMPUTE BY columns.
+            destination.WriteByte(TdsEnums.AOPSUM);
+            WriteUInt16(destination, 1); // Source column ordinal.
+            _column.Deflate(destination);
+        }
+    }
+
+    /// <summary>
+    /// Writes an ALTROW tied to the aggregate metadata, reusing standard value serialization.
+    /// </summary>
+    private sealed class AltRowToken : TDSRowToken
+    {
+        internal AltRowToken(TDSColMetadataToken metadata) : base(metadata) => Data.Add(42);
+
+        public override bool Inflate(Stream source) => throw new NotSupportedException();
+
+        /// <summary>Serializes an alternate row without consuming the regular result's row.</summary>
+        /// <param name="destination">The server response stream.</param>
+        public override void Deflate(Stream destination)
+        {
+            destination.WriteByte((byte)TDSTokenType.AlternativeRow);
+            WriteUInt16(destination, AltMetadataId);
+            DeflateColumn(destination, Metadata.Columns[0], Data[0]);
         }
     }
 }
