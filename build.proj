@@ -241,14 +241,13 @@
       Applies to:     Build* targets (driver and extension projects)
       Description:    When set, redirects each project's binary output (bin) to an isolated
                       location instead of the repo's artifacts/ folder, and forces a full
-                      (non-incremental) compile. This lets a build run at any time without
-                      clobbering existing real build output - for example, an analysis pass that
-                      only needs to compile the code and must not disturb a real build's output.
+                      (non-incremental) compile. This is useful for an analysis pass that writes
+                      binaries to a separate location before the real build.
 
                       * bin is redirected under "$(IsolatedBuildPath)/bin/" via ArtifactPath. Each
                         project's OutputPath already appends a project-specific subfolder, so the
-                        projects do not collide and the real artifacts/ folder is left untouched.
-                      * The intermediate (obj) directory is intentionally left at its default,
+                        projects do not collide in the redirected output.
+                      * The intermediate (obj) directory is left at its default,
                         per-project location. MSBuild resolves the default relative obj/ against
                         each project's own directory, which keeps intermediates separate for the
                         multiple projects that make up a package (for example the ref, src, and
@@ -257,14 +256,10 @@
                         other's restore assets and fail. The non-incremental switch guarantees a
                         full recompile regardless of any pre-existing intermediate output.
 
-                      NOTE: Even though an isolated build shares the default obj/ with a prior real
-                      build, it does not perturb that real build's output. The non-incremental switch
-                      does not run Clean or delete anything; it disables the incremental/up-to-date
-                      checks and forces a full recompile so the analyzers see every source file. Real
-                      output is safe because bin is redirected to $(IsolatedBuildPath): the isolated
-                      build only ever writes to the isolated bin, never to the real artifacts/ bin.
-                      The recompile just rewrites the shared obj/ intermediates, which is harmless
-                      because nothing downstream consumes obj/.
+                      NOTE: This isolates binary output, not intermediate state. The
+                      non-incremental switch forces a rebuild of the dependency graph and may
+                      clean previous outputs recorded in obj/. Run this before the real build,
+                      not after signing, and do not run it concurrently with another build.
       Default value:  [blank] (normal artifacts/ location and incremental build are used)
       Example:        C:\agent\_temp\isolated-build
     -->
@@ -484,7 +479,7 @@
   <!-- Top Level/Miscellaneous Targets -->
 
   <!--
-    BuildAll: Build all projects in the repo, for all supported OS and TargetFramework combinations.
+    BuildAll: Build driver projects, tests, samples, and tools for their declared target frameworks.
     This is the default target.
   -->
   <Target Name="BuildAll" DependsOnTargets="BuildDriver;BuildTests;BuildSamples;BuildTools" />
@@ -1379,7 +1374,7 @@
     <SamplesProjectPath>$(RepoRoot)doc/samples/Microsoft.Data.SqlClient.Samples.csproj</SamplesProjectPath>
   </PropertyGroup>
 
-  <!-- BuildTests: Builds all test projects for all supported OS combinations. -->
+  <!-- BuildTests: Builds the driver test projects for their declared target frameworks. -->
   <Target Name="BuildTests" DependsOnTargets="BuildAbstractionsTests;BuildAkvProviderTests;BuildSqlClientTestsUnit;BuildSqlClientTestsFunctional;BuildSqlClientTestsManual;BuildSqlClientTestsPerformance;BuildSqlClientTestsStress;BuildAzureTests" />
 
   <!-- BuildAkvProviderTests: Builds the AKV Provider test project (OS-agnostic). -->
