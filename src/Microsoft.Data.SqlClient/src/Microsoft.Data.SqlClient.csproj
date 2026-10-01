@@ -238,7 +238,7 @@
   <!-- Reference to Abstractions -->
   <ItemGroup>
     <ProjectReference Include="$(AbstractionsProjectPath)"
-                      Condition="'$(ReferenceType)' != 'Package'" />
+                      Condition="'$(ReferenceType)' == 'Project'" />
     <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Abstractions"
                       Condition="'$(ReferenceType)' == 'Package'" />
   </ItemGroup>
@@ -246,7 +246,7 @@
   <!-- Reference to Logging -->
   <ItemGroup>
     <ProjectReference Include="$(LoggingProjectPath)"
-                      Condition="'$(ReferenceType)' != 'Package'" />
+                      Condition="'$(ReferenceType)' == 'Project'" />
     <PackageReference Include="Microsoft.Data.SqlClient.Internal.Logging"
                       Condition="'$(ReferenceType)' == 'Package'" />
   </ItemGroup>
@@ -254,7 +254,7 @@
   <!-- Reference to SqlServer -->
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)/src/Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj"
-                      Condition="'$(ReferenceType)' != 'Package'" />
+                      Condition="'$(ReferenceType)' == 'Project'" />
     <PackageReference Include="Microsoft.SqlServer.Server"
                       Condition="'$(ReferenceType)' == 'Package'" />
   </ItemGroup>

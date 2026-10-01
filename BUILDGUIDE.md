@@ -358,6 +358,8 @@ package. In targets where a package is being referenced, the parameter sets the 
 Because the SqlClient family shares one version, `PackageVersionSqlClient` covers every family package, whether it is
 being built or referenced.
 
+`ReferenceType` accepts only `Project` and `Package`. Building a project with any other value fails with an explicit error.
+
 If these parameters are not specified, the latest version, as defined in the `Versions.props` file, will be used.
 
 The `nuget.config` for this repository defines a local feed that points to the `packages` directory. This allows

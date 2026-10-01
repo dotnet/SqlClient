@@ -91,14 +91,14 @@
   <!-- Reference to Abstractions -->
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj"
-                      Condition="'$(ReferenceType)' != 'Package'" />
+                      Condition="'$(ReferenceType)' == 'Project'" />
     <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Abstractions"
                       Condition="'$(ReferenceType)' == 'Package'" />
   </ItemGroup>
   <!-- .NET Framework and .NET Standard 2.0 don't need to reference SqlServer. -->
   <ItemGroup Condition="'$(TargetFramework)' != 'net462' AND '$(TargetFramework)' != 'netstandard2.0'">
     <ProjectReference Include="$(RepoRoot)src/Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj"
-                      Condition="'$(ReferenceType)' != 'Package'" />
+                      Condition="'$(ReferenceType)' == 'Project'" />
     <PackageReference Include="Microsoft.SqlServer.Server"
                       Condition="'$(ReferenceType)' == 'Package'" />
   </ItemGroup>
