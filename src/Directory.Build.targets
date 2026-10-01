@@ -3,21 +3,7 @@
   file to you under the MIT license.
 -->
 <Project>
-  <!--
-    ReferenceType is compared positively (== 'Project' or == 'Package') everywhere it is consumed,
-    so an unrecognized value would silently select neither branch and produce confusing downstream
-    errors. Fail fast instead.
-  -->
-  <Target Name="ValidateReferenceType"
-          BeforeTargets="Restore;BeforeBuild">
-    <PropertyGroup>
-      <_ReferenceTypeIsValid>false</_ReferenceTypeIsValid>
-      <_ReferenceTypeIsValid Condition="'$(ReferenceType)' == 'Project'">true</_ReferenceTypeIsValid>
-      <_ReferenceTypeIsValid Condition="'$(ReferenceType)' == 'Package'">true</_ReferenceTypeIsValid>
-    </PropertyGroup>
-    <Error Condition="'$(_ReferenceTypeIsValid)' == 'false'"
-           Text="Invalid ReferenceType '$(ReferenceType)'. Allowed values are 'Project' and 'Package'." />
-  </Target>
+  <Import Project="$(MSBuildThisFileDirectory)../tools/targets/ValidateReferenceType.targets" />
 
   <!--
     Confirm that, when analysis is enabled, the build produced the SARIF file(s) that we expect.

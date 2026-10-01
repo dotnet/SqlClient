@@ -358,7 +358,7 @@ package. In targets where a package is being referenced, the parameter sets the 
 Because the SqlClient family shares one version, `PackageVersionSqlClient` covers every family package, whether it is
 being built or referenced.
 
-`ReferenceType` accepts only `Project` and `Package`. Building a project with any other value fails with an explicit error.
+`ReferenceType` accepts only `Project` and `Package`. Any other value fails the build with an explicit error, whether a project is built directly or through `build.proj`.
 
 If these parameters are not specified, the latest version, as defined in the `Versions.props` file, will be used.
 
