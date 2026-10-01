@@ -115,6 +115,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// Kill the target connection's SPID from a separate connection and
         /// wait long enough for the <c>CheckConnectionWindow</c> to expire.
         /// </summary>
+        /// <param name="spid">The server process id of the session to kill.</param>
         private void KillSpid(int spid)
         {
             using SqlConnection killer = new(_baseConnectionString);
@@ -131,6 +132,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// query which works correctly with MARS connections (where
         /// <see cref="SqlConnection.ServerProcessId"/> may return 0).
         /// </summary>
+        /// <param name="conn">The open connection to query.</param>
+        /// <returns>The server process id of the connection's session.</returns>
         private static int GetServerSpid(SqlConnection conn)
         {
             using SqlCommand cmd = new("SELECT @@SPID", conn);
@@ -141,6 +144,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// Queries the server for its actual current database via
         /// <c>SELECT DB_NAME()</c>.
         /// </summary>
+        /// <param name="conn">The open connection to query.</param>
+        /// <returns>The database the server session is currently using.</returns>
         private static string GetServerDatabase(SqlConnection conn)
         {
             using SqlCommand cmd = new("SELECT DB_NAME()", conn);
@@ -150,6 +155,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// <summary>
         /// Assert that both client and server agree on the expected database.
         /// </summary>
+        /// <param name="conn">The open connection to check.</param>
+        /// <param name="expectedDb">The database both sides are expected to report.</param>
+        /// <param name="context">A label identifying the call site in failure messages.</param>
         private static void AssertDatabaseContext(
             SqlConnection conn, string expectedDb, string context)
         {
@@ -173,6 +181,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// and is guaranteed to change after reconnection, even when SQL Server
         /// reuses the same SPID.
         /// </summary>
+        /// <param name="conn">The open connection to query.</param>
+        /// <returns>The unique identifier of the current physical connection.</returns>
         private static Guid GetConnectionId(SqlConnection conn)
         {
             using SqlCommand cmd = new(

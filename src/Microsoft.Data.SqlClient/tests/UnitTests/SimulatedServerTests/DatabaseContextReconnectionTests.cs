@@ -322,6 +322,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// triggering reconnection.  In that case the method re-disconnects and retries.
         /// </para>
         /// </summary>
+        /// <param name="server">The simulated server whose clients are disconnected.</param>
+        /// <param name="connection">The connection expected to reconnect transparently.</param>
+        /// <param name="commandText">The batch executed to trigger the reconnection.</param>
         private static void DisconnectAndExecute(DisconnectableTdsServer server,
             SqlConnection connection, string commandText = "SELECT 1")
         {
@@ -371,6 +374,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// Disconnect all server clients and verify that the next command throws
         /// (used for no-retry scenarios where reconnection is not expected).
         /// </summary>
+        /// <param name="server">The simulated server whose clients are disconnected.</param>
+        /// <param name="connection">The connection expected to fail on its next command.</param>
+        /// <param name="commandText">The batch executed to surface the failure.</param>
         private static void DisconnectAndExpectFailure(DisconnectableTdsServer server,
             SqlConnection connection, string commandText = "SELECT 1")
         {
@@ -627,11 +633,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             Assert.Equal(SwitchedDatabase, connection.Database);
 
+            int useCountBeforeReconnect = server.UseDatabaseCount;
+
             DisconnectAndExecute(server, connection);
 
             // The server sent ENV_CHANGE with the recovered database.
             Assert.Equal(SwitchedDatabase, server.LastLoginResponseDatabase);
             Assert.Equal(SwitchedDatabase, connection.Database);
+            AssertNoRecoveryUse(server, useCountBeforeReconnect);
         }
 
         /// <summary>
@@ -650,10 +659,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             connection.ChangeDatabase(SwitchedDatabase);
             Assert.Equal(SwitchedDatabase, connection.Database);
 
+            int useCountBeforeReconnect = server.UseDatabaseCount;
+
             DisconnectAndExecute(server, connection);
 
             Assert.Equal(SwitchedDatabase, server.LastLoginResponseDatabase);
             Assert.Equal(SwitchedDatabase, connection.Database);
+            AssertNoRecoveryUse(server, useCountBeforeReconnect);
         }
 
         /// <summary>
@@ -688,10 +700,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
                 Assert.Equal(SwitchedDatabase, connection.Database);
 
+                int useCountBeforeReconnect = server.UseDatabaseCount;
+
                 DisconnectAndExecute(server, connection);
 
                 Assert.Equal(SwitchedDatabase, server.LastLoginResponseDatabase);
                 Assert.Equal(SwitchedDatabase, connection.Database);
+                AssertNoRecoveryUse(server, useCountBeforeReconnect);
             }
             finally
             {
