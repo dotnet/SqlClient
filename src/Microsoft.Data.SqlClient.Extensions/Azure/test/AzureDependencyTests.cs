@@ -14,8 +14,8 @@ namespace Microsoft.Data.SqlClient.Extensions.Azure.Test;
 public class AzureDependencyTests
 {
     /// <summary>
-    /// Credentials used by the provider must come from Azure.Core, without a separate
-    /// Azure.Identity implementation assembly.
+    /// Ensures each credential type is defined in the Azure.Core assembly that defines
+    /// TokenCredential, rather than in a separate Azure.Identity assembly.
     /// </summary>
     [Theory]
     [InlineData(typeof(DefaultAzureCredential))]
