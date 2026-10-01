@@ -519,6 +519,41 @@ function Test-Cref {
         return
     }
 
+    # Only a member that can be overloaded carries a parameter list: a method, written M:, and an
+    # indexed property, written P:. A namespace, type, field or event has nothing to disambiguate,
+    # so parentheses there are outside the grammar. This is checked before the arguments are read
+    # because the signature rules below accept them on any prefix, and a well-formed argument list
+    # on the wrong kind would otherwise pass unexamined and reach Open Publishing as an
+    # xref-not-found.
+    if ($parameterLists -eq 1 -and $prefix -ne 'M' -and $prefix -ne 'P') {
+        $withoutSignature = $body.Substring(0, $body.IndexOf('('))
+        $kind = switch ($prefix) {
+            'N' { 'a namespace' }
+            'T' { 'a type' }
+            'F' { 'a field' }
+            'E' { 'an event' }
+            default { 'a member' }
+        }
+        $suggestion = if ([string]::IsNullOrWhiteSpace($withoutSignature)) {
+            ''
+        }
+        else {
+            # Which correction is right depends on what the author meant, and the cref alone does
+            # not say. Naming a parameter list is far more often a sign that the prefix is wrong
+            # than that the list is spurious. The one occurrence this rule found in doc/snippets
+            # was an 'E:' on DbDataAdapter.Update, which is a method, so suggesting the
+            # prefix-preserving form alone would send the author to a cref that still resolves to
+            # nothing. Offer both, with the member-kind correction first.
+            " Either this names a method, in which case use 'M:$body', or the parameter list is " +
+            "spurious, in which case use '${prefix}:$withoutSignature'."
+        }
+
+        Add-Finding @Context -Category 'invalid-docid' -Cref $Cref -Message (
+            "Cref '$trimmed' writes a parameter list on $kind. Only a method, written 'M:', " +
+            "and an indexed property, written 'P:', carry one.$suggestion")
+        return
+    }
+
     $signatureStart = $body.IndexOf('(')
     $namePart = if ($signatureStart -ge 0) { $body.Substring(0, $signatureStart) } else { $body }
 
