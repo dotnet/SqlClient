@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="BuildAll" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="BuildAll" InitialTargets="ValidateReferenceType" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <!-- Imports ========================================================= -->
   <Import Project="src/Directory.Build.props" />
+  <Import Project="tools/targets/ValidateReferenceType.targets" />
 
   <!-- Build Parameters ================================================ -->
   <!-- @TODO: Add a Help target that lists targets and these descriptions of the parameters -->
