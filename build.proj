@@ -538,14 +538,14 @@
   <Target Name="GetVersionsSqlClient">
     <PropertyGroup>
       <_Cmd>"$(DotnetPath)dotnet" build "$(SqlClientProjectPath)" -getProperty:SqlClientPackageVersion $(BuildNumberArgument) $(BuildSuffixArgument) $(SqlClientNextVersionArgument)</_Cmd>
-      <_Cmd>$([System.Text.RegularExpressions.Regex]::Replace($(_Cmd), "\s+", " "))</_Cmd>
+      <_Cmd>$([System.Text.RegularExpressions.Regex]::Replace($(_Cmd), "\s*[\r\n]+\s*", " "))</_Cmd>
     </PropertyGroup>
     <Exec Command="$(_Cmd)" ConsoleToMsBuild="true" StandardOutputImportance="High">
       <Output TaskParameter="ConsoleOutput" PropertyName="_PackageVersion" />
     </Exec>
     <PropertyGroup>
       <_Cmd>"$(DotnetPath)dotnet" build "$(SqlClientProjectPath)" -getProperty:SqlClientFileVersion $(BuildNumberArgument) $(BuildSuffixArgument) $(SqlClientNextVersionArgument)</_Cmd>
-      <_Cmd>$([System.Text.RegularExpressions.Regex]::Replace($(_Cmd), "\s+", " "))</_Cmd>
+      <_Cmd>$([System.Text.RegularExpressions.Regex]::Replace($(_Cmd), "\s*[\r\n]+\s*", " "))</_Cmd>
     </PropertyGroup>
     <Exec Command="$(_Cmd)" ConsoleToMsBuild="true" StandardOutputImportance="High">
       <Output TaskParameter="ConsoleOutput" PropertyName="_FileVersion" />
@@ -557,7 +557,7 @@
   <Target Name="GetVersionsSqlServer">
     <PropertyGroup>
       <_Cmd>"$(DotnetPath)dotnet" build "$(SqlServerProjectPath)" -getProperty:SqlServerPackageVersion $(BuildNumberArgument) $(BuildSuffixArgument) $(SqlServerNextVersionArgument)</_Cmd>
-      <_Cmd>$([System.Text.RegularExpressions.Regex]::Replace($(_Cmd), "\s+", " "))</_Cmd>
+      <_Cmd>$([System.Text.RegularExpressions.Regex]::Replace($(_Cmd), "\s*[\r\n]+\s*", " "))</_Cmd>
     </PropertyGroup>
     <Exec Command="$(_Cmd)" ConsoleToMsBuild="true" StandardOutputImportance="High">
       <Output TaskParameter="ConsoleOutput" PropertyName="_PackageVersion" />
@@ -567,7 +567,7 @@
     </Exec>
     <PropertyGroup>
       <_Cmd>"$(DotnetPath)dotnet" build "$(SqlServerProjectPath)" -getProperty:SqlServerFileVersion $(BuildNumberArgument) $(BuildSuffixArgument) $(SqlServerNextVersionArgument)</_Cmd>
-      <_Cmd>$([System.Text.RegularExpressions.Regex]::Replace($(_Cmd), "\s+", " "))</_Cmd>
+      <_Cmd>$([System.Text.RegularExpressions.Regex]::Replace($(_Cmd), "\s*[\r\n]+\s*", " "))</_Cmd>
     </PropertyGroup>
     <Exec Command="$(_Cmd)" ConsoleToMsBuild="true" StandardOutputImportance="High">
       <Output TaskParameter="ConsoleOutput" PropertyName="_FileVersion" />
@@ -628,8 +628,8 @@
         "$(DotnetPath)dotnet" build "$(GenApiProjectPath)"
         -p:Configuration=$(Configuration)
       </DotnetCommand>
-      <!-- Convert more than one whitespace character into one space -->
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <!-- Collapse line breaks without changing spaces inside quoted arguments -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s*[\r\n]+\s*", " "))</DotnetCommand>
     </PropertyGroup>
 
     <Message Importance="High" Text=">>> Building GenAPI project"/>
@@ -660,8 +660,8 @@
         $(ReferenceTypeArgument)
         $(PackageVersionSqlServerArgument)
       </DotnetCommand>
-      <!-- Convert more than one whitespace character into one space -->
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <!-- Collapse line breaks without changing spaces inside quoted arguments -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s*[\r\n]+\s*", " "))</DotnetCommand>
     </PropertyGroup>
 
     <Message Importance="High" Text=">>> Building not supported binaries project"/>
@@ -676,7 +676,7 @@
   <Target Name="BuildSqlClientRef" DependsOnTargets="$(BuildSqlClientRefDependsOn)">
     <PropertyGroup>
       <DotnetCommand>
-        "$(DotnetPath)dotnet" build $(SqlClientRefProjectPath)
+        "$(DotnetPath)dotnet" build "$(SqlClientRefProjectPath)"
         -p:Configuration=$(Configuration)
         $(IsolatedBuildArgument)
         $(EnableAnalyzersArgument)
@@ -692,8 +692,8 @@
         $(ReferenceTypeArgument)
         $(PackageVersionSqlServerArgument)
       </DotnetCommand>
-      <!-- Convert more than one whitespace character into one space -->
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <!-- Collapse line breaks without changing spaces inside quoted arguments -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s*[\r\n]+\s*", " "))</DotnetCommand>
     </PropertyGroup>
 
     <Message Importance="High" Text=">>> Building SqlClient ref binaries"/>
@@ -708,7 +708,7 @@
   <Target Name="BuildSqlClientImpl" DependsOnTargets="$(BuildSqlClientImplDependsOn)">
     <PropertyGroup>
       <DotnetCommand>
-        "$(DotnetPath)dotnet" build $(SqlClientProjectPath)
+        "$(DotnetPath)dotnet" build "$(SqlClientProjectPath)"
         -p:Configuration=$(Configuration)
         $(IsolatedBuildArgument)
         $(EnableAnalyzersArgument)
@@ -724,8 +724,8 @@
         $(ReferenceTypeArgument)
         $(PackageVersionSqlServerArgument)
       </DotnetCommand>
-      <!-- Convert more than one whitespace character into one space -->
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <!-- Collapse line breaks without changing spaces inside quoted arguments -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s*[\r\n]+\s*", " "))</DotnetCommand>
     </PropertyGroup>
 
     <Message Importance="High" Text=">>> Building SqlClient Implementation"/>
@@ -771,8 +771,8 @@
         <!-- Pack settings are defined in Microsoft.Data.SqlClient.csproj -->
         -p:PackageOutputPath="$(SqlClientPackageArtifactRoot)"
       </DotnetCommand>
-      <!-- Convert more than one whitespace character into one space -->
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <!-- Collapse line breaks without changing spaces inside quoted arguments -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s*[\r\n]+\s*", " "))</DotnetCommand>
     </PropertyGroup>
     <Message Importance="High" Text=">>> Packing SqlClient"/>
     <Message Text="    Command: $(DotnetCommand)"/>
@@ -816,8 +816,8 @@
         $(PackageVersionSqlClientArgument)
         $(PackageVersionSqlServerArgument)
       </DotnetCommand>
-      <!-- Convert more than one whitespace character into one space -->
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <!-- Collapse line breaks without changing spaces inside quoted arguments -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s*[\r\n]+\s*", " "))</DotnetCommand>
     </PropertyGroup>
     <Message Importance="High" Text=">>> Running functional tests for SqlClient"/>
     <Message Text="    Command: $(DotnetCommand)"/>
@@ -860,8 +860,8 @@
         $(PackageVersionSqlClientArgument)
         $(PackageVersionSqlServerArgument)
       </DotnetCommand>
-      <!-- Convert more than one whitespace character into one space -->
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <!-- Collapse line breaks without changing spaces inside quoted arguments -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s*[\r\n]+\s*", " "))</DotnetCommand>
     </PropertyGroup>
     <Message Importance="High" Text=">>> Running manual tests for SqlClient"/>
     <Message Text="    Command: $(DotnetCommand)"/>
@@ -889,8 +889,8 @@
         --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
       </DotnetCommand>
 
-      <!-- Convert more than one whitespace character into one space -->
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <!-- Collapse line breaks without changing spaces inside quoted arguments -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s*[\r\n]+\s*", " "))</DotnetCommand>
     </PropertyGroup>
     <Message Importance="High" Text=">>> Running unit tests for SqlClient"/>
     <Message Text="    Command: $(DotnetCommand)"/>
@@ -929,8 +929,8 @@
         $(ReferenceTypeArgument)
         $(PackageVersionSqlServerArgument)
       </DotnetCommand>
-      <!-- Convert more than one whitespace character into one space -->
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <!-- Collapse line breaks without changing spaces inside quoted arguments -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s*[\r\n]+\s*", " "))</DotnetCommand>
     </PropertyGroup>
 
     <Message Importance="High" Text=">>> Building AKV Provider"/>
@@ -962,8 +962,8 @@
         $(ReferenceTypeArgument)
         $(PackageVersionSqlServerArgument)
       </DotnetCommand>
-      <!-- Convert more than one whitespace character into one space -->
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <!-- Collapse line breaks without changing spaces inside quoted arguments -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s*[\r\n]+\s*", " "))</DotnetCommand>
     </PropertyGroup>
 
     <Message Importance="High" Text=">>> Packaging AKV Provider"/>
@@ -1002,8 +1002,8 @@
         --results-directory "$(TestResultsFolderPath)"
         --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
       </DotnetCommand>
-      <!-- Convert more than one whitespace character into one space -->
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <!-- Collapse line breaks without changing spaces inside quoted arguments -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s*[\r\n]+\s*", " "))</DotnetCommand>
     </PropertyGroup>
 
     <Message Importance="High" Text=">>> Running tests for AKV Provider"/>
@@ -1042,8 +1042,8 @@
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
       </DotnetCommand>
-      <!-- Convert more than one whitespace character into one space -->
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <!-- Collapse line breaks without changing spaces inside quoted arguments -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s*[\r\n]+\s*", " "))</DotnetCommand>
     </PropertyGroup>
 
     <Message Importance="High" Text=">>> Building Abstractions"/>
@@ -1073,8 +1073,8 @@
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
       </DotnetCommand>
-      <!-- Convert more than one whitespace character into one space -->
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <!-- Collapse line breaks without changing spaces inside quoted arguments -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s*[\r\n]+\s*", " "))</DotnetCommand>
     </PropertyGroup>
 
     <Message Importance="High" Text=">>> Packaging Abstractions"/>
@@ -1113,8 +1113,8 @@
         --results-directory "$(TestResultsFolderPath)"
         --logger:"trx;LogFilePrefix=$(LogFilePrefix)"
       </DotnetCommand>
-      <!-- Convert more than one whitespace character into one space -->
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <!-- Collapse line breaks without changing spaces inside quoted arguments -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s*[\r\n]+\s*", " "))</DotnetCommand>
     </PropertyGroup>
 
     <Message Importance="High" Text=">>> Running tests for Abstractions"/>
@@ -1153,8 +1153,8 @@
         <!-- Reference type arguments -->
         $(ReferenceTypeArgument)
       </DotnetCommand>
-      <!-- Convert more than one whitespace character into one space -->
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <!-- Collapse line breaks without changing spaces inside quoted arguments -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s*[\r\n]+\s*", " "))</DotnetCommand>
     </PropertyGroup>
 
     <Message Importance="High" Text=">>> Building Azure"/>
@@ -1184,8 +1184,8 @@
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
       </DotnetCommand>
-      <!-- Convert more than one whitespace character into one space -->
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <!-- Collapse line breaks without changing spaces inside quoted arguments -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s*[\r\n]+\s*", " "))</DotnetCommand>
     </PropertyGroup>
 
     <Message Importance="High" Text=">>> Packaging Azure"/>
@@ -1225,8 +1225,8 @@
         $(PackageVersionSqlClientArgument)
         $(PackageVersionSqlServerArgument)
       </DotnetCommand>
-      <!-- Convert more than one whitespace character into one space -->
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <!-- Collapse line breaks without changing spaces inside quoted arguments -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s*[\r\n]+\s*", " "))</DotnetCommand>
     </PropertyGroup>
 
     <Message Importance="High" Text=">>> Running tests for Azure"/>
@@ -1246,7 +1246,7 @@
   <Target Name="BuildLogging">
     <PropertyGroup>
       <DotnetCommand>
-        "$(DotnetPath)dotnet" build $(LoggingProjectPath)
+        "$(DotnetPath)dotnet" build "$(LoggingProjectPath)"
         -p:Configuration=$(Configuration)
         $(IsolatedBuildArgument)
         $(EnableAnalyzersArgument)
@@ -1258,8 +1258,8 @@
         $(PackageVersionSqlClientArgument)
         $(FileVersionSqlClientArgument)
       </DotnetCommand>
-      <!-- Convert more than one whitespace character into one space -->
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <!-- Collapse line breaks without changing spaces inside quoted arguments -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s*[\r\n]+\s*", " "))</DotnetCommand>
     </PropertyGroup>
 
     <Message Importance="High" Text=">>> Building Logging"/>
@@ -1271,7 +1271,7 @@
   <Target Name="PackLogging">
     <PropertyGroup>
       <DotnetCommand>
-        "$(DotnetPath)dotnet" pack $(LoggingProjectPath)
+        "$(DotnetPath)dotnet" pack "$(LoggingProjectPath)"
         -p:Configuration=$(Configuration)
         $(PackBuildArgument)
         $(SigningKeyPathArgument)
@@ -1282,8 +1282,8 @@
         $(PackageVersionSqlClientArgument)
         $(FileVersionSqlClientArgument)
       </DotnetCommand>
-      <!-- Convert more than one whitespace character into one space -->
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <!-- Collapse line breaks without changing spaces inside quoted arguments -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s*[\r\n]+\s*", " "))</DotnetCommand>
     </PropertyGroup>
 
     <Message Importance="High" Text=">>> Packaging Logging"/>
@@ -1314,7 +1314,7 @@
   <Target Name="BuildSqlServer">
     <PropertyGroup>
       <DotnetCommand>
-        "$(DotnetPath)dotnet" build $(SqlServerProjectPath)
+        "$(DotnetPath)dotnet" build "$(SqlServerProjectPath)"
         -p:Configuration=$(Configuration)
         $(IsolatedBuildArgument)
         $(EnableAnalyzersArgument)
@@ -1326,8 +1326,8 @@
         $(PackageVersionSqlServerArgument)
         $(FileVersionSqlServerArgument)
       </DotnetCommand>
-      <!-- Convert more than one whitespace character into one space -->
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <!-- Collapse line breaks without changing spaces inside quoted arguments -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s*[\r\n]+\s*", " "))</DotnetCommand>
     </PropertyGroup>
 
     <Message Importance="High" Text=">>> Building SqlServer"/>
@@ -1339,7 +1339,7 @@
   <Target Name="PackSqlServer">
     <PropertyGroup>
       <DotnetCommand>
-        "$(DotnetPath)dotnet" pack $(SqlServerProjectPath)
+        "$(DotnetPath)dotnet" pack "$(SqlServerProjectPath)"
         -p:Configuration=$(Configuration)
         $(PackBuildArgument)
         $(SigningKeyPathArgument)
@@ -1350,8 +1350,8 @@
         $(PackageVersionSqlServerArgument)
         $(FileVersionSqlServerArgument)
       </DotnetCommand>
-      <!-- Convert more than one whitespace character into one space -->
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <!-- Collapse line breaks without changing spaces inside quoted arguments -->
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s*[\r\n]+\s*", " "))</DotnetCommand>
     </PropertyGroup>
 
     <Message Importance="High" Text=">>> Packaging SqlServer"/>
@@ -1389,7 +1389,7 @@
         "$(DotnetPath)dotnet" build "$(AkvProviderTestProjectPath)"
         -p:Configuration=$(Configuration)
       </DotnetCommand>
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s*[\r\n]+\s*", " "))</DotnetCommand>
     </PropertyGroup>
     <Message Importance="High" Text=">>> Building AKV Provider Tests"/>
     <Message Text="    Command: $(DotnetCommand)"/>
@@ -1403,7 +1403,7 @@
         "$(DotnetPath)dotnet" build "$(AbstractionsTestProjectPath)"
         -p:Configuration=$(Configuration)
       </DotnetCommand>
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s*[\r\n]+\s*", " "))</DotnetCommand>
     </PropertyGroup>
     <Message Importance="High" Text=">>> Building Abstractions Tests"/>
     <Message Text="    Command: $(DotnetCommand)"/>
@@ -1423,7 +1423,7 @@
         $(PackageVersionSqlClientArgument)
         $(PackageVersionSqlServerArgument)
       </DotnetCommand>
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s*[\r\n]+\s*", " "))</DotnetCommand>
     </PropertyGroup>
     <Message Importance="High" Text=">>> Building SqlClient Unit Tests"/>
     <Message Text="    Command: $(DotnetCommand)"/>
@@ -1441,7 +1441,7 @@
         $(ReferenceTypeArgument)
         $(PackageVersionSqlClientArgument)
       </DotnetCommand>
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s*[\r\n]+\s*", " "))</DotnetCommand>
     </PropertyGroup>
     <Message Importance="High" Text=">>> Building SqlClient Functional Tests"/>
     <Message Text="    Command: $(DotnetCommand)"/>
@@ -1460,7 +1460,7 @@
         $(PackageVersionSqlClientArgument)
         $(PackageVersionSqlServerArgument)
       </DotnetCommand>
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s*[\r\n]+\s*", " "))</DotnetCommand>
     </PropertyGroup>
     <Message Importance="High" Text=">>> Building SqlClient Manual Tests"/>
     <Message Text="    Command: $(DotnetCommand)"/>
@@ -1478,7 +1478,7 @@
         $(ReferenceTypeArgument)
         $(PackageVersionSqlClientArgument)
       </DotnetCommand>
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s*[\r\n]+\s*", " "))</DotnetCommand>
     </PropertyGroup>
     <Message Importance="High" Text=">>> Building SqlClient Performance Tests"/>
     <Message Text="    Command: $(DotnetCommand)"/>
@@ -1496,7 +1496,7 @@
         $(ReferenceTypeArgument)
         $(PackageVersionSqlClientArgument)
       </DotnetCommand>
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s*[\r\n]+\s*", " "))</DotnetCommand>
     </PropertyGroup>
     <Message Importance="High" Text=">>> Building SqlClient Stress Tests"/>
     <Message Text="    Command: $(DotnetCommand)"/>
@@ -1514,7 +1514,7 @@
         $(ReferenceTypeArgument)
         $(PackageVersionSqlClientArgument)
       </DotnetCommand>
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s*[\r\n]+\s*", " "))</DotnetCommand>
     </PropertyGroup>
     <Message Importance="High" Text=">>> Building Azure Tests"/>
     <Message Text="    Command: $(DotnetCommand)"/>
@@ -1531,7 +1531,7 @@
         "$(DotnetPath)dotnet" build "$(SamplesProjectPath)"
         -p:Configuration=$(Configuration)
       </DotnetCommand>
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s*[\r\n]+\s*", " "))</DotnetCommand>
     </PropertyGroup>
     <Message Importance="High" Text=">>> Building Samples"/>
     <Message Text="    Command: $(DotnetCommand)"/>
@@ -1561,7 +1561,7 @@
         "$(DotnetPath)dotnet" build "$(AzureSqlConnectorProjectPath)"
         -p:Configuration=$(Configuration)
       </DotnetCommand>
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s*[\r\n]+\s*", " "))</DotnetCommand>
     </PropertyGroup>
     <Message Importance="High" Text=">>> Building AzureSqlConnector"/>
     <Message Text="    Command: $(DotnetCommand)"/>
@@ -1575,7 +1575,7 @@
         "$(DotnetPath)dotnet" build "$(PackageCompatibilityProjectPath)"
         -p:Configuration=$(Configuration)
       </DotnetCommand>
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s*[\r\n]+\s*", " "))</DotnetCommand>
     </PropertyGroup>
     <Message Importance="High" Text=">>> Building PackageCompatibility"/>
     <Message Text="    Command: $(DotnetCommand)"/>
@@ -1589,7 +1589,7 @@
         "$(DotnetPath)dotnet" build "$(PackageValidatorProjectPath)"
         -p:Configuration=$(Configuration)
       </DotnetCommand>
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s*[\r\n]+\s*", " "))</DotnetCommand>
     </PropertyGroup>
     <Message Importance="High" Text=">>> Building PackageValidator"/>
     <Message Text="    Command: $(DotnetCommand)"/>
@@ -1603,7 +1603,7 @@
         "$(DotnetPath)dotnet" build "$(PackageCompatibilityTestProjectPath)"
         -p:Configuration=$(Configuration)
       </DotnetCommand>
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s*[\r\n]+\s*", " "))</DotnetCommand>
     </PropertyGroup>
     <Message Importance="High" Text=">>> Building PackageCompatibility tests"/>
     <Message Text="    Command: $(DotnetCommand)"/>
@@ -1617,7 +1617,7 @@
         "$(DotnetPath)dotnet" build "$(PackageValidatorTestProjectPath)"
         -p:Configuration=$(Configuration)
       </DotnetCommand>
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s*[\r\n]+\s*", " "))</DotnetCommand>
     </PropertyGroup>
     <Message Importance="High" Text=">>> Building PackageValidator tests"/>
     <Message Text="    Command: $(DotnetCommand)"/>
@@ -1636,7 +1636,7 @@
         "$(DotnetPath)dotnet" test "$(PackageCompatibilityTestProjectPath)"
         -p:Configuration=$(Configuration)
       </DotnetCommand>
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s*[\r\n]+\s*", " "))</DotnetCommand>
     </PropertyGroup>
     <Message Importance="High" Text=">>> Testing PackageCompatibility"/>
     <Message Text="    Command: $(DotnetCommand)"/>
@@ -1655,7 +1655,7 @@
         "$(DotnetPath)dotnet" test "$(PackageValidatorTestProjectPath)"
         -p:Configuration=$(Configuration)
       </DotnetCommand>
-      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
+      <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s*[\r\n]+\s*", " "))</DotnetCommand>
     </PropertyGroup>
     <Message Importance="High" Text=">>> Testing PackageValidator"/>
     <Message Text="    Command: $(DotnetCommand)"/>

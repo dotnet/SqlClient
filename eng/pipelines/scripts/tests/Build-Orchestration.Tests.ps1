@@ -287,3 +287,19 @@ Describe 'local package version freshness' {
         }
     }
 }
+
+Describe 'build.proj project path quoting' {
+    It 'passes the project path as one argument for <Target>' -ForEach @(
+        @{ Target = 'BuildSqlClientRef'; Property = 'SqlClientRefProjectPath' }
+        @{ Target = 'BuildSqlClientImpl'; Property = 'SqlClientProjectPath' }
+        @{ Target = 'BuildLogging'; Property = 'LoggingProjectPath' }
+        @{ Target = 'PackLogging'; Property = 'LoggingProjectPath' }
+        @{ Target = 'BuildSqlServer'; Property = 'SqlServerProjectPath' }
+        @{ Target = 'PackSqlServer'; Property = 'SqlServerProjectPath' }
+    ) {
+        $projectPath = Join-Path $TestDrive 'repo with  spaces/Example.csproj'
+        $arguments = Get-ChildArguments $Target @("-p:$Property=$projectPath")
+
+        $arguments | Should -Contain $projectPath
+    }
+}
