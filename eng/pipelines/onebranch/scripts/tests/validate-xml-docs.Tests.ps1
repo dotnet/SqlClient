@@ -301,6 +301,86 @@ Describe 'validate-xml-docs.ps1' {
             @((Get-Report -Path $report).Findings) | Should -BeNullOrEmpty
         }
 
+        <#
+            A comma separates two parameters, so an empty entry means one is missing. The splitter
+            returns those as empty strings and nothing downstream objected: an empty argument
+            reduces to an empty type name, which matches no C# alias, so the signature passed the
+            gate while naming no overload.
+        #>
+        It 'rejects an empty parameter in a signature' -ForEach @(
+            @{ Cref = 'M:System.String.IndexOf(,System.Char)' }
+            @{ Cref = 'M:System.String.IndexOf(System.Char,)' }
+            @{ Cref = 'M:System.String.IndexOf(System.Char,,System.Int32)' }
+        ) {
+            $snippets = New-SnippetDirectory -Crefs @($Cref)
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -SnippetsDirectory $snippets -ReportPath $report -ReportOnly
+
+            $findings = @((Get-Report -Path $report).Findings)
+            $findings.Count | Should -Be 1
+            $findings[0].Category | Should -Be 'invalid-docid'
+            $findings[0].Message | Should -BeLike '*empty parameter in its signature*'
+        }
+
+        <#
+            A whitespace-only argument is the same defect wearing a disguise. The whitespace rule
+            reports first and then carries on against the stripped form, so this cref draws both
+            findings rather than being excused by the first.
+        #>
+        It 'rejects a whitespace-only parameter once the whitespace is stripped' {
+            $snippets = New-SnippetDirectory -Crefs @('M:System.String.IndexOf(System.Char, ,System.Int32)')
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -SnippetsDirectory $snippets -ReportPath $report -ReportOnly
+
+            $messages = @((Get-Report -Path $report).Findings.Message)
+            $messages | Should -Not -BeNullOrEmpty
+            ($messages -like '*contains whitespace*') | Should -Not -BeNullOrEmpty
+            ($messages -like '*empty parameter in its signature*') | Should -Not -BeNullOrEmpty
+        }
+
+        <#
+            Nothing downstream reads the array brackets: the splitter tracks their depth only to
+            place commas, and Get-DocIdCoreTypeName trims them whether or not they matched, so an
+            unmatched bracket reduced to an ordinary type name and went unreported.
+        #>
+        It 'rejects unbalanced square brackets around an array suffix' -ForEach @(
+            @{ Cref = 'M:System.String.IndexOf(System.Char[)' }
+            @{ Cref = 'M:System.String.IndexOf(System.Char])' }
+            @{ Cref = 'M:Microsoft.Data.SqlClient.Sample.Use(System.Int32[,)' }
+            @{ Cref = 'T:System.Byte[' }
+        ) {
+            $snippets = New-SnippetDirectory -Crefs @($Cref)
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -SnippetsDirectory $snippets -ReportPath $report -ReportOnly
+
+            $findings = @((Get-Report -Path $report).Findings)
+            $findings.Count | Should -Be 1
+            $findings[0].Category | Should -Be 'invalid-docid'
+            $findings[0].Message | Should -BeLike '*unbalanced square brackets*'
+        }
+
+        <#
+            The controls for the two rules above. Every array suffix the documentation-ID grammar
+            writes must still pass, including the multidimensional forms whose commas sit inside
+            the brackets rather than separating parameters.
+        #>
+        It 'accepts well-formed array suffixes in a signature' -ForEach @(
+            @{ Cref = 'M:System.String.IndexOf(System.Char[],System.Int32)' }
+            @{ Cref = 'M:System.String.IndexOf(System.Char[0:,0:])' }
+            @{ Cref = 'M:Microsoft.Data.SqlClient.Sample.Use(System.Int32[,])' }
+            @{ Cref = 'M:Microsoft.Data.SqlClient.Sample.Use(System.Collections.Generic.List{System.String[]})' }
+        ) {
+            $snippets = New-SnippetDirectory -Crefs @($Cref)
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -SnippetsDirectory $snippets -ReportPath $report -ReportOnly
+
+            @((Get-Report -Path $report).Findings) | Should -BeNullOrEmpty
+        }
+
         It 'rejects a C# alias in a method signature' {
             $snippets = New-SnippetDirectory -Crefs @('M:Microsoft.Data.SqlClient.SqlConnection.GetSchema(string)')
             $report = Join-Path (New-TestDirectory) 'report.json'

@@ -469,6 +469,36 @@ function Test-Cref {
         return
     }
 
+    # The array suffix brackets must pair up as well. They are checked alongside the braces rather
+    # than left to the signature reading below, because nothing downstream looks at them: the
+    # argument splitter tracks bracket depth only to decide where a comma separates parameters,
+    # and Get-DocIdCoreTypeName trims them off whether or not they matched. An unmatched one
+    # therefore reduced to a perfectly ordinary type name and was never reported, so
+    # M:System.String.IndexOf(System.Char[) passed the gate and reached Open Publishing as an
+    # unresolved xref.
+    $bracketDepth = 0
+    foreach ($character in $body.ToCharArray()) {
+        if ($character -eq '[') {
+            $bracketDepth++
+        }
+        elseif ($character -eq ']') {
+            $bracketDepth--
+
+            # A closing bracket with nothing open cannot be balanced by anything later, and leaving
+            # the count negative reports it below.
+            if ($bracketDepth -lt 0) {
+                break
+            }
+        }
+    }
+
+    if ($bracketDepth -ne 0) {
+        Add-Finding @Context -Category 'invalid-docid' -Cref $Cref -Message (
+            "Cref '$trimmed' has unbalanced square brackets around an array suffix. " +
+            'Documentation IDs pair every [ with a later ].')
+        return
+    }
+
     # The parentheses must pair up too, and a documentation ID carries at most one parameter list,
     # so they form a single matched pair that never nests. That is checked here rather than left to
     # the signature reading below, which takes the argument text from the first '(' to the last
@@ -605,6 +635,20 @@ function Test-Cref {
         # operator's return type is part of its signature, so it is scanned with the parameters.
         $signatureTypes = [System.Collections.Generic.List[string]]::new()
         foreach ($argument in (Split-DocIdArguments -Arguments $arguments)) {
+            # A comma separates two parameters, so an empty entry means one is missing: a leading,
+            # repeated or trailing separator. The splitter returns those entries as empty strings
+            # and everything downstream tolerates them, because Get-DocIdCoreTypeName reduces an
+            # empty argument to an empty name that matches no C# alias. The signature is still
+            # malformed and names no overload, so M:System.String.IndexOf(,System.Char) reached
+            # Open Publishing as an unresolved xref.
+            if ([string]::IsNullOrWhiteSpace($argument)) {
+                Add-Finding @Context -Category 'invalid-docid' -Cref $Cref -Message (
+                    "Cref '$trimmed' has an empty parameter in its signature. Documentation IDs " +
+                    'separate parameters with a single comma, and write no leading, repeated or ' +
+                    'trailing separator.')
+                return
+            }
+
             $signatureTypes.Add($argument)
         }
         if ($null -ne $returnType) {
