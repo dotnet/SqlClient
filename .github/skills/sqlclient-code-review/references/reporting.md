@@ -60,7 +60,10 @@ specific uncovered behavior.
 
 ## Review summary
 
-Lead with findings, ordered by priority. Include a short scope/limitations note:
+For PR reviews, lead with the **Existing feedback** snapshot defined in
+[SKILL.md](../SKILL.md#existing-feedback-before-code-review), updated with any
+dispositions verified during this review. Follow with **New findings**, ordered
+by priority; for local-only reviews, lead with findings. Include a short scope/limitations note:
 reviewed revision or local comparison, any unreviewed surfaces, and material
 execution or coverage gaps. Say "No actionable findings in the reviewed scope"
 only when no new or previously reported actionable defects remain in that scope;

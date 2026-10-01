@@ -132,10 +132,10 @@ specific token, negotiated feature, and protocol revision.
 
 - Inspect added code, configuration, samples, and comments for embedded credentials
   per `.github/instructions/secrets.instructions.md`; never reproduce secret values.
-  The draft-only `code-review` prompt cannot run scanners or retrieve scanning alerts.
-  Unless redacted results for the reviewed revision are supplied by the user or
-  trusted CI, report a secret-scanning verification gap. Other hosts need explicit
-  authorization to retrieve results or run scans; manual inspection is not a scan.
+  Run scanners or retrieve scanning alerts only when the host authorizes those
+  capabilities. Otherwise inspect redacted results for the reviewed revision
+  supplied by the user or trusted CI, or report a secret-scanning verification gap.
+  Manual inspection is not a scan.
 - Check that identity/token caches preserve their intended scope and refresh
   semantics. Confirm TLS negotiation and certificate/hostname validation across
   affected encryption modes; do not weaken defaults to make a test pass.

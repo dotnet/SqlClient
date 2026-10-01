@@ -58,8 +58,8 @@ reference sources do not invalidate a defect independently established in SqlCli
 
 Only in workflows that authorize external documentation access, use Learn search
 when the applicable contract/version is unclear, then fetch the relevant page or
-MS-TDS section. The draft-only `code-review` prompt does not allow these lookups:
-use supplied documentation or report the evidence gap. These queries locate public
+MS-TDS section. When the host prohibits these lookups, use supplied documentation
+or report the evidence gap. These queries locate public
 contracts; they do not replace reading the implementation. Never include private
 diffs or logs in queries.
 
