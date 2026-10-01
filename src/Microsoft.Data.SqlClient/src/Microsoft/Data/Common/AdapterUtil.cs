@@ -21,6 +21,7 @@ using System.Transactions;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.Connection;
+using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.SqlServer.Server;
 using Microsoft.Win32;
 using IsolationLevel = System.Data.IsolationLevel;
@@ -1336,6 +1337,17 @@ namespace Microsoft.Data.Common
 #region DbConnectionPool and related
         internal static Exception PooledOpenTimeout()
             => ADP.InvalidOperation(StringsHelper.GetString(Strings.ADP_PooledOpenTimeout));
+
+        internal static Exception PooledOpenTimeout(PoolAcquisitionDiagnostics diagnostics)
+        {
+            Exception exception = ADP.InvalidOperation(
+                string.Concat(
+                    StringsHelper.GetString(Strings.ADP_PooledOpenTimeout),
+                    " ",
+                    diagnostics.GetMessage()));
+            diagnostics.AddTo(exception.Data);
+            return exception;
+        }
 
         internal static Exception NonPooledOpenTimeout()
             => ADP.TimeoutException(StringsHelper.GetString(Strings.ADP_NonPooledOpenTimeout));

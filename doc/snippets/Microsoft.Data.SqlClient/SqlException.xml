@@ -307,6 +307,41 @@
       <seealso cref="T:Microsoft.Data.SqlClient.SqlErrorCollection" />
       <seealso cref="T:Microsoft.Data.SqlClient.SqlError" />
     </Errors>
+    <ConnectionOpenRetryFailures>
+      <summary>
+        Gets the transient failures that caused retries before this connection open operation ultimately failed.
+      </summary>
+      <value>
+        A read-only list in retry order. The list is empty when the exception was not produced by a retried connection open operation.
+      </value>
+      <remarks>
+        <para>
+          The terminal failure is represented by this <see cref="T:Microsoft.Data.SqlClient.SqlException" />. This property contains only earlier failures that caused the driver to retry the same connection open operation.
+        </para>
+        <para>
+          The list is scoped to one call to <see cref="M:Microsoft.Data.SqlClient.SqlConnection.Open" /> or <see cref="M:Microsoft.Data.SqlClient.SqlConnection.OpenAsync(System.Threading.CancellationToken)" /> and is discarded when the connection opens successfully.
+        </para>
+        <para>
+          Formatter-based serialization does not preserve this diagnostic list.
+        </para>
+      </remarks>
+      <example>
+        <code language="c#">
+          try
+          {
+              connection.Open();
+          }
+          catch (SqlException ex)
+          {
+              Console.WriteLine($"Final failure: {ex.Message}");
+              foreach (SqlException retryFailure in ex.ConnectionOpenRetryFailures)
+              {
+                  Console.WriteLine($"Earlier retry failure: {retryFailure.Message}");
+              }
+          }
+        </code>
+      </example>
+    </ConnectionOpenRetryFailures>
     <GetObjectData>
       <summary>To be added</summary>
     </GetObjectData>
