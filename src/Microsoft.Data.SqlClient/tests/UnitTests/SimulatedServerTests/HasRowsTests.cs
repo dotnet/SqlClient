@@ -4,8 +4,10 @@
 
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Threading.Tasks;
+using Microsoft.Data.Common;
 using Microsoft.SqlServer.TDS;
 using Microsoft.SqlServer.TDS.ColMetadata;
 using Microsoft.SqlServer.TDS.Done;
@@ -141,6 +143,47 @@ public sealed class HasRowsTests
         {
             Assert.Equal($"Info message {i}", infoMessages[i]);
         }
+    }
+
+    /// <summary>
+    /// Buffered INFO tokens must fail promptly if the parser closes or breaks,
+    /// rather than repeatedly peeking the same unconsumed token in either metadata path.
+    /// </summary>
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public void Metadata_WithBufferedInfoAndUnavailableParser_Throws(bool broken, bool useAlternateMetadata)
+    {
+        using SqlCommand command = new();
+        using SqlDataReader reader = new(command, CommandBehavior.Default);
+        TdsParser parser = new(false, false)
+        {
+            State = broken ? TdsParserState.Broken : TdsParserState.Closed
+        };
+        TdsParserStateObject state = parser._physicalStateObj;
+        reader.Bind(state);
+        state.SniContext = SniContext.Snix_Read;
+        state.SetBuffer(new[] { TdsEnums.SQLINFO }, 0, 1);
+        state._inBytesPacket = 1;
+        _SqlMetaDataSet metadata = new(1, null);
+
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() =>
+        {
+            if (useAlternateMetadata)
+            {
+                reader.TrySetAltMetaDataSet(metadata, true);
+            }
+            else
+            {
+                reader.TrySetMetaData(metadata, false);
+            }
+        });
+
+        Assert.Equal(ADP.ClosedConnectionError().Message, exception.Message);
+        Assert.Equal(0, state._inBytesUsed);
+        Assert.False(state._accumulateInfoEvents);
     }
 
     /// <summary>

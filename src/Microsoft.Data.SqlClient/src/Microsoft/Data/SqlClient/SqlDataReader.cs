@@ -4215,6 +4215,12 @@ namespace Microsoft.Data.SqlClient
                 }
                 while (b == TdsEnums.SQLINFO)
                 {
+                    // TryRun cannot consume INFO tokens when the parser is closed or broken.
+                    if (_parser.State == TdsParserState.Broken || _parser.State == TdsParserState.Closed)
+                    {
+                        throw ADP.ClosedConnectionError();
+                    }
+
                     try
                     {
                         _stateObj._accumulateInfoEvents = true;
@@ -4314,6 +4320,12 @@ namespace Microsoft.Data.SqlClient
                         }
                         while (b == TdsEnums.SQLINFO)
                         {
+                            // TryRun cannot consume INFO tokens when the parser is closed or broken.
+                            if (_parser.State == TdsParserState.Broken || _parser.State == TdsParserState.Closed)
+                            {
+                                throw ADP.ClosedConnectionError();
+                            }
+
                             // VSTFDEVDIV713926
                             // We are accumulating informational events and fire them at next
                             // TdsParser.Run purely to avoid breaking change
