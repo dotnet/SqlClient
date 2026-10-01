@@ -117,6 +117,19 @@ namespace Microsoft.Data.SqlClient
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/SqlBulkCopy/*'/>
     public sealed class SqlBulkCopy : IDisposable
     {
+        // Wraps a reader fault that happens to be an OperationCanceledException so it
+        // survives the async await boundary without being reinterpreted as
+        // cancellation (awaiting a task that faulted with a bare OCE marks the
+        // awaiting task Canceled). Unwrapped at the public completion boundary so
+        // callers observe the original exception.
+        private sealed class BulkCopyAbortException : Exception
+        {
+            public BulkCopyAbortException(Exception inner)
+                : base(inner?.Message, inner)
+            {
+            }
+        }
+
         private enum ValueSourceType
         {
             Unspecified = 0,
@@ -1376,7 +1389,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 // The read pended (or faulted/cancelled): await it via a small async
                 // helper instead of ReadAsync(...).ContinueWith(...).Unwrap(), which
                 // allocated an extra continuation + wrapper Task per row.
-                return AwaitReadFromDbDataReaderAsync(readTask);
+                return AwaitReadFromDbDataReaderAsync(readTask, cts);
             }
             else
             { // This will call Read for DataRows, DataTable and IDataReader (this includes all IDataReader except DbDataReader)
@@ -1404,9 +1417,24 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
         // Awaits a pended DbDataReader.ReadAsync and records whether more rows
         // remain. Only reached when the read did not complete synchronously.
-        private async Task AwaitReadFromDbDataReaderAsync(Task<bool> readTask)
+        private async Task AwaitReadFromDbDataReaderAsync(Task<bool> readTask, CancellationToken cts)
         {
-            _hasMoreRowToCopy = await readTask.ConfigureAwait(false);
+            try
+            {
+                _hasMoreRowToCopy = await readTask.ConfigureAwait(false);
+            }
+            catch (OperationCanceledException oce) when (!cts.IsCancellationRequested)
+            {
+                // The reader *faulted* with an OperationCanceledException even though
+                // the caller's token was never signaled (e.g. it returned
+                // Task.FromException with an OCE). Awaiting that would mark this task
+                // Canceled, and the bulk-copy driver treats a canceled batch as
+                // "clean up the parser" (send BulkCopyDone, committing the rows
+                // already written). That is wrong: this is a fault and must abort.
+                // Wrap it so the task stays Faulted; it is unwrapped at the public
+                // completion boundary so callers still observe the original exception.
+                throw new BulkCopyAbortException(oce);
+            }
         }
 
         private bool ReadFromRowSource()
@@ -3109,7 +3137,16 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                             else if (task.Exception != null)
                             {
                                 sqlBulkCopy.ResetLocalColumnMappings();
-                                source.SetException(task.Exception.InnerException);
+                                // Unwrap the internal marker used to keep a faulted
+                                // reader OperationCanceledException from being treated
+                                // as cancellation, so callers observe the original
+                                // exception.
+                                Exception inner = task.Exception.InnerException;
+                                if (inner is BulkCopyAbortException abort && abort.InnerException != null)
+                                {
+                                    inner = abort.InnerException;
+                                }
+                                source.SetException(inner);
                             }
                             else
                             {
@@ -3150,15 +3187,15 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                     }
 
                     if (source != null)
-{
+                    {
                         if (cts.IsCancellationRequested)
                         {
                             source.SetCanceled();
                         }
                         else
-                    {
-                        source.SetResult(null);
-}
+                        {
+                            source.SetResult(null);
+                        }
                     }
                 }
             }
