@@ -1,11 +1,10 @@
 # Microsoft.Data.SqlClient Stress Test
 
-This Stress testing application for the `Microsoft.Data.SqlClient` suite is a work in progress.
+This stress testing application for the `Microsoft.Data.SqlClient` suite is a work in progress.
 
-This project intends to help finding a certain level of effectiveness under unfavorable conditions,
-and verifying the mode of failures.
+It exercises the driver under unfavorable conditions to identify failures.
 
-This is a console application targeting all frameworks supported by MDS, currently:
+This is a console application targeting the SqlClient test framework matrix (not the shipped driver TFMs):
 
 - .NET 10.0
 - .NET 9.0
@@ -15,24 +14,37 @@ This is a console application targeting all frameworks supported by MDS, current
 
 ## Purpose of application for developers
 
-Define fuzz tests for all new features/APIs in the driver and to be run before every GA release.
+Define fuzz tests for new driver features and APIs, and run them before each GA release.
 
 ## Pre-Requisites
 
-Required in the config file:
+Use the SDK pinned in the repository's [global.json](../../../../global.json) and install the runtime
+for the framework you want to run. See [BUILDGUIDE.md](../../../../BUILDGUIDE.md) for prerequisites.
+The project declares all four frameworks on every host; select a modern .NET framework when building
+or running on Linux/macOS.
+
+Create a local configuration based on
+[SqlClient.Stress.Framework/StressTests.config.jsonc](SqlClient.Stress.Framework/StressTests.config.jsonc),
+and point `STRESS_CONFIG_FILE` to its absolute path. Do not commit credentials. Without this override,
+the runner looks for `StressTests.config.jsonc` in the process working directory; the template is not
+automatically copied there.
+
+Configuration fields:
 
 |Field|Values|Description|
 |-|-|-|
 |`name`||Stress testing source configuration name.|
 |`type`|`SqlServer`|Only `SqlServer` is acceptable.|
-|`isDefault`|`true`, `false`|If there is a source node with `isDefault=true`, this node is returned.|
+|`isDefault`|`true`, `false`|Selects the first matching default source, or the first source of the requested type if none is marked default.|
 |`dataSource`||SQL Server data source name.|
-|`user`||User Id to connect the server.|
-|`password`||Paired password with the user.|
-|`supportsWindowsAuthentication`|`true`, `false`|Tries to use integrated security in connection string mixed with SQL Server authentication if it set to `true` by applying the randomization.|
+|`entraIdUser`||Entra ID username; when set, selects Entra ID password authentication instead of SQL authentication.|
+|`entraIdPassword`||Password for `entraIdUser`.|
+|`user`||SQL Server login used when `entraIdUser` is empty.|
+|`password`||Password for the SQL Server login.|
+|`supportsWindowsAuthentication`|`true`, `false`|Present in the template, but currently not forwarded by the JSON configuration loader. It does not enable integrated authentication.|
 |`isLocal`|`true`, `false`|`true` means database is local.|
-|`disableMultiSubnetFailover`|`true`, `false`|Tries to add Multi-subnet Failover fake host entries when it equals `true`.|
-|`disableNamedPipes`|`true`, `false`|`true` means the connections will create just using tcp protocol.|
+|`disableMultiSubnetFailover`|`true`, `false`|Set `true` to disable fake-host setup and randomized MultiSubnetFailover connections.|
+|`disableNamedPipes`|`true`, `false`|Set `true` to prevent random selection of the Named Pipes protocol.|
 |`encrypt`|`true`, `false`|Assigns the encrypt property of the connection strings.|
 
 Note: The database user must have permission to create and drop databases.  Each execution of the
@@ -52,16 +64,20 @@ test runs to execute in parallel against the same database server without collid
 Build the application using the top-level project `SqlClient.Stress.Runner`:
 
 ```bash
-$ cd .../src/Microsoft.Data.SqlClient/tests/StressTests
-dotnet build SqlClient.Stress.Runner [-c <Release|Debug>]
+cd src/Microsoft.Data.SqlClient/tests/StressTests
+dotnet build SqlClient.Stress.Runner -c Debug -f net9.0
 ```
+
+Run the `cd` command from the repository root. On Windows, use `-f net462` to build the .NET Framework
+executable. Use the same configuration and framework for the build and subsequent `--no-build` run.
 
 ## Running tests
 
-After building the application, find the built folder with target framework and run the
-`stresstest.exe` file with required arguments.
+After building, locate the chosen framework's output directory. Run its `stresstest.dll` with
+`dotnet`, or its `stresstest.exe` for .NET Framework, using the paths shown below.
 
-Find the result in a log file inside the `logs` folder besides the command prompt.
+Use `--console` to keep output in the terminal. Otherwise, log files are written under `../../../logs`,
+relative to the process working directory.
 
 You may specify the config file by supplying an environment variable that points to the file:
 
@@ -69,124 +85,112 @@ You may specify the config file by supplying an environment variable that points
 
 ## Command prompt
 
-You must run the stress tests from the root of the Stress Tests project directory (i.e. the same
-directory this readme file is in).
+Run the following commands from the Stress Tests directory (the directory containing this README).
+Set `STRESS_CONFIG_FILE` to your prepared configuration first.
 
 ```bash
-# Linux
-$ cd .../src/Microsoft.Data.SqlClient/tests/StressTests
+# Linux/macOS
+export STRESS_CONFIG_FILE=/path/to/config.jsonc
 
 # Via dotnet run CLI:
-$ dotnet run --no-build -f net9.0 --project SqlClient.Stress.Runner -- -a SqlClient.Stress.Tests
+dotnet run --no-build -f net9.0 --project SqlClient.Stress.Runner -- --assembly SqlClient.Stress.Tests
 
 # Via dotnet CLI:
-$ dotnet SqlClient.Stress.Runner/bin/Debug/net9.0/stresstest.dll -a SqlClient.Stress.Tests
+dotnet SqlClient.Stress.Runner/bin/Debug/net9.0/stresstest.dll --assembly SqlClient.Stress.Tests
 
 # With a specific config file and all output to console:
-$ dotnet run --no-build -f net9.0 --project SqlClient.Stress.Runner -e STRESS_CONFIG_FILE=/path/to/config.jsonc -- -a SqlClient.Stress.Tests -console
+dotnet run --no-build -f net9.0 --project SqlClient.Stress.Runner -e STRESS_CONFIG_FILE=/path/to/config.jsonc -- --assembly SqlClient.Stress.Tests --console
 ```
 
 ```powershell
 # Windows
-> cd ...\src\Microsoft.Data.SqlClient\tests\StressTests
+$env:STRESS_CONFIG_FILE = "C:\path\to\config.jsonc"
 
 # Via dotnet run CLI:
-> dotnet run --no-build -f net9.0 --project SqlClient.Stress.Runner -- -a SqlClient.Stress.Tests
+dotnet run --no-build -f net9.0 --project SqlClient.Stress.Runner -- --assembly SqlClient.Stress.Tests
 
-# Via executable:
-> .\SqlClient.Stress.Runner\bin\Debug\net481\stresstest.exe -a SqlClient.Stress.Tests
+# Via executable (after building -f net462):
+.\SqlClient.Stress.Runner\bin\Debug\net462\stresstest.exe --assembly SqlClient.Stress.Tests
 
 # With a specific config file and all output to console:
-> dotnet run --no-build -f net9.0 --project SqlClient.Stress.Runner -e STRESS_CONFIG_FILE=c:\path\to\config.jsonc -- -a SqlClient.Stress.Tests -console
+dotnet run --no-build -f net9.0 --project SqlClient.Stress.Runner -e STRESS_CONFIG_FILE=C:\path\to\config.jsonc -- --assembly SqlClient.Stress.Tests --console
 ```
 
 ## Supported arguments
 
 |Argument|Values|Description|
 |-|-|-|
-|-all||Run all tests - best for debugging, not perf measurements.|
-|-verify||Run in functional verification mode. [not implemented]|
-|-duration|&lt;n&gt;|Duration of the test in seconds. Default value is 1 second.|
-|-threads|&lt;n&gt;|Number of threads to use. Default value is 16.|
-|-override|&lt;name&gt; &lt;value&gt;|Override the value of a test property.|
-|-test|&lt;name1;name2&gt;|Run specific test(s).|
-|-debug||Print process ID in the beginning and wait for Enter (to give your time to attach the debugger).|
-|-console||Emit all output to the console instead of a log file.|
-|-exceptionThreshold|&lt;n&gt;|An optional limit on exceptions which will be caught. When reached, test will halt.|
-|-monitorenabled|true, false|True or False to enable monitoring. Default is false [not implemented]|
-|-randomSeed||Enables setting of the random number generator used internally. This serves both the purpose of helping to improve reproducibility and making it deterministic from Chess's perspective for a given schedule. Default is 0.|
-|-filter|&lt;filter&gt;|Run tests whose stress test attributes match the given filter. Filter is not applied if attribute does not implement ITestAttributeFilter. Example: -filter TestType=Query,Update;IsServerTest=True|
-|-printMethodName||Print tests' title in console window|
-|-deadlockdetection|true, false|True or False to enable deadlock detection. Default is `false`.|
+|--assembly|&lt;assembly-name&gt;|Required. Assembly containing tests, e.g. `SqlClient.Stress.Tests`.|
+|--duration|&lt;n&gt;|Duration of the test in seconds. Default value is 1 second.|
+|--threads|&lt;n&gt;|Number of threads to use. Default value is 16.|
+|--override|&lt;name=value&gt;|Override test property values. Accepts multiple values.|
+|--variation|&lt;value&gt;|Add a test variation. Accepts multiple values.|
+|--test|&lt;name1;name2&gt;|Run specific test(s). Quote semicolon-separated names.|
+|--debug||Print process ID and wait for Enter to attach the debugger.|
+|--console||Emit all output to the console instead of a log file.|
+|--exception-threshold|&lt;n&gt;|An optional limit on exceptions which will be caught. When reached, test will halt.|
+|--monitor-enabled|true, false|Enable monitoring. Default is false [not implemented].|
+|--random-seed|&lt;n&gt;|Set the random number generator seed for reproducibility. Default is 0.|
+|--filter|&lt;filter&gt;|Run tests whose stress test attributes match the filter. Example: `--filter "TestType=Query,Update;IsServerTest=True"`.|
+|--print-method-name||Print test method names in the console.|
+|--deadlock-detection||Enable deadlock detection. Disabled by default.|
+
+The former single-dash options (`-a`, `-all`, `-verify`, etc.) are not supported.
+Omit `--test` to select all discovered tests, subject to any `--filter`.
+The executable examples below assume a Windows `net462` Debug build and the same Stress Tests working directory.
 
 ```powershell
-# Run the application for a built target framework and all discovered tests
-# without debugger attached.
+# Run all discovered tests.
 
-> .\stresstest.exe -a SqlClient.Stress.Tests -all
+.\SqlClient.Stress.Runner\bin\Debug\net462\stresstest.exe --assembly SqlClient.Stress.Tests
 ```
 
 ```powershell
-# Run the application for a built target framework and all discovered tests
-# without debugger attached and shows the test methods' names.
+# Run all discovered tests and print their method names.
 
-> .\stresstest.exe -a SqlClient.Stress.Tests -all -printMethodName
+.\SqlClient.Stress.Runner\bin\Debug\net462\stresstest.exe --assembly SqlClient.Stress.Tests --print-method-name
 ```
 
 ```powershell
-# Run the application for a built target framework and all discovered tests and
-# will wait for debugger to be attached.
+# Wait for debugger attachment before running all discovered tests.
 
-> .\stresstest.exe -a SqlClient.Stress.Tests -all -debug
+.\SqlClient.Stress.Runner\bin\Debug\net462\stresstest.exe --assembly SqlClient.Stress.Tests --debug
 ```
 
 ```powershell
-# Run the application for a built target framework and
-# "TestExecuteXmlReaderAsyncCancellation" test without debugger attached.
+# Run only TestExecuteXmlReaderAsyncCancellation.
 
-> .\stresstest.exe -a SqlClient.Stress.Tests -test TestExecuteXmlReaderAsyncCancellation
+.\SqlClient.Stress.Runner\bin\Debug\net462\stresstest.exe --assembly SqlClient.Stress.Tests --test TestExecuteXmlReaderAsyncCancellation
 ```
 
 ```powershell
-# Run the application for a built target framework and
-# "TestExecuteXmlReaderAsyncCancellation" test without debugger attached.
+# Run all discovered tests for 10 seconds.
 
-> .\stresstest.exe -a SqlClient.Stress.Tests -test TestExecuteXmlReaderAsyncCancellation
+.\SqlClient.Stress.Runner\bin\Debug\net462\stresstest.exe --assembly SqlClient.Stress.Tests --duration 10
 ```
 
 ```powershell
-# Run the application for a built target framework and all discovered tests
-# without debugger attached for 10 seconds.
+# Run all discovered tests with 5 threads.
 
-> .\stresstest.exe -a SqlClient.Stress.Tests -all -duration 10
+.\SqlClient.Stress.Runner\bin\Debug\net462\stresstest.exe --assembly SqlClient.Stress.Tests --threads 5
 ```
 
 ```powershell
-# Run the application for a built target framework and all discovered tests
-# without debugger attached with 5 threads.
+# Run all discovered tests with deadlock detection enabled.
 
-> .\stresstest.exe -a SqlClient.Stress.Tests -all -threads 5
+.\SqlClient.Stress.Runner\bin\Debug\net462\stresstest.exe --assembly SqlClient.Stress.Tests --deadlock-detection
 ```
 
 ```powershell
-# Run the application for a built target framework and all discovered tests
-# without debugger attached and dead lock detection process.
+# Run all discovered tests with Weight set to 15.
 
-> .\stresstest.exe -a SqlClient.Stress.Tests -all -deadlockdetection true
+.\SqlClient.Stress.Runner\bin\Debug\net462\stresstest.exe --assembly SqlClient.Stress.Tests --override Weight=15
 ```
 
 ```powershell
-# Run the application for a built target framework and all discovered tests
-# without debugger attached with overriding the weight property with value 15.
+# Run all discovered tests with random seed 5.
 
-> .\stresstest.exe -a SqlClient.Stress.Tests -all -override Weight 15
-```
-
-```powershell
-# Run the application for a built target framework and all discovered tests
-# without debugger attached with injecting random seed of 5.
-
-> .\stresstest.exe -a SqlClient.Stress.Tests -all -randomSeed 5
+.\SqlClient.Stress.Runner\bin\Debug\net462\stresstest.exe --assembly SqlClient.Stress.Tests --random-seed 5
 ```
 
 ## Further thoughts
