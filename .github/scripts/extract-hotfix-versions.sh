@@ -12,14 +12,27 @@
 #
 # OVERVIEW
 # --------
-# This script handles two distinct trigger scenarios:
+# This script handles three distinct trigger scenarios:
 #
-#   1. 'closed' event  — The PR was just merged. ALL "Hotfix X.Y.Z" labels on
-#      the PR are processed, emitting one version per valid label.
+#   1. 'closed' event     — The PR was just merged. ALL "Hotfix X.Y.Z" labels
+#      on the PR are processed, emitting one version per valid label. No
+#      duplicate check is needed: the PR has never been processed before.
 #
-#   2. 'labeled' event — A label was added to an already-merged PR. Only the
-#      NEWLY ADDED label is considered, and only if a cherry-pick for that
-#      version hasn't already been created (branch or PR exists).
+#   2. 'labeled' event     — A label was added to an already-merged PR (the
+#      real GitHub webhook fired). Only the NEWLY ADDED label is considered,
+#      and only if a cherry-pick for that version hasn't already been created
+#      (branch or PR exists).
+#
+#   3. 'reconcile' event   — Used for a workflow_dispatch re-run (see
+#      cherry-pick-hotfix.yml): sync-hotfix-label-from-issue.sh adds a
+#      "Hotfix X.Y.Z" label to an already-merged PR using GITHUB_TOKEN, which
+#      does not fire a new "labeled" webhook event (GitHub does not trigger
+#      further workflow runs for events caused by the repository's own
+#      GITHUB_TOKEN), so nothing would otherwise process that label. This mode
+#      re-derives ALL "Hotfix X.Y.Z" labels currently on the PR — like
+#      'closed' — but, like 'labeled', skips any version that already has a
+#      cherry-pick branch or PR, since some of the PR's other labels may have
+#      already been processed by an earlier event.
 #
 # Label names must match the exact pattern "Hotfix <major>.<minor>.<patch>"
 # (e.g. "Hotfix 7.0.1"). All other labels are silently ignored.
@@ -27,9 +40,10 @@
 # REQUIRED ENVIRONMENT VARIABLES
 # ------------------------------
 #   LABELS             Comma-separated list of all label names on the PR.
-#   EVENT_ACTION       The GitHub event action: "closed" or "labeled".
+#   EVENT_ACTION       The GitHub event action: "closed", "labeled", or
+#                      "reconcile".
 #   EVENT_LABEL        For 'labeled' events, the name of the label that was added.
-#                      Empty or unset for 'closed' events.
+#                      Empty or unset for 'closed'/'reconcile' events.
 #   PR_NUMBER          The pull request number (used to derive cherry-pick branch names).
 #   GH_TOKEN           GitHub token for API calls (gh CLI auth).
 #   GITHUB_REPOSITORY  Owner/repo (e.g. "dotnet/SqlClient"). Set automatically by Actions.
@@ -71,8 +85,34 @@ fi
 : "${PR_NUMBER:?PR_NUMBER environment variable is required}"
 : "${GITHUB_REPOSITORY:?GITHUB_REPOSITORY environment variable is required}"
 
-# -- 'labeled' event: process only the newly added label ----------------------
+# -- Shared helper: has a cherry-pick for VERSION already been created? ------
+# Used by both the 'labeled' (single candidate) and 'reconcile' (every
+# current Hotfix label) paths below.
+#
+# NOTE: We use the GitHub API rather than 'git ls-remote' because the
+# detect-versions job does not check out the repository (no .git directory).
+cherry_pick_already_exists() {
+  local version="$1"
+  local branch="dev/automation/pr-${PR_NUMBER}-to-${version}"
+
+  if gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/${branch}" --silent 2>/dev/null; then
+    echo "Cherry-pick branch '${branch}' already exists. Skipping."
+    return 0
+  fi
+
+  local existing_pr
+  existing_pr=$(gh pr list --repo "${GITHUB_REPOSITORY}" --head "${branch}" --state all \
+    --json number --jq 'length')
+  if [[ "${existing_pr}" -gt 0 ]]; then
+    echo "A cherry-pick PR from '${branch}' already exists. Skipping."
+    return 0
+  fi
+
+  return 1
+}
+
 if [[ "${EVENT_ACTION}" == "labeled" ]]; then
+  # -- 'labeled' event: process only the newly added label --------------------
   # Extract version from the new label. If it doesn't match "Hotfix X.Y.Z",
   # this is a non-hotfix label — emit empty matrix and exit cleanly.
   if [[ "${EVENT_LABEL:-}" =~ ^Hotfix\ ([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
@@ -87,30 +127,41 @@ if [[ "${EVENT_ACTION}" == "labeled" ]]; then
     exit 0
   fi
 
-  # Guard against duplicate cherry-picks.  If the cherry-pick branch already
-  # exists on the remote, or a PR (open, closed, or merged) was already created
-  # from it, there is nothing left to do.
-  #
-  # NOTE: We use the GitHub API rather than 'git ls-remote' because the
-  # detect-versions job does not check out the repository (no .git directory).
-  CHERRY_PICK_BRANCH="dev/automation/pr-${PR_NUMBER}-to-${CANDIDATE}"
-
-  if gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/${CHERRY_PICK_BRANCH}" \
-      --silent 2>/dev/null; then
-    echo "Cherry-pick branch '${CHERRY_PICK_BRANCH}' already exists. Skipping."
-    echo "versions=[]" >> "${GITHUB_OUTPUT}"
-    exit 0
-  fi
-
-  EXISTING_PR=$(gh pr list --repo "${GITHUB_REPOSITORY}" --head "${CHERRY_PICK_BRANCH}" --state all \
-    --json number --jq 'length')
-  if [[ "${EXISTING_PR}" -gt 0 ]]; then
-    echo "A cherry-pick PR from '${CHERRY_PICK_BRANCH}' already exists. Skipping."
+  if cherry_pick_already_exists "${CANDIDATE}"; then
     echo "versions=[]" >> "${GITHUB_OUTPUT}"
     exit 0
   fi
 
   VERSIONS="${CANDIDATE}"
+elif [[ "${EVENT_ACTION}" == "reconcile" ]]; then
+  # -- 'reconcile' event: re-derive all current Hotfix labels, but still skip
+  # any version that's already been cherry-picked (see OVERVIEW above).
+  ALL_VERSIONS=$(echo "${LABELS}" | tr ',' '\n' \
+    | sed -nE 's/^Hotfix ([0-9]+\.[0-9]+\.[0-9]+)$/\1/p')
+
+  # No valid "Hotfix X.Y.Z" label at all is the same caller error as the
+  # 'closed' event hitting the check below — fall through to it.
+  if [[ -n "${ALL_VERSIONS}" ]]; then
+    VERSIONS=""
+    while IFS= read -r candidate; do
+      [[ -z "${candidate}" ]] && continue
+      if cherry_pick_already_exists "${candidate}"; then
+        continue
+      fi
+      VERSIONS+="${candidate}"$'\n'
+    done <<< "${ALL_VERSIONS}"
+    VERSIONS="${VERSIONS%$'\n'}"
+
+    # Every valid label already had a cherry-pick (all duplicates): this is a
+    # legitimate no-op, unlike "no valid label found" below, so exit early
+    # rather than falling into the shared error check.
+    if [[ -z "${VERSIONS}" ]]; then
+      echo "versions=[]" >> "${GITHUB_OUTPUT}"
+      exit 0
+    fi
+  else
+    VERSIONS=""
+  fi
 else
   # -- 'closed' event: process all hotfix labels on the PR --------------------
   # Split by comma, keep only labels matching "Hotfix X.Y.Z", extract the version.

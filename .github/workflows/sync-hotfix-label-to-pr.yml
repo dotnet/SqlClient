@@ -1,0 +1,88 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+#
+# Sync Hotfix Label from Issue to PR
+#
+# Companion to hotfix-label-issue.yml, cherry-pick-hotfix.yml, and
+# close-backport-issue.yml. Works together to automate backporting a fix from
+# an issue through to a merged cherry-pick PR.
+#
+# When a pull request's closing keywords (Fixes/Closes/Resolves #N) reference
+# an issue that carries a "Hotfix X.Y.Z" label, this workflow copies that
+# label onto the PR. That's the label cherry-pick-hotfix.yml watches for, so
+# a PR fixing a hotfix-tagged issue is automatically cherry-picked once merged
+# without anyone having to remember to label the PR by hand.
+#
+# Runs both directions so ordering doesn't matter:
+#   - PR opened/edited/synced: sync-hotfix-label-to-pr.sh copies Hotfix
+#     label(s) from the issue(s) it closes onto the PR.
+#   - Issue labeled "Hotfix X.Y.Z" (possibly after its closing PR is already
+#     open): sync-hotfix-label-from-issue.sh finds that PR via
+#     'closedByPullRequestsReferences' and re-runs the same sync.
+#
+#################################################################################
+
+name: Sync Hotfix Label from Issue to PR
+
+# 'pull_request_target' (rather than 'pull_request') is required so the
+# workflow has write access to add labels, including for PRs from forks.
+#
+# 'issues: [labeled]' covers the timing gap the PR events alone miss: if an
+# issue is labeled "Hotfix X.Y.Z" after its closing PR is already open, and
+# that PR doesn't receive another opened/edited/synchronize event, the
+# pull_request_target trigger never fires again to copy the label.
+on:
+  pull_request_target:
+    types: [opened, reopened, edited, synchronize]
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+  # 'actions: write' is needed by sync-hotfix-label-from-issue.sh to dispatch
+  # cherry-pick-hotfix.yml (workflow_dispatch) for already-merged PRs, since
+  # adding a label via this workflow's own GITHUB_TOKEN doesn't fire a new
+  # 'labeled' webhook event for that workflow to react to on its own.
+  actions: write
+
+jobs:
+  sync-hotfix-label-from-pr:
+    if: github.event_name == 'pull_request_target' && github.event.pull_request.state == 'open'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          # Only the scripts directory is needed; skip full history.
+          sparse-checkout: .github/scripts
+          sparse-checkout-cone-mode: false
+
+      - name: Sync Hotfix label from referenced issue(s)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: bash "${GITHUB_WORKSPACE}/.github/scripts/sync-hotfix-label-to-pr.sh"
+
+  sync-hotfix-label-from-issue:
+    if: >-
+      github.event_name == 'issues' &&
+      startsWith(github.event.label.name, 'Hotfix ')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          # Only the scripts directory is needed; skip full history.
+          sparse-checkout: .github/scripts
+          sparse-checkout-cone-mode: false
+
+      - name: Sync Hotfix label onto PR(s) closing this issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: bash "${GITHUB_WORKSPACE}/.github/scripts/sync-hotfix-label-from-issue.sh"
