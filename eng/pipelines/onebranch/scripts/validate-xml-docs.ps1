@@ -352,6 +352,35 @@ function Split-DocIdArguments {
 }
 
 <#
+    Returns the text inside every delimited group in a documentation ID, nested groups included, so
+    each can be validated in its own right rather than only the outermost one.
+
+    Balance is the caller's responsibility: every caller runs after the pairing check for that
+    delimiter, which returns on failure, so an unmatched delimiter never reaches here.
+#>
+function Get-DocIdGroupContents {
+    param(
+        [Parameter(Mandatory)][AllowEmptyString()][string]$Text,
+        [Parameter(Mandatory)][char]$Open,
+        [Parameter(Mandatory)][char]$Close
+    )
+
+    $contents = [System.Collections.Generic.List[string]]::new()
+    $starts = [System.Collections.Generic.Stack[int]]::new()
+    for ($index = 0; $index -lt $Text.Length; $index++) {
+        if ($Text[$index] -eq $Open) {
+            $starts.Push($index)
+        }
+        elseif ($Text[$index] -eq $Close -and $starts.Count -gt 0) {
+            $start = $starts.Pop()
+            $contents.Add($Text.Substring($start + 1, $index - $start - 1))
+        }
+    }
+
+    return $contents
+}
+
+<#
     Reduces a documentation ID parameter to the bare type identifier so it can be compared against
     the C# alias set: array, pointer and by-reference markers are stripped, as are generic
     arguments, which are validated separately as parameters in their own right.
@@ -469,6 +498,31 @@ function Test-Cref {
         return
     }
 
+    # Balance alone does not make a generic argument list well formed. A constructed generic names
+    # one or more type arguments, so an empty list or an empty entry names no type at all, and
+    # nothing downstream objected: Get-DocIdCoreTypeName cuts the body at the first brace, so
+    # T:System.Collections.Generic.List{} reduced to the perfectly ordinary name List and passed.
+    # Every group is checked, nested ones included, so an inner {} is caught as readily as an
+    # outer one.
+    foreach ($genericArguments in (Get-DocIdGroupContents -Text $body -Open '{' -Close '}')) {
+        if ([string]::IsNullOrWhiteSpace($genericArguments)) {
+            Add-Finding @Context -Category 'invalid-docid' -Cref $Cref -Message (
+                "Cref '$trimmed' has an empty generic argument list. A constructed generic names " +
+                'one or more type arguments between { and }.')
+            return
+        }
+
+        foreach ($genericArgument in (Split-DocIdArguments -Arguments $genericArguments)) {
+            if ([string]::IsNullOrWhiteSpace($genericArgument)) {
+                Add-Finding @Context -Category 'invalid-docid' -Cref $Cref -Message (
+                    "Cref '$trimmed' has an empty generic argument. Documentation IDs separate " +
+                    'generic arguments with a single comma, and write no leading, repeated or ' +
+                    'trailing separator.')
+                return
+            }
+        }
+    }
+
     # The array suffix brackets must pair up as well. They are checked alongside the braces rather
     # than left to the signature reading below, because nothing downstream looks at them: the
     # argument splitter tracks bracket depth only to decide where a comma separates parameters,
@@ -497,6 +551,21 @@ function Test-Cref {
             "Cref '$trimmed' has unbalanced square brackets around an array suffix. " +
             'Documentation IDs pair every [ with a later ].')
         return
+    }
+
+    # Balance is not enough here either. An array suffix encloses a dimension list and nothing
+    # else: empty for one dimension, commas for more, or the lower-bound spelling that records a
+    # bound and an optional size. Anything else is balanced but meaningless, and
+    # Get-DocIdCoreTypeName trims the brackets away whichever text they hold, so
+    # Use(System.Char[x]) reduced to the ordinary name System.Char and drew no finding.
+    foreach ($dimensions in (Get-DocIdGroupContents -Text $body -Open '[' -Close ']')) {
+        if ($dimensions -notmatch '^(?:\d+:\d*)?(?:,(?:\d+:\d*)?)*$') {
+            Add-Finding @Context -Category 'invalid-docid' -Cref $Cref -Message (
+                "Cref '$trimmed' writes '[$dimensions]', which is not a documentation-ID " +
+                'dimension list. Write [] for one dimension, [,] for more, or the lower-bound ' +
+                'form [0:,0:].')
+            return
+        }
     }
 
     # The parentheses must pair up too, and a documentation ID carries at most one parameter list,

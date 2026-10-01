@@ -381,6 +381,91 @@ Describe 'validate-xml-docs.ps1' {
             @((Get-Report -Path $report).Findings) | Should -BeNullOrEmpty
         }
 
+        <#
+            Pairing the brackets leaves a balanced but meaningless suffix unexamined. An array
+            suffix encloses a dimension list and nothing else, and Get-DocIdCoreTypeName trims the
+            brackets away whichever text they hold, so each of these reduced to an ordinary type
+            name and drew no finding.
+        #>
+        It 'rejects an array suffix that is not a dimension list' -ForEach @(
+            @{ Cref = 'M:Microsoft.Data.SqlClient.Sample.Use(System.Char[x])'; Suffix = '[x]' }
+            @{ Cref = 'M:Microsoft.Data.SqlClient.Sample.Use(System.Char[1])'; Suffix = '[1]' }
+            @{ Cref = 'M:Microsoft.Data.SqlClient.Sample.Use(System.Char[[]])'; Suffix = '[[]]' }
+            @{ Cref = 'M:Microsoft.Data.SqlClient.Sample.Use(System.Char[0:x])'; Suffix = '[0:x]' }
+        ) {
+            $snippets = New-SnippetDirectory -Crefs @($Cref)
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -SnippetsDirectory $snippets -ReportPath $report -ReportOnly
+
+            $findings = @((Get-Report -Path $report).Findings)
+            $findings.Count | Should -Be 1
+            $findings[0].Category | Should -Be 'invalid-docid'
+            $findings[0].Message | Should -BeLike '*is not a documentation-ID dimension list*'
+
+            # Asserted literally rather than with -BeLike, whose wildcard syntax would read the
+            # brackets in the quoted suffix as a character class and match almost anything.
+            $findings[0].Message.Contains("writes '$Suffix'") | Should -BeTrue
+        }
+
+        <#
+            A constructed generic names one or more type arguments, so an empty list or an empty
+            entry names no type at all. Balance alone accepted both, because Get-DocIdCoreTypeName
+            cuts the body at the first brace: T:...List{} reduced to the ordinary name List.
+            Nested groups are covered too, which is why the inner {} case is here.
+        #>
+        It 'rejects an empty generic argument list' -ForEach @(
+            @{ Cref = 'T:System.Collections.Generic.List{}' }
+            @{ Cref = 'T:System.Collections.Generic.List{System.Collections.Generic.List{}}' }
+            @{ Cref = 'M:Microsoft.Data.SqlClient.Sample.Use(System.Collections.Generic.List{})' }
+        ) {
+            $snippets = New-SnippetDirectory -Crefs @($Cref)
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -SnippetsDirectory $snippets -ReportPath $report -ReportOnly
+
+            $findings = @((Get-Report -Path $report).Findings)
+            $findings.Count | Should -Be 1
+            $findings[0].Category | Should -Be 'invalid-docid'
+            $findings[0].Message | Should -BeLike '*empty generic argument list*'
+        }
+
+        It 'rejects an empty generic argument' -ForEach @(
+            @{ Cref = 'T:System.Collections.Generic.Dictionary{System.String,}' }
+            @{ Cref = 'T:System.Collections.Generic.Dictionary{,System.String}' }
+            @{ Cref = 'T:System.Collections.Generic.Dictionary{System.String,,System.Int32}' }
+            @{ Cref = 'T:System.Collections.Generic.List{System.Collections.Generic.Dictionary{System.String,}}' }
+        ) {
+            $snippets = New-SnippetDirectory -Crefs @($Cref)
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -SnippetsDirectory $snippets -ReportPath $report -ReportOnly
+
+            $findings = @((Get-Report -Path $report).Findings)
+            $findings.Count | Should -Be 1
+            $findings[0].Category | Should -Be 'invalid-docid'
+            $findings[0].Message | Should -BeLike '*empty generic argument*'
+        }
+
+        <#
+            The controls for the two generic rules. Nesting is the case that matters: the check
+            walks every brace group rather than the outermost one, so a valid inner list must not
+            be mistaken for an empty one.
+        #>
+        It 'accepts well-formed generic argument lists' -ForEach @(
+            @{ Cref = 'T:System.Collections.Generic.List{System.String}' }
+            @{ Cref = 'T:System.Collections.Generic.Dictionary{System.String,System.Int32}' }
+            @{ Cref = 'T:System.Collections.Generic.List{System.Collections.Generic.List{System.String}}' }
+            @{ Cref = 'M:Microsoft.Data.SqlClient.Sample.Use(System.Collections.Generic.Dictionary{System.String,System.Collections.Generic.List{System.Int32}})' }
+        ) {
+            $snippets = New-SnippetDirectory -Crefs @($Cref)
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -SnippetsDirectory $snippets -ReportPath $report -ReportOnly
+
+            @((Get-Report -Path $report).Findings) | Should -BeNullOrEmpty
+        }
+
         It 'rejects a C# alias in a method signature' {
             $snippets = New-SnippetDirectory -Crefs @('M:Microsoft.Data.SqlClient.SqlConnection.GetSchema(string)')
             $report = Join-Path (New-TestDirectory) 'report.json'
