@@ -2371,6 +2371,32 @@ namespace Microsoft.Data.SqlClient.Connection
                     _currentSessionData._encrypted = isEncrypted;
                 }
 
+                // Diagnostic only: compare the database captured before the connection
+                // dropped with the database the server reported during the recovery
+                // login, and trace a mismatch. Recovery behavior is deliberately left
+                // unchanged so that the mismatch can be observed without altering it.
+                //
+                // Compare ordinally: a case-sensitive server can host databases whose
+                // names differ only by case, so a case-insensitive match would treat two
+                // distinct recovery targets as equal and miss the mismatch.
+                if (_recoverySessionData != null)
+                {
+                    string recoveredDatabase = _recoverySessionData._database
+                        ?? _recoverySessionData._initialDatabase;
+
+                    if (recoveredDatabase != null
+                        && !string.Equals(CurrentDatabase, recoveredDatabase, StringComparison.Ordinal))
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent(
+                            "SqlInternalConnectionTds.CompleteLogin | ERR | " +
+                            "Object Id {0}, Database context mismatch after session recovery. " +
+                            "Expected database '{1}', server reported '{2}'.",
+                            ObjectID,
+                            recoveredDatabase,
+                            CurrentDatabase);
+                    }
+                }
+
                 _recoverySessionData = null;
             }
 

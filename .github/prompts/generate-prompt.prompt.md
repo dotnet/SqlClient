@@ -25,7 +25,7 @@ Before generating the prompt, review the available skills in the `.github/skills
 
 1.  **Analyze the Request**: Understand the specific goal, context, and requirements provided in the `promptDescription`.
 
-2.  **Discover Relevant Skills**: 
+2.  **Discover Relevant Skills**:
     *   Search `.github/skills/` for skills that could enhance the prompt
     *   Read the `description` field in each skill's YAML frontmatter to determine relevance
     *   A skill is relevant if its purpose aligns with any part of the prompt's task
@@ -45,6 +45,12 @@ Before generating the prompt, review the available skills in the `.github/skills
 
 4.  **Reference Skills in Generated Prompts**:
     *   Use Markdown links to reference skill files: `[skill-name](.github/skills/skill-name/SKILL.md)`
+    *   Paths are written relative to the repository root, not to the prompt file. These links are
+        consumed by agents, which pass the path straight to a workspace-relative file tool; a
+        document-relative form like `../skills/...` would force the agent to infer the prompt's own
+        directory first. The tradeoff is that these links are not clickable on github.com, which is
+        acceptable because their audience is tooling rather than readers. Do not "fix" them to
+        document-relative paths.
     *   Instruct the prompt to "Follow the instructions in the referenced skill" when applicable
     *   Skills can be referenced for sub-tasks within a larger prompt
 
