@@ -63,6 +63,41 @@ printf 'ARG:%s\n' "$@"
             })
     }
 
+    function Get-ProjectTargetArguments {
+        param(
+            [string]$Project,
+            [string[]]$Targets,
+            [string[]]$Properties,
+            [string]$EntryTarget = $Targets[-1]
+        )
+
+        # Run the real command-generation targets without compiling their SDK projects.
+        [xml]$source = Get-Content (Join-Path $repoRoot $Project) -Raw
+        [xml]$probe = @'
+<Project>
+  <Target Name="ResolveReferences" />
+  <Target Name="CopyFilesToOutputDirectory">
+    <Message Text="ARG:CopyFilesToOutputDirectory" Importance="High" />
+  </Target>
+  <Target Name="Build" DependsOnTargets="CopyFilesToOutputDirectory" />
+</Project>
+'@
+        foreach ($target in $Targets) {
+            $node = $source.SelectSingleNode("/Project/Target[@Name='$target']")
+            $probe.DocumentElement.AppendChild($probe.ImportNode($node, $true)) | Out-Null
+        }
+        $probePath = Join-Path $TestDrive 'command-probe.proj'
+        $probe.Save($probePath)
+
+        $output = & $dotnet msbuild $probePath -nologo -v:normal "-t:$EntryTarget" `
+            "-p:DotnetPath=$stubDirectory/" @Properties 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            throw "MSBuild target probe failed:`n$($output -join [Environment]::NewLine)"
+        }
+        @($output | ForEach-Object {
+            if ("$_".Trim() -match '^ARG:(.*)$') { $Matches[1].Trim('"') }
+        })
+    }
 }
 
 Describe 'build.proj command-line filters' {
@@ -301,5 +336,50 @@ Describe 'build.proj project path quoting' {
         $arguments = Get-ChildArguments $Target @("-p:$Property=$projectPath")
 
         $arguments | Should -Contain $projectPath
+    }
+}
+
+Describe 'SqlClient build helper path quoting' {
+    It 'resolves relative documentation paths and trims before copying build outputs' {
+        $documentation = 'obj/docs with  spaces.xml'
+        $arguments = Get-ProjectTargetArguments `
+            'src/Microsoft.Data.SqlClient/ref/Microsoft.Data.SqlClient.csproj' `
+            @('_CheckPwshToolRestored', 'TrimDocsForIntelliSense') `
+            @("-p:RepoRoot=$repoRoot/", "-p:DocumentationFile=$documentation",
+              '-p:GenerateDocumentationFile=true') `
+            -EntryTarget 'Build'
+
+        $arguments | Should -Contain (Join-Path $TestDrive $documentation)
+        $arguments | Should -Contain '-File'
+        $arguments[-1] | Should -Be 'CopyFilesToOutputDirectory'
+    }
+
+    It 'passes the documentation script and XML paths as separate arguments' {
+        $root = "$TestDrive/repo with  spaces/"
+        $documentation = "${root}output/SqlClient.xml"
+        $arguments = Get-ProjectTargetArguments `
+            'src/Microsoft.Data.SqlClient/ref/Microsoft.Data.SqlClient.csproj' `
+            @('_CheckPwshToolRestored', 'TrimDocsForIntelliSense') `
+            @("-p:RepoRoot=$repoRoot/", "-p:DocumentationFile=$documentation",
+              '-p:GenerateDocumentationFile=true')
+
+        $arguments | Should -Contain '-File'
+        $arguments | Should -Contain "$repoRoot/tools/intellisense/TrimDocs.ps1"
+        $arguments | Should -Contain ([System.IO.Path]::GetFullPath($documentation))
+    }
+
+    It 'passes the GenAPI reference assembly as one argument' {
+        $referenceAssembly = Join-Path $TestDrive 'ref with  spaces.dll'
+        $genApi = Join-Path $TestDrive 'GenAPI with  spaces.dll'
+        New-Item -ItemType File -Path $referenceAssembly, $genApi | Out-Null
+
+        $arguments = Get-ProjectTargetArguments `
+            'src/Microsoft.Data.SqlClient/notsupported/Microsoft.Data.SqlClient.csproj' `
+            @('GenerateNotSupportedSource') `
+            @("-p:RefArtifactPath=$referenceAssembly", "-p:GenApiPath=$genApi",
+              '-p:NotSupportedSourceFile=generated.cs')
+
+        $arguments | Should -Contain $referenceAssembly
+        $arguments | Should -Contain $genApi
     }
 }
