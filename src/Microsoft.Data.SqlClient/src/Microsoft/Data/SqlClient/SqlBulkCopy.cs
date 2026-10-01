@@ -3150,8 +3150,15 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                     }
 
                     if (source != null)
+{
+                        if (cts.IsCancellationRequested)
+                        {
+                            source.SetCanceled();
+                        }
+                        else
                     {
                         source.SetResult(null);
+}
                     }
                 }
             }
