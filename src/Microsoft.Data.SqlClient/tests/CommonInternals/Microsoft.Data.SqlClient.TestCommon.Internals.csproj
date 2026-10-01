@@ -48,13 +48,9 @@
       usable.  ExcludeAssets="compile" drops the ref assembly in favour of the explicit Reference
       below.
     -->
-    <!--
-      @TODO: This is a hack for now, the windows and unix nuget files are the same, so we just pick
-          one and use it for all scenarios. Remove this silliness when unsupported binaries are removed
-    -->
     <Reference Include="Microsoft.Data.SqlClient"
                Condition="'$(ReferenceType)' == 'Package'"
-               HintPath="$(PkgMicrosoft_Data_SqlClient)/runtimes/win/lib/$(_SqlClientPackageTfm)/Microsoft.Data.SqlClient.dll" />
+               HintPath="$(PkgMicrosoft_Data_SqlClient)/lib/$(_SqlClientPackageTfm)/Microsoft.Data.SqlClient.dll" />
   </ItemGroup>
 
   <!-- Map this project's TFM to the closest TFM shipped in the driver package, which currently
