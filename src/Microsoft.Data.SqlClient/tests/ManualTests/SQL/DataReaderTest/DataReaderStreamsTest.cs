@@ -1237,6 +1237,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return queryBuilder.ToString();
         }
 
+        /// <summary>
+        /// Serializes the contents of the specified <see cref="XmlReader"/> to a
+        /// <see langword="string"/>.
+        /// </summary>
+        /// <param name="xmlReader">The reader whose contents are to be serialized.</param>
+        /// <returns>
+        /// A string representation of the contents of <paramref name="xmlReader"/>.
+        /// </returns>
         private static string GetXmlReaderContents(XmlReader xmlReader)
         {
             XmlWriterSettings settings = new XmlWriterSettings
