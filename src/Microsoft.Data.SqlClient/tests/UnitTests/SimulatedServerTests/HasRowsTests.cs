@@ -13,6 +13,7 @@ using Microsoft.SqlServer.TDS.ColMetadata;
 using Microsoft.SqlServer.TDS.Done;
 using Microsoft.SqlServer.TDS.EndPoint;
 using Microsoft.SqlServer.TDS.Info;
+using Microsoft.SqlServer.TDS.Order;
 using Microsoft.SqlServer.TDS.Row;
 using Microsoft.SqlServer.TDS.Servers;
 using Microsoft.SqlServer.TDS.SQLBatch;
@@ -22,12 +23,22 @@ using Xunit.Abstractions;
 namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests;
 
 /// <summary>
-/// Guards against issue #3018 using INFO tokens before or after column metadata,
+/// Guards against issue #3018 using INFO-only responses and INFO tokens around metadata and rows,
 /// without requiring a SQL Server instance.
 /// </summary>
 [Collection(SimulatedServerTestCollection.Name)]
 public sealed class HasRowsTests
 {
+    /// <summary>Response shapes used to verify INFO processing and row detection.</summary>
+    public enum InfoPlacement
+    {
+        BeforeMetadata,
+        AfterMetadata,
+        AfterOrder,
+        AfterRows,
+        InfoOnly
+    }
+
     private const ushort AltMetadataId = 1;
     private readonly ITestOutputHelper _output;
 
@@ -42,14 +53,21 @@ public sealed class HasRowsTests
     {
         foreach (int infoCount in new[] { 0, 1, 2, 3, 10 })
         {
-            foreach (bool afterMetadata in new[] { false, true })
+            foreach (InfoPlacement placement in Enum.GetValues(typeof(InfoPlacement)))
             {
                 foreach (bool useAsync in new[] { false, true })
                 {
-                    foreach (bool useAlternateMetadata in new[] { false, true })
+                    if (placement == InfoPlacement.InfoOnly)
                     {
-                        yield return new object[] { infoCount, afterMetadata, useAsync, false, useAlternateMetadata };
-                        yield return new object[] { infoCount, afterMetadata, useAsync, true, useAlternateMetadata };
+                        yield return new object[] { infoCount, placement, useAsync, false, false };
+                    }
+                    else
+                    {
+                        foreach (bool useAlternateMetadata in new[] { false, true })
+                        {
+                            yield return new object[] { infoCount, placement, useAsync, false, useAlternateMetadata };
+                            yield return new object[] { infoCount, placement, useAsync, true, useAlternateMetadata };
+                        }
                     }
                 }
             }
@@ -62,10 +80,10 @@ public sealed class HasRowsTests
     [Theory]
     [MemberData(nameof(InfoTokenCases))]
     public async Task HasRows_WithInfoTokens_ReflectsRowPresence(
-        int infoCount, bool afterMetadata, bool useAsync, bool returnsRow, bool useAlternateMetadata)
+        int infoCount, InfoPlacement placement, bool useAsync, bool returnsRow, bool useAlternateMetadata)
     {
         TdsServerArguments arguments = new();
-        InfoQueryEngine engine = new(arguments, infoCount, afterMetadata, returnsRow, useAlternateMetadata);
+        InfoQueryEngine engine = new(arguments, infoCount, placement, returnsRow, useAlternateMetadata);
         using TdsServer server = new(engine, arguments);
         server.Start();
 
@@ -105,22 +123,35 @@ public sealed class HasRowsTests
             : command.ExecuteReader();
 
         bool hasRowsBeforeRead = reader.HasRows;
-        Assert.Equal(afterMetadata ? 0 : infoCount, infoMessages.Count);
+        bool messagesBeforeMetadata = placement == InfoPlacement.BeforeMetadata || placement == InfoPlacement.InfoOnly;
+        Assert.Equal(messagesBeforeMetadata ? infoCount : 0, infoMessages.Count);
+        if (placement == InfoPlacement.InfoOnly)
+        {
+            Assert.Equal(0, reader.FieldCount);
+        }
         bool read = useAsync ? await reader.ReadAsync() : reader.Read();
         Assert.Equal(returnsRow, read);
         if (read)
         {
             Assert.Equal(1, reader.GetInt32(0));
+            if (placement == InfoPlacement.AfterRows)
+            {
+                Assert.Empty(infoMessages);
+            }
         }
         bool hasRowsAfterRead = reader.HasRows;
         Assert.False(useAsync ? await reader.ReadAsync() : reader.Read());
-        if (!useAlternateMetadata || returnsRow)
+        if (placement == InfoPlacement.AfterRows && useAlternateMetadata)
+        {
+            Assert.Empty(infoMessages);
+        }
+        else if (!useAlternateMetadata || returnsRow)
         {
             Assert.Equal(infoCount, infoMessages.Count);
         }
 
         _output.WriteLine(
-            $"INFO count={infoCount}, after metadata={afterMetadata}, async={useAsync}, returns row={returnsRow}, alternate metadata={useAlternateMetadata}: " +
+            $"INFO count={infoCount}, placement={placement}, async={useAsync}, returns row={returnsRow}, alternate metadata={useAlternateMetadata}: " +
             $"HasRows before Read={hasRowsBeforeRead}, Read={read}, " +
             $"HasRows after Read={hasRowsAfterRead}, INFO received={infoMessages.Count}");
 
@@ -134,6 +165,10 @@ public sealed class HasRowsTests
             Assert.Equal("sum", reader.GetName(0));
             Assert.True(useAsync ? await reader.ReadAsync() : reader.Read());
             Assert.Equal(42, reader.GetInt32(0));
+            if (placement == InfoPlacement.AfterRows)
+            {
+                Assert.Empty(infoMessages);
+            }
             Assert.False(useAsync ? await reader.ReadAsync() : reader.Read());
             Assert.True(reader.HasRows);
         }
@@ -194,21 +229,21 @@ public sealed class HasRowsTests
     {
         internal const string CommandText = "SELECT 1";
         private readonly int _infoCount;
-        private readonly bool _afterMetadata;
+        private readonly InfoPlacement _placement;
         private readonly bool _returnsRow;
         private readonly bool _useAlternateMetadata;
 
-        internal InfoQueryEngine(TdsServerArguments arguments, int infoCount, bool afterMetadata, bool returnsRow, bool useAlternateMetadata)
+        internal InfoQueryEngine(TdsServerArguments arguments, int infoCount, InfoPlacement placement, bool returnsRow, bool useAlternateMetadata)
             : base(arguments)
         {
             _infoCount = infoCount;
-            _afterMetadata = afterMetadata;
+            _placement = placement;
             _returnsRow = returnsRow;
             _useAlternateMetadata = useAlternateMetadata;
         }
 
         /// <summary>
-        /// Places messages before or after normal/alternate metadata, keeping ALTROW
+        /// Places messages around metadata and rows, or omits metadata, keeping ALTROW
         /// separate from the regular result set.
         /// </summary>
         /// <param name="session">The connected test session.</param>
@@ -232,6 +267,11 @@ public sealed class HasRowsTests
                     }
                 }
 
+                if (_placement == InfoPlacement.InfoOnly)
+                {
+                    response[0].RemoveAll(token => token is TDSColMetadataToken);
+                }
+
                 if (_useAlternateMetadata)
                 {
                     TDSColMetadataToken metadata = Assert.IsType<TDSColMetadataToken>(response[0][0]);
@@ -239,7 +279,26 @@ public sealed class HasRowsTests
                     response[0].Insert(response[0].Count - 1, new AltRowToken(metadata));
                 }
 
-                int insertAt = _afterMetadata ? (_useAlternateMetadata ? 2 : 1) : 0;
+                int insertAt;
+                switch (_placement)
+                {
+                    case InfoPlacement.BeforeMetadata:
+                    case InfoPlacement.InfoOnly:
+                        insertAt = 0;
+                        break;
+                    case InfoPlacement.AfterMetadata:
+                        insertAt = _useAlternateMetadata ? 2 : 1;
+                        break;
+                    case InfoPlacement.AfterOrder:
+                        insertAt = _useAlternateMetadata ? 2 : 1;
+                        response[0].Insert(insertAt++, new TDSOrderToken(1));
+                        break;
+                    case InfoPlacement.AfterRows:
+                        insertAt = response[0].Count - 1;
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(_placement));
+                }
                 for (int i = 0; i < _infoCount; i++)
                 {
                     response[0].Insert(insertAt + i, new TDSInfoToken(30000, 0, 0, $"Info message {i}"));

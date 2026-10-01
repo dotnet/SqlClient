@@ -26,7 +26,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         /// <summary>
         /// Checks HasRows and INFO delivery across populated and empty result sets
-        /// from SQL Server; simulated-server tests cover precise token placement.
+        /// from SQL Server. PRINT before SELECT is compatibility coverage, not a repro
+        /// of issue #3018; simulated-server tests place INFO between metadata and rows.
         /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [InlineData(false)]

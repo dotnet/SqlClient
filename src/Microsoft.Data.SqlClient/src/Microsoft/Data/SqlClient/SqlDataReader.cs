@@ -4180,6 +4180,42 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        private TdsOperationStatus TryConsumeInfoTokens(SqlCommand command, ref byte token)
+        {
+            while (token == TdsEnums.SQLINFO)
+            {
+                // TryRun cannot consume INFO tokens when the parser is closed or broken.
+                if (_parser.State == TdsParserState.Broken || _parser.State == TdsParserState.Closed)
+                {
+                    throw ADP.ClosedConnectionError();
+                }
+
+                // VSTFDEVDIV713926: defer informational events until the next parser run
+                // to preserve existing message-delivery timing.
+                TdsOperationStatus result;
+                try
+                {
+                    _stateObj._accumulateInfoEvents = true;
+                    result = _parser.TryRun(RunBehavior.ReturnImmediately, command, null, null, _stateObj, out _);
+                    if (result != TdsOperationStatus.Done)
+                    {
+                        return result;
+                    }
+                }
+                finally
+                {
+                    _stateObj._accumulateInfoEvents = false;
+                }
+
+                result = _stateObj.TryPeekByte(out token);
+                if (result != TdsOperationStatus.Done)
+                {
+                    return result;
+                }
+            }
+            return TdsOperationStatus.Done;
+        }
+
         internal TdsOperationStatus TrySetAltMetaDataSet(_SqlMetaDataSet metaDataSet, bool metaDataConsumed)
         {
             if (_altMetaDataSetCollection == null)
@@ -4213,33 +4249,10 @@ namespace Microsoft.Data.SqlClient
                         return result;
                     }
                 }
-                while (b == TdsEnums.SQLINFO)
+                result = TryConsumeInfoTokens(_command, ref b);
+                if (result != TdsOperationStatus.Done)
                 {
-                    // TryRun cannot consume INFO tokens when the parser is closed or broken.
-                    if (_parser.State == TdsParserState.Broken || _parser.State == TdsParserState.Closed)
-                    {
-                        throw ADP.ClosedConnectionError();
-                    }
-
-                    try
-                    {
-                        _stateObj._accumulateInfoEvents = true;
-                        result = _parser.TryRun(RunBehavior.ReturnImmediately, _command, null, null, _stateObj, out _);
-                        if (result != TdsOperationStatus.Done)
-                        {
-                            return result;
-                        }
-                    }
-                    finally
-                    {
-                        _stateObj._accumulateInfoEvents = false;
-                    }
-
-                    result = _stateObj.TryPeekByte(out b);
-                    if (result != TdsOperationStatus.Done)
-                    {
-                        return result;
-                    }
+                    return result;
                 }
                 _hasRows = IsRowToken(b);
             }
@@ -4318,36 +4331,10 @@ namespace Microsoft.Data.SqlClient
                                 return result;
                             }
                         }
-                        while (b == TdsEnums.SQLINFO)
+                        result = TryConsumeInfoTokens(null, ref b);
+                        if (result != TdsOperationStatus.Done)
                         {
-                            // TryRun cannot consume INFO tokens when the parser is closed or broken.
-                            if (_parser.State == TdsParserState.Broken || _parser.State == TdsParserState.Closed)
-                            {
-                                throw ADP.ClosedConnectionError();
-                            }
-
-                            // VSTFDEVDIV713926
-                            // We are accumulating informational events and fire them at next
-                            // TdsParser.Run purely to avoid breaking change
-                            try
-                            {
-                                _stateObj._accumulateInfoEvents = true;
-                                result = _parser.TryRun(RunBehavior.ReturnImmediately, null, null, null, _stateObj, out _);
-                                if (result != TdsOperationStatus.Done)
-                                {
-                                    return result;
-                                }
-                            }
-                            finally
-                            {
-                                _stateObj._accumulateInfoEvents = false;
-                            }
-
-                            result = _stateObj.TryPeekByte(out b);
-                            if (result != TdsOperationStatus.Done)
-                            {
-                                return result;
-                            }
+                            return result;
                         }
                         _hasRows = IsRowToken(b);
                         if (TdsEnums.SQLALTMETADATA == b)
