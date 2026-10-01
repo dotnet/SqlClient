@@ -97,6 +97,7 @@
       <PowerShellCommand>
         dotnet tool run pwsh --
           -NonInteractive
+          -NoProfile
           -ExecutionPolicy Unrestricted
           -Command "$(TrimDocsScript) -inputFile '$(DocumentationFile)' -outputFile '$(IntermediateOutputPath)trimmed/$(TargetName).xml'"
       </PowerShellCommand>
