@@ -24,6 +24,59 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         private static readonly object s_rowVersionLock = new();
 
+        /// <summary>
+        /// Checks HasRows and INFO delivery across populated and empty result sets
+        /// from SQL Server; simulated-server tests cover precise token placement.
+        /// </summary>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [InlineData(false)]
+        [InlineData(true)]
+        public static async Task HasRows_WithInfoMessages_AcrossResultSets(bool useAsync)
+        {
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            if (useAsync)
+            {
+                await connection.OpenAsync();
+            }
+            else
+            {
+                connection.Open();
+            }
+
+            List<string> messages = new();
+            connection.InfoMessage += (_, args) =>
+            {
+                foreach (SqlError error in args.Errors)
+                {
+                    messages.Add(error.Message);
+                }
+            };
+            using SqlCommand command = new(
+                "PRINT N'first'; PRINT N'second'; SELECT 1; " +
+                "PRINT N'third'; PRINT N'fourth'; SELECT 1 WHERE 1 = 0; SELECT 2;",
+                connection);
+            using SqlDataReader reader = useAsync
+                ? await command.ExecuteReaderAsync()
+                : command.ExecuteReader();
+
+            int[] expectedValues = { 1, 0, 2 };
+            for (int i = 0; i < expectedValues.Length; i++)
+            {
+                bool hasRows = expectedValues[i] != 0;
+                Assert.Equal(hasRows, reader.HasRows);
+                Assert.Equal(hasRows, useAsync ? await reader.ReadAsync() : reader.Read());
+                if (hasRows)
+                {
+                    Assert.Equal(expectedValues[i], reader.GetInt32(0));
+                    Assert.False(useAsync ? await reader.ReadAsync() : reader.Read());
+                }
+                Assert.Equal(hasRows, reader.HasRows);
+                Assert.Equal(i < expectedValues.Length - 1,
+                    useAsync ? await reader.NextResultAsync() : reader.NextResult());
+            }
+            Assert.Equal(new[] { "first", "second", "third", "fourth" }, messages);
+        }
+
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void LoadReaderIntoDataTableToTestGetSchemaTable()
         {
