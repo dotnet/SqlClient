@@ -514,13 +514,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         /// <summary>
-        /// Asserts that exactly one mismatch trace was captured and that it names both the
-        /// database the session expected to recover and the database the server reported.
+        /// Asserts that exactly one mismatch trace was captured, that it names both the
+        /// database the session expected to recover and the database the server reported,
+        /// and that it attributes the value to the server.
         /// </summary>
         /// <param name="listener">The listener that observed the reconnection.</param>
         /// <param name="expectedDatabase">Database the session held before the disconnect.</param>
         /// <param name="reportedDatabase">Database the recovery login reported.</param>
-        private static void AssertMismatchTrace(MismatchTraceListener listener,
+        private static void AssertServerReportedMismatchTrace(MismatchTraceListener listener,
             string expectedDatabase, string reportedDatabase)
         {
             string message = Assert.Single(listener.Messages);
@@ -529,6 +530,33 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 StringComparison.Ordinal);
             Assert.Contains($"server reported '{reportedDatabase}'", message,
                 StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// Asserts that exactly one mismatch trace was captured and that it reports the
+        /// absence of a database <c>ENV_CHANGE</c> rather than attributing the fallback
+        /// database to the server.
+        /// <para>
+        /// A server that reports the wrong database and one that reports none are different
+        /// faults, and the fallback value is indistinguishable from a reported one, so the
+        /// trace must not claim the server named it.
+        /// </para>
+        /// </summary>
+        /// <param name="listener">The listener that observed the reconnection.</param>
+        /// <param name="expectedDatabase">Database the session held before the disconnect.</param>
+        /// <param name="fallbackDatabase">Database the connection fell back to.</param>
+        private static void AssertOmittedEnvChangeMismatchTrace(MismatchTraceListener listener,
+            string expectedDatabase, string fallbackDatabase)
+        {
+            string message = Assert.Single(listener.Messages);
+
+            Assert.Contains($"Expected database '{expectedDatabase}'", message,
+                StringComparison.Ordinal);
+            Assert.Contains("carried no database ENV_CHANGE", message,
+                StringComparison.Ordinal);
+            Assert.Contains($"fell back to '{fallbackDatabase}'", message,
+                StringComparison.Ordinal);
+            Assert.DoesNotContain("server reported", message, StringComparison.Ordinal);
         }
 
         /// <summary>
@@ -793,7 +821,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             Assert.Equal(InitialDatabase, connection.Database);
             AssertNoRecoveryUse(server, useCountBeforeReconnect);
-            AssertMismatchTrace(listener, SwitchedDatabase, InitialDatabase);
+            AssertServerReportedMismatchTrace(listener, SwitchedDatabase, InitialDatabase);
         }
 
         /// <summary>
@@ -823,7 +851,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             Assert.Equal(InitialDatabase, connection.Database);
             AssertNoRecoveryUse(server, useCountBeforeReconnect);
-            AssertMismatchTrace(listener, SwitchedDatabase, InitialDatabase);
+            AssertServerReportedMismatchTrace(listener, SwitchedDatabase, InitialDatabase);
         }
 
         /// <summary>
@@ -868,7 +896,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 DisconnectAndExecute(server, connection);
 
                 AssertNoRecoveryUse(server, useCountBeforeReconnect);
-                AssertMismatchTrace(listener, SwitchedDatabase, InitialDatabase);
+                AssertServerReportedMismatchTrace(listener, SwitchedDatabase, InitialDatabase);
                 Assert.Equal(InitialDatabase, connection.Database);
 
                 connection.Close();
@@ -927,7 +955,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(otherCaseName, server.LastLoginResponseDatabase);
 
             AssertNoRecoveryUse(server, useCountBeforeReconnect);
-            AssertMismatchTrace(listener, SwitchedDatabase, otherCaseName);
+            AssertServerReportedMismatchTrace(listener, SwitchedDatabase, otherCaseName);
             Assert.Equal(otherCaseName, connection.Database);
         }
 
@@ -966,7 +994,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             Assert.Equal(InitialDatabase, connection.Database);
             AssertNoRecoveryUse(server, useCountBeforeReconnect);
-            AssertMismatchTrace(listener, SwitchedDatabase, InitialDatabase);
+            AssertOmittedEnvChangeMismatchTrace(listener, SwitchedDatabase, InitialDatabase);
         }
 
         /// <summary>
@@ -996,7 +1024,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             Assert.Equal(InitialDatabase, connection.Database);
             AssertNoRecoveryUse(server, useCountBeforeReconnect);
-            AssertMismatchTrace(listener, SwitchedDatabase, InitialDatabase);
+            AssertOmittedEnvChangeMismatchTrace(listener, SwitchedDatabase, InitialDatabase);
         }
 
         #endregion

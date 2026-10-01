@@ -240,6 +240,19 @@ namespace Microsoft.Data.SqlClient.Connection
         // @TODO: Rename for naming conventions (remove f prefix)
         private bool _fConnectionOpen = false;
 
+        /// <summary>
+        /// Whether a database <c>ENV_CHANGE</c> token arrived while the most recent login
+        /// response was being parsed.
+        /// </summary>
+        /// <remarks>
+        /// Diagnostic only. <see cref="CurrentDatabase"/> alone cannot distinguish a server
+        /// that reported a database from one that reported none, because the value a login
+        /// falls back to is the initial catalog and a server may legitimately report exactly
+        /// that. Reset immediately before the login response is parsed and read only while
+        /// completing that same login, so a later <c>USE</c> cannot leave it stale.
+        /// </remarks>
+        private bool _databaseEnvChangeReceived;
+
         private readonly SqlCredential _credential;
 
         private string _currentLanguage;
@@ -1155,6 +1168,7 @@ namespace Microsoft.Data.SqlClient.Connection
                     }
 
                     CurrentDatabase = rec._newValue;
+                    _databaseEnvChangeReceived = true;
                     break;
 
                 case TdsEnums.ENV_LANG:
@@ -2311,6 +2325,11 @@ namespace Microsoft.Data.SqlClient.Connection
 
         private void CompleteLogin(bool enlistOK) // @TODO: Rename as per guidelines
         {
+            // Scope the diagnostic flag to the login response parsed by the Run below, so a
+            // database ENV_CHANGE from an earlier login or a later USE cannot be mistaken
+            // for one sent by this recovery.
+            _databaseEnvChangeReceived = false;
+
             _parser.Run(
                 RunBehavior.UntilDone,
                 cmdHandler: null,
@@ -2387,13 +2406,30 @@ namespace Microsoft.Data.SqlClient.Connection
                     if (recoveredDatabase != null
                         && !string.Equals(CurrentDatabase, recoveredDatabase, StringComparison.Ordinal))
                     {
-                        SqlClientEventSource.Log.TryTraceEvent(
-                            "SqlInternalConnectionTds.CompleteLogin | ERR | " +
-                            "Object Id {0}, Database context mismatch after session recovery. " +
-                            "Expected database '{1}', server reported '{2}'.",
-                            ObjectID,
-                            recoveredDatabase,
-                            CurrentDatabase);
+                        // Distinguish the two server behaviors. A server that reported the
+                        // wrong database and one that reported none are different faults,
+                        // and the fallback value is indistinguishable from a reported one.
+                        if (_databaseEnvChangeReceived)
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent(
+                                "SqlInternalConnectionTds.CompleteLogin | ERR | " +
+                                "Object Id {0}, Database context mismatch after session recovery. " +
+                                "Expected database '{1}', server reported '{2}'.",
+                                ObjectID,
+                                recoveredDatabase,
+                                CurrentDatabase);
+                        }
+                        else
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent(
+                                "SqlInternalConnectionTds.CompleteLogin | ERR | " +
+                                "Object Id {0}, Database context mismatch after session recovery. " +
+                                "Expected database '{1}', but the recovery response carried no " +
+                                "database ENV_CHANGE and the connection fell back to '{2}'.",
+                                ObjectID,
+                                recoveredDatabase,
+                                CurrentDatabase);
+                        }
                     }
                 }
 
