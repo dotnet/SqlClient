@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="BuildAll" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="BuildAll" TreatAsLocalProperty="TestFilters" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <!-- Imports ========================================================= -->
   <Import Project="src/Directory.Build.props" />
 
@@ -438,7 +438,7 @@
       that require signed assemblies, and they would fail with strong name validation exceptions on
       .NET Framework.
     -->
-    <TestFilters Condition="'$(TestFilters)' != '' AND '$(SigningKeyPath)' == ''">$(TestFilters)&amp;category!=signed</TestFilters>
+    <TestFilters Condition="'$(TestFilters)' != '' AND '$(SigningKeyPath)' == ''">($(TestFilters))&amp;category!=signed</TestFilters>
     <TestFiltersArgument Condition="'$(TestFilters)' != ''">
       --filter "$(TestFilters)"
     </TestFiltersArgument>
@@ -839,7 +839,7 @@
       <TestSetFilter>$(TestSetFilter.Trim('|'))</TestSetFilter>
 
       <!-- Combine existing filters with test set filters -->
-      <ManualTestFilters Condition="'$(TestSetFilter)' != '' and '$(TestFilters)' != ''">$(TestFilters)&amp;($(TestSetFilter))</ManualTestFilters>
+      <ManualTestFilters Condition="'$(TestSetFilter)' != '' and '$(TestFilters)' != ''">($(TestFilters))&amp;($(TestSetFilter))</ManualTestFilters>
       <ManualTestFilters Condition="'$(TestSetFilter)' == ''">$(TestFilters)</ManualTestFilters>
       <ManualTestFilters Condition="'$(TestFilters)' == ''">$(TestSetFilter)</ManualTestFilters>
       <ManualTestFiltersArgument Condition="'$(ManualTestFilters)' != ''">--filter "$(ManualTestFilters)"</ManualTestFiltersArgument>
