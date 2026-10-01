@@ -29,13 +29,14 @@
 
     <!--
       BuildSuffix
-      Aplies to:      Build*, Pack*
+      Applies to:     Build*, Pack*
       Description:    Suffix to add at the end of the package version to indicate the generated
                       version is a pre-release.
 
                       For local developer builds, this does not need to be set. If a specific
-                      package version is needed, specify PackageVersionMds. Otherwise, the
-                      generated package version will eg, 1.2.3.dev.
+                      package version is needed, specify PackageVersionSqlClient or
+                      PackageVersionSqlServer. Otherwise, the generated version is the
+                      source-declared next version with a -dev suffix.
 
                       For automated builds, this should only be specified on pre-release builds, ie
                       PR/CI pipeline runs. For official, production-ready builds, omit this field
@@ -203,8 +204,8 @@
                       references (eg, Abstractions from SqlClient) will be made as project
                       references. If set to "Package", package references will be made instead. When
                       running in package mode, target versions can be specified via PackageVersion*
-                      build parameters. If these are not provided, the central feed version will be
-                      used instead (see Directory.Packages.props). In package mode, all Pack*
+                      build parameters. If these are not provided, versions are calculated from
+                      Versions.props. In package mode, all Pack*
                       targets also mirror their .nupkg/.snupkg output into the local NuGet feed
                       directory (packages/) so that downstream builds in the same invocation can
                       restore them without a separate feed publish step. When running in project
@@ -938,7 +939,12 @@
   </Target>
 
   <!-- PackAkvProvider: Packages Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider -->
-  <Target Name="PackAkvProvider">
+  <!-- dotnet pack builds this project; only its sibling packages need explicit preparation.
+       PackSqlClient instead builds multiple projects whose outputs share one nuspec. -->
+  <PropertyGroup>
+    <PackAkvProviderDependsOn Condition="'$(PackBuild.ToLower())' == 'true'">$(BuildAkvProviderDependsOn)</PackAkvProviderDependsOn>
+  </PropertyGroup>
+  <Target Name="PackAkvProvider" DependsOnTargets="$(PackAkvProviderDependsOn)">
     <PropertyGroup>
       <DotnetCommand>
         "$(DotnetPath)dotnet" pack "$(AkvProviderProjectPath)"
@@ -1046,7 +1052,11 @@
   </Target>
 
   <!-- PackAbstractions: Packages Microsoft.Data.SqlClient.Extensions.Abstractions -->
-  <Target Name="PackAbstractions">
+  <!-- dotnet pack builds this project; only its sibling packages need explicit preparation. -->
+  <PropertyGroup>
+    <PackAbstractionsDependsOn Condition="'$(PackBuild.ToLower())' == 'true'">$(BuildAbstractionsDependsOn)</PackAbstractionsDependsOn>
+  </PropertyGroup>
+  <Target Name="PackAbstractions" DependsOnTargets="$(PackAbstractionsDependsOn)">
     <PropertyGroup>
       <DotnetCommand>
         "$(DotnetPath)dotnet" pack "$(AbstractionsProjectPath)"
@@ -1153,7 +1163,11 @@
   </Target>
 
   <!-- PackAzure: Packages Microsoft.Data.SqlClient.Extensions.Azure -->
-  <Target Name="PackAzure">
+  <!-- dotnet pack builds this project; only its sibling packages need explicit preparation. -->
+  <PropertyGroup>
+    <PackAzureDependsOn Condition="'$(PackBuild.ToLower())' == 'true'">$(BuildAzureDependsOn)</PackAzureDependsOn>
+  </PropertyGroup>
+  <Target Name="PackAzure" DependsOnTargets="$(PackAzureDependsOn)">
     <PropertyGroup>
       <DotnetCommand>
         "$(DotnetPath)dotnet" pack "$(AzureProjectPath)"
@@ -1425,8 +1439,6 @@
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
-        $(PackageVersionAbstractionsArgument)
-        $(PackageVersionLoggingArgument)
         $(PackageVersionSqlClientArgument)
       </DotnetCommand>
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
@@ -1445,8 +1457,6 @@
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
-        $(PackageVersionAbstractionsArgument)
-        $(PackageVersionLoggingArgument)
         $(PackageVersionSqlClientArgument)
         $(PackageVersionSqlServerArgument)
       </DotnetCommand>
@@ -1466,8 +1476,6 @@
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
-        $(PackageVersionAbstractionsArgument)
-        $(PackageVersionLoggingArgument)
         $(PackageVersionSqlClientArgument)
       </DotnetCommand>
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
@@ -1486,8 +1494,6 @@
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
-        $(PackageVersionAbstractionsArgument)
-        $(PackageVersionLoggingArgument)
         $(PackageVersionSqlClientArgument)
       </DotnetCommand>
       <DotnetCommand>$([System.Text.RegularExpressions.Regex]::Replace($(DotnetCommand), "\s+", " "))</DotnetCommand>
