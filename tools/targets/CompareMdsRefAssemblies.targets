@@ -13,6 +13,10 @@
   BaselinePackageVersion is required. The consolidated ref project (ref/) is
   built and compared against the published package's ref assemblies.
 
+  BaselineNetFrameworkTfm and BaselineNetTfm can override the baseline folders.
+  By default, use matching folders when present, otherwise the previous driver
+  targets (net462 and net9.0, or net8.0 when net9.0 is absent).
+
   Depends on src/Directory.Build.props for path properties and build configuration.
 -->
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
@@ -38,9 +42,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <_RefTfm Include="net462" />
-      <_RefTfm Include="net8.0" />
-      <_RefTfm Include="net9.0" />
+      <_RefTfm Include="net47" />
+      <_RefTfm Include="net10.0" />
       <_RefTfm Include="netstandard2.0" />
     </ItemGroup>
 
@@ -48,6 +51,27 @@
     <Message Importance="high" Text="BaselineExtractDir: $(BaselineExtractDir)" />
     <Message Importance="high" Text="RefProjectPath:     $(RefProjectPath)" />
     <Message Importance="high" Text="RefOutputDir:       $(RefOutputDir)" />
+  </Target>
+
+  <!-- A historical package may not contain the newly supported local TFMs. -->
+  <Target Name="_ResolveRefBaselineFrameworks" DependsOnTargets="_SetApiCompatProperties">
+    <PropertyGroup>
+      <BaselineNetFrameworkTfm Condition="'$(BaselineNetFrameworkTfm)' == '' AND Exists('$(BaselineExtractDir)ref/net47/Microsoft.Data.SqlClient.dll')">net47</BaselineNetFrameworkTfm>
+      <BaselineNetFrameworkTfm Condition="'$(BaselineNetFrameworkTfm)' == ''">net462</BaselineNetFrameworkTfm>
+      <BaselineNetTfm Condition="'$(BaselineNetTfm)' == '' AND Exists('$(BaselineExtractDir)ref/net10.0/Microsoft.Data.SqlClient.dll')">net10.0</BaselineNetTfm>
+      <BaselineNetTfm Condition="'$(BaselineNetTfm)' == '' AND Exists('$(BaselineExtractDir)ref/net9.0/Microsoft.Data.SqlClient.dll')">net9.0</BaselineNetTfm>
+      <BaselineNetTfm Condition="'$(BaselineNetTfm)' == ''">net8.0</BaselineNetTfm>
+    </PropertyGroup>
+    <ItemGroup>
+      <_RefTfm>
+        <BaselineTfm Condition="'%(_RefTfm.Identity)' == 'net47'">$(BaselineNetFrameworkTfm)</BaselineTfm>
+        <BaselineTfm Condition="'%(_RefTfm.Identity)' == 'net10.0'">$(BaselineNetTfm)</BaselineTfm>
+        <BaselineTfm Condition="'%(_RefTfm.Identity)' == 'netstandard2.0'">netstandard2.0</BaselineTfm>
+      </_RefTfm>
+    </ItemGroup>
+    <Error
+      Condition="!Exists('$(BaselineExtractDir)ref/%(_RefTfm.BaselineTfm)/Microsoft.Data.SqlClient.dll')"
+      Text="Baseline package $(BaselinePackageVersion) has no ref/%(_RefTfm.BaselineTfm)/Microsoft.Data.SqlClient.dll for local %(_RefTfm.Identity). Select a baseline containing this asset, or set BaselineNetFrameworkTfm/BaselineNetTfm to its corresponding Framework/.NET ref folder." />
   </Target>
 
   <!-- ================================================================== -->
@@ -118,7 +142,7 @@
   <!-- _RunRefApiCompat                                                   -->
   <!-- ================================================================== -->
   <Target Name="_RunRefApiCompat"
-          DependsOnTargets="_DownloadBaselinePackage;_BuildRefProject">
+          DependsOnTargets="_DownloadBaselinePackage;_ResolveRefBaselineFrameworks;_BuildRefProject">
 
     <!--
       For each TFM, compare the consolidated ref output against the baseline
@@ -138,10 +162,10 @@
 
     <Message
       Importance="high"
-      Text="--- Comparing %(_RefTfm.Identity) ref vs baseline $(BaselinePackageVersion) ---" />
+      Text="--- Comparing %(_RefTfm.Identity) ref vs baseline $(BaselinePackageVersion) %(_RefTfm.BaselineTfm) ---" />
 
     <Exec
-      Command="dotnet tool run apicompat -- -l &quot;$(BaselineExtractDir)ref/%(_RefTfm.Identity)/Microsoft.Data.SqlClient.dll&quot; -r &quot;$(RefOutputDir)%(_RefTfm.Identity)/Microsoft.Data.SqlClient.dll&quot; --strict-mode &gt; &quot;$(ApiCompatResultsDir)%(_RefTfm.Identity).txt&quot; 2&gt;&amp;1"
+      Command="dotnet tool run apicompat -- -l &quot;$(BaselineExtractDir)ref/%(_RefTfm.BaselineTfm)/Microsoft.Data.SqlClient.dll&quot; -r &quot;$(RefOutputDir)%(_RefTfm.Identity)/Microsoft.Data.SqlClient.dll&quot; --strict-mode &gt; &quot;$(ApiCompatResultsDir)%(_RefTfm.Identity).txt&quot; 2&gt;&amp;1"
       WorkingDirectory="$(RepoRoot)"
       ContinueOnError="ErrorAndContinue" />
 
