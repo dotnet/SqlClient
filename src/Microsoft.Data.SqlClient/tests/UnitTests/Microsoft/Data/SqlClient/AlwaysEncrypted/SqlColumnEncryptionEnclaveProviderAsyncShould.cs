@@ -313,8 +313,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             FakeAttestationEnclaveProvider provider = new FakeAttestationEnclaveProvider(TimeSpan.FromMilliseconds(20));
             EnclaveSessionParameters parameters = NewSessionParameters();
 
-            SqlEnclaveSession[] sessions = await Task.WhenAll(
-                Enumerable.Range(0, 8).Select(index => Task.Run(() => AttestAsync(provider, parameters))));
+            // Prime every cold-cache lookup before allowing any caller to attest. Task.Run plus a
+            // short delay does not guarantee this: a slow worker can arrive after the cache is filled.
+            TaskCompletionSource<bool> startAttestation = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            Task<SqlEnclaveSession>[] callers = Enumerable.Range(0, 8)
+                .Select(index => AttestAsync(provider, parameters, beforeCreate: startAttestation.Task))
+                .ToArray();
+            startAttestation.SetResult(true);
+
+            SqlEnclaveSession[] sessions = await Task.WhenAll(callers);
 
             Assert.All(sessions, session => Assert.NotNull(session));
 
@@ -444,10 +451,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
         /// Drives the full async attestation sequence the driver uses:
         /// GetEnclaveSessionAsync -> GetAttestationParametersAsync -> CreateEnclaveSessionAsync.
         /// </summary>
+        /// <param name="provider">The provider being exercised.</param>
+        /// <param name="parameters">The cache key and attestation settings for the session.</param>
+        /// <param name="cancellationToken">Cancellation forwarded to each provider operation.</param>
+        /// <param name="beforeCreate">An optional test gate after parameter generation, before attestation.</param>
+        /// <returns>The cached or newly created enclave session.</returns>
         private static async Task<SqlEnclaveSession> AttestAsync(
             SqlColumnEncryptionEnclaveProvider provider,
             EnclaveSessionParameters parameters,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default,
+            Task beforeCreate = null)
         {
             (SqlEnclaveSession session, _, byte[] customData, int customDataLength) =
                 await provider.GetEnclaveSessionAsync(parameters, generateCustomData: true, isRetry: false, cancellationToken)
@@ -462,6 +475,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             SqlEnclaveAttestationParameters attestationParameters = await provider
                 .GetAttestationParametersAsync(parameters.AttestationUrl, customData, customDataLength, cancellationToken)
                 .ConfigureAwait(false);
+
+            if (beforeCreate != null)
+            {
+                await beforeCreate.ConfigureAwait(false);
+            }
 
             (SqlEnclaveSession created, _) = await provider
                 .CreateEnclaveSessionAsync(
