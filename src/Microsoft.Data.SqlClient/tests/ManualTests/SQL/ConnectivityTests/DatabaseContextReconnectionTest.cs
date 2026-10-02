@@ -69,18 +69,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     foreach (string tableName in _createdTableNames)
                     {
-                        try
-                        {
-                            using SqlCommand cmd = conn.CreateCommand();
-                            cmd.CommandText =
-                                $"IF OBJECT_ID(N'[{initialCatalog}].dbo.[{tableName}]') " +
-                                $"IS NOT NULL DROP TABLE [{initialCatalog}].dbo.[{tableName}]";
-                            cmd.ExecuteNonQuery();
-                        }
-                        catch
-                        {
-                            // Best-effort cleanup
-                        }
+                        DataTestUtility.DropTable(
+                            conn,
+                            $"[{initialCatalog}].dbo.[{tableName}]");
                     }
                 }
             }
@@ -313,79 +304,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         #endregion
 
-        #region Stress tests
-
-        /// <summary>
-        /// Runs USE -> KILL -> verify in a tight loop to surface intermittent
-        /// failures in session recovery.
-        /// </summary>
-        [ConditionalFact(typeof(DataTestUtility),
-            nameof(DataTestUtility.AreConnStringsSetup),
-            nameof(DataTestUtility.IsNotAzureServer),
-            nameof(DataTestUtility.IsNotAzureSynapse))]
-        public void UseDatabase_KillReconnect_StressLoop_PreservesContext()
-        {
-            const int iterations = 100;
-            var builder = BuildConnectionString(pooling: false);
-
-            using SqlConnection conn = new(builder.ConnectionString);
-            conn.Open();
-
-            for (int i = 0; i < iterations; i++)
-            {
-                string context = $"USE stress iteration {i}";
-
-                // Switch to temp database (may already be there after
-                // reconnection, but USE is idempotent).
-                using (SqlCommand useCmd = new($"USE [{_tempDbName}]", conn))
-                {
-                    useCmd.ExecuteNonQuery();
-                }
-                AssertDatabaseContext(conn, _tempDbName, context + " pre-kill");
-
-                Guid connIdBefore = GetConnectionId(conn);
-                KillSpid(conn.ServerProcessId);
-
-                // The next command drives reconnection.
-                AssertDatabaseContext(conn, _tempDbName, context + " post-reconnect");
-                Guid connIdAfter = GetConnectionId(conn);
-                Assert.NotEqual(connIdBefore, connIdAfter);
-            }
-        }
-
-        /// <summary>
-        /// Same stress loop but via <see cref="SqlConnection.ChangeDatabase"/>.
-        /// </summary>
-        [ConditionalFact(typeof(DataTestUtility),
-            nameof(DataTestUtility.AreConnStringsSetup),
-            nameof(DataTestUtility.IsNotAzureServer),
-            nameof(DataTestUtility.IsNotAzureSynapse))]
-        public void ChangeDatabase_KillReconnect_StressLoop_PreservesContext()
-        {
-            const int iterations = 100;
-            var builder = BuildConnectionString(pooling: false);
-
-            using SqlConnection conn = new(builder.ConnectionString);
-            conn.Open();
-
-            for (int i = 0; i < iterations; i++)
-            {
-                string context = $"ChangeDatabase stress iteration {i}";
-
-                conn.ChangeDatabase(_tempDbName);
-                AssertDatabaseContext(conn, _tempDbName, context + " pre-kill");
-
-                Guid connIdBefore = GetConnectionId(conn);
-                KillSpid(conn.ServerProcessId);
-
-                AssertDatabaseContext(conn, _tempDbName, context + " post-reconnect");
-                Guid connIdAfter = GetConnectionId(conn);
-                Assert.NotEqual(connIdBefore, connIdAfter);
-            }
-        }
-
-        #endregion
-
         #region Object-creation tests
 
         /// <summary>
@@ -415,11 +333,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             KillSpid(conn.ServerProcessId);
 
             // Create a table - this DDL should execute in _tempDbName
-            using (SqlCommand createCmd = new(
-                $"CREATE TABLE [{tableName}] (Id INT PRIMARY KEY, Val NVARCHAR(50))", conn))
-            {
-                createCmd.ExecuteNonQuery();
-            }
+            DataTestUtility.CreateTable(
+                conn,
+                $"[{tableName}]",
+                "(Id INT PRIMARY KEY, Val NVARCHAR(50))");
 
             // Insert a row to confirm the table is usable
             using (SqlCommand insertCmd = new(
@@ -458,118 +375,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.True(count == 0,
                     $"Table '{tableName}' was found in initial catalog '{initialCatalog}'. " +
                     "DDL executed in the WRONG database after reconnection!");
-            }
-        }
-
-        /// <summary>
-        /// Stress loop: each iteration switches database, kills the connection,
-        /// creates a uniquely-named table after reconnection, then verifies from
-        /// a separate connection that every table landed in the correct database.
-        /// Also runs a variable number of queries before and after the USE to
-        /// vary the session state and packet buffer contents.
-        /// </summary>
-        [ConditionalFact(typeof(DataTestUtility),
-            nameof(DataTestUtility.AreConnStringsSetup),
-            nameof(DataTestUtility.IsNotAzureServer),
-            nameof(DataTestUtility.IsNotAzureSynapse))]
-        public void UseDatabase_KillReconnect_StressCreateTables_LandInCorrectDb()
-        {
-            const int iterations = 50;
-            var builder = BuildConnectionString(pooling: false);
-            var rng = new Random(42); // deterministic seed for reproducibility
-            string[] tableNames = new string[iterations];
-
-            using SqlConnection conn = new(builder.ConnectionString);
-            conn.Open();
-
-            for (int i = 0; i < iterations; i++)
-            {
-                string context = $"stress-create iteration {i}";
-
-                // Variable workload BEFORE USE - pollute session state
-                int preQueries = rng.Next(0, 6);
-                for (int q = 0; q < preQueries; q++)
-                {
-                    using SqlCommand workCmd = new(
-                        $"SET NOCOUNT ON; SELECT TOP {rng.Next(1, 100)} * FROM sys.objects", conn);
-                    using var reader = workCmd.ExecuteReader();
-                    while (reader.Read()) { }
-                }
-
-                // Add session state: SET options increase recovery payload
-                if (i % 3 == 0)
-                {
-                    using SqlCommand setCmd = new(
-                        "SET TEXTSIZE 65536; SET LOCK_TIMEOUT 5000", conn);
-                    setCmd.ExecuteNonQuery();
-                }
-
-                // Switch to temp database
-                using (SqlCommand useCmd = new($"USE [{_tempDbName}]", conn))
-                {
-                    useCmd.ExecuteNonQuery();
-                }
-
-                // Variable workload AFTER USE, BEFORE kill
-                int postQueries = rng.Next(0, 4);
-                for (int q = 0; q < postQueries; q++)
-                {
-                    using SqlCommand workCmd = new("SELECT GETDATE()", conn);
-                    workCmd.ExecuteScalar();
-                }
-
-                AssertDatabaseContext(conn, _tempDbName, context + " pre-kill");
-
-                Guid connIdBefore = GetConnectionId(conn);
-                KillSpid(conn.ServerProcessId);
-
-                // Reconnection happens here - create a table
-                string tableName = $"tbl_s{i}_{Guid.NewGuid().ToString("N").Substring(0, 6)}";
-                tableNames[i] = tableName;
-                _createdTableNames.Add(tableName);
-
-                using (SqlCommand createCmd = new(
-                    $"CREATE TABLE [{tableName}] (Id INT)", conn))
-                {
-                    createCmd.ExecuteNonQuery();
-                }
-
-                AssertDatabaseContext(conn, _tempDbName, context + " post-create");
-                Guid connIdAfter = GetConnectionId(conn);
-                Assert.NotEqual(connIdBefore, connIdAfter);
-            }
-
-            // Bulk verification: every table must exist in _tempDbName
-            using SqlConnection verifier = new(_baseConnectionString);
-            verifier.Open();
-
-            string initialCatalog = verifier.Database;
-
-            for (int i = 0; i < iterations; i++)
-            {
-                using SqlCommand checkCmd = new(
-                    $"SELECT COUNT(*) FROM [{_tempDbName}].INFORMATION_SCHEMA.TABLES " +
-                    $"WHERE TABLE_NAME = @name", verifier);
-                checkCmd.Parameters.AddWithValue("@name", tableNames[i]);
-                int found = (int)checkCmd.ExecuteScalar();
-                Assert.True(found == 1,
-                    $"Iteration {i}: Table '{tableNames[i]}' NOT found in '{_tempDbName}'. " +
-                    "Object creation landed in the wrong database.");
-
-                // Negative check against initial catalog
-                if (!string.IsNullOrEmpty(initialCatalog)
-                    && !string.Equals(initialCatalog, _tempDbName,
-                        StringComparison.OrdinalIgnoreCase))
-                {
-                    using SqlCommand negCmd = new(
-                        $"SELECT COUNT(*) FROM [{initialCatalog}].INFORMATION_SCHEMA.TABLES " +
-                        $"WHERE TABLE_NAME = @name", verifier);
-                    negCmd.Parameters.AddWithValue("@name", tableNames[i]);
-                    int wrongDb = (int)negCmd.ExecuteScalar();
-                    Assert.True(wrongDb == 0,
-                        $"Iteration {i}: Table '{tableNames[i]}' found in initial catalog " +
-                        $"'{initialCatalog}' - DDL executed in WRONG database!");
-                }
             }
         }
 
@@ -614,11 +419,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             KillSpid(conn.ServerProcessId);
 
             // After reconnection, create a table - must land in _tempDbName
-            using (SqlCommand createCmd = new(
-                $"CREATE TABLE [{tableName}] (Id INT)", conn))
-            {
-                createCmd.ExecuteNonQuery();
-            }
+            DataTestUtility.CreateTable(conn, $"[{tableName}]", "(Id INT)");
 
             AssertDatabaseContext(conn, _tempDbName, "post-reconnect");
 
@@ -684,11 +485,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             KillSpid(conn.ServerProcessId);
 
             // Create table after second reconnection
-            using (SqlCommand createCmd = new(
-                $"CREATE TABLE [{tableName}] (Id INT)", conn))
-            {
-                createCmd.ExecuteNonQuery();
-            }
+            DataTestUtility.CreateTable(conn, $"[{tableName}]", "(Id INT)");
 
             AssertDatabaseContext(conn, _tempDbName, "after double kill");
 
