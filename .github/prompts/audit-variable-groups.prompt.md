@@ -45,15 +45,16 @@ is consumed. Resolve repository and ref scope as follows:
 3. Include repositories and refs referenced as templates from any included ref, such as
    `resources.repositories` refs and cross-repository `template` or `extends` references, since
    template files can declare variable groups.
-4. For in-scope repositories that no enabled or paused pipeline uses, use the configured default
-   branch.
+4. A repository that no enabled or paused pipeline uses, directly or as a template source,
+   contributes no YAML usage. Report any such user-supplied repository as having no pipeline
+   roots rather than scanning it.
 5. Exclude disabled and deleted pipelines unless the user explicitly includes them. Include
    paused pipelines, because they can run again once resumed.
 
-The audit scope is incomplete when the user restricts repositories, branches, or tags, or when
-the run-capable refs of any pipeline cannot be fully enumerated. In either case, report every
-variable group that is not referenced within the audited scope as **usage unknown**, never as
-unused.
+The audit scope is incomplete when the user restricts repositories, branches, or tags, when the
+run-capable refs of any pipeline cannot be fully enumerated, or when a template or group
+reference cannot be resolved (see step 2). In any of these cases, report every variable group
+that is not referenced within the audited scope as **usage unknown**, never as unused.
 
 Before starting the audit, present the resolved organization, project, repositories, the number
 of refs per repository and how they were derived, and any variable-group filter. State whether
@@ -82,14 +83,24 @@ the stem "delet" (matching "delete", "deleted", and "deletion"), case-insensitiv
 the exact marker may vary. Ignore current descriptions when determining actual usage so they do
 not bias the search.
 
-### 2. Search repositories for variable-group references
+### 2. Search YAML pipelines for variable-group references
 
-For each repository and ref in scope:
+For each enabled or paused YAML pipeline and each run-capable ref in scope:
 
-1. Enumerate files recursively at that ref.
-2. Restrict candidates to `.yml` and `.yaml` files.
-3. Retrieve each candidate file's content without modifying the repository.
-4. Search for every in-scope variable-group name.
+1. Start from the pipeline definition's configured YAML path at that ref.
+2. Follow every template reference transitively, including stage, job, step, and variable
+   templates, `extends` templates, and templates from other repositories through
+   `resources.repositories` aliases and their refs.
+3. Retrieve each reached file's content without modifying the repository.
+4. Search the reached files for every in-scope variable-group name.
+
+Do not scan YAML files that are not reachable from an included pipeline's YAML path. Examples,
+test fixtures, and files belonging to disabled or deleted pipelines must not count as usage.
+
+Resolve template expressions from values fixed in the YAML. When a template path, repository
+ref, or `group:` value depends on a parameter that declares a `values` list, evaluate every
+allowed value. If it depends on anything else that cannot be resolved, mark that pipeline's
+scope incomplete instead of scanning unrelated YAML.
 
 Many refs share identical files. Fetch each distinct file version, identified by its object ID,
 once and reuse the result for every ref that contains it.
@@ -101,9 +112,8 @@ match `FooBar`. Recognize these YAML forms:
 - `group: "<name>"`, with the name bounded by double quotes.
 - `group: <name>`, with the value followed by end-of-line, whitespace, or `#`.
 
-Prefer likely pipeline locations when a repository is large, but do not omit root-level YAML
-files. Handle pagination and transient throttling using the conventions of the active
-integration. Retry transient failures with bounded exponential backoff.
+Handle pagination and transient throttling using the conventions of the active integration.
+Retry transient failures with bounded exponential backoff.
 
 ### 3. Search Classic pipelines for variable-group references
 
@@ -182,8 +192,9 @@ representation.
 Apply these description rules:
 
 - **Used groups**: prepend `[Used by: <repo>: <branch1>, <branch2>; <repo2>: <branch>; Classic/<type>: <pipeline name>] ` to the existing description after stripping any previous `[Used by: ...]` prefix. `<type>` is `Build` or `Release`.
-  When a repository contributes more than five refs, list its default branch and summarize the
-  rest as a count, for example `<repo>: main +12 refs`.
+  When a group is referenced on more than five refs in a repository, list five of those refs,
+  putting the default branch first only if it is one of them, and summarize the rest as a
+  count, for example `<repo>: <ref1>, <ref2>, <ref3>, <ref4>, <ref5> +12 refs`.
 - **Unused groups**: set the description to the resolved unused marker.
 - **Incorrectly marked unused**: replace the unused marker with `[Used by: ...]`.
 - **Already correct**: skip groups whose description would not change.
