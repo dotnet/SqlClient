@@ -73,6 +73,11 @@
          above to locate the runtime DLL inside the NuGet package layout. -->
     <Reference Include="Microsoft.Data.SqlClient"
                HintPath="$(PkgMicrosoft_Data_SqlClient)/lib/$(_SqlClientPackageTfm)/Microsoft.Data.SqlClient.dll" />
+    <!-- ExcludeAssets="compile" above also suppresses compile assets across the driver package's
+         dependency subtree, which is where Abstractions would otherwise come from.  Tests here use
+         SqlAuthenticationProvider and friends, which Microsoft.Data.SqlClient only type-forwards to
+         that assembly, so it must be referenced directly for those forwards to resolve. -->
+    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Abstractions" />
     <PackageReference Include="Microsoft.SqlServer.Server" />
   </ItemGroup>
 
@@ -106,6 +111,7 @@
     <PackageReference Include="xunit.runner.visualstudio" ExcludeAssets="compile" />
 
     <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\tests\Common\Microsoft.Data.SqlClient.TestCommon.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\tests\CommonInternals\Microsoft.Data.SqlClient.TestCommon.Internals.csproj" />
     <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\tests\tools\TDS\TDS\TDS.csproj" />
     <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\tests\tools\TDS\TDS.EndPoint\TDS.EndPoint.csproj" />
     <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\tests\tools\TDS\TDS.Servers\TDS.Servers.csproj" />
@@ -126,6 +132,7 @@
     <PackageReference Include="xunit.runner.visualstudio" ExcludeAssets="compile" />
 
     <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\tests\Common\Microsoft.Data.SqlClient.TestCommon.csproj" />
+    <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\tests\CommonInternals\Microsoft.Data.SqlClient.TestCommon.Internals.csproj" />
     <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\tests\tools\TDS\TDS\TDS.csproj" />
     <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\tests\tools\TDS\TDS.EndPoint\TDS.EndPoint.csproj" />
     <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\tests\tools\TDS\TDS.Servers\TDS.Servers.csproj" />
