@@ -13,8 +13,11 @@ The package provides the types and attributes needed to create SQL Server CLR us
 
 This package supports:
 
-- .NET Framework 4.6+
+- .NET Framework 4.7+ (`net47`)
 - .NET Standard 2.0 (for .NET Core 2.0+ and .NET 5+)
+
+The package targets `net47;netstandard2.0`. Applications using it with the current
+Microsoft.Data.SqlClient driver require .NET Framework 4.7+ or .NET 10.0+.
 
 ## Installation
 
