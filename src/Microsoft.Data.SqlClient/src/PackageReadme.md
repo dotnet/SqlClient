@@ -13,8 +13,11 @@ This library grew from a union of the two `System.Data.SqlClient` components whi
 
 This package supports:
 
-- .NET Framework 4.6.2+
-- .NET 8.0+
+- .NET Framework 4.7+
+- .NET 10.0+
+
+The implementation targets `net47;net10.0`. Reference and unsupported-platform assemblies also
+retain `netstandard2.0`; that target does not extend supported driver runtimes.
 
 ## Installation
 

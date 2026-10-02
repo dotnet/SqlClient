@@ -28,11 +28,11 @@ parameters:
 
   - name: netTestRuntimes
     type: object
-    default: [net8.0, net9.0, net10.0]
+    default: [net10.0]
 
   - name: netFrameworkTestRuntimes
     type: object
-    default: [net462]
+    default: [net47]
 
 stages:
 

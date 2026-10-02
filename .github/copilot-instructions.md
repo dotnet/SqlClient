@@ -11,7 +11,7 @@
 
 ## 📚 Project Overview
 This project is a .NET data provider for SQL Server, enabling .NET applications to interact with SQL Server databases. It supports various features like connection pooling, transaction management, and asynchronous operations.
-The project builds from a **single unified project** at `src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj`. Its framework and platform selection is defined by the project and imported build files. Public API declarations are unified under `src/Microsoft.Data.SqlClient/ref/`; the legacy `netfx/` and `netcore/` directories are no longer used.
+The project builds from a **single unified project** at `src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj`, targeting `net47;net10.0` (minimum runtime compatibility: .NET Framework 4.7 and .NET 10). Public API declarations are unified under `src/Microsoft.Data.SqlClient/ref/`; reference and unsupported-platform projects additionally preserve `netstandard2.0`. The legacy `netfx/` and `netcore/` directories are no longer used.
 The project includes:
 - **Public APIs**: Defined by `src/Microsoft.Data.SqlClient/ref/Microsoft.Data.SqlClient.csproj` and the reference source files beside it.
 - **Implementations**: All source code in `src/Microsoft.Data.SqlClient/src/`.
@@ -51,12 +51,12 @@ This project includes several key products and libraries that facilitate SQL Ser
 - **Logging and Diagnostics**: Provides event source tracing diagnostic capabilities for troubleshooting.
 - **Failover Support**: Handles automatic failover scenarios for high availability.
   - Compatibility switch: `Switch.Microsoft.Data.SqlClient.UseLegacyFailoverAlternationOnLoginSqlErrors` (default `false`) can restore legacy alternation behavior in `LoginWithFailover` for login-phase SQL errors.
-- **Cross-Platform Support**: Compatible with both .NET Framework and .NET Core, allowing applications to run on Windows, Linux, and macOS.
+- **Cross-Platform Support**: Compatible with .NET Framework 4.7+ on Windows and .NET 10+ on Windows, Linux, and macOS.
 - **Column Encryption AKV Provider**: Supports Azure Key Vault (AKV) provider for acquiring keys from Azure Key Vault to be used for encryption and decryption.
 
 ## 🧩 SNI Implementations
 There are two implementations of the SQL Server Network Interface (SNI) layer used in this project:
-- **Managed SNI**: A managed implementation of SNI that is used in .NET Core and .NET 5+ environments. It provides cross-platform support for SQL Server connectivity.
+- **Managed SNI**: A managed implementation of SNI that is used in .NET 10+ environments. It provides cross-platform support for SQL Server connectivity.
 - **Native SNI**: A native implementation of SNI that is used in .NET Framework and .NET Core environments on Windows. It's shipped as part of the `Microsoft.Data.SqlClient.SNI` and `Microsoft.Data.SqlClient.SNI.Runtime` packages.
   - **Microsoft.Data.SqlClient.SNI**: This package provides the native SNI layer for .NET Framework applications.
   - **Microsoft.Data.SqlClient.SNI.Runtime**: This package provides the native SNI layer for .NET Core applications on Windows.

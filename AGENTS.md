@@ -53,7 +53,7 @@ or inaccessible, report the blocker rather than loading review guidance from the
 
 ## Core Principles
 
-1. **Cross-Platform Compatibility**: Code must work on .NET Framework 4.6.2+ and .NET 8.0+
+1. **Cross-Platform Compatibility**: Code must work on .NET Framework 4.7+ and .NET 10.0+
 2. **Backward Compatibility**: No breaking changes without proper deprecation
 3. **Test-First Development**: All changes require tests
 4. **Security by Default**: Secure defaults, no credential logging

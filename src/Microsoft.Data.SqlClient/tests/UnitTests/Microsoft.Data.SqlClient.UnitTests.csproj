@@ -9,7 +9,7 @@
 
   <!-- Target Frameworks =============================================== -->
   <PropertyGroup>
-    <TargetFrameworks>net462;net8.0;net9.0;net10.0</TargetFrameworks>
+    <TargetFrameworks>net47;net10.0</TargetFrameworks>
   </PropertyGroup>
 
   <!-- Embedded resources and content files  =========================== -->
@@ -55,10 +55,9 @@
         as explained above.
   -->
   <PropertyGroup Condition="'$(ReferenceType)' == 'Package'">
-    <!-- Map test TFM to the closest available package TFM (package ships net8.0/net9.0/net462) -->
-    <_SqlClientPackageTfm Condition="'$(TargetFramework)' == 'net8.0'">net8.0</_SqlClientPackageTfm>
-    <_SqlClientPackageTfm Condition="'$(TargetFramework)' == 'net462'">net462</_SqlClientPackageTfm>
-    <_SqlClientPackageTfm Condition="'$(_SqlClientPackageTfm)' == ''">net9.0</_SqlClientPackageTfm>
+    <_SqlClientPackageTfm Condition="'$(TargetFramework)' == 'net47'">net47</_SqlClientPackageTfm>
+    <!-- Default to the shipped modern implementation during outer builds and runtime roll-forward tests. -->
+    <_SqlClientPackageTfm Condition="'$(_SqlClientPackageTfm)' == ''">net10.0</_SqlClientPackageTfm>
   </PropertyGroup>
   <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
     <!-- Brings in transitive dependencies and runtime deployment; ExcludeAssets="compile" prevents
@@ -77,7 +76,7 @@
   </ItemGroup>
 
   <!-- References for netframework -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net47'">
     <Reference Include="System.Transactions" />
 
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
@@ -112,9 +111,9 @@
   </ItemGroup>
 
   <!-- References for netcore -->
-  <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
+  <ItemGroup Condition="'$(TargetFramework)' != 'net47'">
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
-    <!-- See the net462 group above for why this reference is declared explicitly. -->
+    <!-- See the net47 group above for why this reference is declared explicitly. -->
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
     <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />

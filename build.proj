@@ -446,7 +446,7 @@
                      specified test target. If not specified, this defaults to running tests for
                      *all* framework versions supported for the project.
       Default value: [blank]
-      Example:       net462
+      Example:       net47
     -->
     <TestFramework Condition="'$(TestFramework)' == ''" />
     <TestFrameworkArgument Condition="'$(TestFramework)' != ''">-f $(TestFramework)</TestFrameworkArgument>

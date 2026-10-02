@@ -31,7 +31,7 @@ extends: v1/Perf.Test.Job.yml@PerfTemplates
       │   SCPs <testResultsSubDir> back, publishes it, tears the VM down)
       ▼
 ON THE VM  ── run-perf-tests.{sh,ps1}
-      1. Install the .NET SDK pinned by global.json (+ runtimes).
+      1. Install the .NET SDK pinned by global.json (+ the .NET 10.0 runtime).
       2. Create the perf database on the VM's SQL Server.
       3. Inject the VM SQL connection string into runnerconfig.
       4. Baseline pass  → MDS <baselineVersion> from NuGet.org (Package mode)   → results/baseline/
@@ -58,7 +58,7 @@ context variables are available (the VM is behind NAT and lacks the pipeline ide
 | Parameter | Default | Description |
 | --------- | ------- | ----------- |
 | `platform` | `linux` | `linux` or `windows` VM + client. |
-| `dotnetFramework` | `net9.0` | TFM the benchmarks run against (`net8.0`/`net9.0`/`net10.0`). |
+| `dotnetFramework` | `net10.0` | TFM the benchmarks run against (`net10.0` only). |
 | `testTimeoutMinutes` | `180` | Template timeout waiting for the VM run. |
 | `baselineVersion` | `7.0.2` | **Baseline Version** — released MDS the branch is compared against. Empty = current-only (no baseline pass / comparison). |
 | `regressionThreshold` | `10` | Percent slowdown (current vs baseline mean) flagged as a regression. |
@@ -241,11 +241,11 @@ longer conflates it with checkout cost.
 The same principle applies to how a benchmark schedules its workers. A sync `Open()` that has to
 wait blocks whichever thread it runs on, so a pool whose waiter wake-up needs a queued continuation
 stalls when every threadpool thread is already blocked; the wake-up waits on thread injection. On
-the TFMs the perf project builds (net8.0-net10.0) the runtime is told about cooperative blocking and
+the TFM the perf project builds (net10.0) the runtime is told about cooperative blocking and
 compensates quickly, so that stall is tens to a few hundred milliseconds, and that is the only
-expectation these benchmarks validate. On net462 the `Task` wait never notifies the pool, so the
+expectation these benchmarks validate. On net47 the `Task` wait never notifies the pool, so the
 wake-up falls to starvation detection and hill climbing and is materially slower; the pool carries no
-framework guards and the driver still ships net462, so that path is live but unmeasured here.
+framework guards and the driver still ships net47, so that path is live but unmeasured here.
 Threadpool threads are the realistic case, because sync database
 calls in ASP.NET run on them, and they are the only configuration in which that stall is visible.
 Benchmarks therefore keep threadpool threads as the default and add dedicated-thread variants
