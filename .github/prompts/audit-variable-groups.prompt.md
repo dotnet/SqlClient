@@ -31,19 +31,35 @@ or command-line interface.
 ## Inputs and scope
 
 Parse `${input:scope}` for any organization, project, repository, branch, variable-group name or
-ID, or unused-marker override supplied by the user. Honor recognized scope values. Ask for
-clarification rather than silently ignoring an ambiguous value.
+ID, run-history lookback window, or unused-marker override supplied by the user. Honor
+recognized scope values. Ask for clarification rather than silently ignoring an ambiguous value.
 
-Resolve repository and branch scope as follows:
+A YAML pipeline runs the YAML from whichever branch triggered it, so a variable group can be
+referenced on any branch a pipeline runs from, not only its default branch. Resolve repository
+and branch scope as follows:
 
 1. Honor repositories and branches explicitly supplied by the user.
-2. Include repositories and branches referenced by enabled YAML pipeline definitions.
-3. If no pipeline-derived branch is available for an in-scope repository, use its configured default branch.
-4. Exclude repositories or branches associated only with disabled, deleted, paused, or retired pipelines unless the user explicitly includes them.
+2. For each enabled YAML pipeline, include its default branch.
+3. Include existing branches that match the pipeline's CI and PR trigger filters (include
+   patterns minus exclude patterns), taken from its YAML and from any trigger overrides on the
+   pipeline definition.
+4. Include branches the pipeline ran from within a lookback window. Default to 90 days unless
+   the user supplies another window.
+5. Include repositories and refs referenced as templates, such as `resources.repositories` refs
+   and cross-repository `template` or `extends` references, since template files can declare
+   variable groups.
+6. For in-scope repositories that no enabled pipeline uses, use the configured default branch.
+7. Exclude repositories or branches associated only with disabled, deleted, paused, or retired
+   pipelines unless the user explicitly includes them.
+
+If a pipeline's trigger filters or run history cannot be determined, treat its branch scope as
+incomplete: report every variable group that pipeline could reference as **usage unknown**,
+never as unused.
 
 Before starting the audit, present the resolved organization, project, repositories, branches,
-and any variable-group filter. Clearly state that branches not included in the resolved scope are
-not covered by the audit.
+lookback window, and any variable-group filter, indicating which branches were derived from
+triggers, run history, or template references. Clearly state that branches not included in the
+resolved scope are not covered by the audit.
 
 Use the user-provided unused-marker text when supplied. Otherwise, preserve an existing
 project-standard marker if one can be identified consistently; if not, use
