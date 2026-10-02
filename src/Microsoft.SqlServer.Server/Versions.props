@@ -25,7 +25,7 @@
   <!-- Set up the default version for fallback if a version is not provided -->
   <PropertyGroup>
     <!-- Last version shipped to NuGet. Update after each release. -->
-    <SqlServerPublishedVersion>1.0.0</SqlServerPublishedVersion>
+    <SqlServerPublishedVersion>2.0.0</SqlServerPublishedVersion>
 
     <!-- This is the *next* version to release of SqlServer. Update this after each release. -->
     <SqlServerNextVersion>2.0.0-preview1</SqlServerNextVersion>

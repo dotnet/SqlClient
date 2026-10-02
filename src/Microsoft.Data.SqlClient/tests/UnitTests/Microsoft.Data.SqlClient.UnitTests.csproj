@@ -41,7 +41,8 @@
   <!-- Test target reference -->
   <ItemGroup Condition="'$(ReferenceType)' != 'Package'">
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj" />
-    <ProjectReference Include="$(RepoRoot)src/Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj" />
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj"
+                      Condition="'$(TargetFramework)' != 'net462'" />
   </ItemGroup>
 
   <!--
@@ -73,7 +74,8 @@
          above to locate the runtime DLL inside the NuGet package layout. -->
     <Reference Include="Microsoft.Data.SqlClient"
                HintPath="$(PkgMicrosoft_Data_SqlClient)/lib/$(_SqlClientPackageTfm)/Microsoft.Data.SqlClient.dll" />
-    <PackageReference Include="Microsoft.SqlServer.Server" />
+    <PackageReference Include="Microsoft.SqlServer.Server"
+                      Condition="'$(TargetFramework)' != 'net462'" />
   </ItemGroup>
 
   <!-- References for netframework -->

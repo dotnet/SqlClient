@@ -252,7 +252,8 @@
   </ItemGroup>
 
   <!-- Reference to SqlServer -->
-  <ItemGroup>
+  <!-- .NET Framework uses the SQL CLR types provided by System.Data. -->
+  <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
     <ProjectReference Include="$(RepoRoot)/src/Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj"
                       Condition="'$(ReferenceType)' != 'Package'" />
     <PackageReference Include="Microsoft.SqlServer.Server"

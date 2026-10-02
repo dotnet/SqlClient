@@ -100,6 +100,51 @@ printf 'ARG:%s\n' "$@"
     }
 }
 
+Describe 'SqlServer dependency framework selection' {
+    It '<Project> references SqlServer only outside .NET Framework' -ForEach @(
+        @{ Project = 'src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj' }
+        @{ Project = 'src/Microsoft.Data.SqlClient/tests/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj' }
+        @{ Project = 'src/Microsoft.Data.SqlClient/tests/ManualTests/Microsoft.Data.SqlClient.ManualTests.csproj' }
+        @{ Project = 'src/Microsoft.Data.SqlClient/tests/TestUdts/Address/Address.csproj' }
+        @{ Project = 'src/Microsoft.Data.SqlClient/tests/TestUdts/Circle/Circle.csproj' }
+        @{ Project = 'src/Microsoft.Data.SqlClient/tests/TestUdts/Shapes/Shapes.csproj' }
+        @{ Project = 'src/Microsoft.Data.SqlClient/tests/TestUdts/Utf8String/Utf8String.csproj' }
+    ) {
+        foreach ($framework in @('net462', 'net8.0', 'net9.0')) {
+            foreach ($referenceType in @('Project', 'Package')) {
+                $output = & $dotnet msbuild (Join-Path $repoRoot $Project) -nologo `
+                    "-p:TargetFramework=$framework" "-p:ReferenceType=$referenceType" `
+                    '-p:SqlServerPackageVersion=2.0.0' `
+                    '-getItem:ProjectReference,PackageReference,PackageVersion' 2>&1
+                $LASTEXITCODE | Should -Be 0 -Because ($output -join "`n")
+                $items = (($output -join "`n") | ConvertFrom-Json).Items
+                $projectReferences = @($items.ProjectReference | Where-Object {
+                    (Split-Path $_.Identity -Leaf) -eq 'Microsoft.SqlServer.Server.csproj'
+                })
+                $packageReferences = @($items.PackageReference | Where-Object {
+                    $_.Identity -eq 'Microsoft.SqlServer.Server'
+                })
+
+                if ($framework -eq 'net462') {
+                    $projectReferences.Count | Should -Be 0
+                    $packageReferences.Count | Should -Be 0
+                }
+                elseif ($referenceType -eq 'Project') {
+                    $projectReferences.Count | Should -Be 1
+                    $packageReferences.Count | Should -Be 0
+                }
+                else {
+                    $projectReferences.Count | Should -Be 0
+                    $packageReferences.Count | Should -Be 1
+                    ($items.PackageVersion | Where-Object {
+                        $_.Identity -eq 'Microsoft.SqlServer.Server'
+                    }).Version | Should -Be '[2.0.0, 3.0.0)'
+                }
+            }
+        }
+    }
+}
+
 Describe 'build.proj command-line filters' {
     It 'disables filtering when TestFilters=none is supplied on the command line' {
         $result = (Invoke-BuildProbe @(

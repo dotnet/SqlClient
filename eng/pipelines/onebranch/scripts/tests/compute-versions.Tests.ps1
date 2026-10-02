@@ -37,7 +37,8 @@ BeforeAll {
     function Set-DotnetMock {
         param(
             [string]$SqlClientPackageVersion = "7.1.0-preview3.$script:testBuildNumber",
-            [string]$SqlServerPackageVersion = "1.1.0-preview1.$script:testBuildNumber"
+            [string]$SqlServerPackageVersion = "1.1.0-preview1.$script:testBuildNumber",
+            [string]$SqlServerPublishedVersion = '1.0.0'
         )
 
         $global:computeVersionsDotnetCallCount = 0
@@ -55,7 +56,7 @@ BeforeAll {
             return @(
                 "  PackageVersion: $SqlServerPackageVersion"
                 '  FileVersion: 1.1.0.26238'
-                '  PublishedVersion: 1.0.0'
+                "  PublishedVersion: $SqlServerPublishedVersion"
             )
         }.GetNewClosure()
     }
@@ -179,6 +180,16 @@ Describe 'compute-versions.ps1 Effective Versions' {
         $output | Should -Not -Match "SqlServerPackageVersion;isOutput=true]1\.0\.0[\.-]$script:testFileVersionBuildNumber"
 
         # An unbuilt SqlServer is never stamped, so it has no effective file version.
+        $output | Should -Match 'SqlServerFileVersion;isOutput=true](\r?\n|$)'
+    }
+
+    It 'uses the stable published SqlServer major instead of the next preview when SqlServer is not built' {
+        Set-DotnetMock -SqlServerPackageVersion "2.0.0-preview1.$script:testBuildNumber" -SqlServerPublishedVersion '2.0.0'
+
+        $output = Invoke-ComputeVersions -BuildSqlServer $false
+
+        $output | Should -Match 'SqlServerPackageVersion;isOutput=true]2\.0\.0(\r?\n|$)'
+        $output | Should -Match 'SqlServerApiScanVersion;isOutput=true]2\.0(\r?\n|$)'
         $output | Should -Match 'SqlServerFileVersion;isOutput=true](\r?\n|$)'
     }
 
