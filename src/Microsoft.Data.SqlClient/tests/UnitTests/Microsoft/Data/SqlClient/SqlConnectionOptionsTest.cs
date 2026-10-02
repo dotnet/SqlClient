@@ -155,5 +155,31 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
 
             Assert.Throws<ArgumentException>(() => new SqlConnectionOptions(builder.ConnectionString));
         }
+
+        /// <summary>
+        /// Tests that the vector type support setting survives the copy constructor, which is
+        /// used for User Instance connections. The enum's default is <c>Off</c>, so a setting
+        /// which is not copied would silently suppress the VECTORSUPPORT feature extension and
+        /// return vector columns as JSON strings.
+        /// </summary>
+        [Theory]
+        [InlineData(SqlVectorTypeSupport.Off)]
+        [InlineData(SqlVectorTypeSupport.V1)]
+        [InlineData(SqlVectorTypeSupport.V2)]
+        public void TestVectorTypeSupportSurvivesCopyConstructor(SqlVectorTypeSupport setting)
+        {
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = "server",
+                VectorTypeSupport = setting
+            };
+
+            SqlConnectionOptions original = new(builder.ConnectionString);
+            Assert.Equal(setting, original.VectorTypeSupport);
+
+            SqlConnectionOptions copy = new(original, "server\\instance", userInstance: true, setEnlistValue: null);
+
+            Assert.Equal(setting, copy.VectorTypeSupport);
+        }
     }
 }

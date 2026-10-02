@@ -981,8 +981,23 @@ The <xref:Microsoft.Data.SqlClient.SqlDataReader.GetSchemaTable%2A> method retur
       <exception cref="T:System.InvalidCastException">
         The retrieved data is not compatible with the <see cref="T:Microsoft.Data.SqlTypes.SqlVector`1" /> type.
       </exception>
+      <exception cref="T:System.NotSupportedException">
+        The column's base type cannot be represented by <typeparamref name="T" /> without losing precision.
+      </exception>
       <remarks>
-        No conversions are performed; therefore, the data retrieved must already be a vector value, or an exception is generated.
+        <format type="text/markdown">
+          <![CDATA[  
+The data retrieved must already be a vector value, or an exception is generated.
+
+A column whose base type matches `T` is returned as it was sent, without conversion. A base
+type which widens to `T` without losing precision is converted: a `float16` column can be read
+as `SqlVector<float>`, which is the only strongly typed way to read one on .NET Framework,
+where `System.Half` does not exist. Narrowing is rejected with
+<xref:System.NotSupportedException> rather than performed silently, so a `float32` column
+cannot be read as `SqlVector<Half>`.
+
+  ]]>
+        </format>
       </remarks>
     </GetSqlVector>
     <GetSqlMoney>
