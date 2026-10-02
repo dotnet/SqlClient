@@ -30,36 +30,35 @@ or command-line interface.
 
 ## Inputs and scope
 
-Parse `${input:scope}` for any organization, project, repository, branch, variable-group name or
-ID, run-history lookback window, or unused-marker override supplied by the user. Honor
-recognized scope values. Ask for clarification rather than silently ignoring an ambiguous value.
+Parse `${input:scope}` for any organization, project, repository, branch or tag, variable-group
+name or ID, or unused-marker override supplied by the user. Honor recognized scope values. Ask
+for clarification rather than silently ignoring an ambiguous value.
 
-A YAML pipeline runs the YAML from whichever branch triggered it, so a variable group can be
-referenced on any branch a pipeline runs from, not only its default branch. Resolve repository
-and branch scope as follows:
+A YAML pipeline can run the YAML from any branch or tag on which its YAML file exists. CI, PR,
+scheduled, and pipeline-completion or resource triggers each select a ref, and a manual run can
+select any ref, so neither trigger configuration nor run history bounds where a variable group
+is consumed. Resolve repository and ref scope as follows:
 
-1. Honor repositories and branches explicitly supplied by the user.
-2. For each enabled YAML pipeline, include its default branch.
-3. Include existing branches that match the pipeline's CI and PR trigger filters (include
-   patterns minus exclude patterns), taken from its YAML and from any trigger overrides on the
-   pipeline definition.
-4. Include branches the pipeline ran from within a lookback window. Default to 90 days unless
-   the user supplies another window.
-5. Include repositories and refs referenced as templates, such as `resources.repositories` refs
-   and cross-repository `template` or `extends` references, since template files can declare
-   variable groups.
-6. For in-scope repositories that no enabled pipeline uses, use the configured default branch.
-7. Exclude repositories or branches associated only with disabled, deleted, paused, or retired
-   pipelines unless the user explicitly includes them.
+1. Honor repositories, branches, and tags explicitly supplied by the user.
+2. For each enabled or paused YAML pipeline, include every branch and tag in its repository on
+   which the pipeline's YAML file exists.
+3. Include repositories and refs referenced as templates from any included ref, such as
+   `resources.repositories` refs and cross-repository `template` or `extends` references, since
+   template files can declare variable groups.
+4. For in-scope repositories that no enabled or paused pipeline uses, use the configured default
+   branch.
+5. Exclude disabled and deleted pipelines unless the user explicitly includes them. Include
+   paused pipelines, because they can run again once resumed.
 
-If a pipeline's trigger filters or run history cannot be determined, treat its branch scope as
-incomplete: report every variable group that pipeline could reference as **usage unknown**,
-never as unused.
+The audit scope is incomplete when the user restricts repositories, branches, or tags, or when
+the run-capable refs of any pipeline cannot be fully enumerated. In either case, report every
+variable group that is not referenced within the audited scope as **usage unknown**, never as
+unused.
 
-Before starting the audit, present the resolved organization, project, repositories, branches,
-lookback window, and any variable-group filter, indicating which branches were derived from
-triggers, run history, or template references. Clearly state that branches not included in the
-resolved scope are not covered by the audit.
+Before starting the audit, present the resolved organization, project, repositories, the number
+of refs per repository and how they were derived, and any variable-group filter. State whether
+the scope is complete; if it is not, state that unreferenced groups will be reported as usage
+unknown.
 
 Use the user-provided unused-marker text when supplied. Otherwise, preserve an existing
 project-standard marker if one can be identified consistently; if not, use
@@ -77,19 +76,23 @@ Retrieve every variable group in scope, handling pagination and collecting at le
 - Type
 - Project references, when available
 
-Identify which groups appear to be marked unused and which are active. Use **fuzzy matching** for
-an existing unused marker: check for both "unused" and "delete", case-insensitively, because the
-exact marker may vary. Ignore current descriptions when determining actual usage so they do not
-bias the search.
+Identify which groups appear to be marked unused and which are active. Treat a description as
+marked unused when it contains the resolved unused marker, or when it contains both "unused" and
+the stem "delet" (matching "delete", "deleted", and "deletion"), case-insensitively, because
+the exact marker may vary. Ignore current descriptions when determining actual usage so they do
+not bias the search.
 
 ### 2. Search repositories for variable-group references
 
-For each repository and branch in scope:
+For each repository and ref in scope:
 
-1. Enumerate files recursively at the selected branch revision.
+1. Enumerate files recursively at that ref.
 2. Restrict candidates to `.yml` and `.yaml` files.
 3. Retrieve each candidate file's content without modifying the repository.
 4. Search for every in-scope variable-group name.
+
+Many refs share identical files. Fetch each distinct file version, identified by its object ID,
+once and reuse the result for every ref that contains it.
 
 Use **exact-match** patterns that prevent prefix false positives: searching for `Foo` must not
 match `FooBar`. Recognize these YAML forms:
@@ -104,11 +107,12 @@ integration. Retry transient failures with bounded exponential backoff.
 
 ### 3. Search Classic pipelines for variable-group references
 
-Retrieve all enabled Classic build and release definitions in scope, handling pagination and
+Retrieve all Classic build and release definitions in scope, handling pagination and
 loading expanded definition details when the initial listing does not contain variable-group
 references.
 
-Exclude definitions that are disabled, paused, deleted, or retired.
+Exclude disabled and deleted definitions. Include paused definitions, because they can run again
+once resumed.
 
 For build definitions, inspect all variable-group references associated with the definition.
 
@@ -124,7 +128,7 @@ For every reference, record:
 - Pipeline type
 - Stage or environment name, when applicable
 
-Merge these results with the repository and branch results from step 2.
+Merge these results with the repository and ref results from step 2.
 
 ### 4. Summarize findings
 
@@ -134,7 +138,8 @@ Present a clear summary before making any changes. Include:
 - **Unused groups**: group name, ID, current description, and the proposed unused marker.
 - **Surprise findings**: groups marked unused that are still referenced and should be unmarked.
 - **No-change groups**: groups whose current descriptions already match the findings.
-- **Usage unknown**: groups that cannot be classified because some relevant scope could not be inspected.
+- **Usage unknown**: groups that cannot be classified because some relevant scope could not be
+  inspected or was excluded by a user restriction.
 
 Show the exact current and proposed description for every group that would change. Never classify
 a group as unused when any relevant repository, branch, pipeline family, or result page could not
@@ -177,6 +182,8 @@ representation.
 Apply these description rules:
 
 - **Used groups**: prepend `[Used by: <repo>: <branch1>, <branch2>; <repo2>: <branch>; Classic/<type>: <pipeline name>] ` to the existing description after stripping any previous `[Used by: ...]` prefix. `<type>` is `Build` or `Release`.
+  When a repository contributes more than five refs, list its default branch and summarize the
+  rest as a count, for example `<repo>: main +12 refs`.
 - **Unused groups**: set the description to the resolved unused marker.
 - **Incorrectly marked unused**: replace the unused marker with `[Used by: ...]`.
 - **Already correct**: skip groups whose description would not change.
