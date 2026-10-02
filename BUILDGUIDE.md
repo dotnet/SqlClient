@@ -92,7 +92,8 @@ extend the driver's runtime support below .NET Framework 4.7 or .NET 10.
 | Existing dual-target tests, stress projects, and their shared helpers | `net47;net10.0` |
 | Modern-only projects, including performance tests | `net10.0` |
 | AKV Provider, Abstractions, Logging, and standard-only test utilities | `netstandard2.0` only |
-| Azure extensions and Microsoft.SqlServer.Server | `net47;netstandard2.0` |
+| Azure extensions | `net47;netstandard2.0` |
+| Microsoft.SqlServer.Server (independently versioned; unchanged here) | `net46;netstandard2.0` |
 | PackageCompatibility tool and tests (xUnit v3) | `net481;net10.0` |
 | AzureSqlConnector | `net481;net10.0-windows` |
 

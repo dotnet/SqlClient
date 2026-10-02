@@ -99,7 +99,8 @@ The unsupported-platform project also retains `netstandard2.0`; neither this tar
 assembly expands supported driver runtimes below .NET Framework 4.7 or .NET 10.
 Existing dual-target tests use `net47;net10.0`; modern-only projects, including performance tests, use
 `net10.0` only. Standard-only companions retain their existing `netstandard` targets. Azure extensions
-and Microsoft.SqlServer.Server target `net47;netstandard2.0`.
+target `net47;netstandard2.0`. Microsoft.SqlServer.Server remains independently
+versioned and retains `net46;netstandard2.0`; raising its framework floor is a separate change.
 Preserve every `net481` target: PackageCompatibility tool/tests use `net481;net10.0` with xUnit v3,
 and AzureSqlConnector uses `net481;net10.0-windows`. Do not migrate the historical SniCloseLegacyRepro matrix.
 
