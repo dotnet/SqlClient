@@ -85,6 +85,8 @@
 
     <PackageReference Include="Azure.Core" />
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
+    <!-- The AKV reference assembly graph does not carry the driver's TimeProvider dependency. -->
+    <PackageReference Include="Microsoft.Bcl.TimeProvider" />
     <PackageReference Include="System.Memory" />
     <PackageReference Include="System.ValueTuple" />
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />

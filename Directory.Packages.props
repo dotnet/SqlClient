@@ -100,12 +100,9 @@
     <PackageVersion Include="Microsoft.Identity.Client" Version="4.84.2" />
   </ItemGroup>
 
-  <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">
-    <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="9.0.18" />
-  </ItemGroup>
-
-  <ItemGroup Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">
-    <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
+  <!-- .NET 10 is the lowest supported runtime band, including legacy/Standard dependencies. -->
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="10.0.12" />
   </ItemGroup>
 
   <!-- ===================================================================== -->
@@ -158,28 +155,20 @@
     <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.16.0" />
     <PackageVersion Include="System.Buffers" Version="4.6.1" />
     <PackageVersion Include="System.Data.Common" Version="4.3.0" />
-    <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="10.0.10" />
+    <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="10.0.12" />
     <PackageVersion Include="System.Memory" Version="4.6.3" />
     <PackageVersion Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
-    <PackageVersion Include="System.Text.Json" Version="10.0.10" />
+    <PackageVersion Include="System.Text.Json" Version="10.0.12" />
     <PackageVersion Include="System.ValueTuple" Version="4.6.2" />
     <PackageVersion Include="System.Threading.Channels" Version="10.0.3" />
   </ItemGroup>
 
-  <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">
-    <PackageVersion Include="Microsoft.Bcl.Cryptography" Version="9.0.18" />
-    <PackageVersion Include="Microsoft.Bcl.TimeProvider" Version="9.0.18" />
-    <PackageVersion Include="System.Threading.RateLimiting" Version="9.0.18" />
-    <PackageVersion Include="System.Configuration.ConfigurationManager" Version="9.0.18" />
-    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="9.0.18" />
-  </ItemGroup>
-
-  <ItemGroup Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">
-    <PackageVersion Include="Microsoft.Bcl.Cryptography" Version="8.0.0" />
-    <PackageVersion Include="Microsoft.Bcl.TimeProvider" Version="8.0.1" />
-    <PackageVersion Include="System.Threading.RateLimiting" Version="8.0.0" />
-    <PackageVersion Include="System.Configuration.ConfigurationManager" Version="8.0.1" />
-    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="8.0.1" />
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.Bcl.Cryptography" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Bcl.TimeProvider" Version="10.0.12" />
+    <PackageVersion Include="System.Threading.RateLimiting" Version="10.0.12" />
+    <PackageVersion Include="System.Configuration.ConfigurationManager" Version="10.0.12" />
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.12" />
   </ItemGroup>
 
   <!-- ===================================================================== -->
