@@ -9,7 +9,7 @@
     <TargetFrameworks>net462;net8.0;net9.0;net10.0</TargetFrameworks>
   </PropertyGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
     <ProjectReference Include="$(RepoRoot)src/Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj"
                       Condition="'$(ReferenceType)' != 'Package'" />
     <PackageReference Include="Microsoft.SqlServer.Server"
