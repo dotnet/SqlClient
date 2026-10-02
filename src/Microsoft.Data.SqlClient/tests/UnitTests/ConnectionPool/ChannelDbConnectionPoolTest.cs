@@ -684,6 +684,29 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         /// <summary>
+        /// Verifies that an expired caller timeout prevents physical connection creation.
+        /// </summary>
+        [Fact]
+        public void GetConnectionExpiredTimeout_DoesNotAttemptPhysicalConnection()
+        {
+            // Arrange
+            var connectionFactory = new CountingTimeoutConnectionFactory();
+            var pool = ConstructPool(connectionFactory);
+
+            // Act
+            InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() =>
+                pool.TryGetConnection(
+                    new SqlConnection(),
+                    taskCompletionSource: null,
+                    TimeoutTimer.StartExpired(),
+                    out _));
+
+            // Assert
+            Assert.Equal(ADP.PooledOpenTimeout().Message, exception.Message);
+            Assert.Equal(0, connectionFactory.CreateCount);
+        }
+
+        /// <summary>
         /// Verifies under concurrent synchronous load that the pool never grows beyond its
         /// configured maximum size and continues to serve requests safely.
         /// </summary>
