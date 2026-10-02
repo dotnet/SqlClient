@@ -139,6 +139,14 @@ internal static class LocalAppContextSwitches
     private const string UseOverallConnectTimeoutForPoolWaitString =
         "Switch.Microsoft.Data.SqlClient.UseOverallConnectTimeoutForPoolWait";
 
+    /// <summary>
+    /// The name of the app context switch that controls whether the driver
+    /// loads any assembly named by a server-supplied UDT assembly-qualified
+    /// name, restoring the behavior that predates the UDT assembly load policy.
+    /// </summary>
+    private const string UseLegacyUdtAssemblyLoadString =
+        "Switch.Microsoft.Data.SqlClient.UseLegacyUdtAssemblyLoad";
+
     #if NET
     /// <summary>
     /// The name of the app context switch that controls whether to use the
@@ -257,6 +265,11 @@ internal static class LocalAppContextSwitches
     /// The cached value of the UseOverallConnectTimeoutForPoolWait switch.
     /// </summary>
     private static SwitchValue s_useOverallConnectTimeoutForPoolWait = SwitchValue.None;
+
+    /// <summary>
+    /// The cached value of the UseLegacyUdtAssemblyLoad switch.
+    /// </summary>
+    private static SwitchValue s_useLegacyUdtAssemblyLoad = SwitchValue.None;
 
     #if NET
     /// <summary>
@@ -611,6 +624,25 @@ internal static class LocalAppContextSwitches
             UseOverallConnectTimeoutForPoolWaitString,
             defaultValue: false,
             ref s_useOverallConnectTimeoutForPoolWait);
+
+    /// <summary>
+    /// When set to true, the driver loads any assembly named by a
+    /// server-supplied UDT assembly-qualified name, and skips the check that
+    /// the resolved type is annotated with SqlUserDefinedTypeAttribute.  This is
+    /// the behavior that predates the UDT assembly load policy.
+    ///
+    /// Enabling it allows a server, or an attacker on the network path of a
+    /// connection that has opted out of certificate validation, to choose which
+    /// assemblies the client process loads, so it should only be used as a
+    /// temporary compatibility measure.
+    ///
+    /// The default value of this switch is false.
+    /// </summary>
+    public static bool UseLegacyUdtAssemblyLoad =>
+        AcquireAndReturn(
+            UseLegacyUdtAssemblyLoadString,
+            defaultValue: false,
+            ref s_useLegacyUdtAssemblyLoad);
 
     #if NET
     /// <summary>
