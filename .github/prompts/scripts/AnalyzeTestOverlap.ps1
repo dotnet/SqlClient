@@ -25,8 +25,8 @@
 
 .PARAMETER Framework
     The target framework moniker (TFM) to build and run tests against.  Must
-    match a valid <TargetFramework> in the test project (e.g., "net462",
-    "net9.0").  Default is "net462".
+    match a valid <TargetFramework> in the test project (e.g., "net47",
+    "net10.0").  Default is "net47".
 
 .PARAMETER Project
     The relative path to the test project (.csproj) to analyze.  Default is
@@ -45,7 +45,7 @@
 param
 (
     [string]$Filter = "",
-    [string]$Framework = "net462",
+    [string]$Framework = "net47",
     [string]$Project = "src\Microsoft.Data.SqlClient\tests\UnitTests\Microsoft.Data.SqlClient.UnitTests.csproj",
     [string]$Output = "test-coverage-analysis.json"
 )

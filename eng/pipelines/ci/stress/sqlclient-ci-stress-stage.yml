@@ -55,13 +55,12 @@ parameters:
   # The list of .NET Framework runtimes to test against.
   - name: netFrameworkTestRuntimes
     type: object
-    default: [net462]
+    default: [net47]
 
-  # The list of .NET runtimes to test against.  These should include the TFMs that SqlClient ships
-  # as well as any upcoming runtimes being validated (e.g. net10.0 is tested but not yet shipped).
+  # The list of .NET runtimes to test against, matching the TFMs that SqlClient ships.
   - name: netTestRuntimes
     type: object
-    default: [net8.0, net9.0, net10.0]
+    default: [net10.0]
 
 stages:
   - stage: stress_tests_stage

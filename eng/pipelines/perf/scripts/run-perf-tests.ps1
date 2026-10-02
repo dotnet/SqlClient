@@ -22,7 +22,7 @@
 [CmdletBinding()]
 param(
     [string]$Configuration = "Release",
-    [string]$Framework = "net9.0",
+    [string]$Framework = "net10.0",
     [string]$ResultsSubdir = "perf-results",
     [string]$BaselineVersion = "",
     # Alternative to -BaselineVersion: benchmark against Microsoft.Data.SqlClient built from ANOTHER

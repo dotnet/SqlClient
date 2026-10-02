@@ -36,7 +36,7 @@ export PYTHONDONTWRITEBYTECODE=1
 ####################################################################################################
 
 configuration="Release"
-framework="net9.0"
+framework="net10.0"
 resultsSubDir="perf-results"
 baselineVersion=""
 # Alternative to --baseline-version: benchmark against Microsoft.Data.SqlClient built from ANOTHER
