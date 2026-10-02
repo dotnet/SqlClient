@@ -55,7 +55,9 @@
         as explained above.
   -->
   <PropertyGroup Condition="'$(ReferenceType)' == 'Package'">
-    <_SqlClientPackageTfm>$(TargetFramework)</_SqlClientPackageTfm>
+    <_SqlClientPackageTfm Condition="'$(TargetFramework)' == 'net47'">net47</_SqlClientPackageTfm>
+    <!-- Default to the shipped modern implementation during outer builds and runtime roll-forward tests. -->
+    <_SqlClientPackageTfm Condition="'$(_SqlClientPackageTfm)' == ''">net10.0</_SqlClientPackageTfm>
   </PropertyGroup>
   <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
     <!-- Brings in transitive dependencies and runtime deployment; ExcludeAssets="compile" prevents
