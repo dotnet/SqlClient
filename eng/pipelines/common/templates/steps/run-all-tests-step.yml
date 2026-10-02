@@ -68,6 +68,15 @@ parameters:
     type: number
     default: 2
 
+  # VSTest expressions used for regular and quarantined manual-test runs.
+  - name: manualTestFilters
+    type: string
+    default: 'category!=failing&category!=flaky&category!=interactive'
+
+  - name: flakyManualTestFilters
+    type: string
+    default: 'category=flaky'
+
 steps:
 - ${{ if parameters.debug }}:
   - powershell: 'dotnet sdk check'
@@ -204,6 +213,7 @@ steps:
           -p:Configuration=${{ parameters.buildConfiguration }}
           -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
           -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
+          -p:TestFilters="${{ parameters.manualTestFilters }}"
           -p:TestResultsFolderPath=TestResults
       ${{ else }}: # x86
         arguments: >-
@@ -215,6 +225,7 @@ steps:
           -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
           -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
+          -p:TestFilters="${{ parameters.manualTestFilters }}"
           -p:TestResultsFolderPath=TestResults
     retryCountOnTaskFailure: ${{parameters.retryCountOnManualTests }}
 
@@ -233,7 +244,7 @@ steps:
           -p:Configuration=${{ parameters.buildConfiguration }}
           -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
           -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
-          -p:TestFilters="category=flaky"
+          -p:TestFilters="${{ parameters.flakyManualTestFilters }}"
           -p:TestResultsFolderPath=TestResults
           -p:TestCodeCoverage=false
       ${{ else }}: # x86
@@ -246,7 +257,7 @@ steps:
           -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
           -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
           -p:DotnetPath=${{ parameters.dotnetx86RootPath }}
-          -p:TestFilters="category=flaky"
+          -p:TestFilters="${{ parameters.flakyManualTestFilters }}"
           -p:TestResultsFolderPath=TestResults
           -p:TestCodeCoverage=false
     continueOnError: true
@@ -331,6 +342,7 @@ steps:
         -p:Configuration=${{ parameters.buildConfiguration }}
         -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
         -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
+        -p:TestFilters="${{ parameters.manualTestFilters }}"
         -p:TestResultsFolderPath=TestResults
     retryCountOnTaskFailure: ${{parameters.retryCountOnManualTests }}
 
@@ -348,7 +360,7 @@ steps:
         -p:Configuration=${{ parameters.buildConfiguration }}
         -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
         -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
-        -p:TestFilters="category=flaky"
+        -p:TestFilters="${{ parameters.flakyManualTestFilters }}"
         -p:TestResultsFolderPath=TestResults
         -p:TestCodeCoverage=false
     continueOnError: true
