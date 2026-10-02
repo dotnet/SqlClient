@@ -74,11 +74,19 @@ public class Float16ConverterTest
     }
 
     /// <summary>
-    /// Verifies narrowing against <c>System.Half</c> for inputs drawn from the whole single
-    /// precision space, not just those binary16 can represent. This is what covers rounding,
-    /// overflow, and underflow for arbitrary application values, which the exhaustive
-    /// representable-value test above cannot reach.
+    /// Verifies narrowing against <c>System.Half</c> for inputs sampled across the whole
+    /// single precision space, not just those binary16 can represent. This is what covers
+    /// rounding, overflow, and underflow for arbitrary application values, which the
+    /// exhaustive representable-value test above cannot reach.
     /// </summary>
+    /// <remarks>
+    /// This samples roughly 4.1 million of the 4,294,967,296 binary32 patterns rather than
+    /// visiting them all, so that it costs a few milliseconds on every CI leg. A sweep of
+    /// the full space takes about ten seconds on 32 cores and proportionally longer on a
+    /// smaller agent, which is not worth repeating per run for a codec that does not
+    /// change; it was run once during development and reported no divergence. Setting
+    /// <c>Stride</c> to 1 reproduces it.
+    /// </remarks>
     [Fact]
     public void FromSingle_MatchesHalf_AcrossTheSinglePrecisionRange()
     {
