@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Threading;
 using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient
@@ -38,6 +39,9 @@ namespace Microsoft.Data.SqlClient
     public sealed class SqlConfigurableRetryFactory
     {
         private static readonly object s_syncObject = new();
+
+        // Shared by commands and connections when app.config is not read.
+        private static SqlRetryLogicBaseProvider s_noneRetryProvider;
 
         /// Default known transient error numbers.
         // We use a HashSet internally for O(1) lookup performance in the hot path. The public API exposes a ReadOnlyCollection.
@@ -105,6 +109,9 @@ namespace Microsoft.Data.SqlClient
 
             return new SqlRetryLogicProvider(retryLogic);
         }
+
+        internal static SqlRetryLogicBaseProvider NoneRetryProvider =>
+            LazyInitializer.EnsureInitialized(ref s_noneRetryProvider, CreateNoneRetryProvider);
 
         /// <summary>
         /// Verifies the provider which is not null and doesn't include SqlNoneIntervalEnumerator enumerator object.

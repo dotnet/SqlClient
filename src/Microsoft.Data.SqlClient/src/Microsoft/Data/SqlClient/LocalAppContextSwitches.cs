@@ -29,6 +29,15 @@ internal static class LocalAppContextSwitches
         "Switch.Microsoft.Data.SqlClient.DisableTNIRByDefaultInConnectionString";
     #endif
 
+    #if NET
+    /// <summary>
+    /// The name of the app context switch that controls whether SqlClient
+    /// reads app.config.
+    /// </summary>
+    private const string EnableAppConfigString =
+        "Switch.Microsoft.Data.SqlClient.EnableAppConfig";
+    #endif
+
     /// <summary>
     /// The name of the app context switch that controls whether
     /// MultiSubnetFailover is enabled by default in the connection string.
@@ -186,6 +195,13 @@ internal static class LocalAppContextSwitches
     private static SwitchValue s_disableTnirByDefault = SwitchValue.None;
     #endif
 
+    #if NET
+    /// <summary>
+    /// The cached value of the EnableAppConfig switch.
+    /// </summary>
+    private static SwitchValue s_enableAppConfig = SwitchValue.None;
+    #endif
+
     /// <summary>
     /// The cached value of the EnableMultiSubnetFailoverByDefault switch.
     /// </summary>
@@ -283,6 +299,13 @@ internal static class LocalAppContextSwitches
     /// </summary>
     static LocalAppContextSwitches()
     {
+        // Read before any override is applied, so this switch itself cannot be
+        // set from the config file it gates.
+        if (!EnableAppConfig)
+        {
+            return;
+        }
+
         IAppContextSwitchOverridesSection appContextSwitch = AppConfigManager.FetchConfigurationSection<AppContextSwitchOverridesSection>(AppContextSwitchOverridesSection.Name);
 
         try
@@ -327,6 +350,32 @@ internal static class LocalAppContextSwitches
             DisableTnirByDefaultString,
             defaultValue: false,
             ref s_disableTnirByDefault);
+    #endif
+
+    #if NET
+    /// <summary>
+    /// When set to false, SqlClient does not read app.config.  Configurable
+    /// retry logic, authentication providers and switch overrides are then not
+    /// taken from the configuration file.
+    ///
+    /// ILLink.Substitutions.xml allows the configuration reading, and the type
+    /// resolution it drives, to be trimmed away when the corresponding
+    /// AppContext switch is set at compile time. In such cases, this property
+    /// will return a constant value, even if the AppContext switch is set or
+    /// reset at runtime.
+    ///
+    /// The default value of this switch is true.
+    /// </summary>
+    public static bool EnableAppConfig =>
+        AcquireAndReturn(
+            EnableAppConfigString,
+            defaultValue: true,
+            ref s_enableAppConfig);
+    #else
+    /// <summary>
+    /// Trimming does not apply to .NET Framework, so app.config is always read.
+    /// </summary>
+    public static bool EnableAppConfig => true;
     #endif
 
     /// <summary>
