@@ -2,8 +2,9 @@
 
 This directory contains tests for the shell scripts used by the
 [cherry-pick-hotfix](./../../../.github/workflows/cherry-pick-hotfix.yml),
-[check-milestone](./../../../.github/workflows/check-milestone.yml) and
-[recheck-milestones](./../../../.github/workflows/recheck-milestones.yml) GitHub Actions workflows.
+[check-milestone](./../../../.github/workflows/check-milestone.yml),
+[recheck-milestones](./../../../.github/workflows/recheck-milestones.yml), and
+[bump-next-version](./../../../.github/workflows/bump-next-version.yml) GitHub Actions workflows.
 These tests are intended to be run manually by developers when they are changing the associated
 scripts, and not as part of any CI runs.
 
@@ -89,6 +90,7 @@ bats .github/scripts/tests/extract-hotfix-versions.bats
 bats .github/scripts/tests/cherry-pick-to-release.bats
 bats .github/scripts/tests/check-milestone-branch.bats
 bats .github/scripts/tests/recheck-milestones-for-release-branch.bats
+bats .github/scripts/tests/bump-next-version.bats
 ```
 
 ### Run a specific test by name
@@ -118,6 +120,7 @@ bats --formatter pretty .github/scripts/tests/
 | `cherry-pick-to-release.bats` | 15 | Branch derivation, already-applied detection, clean cherry-pick, conflict handling, milestone lookup, PR creation, duplicate skip logic |
 | `check-milestone-branch.bats` | 26 | Milestone version parsing, state-independent active development-line selection, rejection of earlier and later series on the default branch, fail-closed handling when no series is active, release-branch derivation, default-branch vs release-branch validation, integration-branch and non-semver skips, API invocation assertions, API failure handling |
 | `recheck-milestones-for-release-branch.bats` | 17 | Release-branch name parsing, matching open PRs by milestone, run lookup by head SHA and PR association, fork fallback, re-run invocation, and failure reporting |
+| `bump-next-version.bats` | 19 | Milestone ordering, weekly reconciliation across main and release branches (including updating stale PRs without overwriting unrelated edits), patch fallback, stale/invalid closures, duplicate PRs, legacy branches, and API failure |
 
 ## How the Tests Work
 

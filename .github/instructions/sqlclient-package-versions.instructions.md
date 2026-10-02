@@ -179,8 +179,23 @@ package that actually exists on NuGet.
 ## Updating Versions
 
 After releasing the **SqlClient family**:
-1. Update `SqlClientNextVersion` in `src/Microsoft.Data.SqlClient/Versions.props` to the next planned
-   version.  (There is no family published version to update.)
+1. Close the released version's GitHub milestone. The `bump-next-version.yml` workflow proposes a
+   pull request updating `SqlClientNextVersion` in `src/Microsoft.Data.SqlClient/Versions.props` on
+   the owning branch (`release/X.Y` if present; otherwise the default branch). It selects the next
+   open milestone in that major.minor series, or creates the next unused patch milestone if none is
+   open. Stale closures and older release branches without the unified `Versions.props` are skipped.
+   The same workflow also runs every Monday at 09:17 UTC (and on manual dispatch) to reconcile
+   the default branch and release branches with open milestones. It leaves a current open milestone
+   alone; if a preview is discarded or closed, it proposes the next open milestone instead. On the
+   default branch it may advance to the next unbranched major.minor series; on release branches it
+   stays within the branch's series. If a generated PR is still open when the next milestone
+   changes, the run updates its version and milestone; it never overwrites unrelated PR edits.
+   A scheduled run does not create speculative patch milestones.
+2. Review the version-bump PR and push a follow-up commit with a non-default token to trigger
+   required checks before merging: the workflow uses `GITHUB_TOKEN`, and GitHub does not fire
+   ordinary `pull_request` workflows for PRs it creates.
+   If automation does not apply, update `SqlClientNextVersion` manually. (There is no family
+   published version to update.)
 
 After releasing **`Microsoft.SqlServer.Server`**:
 1. Update `SqlServerPublishedVersion` to the version just shipped.
