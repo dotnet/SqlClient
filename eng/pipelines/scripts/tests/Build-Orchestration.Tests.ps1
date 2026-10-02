@@ -38,6 +38,10 @@ printf 'ARG:%s\n' "$@"
         $output
     }
 
+    # Evaluate the real SDK project without restoring packages or executing build targets.
+    # The returned properties/items include imported props and TFM-specific conditions,
+    # so callers verify effective build behavior rather than just matching project XML.
+    # Properties supplies optional command-line overrides (for example, TargetFramework).
     function Get-ProjectEvaluation {
         param(
             [string]$Project,
@@ -53,6 +57,9 @@ printf 'ARG:%s\n' "$@"
         $output -join "`n" | ConvertFrom-Json
     }
 
+    # Populate only the baseline asset paths the resolver needs, then run its selection
+    # target directly. Empty DLL placeholders keep these cases offline and inexpensive;
+    # returning the exit code lets missing-asset cases assert the expected failure.
     function Invoke-RefBaselineProbe {
         param(
             [string[]]$AvailableFrameworks,
@@ -140,6 +147,8 @@ printf 'ARG:%s\n' "$@"
 }
 
 Describe 'supported target frameworks' {
+    # Pipeline matrices and standalone VM installers must agree: a clean benchmark VM
+    # should not download retired runtimes just because a script bypasses YAML setup.
     It 'does not schedule retired frameworks or install their runtimes in active pipelines' {
         $pipelines = @(
             Get-ChildItem (Join-Path $repoRoot 'eng\pipelines') -Recurse -File -Include *.yml, *.yaml
@@ -150,8 +159,16 @@ Describe 'supported target frameworks' {
             $content | Should -Not -Match '\bnet(?:462|8\.0|9\.0)\b' -Because $pipeline.FullName
             $content | Should -Not -Match 'runtimes:\s*\[[^\]]*\b[89]\.x\b' -Because $pipeline.FullName
         }
+        foreach ($script in @('run-perf-tests.ps1', 'run-perf-tests.sh')) {
+            $content = Get-Content (Join-Path $repoRoot "eng\pipelines\perf\scripts\$script") -Raw
+            $content | Should -Not -Match '\bnet(?:462|8\.0|9\.0)\b' -Because $script
+            # These scripts use bare channel numbers, not TFMs or the YAML "8.x" syntax.
+            $content | Should -Not -Match '(?<![\w.])[89]\.0(?![\w.])' -Because $script
+        }
     }
 
+    # Enumerate target sets explicitly so neither inherited stress targets nor the
+    # deliberate Standard-only, net481, and historical-repro exceptions get lost.
     It 'evaluates <Project> to <Frameworks>' -ForEach @(
         foreach ($group in @(
             @{
@@ -188,9 +205,13 @@ Describe 'supported target frameworks' {
             @{
                 Frameworks = 'net47;netstandard2.0'
                 Projects = @(
-                    'src\Microsoft.SqlServer.Server\Microsoft.SqlServer.Server.csproj'
                     'src\Microsoft.Data.SqlClient.Extensions\Azure\src\Azure.csproj'
                 )
+            }
+            @{
+                # This independently versioned package needs its own major-version PR.
+                Frameworks = 'net46;netstandard2.0'
+                Projects = @('src\Microsoft.SqlServer.Server\Microsoft.SqlServer.Server.csproj')
             }
             @{
                 Frameworks = 'netstandard2.0'
@@ -243,6 +264,8 @@ Describe 'supported target frameworks' {
             Should -Be (($Frameworks.Split(';') | Sort-Object) -join ';')
     }
 
+    # Evaluate both OS branches even on a Windows host; cross-compilation must not
+    # introduce a Framework target on Unix or downgrade the sample's net481 target.
     It 'preserves the Windows sample targets for <OperatingSystem>' -ForEach @(
         @{ OperatingSystem = 'Windows_NT'; Frameworks = 'net481;net10.0-windows' }
         @{ OperatingSystem = 'Unix'; Frameworks = 'net10.0-windows' }
@@ -259,6 +282,8 @@ Describe 'supported target frameworks' {
         $actual | Should -Be $Frameworks
     }
 
+    # Unit tests use internal driver APIs unavailable in ref assemblies. Check both
+    # the NuGet compile exclusion and the explicit lib path, not just the TFM property.
     It 'maps Package-mode UnitTests to the <Framework> implementation, not the reference assembly' -ForEach @(
         @{ Framework = 'net47' }
         @{ Framework = 'net10.0' }
@@ -277,6 +302,16 @@ Describe 'supported target frameworks' {
         $reference[0].HintPath.Replace('\', '/') | Should -Be "$($TestDrive.Replace('\', '/'))/package/lib/$Framework/Microsoft.Data.SqlClient.dll"
     }
 
+    It 'defaults Package-mode UnitTests to net10.0 during the outer build' {
+        $result = Get-ProjectEvaluation 'src\Microsoft.Data.SqlClient\tests\UnitTests\Microsoft.Data.SqlClient.UnitTests.csproj' @(
+            '-p:ReferenceType=Package'
+        )
+        $result.Properties.TargetFramework | Should -BeNullOrEmpty
+        $result.Properties._SqlClientPackageTfm | Should -Be 'net10.0'
+    }
+
+    # Framework/Standard targets use the same lowest supported modern dependency
+    # band. Assert the major rather than a patch, allowing normal servicing updates.
     It 'uses the .NET 10 dependency band for <Framework>, including preserved framework targets' -ForEach @(
         @{ Framework = 'net47' }
         @{ Framework = 'net10.0' }
@@ -294,6 +329,7 @@ Describe 'supported target frameworks' {
             'System.Security.Cryptography.Pkcs'
             'System.Diagnostics.DiagnosticSource'
             'System.Text.Json'
+            'System.Threading.Channels'
         )) {
             $central = @($result.Items.PackageVersion | Where-Object Identity -EQ $id)
             $central.Count | Should -Be 1
@@ -315,6 +351,8 @@ Describe 'supported target frameworks' {
         }
     }
 
+    # The hand-authored nuspec is independent of project targeting. Detect missing or
+    # extra package groups and ensure only Standard uses the unsupported-platform DLL.
     It 'aligns package dependency groups and assembly paths with the declared reference targets' {
         [xml]$nuspec = Get-Content (Join-Path $repoRoot 'src\Microsoft.Data.SqlClient\src\Microsoft.Data.SqlClient.nuspec') -Raw
         $result = Get-ProjectEvaluation 'src\Microsoft.Data.SqlClient\ref\Microsoft.Data.SqlClient.csproj'
@@ -342,6 +380,8 @@ Describe 'supported target frameworks' {
         }
     }
 
+    # A successful project build cannot detect stale nuspec dependency versions.
+    # Compare the actual per-TFM package references and central versions to the manifest.
     It 'aligns <Framework> driver dependencies and central versions with the package metadata' -ForEach @(
         @{ Framework = 'net47'; Sni = 'Microsoft.Data.SqlClient.SNI' }
         @{ Framework = 'net10.0'; Sni = 'Microsoft.Data.SqlClient.SNI.runtime' }
@@ -369,6 +409,8 @@ Describe 'supported target frameworks' {
 }
 
 Describe 'reference assembly baseline framework resolution' {
+    # Prefer exact baseline assets, then exercise both previous modern target layouts.
+    # Overrides must take precedence even when the baseline also contains exact matches.
     It 'selects <Scenario> assets without building or downloading a baseline' -ForEach @(
         @{
             Scenario = 'matching'
@@ -408,6 +450,8 @@ Describe 'reference assembly baseline framework resolution' {
         ($items | Where-Object Identity -EQ 'netstandard2.0').BaselineTfm | Should -Be 'netstandard2.0'
     }
 
+    # Missing assets must fail before ApiCompat runs; silently omitting a comparison
+    # would make a partially checked API surface appear compatible.
     It 'fails clearly when the <Scenario> asset is missing' -ForEach @(
         @{
             Scenario = 'Framework fallback'
