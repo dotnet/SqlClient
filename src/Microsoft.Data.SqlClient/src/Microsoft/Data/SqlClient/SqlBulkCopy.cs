@@ -1818,6 +1818,9 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             MetaType metatype = MetaType.GetMetaTypeFromValue(value);
             switch (metatype.TDSType)
             {
+                case TdsEnums.SQLMONEY:
+                    // Keep the SQL type: converting to decimal loses money's variant identity.
+                    return value;
                 case TdsEnums.SQLFLT4:
                 case TdsEnums.SQLFLT8:
                 case TdsEnums.SQLINT8:
@@ -1830,7 +1833,6 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 case TdsEnums.SQLUNIQUEID:
                 case TdsEnums.SQLNVARCHAR:
                 case TdsEnums.SQLDATETIME:
-                case TdsEnums.SQLMONEY:
                 case TdsEnums.SQLNUMERICN:
                 case TdsEnums.SQLDATE:
                 case TdsEnums.SQLTIME:
@@ -2680,6 +2682,12 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 else if (variantInternalType == SqlBuffer.StorageType.Date)
                 {
                     _parser.WriteSqlVariantDate(((DateTime)value), _stateObj);
+                }
+                else if (!isNull && variantInternalType == SqlBuffer.StorageType.Money)
+                {
+                    // GetValue exposes both money types as decimal; preserve the source's wire type.
+                    _parser.WriteSqlVariantMoney(new SqlMoney((decimal)value), _stateObj,
+                        _sqlDataReaderRowSource.IsSmallMoney(_sortedColumnMappings[col]._sourceColumnOrdinal));
                 }
                 else
                 {

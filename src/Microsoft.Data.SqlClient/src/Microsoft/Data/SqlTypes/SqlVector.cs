@@ -133,7 +133,6 @@ where T : unmanaged
         {
             return SQLMessage.NullString();
         }
-
         #if NET
         if (typeof(T) == typeof(Half))
         {
@@ -151,11 +150,14 @@ where T : unmanaged
                 widened[i] = (float)elements[i];
             }
 
-            return JsonSerializer.Serialize(widened);
+            return JsonSerializer.Serialize(widened, SqlClientJsonSerializerContext.Default.SingleArray);
         }
         #endif
 
-        return JsonSerializer.Serialize(Memory);
+        // GetTypeFieldsOrThrow guarantees T is float once Half is handled above.
+        return JsonSerializer.Serialize(
+            (ReadOnlyMemory<float>)(object)Memory,
+            SqlClientJsonSerializerContext.Default.ReadOnlyMemorySingle);
     }
 
     /// <summary>

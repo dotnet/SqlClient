@@ -471,4 +471,18 @@ translated NDJSON as the `perf-kusto-payloads` artifact for manual/backfill inge
 | Ingestion auth error | The service connection's SP lacks **Database Ingestor** on the target database. |
 | "Kusto ingestion was queued, but the ingestion principal is not authorized to query the database" | The SP has **Database Ingestor** but not **Database Viewer**. Ingestion succeeded; grant **Database Viewer** so the verify step can confirm the rows landed. |
 | `Kusto ingestion not yet queryable after Ns ... no ingestion failures were reported` (warning, step passes) | Expected, harmless: queued ingestion is asynchronous and small perf payloads can take longer than the verify window to become queryable. The step **warns and passes** because `.show ingestion failures` is clean, so the rows will land shortly. The step only **fails** when `.show ingestion failures` actually reports failures — in that case confirm the `PerfRun` / `PerfBenchmarkResult` tables exist with columns matching the schema above (a schema/column-name mismatch is the usual cause; the self-contained inline JSON mapping rules out a missing server-side named mapping). |
-| Benchmarks not CPU-pinned | `PERF_CLIENT_CPUS` was not injected, or `taskset` is unavailable on the VM. |
+| Benchmarks not CPU-pinned | `PERF_CLIENT_CPUS` was not injected, or `taskset` is unavailable on the VM. For interleaved Windows runs, check stderr for `SetProcessAffinityMask` warnings with the child PID, requested mask, and Win32 error code/message. Pinning remains best effort; masks are limited to the Python process's pointer width (32 or 64 bits) and cannot span processor groups. |
+
+### Affinity regression tests
+
+Run the standard-library tests from the repository root:
+
+```text
+python -m unittest discover -s eng/pipelines/perf/scripts/tests -p test_affinity.py -v
+```
+
+On Windows, `py -3` can be used instead of `python`. The tests cover the Windows ctypes
+signature, error diagnostics, mask bounds, and unchanged Linux warning-only behavior.
+Windows-only tests also pin a disposable Python child to an available CPU and read its
+affinity back, and check the real error from an invalid handle. No SQL Server is needed,
+and the test runner's affinity is never changed.

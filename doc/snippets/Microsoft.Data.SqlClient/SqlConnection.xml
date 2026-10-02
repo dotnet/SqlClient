@@ -361,9 +361,14 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and a
           are the same, they will be grouped into the same connection pool.
         </para>
         <para>
-          When using a token callback function, the connection manages
-          refreshing the tokens returned by the callback.  The application is
-          not responsible for knowing when tokens expire.
+          The driver manages token refresh and discards pooled connections with
+          expired or nearly expired tokens before reuse. Connections in use or
+          reused within the same active transaction are unaffected.
+        </para>
+        <para>
+          New physical connections invoke the callback only when a cached token
+          is missing or needs refreshing. Reusing a pooled connection does not
+          invoke the callback.
         </para>
         <para>
           This property is mutually exclusive with the
