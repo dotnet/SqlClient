@@ -13,8 +13,22 @@ The package provides the types and attributes needed to create SQL Server CLR us
 
 This package supports:
 
-- .NET Framework 4.6+
+- .NET Framework 4.7+
 - .NET Standard 2.0 (for .NET Core 2.0+ and .NET 5+)
+
+### Breaking change in 2.0
+
+Starting with version 2.0, the minimum supported .NET Framework version is 4.7
+(previously 4.6). The package now ships a `net47` assembly instead of `net46`;
+the `netstandard2.0` assembly is retained.
+
+Applications targeting .NET Framework 4.6, 4.6.1, or 4.6.2 should retarget to
+.NET Framework 4.7 or later before upgrading, or remain on Microsoft.SqlServer.Server
+1.x. NuGet may still select the .NET Standard 2.0 asset for some older .NET Framework
+targets, but this does not extend the package's supported .NET Framework versions.
+
+This breaking change is versioned independently of Microsoft.Data.SqlClient and
+does not change that driver's supported frameworks.
 
 ## Installation
 
