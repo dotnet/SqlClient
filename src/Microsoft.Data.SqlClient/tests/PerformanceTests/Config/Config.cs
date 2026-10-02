@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 namespace Microsoft.Data.SqlClient.PerformanceTests
 {
     /// <summary>
@@ -56,12 +58,12 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
     public class Benchmarks
     {
         public RunnerJob SqlConnectionRunnerConfig;
-        public RunnerJob SqlCommandRunnerConfig;
+        public CommandRunnerJob SqlCommandRunnerConfig;
         public RunnerJob SqlBulkCopyRunnerConfig;
-        public RunnerJob DataTypeReaderRunnerConfig;
-        public RunnerJob AlwaysEncryptedDataTypeReaderRunnerConfig;
-        public RunnerJob LargeDataReadRunnerConfig;
-        public RunnerJob AlwaysEncryptedLargeDataReadRunnerConfig;
+        public CommandRunnerJob DataTypeReaderRunnerConfig;
+        public CommandRunnerJob AlwaysEncryptedDataTypeReaderRunnerConfig;
+        public PlaintextLargeDataRunnerJob LargeDataReadRunnerConfig;
+        public CommandRunnerJob AlwaysEncryptedLargeDataReadRunnerConfig;
         public RunnerJob MarsOverheadRunnerConfig;
         public RunnerJob ParallelAsyncConnectionRunnerConfig;
         public RunnerJob CancellationTokenReadAsyncRunnerConfig;

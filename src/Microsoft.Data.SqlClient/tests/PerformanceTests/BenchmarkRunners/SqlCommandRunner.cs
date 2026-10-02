@@ -2,101 +2,141 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
+using System.Data;
 using System.Threading.Tasks;
 using System.Xml;
 using BenchmarkDotNet.Attributes;
 
 namespace Microsoft.Data.SqlClient.PerformanceTests
 {
-    public class SqlCommandRunner : BaseRunner
+    /// <summary>Measures command entry points over stable, focused SQL batch and RPC workloads.</summary>
+    public class SqlCommandRunner : CommandRunnerBase
     {
-        private static SqlConnection s_sqlConnection;
-        private Table _table;
-        private string _query;
+        /// <summary>Distinguishes ordinary batches, sp_executesql, and stored-procedure RPCs.</summary>
+        public enum ExecutionPath { Text, Parameterized, StoredProcedure }
 
-        [GlobalSetup]
-        public void Setup()
+        [Params(ExecutionPath.Text, ExecutionPath.Parameterized, ExecutionPath.StoredProcedure)]
+        public ExecutionPath Path { get; set; }
+
+        private SqlCommand _nonQuery;
+        private SqlCommand _scalar;
+        private SqlCommand _reader;
+        private SqlCommand _xml;
+
+        protected override CommandRunnerJob Settings => s_config.Benchmarks.SqlCommandRunnerConfig;
+
+        /// <summary>Creates session-local fixtures and checks all API paths outside measurement.</summary>
+        protected override void SetupCommands()
         {
-            s_sqlConnection = new(s_config.ConnectionString);
-            s_sqlConnection.Open();
+            CreateCommand("CREATE TABLE #CommandRow (Id int PRIMARY KEY, Value int NOT NULL); INSERT INTO #CommandRow VALUES (1, 123);")
+                .ExecuteNonQuery();
 
-            _table = TablePatterns.TableAll25Columns(s_datatypes, nameof(SqlCommandRunner))
-                    .CreateTable(s_sqlConnection)
-                    .InsertBulkRows(s_config.Benchmarks.SqlCommandRunnerConfig.RowCount, s_sqlConnection);
+            _nonQuery = BuildCommand("NonQuery", "UPDATE #CommandRow SET Value = 123 WHERE Id = @id;");
+            _scalar = BuildCommand("Scalar", "SELECT Value FROM #CommandRow WHERE Id = @id;");
+            _reader = BuildCommand("Reader", "SELECT Id, Value FROM #CommandRow WHERE Id = @id;");
+            _xml = BuildCommand("Xml", "SELECT Id, Value FROM #CommandRow WHERE Id = @id FOR XML PATH('row'), ROOT('rows');");
 
-            _query = $"SELECT * FROM {_table.Name}";
+            if (ExecuteNonQuery() != 1 || ExecuteNonQueryAsync().GetAwaiter().GetResult() != 1 ||
+                (int)ExecuteScalar() != 123 || (int)ExecuteScalarAsync().GetAwaiter().GetResult() != 123 ||
+                ExecuteReader() != 124 || ExecuteReaderAsync().GetAwaiter().GetResult() != 124 ||
+                ExecuteXmlReader() != 10 || ExecuteXmlReaderAsync().GetAwaiter().GetResult() != 10)
+            {
+                throw new InvalidOperationException("Command fixture returned unexpected results.");
+            }
         }
 
-        [GlobalCleanup]
-        public void Dispose()
+        /// <summary>Constructs one batch or RPC command, leaving parameters stable between invocations.</summary>
+        /// <param name="name">Session-local procedure suffix.</param>
+        /// <param name="sql">The workload SQL with an integer @id parameter.</param>
+        /// <returns>The reusable command.</returns>
+        private SqlCommand BuildCommand(string name, string sql)
         {
-            _table.DropTable(s_sqlConnection);
-            s_sqlConnection.Close();
-            SqlConnection.ClearAllPools();
+            SqlCommand command;
+            if (Path == ExecutionPath.StoredProcedure)
+            {
+                string procedure = "#Command" + name;
+                CreateCommand($"CREATE PROCEDURE {procedure} @id int AS {sql}").ExecuteNonQuery();
+                command = CreateCommand(procedure);
+                command.CommandType = CommandType.StoredProcedure;
+            }
+            else
+            {
+                command = CreateCommand(Path == ExecutionPath.Text ? sql.Replace("@id", "1") : sql);
+            }
+            if (Path != ExecutionPath.Text)
+            {
+                command.Parameters.Add("@id", SqlDbType.Int).Value = 1;
+            }
+            return command;
         }
 
+        /// <summary>Executes a reusable reader command and accesses every returned field.</summary>
         [Benchmark]
-        public void ExecuteReader()
+        public int ExecuteReader()
         {
-            using SqlCommand sqlCommand = new(_query, s_sqlConnection);
-            using SqlDataReader reader = sqlCommand.ExecuteReader();
+            using SqlDataReader reader = _reader.ExecuteReader();
+            int sum = 0;
             while (reader.Read())
-            { }
+            {
+                sum += reader.GetInt32(0) + reader.GetInt32(1);
+            }
+            return sum;
         }
 
+        /// <summary>Executes and advances asynchronously, then accesses the current row's typed fields.</summary>
         [Benchmark]
-        public async Task ExecuteReaderAsync()
+        public async Task<int> ExecuteReaderAsync()
         {
-            using SqlCommand sqlCommand = new(_query, s_sqlConnection);
-            using SqlDataReader reader = await sqlCommand.ExecuteReaderAsync();
+            using SqlDataReader reader = await _reader.ExecuteReaderAsync();
+            int sum = 0;
             while (await reader.ReadAsync())
-            { }
+            {
+                sum += reader.GetInt32(0) + reader.GetInt32(1);
+            }
+            return sum;
         }
 
+        /// <summary>Measures first-value execution without command allocation or unused result rows.</summary>
         [Benchmark]
-        public void ExecuteScalar()
-        {
-            using SqlCommand sqlCommand = new(_query, s_sqlConnection);
-            _ = sqlCommand.ExecuteScalar();
-        }
+        public object ExecuteScalar() => _scalar.ExecuteScalar();
 
+        /// <summary>Measures the corresponding asynchronous first-value execution path.</summary>
         [Benchmark]
-        public async Task ExecuteScalarAsync()
-        {
-            using SqlCommand sqlCommand = new(_query, s_sqlConnection);
-            _ = await sqlCommand.ExecuteScalarAsync();
-        }
+        public Task<object> ExecuteScalarAsync() => _scalar.ExecuteScalarAsync();
 
+        /// <summary>Updates the same row to the same value without growing the workload.</summary>
         [Benchmark]
-        public void ExecuteNonQuery()
-        {
-            using SqlCommand sqlCommand = new(_query, s_sqlConnection);
-            sqlCommand.ExecuteNonQuery();
-        }
+        public int ExecuteNonQuery() => _nonQuery.ExecuteNonQuery();
 
+        /// <summary>Measures asynchronous nonquery execution over the same stable update.</summary>
         [Benchmark]
-        public async Task ExecuteNonQueryAsync()
-        {
-            using SqlCommand sqlCommand = new(_query, s_sqlConnection);
-            await sqlCommand.ExecuteNonQueryAsync();
-        }
+        public Task<int> ExecuteNonQueryAsync() => _nonQuery.ExecuteNonQueryAsync();
 
+        /// <summary>Executes an XML result and consumes all XML nodes.</summary>
         [Benchmark]
-        public void ExecuteXmlReader()
+        public int ExecuteXmlReader()
         {
-            using SqlCommand sqlCommand = new(_query + " FOR XML AUTO, BINARY BASE64", s_sqlConnection);
-            using XmlReader reader = sqlCommand.ExecuteXmlReader();
+            using XmlReader reader = _xml.ExecuteXmlReader();
+            int nodes = 0;
             while (reader.Read())
-            { }
+            {
+                nodes++;
+            }
+            return nodes;
         }
 
+        /// <summary>Executes and fully consumes XML through the actual async APIs.</summary>
         [Benchmark]
-        public async Task ExecuteXmlReaderAsync()
+        public async Task<int> ExecuteXmlReaderAsync()
         {
-            using SqlCommand sqlCommand = new(_query + " FOR XML AUTO, BINARY BASE64", s_sqlConnection);
-            using XmlReader reader = await sqlCommand.ExecuteXmlReaderAsync();
+            using XmlReader reader = await _xml.ExecuteXmlReaderAsync();
+            int nodes = 0;
             while (await reader.ReadAsync())
-            { }
+            {
+                nodes++;
+            }
+            return nodes;
         }
     }
 }

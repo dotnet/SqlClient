@@ -74,7 +74,7 @@
             "WarmupCount": 1,
             "RowCount": 1000
         },
-        // The large-data read benchmarks move up to 20 MB per operation, so a single
+        // Plaintext large-data reads include 128 MiB per operation, so a single
         // operation takes seconds rather than microseconds. Three settings account for that:
         //   IterationCount is reduced (20 network-bound iterations add little statistical
         //     value over 5, but cost 4x the wall time);
@@ -89,8 +89,11 @@
             "InvocationCount": 1,
             "WarmupCount": 1,
             "RowCount": 0,
+            // Byte-valued sizes apply to binary and UTF-16 text, across all accessor paths.
+            "PayloadSizesBytes": [1048576, 5242880, 10485760, 20971520, 134217728],
+            "CommandTimeoutSeconds": 1800,
             "RunStrategy": "Monitoring",
-            "TimeoutMinutes": 30
+            "TimeoutMinutes": 120
         },
         "AlwaysEncryptedLargeDataReadRunnerConfig": {
             "Enabled": true,
