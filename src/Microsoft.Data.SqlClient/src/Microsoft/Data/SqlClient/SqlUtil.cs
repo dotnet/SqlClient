@@ -299,6 +299,11 @@ namespace Microsoft.Data.SqlClient
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ParameterDirectionInvalidForOptimizedBinding, paramName));
         }
 
+        internal static Exception PrepareNotSupportedForOptimizedBinding()
+        {
+            return ADP.InvalidOperation(Strings.SQL_PrepareNotSupportedForOptimizedBinding);
+        }
+
         internal static Exception ActiveDirectoryTokenRetrievingTimeout(string authenticaton, string errorCode, Exception exception)
         {
             return ADP.TimeoutException(StringsHelper.GetString(Strings.AAD_Token_Retrieving_Timeout, authenticaton, errorCode, exception?.Message), exception);

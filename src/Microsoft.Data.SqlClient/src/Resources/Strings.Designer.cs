@@ -3841,6 +3841,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Prepare is not supported when EnableOptimizedParameterBinding is enabled. Create a new SqlCommand and either set EnableOptimizedParameterBinding to false before its first execution or execute it without calling Prepare..
+        /// </summary>
+        internal static string SQL_PrepareNotSupportedForOptimizedBinding {
+            get {
+                return ResourceManager.GetString("SQL_PrepareNotSupportedForOptimizedBinding", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Certificate failed chain validation. Error(s): &apos;{0}&apos;..
         /// </summary>
         internal static string SQL_RemoteCertificateChainErrors {
