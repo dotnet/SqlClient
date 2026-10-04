@@ -402,10 +402,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
                 Assert.NotNull(blockedSession);
                 Assert.NotEqual(heldSession.SessionId, blockedSession.SessionId);
 
-                // The gate must still be balanced and usable. An over-release would have thrown
-                // SemaphoreFullException; a lost release would hang this call.
-                provider.GateTimeoutInMilliseconds = 15 * 1000;
-                Assert.NotNull(await AttestAsync(provider, NewSessionParameters()));
+                // Disable timeout fallthrough so a lost gate release fails via cancellation instead
+                // of silently attesting anyway.
+                provider.GateTimeoutInMilliseconds = Timeout.Infinite;
+                using (CancellationTokenSource gateWaitTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(30)))
+                {
+                    Assert.NotNull(await AttestAsync(provider, NewSessionParameters(), gateWaitTimeout.Token));
+                }
                 Assert.Equal(3, provider.AttestationCount);
             }
             finally
