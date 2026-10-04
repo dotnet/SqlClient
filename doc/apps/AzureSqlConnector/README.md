@@ -6,25 +6,24 @@ parameters in a UI, builds the corresponding ADO.NET connection string via
 
 It is intended as a quick, repeatable scratch tool for manually validating connection-string
 combinations (server / database / authentication mode / encryption / etc.) against an Azure SQL DB
-or SQL Server instance, **and as a manual repro** for the WAM-broker behavior added in this
-branch's `ActiveDirectoryAuthenticationProvider`.
+or SQL Server instance, **and as a manual repro** for
+`ActiveDirectoryAuthenticationProvider`'s WAM-broker behavior.
 
-The sample multi-targets:
+On Windows, the sample multi-targets:
 
 | TFM              | Purpose                                                                                          |
 | ---------------- | ------------------------------------------------------------------------------------------------ |
-| `net481`         | Exercises the legacy `SetIWin32WindowFunc` API used by .NET Framework callers with WinForms.     |
+| `net481`         | Exercises both the legacy `SetIWin32WindowFunc` and modern `SetParentActivityOrWindowFunc` APIs. |
 | `net10.0-windows` | Exercises the modern `SetParentActivityOrWindowFunc` API used on .NET 8+.                       |
 
-`net10.0-windows` restores and builds cleanly on Linux/macOS hosts even though the resulting
+On Linux/macOS, only `net10.0-windows` is selected. It can be cross-compiled even though the resulting
 binary only runs on Windows, so the project no longer needs a separate no-op cross-platform
 fallback.
 
 > **Note:** `SetParentActivityOrWindowFunc` is also available on `net481` and is the
-> recommended API for new code on any framework. The sample wires `net481` up to
-> `SetIWin32WindowFunc` only to keep coverage of that legacy code path; replacing the
-> `SetIWin32WindowFunc(() => this)` call with `SetParentActivityOrWindowFunc(() => this.Handle)`
-> on `net481` works the same way.
+> recommended API for new code on any framework. On `net481`, the sample registers both APIs.
+> Both callbacks use a window handle captured on the UI thread, rather than reading `Form.Handle`
+> when MSAL invokes the callback.
 
 ## Mode selector
 
@@ -32,11 +31,12 @@ When the app launches it shows a small `ModeSelectorForm` that picks between two
 
 | Mode                               | Form              | What it exercises                                                                                                       |
 | ---------------------------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| **UI thread (`OpenAsync`)**        | `MainForm`        | Calls `SqlConnection.OpenAsync()` on the UI thread so the Windows Forms message pump stays alive during MSAL sign-in.   |
+| **UI thread (`OpenAsync`)**        | `MainForm`        | Defaults to `OpenAsync`; its **Open mode** dropdown also allows synchronous `Open` on the UI thread.                    |
 | **Worker thread (`Open`, sync)**   | `MainFormWorker`  | Calls `SqlConnection.Open()` on a background worker thread; the parent window handle is captured up-front on the UI thread. |
 
-Both forms demonstrate the supported patterns for parenting the WAM broker (or the legacy
-embedded WebView on .NET Framework).
+Both forms capture the parent window handle on the UI thread before registering callbacks.
+Use the default async mode or the worker-thread form to keep the UI responsive; synchronous
+`Open` in the UI-thread form blocks that thread while the connection opens.
 
 ## Form inputs
 
@@ -76,15 +76,17 @@ outcome (including SQL error number when applicable), and the server version on 
 
 ## Prerequisites
 
-- Visual Studio 2026 (or any IDE / SDK with .NET Framework **4.8.1** Developer Pack installed) for
-  the `net481` target. The `net10.0-windows` target only needs the .NET 10 SDK.
+- The SDK pinned in the repository's [global.json](../../../global.json); see the
+  [build prerequisites](../../../BUILDGUIDE.md#prerequisites).
+- Windows to run either target, with .NET Framework **4.8.1** for `net481` or the .NET 10 Windows
+  Desktop runtime for `net10.0-windows`.
 - Network connectivity to your Azure SQL Database (server firewall must allow your client IP).
 - For Entra ID authentication modes, valid credentials available through Azure CLI / environment
   variables / managed identity / the WAM broker, depending on the chosen method.
 
 ## Build & run
 
-From the project folder:
+From the project folder on Windows:
 
 ```pwsh
 dotnet build .\AzureSqlConnector.csproj
@@ -92,7 +94,7 @@ dotnet run --project .\AzureSqlConnector.csproj -f net10.0-windows   # modern WA
 dotnet run --project .\AzureSqlConnector.csproj -f net481            # legacy IWin32Window API
 ```
 
-Or load `src\Microsoft.Data.SqlClient.slnx` in Visual Studio, set **AzureSqlConnector** as the
+Or load [src/Microsoft.Data.SqlClient.slnx](../../../src/Microsoft.Data.SqlClient.slnx) in Visual Studio, set **AzureSqlConnector** as the
 startup project, and press **F5**.
 
 ## Example
@@ -113,11 +115,10 @@ For any `ActiveDirectory*` authentication method (especially **ActiveDirectoryIn
 app installs an `ActiveDirectoryAuthenticationProvider` and tells it which window should host the
 sign-in UI:
 
-- On **`net481`** the form calls `provider.SetIWin32WindowFunc(() => this)`. This is the legacy
-  API used by .NET Framework callers with the embedded WebView.
-- On **`net10.0-windows`** the form calls
-  `provider.SetParentActivityOrWindowFunc(() => this.Handle)`. This is the modern API that also
-  integrates with the WAM broker on Windows.
+- On **both targets**, the form registers `SetParentActivityOrWindowFunc` with a callback
+  returning the captured window handle. This is the modern API used by the WAM broker.
+- On **`net481`**, the form also registers `SetIWin32WindowFunc` with a `Win32WindowHandle`
+  wrapper around that same handle for the legacy embedded WebView.
 
 The provider is registered for every `SqlAuthenticationMethod.ActiveDirectory*` value at startup.
 
@@ -125,13 +126,14 @@ The provider is registered for every `SqlAuthenticationMethod.ActiveDirectory*` 
 
 | Form              | Open mode                | Parent window callback                                                                                                                          |
 | ----------------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `MainForm`        | `OpenAsync` on UI thread | Callback runs on the UI thread when MSAL invokes it, so `this`/`this.Handle` is naturally safe to access.                                       |
+| `MainForm`        | `OpenAsync` or `Open` on UI thread | Callback returns the captured handle without accessing controls, even if MSAL invokes it on a worker thread.                                  |
 | `MainFormWorker`  | `Open` (sync) on worker  | The form captures `this.Handle` into a field on the UI thread before kicking off the worker; the callback closes over that captured value so it never needs to marshal back. |
 
-Without one of these patterns the WAM broker (or the embedded WebView on .NET Framework) can fail
-to render or stay unresponsive while it waits for the user.
+Do not assume MSAL invokes a callback on the UI thread, even when the connection is opened there.
+Accessing a control's handle from a worker thread can fail; the captured-handle pattern avoids this.
 
 ## Notes
 
 - This is a sample / diagnostic tool, **not** a product. It does not persist credentials.
-- From the repo root: `dotnet run --project .\doc\apps\AzureSqlConnector\AzureSqlConnector.csproj`
+- From the repo root on Windows:
+  `dotnet run --project .\doc\apps\AzureSqlConnector\AzureSqlConnector.csproj -f net10.0-windows`

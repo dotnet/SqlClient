@@ -1999,7 +1999,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [Trait("Category", "flaky")] // System.AggregateException : One or more errors occurred. (Assert.ThrowsAny() Failure: No exception was thrown
+        [Trait("category", "flaky")] // System.AggregateException : One or more errors occurred. (Assert.ThrowsAny() Failure: No exception was thrown
                                      // Expected: typeof(System.Exception))
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProviderWithExecutionMethod))]
@@ -2232,7 +2232,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         // fixed CancelAfter window races a real, network-latency-dependent Always Encrypted
         // query and the exact-message assertion flakes. Quarantine it only for non-DEBUG
         // builds; under DEBUG the failpoint keeps it deterministic and gating.
-        [Trait("Category", "flaky")]
+        [Trait("category", "flaky")]
 #endif
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProviderWithCancellationTime))]

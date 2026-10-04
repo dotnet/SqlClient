@@ -146,3 +146,7 @@ node_modules/
 
 # C# language server cache
 *.lscache
+
+# Python bytecode caches
+__pycache__/
+*.py[cod]

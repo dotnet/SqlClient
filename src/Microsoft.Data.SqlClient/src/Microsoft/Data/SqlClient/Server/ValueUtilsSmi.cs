@@ -1504,7 +1504,7 @@ namespace Microsoft.Data.SqlClient.Server
                     }
 #if NET
                 case ExtendedClrTypeCode.DateOnly:
-                    SetDateTime_Checked(setters, ordinal, metaData, ((DateOnly)value).ToDateTime(new TimeOnly(0, 0)));
+                    SetDate_Checked(setters, ordinal, metaData, ((DateOnly)value).ToDateTime(new TimeOnly(0, 0)));
                     break;
                 case ExtendedClrTypeCode.TimeOnly:
                     SetTimeSpan_Checked(setters, ordinal, metaData, ((TimeOnly)value).ToTimeSpan());
@@ -2033,9 +2033,35 @@ namespace Microsoft.Data.SqlClient.Server
                             SetSqlXml_Unchecked(setters, i, record.GetSqlXml(i));    // perf improvement?
                             break;
                         case SqlDbType.Variant:
-                            object o = record.GetSqlValue(i);
+                            SmiMetaData variantMetadata = record.GetVariantInternalMetaData(i);
+                            SqlBuffer.StorageType storageType;
+                            object o;
+
+                            // We cannot transport a DateOnly instance using the GetSqlValue method. This is because
+                            // GetSqlValue will return a SqlDateTime, which has a much tighter range of expected
+                            // values (so trying to send DateOnly.MinValue will overflow.) Instead, use GetValue (which
+                            // will return a DateTime, with identical ranges of expected values.)
+                            if (variantMetadata.SqlDbType is SqlDbType.Date)
+                            {
+                                storageType = SqlBuffer.StorageType.Date;
+                                o = record.GetValue(i);
+                            }
+                            else
+                            {
+                                storageType = SqlBuffer.StorageType.Empty;
+                                o = record.GetSqlValue(i);
+                            }
+
                             ExtendedClrTypeCode typeCode = MetaDataUtilsSmi.DetermineExtendedTypeCode(o);
-                            SetCompatibleValueV200(setters, i, metaData[i], o, typeCode, 0, null /* no peekahead */);
+
+                            if (storageType is not SqlBuffer.StorageType.Empty)
+                            {
+                                SetCompatibleValueV200(setters, i, metaData[i], o, typeCode, 0, null /* no peekahead */, storageType);
+                            }
+                            else
+                            {
+                                SetCompatibleValueV200(setters, i, metaData[i], o, typeCode, 0, null /* no peekahead */);
+                            }
                             break;
                         case SqlDbType.Udt:
                             Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.SqlBytes));
@@ -3135,8 +3161,11 @@ namespace Microsoft.Data.SqlClient.Server
 
         private static void SetDate_Unchecked(ITypedSettersV3 setters, int ordinal, SmiMetaData metaData, DateTime value)
         {
-            Debug.Assert(metaData.SqlDbType == SqlDbType.Variant, "Invalid type. This should be called only when the type is variant.");
-            setters.SetVariantMetaData(ordinal, SmiMetaData.DefaultDate);
+            if (metaData.SqlDbType == SqlDbType.Variant)
+            {
+                setters.SetVariantMetaData(ordinal, SmiMetaData.DefaultDate);
+            }
+
             setters.SetDateTime(ordinal, value);
         }
 

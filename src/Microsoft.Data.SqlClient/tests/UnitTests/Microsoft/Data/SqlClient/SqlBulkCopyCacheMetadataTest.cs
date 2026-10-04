@@ -18,6 +18,20 @@ namespace Microsoft.Data.SqlClient.UnitTests
                 .SetValue(bulkCopy, value);
         }
 
+        private static void SetResolveColumnAliases(SqlBulkCopy bulkCopy, bool value)
+        {
+            typeof(SqlBulkCopy)
+                .GetField("_localColumnMappingsResolveAliases", BindingFlags.Instance | BindingFlags.NonPublic)!
+                .SetValue(bulkCopy, value);
+        }
+
+        private static void SetCachedMetadataResolveAliases(SqlBulkCopy bulkCopy, bool value)
+        {
+            typeof(SqlBulkCopy)
+                .GetField("_cachedMetadataResolveAliases", BindingFlags.Instance | BindingFlags.NonPublic)!
+                .SetValue(bulkCopy, value);
+        }
+
         [Fact]
         public void CacheMetadata_FlagValue_IsCorrect()
         {
@@ -115,6 +129,22 @@ namespace Microsoft.Data.SqlClient.UnitTests
             // Changing to a different table should clear the cache
             bulkCopy.DestinationTableName = "Table2";
             Assert.Null(bulkCopy.CachedMetadata);
+        }
+
+        [Theory]
+        [InlineData(false, false, true)]
+        [InlineData(false, true, true)]
+        [InlineData(true, false, false)]
+        [InlineData(true, true, true)]
+        public void IsCachedMetadataValid_DependsOnOperationAndCachedAliasResolution(bool resolveAliases, bool cachedMetadataResolveAliases, bool expected)
+        {
+            using SqlBulkCopy bulkCopy = new(new SqlConnection(), SqlBulkCopyOptions.CacheMetadata, null);
+
+            SetCachedMetadata(bulkCopy, new BulkCopySimpleResultSet());
+            SetCachedMetadataResolveAliases(bulkCopy, cachedMetadataResolveAliases);
+            SetResolveColumnAliases(bulkCopy, resolveAliases);
+
+            Assert.Equal(expected, bulkCopy.IsCachedMetadataValid());
         }
 
         [Fact]

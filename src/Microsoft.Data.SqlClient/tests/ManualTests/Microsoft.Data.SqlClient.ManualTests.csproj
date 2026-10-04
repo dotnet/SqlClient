@@ -8,13 +8,7 @@
 
   <!-- Target Frameworks =============================================== -->
   <PropertyGroup>
-    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
-
-    <!-- Default TargetOs to host OS if not specified (eg, during IDE development). -->
-    <TargetOs Condition="'$(TargetOs)' == ''">$(OS)</TargetOs>
-
-    <!-- Add net462 when targeting Windows. Building net462 is supported on any host OS. -->
-    <TargetFrameworks Condition="'$(TargetOs)' == 'Windows_NT'">$(TargetFrameworks);net462</TargetFrameworks>
+    <TargetFrameworks>net462;net8.0;net9.0;net10.0</TargetFrameworks>
   </PropertyGroup>
 
   <!-- Links to Resources/etc ========================================== -->
@@ -89,7 +83,7 @@
   <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
     <Reference Include="System.Transactions" />
 
-    <PackageReference Include="Azure.Identity" />
+    <PackageReference Include="Azure.Core" />
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
     <PackageReference Include="System.Memory" />
     <PackageReference Include="System.ValueTuple" />
@@ -119,7 +113,7 @@
 
   <!-- References for netcore -->
   <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
-    <PackageReference Include="Azure.Identity" />
+    <PackageReference Include="Azure.Core" />
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />

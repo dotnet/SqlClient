@@ -15,6 +15,9 @@ internal static class Categories
     public const string SymbolChecksumMismatch = "symbol-checksum-mismatch";
     public const string SymbolOrphan = "symbol-orphan";
     public const string SymbolDuplicate = "symbol-duplicate";
+    public const string MissingSourceLink = "missing-source-link";
+    public const string UntrackedSource = "untracked-source";
+    public const string NonDeterministicSourcePath = "non-deterministic-source-path";
     public const string DelaySigned = "delay-signed";
     public const string Unsigned = "unsigned";
     public const string PackageUnsigned = "package-unsigned";
@@ -30,6 +33,7 @@ internal static class Categories
         SymbolOrphan, SymbolDuplicate, DelaySigned, Unsigned, PackageUnsigned,
         DependencyInconsistency, UnexpectedPackageVersion, UnexpectedFileVersion,
         UnexpectedAssemblyVersion,
+        MissingSourceLink, UntrackedSource, NonDeterministicSourcePath,
     ];
 }
 
@@ -54,10 +58,42 @@ internal static class Validator
         CheckVersionConsistency(report, findings);
         CheckExpectedVersions(report, expectations, findings);
         CheckSymbols(report, findings);
+        CheckSourceCoverage(report, findings);
         CheckSigning(report, findings);
         CheckPackageSignature(report, findings);
 
         report.Findings = findings.Count == 0 ? null : findings;
+    }
+
+    /// <summary>Reports source issues only for PDBs actually inspected, leaving symbolless reference/satellite assemblies alone.</summary>
+    private static void CheckSourceCoverage(PackageReport report, List<Finding> findings)
+    {
+        foreach (BinaryReport asm in report.Binaries.Where(b => b.IsManagedAssembly && b.SourceCoverage is not null))
+        {
+            foreach (PdbSourceCoverage coverage in asm.SourceCoverage!)
+            {
+                AddSourceFindings(coverage.MissingSourceLinkDocuments, Categories.MissingSourceLink,
+                    "source is neither embedded nor covered by Source Link");
+                AddSourceFindings(coverage.UntrackedDocuments, Categories.UntrackedSource,
+                    "unembedded source is unmapped or contains an obj, temp, or tmp path segment");
+                AddSourceFindings(coverage.NonNormalizedDocuments, Categories.NonDeterministicSourcePath,
+                    "source path does not begin with the deterministic '/_' prefix");
+
+                void AddSourceFindings(List<string> documents, string category, string message)
+                {
+                    foreach (string document in documents)
+                    {
+                        findings.Add(new Finding
+                        {
+                            Severity = Severity.Warning,
+                            Category = category,
+                            Target = asm.Path,
+                            Message = $"{message}: '{document}' (PDB '{coverage.Pdb}').",
+                        });
+                    }
+                }
+            }
+        }
     }
 
     /// <summary>

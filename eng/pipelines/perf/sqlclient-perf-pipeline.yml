@@ -331,6 +331,9 @@ extends:
             scriptsDir="$(Build.SourcesDirectory)/dotnet-sqlclient/eng/pipelines/perf/scripts"
             kustoOut="$(Build.ArtifactStagingDirectory)/kusto"
 
+            # Keep the checkout clean: no __pycache__/*.pyc written into eng/.
+            export PYTHONDONTWRITEBYTECODE=1
+
             # PEP 668: Ubuntu agents ship an "externally managed" Python and lack the
             # python3-venv package (no ensurepip), so both a plain 'pip install' and
             # 'python3 -m venv' fail. pip itself is available, so install the Kusto SDKs

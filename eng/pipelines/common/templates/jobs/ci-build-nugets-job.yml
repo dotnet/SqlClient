@@ -19,15 +19,17 @@ parameters:
       # Reference sibling packages as C# projects.
       - Project
 
-  # The name of Azure Pipelines pool to use.
+  # The name of the 1ES pool to use.
+  #
+  # Supplied by the caller so that the pool name flows down from the pipeline
+  # root, rather than being read from a variable group at this depth.
+  #
   - name: poolName
     type: string
-    default: $(ci_var_defaultPoolName)
 
-  # The name of the Azure Pipelines image to use within the pool.
-  - name: imageOverride
+  # The name of the VM image to run on, within the pool.
+  - name: poolImage
     type: string
-    default: ADO-MMS22-SQL19
 
   # The name of the Abstractions pipeline artifact to download when referenceType is 'Package'.
   - name: abstractionsArtifactsName
@@ -61,20 +63,9 @@ parameters:
     type: stepList
     default: []
 
-  # The version of the Abstractions package to depend on when referenceType is 'Package'.
-  - name: abstractionsPackageVersion
-    type: string
-
-  # The version of the Logging package to depend on when referenceType is 'Package'.
-  - name: loggingPackageVersion
-    type: string
-
-  # The version to apply to the SqlClient package.
-  - name: mdsPackageVersion
-    type: string
-
-  # The version to apply to the AKV Provider package.
-  - name: akvPackageVersion
+  # The version to apply to the SqlClient family packages (SqlClient, Abstractions, Logging, and the
+  # AKV Provider).  They all share this version.
+  - name: packageVersion
     type: string
 
   # The version of the SqlServer package to depend on when referenceType is 'Package'.
@@ -94,10 +85,7 @@ jobs:
   pool:
     name: ${{parameters.poolName }}
     demands:
-    - imageOverride -equals ${{ parameters.imageOverride }}
-
-  variables:
-    - template: /eng/pipelines/libraries/ci-build-variables.yml@self
+    - imageOverride -equals ${{ parameters.poolImage }}
 
   steps:
   - ${{ if eq(parameters.debug, true)}}:
@@ -156,8 +144,7 @@ jobs:
       referenceType: ${{ parameters.referenceType }}
       operatingSystem: Windows
       build: MDS
-      abstractionsPackageVersion: ${{parameters.abstractionsPackageVersion}}
-      loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
+      packageVersion: ${{ parameters.packageVersion }}
       sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
 
   - task: DotNetCoreCLI@2
@@ -170,9 +157,7 @@ jobs:
         -p:PackBuild=false
         -p:Configuration=${{ parameters.buildConfiguration }}
         -p:ReferenceType=${{ parameters.referenceType }}
-        -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
-        -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
-        -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
+        -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
         -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
 
   # PackSqlClient outputs to artifacts/Microsoft.Data.SqlClient/<ReferenceType>-<Configuration>/.
@@ -201,10 +186,7 @@ jobs:
       buildConfiguration: ${{ parameters.buildConfiguration }}
       referenceType: ${{ parameters.referenceType }}
       build: AkvProvider
-      abstractionsPackageVersion: ${{parameters.abstractionsPackageVersion}}
-      loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
-      mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
-      akvPackageVersion: ${{ parameters.akvPackageVersion }}
+      packageVersion: ${{ parameters.packageVersion }}
       sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
 
   - task: DotNetCoreCLI@2
@@ -218,11 +200,8 @@ jobs:
         -p:PackBuild=false
         -p:ReferenceType=${{ parameters.referenceType }}
         -p:BuildNumber=$(Build.BuildNumber)
-        -p:PackageVersionAbstractions=${{ parameters.abstractionsPackageVersion }}
-        -p:PackageVersionLogging=${{ parameters.loggingPackageVersion }}
-        -p:PackageVersionSqlClient=${{ parameters.mdsPackageVersion }}
+        -p:PackageVersionSqlClient=${{ parameters.packageVersion }}
         -p:PackageVersionSqlServer=${{ parameters.sqlServerPackageVersion }}
-        -p:PackageVersionAkvProvider=${{ parameters.akvPackageVersion }}
 
   - task: CopyFiles@2
     displayName: Copy AKV Package to Output Folder

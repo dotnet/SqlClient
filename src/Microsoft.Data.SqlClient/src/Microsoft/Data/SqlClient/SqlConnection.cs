@@ -262,6 +262,14 @@ namespace Microsoft.Data.SqlClient
 
             _accessToken = connection._accessToken;
             _accessTokenCallback = connection._accessTokenCallback;
+            RegisteredApplication = connection.RegisteredApplication;
+
+            // CopyFrom retains the source PoolGroup, and therefore the source ConnectionPoolKey.
+            // The provider must be copied along with it, otherwise the clone would authenticate
+            // with a provider that its public property does not report, and would let the caller
+            // set AccessToken/AccessTokenCallback without tripping the mutual-exclusivity checks.
+            _sspiContextProvider = connection._sspiContextProvider;
+
             CacheConnectionStringProperties();
         }
 
@@ -371,6 +379,34 @@ namespace Microsoft.Data.SqlClient
 
                 // Set the dictionary to the ReadOnly dictionary.
                 s_globalCustomColumnEncryptionKeyStoreProviders = customColumnEncryptionKeyStoreProviders;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RegisteredApplication/*' />
+        [CLSCompliant(false)]
+        public RegisteredApplication RegisteredApplication
+        {
+            get;
+            set
+            {
+                DbConnectionInternal connectionInternal = InnerConnection;
+                bool canSet = connectionInternal.AllowSetConnectionString;
+                if (canSet)
+                {
+                    // Reserve the closed state so Open cannot read the old value while this setter
+                    // publishes the new one.
+                    canSet = SetInnerConnectionFrom(DbConnectionClosedBusy.SingletonInstance, connectionInternal);
+                    if (canSet)
+                    {
+                        field = value;
+                        SetInnerConnectionTo(connectionInternal);
+                    }
+                }
+
+                if (!canSet)
+                {
+                    throw ADP.OpenConnectionPropertySet(nameof(RegisteredApplication), connectionInternal.State);
+                }
             }
         }
 
@@ -763,8 +799,16 @@ namespace Microsoft.Data.SqlClient
                     CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessToken(ConnectionOptions);
                 }
 
-                // Need to call ConnectionString_Set to do proper pool group check
-                ConnectionString_Set(new ConnectionPoolKey(_connectionString, credential: _credential, accessToken: value, accessTokenCallback: null, sspiContextProvider: null));
+                // Need to call ConnectionString_Set to do proper pool group check.
+                // AccessTokenCallback and SspiContextProvider are mutually exclusive with AccessToken
+                // (validated above), so they are always null here when a token is supplied. Passing the
+                // current values through matters only when the token is being cleared.
+                ConnectionString_Set(new ConnectionPoolKey(
+                    _connectionString,
+                    credential: _credential,
+                    accessToken: value,
+                    accessTokenCallback: _accessTokenCallback,
+                    sspiContextProvider: _sspiContextProvider));
                 _accessToken = value;
             }
         }
@@ -787,7 +831,12 @@ namespace Microsoft.Data.SqlClient
                     CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessTokenCallback(ConnectionOptions);
                 }
 
-                ConnectionString_Set(new ConnectionPoolKey(_connectionString, credential: _credential, accessToken: null, accessTokenCallback: value, sspiContextProvider: null));
+                ConnectionString_Set(new ConnectionPoolKey(
+                    _connectionString,
+                    credential: _credential,
+                    accessToken: _accessToken,
+                    accessTokenCallback: value,
+                    sspiContextProvider: _sspiContextProvider));
                 _accessTokenCallback = value;
             }
         }
@@ -804,7 +853,21 @@ namespace Microsoft.Data.SqlClient
                     throw ADP.OpenConnectionPropertySet(nameof(SspiContextProvider), InnerConnection.State);
                 }
 
-                ConnectionString_Set(new ConnectionPoolKey(_connectionString, credential: _credential, accessToken: null, accessTokenCallback: null, sspiContextProvider: value));
+                if (value != null)
+                {
+                    // SSPI is an alternative to token-based authentication, so the two are mutually exclusive.
+                    CheckAndThrowOnInvalidCombinationOfConnectionOptionAndSspiContextProvider();
+                }
+
+                // Because SSPI and token authentication are mutually exclusive (validated above), the token
+                // state is always null when a provider is supplied. Passing the current values through
+                // matters only when the provider is being cleared, where any token state must survive.
+                ConnectionString_Set(new ConnectionPoolKey(
+                    _connectionString,
+                    credential: _credential,
+                    accessToken: _accessToken,
+                    accessTokenCallback: _accessTokenCallback,
+                    sspiContextProvider: value));
                 _sspiContextProvider = value;
             }
         }
@@ -1101,7 +1164,12 @@ namespace Microsoft.Data.SqlClient
                 _credential = value;
 
                 // Need to call ConnectionString_Set to do proper pool group check
-                ConnectionString_Set(new ConnectionPoolKey(_connectionString, _credential, accessToken: _accessToken, accessTokenCallback: _accessTokenCallback, sspiContextProvider: null));
+                ConnectionString_Set(new ConnectionPoolKey(
+                    _connectionString,
+                    _credential,
+                    accessToken: _accessToken,
+                    accessTokenCallback: _accessTokenCallback,
+                    sspiContextProvider: _sspiContextProvider));
             }
         }
 
@@ -1157,6 +1225,11 @@ namespace Microsoft.Data.SqlClient
             {
                 throw ADP.InvalidMixedUsageOfAccessTokenAndTokenCallback();
             }
+
+            if (_sspiContextProvider != null)
+            {
+                throw ADP.InvalidMixedUsageOfAccessTokenProperties();
+            }
         }
 
         // CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessTokenCallback: check if the usage of AccessTokenCallback has any conflict
@@ -1178,6 +1251,23 @@ namespace Microsoft.Data.SqlClient
             if (_accessToken != null)
             {
                 throw ADP.InvalidMixedUsageOfAccessTokenAndTokenCallback();
+            }
+
+            if (_sspiContextProvider != null)
+            {
+                throw ADP.InvalidMixedUsageOfAccessTokenProperties();
+            }
+        }
+
+        // CheckAndThrowOnInvalidCombinationOfConnectionOptionAndSspiContextProvider: SSPI is an alternative to
+        //  token-based authentication, so a context provider cannot be combined with AccessToken or
+        //  AccessTokenCallback. If there is any conflict, it throws InvalidOperationException.
+        //  This is to be used by the setter of the SspiContextProvider property.
+        private void CheckAndThrowOnInvalidCombinationOfConnectionOptionAndSspiContextProvider()
+        {
+            if (_accessToken != null || _accessTokenCallback != null)
+            {
+                throw ADP.InvalidMixedUsageOfAccessTokenProperties();
             }
         }
 

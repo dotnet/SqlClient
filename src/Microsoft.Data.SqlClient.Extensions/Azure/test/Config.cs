@@ -38,7 +38,7 @@ internal static class Config
 
     internal static bool AdoPool { get; } = false;
     internal static bool DebugEmit { get; } = false;
-    internal static bool IntegratedSecuritySupported { get; } = false;
+    internal static bool EntraIntegratedSupported { get; } = false;
     internal static bool ManagedIdentitySupported { get; } = false;
     // @TODO Remove PasswordConnectionString from config; AAD Password auth is deprecated
     internal static string PasswordConnectionString { get; } = string.Empty;
@@ -73,7 +73,7 @@ internal static class Config
     internal static bool OnWindows() => RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
     internal static bool OnUnix() => OnLinux() || OnMacOS();
 
-    internal static bool SupportsIntegratedSecurity() => IntegratedSecuritySupported;
+    internal static bool SupportsEntraIntegrated() => EntraIntegratedSupported;
     internal static bool SupportsManagedIdentity() => ManagedIdentitySupported;
     internal static bool SupportsSystemAssignedManagedIdentity() => SystemAssignedManagedIdentitySupported;
 
@@ -115,7 +115,7 @@ internal static class Config
             // The sample file is copied to the build output directory as
             // config.jsonc by the TestUtilities project file.
             //
-            IntegratedSecuritySupported = GetBool(root, "SupportsIntegratedSecurity");
+            EntraIntegratedSupported = GetBool(root, "SupportsEntraIntegrated");
             ManagedIdentitySupported = GetBool(root, "ManagedIdentitySupported");
             PasswordConnectionString = GetString(root, "AADPasswordConnectionString");
             ServicePrincipalId = GetString(root, "AADServicePrincipalId");
@@ -160,7 +160,7 @@ internal static class Config
             Console.WriteLine(
                 $"  DebugEmit:                              {DebugEmit}");
             Console.WriteLine(
-                $"  IntegratedSecuritySupported:            {IntegratedSecuritySupported}");
+                $"  EntraIntegratedSupported:               {EntraIntegratedSupported}");
             Console.WriteLine(
                 $"  ManagedIdentitySupported:               {ManagedIdentitySupported}");
             Console.WriteLine(

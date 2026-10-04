@@ -256,19 +256,10 @@ namespace Microsoft.Data.SqlClient.Test.Stress
                 return "<unknown>";
             }
 
-            // Look for the NuGetPackageVersion field, which is available in
-            // newer MDS packages.
-            var field = type.GetField(
-                "NuGetPackageVersion",
-                BindingFlags.NonPublic | BindingFlags.Static);
-
-            // If not present, use the older assembly file version field.
-            if (field is null)
-            {
-                field = type.GetField(
-                    "InformationalVersion",
-                    BindingFlags.NonPublic | BindingFlags.Static);
-            }
+            // Prefer PackageVersion, falling back to FileVersion.
+            var field =
+                type.GetField("PackageVersion", BindingFlags.NonPublic | BindingFlags.Static)
+                ?? type.GetField("FileVersion", BindingFlags.NonPublic | BindingFlags.Static);
 
             if (field is null)
             {

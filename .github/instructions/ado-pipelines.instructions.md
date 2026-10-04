@@ -93,7 +93,7 @@ Test filters — default excludes `failing` and `flaky` categories:
 - `nonwindowstests` / `nonlinuxtests` — OS-specific exclusions
 
 Flaky test quarantine:
-- Quarantined tests (`[Trait("Category", "flaky")]`) run in separate steps after main tests
+- Quarantined tests (`[Trait("category", "flaky")]`) run in separate steps after main tests
 - Main test runs are not blocked by flaky failures
 - No code coverage collected for flaky runs
 - Configured in `common/templates/steps/build-and-run-tests-netcore-step.yml`, `build-and-run-tests-netfx-step.yml`, and `run-all-tests-step.yml`

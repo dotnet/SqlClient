@@ -244,7 +244,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // Synapse: Parse error at line: 1, column: 8: Incorrect syntax near 'TYPE'.
-        [Trait("Category", "flaky")]
+        [Trait("category", "flaky")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestParametersWithDatatablesTVPInsert()
         {
@@ -287,7 +287,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
 #if !NETFRAMEWORK
         // Synapse: Parse error at line: 1, column: 8: Incorrect syntax near 'TYPE'.
-        [Trait("Category", "flaky")]
+        [Trait("category", "flaky")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestParametersWithSqlRecordsTVPInsert()
         {
@@ -344,7 +344,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(2, count);
         }
 
-        [Trait("Category", "flaky")]
+        [Trait("category", "flaky")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestDateOnlyTVPDataTable_CommandSP()
         {
@@ -379,7 +379,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             cmd.ExecuteNonQuery();
         }
 
-        [Trait("Category", "flaky")]
+        [Trait("category", "flaky")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestDateOnlyTVPSqlDataRecord_CommandSP()
         {
@@ -532,11 +532,112 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.True(ValidateInsertedValues(connection, decimalTable.Name, truncateScaledDecimal), $"Invalid test happened with connection string [{connection.ConnectionString}]");
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void TestOutOfRangeDecimalParameter_CommandSelect()
+        /// <summary>
+        /// CLR and SQL zero values with different representations must round-trip into decimal(p,p) columns.
+        /// One async case covers command execution parity; scale boundaries use the shared synchronous conversion.
+        /// </summary>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup))]
+        [InlineData(1, false)]
+        [InlineData(2, false)]
+        [InlineData(3, false)]
+        [InlineData(3, true)]
+        [InlineData(28, false)]
+        [InlineData(29, false)]
+        [InlineData(38, false)]
+        public static async Task ZeroDecimalParameter_CommandInsert(byte scale, bool useAsync)
         {
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
-            connection.Open();
+            if (useAsync)
+            {
+                await connection.OpenAsync();
+            }
+            else
+            {
+                connection.Open();
+            }
+
+            using Table table = new(connection, "ZeroDecimalParameter", $"([Value] decimal({scale},{scale}))");
+            using SqlCommand command = new(
+                $"INSERT INTO {table.Name} ([Value]) OUTPUT INSERTED.[Value] VALUES (@Value)", connection);
+            SqlParameter parameter = command.Parameters.Add("@Value", SqlDbType.Decimal);
+            parameter.Precision = scale;
+            parameter.Scale = scale;
+
+            foreach (object value in new object[]
+            {
+                0m, 0.0m, 0.000m, new decimal(0, 0, 0, true, 0),
+                new SqlDecimal(0m), new SqlDecimal(0.000m),
+                new SqlDecimal(new decimal(0, 0, 0, true, 0)),
+                new SqlDecimal(38, scale, true, 0, 0, 0, 0),
+                new SqlDecimal(38, scale, false, 0, 0, 0, 0)
+            })
+            {
+                parameter.Value = value;
+                using SqlDataReader reader = useAsync
+                    ? await command.ExecuteReaderAsync()
+                    : command.ExecuteReader();
+                Assert.True(useAsync ? await reader.ReadAsync() : reader.Read());
+                SqlDecimal actual = reader.GetSqlDecimal(0);
+                Assert.Equal(scale, actual.Precision);
+                Assert.Equal(scale, actual.Scale);
+                Assert.Equal(0, actual.CompareTo(new SqlDecimal(0)));
+            }
+        }
+
+        /// <summary>
+        /// Correcting zero precision must not allow nonzero values that exceed the parameter precision.
+        /// Both command APIs must surface the same exception, including when the async result is awaited.
+        /// </summary>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup))]
+        [InlineData(false)]
+        [InlineData(true)]
+        public static async Task DecimalParameter_RejectsInsufficientPrecision(bool useAsync)
+        {
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            if (useAsync)
+            {
+                await connection.OpenAsync();
+            }
+            else
+            {
+                connection.Open();
+            }
+
+            using SqlCommand command = new("SELECT @Value", connection);
+            SqlParameter parameter = command.Parameters.Add("@Value", SqlDbType.Decimal);
+            parameter.Precision = 3;
+            parameter.Scale = 3;
+            foreach (object value in new object[] { 1m, -1m, new SqlDecimal(1m), new SqlDecimal(-1m) })
+            {
+                parameter.Value = value;
+                if (useAsync)
+                {
+                    await Assert.ThrowsAsync<ArgumentException>(() => command.ExecuteNonQueryAsync());
+                }
+                else
+                {
+                    Assert.Throws<ArgumentException>(() => command.ExecuteNonQuery());
+                }
+            }
+        }
+
+        /// <summary>
+        /// Large decimal values must still round-trip after rescaling beyond the CLR decimal capacity.
+        /// </summary>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup))]
+        [InlineData(false)]
+        [InlineData(true)]
+        public static async Task TestOutOfRangeDecimalParameter_CommandSelect(bool useAsync)
+        {
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            if (useAsync)
+            {
+                await connection.OpenAsync();
+            }
+            else
+            {
+                connection.Open();
+            }
 
             using SqlCommand cmd = new("SELECT @Value", connection);
             // A System.Decimal value has a maximum precision of 29 digits. We specify a Precision of 38 and a Scale of 2 in order
@@ -550,9 +651,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             cmd.Parameters.Add(p);
 
-            using SqlDataReader reader = cmd.ExecuteReader();
+            using SqlDataReader reader = useAsync
+                ? await cmd.ExecuteReaderAsync()
+                : cmd.ExecuteReader();
 
-            reader.Read();
+            Assert.True(useAsync ? await reader.ReadAsync() : reader.Read());
             // Read the original value back as a SqlDecimal, with matching scale and precision.
             SqlDecimal roundtrippedDecimal = reader.GetSqlDecimal(0);
 
@@ -596,7 +699,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // Synapse: Parse error at line: 2, column: 8: Incorrect syntax near 'TYPE'.
         // Enumeration is disabled to prevent generating empty test set when connection strings are not setup.
-        [Trait("Category", "flaky")]
+        [Trait("category", "flaky")]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [MemberData(nameof(TestScaledDecimalParameter_Data), DisableDiscoveryEnumeration = true)]
         public static void TestScaledDecimalTVP_CommandSP(string connectionString, bool truncateScaledDecimal)

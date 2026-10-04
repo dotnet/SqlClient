@@ -110,11 +110,12 @@ namespace Microsoft.Data.SqlClient
         // is a deliberate trade: it buys an ownership model that is sound under ConfigureAwait(false)
         // at the cost of some redundant per-caller work during a cold start.
         //
-        // This gate uses LockTimeoutMaxInMilliseconds directly and does not participate in the
-        // synchronous path's adaptive 'lockTimeoutInMilliseconds', which sync callers drive to zero on
-        // a failed acquisition and restore on a successful one. The decoupling is deliberate and
-        // symmetric: async callers neither degrade that value for sync callers nor are degraded by it,
-        // so the async timeout cannot be collapsed to zero by unrelated synchronous contention.
+        // This gate uses the provider's async timeout, which defaults to LockTimeoutMaxInMilliseconds,
+        // and does not participate in the synchronous path's adaptive 'lockTimeoutInMilliseconds',
+        // which sync callers drive to zero on a failed acquisition and restore on a successful one.
+        // The decoupling is deliberate and symmetric: async callers neither degrade that value for sync
+        // callers nor are degraded by it, so the async timeout cannot be collapsed to zero by unrelated
+        // synchronous contention.
         private static readonly SemaphoreSlim s_asyncAttestationGate = new SemaphoreSlim(1, 1);
 
         // Records the managed thread IDs that are part way through an attestation sequence, so that
@@ -261,8 +262,9 @@ namespace Microsoft.Data.SqlClient
         }
 
         // How long a caller waits for the async attestation gate before giving up and attesting on its
-        // own. Overridable so that tests can exercise the timeout fallthrough without waiting out the
-        // full production timeout; production providers use the default.
+        // own. This instance-scoped seam lets tests exercise the timeout fallthrough without waiting
+        // out the production timeout; because the gate is process-wide, production providers must not
+        // override it with a shorter timeout.
         protected virtual int AsyncAttestationGateTimeoutInMilliseconds => LockTimeoutMaxInMilliseconds;
 
         // Indicates whether this provider's attestation protocol uses a client-generated nonce.

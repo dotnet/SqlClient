@@ -75,18 +75,38 @@ public abstract class AzureKeyVaultKeyFixtureBase : IDisposable
 
     protected virtual void Dispose(bool disposing)
     {
-        foreach (KeyVaultKey key in _createdKeys)
+        try
         {
-            try
+            foreach (KeyVaultKey key in _createdKeys)
             {
-                _keyClient.StartDeleteKey(key.Name).WaitForCompletion();
-            }
-            catch (Exception)
-            {
-                continue;
-            }
-        }
+                try
+                {
+                    _keyClient.StartDeleteKey(key.Name).WaitForCompletion();
+                }
+                catch (Exception)
+                {
+                    continue;
+                }
 
-        _randomGenerator.Dispose();
+                // A deleted key remains in a soft-deleted state (and continues to consume the name)
+                // until it is purged or the retention period expires. Purging is best-effort: the
+                // test principal may not have permission, and the vault may have purge protection
+                // enabled, in which case the soft-deleted key simply expires on its own.
+                try
+                {
+                    _keyClient.PurgeDeletedKey(key.Name);
+                }
+                catch (Exception)
+                {
+                    continue;
+                }
+            }
+
+            _createdKeys.Clear();
+        }
+        finally
+        {
+            _randomGenerator.Dispose();
+        }
     }
 }

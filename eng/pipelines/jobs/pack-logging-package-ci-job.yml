@@ -17,12 +17,9 @@ parameters:
     type: string
     default: Logging.Artifacts
 
-  # The assembly file version to stamp into the Logging DLLs.
-  - name: loggingAssemblyFileVersion
-    type: string
-
-  # The version to apply to the Logging NuGet package and its assemblies.
-  - name: loggingPackageVersion
+  # The version to apply to the Logging NuGet package and its assemblies.  Every package in the
+  # SqlClient family shares this version.
+  - name: packageVersion
     type: string
 
   # The type of build to test (Release or Debug)
@@ -53,6 +50,18 @@ parameters:
     - detailed
     - diagnostic
 
+  # The name of the 1ES pool to run in.
+  #
+  # Supplied by the caller so that the pool name flows down from the pipeline
+  # root, rather than being read from a variable group at this depth.
+  #
+  - name: poolName
+    type: string
+
+  # The name of the VM image to run on, within the pool.
+  - name: poolImage
+    type: string
+
 jobs:
 
   - job: pack_logging_package_job
@@ -61,8 +70,10 @@ jobs:
     dependsOn: ${{ parameters.dependsOn }}
 
     pool:
-      name: Azure Pipelines
-      vmImage: ubuntu-latest
+      name: ${{ parameters.poolName }}
+
+      demands:
+        - imageOverride -equals ${{ parameters.poolImage }}
 
     variables:
 
@@ -107,7 +118,11 @@ jobs:
           configurationToPack: ${{ parameters.buildConfiguration }}
           packDirectory: $(dotnetPackagesDir)
           verbosityToPack: ${{ parameters.dotnetVerbosity }}
-          buildProperties: LoggingPackageVersion=${{ parameters.loggingPackageVersion }};LoggingAssemblyFileVersion=${{ parameters.loggingAssemblyFileVersion }}
+          # BuildNumber supplies the revision component of FileVersion
+          # (Major.Minor.Patch.Revision).  Without it, FileVersionBuildNumber
+          # defaults to 0 and the assembly is stamped Major.Minor.Patch.0,
+          # inconsistent with the MDS/AKV packages that pass it.
+          buildProperties: SqlClientPackageVersion=${{ parameters.packageVersion }};BuildNumber=$(Build.BuildNumber)
 
       # Publish the NuGet packages as a named pipeline artifact.
       - task: PublishPipelineArtifact@1

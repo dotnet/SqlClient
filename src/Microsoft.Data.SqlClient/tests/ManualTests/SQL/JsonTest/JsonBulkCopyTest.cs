@@ -15,7 +15,7 @@ using Xunit.Abstractions;
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JsonTest
 {
     [Trait("Set", "3")]
-    public class JsonBulkCopyTest
+    public class JsonBulkCopyTest : IDisposable
     {
         private readonly ITestOutputHelper _output;
         private static readonly string _generatedJsonFile = DataTestUtility.GetShortName("randomRecords");
@@ -26,6 +26,37 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JsonTest
         public JsonBulkCopyTest(ITestOutputHelper output)
         {
             _output = output;
+        }
+
+        /// <summary>
+        /// Drops the tables and removes the scratch files created by the tests.
+        /// </summary>
+        /// <remarks>
+        /// The table names embed a GUID, so without this the tests left two tables behind in the
+        /// shared test database on every run.
+        /// </remarks>
+        public void Dispose()
+        {
+            try
+            {
+                if (DataTestUtility.AreConnStringsSetup() && DataTestUtility.IsJsonSupported)
+                {
+                    using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+                    connection.Open();
+
+                    DataTestUtility.DropTable(connection, _sourceTableName);
+                    DataTestUtility.DropTable(connection, _destinationTableName);
+                }
+            }
+            catch (Exception ex)
+            {
+                _output.WriteLine($"{nameof(JsonBulkCopyTest)}: failed to drop test tables: {ex.Message}");
+            }
+            finally
+            {
+                DeleteFile(_generatedJsonFile);
+                DeleteFile(_outputFile);
+            }
         }
 
         public static IEnumerable<object[]> JsonBulkCopyTestData()

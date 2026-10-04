@@ -4,11 +4,17 @@
 using System;
 using System.Diagnostics;
 using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using System.Transactions;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    /// <summary>
+    /// Verifies connection lifecycle counters against SQL Server with test execution serialized.
+    /// </summary>
     [Trait("Set", "3")]
     public class MetricsTest
     {
@@ -178,7 +184,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(0, SqlClientEventSourceProps.StasisConnections);
         }
 
-        [Trait("Category", "flaky")]
+        [Trait("category", "flaky")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void TransactedConnectionPool_VerifyActiveConnectionCounters()
         {
@@ -246,6 +252,94 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+#if NET
+        /// <summary>
+        /// Reclaiming an abandoned checkout must balance the published soft-connection counters
+        /// on every reuse, and closing its new owner must not count the abandoned checkout twice.
+        /// </summary>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [InlineData(false, false)]
+        [InlineData(false, true)]
+        [InlineData(true, false)]
+        [InlineData(true, true)]
+        public async Task ReclaimedConnections_BalanceSoftConnectionCounters(bool usePoolV2, bool async)
+        {
+            using ConnectionPoolVersionScope poolVersion = new(usePoolV2);
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
+            {
+                ApplicationName = nameof(ReclaimedConnections_BalanceSoftConnectionCounters) + Guid.NewGuid(),
+                Pooling = true,
+                MinPoolSize = 0,
+                MaxPoolSize = 1,
+                ConnectTimeout = 30
+            };
+            string connectionString = builder.ConnectionString;
+            long active = SqlClientEventSourceProps.ActiveSoftConnections;
+            long connects = SqlClientEventSourceProps.SoftConnects;
+            long disconnects = SqlClientEventSourceProps.SoftDisconnects;
+            long reclaimed = SqlClientEventSourceProps.ReclaimedConnections;
+            InternalConnectionWrapper physicalConnection = null;
+
+            for (int cycle = 1; cycle <= 3; cycle++)
+            {
+                InternalConnectionWrapper abandoned = AbandonConnection(connectionString, async);
+                physicalConnection ??= abandoned;
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                GC.Collect();
+
+                using SqlConnection connection = new(connectionString);
+                if (async)
+                {
+                    await connection.OpenAsync();
+                }
+                else
+                {
+                    connection.Open();
+                }
+
+                Assert.True(abandoned.IsInternalConnectionOf(connection));
+                Assert.True(physicalConnection.IsInternalConnectionOf(connection));
+                // Each cycle reclaims one abandoned checkout of the same physical connection.
+                Assert.Equal(reclaimed + cycle, SqlClientEventSourceProps.ReclaimedConnections);
+                // Each cycle checks out twice: once to abandon the owner, then once to reuse.
+                Assert.Equal(connects + 2 * cycle, SqlClientEventSourceProps.SoftConnects);
+                // All checkouts except the current one have ended, including the abandoned one.
+                Assert.Equal(disconnects + 2 * cycle - 1, SqlClientEventSourceProps.SoftDisconnects);
+                // Only the current owner contributes to the active gauge above its baseline.
+                Assert.Equal(active + 1, SqlClientEventSourceProps.ActiveSoftConnections);
+
+                connection.Close();
+                // Normal close balances the second checkout, without recounting reclamation.
+                Assert.Equal(disconnects + 2 * cycle, SqlClientEventSourceProps.SoftDisconnects);
+                // No checkout from this test remains active after close.
+                Assert.Equal(active, SqlClientEventSourceProps.ActiveSoftConnections);
+            }
+        }
+
+        /// <summary>
+        /// Leaves an opened connection without a live owner. A separate non-inlined stack frame
+        /// ensures the owner is collectable even in Debug builds.
+        /// </summary>
+        /// <param name="connectionString">The test's isolated pool connection string.</param>
+        /// <param name="async">Whether to exercise asynchronous opening.</param>
+        /// <returns>A wrapper retaining only the internal connection, not its owner.</returns>
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static InternalConnectionWrapper AbandonConnection(string connectionString, bool async)
+        {
+            SqlConnection connection = new(connectionString);
+            if (async)
+            {
+                connection.OpenAsync().GetAwaiter().GetResult();
+            }
+            else
+            {
+                connection.Open();
+            }
+            return new InternalConnectionWrapper(connection);
+        }
+#endif
+
         [ActiveIssue("https://github.com/dotnet/SqlClient/issues/3031")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void ReclaimedConnectionsCounter_Functional()
@@ -280,7 +374,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [Trait("Category", "flaky")]
+        [Trait("category", "flaky")]
         public void ConnectionPoolGroupsCounter_Functional()
         {
             SqlConnection.ClearAllPools();

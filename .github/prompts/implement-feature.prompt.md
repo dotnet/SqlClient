@@ -27,10 +27,8 @@ Before writing code, produce a brief implementation plan covering:
 - **Documentation plan** — XML docs, samples, release notes entries.
 
 ## 3. Update Reference Assemblies (if public API changes)
-- If adding new public APIs, update reference assemblies FIRST:
-  - `netcore/ref/Microsoft.Data.SqlClient.cs` and/or `Microsoft.Data.SqlClient.Manual.cs` for .NET Core/.NET APIs
-  - `netfx/ref/Microsoft.Data.SqlClient.cs` for .NET Framework APIs
-  - `ref/` shared files if the API applies to batch or cross-framework features
+- If adding or changing public APIs, update the corresponding namespace-specific sources under `src/Microsoft.Data.SqlClient/ref/` FIRST.
+- Ensure signatures match the implementation for each affected framework, including conditional declarations.
 - Include only the method/property signatures with no implementation.
 - Add XML documentation comments on all public members.
 

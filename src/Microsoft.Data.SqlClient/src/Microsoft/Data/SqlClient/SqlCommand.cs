@@ -1306,7 +1306,7 @@ namespace Microsoft.Data.SqlClient
         #region Internal Methods
 
         // @TODO: This is only called by SqlCommandBuilder, it should live there. EXCEPT for the one call to ValidateCommand and setting _parameters at the end. Is that really necessary?
-        // @TODO: This also an crazy long method.
+        // @TODO: This method is also excessively long.
         internal void DeriveParameters()
         {
             switch (CommandType)

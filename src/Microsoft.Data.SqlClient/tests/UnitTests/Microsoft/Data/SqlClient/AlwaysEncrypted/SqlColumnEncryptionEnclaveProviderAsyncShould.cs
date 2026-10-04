@@ -8,8 +8,8 @@
 #nullable disable
 
 using System;
-using System.Diagnostics;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading;
@@ -19,10 +19,20 @@ using Xunit;
 namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
 {
     /// <summary>
+    /// Prevents tests using the process-wide async enclave attestation gate from running in parallel.
+    /// </summary>
+    [CollectionDefinition(Name, DisableParallelization = true)]
+    public sealed class AsyncEnclaveProviderTestCollection
+    {
+        public const string Name = "AsyncEnclaveProviderTests";
+    }
+
+    /// <summary>
     /// Tests for the async counterparts declared on <see cref="SqlColumnEncryptionEnclaveProvider"/> and
     /// implemented by <see cref="EnclaveProviderBase"/>, covering the default sync fallbacks,
     /// cancellation, and concurrent enclave session creation on both the sync and async paths.
     /// </summary>
+    [Collection(AsyncEnclaveProviderTestCollection.Name)]
     public class SqlColumnEncryptionEnclaveProviderAsyncShould
     {
         private static readonly byte[] SharedSecret = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 };
@@ -360,33 +370,58 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             EnclaveSessionParameters blockedParameters = NewSessionParameters();
 
             Task<SqlEnclaveSession> holder = Task.Run(() => AttestAsync(provider, holderParameters));
+            Task<SqlEnclaveSession> blocked = null;
 
-            // The holder now owns the gate and is parked inside its attestation until we release it.
-            Assert.True(provider.AttestationStarted.Wait(TimeSpan.FromSeconds(30)));
-            provider.GateTimeoutInMilliseconds = 1;
+            try
+            {
+                // The holder now owns the gate and is parked inside its attestation until we release it.
+                Task attestationStarted = provider.FirstAttestationStarted.Task;
+                using (CancellationTokenSource timeoutSource = new CancellationTokenSource())
+                {
+                    Task timeout = Task.Delay(TimeSpan.FromSeconds(30), timeoutSource.Token);
+                    Task completed = await Task.WhenAny(attestationStarted, timeout);
+                    timeoutSource.Cancel();
+                    Assert.Same(attestationStarted, completed);
+                }
+                provider.GateTimeoutInMilliseconds = 1;
 
-            Task<SqlEnclaveSession> blocked = Task.Run(() => AttestAsync(provider, blockedParameters));
+                blocked = Task.Run(() => AttestAsync(provider, blockedParameters));
 
-            // Reaching two attestations while the first is still parked is only possible if the second
-            // caller gave up on the gate. Without the fallthrough this wait times out.
-            await provider.WaitForAttestationCountAsync(2);
-            Assert.Equal(2, provider.MaxConcurrentAttestations);
+                // Reaching two attestations while the first is still parked is only possible if the second
+                // caller gave up on the gate. Without the fallthrough this wait times out.
+                await provider.WaitForAttestationCountAsync(2);
+                Assert.Equal(2, provider.MaxConcurrentAttestations);
 
-            hold.SetResult(true);
-            provider.HoldAttestation = null;
+                hold.TrySetResult(true);
+                provider.HoldAttestation = null;
 
-            SqlEnclaveSession heldSession = await holder;
-            SqlEnclaveSession blockedSession = await blocked;
+                SqlEnclaveSession heldSession = await holder;
+                SqlEnclaveSession blockedSession = await blocked;
 
-            Assert.NotNull(heldSession);
-            Assert.NotNull(blockedSession);
-            Assert.NotEqual(heldSession.SessionId, blockedSession.SessionId);
+                Assert.NotNull(heldSession);
+                Assert.NotNull(blockedSession);
+                Assert.NotEqual(heldSession.SessionId, blockedSession.SessionId);
 
-            // The gate must still be balanced and usable. An over-release would have thrown
-            // SemaphoreFullException; a lost release would hang this call.
-            provider.GateTimeoutInMilliseconds = 15 * 1000;
-            Assert.NotNull(await AttestAsync(provider, NewSessionParameters()));
-            Assert.Equal(3, provider.AttestationCount);
+                // The gate must still be balanced and usable. An over-release would have thrown
+                // SemaphoreFullException; a lost release would hang this call.
+                provider.GateTimeoutInMilliseconds = 15 * 1000;
+                Assert.NotNull(await AttestAsync(provider, NewSessionParameters()));
+                Assert.Equal(3, provider.AttestationCount);
+            }
+            finally
+            {
+                hold.TrySetResult(true);
+                provider.HoldAttestation = null;
+
+                if (blocked == null)
+                {
+                    await holder;
+                }
+                else
+                {
+                    await Task.WhenAll(holder, blocked);
+                }
+            }
         }
 
         /// <summary>
@@ -758,10 +793,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             internal int MaxConcurrentAttestations => Volatile.Read(ref _maxConcurrentAttestations);
 
             /// <summary>
-            /// Signalled once an attestation round trip is actually under way. Tests use this instead of
-            /// a sleep so they do not race against first-call JIT and key generation costs.
+            /// Completes once the first attestation round trip starts. Tests use this instead of a sleep
+            /// so they do not race against first-call JIT and key generation costs.
             /// </summary>
-            internal ManualResetEventSlim AttestationStarted { get; } = new ManualResetEventSlim(false);
+            internal TaskCompletionSource<bool> FirstAttestationStarted { get; } =
+                new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
             /// <summary>
             /// When set, every asynchronous attestation parks on this source until the test completes it.
@@ -771,7 +807,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             internal TaskCompletionSource<bool> HoldAttestation { get; set; }
 
             /// <summary>
-            /// Spins until <see cref="AttestationCount"/> reaches <paramref name="count"/>.
+            /// Polls until <see cref="AttestationCount"/> reaches <paramref name="count"/>, awaiting
+            /// between checks so the test does not occupy a worker thread while it waits.
             /// </summary>
             internal async Task WaitForAttestationCountAsync(int count)
             {
@@ -785,6 +822,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
                 }
             }
 
+            /// <summary>
+            /// Records a new active attestation and updates the concurrency high-water mark before
+            /// publishing the attestation count used by test waiters.
+            /// </summary>
             private void EnterAttestation()
             {
                 int concurrent = Interlocked.Increment(ref _concurrentAttestations);
@@ -803,9 +844,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
                 }
 
                 Interlocked.Increment(ref _attestationCount);
-                AttestationStarted.Set();
+                FirstAttestationStarted.TrySetResult(true);
             }
 
+            /// <summary>
+            /// Decrements the active-attestation count when a fake attestation round trip completes.
+            /// </summary>
             private void ExitAttestation() => Interlocked.Decrement(ref _concurrentAttestations);
 
             /// <summary>

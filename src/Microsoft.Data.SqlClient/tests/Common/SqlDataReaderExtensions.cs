@@ -45,7 +45,8 @@ namespace Microsoft.Data.SqlClient.Tests.Common
         {
             while (dataReader.Read())
             {
-                // Discard results.
+                // Read all row data and discard.
+                _ = dataReader.IsDBNull(0);
             }
         }
 
@@ -58,7 +59,8 @@ namespace Microsoft.Data.SqlClient.Tests.Common
         {
             while (await dataReader.ReadAsync())
             {
-                // Discard results.
+                // Read all row data and discard.
+                _ = await dataReader.IsDBNullAsync(0);
             }
         }
     }

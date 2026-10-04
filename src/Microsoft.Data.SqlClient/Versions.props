@@ -14,10 +14,13 @@
   -->
 
   <!--
-    Import guard: set on first import so that subsequent imports of this file are skipped.
-    Directory.Packages.props imports all Versions.props early in Package mode; the guard
-    prevents each csproj's own conditional import from re-importing and re-evaluating
-    version properties.
+    This is the canonical version file for the entire SqlClient *family* of packages.  All family
+    packages (Internal.Logging, Extensions.Abstractions, Microsoft.Data.SqlClient, Extensions.Azure,
+    and the AlwaysEncrypted.AzureKeyVaultProvider) share these SqlClient* version properties
+    (package, file, and assembly).  Microsoft.SqlServer.Server is versioned separately.
+
+    Import guard: set on first import so that subsequent conditional imports of this file are
+    skipped. Without the guard, MSBuild ignores the duplicate import but emits warning MSB4011.
   -->
   <PropertyGroup>
     <SqlClientVersionsImported>true</SqlClientVersionsImported>
@@ -26,10 +29,10 @@
   <!-- Set up the default version for fallback if a version is not provided -->
   <PropertyGroup>
     <!--
-      This is the *next* version to release of SqlClient. Update this after a version is released.
-      @TODO: Determine how versions should be updated in release branches vs main
+      This is the *next* version to release of the SqlClient family.  Update this after a version
+      is released.  Every SqlClient family package uses this version.
     -->
-    <SqlClientVersionDefault>7.1.0-preview2</SqlClientVersionDefault>
+    <SqlClientNextVersion>8.0.0-preview1</SqlClientNextVersion>
   </PropertyGroup>
 
   <!-- Determine file version and package version based on what was provided. -->
@@ -37,12 +40,17 @@
     <When Condition="'$(SqlClientPackageVersion)' != ''">
       <!--
         When a package version is provided, it supercedes all other choices. It will be used as the
-        package version and the file version will be based on it. This situation is used for
-        local developer scenarios and (@TODO:) old build pipelines that stored their version
-        information in the pipeline yaml.
+        package version and the file version will be based on it.
       -->
       <PropertyGroup>
-        <SqlClientFileVersion>$(SqlClientPackageVersion.Split('-')[0]).$(FileVersionBuildNumber)</SqlClientFileVersion>
+        <SqlClientPackageVersionBase>$(SqlClientPackageVersion.Split('-')[0])</SqlClientPackageVersionBase>
+        <!--
+          Package versions cannot be used directly as file versions because a prerelease suffix is
+          not valid in a file version. Start with the suffix-free package base and append the
+          configured file-version build number, which converts a three-part package version such as
+          1.2.3-preview1 to 1.2.3.42.
+        -->
+        <SqlClientFileVersion>$(SqlClientPackageVersionBase).$(FileVersionBuildNumber)</SqlClientFileVersion>
       </PropertyGroup>
     </When>
 
@@ -51,20 +59,26 @@
         When a build number is provided, the default version is used as the base of the package and
         file versions.
 
-        If a build suffix is provided, this is appended to the package version. This is meant to be
-        used by automated pre-release systems to indicate the source of the build.
+        If a build suffix is provided, it is appended as a prerelease tag. This is meant to be used
+        by automated pre-release systems to indicate the source of the build.
 
-        If a build suffix is not provided, no pre-release tag will be added to package version. If
-        the default version already has a pre-release tag added to it (eg, "7.0.0-preview1") this
-        will be retained for the package version, but will be stripped off for the file version
-        (letters are not allowed in file/assembly versions). This is meant to be used by official
-        build pipelines to generate production-ready builds.
+        The build number is then appended to any version carrying a prerelease tag — whether that
+        tag came from the declared version or from the build suffix — so every automated run
+        produces a distinct package version (eg, "7.0.0-preview1" becomes
+        "7.0.0-preview1.26238.3"). A version with no prerelease tag is left exactly as declared,
+        because released packages are not stamped with a build number. The tag is always stripped
+        for the file version (letters are not allowed in file/assembly versions). This is meant to
+        be used by official build pipelines to generate production-ready builds.
       -->
       <PropertyGroup>
-        <SqlClientPackageVersion Condition="'$(BuildSuffix)' != ''">$(SqlClientVersionDefault)-$(BuildSuffix)$(BuildNumber)</SqlClientPackageVersion>
-        <SqlClientPackageVersion Condition="'$(BuildSuffix)' == ''">$(SqlClientVersionDefault)</SqlClientPackageVersion>
+        <_SqlClientCandidateVersion>$(SqlClientNextVersion)</_SqlClientCandidateVersion>
+        <_SqlClientCandidateVersion Condition="'$(BuildSuffix)' != ''">$(SqlClientNextVersion)-$(BuildSuffix)</_SqlClientCandidateVersion>
 
-        <SqlClientFileVersion>$(SqlClientVersionDefault.Split('-')[0]).$(FileVersionBuildNumber)</SqlClientFileVersion>
+        <!-- A dash means a prerelease tag is present, from either source. -->
+        <SqlClientPackageVersion Condition="$(_SqlClientCandidateVersion.Contains('-'))">$(_SqlClientCandidateVersion).$(BuildNumber)</SqlClientPackageVersion>
+        <SqlClientPackageVersion Condition="!$(_SqlClientCandidateVersion.Contains('-'))">$(_SqlClientCandidateVersion)</SqlClientPackageVersion>
+
+        <SqlClientFileVersion>$(SqlClientNextVersion.Split('-')[0]).$(FileVersionBuildNumber)</SqlClientFileVersion>
       </PropertyGroup>
     </When>
 
@@ -76,8 +90,8 @@
         want a quick build without supplying any parameters.
       -->
       <PropertyGroup>
-        <SqlClientPackageVersion>$(SqlClientVersionDefault)-dev</SqlClientPackageVersion>
-        <SqlClientFileVersion>$(SqlClientVersionDefault.Split('-')[0]).$(FileVersionBuildNumber)</SqlClientFileVersion>
+        <SqlClientPackageVersion>$(SqlClientNextVersion)-dev</SqlClientPackageVersion>
+        <SqlClientFileVersion>$(SqlClientNextVersion.Split('-')[0]).$(FileVersionBuildNumber)</SqlClientFileVersion>
       </PropertyGroup>
     </Otherwise>
   </Choose>
@@ -91,4 +105,11 @@
   <PropertyGroup>
     <SqlClientAssemblyVersion>$(SqlClientFileVersion.Split('.')[0]).0.0.0</SqlClientAssemblyVersion>
   </PropertyGroup>
+
+  <!-- FileVersionSqlClient overrides everything computed above, so validate the final value. -->
+  <Target Name="ValidateSqlClientFileVersion" BeforeTargets="PrepareForBuild">
+    <Error
+      Condition="!$([System.Text.RegularExpressions.Regex]::IsMatch('$(SqlClientFileVersion)', '^\d+\.\d+\.\d+\.\d+$'))"
+      Text="SqlClientFileVersion '$(SqlClientFileVersion)' is not a four-part numeric version (major.minor.build.revision). Check FileVersionSqlClient, SqlClientPackageVersion ('$(SqlClientPackageVersion)') and SqlClientNextVersion ('$(SqlClientNextVersion)')." />
+  </Target>
 </Project>
