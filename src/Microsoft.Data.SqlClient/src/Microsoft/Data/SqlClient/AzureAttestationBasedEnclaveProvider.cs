@@ -399,7 +399,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     // Wait for SigningKeyRetryInSec sec before retrying to download the signing keys again.
                     // The synchronous path blocks the calling thread here; the async path must not.
-                    await Task.Delay(SigningKeyRetryInSec * 1000, cancellationToken).ConfigureAwait(false);
+                    await Task.Delay(TimeSpan.FromSeconds(SigningKeyRetryInSec), cancellationToken).ConfigureAwait(false);
                 }
 
                 // In cases if we fail to validate the token, since we are using the old signing keys
