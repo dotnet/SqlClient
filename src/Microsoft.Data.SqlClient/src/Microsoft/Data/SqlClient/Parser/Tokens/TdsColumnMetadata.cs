@@ -201,7 +201,7 @@ internal sealed class TdsColumnMetadata : TdsTypeInfo
     /// <returns>
     /// A new TdsColumnMetadata object that is a copy of the current instance.
     /// </returns>
-    internal override TdsColumnMetadata Clone() =>
+    internal TdsColumnMetadata Clone() =>
         new TdsColumnMetadata(this);
 
     private bool HasFlag(MetadataFlags flag)
