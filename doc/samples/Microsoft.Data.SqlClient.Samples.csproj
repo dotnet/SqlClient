@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net10.0;net47</TargetFrameworks>
+    <TargetFrameworks>net10.0;net462</TargetFrameworks>
     <OutputType>Library</OutputType>
     <ImplicitUsings>disable</ImplicitUsings>
     <!-- TODO: Enable nullable and fix nullable warnings in samples. -->
@@ -27,7 +27,7 @@
   </ItemGroup>
 
   <!-- .NET Framework references -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'net47'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" />
     <Reference Include="System.Transactions" />
     <Reference Include="System.Windows.Forms" />

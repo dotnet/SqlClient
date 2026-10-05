@@ -14,8 +14,8 @@
   built and compared against the published package's ref assemblies.
 
   BaselineNetFrameworkTfm and BaselineNetTfm can override the baseline folders.
-  By default, use matching folders when present, otherwise the previous driver
-  targets (net462 and net9.0, or net8.0 when net9.0 is absent).
+  By default, use net462 for Framework and a matching modern folder when present,
+  otherwise net9.0, or net8.0 when net9.0 is absent.
 
   Depends on src/Directory.Build.props for path properties and build configuration.
 -->
@@ -42,7 +42,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <_RefTfm Include="net47" />
+      <_RefTfm Include="net462" />
       <_RefTfm Include="net10.0" />
       <_RefTfm Include="netstandard2.0" />
     </ItemGroup>
@@ -56,7 +56,6 @@
   <!-- A historical package may not contain the newly supported local TFMs. -->
   <Target Name="_ResolveRefBaselineFrameworks" DependsOnTargets="_SetApiCompatProperties">
     <PropertyGroup>
-      <BaselineNetFrameworkTfm Condition="'$(BaselineNetFrameworkTfm)' == '' AND Exists('$(BaselineExtractDir)ref/net47/Microsoft.Data.SqlClient.dll')">net47</BaselineNetFrameworkTfm>
       <BaselineNetFrameworkTfm Condition="'$(BaselineNetFrameworkTfm)' == ''">net462</BaselineNetFrameworkTfm>
       <BaselineNetTfm Condition="'$(BaselineNetTfm)' == '' AND Exists('$(BaselineExtractDir)ref/net10.0/Microsoft.Data.SqlClient.dll')">net10.0</BaselineNetTfm>
       <BaselineNetTfm Condition="'$(BaselineNetTfm)' == '' AND Exists('$(BaselineExtractDir)ref/net9.0/Microsoft.Data.SqlClient.dll')">net9.0</BaselineNetTfm>
@@ -64,7 +63,7 @@
     </PropertyGroup>
     <ItemGroup>
       <_RefTfm>
-        <BaselineTfm Condition="'%(_RefTfm.Identity)' == 'net47'">$(BaselineNetFrameworkTfm)</BaselineTfm>
+        <BaselineTfm Condition="'%(_RefTfm.Identity)' == 'net462'">$(BaselineNetFrameworkTfm)</BaselineTfm>
         <BaselineTfm Condition="'%(_RefTfm.Identity)' == 'net10.0'">$(BaselineNetTfm)</BaselineTfm>
         <BaselineTfm Condition="'%(_RefTfm.Identity)' == 'netstandard2.0'">netstandard2.0</BaselineTfm>
       </_RefTfm>

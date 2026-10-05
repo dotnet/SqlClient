@@ -8,7 +8,7 @@
 
   <!-- Target Frameworks =============================================== -->
   <PropertyGroup>
-    <TargetFrameworks>net47;net10.0</TargetFrameworks>
+    <TargetFrameworks>net462;net10.0</TargetFrameworks>
   </PropertyGroup>
 
   <!-- Links to Resources/etc ========================================== -->
@@ -80,7 +80,7 @@
   </ItemGroup>
 
   <!-- References for netfx -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'net47'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
     <Reference Include="System.Transactions" />
 
     <PackageReference Include="Azure.Core" />
@@ -114,7 +114,7 @@
   </ItemGroup>
 
   <!-- References for netcore -->
-  <ItemGroup Condition="'$(TargetFramework)' != 'net47'">
+  <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
     <PackageReference Include="Azure.Core" />
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />

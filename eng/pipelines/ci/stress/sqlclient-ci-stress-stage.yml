@@ -55,7 +55,7 @@ parameters:
   # The list of .NET Framework runtimes to test against.
   - name: netFrameworkTestRuntimes
     type: object
-    default: [net47]
+    default: [net462]
 
   # The list of .NET runtimes to test against, matching the TFMs that SqlClient ships.
   - name: netTestRuntimes

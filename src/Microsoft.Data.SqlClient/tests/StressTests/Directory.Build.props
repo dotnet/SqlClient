@@ -11,7 +11,7 @@
     <StressRoot>$(MSBuildThisFileDirectory)</StressRoot>
 
     <!-- Target the same frameworks that the rest of the SqlClient tests do. -->
-    <TargetFrameworks>net47;net10.0</TargetFrameworks>
+    <TargetFrameworks>net462;net10.0</TargetFrameworks>
 
     <!--
       Use the latest C# language version, regardless of what a particular target framework claims to

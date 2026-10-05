@@ -15,7 +15,7 @@ parameters:
   #
   - name: targetFrameworks
     type: object
-    default: [net47, net10.0]
+    default: [net462, net10.0]
 
   # The target frameworks to build and run tests for on Unix.
   #
@@ -30,7 +30,7 @@ parameters:
   #
   - name: primaryTargetFrameworks
     type: object
-    default: [net47, net10.0]
+    default: [net462, net10.0]
 
   # The target frameworks to build and run tests for on Unix, for the primary
   # test configurations (local SQL Server 2025 and Azure SQL).
@@ -432,7 +432,7 @@ stages:
           pool: ${{parameters.defaultPoolName }}
           images:
             Win22_Sql19_x86: ADO-MMS22-SQL19
-          TargetFrameworks: [net47, net10.0]
+          TargetFrameworks: [net462, net10.0]
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
           testSets: ${{parameters.testSets }}
@@ -450,7 +450,7 @@ stages:
             LocalDbAppName: $(LocalDbAppName)
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
             AliasName: $(SQLAliasName)
-            x86TestTargetFrameworks: [net47, net10.0]
+            x86TestTargetFrameworks: [net462, net10.0]
             SQLRootPath: $(SQL19RootPath)
             enableLocalDB: true
 
@@ -485,7 +485,7 @@ stages:
           pool: ${{parameters.defaultPoolName }}
           images:
             Win25_Sql25_x86: ADO-MMS25-SQL25
-          TargetFrameworks: [net47, net10.0]
+          TargetFrameworks: [net462, net10.0]
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
           testSets: ${{parameters.testSets }}
@@ -503,7 +503,7 @@ stages:
             LocalDbAppName: $(LocalDbAppName)
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
             AliasName: $(SQLAliasName)
-            x86TestTargetFrameworks: [net47, net10.0]
+            x86TestTargetFrameworks: [net462, net10.0]
             SQLRootPath: $(SQL25RootPath)
             enableLocalDB: true
 

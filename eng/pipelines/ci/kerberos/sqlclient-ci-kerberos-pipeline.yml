@@ -7,7 +7,7 @@
 # packages produced by sqlclient-ci-package and run on domain-connected Windows and Linux agents.
 #
 # Job breakdown:
-#   - Windows: net47 with native SNI, plus net10 with native and managed SNI (3 jobs).
+#   - Windows: net462 with native SNI, plus net10 with native and managed SNI (3 jobs).
 #   - Linux: net10 with managed SNI (1 job).
 
 name: $(date:yyyyMMdd)$(rev:.r)

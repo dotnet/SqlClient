@@ -32,7 +32,7 @@ parameters:
 
   - name: netFrameworkTestRuntimes
     type: object
-    default: [net47]
+    default: [net462]
 
 stages:
 

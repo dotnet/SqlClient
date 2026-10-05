@@ -92,7 +92,7 @@ parameters:
   - name: targetFrameworks
     displayName: Target Frameworks on Windows
     type: object
-    default: [net47, net10.0]
+    default: [net462, net10.0]
 
   # The target frameworks to build and run tests for on Unix.
   #

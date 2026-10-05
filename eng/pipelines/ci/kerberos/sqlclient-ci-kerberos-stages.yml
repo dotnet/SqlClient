@@ -27,7 +27,7 @@ parameters:
 
   - name: netFrameworkTestRuntimes
     type: object
-    default: [net47]
+    default: [net462]
 
   - name: netTestRuntimes
     type: object

@@ -35,7 +35,7 @@
     -->
 
     <dependencies>
-      <group targetFramework="net47">
+      <group targetFramework="net462">
         <dependency id="Microsoft.Bcl.Cryptography" version="10.0.12" />
         <dependency id="Microsoft.Bcl.TimeProvider" version="10.0.12" />
         <dependency id="Microsoft.Data.SqlClient.Extensions.Abstractions" version="$SqlClientVersionRange$" />
@@ -87,11 +87,11 @@
     </dependencies>
 
     <frameworkAssemblies>
-      <frameworkAssembly assemblyName="mscorlib" targetFramework="net47" />
-      <frameworkAssembly assemblyName="System.Data" targetFramework="net47" />
+      <frameworkAssembly assemblyName="mscorlib" targetFramework="net462" />
+      <frameworkAssembly assemblyName="System.Data" targetFramework="net462" />
     </frameworkAssemblies>
     <references>
-      <group targetFramework="net47">
+      <group targetFramework="net462">
         <reference file="Microsoft.Data.SqlClient.dll" />
         <reference file="Microsoft.Data.SqlClient.xml" />
       </group>
@@ -118,25 +118,25 @@
     -->
 
     <!-- Lib and Runtime Binaries ================================================== -->
-    <!-- lib/net47 - These contain the implementation -->
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net47\Microsoft.Data.SqlClient.dll" target="lib\net47\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net47\Microsoft.Data.SqlClient.pdb" target="lib\net47\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net47\Microsoft.Data.SqlClient.xml" target="lib\net47\" exclude="" />
+    <!-- lib/net462 - These contain the implementation -->
+    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\Microsoft.Data.SqlClient.dll" target="lib\net462\" exclude="" />
+    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\Microsoft.Data.SqlClient.pdb" target="lib\net462\" exclude="" />
+    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\Microsoft.Data.SqlClient.xml" target="lib\net462\" exclude="" />
 
-    <!-- lib/net47 Localized Resources -->
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net47\cs\Microsoft.Data.SqlClient.resources.dll" target="lib\net47\cs\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net47\de\Microsoft.Data.SqlClient.resources.dll" target="lib\net47\de\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net47\es\Microsoft.Data.SqlClient.resources.dll" target="lib\net47\es\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net47\fr\Microsoft.Data.SqlClient.resources.dll" target="lib\net47\fr\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net47\it\Microsoft.Data.SqlClient.resources.dll" target="lib\net47\it\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net47\ja\Microsoft.Data.SqlClient.resources.dll" target="lib\net47\ja\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net47\ko\Microsoft.Data.SqlClient.resources.dll" target="lib\net47\ko\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net47\pl\Microsoft.Data.SqlClient.resources.dll" target="lib\net47\pl\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net47\pt-BR\Microsoft.Data.SqlClient.resources.dll" target="lib\net47\pt-BR\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net47\ru\Microsoft.Data.SqlClient.resources.dll" target="lib\net47\ru\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net47\tr\Microsoft.Data.SqlClient.resources.dll" target="lib\net47\tr\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net47\zh-Hans\Microsoft.Data.SqlClient.resources.dll" target="lib\net47\zh-Hans\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net47\zh-Hant\Microsoft.Data.SqlClient.resources.dll" target="lib\net47\zh-Hant\" exclude="" />
+    <!-- lib/net462 Localized Resources -->
+    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\cs\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\cs\" exclude="" />
+    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\de\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\de\" exclude="" />
+    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\es\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\es\" exclude="" />
+    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\fr\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\fr\" exclude="" />
+    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\it\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\it\" exclude="" />
+    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\ja\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\ja\" exclude="" />
+    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\ko\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\ko\" exclude="" />
+    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\pl\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\pl\" exclude="" />
+    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\pt-BR\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\pt-BR\" exclude="" />
+    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\ru\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\ru\" exclude="" />
+    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\tr\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\tr\" exclude="" />
+    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\zh-Hans\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\zh-Hans\" exclude="" />
+    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\zh-Hant\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\zh-Hant\" exclude="" />
 
     <!-- lib/net10.0 - These contain the implementation -->
     <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net10.0\Microsoft.Data.SqlClient.dll" target="lib\net10.0\" exclude="" />
@@ -165,9 +165,9 @@
     <file src="Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\netstandard2.0\Microsoft.Data.SqlClient.xml" target="lib\netstandard2.0\" exclude="" />
 
     <!-- Ref Binaries ================================================== -->
-    <!-- ref/net47 -->
-    <file src="Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\net47\Microsoft.Data.SqlClient.dll" target="ref\net47\" exclude="" />
-    <file src="Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\net47\Microsoft.Data.SqlClient.xml" target="ref\net47\" exclude="" />
+    <!-- ref/net462 -->
+    <file src="Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\net462\Microsoft.Data.SqlClient.dll" target="ref\net462\" exclude="" />
+    <file src="Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\net462\Microsoft.Data.SqlClient.xml" target="ref\net462\" exclude="" />
 
     <!-- ref/net10.0 -->
     <file src="Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\net10.0\Microsoft.Data.SqlClient.dll" target="ref\net10.0\" exclude="" />

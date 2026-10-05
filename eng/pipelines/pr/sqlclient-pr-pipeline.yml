@@ -69,7 +69,7 @@ parameters:
     type: object
     default:
       - displayName: "windows_net47"
-        dotnet: "net47"
+        dotnet: "net462"
         image: "ADO-MMS25-SQL25"
         operatingSystem: "Windows"
       - displayName: "windows_net10"

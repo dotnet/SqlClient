@@ -156,12 +156,12 @@ Describe 'supported target frameworks' {
         )
         foreach ($pipeline in $pipelines) {
             $content = Get-Content $pipeline.FullName -Raw
-            $content | Should -Not -Match '\bnet(?:462|8\.0|9\.0)\b' -Because $pipeline.FullName
+            $content | Should -Not -Match '\bnet(?:47|8\.0|9\.0)\b' -Because $pipeline.FullName
             $content | Should -Not -Match 'runtimes:\s*\[[^\]]*\b[89]\.x\b' -Because $pipeline.FullName
         }
         foreach ($script in @('run-perf-tests.ps1', 'run-perf-tests.sh')) {
             $content = Get-Content (Join-Path $repoRoot "eng\pipelines\perf\scripts\$script") -Raw
-            $content | Should -Not -Match '\bnet(?:462|8\.0|9\.0)\b' -Because $script
+            $content | Should -Not -Match '\bnet(?:47|8\.0|9\.0)\b' -Because $script
             # These scripts use bare channel numbers, not TFMs or the YAML "8.x" syntax.
             $content | Should -Not -Match '(?<![\w.])[89]\.0(?![\w.])' -Because $script
         }
@@ -172,7 +172,7 @@ Describe 'supported target frameworks' {
     It 'evaluates <Project> to <Frameworks>' -ForEach @(
         foreach ($group in @(
             @{
-                Frameworks = 'net47;net10.0'
+                Frameworks = 'net462;net10.0'
                 Projects = @(
                     'doc\samples\Microsoft.Data.SqlClient.Samples.csproj'
                     'src\Microsoft.Data.SqlClient\src\Microsoft.Data.SqlClient.csproj'
@@ -196,14 +196,14 @@ Describe 'supported target frameworks' {
                 )
             }
             @{
-                Frameworks = 'net47;net10.0;netstandard2.0'
+                Frameworks = 'net462;net10.0;netstandard2.0'
                 Projects = @(
                     'src\Microsoft.Data.SqlClient\ref\Microsoft.Data.SqlClient.csproj'
                     'src\Microsoft.Data.SqlClient\notsupported\Microsoft.Data.SqlClient.csproj'
                 )
             }
             @{
-                Frameworks = 'net47;netstandard2.0'
+                Frameworks = 'net462;netstandard2.0'
                 Projects = @(
                     'src\Microsoft.Data.SqlClient.Extensions\Azure\src\Azure.csproj'
                 )
@@ -285,7 +285,7 @@ Describe 'supported target frameworks' {
     # Unit tests use internal driver APIs unavailable in ref assemblies. Check both
     # the NuGet compile exclusion and the explicit lib path, not just the TFM property.
     It 'maps Package-mode UnitTests to the <Framework> implementation, not the reference assembly' -ForEach @(
-        @{ Framework = 'net47' }
+        @{ Framework = 'net462' }
         @{ Framework = 'net10.0' }
     ) {
         $result = Get-ProjectEvaluation 'src\Microsoft.Data.SqlClient\tests\UnitTests\Microsoft.Data.SqlClient.UnitTests.csproj' @(
@@ -313,7 +313,7 @@ Describe 'supported target frameworks' {
     # Framework/Standard targets use the same lowest supported modern dependency
     # band. Assert the major rather than a patch, allowing normal servicing updates.
     It 'uses the .NET 10 dependency band for <Framework>, including preserved framework targets' -ForEach @(
-        @{ Framework = 'net47' }
+        @{ Framework = 'net462' }
         @{ Framework = 'net10.0' }
         @{ Framework = 'netstandard2.0' }
     ) {
@@ -338,7 +338,7 @@ Describe 'supported target frameworks' {
     }
 
     It 'uses the .NET 10 Hosting and Asn1 dependencies for <Framework> tests' -ForEach @(
-        @{ Framework = 'net47' }
+        @{ Framework = 'net462' }
         @{ Framework = 'net10.0' }
     ) {
         $result = Get-ProjectEvaluation 'src\Microsoft.Data.SqlClient\tests\UnitTests\Microsoft.Data.SqlClient.UnitTests.csproj' @(
@@ -362,7 +362,7 @@ Describe 'supported target frameworks' {
         ($nuspec.package.metadata.references.group.targetFramework | Sort-Object) -join ';' |
             Should -Be ($frameworks -join ';')
         @($nuspec.package.metadata.frameworkAssemblies.frameworkAssembly.targetFramework | Select-Object -Unique) |
-            Should -Be @('net47')
+            Should -Be @('net462')
         foreach ($kind in @('lib', 'ref')) {
             $assemblyFiles = @($nuspec.package.files.file | Where-Object {
                 $_.src.EndsWith('\Microsoft.Data.SqlClient.dll') -and $_.target.StartsWith("$kind\")
@@ -383,7 +383,7 @@ Describe 'supported target frameworks' {
     # A successful project build cannot detect stale nuspec dependency versions.
     # Compare the actual per-TFM package references and central versions to the manifest.
     It 'aligns <Framework> driver dependencies and central versions with the package metadata' -ForEach @(
-        @{ Framework = 'net47'; Sni = 'Microsoft.Data.SqlClient.SNI' }
+        @{ Framework = 'net462'; Sni = 'Microsoft.Data.SqlClient.SNI' }
         @{ Framework = 'net10.0'; Sni = 'Microsoft.Data.SqlClient.SNI.runtime' }
     ) {
         $result = Get-ProjectEvaluation 'src\Microsoft.Data.SqlClient\src\Microsoft.Data.SqlClient.csproj' @(
@@ -392,7 +392,7 @@ Describe 'supported target frameworks' {
         [xml]$nuspec = Get-Content (Join-Path $repoRoot 'src\Microsoft.Data.SqlClient\src\Microsoft.Data.SqlClient.nuspec') -Raw
         $dependencies = ($nuspec.package.metadata.dependencies.group | Where-Object targetFramework -EQ $Framework).dependency
         $references = @($result.Items.PackageReference | Where-Object IsImplicitlyDefined -NE 'true')
-        if ($Framework -eq 'net47') {
+        if ($Framework -eq 'net462') {
             # SQL CLR types are forwarded to System.Data on .NET Framework, so the sibling
             # project reference does not require a runtime package dependency.
             $references = @($references | Where-Object Identity -NE 'Microsoft.SqlServer.Server')
@@ -414,8 +414,8 @@ Describe 'reference assembly baseline framework resolution' {
     It 'selects <Scenario> assets without building or downloading a baseline' -ForEach @(
         @{
             Scenario = 'matching'
-            Available = @('net47', 'net10.0', 'net462', 'net9.0', 'net8.0', 'netstandard2.0')
-            FrameworkBaseline = 'net47'
+            Available = @('net462', 'net10.0', 'net47', 'net9.0', 'net8.0', 'netstandard2.0')
+            FrameworkBaseline = 'net462'
             NetBaseline = 'net10.0'
             Properties = @()
         }
@@ -435,7 +435,7 @@ Describe 'reference assembly baseline framework resolution' {
         }
         @{
             Scenario = 'explicit override despite matching'
-            Available = @('net47', 'net10.0', 'net472', 'net8.0', 'netstandard2.0')
+            Available = @('net462', 'net10.0', 'net472', 'net8.0', 'netstandard2.0')
             FrameworkBaseline = 'net472'
             NetBaseline = 'net8.0'
             Properties = @('-p:BaselineNetFrameworkTfm=net472', '-p:BaselineNetTfm=net8.0')
@@ -444,8 +444,8 @@ Describe 'reference assembly baseline framework resolution' {
         $result = Invoke-RefBaselineProbe $Available $Properties
         $result.ExitCode | Should -Be 0 -Because $result.Output
         $items = @(($result.Output | ConvertFrom-Json).Items._RefTfm)
-        ($items.Identity | Sort-Object) -join ';' | Should -Be 'net10.0;net47;netstandard2.0'
-        ($items | Where-Object Identity -EQ 'net47').BaselineTfm | Should -Be $FrameworkBaseline
+        ($items.Identity | Sort-Object) -join ';' | Should -Be 'net10.0;net462;netstandard2.0'
+        ($items | Where-Object Identity -EQ 'net462').BaselineTfm | Should -Be $FrameworkBaseline
         ($items | Where-Object Identity -EQ 'net10.0').BaselineTfm | Should -Be $NetBaseline
         ($items | Where-Object Identity -EQ 'netstandard2.0').BaselineTfm | Should -Be 'netstandard2.0'
     }
@@ -454,36 +454,36 @@ Describe 'reference assembly baseline framework resolution' {
     # would make a partially checked API surface appear compatible.
     It 'fails clearly when the <Scenario> asset is missing' -ForEach @(
         @{
-            Scenario = 'Framework fallback'
+            Scenario = 'Framework default'
             Available = @('net10.0', 'netstandard2.0')
             Missing = 'net462'
-            Local = 'net47'
+            Local = 'net462'
             Properties = @()
         }
         @{
             Scenario = 'modern fallback'
-            Available = @('net47', 'netstandard2.0')
+            Available = @('net462', 'netstandard2.0')
             Missing = 'net8.0'
             Local = 'net10.0'
             Properties = @()
         }
         @{
             Scenario = 'preserved Standard'
-            Available = @('net47', 'net10.0')
+            Available = @('net462', 'net10.0')
             Missing = 'netstandard2.0'
             Local = 'netstandard2.0'
             Properties = @()
         }
         @{
             Scenario = 'Framework override'
-            Available = @('net47', 'net10.0', 'netstandard2.0')
+            Available = @('net462', 'net10.0', 'netstandard2.0')
             Missing = 'net472'
-            Local = 'net47'
+            Local = 'net462'
             Properties = @('-p:BaselineNetFrameworkTfm=net472')
         }
         @{
             Scenario = 'modern override'
-            Available = @('net47', 'net10.0', 'netstandard2.0')
+            Available = @('net462', 'net10.0', 'netstandard2.0')
             Missing = 'net9.0'
             Local = 'net10.0'
             Properties = @('-p:BaselineNetTfm=net9.0')

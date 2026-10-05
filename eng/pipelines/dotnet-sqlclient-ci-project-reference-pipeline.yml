@@ -115,7 +115,7 @@ parameters:
   - name: targetFrameworks
     displayName: Target Frameworks on Windows
     type: object
-    default: [net47, net10.0]
+    default: [net462, net10.0]
 
   # The target frameworks to build and run tests for on Unix.
   #
@@ -132,7 +132,7 @@ parameters:
   - name: primaryTargetFrameworks
     displayName: Target Frameworks on Windows (SQL 2025 and Azure SQL)
     type: object
-    default: [net47, net10.0]
+    default: [net462, net10.0]
 
   # The target frameworks used by the primary test configurations (local SQL
   # Server 2025 and Azure SQL) on Unix.

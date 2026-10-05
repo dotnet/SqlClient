@@ -23,7 +23,7 @@
 
   <!-- Target Frameworks =============================================== -->
   <PropertyGroup>
-    <TargetFrameworks>net47;net10.0</TargetFrameworks>
+    <TargetFrameworks>net462;net10.0</TargetFrameworks>
   </PropertyGroup>
 
   <!-- References ====================================================== -->
@@ -47,14 +47,14 @@
   </ItemGroup>
 
   <!-- References for netfx -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'net47'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
     <PackageReference Include="Azure.Core" />
     <PackageReference Include="Azure.Security.KeyVault.Keys" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" />
   </ItemGroup>
 
   <!-- References for netcore -->
-  <ItemGroup Condition="'$(TargetFramework)' != 'net47'">
+  <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
     <PackageReference Include="Azure.Core" />
     <PackageReference Include="Azure.Security.KeyVault.Keys" />
   </ItemGroup>

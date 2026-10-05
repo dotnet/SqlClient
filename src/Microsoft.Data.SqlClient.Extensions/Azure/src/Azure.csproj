@@ -2,7 +2,7 @@
   <!-- General Properties ============================================== -->
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient.Extensions.Azure</AssemblyName>
-    <TargetFrameworks>net47;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net462;netstandard2.0</TargetFrameworks>
   </PropertyGroup>
 
   <!-- Compiler Options ================================================ -->

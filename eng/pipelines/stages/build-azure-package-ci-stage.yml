@@ -181,7 +181,7 @@ stages:
           mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
           sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
           sqlServerPackageVersion: $(sqlServerPackageVersion)
-          netFrameworkRuntimes: [net47]
+          netFrameworkRuntimes: [net462]
           netRuntimes: [net10.0]
           poolName: ${{ parameters.poolName }}
           referenceType: ${{ parameters.referenceType }}

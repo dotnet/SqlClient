@@ -131,7 +131,7 @@ stages:
           displayNamePrefix: Win
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           jobNameSuffix: windows
-          netFrameworkRuntimes: [net47]
+          netFrameworkRuntimes: [net462]
           netRuntimes: [net10.0]
           poolName: ${{ parameters.poolName }}
           poolImage: ADO-Win25
