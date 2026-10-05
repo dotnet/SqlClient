@@ -4,27 +4,35 @@ Pester tests for PowerShell scripts used by OneBranch pipeline steps.
 
 ## Prerequisites
 
-- PowerShell 5.1+ or PowerShell 7+
+- PowerShell 7+, as restored by `dotnet tool restore` from `dotnet-tools.json`. Windows
+  PowerShell 5.1 is not supported: these scripts and tests use types that exist only in
+  PowerShell Core, such as `Microsoft.PowerShell.Commands.HttpResponseException`.
 - [Pester v5](https://pester.dev/) (`Install-Module Pester -MinimumVersion 5.0 -Scope CurrentUser`)
 
 ## Running the Tests
 
+Restore the repository-pinned PowerShell first:
+
+```console
+dotnet tool restore
+```
+
 From this directory:
 
-```powershell
-Invoke-Pester ./publish-symbols.Tests.ps1
+```console
+dotnet tool run pwsh -NoProfile -Command "Invoke-Pester ./publish-symbols.Tests.ps1"
 ```
 
 Or from the repository root:
 
-```powershell
-Invoke-Pester ./eng/pipelines/onebranch/scripts/tests/
+```console
+dotnet tool run pwsh -NoProfile -Command "Invoke-Pester ./eng/pipelines/onebranch/scripts/tests/"
 ```
 
 For detailed output:
 
-```powershell
-Invoke-Pester ./publish-symbols.Tests.ps1 -Output Detailed
+```console
+dotnet tool run pwsh -NoProfile -Command "Invoke-Pester ./publish-symbols.Tests.ps1 -Output Detailed"
 ```
 
 ## Test Coverage
@@ -49,10 +57,16 @@ Invoke-Pester ./publish-symbols.Tests.ps1 -Output Detailed
 | Dependency documentation restore | Exact version pinned, central package management not inherited, documentation collected per target framework, restore tree removed, stale destination replaced, and failures reported for a failed restore, a missing package folder, or a package shipping no documentation |
 | Package signatures    | Every package and symbol package verified, all failures reported before throwing |
 | Assembly signatures   | Package expansion, native binaries under `runtimes/` included, stale expansions replaced, all unsigned assemblies reported |
+| Token diagnostics     | Minimal troubleshooting claims, malformed payload handling, gated off by default, header/signature segments never logged |
+| Command logging       | Commands logged only under `-VerboseDiagnostics`, `Authorization` redacted unconditionally either way |
+| HTTP failure detail   | Status code and correlation ids captured, exception and inner-exception types reported, explicit when no response was received |
+| Endpoint reachability | Comma-separated and array host lists, DNS failure distinguished from connection failure, socket error code and errno reported, never throws |
 
 ## Notes
 
 - All external calls (`az`, `Invoke-RestMethod`) are mocked — no network access or Azure credentials are required.
+- The endpoint-reachability tests are the one exception: they exercise real sockets, but only
+  against loopback and the RFC 2606 reserved `.invalid` TLD, so they need no external network.
 - Script-level version tests mock `dotnet`; package-composition tests invoke the real MSBuild
   `GetVersionsSqlClient` and `GetVersionsSqlServer` targets.
 - `Get-AuthenticodeSignature` is Windows-only, so the assembly-signature tests declare a stub when

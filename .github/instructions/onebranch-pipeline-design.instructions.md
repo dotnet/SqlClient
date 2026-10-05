@@ -98,6 +98,11 @@ When adding a new package to the OneBranch flow:
 - Build jobs copy PDBs into `$(JOB_OUTPUT)/symbols/` so they are included in the auto-published artifact
 - The `publish-symbols-step.yml` accepts a `symbolsFolder` parameter to point at the downloaded PDB location
 - The publish step calls an extracted `publish-symbols.ps1` script with structured error handling and diagnostic logging
+- Diagnostics are gated on the pipeline's top-level `debug` parameter, which is plumbed through `publish-symbols-stage.yml` → `publish-symbols-job.yml` → `publish-symbols-step.yml` and reaches the script as `-VerboseDiagnostics`. Off by default, so a routine run stays quiet
+- When `debug` is enabled, every command the script runs (the `az` token acquisition and each `Invoke-RestMethod` call) is echoed to the log. Secrets are redacted **unconditionally**: `debug` controls whether the already-redacted command is logged at all, never whether it is redacted, and no parameter anywhere can emit the bearer token or the `Authorization` header
+- When `debug` is enabled, the run also logs only the token payload claims needed to diagnose audience, principal, tenant, permission, and expiry failures (`aud`, `appid`, `tid`, `roles`/`scp`, and `exp`); the header and signature segments are never decoded
+- `test-endpoint-reachability.ps1` runs before the publish request when `debug` is enabled, probing both symbol servers from inside the build container so a failure can be diagnosed from the socket error rather than guessed at
+- Failed calls report the HTTP status code and any service correlation identifiers (such as `mise-correlation-id`) along with the response body, which is what the symbol service owners need to trace a rejection. This is failure-only output and is **not** gated on `debug` — it explains a failure that has already happened
 - Symbols publishing credentials come from the `Symbols Publishing` variable group
 - In the official pipeline, symbol server destination follows `releaseToProduction`: Production when true, PPE when false
 - Non-official pipeline always targets the PPE symbol server
@@ -119,7 +124,7 @@ When adding a new package to the OneBranch flow:
 ## Parameters
 
 Build parameters:
-- `debug` — enable debug output (default `false`)
+- `debug` — enable debug output (default `false`). Also gates the symbol-publishing diagnostics described under Symbols Publishing Stage; it never relaxes secret redaction
 - `isPreview` — use preview version numbers (default `false`)
 - `publishSymbols` — publish symbols to servers (default `false`)
 - `buildSqlServer` — build the Microsoft.SqlServer.Server package (default `true` in the non-official/nightly pipeline, `false` in the official pipeline). The SqlClient family is always built, so this is the only build toggle. It also drives the SqlServer dependency version the family uses (built/next vs published). Requesting `releaseSqlServer` without `buildSqlServer` fails template expansion.
