@@ -416,18 +416,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             DbConnectionInternal oldConnection,
             TimeoutTimer timeout)
         {
-            if (!_pruningGuard.TryEnter())
+            using PoolPruningGuard.Lease? lease = _pruningGuard.TryEnter();
+            if (lease is null)
             {
                 return null;
             }
-            try
-            {
-                return ReplaceConnectionCore(owningObject, oldConnection, timeout);
-            }
-            finally
-            {
-                _pruningGuard.Exit();
-            }
+            return ReplaceConnectionCore(owningObject, oldConnection, timeout);
         }
 
         private DbConnectionInternal ReplaceConnectionCore(
@@ -941,22 +935,21 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             TimeoutTimer timeout,
             out DbConnectionInternal? connection)
         {
-            if (!_pruningGuard.TryEnter())
+            PoolPruningGuard.Lease? lease = _pruningGuard.TryEnter();
+            if (lease is null)
             {
                 connection = null;
                 return true;
             }
-            bool pending = false;
             try
             {
-                return TryGetConnectionCore(owningObject, taskCompletionSource, timeout, out connection, out pending);
+                // TryGetConnectionCore nulls the lease when it transfers ownership to a background
+                // worker; otherwise it is released here.
+                return TryGetConnectionCore(owningObject, taskCompletionSource, timeout, out connection, ref lease);
             }
             finally
             {
-                if (!pending)
-                {
-                    _pruningGuard.Exit();
-                }
+                lease?.Dispose();
             }
         }
 
@@ -965,9 +958,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             TaskCompletionSource<DbConnectionInternal>? taskCompletionSource,
             TimeoutTimer timeout,
             out DbConnectionInternal? connection,
-            out bool pending)
+            ref PoolPruningGuard.Lease? lease)
         {
-            pending = false;
             // Short-circuit when the pool is not Running (i.e., shut down or never started).
             // Returning (true, null) matches WaitHandleDbConnectionPool.TryGetConnection and tells
             // the caller "completed; no connection available" without entering the channel path,
@@ -1048,6 +1040,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 return true;
             }
 
+            PoolPruningGuard.Lease? workerLease = lease;
             Task.Run(async () =>
             {
                 DbConnectionInternal? connection = null;
@@ -1088,10 +1081,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 }
                 finally
                 {
-                    _pruningGuard.Exit();
+                    workerLease?.Dispose();
                 }
             });
-            pending = true;
+            // The worker now owns the lease.
+            lease = null;
 
             connection = null;
             return false;
@@ -1116,18 +1110,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             CancellationToken cancellationToken,
             TimeoutTimer timeout)
         {
-            if (!_pruningGuard.TryEnter())
+            using PoolPruningGuard.Lease? lease = _pruningGuard.TryEnter();
+            if (lease is null)
             {
                 return null;
             }
-            try
-            {
-                return OpenNewInternalConnectionCore(owningConnection, cancellationToken, timeout);
-            }
-            finally
-            {
-                _pruningGuard.Exit();
-            }
+            return OpenNewInternalConnectionCore(owningConnection, cancellationToken, timeout);
         }
 
         private DbConnectionInternal? OpenNewInternalConnectionCore(
@@ -1977,9 +1965,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 return;
             }
 
-            // Hold a pruning admission from before scheduling until the loop exits, so a queued
+            // Hold a pruning lease from before scheduling until the loop exits, so a queued
             // warmup keeps the pool from being pruned before the loop starts creating.
-            if (!_pruningGuard.TryEnter())
+            PoolPruningGuard.Lease? lease = _pruningGuard.TryEnter();
+            if (lease is null)
             {
                 Interlocked.Exchange(ref _warmupLoopRunning, 0);
                 return;
@@ -1991,7 +1980,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 // Fire-and-forget on the thread pool so warmup never blocks the caller. The loop
                 // absorbs its own exceptions and always releases the single-loop guard on exit. The
                 // task is published so tests can await a warmup pass to a deterministic completion.
-                WarmupLoopTask = Task.Run(RunWarmupLoopAsync);
+                WarmupLoopTask = Task.Run(() => RunWarmupLoopAsync(lease));
                 scheduled = true;
 
                 SqlClientEventSource.Log.TryPoolerTraceEvent(
@@ -2007,7 +1996,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 // Once scheduled, the loop owns both guards and releases them itself.
                 if (!scheduled)
                 {
-                    _pruningGuard.Exit();
+                    lease.Dispose();
                     Interlocked.Exchange(ref _warmupLoopRunning, 0);
                 }
                 if (!ADP.IsCatchableExceptionType(ex))
@@ -2030,7 +2019,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// enters the pool's blocking-period error state via the shared creation path, mirroring the
         /// legacy WaitHandle pool.
         /// </summary>
-        private async Task RunWarmupLoopAsync()
+        /// <param name="lease">The pruning lease acquired by <see cref="RequestWarmup"/>; released on exit.</param>
+        private async Task RunWarmupLoopAsync(PoolPruningGuard.Lease lease)
         {
             int warmedUp = 0;
 
@@ -2152,9 +2142,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             {
                 // Always release the single-loop guard, whatever exit path we took, so a future
                 // below-minimum trigger can start a new loop. Interlocked.Exchange mirrors the
-                // Interlocked.CompareExchange acquire in RequestWarmup. The pruning admission
+                // Interlocked.CompareExchange acquire in RequestWarmup. The pruning lease
                 // acquired in RequestWarmup is released first so the loop no longer blocks pruning.
-                _pruningGuard.Exit();
+                lease.Dispose();
                 Interlocked.Exchange(ref _warmupLoopRunning, 0);
             }
         }

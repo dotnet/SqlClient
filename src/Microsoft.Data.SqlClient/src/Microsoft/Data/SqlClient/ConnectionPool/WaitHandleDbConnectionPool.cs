@@ -63,14 +63,17 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         private sealed class PendingGetConnection
         {
-            public PendingGetConnection(long dueTime, DbConnection owner, TaskCompletionSource<DbConnectionInternal> completion, TimeoutTimer timeout)
+            public PendingGetConnection(long dueTime, DbConnection owner, TaskCompletionSource<DbConnectionInternal> completion, TimeoutTimer timeout, PoolPruningGuard.Lease lease)
             {
                 DueTime = dueTime;
                 Owner = owner;
                 Completion = completion;
                 Timeout = timeout;
+                Lease = lease;
             }
             public long DueTime { get; private set; }
+            /// <summary>Pruning lease owned by this request; released once the request is processed.</summary>
+            public PoolPruningGuard.Lease Lease { get; private set; }
             public DbConnection Owner { get; private set; }
             public TaskCompletionSource<DbConnectionInternal> Completion { get; private set; }
             public TimeoutTimer Timeout { get; private set; }
@@ -537,18 +540,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         private DbConnectionInternal CreateObject(DbConnection owningObject, DbConnectionInternal oldConnection, TimeoutTimer timeout)
         {
-            if (!_pruningGuard.TryEnter())
+            using PoolPruningGuard.Lease lease = _pruningGuard.TryEnter();
+            if (lease is null)
             {
                 return null;
             }
-            try
-            {
-                return CreateObjectCore(owningObject, oldConnection, timeout);
-            }
-            finally
-            {
-                _pruningGuard.Exit();
-            }
+            return CreateObjectCore(owningObject, oldConnection, timeout);
         }
 
         private DbConnectionInternal CreateObjectCore(DbConnection owningObject, DbConnectionInternal oldConnection, TimeoutTimer timeout)
@@ -800,7 +797,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     {
                         if (next.Completion.Task.IsCompleted)
                         {
-                            _pruningGuard.Exit();
+                            next.Lease.Dispose();
                             continue;
                         }
 
@@ -857,7 +854,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         }
                         finally
                         {
-                            _pruningGuard.Exit();
+                            next.Lease.Dispose();
                         }
                     }
                 }
@@ -898,28 +895,25 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         public bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal> taskCompletionSource, TimeoutTimer timeout, out DbConnectionInternal connection)
         {
-            if (!_pruningGuard.TryEnter())
+            PoolPruningGuard.Lease lease = _pruningGuard.TryEnter();
+            if (lease is null)
             {
                 connection = null;
                 return true;
             }
-            bool pending = false;
             try
             {
-                return TryGetConnectionCore(owningObject, taskCompletionSource, timeout, out connection, out pending);
+                // TryGetConnectionCore nulls 'lease' when it transfers ownership to a pending request.
+                return TryGetConnectionCore(owningObject, taskCompletionSource, timeout, out connection, ref lease);
             }
             finally
             {
-                if (!pending)
-                {
-                    _pruningGuard.Exit();
-                }
+                lease?.Dispose();
             }
         }
 
-        private bool TryGetConnectionCore(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal> taskCompletionSource, TimeoutTimer timeout, out DbConnectionInternal connection, out bool pending)
+        private bool TryGetConnectionCore(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal> taskCompletionSource, TimeoutTimer timeout, out DbConnectionInternal connection, ref PoolPruningGuard.Lease lease)
         {
-            pending = false;
             uint waitForMultipleObjectsTimeout = 0;
             bool allowCreate = false;
 
@@ -978,17 +972,29 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     dueTime,
                     owningObject,
                     taskCompletionSource,
-                    timeout);
+                    timeout,
+                    lease);
             _pendingOpens.Enqueue(pendingGetConnection);
-            // Transfer the admission to the worker, including cancelled requests still queued.
-            pending = true;
+            // Ownership of the lease moves to the queued request; the worker releases it.
+            lease = null;
 
             // it is better to StartNew too many times than not enough
             if (_pendingOpensWaiting == 0)
             {
-                Thread waitOpenThread = new Thread(WaitForPendingOpen);
-                waitOpenThread.IsBackground = true;
-                waitOpenThread.Start();
+                try
+                {
+                    Thread waitOpenThread = new Thread(WaitForPendingOpen);
+                    waitOpenThread.IsBackground = true;
+                    waitOpenThread.Start();
+                }
+                catch (Exception e)
+                {
+                    // No worker will run for this request: fail it and release its lease now.
+                    // Lease.Dispose is idempotent, so a later worker dequeuing it is harmless.
+                    pendingGetConnection.Lease.Dispose();
+                    taskCompletionSource.TrySetException(e);
+                    throw;
+                }
             }
 
             connection = null;
@@ -1210,18 +1216,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <returns>A new inner connection that is attached to the <paramref name="owningObject"/></returns>
         public DbConnectionInternal ReplaceConnection(DbConnection owningObject, DbConnectionInternal oldConnection, TimeoutTimer timeout)
         {
-            if (!_pruningGuard.TryEnter())
+            using PoolPruningGuard.Lease lease = _pruningGuard.TryEnter();
+            if (lease is null)
             {
                 return null;
             }
-            try
-            {
-                return ReplaceConnectionCore(owningObject, oldConnection, timeout);
-            }
-            finally
-            {
-                _pruningGuard.Exit();
-            }
+            return ReplaceConnectionCore(owningObject, oldConnection, timeout);
         }
 
         private DbConnectionInternal ReplaceConnectionCore(DbConnection owningObject, DbConnectionInternal oldConnection, TimeoutTimer timeout)
@@ -1423,8 +1423,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
             finally
             {
-                // Release the admission acquired by QueuePoolCreateRequest.
-                _pruningGuard.Exit();
+                // Release the lease handed over by QueuePoolCreateRequest.
+                (state as PoolPruningGuard.Lease)?.Dispose();
                 SqlClientEventSource.Log.TryPoolerScopeLeaveEvent(scopeID);
             }
         }
@@ -1524,22 +1524,30 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         private void QueuePoolCreateRequest()
         {
-            // The admission is transferred to PoolCreateRequest so a queued replenishment keeps
+            // The lease is handed to PoolCreateRequest so a queued replenishment keeps
             // the pool from being pruned before the worker runs.
-            if (State is Running && _pruningGuard.TryEnter())
+            if (State is not Running)
             {
-                bool queued = false;
-                try
+                return;
+            }
+
+            PoolPruningGuard.Lease lease = _pruningGuard.TryEnter();
+            if (lease is null)
+            {
+                return;
+            }
+
+            bool queued = false;
+            try
+            {
+                // Make sure we're at quota by posting a callback to the threadpool.
+                queued = ThreadPool.QueueUserWorkItem(_poolCreateRequest, lease);
+            }
+            finally
+            {
+                if (!queued)
                 {
-                    // Make sure we're at quota by posting a callback to the threadpool.
-                    queued = ThreadPool.QueueUserWorkItem(_poolCreateRequest);
-                }
-                finally
-                {
-                    if (!queued)
-                    {
-                        _pruningGuard.Exit();
-                    }
+                    lease.Dispose();
                 }
             }
         }
