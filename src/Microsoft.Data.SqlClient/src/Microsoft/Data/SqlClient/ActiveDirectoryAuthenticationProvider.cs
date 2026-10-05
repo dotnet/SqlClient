@@ -203,7 +203,7 @@ namespace Microsoft.Data.SqlClient
              *
              * If no tenant is specified, the app targets Azure AD and personal Microsoft accounts as an audience.
              * (That is, it behaves as though `common` were specified.) We always have a tenant here, because the server supplies one in the STSURL.
-             * More information: https://docs.microsoft.com/azure/active-directory/develop/msal-client-application-configuration
+             * More information: https://learn.microsoft.com/entra/identity-platform/msal-client-application-configuration
              *
              * The authority URL provided by the server may be a bare tenant endpoint
              * ("https://login.microsoftonline.com/{tenantId}") or an ADAL v1 style endpoint
