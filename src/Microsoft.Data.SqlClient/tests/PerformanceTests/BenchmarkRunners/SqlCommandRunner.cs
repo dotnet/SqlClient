@@ -13,6 +13,12 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
     /// <summary>Measures command entry points over stable, focused SQL batch and RPC workloads.</summary>
     public class SqlCommandRunner : CommandRunnerBase
     {
+        // These local command executions take only a few hundred microseconds. Batch them
+        // sequentially so the configured iterations exceed BenchmarkDotNet's recommended
+        // 100 ms on the local database and scheduling interruptions have less influence.
+        // OperationsPerInvoke keeps reported time and allocations normalized to one command.
+        private const int OperationsPerBatch = 512;
+
         /// <summary>Distinguishes ordinary batches, sp_executesql, and stored-procedure RPCs.</summary>
         public enum ExecutionPath { Text, Parameterized, StoredProcedure }
 
@@ -37,10 +43,10 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             _reader = BuildCommand("Reader", "SELECT Id, Value FROM #CommandRow WHERE Id = @id;");
             _xml = BuildCommand("Xml", "SELECT Id, Value FROM #CommandRow WHERE Id = @id FOR XML PATH('row'), ROOT('rows');");
 
-            if (ExecuteNonQuery() != 1 || ExecuteNonQueryAsync().GetAwaiter().GetResult() != 1 ||
+            if (ExecuteNonQuery() != OperationsPerBatch || ExecuteNonQueryAsync().GetAwaiter().GetResult() != OperationsPerBatch ||
                 (int)ExecuteScalar() != 123 || (int)ExecuteScalarAsync().GetAwaiter().GetResult() != 123 ||
-                ExecuteReader() != 124 || ExecuteReaderAsync().GetAwaiter().GetResult() != 124 ||
-                ExecuteXmlReader() != 10 || ExecuteXmlReaderAsync().GetAwaiter().GetResult() != 10)
+                ExecuteReader() != 124 * OperationsPerBatch || ExecuteReaderAsync().GetAwaiter().GetResult() != 124 * OperationsPerBatch ||
+                ExecuteXmlReader() != 10 * OperationsPerBatch || ExecuteXmlReaderAsync().GetAwaiter().GetResult() != 10 * OperationsPerBatch)
             {
                 throw new InvalidOperationException("Command fixture returned unexpected results.");
             }
@@ -72,69 +78,113 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         }
 
         /// <summary>Executes a reusable reader command and accesses every returned field.</summary>
-        [Benchmark]
+        [Benchmark(OperationsPerInvoke = OperationsPerBatch)]
         public int ExecuteReader()
         {
-            using SqlDataReader reader = _reader.ExecuteReader();
             int sum = 0;
-            while (reader.Read())
+            for (int operation = 0; operation < OperationsPerBatch; operation++)
             {
-                sum += reader.GetInt32(0) + reader.GetInt32(1);
+                using SqlDataReader reader = _reader.ExecuteReader();
+                while (reader.Read())
+                {
+                    sum += reader.GetInt32(0) + reader.GetInt32(1);
+                }
             }
             return sum;
         }
 
         /// <summary>Executes and advances asynchronously, then accesses the current row's typed fields.</summary>
-        [Benchmark]
+        [Benchmark(OperationsPerInvoke = OperationsPerBatch)]
         public async Task<int> ExecuteReaderAsync()
         {
-            using SqlDataReader reader = await _reader.ExecuteReaderAsync();
             int sum = 0;
-            while (await reader.ReadAsync())
+            for (int operation = 0; operation < OperationsPerBatch; operation++)
             {
-                sum += reader.GetInt32(0) + reader.GetInt32(1);
+                using SqlDataReader reader = await _reader.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    sum += reader.GetInt32(0) + reader.GetInt32(1);
+                }
             }
             return sum;
         }
 
         /// <summary>Measures first-value execution without command allocation or unused result rows.</summary>
-        [Benchmark]
-        public object ExecuteScalar() => _scalar.ExecuteScalar();
+        [Benchmark(OperationsPerInvoke = OperationsPerBatch)]
+        public object ExecuteScalar()
+        {
+            object value = null;
+            for (int operation = 0; operation < OperationsPerBatch; operation++)
+            {
+                value = _scalar.ExecuteScalar();
+            }
+            return value;
+        }
 
         /// <summary>Measures the corresponding asynchronous first-value execution path.</summary>
-        [Benchmark]
-        public Task<object> ExecuteScalarAsync() => _scalar.ExecuteScalarAsync();
+        [Benchmark(OperationsPerInvoke = OperationsPerBatch)]
+        public async Task<object> ExecuteScalarAsync()
+        {
+            object value = null;
+            for (int operation = 0; operation < OperationsPerBatch; operation++)
+            {
+                value = await _scalar.ExecuteScalarAsync();
+            }
+            return value;
+        }
 
         /// <summary>Updates the same row to the same value without growing the workload.</summary>
-        [Benchmark]
-        public int ExecuteNonQuery() => _nonQuery.ExecuteNonQuery();
+        [Benchmark(OperationsPerInvoke = OperationsPerBatch)]
+        public int ExecuteNonQuery()
+        {
+            int affectedRows = 0;
+            for (int operation = 0; operation < OperationsPerBatch; operation++)
+            {
+                affectedRows += _nonQuery.ExecuteNonQuery();
+            }
+            return affectedRows;
+        }
 
         /// <summary>Measures asynchronous nonquery execution over the same stable update.</summary>
-        [Benchmark]
-        public Task<int> ExecuteNonQueryAsync() => _nonQuery.ExecuteNonQueryAsync();
+        [Benchmark(OperationsPerInvoke = OperationsPerBatch)]
+        public async Task<int> ExecuteNonQueryAsync()
+        {
+            int affectedRows = 0;
+            for (int operation = 0; operation < OperationsPerBatch; operation++)
+            {
+                affectedRows += await _nonQuery.ExecuteNonQueryAsync();
+            }
+            return affectedRows;
+        }
 
         /// <summary>Executes an XML result and consumes all XML nodes.</summary>
-        [Benchmark]
+        [Benchmark(OperationsPerInvoke = OperationsPerBatch)]
         public int ExecuteXmlReader()
         {
-            using XmlReader reader = _xml.ExecuteXmlReader();
             int nodes = 0;
-            while (reader.Read())
+            for (int operation = 0; operation < OperationsPerBatch; operation++)
             {
-                nodes++;
+                using XmlReader reader = _xml.ExecuteXmlReader();
+                while (reader.Read())
+                {
+                    nodes++;
+                }
             }
             return nodes;
         }
 
         /// <summary>Executes and fully consumes XML through the actual async APIs.</summary>
-        [Benchmark]
+        [Benchmark(OperationsPerInvoke = OperationsPerBatch)]
         public async Task<int> ExecuteXmlReaderAsync()
         {
-            using XmlReader reader = await _xml.ExecuteXmlReaderAsync();
             int nodes = 0;
-            while (await reader.ReadAsync())
+            for (int operation = 0; operation < OperationsPerBatch; operation++)
             {
-                nodes++;
+                using XmlReader reader = await _xml.ExecuteXmlReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    nodes++;
+                }
             }
             return nodes;
         }

@@ -94,8 +94,11 @@ Plaintext large-data defaults use five iterations, Monitoring, and a 120-minute 
 including when a private configuration specifies only Enabled. RowCount does not apply to LOB
 or command-entry-point fixtures.
 
-Repetitions belong to LaunchCount/WarmupCount/IterationCount/InvocationCount, not loops inside
-benchmark methods. The checked-in large-data entries use Monitoring and a longer TimeoutMinutes
+Repetitions are controlled by LaunchCount/WarmupCount/IterationCount/InvocationCount. The fast
+SqlCommand benchmarks additionally batch 512 sequential command executions per invocation to
+reach BenchmarkDotNet's recommended iteration duration. OperationsPerInvoke normalizes reported
+timings and allocations to one command execution. The checked-in large-data entries use
+Monitoring and a longer TimeoutMinutes
 for slow transfers. CommandTimeoutSeconds controls workload/setup commands and row bulk-copy
 population; existing encryption-key fixture helpers retain their own timeouts. TimeoutMinutes
 controls the entire BenchmarkDotNet case. Invalid configurations and failed benchmark cases
