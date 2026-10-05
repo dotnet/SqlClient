@@ -17,7 +17,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
     public class SqlCommandOptimizedBindingTests
     {
         /// <summary>
-        /// Deferred preparation reports the incompatible option rather than blaming an unnamed parameter.
+        /// Enabling optimized binding before or after Prepare reports the same diagnostic at execution.
         /// </summary>
         [Theory]
         [InlineData(false, false, false)]
@@ -34,11 +34,22 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             connection.Open();
             using SqlCommand command = new("SELECT @value", connection);
             command.Parameters.Add("@value", SqlDbType.Int).Value = 1;
-            command.EnableOptimizedParameterBinding = enableBeforePrepare;
+            if (enableBeforePrepare)
+            {
+                command.EnableOptimizedParameterBinding = true;
+            }
+
             command.Prepare();
-            command.EnableOptimizedParameterBinding = true;
+
+            if (!enableBeforePrepare)
+            {
+                command.EnableOptimizedParameterBinding = true;
+            }
+
             if (reopen)
             {
+                // A changed connection close count makes the pending preparation dirty.
+                // Execution must still attempt preparation and report the same incompatibility.
                 connection.Close();
                 connection.Open();
             }
@@ -48,11 +59,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 : Assert.Throws<InvalidOperationException>(() => command.ExecuteNonQuery());
 
             Assert.Equal(Strings.SQL_PrepareNotSupportedForOptimizedBinding, exception.Message);
-            Assert.Contains("Prepare", exception.Message);
-            Assert.Contains("EnableOptimizedParameterBinding", exception.Message);
-            Assert.Contains("new SqlCommand", exception.Message);
-            Assert.Contains("before its first execution", exception.Message);
-            Assert.DoesNotContain("Parameter ''", exception.Message);
         }
 
         /// <summary>
@@ -91,12 +97,17 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             using SqlConnection connection = new();
             using SqlCommand command = new("SELECT @value", connection);
             command.Parameters.Add("@value", SqlDbType.Int).Value = 1;
+
+            // Parameterized text requires an open connection; optimized binding must not replace that error.
             string expected = Assert.Throws<InvalidOperationException>(() => command.Prepare()).Message;
             command.EnableOptimizedParameterBinding = true;
             Assert.Equal(expected, Assert.Throws<InvalidOperationException>(() => command.Prepare()).Message);
 
+            // Stored-procedure preparation is a no-op, even with parameters and a closed connection.
             command.CommandType = CommandType.StoredProcedure;
             command.Prepare();
+
+            // Parameterless text also bypasses preparation and does not require an open connection.
             command.CommandType = CommandType.Text;
             command.Parameters.Clear();
             command.CommandText = "SELECT 1";

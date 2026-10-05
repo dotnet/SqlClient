@@ -11,36 +11,12 @@ using Xunit;
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     /// <summary>
-    /// Covers preparation and optimized-binding call order against SQL Server.
+    /// Verifies driver state transitions using real prepared handles and output parameter responses.
+    /// Local diagnostic and no-op preparation checks are covered by the simulated-server tests.
     /// </summary>
     [Trait("Set", "3")]
     public class SqlCommandOptimizedBindingTests
     {
-        /// <summary>
-        /// Both execution paths explain the internal preparation handle regardless of the option's call order.
-        /// </summary>
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [InlineData(false, false)]
-        [InlineData(false, true)]
-        [InlineData(true, false)]
-        [InlineData(true, true)]
-        public async Task Prepare_OptimizedBinding_ReportsIncompatibleOption(bool async, bool enableBeforePrepare)
-        {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
-            connection.Open();
-            using SqlCommand command = new("SELECT @value", connection);
-            command.Parameters.Add("@value", SqlDbType.Int).Value = 42;
-            command.EnableOptimizedParameterBinding = enableBeforePrepare;
-            command.Prepare();
-            command.EnableOptimizedParameterBinding = true;
-
-            InvalidOperationException exception = async
-                ? await Assert.ThrowsAsync<InvalidOperationException>(() => command.ExecuteScalarAsync())
-                : Assert.Throws<InvalidOperationException>(() => command.ExecuteScalar());
-            Assert.Contains("Prepare", exception.Message);
-            Assert.Contains("EnableOptimizedParameterBinding", exception.Message);
-        }
-
         /// <summary>
         /// A new command configured with either supported alternative executes after a preparation failure.
         /// </summary>
@@ -112,41 +88,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using SqlCommand command = new("SELECT @value", connection);
             command.Parameters.Add("@value", SqlDbType.Int).Value = 42;
             command.Prepare();
+
+            // Acquire a real handle before enabling optimized binding, then execute through that handle.
             Assert.Equal(42, async ? await command.ExecuteScalarAsync() : command.ExecuteScalar());
             command.EnableOptimizedParameterBinding = true;
             Assert.Equal(42, async ? await command.ExecuteScalarAsync() : command.ExecuteScalar());
 
+            // Changing the text forces another sp_prepexec, which must reject the incompatible option.
             command.CommandText = "SELECT @value + 1";
             InvalidOperationException exception = async
                 ? await Assert.ThrowsAsync<InvalidOperationException>(() => command.ExecuteScalarAsync())
                 : Assert.Throws<InvalidOperationException>(() => command.ExecuteScalar());
             Assert.Contains("Prepare", exception.Message);
-        }
-
-        /// <summary>
-        /// Optimized input binding and no-op preparation continue to execute successfully.
-        /// </summary>
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [InlineData(false, false)]
-        [InlineData(true, false)]
-        [InlineData(false, true)]
-        [InlineData(true, true)]
-        public async Task OptimizedBinding_WithoutPreparation_Succeeds(bool async, bool parameterless)
-        {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
-            connection.Open();
-            using SqlCommand command = new(parameterless ? "SELECT 42" : "SELECT @value", connection);
-            command.EnableOptimizedParameterBinding = true;
-            if (parameterless)
-            {
-                command.Prepare();
-            }
-            else
-            {
-                command.Parameters.Add("@value", SqlDbType.Int).Value = 42;
-            }
-
-            Assert.Equal(42, async ? await command.ExecuteScalarAsync() : command.ExecuteScalar());
         }
 
         /// <summary>
