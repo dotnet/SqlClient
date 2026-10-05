@@ -11,11 +11,8 @@ This repository contains the official Microsoft ADO.NET data provider for SQL Se
 src/
 ├── Microsoft.Data.SqlClient/
 │   ├── add-ons/                    # Azure Key Vault provider
-│   ├── netcore/                    # ⚠️ LEGACY - being phased out
-│   │   └── ref/                    # Reference assemblies for .NET Core/.NET
-│   ├── netfx/                      # ⚠️ LEGACY - being phased out
-│   │   └── ref/                    # Reference assemblies for .NET Framework
-│   ├── ref/                        # Shared reference assembly files
+│   ├── ref/                        # Unified public API declarations
+│   │   └── Microsoft.Data.SqlClient.csproj # Multi-target reference project
 │   ├── src/                        # ✅ PRIMARY - Unified source for all platforms
 │   │   ├── Microsoft.Data.SqlClient.csproj  # Multi-target project file
 │   │   ├── Interop/               # P/Invoke and native interop
@@ -34,19 +31,13 @@ src/
 ## Unified Project Model
 
 ### Architecture Goal
-The driver is transitioning away from separate `netfx/` and `netcore/` project files toward a **single unified project** at `src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj`. This project targets the modern .NET TFMs on every host and conditionally adds .NET Framework on Windows:
-
-```xml
-<TargetFrameworks>net8.0;net9.0</TargetFrameworks>
-<TargetFrameworks Condition="'$(NormalizedTargetOs)' == 'windows_nt'">$(TargetFrameworks);net462</TargetFrameworks>
-```
+The driver implementation is built from `src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj`; its public API declarations are built from `src/Microsoft.Data.SqlClient/ref/Microsoft.Data.SqlClient.csproj`. Check those projects and their imported build files for framework and platform selection.
 
 **All new code MUST go into `src/Microsoft.Data.SqlClient/src/`**. Do NOT add files to the legacy `netcore/src/` or `netfx/src/` directories.
 
 ### Legacy Folders
-The `netcore/` and `netfx/` directories are legacy artifacts from the old dual-project model:
-- `netcore/src/` and `netfx/src/` — **DEPRECATED**. These contain legacy project files that are being phased out. Do not add new code here.
-- `netcore/ref/` and `netfx/ref/` — **STILL ACTIVE**. Reference assemblies remain in these directories and define the public API surface for each target framework.
+The former `netcore/` and `netfx/` source and reference directories are no longer
+used. Do not recreate them; use the unified `src/` and `ref/` directories.
 
 ### OS Targeting with `TargetOs`
 The unified project uses a `TargetOs` build property to handle OS-specific compilation:
@@ -97,12 +88,12 @@ The unified project uses conditional `ItemGroup` elements for dependencies:
 - **Shared**: `Azure.Core`, `Azure.Identity`, `Microsoft.Bcl.Cryptography`, `Microsoft.Extensions.Caching.Memory`, `Microsoft.IdentityModel.*`, `System.Security.Cryptography.Pkcs`
 
 ### Reference Assemblies
-The `ref/` directories define the public API surface:
-- `netcore/ref/` — Public APIs for .NET Core/.NET (includes `Microsoft.Data.SqlClient.cs`, `Microsoft.Data.SqlClient.Manual.cs`)
-- `netfx/ref/` — Public APIs for .NET Framework (includes `Microsoft.Data.SqlClient.cs`)
-- `ref/` — Shared reference assembly files (e.g., `Microsoft.Data.SqlClient.Batch.cs`, `Microsoft.Data.SqlClient.Batch.NetCoreApp.cs`)
+`src/Microsoft.Data.SqlClient/ref/Microsoft.Data.SqlClient.csproj` builds the unified
+reference sources for `net462`, `net8.0`, `net9.0`, and `netstandard2.0`. Declarations
+are grouped by namespace, with conditional compilation for framework differences.
 
-**IMPORTANT**: Any public API changes MUST update the corresponding reference assembly in the appropriate `ref/` directory.
+**IMPORTANT**: Public API changes MUST update the corresponding files under
+`src/Microsoft.Data.SqlClient/ref/` for every affected target framework.
 
 ### Build Output
 Build artifacts are organized by reference mode, configuration, OS, and framework:

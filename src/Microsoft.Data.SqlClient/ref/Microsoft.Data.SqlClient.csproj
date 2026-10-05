@@ -64,7 +64,7 @@
 
   <!-- Verifies that dotnet local tools have been restored (pwsh is required for doc trimming). -->
   <Target Name="_CheckPwshToolRestored">
-    <Exec Command="dotnet tool run pwsh -- -Version"
+    <Exec Command="&quot;$(DotnetPath)dotnet&quot; tool run pwsh -- -Version"
           WorkingDirectory="$(RepoRoot)"
           ConsoleToMsBuild="true"
           IgnoreExitCode="true">
@@ -94,20 +94,24 @@
     <MakeDir Directories="$(IntermediateOutputPath)trimmed" />
 
     <PropertyGroup>
+      <_DocumentationFileFullPath>$([MSBuild]::NormalizePath('$(MSBuildProjectDirectory)', '$(DocumentationFile)'))</_DocumentationFileFullPath>
+      <_TrimmedDocumentationFileFullPath>$([MSBuild]::NormalizePath('$(MSBuildProjectDirectory)', '$(IntermediateOutputPath)trimmed/$(TargetName).xml'))</_TrimmedDocumentationFileFullPath>
       <PowerShellCommand>
-        dotnet tool run pwsh --
+        "$(DotnetPath)dotnet" tool run pwsh --
           -NonInteractive
           -NoProfile
           -ExecutionPolicy Unrestricted
-          -Command "$(TrimDocsScript) -inputFile '$(DocumentationFile)' -outputFile '$(IntermediateOutputPath)trimmed/$(TargetName).xml'"
+          -File "$(TrimDocsScript)"
+          -inputFile "$(_DocumentationFileFullPath)"
+          -outputFile "$(_TrimmedDocumentationFileFullPath)"
       </PowerShellCommand>
 
-      <!-- Convert more than one whitespace character into one space -->
-      <PowerShellCommand>$([System.Text.RegularExpressions.Regex]::Replace($(PowerShellCommand), "\s+", " "))</PowerShellCommand>
+      <!-- Collapse line breaks without changing spaces inside quoted arguments -->
+      <PowerShellCommand>$([System.Text.RegularExpressions.Regex]::Replace($(PowerShellCommand), "\s*[\r\n]+\s*", " "))</PowerShellCommand>
     </PropertyGroup>
 
     <Message Text=">>> Trimming documentation file from generated documentation file: $(PowerShellCommand)"/>
-    <Exec Command="$(PowerShellCommand)" ConsoleToMsBuild="true" />
+    <Exec Command="$(PowerShellCommand)" ConsoleToMsBuild="true" WorkingDirectory="$(RepoRoot)" />
   </Target>
 
   <!--
