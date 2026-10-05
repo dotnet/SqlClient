@@ -146,6 +146,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
         [InlineData(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity)]
         [InlineData(SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity)]
         [InlineData(SqlAuthenticationMethod.ActiveDirectoryInteractive)]
+        [InlineData(SqlAuthenticationMethod.ActiveDirectoryPassword)]
         public async Task AcquireTokenAsync_MalformedAuthority_ThrowsArgumentException(
             SqlAuthenticationMethod method)
         {
