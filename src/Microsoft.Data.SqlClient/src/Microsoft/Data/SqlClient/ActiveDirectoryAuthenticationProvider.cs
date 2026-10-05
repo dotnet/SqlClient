@@ -918,7 +918,7 @@ namespace Microsoft.Data.SqlClient
 
             /// <summary>
             /// The tenant, which may be a tenant id, a domain name, or one of the
-            /// `common` / `organizations` / `consumers` placeholders. Empty when the credential
+            /// <c>common</c> / <c>organizations</c> / <c>consumers</c> placeholders. Empty when the credential
             /// type doesn't take a tenant.
             /// </summary>
             public readonly string _tenant;
