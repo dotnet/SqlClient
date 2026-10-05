@@ -455,7 +455,7 @@ namespace Microsoft.Data.SqlClient
         }
 
 #if !NETFRAMEWORK
-        [SuppressMessage("ReflectionAnalysis", "IL2111",
+        [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2111",
                    Justification = "System.Type.TypeInitializer would not be used in dataType and providerSpecificDataType columns.")]
 #endif
         internal DataTable BuildSchemaTable()
