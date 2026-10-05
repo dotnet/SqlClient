@@ -121,7 +121,7 @@ This repository uses automated workflows to maintain project hygiene:
 
 - PRs are marked stale after 30 days of inactivity.
 - Stale PRs are automatically closed after 7 additional days.
-- PRs lin Draft are exempt from auto-closure.
+- PRs in Draft are exempt from auto-closure.
 
 To prevent closure, simply add comments, push commits, or respond to feedback.
 

@@ -319,6 +319,7 @@ extends:
         parameters:
           publishSymbols: ${{ parameters.publishSymbols }}
           buildSqlServer: ${{ parameters.buildSqlServer }}
+          debug: ${{ parameters.debug }}
 
           abstractionsArtifactsName: '${{ variables.abstractionsArtifactsName }}'
           akvProviderArtifactsName: '${{ variables.akvProviderArtifactsName }}'
