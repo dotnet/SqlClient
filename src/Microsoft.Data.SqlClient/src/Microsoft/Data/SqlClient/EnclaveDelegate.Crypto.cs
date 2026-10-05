@@ -92,6 +92,12 @@ namespace Microsoft.Data.SqlClient
                 switch (attestationProtocol)
                 {
                     case SqlConnectionAttestationProtocol.AAS:
+                        // Validating Azure Attestation tokens requires our Azure extension.
+                        if (AzureAttestationTokenValidatorBinding.Instance is null)
+                        {
+                            throw SQL.AzureAttestationExtensionNotFound();
+                        }
+
                         sqlColumnEncryptionEnclaveProvider = new AzureAttestationEnclaveProvider();
                         s_enclaveProviders[attestationProtocol] = sqlColumnEncryptionEnclaveProvider;
                         break;

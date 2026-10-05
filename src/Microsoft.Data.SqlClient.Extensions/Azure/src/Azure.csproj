@@ -95,6 +95,10 @@
     <!-- Explicitly depend on the same version of Microsoft.Identity.Client as SqlClient. -->
     <PackageReference Include="Microsoft.Identity.Client" />
     <PackageReference Include="Microsoft.Identity.Client.Broker" />
+    <!-- Used by AzureAttestationTokenValidator, on behalf of Microsoft.Data.SqlClient's Azure
+         Attestation enclave provider. -->
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
+    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
   </ItemGroup>
 
   <!-- CodeGen Targets ================================================= -->

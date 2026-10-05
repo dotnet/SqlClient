@@ -5191,6 +5191,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Attestation protocol &apos;AAS&apos; requires the Microsoft.Data.SqlClient.Extensions.Azure package. Add a reference to that package, or specify a different attestation protocol in the connection string..
+        /// </summary>
+        internal static string TCE_AzureAttestationExtensionNotFound {
+            get {
+                return ResourceManager.GetString("TCE_AzureAttestationExtensionNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to {0} should be identical on all commands ({1}, {2}, {3}, {4}) when doing batch updates..
         /// </summary>
         internal static string TCE_BatchedUpdateColumnEncryptionSettingMismatch {
