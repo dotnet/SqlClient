@@ -704,7 +704,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 connection.SetReturnedTime(_timeProvider.GetUtcNow().UtcDateTime);
             }
 
-            if (!IsLiveConnection(connection, probeLiveness))
+            // Match V1: check token expiry on general checkout, not return. An expired connection
+            // may remain idle, but will be discarded before it can be reused outside its transaction.
+            if (!IsLiveConnection(connection, probeLiveness, checkAccessTokenExpiry: false))
             {
                 RemoveConnection(connection);
                 return;
@@ -1264,9 +1266,21 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// Whether to poll the physical connection to confirm it is still alive. Pass false when
         /// running on a thread that must not block; the remaining checks are all cheap and local.
         /// </param>
+        /// <param name="checkAccessTokenExpiry">
+        /// Validate the token before general checkout, but not when returning a connection to the pool.
+        /// </param>
         /// <returns>Returns true if the connection is live and unexpired, otherwise returns false.</returns>
-        private bool IsLiveConnection(DbConnectionInternal connection, bool probeLiveness = true)
+        private bool IsLiveConnection(DbConnectionInternal connection, bool probeLiveness = true, bool checkAccessTokenExpiry = true)
         {
+            if (checkAccessTokenExpiry && connection.IsAccessTokenExpired)
+            {
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "ChannelDbConnectionPool.IsLiveConnection | INFO | {0}, Connection {1}, will not be reused because its access token has expired or is about to expire.",
+                    Id,
+                    connection.ObjectID);
+                return false;
+            }
+
             // Connection has been sitting idle longer than the configured idle timeout.
             // Checked before the (potentially expensive) liveness probe so an idle-expired
             // connection is discarded without an SNI round-trip.
@@ -1548,7 +1562,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         {
                             // Skip the liveness/idle/generation gate at the bottom of the loop:
                             // GetFromTransactedPool has already probed liveness, and a transacted
-                            // connection is exempt from idle-timeout, load-balance and
+                            // connection is exempt from token-expiry, idle-timeout, load-balance and
                             // clear-generation eviction because closing it would abort its
                             // (possibly distributed) transaction.
                             break;

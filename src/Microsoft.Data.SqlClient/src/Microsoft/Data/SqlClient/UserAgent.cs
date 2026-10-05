@@ -3,8 +3,10 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 
 #nullable enable
 
@@ -31,9 +33,15 @@ internal static class UserAgent
     ///     never larger than 256 characters.
     ///   </para>
     ///   <para>
-    ///     The format is pipe ('|') delimited into 7 parts:
+    ///     The format is pipe ('|') delimited into 9 parts:
     ///
-    ///     <code>1|MS-MDS|{Driver Version}|{Arch}|{OS Type}|{OS Info}|{Runtime Info}</code>
+    ///     <code>2|MS-MDS|{Driver Version}|{Arch}|{OS Type}|{OS Info}|{Runtime Info}|{App Id}|{Driver Properties}</code>
+    ///   </para>
+    ///   <para>
+    ///     This is the base value, whose <c>{App Id}</c> part is always
+    ///     <c>0</c>.  The payload actually sent at login carries the
+    ///     identifier set on the connection; see
+    ///     <see cref="GetUcs2Bytes">GetUcs2Bytes</see>.
     ///   </para>
     ///   <para>
     ///     The <c>{Driver Version}</c> part is the version of the driver,
@@ -76,6 +84,17 @@ internal static class UserAgent
     ///     Maximum length is 44 characters.
     ///   </para>
     ///   <para>
+    ///     The <c>{App Id}</c> part is the identifier of the application
+    ///     middleware using the driver, serialized as uppercase hexadecimal.
+    ///     It is always present; <c>0</c> means no application identity was
+    ///     reported. Maximum length is 4 characters.
+    ///   </para>
+    ///   <para>
+    ///     The <c>{Driver Properties}</c> part is a driver-owned feature flag
+    ///     value, serialized as uppercase hexadecimal. It is always present.
+    ///     Maximum length is 16 characters.
+    ///   </para>
+    ///   <para>
     ///     Any characters from the sourced values that are not one of the
     ///     following are replaced with underscore ('_'):
     ///     <list type="bullet">
@@ -109,6 +128,62 @@ internal static class UserAgent
     #region Helpers
 
     /// <summary>
+    ///   <para>
+    ///     Returns the UCS-2 encoded payload reporting the given application
+    ///     identifier.
+    ///   </para>
+    ///   <para>
+    ///     When <paramref name="app"/> is
+    ///     <see cref="RegisteredApplication.Unknown"/>, <see cref="Ucs2Bytes"/> is
+    ///     returned, whose App Id part is <c>0</c>.
+    ///   </para>
+    /// </summary>
+    /// <param name="app">
+    ///   The application identifier set on the connection being logged in.
+    /// </param>
+    /// <returns>The UCS-2 encoded payload bytes.</returns>
+    internal static ReadOnlyMemory<byte> GetUcs2Bytes(RegisteredApplication app)
+    {
+        if (app == RegisteredApplication.Unknown)
+        {
+            return Ucs2Bytes;
+        }
+
+        // Most processes report a single application identifier, so a single
+        // cached entry serves every login.  The pair is cached behind one
+        // reference so readers never observe a torn ReadOnlyMemory<byte>.
+        AppPayload? cached = Volatile.Read(ref s_appPayload);
+        if (cached is not null && cached.App == app)
+        {
+            return cached.Ucs2Bytes;
+        }
+
+        ReadOnlyMemory<byte> bytes = Encoding.Unicode.GetBytes(BuildPayload(app));
+        Volatile.Write(ref s_appPayload, new AppPayload(app, bytes));
+
+        return bytes;
+    }
+
+    /// <summary>
+    ///   Build the payload string from the current runtime environment,
+    ///   reporting the given application identifier.
+    /// </summary>
+    /// <param name="app">The application identifier to report.</param>
+    /// <returns>The payload string value.</returns>
+    private static string BuildPayload(RegisteredApplication app) =>
+        Build(
+            MaxLenOverall,
+            PayloadVersion,
+            DriverName,
+            ThisAssembly.PackageVersion,
+            RuntimeInformation.ProcessArchitecture,
+            s_osType,
+            RuntimeInformation.OSDescription,
+            RuntimeInformation.FrameworkDescription,
+            (ushort)app,
+            (ulong)SqlClientDriverPropertiesResolver.Current);
+
+    /// <summary>
     ///   Static construction builds the Client Interface Name.  All known
     ///   exceptions are consumed.
     /// </summary>
@@ -139,16 +214,11 @@ internal static class UserAgent
         }
 #endif
 
+        // Remember it for agent payloads built later.
+        s_osType = osType;
+
         // Build it!
-        Value = Build(
-            MaxLenOverall,
-            PayloadVersion,
-            DriverName,
-            ThisAssembly.PackageVersion,
-            RuntimeInformation.ProcessArchitecture,
-            osType,
-            RuntimeInformation.OSDescription,
-            RuntimeInformation.FrameworkDescription);
+        Value = BuildPayload(RegisteredApplication.Unknown);
 
         // Convert it to UCS-2 bytes.
         //
@@ -189,6 +259,13 @@ internal static class UserAgent
     /// <param name="runtimeInfo">
     ///   The value of the Runtime Info part.
     /// </param>
+    /// <param name="appId">
+    ///   The value of the App Id part, serialized as uppercase hexadecimal.
+    /// </param>
+    /// <param name="driverProperties">
+    ///   The value of the Driver Properties part, serialized as uppercase
+    ///   hexadecimal.
+    /// </param>
     /// <returns>
     ///   The payload string value, never null, never empty, and never longer
     ///   than <paramref name="maxLen"/>.
@@ -201,7 +278,9 @@ internal static class UserAgent
         Architecture arch,
         string osType,
         string osInfo,
-        string runtimeInfo)
+        string runtimeInfo,
+        ushort appId,
+        ulong driverProperties)
     {
         string result;
 
@@ -244,6 +323,14 @@ internal static class UserAgent
 
             // Add the Runtime Info, truncating to its max length.
             name.Append(Truncate(Clean(runtimeInfo), MaxLenRuntimeInfo));
+            name.Append('|');
+
+            // Add the App Id.
+            name.Append(FormatHex(appId));
+            name.Append('|');
+
+            // Add the Driver Properties.
+            name.Append(FormatHex(driverProperties));
 
             // Remember the name we've built up.
             result = name.ToString();
@@ -254,7 +341,8 @@ internal static class UserAgent
             // value.
             result =
                 $"{payloadVersion}|{driverName}|{Unknown}|{Unknown}|" +
-                $"{Unknown}|{Unknown}|{Unknown}";
+                $"{Unknown}|{Unknown}|{Unknown}|{FormatHex(appId)}|" +
+                $"{FormatHex(driverProperties)}";
         }
 
         // Truncate to our max length if necessary.
@@ -372,6 +460,14 @@ internal static class UserAgent
     }
 
     /// <summary>
+    ///   Formats the given value as uppercase hexadecimal.
+    /// </summary>
+    /// <param name="value">The value to format.</param>
+    /// <returns>The formatted value.</returns>
+    internal static string FormatHex(ulong value) =>
+        value.ToString("X", CultureInfo.InvariantCulture);
+
+    /// <summary>
     ///   Truncate the given value to the given max length, and return the
     ///   result.
     /// </summary>
@@ -398,7 +494,9 @@ internal static class UserAgent
     #region Private Fields
 
     // Our payload format version.
-    private const string PayloadVersion = "1";
+    //
+    // Version 2 adds the App Id and Driver Properties parts.
+    private const string PayloadVersion = "2";
 
     // Our well-known .NET driver name.
     private const string DriverName = "MS-MDS";
@@ -427,6 +525,30 @@ internal static class UserAgent
     // A fallback value for parts of the client interface name that are
     // unknown, invalid, or when errors occur.
     private const string Unknown = "Unknown";
+
+    // The OS Type resolved during static construction, retained so payloads
+    // built later use the same value as Value.
+    private static readonly string s_osType;
+
+    // The payload for the most recently requested application identifier,
+    // built on first use.
+    private static AppPayload? s_appPayload;
+
+    /// <summary>
+    ///   Pairs a payload with the application identifier it was built for.
+    /// </summary>
+    private sealed class AppPayload
+    {
+        internal AppPayload(RegisteredApplication app, ReadOnlyMemory<byte> ucs2Bytes)
+        {
+            App = app;
+            Ucs2Bytes = ucs2Bytes;
+        }
+
+        internal RegisteredApplication App { get; }
+
+        internal ReadOnlyMemory<byte> Ucs2Bytes { get; }
+    }
 
     #endregion Private Fields
 }

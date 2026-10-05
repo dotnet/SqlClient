@@ -12,7 +12,7 @@ This package provides **Azure integration extensions** for [Microsoft.Data.SqlCl
 - **Entra ID Authentication**: Simplified Entra ID token-based authentication
 - **Managed Identity Support**: Connect to Azure SQL using Azure Managed Identities
 - **Token Caching**: Automatic caching of authentication tokens for improved performance
-- **Azure.Identity Integration**: Leverage the full power of Azure.Identity credential providers
+- **Azure Identity Integration**: Use Azure.Identity credential types supplied by Azure.Core
 
 ## Supportability
 
@@ -33,6 +33,21 @@ Or via the Package Manager Console:
 ```powershell
 Install-Package Microsoft.Data.SqlClient.Extensions.Azure
 ```
+
+### Azure.Core migration
+
+This package uses Azure.Core 1.62.0 or later instead of depending on Azure.Identity.
+Credential types remain in the `Azure.Identity` namespace, so existing `using` directives
+do not need to change.
+
+If your application references Azure.Identity older than 1.21.0, remove that reference
+or upgrade it to 1.21.0 or later to avoid duplicate-type errors (CS0433). If another
+dependency brings in an older Azure.Identity transitively, add a direct reference to
+Azure.Identity 1.21.0 or later, which forwards its types to Azure.Core. Applications
+using Azure.Identity.Broker must also upgrade it to 1.6.0 or later.
+
+See the [Azure SDK migration guide](https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/identity/Azure.Identity/MigrationGuide.md)
+for details.
 
 ## Getting Started
 
@@ -143,5 +158,5 @@ This package is licensed under the [MIT License](https://licenses.nuget.org/MIT)
 - [Microsoft.Data.SqlClient](https://www.nuget.org/packages/Microsoft.Data.SqlClient) - The main SqlClient driver
 - [Microsoft.Data.SqlClient.Extensions.Abstractions](https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Abstractions) - Core abstractions
 - [Microsoft.Data.SqlClient.Internal.Logging](https://www.nuget.org/packages/Microsoft.Data.SqlClient.Internal.Logging) - Logging internals
-- [Azure.Identity](https://www.nuget.org/packages/Azure.Identity) - Entra ID authentication library
+- [Azure.Core](https://www.nuget.org/packages/Azure.Core) - Azure SDK primitives and Entra ID credentials
 - 

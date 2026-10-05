@@ -592,6 +592,40 @@ public class SqlClientLogger
     public void LogInfo(string type, string method, string message) { }
 }
 
+/// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/RegisteredApplication.xml' path='docs/members[@name="RegisteredApplication"]/RegisteredApplication/*' />
+[System.CLSCompliantAttribute(false)]
+public enum RegisteredApplication : ushort
+{
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/RegisteredApplication.xml' path='docs/members[@name="RegisteredApplication"]/Unknown/*' />
+    Unknown = 0,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/RegisteredApplication.xml' path='docs/members[@name="RegisteredApplication"]/EntityFrameworkCore/*' />
+    EntityFrameworkCore = 1,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/RegisteredApplication.xml' path='docs/members[@name="RegisteredApplication"]/SemanticKernel/*' />
+    SemanticKernel = 2,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/RegisteredApplication.xml' path='docs/members[@name="RegisteredApplication"]/ManagementStudio/*' />
+    ManagementStudio = 3,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/RegisteredApplication.xml' path='docs/members[@name="RegisteredApplication"]/SqlManagementObjects/*' />
+    SqlManagementObjects = 4,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/RegisteredApplication.xml' path='docs/members[@name="RegisteredApplication"]/DataTierApplicationFramework/*' />
+    DataTierApplicationFramework = 5,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/RegisteredApplication.xml' path='docs/members[@name="RegisteredApplication"]/SqlToolsService/*' />
+    SqlToolsService = 6,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/RegisteredApplication.xml' path='docs/members[@name="RegisteredApplication"]/AspNetCoreDistributedSqlServerCache/*' />
+    AspNetCoreDistributedSqlServerCache = 7,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/RegisteredApplication.xml' path='docs/members[@name="RegisteredApplication"]/EntityFramework/*' />
+    EntityFramework = 8,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/RegisteredApplication.xml' path='docs/members[@name="RegisteredApplication"]/AzureFunctionsSqlExtension/*' />
+    AzureFunctionsSqlExtension = 9,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/RegisteredApplication.xml' path='docs/members[@name="RegisteredApplication"]/OrleansAdoNet/*' />
+    OrleansAdoNet = 10,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/RegisteredApplication.xml' path='docs/members[@name="RegisteredApplication"]/DurableTaskSqlServer/*' />
+    DurableTaskSqlServer = 11,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/RegisteredApplication.xml' path='docs/members[@name="RegisteredApplication"]/SqlPackage/*' />
+    SqlPackage = 12,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/RegisteredApplication.xml' path='docs/members[@name="RegisteredApplication"]/DataApiBuilder/*' />
+    DataApiBuilder = 13
+}
+
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/SqlClientMetaDataCollectionNames/*'/>
 public static class SqlClientMetaDataCollectionNames
 {
@@ -1010,6 +1044,9 @@ public sealed class SqlConnection : System.Data.Common.DbConnection, System.IClo
     public SqlConnection(string connectionString) { }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctorConnectionStringCredential/*'/>
     public SqlConnection(string connectionString, Microsoft.Data.SqlClient.SqlCredential credential) { }
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RegisteredApplication/*' />
+    [System.CLSCompliantAttribute(false)]
+    public Microsoft.Data.SqlClient.RegisteredApplication RegisteredApplication { get { throw null; } set { } }
 
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/AccessToken/*'/>
     [System.ComponentModel.BrowsableAttribute(false)]
