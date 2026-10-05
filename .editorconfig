@@ -198,3 +198,7 @@ dotnet_diagnostic.CA1416.severity = silent
 dotnet_code_quality.CA2100.excluded_type_names_with_derived_types = Microsoft.Data.SqlClient.ManualTesting.Tests.*
 dotnet_diagnostic.xUnit1031.severity=none
 dotnet_diagnostic.xUnit1030.severity=none
+
+# Pool pruning leases must be disposed or explicitly handed off.
+[src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/ConnectionPool/**/*.cs]
+dotnet_diagnostic.CA2000.severity = warning
