@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <CppCompilerAndLinker>gcc</CppCompilerAndLinker>
+    <StripSymbols>false</StripSymbols>
+    <TrimMode>full</TrimMode>
+    <PublishAot Condition="'$(Mode)' == 'aot'">true</PublishAot>
+    <PublishTrimmed Condition="'$(Mode)' == 'trim'">true</PublishTrimmed>
+    <SelfContained>true</SelfContained>
+    <TrimmerSingleWarn>false</TrimmerSingleWarn>
+  </PropertyGroup>
+  <ItemGroup><ProjectReference Include="../PolyLib/PolyLib.csproj" /><ProjectReference Include="../MultiLib/MultiLib.csproj" /></ItemGroup>
+  <ItemGroup Condition="'$(SwitchOff)' == 'true'">
+    <RuntimeHostConfigurationOption Include="PolyLib.A;PolyLib.B;PolyLib.C;PolyLib.E;MultiLib.A;MultiLib.B;MultiLib.C" Value="false" Trim="true" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,132 @@
+### net9.0 trim TrimmerSingleWarn=true 
+ilc/illink: 
+warnings:  4 warning IL2104,
+assembly-level: IL2104 'Microsoft.Data.SqlClient';IL2104 'Microsoft.Data.SqlClient.Extensions.Abstractions';IL2104 'Microsoft.Data.SqlClient.Internal.Logging';IL2104 'System.Configuration.ConfigurationManager';
+auth-specific:
+Azure dll in publish dir: 0
+  dir=out/net9.0-trim-true-
+  run> GetProvider(ActiveDirectoryDefault) = null
+  run> SetProvider(ActiveDirectoryInteractive, MyProvider) = True; GetProvider -> MyProvider
+  trc>   trace: static SqlAuthenticationProviderManager: Unable to load custom SqlAuthenticationProviders or SqlClientAuthenticationProviders. ConfigurationManager failed to load due to configuration errors:
+  trc>   trace: SqlAuthenticationProviderManager: Azure extension assembly=Microsoft.Data.SqlClient.Extensions.Azure not found or not usable; no default provider installed; FileNotFoundException: Could not l
+### net9.0 trim TrimmerSingleWarn=false 
+ilc/illink: 
+warnings:  16 warning IL2026, 6 warning IL2057, 4 warning IL2067, 6 warning IL2070, 3 warning IL2072, 2 warning IL2075,
+assembly-level: 
+auth-specific:
+      1   IL2026 Microsoft.Data.SqlClient.SqlAuthenticationProvider.Internal..cctor() Reflection.Assembly.GetType(String)
+      2   IL2026 Microsoft.Data.SqlClient.SqlAuthenticationProviderManager..cctor() Reflection.Assembly.GetType(String)
+      2   IL2057 Microsoft.Data.SqlClient.SqlAuthenticationProviderManager.SqlAuthenticationProviderManager(SqlAuthenticationProviderConfigurationSection) Type.GetType(String, Boolean)
+      3   IL2067 Microsoft.Data.SqlClient.SqlAuthenticationProviderManager.CreateAzureAuthenticationProvider(Type, Type, String, Nullable<Boolean>) 
+      5   IL2070 Microsoft.Data.SqlClient.SqlAuthenticationProviderManager.CreateAzureAuthenticationProvider(Type, Type, String, Nullable<Boolean>) 
+      2   IL2075 Microsoft.Data.SqlClient.SqlAuthenticationProvider.Internal..cctor() 
+Azure dll in publish dir: 0
+  dir=out/net9.0-trim-false-
+  run> GetProvider(ActiveDirectoryDefault) = null
+  run> SetProvider(ActiveDirectoryInteractive, MyProvider) = True; GetProvider -> MyProvider
+  trc>   trace: static SqlAuthenticationProviderManager: Unable to load custom SqlAuthenticationProviders or SqlClientAuthenticationProviders. ConfigurationManager failed to load due to configuration errors:
+  trc>   trace: SqlAuthenticationProviderManager: Azure extension assembly=Microsoft.Data.SqlClient.Extensions.Azure not found or not usable; no default provider installed; FileNotFoundException: Could not l
+### net9.0 aot TrimmerSingleWarn=true 
+ilc/illink: 
+warnings:  4 warning IL2104, 1 warning IL3053,
+assembly-level: IL2104 'Microsoft.Data.SqlClient';IL2104 'Microsoft.Data.SqlClient.Extensions.Abstractions';IL2104 'Microsoft.Data.SqlClient.Internal.Logging';IL2104 'System.Configuration.ConfigurationManager';IL3053 'Microsoft.Data.SqlClient';
+auth-specific:
+Azure dll in publish dir: 0
+  dir=out/net9.0-aot-true-
+  run> GetProvider(ActiveDirectoryDefault) = null
+  run> SetProvider(ActiveDirectoryInteractive, MyProvider) = False; GetProvider -> null
+  trc>   trace: SqlAuthenticationProvider.Internal | MDS GetProvider() method not found; GetProvider() will not function
+  trc>   trace: SqlAuthenticationProvider.Internal | MDS SetProvider() method not found; SetProvider() will not function
+### net9.0 aot TrimmerSingleWarn=false 
+ilc/illink: 
+warnings:  17 warning IL2026, 7 warning IL2057, 4 warning IL2067, 7 warning IL2070, 6 warning IL2072, 4 warning IL2075, 1 warning IL3050,
+assembly-level: 
+auth-specific:
+      1   IL2026 Microsoft.Data.SqlClient.SqlAuthenticationProvider.Internal..cctor() Reflection.Assembly.GetType(String)
+      2   IL2026 Microsoft.Data.SqlClient.SqlAuthenticationProviderManager..cctor() Reflection.Assembly.GetType(String)
+      2   IL2057 Microsoft.Data.SqlClient.SqlAuthenticationProviderManager.SqlAuthenticationProviderManager(SqlAuthenticationProviderConfigurationSection) Type.GetType(String,Boolean)
+      3   IL2067 Microsoft.Data.SqlClient.SqlAuthenticationProviderManager.CreateAzureAuthenticationProvider(Type,Type,String,Nullable`1<Boolean>) 
+      5   IL2070 Microsoft.Data.SqlClient.SqlAuthenticationProviderManager.CreateAzureAuthenticationProvider(Type,Type,String,Nullable`1<Boolean>) 
+      2   IL2075 Microsoft.Data.SqlClient.SqlAuthenticationProvider.Internal..cctor() 
+Azure dll in publish dir: 0
+  dir=out/net9.0-aot-false-
+  run> GetProvider(ActiveDirectoryDefault) = null
+  run> SetProvider(ActiveDirectoryInteractive, MyProvider) = False; GetProvider -> null
+  trc>   trace: SqlAuthenticationProvider.Internal | MDS GetProvider() method not found; GetProvider() will not function
+  trc>   trace: SqlAuthenticationProvider.Internal | MDS SetProvider() method not found; SetProvider() will not function
+### net9.0 trim TrimmerSingleWarn=true -p:RootAzure=true
+ilc/illink: 
+warnings:  4 warning IL2104,
+assembly-level: IL2104 'Microsoft.Data.SqlClient';IL2104 'Microsoft.Data.SqlClient.Extensions.Abstractions';IL2104 'Microsoft.Data.SqlClient.Internal.Logging';IL2104 'System.Configuration.ConfigurationManager';
+auth-specific:
+Azure dll in publish dir: 1
+  dir=out/net9.0-trim-true--p_RootAzure_true
+  run> GetProvider(ActiveDirectoryDefault) = Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider
+  run> SetProvider(ActiveDirectoryInteractive, MyProvider) = True; GetProvider -> MyProvider
+  trc>   trace: static SqlAuthenticationProviderManager: Unable to load custom SqlAuthenticationProviders or SqlClientAuthenticationProviders. ConfigurationManager failed to load due to configuration errors:
+### net8.0 trim TrimmerSingleWarn=true 
+ilc/illink: 
+warnings:  5 warning IL2104,
+assembly-level: IL2104 'Microsoft.Data.SqlClient';IL2104 'Microsoft.Data.SqlClient.Extensions.Abstractions';IL2104 'Microsoft.Data.SqlClient.Internal.Logging';IL2104 'System.Configuration.ConfigurationManager';IL2104 'System.Text.Json';
+auth-specific:
+Azure dll in publish dir: 0
+  dir=out/net8.0-trim-true-
+  run> GetProvider(ActiveDirectoryDefault) = null
+  run> SetProvider(ActiveDirectoryInteractive, MyProvider) = True; GetProvider -> MyProvider
+  trc>   trace: static SqlAuthenticationProviderManager: Unable to load custom SqlAuthenticationProviders or SqlClientAuthenticationProviders. ConfigurationManager failed to load due to configuration errors:
+  trc>   trace: SqlAuthenticationProviderManager: Azure extension assembly=Microsoft.Data.SqlClient.Extensions.Azure not found or not usable; no default provider installed; FileNotFoundException: Could not l
+### net8.0 trim TrimmerSingleWarn=false 
+ilc/illink: 
+warnings:  16 warning IL2026, 2 warning IL2046, 6 warning IL2057, 4 warning IL2067, 8 warning IL2070, 3 warning IL2072, 2 warning IL2075, 1 warning IL2090,
+assembly-level: 
+auth-specific:
+      1   IL2026 Microsoft.Data.SqlClient.SqlAuthenticationProvider.Internal..cctor() Reflection.Assembly.GetType(String)
+      2   IL2026 Microsoft.Data.SqlClient.SqlAuthenticationProviderManager..cctor() Reflection.Assembly.GetType(String)
+      2   IL2057 Microsoft.Data.SqlClient.SqlAuthenticationProviderManager.SqlAuthenticationProviderManager(SqlAuthenticationProviderConfigurationSection) Type.GetType(String, Boolean)
+      3   IL2067 Microsoft.Data.SqlClient.SqlAuthenticationProviderManager.CreateAzureAuthenticationProvider(Type, Type, String, Nullable<Boolean>) 
+      5   IL2070 Microsoft.Data.SqlClient.SqlAuthenticationProviderManager.CreateAzureAuthenticationProvider(Type, Type, String, Nullable<Boolean>) 
+      2   IL2075 Microsoft.Data.SqlClient.SqlAuthenticationProvider.Internal..cctor() 
+Azure dll in publish dir: 0
+  dir=out/net8.0-trim-false-
+  run> GetProvider(ActiveDirectoryDefault) = null
+  run> SetProvider(ActiveDirectoryInteractive, MyProvider) = True; GetProvider -> MyProvider
+  trc>   trace: static SqlAuthenticationProviderManager: Unable to load custom SqlAuthenticationProviders or SqlClientAuthenticationProviders. ConfigurationManager failed to load due to configuration errors:
+  trc>   trace: SqlAuthenticationProviderManager: Azure extension assembly=Microsoft.Data.SqlClient.Extensions.Azure not found or not usable; no default provider installed; FileNotFoundException: Could not l
+### net8.0 aot TrimmerSingleWarn=true 
+ilc/illink: 
+warnings:  5 warning IL2104, 1 warning IL3053,
+assembly-level: IL2104 'Microsoft.Data.SqlClient';IL2104 'Microsoft.Data.SqlClient.Extensions.Abstractions';IL2104 'Microsoft.Data.SqlClient.Internal.Logging';IL2104 'System.Configuration.ConfigurationManager';IL2104 'System.Text.Json';IL3053 'Microsoft.Data.SqlClient';
+auth-specific:
+Azure dll in publish dir: 0
+  dir=out/net8.0-aot-true-
+  run> GetProvider(ActiveDirectoryDefault) = null
+  run> SetProvider(ActiveDirectoryInteractive, MyProvider) = False; GetProvider -> null
+  trc>   trace: SqlAuthenticationProvider.Internal | MDS GetProvider() method not found; GetProvider() will not function
+  trc>   trace: SqlAuthenticationProvider.Internal | MDS SetProvider() method not found; SetProvider() will not function
+### net8.0 aot TrimmerSingleWarn=false 
+ilc/illink: 
+warnings:  17 warning IL2026, 7 warning IL2057, 4 warning IL2067, 9 warning IL2070, 6 warning IL2072, 4 warning IL2075, 1 warning IL3050,
+assembly-level: 
+auth-specific:
+      1   IL2026 Microsoft.Data.SqlClient.SqlAuthenticationProvider.Internal..cctor() Reflection.Assembly.GetType(String)
+      2   IL2026 Microsoft.Data.SqlClient.SqlAuthenticationProviderManager..cctor() Reflection.Assembly.GetType(String)
+      2   IL2057 Microsoft.Data.SqlClient.SqlAuthenticationProviderManager.SqlAuthenticationProviderManager(SqlAuthenticationProviderConfigurationSection) Type.GetType(String,Boolean)
+      3   IL2067 Microsoft.Data.SqlClient.SqlAuthenticationProviderManager.CreateAzureAuthenticationProvider(Type,Type,String,Nullable`1<Boolean>) 
+      5   IL2070 Microsoft.Data.SqlClient.SqlAuthenticationProviderManager.CreateAzureAuthenticationProvider(Type,Type,String,Nullable`1<Boolean>) 
+      2   IL2075 Microsoft.Data.SqlClient.SqlAuthenticationProvider.Internal..cctor() 
+Azure dll in publish dir: 0
+  dir=out/net8.0-aot-false-
+  run> GetProvider(ActiveDirectoryDefault) = null
+  run> SetProvider(ActiveDirectoryInteractive, MyProvider) = False; GetProvider -> null
+  trc>   trace: SqlAuthenticationProvider.Internal | MDS GetProvider() method not found; GetProvider() will not function
+  trc>   trace: SqlAuthenticationProvider.Internal | MDS SetProvider() method not found; SetProvider() will not function
+### net8.0 trim TrimmerSingleWarn=true -p:RootAzure=true
+ilc/illink: 
+warnings:  5 warning IL2104,
+assembly-level: IL2104 'Microsoft.Data.SqlClient';IL2104 'Microsoft.Data.SqlClient.Extensions.Abstractions';IL2104 'Microsoft.Data.SqlClient.Internal.Logging';IL2104 'System.Configuration.ConfigurationManager';IL2104 'System.Text.Json';
+auth-specific:
+Azure dll in publish dir: 1
+  dir=out/net8.0-trim-true--p_RootAzure_true
+  run> GetProvider(ActiveDirectoryDefault) = Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider
+  run> SetProvider(ActiveDirectoryInteractive, MyProvider) = True; GetProvider -> MyProvider
+  trc>   trace: static SqlAuthenticationProviderManager: Unable to load custom SqlAuthenticationProviders or SqlClientAuthenticationProviders. ConfigurationManager failed to load due to configuration errors:

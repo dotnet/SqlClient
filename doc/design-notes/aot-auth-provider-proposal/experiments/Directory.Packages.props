@@ -1,0 +1,10 @@
+<Project>
+  <!--
+    The experiment harness pins exact package versions in each project and is not part of the
+    repository build. This file stops the repository's central package management from applying
+    when an IDE loads these projects. The run scripts build copies outside the repository.
+  -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+</Project>

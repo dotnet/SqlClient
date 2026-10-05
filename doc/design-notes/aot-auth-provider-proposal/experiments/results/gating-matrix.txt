@@ -1,0 +1,48 @@
+net10 trim off=0 | warnings:       7 IL2026       1 IL3050       4 IL4000 
+   run: Poly A=POLY_MARKER_A B=B-off C=POLY_MARKER_C E=E-off Multi A=MULTI_MARKER_A B=B-off C=MULTI_MARKER_C D=MULTI_MARKER_D 
+   poly: A=PRESENT B=TRIMMED C=PRESENT E=TRIMMED 
+   multi: A=PRESENT B=TRIMMED C=PRESENT D=PRESENT 
+net10 trim off=1 | warnings:       3 IL2026       1 IL3050       4 IL4000 
+   run: Poly A=A-off B=B-off C=C-off E=E-off Multi A=A-off B=B-off C=C-off D=MULTI_MARKER_D 
+   poly: A=TRIMMED B=TRIMMED C=TRIMMED E=TRIMMED 
+   multi: A=TRIMMED B=TRIMMED C=TRIMMED D=PRESENT 
+net10 aot off=0 | warnings:       6 IL2026       5 IL3050       4 IL4000 
+   run: Poly A=POLY_MARKER_A B=B-off C=POLY_MARKER_C E=E-off Multi A=MULTI_MARKER_A B=B-off C=MULTI_MARKER_C D=D-off 
+   poly: A=PRESENT B=TRIMMED C=PRESENT E=TRIMMED 
+   multi: A=PRESENT B=TRIMMED C=PRESENT D=TRIMMED 
+net10 aot off=1 | warnings:       2 IL2026       1 IL3050       4 IL4000 
+   run: Poly A=A-off B=B-off C=C-off E=E-off Multi A=A-off B=B-off C=C-off D=D-off 
+   poly: A=TRIMMED B=TRIMMED C=TRIMMED E=TRIMMED 
+   multi: A=TRIMMED B=TRIMMED C=TRIMMED D=TRIMMED 
+net9 trim off=0 | warnings:       4 IL2026 
+   run: Poly A=POLY_MARKER_A B=B-off C=POLY_MARKER_C E=E-off Multi A=MULTI_MARKER_A B=B-off C=MULTI_MARKER_C D=D-n/a(netstandard2.0 asset) 
+   poly: A=PRESENT B=TRIMMED C=PRESENT E=TRIMMED 
+   multi: A=PRESENT B=TRIMMED C=PRESENT D=TRIMMED 
+net9 trim off=1 | warnings: none
+   run: Poly A=A-off B=B-off C=C-off E=E-off Multi A=A-off B=B-off C=C-off D=D-n/a(netstandard2.0 asset) 
+   poly: A=TRIMMED B=TRIMMED C=TRIMMED E=TRIMMED 
+   multi: A=TRIMMED B=TRIMMED C=TRIMMED D=TRIMMED 
+net9 aot off=0 | warnings:       4 IL2026       4 IL3050 
+   run: Poly A=POLY_MARKER_A B=B-off C=POLY_MARKER_C E=E-off Multi A=MULTI_MARKER_A B=B-off C=MULTI_MARKER_C D=D-n/a(netstandard2.0 asset) 
+   poly: A=PRESENT B=TRIMMED C=PRESENT E=TRIMMED 
+   multi: A=PRESENT B=TRIMMED C=PRESENT D=TRIMMED 
+net9 aot off=1 | warnings: none
+   run: Poly A=A-off B=B-off C=C-off E=E-off Multi A=A-off B=B-off C=C-off D=D-n/a(netstandard2.0 asset) 
+   poly: A=TRIMMED B=TRIMMED C=TRIMMED E=TRIMMED 
+   multi: A=TRIMMED B=TRIMMED C=TRIMMED D=TRIMMED 
+net8 trim off=0 | warnings:       7 IL2026 
+   run: Poly A=POLY_MARKER_A B=POLY_MARKER_B C=POLY_MARKER_C E=POLY_MARKER_E Multi A=MULTI_MARKER_A B=MULTI_MARKER_B C=MULTI_MARKER_C D=D-n/a(netstandard2.0 asset) 
+   poly: A=PRESENT B=PRESENT C=PRESENT E=PRESENT 
+   multi: A=PRESENT B=PRESENT C=PRESENT D=TRIMMED 
+net8 trim off=1 | warnings:       3 IL2026 
+   run: Poly A=A-off B=B-off C=C-off E=E-off Multi A=A-off B=B-off C=C-off D=D-n/a(netstandard2.0 asset) 
+   poly: A=TRIMMED B=TRIMMED C=TRIMMED E=TRIMMED 
+   multi: A=PRESENT B=PRESENT C=PRESENT D=TRIMMED 
+net8 aot off=0 | warnings:       6 IL2026       6 IL3050 
+   run: Poly A=POLY_MARKER_A B=POLY_MARKER_B C=POLY_MARKER_C E=E-off Multi A=MULTI_MARKER_A B=MULTI_MARKER_B C=MULTI_MARKER_C D=D-n/a(netstandard2.0 asset) 
+   poly: A=PRESENT B=PRESENT C=PRESENT E=TRIMMED 
+   multi: A=PRESENT B=PRESENT C=PRESENT D=TRIMMED 
+net8 aot off=1 | warnings:       4 IL2026       4 IL3050 
+   run: Poly A=A-off B=B-off C=C-off E=E-off Multi A=A-off B=B-off C=C-off D=D-n/a(netstandard2.0 asset) 
+   poly: A=TRIMMED B=TRIMMED C=TRIMMED E=TRIMMED 
+   multi: A=PRESENT B=PRESENT C=PRESENT D=TRIMMED 

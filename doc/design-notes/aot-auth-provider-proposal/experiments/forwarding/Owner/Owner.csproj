@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Reader/Reader.csproj" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="9.0.0" />
+  </ItemGroup>
+  <!-- Fwd.cs forwards an internal type and is expected to fail with CS0122; see run.sh. -->
+  <ItemGroup Condition="'$(ForwardCheck)' != 'true'">
+    <Compile Remove="Fwd.cs" />
+  </ItemGroup>
+</Project>

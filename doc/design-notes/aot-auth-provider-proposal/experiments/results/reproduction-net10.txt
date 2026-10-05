@@ -1,0 +1,83 @@
+### net10.0 trim TrimmerSingleWarn=true 
+ilc/illink: 
+warnings:  4 warning IL2104,
+assembly-level: IL2104 'Microsoft.Data.SqlClient';IL2104 'Microsoft.Data.SqlClient.Extensions.Abstractions';IL2104 'Microsoft.Data.SqlClient.Internal.Logging';IL2104 'System.Configuration.ConfigurationManager';
+auth-specific:
+Azure dll in publish dir: 0
+  run> GetProvider(ActiveDirectoryDefault) = null
+  run> SetProvider(ActiveDirectoryInteractive, MyProvider) = True; GetProvider -> MyProvider
+  run> Initializer SetProvider result=n/a error=none; GetProvider(DeviceCodeFlow) -> null
+  run>  ---> System.MissingMethodException: Cannot dynamically create an instance of type 'System.Configuration.ClientConfigurationHost'. Reason: No parameterless constructor defined.
+  run>    at System.RuntimeType.ActivatorCache..ctor(RuntimeType rt)
+  run>    at System.RuntimeType.ActivatorCache.Create(RuntimeType type)
+  run>    at System.RuntimeType.IGenericCacheEntry`1.CreateAndCache(RuntimeType type)
+  run>    at System.RuntimeType.GetOrCr…
+  run> 
+  trc>   trace: static SqlAuthenticationProviderManager: Unable to load custom SqlAuthenticationProviders or SqlClientAuthenticationProviders. ConfigurationManager failed to load due to configuration errors:
+  trc>   trace: SqlAuthenticationProviderManager: Azure extension assembly=Microsoft.Data.SqlClient.Extensions.Azure not found or not usable; no default provider installed; FileNotFoundException: Could not l
+### net10.0 trim TrimmerSingleWarn=false 
+ilc/illink: 
+warnings:  16 warning IL2026, 6 warning IL2057, 4 warning IL2067, 6 warning IL2070, 3 warning IL2072, 2 warning IL2075,
+assembly-level: 
+auth-specific:
+      1   IL2026 Microsoft.Data.SqlClient.SqlAuthenticationProvider.Internal..cctor() Reflection.Assembly.GetType(String)
+      2   IL2026 Microsoft.Data.SqlClient.SqlAuthenticationProviderManager..cctor() Reflection.Assembly.GetType(String)
+      2   IL2057 Microsoft.Data.SqlClient.SqlAuthenticationProviderManager.SqlAuthenticationProviderManager(SqlAuthenticationProviderConfigurationSection) Type.GetType(String, Boolean)
+      3   IL2067 Microsoft.Data.SqlClient.SqlAuthenticationProviderManager.CreateAzureAuthenticationProvider(Type, Type, String, Nullable<Boolean>) 
+      5   IL2070 Microsoft.Data.SqlClient.SqlAuthenticationProviderManager.CreateAzureAuthenticationProvider(Type, Type, String, Nullable<Boolean>) 
+      2   IL2075 Microsoft.Data.SqlClient.SqlAuthenticationProvider.Internal..cctor() 
+Azure dll in publish dir: 0
+  run> GetProvider(ActiveDirectoryDefault) = null
+  run> SetProvider(ActiveDirectoryInteractive, MyProvider) = True; GetProvider -> MyProvider
+  run> Initializer SetProvider result=n/a error=none; GetProvider(DeviceCodeFlow) -> null
+  run>  ---> System.MissingMethodException: Cannot dynamically create an instance of type 'System.Configuration.ClientConfigurationHost'. Reason: No parameterless constructor defined.
+  run>    at System.RuntimeType.ActivatorCache..ctor(RuntimeType rt)
+  run>    at System.RuntimeType.ActivatorCache.Create(RuntimeType type)
+  run>    at System.RuntimeType.IGenericCacheEntry`1.CreateAndCache(RuntimeType type)
+  run>    at System.RuntimeType.GetOrCr…
+  run> 
+  trc>   trace: static SqlAuthenticationProviderManager: Unable to load custom SqlAuthenticationProviders or SqlClientAuthenticationProviders. ConfigurationManager failed to load due to configuration errors:
+  trc>   trace: SqlAuthenticationProviderManager: Azure extension assembly=Microsoft.Data.SqlClient.Extensions.Azure not found or not usable; no default provider installed; FileNotFoundException: Could not l
+### net10.0 aot TrimmerSingleWarn=true 
+ilc/illink: 
+warnings:  4 warning IL2104, 1 warning IL3053,
+assembly-level: IL2104 'Microsoft.Data.SqlClient';IL2104 'Microsoft.Data.SqlClient.Extensions.Abstractions';IL2104 'Microsoft.Data.SqlClient.Internal.Logging';IL2104 'System.Configuration.ConfigurationManager';IL3053 'Microsoft.Data.SqlClient';
+auth-specific:
+Azure dll in publish dir: 0
+  run> GetProvider(ActiveDirectoryDefault) = null
+  run> SetProvider(ActiveDirectoryInteractive, MyProvider) = False; GetProvider -> null
+  run> Initializer SetProvider result=n/a error=none; GetProvider(DeviceCodeFlow) -> null
+  trc>   trace: SqlAuthenticationProvider.Internal | MDS GetProvider() method not found; GetProvider() will not function
+  trc>   trace: SqlAuthenticationProvider.Internal | MDS SetProvider() method not found; SetProvider() will not function
+### net10.0 aot TrimmerSingleWarn=false 
+ilc/illink: 
+warnings:  16 warning IL2026, 7 warning IL2057, 4 warning IL2067, 6 warning IL2070, 4 warning IL2072, 4 warning IL2075, 1 warning IL3050,
+assembly-level: 
+auth-specific:
+      1   IL2026 Microsoft.Data.SqlClient.SqlAuthenticationProvider.Internal..cctor() Reflection.Assembly.GetType(String)
+      2   IL2026 Microsoft.Data.SqlClient.SqlAuthenticationProviderManager..cctor() Reflection.Assembly.GetType(String)
+      2   IL2057 Microsoft.Data.SqlClient.SqlAuthenticationProviderManager.SqlAuthenticationProviderManager(SqlAuthenticationProviderConfigurationSection) Type.GetType(String,Boolean)
+      3   IL2067 Microsoft.Data.SqlClient.SqlAuthenticationProviderManager.CreateAzureAuthenticationProvider(Type,Type,String,Nullable`1<Boolean>) 
+      5   IL2070 Microsoft.Data.SqlClient.SqlAuthenticationProviderManager.CreateAzureAuthenticationProvider(Type,Type,String,Nullable`1<Boolean>) 
+      2   IL2075 Microsoft.Data.SqlClient.SqlAuthenticationProvider.Internal..cctor() 
+Azure dll in publish dir: 0
+  run> GetProvider(ActiveDirectoryDefault) = null
+  run> SetProvider(ActiveDirectoryInteractive, MyProvider) = False; GetProvider -> null
+  run> Initializer SetProvider result=n/a error=none; GetProvider(DeviceCodeFlow) -> null
+  trc>   trace: SqlAuthenticationProvider.Internal | MDS GetProvider() method not found; GetProvider() will not function
+  trc>   trace: SqlAuthenticationProvider.Internal | MDS SetProvider() method not found; SetProvider() will not function
+### net10.0 trim TrimmerSingleWarn=true -p:RootAzure=true
+ilc/illink: 
+warnings:  4 warning IL2104,
+assembly-level: IL2104 'Microsoft.Data.SqlClient';IL2104 'Microsoft.Data.SqlClient.Extensions.Abstractions';IL2104 'Microsoft.Data.SqlClient.Internal.Logging';IL2104 'System.Configuration.ConfigurationManager';
+auth-specific:
+Azure dll in publish dir: 1
+  run> GetProvider(ActiveDirectoryDefault) = Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider
+  run> SetProvider(ActiveDirectoryInteractive, MyProvider) = True; GetProvider -> MyProvider
+  run> Initializer SetProvider result=n/a error=none; GetProvider(DeviceCodeFlow) -> ActiveDirectoryAuthenticationProvider
+  run>  ---> System.MissingMethodException: Cannot dynamically create an instance of type 'System.Configuration.ClientConfigurationHost'. Reason: No parameterless constructor defined.
+  run>    at System.RuntimeType.ActivatorCache..ctor(RuntimeType rt)
+  run>    at System.RuntimeType.ActivatorCache.Create(RuntimeType type)
+  run>    at System.RuntimeType.IGenericCacheEntry`1.CreateAndCache(RuntimeType type)
+  run>    at System.RuntimeType.GetOrCr…
+  trc>   trace: static SqlAuthenticationProviderManager: Unable to load custom SqlAuthenticationProviders or SqlClientAuthenticationProviders. ConfigurationManager failed to load due to configuration errors:

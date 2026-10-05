@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <CppCompilerAndLinker>gcc</CppCompilerAndLinker>
+    <StripSymbols>false</StripSymbols>
+    <SelfContained>true</SelfContained>
+    <EventSourceSupport>true</EventSourceSupport>
+    <PublishAot Condition="'$(Mode)' == 'aot'">true</PublishAot>
+    <PublishTrimmed Condition="'$(Mode)' == 'trim'">true</PublishTrimmed>
+    <TrimmerSingleWarn Condition="'$(SingleWarn)' == 'false'">false</TrimmerSingleWarn>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(RootAzure)' == 'true'"><TrimmerRootAssembly Include="Microsoft.Data.SqlClient.Extensions.Azure" /></ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="7.1.1" />
+    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Azure" Version="7.1.1" />
+  </ItemGroup>
+  <PropertyGroup Condition="'$(CfgProbe)' == 'true'"><DefineConstants>$(DefineConstants);CFGPROBE</DefineConstants></PropertyGroup>
+  <ItemGroup Condition="'$(CfgProbe)' == 'true'"><PackageReference Include="System.Configuration.ConfigurationManager" Version="9.0.18" /></ItemGroup>
+</Project>

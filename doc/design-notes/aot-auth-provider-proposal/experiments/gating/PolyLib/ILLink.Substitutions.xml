@@ -1,0 +1,11 @@
+<linker>
+  <assembly fullname="PolyLib">
+    <type fullname="PolyLib.Shapes">
+      <method signature="System.Boolean get_SwitchA()" body="stub" value="false" feature="PolyLib.A" featurevalue="false" />
+      <method signature="System.Boolean get_SwitchB()" body="stub" value="false" feature="PolyLib.B" featurevalue="false" />
+      <method signature="System.Boolean get_SwitchC()" body="stub" value="false" feature="PolyLib.C" featurevalue="false" />
+      <method signature="System.Boolean get_SwitchE()" body="stub" value="false" feature="PolyLib.E" featurevalue="false" />
+      <method signature="System.Boolean get_GuardE()" body="stub" value="false" feature="System.Runtime.CompilerServices.RuntimeFeature.IsDynamicCodeSupported" featurevalue="false" />
+    </type>
+  </assembly>
+</linker>
