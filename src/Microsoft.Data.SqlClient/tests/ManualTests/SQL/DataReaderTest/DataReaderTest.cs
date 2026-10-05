@@ -1171,7 +1171,7 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
         /// <param name="connection">The connection to open. Side effect: it is left open.</param>
         /// <param name="async"><see langword="true"/> to use the async overload.</param>
         /// <returns>A task that completes once the connection is open.</returns>
-        private static async Task OpenAsync(SqlConnection connection, bool async)
+        private static async Task Open(SqlConnection connection, bool async)
         {
             if (async)
             {
@@ -1189,7 +1189,7 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
         /// <param name="command">The command to execute.</param>
         /// <param name="async"><see langword="true"/> to use the async overload.</param>
         /// <returns>The reader, which the caller owns and must dispose.</returns>
-        private static async Task<SqlDataReader> ExecuteReaderAsync(SqlCommand command, bool async)
+        private static async Task<SqlDataReader> ExecuteReader(SqlCommand command, bool async)
         {
             if (async)
             {
@@ -1205,7 +1205,7 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
         /// <param name="reader">The reader to advance. Side effect: the reader's position moves.</param>
         /// <param name="async"><see langword="true"/> to use the async overload.</param>
         /// <returns><see langword="true"/> if a row was read; otherwise <see langword="false"/>.</returns>
-        private static async Task<bool> ReadAsync(SqlDataReader reader, bool async)
+        private static async Task<bool> Read(SqlDataReader reader, bool async)
         {
             if (async)
             {
@@ -1221,7 +1221,7 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
         /// <param name="reader">The reader to advance. Side effect: the reader's position moves.</param>
         /// <param name="async"><see langword="true"/> to use the async overload.</param>
         /// <returns><see langword="true"/> if another result set exists; otherwise <see langword="false"/>.</returns>
-        private static async Task<bool> NextResultAsync(SqlDataReader reader, bool async)
+        private static async Task<bool> NextResult(SqlDataReader reader, bool async)
         {
             if (async)
             {
@@ -1248,15 +1248,15 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
         public static async Task ErrorRethrownFromCatchBlock_IsSurfacedByRead(bool async)
         {
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
-            await OpenAsync(connection, async);
+            await Open(connection, async);
             using SqlCommand command = connection.CreateCommand();
             command.CommandText = RethrowFromCatchBatch;
 
             // Executing the batch succeeds; only the read is expected to throw, so it is the
             // single statement under assertion.
-            using SqlDataReader reader = await ExecuteReaderAsync(command, async);
+            using SqlDataReader reader = await ExecuteReader(command, async);
 
-            SqlException ex = await Assert.ThrowsAsync<SqlException>(() => ReadAsync(reader, async));
+            SqlException ex = await Assert.ThrowsAsync<SqlException>(() => Read(reader, async));
 
             Assert.Equal(8134, ex.Number);
         }
@@ -1274,7 +1274,7 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
         public static async Task ErrorRethrownFromCatchBlock_AfterOutputClause_IsSurfacedByRead(bool async)
         {
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
-            await OpenAsync(connection, async);
+            await Open(connection, async);
 
             using Table table = new(connection, "DataReaderTest_Issue4321_Output", "([Id] INT NOT NULL)");
 
@@ -1289,9 +1289,9 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
 
             // The OUTPUT clause yields an (empty) result set, so execution succeeds and the
             // first read is what surfaces the rethrown error.
-            using SqlDataReader reader = await ExecuteReaderAsync(command, async);
+            using SqlDataReader reader = await ExecuteReader(command, async);
 
-            SqlException ex = await Assert.ThrowsAsync<SqlException>(() => ReadAsync(reader, async));
+            SqlException ex = await Assert.ThrowsAsync<SqlException>(() => Read(reader, async));
 
             Assert.Equal(8134, ex.Number);
         }
@@ -1309,13 +1309,13 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
         public static async Task ErrorWithoutTryCatch_IsStillSurfacedByRead(bool async)
         {
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
-            await OpenAsync(connection, async);
+            await Open(connection, async);
             using SqlCommand command = connection.CreateCommand();
             command.CommandText = "SELECT 1/0;";
 
-            using SqlDataReader reader = await ExecuteReaderAsync(command, async);
+            using SqlDataReader reader = await ExecuteReader(command, async);
 
-            SqlException ex = await Assert.ThrowsAsync<SqlException>(() => ReadAsync(reader, async));
+            SqlException ex = await Assert.ThrowsAsync<SqlException>(() => Read(reader, async));
 
             Assert.Equal(8134, ex.Number);
         }
@@ -1331,16 +1331,16 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
         public static async Task EmptyResultSetWithoutError_ReturnsNoRows(bool async)
         {
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
-            await OpenAsync(connection, async);
+            await Open(connection, async);
 
             using SqlCommand command = connection.CreateCommand();
             command.CommandText = "SELECT 1 AS Value WHERE 1 = 0;";
 
-            using SqlDataReader reader = await ExecuteReaderAsync(command, async);
+            using SqlDataReader reader = await ExecuteReader(command, async);
 
             // No rows, no error, no further result sets.
-            Assert.False(await ReadAsync(reader, async));
-            Assert.False(await NextResultAsync(reader, async));
+            Assert.False(await Read(reader, async));
+            Assert.False(await NextResult(reader, async));
         }
 
         /// <summary>
@@ -1358,18 +1358,18 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
             List<string> messages = new();
             connection.InfoMessage += (_, e) => messages.Add(e.Message);
-            await OpenAsync(connection, async);
+            await Open(connection, async);
 
             using SqlCommand command = connection.CreateCommand();
             command.CommandText = "SELECT 1 AS Value; PRINT 'trailing-info';";
 
-            using (SqlDataReader reader = await ExecuteReaderAsync(command, async))
+            using (SqlDataReader reader = await ExecuteReader(command, async))
             {
                 // Exactly one row, then a clean end of result set - the trailing PRINT must not
                 // throw and must not be mistaken for a row.
-                Assert.True(await ReadAsync(reader, async));
+                Assert.True(await Read(reader, async));
                 Assert.Equal(1, reader.GetInt32(0));
-                Assert.False(await ReadAsync(reader, async));
+                Assert.False(await Read(reader, async));
             }
 
             Assert.Contains("trailing-info", messages);
@@ -1388,26 +1388,26 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
         public static async Task MultipleResultSets_AreUnaffected(bool async)
         {
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
-            await OpenAsync(connection, async);
+            await Open(connection, async);
 
             using SqlCommand command = connection.CreateCommand();
             command.CommandText = "SELECT 1 AS Value; SELECT 2 AS Value;";
 
-            using SqlDataReader reader = await ExecuteReaderAsync(command, async);
+            using SqlDataReader reader = await ExecuteReader(command, async);
 
             // Result set 1 holds exactly one row, carrying 1.
-            Assert.True(await ReadAsync(reader, async));
+            Assert.True(await Read(reader, async));
             Assert.Equal(1, reader.GetInt32(0));
-            Assert.False(await ReadAsync(reader, async));
+            Assert.False(await Read(reader, async));
 
             // Result set 2 holds exactly one row, carrying 2.
-            Assert.True(await NextResultAsync(reader, async));
-            Assert.True(await ReadAsync(reader, async));
+            Assert.True(await NextResult(reader, async));
+            Assert.True(await Read(reader, async));
             Assert.Equal(2, reader.GetInt32(0));
-            Assert.False(await ReadAsync(reader, async));
+            Assert.False(await Read(reader, async));
 
             // ... and the batch ends there.
-            Assert.False(await NextResultAsync(reader, async));
+            Assert.False(await NextResult(reader, async));
         }
 
         /// <summary>
@@ -1423,18 +1423,18 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
         public static async Task RowsThenTrailingError_DeliversRowsThenThrows(bool async)
         {
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
-            await OpenAsync(connection, async);
+            await Open(connection, async);
             using SqlCommand command = connection.CreateCommand();
             command.CommandText = "SELECT 1 AS Value; RAISERROR('trailing-error', 16, 1);";
 
-            using SqlDataReader reader = await ExecuteReaderAsync(command, async);
+            using SqlDataReader reader = await ExecuteReader(command, async);
 
             // The row that was already produced is delivered normally.
-            Assert.True(await ReadAsync(reader, async));
+            Assert.True(await Read(reader, async));
             Assert.Equal(1, reader.GetInt32(0));
 
             // The read that would otherwise have returned false raises the error instead.
-            SqlException ex = await Assert.ThrowsAsync<SqlException>(() => ReadAsync(reader, async));
+            SqlException ex = await Assert.ThrowsAsync<SqlException>(() => Read(reader, async));
             Assert.Equal(50000, ex.Number);
         }
 

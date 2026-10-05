@@ -105,7 +105,7 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
     /// <see langword="false"/> to call <see cref="SqlConnection.Open"/>.
     /// </param>
     /// <returns>A task that completes once the connection is open.</returns>
-    private static async Task OpenAsync(SqlConnection connection, bool async)
+    private static async Task Open(SqlConnection connection, bool async)
     {
         if (async)
         {
@@ -126,7 +126,7 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
     /// <see langword="false"/> to call <see cref="SqlCommand.ExecuteReader()"/>.
     /// </param>
     /// <returns>The reader, which the caller owns and must dispose.</returns>
-    private static async Task<SqlDataReader> ExecuteReaderAsync(SqlCommand command, bool async)
+    private static async Task<SqlDataReader> ExecuteReader(SqlCommand command, bool async)
     {
         if (async)
         {
@@ -145,7 +145,7 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
     /// <see langword="false"/> to call <see cref="SqlDataReader.Read"/>.
     /// </param>
     /// <returns><see langword="true"/> if a row was read; otherwise <see langword="false"/>.</returns>
-    private static async Task<bool> ReadAsync(SqlDataReader reader, bool async)
+    private static async Task<bool> Read(SqlDataReader reader, bool async)
     {
         if (async)
         {
@@ -164,7 +164,7 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
     /// <see langword="false"/> to call <see cref="SqlDataReader.NextResult"/>.
     /// </param>
     /// <returns><see langword="true"/> if another result set exists; otherwise <see langword="false"/>.</returns>
-    private static async Task<bool> NextResultAsync(SqlDataReader reader, bool async)
+    private static async Task<bool> NextResult(SqlDataReader reader, bool async)
     {
         if (async)
         {
@@ -405,14 +405,14 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
     public async Task Read_ErrorAfterResultSetDone_ThrowsSqlException(bool async)
     {
         using SqlConnection connection = new(_connectionString);
-        await OpenAsync(connection, async);
+        await Open(connection, async);
         RespondWithTrailingError();
 
         using SqlCommand command = CreateCommand(connection);
-        using SqlDataReader reader = await ExecuteReaderAsync(command, async);
+        using SqlDataReader reader = await ExecuteReader(command, async);
 
         // Only the read is expected to throw; execution must have succeeded.
-        SqlException ex = await Assert.ThrowsAnyAsync<SqlException>(() => ReadAsync(reader, async));
+        SqlException ex = await Assert.ThrowsAnyAsync<SqlException>(() => Read(reader, async));
 
         Assert.Equal((int)DivideByZeroErrorNumber, ex.Number);
         Assert.Contains(DivideByZeroMessage, ex.Message);
@@ -434,13 +434,13 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
     public async Task Read_ErrorBeforeDone_StillThrowsSqlException(bool async)
     {
         using SqlConnection connection = new(_connectionString);
-        await OpenAsync(connection, async);
+        await Open(connection, async);
         RespondWithLeadingError();
 
         using SqlCommand command = CreateCommand(connection);
-        using SqlDataReader reader = await ExecuteReaderAsync(command, async);
+        using SqlDataReader reader = await ExecuteReader(command, async);
 
-        SqlException ex = await Assert.ThrowsAnyAsync<SqlException>(() => ReadAsync(reader, async));
+        SqlException ex = await Assert.ThrowsAnyAsync<SqlException>(() => Read(reader, async));
 
         Assert.Equal((int)DivideByZeroErrorNumber, ex.Number);
     }
@@ -460,15 +460,15 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
     public async Task Read_EmptyResultSetWithoutError_ReturnsNoRowsAndDoesNotThrow(bool async)
     {
         using SqlConnection connection = new(_connectionString);
-        await OpenAsync(connection, async);
+        await Open(connection, async);
         RespondWithEmptyResultSet();
 
         using SqlCommand command = CreateCommand(connection);
-        using SqlDataReader reader = await ExecuteReaderAsync(command, async);
+        using SqlDataReader reader = await ExecuteReader(command, async);
 
         // No rows, no error, no further result sets.
-        Assert.False(await ReadAsync(reader, async));
-        Assert.False(await NextResultAsync(reader, async));
+        Assert.False(await Read(reader, async));
+        Assert.False(await NextResult(reader, async));
     }
 
     // --------------------------------------------------------------------------
@@ -487,18 +487,18 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
     public async Task Read_RowsThenTrailingError_DeliversRowsThenThrows(bool async)
     {
         using SqlConnection connection = new(_connectionString);
-        await OpenAsync(connection, async);
+        await Open(connection, async);
         RespondWithRowsThenTrailingError(42);
 
         using SqlCommand command = CreateCommand(connection);
-        using SqlDataReader reader = await ExecuteReaderAsync(command, async);
+        using SqlDataReader reader = await ExecuteReader(command, async);
 
         // The row that was already produced is delivered normally.
-        Assert.True(await ReadAsync(reader, async));
+        Assert.True(await Read(reader, async));
         Assert.Equal(42, reader.GetInt32(0));
 
         // The read that would otherwise have returned false raises the error instead.
-        SqlException ex = await Assert.ThrowsAnyAsync<SqlException>(() => ReadAsync(reader, async));
+        SqlException ex = await Assert.ThrowsAnyAsync<SqlException>(() => Read(reader, async));
         Assert.Equal((int)DivideByZeroErrorNumber, ex.Number);
     }
 
@@ -520,7 +520,7 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
         const string InfoText = "informational only";
 
         using SqlConnection connection = new(_connectionString);
-        await OpenAsync(connection, async);
+        await Open(connection, async);
 
         List<string> infoMessages = new();
         connection.InfoMessage += (_, e) =>
@@ -534,13 +534,13 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
         RespondWithRowsThenTrailingInfoMessage(7, InfoText);
 
         using (SqlCommand command = CreateCommand(connection))
-        using (SqlDataReader reader = await ExecuteReaderAsync(command, async))
+        using (SqlDataReader reader = await ExecuteReader(command, async))
         {
             // Exactly one row, then a clean end of result set - the INFO token must not throw
             // and must not be mistaken for a row.
-            Assert.True(await ReadAsync(reader, async));
+            Assert.True(await Read(reader, async));
             Assert.Equal(7, reader.GetInt32(0));
-            Assert.False(await ReadAsync(reader, async));
+            Assert.False(await Read(reader, async));
         }
 
         Assert.Contains(InfoText, infoMessages);
@@ -561,25 +561,25 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
     public async Task NextResult_MultipleResultSets_AreUnchanged(bool async)
     {
         using SqlConnection connection = new(_connectionString);
-        await OpenAsync(connection, async);
+        await Open(connection, async);
         RespondWithTwoResultSets();
 
         using SqlCommand command = CreateCommand(connection);
-        using SqlDataReader reader = await ExecuteReaderAsync(command, async);
+        using SqlDataReader reader = await ExecuteReader(command, async);
 
         // Result set 1 holds exactly one row, carrying 1.
-        Assert.True(await ReadAsync(reader, async));
+        Assert.True(await Read(reader, async));
         Assert.Equal(1, reader.GetInt32(0));
-        Assert.False(await ReadAsync(reader, async));
+        Assert.False(await Read(reader, async));
 
         // Result set 2 holds exactly one row, carrying 2.
-        Assert.True(await NextResultAsync(reader, async));
-        Assert.True(await ReadAsync(reader, async));
+        Assert.True(await NextResult(reader, async));
+        Assert.True(await Read(reader, async));
         Assert.Equal(2, reader.GetInt32(0));
-        Assert.False(await ReadAsync(reader, async));
+        Assert.False(await Read(reader, async));
 
         // ... and the batch ends there.
-        Assert.False(await NextResultAsync(reader, async));
+        Assert.False(await NextResult(reader, async));
     }
 
     // --------------------------------------------------------------------------
@@ -598,13 +598,13 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
     public async Task NextResult_ErrorAfterResultSetDone_ThrowsSqlException(bool async)
     {
         using SqlConnection connection = new(_connectionString);
-        await OpenAsync(connection, async);
+        await Open(connection, async);
         RespondWithTrailingError();
 
         using SqlCommand command = CreateCommand(connection);
-        using SqlDataReader reader = await ExecuteReaderAsync(command, async);
+        using SqlDataReader reader = await ExecuteReader(command, async);
 
-        SqlException ex = await Assert.ThrowsAnyAsync<SqlException>(() => NextResultAsync(reader, async));
+        SqlException ex = await Assert.ThrowsAnyAsync<SqlException>(() => NextResult(reader, async));
 
         Assert.Equal((int)DivideByZeroErrorNumber, ex.Number);
     }
@@ -627,25 +627,25 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
     public async Task Read_ErrorInSecondResultSet_DoesNotSurfaceWhileDrainingFirst(bool async)
     {
         using SqlConnection connection = new(_connectionString);
-        await OpenAsync(connection, async);
+        await Open(connection, async);
         RespondWithErrorInSecondResultSet();
 
         using SqlCommand command = CreateCommand(connection);
-        using SqlDataReader reader = await ExecuteReaderAsync(command, async);
+        using SqlDataReader reader = await ExecuteReader(command, async);
 
         // Result set 1 yields exactly its own row and must NOT throw: result set 2's
         // ERROR token is behind the COLMETADATA barrier.
-        Assert.True(await ReadAsync(reader, async));
+        Assert.True(await Read(reader, async));
         Assert.Equal(1, reader.GetInt32(0));
-        Assert.False(await ReadAsync(reader, async));
+        Assert.False(await Read(reader, async));
 
         // Advancing crosses the barrier and exposes result set 2's row...
-        Assert.True(await NextResultAsync(reader, async));
-        Assert.True(await ReadAsync(reader, async));
+        Assert.True(await NextResult(reader, async));
+        Assert.True(await Read(reader, async));
         Assert.Equal(2, reader.GetInt32(0));
 
         // ... and only then is the error raised, by the read that reaches it.
-        SqlException ex = await Assert.ThrowsAnyAsync<SqlException>(() => ReadAsync(reader, async));
+        SqlException ex = await Assert.ThrowsAnyAsync<SqlException>(() => Read(reader, async));
         Assert.Equal((int)DivideByZeroErrorNumber, ex.Number);
     }
 
@@ -669,7 +669,7 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
     public async Task InfoMessage_BelongingToLaterResultSet_DoesNotFireWhileReadingEarlierOne(bool async)
     {
         using SqlConnection connection = new(_connectionString);
-        await OpenAsync(connection, async);
+        await Open(connection, async);
 
         // Every informational message is appended here as it arrives, so the position of an
         // assertion within the call sequence below is what establishes the firing point.
@@ -685,32 +685,32 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
         RespondWithInfoMessageInSecondResultSet();
 
         using SqlCommand command = CreateCommand(connection);
-        using SqlDataReader reader = await ExecuteReaderAsync(command, async);
+        using SqlDataReader reader = await ExecuteReader(command, async);
 
         // Result set 1 holds exactly one row, carrying 1.
-        Assert.True(await ReadAsync(reader, async));
+        Assert.True(await Read(reader, async));
         Assert.Equal(1, reader.GetInt32(0));
 
         // The INFO token sits behind result set 2's COLMETADATA, so the read that ends result
         // set 1 must not reach it: nothing has been raised at this point in the sequence.
-        Assert.False(await ReadAsync(reader, async));
+        Assert.False(await Read(reader, async));
         Assert.Empty(messages);
 
         // Advancing consumes result set 2's COLMETADATA and stops there, so the INFO token
         // that sits behind it has still not been reached.
-        Assert.True(await NextResultAsync(reader, async));
+        Assert.True(await NextResult(reader, async));
         Assert.Empty(messages);
 
         // The read that reaches result set 2's row passes over the INFO token on the way, and
         // that is the call which delivers the message.
-        Assert.True(await ReadAsync(reader, async));
+        Assert.True(await Read(reader, async));
         Assert.Single(messages);
         Assert.Contains(DeferredInfoMessage, messages[0]);
         Assert.Equal(2, reader.GetInt32(0));
 
         // Result set 2 holds only that one row, and the batch ends there.
-        Assert.False(await ReadAsync(reader, async));
-        Assert.False(await NextResultAsync(reader, async));
+        Assert.False(await Read(reader, async));
+        Assert.False(await NextResult(reader, async));
 
         // The message was raised once, as information, and never as an exception.
         Assert.Single(messages);
