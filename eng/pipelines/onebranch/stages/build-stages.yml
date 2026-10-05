@@ -70,6 +70,7 @@ stages:
               -p:LoggingAssemblyFileVersion=$(loggingAssemblyFileVersion)
             assemblyFileVersion: $(loggingAssemblyFileVersion)
             publishSymbols: ${{ parameters.publishSymbols }}
+            debug: ${{ parameters.debug }}
             esrpConnectedServiceName: $(ESRPConnectedServiceName)
             esrpClientId: $(ESRPClientId)
             appRegistrationClientId: $(AppRegistrationClientId)
@@ -88,6 +89,7 @@ stages:
               -p:SqlServerPackageVersion=$(effectiveSqlServerVersion)
             assemblyFileVersion: $(sqlServerAssemblyFileVersion)
             publishSymbols: ${{ parameters.publishSymbols }}
+            debug: ${{ parameters.debug }}
             esrpConnectedServiceName: $(ESRPConnectedServiceName)
             esrpClientId: $(ESRPClientId)
             appRegistrationClientId: $(AppRegistrationClientId)
@@ -117,6 +119,7 @@ stages:
               -p:LoggingPackageVersion=$(effectiveLoggingVersion)
             assemblyFileVersion: $(abstractionsAssemblyFileVersion)
             publishSymbols: ${{ parameters.publishSymbols }}
+            debug: ${{ parameters.debug }}
             esrpConnectedServiceName: $(ESRPConnectedServiceName)
             esrpClientId: $(ESRPClientId)
             appRegistrationClientId: $(AppRegistrationClientId)
@@ -141,6 +144,7 @@ stages:
         - template: /eng/pipelines/onebranch/jobs/build-signed-sqlclient-package-job.yml@self
           parameters:
             publishSymbols: ${{ parameters.publishSymbols }}
+            debug: ${{ parameters.debug }}
             isPreview: ${{ parameters.isPreview }}
             # TODO: This job should use the effective versions for Abstractions, Logging,
             # SqlServer, and SqlClient.
@@ -157,6 +161,7 @@ stages:
               -p:LoggingPackageVersion=$(effectiveLoggingVersion)
             assemblyFileVersion: $(azureAssemblyFileVersion)
             publishSymbols: ${{ parameters.publishSymbols }}
+            debug: ${{ parameters.debug }}
             esrpConnectedServiceName: $(ESRPConnectedServiceName)
             esrpClientId: $(ESRPClientId)
             appRegistrationClientId: $(AppRegistrationClientId)
@@ -192,6 +197,7 @@ stages:
               -p:AbstractionsPackageVersion=$(effectiveAbstractionsVersion)
             assemblyFileVersion: $(akvAssemblyFileVersion)
             publishSymbols: ${{ parameters.publishSymbols }}
+            debug: ${{ parameters.debug }}
             esrpConnectedServiceName: $(ESRPConnectedServiceName)
             esrpClientId: $(ESRPClientId)
             appRegistrationClientId: $(AppRegistrationClientId)

@@ -223,6 +223,35 @@ Two ADO environments control release behavior:
 
 ---
 
+### 4.4 Symbol Publishing Diagnostics
+
+Symbols are uploaded and published inside the build jobs when `publishSymbols` is
+enabled. This branch does not use a separate symbol-publishing stage.
+
+- The top-level `debug` parameter is forwarded through `build-stages.yml` and both
+  build-job templates to `publish-symbols-step.yml`, which invokes
+  `eng/pipelines/onebranch/scripts/publish-symbols.ps1` with `-VerboseDiagnostics`.
+- Debug is off by default. When enabled, the script logs Azure CLI and REST commands
+  with the Authorization header unconditionally redacted. Debug never relaxes
+  redaction or logs the bearer token.
+- Token diagnostics decode only the payload and report the allowlisted `aud`,
+  `appid`, `tid`, `roles`, `scp`, and `exp` claims. The header and signature segments
+  are never decoded or logged.
+- Debug also enables `test-endpoint-reachability.ps1` before the publishing request,
+  probing PPE and production from the build container. `reachabilityProbeHosts`
+  can override the comma-separated host list. Probe failures do not skip publication.
+- Failed REST calls always report available HTTP status, correlation identifiers,
+  response body, and exception details, regardless of debug. Token acquisition
+  failures and Failed/Cancelled results for enabled destinations fail the task;
+  Pending results remain accepted because publication is asynchronous.
+- Existing upload paths, artifact names, publishing destinations, and service
+  connections are retained.
+
+Focused Pester tests and their local invocation are documented in
+[the script test README](../../eng/pipelines/onebranch/scripts/tests/README.md).
+
+---
+
 ## 5. Runtime Parameters
 
 ### 5.1 Build Parameters

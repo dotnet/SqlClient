@@ -15,6 +15,10 @@
 # signed DLLs, and finally ESRP signs the NuGet packages.
 
 parameters:
+  - name: debug
+    type: boolean
+    default: false
+
   # Short package name used in the job name, display strings, filesystem paths, and as a suffix for
   # the default Build and Pack targets if those aren't specified.
   - name: packageName
@@ -197,5 +201,6 @@ jobs:
       - ${{ if eq(parameters.publishSymbols, true) }}:
           - template: /eng/pipelines/onebranch/steps/publish-symbols-step.yml@self
             parameters:
+              debug: ${{ parameters.debug }}
               packageFullName: ${{ parameters.packageFullName }}
               packageVersion: ${{ parameters.packageVersion }}

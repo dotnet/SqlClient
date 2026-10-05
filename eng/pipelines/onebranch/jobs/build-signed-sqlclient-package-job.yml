@@ -7,6 +7,10 @@
 # This file is only included in MDS OneBranch Official pipelines.
 
 parameters:
+  - name: debug
+    type: boolean
+    default: false
+
   # True to publish symbols to public and private feeds after the build completes.
   - name: publishSymbols
     type: boolean
@@ -146,5 +150,6 @@ jobs:
   - ${{ if eq(parameters.publishSymbols, true) }}:
     - template: /eng/pipelines/onebranch/steps/publish-symbols-step.yml@self
       parameters:
+        debug: ${{ parameters.debug }}
         packageFullName: Microsoft.Data.SqlClient
         packageVersion: $(mdsPackageVersion)
