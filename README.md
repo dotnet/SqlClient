@@ -4,7 +4,7 @@
 
 # Microsoft SqlClient Data Provider for SQL Server
 
-Microsoft.Data.SqlClient is a .NET data provider for [Microsoft SQL Server]([url](https://aka.ms/sql)) and the [Azure SQL]([url](https://aka.ms/azure_sql)) family of databases. It grew from a union of the two System.Data.SqlClient components which live independently in .NET and .NET Framework. Going forward, support for new SQL Server and Azure SQL features will only be implemented in Microsoft.Data.SqlClient.
+Microsoft.Data.SqlClient is a .NET data provider for [Microsoft SQL Server](https://aka.ms/sql) and the [Azure SQL](https://aka.ms/azure_sql) family of databases. It grew from a union of the two System.Data.SqlClient components which live independently in .NET and .NET Framework. Going forward, support for new SQL Server and Azure SQL features will only be implemented in Microsoft.Data.SqlClient.
 
 ## Supportability
 
