@@ -39,15 +39,18 @@ teardown() {
 #   $3: parent issue view JSON ({title,labels})
 #   $4: 'gh issue create' output (the created issue URL)
 #   $5: issue GET response for the child (JSON with .id)
+#   $6: issues returned by the orphan recovery search (JSON array)
 stub_gh() {
   local sub_issues_tsv="$1"
   local milestone_titles="$2"
   local parent_json="$3"
   local created_url="$4"
   local child_issue_json="$5"
+  local orphan_issues_json="${6:-[]}"
 
   printf '%s' "${sub_issues_tsv}" > "${STUB_DIR}/sub_issues.tsv"
   printf '%s' "${milestone_titles}" > "${STUB_DIR}/milestones.txt"
+  printf '%s' "${orphan_issues_json}" > "${STUB_DIR}/orphan_issues.json"
 
   cat > "${STUB_DIR}/gh" <<STUB
 #!/usr/bin/env bash
@@ -68,7 +71,13 @@ if [[ "\$1" == "issue" && "\$2" == "view" ]]; then
   exit 0
 fi
 
+if [[ "\$1" == "issue" && "\$2" == "list" ]]; then
+  cat "${STUB_DIR}/orphan_issues.json"
+  exit 0
+fi
+
 if [[ "\$1" == "issue" && "\$2" == "create" ]]; then
+  echo "CREATE_CALLED" >> "${STUB_DIR}/issue_create_calls.log"
   echo '${created_url}'
   exit 0
 fi
@@ -136,6 +145,18 @@ STUB
   run bash "${SCRIPT}"
   [ "$status" -eq 0 ]
   [[ "$output" == *"already exists"* ]]
+}
+
+@test "does not skip a similarly named child without the title-prefix space" {
+  stub_gh "$(printf '7.1.1\t[7.1.1]-follow-up\t4899')" \
+    "$(printf '7.1.1')" \
+    '{"title":"Parent title","labels":[]}' \
+    "https://github.com/dotnet/SqlClient/issues/4901" \
+    '{"id":123456789}'
+  run bash "${SCRIPT}"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Created backport issue #4901"* ]]
+  [ -f "${STUB_DIR}/issue_create_calls.log" ]
 }
 
 @test "skips when a sub-issue already has the child title prefix but no milestone yet" {
@@ -207,6 +228,22 @@ STUB
   [[ "$output" == *"Milestone '7.1.1' found."* ]]
   [[ "$output" == *"Created backport issue #4901"* ]]
   [[ "$output" == *"Linked #4901 as a sub-issue of #4714"* ]]
+  [ -f "${STUB_DIR}/sub_issue_calls.log" ]
+}
+
+@test "reuses an unlinked issue created by an earlier incomplete run" {
+  stub_gh "" \
+    "$(printf '7.1.1')" \
+    '{"title":"Parent title","labels":[]}' \
+    "https://github.com/dotnet/SqlClient/issues/4901" \
+    '{"id":123456789}' \
+    '[{"number":4903,"title":"[7.1.1] Parent title","body":"Backport of #4714 for the `7.1.1` hotfix.","author":{"login":"github-actions[bot]"}}]'
+
+  run bash "${SCRIPT}"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Found previously created, unlinked backport issue #4903"* ]]
+  [[ "$output" == *"Linked #4903 as a sub-issue of #4714"* ]]
+  [ ! -f "${STUB_DIR}/issue_create_calls.log" ]
   [ -f "${STUB_DIR}/sub_issue_calls.log" ]
 }
 

@@ -99,7 +99,7 @@ CLOSING_PRS=$(gh api graphql \
       repository(owner: $owner, name: $repo) {
         issue(number: $issueNumber) {
           closedByPullRequestsReferences(first: 50) {
-            nodes { number state }
+            nodes { number state repository { nameWithOwner } }
           }
         }
       }
@@ -107,7 +107,8 @@ CLOSING_PRS=$(gh api graphql \
   -F owner="${REPO_OWNER}" \
   -F repo="${REPO_NAME}" \
   -F issueNumber="${ISSUE_NUMBER}" \
-  --jq '.data.repository.issue.closedByPullRequestsReferences.nodes[] | select(.state == "OPEN" or .state == "MERGED") | "\(.number) \(.state)"')
+  --jq --arg repository "${GITHUB_REPOSITORY}" \
+    '.data.repository.issue.closedByPullRequestsReferences.nodes[] | select(.repository.nameWithOwner == $repository) | select(.state == "OPEN" or .state == "MERGED") | "\(.number) \(.state)"')
 
 if [[ -z "${CLOSING_PRS}" ]]; then
   echo "No open or merged pull requests found that close #${ISSUE_NUMBER}. Nothing to sync."

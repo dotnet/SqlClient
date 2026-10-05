@@ -19,9 +19,10 @@
 #      duplicate check is needed: the PR has never been processed before.
 #
 #   2. 'labeled' event     — A label was added to an already-merged PR (the
-#      real GitHub webhook fired). Only the NEWLY ADDED label is considered,
-#      and only if a cherry-pick for that version hasn't already been created
-#      (branch or PR exists).
+#      real GitHub webhook fired). ALL current labels are reconciled, and only
+#      versions without an existing cherry-pick (branch or PR) are processed.
+#      This makes replacement of a pending workflow run safe: the latest
+#      labeled event includes the full set of current PR labels.
 #
 #   3. 'reconcile' event   — Used for a workflow_dispatch re-run (see
 #      cherry-pick-hotfix.yml): sync-hotfix-label-from-issue.sh adds a
@@ -43,7 +44,7 @@
 #   EVENT_ACTION       The GitHub event action: "closed", "labeled", or
 #                      "reconcile".
 #   EVENT_LABEL        For 'labeled' events, the name of the label that was added.
-#                      Empty or unset for 'closed'/'reconcile' events.
+#                      Not needed for processing; labels are reconciled from LABELS.
 #   PR_NUMBER          The pull request number (used to derive cherry-pick branch names).
 #   GH_TOKEN           GitHub token for API calls (gh CLI auth).
 #   GITHUB_REPOSITORY  Owner/repo (e.g. "dotnet/SqlClient"). Set automatically by Actions.
@@ -86,8 +87,7 @@ fi
 : "${GITHUB_REPOSITORY:?GITHUB_REPOSITORY environment variable is required}"
 
 # -- Shared helper: has a cherry-pick for VERSION already been created? ------
-# Used by both the 'labeled' (single candidate) and 'reconcile' (every
-# current Hotfix label) paths below.
+# Used by both the 'labeled' and 'reconcile' paths below.
 #
 # NOTE: We use the GitHub API rather than 'git ls-remote' because the
 # detect-versions job does not check out the repository (no .git directory).
@@ -111,31 +111,11 @@ cherry_pick_already_exists() {
   return 1
 }
 
-if [[ "${EVENT_ACTION}" == "labeled" ]]; then
-  # -- 'labeled' event: process only the newly added label --------------------
-  # Extract version from the new label. If it doesn't match "Hotfix X.Y.Z",
-  # this is a non-hotfix label — emit empty matrix and exit cleanly.
-  if [[ "${EVENT_LABEL:-}" =~ ^Hotfix\ ([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
-    CANDIDATE="${BASH_REMATCH[1]}"
-  else
-    CANDIDATE=""
-  fi
-
-  if [[ -z "${CANDIDATE}" ]]; then
-    echo "Label '${EVENT_LABEL:-}' is not a valid 'Hotfix X.Y.Z' label. Skipping."
-    echo "versions=[]" >> "${GITHUB_OUTPUT}"
-    exit 0
-  fi
-
-  if cherry_pick_already_exists "${CANDIDATE}"; then
-    echo "versions=[]" >> "${GITHUB_OUTPUT}"
-    exit 0
-  fi
-
-  VERSIONS="${CANDIDATE}"
-elif [[ "${EVENT_ACTION}" == "reconcile" ]]; then
-  # -- 'reconcile' event: re-derive all current Hotfix labels, but still skip
-  # any version that's already been cherry-picked (see OVERVIEW above).
+if [[ "${EVENT_ACTION}" == "labeled" || "${EVENT_ACTION}" == "reconcile" ]]; then
+  # -- 'labeled'/'reconcile' event: process all current Hotfix labels, but
+  # still skip any version that's already been cherry-picked. A label event
+  # carries the complete PR label snapshot, so this also safely coalesces
+  # pending runs in the workflow's concurrency group.
   ALL_VERSIONS=$(echo "${LABELS}" | tr ',' '\n' \
     | sed -nE 's/^Hotfix ([0-9]+\.[0-9]+\.[0-9]+)$/\1/p')
 
@@ -161,6 +141,11 @@ elif [[ "${EVENT_ACTION}" == "reconcile" ]]; then
     fi
   else
     VERSIONS=""
+    if [[ "${EVENT_ACTION}" == "labeled" ]]; then
+      echo "No valid 'Hotfix X.Y.Z' labels remain on the PR. Skipping."
+      echo "versions=[]" >> "${GITHUB_OUTPUT}"
+      exit 0
+    fi
   fi
 else
   # -- 'closed' event: process all hotfix labels on the PR --------------------

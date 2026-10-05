@@ -32,9 +32,9 @@ teardown() {
 # script's own GraphQL lookup and the calls its delegate,
 # sync-hotfix-label-to-pr.sh, makes for each PR it's re-run against.
 #
-#   $1: newline-separated "pr_number:STATE" pairs returned by the
+#   $1: newline-separated "pr_number:STATE[:repository]" pairs returned by the
 #       closedByPullRequestsReferences GraphQL query (STATE is OPEN, MERGED,
-#       or CLOSED)
+#       or CLOSED; repository defaults to GITHUB_REPOSITORY)
 #   $2: newline-separated "pr_number:closing_issue_numbers,..." describing
 #       each PR's own closing issue references (delegate's Step 1)
 #   $3: newline-separated "issue_number:label1,label2" pairs describing each
@@ -60,7 +60,9 @@ set -euo pipefail
 
 # gh api graphql (closedByPullRequestsReferences lookup)
 if [[ "\$1" == "api" && "\$2" == "graphql" ]]; then
-  awk -F':' '\$2 == "OPEN" || \$2 == "MERGED" { print \$1, \$2 }' "${STUB_DIR}/closing_prs.txt"
+  awk -F':' -v repository="${GITHUB_REPOSITORY}" \
+    '\$2 == "OPEN" || \$2 == "MERGED" { if (\$3 == "" || \$3 == repository) print \$1, \$2 }' \
+    "${STUB_DIR}/closing_prs.txt"
   exit 0
 fi
 
@@ -234,4 +236,16 @@ dispatched_prs() {
   run bash "${SCRIPT}"
   [ "$status" -eq 0 ]
   [ "$(dispatched_prs)" = "pr_number=4722" ]
+}
+
+@test "ignores a cross-repository PR even when its number collides with a local PR" {
+  stub_gh \
+    "$(printf '4721:MERGED:other/SqlClient\n4721:OPEN:dotnet/SqlClient')" \
+    "$(printf '4721:4715')" \
+    "$(printf '4715:Hotfix 7.1.1')" \
+    "$(printf '4721:')"
+  run bash "${SCRIPT}"
+  [ "$status" -eq 0 ]
+  [ "$(added_prs)" = "4721" ]
+  [ -z "$(dispatched_prs)" ]
 }

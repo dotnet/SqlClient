@@ -83,7 +83,7 @@ else
   exit 0
 fi
 
-CHILD_TITLE_PREFIX="[${VERSION}]"
+CHILD_TITLE_PREFIX="[${VERSION}] "
 
 echo "Parent issue:  #${PARENT_ISSUE_NUMBER}"
 echo "Hotfix label:  ${EVENT_LABEL}"
@@ -141,45 +141,67 @@ PARENT_TITLE=$(jq -r '.title' <<< "${PARENT_JSON}")
 CHILD_LABELS=$(jq -r '[.labels[].name | select(startswith("Hotfix ") | not)] | join(",")' \
   <<< "${PARENT_JSON}")
 
-# -- Step 4: Look up the milestone (best-effort) ------------------------------
-MILESTONE_FOUND=""
-MILESTONE_NOTE=""
-if gh api "repos/${GITHUB_REPOSITORY}/milestones" --method GET --paginate \
-    --field state=open --jq '.[].title' | grep -qx "${VERSION}"; then
-  MILESTONE_FOUND="${VERSION}"
-  echo "Milestone '${VERSION}' found."
+# -- Step 4: Recover a child issue created by an earlier incomplete run ------
+# Issue creation and sub-issue linking are separate API operations. If the
+# issue was created but the link failed, a rerun cannot find it among the
+# parent's sub-issues. Search for the exact title prefix and body identity,
+# and only adopt issues authored by the Actions bot.
+ORPHAN_SEARCH="in:title \"${CHILD_TITLE_PREFIX% }\" in:body \"Backport of #${PARENT_ISSUE_NUMBER}\""
+if ! ORPHAN_ISSUE_NUMBER=$(gh issue list --repo "${GITHUB_REPOSITORY}" \
+  --state all --limit 1000 --search "${ORPHAN_SEARCH}" \
+  --json number,title,body,author \
+  | jq -r --arg title_prefix "${CHILD_TITLE_PREFIX}" \
+       --arg body_prefix "Backport of #${PARENT_ISSUE_NUMBER} for the \`${VERSION}\` hotfix." \
+       '[.[] | select(.title | startswith($title_prefix)) | select(.body | startswith($body_prefix)) | select(.author.login == "github-actions[bot]")] | sort_by(.number) | .[0].number // empty'); then
+  echo "::error::Failed to search for an unlinked backport issue for #${PARENT_ISSUE_NUMBER};" \
+       "cannot safely create another issue. Aborting." >&2
+  exit 1
+fi
+
+if [[ -n "${ORPHAN_ISSUE_NUMBER}" ]]; then
+  CHILD_NUMBER="${ORPHAN_ISSUE_NUMBER}"
+  echo "Found previously created, unlinked backport issue #${CHILD_NUMBER}; reusing it."
 else
-  echo "::warning::Milestone '${VERSION}' does not exist." \
-       "Backport issue will be created without a milestone."
-  MILESTONE_NOTE=$'\n\n> **Note:** Milestone `'"${VERSION}"'` does not exist yet. Please create it and assign this issue manually.'
+  # -- Step 5: Look up the milestone (best-effort) ----------------------------
+  MILESTONE_FOUND=""
+  MILESTONE_NOTE=""
+  if gh api "repos/${GITHUB_REPOSITORY}/milestones" --method GET --paginate \
+      --field state=open --jq '.[].title' | grep -qx "${VERSION}"; then
+    MILESTONE_FOUND="${VERSION}"
+    echo "Milestone '${VERSION}' found."
+  else
+    echo "::warning::Milestone '${VERSION}' does not exist." \
+         "Backport issue will be created without a milestone."
+    MILESTONE_NOTE=$'\n\n> **Note:** Milestone `'"${VERSION}"'` does not exist yet. Please create it and assign this issue manually.'
+  fi
+
+  # -- Step 6: Create the child issue -----------------------------------------
+  CHILD_BODY="Backport of #${PARENT_ISSUE_NUMBER} for the \`${VERSION}\` hotfix.${MILESTONE_NOTE}"
+
+  # Built as an array (not an unquoted string) because label names in this repo
+  # can contain spaces (e.g. "Regression :boom:"), which would otherwise be
+  # word-split incorrectly. The "${ARGS[@]+...}" guard keeps this portable to
+  # bash 3.2 (macOS default), where referencing an empty array under 'set -u'
+  # is treated as an unbound variable.
+  ARGS=()
+  if [[ -n "${CHILD_LABELS}" ]]; then
+    ARGS+=(--label "${CHILD_LABELS}")
+  fi
+  if [[ -n "${MILESTONE_FOUND}" ]]; then
+    ARGS+=(--milestone "${MILESTONE_FOUND}")
+  fi
+
+  CHILD_URL=$(gh issue create \
+    --repo "${GITHUB_REPOSITORY}" \
+    --title "${CHILD_TITLE_PREFIX}${PARENT_TITLE}" \
+    --body "${CHILD_BODY}" \
+    "${ARGS[@]+"${ARGS[@]}"}")
+
+  CHILD_NUMBER="${CHILD_URL##*/}"
+  echo "Created backport issue #${CHILD_NUMBER}: ${CHILD_URL}"
 fi
 
-# -- Step 5: Create the child issue -------------------------------------------
-CHILD_BODY="Backport of #${PARENT_ISSUE_NUMBER} for the \`${VERSION}\` hotfix.${MILESTONE_NOTE}"
-
-# Built as an array (not an unquoted string) because label names in this repo
-# can contain spaces (e.g. "Regression :boom:"), which would otherwise be
-# word-split incorrectly. The "${ARGS[@]+...}" guard keeps this portable to
-# bash 3.2 (macOS default), where referencing an empty array under 'set -u'
-# is treated as an unbound variable.
-ARGS=()
-if [[ -n "${CHILD_LABELS}" ]]; then
-  ARGS+=(--label "${CHILD_LABELS}")
-fi
-if [[ -n "${MILESTONE_FOUND}" ]]; then
-  ARGS+=(--milestone "${MILESTONE_FOUND}")
-fi
-
-CHILD_URL=$(gh issue create \
-  --repo "${GITHUB_REPOSITORY}" \
-  --title "${CHILD_TITLE_PREFIX} ${PARENT_TITLE}" \
-  --body "${CHILD_BODY}" \
-  "${ARGS[@]+"${ARGS[@]}"}")
-
-CHILD_NUMBER="${CHILD_URL##*/}"
-echo "Created backport issue #${CHILD_NUMBER}: ${CHILD_URL}"
-
-# -- Step 6: Link the child as a native GitHub sub-issue of the parent --------
+# -- Step 7: Link the child as a native GitHub sub-issue of the parent --------
 # The sub-issues REST API takes the child issue's numeric database *id* (not
 # its user-facing number, and not its node_id), so resolve it first.
 CHILD_ID=$(gh api "repos/${GITHUB_REPOSITORY}/issues/${CHILD_NUMBER}" --jq '.id')

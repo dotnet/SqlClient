@@ -143,7 +143,7 @@ get_versions() {
 
 # ── Labeled event: basic behavior ───────────────────────────────────────────
 
-@test "labeled event: processes valid newly added label" {
+@test "labeled event: reconciles all current Hotfix labels" {
   export EVENT_ACTION="labeled"
   export EVENT_LABEL="Hotfix 7.0.1"
   export LABELS="Hotfix 7.0.1,Hotfix 8.0.0"
@@ -168,19 +168,19 @@ STUB
   rm -rf "${stub_dir}"
 
   [ "$status" -eq 0 ]
-  [ "$(get_versions)" = '["7.0.1"]' ]
+  [ "$(get_versions)" = '["7.0.1","8.0.0"]' ]
 }
 
-@test "labeled event: skips non-hotfix label" {
+@test "labeled event: reconciles current Hotfix labels after a non-hotfix label is added" {
   export EVENT_ACTION="labeled"
   export EVENT_LABEL="bug"
   export LABELS="bug,Hotfix 7.0.1"
   run bash "${SCRIPT}"
   [ "$status" -eq 0 ]
-  [ "$(get_versions)" = '[]' ]
+  [ "$(get_versions)" = '["7.0.1"]' ]
 }
 
-@test "labeled event: skips malformed hotfix label" {
+@test "labeled event: ignores malformed Hotfix labels while reconciling current labels" {
   export EVENT_ACTION="labeled"
   export EVENT_LABEL="Hotfix 7.0"
   export LABELS="Hotfix 7.0"
