@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+// Pre-publication gate for issue-triage safe outputs: reject incomplete summaries
+// and partial batches before any queued comment or label change reaches GitHub.
 const fs = require('node:fs');
 
 const TEMPLATE_PLACEHOLDER_PATTERN = /<([^<>\r\n]+)>/g;
@@ -11,6 +13,7 @@ const GENERIC_ARGUMENTS_PATTERN =
     /^[A-Za-z_][\w.?\[\]]*(?:\s*,\s*[A-Za-z_][\w.?\[\]]*)*$/;
 
 function hasTemplatePlaceholder(text) {
+    // Distinguish unfilled template fields from legitimate C# generics and Markdown autolinks.
     return [...text.matchAll(TEMPLATE_PLACEHOLDER_PATTERN)].some((match) => {
         const contents = match[1];
         const value = contents.trim();
@@ -24,6 +27,7 @@ function hasTemplatePlaceholder(text) {
 }
 
 function proseOnly(body) {
+    // Quoted examples, code blocks, and hidden attribution cannot satisfy required summary fields.
     let fence;
     return body.replace(/<!--[\s\S]*?(?:-->|$)/g, '').split('\n').map(line => {
         const marker = line.match(/^ {0,3}(`{3,}|~{3,})/);
@@ -47,6 +51,7 @@ function meaningful(value) {
     return /[\p{L}\p{N}]/u.test(text) &&
         !/^<[\s\S]*>$/.test(text) &&
         !hasTemplatePlaceholder(text) &&
+        !/^\s*(?:(?:[-+]|\d+[.)])\s+)?(?:todo|tbd|placeholder)\b/im.test(text) &&
         !/^(?:todo|tbd|test(?: message)?(?: please ignore)?|placeholder)$/i.test(text);
 }
 
@@ -60,6 +65,7 @@ function validateTriageOutput(output) {
         throw new Error('Triage output contains errors; refusing to publish a partial safe-output batch.');
     }
 
+    // Explicit no-op/failure reports may proceed, but cannot accompany a summary or label changes.
     const comments = output.items.filter(item => item.type === 'add_comment');
     const incomplete = output.items.some(item =>
         ['report_incomplete', 'missing_tool', 'missing_data'].includes(item.type));
@@ -85,6 +91,7 @@ function validateTriageOutput(output) {
         !/^## (?:\u{1F50D} )?Triage Summary(?: \(updated after author response\)| \(on-demand re-triage\))? *\r?\n/u.test(body.trim())) {
         throw new Error('Comment must start with the completed Triage Summary heading.');
     }
+    // Require the workflow's five check rows and both prose sections, not merely its heading.
     const prose = proseOnly(body.replace(/\r\n?/g, '\n').trim());
     const table = prose.split(/^### /m)[0];
     for (const field of ['Issue type', 'Environment', 'Area', 'Duplicates', 'Regression']) {
@@ -105,6 +112,7 @@ function validateTriageOutput(output) {
 }
 
 if (require.main === module) {
+    // gh-aw supplies the complete queued batch here; throwing blocks safe-output publication.
     const filename = process.env.GH_AW_AGENT_OUTPUT;
     if (!filename) {
         throw new Error('GH_AW_AGENT_OUTPUT is required; refusing to publish unvalidated triage output.');

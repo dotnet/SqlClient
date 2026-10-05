@@ -123,6 +123,44 @@ test('requires populated Analysis and Next Steps sections', () => {
     ))), /Next Steps/);
 });
 
+test('rejects marker-prefixed drafts in check rows and required sections', () => {
+    for (const draft of [
+        'TODO: replace this with the actual analysis.',
+        'TBD: determine next steps.',
+        '**todo** investigate cancellation.',
+        '- TBD: determine next steps.',
+        '1. TODO: request reproduction details.',
+        'Placeholder: insert findings here.',
+    ]) {
+        for (const [content, message] of [
+            ['Missing: SQL Server version', /check row/],
+            ['Cancellation leaves the operation running. Investigate the async cancellation path; P1.', /Analysis/],
+            ['- Ask the author for their SQL Server version.', /Next Steps/],
+        ]) {
+            assert.throws(() => validateTriageOutput(output(
+                summary.replace(content, draft)
+            )), message);
+        }
+    }
+    assert.throws(() => validateTriageOutput(output(summary.replace(
+        '- Ask the author for their SQL Server version.',
+        '- Ask the author for their SQL Server version.\n- TODO: decide the next action.'
+    ))), /Next Steps/);
+});
+
+test('accepts completed prose that mentions markers without using them as draft prefixes', () => {
+    for (const text of [
+        'The reproduction contains a TODO comment in application code.',
+        'TodoList cancellation leaves the operation running.',
+        'TODOs in the sample do not affect the reproduction.',
+    ]) {
+        validateTriageOutput(output(summary.replace(
+            'Cancellation leaves the operation running. Investigate the async cancellation path; P1.',
+            text
+        )));
+    }
+});
+
 test('fenced examples cannot supply missing check rows or sections', () => {
     const body = summary.replace(
         '| Check | Result |', '```markdown\n| Check | Result |'

@@ -14,7 +14,9 @@ before triage comments and labels are published: complete summaries, explicit
 no-op/failure results, placeholder comments, unfinished templates, quoted/fenced
 examples, duplicate comments, and mixed success/incomplete outcomes.
 They also reject partial safe-output batches with recorded errors while
-allowing C# generic type syntax in completed summaries.
+allowing C# generic type syntax in completed summaries. Draft prefixes such as
+`TODO:` and `TBD:` are rejected in required fields and list items; ordinary
+mentions of those markers within completed prose remain valid.
 
 ## Shell script tests
 
