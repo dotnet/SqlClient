@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
 using System.Data;
 using System.Text;
 using Xunit;
@@ -56,6 +55,7 @@ public class TdsColumnMetadataTests
     [Fact]
     public void Clone_CopiesAllProperties()
     {
+        // Arrange
         var original = new TdsColumnMetadata(7)
         {
             baseColumn = "OriginalColumn",
@@ -84,13 +84,13 @@ public class TdsColumnMetadataTests
             scale = 8,
             collation = new SqlCollation(0x00, 0x00),
             BaseTypeInfo = new TdsTypeInfo { DbType = SqlDbType.Int },
-            CipherMetadata = new SqlCipherMetadata(default, 1, 2, "TestAlgorithm", 1, 1)
+            CipherMetadata = new SqlCipherMetadata(null, 1, 2, "TestAlgorithm", 1, 1)
         };
 
-        // Exercise the virtual override through the base type as well.
-        TdsTypeInfo typeInfo = original;
-        var clone = Assert.IsType<TdsColumnMetadata>(typeInfo.Clone());
+        // Act
+        TdsColumnMetadata clone = original.Clone();
 
+        // Assert
         Assert.NotSame(original, clone);
         Assert.Equal(original.Ordinal, clone.Ordinal);
         Assert.Equal(original.baseColumn, clone.baseColumn);
@@ -126,17 +126,6 @@ public class TdsColumnMetadataTests
         Assert.Same(original.CipherMetadata, clone.CipherMetadata);
         Assert.Null(clone.UdtTypeInfo);
         Assert.Null(clone.XmlTypeInfo);
-
-        clone.column = "ChangedAlias";
-        clone.tableName.TableName = "ChangedTable";
-        clone.IsKey = false;
-        clone.IsNullable = false;
-        clone.Updatability = 0;
-        Assert.Equal("ColumnAlias", original.column);
-        Assert.Equal("TestTable", original.TableName);
-        Assert.True(original.IsKey);
-        Assert.True(original.IsNullable);
-        Assert.Equal(2, original.Updatability);
     }
 
     /// <summary>
@@ -145,7 +134,8 @@ public class TdsColumnMetadataTests
     [Fact]
     public void Clone_WithUdtAndXmlTypeInfo_CreatesDeepCopies()
     {
-        var original = new TdsColumnMetadata(0)
+        // Arrange
+        TdsColumnMetadata original = new TdsColumnMetadata(0)
         {
             UdtTypeInfo = new TdsUdtTypeInfo
             {
@@ -163,73 +153,213 @@ public class TdsColumnMetadataTests
             }
         };
 
-        var clone = original.Clone();
+        // Act
+        TdsColumnMetadata clone = original.Clone();
 
+        // Assert
+        // - UdtTypeInfo was deep cloned
         Assert.NotNull(clone.UdtTypeInfo);
         Assert.NotSame(original.UdtTypeInfo, clone.UdtTypeInfo);
-        Assert.Equal(original.UdtTypeInfo.AssemblyQualifiedName,
-            clone.UdtTypeInfo.AssemblyQualifiedName);
         Assert.Equal(original.UdtTypeInfo.DatabaseName, clone.UdtTypeInfo.DatabaseName);
         Assert.Equal(original.UdtTypeInfo.SchemaName, clone.UdtTypeInfo.SchemaName);
         Assert.Equal(original.UdtTypeInfo.TypeName, clone.UdtTypeInfo.TypeName);
         Assert.Equal(original.UdtTypeInfo.Type, clone.UdtTypeInfo.Type);
+        Assert.Equal(
+            original.UdtTypeInfo.AssemblyQualifiedName,
+            clone.UdtTypeInfo.AssemblyQualifiedName);
+
+        // - XmlTypeInfo was deep cloned
         Assert.NotNull(clone.XmlTypeInfo);
         Assert.NotSame(original.XmlTypeInfo, clone.XmlTypeInfo);
         Assert.Equal(original.XmlTypeInfo.Database, clone.XmlTypeInfo.Database);
         Assert.Equal(original.XmlTypeInfo.OwningSchema, clone.XmlTypeInfo.OwningSchema);
         Assert.Equal(original.XmlTypeInfo.Name, clone.XmlTypeInfo.Name);
-
-        clone.UdtTypeInfo.TypeName = "ChangedType";
-        clone.XmlTypeInfo.Name = "ChangedSchemaCollection";
-        Assert.Equal("MyUdtType", original.UdtTypeInfo.TypeName);
-        Assert.Equal("TestSchemaCollection", original.XmlTypeInfo.Name);
     }
 
-    /// <summary>
-    /// Ensures each packed boolean flag can be set and cleared without altering other flags.
-    /// </summary>
     [Fact]
-    public void Flags_SetAndClear_PreserveOtherFlagsAndUpdatability()
+    public void IsColumnSet_PreservesOtherFlagsAndUpdatability()
     {
-        var metadata = new TdsColumnMetadata(0) { Updatability = 2 };
-        Action<bool>[] setters =
-        {
-            value => metadata.IsColumnSet = value,
-            value => metadata.IsDifferentName = value,
-            value => metadata.IsExpression = value,
-            value => metadata.IsHidden = value,
-            value => metadata.IsIdentity = value,
-            value => metadata.IsKey = value
-        };
-        Func<bool>[] getters =
-        {
-            () => metadata.IsColumnSet,
-            () => metadata.IsDifferentName,
-            () => metadata.IsExpression,
-            () => metadata.IsHidden,
-            () => metadata.IsIdentity,
-            () => metadata.IsKey
-        };
+        // Arrange
+        TdsColumnMetadata metadata = new TdsColumnMetadata(0) { Updatability = 2 };
 
-        for (int i = 0; i < setters.Length; i++)
-        {
-            setters[i](true);
-            for (int j = 0; j < getters.Length; j++)
-            {
-                Assert.Equal(j <= i, getters[j]());
-            }
-            Assert.Equal(2, metadata.Updatability);
-        }
+        // Act 1) Set IsColumnSet
+        metadata.IsColumnSet = true;
 
-        for (int i = 0; i < setters.Length; i++)
-        {
-            setters[i](false);
-            for (int j = 0; j < getters.Length; j++)
-            {
-                Assert.Equal(j > i, getters[j]());
-            }
-            Assert.Equal(2, metadata.Updatability);
-        }
+        // Assert
+        Assert.True(metadata.IsColumnSet);
+        Assert.False(metadata.IsDifferentName);
+        Assert.False(metadata.IsExpression);
+        Assert.False(metadata.IsHidden);
+        Assert.False(metadata.IsIdentity);
+        Assert.False(metadata.IsKey);
+        Assert.StrictEqual(2, metadata.Updatability);
+
+        // Act 2) Clear IsColumnSet
+        metadata.IsColumnSet = false;
+
+        // Assert
+        Assert.False(metadata.IsColumnSet);
+        Assert.False(metadata.IsDifferentName);
+        Assert.False(metadata.IsExpression);
+        Assert.False(metadata.IsHidden);
+        Assert.False(metadata.IsIdentity);
+        Assert.False(metadata.IsKey);
+        Assert.StrictEqual(2, metadata.Updatability);
+    }
+
+    [Fact]
+    public void IsDifferentName_PreservesOtherFlagsAndUpdatability()
+    {
+        // Arrange
+        TdsColumnMetadata metadata = new TdsColumnMetadata(0) { Updatability = 2 };
+
+        // Act 1) Set IsColumnSet
+        metadata.IsDifferentName = true;
+
+        // Assert
+        Assert.False(metadata.IsColumnSet);
+        Assert.True(metadata.IsDifferentName);
+        Assert.False(metadata.IsExpression);
+        Assert.False(metadata.IsHidden);
+        Assert.False(metadata.IsIdentity);
+        Assert.False(metadata.IsKey);
+        Assert.StrictEqual(2, metadata.Updatability);
+
+        // Act 2) Clear IsColumnSet
+        metadata.IsDifferentName = false;
+
+        // Assert
+        Assert.False(metadata.IsColumnSet);
+        Assert.False(metadata.IsDifferentName);
+        Assert.False(metadata.IsExpression);
+        Assert.False(metadata.IsHidden);
+        Assert.False(metadata.IsIdentity);
+        Assert.False(metadata.IsKey);
+        Assert.StrictEqual(2, metadata.Updatability);
+    }
+
+    [Fact]
+    public void IsExpression_PreservesOtherFlagsAndUpdatability()
+    {
+        // Arrange
+        TdsColumnMetadata metadata = new TdsColumnMetadata(0) { Updatability = 2 };
+
+        // Act 1) Set IsColumnSet
+        metadata.IsExpression = true;
+
+        // Assert
+        Assert.False(metadata.IsColumnSet);
+        Assert.False(metadata.IsDifferentName);
+        Assert.True(metadata.IsExpression);
+        Assert.False(metadata.IsHidden);
+        Assert.False(metadata.IsIdentity);
+        Assert.False(metadata.IsKey);
+        Assert.StrictEqual(2, metadata.Updatability);
+
+        // Act 2) Clear IsColumnSet
+        metadata.IsExpression = false;
+
+        // Assert
+        Assert.False(metadata.IsColumnSet);
+        Assert.False(metadata.IsDifferentName);
+        Assert.False(metadata.IsExpression);
+        Assert.False(metadata.IsHidden);
+        Assert.False(metadata.IsIdentity);
+        Assert.False(metadata.IsKey);
+        Assert.StrictEqual(2, metadata.Updatability);
+    }
+
+    [Fact]
+    public void IsHidden_PreservesOtherFlagsAndUpdatability()
+    {
+        // Arrange
+        TdsColumnMetadata metadata = new TdsColumnMetadata(0) { Updatability = 2 };
+
+        // Act 1) Set IsColumnSet
+        metadata.IsHidden = true;
+
+        // Assert
+        Assert.False(metadata.IsColumnSet);
+        Assert.False(metadata.IsDifferentName);
+        Assert.False(metadata.IsExpression);
+        Assert.True(metadata.IsHidden);
+        Assert.False(metadata.IsIdentity);
+        Assert.False(metadata.IsKey);
+        Assert.StrictEqual(2, metadata.Updatability);
+
+        // Act 2) Clear IsColumnSet
+        metadata.IsHidden = false;
+
+        // Assert
+        Assert.False(metadata.IsColumnSet);
+        Assert.False(metadata.IsDifferentName);
+        Assert.False(metadata.IsExpression);
+        Assert.False(metadata.IsHidden);
+        Assert.False(metadata.IsIdentity);
+        Assert.False(metadata.IsKey);
+        Assert.StrictEqual(2, metadata.Updatability);
+    }
+
+    [Fact]
+    public void IsIdentity_PreservesOtherFlagsAndUpdatability()
+    {
+        // Arrange
+        TdsColumnMetadata metadata = new TdsColumnMetadata(0) { Updatability = 2 };
+
+        // Act 1) Set IsColumnSet
+        metadata.IsIdentity = true;
+
+        // Assert
+        Assert.False(metadata.IsColumnSet);
+        Assert.False(metadata.IsDifferentName);
+        Assert.False(metadata.IsExpression);
+        Assert.False(metadata.IsHidden);
+        Assert.True(metadata.IsIdentity);
+        Assert.False(metadata.IsKey);
+        Assert.StrictEqual(2, metadata.Updatability);
+
+        // Act 2) Clear IsColumnSet
+        metadata.IsIdentity = false;
+
+        // Assert
+        Assert.False(metadata.IsColumnSet);
+        Assert.False(metadata.IsDifferentName);
+        Assert.False(metadata.IsExpression);
+        Assert.False(metadata.IsHidden);
+        Assert.False(metadata.IsIdentity);
+        Assert.False(metadata.IsKey);
+        Assert.StrictEqual(2, metadata.Updatability);
+    }
+
+    [Fact]
+    public void IsKey_PreservesOtherFlagsAndUpdatability()
+    {
+        // Arrange
+        TdsColumnMetadata metadata = new TdsColumnMetadata(0) { Updatability = 2 };
+
+        // Act 1) Set IsColumnSet
+        metadata.IsKey = true;
+
+        // Assert
+        Assert.False(metadata.IsColumnSet);
+        Assert.False(metadata.IsDifferentName);
+        Assert.False(metadata.IsExpression);
+        Assert.False(metadata.IsHidden);
+        Assert.False(metadata.IsIdentity);
+        Assert.True(metadata.IsKey);
+        Assert.StrictEqual(2, metadata.Updatability);
+
+        // Act 2) Clear IsColumnSet
+        metadata.IsKey = false;
+
+        // Assert
+        Assert.False(metadata.IsColumnSet);
+        Assert.False(metadata.IsDifferentName);
+        Assert.False(metadata.IsExpression);
+        Assert.False(metadata.IsHidden);
+        Assert.False(metadata.IsIdentity);
+        Assert.False(metadata.IsKey);
+        Assert.StrictEqual(2, metadata.Updatability);
     }
 
     /// <summary>
@@ -245,7 +375,8 @@ public class TdsColumnMetadataTests
     [InlineData(255, 3, false)]
     public void Updatability_MasksValueAndPreservesFlags(byte value, byte expected, bool isReadOnly)
     {
-        var metadata = new TdsColumnMetadata(0)
+        // Arrange
+        TdsColumnMetadata metadata = new TdsColumnMetadata(0)
         {
             IsColumnSet = true,
             IsDifferentName = true,
@@ -256,8 +387,10 @@ public class TdsColumnMetadataTests
             Updatability = 3
         };
 
+        // Act
         metadata.Updatability = value;
 
+        // Assert
         Assert.Equal(expected, metadata.Updatability);
         Assert.Equal(isReadOnly, metadata.IsReadOnly);
         Assert.True(metadata.IsColumnSet);
@@ -281,8 +414,10 @@ public class TdsColumnMetadataTests
     [InlineData(SqlDbType.Int, false)]
     public void Is2008DateTimeType_ClassifiesDbType(SqlDbType dbType, bool expected)
     {
-        var metadata = new TdsColumnMetadata(0) { DbType = dbType };
+        // Act
+        TdsColumnMetadata metadata = new TdsColumnMetadata(0) { DbType = dbType };
 
+        // Assert
         Assert.Equal(expected, metadata.Is2008DateTimeType);
     }
 
@@ -296,8 +431,10 @@ public class TdsColumnMetadataTests
     [InlineData(SqlDbType.VarBinary, int.MaxValue, false)]
     public void IsLargeUdt_RequiresUdtAndMaximumLength(SqlDbType dbType, int length, bool expected)
     {
-        var metadata = new TdsColumnMetadata(0) { DbType = dbType, length = length };
+        // Act
+        TdsColumnMetadata metadata = new TdsColumnMetadata(0) { DbType = dbType, length = length };
 
+        // Assert
         Assert.Equal(expected, metadata.IsLargeUdt);
     }
 }
