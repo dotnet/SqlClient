@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using Microsoft.Data.SqlClient.Tests.Common.ConfigurableRetryLogic;
+
 namespace Microsoft.Data.SqlClient.UnloadableLibrary;
 
 public sealed class EntryPoint
@@ -13,6 +15,24 @@ public sealed class EntryPoint
         AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", true);
 
         ConnectionString = connectionString;
+
+        InitializeRetryProviders();
+    }
+
+    private void InitializeRetryProviders()
+    {
+        RetryLogicConfigs connectionConfigs = new()
+        {
+            DeltaTime = TimeSpan.FromSeconds(1),
+            MaxTimeInterval = TimeSpan.FromSeconds(30),
+            MinTimeInterval = TimeSpan.FromSeconds(1),
+            NumberOfTries = 1,
+            RetryLogicType = typeof(SqlConfigurableRetryFactory).FullName,
+            RetryMethodName = nameof(SqlConfigurableRetryFactory.CreateNoneRetryProvider)
+        };
+        RetryLogicConfigs commandConfigs = RetryLogicLoaderHelper.CreateRandomConfig(method: null, authorizedSqlCondition: null);
+
+        RetryLogicLoaderHelper.CreateLoader(connectionConfigs, commandConfigs);
     }
 
     public void GetDate()
