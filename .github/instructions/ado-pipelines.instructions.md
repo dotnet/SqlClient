@@ -41,7 +41,7 @@ Key parameters:
 - `referenceType` (required) — `Package` or `Project`; controls how sibling packages are referenced
 - `buildConfiguration` (required) — `Debug` or `Release`
 - `testJobTimeout` (required) — test job timeout in minutes
-- `targetFrameworks` — Windows test TFMs; default `[net47, net10.0]`
+- `targetFrameworks` — Windows test TFMs; default `[net462, net10.0]`
 - `targetFrameworksUnix` — Unix test TFMs; default `[net10.0]`
 - `netcoreVersionTestUtils` — default runtime for shared test utilities; default `net10.0`
 - `testSets` — test partitions; default `[1, 2, 3]`
@@ -71,7 +71,7 @@ When adding a new build stage, respect the dependency graph and pass artifact na
 
 PR pipelines:
 - Trigger on PRs to `dev/*`, `feat/*`, `main`; exclude `eng/pipelines/onebranch/*` paths
-- Use `[net47, net10.0]` on Windows and `[net10.0]` on Unix
+- Use `[net462, net10.0]` on Windows and `[net10.0]` on Unix
 - Timeout: 90 minutes
 - Package-ref PR disables Always Encrypted tests in Debug config and also disables legacy SQL Server test legs to keep validation fast
 

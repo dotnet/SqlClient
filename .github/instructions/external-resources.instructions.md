@@ -50,11 +50,11 @@ When working with Microsoft.Data.SqlClient, reference official documentation for
 
 ## .NET Version Compatibility
 
-> The driver implementation targets `net47;net10.0`. Reference and unsupported-platform projects also retain `netstandard2.0`, which does not extend driver runtime support. Existing dual-target tests target `net47;net10.0`; modern-only tests, including performance tests, target `net10.0`.
+> The driver implementation targets `net462;net10.0`. Reference and unsupported-platform projects also retain `netstandard2.0`, which does not extend driver runtime support. Existing dual-target tests target `net462;net10.0`; modern-only tests, including performance tests, target `net10.0`.
 
 | .NET Version | Status | Notes |
 |--------------|--------|-------|
-| .NET Framework 4.7 | Supported | Minimum for netfx; shipped `net47` TFM |
+| .NET Framework 4.6.2 | Supported | Minimum for netfx; shipped `net462` TFM |
 | .NET Framework 4.8.1 | Supported | Latest netfx |
 | .NET 8.0 / .NET 9.0 | Not supported by this branch | No shipped or test TFM |
 | .NET 10.0 | Supported | Minimum modern runtime; shipped `net10.0` TFM |

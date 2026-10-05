@@ -90,7 +90,7 @@ When writing notes:
 - If the change affects **all supported TFMs** for that package, do not add a TFM qualifier.
 - If the change affects **only some TFMs**, include an explicit qualifier in the relevant bullet or section title.
 - Use concise qualifiers like:
-  - `(net47 only)`
+  - `(net462 only)`
   - `(net10.0 only)`
 
 Do not infer TFM scope from labels alone; verify from changed files and code paths on the target release branch. Older releases and independently targeted packages may use different TFMs.

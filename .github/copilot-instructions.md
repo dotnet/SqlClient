@@ -11,7 +11,7 @@
 
 ## 📚 Project Overview
 This project is a .NET data provider for SQL Server, enabling .NET applications to interact with SQL Server databases. It supports various features like connection pooling, transaction management, and asynchronous operations.
-The project builds from a **single unified project** at `src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj`, targeting `net47;net10.0` (minimum runtime compatibility: .NET Framework 4.7 and .NET 10). Public API declarations are unified under `src/Microsoft.Data.SqlClient/ref/`; reference and unsupported-platform projects additionally preserve `netstandard2.0`. The legacy `netfx/` and `netcore/` directories are no longer used.
+The project builds from a **single unified project** at `src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj`, targeting `net462;net10.0` (minimum runtime compatibility: .NET Framework 4.6.2 and .NET 10). Public API declarations are unified under `src/Microsoft.Data.SqlClient/ref/`; reference and unsupported-platform projects additionally preserve `netstandard2.0`. The legacy `netfx/` and `netcore/` directories are no longer used.
 The project includes:
 - **Public APIs**: Defined by `src/Microsoft.Data.SqlClient/ref/Microsoft.Data.SqlClient.csproj` and the reference source files beside it.
 - **Implementations**: All source code in `src/Microsoft.Data.SqlClient/src/`.
@@ -51,7 +51,7 @@ This project includes several key products and libraries that facilitate SQL Ser
 - **Logging and Diagnostics**: Provides event source tracing diagnostic capabilities for troubleshooting.
 - **Failover Support**: Handles automatic failover scenarios for high availability.
   - Compatibility switch: `Switch.Microsoft.Data.SqlClient.UseLegacyFailoverAlternationOnLoginSqlErrors` (default `false`) can restore legacy alternation behavior in `LoginWithFailover` for login-phase SQL errors.
-- **Cross-Platform Support**: Compatible with .NET Framework 4.7+ on Windows and .NET 10+ on Windows, Linux, and macOS.
+- **Cross-Platform Support**: Compatible with .NET Framework 4.6.2+ on Windows and .NET 10+ on Windows, Linux, and macOS.
 - **Column Encryption AKV Provider**: Supports Azure Key Vault (AKV) provider for acquiring keys from Azure Key Vault to be used for encryption and decryption.
 
 ## 🧩 SNI Implementations

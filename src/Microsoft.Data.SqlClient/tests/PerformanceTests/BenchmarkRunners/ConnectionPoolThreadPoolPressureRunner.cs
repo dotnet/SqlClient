@@ -20,7 +20,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
     /// cannot make progress: every thread is blocked in a wait, so the wake-up sits in the
     /// queue until the threadpool injects another thread. On the TFMs this project builds the
     /// runtime is told about cooperative blocking and compensates quickly, so stalls are tens
-    /// to a few hundred milliseconds. net47 has no equivalent notification and is slower, but
+    /// to a few hundred milliseconds. net462 has no equivalent notification and is slower, but
     /// this suite does not build it, so that path is not measured here.
     ///
     /// <see cref="ConnectionPoolContentionRunner"/> covers the same shape at the default

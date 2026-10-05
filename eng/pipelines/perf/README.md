@@ -243,9 +243,9 @@ wait blocks whichever thread it runs on, so a pool whose waiter wake-up needs a 
 stalls when every threadpool thread is already blocked; the wake-up waits on thread injection. On
 the TFM the perf project builds (net10.0) the runtime is told about cooperative blocking and
 compensates quickly, so that stall is tens to a few hundred milliseconds, and that is the only
-expectation these benchmarks validate. On net47 the `Task` wait never notifies the pool, so the
+expectation these benchmarks validate. On net462 the `Task` wait never notifies the pool, so the
 wake-up falls to starvation detection and hill climbing and is materially slower; the pool carries no
-framework guards and the driver still ships net47, so that path is live but unmeasured here.
+framework guards and the driver still ships net462, so that path is live but unmeasured here.
 Threadpool threads are the realistic case, because sync database
 calls in ASP.NET run on them, and they are the only configuration in which that stall is visible.
 Benchmarks therefore keep threadpool threads as the default and add dedicated-thread variants

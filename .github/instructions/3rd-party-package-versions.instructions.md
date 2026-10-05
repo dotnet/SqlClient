@@ -3,12 +3,12 @@ applyTo: "**/Directory.Packages.props,**/*.csproj,**/Directory.Build.props,**/*.
 ---
 # Choosing Third-Party Package Dependency Versions
 
-Guidance for choosing versions of **external (third-party) NuGet package dependencies** in multi-targeted projects (e.g. `net47;net10.0`).
+Guidance for choosing versions of **external (third-party) NuGet package dependencies** in multi-targeted projects (e.g. `net462;net10.0`).
 
 > **Scope:** This document covers dependencies consumed from NuGet — packages the SqlClient repo does NOT own. For versioning of SqlClient's own inter-sibling packages (Logging, Abstractions, SqlClient, Azure, AKV Provider, SqlServer.Server), see `sqlclient-package-versions.instructions.md`.
 
 ## Rule
-For runtime-aligned packages, **the package major must match the target runtime major**: 10.x on `net10.0` in this branch. TFMs that aren't tied to a specific runtime major (`net47`, `net481`, `netstandard2.0`) get the major of the floor LTS. Other categories are versioned as described below.
+For runtime-aligned packages, **the package major must match the target runtime major**: 10.x on `net10.0` in this branch. TFMs that aren't tied to a specific runtime major (`net462`, `net481`, `netstandard2.0`) get the major of the floor LTS. Other categories are versioned as described below.
 
 Split package references into three categories:
 
@@ -22,10 +22,10 @@ Packages whose major version ships with (or is tightly coupled to) a specific .N
 - `System.Text.Json`, `System.Memory`, `System.IO.Pipelines`, `System.Formats.Asn1`, `System.Security.Cryptography.Pkcs`
 - `Microsoft.Bcl.*`
 
-Use the major version that matches the TFM. For TFMs without a corresponding runtime major (`net47`, `net481`, `netstandard2.0`, etc.), use the major of the **lowest supported modern TFM** — currently .NET 10. This keeps the legacy targets on a long-lived, well-patched band and avoids dragging in transitive deps from a newer major:
+Use the major version that matches the TFM. For TFMs without a corresponding runtime major (`net462`, `net481`, `netstandard2.0`, etc.), use the major of the **lowest supported modern TFM** — currently .NET 10. This keeps the legacy targets on a long-lived, well-patched band and avoids dragging in transitive deps from a newer major:
 
 ```xml
-<!-- Defaults: .NET 10 LTS; also applies to net47 / net481 / netstandard2.0 -->
+<!-- Defaults: .NET 10 LTS; also applies to net462 / net481 / netstandard2.0 -->
 <ItemGroup>
   <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.0" />
   <PackageVersion Include="System.Text.Json"             Version="10.0.0" />
@@ -58,7 +58,7 @@ Reference one (latest stable) version unconditionally:
 Packages that only exist (or are only needed) on older TFMs. The polyfill major doesn't have to match any runtime band (older TFMs have no in-box equivalent), so pick the latest stable available:
 
 ```xml
-<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'net47' OR '$(TargetFramework)' == 'net481'">
+<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'net462' OR '$(TargetFramework)' == 'net481'">
   <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.0" />
 </ItemGroup>
 ```

@@ -144,9 +144,9 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         /// wake-up is stuck behind thread injection. On the TFMs this project builds the
         /// runtime notifies the pool of cooperative blocking and compensates quickly, so the
         /// stall is tens to a few hundred milliseconds; that is the expectation measured here.
-        /// On net47 the Task wait never notifies the pool, so the wake-up waits on starvation
+        /// On net462 the Task wait never notifies the pool, so the wake-up waits on starvation
         /// detection and hill climbing instead. That path is live, since the pool carries no
-        /// framework guards and the driver still ships net47, but this suite cannot measure it.
+        /// framework guards and the driver still ships net462, but this suite cannot measure it.
         /// Dedicated threads remove that coupling, so this variant measures the pool's
         /// intrinsic checkout/return cost with the scheduler taken out of the picture.
         ///

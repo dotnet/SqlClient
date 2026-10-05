@@ -10,7 +10,7 @@ Microsoft.Data.SqlClient is a .NET data provider for [Microsoft SQL Server](http
 
 The Microsoft.Data.SqlClient package supports the following environments:
 
-- .NET Framework 4.7+
+- .NET Framework 4.6.2+
 - .NET 10.0+
 
 ## Download

@@ -7,7 +7,7 @@ It exercises the driver under unfavorable conditions to identify failures.
 This is a console application targeting the SqlClient test framework matrix (not the shipped driver TFMs):
 
 - .NET 10.0
-- .NET Framework 4.7 (Windows only; higher .NET Framework versions are supported at runtime via
+- .NET Framework 4.6.2 (Windows only; higher .NET Framework versions are supported at runtime via
   compatibility)
 
 ## Purpose of application for developers
@@ -66,7 +66,7 @@ cd src/Microsoft.Data.SqlClient/tests/StressTests
 dotnet build SqlClient.Stress.Runner -c Debug -f net10.0
 ```
 
-Run the `cd` command from the repository root. On Windows, use `-f net47` to build the .NET Framework
+Run the `cd` command from the repository root. On Windows, use `-f net462` to build the .NET Framework
 executable. Use the same configuration and framework for the build and subsequent `--no-build` run.
 
 ## Running tests
@@ -107,8 +107,8 @@ $env:STRESS_CONFIG_FILE = "C:\path\to\config.jsonc"
 # Via dotnet run CLI:
 dotnet run --no-build -f net10.0 --project SqlClient.Stress.Runner -- --assembly SqlClient.Stress.Tests
 
-# Via executable (after building -f net47):
-.\SqlClient.Stress.Runner\bin\Debug\net47\stresstest.exe --assembly SqlClient.Stress.Tests
+# Via executable (after building -f net462):
+.\SqlClient.Stress.Runner\bin\Debug\net462\stresstest.exe --assembly SqlClient.Stress.Tests
 
 # With a specific config file and all output to console:
 dotnet run --no-build -f net10.0 --project SqlClient.Stress.Runner -e STRESS_CONFIG_FILE=C:\path\to\config.jsonc -- --assembly SqlClient.Stress.Tests --console
@@ -135,60 +135,60 @@ dotnet run --no-build -f net10.0 --project SqlClient.Stress.Runner -e STRESS_CON
 
 The former single-dash options (`-a`, `-all`, `-verify`, etc.) are not supported.
 Omit `--test` to select all discovered tests, subject to any `--filter`.
-The executable examples below assume a Windows `net47` Debug build and the same Stress Tests working directory.
+The executable examples below assume a Windows `net462` Debug build and the same Stress Tests working directory.
 
 ```powershell
 # Run all discovered tests.
 
-.\SqlClient.Stress.Runner\bin\Debug\net47\stresstest.exe --assembly SqlClient.Stress.Tests
+.\SqlClient.Stress.Runner\bin\Debug\net462\stresstest.exe --assembly SqlClient.Stress.Tests
 ```
 
 ```powershell
 # Run all discovered tests and print their method names.
 
-.\SqlClient.Stress.Runner\bin\Debug\net47\stresstest.exe --assembly SqlClient.Stress.Tests --print-method-name
+.\SqlClient.Stress.Runner\bin\Debug\net462\stresstest.exe --assembly SqlClient.Stress.Tests --print-method-name
 ```
 
 ```powershell
 # Wait for debugger attachment before running all discovered tests.
 
-.\SqlClient.Stress.Runner\bin\Debug\net47\stresstest.exe --assembly SqlClient.Stress.Tests --debug
+.\SqlClient.Stress.Runner\bin\Debug\net462\stresstest.exe --assembly SqlClient.Stress.Tests --debug
 ```
 
 ```powershell
 # Run only TestExecuteXmlReaderAsyncCancellation.
 
-.\SqlClient.Stress.Runner\bin\Debug\net47\stresstest.exe --assembly SqlClient.Stress.Tests --test TestExecuteXmlReaderAsyncCancellation
+.\SqlClient.Stress.Runner\bin\Debug\net462\stresstest.exe --assembly SqlClient.Stress.Tests --test TestExecuteXmlReaderAsyncCancellation
 ```
 
 ```powershell
 # Run all discovered tests for 10 seconds.
 
-.\SqlClient.Stress.Runner\bin\Debug\net47\stresstest.exe --assembly SqlClient.Stress.Tests --duration 10
+.\SqlClient.Stress.Runner\bin\Debug\net462\stresstest.exe --assembly SqlClient.Stress.Tests --duration 10
 ```
 
 ```powershell
 # Run all discovered tests with 5 threads.
 
-.\SqlClient.Stress.Runner\bin\Debug\net47\stresstest.exe --assembly SqlClient.Stress.Tests --threads 5
+.\SqlClient.Stress.Runner\bin\Debug\net462\stresstest.exe --assembly SqlClient.Stress.Tests --threads 5
 ```
 
 ```powershell
 # Run all discovered tests with deadlock detection enabled.
 
-.\SqlClient.Stress.Runner\bin\Debug\net47\stresstest.exe --assembly SqlClient.Stress.Tests --deadlock-detection
+.\SqlClient.Stress.Runner\bin\Debug\net462\stresstest.exe --assembly SqlClient.Stress.Tests --deadlock-detection
 ```
 
 ```powershell
 # Run all discovered tests with Weight set to 15.
 
-.\SqlClient.Stress.Runner\bin\Debug\net47\stresstest.exe --assembly SqlClient.Stress.Tests --override Weight=15
+.\SqlClient.Stress.Runner\bin\Debug\net462\stresstest.exe --assembly SqlClient.Stress.Tests --override Weight=15
 ```
 
 ```powershell
 # Run all discovered tests with random seed 5.
 
-.\SqlClient.Stress.Runner\bin\Debug\net47\stresstest.exe --assembly SqlClient.Stress.Tests --random-seed 5
+.\SqlClient.Stress.Runner\bin\Debug\net462\stresstest.exe --assembly SqlClient.Stress.Tests --random-seed 5
 ```
 
 ## Further thoughts

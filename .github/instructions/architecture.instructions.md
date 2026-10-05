@@ -55,8 +55,8 @@ This defines preprocessor constants:
 > **NOTE**: These constants are prefixed with `_` (underscore) to avoid conflict with .NET 5+ built-in OS-specific target framework preprocessor flags.
 
 ### Platform-Specific Files
-The driver supports .NET Framework 4.7+ and .NET 10+. Platform-specific code uses file suffixes:
-- `.netfx.cs` — .NET Framework only (compiled when targeting `net47`)
+The driver supports .NET Framework 4.6.2+ and .NET 10+. Platform-specific code uses file suffixes:
+- `.netfx.cs` — .NET Framework only (compiled when targeting `net462`)
 - `.netcore.cs` — .NET only (compiled when targeting `net10.0`)
 - `.windows.cs` — Windows only (compiled when `_WINDOWS` is defined)
 - `.unix.cs` — Unix/Linux/macOS only (compiled when `_UNIX` is defined)
@@ -68,13 +68,13 @@ When writing code that differs by platform, use these preprocessor directives:
 
 | Directive | When to Use |
 |-----------|------------|
-| `#if NETFRAMEWORK` | Code for .NET Framework (`net47`) only |
+| `#if NETFRAMEWORK` | Code for .NET Framework (`net462`) only |
 | `#if NET` | Code for .NET 10+ only |
 | `#if _WINDOWS` | Code for Windows OS (any framework) |
 | `#if _UNIX` | Code for Unix/Linux/macOS OS (any framework) |
 
 Guidelines:
-1. Driver code must compile for `net10.0` everywhere and `net47` for Windows runtime support
+1. Driver code must compile for `net10.0` everywhere and `net462` for Windows runtime support
 2. Use `#if NETFRAMEWORK` or `#if NET` for framework-specific code paths
 3. Use `#if _WINDOWS` or `#if _UNIX` for OS-specific code paths
 4. Avoid APIs that don't exist on a target platform without conditional compilation
@@ -83,23 +83,23 @@ Guidelines:
 ### Framework-Specific Dependencies
 The unified project uses conditional `ItemGroup` elements for dependencies:
 
-- **net47**: References `System.Configuration`, `System.EnterpriseServices`, `System.Transactions`, plus `Microsoft.Data.SqlClient.SNI` native package
+- **net462**: References `System.Configuration`, `System.EnterpriseServices`, `System.Transactions`, plus `Microsoft.Data.SqlClient.SNI` native package
 - **net10.0**: References `Microsoft.Data.SqlClient.SNI.runtime`, `System.Configuration.ConfigurationManager`, `Microsoft.SqlServer.Server`
 - **Shared**: `Azure.Core`, `Azure.Identity`, `Microsoft.Bcl.Cryptography`, `Microsoft.Extensions.Caching.Memory`, `Microsoft.IdentityModel.*`, `System.Security.Cryptography.Pkcs`
 
 ### Reference Assemblies
 `src/Microsoft.Data.SqlClient/ref/Microsoft.Data.SqlClient.csproj` builds the unified
-reference sources for `net47`, `net10.0`, and `netstandard2.0`. Declarations
+reference sources for `net462`, `net10.0`, and `netstandard2.0`. Declarations
 are grouped by namespace, with conditional compilation for framework differences.
 
 **IMPORTANT**: Public API changes MUST update the corresponding files under
 `src/Microsoft.Data.SqlClient/ref/` for every affected target framework.
 
 The unsupported-platform project also retains `netstandard2.0`; neither this target nor the reference
-assembly expands supported driver runtimes below .NET Framework 4.7 or .NET 10.
-Existing dual-target tests use `net47;net10.0`; modern-only projects, including performance tests, use
+assembly expands supported driver runtimes below .NET Framework 4.6.2 or .NET 10.
+Existing dual-target tests use `net462;net10.0`; modern-only projects, including performance tests, use
 `net10.0` only. Standard-only companions retain their existing `netstandard` targets. Azure extensions
-target `net47;netstandard2.0`. Microsoft.SqlServer.Server remains independently
+target `net462;netstandard2.0`. Microsoft.SqlServer.Server remains independently
 versioned and retains `net46;netstandard2.0`; raising its framework floor is a separate change.
 Preserve every `net481` target: PackageCompatibility tool/tests use `net481;net10.0` with xUnit v3,
 and AzureSqlConnector uses `net481;net10.0-windows`. Do not migrate the historical SniCloseLegacyRepro matrix.
@@ -127,7 +127,7 @@ Two implementations exist:
 ### Native SNI
 - Windows-only native library (C++)
 - Shipped as separate NuGet packages:
-  - `Microsoft.Data.SqlClient.SNI` — For .NET Framework (`net47` driver target)
+  - `Microsoft.Data.SqlClient.SNI` — For .NET Framework (`net462` driver target)
   - `Microsoft.Data.SqlClient.SNI.runtime` — For .NET Core/.NET on Windows
 - Provides optimal performance on Windows
 
@@ -184,6 +184,6 @@ Column-level encryption implementation:
 
 ## Dependencies and Framework Support
 
-- .NET Framework 4.7+
+- .NET Framework 4.6.2+
 - .NET 10.0+
 - See `Directory.Packages.props` for centralized package version management

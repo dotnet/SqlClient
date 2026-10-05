@@ -18,11 +18,11 @@ This package provides **Azure integration extensions** for [Microsoft.Data.SqlCl
 
 This package targets:
 
-- .NET Framework 4.7 (`net47`)
+- .NET Framework 4.6.2 (`net462`)
 - .NET Standard 2.0 (`netstandard2.0`)
 
 When used with the current Microsoft.Data.SqlClient driver, supported runtimes are
-.NET Framework 4.7+ and .NET 10.0+. The .NET Standard target does not extend driver runtime support.
+.NET Framework 4.6.2+ and .NET 10.0+. The .NET Standard target does not extend driver runtime support.
 
 ## Installation
 

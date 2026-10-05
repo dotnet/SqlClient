@@ -55,7 +55,7 @@ Before making changes, document:
 
 ## 4. Implement the Optimization
 - Make changes in `src/Microsoft.Data.SqlClient/src/`. Do NOT modify legacy directories.
-- Ensure the optimization compiles for ALL driver implementation target frameworks (`net47`, `net10.0`).
+- Ensure the optimization compiles for ALL driver implementation target frameworks (`net462`, `net10.0`).
 - Use `#if NET` for modern .NET APIs available on the `net10.0` target but not .NET Framework (e.g., `SearchValues<T>`, newer `Span` overloads).
 - Preserve exact behavioral semantics — the optimization must be invisible to callers.
 - Pay special attention to thread safety when caching or sharing instances.

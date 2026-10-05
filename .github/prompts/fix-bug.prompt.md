@@ -13,14 +13,14 @@ Follow this workflow step-by-step:
 ## 1. Understand the Bug
 - If a GitHub issue number is provided, fetch the issue details from `dotnet/SqlClient`.
 - Identify the repro steps, expected behavior, and actual behavior.
-- Determine which platforms are affected (.NET Framework 4.7+, .NET 10+, Windows, Unix).
+- Determine which platforms are affected (.NET Framework 4.6.2+, .NET 10+, Windows, Unix).
 - If the issue lacks sufficient detail, note what information is missing.
 
 ## 2. Locate the Relevant Code
 - All source code lives in `src/Microsoft.Data.SqlClient/src/`. Do NOT modify files in the legacy `netcore/src/` or `netfx/src/` directories.
 - Search for related classes, methods, or keywords in `src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/`.
 - Check for platform-specific files (`.netfx.cs`, `.netcore.cs`, `.windows.cs`, `.unix.cs`) that may contain the affected code path.
-- Understand conditional compilation: use `#if NETFRAMEWORK` for net47, `#if NET` for net10.0, `#if _WINDOWS` / `#if _UNIX` for OS-specific code.
+- Understand conditional compilation: use `#if NETFRAMEWORK` for net462, `#if NET` for net10.0, `#if _WINDOWS` / `#if _UNIX` for OS-specific code.
 
 ## 3. Write a Failing Test
 - Create a test that reproduces the bug BEFORE implementing the fix.
@@ -34,7 +34,7 @@ Follow this workflow step-by-step:
 
 ## 4. Implement the Fix
 - Make the minimal change needed to fix the bug.
-- Ensure the fix compiles for ALL driver implementation target frameworks: `net47`, `net10.0`.
+- Ensure the fix compiles for ALL driver implementation target frameworks: `net462`, `net10.0`.
 - If the fix requires platform-specific code, use the appropriate conditional compilation directives.
 - Do NOT introduce breaking changes to public APIs.
 - If a public API must change, update the corresponding sources under `src/Microsoft.Data.SqlClient/ref/`, including conditional declarations for each affected framework.

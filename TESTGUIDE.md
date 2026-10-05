@@ -16,12 +16,12 @@ The primary test projects for Microsoft.Data.SqlClient are under
 | Functional tests | [src/Microsoft.Data.SqlClient/tests/FunctionalTests/Microsoft.Data.SqlClient.FunctionalTests.csproj](src/Microsoft.Data.SqlClient/tests/FunctionalTests/Microsoft.Data.SqlClient.FunctionalTests.csproj) | Functional tests for public and internal behavior. Some tests use simulated servers or local test infrastructure. |
 | Manual tests     | [src/Microsoft.Data.SqlClient/tests/ManualTests/Microsoft.Data.SqlClient.ManualTests.csproj](src/Microsoft.Data.SqlClient/tests/ManualTests/Microsoft.Data.SqlClient.ManualTests.csproj)                 | Integration tests that generally require a configured SQL Server or Azure SQL target.                             |
 
-These projects declare `net47` and `net10.0`. The `net47` tests require Windows and .NET Framework 4.7
+These projects declare `net462` and `net10.0`. The `net462` tests require Windows and .NET Framework 4.6.2
 or a compatible later runtime; the project framework lists are not automatically reduced on Linux/macOS.
 Select `-p:TestFramework=net10.0` when using `build.proj`, or `--framework net10.0` with `dotnet test`.
 The examples below select `net10.0` unless stated otherwise. Install the .NET 10 runtime to run modern tests.
-Existing dual-target companion tests also use `net47;net10.0`; modern-only projects, including performance
-tests, use only `net10.0`. Stress projects use `net47;net10.0`. PackageCompatibility tool tests remain on
+Existing dual-target companion tests also use `net462;net10.0`; modern-only projects, including performance
+tests, use only `net10.0`. Stress projects use `net462;net10.0`. PackageCompatibility tool tests remain on
 `net481;net10.0` with xUnit v3, and their Framework target requires Windows and .NET Framework 4.8.1.
 The historical `tools/SniCloseLegacyRepro` test matrix is unchanged.
 
@@ -128,7 +128,7 @@ The most commonly used test parameters are:
 | `-p:TestBlameTimeout=`      | `10m`                                                     | Enables hang blame collection with the specified timeout. Use `0` to disable hang timeouts.                                   |
 | `-p:TestCodeCoverage=`      | `true`                                                    | Collects code coverage when set to `true`.                                                                                    |
 | `-p:TestFilters=`           | `category!=failing&category!=flaky&category!=interactive` | xUnit filter expression. Use `none` to disable this filter; test-set selection and conditional skips still apply.              |
-| `-p:TestFramework=`         | Empty                                                     | Target framework to run. If omitted, all project frameworks are selected, including Windows-only `net47`.                     |
+| `-p:TestFramework=`         | Empty                                                     | Target framework to run. If omitted, all project frameworks are selected, including Windows-only `net462`.                     |
 | `-p:TestResultsFolderPath=` | `test_results` under the repository root                   | Absolute directory where test results are written.                                                                          |
 | `-p:TestSet=`               | Empty                                                     | Selects manual test sets. Supported values include `1`, `2`, `3`, `AE`, and combinations such as `13` or `12AE`.              |
 

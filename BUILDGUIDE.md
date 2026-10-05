@@ -16,7 +16,7 @@ building the current version, see [global.json](global.json). Downloads for .NET
 The .NET SDK contains support for building for previous versions of .NET, including support for building .NET Framework
 on operating systems that do not support .NET Framework. As such, it is not necessary to install an older
 .NET SDK to compile the projects. Running modern tests requires the .NET 10 runtime.
-Running `net47` tests requires Windows and .NET Framework 4.7 or a compatible later runtime.
+Running `net462` tests requires Windows and .NET Framework 4.6.2 or a compatible later runtime.
 The PackageCompatibility tool and its tests retain `net481` and require .NET Framework 4.8.1 for that target;
 AzureSqlConnector retains `net481;net10.0-windows` and requires Windows with the corresponding
 .NET Framework 4.8.1 or .NET 10 Windows Desktop runtime. On Linux and macOS, select
@@ -79,20 +79,20 @@ driver projects, tests, samples, and tools for their declared target frameworks.
 projects, specify `-t:BuildDriver` explicitly.
 
 The implementation is built from `src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj`,
-which targets `net47` and `net10.0`. The modern .NET implementation is shared across Windows,
+which targets `net462` and `net10.0`. The modern .NET implementation is shared across Windows,
 Linux, and macOS; there are no separate Windows and Unix build targets. Reference assemblies are built
 from `src/Microsoft.Data.SqlClient/ref/Microsoft.Data.SqlClient.csproj`.
 The reference and unsupported-platform projects additionally retain `netstandard2.0`; this does not
-extend the driver's runtime support below .NET Framework 4.7 or .NET 10.
+extend the driver's runtime support below .NET Framework 4.6.2 or .NET 10.
 
 | Project group | Target frameworks |
 |---------------|-------------------|
-| Driver implementation | `net47;net10.0` |
-| Driver reference and unsupported-platform assemblies | `net47;net10.0;netstandard2.0` |
-| Existing dual-target tests, stress projects, and their shared helpers | `net47;net10.0` |
+| Driver implementation | `net462;net10.0` |
+| Driver reference and unsupported-platform assemblies | `net462;net10.0;netstandard2.0` |
+| Existing dual-target tests, stress projects, and their shared helpers | `net462;net10.0` |
 | Modern-only projects, including performance tests | `net10.0` |
 | AKV Provider, Abstractions, Logging, and standard-only test utilities | `netstandard2.0` only |
-| Azure extensions | `net47;netstandard2.0` |
+| Azure extensions | `net462;netstandard2.0` |
 | Microsoft.SqlServer.Server (independently versioned; unchanged here) | `net46;netstandard2.0` |
 | PackageCompatibility tool and tests (xUnit v3) | `net481;net10.0` |
 | AzureSqlConnector | `net481;net10.0-windows` |

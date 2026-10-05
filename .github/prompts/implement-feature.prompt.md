@@ -13,7 +13,7 @@ Follow this workflow step-by-step:
 ## 1. Understand the Feature
 - If a GitHub issue number is provided, fetch the full issue details from `dotnet/SqlClient`.
 - Identify the feature scope, requirements, and acceptance criteria.
-- Determine which platforms must be supported (.NET Framework 4.7, .NET 10.0).
+- Determine which platforms must be supported (.NET Framework 4.6.2, .NET 10.0).
 - Check for related issues or prior discussions.
 - If the feature involves a new connection string keyword, new data type, or TDS protocol change, note the additional areas impacted.
 
@@ -40,10 +40,10 @@ Before writing code, produce a brief implementation plan covering:
   - `.windows.cs` for Windows-only code
   - `.unix.cs` for Unix/Linux/macOS-only code
 - Use conditional compilation:
-  - `#if NETFRAMEWORK` for net47 code paths
+  - `#if NETFRAMEWORK` for net462 code paths
   - `#if NET` for net10.0 code paths (NOT `#if NETCOREAPP`)
   - `#if _WINDOWS` or `#if _UNIX` for OS-specific code
-- Ensure the code compiles for ALL driver implementation target frameworks: `net47`, `net10.0`.
+- Ensure the code compiles for ALL driver implementation target frameworks: `net462`, `net10.0`.
 - Follow the coding standards in `policy/coding-style.md` and `policy/coding-best-practices.md`.
 
 ### Connection String Keywords (if applicable)
@@ -83,6 +83,6 @@ Before writing code, produce a brief implementation plan covering:
   - [ ] Both sync and async code paths tested
   - [ ] XML documentation on all public members
   - [ ] Code sample added to `doc/samples/`
-  - [ ] Compiles on all driver implementation target frameworks (`net47`, `net10.0`)
+  - [ ] Compiles on all driver implementation target frameworks (`net462`, `net10.0`)
   - [ ] No breaking changes to existing APIs
   - [ ] Follows coding style (`policy/coding-style.md`)
