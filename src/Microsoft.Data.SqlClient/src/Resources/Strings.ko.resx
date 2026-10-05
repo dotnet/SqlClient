@@ -204,9 +204,6 @@
   <data name="ADP_PooledOpenTimeout" xml:space="preserve">
     <value>제한 시간이 만료되었습니다. 풀에서 연결을 만들기 전에 제한 시간이 경과되었습니다. 풀링된 연결이 사용 중이었거나 최대 풀 크기에 도달했기 때문일 수 있습니다.</value>
   </data>
-  <data name="ADP_IsolationLevelResetTimeout" xml:space="preserve">
-    <value>제한 시간이 만료되었습니다. 풀링된 연결의 트랜잭션 격리 수준을 다시 설정하기 전에 연결 제한 시간이 경과되었습니다.</value>
-  </data>
   <data name="ADP_NonPooledOpenTimeout" xml:space="preserve">
     <value>연결을 여는 중 시간이 초과했습니다. 연결을 열기 전에 경과한 시간이 제한 시간을 초과했습니다. 이는 풀링되지 않은 연결 시도가 동시에 너무 많이 시도되어서 발생했을 수 있습니다.</value>
   </data>

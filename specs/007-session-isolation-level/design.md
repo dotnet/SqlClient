@@ -125,7 +125,7 @@ documented `TransactionScope` `Serializable` default silently run read-committed
 | Code path | `SqlConnectionInternal.Enlist()` — the **re-enlistment / checkout** path (the `else if` on the equality short-circuit) |
 | Mechanism | When a reset is pending, re-issue `SET TRANSACTION ISOLATION LEVEL <ambient>` mapped from `Transaction.IsolationLevel` |
 | Direction | **Re-assert** session state on the way back out of the pool |
-| Isolation levels | Re-assert `ReadUncommitted`, `RepeatableRead`, `Serializable`, and `Snapshot`. Skip `ReadCommitted` (no reassertion needed), `Unspecified`, and `Chaos` (no statement mapping). Reasserting `Snapshot` preserves the level under which the delegated transaction began; it does not introduce Snapshot into a transaction begun at another level. |
+| Isolation levels | Re-assert `ReadUncommitted`, `RepeatableRead`, `Serializable`, and `Snapshot`. Skip `ReadCommitted` (no reassertion needed), `Unspecified`, and `Chaos` (no statement mapping). Reasserting `Snapshot` preserves the level under which the delegated transaction began; it does not introduce Snapshot into a transaction begun at another level. Skipped entirely on dedicated Synapse endpoints, which reject the statement with error 104409. |
 | Activation | Unconditional; no compatibility switch |
 | Cost | One extra round trip on a pooled re-checkout with a reset pending and one of the mapped non-default levels, on all back ends |
 

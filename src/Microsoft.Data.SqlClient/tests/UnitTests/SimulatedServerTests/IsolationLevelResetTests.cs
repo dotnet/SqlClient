@@ -116,6 +116,40 @@ public sealed class IsolationLevelResetTests
     }
 
     /// <summary>
+    /// Ensures a broken parser fails the reset and dooms the connection instead of silently
+    /// skipping the batch and handing out a session whose isolation level was never scrubbed.
+    /// </summary>
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ResetSessionIsolationLevel_ParserNotUsable_ThrowsAndDooms(bool broken)
+    {
+        TdsParserState parserState = broken ? TdsParserState.Broken : TdsParserState.Closed;
+        using TdsServer server = new(new TdsServerArguments());
+        server.Start();
+        using SqlConnection connection = OpenConnection(server);
+        int batchCount = 0;
+        server.OnSQLBatchCompleted = _ => Interlocked.Increment(ref batchCount);
+
+        SqlConnectionInternal internalConnection = (SqlConnectionInternal)connection.InnerConnection;
+        TdsParserState originalState = internalConnection.Parser.State;
+        internalConnection.Parser.State = parserState;
+        try
+        {
+            Assert.Throws<InvalidOperationException>(
+                () => internalConnection.ResetSessionIsolationLevel(TimeoutTimer.StartNew(TimeSpan.FromSeconds(15))));
+        }
+        finally
+        {
+            internalConnection.Parser.State = originalState;
+        }
+
+        Assert.Equal(0, Volatile.Read(ref batchCount));
+        Assert.True(internalConnection.IsConnectionDoomed);
+        Assert.False(internalConnection.IsolationLevelDirty);
+    }
+
+    /// <summary>
     /// Ensures an already-doomed connection does not send any SQL batch to the server.
     /// </summary>
     [Fact]

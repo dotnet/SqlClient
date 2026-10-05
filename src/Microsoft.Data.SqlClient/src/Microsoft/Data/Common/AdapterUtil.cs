@@ -943,7 +943,7 @@ namespace Microsoft.Data.Common
         // Locates, without allocating, the host within a data source of the form
         // "[protocol:]host[\instance][,port]", including named pipe forms such as
         // "np:\\host\pipe\sql\query". The host occupies [start, end) of dataSource.
-        private static void GetDataSourceHostRange(string dataSource, out int start, out int end)
+        internal static void GetDataSourceHostRange(string dataSource, out int start, out int end)
         {
             start = 0;
             end = dataSource.Length;
@@ -968,7 +968,7 @@ namespace Microsoft.Data.Common
             TrimRange(dataSource, ref start, ref end);
         }
 
-        private static void TrimRange(string value, ref int start, ref int end)
+        internal static void TrimRange(string value, ref int start, ref int end)
         {
             while (start < end && char.IsWhiteSpace(value[start]))
             {
@@ -981,7 +981,7 @@ namespace Microsoft.Data.Common
         }
 
         // Returns whether value[start, end) ends with suffix, using an ordinal, case-insensitive comparison.
-        private static bool EndsWithOrdinalIgnoreCase(string value, int start, int end, string suffix)
+        internal static bool EndsWithOrdinalIgnoreCase(string value, int start, int end, string suffix)
             => end - start >= suffix.Length
                 && string.Compare(value, end - suffix.Length, suffix, 0, suffix.Length, StringComparison.OrdinalIgnoreCase) == 0;
 

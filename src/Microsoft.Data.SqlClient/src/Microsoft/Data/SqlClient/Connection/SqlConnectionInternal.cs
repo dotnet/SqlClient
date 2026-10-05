@@ -2102,9 +2102,6 @@ namespace Microsoft.Data.SqlClient.Connection
 
         #region Protected Methods
 
-        protected override void Activate(Transaction transaction)
-            => Activate(transaction, TimeoutTimer.StartNew(TimeSpan.FromSeconds(ConnectionOptions.ConnectTimeout)));
-
         protected override void Activate(Transaction transaction, TimeoutTimer timeout)
         {
             #if NETFRAMEWORK
@@ -2557,6 +2554,14 @@ namespace Microsoft.Data.SqlClient.Connection
                     return;
             }
 
+            // Dedicated Synapse pools reject SET TRANSACTION ISOLATION LEVEL with error 104409;
+            // their effective isolation is service-controlled. Sending it would fail the second
+            // Open inside the same TransactionScope, so skip the reassert there.
+            if (ADP.IsAzureSynapseDedicatedPoolEndpoint(ConnectionOptions.DataSource))
+            {
+                return;
+            }
+
             // Matches the batch/Run shape used by ChangeDatabase, including its up-front
             // validation that the parser is usable and the physical state object is idle.
             ValidateConnectionForExecute(null);
@@ -2584,10 +2589,7 @@ namespace Microsoft.Data.SqlClient.Connection
                 // transactions are joined by propagating a DTC transaction token instead (see
                 // PropagateTransactionCookie). Mark the session here so the next pooled checkout
                 // resets it.
-                if (!ADP.IsAzureSynapseDedicatedPoolEndpoint(ConnectionOptions.DataSource))
-                {
-                    _isolationLevelDirty = true;
-                }
+                _isolationLevelDirty = true;
             }
             catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
@@ -4202,13 +4204,22 @@ namespace Microsoft.Data.SqlClient.Connection
                     }
                 }
 
+                // A Broken or Closed parser makes the send and Run below silent no-ops, which would
+                // hand out a connection whose session level was never scrubbed. Fail instead.
+                ValidateConnectionForExecute(null);
+
                 _parser.TdsExecuteSQLBatchWithMillisecondTimeout(
-                    text: "SET TRANSACTION ISOLATION LEVEL READ COMMITTED;",
-                    timeoutMilliseconds: timeoutMilliseconds,
-                    notificationRequest: null,
-                    stateObj: _parser._physicalStateObj,
-                    sync: true);
+                        text: "SET TRANSACTION ISOLATION LEVEL READ COMMITTED;",
+                        timeoutMilliseconds: timeoutMilliseconds,
+                        notificationRequest: null,
+                        stateObj: _parser._physicalStateObj,
+                        sync: true);
                 _parser.Run(RunBehavior.UntilDone, null, null, null, _parser._physicalStateObj);
+
+                if (_parser.State is not TdsParserState.OpenLoggedIn)
+                {
+                    throw ADP.ClosedConnectionError();
+                }
             }
             catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {

@@ -873,20 +873,13 @@ namespace Microsoft.Data.ProviderBase
         #region Protected Methods
 
         /// <summary>
-        /// Activates the connection, preparing it for active use.
-        /// An activated connection has an owner and is checked out from the connection pool (if pooling is enabled).
-        /// </summary>
-        /// <param name="transaction">The transaction in which the connection should enlist.</param>
-        protected abstract void Activate(Transaction transaction);
-
-        /// <summary>
         /// Activates the connection, preparing it for active use, within the caller's remaining
-        /// open timeout. The default implementation ignores <paramref name="timeout"/> and calls
-        /// <see cref="Activate(Transaction)"/>.
+        /// open timeout. An activated connection has an owner and is checked out from the
+        /// connection pool (if pooling is enabled).
         /// </summary>
         /// <param name="transaction">The transaction in which the connection should enlist.</param>
         /// <param name="timeout">The remaining time budget of the open operation.</param>
-        protected virtual void Activate(Transaction transaction, TimeoutTimer timeout) => Activate(transaction);
+        protected abstract void Activate(Transaction transaction, TimeoutTimer timeout);
 
         /// <summary>
         /// Cleanup connection's transaction-specific structures (currently used by Delegated transaction).

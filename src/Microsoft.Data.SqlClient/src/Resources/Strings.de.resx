@@ -204,9 +204,6 @@
   <data name="ADP_PooledOpenTimeout" xml:space="preserve">
     <value>Timeout abgelaufen. Das Zeitlimit ist vor dem Anfordern einer Verbindung aus dem Pool abgelaufen. Möglicherweise werden alle Verbindungen im Pool bereits verwendet, und die maximale Poolgröße wurde erreicht.</value>
   </data>
-  <data name="ADP_IsolationLevelResetTimeout" xml:space="preserve">
-    <value>Timeout abgelaufen. Das Verbindungszeitlimit ist abgelaufen, bevor die Transaktionsisolationsstufe der Verbindung aus dem Pool zurückgesetzt werden konnte.</value>
-  </data>
   <data name="ADP_NonPooledOpenTimeout" xml:space="preserve">
     <value>Timeout beim Versuch, die Verbindung zu öffnen. Die Zeitspanne, die vor dem Versuch, die Verbindung zu öffnen, verstreichen kann, wurde überschritten. Die Ursache sind möglicherweise zu viele gleichzeitige Versuche, Verbindungen ohne Pooling herzustellen.</value>
   </data>
