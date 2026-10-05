@@ -167,7 +167,7 @@ internal class TdsTypeInfo
     /// <returns>
     /// A new TdsTypeInfo instance populated with the same values as the original.
     /// </returns>
-    internal TdsTypeInfo Clone() =>
+    internal virtual TdsTypeInfo Clone() =>
         new TdsTypeInfo(this);
 
     private bool HasFlag(TdsTypeInfoFlags flag)

@@ -40,6 +40,7 @@ public class TdsUdtTypeInfoTests
         var clone = original.Clone();
 
         // Assert
+        Assert.NotSame(original, clone);
         Assert.Equal(original.AssemblyQualifiedName, clone.AssemblyQualifiedName);
         Assert.Equal(original.DatabaseName, clone.DatabaseName);
         Assert.Equal(original.SchemaName, clone.SchemaName);
