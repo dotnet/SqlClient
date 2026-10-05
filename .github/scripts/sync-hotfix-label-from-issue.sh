@@ -107,7 +107,7 @@ CLOSING_PRS=$(gh api graphql \
   -F owner="${REPO_OWNER}" \
   -F repo="${REPO_NAME}" \
   -F issueNumber="${ISSUE_NUMBER}" \
-  --jq --arg repository "${GITHUB_REPOSITORY}" \
+  | jq -r --arg repository "${GITHUB_REPOSITORY}" \
     '.data.repository.issue.closedByPullRequestsReferences.nodes[] | select(.repository.nameWithOwner == $repository) | select(.state == "OPEN" or .state == "MERGED") | "\(.number) \(.state)"')
 
 if [[ -z "${CLOSING_PRS}" ]]; then

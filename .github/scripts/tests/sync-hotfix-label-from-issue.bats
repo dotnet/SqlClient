@@ -60,9 +60,14 @@ set -euo pipefail
 
 # gh api graphql (closedByPullRequestsReferences lookup)
 if [[ "\$1" == "api" && "\$2" == "graphql" ]]; then
-  awk -F':' -v repository="${GITHUB_REPOSITORY}" \
-    '\$2 == "OPEN" || \$2 == "MERGED" { if (\$3 == "" || \$3 == repository) print \$1, \$2 }' \
-    "${STUB_DIR}/closing_prs.txt"
+  jq -Rn --arg repository "${GITHUB_REPOSITORY}" '
+    [inputs | split(":") | {
+      number: (.[0] | tonumber),
+      state: .[1],
+      repository: {nameWithOwner: (.[2] // \$repository)}
+    }] |
+    {data: {repository: {issue: {closedByPullRequestsReferences: {nodes: .}}}}}
+  ' "${STUB_DIR}/closing_prs.txt"
   exit 0
 fi
 
