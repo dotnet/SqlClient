@@ -411,8 +411,10 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
                     type.GetMethod("DetachTransaction", flags).Invoke(inner, new object[] { Transaction.Current, true });
                     Assert.Null(enlisted.GetValue(inner));
                     Assert.True((bool)root.GetValue(inner));
-                    type.GetMethod("Activate", flags, null, new[] { typeof(Transaction) }, null)
-                        .Invoke(inner, new object[] { null });
+                    // The timeout is never consumed here: the active-root gate skips the reset.
+                    Type timeoutTimer = typeof(SqlConnection).Assembly.GetType("Microsoft.Data.ProviderBase.TimeoutTimer", throwOnError: true);
+                    type.GetMethod("Activate", flags, null, new[] { typeof(Transaction), timeoutTimer }, null)
+                        .Invoke(inner, new object[] { null, null });
 
                     using SqlCommand count = new("SELECT @@TRANCOUNT;", connection);
                     Assert.Equal(1, Convert.ToInt32(async ? await count.ExecuteScalarAsync() : count.ExecuteScalar()));
