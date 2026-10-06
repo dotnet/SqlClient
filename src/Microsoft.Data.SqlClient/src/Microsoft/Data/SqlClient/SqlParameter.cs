@@ -2000,6 +2000,21 @@ namespace Microsoft.Data.SqlClient
                     _value = DBNull.Value;
                     return MetaType.GetDefaultMetaType();
                 }
+
+                if (_metaType.SqlDbType == SqlDbTypeExtensions.Vector &&
+                    _direction == ParameterDirection.Input &&
+                    _value is string)
+                {
+                    // A JSON array is sent as text and parsed by the server into whatever
+                    // base type the destination column has. Building a vector from it here
+                    // instead would fix the base type to float32, which a column of another
+                    // base type then needs the server to convert — and not every build does.
+                    // Sending the text keeps this form working against every server, which
+                    // matters because it is the only one available to a .NET Framework
+                    // caller round-tripping a float16 column through a DbDataAdapter.
+                    return MetaType.MetaMaxVarChar;
+                }
+
                 return _metaType;
             }
             if (_value != null && DBNull.Value != _value)

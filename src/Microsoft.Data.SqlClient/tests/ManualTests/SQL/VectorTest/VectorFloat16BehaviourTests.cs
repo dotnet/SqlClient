@@ -102,7 +102,7 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
     {
         // Requesting single precision from a float16 column widens the elements, which is
         // exact. This is the only strongly typed read available where System.Half is not.
-        Insert(_float16Table, new SqlVector<float>(new float[] { 1.5f, 2.5f, 3.5f }));
+        Seed(_float16Table, "[1.5,2.5,3.5]");
 
         using SqlDataReader reader = Select(_float16Table);
         Assert.True(reader.Read());
@@ -133,7 +133,7 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
     [ConditionalFact(nameof(IsSupported))]
     public void ReportsUnsupportedElementTypes()
     {
-        Insert(_float16Table, new SqlVector<float>(new float[] { 1.5f, 2.5f, 3.5f }));
+        Seed(_float16Table, "[1.5,2.5,3.5]");
 
         using SqlDataReader reader = Select(_float16Table);
         Assert.True(reader.Read());
@@ -147,7 +147,7 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
     {
         // Every provider specific value is a type from System.Data.SqlTypes, including the
         // JSON rendering a float16 column falls back to where System.Half is unavailable.
-        Insert(_float16Table, new SqlVector<float>(new float[] { 1.5f, 2.5f, 3.5f }));
+        Seed(_float16Table, "[1.5,2.5,3.5]");
 
         using SqlDataReader reader = Select(_float16Table);
         Assert.True(reader.Read());
@@ -453,7 +453,7 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
         // On .NET Framework a float16 column reads as a JSON string, so a copy into a
         // float32 column takes the textual path and the value is converted rather than
         // rejected. This is the counterpart of the .NET case above.
-        Insert(_float16Table, new SqlVector<float>(new float[] { 1.5f, 2.5f, 3.5f }));
+        Seed(_float16Table, "[1.5,2.5,3.5]");
 
         using SqlConnection sourceConnection = new(_connectionString);
         sourceConnection.Open();
@@ -862,6 +862,50 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
     }
     #endif
 
+    /// <summary>
+    /// Verifies that a JSON string parameter is sent as text rather than as a float32
+    /// vector, by writing more elements than a float32 payload could carry at all. A vector
+    /// payload is capped at the size of a TDS packet, which is 1998 float32 elements, so a
+    /// 3000 element float16 column can only be written this way if the value travels as
+    /// text for the server to parse.
+    /// </summary>
+    /// <remarks>
+    /// This is what keeps the JSON form working against servers which block conversion
+    /// between base types, and it is the only form available to a .NET Framework caller
+    /// writing a float16 column.
+    /// </remarks>
+    [ConditionalFact(nameof(IsSupported))]
+    public void SendsAJsonStringParameterAsTextRatherThanAFloat32Vector()
+    {
+        const int Dimensions = 3000;
+
+        using Table wide = new(_managementConnection, "VectorF16WideParamTable",
+            $"(Id INT PRIMARY KEY IDENTITY, {ColumnName} vector({Dimensions}, float16) NULL)");
+
+        float[] values = new float[Dimensions];
+        for (int i = 0; i < values.Length; i++)
+        {
+            // Eighths are exactly representable in binary16 at this magnitude.
+            values[i] = (i % 8) * 0.125f;
+        }
+
+        using SqlConnection connection = new(_connectionString);
+        connection.Open();
+
+        using (SqlCommand insert =
+            new($"INSERT INTO {wide.Name} ({ColumnName}) VALUES ({ParameterName})", connection))
+        {
+            insert.Parameters.Add(new SqlParameter(ParameterName, SqlDbTypeExtensions.Vector)
+            {
+                Value = JsonSerializer.Serialize(values)
+            });
+
+            Assert.Equal(1, insert.ExecuteNonQuery());
+        }
+
+        Assert.Equal(values, ReadLast(connection, wide));
+    }
+
     [ConditionalFact(nameof(IsSupported))]
     public void BulkCopyRejectsValuesOutsideTheFloat16Range()
     {
@@ -891,6 +935,16 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
 
     #region Helpers
 
+    /// <summary>
+    /// Inserts a vector through a parameter of the given value's own type.
+    /// </summary>
+    /// <param name="table">The destination table.</param>
+    /// <param name="value">The value to insert.</param>
+    /// <remarks>
+    /// Writing a value whose base type differs from the column's needs the server to convert
+    /// between base types, which not every build does. Use <see cref="Seed"/> instead where
+    /// the write is only setting up for what the test actually checks.
+    /// </remarks>
     private void Insert(Table table, object value)
     {
         using SqlConnection connection = new(_connectionString);
@@ -899,6 +953,27 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
         using SqlCommand command =
             new($"INSERT INTO {table.Name} ({ColumnName}) VALUES ({ParameterName})", connection);
         command.Parameters.Add(new SqlParameter(ParameterName, SqlDbTypeExtensions.Vector) { Value = value });
+
+        Assert.Equal(1, command.ExecuteNonQuery());
+    }
+
+    /// <summary>
+    /// Inserts a vector from its textual form, which every server accepts whatever its
+    /// column's base type and without converting between base types.
+    /// </summary>
+    /// <param name="table">The destination table.</param>
+    /// <param name="literal">A JSON array holding the vector's elements.</param>
+    /// <remarks>
+    /// Used where a row is only being set up for what the test actually checks, so that the
+    /// setup does not depend on a server behaviour the test is not about.
+    /// </remarks>
+    private void Seed(Table table, string literal)
+    {
+        using SqlConnection connection = new(_connectionString);
+        connection.Open();
+
+        using SqlCommand command =
+            new($"INSERT INTO {table.Name} ({ColumnName}) VALUES ('{literal}')", connection);
 
         Assert.Equal(1, command.ExecuteNonQuery());
     }
