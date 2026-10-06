@@ -58,24 +58,37 @@ internal sealed class AzureAttestationTokenValidator
     /// </summary>
     internal const int SigningKeysUnavailable = 4;
 
-    // This is the metadata endpoint for AAS provided by the Windows team,
-    // i.e. https://<attestation_instance>/.well-known/openid-configuration
-    // such as https://sql.azure.attest.com/.well-known/openid-configuration
+    /// <summary>
+    /// The path of the OpenID configuration, relative to the attestation instance url, such as
+    /// https://sql.azure.attest.com/.well-known/openid-configuration.
+    /// </summary>
     private const string AttestationUrlSuffix = @"/.well-known/openid-configuration";
 
-    // Signing keys are cached for 1 day to avoid DDOS attacks on the attestation instance.
+    /// <summary>
+    /// How long signing keys are cached: 1 day, to avoid DDOS attacks on the attestation instance.
+    /// </summary>
     private static readonly TimeSpan s_signingKeysCacheTimeout = TimeSpan.FromDays(1);
 
-    // The validator SqlClient uses, through the static methods it binds to.
+    /// <summary>
+    /// The validator SqlClient uses, through the static methods it binds to.
+    /// </summary>
     private static readonly AzureAttestationTokenValidator s_default =
         new(new HttpDocumentRetriever(), new MemoryCache(new MemoryCacheOptions()));
 
-    // Retrieves the OpenID configuration and signing keys documents.
+    /// <summary>
+    /// Retrieves the OpenID configuration and signing keys documents.
+    /// </summary>
     private readonly IDocumentRetriever _documentRetriever;
 
-    // Signing keys, keyed by attestation instance url.
+    /// <summary>
+    /// The signing keys, keyed by attestation instance url.
+    /// </summary>
     private readonly IMemoryCache _signingKeysCache;
 
+    /// <summary>
+    /// Enables personally identifiable information in IdentityModel's exception messages, before
+    /// the validator first uses IdentityModel.
+    /// </summary>
     static AzureAttestationTokenValidator()
     {
         // Include token details in IdentityModel's exception messages, which SqlClient surfaces
