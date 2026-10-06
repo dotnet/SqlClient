@@ -938,34 +938,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         /// <summary>
-        /// Verifies that the pool state getter reports <see cref="DbConnectionPoolState.Running"/>
-        /// immediately after construction.
-        /// </summary>
-        [Fact]
-        public void TestStateGetter()
-        {
-            // Arrange
-            var pool = ConstructPool(SuccessfulConnectionFactory);
-
-            // Act & Assert
-            Assert.Equal(DbConnectionPoolState.Running, pool.State);
-        }
-
-        /// <summary>
-        /// Verifies that the pool state remains <see cref="DbConnectionPoolState.Running"/> after
-        /// construction when no shutdown has been requested.
-        /// </summary>
-        [Fact]
-        public void TestStateSetter()
-        {
-            // Arrange
-            var pool = ConstructPool(SuccessfulConnectionFactory);
-
-            // Act & Assert
-            Assert.Equal(DbConnectionPoolState.Running, pool.State);
-        }
-
-        /// <summary>
         /// Verifies that the pool exposes whether load balancing is enabled based on its configured
         /// pool group options.
         /// </summary>

@@ -15,7 +15,6 @@ using System.Transactions;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Diagnostics;
-using static Microsoft.Data.SqlClient.ConnectionPool.DbConnectionPoolState;
 using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient.ConnectionPool
@@ -55,7 +54,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         public int Id => Interlocked.Increment(ref _objectTypeCount);
 
-        public DbConnectionPoolState State { get; set; }
+        // Non-zero once Shutdown's one-time cleanup has started.
+        private int _shutdownInitiated;
 
         // This class is a way to stash our cloned Tx key for later disposal when it's no longer needed.
         // We can't get at the key in the dictionary without enumerating entries, so we stash an extra
@@ -278,7 +278,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             _transactedConnectionPool = new TransactedConnectionPool(this, Metrics);
 
             _poolCreateRequest = new WaitCallback(PoolCreateRequest); // used by CleanupCallback
-            State = Running;
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.DbConnectionPool|RES|CPOOL> {0}, Constructed.", Id);
 
             //_cleanupTimer & QueuePoolCreateRequest is delayed until DbConnectionPoolGroup calls
@@ -311,7 +310,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         {
             get
             {
-                if (State is not Running) // Don't allow connection create when not running.
+                if (!IsRunning) // Don't allow connection create when not running.
                 {
                     return false;
                 }
@@ -338,10 +337,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         public DbConnectionPoolIdentity Identity => _identity;
 
-        public bool IsRunning
-        {
-            get { return State is Running; }
-        }
+        /// <inheritdoc/>
+        /// <remarks>
+        /// Derived from the pruning guard's single atomic state, so the pool stops running in the
+        /// same step that refuses new admission.
+        /// </remarks>
+        public bool IsRunning => _pruningGuard.IsRunning;
 
         internal int MaxPoolSize => PoolGroupOptions.MaxPoolSize;
 
@@ -366,10 +367,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         internal void CleanupCallback(object state)
         {
-            // If the pool is not Running, skip work. Shutdown disposes the timer, but
+            // If the pool is not running, skip work. Shutdown disposes the timer, but
             // a callback may already be in-flight when Shutdown runs; this guard ensures it does
             // not perform pruning or re-arm pool create requests.
-            if (State is not Running)
+            if (!IsRunning)
             {
                 return;
             }
@@ -541,17 +542,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 _cleanupWait,
                 _cleanupWait);
 
+        // Callers must already hold a pruning guard lease (admission, replacement, or pool-create lease),
+        // so already-admitted work can finish after Shutdown closes the guard.
         private DbConnectionInternal CreateObject(DbConnection owningObject, DbConnectionInternal oldConnection, TimeoutTimer timeout)
-        {
-            using PoolPruningGuard.Lease lease = _pruningGuard.TryEnter();
-            if (!lease.IsActive)
-            {
-                return null;
-            }
-            return CreateObjectCore(owningObject, oldConnection, timeout);
-        }
-
-        private DbConnectionInternal CreateObjectCore(DbConnection owningObject, DbConnectionInternal oldConnection, TimeoutTimer timeout)
         {
             DbConnectionInternal newObj = null;
 
@@ -635,7 +628,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     // transaction object will ensure that it is owned (not lost),
                     // and it will be certain to put it back into the pool.
 
-                    if (State is ShuttingDown)
+                    if (!IsRunning)
                     {
                         if (obj.IsTransactionRoot)
                         {
@@ -673,7 +666,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                             Transaction transaction = obj.EnlistedTransaction;
                             if (transaction != null)
                             {
-                                // NOTE: we're not locking on _state, so it's possible that its
+                                // NOTE: we're not locking around IsRunning, so it's possible that its
                                 //   value could change between the conditional check and here.
                                 //   Although perhaps not ideal, this is OK because the
                                 //   DelegatedTransactionEnded event will clean up the
@@ -926,9 +919,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 allowCreate = true;
             }            
             
-            if (State is not Running)
+            if (!IsRunning)
             {
-                SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, DbConnectionInternal State != Running.", Id);
+                SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Pool is not running.", Id);
                 connection = null;
                 return true;
             }
@@ -946,10 +939,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             // Before queueing, the factory can still redirect this request to a new pool.
             // Once queued, the request must finish on this pool, even if it is retired.
-            if (State is not Running)
+            if (!IsRunning)
             {
                 SqlClientEventSource.Log.TryPoolerTraceEvent(
-                    "<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Pool not Running after inner TryGetConnection; short-circuit async path.", Id);
+                    "<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Pool is not running after inner TryGetConnection; short-circuit async path.", Id);
                 connection = null;
                 return true;
             }
@@ -1332,7 +1325,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             long scopeID = SqlClientEventSource.Log.TryPoolerScopeEnterEvent("<prov.DbConnectionPool.PoolCreateRequest|RES|INFO|CPOOL> {0}", Id);
             try
             {
-                if (State is Running)
+                if (IsRunning)
                 {
                     // in case WaitForPendingOpen ever failed with no subsequent OpenAsync calls,
                     // start it back up again
@@ -1516,7 +1509,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // done and all transactions are ended.
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.PutObjectFromTransactedPool|RES|CPOOL> {0}, Connection {1}, Transaction has ended.", Id, obj.ObjectID);
 
-            if (State is Running && obj.CanBePooled)
+            if (IsRunning && obj.CanBePooled)
             {
                 obj.ResetConnection();
                 PutNewObject(obj);
@@ -1532,7 +1525,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         {
             // The lease is handed to PoolCreateRequest so a queued replenishment keeps
             // the pool from being pruned before the worker runs.
-            if (State is not Running)
+            if (!IsRunning)
             {
                 return;
             }
@@ -1636,7 +1629,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // Shutdown() would create a fresh _cleanupTimer and queue a PoolCreateRequest
             // against a pool that will never accept connections back, leaking the timer
             // and scheduling background work that immediately short-circuits.
-            if (State is not Running)
+            if (!IsRunning)
             {
                 return;
             }
@@ -1655,12 +1648,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         {
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.Shutdown|RES|INFO|CPOOL> {0}", Id);
 
-            // Idempotent: subsequent calls observe ShuttingDown and bail.
-            if (State == ShuttingDown)
+            // Stop admission. A prune may already have closed the guard; the cleanup below
+            // must still run exactly once.
+            _pruningGuard.TryClose();
+            if (Interlocked.Exchange(ref _shutdownInitiated, 1) != 0)
             {
                 return;
             }
-            State = ShuttingDown;
 
             // Stop maintenance, but let admitted requests finish. Their connections are
             // destroyed by DeactivateObject when returned to this retired pool.

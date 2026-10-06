@@ -11,7 +11,6 @@ using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Xunit;
-using static Microsoft.Data.SqlClient.ConnectionPool.DbConnectionPoolState;
 
 namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 {
@@ -378,7 +377,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             pool.Shutdown();
 
-            Assert.Equal(ShuttingDown, pool.State);
+            Assert.False(pool.IsRunning);
             // After shutdown, the timer-enabled flag must be cleared.
             AssertPrunerState(pruner, false, 0);
         }
@@ -392,7 +391,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             // Should not throw
             pool.Shutdown();
-            Assert.Equal(ShuttingDown, pool.State);
+            Assert.False(pool.IsRunning);
         }
 
         [Fact]
@@ -413,7 +412,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             pool.Shutdown();
             pruner.Dispose();
 
-            Assert.Equal(ShuttingDown, pool.State);
+            Assert.False(pool.IsRunning);
             AssertPrunerState(pruner, false, 0);
         }
 

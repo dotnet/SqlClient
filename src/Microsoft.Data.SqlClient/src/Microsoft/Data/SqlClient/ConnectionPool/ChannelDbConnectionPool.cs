@@ -16,7 +16,6 @@ using System.Transactions;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Diagnostics;
-using static Microsoft.Data.SqlClient.ConnectionPool.DbConnectionPoolState;
 using Microsoft.Data.SqlClient.Internal;
 
 #nullable enable
@@ -206,8 +205,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             Reclaimer = new PoolReclaimer(this, _timeProvider);
 
-            State = Running;
-
             SqlClientEventSource.Log.TryPoolerTraceEvent(
                 "ChannelDbConnectionPool.ChannelDbConnectionPool | INFO | {0}, Constructed. MinPoolSize={1}, MaxPoolSize={2}",
                 Id,
@@ -257,7 +254,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         public DbConnectionPoolIdentity Identity { get; }
 
         /// <inheritdoc />
-        public bool IsRunning => State == Running;
+        /// <remarks>
+        /// Pools start running during construction, and stop running permanently once Shutdown() is called.
+        /// Derived from the pruning guard's single atomic state, so the pool stops running in the
+        /// same atomic step that refuses new admission.
+        /// </remarks>
+        public bool IsRunning => _pruningGuard.IsRunning;
 
         /// <inheritdoc />
         public TimeSpan LoadBalanceTimeout => PoolGroupOptions.LoadBalanceTimeout;
@@ -270,9 +272,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         /// <inheritdoc />
         public DbConnectionPoolProviderInfo ProviderInfo { get; }
-
-        /// <inheritdoc />
-        public DbConnectionPoolState State { get; private set; }
 
         /// <inheritdoc />
         public TransactedConnectionPool TransactedConnectionPool { get; }
@@ -376,7 +375,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // NOTE: no locking is required here because if we're in this method we can safely
             // presume that the caller is the only one using the connection, that all pre-push logic
             // has been done, and that all transactions have ended.
-            if (State is Running && connection.CanBePooled)
+            if (IsRunning && connection.CanBePooled)
             {
                 SqlClientEventSource.Log.TryPoolerTraceEvent(
                     "ChannelDbConnectionPool.PutObjectFromTransactedPool | INFO | {0}, Connection {1}, Transaction has ended; returning connection to pool.",
@@ -482,8 +481,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     // try below are intentionally excluded -- the server proved reachable -- matching the
                     // WaitHandle pool, where PrepareConnection runs outside CreateObject's error-state catch.
                     // We exclude OperationCanceledException (caller-side timeout/cancellation, not a physical
-                    // failure) and only enter while Running, mirroring OpenNewInternalConnection.
-                    if (State == Running)
+                    // failure) and only enter while running, mirroring OpenNewInternalConnection.
+                    if (IsRunning)
                     {
                         _errorState?.Enter(ex);
                     }
@@ -593,7 +592,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
 
             // Note: this logic mirrors WaitHandleDbConnectionPool.ReturnObject, minus one dead
-            // branch. Its Running path also checks IsTransactionRoot && Pool == null -> SetInStasis,
+            // branch. Its running path also checks IsTransactionRoot && Pool == null -> SetInStasis,
             // under its own "how did we get here if the pool is null?" TODO. A connection cannot
             // arrive here without a pool, because this method is called through the connection's own
             // Pool reference. The branch is redundant in any case: putting a transaction root in
@@ -601,7 +600,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             ReturnDisposition disposition;
             lock (connection)
             {
-                if (State is not Running || !connection.CanBePooled)
+                if (!IsRunning || !connection.CanBePooled)
                 {
                     // A transaction root that cannot be pooled must be put in stasis rather than
                     // closed. Closing it would orphan the root transaction with no means to promote
@@ -734,7 +733,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             if (!_idleChannel.TryWrite(connection))
             {
                 // The channel has been completed (pool is shutting down). Race window
-                // between the State check by the caller and TryWrite: destroy instead of pooling.
+                // between the IsRunning check by the caller and TryWrite: destroy instead of pooling.
                 RemoveConnection(connection);
             }
         }
@@ -742,6 +741,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <inheritdoc />
         public void Shutdown()
         {
+            // Stop accepting new requests. After this point IsRunning is false and
+            // ReturnInternalConnection routes returning connections to RemoveConnection. Already
+            // admitted operations keep their lease and release it normally. A prune may already
+            // have closed the guard, so cleanup is gated separately below.
+            _pruningGuard.TryClose();
+
             // idempotent. Compare-and-exchange ensures only one caller performs shutdown work.
             if (Interlocked.CompareExchange(ref _shutdownInitiated, 1, 0) != 0)
             {
@@ -751,13 +756,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             SqlClientEventSource.Log.TryPoolerTraceEvent(
                 "ChannelDbConnectionPool.Shutdown | INFO | {0}", Id);
 
-            // Transition to ShuttingDown. After this point, ReturnInternalConnection
-            // routes returning connections to RemoveConnection.
-            State = ShuttingDown;
-
             // Cancel any in-flight background warmup/replenishment so no new connections are
             // created after shutdown begins (Story 4). The warmup loop also observes the
-            // State transition above; cancelling here stops the loop promptly by tripping its
+            // running flag above; cancelling here stops the loop promptly by tripping its
             // await points and pre-create checks. It does not abort an already in-progress
             // synchronous physical open (see _warmupCts field docs). Cancel is idempotent.
             try
@@ -891,7 +892,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <inheritdoc />
         public void Startup()
         {
-            // State is set to Running in the constructor, and PoolPruner (when present, i.e.
+            // The pool is running from construction, and PoolPruner (when present, i.e.
             // MinPoolSize < MaxPoolSize) is also constructed eagerly there; its timer arms/disarms
             // via UpdateTimer() calls from OpenNewInternalConnection and RemoveConnection as the
             // pool grows/shrinks.
@@ -960,15 +961,15 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             out DbConnectionInternal? connection,
             ref PoolPruningGuard.Lease lease)
         {
-            // Short-circuit when the pool is not Running (i.e., shut down or never started).
+            // Short-circuit when the pool is not running.
             // Returning (true, null) matches WaitHandleDbConnectionPool.TryGetConnection and tells
             // the caller "completed; no connection available" without entering the channel path,
             // which would otherwise reserve a slot, attempt to open a fresh physical connection,
-            // and then immediately destroy it on return because State == ShuttingDown.
-            if (State is not Running)
+            // and then immediately destroy it on return because the pool is not running.
+            if (!IsRunning)
             {
                 SqlClientEventSource.Log.TryPoolerTraceEvent(
-                    "ChannelDbConnectionPool.TryGetConnection | INFO | {0}, State != Running.", Id);
+                    "ChannelDbConnectionPool.TryGetConnection | INFO | {0}, Pool is not running.", Id);
                 connection = null;
                 return true;
             }
@@ -1105,20 +1106,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <exception cref="OperationCanceledException">
         /// Thrown when the cancellation token is cancelled before the connection operation completes.
         /// </exception>
+        /// <remarks>
+        /// Callers must already hold a pruning-guard lease (see <see cref="TryGetConnection"/>);
+        /// this method does not re-enter the guard, because re-entry would fail after
+        /// <see cref="Shutdown"/> and strand already-admitted work.
+        /// </remarks>
         private DbConnectionInternal? OpenNewInternalConnection(
-            DbConnection? owningConnection,
-            CancellationToken cancellationToken,
-            TimeoutTimer timeout)
-        {
-            using PoolPruningGuard.Lease lease = _pruningGuard.TryEnter();
-            if (!lease.IsActive)
-            {
-                return null;
-            }
-            return OpenNewInternalConnectionCore(owningConnection, cancellationToken, timeout);
-        }
-
-        private DbConnectionInternal? OpenNewInternalConnectionCore(
             DbConnection? owningConnection,
             CancellationToken cancellationToken,
             TimeoutTimer timeout)
@@ -1305,13 +1298,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 // must not poison the pool into fast-fail/backoff for other callers.
                 // FR-006, FR-007.
                 //
-                // Only enter the error state while the pool is still Running. A synchronous physical
+                // Only enter the error state while the pool is still running. A synchronous physical
                 // open cannot be cancelled once it is in progress (see _warmupCts field docs), so a
                 // warmup/user open that began before Shutdown can complete with a failure after
                 // Shutdown has already disposed _errorState. Entering here would re-arm the exit
                 // timer and keep callbacks/logging alive past teardown, so we skip it once shutdown
                 // has begun; the throw below still propagates the failure to the caller/warmup loop.
-                if (State == Running)
+                if (IsRunning)
                 {
                     _errorState?.Enter(ex);
                 }
@@ -1469,7 +1462,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // shared serial, rate-limited warmup path (Story 5). This is the single choke point for
             // every below-minimum event: connections destroyed on return (broken/lifetime), idle
             // timeout eviction, and pruning all funnel through RemoveConnection. RequestWarmup is a
-            // no-op when MinPoolSize == 0, the pool is not Running, or a warmup loop is already
+            // no-op when MinPoolSize == 0, the pool is not running, or a warmup loop is already
             // running/queued, so calling it unconditionally here is cheap.
             RequestWarmup();
         }
@@ -1940,7 +1933,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         {
             // No-op when there is nothing to pre-create (MinPoolSize == 0), the pool is not running,
             // or shutdown has cancelled background activity.
-            if (MinPoolSize == 0 || State != Running || _warmupCts.IsCancellationRequested)
+            if (MinPoolSize == 0 || !IsRunning || _warmupCts.IsCancellationRequested)
             {
                 return;
             }
@@ -1965,22 +1958,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 return;
             }
 
-            // Hold a pruning lease from before scheduling until the loop exits, so a queued
-            // warmup keeps the pool from being pruned before the loop starts creating.
-            PoolPruningGuard.Lease lease = _pruningGuard.TryEnter();
-            if (!lease.IsActive)
-            {
-                Interlocked.Exchange(ref _warmupLoopRunning, 0);
-                return;
-            }
-
             bool scheduled = false;
             try
             {
                 // Fire-and-forget on the thread pool so warmup never blocks the caller. The loop
                 // absorbs its own exceptions and always releases the single-loop guard on exit. The
                 // task is published so tests can await a warmup pass to a deterministic completion.
-                WarmupLoopTask = Task.Run(() => RunWarmupLoopAsync(lease));
+                WarmupLoopTask = Task.Run(RunWarmupLoopAsync);
                 scheduled = true;
 
                 SqlClientEventSource.Log.TryPoolerTraceEvent(
@@ -1993,10 +1977,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 // below-minimum trigger will try again. Release the guard for every exception, but
                 // only absorb catchable ones - a non-catchable exception (e.g. OutOfMemoryException)
                 // must not be swallowed into a pool that keeps running in a potentially corrupted state.
-                // Once scheduled, the loop owns both guards and releases them itself.
+                // Once scheduled, the loop owns the guard and releases it itself.
                 if (!scheduled)
                 {
-                    lease.Dispose();
                     Interlocked.Exchange(ref _warmupLoopRunning, 0);
                 }
                 if (!ADP.IsCatchableExceptionType(ex))
@@ -2019,8 +2002,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// enters the pool's blocking-period error state via the shared creation path, mirroring the
         /// legacy WaitHandle pool.
         /// </summary>
-        /// <param name="lease">The pruning lease acquired by <see cref="RequestWarmup"/>; released on exit.</param>
-        private async Task RunWarmupLoopAsync(PoolPruningGuard.Lease lease)
+        private async Task RunWarmupLoopAsync()
         {
             int warmedUp = 0;
 
@@ -2051,7 +2033,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 // WaitHandle pool, which skips replenishment while blocking. (Warmup still
                 // participates in the error state on its own creations - entering it on failure and
                 // clearing it on success - via OpenNewInternalConnection.)
-                while (State == Running
+                while (IsRunning
                     && !token.IsCancellationRequested
                     && !ErrorOccurred
                     && _connectionSlots.ReservationCount < MinPoolSize)
@@ -2065,6 +2047,15 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     DbConnectionInternal? connection;
                     try
                     {
+                        // Each create holds its own lease so pruning cannot retire the pool while a
+                        // physical open is in progress. An inactive lease means the pool is pruned or
+                        // shut down, so stop warming up.
+                        using PoolPruningGuard.Lease lease = _pruningGuard.TryEnter();
+                        if (!lease.IsActive)
+                        {
+                            break;
+                        }
+
                         // owningConnection is null: warmup connections are created unattached and
                         // enter the pool as idle. A null return means the shared rate limiter was
                         // saturated; a thrown exception means the physical open genuinely failed.
@@ -2142,9 +2133,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             {
                 // Always release the single-loop guard, whatever exit path we took, so a future
                 // below-minimum trigger can start a new loop. Interlocked.Exchange mirrors the
-                // Interlocked.CompareExchange acquire in RequestWarmup. The pruning lease
-                // acquired in RequestWarmup is released first so the loop no longer blocks pruning.
-                lease.Dispose();
+                // Interlocked.CompareExchange acquire in RequestWarmup.
                 Interlocked.Exchange(ref _warmupLoopRunning, 0);
             }
         }

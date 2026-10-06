@@ -79,6 +79,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <summary>
         /// Indicates whether the connection pool is currently running.
         /// </summary>
+        /// <remarks>
+        /// Pools start running during construction, and stop running permanently once Shutdown() is called.
+        /// This flag does not indicate whether shutdown cleanup has finished.
+        /// </remarks>
         bool IsRunning { get; }
 
         /// <summary>
@@ -103,11 +107,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         DbConnectionPoolProviderInfo ProviderInfo { get; }
 
         /// <summary>
-        /// The current state of the connection pool.
-        /// </summary>
-        DbConnectionPoolState State { get; }
-
-        /// <summary>
         /// Holds connections that are currently enlisted in a transaction.
         /// </summary>
         TransactedConnectionPool TransactedConnectionPool { get; }
@@ -120,7 +119,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         #region Methods
         /// <summary>
-        /// Clears the connection pool, releasing all connections and resetting the state.
+        /// Clears the connection pool without changing whether it is running.
         /// </summary>
         /// <remarks>
         /// Clearing the pool is an expensive operation and should only be used if required.
