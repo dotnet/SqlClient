@@ -4180,43 +4180,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private TdsOperationStatus TryConsumeInfoTokens(SqlCommand command, ref byte token)
-        {
-            while (token == TdsEnums.SQLINFO)
-            {
-                // TryRun cannot consume INFO tokens when the parser is closed or broken.
-                // Leave the token unchanged to preserve the existing HasRows=false behavior.
-                if (_parser.State == TdsParserState.Broken || _parser.State == TdsParserState.Closed)
-                {
-                    break;
-                }
-
-                // VSTFDEVDIV713926: defer informational events until the next parser run
-                // to preserve existing message-delivery timing.
-                TdsOperationStatus result;
-                try
-                {
-                    _stateObj._accumulateInfoEvents = true;
-                    result = _parser.TryRun(RunBehavior.ReturnImmediately, command, null, null, _stateObj, out _);
-                    if (result != TdsOperationStatus.Done)
-                    {
-                        return result;
-                    }
-                }
-                finally
-                {
-                    _stateObj._accumulateInfoEvents = false;
-                }
-
-                result = _stateObj.TryPeekByte(out token);
-                if (result != TdsOperationStatus.Done)
-                {
-                    return result;
-                }
-            }
-            return TdsOperationStatus.Done;
-        }
-
         internal TdsOperationStatus TrySetAltMetaDataSet(_SqlMetaDataSet metaDataSet, bool metaDataConsumed)
         {
             if (_altMetaDataSetCollection == null)
@@ -4332,7 +4295,7 @@ namespace Microsoft.Data.SqlClient
                                 return result;
                             }
                         }
-                        result = TryConsumeInfoTokens(null, ref b);
+                        result = TryConsumeInfoTokens(command: null, ref b);
                         if (result != TdsOperationStatus.Done)
                         {
                             return result;
@@ -5825,6 +5788,43 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlStatistics.StopTimer(statistics);
             }
+        }
+
+        private TdsOperationStatus TryConsumeInfoTokens(SqlCommand command, ref byte token)
+        {
+            while (token == TdsEnums.SQLINFO)
+            {
+                // TryRun cannot consume INFO tokens when the parser is closed or broken.
+                // Leave the token unchanged to preserve the existing HasRows=false behavior.
+                if (_parser.State == TdsParserState.Broken || _parser.State == TdsParserState.Closed)
+                {
+                    break;
+                }
+
+                // VSTFDEVDIV713926: defer informational events until the next parser run
+                // to preserve existing message-delivery timing.
+                TdsOperationStatus result;
+                try
+                {
+                    _stateObj._accumulateInfoEvents = true;
+                    result = _parser.TryRun(RunBehavior.ReturnImmediately, command, dataStream: null, bulkCopyHandler: null, _stateObj, out _);
+                    if (result != TdsOperationStatus.Done)
+                    {
+                        return result;
+                    }
+                }
+                finally
+                {
+                    _stateObj._accumulateInfoEvents = false;
+                }
+
+                result = _stateObj.TryPeekByte(out token);
+                if (result != TdsOperationStatus.Done)
+                {
+                    return result;
+                }
+            }
+            return TdsOperationStatus.Done;
         }
 
         private ReadOnlyCollection<DbColumn> BuildColumnSchema()

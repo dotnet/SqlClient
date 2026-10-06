@@ -17,7 +17,6 @@ using Microsoft.SqlServer.TDS.Row;
 using Microsoft.SqlServer.TDS.Servers;
 using Microsoft.SqlServer.TDS.SQLBatch;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests;
 
@@ -39,144 +38,449 @@ public sealed class HasRowsTests
     }
 
     private const ushort AltMetadataId = 1;
-    private readonly ITestOutputHelper _output;
+    private static readonly int[] s_infoCounts = { 0, 1, 2, 3, 10 };
 
-    public HasRowsTests(ITestOutputHelper output) => _output = output;
-
-    /// <summary>
-    /// Covers the single-token boundary, multiple tokens, and empty results with
-    /// both synchronous and asynchronous readers, including alternate metadata.
-    /// </summary>
-    /// <returns>INFO count, placement, async flag, regular row presence, and alternate metadata flag.</returns>
-    public static IEnumerable<object[]> InfoTokenCases()
+    /// <summary>Combines INFO counts with each placement around metadata and rows.</summary>
+    /// <returns>Strongly typed INFO counts and placements for each result-shape test.</returns>
+    public static TheoryData<int, InfoPlacement> InfoTokenCases()
     {
-        foreach (int infoCount in new[] { 0, 1, 2, 3, 10 })
+        TheoryData<int, InfoPlacement> cases = new();
+        foreach (int infoCount in s_infoCounts)
         {
-            foreach (InfoPlacement placement in Enum.GetValues(typeof(InfoPlacement)))
+            foreach (InfoPlacement placement in new[]
             {
-                foreach (bool useAsync in new[] { false, true })
-                {
-                    if (placement == InfoPlacement.InfoOnly)
-                    {
-                        yield return new object[] { infoCount, placement, useAsync, false, false };
-                    }
-                    else
-                    {
-                        foreach (bool useAlternateMetadata in new[] { false, true })
-                        {
-                            yield return new object[] { infoCount, placement, useAsync, false, useAlternateMetadata };
-                            yield return new object[] { infoCount, placement, useAsync, true, useAlternateMetadata };
-                        }
-                    }
-                }
+                InfoPlacement.BeforeMetadata,
+                InfoPlacement.AfterMetadata,
+                InfoPlacement.AfterOrder,
+                InfoPlacement.AfterRows
+            })
+            {
+                cases.Add(infoCount, placement);
             }
         }
+        return cases;
     }
 
-    /// <summary>
-    /// Verifies INFO tokens do not affect HasRows or change deferred message delivery.
-    /// </summary>
+    /// <summary>Covers zero, one, and multiple INFO tokens without column metadata.</summary>
+    /// <returns>Strongly typed INFO counts for metadata-free responses.</returns>
+    public static TheoryData<int> InfoOnlyCases()
+    {
+        TheoryData<int> cases = new();
+        foreach (int infoCount in s_infoCounts)
+        {
+            cases.Add(infoCount);
+        }
+        return cases;
+    }
+
+    /// <summary>Checks that INFO tokens neither hide nor consume the first regular row.</summary>
     [Theory]
     [MemberData(nameof(InfoTokenCases))]
-    public async Task HasRows_WithInfoTokens_ReflectsRowPresence(
-        int infoCount, InfoPlacement placement, bool useAsync, bool returnsRow, bool useAlternateMetadata)
+    public void HasRows_WithPopulatedResult_ReturnsTrue(int infoCount, InfoPlacement placement)
     {
-        TdsServerArguments arguments = new();
-        InfoQueryEngine engine = new(arguments, infoCount, placement, returnsRow, useAlternateMetadata);
-        using TdsServer server = new(engine, arguments);
+        // Arrange: using declarations dispose the reader, command, connection, then server.
+        using TdsServer server = CreateServer(infoCount, placement, returnsRow: true, useAlternateMetadata: false);
         server.Start();
-
-        SqlConnectionStringBuilder builder = new()
-        {
-            DataSource = $"localhost,{server.EndPoint.Port}",
-            Encrypt = SqlConnectionEncryptOption.Optional,
-            Pooling = false,
-            ConnectTimeout = 5
-        };
-        using SqlConnection connection = new(builder.ConnectionString);
         List<string> infoMessages = new();
-        connection.InfoMessage += (_, args) =>
-        {
-            foreach (SqlError error in args.Errors)
-            {
-                infoMessages.Add(error.Message);
-            }
-        };
-
-        if (useAsync)
-        {
-            await connection.OpenAsync();
-        }
-        else
-        {
-            connection.Open();
-        }
+        using SqlConnection connection = CreateConnection(server, infoMessages);
+        connection.Open();
         infoMessages.Clear();
-
         using SqlCommand command = new(InfoQueryEngine.CommandText, connection)
         {
             CommandTimeout = 5
         };
-        using SqlDataReader reader = useAsync
-            ? await command.ExecuteReaderAsync()
-            : command.ExecuteReader();
 
+        // Act
+        using SqlDataReader reader = command.ExecuteReader();
+
+        // Assert
         bool hasRowsBeforeRead = reader.HasRows;
-        bool messagesBeforeMetadata = placement == InfoPlacement.BeforeMetadata || placement == InfoPlacement.InfoOnly;
-        Assert.Equal(messagesBeforeMetadata ? infoCount : 0, infoMessages.Count);
-        if (placement == InfoPlacement.InfoOnly)
-        {
-            Assert.Equal(0, reader.FieldCount);
-        }
-        bool read = useAsync ? await reader.ReadAsync() : reader.Read();
-        Assert.Equal(returnsRow, read);
-        if (read)
-        {
-            Assert.Equal(1, reader.GetInt32(0));
-            if (placement == InfoPlacement.AfterRows)
-            {
-                Assert.Empty(infoMessages);
-            }
-        }
-        bool hasRowsAfterRead = reader.HasRows;
-        Assert.False(useAsync ? await reader.ReadAsync() : reader.Read());
-        if (placement == InfoPlacement.AfterRows && useAlternateMetadata)
+        Assert.Equal(placement == InfoPlacement.BeforeMetadata ? infoCount : 0, infoMessages.Count);
+        Assert.True(reader.Read());
+        Assert.Equal(1, reader.GetInt32(0));
+        Assert.True(hasRowsBeforeRead);
+        Assert.True(reader.HasRows);
+        if (placement == InfoPlacement.AfterRows)
         {
             Assert.Empty(infoMessages);
         }
-        else if (!useAlternateMetadata || returnsRow)
-        {
-            Assert.Equal(infoCount, infoMessages.Count);
-        }
-
-        _output.WriteLine(
-            $"INFO count={infoCount}, placement={placement}, async={useAsync}, returns row={returnsRow}, alternate metadata={useAlternateMetadata}: " +
-            $"HasRows before Read={hasRowsBeforeRead}, Read={read}, " +
-            $"HasRows after Read={hasRowsAfterRead}, INFO received={infoMessages.Count}");
-
-        Assert.Equal(returnsRow, hasRowsBeforeRead);
-        Assert.Equal(returnsRow, hasRowsAfterRead);
-        Assert.Equal(returnsRow, reader.HasRows);
-        if (useAlternateMetadata)
-        {
-            Assert.True(useAsync ? await reader.NextResultAsync() : reader.NextResult());
-            Assert.True(reader.HasRows);
-            Assert.Equal("sum", reader.GetName(0));
-            Assert.True(useAsync ? await reader.ReadAsync() : reader.Read());
-            Assert.Equal(42, reader.GetInt32(0));
-            if (placement == InfoPlacement.AfterRows)
-            {
-                Assert.Empty(infoMessages);
-            }
-            Assert.False(useAsync ? await reader.ReadAsync() : reader.Read());
-            Assert.True(reader.HasRows);
-        }
-        Assert.False(useAsync ? await reader.NextResultAsync() : reader.NextResult());
+        Assert.False(reader.Read());
+        Assert.True(reader.HasRows);
         Assert.Equal(infoCount, infoMessages.Count);
-        for (int i = 0; i < infoCount; i++)
+        Assert.False(reader.NextResult());
+        AssertInfoMessages(infoCount, infoMessages);
+    }
+
+    /// <summary>Async counterpart: checks that INFO tokens neither hide nor consume the first regular row.</summary>
+    [Theory]
+    [MemberData(nameof(InfoTokenCases))]
+    public async Task HasRows_WithPopulatedResult_ReturnsTrueAsync(int infoCount, InfoPlacement placement)
+    {
+        // Arrange: using declarations dispose the reader, command, connection, then server.
+        using TdsServer server = CreateServer(infoCount, placement, returnsRow: true, useAlternateMetadata: false);
+        server.Start();
+        List<string> infoMessages = new();
+        using SqlConnection connection = CreateConnection(server, infoMessages);
+        await connection.OpenAsync();
+        infoMessages.Clear();
+        using SqlCommand command = new(InfoQueryEngine.CommandText, connection)
         {
-            Assert.Equal($"Info message {i}", infoMessages[i]);
+            CommandTimeout = 5
+        };
+
+        // Act
+        using SqlDataReader reader = await command.ExecuteReaderAsync();
+
+        // Assert
+        bool hasRowsBeforeRead = reader.HasRows;
+        Assert.Equal(placement == InfoPlacement.BeforeMetadata ? infoCount : 0, infoMessages.Count);
+        Assert.True(await reader.ReadAsync());
+        Assert.Equal(1, reader.GetInt32(0));
+        Assert.True(hasRowsBeforeRead);
+        Assert.True(reader.HasRows);
+        if (placement == InfoPlacement.AfterRows)
+        {
+            Assert.Empty(infoMessages);
         }
+        Assert.False(await reader.ReadAsync());
+        Assert.True(reader.HasRows);
+        Assert.Equal(infoCount, infoMessages.Count);
+        Assert.False(await reader.NextResultAsync());
+        AssertInfoMessages(infoCount, infoMessages);
+    }
+
+    /// <summary>Checks that an empty result stays empty while all INFO messages are delivered.</summary>
+    [Theory]
+    [MemberData(nameof(InfoTokenCases))]
+    public void HasRows_WithEmptyResult_ReturnsFalse(int infoCount, InfoPlacement placement)
+    {
+        // Arrange: using declarations dispose the reader, command, connection, then server.
+        using TdsServer server = CreateServer(infoCount, placement, returnsRow: false, useAlternateMetadata: false);
+        server.Start();
+        List<string> infoMessages = new();
+        using SqlConnection connection = CreateConnection(server, infoMessages);
+        connection.Open();
+        infoMessages.Clear();
+        using SqlCommand command = new(InfoQueryEngine.CommandText, connection)
+        {
+            CommandTimeout = 5
+        };
+
+        // Act
+        using SqlDataReader reader = command.ExecuteReader();
+
+        // Assert
+        Assert.False(reader.HasRows);
+        Assert.Equal(placement == InfoPlacement.BeforeMetadata ? infoCount : 0, infoMessages.Count);
+        Assert.False(reader.Read());
+        Assert.False(reader.HasRows);
+        Assert.False(reader.Read());
+        Assert.False(reader.HasRows);
+        Assert.Equal(infoCount, infoMessages.Count);
+        Assert.False(reader.NextResult());
+        AssertInfoMessages(infoCount, infoMessages);
+    }
+
+    /// <summary>Async counterpart: checks that an empty result stays empty while all INFO messages are delivered.</summary>
+    [Theory]
+    [MemberData(nameof(InfoTokenCases))]
+    public async Task HasRows_WithEmptyResult_ReturnsFalseAsync(int infoCount, InfoPlacement placement)
+    {
+        // Arrange: using declarations dispose the reader, command, connection, then server.
+        using TdsServer server = CreateServer(infoCount, placement, returnsRow: false, useAlternateMetadata: false);
+        server.Start();
+        List<string> infoMessages = new();
+        using SqlConnection connection = CreateConnection(server, infoMessages);
+        await connection.OpenAsync();
+        infoMessages.Clear();
+        using SqlCommand command = new(InfoQueryEngine.CommandText, connection)
+        {
+            CommandTimeout = 5
+        };
+
+        // Act
+        using SqlDataReader reader = await command.ExecuteReaderAsync();
+
+        // Assert
+        Assert.False(reader.HasRows);
+        Assert.Equal(placement == InfoPlacement.BeforeMetadata ? infoCount : 0, infoMessages.Count);
+        Assert.False(await reader.ReadAsync());
+        Assert.False(reader.HasRows);
+        Assert.False(await reader.ReadAsync());
+        Assert.False(reader.HasRows);
+        Assert.Equal(infoCount, infoMessages.Count);
+        Assert.False(await reader.NextResultAsync());
+        AssertInfoMessages(infoCount, infoMessages);
+    }
+
+    /// <summary>Checks separate regular and aggregate rows, result navigation, and deferred INFO delivery.</summary>
+    [Theory]
+    [MemberData(nameof(InfoTokenCases))]
+    public void HasRows_WithRegularAndAlternateRows_PreservesBothResults(int infoCount, InfoPlacement placement)
+    {
+        // Arrange: using declarations dispose the reader, command, connection, then server.
+        using TdsServer server = CreateServer(infoCount, placement, returnsRow: true, useAlternateMetadata: true);
+        server.Start();
+        List<string> infoMessages = new();
+        using SqlConnection connection = CreateConnection(server, infoMessages);
+        connection.Open();
+        infoMessages.Clear();
+        using SqlCommand command = new(InfoQueryEngine.CommandText, connection)
+        {
+            CommandTimeout = 5
+        };
+
+        // Act
+        using SqlDataReader reader = command.ExecuteReader();
+
+        // Assert the regular result, including its first row and deferred messages.
+        bool hasRowsBeforeRead = reader.HasRows;
+        Assert.Equal(placement == InfoPlacement.BeforeMetadata ? infoCount : 0, infoMessages.Count);
+        Assert.True(reader.Read());
+        Assert.Equal(1, reader.GetInt32(0));
+        Assert.True(hasRowsBeforeRead);
+        Assert.True(reader.HasRows);
+        if (placement == InfoPlacement.AfterRows)
+        {
+            Assert.Empty(infoMessages);
+        }
+        Assert.False(reader.Read());
+        Assert.True(reader.HasRows);
+        Assert.Equal(placement == InfoPlacement.AfterRows ? 0 : infoCount, infoMessages.Count);
+
+        // Act: advance to the alternate result.
+        Assert.True(reader.NextResult());
+
+        // Assert the aggregate row is a separate result and is not consumed by HasRows.
+        Assert.True(reader.HasRows);
+        Assert.Equal("sum", reader.GetName(0));
+        Assert.True(reader.Read());
+        Assert.Equal(42, reader.GetInt32(0));
+        if (placement == InfoPlacement.AfterRows)
+        {
+            Assert.Empty(infoMessages);
+        }
+        Assert.False(reader.Read());
+        Assert.True(reader.HasRows);
+        Assert.False(reader.NextResult());
+        AssertInfoMessages(infoCount, infoMessages);
+    }
+
+    /// <summary>Async counterpart: checks separate regular and aggregate rows, result navigation, and deferred INFO delivery.</summary>
+    [Theory]
+    [MemberData(nameof(InfoTokenCases))]
+    public async Task HasRows_WithRegularAndAlternateRows_PreservesBothResultsAsync(int infoCount, InfoPlacement placement)
+    {
+        // Arrange: using declarations dispose the reader, command, connection, then server.
+        using TdsServer server = CreateServer(infoCount, placement, returnsRow: true, useAlternateMetadata: true);
+        server.Start();
+        List<string> infoMessages = new();
+        using SqlConnection connection = CreateConnection(server, infoMessages);
+        await connection.OpenAsync();
+        infoMessages.Clear();
+        using SqlCommand command = new(InfoQueryEngine.CommandText, connection)
+        {
+            CommandTimeout = 5
+        };
+
+        // Act
+        using SqlDataReader reader = await command.ExecuteReaderAsync();
+
+        // Assert the regular result, including its first row and deferred messages.
+        bool hasRowsBeforeRead = reader.HasRows;
+        Assert.Equal(placement == InfoPlacement.BeforeMetadata ? infoCount : 0, infoMessages.Count);
+        Assert.True(await reader.ReadAsync());
+        Assert.Equal(1, reader.GetInt32(0));
+        Assert.True(hasRowsBeforeRead);
+        Assert.True(reader.HasRows);
+        if (placement == InfoPlacement.AfterRows)
+        {
+            Assert.Empty(infoMessages);
+        }
+        Assert.False(await reader.ReadAsync());
+        Assert.True(reader.HasRows);
+        Assert.Equal(placement == InfoPlacement.AfterRows ? 0 : infoCount, infoMessages.Count);
+
+        // Act: advance to the alternate result.
+        Assert.True(await reader.NextResultAsync());
+
+        // Assert the aggregate row is a separate result and is not consumed by HasRows.
+        Assert.True(reader.HasRows);
+        Assert.Equal("sum", reader.GetName(0));
+        Assert.True(await reader.ReadAsync());
+        Assert.Equal(42, reader.GetInt32(0));
+        if (placement == InfoPlacement.AfterRows)
+        {
+            Assert.Empty(infoMessages);
+        }
+        Assert.False(await reader.ReadAsync());
+        Assert.True(reader.HasRows);
+        Assert.False(await reader.NextResultAsync());
+        AssertInfoMessages(infoCount, infoMessages);
+    }
+
+    /// <summary>Checks the transition from an empty regular result to an aggregate row without losing INFO.</summary>
+    [Theory]
+    [MemberData(nameof(InfoTokenCases))]
+    public void HasRows_WithAlternateRowOnly_PreservesResultTransition(int infoCount, InfoPlacement placement)
+    {
+        // Arrange: using declarations dispose the reader, command, connection, then server.
+        using TdsServer server = CreateServer(infoCount, placement, returnsRow: false, useAlternateMetadata: true);
+        server.Start();
+        List<string> infoMessages = new();
+        using SqlConnection connection = CreateConnection(server, infoMessages);
+        connection.Open();
+        infoMessages.Clear();
+        using SqlCommand command = new(InfoQueryEngine.CommandText, connection)
+        {
+            CommandTimeout = 5
+        };
+
+        // Act
+        using SqlDataReader reader = command.ExecuteReader();
+
+        // Assert alternate metadata does not make the empty regular result appear populated.
+        Assert.False(reader.HasRows);
+        Assert.Equal(placement == InfoPlacement.BeforeMetadata ? infoCount : 0, infoMessages.Count);
+        Assert.False(reader.Read());
+        Assert.False(reader.HasRows);
+        Assert.False(reader.Read());
+        Assert.False(reader.HasRows);
+        if (placement == InfoPlacement.AfterRows)
+        {
+            Assert.Empty(infoMessages);
+        }
+
+        // Act: advance past the empty regular result.
+        Assert.True(reader.NextResult());
+
+        // Assert the aggregate row and messages survive the result transition.
+        Assert.True(reader.HasRows);
+        Assert.Equal("sum", reader.GetName(0));
+        Assert.True(reader.Read());
+        Assert.Equal(42, reader.GetInt32(0));
+        if (placement == InfoPlacement.AfterRows)
+        {
+            Assert.Empty(infoMessages);
+        }
+        Assert.False(reader.Read());
+        Assert.True(reader.HasRows);
+        Assert.False(reader.NextResult());
+        AssertInfoMessages(infoCount, infoMessages);
+    }
+
+    /// <summary>Async counterpart: checks the transition from an empty regular result to an aggregate row without losing INFO.</summary>
+    [Theory]
+    [MemberData(nameof(InfoTokenCases))]
+    public async Task HasRows_WithAlternateRowOnly_PreservesResultTransitionAsync(int infoCount, InfoPlacement placement)
+    {
+        // Arrange: using declarations dispose the reader, command, connection, then server.
+        using TdsServer server = CreateServer(infoCount, placement, returnsRow: false, useAlternateMetadata: true);
+        server.Start();
+        List<string> infoMessages = new();
+        using SqlConnection connection = CreateConnection(server, infoMessages);
+        await connection.OpenAsync();
+        infoMessages.Clear();
+        using SqlCommand command = new(InfoQueryEngine.CommandText, connection)
+        {
+            CommandTimeout = 5
+        };
+
+        // Act
+        using SqlDataReader reader = await command.ExecuteReaderAsync();
+
+        // Assert alternate metadata does not make the empty regular result appear populated.
+        Assert.False(reader.HasRows);
+        Assert.Equal(placement == InfoPlacement.BeforeMetadata ? infoCount : 0, infoMessages.Count);
+        Assert.False(await reader.ReadAsync());
+        Assert.False(reader.HasRows);
+        Assert.False(await reader.ReadAsync());
+        Assert.False(reader.HasRows);
+        if (placement == InfoPlacement.AfterRows)
+        {
+            Assert.Empty(infoMessages);
+        }
+
+        // Act: advance past the empty regular result.
+        Assert.True(await reader.NextResultAsync());
+
+        // Assert the aggregate row and messages survive the result transition.
+        Assert.True(reader.HasRows);
+        Assert.Equal("sum", reader.GetName(0));
+        Assert.True(await reader.ReadAsync());
+        Assert.Equal(42, reader.GetInt32(0));
+        if (placement == InfoPlacement.AfterRows)
+        {
+            Assert.Empty(infoMessages);
+        }
+        Assert.False(await reader.ReadAsync());
+        Assert.True(reader.HasRows);
+        Assert.False(await reader.NextResultAsync());
+        AssertInfoMessages(infoCount, infoMessages);
+    }
+
+    /// <summary>Checks metadata-free INFO responses report no rows or columns and deliver every message.</summary>
+    [Theory]
+    [MemberData(nameof(InfoOnlyCases))]
+    public void HasRows_WithInfoOnly_ReturnsFalse(int infoCount)
+    {
+        // Arrange: using declarations dispose the reader, command, connection, then server.
+        using TdsServer server = CreateServer(infoCount, InfoPlacement.InfoOnly, returnsRow: false, useAlternateMetadata: false);
+        server.Start();
+        List<string> infoMessages = new();
+        using SqlConnection connection = CreateConnection(server, infoMessages);
+        connection.Open();
+        infoMessages.Clear();
+        using SqlCommand command = new(InfoQueryEngine.CommandText, connection)
+        {
+            CommandTimeout = 5
+        };
+
+        // Act
+        using SqlDataReader reader = command.ExecuteReader();
+
+        // Assert
+        Assert.False(reader.HasRows);
+        Assert.Equal(0, reader.FieldCount);
+        Assert.Equal(infoCount, infoMessages.Count);
+        Assert.False(reader.Read());
+        Assert.False(reader.HasRows);
+        Assert.False(reader.Read());
+        Assert.False(reader.HasRows);
+        Assert.False(reader.NextResult());
+        AssertInfoMessages(infoCount, infoMessages);
+    }
+
+    /// <summary>Async counterpart: checks metadata-free INFO responses report no rows or columns and deliver every message.</summary>
+    [Theory]
+    [MemberData(nameof(InfoOnlyCases))]
+    public async Task HasRows_WithInfoOnly_ReturnsFalseAsync(int infoCount)
+    {
+        // Arrange: using declarations dispose the reader, command, connection, then server.
+        using TdsServer server = CreateServer(infoCount, InfoPlacement.InfoOnly, returnsRow: false, useAlternateMetadata: false);
+        server.Start();
+        List<string> infoMessages = new();
+        using SqlConnection connection = CreateConnection(server, infoMessages);
+        await connection.OpenAsync();
+        infoMessages.Clear();
+        using SqlCommand command = new(InfoQueryEngine.CommandText, connection)
+        {
+            CommandTimeout = 5
+        };
+
+        // Act
+        using SqlDataReader reader = await command.ExecuteReaderAsync();
+
+        // Assert
+        Assert.False(reader.HasRows);
+        Assert.Equal(0, reader.FieldCount);
+        Assert.Equal(infoCount, infoMessages.Count);
+        Assert.False(await reader.ReadAsync());
+        Assert.False(reader.HasRows);
+        Assert.False(await reader.ReadAsync());
+        Assert.False(reader.HasRows);
+        Assert.False(await reader.NextResultAsync());
+        AssertInfoMessages(infoCount, infoMessages);
     }
 
     /// <summary>
@@ -190,6 +494,7 @@ public sealed class HasRowsTests
     [InlineData(true, true)]
     public void Metadata_WithBufferedInfoAndUnavailableParser_ReturnsNoRows(bool broken, bool useAlternateMetadata)
     {
+        // Arrange
         using SqlCommand command = new();
         using SqlDataReader reader = new(command, CommandBehavior.Default);
         TdsParser parser = new(false, false)
@@ -203,16 +508,67 @@ public sealed class HasRowsTests
         state._inBytesPacket = 1;
         _SqlMetaDataSet metadata = new(1, null);
 
+        // Act
         TdsOperationStatus result = useAlternateMetadata
             ? reader.TrySetAltMetaDataSet(metadata, true)
             : reader.TrySetMetaData(metadata, false);
 
+        // Assert
         Assert.Equal(TdsOperationStatus.Done, result);
         Assert.False(reader.HasRows);
         Assert.Equal(0, state._inBytesUsed);
         Assert.Equal(1, state._inBytesPacket);
         Assert.False(state._accumulateInfoEvents);
         Assert.Null(state._pendingInfoEvents);
+    }
+
+    /// <summary>Creates an unstarted server with the requested wire response; the caller owns its lifetime.</summary>
+    /// <param name="infoCount">Number of messages in the response.</param>
+    /// <param name="placement">Location of INFO tokens relative to metadata and rows.</param>
+    /// <param name="returnsRow">Whether the regular result has a row.</param>
+    /// <param name="useAlternateMetadata">Whether an aggregate result follows the regular result.</param>
+    /// <returns>The server to start and dispose within the test.</returns>
+    private static TdsServer CreateServer(int infoCount, InfoPlacement placement, bool returnsRow, bool useAlternateMetadata)
+    {
+        TdsServerArguments arguments = new();
+        InfoQueryEngine engine = new(arguments, infoCount, placement, returnsRow, useAlternateMetadata);
+        return new TdsServer(engine, arguments);
+    }
+
+    /// <summary>Creates an unopened connection and captures INFO messages in delivery order.</summary>
+    /// <param name="server">The running server for this test.</param>
+    /// <param name="infoMessages">The destination for captured messages.</param>
+    /// <returns>The connection to open and dispose within the test.</returns>
+    private static SqlConnection CreateConnection(TdsServer server, List<string> infoMessages)
+    {
+        SqlConnectionStringBuilder builder = new()
+        {
+            DataSource = $"localhost,{server.EndPoint.Port}",
+            Encrypt = SqlConnectionEncryptOption.Optional,
+            Pooling = false,
+            ConnectTimeout = 5
+        };
+        SqlConnection connection = new(builder.ConnectionString);
+        connection.InfoMessage += (_, args) =>
+        {
+            foreach (SqlError error in args.Errors)
+            {
+                infoMessages.Add(error.Message);
+            }
+        };
+        return connection;
+    }
+
+    /// <summary>Verifies every INFO message was delivered once and in wire order.</summary>
+    /// <param name="infoCount">Expected number of messages.</param>
+    /// <param name="infoMessages">Messages captured during the query.</param>
+    private static void AssertInfoMessages(int infoCount, List<string> infoMessages)
+    {
+        Assert.Equal(infoCount, infoMessages.Count);
+        for (int i = 0; i < infoCount; i++)
+        {
+            Assert.Equal($"Info message {i}", infoMessages[i]);
+        }
     }
 
     /// <summary>
