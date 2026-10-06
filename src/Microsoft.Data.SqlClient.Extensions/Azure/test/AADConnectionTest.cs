@@ -78,7 +78,7 @@ public class AADConnectionTest
             : Assert.Throws<SqlException>(() => connection.Open());
 
         Assert.Contains(
-            "Failed to acquire access token for ActiveDirectoryManagedIdentity: Azure.Identity error:",
+            "Failed to authenticate the user in Active Directory (Authentication=ActiveDirectoryManagedIdentity).",
             e.Message,
             StringComparison.Ordinal);
     }
