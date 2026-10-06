@@ -8,6 +8,13 @@ namespace Microsoft.Data.SqlClient.UnloadableLibrary;
 
 public sealed class EntryPoint
 {
+    public static string? AssemblyLoadContextName =>
+        #if NET
+        System.Runtime.Loader.AssemblyLoadContext.GetLoadContext(typeof(SqlConnection).Assembly)?.Name;
+        #else
+        "Default";
+        #endif
+
     public string ConnectionString { get; }
 
     public EntryPoint(string connectionString)

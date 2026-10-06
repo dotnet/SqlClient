@@ -58,8 +58,10 @@ public class UnloadableAssemblyLoadContextTest
     [MethodImpl(MethodImplOptions.NoInlining)]
     private static async Task<WeakReference> LoadAndUnloadAssemblyLoadContext(string typeName, string assemblyPath, string mdsPath, string connectionString)
     {
-        // This method loads the entry point type into a new, collectible AssemblyLoadContext. It
-        // then manually instantiates this, and invokes GetDate and GetDateAsync.
+        // This method loads the entry point type into a new, collectible AssemblyLoadContext and
+        // verifies that the entry point type is referencing the SqlConnection type in the correct
+        // AssemblyLoadContext.
+        // It then manually instantiates this entry point type, and invokes GetDate and GetDateAsync.
         Dictionary<string, string> assemblyPathMappings = new()
         {
             { "Microsoft.Data.SqlClient", mdsPath }
@@ -71,6 +73,12 @@ public class UnloadableAssemblyLoadContextTest
 
         Type? unloadableLibraryType = loadedAsm.GetType(typeName);
         Assert.NotNull(unloadableLibraryType);
+
+        PropertyInfo? alcNameProperty = unloadableLibraryType.GetProperty(nameof(EntryPoint.AssemblyLoadContextName), BindingFlags.Public | BindingFlags.Static);
+        Assert.NotNull(alcNameProperty);
+        string? alcName = alcNameProperty.GetValue(null) as string;
+
+        Assert.Equal(alc.Name, alcName);
 
         object? instantiated = Activator.CreateInstance(unloadableLibraryType, [connectionString]);
         Assert.NotNull(instantiated);
