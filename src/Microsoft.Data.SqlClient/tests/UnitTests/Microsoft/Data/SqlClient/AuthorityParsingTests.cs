@@ -93,6 +93,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
             },
         };
 
+        /// <summary>
+        /// Supported authority URLs yield the authority host, first-segment tenant, and normalized
+        /// MSAL authority without trailing endpoint paths.
+        /// </summary>
         [Theory]
         [MemberData(nameof(AuthorityData))]
         public void TryParseAuthority_SplitsHostAndTenant(
@@ -112,6 +116,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
             Assert.Equal(expectedMsalAuthority, msalAuthority);
         }
 
+        /// <summary>
+        /// Invalid authority URLs are rejected and all parsed outputs are empty.
+        /// </summary>
         [Theory]
         // A tenant is required; an authority without one cannot yield a usable credential.
         [InlineData("https://login.microsoftonline.com")]
