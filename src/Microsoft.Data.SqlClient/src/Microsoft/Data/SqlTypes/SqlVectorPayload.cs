@@ -52,6 +52,27 @@ internal static class SqlVectorPayload
     }
 
     /// <summary>
+    /// Throws if a vector of the given length cannot be represented in the given base type
+    /// without exceeding the maximum size of a TDS packet.
+    /// </summary>
+    /// <remarks>
+    /// The limit depends on the element width, so it is checked against the base type the
+    /// value is finally sent as rather than any intermediate it passed through. Reported
+    /// here so that an oversized vector is named as such, rather than reaching the server
+    /// and coming back as a column length error.
+    /// </remarks>
+    internal static void ThrowIfLengthExceedsBaseType(int length, byte elementType)
+    {
+        int maxElements =
+            (TdsEnums.MAXSIZE - TdsEnums.VECTOR_HEADER_SIZE) / MetaType.GetVectorElementSize(elementType);
+
+        if (length > maxElements)
+        {
+            throw ADP.InvalidArraySize(nameof(length));
+        }
+    }
+
+    /// <summary>
     /// Rewrites a TDS vector payload so that its elements use the requested base type,
     /// returning the original payload when it already does.
     /// </summary>

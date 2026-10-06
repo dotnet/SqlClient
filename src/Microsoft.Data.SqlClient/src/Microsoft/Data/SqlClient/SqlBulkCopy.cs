@@ -1866,10 +1866,16 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         /// column's base type, leaving payloads which already use that base type untouched.
         /// </summary>
         /// <remarks>
-        /// Used only for a textual source, whose JSON array is always coerced to a float32
-        /// payload regardless of the destination's base type. The server does not convert
-        /// within the bulk copy data stream, because binary16 and binary32 elements differ
-        /// in size and the <c>INSERT BULK</c> declaration fixes the element width.
+        /// Used for any in-memory value, whose payload carries the base type it was built
+        /// with rather than the destination's. The server does not convert within the bulk
+        /// copy data stream, because binary16 and binary32 elements differ in size and the
+        /// <c>INSERT BULK</c> declaration fixes the element width.
+        /// <para>
+        /// The element count limit is checked here rather than when the intermediate was
+        /// built, because it depends on the element width and so on the base type the value
+        /// is finally sent as. A float16 column accepts twice as many elements as a float32
+        /// one, and the intermediate is always float32.
+        /// </para>
         /// </remarks>
         private static object ConvertVectorToBaseType(object value, byte destinationElementType)
         {
@@ -1880,7 +1886,13 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 return value;
             }
 
-            return SqlTypes.SqlVectorPayload.ConvertElementType(payload, destinationElementType);
+            byte[] converted = SqlTypes.SqlVectorPayload.ConvertElementType(payload, destinationElementType);
+
+            SqlTypes.SqlVectorPayload.ThrowIfLengthExceedsBaseType(
+                (converted.Length - TdsEnums.VECTOR_HEADER_SIZE) / MetaType.GetVectorElementSize(destinationElementType),
+                destinationElementType);
+
+            return converted;
         }
 
         private object ConvertValue(object value, _SqlMetaData metadata, bool isNull, ref bool isSqlType, out bool coercedToDataFeed, int sourceOrdinal)

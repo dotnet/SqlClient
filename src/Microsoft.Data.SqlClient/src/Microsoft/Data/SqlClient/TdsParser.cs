@@ -11650,8 +11650,12 @@ namespace Microsoft.Data.SqlClient
                             stateObj.WriteByteArray(s_jsonMetadataSubstituteSequence, s_jsonMetadataSubstituteSequence.Length, 0);
                             break;
                         case SqlDbTypeExtensions.Vector:
-                            // The scale carries the destination column's base type, which the
-                            // connection must have negotiated in order to send the payload.
+                            // The scale carries the destination column's base type. A
+                            // connection which did not negotiate that base type is told the
+                            // column is a varchar(max) instead, so this does not arise today
+                            // and the value travels as text; the check guards the invariant
+                            // rather than a reachable case, and keeps this path consistent
+                            // with the parameter path.
                             VectorTypeSupportUtilities.ThrowIfBaseTypeNotNegotiated(md.scale, Capabilities.VectorVersion);
 
                             stateObj.WriteByte(md.tdsType);

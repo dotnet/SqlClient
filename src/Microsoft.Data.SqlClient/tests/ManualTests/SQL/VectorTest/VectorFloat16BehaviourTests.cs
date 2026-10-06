@@ -292,6 +292,93 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
 
     #endregion
 
+    #region Feature extension negotiation
+
+    /// <summary>
+    /// Verifies that writing a native float16 parameter on a connection which did not
+    /// negotiate the base type is rejected by the driver, naming the keyword which enables
+    /// it. Without this the server either stores a value the same connection would read back
+    /// as a JSON string, or reports the protocol stream as malformed, neither of which tells
+    /// the caller what to change. The JDBC and ODBC drivers reject it on the client too.
+    /// </summary>
+    /// <param name="setting">The level to request, or null to leave the keyword unset.</param>
+    #if NET
+    [ConditionalTheory(nameof(IsSupported))]
+    // The default is v1, so an application which says nothing is covered too.
+    [InlineData(null)]
+    [InlineData(SqlVectorTypeSupport.V1)]
+    [InlineData(SqlVectorTypeSupport.Off)]
+    public void RejectsNativeFloat16ParameterBelowTheNegotiatedVersion(SqlVectorTypeSupport? setting)
+    {
+        using SqlConnection connection = OpenAt(setting);
+
+        using SqlCommand command =
+            new($"INSERT INTO {_float16Table.Name} ({ColumnName}) VALUES ({ParameterName})", connection);
+        command.Parameters.AddWithValue(
+            ParameterName, new SqlVector<Half>(new[] { (Half)1.5f, (Half)2.5f, (Half)3.5f }));
+
+        InvalidOperationException exception =
+            Assert.Throws<InvalidOperationException>(() => command.ExecuteNonQuery());
+
+        Assert.Contains("float16", exception.Message);
+        Assert.Contains("Vector Type Support", exception.Message);
+        Assert.Contains("V2", exception.Message);
+    }
+
+    /// <summary>
+    /// Verifies that a bulk copy into a float16 column still works on a connection which did
+    /// not negotiate float16. Such a connection is told the column is a <c>varchar(max)</c>,
+    /// so the value travels as text and the server converts it — the column is never a vector
+    /// from the client's point of view, and the base type check does not arise. This is what
+    /// makes the default level usable for loading float16 data.
+    /// </summary>
+    /// <param name="setting">The level to request, or null to leave the keyword unset.</param>
+    [ConditionalTheory(nameof(IsSupported))]
+    [InlineData(null)]
+    [InlineData(SqlVectorTypeSupport.V1)]
+    [InlineData(SqlVectorTypeSupport.Off)]
+    public void BulkCopiesIntoFloat16AsTextBelowTheNegotiatedVersion(SqlVectorTypeSupport? setting)
+    {
+        DataTable source = new();
+        source.Columns.Add(ColumnName, typeof(string));
+        source.Rows.Add("[1.5,2.5,3.5]");
+
+        using SqlConnection connection = OpenAt(setting);
+
+        using (SqlBulkCopy bulkCopy = new(connection) { DestinationTableName = _float16Table.Name })
+        {
+            bulkCopy.ColumnMappings.Add(ColumnName, ColumnName);
+            bulkCopy.WriteToServer(source);
+        }
+
+        // Read back over a v2 connection, which sees the column as a vector.
+        using SqlDataReader reader = Select(_float16Table);
+        Assert.True(reader.Read());
+        Assert.Equal([1.5f, 2.5f, 3.5f], reader.GetSqlVector<float>(0).Memory.ToArray());
+    }
+
+    /// <summary>
+    /// Opens a connection requesting a given level of vector type support.
+    /// </summary>
+    /// <param name="setting">The level to request, or null to leave the keyword unset.</param>
+    /// <returns>An open connection.</returns>
+    private static SqlConnection OpenAt(SqlVectorTypeSupport? setting)
+    {
+        SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
+
+        if (setting.HasValue)
+        {
+            builder.VectorTypeSupport = setting.Value;
+        }
+
+        SqlConnection connection = new(builder.ConnectionString);
+        connection.Open();
+        return connection;
+    }
+    #endif
+
+    #endregion
+
     #region Bulk copy across base types
 
     [ConditionalTheory(nameof(IsSupported))]
@@ -623,6 +710,104 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
 
         Assert.True(reader.Read());
         Assert.Equal([1.5f, 2.5f, 3.5f], reader.GetSqlVector<float>(0).Memory.ToArray());
+    }
+
+    /// <summary>
+    /// Verifies that the element count limit is still enforced for a float32 destination,
+    /// which accepts half as many elements as a float16 one. The JSON intermediate is always
+    /// float32 and is built without the limit so that a wide float16 column can be loaded, so
+    /// the limit has to be applied against the destination's base type instead. Without it an
+    /// oversized payload would reach the server and come back as a column length error.
+    /// </summary>
+    [ConditionalFact(nameof(IsSupported))]
+    public void BulkCopyRejectsAJsonSourceWiderThanTheFloat32Limit()
+    {
+        // 1998 is the most a float32 vector column can declare; the source supplies more.
+        using Table wideFloat32Table = new(_managementConnection, "VectorF32WideTable",
+            $"(Id INT PRIMARY KEY IDENTITY, {ColumnName} vector(1998, float32) NULL)");
+
+        DataTable source = new();
+        source.Columns.Add(ColumnName, typeof(string));
+        source.Rows.Add(JsonSerializer.Serialize(new float[2000]));
+
+        using SqlConnection connection = new(_connectionString);
+        connection.Open();
+
+        using SqlBulkCopy bulkCopy = new(connection) { DestinationTableName = wideFloat32Table.Name };
+        bulkCopy.ColumnMappings.Add(ColumnName, ColumnName);
+
+        // Bulk copy wraps the failure to name the column and row.
+        InvalidOperationException exception =
+            Assert.Throws<InvalidOperationException>(() => bulkCopy.WriteToServer(source));
+
+        Assert.IsType<ArgumentOutOfRangeException>(exception.InnerException);
+    }
+
+    /// <summary>
+    /// Verifies that a JSON value near a binary16 tie is stored identically whether it is
+    /// bulk copied or inserted through a literal. A bulk copy parses the text to float32 and
+    /// narrows it on the client, so the value is rounded twice; an INSERT leaves the text to
+    /// the server. If the server rounded once, the same JSON would give different stored
+    /// values for the two paths.
+    /// </summary>
+    /// <param name="literal">A JSON array holding one value at or near a binary16 tie.</param>
+    [ConditionalTheory(nameof(IsSupported))]
+    // Exactly the tie between 1.0 and 1.0009765625, which ties-to-even resolves downwards.
+    [InlineData("[1.00048828125]")]
+    // Just above that tie in decimal, but the nearest float32 is the tie itself.
+    [InlineData("[1.00048828125000001]")]
+    // The tie between 1.0009765625 and 1.001953125, which resolves upwards.
+    [InlineData("[1.00146484375]")]
+    // Half of the smallest subnormal, and just above it.
+    [InlineData("[2.98023223876953125e-8]")]
+    [InlineData("[3.0e-8]")]
+    public void BulkCopyRoundsTheSameWayAsTheServer(string literal)
+    {
+        using Table table = new(_managementConnection, "VectorF16RoundingTable",
+            $"(Id INT PRIMARY KEY IDENTITY, {ColumnName} vector(1, float16) NULL)");
+
+        using SqlConnection connection = new(_connectionString);
+        connection.Open();
+
+        // The server parses the literal itself.
+        using (SqlCommand insert =
+            new($"INSERT INTO {table.Name} ({ColumnName}) VALUES ('{literal}')", connection))
+        {
+            insert.ExecuteNonQuery();
+        }
+
+        float[] viaServer = ReadLast(connection, table);
+
+        // The client parses the same text and narrows it before sending.
+        DataTable source = new();
+        source.Columns.Add(ColumnName, typeof(string));
+        source.Rows.Add(literal);
+
+        using (SqlBulkCopy bulkCopy = new(connection) { DestinationTableName = table.Name })
+        {
+            bulkCopy.ColumnMappings.Add(ColumnName, ColumnName);
+            bulkCopy.WriteToServer(source);
+        }
+
+        float[] viaClient = ReadLast(connection, table);
+
+        Assert.Equal(viaServer, viaClient);
+    }
+
+    /// <summary>
+    /// Reads the most recently inserted vector from a table as single precision values.
+    /// </summary>
+    /// <param name="connection">An open connection.</param>
+    /// <param name="table">The table to read from.</param>
+    /// <returns>The elements of the last row's vector.</returns>
+    private static float[] ReadLast(SqlConnection connection, Table table)
+    {
+        using SqlCommand command =
+            new($"SELECT TOP 1 {ColumnName} FROM {table.Name} ORDER BY Id DESC", connection);
+        using SqlDataReader reader = command.ExecuteReader();
+
+        Assert.True(reader.Read());
+        return reader.GetSqlVector<float>(0).Memory.ToArray();
     }
 
     [ConditionalFact(nameof(IsSupported))]
