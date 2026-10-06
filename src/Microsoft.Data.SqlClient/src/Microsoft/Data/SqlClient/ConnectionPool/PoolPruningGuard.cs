@@ -13,47 +13,78 @@ using Microsoft.Data.SqlClient.Internal;
 namespace Microsoft.Data.SqlClient.ConnectionPool
 {
     /// <summary>
+    /// Single source of truth for whether a pool is running and which operations it admits.
     /// Makes idle pool retirement atomic with admission of requests and background creation.
     /// Activity covers queued work as well as creation not yet reflected in the pool count.
-    /// Explicit shutdown is independent: requests already admitted may still finish.
     /// </summary>
     /// <remarks>
     /// Admission is represented by a <see cref="Lease"/>. Whoever holds the lease owns the
-    /// admission and must dispose it; ownership moves with the work when it is handed to a
+    /// admission and must dispose it; ownership moves with the lease when it is handed to a
     /// background worker, and the giver clears its copy (<c>lease = default</c>).
     /// <para>
-    /// Admission is lock-free and allocation-free because it runs on every checkout.
-    /// <see cref="_state"/> is the active operation count, or <see cref="Pruning"/> /
-    /// <see cref="Pruned"/>.
+    /// <see cref="_state"/> packs a closed flag, a pruning flag and the active operation count
+    /// into one <see cref="int"/>, so every transition (admit, release, prune, close) is a single
+    /// compare-and-swap. Splitting them into separate fields would reopen the races this type
+    /// exists to close: a pool could be retired between a caller's state check and its count
+    /// increment, or be reported as running after it already refused admission. Admission is
+    /// lock-free and allocation-free because it runs on every checkout.
+    /// </para>
+    /// <para>
+    /// Closing (prune or shutdown) is permanent and keeps the count, so operations admitted
+    /// before an explicit shutdown still release normally.
     /// </para>
     /// </remarks>
     internal sealed class PoolPruningGuard
     {
-        private const int Pruned = -1;
-        private const int Pruning = -2;
+        /// <summary>Set once the pool is pruned or shut down; never cleared.</summary>
+        private const int ClosedFlag = unchecked((int)0x80000000);
+
+        /// <summary>Set only while a prune decision is in progress; the count is zero then.</summary>
+        private const int PruningFlag = 0x40000000;
+
+        /// <summary>Bits holding the number of admitted operations.</summary>
+        private const int CountMask = 0x3FFFFFFF;
 
         private int _state;
 
+        private static bool IsClosed(int state) => (state & ClosedFlag) != 0;
+
+        private static bool IsPruning(int state) => (state & PruningFlag) != 0;
+
+        private static int ActiveCount(int state) => state & CountMask;
+
+        /// <summary>
+        /// Whether the pool is running. Pools start running during construction, and stop
+        /// running permanently once Shutdown() is called (or the pool is pruned). A caller refused
+        /// by <see cref="TryEnter"/> always observes <see langword="false"/> here.
+        /// </summary>
+        internal bool IsRunning => !IsClosed(Volatile.Read(ref _state));
+
         /// <summary>
         /// Admits an operation. The returned lease is inactive (<see cref="Lease.IsActive"/> is
-        /// <see langword="false"/>) once the pool has been pruned.
+        /// <see langword="false"/>) once the pool has been pruned or shut down.
         /// </summary>
+        /// <remarks>
+        /// While a prune decision is in progress this spins briefly (never takes a lock) until
+        /// the decision either reopens admission or marks the pool pruned.
+        /// </remarks>
         internal Lease TryEnter()
         {
             SpinWait spinner = default;
             while (true)
             {
                 int state = Volatile.Read(ref _state);
-                if (state == Pruned)
+                if (IsClosed(state))
                 {
                     return default;
                 }
-                if (state == Pruning)
+                if (IsPruning(state))
                 {
-                    // A prune decision is in progress and resolves without blocking.
+                    // Wait for the prune decision to either reopen admission or mark the pool pruned.
                     spinner.SpinOnce();
                     continue;
                 }
+                Debug.Assert(ActiveCount(state) < CountMask, "PoolPruningGuard active count overflow.");
                 if (Interlocked.CompareExchange(ref _state, state + 1, state) == state)
                 {
                     return new Lease(this);
@@ -61,10 +92,14 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
         }
 
+        /// <summary>
+        /// Retires the pool if it is idle: no error, no connections and no admitted operations.
+        /// On success the pool stops running and refuses admission in one step, then is shut down.
+        /// </summary>
         internal bool TryPrune(IDbConnectionPool pool)
         {
             if (pool.ErrorOccurred || pool.Count != 0 ||
-                Interlocked.CompareExchange(ref _state, Pruning, 0) != 0)
+                Interlocked.CompareExchange(ref _state, PruningFlag, 0) != 0)
             {
                 return false;
             }
@@ -76,12 +111,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 Volatile.Write(ref _state, 0);
                 return false;
             }
-            Volatile.Write(ref _state, Pruned);
 
-            // The pool is idle and no longer admits work, so it is retired whatever happens next.
-            // Shutting down here (rather than only in QueuePoolForRelease) lets the factory redirect
-            // a caller that already fetched this pool instead of reporting a pool timeout. Shutdown
-            // is idempotent and is retried by QueuePoolForRelease, so a failure here is only traced.
+            // Stop running and refuse admission in one step, so a refused caller always sees
+            // IsRunning == false and is redirected rather than reporting a pool timeout.
+            Volatile.Write(ref _state, ClosedFlag);
+
+            // Shutdown is idempotent and is retried by QueuePoolForRelease, so a failure here is
+            // only traced.
             try
             {
                 pool.Shutdown();
@@ -94,6 +130,40 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             return true;
         }
 
+        /// <summary>
+        /// Stops admission permanently while keeping the count of already admitted operations.
+        /// Returns <see langword="true"/> only for the call that closed the guard.
+        /// </summary>
+        /// <remarks>
+        /// Spins briefly (never takes a lock) while a prune decision is in progress.
+        /// </remarks>
+        internal bool TryClose()
+        {
+            SpinWait spinner = default;
+            while (true)
+            {
+                int state = Volatile.Read(ref _state);
+                if (IsClosed(state))
+                {
+                    return false;
+                }
+                if (IsPruning(state))
+                {
+                    // Wait for the prune decision to either reopen admission or mark the pool pruned.
+                    spinner.SpinOnce();
+                    continue;
+                }
+                if (Interlocked.CompareExchange(ref _state, state | ClosedFlag, state) == state)
+                {
+                    return true;
+                }
+            }
+        }
+
+        /// <remarks>
+        /// Never waits on another operation; it only retries when a concurrent admit, release or
+        /// close changed the state between the read and the compare-and-swap.
+        /// </remarks>
         private void Release()
         {
             SpinWait spinner = default;
@@ -101,13 +171,15 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             {
                 int state = Volatile.Read(ref _state);
 
-                // Refuse to go negative: a lower count would read as "no active operations" (or
-                // as a pruning state) and allow retiring a pool that is still in use.
-                if (state <= 0)
+                // Refuse to go below zero: that would corrupt the flags and could allow retiring
+                // a pool that is still in use.
+                if (ActiveCount(state) == 0)
                 {
                     Debug.Fail("PoolPruningGuard released more often than admitted.");
                     return;
                 }
+
+                // Decrementing the count leaves the closed flag intact.
                 if (Interlocked.CompareExchange(ref _state, state - 1, state) == state)
                 {
                     return;
