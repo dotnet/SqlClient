@@ -810,6 +810,58 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
         return reader.GetSqlVector<float>(0).Memory.ToArray();
     }
 
+    /// <summary>
+    /// Verifies that a JSON string can be used as a vector parameter, which is how a
+    /// <see cref="System.Data.Common.DbDataAdapter"/> update of a float16 column arrives on
+    /// .NET Framework: the column has no <c>System.Half</c> to be surfaced as, so it is read
+    /// as a string, and <see cref="SqlCommandBuilder"/> pairs that string with
+    /// <c>SqlDbType.Vector</c> taken from the column's provider type.
+    /// </summary>
+    /// <remarks>
+    /// Concurrency matches on the key alone because a vector column cannot appear in a WHERE
+    /// clause, which is a server restriction rather than anything to do with the base type.
+    /// <para>
+    /// .NET Framework only. On .NET the column is surfaced as <c>SqlVector&lt;Half&gt;</c>,
+    /// which <see cref="DataTable"/> stores through <c>SqlUdtStorage</c> and then refuses to
+    /// assign; that is a limitation of <see cref="DataTable"/> which applies equally to
+    /// <c>SqlVector&lt;float&gt;</c> and so predates this base type.
+    /// </para>
+    /// </remarks>
+    #if !NET
+    [ConditionalFact(nameof(IsSupported))]
+    public void UpdatesAFloat16ColumnThroughADataAdapter()
+    {
+        using Table table = new(_managementConnection, "VectorF16AdapterTable",
+            $"(Id INT PRIMARY KEY, {ColumnName} vector(3, float16) NULL)");
+
+        using SqlConnection connection = new(_connectionString);
+        connection.Open();
+
+        using (SqlCommand seed =
+            new($"INSERT INTO {table.Name} VALUES (1, '[1.5,2.5,3.5]')", connection))
+        {
+            seed.ExecuteNonQuery();
+        }
+
+        using SqlDataAdapter adapter = new($"SELECT Id, {ColumnName} FROM {table.Name}", connection);
+        using SqlCommandBuilder builder = new(adapter)
+        {
+            ConflictOption = ConflictOption.OverwriteChanges
+        };
+
+        DataTable rows = new();
+        adapter.Fill(rows);
+
+        // No System.Half, so the column is surfaced as a JSON string and SqlCommandBuilder
+        // pairs that string with SqlDbType.Vector. This is the case being guarded.
+        rows.Rows[0][ColumnName] = "[4.5,5.5,6.5]";
+
+        adapter.Update(rows);
+
+        Assert.Equal([4.5f, 5.5f, 6.5f], ReadLast(connection, table));
+    }
+    #endif
+
     [ConditionalFact(nameof(IsSupported))]
     public void BulkCopyRejectsValuesOutsideTheFloat16Range()
     {

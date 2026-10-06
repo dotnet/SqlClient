@@ -1705,6 +1705,43 @@ namespace Microsoft.Data.SqlClient
             return ShouldSerializePrecision() ? PrecisionInternal : ValuePrecision(CoercedValue);
         }
 
+        /// <summary>
+        /// The vector properties of this parameter's value: its base type, element count,
+        /// and payload.
+        /// </summary>
+        /// <remarks>
+        /// A caller may supply a vector either as a <see cref="SqlTypes.SqlVector{T}"/> or as
+        /// a JSON array in a string. The latter is the only form available to a .NET
+        /// Framework caller round-tripping a <c>float16</c> column, which has no
+        /// <c>System.Half</c> to be surfaced as and so is read as a string; a
+        /// <see cref="System.Data.Common.DbDataAdapter"/> update built from that column
+        /// therefore pairs a string value with <c>SqlDbType.Vector</c>. Both forms are
+        /// described here so that the declaration and the payload agree whichever was used.
+        /// </remarks>
+        internal ISqlVector GetVectorProperties()
+        {
+            if (Value is ISqlVector vector)
+            {
+                return vector;
+            }
+
+            if (Value is string json)
+            {
+                try
+                {
+                    return SqlVector<float>.CreateForConversion(
+                        JsonSerializer.Deserialize(json, SqlClientJsonSerializerContext.Default.SingleArray));
+                }
+                catch (Exception ex) when (ex is ArgumentNullException || ex is JsonException)
+                {
+                    throw ADP.InvalidJsonStringForVector(json, ex);
+                }
+            }
+
+            // Validate rejects every other type, so this is unreachable for a valid value.
+            throw ADP.InvalidCast();
+        }
+
         internal object GetCoercedValue()
         {
             // NOTE: User can change the Udt at any time

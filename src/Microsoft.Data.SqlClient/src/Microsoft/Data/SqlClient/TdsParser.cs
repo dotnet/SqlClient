@@ -10736,7 +10736,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         // For vector type we need to write the size in bytes required to represent
                         // vector value when communicating with SQL Server.
-                        var sqlVectorProps = ((ISqlVector)param.Value);
+                        var sqlVectorProps = param.GetVectorProperties();
                         maxsize = sqlVectorProps.Size;
                     }
 
@@ -10765,7 +10765,7 @@ namespace Microsoft.Data.SqlClient
             else if (mt.SqlDbType == SqlDbTypeExtensions.Vector)
             {
                 // For vector type we need to write scale as the element type of the vector.
-                byte elementType = ((ISqlVector)param.Value).ElementType;
+                byte elementType = param.GetVectorProperties().ElementType;
 
                 VectorTypeSupportUtilities.ThrowIfBaseTypeNotNegotiated(elementType, Capabilities.VectorVersion);
 
@@ -10855,7 +10855,7 @@ namespace Microsoft.Data.SqlClient
                     // for codePageEncoded types, WriteValue simply expects the number of characters
                     // For plp types, we also need the encoded byte size
                     // For vector type we need to write scale as the element type of the vector.
-                    byte writeScale = mt.SqlDbType == SqlDbTypeExtensions.Vector ? ((ISqlVector)param.Value).ElementType : param.GetActualScale();
+                    byte writeScale = mt.SqlDbType == SqlDbTypeExtensions.Vector ? param.GetVectorProperties().ElementType : param.GetActualScale();
                     writeParamTask = WriteValue(value, mt, isParameterEncrypted ? (byte)0 : writeScale, actualSize, codePageByteSize, isParameterEncrypted ? 0 : param.Offset, stateObj, isParameterEncrypted ? 0 : param.Size, isDataFeed);
                 }
             }

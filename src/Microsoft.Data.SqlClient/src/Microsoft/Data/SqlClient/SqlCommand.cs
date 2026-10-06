@@ -2279,7 +2279,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     // The validate function for SqlParameters would have already thrown
                     // InvalidCastException if an incompatible value is specified for vector type.
-                    ISqlVector vectorProps = (ISqlVector)sqlParam.Value;
+                    ISqlVector vectorProps = sqlParam.GetVectorProperties();
 
                     // The base type is only stated for float16, so that the declaration
                     // emitted for float32 vectors is unchanged from earlier versions and
