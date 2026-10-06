@@ -117,20 +117,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         public static bool IsSupported => TestDataInstance.IsSupported;
 
         /// <summary>
-        /// The bulk copy source modes which apply to this suite. Mode 2 supplies the value as
-        /// a <see cref="SqlVector{T}"/> through a <see cref="DataTable"/>, which carries its
-        /// own base type; it is therefore only valid when that base type is the column's.
+        /// The bulk copy source modes which apply to this suite. Mode 1 reads the value from
+        /// a SQL Server table, and mode 2 supplies it as a <see cref="SqlVector{T}"/> through
+        /// a <see cref="DataTable"/>. Both apply to every representation: an in-memory vector
+        /// carries the base type of its element type, which the client rewrites to the
+        /// column's base type when they differ.
         /// </summary>
         public static IEnumerable<object[]> BulkCopySourceModes
         {
             get
             {
                 yield return new object[] { 1 };
-
-                if (TestDataInstance.IsDefaultRepresentation)
-                {
-                    yield return new object[] { 2 };
-                }
+                yield return new object[] { 2 };
             }
         }
 

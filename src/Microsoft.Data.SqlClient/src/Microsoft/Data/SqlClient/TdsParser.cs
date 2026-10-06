@@ -10765,7 +10765,11 @@ namespace Microsoft.Data.SqlClient
             else if (mt.SqlDbType == SqlDbTypeExtensions.Vector)
             {
                 // For vector type we need to write scale as the element type of the vector.
-                stateObj.WriteByte(((ISqlVector)param.Value).ElementType);
+                byte elementType = ((ISqlVector)param.Value).ElementType;
+
+                VectorTypeSupportUtilities.ThrowIfBaseTypeNotNegotiated(elementType, Capabilities.VectorVersion);
+
+                stateObj.WriteByte(elementType);
             }
 
             // write out collation or xml metadata
@@ -11646,6 +11650,10 @@ namespace Microsoft.Data.SqlClient
                             stateObj.WriteByteArray(s_jsonMetadataSubstituteSequence, s_jsonMetadataSubstituteSequence.Length, 0);
                             break;
                         case SqlDbTypeExtensions.Vector:
+                            // The scale carries the destination column's base type, which the
+                            // connection must have negotiated in order to send the payload.
+                            VectorTypeSupportUtilities.ThrowIfBaseTypeNotNegotiated(md.scale, Capabilities.VectorVersion);
+
                             stateObj.WriteByte(md.tdsType);
                             WriteTokenLength(md.tdsType, md.length, stateObj);
                             stateObj.WriteByte(md.scale);

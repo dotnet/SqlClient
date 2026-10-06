@@ -4327,6 +4327,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The vector base type &apos;{0}&apos; is not supported for the vector type support level negotiated with the server. Set the &apos;Vector Type Support&apos; connection string keyword to &apos;{1}&apos; to use it..
+        /// </summary>
+        internal static string SQL_VectorBaseTypeNotNegotiated {
+            get {
+                return ResourceManager.GetString("SQL_VectorBaseTypeNotNegotiated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Invalid attempt to GetXmlReader on column &apos;{0}&apos;. The GetXmlReader function can only be used on columns of type Xml..
         /// </summary>
         internal static string SQL_XmlReaderNotSupportOnColumnType {

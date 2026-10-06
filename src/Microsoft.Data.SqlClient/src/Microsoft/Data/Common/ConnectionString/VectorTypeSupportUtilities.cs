@@ -131,5 +131,44 @@ namespace Microsoft.Data.Common.ConnectionString
                 _ => TdsEnums.VECTOR_VERSION_FLOAT32,
             };
         }
+
+        /// <summary>
+        /// Throws if a vector base type is used which the connection did not negotiate.
+        /// </summary>
+        /// <param name="elementType">The base type of the value being sent.</param>
+        /// <param name="negotiatedVersion">
+        /// The version acknowledged by the server, from <c>ConnectionCapabilities.VectorVersion</c>.
+        /// </param>
+        /// <remarks>
+        /// The negotiated version governs which base types are exchanged in binary form, so
+        /// a value of a base type above it cannot be sent. Checked once here so that the
+        /// parameter and bulk copy paths cannot disagree.
+        /// </remarks>
+        internal static void ThrowIfBaseTypeNotNegotiated(byte elementType, byte negotiatedVersion)
+        {
+            // Each base type was added in the feature extension version of the same number:
+            // float32 in version 1, float16 in version 2.
+            byte requiredVersion = elementType switch
+            {
+                (byte)MetaType.SqlVectorElementType.Float32 => TdsEnums.VECTOR_VERSION_FLOAT32,
+                (byte)MetaType.SqlVectorElementType.Float16 => TdsEnums.VECTOR_VERSION_FLOAT16,
+                _ => throw SQL.VectorTypeNotSupported(elementType.ToString()),
+            };
+
+            if (negotiatedVersion >= requiredVersion)
+            {
+                return;
+            }
+
+            string baseType = elementType == (byte)MetaType.SqlVectorElementType.Float16
+                ? "float16"
+                : "float32";
+
+            string keywordValue = requiredVersion == TdsEnums.VECTOR_VERSION_FLOAT16
+                ? nameof(SqlVectorTypeSupport.V2)
+                : nameof(SqlVectorTypeSupport.V1);
+
+            throw SQL.VectorBaseTypeNotNegotiated(baseType, keywordValue);
+        }
     }
 }

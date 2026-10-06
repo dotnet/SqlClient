@@ -15,8 +15,9 @@
           read on .NET Framework, either as a JSON array through the string read paths, or as a
           <c>SqlVector&lt;float&gt;</c>, which widens the elements to single precision. Widening
           is exact, so no information is lost. Values can be written to a <c>float16</c> column
-          from .NET Framework as a JSON string, or as a <c>SqlVector&lt;float&gt;</c>, which the
-          server converts.
+          from .NET Framework as a JSON string, which every server accepts, or as a
+          <c>SqlVector&lt;float&gt;</c>, which requires a server that converts between base
+          types. See the remarks on conversion below.
         </para>
         <para>
           A <c>float16</c> column is only exchanged in its binary form when the connection asks
@@ -34,10 +35,21 @@
           elements, but only the string paths also serialize the result.
         </para>
         <para>
-          Conversion between base types is performed by SQL Server, which reports an error if a
-          value is outside the range the destination can represent. Converting from
-          <c>float32</c> to <c>float16</c> loses precision for values which the narrower type
-          cannot represent exactly, in the same way as inserting a JSON literal does.
+          Conversion between the <c>float32</c> and <c>float16</c> base types is performed by
+          SQL Server, and whether it is permitted depends on the server. Some builds block both
+          implicit and explicit conversion between base types and report error 42238; others
+          allow it. Verified as working against SQL Server vNext CTP 1.0 (18.0.258.0). Where
+          the conversion is blocked, a value whose base type differs from the column's cannot
+          be written as a <c>SqlVector&lt;T&gt;</c> at all, which on .NET Framework leaves a
+          JSON string as the only way to write a <c>float16</c> column, since
+          <see cref="T:System.Half" /> is unavailable there. A JSON string is accepted by every
+          server, so prefer it when the target server is not known.
+        </para>
+        <para>
+          Where the conversion is permitted, the server reports an error if a value is outside
+          the range the destination can represent. Converting from <c>float32</c> to
+          <c>float16</c> loses precision for values which the narrower type cannot represent
+          exactly, in the same way as inserting a JSON literal does.
         </para>
         <para>
           A bulk copy is different, because the <c>INSERT BULK</c> statement states the

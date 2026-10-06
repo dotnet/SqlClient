@@ -66,6 +66,13 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
 
     public static bool IsSupported => DataTestUtility.IsSqlVectorFloat16Supported;
 
+    /// <summary>
+    /// Whether the server converts between vector base types. Some builds block it and report
+    /// error 42238, in which case a value can only be written to a column whose base type
+    /// matches its own.
+    /// </summary>
+    public static bool ServerConvertsBaseTypes => DataTestUtility.IsSqlVectorBaseTypeConversionSupported;
+
     #region Column metadata
 
     [ConditionalFact(nameof(IsSupported))]
@@ -237,8 +244,9 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
 
     public static IEnumerable<object[]> CrossBaseTypeParameters()
     {
-        // A vector of either base type can be written to a column of either base type: the
-        // conversion is performed by the server, which knows the destination's base type.
+        // A vector of either base type can be written to a column of either base type, where
+        // the server converts between them. Whether it does is server dependent, which is
+        // what ServerConvertsBaseTypes guards.
         yield return ["float16", new SqlVector<float>(new float[] { 1.5f, 2.5f, 3.5f })];
         yield return ["float32", new SqlVector<float>(new float[] { 1.5f, 2.5f, 3.5f })];
         #if NET
@@ -247,7 +255,13 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
         #endif
     }
 
-    [ConditionalTheory(nameof(IsSupported))]
+    /// <summary>
+    /// Verifies that a vector parameter can be written to a column of either base type, with
+    /// the server performing the conversion. Skipped where the server blocks conversion
+    /// between base types, in which case a JSON string is the only portable way to write a
+    /// column whose base type differs from the value's.
+    /// </summary>
+    [ConditionalTheory(nameof(IsSupported), nameof(ServerConvertsBaseTypes))]
     [MemberData(nameof(CrossBaseTypeParameters), DisableDiscoveryEnumeration = true)]
     public void WritesVectorParameterToColumnOfEitherBaseType(string columnBaseType, object value)
     {
@@ -260,7 +274,12 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
         Assert.Equal([1.5f, 2.5f, 3.5f], reader.GetSqlVector<float>(0).Memory.ToArray());
     }
 
-    [ConditionalFact(nameof(IsSupported))]
+    /// <summary>
+    /// Verifies that a float32 value which cannot be represented in float16 is reported
+    /// rather than silently saturated. The value is sent as float32 and narrowed by the
+    /// server, so this depends on the server converting between base types.
+    /// </summary>
+    [ConditionalFact(nameof(IsSupported), nameof(ServerConvertsBaseTypes))]
     public void RejectsValuesOutsideTheFloat16Range()
     {
         // The value is sent as float32 and narrowed by the server, which reports the

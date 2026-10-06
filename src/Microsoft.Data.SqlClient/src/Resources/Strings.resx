@@ -2160,6 +2160,9 @@
   <data name="SQL_VectorTypeNotSupported" xml:space="preserve">
     <value>Unsupported Vector type '{0}'.</value>
   </data>
+  <data name="SQL_VectorBaseTypeNotNegotiated" xml:space="preserve">
+    <value>The vector base type '{0}' is not supported for the vector type support level negotiated with the server. Set the 'Vector Type Support' connection string keyword to '{1}' to use it.</value>
+  </data>
   <data name="ADP_NullOutputParameterValueForVector" xml:space="preserve">
     <value>'null' value not supported for output parameter '{0}' of SqlDbtype Vector.</value>
   </data>

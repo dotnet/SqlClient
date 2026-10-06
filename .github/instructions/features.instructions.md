@@ -144,13 +144,24 @@ Notes:
   `GetSqlVector<float>`, which widens the elements. Widening from `float16` is exact.
 - `float16` requires `ALTER DATABASE SCOPED CONFIGURATION SET PREVIEW_FEATURES = ON` while
   it is in preview.
-- SQL Server converts between base types for a parameter. A bulk copy is different: the
-  `INSERT BULK` statement states the destination's base type, and the server then requires a
-  binary payload of exactly that width, so it performs no conversion within the data stream.
-  A textual source is therefore parsed into the destination's base type by the driver, and
+- Whether SQL Server converts between base types for a parameter depends on the server:
+  some builds block both implicit and explicit conversion and report error 42238, others
+  allow it (verified against SQL Server vNext CTP 1.0, 18.0.258.0). A JSON string is
+  accepted by every server, so prefer it when the target server is not known. This matters
+  most on .NET Framework, where `System.Half` is unavailable and a `SqlVector<float>` would
+  otherwise be the only strongly typed way to write a `float16` column.
+- A bulk copy is different: the `INSERT BULK` statement states the destination's base type,
+  and the server then requires a binary payload of exactly that width, so it performs no
+  conversion within the data stream. Any in-memory value — a JSON string or a
+  `SqlVector<T>` whose element type differs from the column's — is therefore converted to
+  the destination's base type by the driver, which does not depend on the server, and
   narrowing to `float16` throws an `OverflowException` for a value outside its range. A
   payload read from another vector column keeps its own base type, so copying between
   columns of different base types is reported by the server.
+- A vector base type can only be used once the connection has negotiated the feature
+  extension version which covers it, so writing a `float16` value needs
+  `Vector Type Support=v2`. The driver reports this itself rather than letting the server
+  see a value it did not negotiate.
 - A column's base type and number of dimensions are available from the column schema:
   `reader.GetColumnSchema()[i]["VectorBaseType"]` and `["VectorDimensions"]`. Both are `null`
   for columns which are not vectors. This is the only way to tell the two base types apart

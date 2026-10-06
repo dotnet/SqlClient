@@ -9,11 +9,11 @@ namespace SqlVectorFloat16Example;
 // - Inserts vectors from .NET Framework, where System.Half is unavailable
 // - Reads float16 vectors as SqlVector<Half>, as widened SqlVector<float>, and as JSON
 // - Inspects a column's base type and number of dimensions
-// - Converts between the float16 and float32 base types
+// - Converts between the float16 and float32 base types, where the server permits it
 //
 // Requirements:
 // - SQL Server 2025 and above, with PREVIEW_FEATURES enabled for the database
-// - Microsoft.Data.SqlClient (7.1.0 and above)
+// - Microsoft.Data.SqlClient (8.0.0 and above)
 //<Snippet1>
 using Microsoft.Data;
 using Microsoft.Data.SqlClient;
@@ -193,14 +193,24 @@ CREATE TABLE {TableName}
     #region ConvertBetweenBaseTypes
     private static async Task ConvertBetweenBaseTypesAsync(SqlConnection conn)
     {
-        // SQL Server converts between the two base types, so a vector read from a column of
-        // one base type can be written to a column of the other.
-        using var cmd = new SqlCommand(
-            "SELECT CAST(CAST('[1.5,2.5,3.5]' AS vector(3, float16)) AS vector(3, float32));", conn);
-        using var reader = await cmd.ExecuteReaderAsync();
+        // Whether SQL Server converts between the two base types depends on the server: some
+        // builds block both implicit and explicit conversion and report error 42238. Where it
+        // is permitted, a vector read from a column of one base type can be written to a
+        // column of the other. Where it is not, write a JSON string instead, which every
+        // server accepts and which the examples above use.
+        try
+        {
+            using var cmd = new SqlCommand(
+                "SELECT CAST(CAST('[1.5,2.5,3.5]' AS vector(3, float16)) AS vector(3, float32));", conn);
+            using var reader = await cmd.ExecuteReaderAsync();
 
-        await reader.ReadAsync();
-        Console.WriteLine($"\nfloat16 converted to float32: {reader.GetString(0)}");
+            await reader.ReadAsync();
+            Console.WriteLine($"\nfloat16 converted to float32: {reader.GetString(0)}");
+        }
+        catch (SqlException ex)
+        {
+            Console.WriteLine($"\nThis server does not convert between vector base types: {ex.Message}");
+        }
     }
     #endregion
 }

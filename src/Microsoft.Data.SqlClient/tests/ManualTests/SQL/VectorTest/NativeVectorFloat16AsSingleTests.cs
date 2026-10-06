@@ -45,7 +45,10 @@ public sealed class VectorFloat16AsSingleTestData : NativeVectorTestDataBase<flo
 
     public override int IncorrectScalarDataParameterSize => 3234;
 
-    public override bool IsSupported => DataTestUtility.IsSqlVectorFloat16Supported;
+    // The column's base type is float16 but the values are single precision, so writing a
+    // parameter depends on the server converting between base types. Where that is blocked,
+    // the suite does not apply.
+    public override bool IsSupported => DataTestUtility.IsSqlVectorBaseTypeConversionSupported;
 
     public override string SqlServerTypeName => "float16";
 
