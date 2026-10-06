@@ -7,6 +7,7 @@
 #nullable enable
 
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Loader;
@@ -29,8 +30,9 @@ public class UnloadableAssemblyLoadContextTest
         string connStr = DataTestUtility.TCPConnectionString;
         string typeName = typeof(EntryPoint).FullName!;
         string libraryPath = typeof(EntryPoint).Assembly.Location;
+        string mdsPath = typeof(SqlConnection).Assembly.Location;
 
-        WeakReference alcWeakReference = await LoadAndUnloadAssemblyLoadContext(typeName, libraryPath, connStr);
+        WeakReference alcWeakReference = await LoadAndUnloadAssemblyLoadContext(typeName, libraryPath, mdsPath, connStr);
 
         for (int i = 0; i < 10 && alcWeakReference.IsAlive; i++)
         {
@@ -54,11 +56,16 @@ public class UnloadableAssemblyLoadContextTest
     /// in order to ensure that this weak reference is guaranteed to be out of scope in the method's caller.
     /// </remarks>
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private static async Task<WeakReference> LoadAndUnloadAssemblyLoadContext(string typeName, string assemblyPath, string connectionString)
+    private static async Task<WeakReference> LoadAndUnloadAssemblyLoadContext(string typeName, string assemblyPath, string mdsPath, string connectionString)
     {
         // This method loads the entry point type into a new, collectible AssemblyLoadContext. It
         // then manually instantiates this, and invokes GetDate and GetDateAsync.
-        AssemblyLoadContext alc = new(nameof(SecondaryAssemblyLoadContext_Unloads), isCollectible: true);
+        Dictionary<string, string> assemblyPathMappings = new()
+        {
+            { "Microsoft.Data.SqlClient", mdsPath }
+        };
+
+        UnloadableAssemblyLoadContext alc = new(nameof(SecondaryAssemblyLoadContext_Unloads), assemblyPath, assemblyPathMappings);
         WeakReference weakRef = new(alc, trackResurrection: true);
         Assembly loadedAsm = alc.LoadFromAssemblyPath(assemblyPath);
 
@@ -84,6 +91,31 @@ public class UnloadableAssemblyLoadContextTest
         alc.Unload();
 
         return weakRef;
+    }
+
+    private sealed class UnloadableAssemblyLoadContext : AssemblyLoadContext
+    {
+        private readonly Dictionary<string, string> _assemblyPathMappings;
+        private readonly AssemblyDependencyResolver _resolver;
+
+        public UnloadableAssemblyLoadContext(string name, string assemblyPath, Dictionary<string, string> assemblyPathMappings)
+            : base(name, isCollectible: true)
+        {
+            _assemblyPathMappings = assemblyPathMappings;
+            _resolver = new AssemblyDependencyResolver(assemblyPath);
+        }
+
+        protected override Assembly? Load(AssemblyName assemblyName)
+        {
+            string? resolvedAssemblyPath = assemblyName.Name is not null
+                && _assemblyPathMappings.TryGetValue(assemblyName.Name, out string? mappedPath)
+                ? mappedPath
+                : _resolver.ResolveAssemblyToPath(assemblyName);
+
+            return resolvedAssemblyPath is not null
+                ? LoadFromAssemblyPath(resolvedAssemblyPath)
+                : null;
+        }
     }
 }
 
