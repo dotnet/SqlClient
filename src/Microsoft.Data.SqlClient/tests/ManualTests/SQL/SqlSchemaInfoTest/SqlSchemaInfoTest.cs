@@ -17,6 +17,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     [Trait("Set", "3")]
     public static class SqlSchemaInfoTest
     {
+        // SqlInitialCatalogConverter only lists databases when the connection string has
+        // Integrated Security or a User ID; access token auth provides neither.
+        public static bool HasConnStringCredentials
+        {
+            get
+            {
+                if (!DataTestUtility.AreConnStringsSetup())
+                {
+                    return false;
+                }
+
+                SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
+                return builder.IntegratedSecurity || !string.IsNullOrEmpty(builder.UserID);
+            }
+        }
+
         #region TestMethods
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [InlineData(true)]
@@ -159,7 +175,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // This test validates behavior of SqlInitialCatalogConverter used to present database names in PropertyGrid
         // with the SqlConnectionStringBuilder object presented in the control underneath.
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalFact(typeof(SqlSchemaInfoTest), nameof(HasConnStringCredentials))]
         public static void TestInitialCatalogStandardValues()
         {
             using (SqlConnection connection = DataTestUtility.CreateConnection())

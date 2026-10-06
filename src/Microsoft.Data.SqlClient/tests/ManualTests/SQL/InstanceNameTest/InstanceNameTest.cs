@@ -117,7 +117,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if (DataTestUtility.IsIntegratedSecuritySetup())
             {
                 string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD", "Trusted_Connection" };
-                connectionString = connectionString.RemoveKeysInConnStr(removeKeys) + $"Integrated Security=true";
+                connectionString = new SqlConnectionStringBuilder(connectionString.RemoveKeysInConnStr(removeKeys))
+                {
+                    IntegratedSecurity = true
+                }.ConnectionString;
             }
 
             SqlConnectionStringBuilder builder = new(connectionString);
