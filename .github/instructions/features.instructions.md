@@ -164,9 +164,14 @@ Notes:
   see a value it did not negotiate.
 - A column's base type and number of dimensions are available from the column schema:
   `reader.GetColumnSchema()[i]["VectorBaseType"]` and `["VectorDimensions"]`. Both are `null`
-  for columns which are not vectors. This is the only way to tell the two base types apart
-  when a `float16` column is surfaced as a JSON string, because `GetFieldType` reports
-  `string` for such a column just as it does for a `varchar` one:
+  for columns which are not vectors, **including a vector column the server returned as
+  `varchar(max)` because the connection did not negotiate its base type**. So at `v1` a
+  `float16` column reports `null` for both, and at `off` so does every vector column; query
+  `sys.columns.vector_base_type` and `sys.columns.vector_dimensions` instead when the
+  connection has not negotiated the column's base type. Where the column *is* negotiated,
+  these properties are the only way to tell the two base types apart when a `float16` column
+  is surfaced as a JSON string, because `GetFieldType` reports `string` for such a column
+  just as it does for a `varchar` one:
 
   ```csharp
   DbColumn column = reader.GetColumnSchema()[0];

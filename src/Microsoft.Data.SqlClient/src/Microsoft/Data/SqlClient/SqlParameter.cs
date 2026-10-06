@@ -796,7 +796,14 @@ namespace Microsoft.Data.SqlClient
                     #if NET
                     return new SqlVector<Half>((byte[])_sqlBufferReturnValue.Value);
                     #else
-                    // Widening binary16 to binary32 is exact, so no information is lost.
+                    // Defensive. A .NET Framework caller has no way to declare a float16
+                    // vector parameter: the declared base type comes from the value, and
+                    // both forms available there — a SqlVector<float> and a JSON string —
+                    // declare float32, so a server which converts between base types
+                    // returns float32 here. Kept so that a server which returns the
+                    // column's own base type regardless is still read correctly rather
+                    // than misinterpreting the payload. Widening binary16 to binary32 is
+                    // exact, so no information is lost.
                     return SqlVector<float>.FromTdsPayload((byte[])_sqlBufferReturnValue.Value);
                     #endif
                 default:

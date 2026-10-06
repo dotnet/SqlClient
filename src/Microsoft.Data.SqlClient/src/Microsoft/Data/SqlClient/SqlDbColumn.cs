@@ -139,7 +139,10 @@ namespace Microsoft.Data.SqlClient
         /// <para>
         /// Both properties are <see langword="null"/> for columns which are not vectors,
         /// including a vector column which the server returned as <c>varchar</c> because
-        /// the connection did not negotiate support for its base type.
+        /// the connection did not negotiate support for its base type. A connection at
+        /// <c>v1</c> therefore reports <see langword="null"/> for a <c>float16</c> column,
+        /// and one at <c>off</c> for every vector column; <c>sys.columns.vector_base_type</c>
+        /// and <c>sys.columns.vector_dimensions</c> describe such a column instead.
         /// </para>
         /// </remarks>
         public override object this[string property] =>
