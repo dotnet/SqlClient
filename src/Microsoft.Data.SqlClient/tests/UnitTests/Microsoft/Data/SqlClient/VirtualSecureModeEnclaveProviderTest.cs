@@ -62,6 +62,32 @@ public class VirtualSecureModeEnclaveProviderTest
         Assert.Equal(Strings.VerifyEnclaveKeyBindingFailed, ex.Message);
     }
 
+    /// <summary>
+    /// Deriving the session secret rejects an enclave public key the signed report doesn't commit
+    /// to, before using the key. Both the sync and async attestation paths derive the secret through
+    /// this method, so neither can skip the binding check; the async path did skip it when the check
+    /// lived in each caller.
+    /// </summary>
+    [Fact]
+    public void GetSharedSecret_UnboundKey_Throws()
+    {
+        // Arrange
+        EnclaveReportPackage testPackage = BuildReportPackage(Sha256(Encoding.UTF8.GetBytes("committed-enclave-public-key-blob")));
+        EnclavePublicKey substitutedKey = new EnclavePublicKey(Encoding.UTF8.GetBytes("substituted-enclave-public-key"));
+
+        // Act
+        // The Diffie-Hellman inputs are null: the binding check must reject the key before they are used.
+        Action action = () => VirtualizationBasedSecurityEnclaveProviderBase.GetSharedSecret(
+            testPackage,
+            substitutedKey,
+            enclaveDHInfo: null,
+            clientDHKey: null);
+
+        // Assert
+        ArgumentException ex = Assert.Throws<ArgumentException>(action);
+        Assert.Equal(Strings.VerifyEnclaveKeyBindingFailed, ex.Message);
+    }
+
     // Builds a minimal EnclaveReportPackage whose report EnclaveData begins with the given 32-byte
     // binding value. The signature is empty because this targets the binding, not the report signature.
     private static EnclaveReportPackage BuildReportPackage(byte[] enclaveDataFirst32)
