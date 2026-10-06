@@ -50,6 +50,28 @@ namespace Microsoft.Data.SqlClient
         private const int SigningKeyRetryInSec = 3;
         #endregion
 
+        #region Members
+        // The token validator to use, or null to use the Azure extension's.
+        private readonly AzureAttestationTokenValidatorBinding _validator;
+
+        // How long to wait before retrying validation with refreshed signing keys.
+        private readonly TimeSpan _signingKeyRetryDelay;
+        #endregion
+
+        #region Constructors
+        internal AzureAttestationEnclaveProvider()
+            : this(null, TimeSpan.FromSeconds(SigningKeyRetryInSec))
+        {
+        }
+
+        // Lets tests supply a fake validator and a short retry delay.
+        internal AzureAttestationEnclaveProvider(AzureAttestationTokenValidatorBinding validator, TimeSpan signingKeyRetryDelay)
+        {
+            _validator = validator;
+            _signingKeyRetryDelay = signingKeyRetryDelay;
+        }
+        #endregion
+
         #region Internal methods
         // When overridden in a derived class, looks up an existing enclave session information in the enclave session cache.
         // If the enclave provider doesn't implement enclave session caching, this method is expected to return null in the sqlEnclaveSession parameter.
@@ -308,40 +330,34 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // Performs Attestation per the protocol used by Azure Attestation Service
-        private void VerifyAzureAttestationInfo(string attestationUrl, EnclaveType enclaveType, string attestationToken, EnclavePublicKey enclavePublicKey, byte[] nonce)
+        // Performs Attestation per the protocol used by Azure Attestation Service.
+        // Internal for tests.
+        internal void VerifyAzureAttestationInfo(string attestationUrl, EnclaveType enclaveType, string attestationToken, EnclavePublicKey enclavePublicKey, byte[] nonce)
         {
             AzureAttestationTokenValidatorBinding validator = GetTokenValidator();
-            bool shouldForceUpdateSigningKeys = false;
             string attestationInstanceUrl = GetAttestationInstanceUrl(attestationUrl);
 
-            bool shouldRetryValidation;
-            bool isSignatureValid;
-            string exceptionMessage = string.Empty;
-            do
+            bool forceRefreshSigningKeys = false;
+            while (true)
             {
-                shouldRetryValidation = false;
-
-                // Get the signing keys from the OpenId config
-                object signingKeys = GetSigningKeys(validator, attestationInstanceUrl, shouldForceUpdateSigningKeys);
-
-                // Verify the token signature against the signing keys downloaded from meta data end point
-                bool isKeySigningExpired;
-                isSignatureValid = VerifyTokenSignature(validator, attestationToken, attestationInstanceUrl, signingKeys, out isKeySigningExpired, out exceptionMessage);
-
-                // In cases if we fail to validate the token, since we are using the old signing keys
-                // let's re-download the signing keys again and re-validate the token signature
-                if (!isSignatureValid && isKeySigningExpired && !shouldForceUpdateSigningKeys)
+                int status = validator.ValidateToken(attestationToken, attestationInstanceUrl, forceRefreshSigningKeys, out Exception error);
+                if (status == AzureAttestationTokenValidatorBinding.TokenValid)
                 {
-                    shouldForceUpdateSigningKeys = true;
-                    shouldRetryValidation = true;
+                    break;
                 }
-            }
-            while (shouldRetryValidation);
 
-            if (!isSignatureValid)
-            {
-                throw SQL.AttestationFailed(string.Format(Strings.AttestationTokenSignatureValidationFailed, exceptionMessage));
+                string exceptionMessage = ThrowIfNotRetryable(status, error);
+
+                // The cached signing keys may be stale. Wait, then download them again and
+                // re-validate the token, once. The synchronous path blocks the calling thread here.
+                Thread.Sleep(_signingKeyRetryDelay);
+
+                if (forceRefreshSigningKeys)
+                {
+                    throw SQL.AttestationFailed(string.Format(Strings.AttestationTokenSignatureValidationFailed, exceptionMessage));
+                }
+
+                forceRefreshSigningKeys = true;
             }
 
             // Validate claims in the token
@@ -349,8 +365,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Performs Attestation per the protocol used by Azure Attestation Service.
-        // Asynchronous counterpart of VerifyAzureAttestationInfo.
-        private async Task VerifyAzureAttestationInfoAsync(
+        // Asynchronous counterpart of VerifyAzureAttestationInfo. Internal for tests.
+        internal async Task VerifyAzureAttestationInfoAsync(
             string attestationUrl,
             EnclaveType enclaveType,
             string attestationToken,
@@ -359,45 +375,31 @@ namespace Microsoft.Data.SqlClient
             CancellationToken cancellationToken)
         {
             AzureAttestationTokenValidatorBinding validator = GetTokenValidator();
-            bool shouldForceUpdateSigningKeys = false;
             string attestationInstanceUrl = GetAttestationInstanceUrl(attestationUrl);
 
-            bool shouldRetryValidation;
-            bool isSignatureValid;
-            string exceptionMessage = string.Empty;
-            do
+            bool forceRefreshSigningKeys = false;
+            while (true)
             {
-                shouldRetryValidation = false;
-
-                // Get the signing keys from the OpenId config
-                object signingKeys =
-                    await GetSigningKeysAsync(validator, attestationInstanceUrl, shouldForceUpdateSigningKeys, cancellationToken)
+                Tuple<int, Exception> result =
+                    await validator.ValidateTokenAsync(attestationToken, attestationInstanceUrl, forceRefreshSigningKeys, cancellationToken)
                         .ConfigureAwait(false);
-
-                // Verify the token signature against the signing keys downloaded from meta data end point
-                bool isKeySigningExpired;
-                isSignatureValid = VerifyTokenSignatureCore(validator, attestationToken, attestationInstanceUrl, signingKeys, out isKeySigningExpired, out exceptionMessage);
-
-                if (isKeySigningExpired)
+                if (result.Item1 == AzureAttestationTokenValidatorBinding.TokenValid)
                 {
-                    // Wait for SigningKeyRetryInSec sec before retrying to download the signing keys again.
-                    // The synchronous path blocks the calling thread here; the async path must not.
-                    await Task.Delay(SigningKeyRetryInSec * 1000, cancellationToken).ConfigureAwait(false);
+                    break;
                 }
 
-                // In cases if we fail to validate the token, since we are using the old signing keys
-                // let's re-download the signing keys again and re-validate the token signature
-                if (!isSignatureValid && isKeySigningExpired && !shouldForceUpdateSigningKeys)
-                {
-                    shouldForceUpdateSigningKeys = true;
-                    shouldRetryValidation = true;
-                }
-            }
-            while (shouldRetryValidation);
+                string exceptionMessage = ThrowIfNotRetryable(result.Item1, result.Item2);
 
-            if (!isSignatureValid)
-            {
-                throw SQL.AttestationFailed(string.Format(Strings.AttestationTokenSignatureValidationFailed, exceptionMessage));
+                // The cached signing keys may be stale. Wait, then download them again and
+                // re-validate the token, once. The asynchronous path must not block a thread.
+                await Task.Delay(_signingKeyRetryDelay, cancellationToken).ConfigureAwait(false);
+
+                if (forceRefreshSigningKeys)
+                {
+                    throw SQL.AttestationFailed(string.Format(Strings.AttestationTokenSignatureValidationFailed, exceptionMessage));
+                }
+
+                forceRefreshSigningKeys = true;
             }
 
             // Validate claims in the token
@@ -405,23 +407,29 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Returns the Azure Attestation token validator, or throws if the Azure extension isn't available.
-        private static AzureAttestationTokenValidatorBinding GetTokenValidator()
+        private AzureAttestationTokenValidatorBinding GetTokenValidator()
         {
-            return AzureAttestationTokenValidatorBinding.Instance ?? throw SQL.AzureAttestationExtensionNotFound();
+            return _validator ?? AzureAttestationTokenValidatorBinding.Instance ?? throw SQL.AzureAttestationExtensionNotFound();
         }
 
-        // For the given attestation url it downloads the token signing keys from the well-known openid configuration end point.
-        // The Azure extension caches that information for 1 day to avoid DDOS attacks.
-        // Asynchronous counterpart of GetSigningKeys.
-        private static async Task<object> GetSigningKeysAsync(AzureAttestationTokenValidatorBinding validator, string url, bool forceUpdate, CancellationToken cancellationToken)
+        // Translates a token validation failure into the SqlClient exception for it. Returns the
+        // message to report if the failure is retryable with refreshed signing keys; throws otherwise.
+        private static string ThrowIfNotRetryable(int status, Exception error)
         {
-            try
+            string innerMostMessage = error is null ? string.Empty : GetInnerMostExceptionMessage(error);
+            switch (status)
             {
-                return await validator.GetSigningKeysAsync(url, forceUpdate, cancellationToken).ConfigureAwait(false);
-            }
-            catch (Exception exception) when (!(exception is OperationCanceledException && cancellationToken.IsCancellationRequested))
-            {
-                throw SQL.AttestationFailed(string.Format(Strings.GetAttestationTokenSigningKeysFailed, GetInnerMostExceptionMessage(exception)), exception);
+                case AzureAttestationTokenValidatorBinding.TokenValidationFailed:
+                    return innerMostMessage;
+
+                case AzureAttestationTokenValidatorBinding.TokenExpired:
+                    throw SQL.AttestationFailed(Strings.ExpiredAttestationToken, error);
+
+                case AzureAttestationTokenValidatorBinding.SigningKeysUnavailable:
+                    throw SQL.AttestationFailed(string.Format(Strings.GetAttestationTokenSigningKeysFailed, innerMostMessage), error);
+
+                default:
+                    throw SQL.AttestationFailed(string.Format(Strings.InvalidAttestationToken, innerMostMessage));
             }
         }
 
@@ -437,20 +445,6 @@ namespace Microsoft.Data.SqlClient
             return exLocal.Message;
         }
 
-        // For the given attestation url it downloads the token signing keys from the well-known openid configuration end point.
-        // The Azure extension caches that information for 1 day to avoid DDOS attacks.
-        private static object GetSigningKeys(AzureAttestationTokenValidatorBinding validator, string url, bool forceUpdate)
-        {
-            try
-            {
-                return validator.GetSigningKeys(url, forceUpdate);
-            }
-            catch (Exception exception)
-            {
-                throw SQL.AttestationFailed(string.Format(Strings.GetAttestationTokenSigningKeysFailed, GetInnerMostExceptionMessage(exception)), exception);
-            }
-        }
-
         // Return the attestation instance url for given attestation url
         // such as for https://sql.azure.attest.com/attest/SgxEnclave?api-version=2017-11-01
         // It will return https://sql.azure.attest.com
@@ -458,51 +452,6 @@ namespace Microsoft.Data.SqlClient
         {
             Uri attestationUri = new Uri(attestationUrl);
             return attestationUri.GetLeftPart(UriPartial.Authority);
-        }
-
-        // Verifies the attestation token is signed by correct signing keys.
-        //
-        // On the SecurityTokenValidationException retry path this blocks the calling thread for
-        // SigningKeyRetryInSec seconds. The delay is applied here (rather than in VerifyTokenSignatureCore)
-        // so that the asynchronous path can await the same backoff instead of blocking a thread pool thread.
-        private static bool VerifyTokenSignature(AzureAttestationTokenValidatorBinding validator, string attestationToken, string tokenIssuerUrl, object issuerSigningKeys, out bool isKeySigningExpired, out string exceptionMessage)
-        {
-            bool isSignatureValid = VerifyTokenSignatureCore(validator, attestationToken, tokenIssuerUrl, issuerSigningKeys, out isKeySigningExpired, out exceptionMessage);
-
-            if (isKeySigningExpired)
-            {
-                // Sleep for SigningKeyRetryInSec sec before retrying to download the signing keys again.
-                Thread.Sleep(SigningKeyRetryInSec * 1000);
-            }
-
-            return isSignatureValid;
-        }
-
-        // Verifies the attestation token is signed by correct signing keys, without applying the
-        // signing key retry backoff. Callers are responsible for the backoff so that synchronous and
-        // asynchronous callers can each wait in the manner appropriate to them.
-        private static bool VerifyTokenSignatureCore(AzureAttestationTokenValidatorBinding validator, string attestationToken, string tokenIssuerUrl, object issuerSigningKeys, out bool isKeySigningExpired, out string exceptionMessage)
-        {
-            exceptionMessage = string.Empty;
-            isKeySigningExpired = false;
-
-            int result = validator.ValidateTokenSignature(attestationToken, tokenIssuerUrl, issuerSigningKeys, out Exception error);
-            switch (result)
-            {
-                case AzureAttestationTokenValidatorBinding.TokenValid:
-                    return true;
-
-                case AzureAttestationTokenValidatorBinding.TokenExpired:
-                    throw SQL.AttestationFailed(Strings.ExpiredAttestationToken, error);
-
-                case AzureAttestationTokenValidatorBinding.TokenValidationFailed:
-                    isKeySigningExpired = true;
-                    exceptionMessage = GetInnerMostExceptionMessage(error);
-                    return false;
-
-                default:
-                    throw SQL.AttestationFailed(string.Format(Strings.InvalidAttestationToken, error is null ? string.Empty : GetInnerMostExceptionMessage(error)));
-            }
         }
 
         // Computes the SHA256 hash of the byte array

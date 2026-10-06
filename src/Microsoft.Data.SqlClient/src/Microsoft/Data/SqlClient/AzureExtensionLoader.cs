@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.IO;
 using System.Reflection;
 using Microsoft.Data.SqlClient.Internal;
 
@@ -16,24 +17,59 @@ namespace Microsoft.Data.SqlClient
     /// </summary>
     internal static class AzureExtensionLoader
     {
-        // The name of our Azure extension assembly.
+        /// <summary>
+        /// The name of our Azure extension assembly.
+        /// </summary>
         internal const string AssemblyName = "Microsoft.Data.SqlClient.Extensions.Azure";
 
-        // The public key token of our Azure extension assembly, used to avoid loading imposter
-        // assemblies.
+        /// <summary>
+        /// The public key token of our Azure extension assembly, used to avoid loading imposter
+        /// assemblies.
+        /// </summary>
         private static readonly byte[] s_publicKeyToken = [ 0x23, 0xec, 0x7f, 0xc2, 0xd6, 0xea, 0xa4, 0xa5 ];
 
         /// <summary>
         /// Loads the Azure extension assembly.
         /// </summary>
+        /// <remarks>
+        /// Each call loads the assembly through <see cref="Assembly.Load(AssemblyName)"/>, which
+        /// returns the already-loaded assembly on later calls within the same load context.
+        /// Callers cache the result.
+        /// </remarks>
         /// <param name="caller">The name of the caller, for tracing.</param>
         /// <returns>
-        /// The assembly, or null if it was not found or has an unexpected public key token.
+        /// The assembly, or null if it is not present, could not be loaded, is not a valid
+        /// assembly, or has an unexpected public key token.
         /// </returns>
-        /// <exception cref="System.IO.FileNotFoundException">The assembly is not present.</exception>
-        /// <exception cref="System.IO.FileLoadException">The assembly could not be loaded.</exception>
-        /// <exception cref="BadImageFormatException">The assembly is not valid.</exception>
         internal static Assembly? Load(string caller)
+        {
+            try
+            {
+                return LoadCore(caller);
+            }
+            catch (Exception ex)
+            when (ex is FileNotFoundException or FileLoadException or BadImageFormatException)
+            {
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "{0}: Azure extension assembly={1} not found or not loadable; {2}: {3}",
+                    caller,
+                    AssemblyName,
+                    ex.GetType().Name,
+                    ex.Message);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Loads the Azure extension assembly, verifying its public key token when strong-name
+        /// signing is enabled.
+        /// </summary>
+        /// <param name="caller">The name of the caller, for tracing.</param>
+        /// <returns>The assembly, or null if it has an unexpected public key token.</returns>
+        /// <exception cref="FileNotFoundException">The assembly is not present.</exception>
+        /// <exception cref="FileLoadException">The assembly could not be loaded.</exception>
+        /// <exception cref="BadImageFormatException">The assembly is not valid.</exception>
+        private static Assembly? LoadCore(string caller)
         {
             #if STRONG_NAME_SIGNING
 
