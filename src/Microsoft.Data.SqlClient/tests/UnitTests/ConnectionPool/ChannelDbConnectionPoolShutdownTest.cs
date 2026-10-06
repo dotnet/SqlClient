@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
@@ -40,18 +41,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 new DbConnectionPoolProviderInfo());
         }
 
-        // State transitions to ShuttingDown on Shutdown.
+        /// <summary>Shutdown permanently stops the pool from accepting new requests.</summary>
         [Fact]
-        public void Shutdown_TransitionsState_ToShuttingDown()
+        public void Shutdown_StopsRunning()
         {
             var pool = ConstructPool();
             Assert.True(pool.IsRunning);
-            Assert.Equal(DbConnectionPoolState.Running, pool.State);
 
             pool.Shutdown();
 
             Assert.False(pool.IsRunning);
-            Assert.Equal(DbConnectionPoolState.ShuttingDown, pool.State);
         }
 
         // Drains buffered idle connections.
@@ -112,43 +111,63 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // Second call must not throw and must leave state intact.
             pool.Shutdown();
             pool.Shutdown();
-            Assert.Equal(DbConnectionPoolState.ShuttingDown, pool.State);
+            Assert.False(pool.IsRunning);
         }
 
-        // Async waiter is unblocked when the pool shuts down.
-        [Fact]
-        public async Task Shutdown_UnblocksAsyncWaiter()
+        /// <summary>
+        /// Shutdown releases both sync and async channel waiters with the pool shutdown error,
+        /// rather than leaving them blocked until their acquisition timeout expires.
+        /// </summary>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task Shutdown_UnblocksWaiter(bool async)
         {
-            var pool = ConstructPool(maxPoolSize: 1);
+            using var pool = ConstructPool(maxPoolSize: 1);
+            using var blockingOwner = new SqlConnection();
+            using var waitingOwner = new SqlConnection();
 
             // Saturate the pool.
-            Assert.True(pool.TryGetConnection(new SqlConnection(), taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? blocking));
+            Assert.True(pool.TryGetConnection(blockingOwner, taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? blocking));
             Assert.NotNull(blocking);
 
-            // Park an async waiter.
             var tcs = new TaskCompletionSource<DbConnectionInternal>();
-            bool completed = pool.TryGetConnection(new SqlConnection(), tcs, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? waiter);
-            Assert.False(completed);
-            Assert.Null(waiter);
-            Assert.False(tcs.Task.IsCompleted);
-
-            // Shut down the pool.
-            pool.Shutdown();
-
-            // Waiter must complete (faulted or with a null connection) within a bounded window.
-            var winner = await Task.WhenAny(tcs.Task, Task.Delay(TimeSpan.FromSeconds(5)));
-            Assert.Same(tcs.Task, winner);
-            // Either an exception was set (channel closed) or the result is null - both are acceptable
-            // shutdown signals. What matters is the waiter does NOT block forever.
-            if (tcs.Task.IsFaulted)
+            Task pending;
+            if (async)
             {
-                // Expected path: ChannelClosedException or a wrapped exception.
-                Assert.NotNull(tcs.Task.Exception);
+                Assert.False(pool.TryGetConnection(waitingOwner, tcs, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? waiter));
+                Assert.Null(waiter);
+                pending = tcs.Task;
             }
             else
             {
-                // Permitted: completed with null result.
-                Assert.Null(tcs.Task.Result);
+                pending = Task.Factory.StartNew(
+                    () => pool.TryGetConnection(waitingOwner, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out _),
+                    CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+            }
+
+            try
+            {
+                Assert.True(SpinWait.SpinUntil(() => pool.Reclaimer.ParkedWaiters == 1, TimeSpan.FromSeconds(5)));
+                Assert.False(pending.IsCompleted);
+
+                pool.Shutdown();
+
+                Assert.Same(pending, await Task.WhenAny(pending, Task.Delay(TimeSpan.FromSeconds(5))));
+                var error = await Assert.ThrowsAsync<InvalidOperationException>(() => pending);
+                Assert.Equal(StringsHelper.GetString(Strings.SQL_ConnectionPoolShutDown), error.Message);
+                Assert.False(pool.IsRunning);
+                Assert.Equal(0, pool.Reclaimer.ParkedWaiters);
+            }
+            finally
+            {
+                pool.Shutdown();
+                pool.ReturnInternalConnection(blocking!, blockingOwner);
+                Assert.Same(pending, await Task.WhenAny(pending, Task.Delay(TimeSpan.FromSeconds(20))));
+                if (pending.IsFaulted)
+                {
+                    _ = pending.Exception;
+                }
             }
         }
 
@@ -172,8 +191,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(0, pool.IdleCount);
         }
 
-        // Sanity: Startup is currently a no-op for this pool but must not throw or change
-        // shutdown state if invoked after Shutdown.
+        /// <summary>Startup must not restart background warmup on a retired pool.</summary>
         [Fact]
         public void Startup_AfterShutdown_DoesNotResurrectPool()
         {
@@ -182,7 +200,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             pool.Startup();
 
-            Assert.Equal(DbConnectionPoolState.ShuttingDown, pool.State);
             Assert.False(pool.IsRunning);
         }
 
