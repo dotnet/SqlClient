@@ -136,6 +136,7 @@ namespace Microsoft.Data.SqlClient
                       MemberAccessException or
                       MissingMethodException or
                       NotSupportedException or
+                      TypeInitializationException or
                       TypeLoadException)
             {
                 SqlClientEventSource.Log.TryTraceEvent(
