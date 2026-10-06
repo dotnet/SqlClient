@@ -36,7 +36,8 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 DECLARE @count int = 1;
                 WHILE @count < @rows
                 BEGIN
-                    INSERT INTO #Numbers SELECT TOP (@rows - @count) Id + @count FROM #Numbers;
+                    -- Keep the final partial doubling contiguous so exactly @rows / 4 rows have NULLs.
+                    INSERT INTO #Numbers SELECT TOP (@rows - @count) Id + @count FROM #Numbers ORDER BY Id;
                     SET @count = (SELECT COUNT(*) FROM #Numbers);
                 END;");
             numbers.Parameters.Add("@rows", SqlDbType.Int).Value = checked((int)rows);
