@@ -576,9 +576,7 @@ stages:
           configProperties:
             TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING)
             NPConnectionString: $(AZURE_DB_NP_CONN_STRING)
-            AADAuthorityURL: $(AADAuthorityURL)
             ${{ if eq(variables['System.PullRequest.IsFork'], 'False') }}:
-              AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR)
               AADServicePrincipalSecret: $(AADServicePrincipalSecret)
             AADServicePrincipalId: $(AADServicePrincipalId)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)

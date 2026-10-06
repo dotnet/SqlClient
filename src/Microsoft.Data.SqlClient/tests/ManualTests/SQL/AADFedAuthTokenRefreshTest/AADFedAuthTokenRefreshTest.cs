@@ -7,7 +7,6 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using Azure.Core;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.Common.SystemDataInternals;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals;
 using Microsoft.Data.SqlClient.Tests.Common;
@@ -90,7 +89,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// Verifies both pools replace connections with expired or nearly expired tokens and
         /// invoke the callback when the cached token also needs refreshing, for Open and OpenAsync.
         /// </summary>
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsAADPasswordConnStrSetup))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsManagedIdentitySetup))]
         [InlineData(false, false, -1)]
         [InlineData(false, true, -1)]
         [InlineData(true, false, -1)]
@@ -104,7 +103,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using var poolVersion = new ConnectionPoolVersionScope(usePoolV2);
             string[] credentialKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
             var builder = new SqlConnectionStringBuilder(
-                DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credentialKeys))
+                DataTestUtility.TCPConnectionString.RemoveKeysInConnStr(credentialKeys))
             {
                 Pooling = true,
                 MinPoolSize = 0,
@@ -112,7 +111,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 ConnectTimeout = 30,
                 Enlist = false
             };
-            var credential = DataTestUtility.GetTokenCredential();
             SqlAuthenticationToken callbackToken = null;
             int callbackInvocations = 0;
             using var connection = new SqlConnection(builder.ConnectionString)
@@ -120,10 +118,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 AccessTokenCallback = async (parameters, cancellationToken) =>
                 {
                     Interlocked.Increment(ref callbackInvocations);
-                    const string suffix = "/.default";
-                    string scope = parameters.Resource.EndsWith(suffix) ? parameters.Resource : parameters.Resource + suffix;
-                    AccessToken token = await credential.GetTokenAsync(new TokenRequestContext(new[] { scope }), cancellationToken);
-                    callbackToken = new SqlAuthenticationToken(token.Token, token.ExpiresOn);
+                    cancellationToken.ThrowIfCancellationRequested();
+                    SqlAuthenticationToken token = await DataTestUtility.GetSqlAuthenticationTokenAsync();
+                    cancellationToken.ThrowIfCancellationRequested();
+                    callbackToken = token;
                     return callbackToken;
                 }
             };

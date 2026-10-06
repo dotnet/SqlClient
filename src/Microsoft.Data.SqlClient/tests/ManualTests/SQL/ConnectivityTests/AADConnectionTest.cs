@@ -388,7 +388,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             TokenCredential cred = DataTestUtility.GetTokenCredential();
             const string defaultScopeSuffix = "/.default";
-            
+
             using SqlConnection conn = new(connStr);
             conn.AccessTokenCallback = (parms, cancellationToken) =>
             {
@@ -492,7 +492,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string connectionString = DataTestUtility.TCPConnectionString
                 .RemoveAuthAndCredsProperties();
-            
+
             using SqlConnection conn = new(connectionString);
             conn.AccessToken = await DataTestUtility.GetUserIdentityAccessTokenAsync();
             conn.Open();

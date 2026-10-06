@@ -24,7 +24,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 return string.Empty;
             }
 
-            return new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString.RemoveAuthAndCredsProperties())
+            string connectionString = DataTestUtility.IsAzureSqlConnectionString(DataTestUtility.TCPConnectionString)
+                ? DataTestUtility.TCPConnectionString.RemoveAuthAndCredsProperties()
+                : DataTestUtility.TCPConnectionString;
+            return new SqlConnectionStringBuilder(connectionString)
             {
                 MultipleActiveResultSets = mars,
                 Pooling = true
@@ -55,7 +58,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 return string.Empty;
             }
 
-            return new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString.RemoveAuthAndCredsProperties())
+            string connectionString = DataTestUtility.IsAzureSqlConnectionString(DataTestUtility.TCPConnectionString)
+                ? DataTestUtility.TCPConnectionString.RemoveAuthAndCredsProperties()
+                : DataTestUtility.TCPConnectionString;
+            return new SqlConnectionStringBuilder(connectionString)
             {
                 MultipleActiveResultSets = mars,
                 Pooling = true
@@ -156,8 +162,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             connection2.Close();
 
             string azureConnStrWithApp = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString.RemoveAuthAndCredsProperties())
-                { 
-                    ApplicationName = "SqlConnectionPoolUnitTest" 
+                {
+                    ApplicationName = "SqlConnectionPoolUnitTest"
                 }.ConnectionString;
             using SqlConnection connection3 = new(azureConnStrWithApp);
             connection3.AccessToken = accessToken;

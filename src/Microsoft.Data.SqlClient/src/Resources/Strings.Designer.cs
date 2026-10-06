@@ -4289,7 +4289,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_UseWamBrokerRequiresAzureExtensionUpgrade", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid attempt to get vector data from column &apos;{0}&apos;. Vectors are only supported for columns of type vector..
         /// </summary>

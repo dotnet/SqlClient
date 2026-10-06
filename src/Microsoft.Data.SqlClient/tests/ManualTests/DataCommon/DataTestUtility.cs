@@ -678,7 +678,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 .RemoveAuthAndCredsProperties()
                 .AddManagedIdentityAuthenticationToConnString()
                 .AddUserToConnString(UserManagedIdentityClientId);
-        
+
         public static TokenCredential GetTokenCredential() => s_defaultCredential.Value;
 
         public static bool IsTargetReadyForAeWithKeyStore()
@@ -840,6 +840,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool IsLocalDBInstalled() => !string.IsNullOrEmpty(LocalDbAppName?.Trim()) && IsIntegratedSecuritySetup();
         public static bool IsLocalDbSharedInstanceSetup() => !string.IsNullOrEmpty(LocalDbSharedInstanceName?.Trim()) && IsIntegratedSecuritySetup();
         public static bool IsIntegratedSecuritySetup() => SupportsIntegratedSecurity;
+        public static bool IsManagedIdentitySetup() =>
+            IsAzureConnStringSetup() && (IsUserManagedIdentitySupported || IsSystemManagedIdentitySupported);
         public static async Task<bool> IsAccessTokenAsyncSetup() =>
             !string.IsNullOrEmpty(await GetAccessTokenAsync());
 
@@ -859,34 +861,37 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 : null;
         }
 
+        internal static async Task<SqlAuthenticationToken> GetSqlAuthenticationTokenAsync()
+        {
+            string accessToken = await GetAccessTokenAsync().ConfigureAwait(false);
+            if (string.IsNullOrEmpty(accessToken))
+            {
+                throw new TestAuthenticationProviderException("An access token is required to connect to Azure SQL.");
+            }
+
+            DateTimeOffset expiresOn = GetAccessTokenExpiration(accessToken);
+            if (expiresOn == DateTimeOffset.MinValue)
+            {
+                throw new TestAuthenticationProviderException("The Azure SQL access token has no valid expiration.");
+            }
+
+            return new SqlAuthenticationToken(accessToken, expiresOn);
+        }
+
         private sealed class TestManagedIdentityAuthenticationProvider : SqlAuthenticationProvider
         {
-            public override async Task<SqlAuthenticationToken> AcquireTokenAsync(SqlAuthenticationParameters parameters)
-            {
-                string accessToken = await GetAccessTokenAsync().ConfigureAwait(false);
-                if (string.IsNullOrEmpty(accessToken))
-                {
-                    throw new TestAuthenticationProviderException("An access token is required to connect to Azure SQL.");
-                }
-
-                DateTimeOffset expiresOn = GetAccessTokenExpiration(accessToken);
-                if (expiresOn == DateTimeOffset.MinValue)
-                {
-                    throw new TestAuthenticationProviderException("The Azure SQL access token has no valid expiration.");
-                }
-
-                return new SqlAuthenticationToken(accessToken, expiresOn);
-            }
+            public override Task<SqlAuthenticationToken> AcquireTokenAsync(SqlAuthenticationParameters parameters) =>
+                GetSqlAuthenticationTokenAsync();
 
             public override bool IsSupported(SqlAuthenticationMethod authenticationMethod) =>
                 authenticationMethod == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity;
+        }
 
-            private sealed class TestAuthenticationProviderException : SqlAuthenticationProviderException
+        private sealed class TestAuthenticationProviderException : SqlAuthenticationProviderException
+        {
+            internal TestAuthenticationProviderException(string message)
+                : base(message)
             {
-                internal TestAuthenticationProviderException(string message)
-                    : base(message)
-                {
-                }
             }
         }
 
