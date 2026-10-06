@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Threading.Tasks;
-using Microsoft.Data.Common;
 using Microsoft.SqlServer.TDS;
 using Microsoft.SqlServer.TDS.ColMetadata;
 using Microsoft.SqlServer.TDS.Done;
@@ -181,15 +180,15 @@ public sealed class HasRowsTests
     }
 
     /// <summary>
-    /// Buffered INFO tokens must fail promptly if the parser closes or breaks,
-    /// rather than repeatedly peeking the same unconsumed token in either metadata path.
+    /// Buffered INFO tokens retain HasRows=false for closed or broken parsers,
+    /// without introducing an exception or looping on an unconsumed token.
     /// </summary>
     [Theory]
     [InlineData(false, false)]
     [InlineData(false, true)]
     [InlineData(true, false)]
     [InlineData(true, true)]
-    public void Metadata_WithBufferedInfoAndUnavailableParser_Throws(bool broken, bool useAlternateMetadata)
+    public void Metadata_WithBufferedInfoAndUnavailableParser_ReturnsNoRows(bool broken, bool useAlternateMetadata)
     {
         using SqlCommand command = new();
         using SqlDataReader reader = new(command, CommandBehavior.Default);
@@ -204,21 +203,16 @@ public sealed class HasRowsTests
         state._inBytesPacket = 1;
         _SqlMetaDataSet metadata = new(1, null);
 
-        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() =>
-        {
-            if (useAlternateMetadata)
-            {
-                reader.TrySetAltMetaDataSet(metadata, true);
-            }
-            else
-            {
-                reader.TrySetMetaData(metadata, false);
-            }
-        });
+        TdsOperationStatus result = useAlternateMetadata
+            ? reader.TrySetAltMetaDataSet(metadata, true)
+            : reader.TrySetMetaData(metadata, false);
 
-        Assert.Equal(ADP.ClosedConnectionError().Message, exception.Message);
+        Assert.Equal(TdsOperationStatus.Done, result);
+        Assert.False(reader.HasRows);
         Assert.Equal(0, state._inBytesUsed);
+        Assert.Equal(1, state._inBytesPacket);
         Assert.False(state._accumulateInfoEvents);
+        Assert.Null(state._pendingInfoEvents);
     }
 
     /// <summary>

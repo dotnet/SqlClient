@@ -4185,9 +4185,10 @@ namespace Microsoft.Data.SqlClient
             while (token == TdsEnums.SQLINFO)
             {
                 // TryRun cannot consume INFO tokens when the parser is closed or broken.
+                // Leave the token unchanged to preserve the existing HasRows=false behavior.
                 if (_parser.State == TdsParserState.Broken || _parser.State == TdsParserState.Closed)
                 {
-                    throw ADP.ClosedConnectionError();
+                    break;
                 }
 
                 // VSTFDEVDIV713926: defer informational events until the next parser run
