@@ -68,7 +68,7 @@ parameters:
   - name: platforms
     type: object
     default:
-      - displayName: "windows_net47"
+      - displayName: "windows_net462"
         dotnet: "net462"
         image: "ADO-MMS25-SQL25"
         operatingSystem: "Windows"
