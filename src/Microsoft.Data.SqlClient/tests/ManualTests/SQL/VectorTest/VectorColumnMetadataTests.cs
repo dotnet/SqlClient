@@ -160,13 +160,6 @@ public sealed class VectorColumnMetadataTests
     }
 
     /// <summary>
-    /// Verifies the use case the properties exist for: choosing a read path without knowing
-    /// the schema in advance. <c>GetFieldType</c> is not enough on its own, because it
-    /// reports string for a float16 column on .NET Framework just as it does for a varchar
-    /// one, and cannot distinguish the two base types at all for a caller which wants to
-    /// read both through a single representation.
-    /// </summary>
-    /// <summary>
     /// Verifies that the vector properties read as null for a float16 column on a connection
     /// which did not negotiate that base type, because the server describes such a column as
     /// a <c>varchar(max)</c> and the driver has nothing to report. An application which stays
@@ -197,6 +190,13 @@ public sealed class VectorColumnMetadataTests
         Assert.Equal(typeof(string), column.DataType);
     }
 
+    /// <summary>
+    /// Verifies the use case the properties exist for: choosing a read path without knowing
+    /// the schema in advance. <c>GetFieldType</c> is not enough on its own, because it
+    /// reports string for a float16 column on .NET Framework just as it does for a varchar
+    /// one, and cannot distinguish the two base types at all for a caller which wants to
+    /// read both through a single representation.
+    /// </summary>
     [ConditionalFact(nameof(IsFloat16Supported))]
     public void DrivesReadPathForACallerWhichDoesNotKnowTheSchema()
     {

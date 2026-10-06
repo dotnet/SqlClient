@@ -75,12 +75,14 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
 
     #region Column metadata
 
+    /// <summary>
+    /// Verifies that a float16 column reports its base type by name and its dimension count
+    /// correctly, the latter needing the smaller element size to be accounted for. Metadata
+    /// for vector columns in general is covered by <c>VectorColumnMetadataTests</c>.
+    /// </summary>
     [ConditionalFact(nameof(IsSupported))]
     public void ColumnSchemaReportsFloat16BaseType()
     {
-        // Metadata for vector columns in general is covered by VectorColumnMetadataTests;
-        // this checks only that the float16 base type is reported by its own name, and that
-        // its dimension count accounts for the smaller element size.
         using SqlConnection connection = new(_connectionString);
         connection.Open();
 
@@ -97,11 +99,14 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
 
     #region Reading
 
+    /// <summary>
+    /// Verifies that requesting single precision from a float16 column widens the elements,
+    /// which is exact. This is the only strongly typed read available where
+    /// <c>System.Half</c> is not.
+    /// </summary>
     [ConditionalFact(nameof(IsSupported))]
     public void ReadsFloat16ColumnAsWidenedSingles()
     {
-        // Requesting single precision from a float16 column widens the elements, which is
-        // exact. This is the only strongly typed read available where System.Half is not.
         Seed(_float16Table, "[1.5,2.5,3.5]");
 
         using SqlDataReader reader = Select(_float16Table);
@@ -113,12 +118,15 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
         Assert.Equal([1.5f, 2.5f, 3.5f], vector.Memory.ToArray());
     }
 
+    /// <summary>
+    /// Verifies that the string read paths render a float16 element's true value. The
+    /// largest finite binary16 value renders as 65500 if the elements are formatted as
+    /// <c>System.Half</c>, because that is the shortest string which round trips to the same
+    /// <c>Half</c>; widening to single precision first renders the value itself.
+    /// </summary>
     [ConditionalFact(nameof(IsSupported))]
     public void RendersValuesExactlyRatherThanShortestRoundTrip()
     {
-        // The largest finite binary16 value renders as 65500 if the elements are formatted
-        // as System.Half, because that is the shortest string which round trips to the same
-        // Half. Widening to single precision first renders the value itself.
         using SqlConnection connection = new(_connectionString);
         connection.Open();
 
@@ -130,6 +138,10 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
         Assert.Equal("[65504,1,2]", reader.GetFieldValue<string>(0));
     }
 
+    /// <summary>
+    /// Verifies that reading a vector as an element type which is not a supported base type
+    /// is rejected, rather than reinterpreting the payload.
+    /// </summary>
     [ConditionalFact(nameof(IsSupported))]
     public void ReportsUnsupportedElementTypes()
     {
@@ -142,11 +154,14 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
         Assert.Throws<NotSupportedException>(() => reader.GetSqlVector<int>(0));
     }
 
+    /// <summary>
+    /// Verifies that every provider specific value is a type from
+    /// <c>System.Data.SqlTypes</c>, including the JSON rendering a float16 column falls back
+    /// to where <c>System.Half</c> is unavailable.
+    /// </summary>
     [ConditionalFact(nameof(IsSupported))]
     public void ReportsProviderSpecificValueAsASqlType()
     {
-        // Every provider specific value is a type from System.Data.SqlTypes, including the
-        // JSON rendering a float16 column falls back to where System.Half is unavailable.
         Seed(_float16Table, "[1.5,2.5,3.5]");
 
         using SqlDataReader reader = Select(_float16Table);
@@ -166,12 +181,15 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
         #endif
     }
 
+    /// <summary>
+    /// Verifies that a narrowing read is rejected the same way for a null row as for a
+    /// populated one. Whether a payload can be read as a given element type is a property of
+    /// the column's base type, so a null row must not appear to succeed where a populated
+    /// row in the same column fails — which was a real defect found in review.
+    /// </summary>
     [ConditionalFact(nameof(IsSupported))]
     public void ReportsNarrowingReadsConsistentlyForNullAndNonNullRows()
     {
-        // The base type pairing is a property of the column, so a null row has to be
-        // rejected the same way a populated one is. Reading a float32 column as a vector of
-        // a narrower element type is not supported in either case.
         Insert(_float32Table, DBNull.Value);
         Insert(_float32Table, new SqlVector<float>(new float[] { 1.5f, 2.5f, 3.5f }));
 
@@ -193,6 +211,11 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
         AssertNarrowingReadIsRejected(reader);
     }
 
+    /// <summary>
+    /// The asynchronous counterpart of
+    /// <see cref="ReportsNarrowingReadsConsistentlyForNullAndNonNullRows"/>, since the two
+    /// read paths resolve the element type separately.
+    /// </summary>
     [ConditionalFact(nameof(IsSupported))]
     public async Task ReportsNarrowingReadsConsistentlyForNullAndNonNullRowsAsync()
     {
@@ -381,13 +404,16 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
 
     #region Bulk copy across base types
 
+    /// <summary>
+    /// Verifies that a payload read from a vector column is transferred to a column of the
+    /// same base type as-is, with no conversion and no intermediate representation.
+    /// </summary>
+    /// <param name="baseType">The base type of both the source and destination columns.</param>
     [ConditionalTheory(nameof(IsSupported))]
     [InlineData("float16")]
     [InlineData("float32")]
     public void BulkCopiesBetweenColumnsOfTheSameBaseType(string baseType)
     {
-        // A payload read from a vector column is transferred to a column of the same base
-        // type as-is, with no conversion and no intermediate representation.
         Table table = baseType == "float16" ? _float16Table : _float32Table;
 
         Insert(table, new SqlVector<float>(new float[] { 1.5f, 2.5f, 3.5f }));
@@ -414,6 +440,14 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
         Assert.Equal([1.5f, 2.5f, 3.5f], verifyReader.GetSqlVector<float>(0).Memory.ToArray());
     }
 
+    /// <summary>
+    /// Verifies that a reader copy between columns of different base types is reported by
+    /// the server rather than silently rewritten. A payload read from a vector column keeps
+    /// its own base type, and the <c>INSERT BULK</c> declaration states the destination's,
+    /// so the two disagree. A caller which wants the conversion reads the source as text.
+    /// </summary>
+    /// <param name="sourceBaseType">The source column's base type.</param>
+    /// <param name="destinationBaseType">The destination column's base type.</param>
     [ConditionalTheory(nameof(IsSupported))]
     [InlineData("float32", "float16")]
     #if NET
@@ -423,10 +457,6 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
     #endif
     public void BulkCopyRejectsColumnsOfDifferentBaseTypes(string sourceBaseType, string destinationBaseType)
     {
-        // A payload read from a vector column keeps its own base type, and the INSERT BULK
-        // declaration states the destination's, so the server reports the mismatch. The
-        // driver does not silently rewrite the payload: a caller which wants the conversion
-        // reads the source column as text, which the server converts.
         Table source = sourceBaseType == "float16" ? _float16Table : _float32Table;
         Table destination = destinationBaseType == "float16" ? _float16Table : _float32Table;
 
@@ -447,12 +477,16 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
     }
 
     #if !NET
+    /// <summary>
+    /// Verifies the .NET Framework counterpart of
+    /// <see cref="BulkCopyRejectsColumnsOfDifferentBaseTypes"/>: a float16 column reads as a
+    /// JSON string there, so a copy into a float32 column takes the textual path and the
+    /// value is converted rather than rejected. That divergence is inherent to the base type
+    /// having no native representation on .NET Framework.
+    /// </summary>
     [ConditionalFact(nameof(IsSupported))]
     public void BulkCopiesFloat16ToFloat32ThroughTheTextualRepresentation()
     {
-        // On .NET Framework a float16 column reads as a JSON string, so a copy into a
-        // float32 column takes the textual path and the value is converted rather than
-        // rejected. This is the counterpart of the .NET case above.
         Seed(_float16Table, "[1.5,2.5,3.5]");
 
         using SqlConnection sourceConnection = new(_connectionString);
@@ -478,6 +512,11 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
     }
     #endif
 
+    /// <summary>
+    /// Verifies that nulls survive a reader copy between columns of the same base type, and
+    /// are not confused with an empty or zeroed vector.
+    /// </summary>
+    /// <param name="baseType">The base type of both the source and destination columns.</param>
     [ConditionalTheory(nameof(IsSupported))]
     [InlineData("float16")]
     [InlineData("float32")]
@@ -528,11 +567,14 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
         }
     }
 
+    /// <summary>
+    /// Verifies that a JSON string source loads into a float16 column. This is the ordinary
+    /// table to table path where <c>System.Half</c> is unavailable, since a float16 column
+    /// reads back as a JSON string there.
+    /// </summary>
     [ConditionalFact(nameof(IsSupported))]
     public void BulkCopiesJsonStringSourceIntoFloat16Column()
     {
-        // A float16 column reads back as a JSON string where System.Half is unavailable, so
-        // this is the ordinary table to table path on those frameworks.
         DataTable table = new();
         table.Columns.Add(ColumnName, typeof(string));
         table.Rows.Add("[1.5,2.5,3.5]");
@@ -551,13 +593,16 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
         Assert.Equal([1.5f, 2.5f, 3.5f], reader.GetSqlVector<float>(0).Memory.ToArray());
     }
 
+    /// <summary>
+    /// Verifies that a reader from another provider is handled, guarding a real defect: the
+    /// source column type has to be read through <see cref="IDataReader"/> rather than the
+    /// <c>SqlDataReader</c> field, which is null unless the reader is a <c>SqlDataReader</c>.
+    /// Such a reader still reports a string column, so the value is parsed into the
+    /// destination's base type as for any other textual source.
+    /// </summary>
     [ConditionalFact(nameof(IsSupported))]
     public void BulkCopiesJsonStringSourceFromANonSqlClientReader()
     {
-        // The source column type has to be read through IDataReader rather than through the
-        // SqlDataReader field, which is null unless the reader is a SqlDataReader. A reader
-        // from another provider still reports a string column, so the value is parsed into
-        // the destination's base type as it is for any other textual source.
         DataTable table = new();
         table.Columns.Add(ColumnName, typeof(string));
         table.Rows.Add(DBNull.Value);
@@ -579,11 +624,14 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
         Assert.Equal([1.5f, 2.5f, 3.5f], verify.GetSqlVector<float>(0).Memory.ToArray());
     }
 
+    /// <summary>
+    /// Control for the float16 cases: at v1 a float32 column is still presented as a vector,
+    /// so the declaration says <c>vector(N)</c> and the string is coerced to a float32
+    /// payload by the client rather than travelling as text.
+    /// </summary>
     [ConditionalFact(nameof(IsSupported))]
     public void BulkCopiesJsonStringSourceIntoFloat32ColumnAtV1()
     {
-        // Control: at v1 a float32 column IS presented as a vector, so the declaration says
-        // vector(N) and the string is coerced to a float32 payload by the client.
         string v1 = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
         {
             VectorTypeSupport = SqlVectorTypeSupport.V1
@@ -607,11 +655,14 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
         Assert.Contains("1.5", (string)command.ExecuteScalar());
     }
 
+    /// <summary>
+    /// Verifies that a float16 column can be loaded at v1, where the server presents it as a
+    /// <c>varchar(max)</c>: the ordinary text path applies and the server performs the
+    /// conversion. This is what makes the default level usable for loading float16 data.
+    /// </summary>
     [ConditionalFact(nameof(IsSupported))]
     public void BulkCopiesJsonStringSourceIntoFloat16ColumnAtV1()
     {
-        // At v1 the server presents a float16 column as varchar(max), so the ordinary text
-        // path applies and the server performs the conversion.
         string v1 = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
         {
             VectorTypeSupport = SqlVectorTypeSupport.V1
@@ -906,6 +957,13 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
         Assert.Equal(values, ReadLast(connection, wide));
     }
 
+    /// <summary>
+    /// Verifies that a value outside the float16 range is reported against the value rather
+    /// than reaching the server. A textual source is parsed into the destination's base type
+    /// by the client, so the client catches the overflow itself; letting the saturated
+    /// infinity through would have the server reject it as a malformed vector instead, which
+    /// says nothing about which value was at fault.
+    /// </summary>
     [ConditionalFact(nameof(IsSupported))]
     public void BulkCopyRejectsValuesOutsideTheFloat16Range()
     {
@@ -989,6 +1047,9 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
         return command.ExecuteReader(CommandBehavior.CloseConnection);
     }
 
+    /// <summary>
+    /// Drops the tables this fixture created and closes its management connection.
+    /// </summary>
     public void Dispose()
     {
         if (_disposed)
