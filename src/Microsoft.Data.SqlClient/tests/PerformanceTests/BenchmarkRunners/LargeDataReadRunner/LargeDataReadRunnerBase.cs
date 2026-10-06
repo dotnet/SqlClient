@@ -150,7 +150,7 @@ public abstract class LargeDataReadRunnerBase : CommandRunnerBase
     [Benchmark]
     public async Task<long> ReadLargeDataAsync_GetFieldValue()
     {
-        using SqlDataReader reader = await ReadCommand.ExecuteReaderAsync(CommandBehavior);
+        await using SqlDataReader reader = await ReadCommand.ExecuteReaderAsync(CommandBehavior);
         long rows = 0;
         long bytes = 0;
         while (await reader.ReadAsync())

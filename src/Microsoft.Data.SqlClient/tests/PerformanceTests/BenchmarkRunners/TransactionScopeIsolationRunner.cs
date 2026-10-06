@@ -118,7 +118,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
 
             for (int i = 0; i < OpensPerScope; i++)
             {
-                using SqlConnection conn = new(_connectionString);
+                await using SqlConnection conn = new(_connectionString);
                 await conn.OpenAsync();
                 await ExecuteAsync(conn);
             }
@@ -144,7 +144,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
 
         private static async Task ExecuteAsync(SqlConnection conn)
         {
-            using SqlCommand cmd = conn.CreateCommand();
+            await using SqlCommand cmd = conn.CreateCommand();
             cmd.CommandText = "SELECT 1";
             await cmd.ExecuteScalarAsync();
         }

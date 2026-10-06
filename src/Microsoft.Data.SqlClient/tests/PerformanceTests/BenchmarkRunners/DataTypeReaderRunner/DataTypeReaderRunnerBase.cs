@@ -14,6 +14,24 @@ namespace Microsoft.Data.SqlClient.PerformanceTests.BenchmarkRunners.DataTypeRea
 /// <summary>Compares row draining and value access without timing connection or fixture setup.</summary>
 public abstract class DataTypeReaderRunnerBase : CommandRunnerBase
 {
+    private static readonly Dictionary<Type, Action<SqlDataReader, int>> Getters = new()
+    {
+        {typeof(bool), (r, i) => _ = r.GetBoolean(i)},
+        {typeof(byte), (r, i) => _ = r.GetByte(i)},
+        {typeof(short), (r, i) => _ = r.GetInt16(i)},
+        {typeof(int), (r, i) => _ = r.GetInt32(i)},
+        {typeof(long), (r, i) => _ = r.GetInt64(i)},
+        {typeof(float), (r, i) => _ = r.GetFloat(i)},
+        {typeof(double), (r, i) => _ = r.GetDouble(i)},
+        {typeof(decimal), (r, i) => _ = r.GetDecimal(i)},
+        {typeof(DateTime), (r, i) => _ = r.GetDateTime(i)},
+        {typeof(DateTimeOffset), (r, i) => _ = r.GetDateTimeOffset(i)},
+        {typeof(TimeSpan), (r, i) => _ = r.GetTimeSpan(i)},
+        {typeof(Guid), (r, i) => _ = r.GetGuid(i)},
+        {typeof(string), (r, i) => _ = r.GetString(i)},
+        {typeof(byte[]), (r, i) => _ = r.GetFieldValue<byte[]>(i)},
+    };
+
     protected Table _table;
     private SqlCommand _command;
     private Action<SqlDataReader, int>[] _getters;
@@ -134,7 +152,7 @@ public abstract class DataTypeReaderRunnerBase : CommandRunnerBase
     [Benchmark]
     public async Task<long> ReadAsync()
     {
-        using SqlDataReader reader = await _command.ExecuteReaderAsync(CommandBehavior);
+        await using SqlDataReader reader = await _command.ExecuteReaderAsync(CommandBehavior);
         long rows = 0;
         while (await reader.ReadAsync())
         {
@@ -180,7 +198,7 @@ public abstract class DataTypeReaderRunnerBase : CommandRunnerBase
     [Benchmark]
     public async Task<long> ReadTypedAsync()
     {
-        using SqlDataReader reader = await _command.ExecuteReaderAsync(CommandBehavior);
+        await using SqlDataReader reader = await _command.ExecuteReaderAsync(CommandBehavior);
         long rows = 0;
         long values = 0;
         while (await reader.ReadAsync())
@@ -213,7 +231,7 @@ public abstract class DataTypeReaderRunnerBase : CommandRunnerBase
     [Benchmark]
     public async Task<long> ReadValuesAsync()
     {
-        using SqlDataReader reader = await _command.ExecuteReaderAsync(CommandBehavior);
+        await using SqlDataReader reader = await _command.ExecuteReaderAsync(CommandBehavior);
         long rows = 0;
         long values = 0;
         while (await reader.ReadAsync())
@@ -257,20 +275,8 @@ public abstract class DataTypeReaderRunnerBase : CommandRunnerBase
     /// <returns>An accessor that consumes its field.</returns>
     private static Action<SqlDataReader, int> CreateGetter(System.Type type)
     {
-        if (type == typeof(bool)) return (r, i) => _ = r.GetBoolean(i);
-        if (type == typeof(byte)) return (r, i) => _ = r.GetByte(i);
-        if (type == typeof(short)) return (r, i) => _ = r.GetInt16(i);
-        if (type == typeof(int)) return (r, i) => _ = r.GetInt32(i);
-        if (type == typeof(long)) return (r, i) => _ = r.GetInt64(i);
-        if (type == typeof(float)) return (r, i) => _ = r.GetFloat(i);
-        if (type == typeof(double)) return (r, i) => _ = r.GetDouble(i);
-        if (type == typeof(decimal)) return (r, i) => _ = r.GetDecimal(i);
-        if (type == typeof(DateTime)) return (r, i) => _ = r.GetDateTime(i);
-        if (type == typeof(DateTimeOffset)) return (r, i) => _ = r.GetDateTimeOffset(i);
-        if (type == typeof(TimeSpan)) return (r, i) => _ = r.GetTimeSpan(i);
-        if (type == typeof(Guid)) return (r, i) => _ = r.GetGuid(i);
-        if (type == typeof(string)) return (r, i) => _ = r.GetString(i);
-        if (type == typeof(byte[])) return (r, i) => _ = r.GetFieldValue<byte[]>(i);
-        throw new NotSupportedException($"No typed benchmark accessor for {type}.");
+        return Getters.TryGetValue(type, out var getter )
+            ? getter
+            : throw new NotSupportedException();
     }
 }

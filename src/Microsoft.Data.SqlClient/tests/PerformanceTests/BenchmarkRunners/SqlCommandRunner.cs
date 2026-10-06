@@ -100,7 +100,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             int sum = 0;
             for (int operation = 0; operation < OperationsPerBatch; operation++)
             {
-                using SqlDataReader reader = await _reader.ExecuteReaderAsync();
+                await using SqlDataReader reader = await _reader.ExecuteReaderAsync();
                 while (await reader.ReadAsync())
                 {
                     sum += reader.GetInt32(0) + reader.GetInt32(1);

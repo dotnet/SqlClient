@@ -49,7 +49,7 @@ public class Plaintext : LargeDataReadRunnerBase
     /// <summary>Checks the exact server-side byte count without transferring the payload.</summary>
     protected override void ValidateFixture()
     {
-        if ((long)CreateCommand($"SELECT DATALENGTH(Data) FROM {_table.Name}").ExecuteScalar() != DataSizeBytes)
+        if (CreateCommand($"SELECT DATALENGTH(Data) FROM {_table.Name}").ExecuteScalar() as long? != DataSizeBytes)
         {
             throw new System.InvalidOperationException("Server-side payload does not match the requested byte count.");
         }
@@ -130,7 +130,7 @@ public class Plaintext : LargeDataReadRunnerBase
     [ArgumentsSource(nameof(ReadBufferBytes))]
     public async Task<long> ReadLargeDataAsync_GetStream(int readBufferBytes)
     {
-        using SqlDataReader reader = await ReadCommand.ExecuteReaderAsync(CommandBehavior);
+        await using SqlDataReader reader = await ReadCommand.ExecuteReaderAsync(CommandBehavior);
         byte[] bytes = readBufferBytes == 8_192 ? _smallBytes : _largeBytes;
         char[] chars = readBufferBytes == 8_192 ? _smallChars : _largeChars;
         long rows = 0;
@@ -140,7 +140,7 @@ public class Plaintext : LargeDataReadRunnerBase
             int count;
             if (Kind == DataKind.Binary)
             {
-                using Stream stream = reader.GetStream(0);
+                await using Stream stream = reader.GetStream(0);
                 while ((count = await stream.ReadAsync(bytes, 0, bytes.Length)) > 0)
                 {
                     totalBytes += count;
