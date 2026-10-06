@@ -6,6 +6,15 @@ using Microsoft.Data.SqlClient.Tests.Common.ConfigurableRetryLogic;
 
 namespace Microsoft.Data.SqlClient.UnloadableLibrary;
 
+/// <summary>
+/// Entry point and hooks for the unloadable assembly load context test.
+/// </summary>
+/// <remarks>
+/// This is organised into a separate class and assembly to provide isolation from the ManualTesting
+/// project. Loading an assembly loads all of its dependencies, so this isolation means that if the
+/// test fails, we can be confident that the failure is due to SqlClient itself rather that to another
+/// assembly that was loaded into the same context.
+/// </remarks>
 public sealed class EntryPoint
 {
     public static string? AssemblyLoadContextName =>

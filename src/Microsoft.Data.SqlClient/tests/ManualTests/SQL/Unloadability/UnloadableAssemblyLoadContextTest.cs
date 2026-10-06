@@ -18,10 +18,18 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.Unloadability;
 
+/// <summary>
+/// Tests verifying SqlClient's behaviour within unloadable assembly load contexts.
+/// </summary>
 [Trait("Set", "2")]
 [Collection("AssemblyLoadContext")]
 public class UnloadableAssemblyLoadContextTest
 {
+    /// <summary>
+    /// Verifies that loading SqlClient into a secondary AssemblyLoadContext does not block that
+    /// AssemblyLoadContext from being unloaded after use.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
     [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup))]
     public async Task SecondaryAssemblyLoadContext_Unloads()
     {
@@ -51,7 +59,7 @@ public class UnloadableAssemblyLoadContextTest
     /// <param name="connectionString">The connection to open.</param>
     /// <returns>A <see cref="WeakReference"/> to the AssemblyLoadContext.</returns>
     /// <remarks>
-    /// This method makes use of relection to avoid accidentally creating a hard reference to the
+    /// This method makes use of reflection to avoid accidentally creating a hard reference to the
     /// secondary ALC's type definitions. It is also marked as <see cref="MethodImplOptions.NoInlining"/>
     /// in order to ensure that this weak reference is guaranteed to be out of scope in the method's caller.
     /// </remarks>
