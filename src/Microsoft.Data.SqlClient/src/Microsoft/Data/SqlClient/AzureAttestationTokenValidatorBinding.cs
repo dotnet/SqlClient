@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
 using System.Threading;
@@ -85,6 +86,17 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal Func<string, Dictionary<string, string>> ReadClaims { get; }
 
+#if NET
+        // Nothing references the validator statically, so without this the trimmer would remove
+        // its methods (or the whole Azure extension) and Azure Attestation would stop working in
+        // trimmed and NativeAOT apps. The dependency only applies when the app includes the
+        // Azure extension.
+        [DynamicDependency(DynamicallyAccessedMemberTypes.NonPublicMethods, ValidatorTypeName, AzureExtensionLoader.AssemblyName)]
+        [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026",
+            Justification = "The validator type is preserved by the DynamicDependency above.")]
+        [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2035",
+            Justification = "The Azure extension is optional; when the app doesn't include it, Bind returns null.")]
+#endif
         private static AzureAttestationTokenValidatorBinding? Bind()
         {
             try
@@ -138,6 +150,10 @@ namespace Microsoft.Data.SqlClient
             // Any other exceptions are fatal.
         }
 
+#if NET
+        [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2070",
+            Justification = "Only called from Bind, whose DynamicDependency preserves the validator's non-public methods.")]
+#endif
         private static T CreateDelegate<T>(Type type, string methodName)
             where T : Delegate
         {
