@@ -35,10 +35,6 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             {
                 throw new ArgumentException("Launch, iteration, and invocation counts must be positive; warmup must be nonnegative.");
             }
-            if (TimeoutMinutes < 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(TimeoutMinutes));
-            }
             if (!string.IsNullOrEmpty(RunStrategy) &&
                 !string.Equals(RunStrategy, "Throughput", StringComparison.OrdinalIgnoreCase) &&
                 !string.Equals(RunStrategy, "Monitoring", StringComparison.OrdinalIgnoreCase) &&
