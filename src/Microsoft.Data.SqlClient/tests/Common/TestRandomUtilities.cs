@@ -6,9 +6,16 @@ using System.Security;
 
 namespace Microsoft.Data.SqlClient.Tests.Common;
 
+/// <summary>
+/// Random value helpers for tests.
+/// </summary>
 public static class TestRandomUtilities
 {
-    // Returns a randomly generated secure string of specified length using only alphanumeric characters.
+    /// <summary>
+    /// Generates a read-only random alphanumeric <see cref="SecureString"/>.
+    /// </summary>
+    /// <param name="length">Number of characters to generate.</param>
+    /// <returns>A read-only secure string.</returns>
     public static SecureString GenerateRandomSecureString(int length = 10)
     {
         const string alphanumeric = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -31,7 +38,12 @@ public static class TestRandomUtilities
         return secureString;
     }
 
-    // Returns randomly generated characters of specified length with a prefix.
+    /// <summary>
+    /// Generates random file-name-safe characters with a prefix.
+    /// </summary>
+    /// <param name="prefix">Prefix to prepend.</param>
+    /// <param name="length">Maximum number of random characters to append.</param>
+    /// <returns>The prefix followed by random characters.</returns>
     public static string GenerateRandomCharacters(string prefix, int length = 11)
     {
         string path = Path.GetRandomFileName();
@@ -39,5 +51,4 @@ public static class TestRandomUtilities
         // Clamp length to available characters to avoid ArgumentOutOfRangeException.
         return string.Concat(prefix, path.Substring(0, Math.Min(length, path.Length)));
     }
-
 }

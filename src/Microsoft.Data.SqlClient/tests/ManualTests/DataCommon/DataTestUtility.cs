@@ -14,7 +14,6 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Security;
 using System.Security.Principal;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -25,7 +24,6 @@ using Azure.Identity;
 using Microsoft.Data.SqlClient.Tests.Common;
 using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 using Microsoft.Data.SqlClient.TestUtilities;
-using Microsoft.Identity.Client;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -66,7 +64,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static readonly string EnclaveAzureDatabaseConnString = null;
         public static bool IsUserManagedIdentitySupported = false;
-        public static string AADAccessToken = null;
         public static bool IsSystemManagedIdentitySupported = false;
         public static string AADSystemIdentityAccessToken = null;
         public static string AADUserIdentityAccessToken = null;
@@ -290,7 +287,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             KerberosDomainPassword = c.KerberosDomainPassword;
             KerberosDomainUser = c.KerberosDomainUser;
             IsUserManagedIdentitySupported = c.ManagedIdentitySupported && !string.IsNullOrEmpty(UserManagedIdentityClientId);
-            IsSystemManagedIdentitySupported = c.ManagedIdentitySupported;
+            IsSystemManagedIdentitySupported = c.ManagedIdentitySupported && c.SupportsSystemAssignedManagedIdentity;
             IsManagedInstance = c.IsManagedInstance;
             AliasName = c.AliasName;
 

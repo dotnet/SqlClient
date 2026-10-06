@@ -77,10 +77,9 @@ public class AADConnectionTest
             ? await Assert.ThrowsAsync<SqlException>(() => connection.OpenAsync())
             : Assert.Throws<SqlException>(() => connection.Open());
 
-        Assert.Contains(
-            "Failed to authenticate the user in Active Directory (Authentication=ActiveDirectoryManagedIdentity).",
-            e.Message,
-            StringComparison.Ordinal);
+        // The user name in this message is empty for Managed Identity.
+        Assert.Contains("Failed to authenticate the user", e.Message, StringComparison.Ordinal);
+        Assert.Contains("(Authentication=ActiveDirectoryManagedIdentity).", e.Message, StringComparison.Ordinal);
     }
 
     [ConditionalFact(

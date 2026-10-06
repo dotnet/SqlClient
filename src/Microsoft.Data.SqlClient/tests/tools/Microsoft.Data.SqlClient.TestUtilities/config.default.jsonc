@@ -8,6 +8,7 @@
 
     // Typical Windows SQL Server on the local host via Named Pipes.
     "NPConnectionString": "Data Source=np:localhost;Database=Northwind;Integrated Security=true;Encrypt=false;",
+
     "TCPConnectionStringHGSVBS": "",
     "TCPConnectionStringNoneVBS": "",
     "TCPConnectionStringAASSGX": "",
@@ -35,6 +36,7 @@
     "EnclaveAzureDatabaseConnString": "",
     // TODO: Default values should be empty/false.
     "ManagedIdentitySupported": true,
+    "SupportsSystemAssignedManagedIdentity": false,
     "UserManagedIdentityClientId": "",
     "PowerShellPath": "",
     "AliasName": "",
