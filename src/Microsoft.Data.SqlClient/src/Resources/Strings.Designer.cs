@@ -5191,7 +5191,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Attestation protocol &apos;AAS&apos; requires the Microsoft.Data.SqlClient.Extensions.Azure package. Add a reference to that package, or specify a different attestation protocol in the connection string..
+        ///   Looks up a localized string similar to Attestation protocol &apos;AAS&apos; requires the Microsoft.Data.SqlClient.Extensions.Azure package, at the same version as Microsoft.Data.SqlClient. Add or update the reference to that package, or specify a different attestation protocol in the connection string..
         /// </summary>
         internal static string TCE_AzureAttestationExtensionNotFound {
             get {

@@ -21,7 +21,7 @@ namespace Microsoft.Data.SqlClient.Extensions.Azure;
 /// Microsoft.Data.SqlClient binds to these members by name via reflection, so that the
 /// Microsoft.IdentityModel dependencies only need to be present when Azure Attestation is used.
 /// Every signature uses only BCL types. Do not rename or change these members without updating
-/// AzureAttestationTokenValidator in Microsoft.Data.SqlClient.
+/// AzureAttestationTokenValidatorBinding in Microsoft.Data.SqlClient.
 /// </remarks>
 internal static class AzureAttestationTokenValidator
 {

@@ -33,6 +33,10 @@ public class AzureAttestationTokenValidatorTests
         Assert.NotNull(instance.GetValue(null));
     }
 
+    /// <summary>
+    /// A token signed by a known key, from the expected issuer and within its lifetime, is
+    /// accepted with no error. This is the happy path every Azure Attestation session relies on.
+    /// </summary>
     [Fact]
     public void ValidateTokenSignature_ValidToken_ReturnsValid()
     {
@@ -45,6 +49,10 @@ public class AzureAttestationTokenValidatorTests
         Assert.Null(error);
     }
 
+    /// <summary>
+    /// A token whose issuer spells out the default HTTPS port is accepted for an attestation url
+    /// without it. Guards the issuer list the validator builds, which lets either form match.
+    /// </summary>
     [Fact]
     public void ValidateTokenSignature_IssuerWithDefaultPort_ReturnsValid()
     {
@@ -56,6 +64,10 @@ public class AzureAttestationTokenValidatorTests
         Assert.Equal(AzureAttestationTokenValidator.TokenValid, result);
     }
 
+    /// <summary>
+    /// An expired token is reported as expired, not as retryable. SqlClient fails attestation
+    /// immediately on expiry instead of refreshing the signing keys, which would not help.
+    /// </summary>
     [Fact]
     public void ValidateTokenSignature_ExpiredToken_ReturnsExpired()
     {
@@ -85,6 +97,10 @@ public class AzureAttestationTokenValidatorTests
         Assert.IsAssignableFrom<SecurityTokenValidationException>(error);
     }
 
+    /// <summary>
+    /// A token from an unexpected issuer fails validation. Guards against accepting tokens issued
+    /// by a different attestation instance.
+    /// </summary>
     [Fact]
     public void ValidateTokenSignature_WrongIssuer_ReturnsValidationFailed()
     {
@@ -96,6 +112,10 @@ public class AzureAttestationTokenValidatorTests
         Assert.Equal(AzureAttestationTokenValidator.TokenValidationFailed, result);
     }
 
+    /// <summary>
+    /// A string that isn't a JWT is reported as invalid rather than retryable, so SqlClient fails
+    /// attestation without downloading the signing keys again.
+    /// </summary>
     [Fact]
     public void ValidateTokenSignature_MalformedToken_ReturnsInvalid()
     {
@@ -107,6 +127,10 @@ public class AzureAttestationTokenValidatorTests
         Assert.NotNull(error);
     }
 
+    /// <summary>
+    /// The claims are returned keyed by claim type. SqlClient compares the aas-ehd and rp_data
+    /// claims against the enclave key and nonce, so their names and values must come through as-is.
+    /// </summary>
     [Fact]
     public void ReadClaims_ReturnsTokenClaims()
     {
@@ -129,7 +153,10 @@ public class AzureAttestationTokenValidatorTests
         Assert.ThrowsAny<ArgumentException>(() => AzureAttestationTokenValidator.ReadClaims("not a token"));
     }
 
-    // RSA.Create(int) is not available on .NET Framework.
+    /// <summary>
+    /// Creates a 2048-bit RSA key. RSA.Create(int) is not available on .NET Framework.
+    /// </summary>
+    /// <returns>A new RSA key, which the caller disposes.</returns>
     private static RSA CreateRsa()
     {
         RSA rsa = RSA.Create();
@@ -137,11 +164,24 @@ public class AzureAttestationTokenValidatorTests
         return rsa;
     }
 
+    /// <summary>
+    /// Builds the signing keys handle that the validator expects, holding only the public part of
+    /// the given key, as the keys downloaded from an attestation instance would.
+    /// </summary>
+    /// <param name="rsa">The key whose public part to use.</param>
+    /// <returns>The signing keys, as the opaque object the validator takes.</returns>
     private static object SigningKeys(RSA rsa)
     {
         return new List<SecurityKey> { new RsaSecurityKey(rsa.ExportParameters(includePrivateParameters: false)) };
     }
 
+    /// <summary>
+    /// Creates a signed JWT carrying the aas-ehd and rp_data claims an attestation token has.
+    /// </summary>
+    /// <param name="rsa">The key to sign with.</param>
+    /// <param name="issuer">The token issuer.</param>
+    /// <param name="expires">The expiry; issued-at and not-before are set two hours earlier.</param>
+    /// <returns>The serialized token.</returns>
     private static string CreateToken(RSA rsa, string issuer, DateTime expires)
     {
         SecurityTokenDescriptor descriptor = new SecurityTokenDescriptor
