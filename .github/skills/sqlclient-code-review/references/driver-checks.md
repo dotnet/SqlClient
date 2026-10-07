@@ -53,6 +53,29 @@ Read `.github/instructions/api-design.instructions.md`.
   Verify worked examples' byte counts, encoding expansion, units, and boundary
   arithmetic; an incorrect example can conceal the very case the change must handle.
 
+## User-facing strings and localization
+
+- Inspect new or changed exception messages and other user-visible prose for
+  inline literals, interpolation, or concatenation that bypass resources. Trace
+  visibility to the caller before reporting; test-only strings, debug assertions,
+  EventSource diagnostics, protocol tokens, identifiers, and URLs are not
+  automatically localizable prose.
+- Reuse the owning assembly's resource conventions (`Strings.resx`, typed
+  accessors, and existing formatting helpers). Check that the resource and
+  accessor are included in every affected framework/platform build. Sibling
+  extensions must not depend on driver resources in a way that creates a cycle.
+- Use complete translatable templates with positional placeholders; include
+  outer exception wrappers and framework-specific variants rather than
+  concatenating English fragments. Preserve exception type, parameter name,
+  actual value, inner exception, retry metadata, and neutral English wording.
+- Verify resource lookup follows the UI culture and formatting follows the
+  current culture. Check neutral-resource fallback, placeholder arguments, and
+  regression assertions against the embedded resources. Do not invent
+  translations or claim translation delivery from resource extraction alone.
+- Treat reachable changed hard-coded user-visible errors as localization
+  defects. Deduplicate repeated instances of the same cause and point to the
+  resource-backed correction; do not request localization of unrelated strings.
+
 ## Async, cancellation, timeouts, and retries
 
 - Compare `Open`/`OpenAsync`, command execution, reader operations, and bulk copy

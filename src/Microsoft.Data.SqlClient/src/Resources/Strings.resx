@@ -2232,4 +2232,13 @@
   <data name="SQL_InvalidUdtSize" xml:space="preserve">
     <value>The type '{0}' has an invalid size.</value>
   </data>
+  <data name="SQL_PoolCapacityTooLarge" xml:space="preserve">
+    <value>Capacity must be less than or equal to Int32.MaxValue.</value>
+  </data>
+  <data name="SQL_PoolCapacityZero" xml:space="preserve">
+    <value>Capacity must be greater than zero.</value>
+  </data>
+  <data name="SQL_PoolIdleTimeoutNegative" xml:space="preserve">
+    <value>Idle timeout cannot be negative.</value>
+  </data>
 </root>

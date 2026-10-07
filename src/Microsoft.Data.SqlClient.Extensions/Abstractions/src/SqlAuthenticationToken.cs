@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using AbstractionsStrings = Microsoft.Data.SqlClient.Extensions.Abstractions.Resources.Strings;
+
 namespace Microsoft.Data.SqlClient;
 
 /// <include file='../doc/SqlAuthenticationToken.xml' path='docs/members[@name="SqlAuthenticationToken"]/SqlAuthenticationToken/*'/>
@@ -14,7 +16,7 @@ public sealed class SqlAuthenticationToken
     {
         if (string.IsNullOrEmpty(accessToken))
         {
-            throw new TokenException("AccessToken must not be null or empty.");
+            throw new TokenException(AbstractionsStrings.EmptyAccessToken);
         }
 
         AccessToken = accessToken;

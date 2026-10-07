@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms</value>
+  </resheader>
+  <data name="AuthenticationFailed" xml:space="preserve">
+    <value>Failed to acquire access token for {0}: {1}</value>
+    <comment>{0} is the authentication method; {1} is the failure message.</comment>
+  </data>
+  <data name="InvalidAuthority" xml:space="preserve">
+    <value>The authority '{0}' is not a valid Entra ID authority. Expected an absolute HTTPS URL containing a tenant, e.g. 'https://login.microsoftonline.com/&lt;tenant&gt;'.</value>
+    <comment>{0} is the authority URL. Keep the example URL unchanged.</comment>
+  </data>
+  <data name="UnsupportedAuthenticationMethod" xml:space="preserve">
+    <value>Authentication method {0} not supported.</value>
+    <comment>{0} is the authentication method.</comment>
+  </data>
+  <data name="NullAuthenticationResult" xml:space="preserve">
+    <value>Internal error - authentication result is null</value>
+  </data>
+  <data name="AzureIdentityError" xml:space="preserve">
+    <value>Azure.Identity error: {0}</value>
+    <comment>{0} is the underlying exception message. Keep Azure.Identity unchanged.</comment>
+  </data>
+  <data name="UnexpectedError" xml:space="preserve">
+    <value>Unexpected error: {0}</value>
+    <comment>{0} is the underlying exception message.</comment>
+  </data>
+  <data name="InvalidParentWindow" xml:space="preserve">
+    <value>{0} expects the callback to return an IntPtr window handle; got {1}.</value>
+    <comment>{0} is the API method name; {1} is the returned type's full name. Keep IntPtr unchanged.</comment>
+  </data>
+  <data name="InvalidParentWindowNetFramework" xml:space="preserve">
+    <value>{0} expects the callback to return an IntPtr window handle (or an IWin32Window on .NET Framework); got {1}.</value>
+    <comment>{0} is the API method name; {1} is the returned type's full name. Keep IntPtr, IWin32Window, and .NET Framework unchanged.</comment>
+  </data>
+</root>

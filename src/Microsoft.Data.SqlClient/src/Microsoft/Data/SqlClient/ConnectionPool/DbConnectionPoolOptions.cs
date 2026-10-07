@@ -40,7 +40,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             if (idleTimeout < 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(idleTimeout), idleTimeout, "Idle timeout cannot be negative.");
+                throw new ArgumentOutOfRangeException(nameof(idleTimeout), idleTimeout, Strings.SQL_PoolIdleTimeoutNegative);
             }
 
             if (idleTimeout != 0)
@@ -98,5 +98,4 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         }
     }
 }
-
 
