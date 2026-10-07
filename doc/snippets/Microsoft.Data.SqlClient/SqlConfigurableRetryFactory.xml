@@ -157,7 +157,7 @@
     </CreateFixedRetryProvider>
     <CreateNoneRetryProvider>
       <summary>
-        Provides a non-retryable provider with a <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicBase.TransientPredicate" /> that returns <see langword="false" />.
+        Provides a non-retryable provider with a <see cref="P:Microsoft.Data.SqlClient.SqlRetryLogicBase.TransientPredicate" /> that returns <see langword="false" />.
       </summary>
       <returns>
         A <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider" /> object.

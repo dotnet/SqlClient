@@ -140,6 +140,124 @@ public override void Open()
 | `<remarks>` | Additional details |
 | `<seealso>` | Related members |
 
+### Cross-References (`cref`)
+
+Our XML documentation is ingested into [dotnet/sqlclient-api-docs](https://github.com/dotnet/sqlclient-api-docs), where Open Publishing resolves every `cref` against the Learn xref map. A malformed documentation ID cannot resolve and produces an `xref-not-found` warning on the API Docs pull request, long after the change left this repository.
+
+A `cref` may be written unqualified (`<see cref="SqlConnection.Open"/>`), in which case the compiler binds it from the surrounding source. Once you write an explicit `T:`/`M:`/`P:`/`F:`/`E:`/`N:` prefix, the compiler passes the value through verbatim and no longer checks it, so the rules below are yours to get right.
+
+| Rule | Wrong | Right |
+|------|-------|-------|
+| Use CLR type names, not C# aliases | `M:...GetSchema(string)` | `M:...GetSchema(System.String)` |
+| Omit parentheses on a parameterless member | `M:...GetSchema()` | `M:...GetSchema` |
+| Never include whitespace | `M:...Add(System.String, System.String)` | `M:...Add(System.String,System.String)` |
+| `T:` names a type, never an array | `T:System.Byte[]` | `T:System.Byte` array |
+| Match the prefix to the member kind | `M:...SqlCommand.CommandTimeout` | `P:...SqlCommand.CommandTimeout` |
+| Generic arguments use braces | `T:...List<System.String>` | `T:...List{System.String}` |
+
+Array, pointer and by-reference markers are legal *inside* a member signature (`M:...Decrypt(System.Byte[])`); they are only invalid as the whole target of a `T:` reference.
+
+Markdown inside `<format type="text/markdown">` uses `<xref:UID>` tokens rather than `cref`
+attributes. The compiler copies these tokens verbatim and cannot validate them. A parameterized
+method has no bare UID, even when it has only one overload, so link to its overload page with the
+URL-encoded wildcard `%2A`:
+
+```xml
+<!-- Wrong: Open Publishing looks for an exact UID that does not exist. -->
+<xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer>
+
+<!-- Right: links to the method's overload page. -->
+<xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer%2A>
+```
+
+Types, properties, fields, events, and parameterless methods may continue to use their exact bare
+UIDs. Generated-document validation indexes the emitted members and rejects a bare inline xref when
+that index proves the target is a parameterized method.
+
+### Validating Cross-References Locally
+
+`eng/pipelines/onebranch/scripts/validate-xml-docs.ps1` enforces the rules above. It runs in the OneBranch build jobs against snippet sources, generated documentation, and the assembled packages, so run it before pushing documentation changes:
+
+```powershell
+./eng/pipelines/onebranch/scripts/validate-xml-docs.ps1 -SnippetsDirectory ./doc/snippets
+```
+
+To also resolve references against the members the build actually emitted, which additionally catches wrong-kind prefixes and cross-references the compiler failed to bind:
+
+```powershell
+dotnet build ./src/Microsoft.Data.SqlClient/ref/Microsoft.Data.SqlClient.csproj -c Release
+./eng/pipelines/onebranch/scripts/validate-xml-docs.ps1 -DocumentationPath ./artifacts/Microsoft.Data.SqlClient.ref/Project-Release
+```
+
+Use the configuration-specific directory so stale outputs from another reference mode or build
+configuration are not included in the result.
+
+Validation is offline by design; it needs no network access and no xref map download.
+
+### Validating Learn Preview Output
+
+Local validation proves that XML is well formed and that references resolve, but it does not prove that Open Publishing rendered every documentation element. After an API docs ingestion PR is available in [dotnet/sqlclient-api-docs](https://github.com/dotnet/sqlclient-api-docs), compare the Learn previews with the source XML before approving the update.
+
+1. Find the latest **Learn Build status** comment and record the commit it validated. Do not use preview links from an older comment.
+2. Enumerate every changed API XML file in the PR. The bot comment lists only the first 25 files, including framework indexes and package metadata, so its table is not the complete API-page list:
+
+   ```bash
+   gh api repos/dotnet/sqlclient-api-docs/pulls/<pr>/files --paginate \
+     --jq '.[] | select(.filename | test("/xml/.+/.+\\.xml$")) | .filename'
+   ```
+
+3. Open every API type preview. Use the `FullName` from the file's `<Type>` element as the lowercase API slug, preserve the `branch=pr-en-us-<pr>` query, and select the matching view:
+   - Main provider: `sqlclient-dotnet-core-<version>`
+   - Azure Key Vault provider: `akvprovider-dotnet-core-<version>`
+4. Follow the preview's own links to every changed member or overload. Do not derive explicit-interface or operator URLs by string replacement; Learn uses special slugs for some members. Enum fields intentionally have no standalone pages and must be checked in the type's fields table.
+5. Compare the rendered content through the entire publication path:
+   - Local snippet or source XML
+   - The `<include>` path on the public declaration
+   - Generated or packaged XML documentation
+   - The API docs PR XML
+   - The rendered type and member previews
+6. Check summaries, remarks, examples, parameters, returns or values, exceptions, overload descriptions, code samples, and xrefs. A healthy type landing page is not proof that each overload page is complete.
+7. Classify expected renderer transformations before reporting a discrepancy:
+   - Learn adds display signatures to xrefs, such as `GetSchema()`.
+   - Markdown tables become separate cells and included snippets become rendered code.
+   - `To be added.` placeholders are suppressed.
+   - `<remarks>` on enum fields are discarded; move required text into `<summary>`.
+8. Treat content present in a snippet but absent from generated XML as a source or build-wiring problem. Common causes include an `<include>` XPath that matches nothing or too much, documentation attached only to a ref declaration, and `lib/` packaging from trimmed `ref/` XML.
+
+The review site requires Microsoft authentication. On a corp-joined Windows device running WSL, the Linux browser may not have the required session. Launch a separate Windows Edge profile with Chrome DevTools Protocol enabled so Edge can use seamless Entra SSO:
+
+```bash
+EDGE="/mnt/c/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"
+"$EDGE" --remote-debugging-port=9222 --remote-allow-origins=http://localhost:9222 \
+  --user-data-dir=C:\\Temp\\edge-cdp-profile \
+  --no-first-run --no-default-browser-check about:blank
+```
+
+Omit `--remote-allow-origins` when the CDP client sends no `Origin` header. Otherwise, allow only
+the exact origin used by that client; never use a wildcard with an authenticated browser profile.
+
+Drive the browser from the Windows side because the Windows firewall can block WSL-to-Windows access to the debugging port:
+
+```bash
+/mnt/c/Windows/System32/curl.exe -s http://localhost:9222/json/version
+/mnt/c/Windows/System32/curl.exe -s http://localhost:9222/json
+```
+
+Never automate credentials or copy authentication tokens. Navigate the authenticated browser through CDP and capture the rendered article text or DOM for comparison. Keep crawl output outside the repository.
+
+### Trimmed vs. Full Documentation
+
+The driver package ships **two** XML documentation files per target framework, and they are deliberately different:
+
+| Package folder | Content | Consumer |
+|----------------|---------|----------|
+| `lib/<tfm>/` | Full documentation, including `<remarks>` and `<example>` | The .NET API docs pipeline, which builds the Learn pages |
+| `ref/<tfm>/` | Trimmed by `tools/intellisense/TrimDocs.ps1`, which strips `<remarks>` and `<example>` | Visual Studio IntelliSense |
+
+Remarks and examples render poorly in Visual Studio tooltips, which is why the `ref/` copy is trimmed. The two files must never be the same: if `lib/` is sourced from the trimmed artifact, the published Learn pages silently lose every remark and example. That regression shipped in 7.1.0, so the packaged-documentation gate now fails the build when a package's `lib/` XML is trimmed, its `ref/` XML is not, or the two are byte-identical.
+
+When changing the `<file>` mappings in `Microsoft.Data.SqlClient.nuspec`, keep `lib/` pointed at the implementation artifact and `ref/` at the reference artifact.
+
 ### Writing Style
 - Use third person ("Opens a connection" not "Open a connection")
 - Be concise but complete
