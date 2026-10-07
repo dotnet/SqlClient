@@ -145,15 +145,6 @@ continues to run the entire enabled unit. Filtering a subset does not remove any
 
 ## Quick execution checks
 
-After building, run the harness selection regression checks from the repository root:
-
-```powershell
-& .\src\Microsoft.Data.SqlClient\tests\PerformanceTests\Tests\Program.Tests.ps1 -AssemblyPath .\src\Microsoft.Data.SqlClient\tests\PerformanceTests\bin\Release\net10.0\PerformanceTests.dll
-```
-
-These checks cover filtering across units, listing, failure reporting, and pipeline selectors
-without contacting SQL Server.
-
 Use the ordinary harness with a private RUNNER_CONFIG copy: set IterationCount and InvocationCount
 to 1, WarmupCount to 0, and RunStrategy to Monitoring. For small data use RowCount 17 and
 PayloadSizesBytes [65538, 131074], which exercise partial chunks. Select a unit using the usual

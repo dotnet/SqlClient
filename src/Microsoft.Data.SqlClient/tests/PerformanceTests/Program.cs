@@ -115,7 +115,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 Environment.ExitCode = args.Contains("--help") || args.Contains("-h") ? 0 : 1;
                 return;
             }
-            if (options.ListBenchmarkCaseMode != ListBenchmarkCaseMode.Disabled)
+            if (options.PrintInformation || options.ListBenchmarkCaseMode != ListBenchmarkCaseMode.Disabled)
             {
                 BenchmarkSwitcher.FromTypes(toRun.Select(unit => unit.RunnerType).ToArray()).Run(args);
                 return;
