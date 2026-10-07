@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -230,6 +230,11 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         #if NET
+        /// <summary>
+        /// Verifies that constructors which do not explicitly specify a string locale throw in
+        /// invariant globalization mode.
+        /// </summary>
+        /// <param name="dbType">The char- or text-based <see cref="SqlDbType"/> to test.</param>
         [Theory]
         [MemberData(nameof(ConstructorCharData))]
         [MemberData(nameof(ConstructorTextData))]
@@ -245,6 +250,12 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Throws<NotSupportedException>(() => new SqlMetaData("col1", dbType, 0, true, true, SortOrder.Ascending, 0));
         }
 
+        /// <summary>
+        /// Verifies that constructors which take a maximum length and an explicit locale do not throw
+        /// in invariant globalization mode.
+        /// </summary>
+        /// <param name="dbType">The char-based <see cref="SqlDbType"/> to test.</param>
+        /// <see cref="ConstructorWithMaxLengthTextExplicitLocale_DoesNotThrowInInvariantGlobalizationMode"/>
         [Theory]
         [MemberData(nameof(ConstructorCharData))]
         public void ConstructorWithMaxLengthAndExplicitLocale_DoesNotThrowInInvariantGlobalizationMode(SqlDbType dbType)
@@ -255,6 +266,12 @@ namespace Microsoft.Data.SqlClient.Tests
             ConstructorWithMaxLengthAndLocale(dbType);
         }
 
+        /// <summary>
+        /// Verifies that constructors which take a maximum length and an explicit locale do not throw
+        /// in invariant globalization mode.
+        /// </summary>
+        /// <param name="dbType">The text-based <see cref="SqlDbType"/> to test.</param>
+        /// <see cref="ConstructorWithMaxLengthAndExplicitLocale_DoesNotThrowInInvariantGlobalizationMode"/>
         [Theory]
         [MemberData(nameof(ConstructorTextData))]
         public void ConstructorWithMaxLengthTextExplicitLocale_DoesNotThrowInInvariantGlobalizationMode(SqlDbType dbType)
