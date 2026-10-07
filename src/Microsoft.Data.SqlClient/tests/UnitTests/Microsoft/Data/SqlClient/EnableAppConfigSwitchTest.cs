@@ -4,29 +4,23 @@
 
 #if NET
 
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Diagnostics.Tracing;
 using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests;
 
 /// <summary>
-/// Tests that the EnableAppConfig switch gates the configurable retry logic
-/// providers used by commands and connections, and that nothing reads the
-/// configuration file while it is disabled.
+/// Tests that the EnableAppConfig switch gates every app.config reader: the
+/// configurable retry logic providers, the switch overrides applied during
+/// static initialization, and the authentication provider section.
 /// </summary>
-/// <remarks>
-/// The authentication provider reader runs once, in a static constructor, so it
-/// cannot be exercised in-process.
-/// </remarks>
 [Collection(AppContextSwitchTestCollection.Name)]
 public class EnableAppConfigSwitchTest
 {
     /// <summary>
     /// With the switch off, commands share the factory's non-retriable
-    /// provider rather than one from the configuration manager.
+    /// provider rather than one from the configuration manager, which is what
+    /// reads the retry sections.
     /// </summary>
     [Fact]
     public void Disabled_CommandsShareNonRetriableProvider()
@@ -60,34 +54,6 @@ public class EnableAppConfigSwitchTest
     }
 
     /// <summary>
-    /// With the switch off, obtaining the providers reads no configuration
-    /// section.  Every path through AppConfigManager traces the section name,
-    /// so the absence of such a trace shows the file was not read.
-    /// </summary>
-    [Fact]
-    public void Disabled_ReadsNoConfigurationSection()
-    {
-        using LocalAppContextSwitchesHelper switchesHelper = new();
-        switchesHelper.EnableAppConfig = false;
-
-        using TraceCollector traces = new();
-
-        using SqlCommand command = new();
-        _ = command.RetryLogicProvider;
-        using SqlConnection connection = new();
-        _ = connection.RetryLogicProvider;
-
-        Assert.DoesNotContain(traces.Messages, message => message.Contains(RetrySectionNameFragment));
-
-        // A read of the same sections is traced, so the check above cannot pass
-        // merely because traces are unavailable.
-        _ = AppConfigManager.FetchConfigurationSection<SqlConfigurableRetryConnectionSection>(
-            SqlConfigurableRetryConnectionSection.Name);
-
-        Assert.Contains(traces.Messages, message => message.Contains(RetrySectionNameFragment));
-    }
-
-    /// <summary>
     /// With the switch on, commands and connections use the configuration
     /// manager's providers, as they did before the switch existed.
     /// </summary>
@@ -105,43 +71,38 @@ public class EnableAppConfigSwitchTest
     }
 
     /// <summary>
-    /// Shared by the retry sections and by the configurable retry logic
-    /// manager's own traces.
+    /// The switch gates the switch overrides section read during static
+    /// initialization.
     /// </summary>
-    private const string RetrySectionNameFragment = "SqlConfigurableRetryLogic";
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void SwitchOverridesAreReadOnlyWhenEnabled(bool enabled)
+    {
+        using LocalAppContextSwitchesHelper switchesHelper = new();
+        switchesHelper.EnableAppConfig = enabled;
+
+        Assert.Equal(enabled, LocalAppContextSwitches.ApplyAppConfigSwitchOverrides());
+    }
 
     /// <summary>
-    /// Collects SqlClient's trace messages for the lifetime of the instance.
+    /// The switch gates the authentication provider section read during static
+    /// initialization.
     /// </summary>
-    private sealed class TraceCollector : EventListener
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void AuthenticationProvidersAreReadOnlyWhenEnabled(bool enabled)
     {
-        private readonly ConcurrentQueue<string> _messages = new();
+        using LocalAppContextSwitchesHelper switchesHelper = new();
+        switchesHelper.EnableAppConfig = enabled;
 
-        public IEnumerable<string> Messages => _messages;
+        Assert.Equal(
+            enabled,
+            SqlAuthenticationProviderManager.TryReadConfigurationSection(out SqlAuthenticationProviderConfigurationSection? section));
 
-        protected override void OnEventSourceCreated(EventSource eventSource)
-        {
-            if (eventSource.Name == "Microsoft.Data.SqlClient.EventSource")
-            {
-                EnableEvents(eventSource, EventLevel.Verbose, EventKeywords.All);
-            }
-        }
-
-        protected override void OnEventWritten(EventWrittenEventArgs eventData)
-        {
-            if (eventData.Payload is null)
-            {
-                return;
-            }
-
-            foreach (object? payload in eventData.Payload)
-            {
-                if (payload is string message)
-                {
-                    _messages.Enqueue(message);
-                }
-            }
-        }
+        // No test host supplies the section, so it is null either way.
+        Assert.Null(section);
     }
 }
 

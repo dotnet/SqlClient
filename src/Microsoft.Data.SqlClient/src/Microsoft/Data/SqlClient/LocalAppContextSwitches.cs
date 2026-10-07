@@ -299,11 +299,28 @@ internal static class LocalAppContextSwitches
     /// </summary>
     static LocalAppContextSwitches()
     {
+        ApplyAppConfigSwitchOverrides();
+    }
+
+    /// <summary>
+    /// Applies the switch values found in the AppContextSwitchOverridesSection of
+    /// the default app config file, unless app.config reading is disabled.
+    /// </summary>
+    /// <returns>
+    /// True when app.config was read, false when the EnableAppConfig switch is
+    /// disabled and it was not.
+    /// </returns>
+    /// <remarks>
+    /// Separated from the static constructor so that it can be tested: the
+    /// constructor runs once per process, before any test can observe it.
+    /// </remarks>
+    internal static bool ApplyAppConfigSwitchOverrides()
+    {
         // Read before any override is applied, so this switch itself cannot be
         // set from the config file it gates.
         if (!EnableAppConfig)
         {
-            return;
+            return false;
         }
 
         IAppContextSwitchOverridesSection appContextSwitch = AppConfigManager.FetchConfigurationSection<AppContextSwitchOverridesSection>(AppContextSwitchOverridesSection.Name);
@@ -318,6 +335,8 @@ internal static class LocalAppContextSwitches
             // Don't throw an exception for an invalid config file
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.ctor|INFO>: {1}", nameof(LocalAppContextSwitches), e);
         }
+
+        return true;
     }
     #endif
 

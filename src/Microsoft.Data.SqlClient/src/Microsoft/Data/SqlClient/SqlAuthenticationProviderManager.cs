@@ -36,26 +36,7 @@ namespace Microsoft.Data.SqlClient
 
         static SqlAuthenticationProviderManager()
         {
-            SqlAuthenticationProviderConfigurationSection? configurationSection = null;
-
-            try
-            {
-                if (LocalAppContextSwitches.EnableAppConfig)
-                {
-                    // New configuration section "SqlClientAuthenticationProviders" for Microsoft.Data.SqlClient accepted to avoid conflicts with older one.
-                    configurationSection = FetchConfigurationSection<SqlClientAuthenticationProviderConfigurationSection>(SqlClientAuthenticationProviderConfigurationSection.Name);
-                    if (configurationSection == null)
-                    {
-                        // If configuration section is not yet found, try with old Configuration Section name for backwards compatibility
-                        configurationSection = FetchConfigurationSection<SqlAuthenticationProviderConfigurationSection>(SqlAuthenticationProviderConfigurationSection.Name);
-                    }
-                }
-            }
-            catch (ConfigurationErrorsException e)
-            {
-                // Don't throw an error for invalid config files
-                SqlClientEventSource.Log.TryTraceEvent("static SqlAuthenticationProviderManager: Unable to load custom SqlAuthenticationProviders or SqlClientAuthenticationProviders. ConfigurationManager failed to load due to configuration errors: {0}", e);
-            }
+            TryReadConfigurationSection(out SqlAuthenticationProviderConfigurationSection? configurationSection);
 
             Instance = new SqlAuthenticationProviderManager(configurationSection);
 
@@ -485,6 +466,49 @@ namespace Microsoft.Data.SqlClient
                     Instance._sqlAuthLogger.LogInfo(nameof(SqlAuthenticationProviderManager), methodName, $"Added auth provider {GetProviderType(provider)}, overriding existed provider {GetProviderType(oldProvider)} for authentication {authenticationMethod}.");
                     return provider;
                 });
+            return true;
+        }
+
+        /// <summary>
+        /// Reads the authentication provider configuration section from app.config,
+        /// unless app.config reading is disabled.
+        /// </summary>
+        /// <param name="configurationSection">
+        /// The section that was found, or null if there is none or app.config was not read.
+        /// </param>
+        /// <returns>
+        /// True when app.config was read, false when the EnableAppConfig switch is
+        /// disabled and it was not.
+        /// </returns>
+        /// <remarks>
+        /// Separated from the static constructor so that it can be tested: the
+        /// constructor runs once per process, before any test can observe it.
+        /// </remarks>
+        internal static bool TryReadConfigurationSection(out SqlAuthenticationProviderConfigurationSection? configurationSection)
+        {
+            configurationSection = null;
+
+            if (!LocalAppContextSwitches.EnableAppConfig)
+            {
+                return false;
+            }
+
+            try
+            {
+                // New configuration section "SqlClientAuthenticationProviders" for Microsoft.Data.SqlClient accepted to avoid conflicts with older one.
+                configurationSection = FetchConfigurationSection<SqlClientAuthenticationProviderConfigurationSection>(SqlClientAuthenticationProviderConfigurationSection.Name);
+                if (configurationSection == null)
+                {
+                    // If configuration section is not yet found, try with old Configuration Section name for backwards compatibility
+                    configurationSection = FetchConfigurationSection<SqlAuthenticationProviderConfigurationSection>(SqlAuthenticationProviderConfigurationSection.Name);
+                }
+            }
+            catch (ConfigurationErrorsException e)
+            {
+                // Don't throw an error for invalid config files
+                SqlClientEventSource.Log.TryTraceEvent("static SqlAuthenticationProviderManager: Unable to load custom SqlAuthenticationProviders or SqlClientAuthenticationProviders. ConfigurationManager failed to load due to configuration errors: {0}", e);
+            }
+
             return true;
         }
 
