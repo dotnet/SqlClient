@@ -228,7 +228,7 @@ jobs:
       - template: /eng/pipelines/common/steps/install-dotnet.yml@self
         parameters:
           debug: ${{ parameters.debug }}
-          runtimes: [8.x, 9.x]
+          runtimes: [10.x]
 
       # The Windows agent images include a suitable .NET Framework runtime, so
       # we don't have to install one explicitly.

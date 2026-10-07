@@ -40,14 +40,12 @@ parameters:
       - windows
 
   # The .NET runtime the benchmarks are executed against.  Must be one of the target frameworks of
-  # the PerformanceTests project (net8.0/net9.0/net10.0).
+  # the PerformanceTests project (net10.0).
   - name: dotnetFramework
     displayName: .NET Framework (TFM)
     type: string
-    default: net9.0
+    default: net10.0
     values:
-      - net8.0
-      - net9.0
       - net10.0
 
   # Maximum time (minutes) the template waits for the benchmark run on the VM before timing out.

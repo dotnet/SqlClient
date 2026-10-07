@@ -8,7 +8,7 @@
 
   <!-- Target Frameworks =============================================== -->
   <PropertyGroup>
-    <TargetFrameworks>net462;net8.0;net9.0;net10.0</TargetFrameworks>
+    <TargetFrameworks>net462;net10.0</TargetFrameworks>
   </PropertyGroup>
 
   <!-- Links to Resources/etc ========================================== -->
@@ -85,6 +85,8 @@
 
     <PackageReference Include="Azure.Core" />
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
+    <!-- The AKV reference assembly graph does not carry the driver's TimeProvider dependency. -->
+    <PackageReference Include="Microsoft.Bcl.TimeProvider" />
     <PackageReference Include="System.Memory" />
     <PackageReference Include="System.ValueTuple" />
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />

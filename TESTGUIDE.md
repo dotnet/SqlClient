@@ -16,11 +16,14 @@ The primary test projects for Microsoft.Data.SqlClient are under
 | Functional tests | [src/Microsoft.Data.SqlClient/tests/FunctionalTests/Microsoft.Data.SqlClient.FunctionalTests.csproj](src/Microsoft.Data.SqlClient/tests/FunctionalTests/Microsoft.Data.SqlClient.FunctionalTests.csproj) | Functional tests for public and internal behavior. Some tests use simulated servers or local test infrastructure. |
 | Manual tests     | [src/Microsoft.Data.SqlClient/tests/ManualTests/Microsoft.Data.SqlClient.ManualTests.csproj](src/Microsoft.Data.SqlClient/tests/ManualTests/Microsoft.Data.SqlClient.ManualTests.csproj)                 | Integration tests that generally require a configured SQL Server or Azure SQL target.                             |
 
-These projects declare `net462`, `net8.0`, `net9.0`, and `net10.0`. The `net462` tests require Windows;
-the project framework lists are not automatically reduced on Linux/macOS. Select an installed runtime with
-`-p:TestFramework=net8.0` (or `net9.0` / `net10.0`) when using `build.proj`, or `--framework` with `dotnet test`.
-The examples below select `net8.0` unless stated otherwise. Install the runtimes you intend to test; the SDK alone
-does not supply every earlier runtime. The driver's shipped frameworks are separate from this test matrix.
+These projects declare `net462` and `net10.0`. The `net462` tests require Windows and .NET Framework 4.6.2
+or a compatible later runtime; the project framework lists are not automatically reduced on Linux/macOS.
+Select `-p:TestFramework=net10.0` when using `build.proj`, or `--framework net10.0` with `dotnet test`.
+The examples below select `net10.0` unless stated otherwise. Install the .NET 10 runtime to run modern tests.
+Existing dual-target companion tests also use `net462;net10.0`; modern-only projects, including performance
+tests, use only `net10.0`. Stress projects use `net462;net10.0`. PackageCompatibility tool tests remain on
+`net481;net10.0` with xUnit v3, and their Framework target requires Windows and .NET Framework 4.8.1.
+The historical `tools/SniCloseLegacyRepro` test matrix is unchanged.
 
 ## Recommended Entry Point
 
@@ -62,55 +65,55 @@ build step is not required. In package mode, prepare the referenced packages fir
 Run the SqlClient unit tests:
 
 ```bash
-dotnet build -t:TestSqlClientUnit -p:TestFramework=net8.0
+dotnet build -t:TestSqlClientUnit -p:TestFramework=net10.0
 ```
 
 Run the SqlClient functional tests:
 
 ```bash
-dotnet build -t:TestSqlClientFunctional -p:TestFramework=net8.0
+dotnet build -t:TestSqlClientFunctional -p:TestFramework=net10.0
 ```
 
 Run the SqlClient manual tests:
 
 ```bash
-dotnet build -t:TestSqlClientManual -p:TestFramework=net8.0
+dotnet build -t:TestSqlClientManual -p:TestFramework=net10.0
 ```
 
 Run only manual test set 2:
 
 ```bash
-dotnet build -t:TestSqlClientManual -p:TestFramework=net8.0 -p:TestSet=2
+dotnet build -t:TestSqlClientManual -p:TestFramework=net10.0 -p:TestSet=2
 ```
 
 Run manual test sets 1 and 3:
 
 ```bash
-dotnet build -t:TestSqlClientManual -p:TestFramework=net8.0 -p:TestSet=13
+dotnet build -t:TestSqlClientManual -p:TestFramework=net10.0 -p:TestSet=13
 ```
 
 Run Always Encrypted manual tests:
 
 ```bash
-dotnet build -t:TestSqlClientManual -p:TestFramework=net8.0 -p:TestSet=AE
+dotnet build -t:TestSqlClientManual -p:TestFramework=net10.0 -p:TestSet=AE
 ```
 
 Run a specific target framework:
 
 ```bash
-dotnet build -t:TestSqlClientFunctional -p:TestFramework=net8.0
+dotnet build -t:TestSqlClientFunctional -p:TestFramework=net10.0
 ```
 
 Run functional tests against an x86 `dotnet` installation:
 
 ```powershell
-dotnet build -t:TestSqlClientFunctional -p:TestFramework=net8.0 -p:DotnetPath='C:\path\to\dotnet\x86\'
+dotnet build -t:TestSqlClientFunctional -p:TestFramework=net10.0 -p:DotnetPath='C:\path\to\dotnet\x86\'
 ```
 
 Run all Azure extension tests, including `interactive` tests, while still excluding tests marked `failing` or `flaky`:
 
 ```bash
-dotnet build -t:TestAzure -p:TestFramework=net8.0 -p:TestFilters='category!=failing&category!=flaky'
+dotnet build -t:TestAzure -p:TestFramework=net10.0 -p:TestFilters='category!=failing&category!=flaky'
 ```
 
 ## Test Parameters
@@ -125,7 +128,7 @@ The most commonly used test parameters are:
 | `-p:TestBlameTimeout=`      | `10m`                                                     | Enables hang blame collection with the specified timeout. Use `0` to disable hang timeouts.                                   |
 | `-p:TestCodeCoverage=`      | `true`                                                    | Collects code coverage when set to `true`.                                                                                    |
 | `-p:TestFilters=`           | `category!=failing&category!=flaky&category!=interactive` | xUnit filter expression. Use `none` to disable this filter; test-set selection and conditional skips still apply.              |
-| `-p:TestFramework=`         | Empty                                                     | Target framework to run. If omitted, all project frameworks are selected, including Windows-only `net462`.                    |
+| `-p:TestFramework=`         | Empty                                                     | Target framework to run. If omitted, all project frameworks are selected, including Windows-only `net462`.                     |
 | `-p:TestResultsFolderPath=` | `test_results` under the repository root                   | Absolute directory where test results are written.                                                                          |
 | `-p:TestSet=`               | Empty                                                     | Selects manual test sets. Supported values include `1`, `2`, `3`, `AE`, and combinations such as `13` or `12AE`.              |
 
@@ -148,19 +151,19 @@ Examples:
 Run a single test by fully-qualified name:
 
 ```bash
-dotnet build -t:TestSqlClientUnit -p:TestFramework=net8.0 -p:TestFilters=FullyQualifiedName=Namespace.ClassName.MethodName
+dotnet build -t:TestSqlClientUnit -p:TestFramework=net10.0 -p:TestFilters=FullyQualifiedName=Namespace.ClassName.MethodName
 ```
 
 Run only flaky tests while investigating quarantine failures:
 
 ```bash
-dotnet build -t:TestSqlClientManual -p:TestFramework=net8.0 -p:TestFilters=category=flaky
+dotnet build -t:TestSqlClientManual -p:TestFramework=net10.0 -p:TestFilters=category=flaky
 ```
 
 Disable the default filter:
 
 ```bash
-dotnet build -t:TestSqlClientFunctional -p:TestFramework=net8.0 -p:TestFilters=none
+dotnet build -t:TestSqlClientFunctional -p:TestFramework=net10.0 -p:TestFilters=none
 ```
 
 When passing filter expressions that contain shell-sensitive characters such as `&`, quote or escape the value as
@@ -173,7 +176,7 @@ common parameters consistent. For quick local investigation, you can run a test 
 
 ```bash
 dotnet test src/Microsoft.Data.SqlClient/tests/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj \
-  --framework net8.0 \
+  --framework net10.0 \
   -p:Configuration=Debug \
   --filter 'category!=failing&category!=flaky&category!=interactive&category!=signed'
 ```
@@ -183,7 +186,7 @@ test project; passing `-p:TestSet=2` directly to `dotnet test` does not select a
 
 ```bash
 dotnet test src/Microsoft.Data.SqlClient/tests/ManualTests/Microsoft.Data.SqlClient.ManualTests.csproj \
-  --framework net8.0 \
+  --framework net10.0 \
   -p:Configuration=Debug \
   --filter 'category!=failing&category!=flaky&category!=interactive&category!=signed&Set=2'
 ```
@@ -250,14 +253,14 @@ For SQL Server in a Linux container, WSL, or another host where SQL authenticati
 You can override the config file path with the `TEST_MDS_CONFIG` environment variable:
 
 ```bash
-TEST_MDS_CONFIG=/path/to/config.jsonc dotnet build -t:TestSqlClientManual -p:TestFramework=net8.0 -p:TestSet=2
+TEST_MDS_CONFIG=/path/to/config.jsonc dotnet build -t:TestSqlClientManual -p:TestFramework=net10.0 -p:TestSet=2
 ```
 
 On PowerShell:
 
 ```powershell
 $env:TEST_MDS_CONFIG = "C:\path\to\config.jsonc"
-dotnet build -t:TestSqlClientManual -p:TestFramework=net8.0 -p:TestSet=2
+dotnet build -t:TestSqlClientManual -p:TestFramework=net10.0 -p:TestSet=2
 ```
 
 ## Configuration Properties
@@ -327,23 +330,23 @@ Test results are written to the `test_results` directory by default. Override th
 `TestResultsFolderPath`:
 
 ```bash
-dotnet build -t:TestSqlClientUnit -p:TestFramework=net8.0 -p:TestResultsFolderPath="$PWD/test_results/unit"
+dotnet build -t:TestSqlClientUnit -p:TestFramework=net10.0 -p:TestResultsFolderPath="$PWD/test_results/unit"
 ```
 
 Hang blame collection is enabled by default with a `10m` timeout. To increase the timeout:
 
 ```bash
-dotnet build -t:TestSqlClientManual -p:TestFramework=net8.0 -p:TestBlameTimeout=30m
+dotnet build -t:TestSqlClientManual -p:TestFramework=net10.0 -p:TestBlameTimeout=30m
 ```
 
 To disable hang blame collection:
 
 ```bash
-dotnet build -t:TestSqlClientManual -p:TestFramework=net8.0 -p:TestBlameTimeout=0
+dotnet build -t:TestSqlClientManual -p:TestFramework=net10.0 -p:TestBlameTimeout=0
 ```
 
 Code coverage is enabled by default. To disable it for a faster local run:
 
 ```bash
-dotnet build -t:TestSqlClientUnit -p:TestFramework=net8.0 -p:TestCodeCoverage=false
+dotnet build -t:TestSqlClientUnit -p:TestFramework=net10.0 -p:TestCodeCoverage=false
 ```

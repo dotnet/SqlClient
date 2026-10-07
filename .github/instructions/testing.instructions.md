@@ -148,7 +148,7 @@ dotnet build build.proj -t:TestSqlClientUnit
 dotnet build build.proj -t:TestSqlClientFunctional
 
 # Run manual tests for specific framework
-dotnet build build.proj -t:TestSqlClientManual -p:TestFramework=net8.0
+dotnet build build.proj -t:TestSqlClientManual -p:TestFramework=net10.0
 
 # Run specific test set
 dotnet build build.proj -t:TestSqlClientManual -p:TestSet=1

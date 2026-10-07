@@ -41,8 +41,8 @@ Key parameters:
 - `referenceType` (required) — `Package` or `Project`; controls how sibling packages are referenced
 - `buildConfiguration` (required) — `Debug` or `Release`
 - `testJobTimeout` (required) — test job timeout in minutes
-- `targetFrameworks` — Windows test TFMs; default `[net462, net8.0, net9.0, net10.0]`
-- `targetFrameworksUnix` — Unix test TFMs; default `[net8.0, net9.0, net10.0]`
+- `targetFrameworks` — Windows test TFMs; default `[net462, net10.0]`
+- `targetFrameworksUnix` — Unix test TFMs; default `[net10.0]`
 - `netcoreVersionTestUtils` — default runtime for shared test utilities; default `net10.0`
 - `testSets` — test partitions; default `[1, 2, 3]`
 - `useManagedSNI` — SNI variants to test; default `[false, true]`
@@ -71,14 +71,14 @@ When adding a new build stage, respect the dependency graph and pass artifact na
 
 PR pipelines:
 - Trigger on PRs to `dev/*`, `feat/*`, `main`; exclude `eng/pipelines/onebranch/*` paths
-- Use reduced TFM matrix: `[net462, net8.0, net9.0]` (excludes net10.0)
+- Use `[net462, net10.0]` on Windows and `[net10.0]` on Unix
 - Timeout: 90 minutes
 - Package-ref PR disables Always Encrypted tests in Debug config and also disables legacy SQL Server test legs to keep validation fast
 
 CI pipelines:
 - Trigger on push to `main` (GitHub) and `internal/main` (ADO) with `batch: true`
 - Scheduled weekday builds (see individual pipeline files for cron times)
-- Full TFM matrix including net10.0 test legs and legacy SQL Server manual-test coverage
+- Same supported TFM matrix as PR validation, with legacy SQL Server manual-test coverage
 
 ## Test Configuration
 
