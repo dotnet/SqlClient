@@ -13,6 +13,8 @@
   <PropertyGroup>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- Opt into the documentation snippet compile inputs declared in src/Directory.Build.targets. -->
+    <IncludesDocumentationSnippets>true</IncludesDocumentationSnippets>
     <RootNamespace />
   </PropertyGroup>
 

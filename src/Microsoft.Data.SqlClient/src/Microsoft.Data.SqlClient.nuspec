@@ -117,8 +117,9 @@
       should be packaged.
     -->
 
-    <!-- Lib and Runtime Binaries ================================================== -->
-    <!-- lib/net462 - These contain the implementation -->
+    <!-- Lib Binaries ================================================== -->
+
+    <!-- lib/net462 -->
     <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\Microsoft.Data.SqlClient.dll" target="lib\net462\" exclude="" />
     <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\Microsoft.Data.SqlClient.pdb" target="lib\net462\" exclude="" />
     <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\Microsoft.Data.SqlClient.xml" target="lib\net462\" exclude="" />
@@ -141,7 +142,7 @@
     <!-- lib/net10.0 - These contain the implementation -->
     <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net10.0\Microsoft.Data.SqlClient.dll" target="lib\net10.0\" exclude="" />
     <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net10.0\Microsoft.Data.SqlClient.pdb" target="lib\net10.0\" exclude="" />
-    <file src="Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\net10.0\Microsoft.Data.SqlClient.xml" target="lib\net10.0\" exclude="" />
+    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net10.0\Microsoft.Data.SqlClient.xml" target="lib\net10.0\" exclude="" />
 
     <!-- lib/net10.0 Localized Resources -->
     <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net10.0\cs\Microsoft.Data.SqlClient.resources.dll" target="lib\net10.0\cs\" exclude="" />
@@ -162,7 +163,10 @@
     <!-- lib/netstandard2.0 - These are PlatformNotSupportedException assemblies -->
     <file src="Microsoft.Data.SqlClient.notsupported\$ReferenceType$-$Configuration$\netstandard2.0\Microsoft.Data.SqlClient.dll" target="lib\netstandard2.0\" exclude="" />
     <file src="Microsoft.Data.SqlClient.notsupported\$ReferenceType$-$Configuration$\netstandard2.0\Microsoft.Data.SqlClient.pdb" target="lib\netstandard2.0\" exclude="" />
-    <file src="Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\netstandard2.0\Microsoft.Data.SqlClient.xml" target="lib\netstandard2.0\" exclude="" />
+    <!-- Sourced from the reference project, unlike the other lib targets, because the
+         implementation project does not build netstandard2.0.  The untrimmed copy is used so that
+         this target carries the same full documentation as every other lib target. -->
+    <file src="Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\netstandard2.0\untrimmed\Microsoft.Data.SqlClient.xml" target="lib\netstandard2.0\" exclude="" />
 
     <!-- Ref Binaries ================================================== -->
     <!-- ref/net462 -->
