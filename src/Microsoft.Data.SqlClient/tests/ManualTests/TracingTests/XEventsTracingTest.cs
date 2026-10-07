@@ -26,7 +26,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 DataTestUtility.IsNotAzureSynapse() &&
                 DataTestUtility.IsNotManagedInstance())
             {
-                using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+                using SqlConnection connection = DataTestUtility.CreateConnection();
                 connection.Open();
 
                 // Identify orphaned event sessions and generate DROP commands.
@@ -115,7 +115,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
         public void XEventActivityIDConsistentWithTracing_RpcStarting()
         {
-            using SqlConnection managementConnection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection managementConnection = DataTestUtility.CreateConnection();
             using StoredProcedure sp = new(managementConnection, nameof(XEventActivityIDConsistentWithTracing_RpcStarting), " AS SELECT 1 AS [Field1];");
 
             // Our stored procedure name is an escaped SQL Server object name. This will not match the object_name data
@@ -152,13 +152,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // where it can be recorded in an XEvent session. This is documented at:
             // https://learn.microsoft.com/en-us/sql/relational-databases/native-client/features/accessing-diagnostic-information-in-the-extended-events-log
 
-            using SqlConnection activityConnection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection activityConnection = DataTestUtility.CreateConnection();
             activityConnection.Open();
 
             Guid connectionId = activityConnection.ClientConnectionId;
             HashSet<string> ids;
 
-            using SqlConnection xEventManagementConnection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection xEventManagementConnection = DataTestUtility.CreateConnection();
             xEventManagementConnection.Open();
 
             using XEventScope xEventSession = new(

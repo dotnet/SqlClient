@@ -20,7 +20,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void TestDataClassificationResultSetRank()
         {
             s_tableName = DataTestUtility.GetLongName("DC");
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConnection = DataTestUtility.CreateConnection())
             using (SqlCommand sqlCommand = sqlConnection.CreateCommand())
             {
                 try
@@ -43,7 +43,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void TestDataClassificationResultSet()
         {
             s_tableName = DataTestUtility.GetLongName("DC");
-            using (SqlConnection sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sqlConnection = DataTestUtility.CreateConnection())
             using (SqlCommand sqlCommand = sqlConnection.CreateCommand())
             {
                 try
@@ -235,7 +235,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             var tableName = DataTestUtility.GetLongName("DC");
 
-            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (var connection = DataTestUtility.CreateConnection())
             {
                 connection.Open();
                 try
