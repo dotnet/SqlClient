@@ -214,9 +214,7 @@ namespace Microsoft.Data.SqlClient
             if (!TryParseAuthority(parameters.Authority, out string authorityHost, out string tenant, out string msalAuthority))
             {
                 throw new ArgumentException(
-                    $"The authority '{parameters.Authority}' is not a valid Entra ID authority. " +
-                    "Expected an absolute HTTPS URL containing a tenant, " +
-                    "e.g. 'https://login.microsoftonline.com/<tenant>'.",
+                    StringsHelper.GetString(Strings.SQL_InvalidAuthority, parameters.Authority),
                     nameof(parameters.Authority));
             }
 

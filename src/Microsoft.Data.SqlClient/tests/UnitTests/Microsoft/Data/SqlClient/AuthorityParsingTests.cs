@@ -175,7 +175,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
 
             Assert.Equal(nameof(SqlAuthenticationParameters.Authority), ex.ParamName);
             Assert.Contains(BadAuthority, ex.Message, StringComparison.Ordinal);
-            Assert.Contains("Expected an absolute HTTPS URL containing a tenant", ex.Message, StringComparison.Ordinal);
+            Assert.False(string.IsNullOrEmpty(Strings.SQL_InvalidAuthority));
+            Assert.Contains(StringsHelper.GetString(Strings.SQL_InvalidAuthority, BadAuthority), ex.Message, StringComparison.Ordinal);
             Assert.Null(ex.InnerException);
         }
     }
