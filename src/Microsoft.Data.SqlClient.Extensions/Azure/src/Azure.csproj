@@ -8,6 +8,8 @@
   <!-- Compiler Options ================================================ -->
   <PropertyGroup>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- Opt into the documentation snippet compile inputs declared in src/Directory.Build.targets. -->
+    <IncludesDocumentationSnippets>true</IncludesDocumentationSnippets>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <RootNamespace>Microsoft.Data.SqlClient</RootNamespace>
@@ -89,7 +91,6 @@
   <!-- Other references -->
   <ItemGroup>
     <PackageReference Include="Azure.Core" />
-    <PackageReference Include="Azure.Identity" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
     <!-- Explicitly depend on the same version of Microsoft.Identity.Client as SqlClient. -->
     <PackageReference Include="Microsoft.Identity.Client" />

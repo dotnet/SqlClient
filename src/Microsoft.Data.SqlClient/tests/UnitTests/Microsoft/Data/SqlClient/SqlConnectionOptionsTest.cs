@@ -59,7 +59,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
             builder.DataSource = dataSource;
             if (tnirEnabledInConnString.HasValue)
             {
+#pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
                 builder.TransparentNetworkIPResolution = tnirEnabledInConnString.Value;
+#pragma warning restore 618
             }
             SqlConnectionOptions connectionString = new(builder.ConnectionString);
 
@@ -99,7 +101,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
             SqlConnectionStringBuilder builder = new() { DataSource = dataSource };
             if (tnirInConnString.HasValue)
             {
+#pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
                 builder.TransparentNetworkIPResolution = tnirInConnString.Value;
+#pragma warning restore 618
             }
 
             SqlConnectionOptions connectionOptions = new(builder.ConnectionString);

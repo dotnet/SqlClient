@@ -1,0 +1,42 @@
+<!--
+  Licensed to the .NET Foundation under one or more agreements. The .NET Foundation licenses this
+  file to you under the MIT license.
+-->
+<Project>
+  <!--
+    Confirm that, when analysis is enabled, the build produced the SARIF file(s) that we expect.
+    Each src/ project that is built should produce a SARIF log whose path is specified by the
+    ErrorLog property defined in src/Directory.Build.props.  We perform this check here, rather
+    than post-build, because the build.proj targets may build multiple projects, and the SARIF paths
+    are difficult to predict.
+  -->
+  <Target Name="VerifyRoslynAnalysisLog"
+          AfterTargets="CoreCompile"
+          Condition="'$(EnableAnalyzers)' == 'true'">
+    <Error Condition="'$(ErrorLog)' == ''"
+           Text="Roslyn analysis did not configure an ErrorLog for $(MSBuildProjectFullPath)." />
+    <Error Condition="'$(ErrorLog)' != '' AND !Exists('$(ErrorLog)')"
+           Text="Roslyn analysis did not produce the expected SARIF log: $(ErrorLog)" />
+  </Target>
+  <!--
+    Documentation comments pull their text from XML files via <include file='...'/>, which the
+    compiler reads but MSBuild does not otherwise know about.  Declaring them as compile inputs
+    makes editing one invalidate the compilation, so the generated XML documentation is rebuilt
+    instead of an earlier copy being left in place.
+
+    Two locations, matching how the sources reference them: the repository-level doc/snippets tree,
+    and a doc directory beside a project's own src directory, which the extension packages use.
+
+    Applied here rather than in Directory.Build.props, and only to projects that opt in, because
+    props is imported before the project body can set the property and is inherited by every
+    project under src/ including the tests.  An unscoped wildcard there would make editing any
+    documentation file invalidate CoreCompile for the whole solution.
+
+    CustomAdditionalCompileInputs is the documented extension point for this: CoreCompile lists it
+    among its Inputs.
+  -->
+  <ItemGroup Condition="'$(IncludesDocumentationSnippets)' == 'true'">
+    <CustomAdditionalCompileInputs Include="$(RepoRoot)doc\snippets\**\*.xml" />
+    <CustomAdditionalCompileInputs Include="$(MSBuildProjectDirectory)\..\doc\**\*.xml" />
+  </ItemGroup>
+</Project>

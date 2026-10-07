@@ -13,9 +13,9 @@
     The big question might be: Why do we need a "Not Supported" version of MDS?
     In some situations, most importantly PowerShell, including a NuGet package will automatically
     reference the appropriate assembly in the /lib folder of the package, which is inherently OS-
-    agnostic. MDS implementation assemblies are placed in the /runtimes folder to provide the OS-
-    specific versions of MDS. The "Not Supported" binary is thus placed in the lib folder so that
-    in OS-agnostic situations, the user is reminded to reference an OS-specific version of MDS.
+    agnostic. The package still places the shared modern .NET implementation in runtime-specific
+    asset folders. The "Not Supported" binary is placed in lib so consumers that do not resolve
+    runtime assets receive an explicit error instead of loading an incomplete dependency set.
 
     The next big question might be: Why is this a separate project?
     In previous iterations, generating the "Not Supported" binaries was part of the netcore ref
@@ -40,12 +40,11 @@
     assumes the GenAPI project has already been built in a previous step. Instead, use the
     following command in build.proj to build the "not supported" binaries:
 
-    > msbuild build.proj /t:BuildSqlClientNotSupported
+    > dotnet build build.proj -t:BuildSqlClientNotSupported
 
     @TODO: Remove this project
-    The primary prerequisite for removing this project is making the "common" MDS project OS-
-    agnostic. Once that happens, the lib binary will be able to switch OS implementation at runtime
-    and a "not supported" error is no longer necessary.
+    The modern .NET implementation is now OS-agnostic, but removing this project also requires
+    changing the NuGet asset layout and validating consumers that load assemblies directly from lib.
 
     alternatively:
     @TODO: Replace the GenAPI project with a C# Source Generator
@@ -54,7 +53,7 @@
   <!-- General Properties ============================================== -->
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
-    <TargetFrameworks>net462;net8.0;net9.0;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net462;net10.0;netstandard2.0</TargetFrameworks>
   </PropertyGroup>
 
   <!-- Compiler Options ================================================ -->
@@ -72,6 +71,13 @@
     <NoWarn>$(NoWarn);CS0618</NoWarn>
   </PropertyGroup>
 
+  <!-- CLS Compliance ================================================== -->
+  <ItemGroup>
+    <AssemblyAttribute Include="System.CLSCompliantAttribute">
+      <_Parameter1>true</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
   <!-- Versioning ====================================================== -->
   <!-- Import our Versions.props unless it was already imported (e.g. by Directory.Packages.props
        in Package mode).  The guard property inside Versions.props makes this a no-op on the
@@ -88,12 +94,14 @@
 
   <!-- Build Output ==================================================== -->
   <PropertyGroup>
+    <ArtifactPath>$(RepoRoot)artifacts/</ArtifactPath>
+
     <!--
       MSBuild will add the target framework to the end of this path by default. Telling it not to
       is possible but also requires specifying the IntermediateOutputPath. So while it would be
       nice to have a flatter directory structure, it's more hassle than its worth.
     -->
-    <OutputPath>$(RepoRoot)artifacts/$(AssemblyName).notsupported/$(ReferenceType)-$(Configuration)/</OutputPath>
+    <OutputPath>$(ArtifactPath)$(AssemblyName).notsupported/$(ReferenceType)-$(Configuration)/</OutputPath>
   </PropertyGroup>
 
   <!-- References ====================================================== -->
@@ -105,7 +113,7 @@
   -->
   <PropertyGroup>
     <RefProjectPath>$(RepoRoot)src/Microsoft.Data.SqlClient/ref/Microsoft.Data.SqlClient.csproj</RefProjectPath>
-    <RefArtifactPath>$(RepoRoot)artifacts/Microsoft.Data.SqlClient.ref/$(ReferenceType)-$(Configuration)/$(TargetFramework)/Microsoft.Data.SqlClient.dll</RefArtifactPath>
+    <RefArtifactPath>$(ArtifactPath)Microsoft.Data.SqlClient.ref/$(ReferenceType)-$(Configuration)/$(TargetFramework)/Microsoft.Data.SqlClient.dll</RefArtifactPath>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="$(RefProjectPath)"
@@ -212,14 +220,14 @@
     <!-- Execute GenAPI against the ref assembly to generate the source file -->
     <PropertyGroup>
       <GenApiCommand>
-        $(DotnetPath)dotnet "$(GenApiPath)"
-          $(RefArtifactPath)
+        "$(DotnetPath)dotnet" "$(GenApiPath)"
+          "$(RefArtifactPath)"
           -l:"@(_referencePathDirectories)"
           -o:"$(NotSupportedSourceFile)"
           -t:"Microsoft.Data.SqlClient is not supported on this platform."
       </GenApiCommand>
-      <!-- Convert more than one whitespace character into one space -->
-      <GenApiCommand>$([System.Text.RegularExpressions.Regex]::Replace($(GenApiCommand), "\s+", " "))</GenApiCommand>
+      <!-- Collapse line breaks without changing spaces inside quoted arguments -->
+      <GenApiCommand>$([System.Text.RegularExpressions.Regex]::Replace($(GenApiCommand), "\s*[\r\n]+\s*", " "))</GenApiCommand>
     </PropertyGroup>
 
     <Message Text=">>> Building SqlClient 'Not Supported' binaries via command: $(GenApiCommand)"/>

@@ -52,7 +52,7 @@
   -->
   <PropertyGroup>
     <!-- SNI version (external package, version declared once here) -->
-    <SniVersion>7.1.0-preview3.26226.3</SniVersion>
+    <SniVersion>7.1.0</SniVersion>
     <SniVersionRange>[$(SniVersion), $([MSBuild]::Add($(SniVersion.Split('.')[0]), 1)).0.0)</SniVersionRange>
   </PropertyGroup>
 
@@ -96,16 +96,31 @@
   <!-- Dependencies shared by multiple projects -->
 
   <ItemGroup>
-    <PackageVersion Include="Azure.Core" Version="1.51.1" />
+    <PackageVersion Include="Azure.Core" Version="1.62.0" />
     <PackageVersion Include="Microsoft.Identity.Client" Version="4.84.2" />
   </ItemGroup>
 
-  <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">
-    <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="9.0.18" />
+  <!-- .NET 10 is the lowest supported runtime band, including legacy/Standard dependencies. -->
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="10.0.12" />
   </ItemGroup>
 
-  <ItemGroup Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">
-    <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
+  <!-- ===================================================================== -->
+  <!-- Internal SDL analyzers (private ADO.Net pipelines only) -->
+  <!--
+    Microsoft.Internal.Analyzers provides the internal "IA*" SDL Roslyn rules. The package is
+    Microsoft-internal and confidential: it is restored ONLY from an internal NuGet feed, ONLY by
+    the private ADO.Net project pipelines, and ONLY when EnableAnalyzers and InternalAnalyzers are
+    both true (see the InternalAnalyzers block in src/Directory.Build.props). Public builds and
+    public CI never set those flags, so the version below is only declared for the private analysis
+    pass and is never seen by a public build.
+
+    The version is supplied by the private pipeline via the InternalAnalyzersVersion
+    property. There is intentionally NO default: the pipeline pins the exact version, and an
+    unset value fails restore rather than silently drifting.
+  -->
+  <ItemGroup Condition="'$(EnableAnalyzers)' == 'true' AND '$(InternalAnalyzers)' == 'true'">
+    <PackageVersion Include="Microsoft.Internal.Analyzers" Version="$(InternalAnalyzersVersion)" />
   </ItemGroup>
 
   <!-- ===================================================================== -->
@@ -127,7 +142,6 @@
   <!-- Azure Dependencies -->
 
   <ItemGroup>
-    <PackageVersion Include="Azure.Identity" Version="1.18.0" />
     <PackageVersion Include="Microsoft.Identity.Client.Broker" Version="4.84.2" />
   </ItemGroup>
 
@@ -137,32 +151,24 @@
   <ItemGroup>
     <PackageVersion Include="Microsoft.Data.SqlClient.SNI" Version="$(SniVersionRange)" />
     <PackageVersion Include="Microsoft.Data.SqlClient.SNI.runtime" Version="$(SniVersionRange)" />
-    <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.16.0" />
-    <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.16.0" />
+    <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.23.0" />
+    <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.23.0" />
     <PackageVersion Include="System.Buffers" Version="4.6.1" />
     <PackageVersion Include="System.Data.Common" Version="4.3.0" />
-    <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="10.0.3" />
+    <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="10.0.12" />
     <PackageVersion Include="System.Memory" Version="4.6.3" />
     <PackageVersion Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
-    <PackageVersion Include="System.Text.Json" Version="10.0.3" />
+    <PackageVersion Include="System.Text.Json" Version="10.0.12" />
     <PackageVersion Include="System.ValueTuple" Version="4.6.2" />
-    <PackageVersion Include="System.Threading.Channels" Version="10.0.3" />
+    <PackageVersion Include="System.Threading.Channels" Version="10.0.12" />
   </ItemGroup>
 
-  <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">
-    <PackageVersion Include="Microsoft.Bcl.Cryptography" Version="9.0.18" />
-    <PackageVersion Include="Microsoft.Bcl.TimeProvider" Version="9.0.18" />
-    <PackageVersion Include="System.Threading.RateLimiting" Version="9.0.18" />
-    <PackageVersion Include="System.Configuration.ConfigurationManager" Version="9.0.18" />
-    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="9.0.18" />
-  </ItemGroup>
-
-  <ItemGroup Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">
-    <PackageVersion Include="Microsoft.Bcl.Cryptography" Version="8.0.0" />
-    <PackageVersion Include="Microsoft.Bcl.TimeProvider" Version="8.0.1" />
-    <PackageVersion Include="System.Threading.RateLimiting" Version="8.0.0" />
-    <PackageVersion Include="System.Configuration.ConfigurationManager" Version="8.0.1" />
-    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="8.0.1" />
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.Bcl.Cryptography" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Bcl.TimeProvider" Version="10.0.12" />
+    <PackageVersion Include="System.Threading.RateLimiting" Version="10.0.12" />
+    <PackageVersion Include="System.Configuration.ConfigurationManager" Version="10.0.12" />
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.12" />
   </ItemGroup>
 
   <!-- ===================================================================== -->

@@ -59,9 +59,22 @@ steps:
       Get-ChildItem -Filter "*.coverage" -Recurse
     displayName: '[Debug] List test result coverage files'
 
+# When an earlier step fails (e.g. SQL Server setup), no TestResults directory is
+# produced and PublishPipelineArtifact fails with "Path does not exist", adding a
+# second error that buries the real one.  Gate the publish on the directory
+# actually existing.
+- pwsh: |
+    $exists = Test-Path -Path 'TestResults' -PathType Container
+    if (-not $exists) {
+      Write-Host 'No TestResults directory was produced; skipping test artifact publish.'
+    }
+    Write-Host "##vso[task.setvariable variable=HasTestResults]$($exists.ToString().ToLowerInvariant())"
+  displayName: 'Check for test results'
+  condition: succeededOrFailed()
+
 - task: PublishPipelineArtifact@1
   displayName: 'Publish Test Artifacts'
   inputs:
     targetPath: TestResults
     artifact: '${{parameters.targetFramework }}WinAz$(System.JobId)'
-  condition: succeededOrFailed()
+  condition: and(succeededOrFailed(), eq(variables['HasTestResults'], 'true'))

@@ -966,7 +966,7 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
         // reading 21 rows that include several nvarchar(max) values tens-of-thousands of characters
         // long.  With small packet sizes the large strings require many network round-trips, and on
         // non-Windows platforms the managed SNI layer is used which adds further overhead.
-        [Trait("Category", "flaky")]
+        [Trait("category", "flaky")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static async Task CanReadAwkwardDataLengths()
         {

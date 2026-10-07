@@ -37,7 +37,7 @@ public abstract class ColumnMasterKey : DatabaseObject<ColumnMasterKey.CreationP
 
     protected ColumnMasterKey(SqlConnection connection, string namePrefix, CreationParameters creationParameters)
         : base(connection, name: GenerateLongName(namePrefix), definition: DefinitionTemplate,
-            state: creationParameters, shouldCreate: true, shouldDrop: true)
+            state: creationParameters)
     {
     }
 

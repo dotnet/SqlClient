@@ -52,9 +52,12 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             new BenchmarkUnit("SequentialXmlRead", b => b.SequentialXmlReadRunnerConfig, typeof(SequentialXmlReadRunner)),
             new BenchmarkUnit("JsonVsVarcharRead", b => b.JsonVsVarcharReadRunnerConfig, typeof(JsonVsVarcharReadRunner)),
             new BenchmarkUnit("BeginTransaction", b => b.BeginTransactionRunnerConfig, typeof(BeginTransactionRunner)),
+            new BenchmarkUnit("TransactionScopeIsolation", b => b.TransactionScopeIsolationRunnerConfig, typeof(TransactionScopeIsolationRunner)),
             new BenchmarkUnit("ConnectionPoolStress", b => b.ConnectionPoolStressRunnerConfig, typeof(ConnectionPoolStressRunner)),
             new BenchmarkUnit("ConnectionPoolContention", b => b.ConnectionPoolContentionRunnerConfig, typeof(ConnectionPoolContentionRunner)),
             new BenchmarkUnit("ConnectionPoolChurn", b => b.ConnectionPoolChurnRunnerConfig, typeof(ConnectionPoolChurnRunner)),
+            new BenchmarkUnit("ConnectionPoolRamp", b => b.ConnectionPoolRampRunnerConfig, typeof(ConnectionPoolRampRunner)),
+            new BenchmarkUnit("ConnectionPoolThreadPoolPressure", b => b.ConnectionPoolThreadPoolPressureRunnerConfig, typeof(ConnectionPoolThreadPoolPressureRunner)),
         };
 
         /// <summary>
@@ -131,7 +134,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
 
         private void SetupConfigurations()
         {
-            // If the config file specifies to use managed SNI on Windows, 
+            // If the config file specifies to use managed SNI on Windows,
             // enable the appropriate AppContext switch to use the managed SNI implementation.
             if (_config.UseManagedSniOnWindows)
             {
@@ -146,8 +149,8 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 "Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2",
                 _config.UseConnectionPoolV2);
 
-            // If the config file specifies to use optimized async behavior, 
-            // enable packet multiplexing feature and other optimizations in SqlClient 
+            // If the config file specifies to use optimized async behavior,
+            // enable packet multiplexing feature and other optimizations in SqlClient
             // by setting the appropriate AppContext switches.
             if(_config.UseOptimizedAsyncBehaviour)
             {
@@ -160,7 +163,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             // diagnosers when building each benchmark's ManualConfig.
             BenchmarkConfig.UseNativeMemoryAndEtwProfiler = _config.UseNativeMemoryAndETWProfiler;
 
-            // If the config file specifies to wait for a profiler, 
+            // If the config file specifies to wait for a profiler,
             // display the process ID and wait for user input before starting the benchmarks.
             // Skipped under harness-controlled execution (PERF_LIST_BENCHMARKS / PERF_BENCHMARK):
             // those modes run unattended, so blocking on Console.ReadKey() would hang automation.

@@ -1,10 +1,11 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
 using System;
 using System.Data;
 using Microsoft.Data.SqlClient.ManualTesting.Tests;
+using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
@@ -54,9 +55,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         {
             string srcConstr = DataTestUtility.TCPConnectionString;
             string dstConstr = DataTestUtility.TCPConnectionString;
-            string dstTable = DataTestUtility.GetShortName("SqlBulkCopyTest_InvalidAccessFromEvent", false);
             _dstConstr = dstConstr;
-            _dstTable = dstTable;
 
             DataSet dataset;
             SqlDataAdapter adapter;
@@ -77,30 +76,26 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
                 _dstConn.Open();
                 _dstcmd = _dstConn.CreateCommand();
 
-                try
-                {
-                    Helpers.TryExecute(_dstcmd, "create table " + dstTable + " (orderid int, customerid nchar(5), rdate datetime, freight money, shipname nvarchar(40))");
-                    _dstcmd.CommandText = "truncate table " + dstTable;
+                // Table disposal falls back to a fresh connection, which matters here because the
+                //   test deliberately leaves the original connection unusable.
+                using Table dstTable = new(_dstConn, "SqlBulkCopyTest_InvalidAccessFromEvent",
+                    "(orderid int, customerid nchar(5), rdate datetime, freight money, shipname nvarchar(40))");
+                _dstTable = dstTable.Name;
+                _dstcmd.CommandText = "truncate table " + dstTable.Name;
 
-                    expectedErrorMsg = SystemDataResourceManager.Instance.SQL_ConnectionLockedForBcpEvent;
-                    InnerTest(new SqlRowsCopiedEventHandler(OnRowCopiedRollback));
-                    InnerTest(new SqlRowsCopiedEventHandler(OnRowCopiedCommit));
-                    InnerTest(new SqlRowsCopiedEventHandler(OnRowCopiedChangeDatabase));
-                    InnerTest(new SqlRowsCopiedEventHandler(OnRowCopiedExecute));
-                    InnerTest(new SqlRowsCopiedEventHandler(OnRowCopiedBulkCopy));
+                expectedErrorMsg = SystemDataResourceManager.Instance.SQL_ConnectionLockedForBcpEvent;
+                InnerTest(new SqlRowsCopiedEventHandler(OnRowCopiedRollback));
+                InnerTest(new SqlRowsCopiedEventHandler(OnRowCopiedCommit));
+                InnerTest(new SqlRowsCopiedEventHandler(OnRowCopiedChangeDatabase));
+                InnerTest(new SqlRowsCopiedEventHandler(OnRowCopiedExecute));
+                InnerTest(new SqlRowsCopiedEventHandler(OnRowCopiedBulkCopy));
 
-                    // this will close the connect which is valid so it must be the last test!
-                    expectedErrorMsg = string.Format(
-                        SystemDataResourceManager.Instance.ADP_OpenConnectionRequired,
-                        "WriteToServer",
-                        SystemDataResourceManager.Instance.ADP_ConnectionStateMsg_Closed);
-                    InnerTest(new SqlRowsCopiedEventHandler(OnRowCopiedClose));
-                }
-                finally
-                {
-                    // the original connection is probably trashed
-                    Helpers.TryDropTable(dstConstr, dstTable);
-                }
+                // this will close the connect which is valid so it must be the last test!
+                expectedErrorMsg = string.Format(
+                    SystemDataResourceManager.Instance.ADP_OpenConnectionRequired,
+                    "WriteToServer",
+                    SystemDataResourceManager.Instance.ADP_ConnectionStateMsg_Closed);
+                InnerTest(new SqlRowsCopiedEventHandler(OnRowCopiedClose));
             }
         }
 

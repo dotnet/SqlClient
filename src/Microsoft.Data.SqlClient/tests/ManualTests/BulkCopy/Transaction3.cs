@@ -1,10 +1,11 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
 using System;
 using System.Data.Common;
 using Microsoft.Data.SqlClient.ManualTesting.Tests;
+using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
@@ -17,47 +18,38 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         {
             string srcConstr = DataTestUtility.TCPConnectionString;
             string dstConstr = DataTestUtility.TCPConnectionString;
-            string dstTable = DataTestUtility.GetShortName("SqlBulkCopyTest_Transaction3", false);
             using (SqlConnection dstConn = new SqlConnection(dstConstr))
-            using (SqlCommand dstCmd = dstConn.CreateCommand())
             {
                 dstConn.Open();
 
-                try
+                using Table dstTable = new Table(dstConn, "SqlBulkCopyTest_Transaction3", "(col1 int, col2 nvarchar(20), col3 nvarchar(10))");
+
+                using (SqlConnection srcConn = new SqlConnection(srcConstr))
+                using (SqlCommand srcCmd = new SqlCommand("select top 5 EmployeeID, LastName, FirstName from employees", srcConn))
                 {
-                    Helpers.TryExecute(dstCmd, "create table " + dstTable + " (col1 int, col2 nvarchar(20), col3 nvarchar(10))");
+                    srcConn.Open();
 
-                    using (SqlConnection srcConn = new SqlConnection(srcConstr))
-                    using (SqlCommand srcCmd = new SqlCommand("select top 5 EmployeeID, LastName, FirstName from employees", srcConn))
+                    using (DbDataReader reader = srcCmd.ExecuteReader())
+                    using (SqlConnection conn3 = new SqlConnection(srcConstr))
                     {
-                        srcConn.Open();
-
-                        using (DbDataReader reader = srcCmd.ExecuteReader())
-                        using (SqlConnection conn3 = new SqlConnection(srcConstr))
+                        conn3.Open();
+                        // Start a local transaction on the wrong connection.
+                        using SqlTransaction myTrans = conn3.BeginTransaction();
+                        using (SqlBulkCopy bulkcopy = new SqlBulkCopy(dstConn, SqlBulkCopyOptions.Default, myTrans))
                         {
-                            conn3.Open();
-                            // Start a local transaction on the wrong connection.
-                            SqlTransaction myTrans = conn3.BeginTransaction();
-                            using (SqlBulkCopy bulkcopy = new SqlBulkCopy(dstConn, SqlBulkCopyOptions.Default, myTrans))
-                            {
-                                SqlBulkCopyColumnMappingCollection ColumnMappings = bulkcopy.ColumnMappings;
-                                bulkcopy.DestinationTableName = dstTable;
+                            SqlBulkCopyColumnMappingCollection ColumnMappings = bulkcopy.ColumnMappings;
+                            bulkcopy.DestinationTableName = dstTable.Name;
 
-                                string exceptionMsg = SystemDataResourceManager.Instance.ADP_TransactionConnectionMismatch;
-                                DataTestUtility.AssertThrows<InvalidOperationException>(() => bulkcopy.WriteToServer(reader), exceptionMessage: exceptionMsg);
+                            string exceptionMsg = SystemDataResourceManager.Instance.ADP_TransactionConnectionMismatch;
+                            DataTestUtility.AssertThrows<InvalidOperationException>(() => bulkcopy.WriteToServer(reader), exceptionMessage: exceptionMsg);
 
-                                SqlCommand myCmd = dstConn.CreateCommand();
-                                myCmd.CommandText = "select * from " + dstTable;
-                                myCmd.Transaction = myTrans;
+                            using SqlCommand myCmd = dstConn.CreateCommand();
+                            myCmd.CommandText = "select * from " + dstTable.Name;
+                            myCmd.Transaction = myTrans;
 
-                                DataTestUtility.AssertThrows<InvalidOperationException>(() => myCmd.ExecuteReader(), exceptionMessage: exceptionMsg);
-                            }
+                            DataTestUtility.AssertThrows<InvalidOperationException>(() => myCmd.ExecuteReader(), exceptionMessage: exceptionMsg);
                         }
                     }
-                }
-                finally
-                {
-                    Helpers.TryExecute(dstCmd, "drop table " + dstTable);
                 }
             }
         }

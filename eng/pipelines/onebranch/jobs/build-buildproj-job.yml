@@ -17,11 +17,33 @@ parameters:
   - name: apiScanPdbPath
     type: string
 
+  # The APIScan registration version for the package being built. This is the major.minor value
+  # derived from the canonical package version by the compute_versions stage. The package's
+  # name/version pair must already be registered with APIScan before the build runs.
+  - name: apiScanSoftwareVersion
+    type: string
+
   # True to enable ESRP malware scanning and code signing steps, which should not be run on
   # non-official pipelines as they access production resources. If true, Signing* parameters must
   # be provided.
   - name: shouldSignPackage
     type: boolean
+
+  # When true, validation findings fail this job.  When false, they are reported as warnings and
+  # the job continues.
+  - name: failOnValidationError
+    type: boolean
+
+  # Project file for this package.  Documentation expectations are read from it rather than
+  # restated here, so the project and the build cannot disagree.
+  - name: projectPath
+    type: string
+
+  # Directory containing the documentation snippets referenced by this project. An empty path
+  # disables source validation for projects that do not consume snippets.
+  - name: documentationSnippetsPath
+    type: string
+    default: ''
 
   # Signing Parameters -----------------------------------------------------
   # @TODO: Signing Parameters Object
@@ -60,8 +82,9 @@ parameters:
     type: object
     default: []
 
-  # Positive unsigned 16-bit revision used by build.proj to derive assembly file versions.
-  - name: revision
+  # Assembly file version to stamp (required). Pre-computed by the compute-versions stage so no
+  # build job re-derives it. The assembly version is derived from this by Versions.props.
+  - name: fileVersion
     type: string
 
   # The full name of the package. This is used in the job name, and to form DLL and PDB filenames
@@ -112,12 +135,50 @@ jobs:
 
       ob_outputDirectory: '$(JOB_OUTPUT)'
 
-      # APIScan per-job configuration for the DLL and PDB folders.
+      # APIScan per-job configuration.  This job template is the single place where the APIScan
+      # software name and version are set; the pipelines' globalSdl blocks deliberately leave them
+      # unset so that every scan is attributed to the package it actually covers.
       ob_sdl_apiscan_softwareFolder: ${{ parameters.apiScanDllPath }}
       ob_sdl_apiscan_symbolsFolder: ${{ parameters.apiScanPdbPath }}
+      ob_sdl_apiscan_softwareName: ${{ parameters.packageFullName }}
+      ob_sdl_apiscan_versionNumber: ${{ parameters.apiScanSoftwareVersion }}
+
+      # SBOM identity for this job's artifact.  OneBranch reads the SBOM package name/version only
+      # from the pipeline's globalSdl block, which has no per-job form, so that block indirects
+      # through these variables and each build job supplies its own values.  Jobs that publish no
+      # packages set ob_sdl_sbom_enabled to false instead.
+      sbomPackageName: ${{ parameters.packageFullName }}
+      sbomPackageVersion: ${{ parameters.packageVersion }}
 
     steps:
       - template: /eng/pipelines/onebranch/steps/script-output-environment-variables-step.yml@self
+
+      # Localized resources ship with the SqlClient driver. Validate them before analysis and
+      # building so missing or untranslated strings fail every SqlClient build.
+      - ${{ if eq(parameters.packageShortName, 'SqlClient') }}:
+        - template: /eng/pipelines/onebranch/steps/validate-localization-step.yml@self
+          parameters:
+            failOnValidationError: ${{ parameters.failOnValidationError }}
+
+      # Validate the documentation snippet sources.  This requires no build, so a malformed
+      # cross-reference is reported in seconds against the file and line a developer edits, rather
+      # than surfacing much later as an xref-not-found warning during API docs ingestion.
+      #
+      # Enabled only for projects whose callers identify a documentation snippet directory.
+      - ${{ if ne(parameters.documentationSnippetsPath, '') }}:
+        - template: /eng/pipelines/onebranch/steps/validate-xml-docs-step.yml@self
+          parameters:
+            displayName: 'Validate XML documentation sources'
+            snippetsDirectory: '${{ parameters.documentationSnippetsPath }}'
+            documentationPath: ''
+            packagesPath: ''
+            extractPath: ''
+            reportPath: '$(JOB_OUTPUT)/validation/xml-docs-sources.json'
+            failOn:
+              - error
+            failOnValidationError: ${{ parameters.failOnValidationError }}
+            projectPath: '${{ parameters.projectPath }}'
+            projectSearchRoot: ''
 
       - ${{ each package in parameters.dependencies }}:
           # Build the dependency version arguments passed to the build/pack/analysis steps.  The
@@ -149,12 +210,14 @@ jobs:
       # such as _CheckPwshToolRestored that run during RoslynAnalyzers and Build.
       - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
 
-      # Perform Roslyn analysis before building, since this step will clobber build output.
+      # Run Roslyn analysis. This step is self-contained: it performs its own build into an
+      # isolated output location, so it can run at any point in the job without clobbering the
+      # real build output below.
       - template: /eng/pipelines/onebranch/steps/roslyn-analyzers-buildproj-step.yml@self
         parameters:
           dependencyArguments: $(sqlServerVersionArgument)
           packageShortName: ${{ parameters.packageShortName }}
-          revision: ${{ parameters.revision }}
+          fileVersion: ${{ parameters.fileVersion }}
           versionPropertySuffix: ${{ parameters.versionPropertySuffix }}
           packageVersion: ${{ parameters.packageVersion }}
 
@@ -164,9 +227,46 @@ jobs:
           buildConfiguration: Release
           dependencyArguments: $(sqlServerVersionArgument)
           packageShortName: ${{ parameters.packageShortName }}
-          revision: ${{ parameters.revision }}
+          fileVersion: ${{ parameters.fileVersion }}
           versionPropertySuffix: ${{ parameters.versionPropertySuffix }}
           packageVersion: ${{ parameters.packageVersion }}
+
+      # Validate the XML documentation the compiler emitted.  Compared with the snippet sources,
+      # this artifact additionally reveals cross-references the compiler could not bind (it rewrites
+      # those with a "!:" prefix) and whether a reference to our own API matches a member that was
+      # actually emitted.  It runs for every package: documentation is shared through <include>, so
+      # a defect can surface in an assembly whose own sources contain no cross-references at all.
+      - template: /eng/pipelines/onebranch/steps/validate-xml-docs-step.yml@self
+        parameters:
+          displayName: 'Validate generated XML documentation'
+          snippetsDirectory: ''
+          documentationPath: '$(BUILD_OUTPUT)/${{ parameters.packageFullName }}'
+          packagesPath: ''
+          extractPath: ''
+          reportPath: '$(JOB_OUTPUT)/validation/xml-docs-generated.json'
+          failOn:
+            - error
+          failOnValidationError: ${{ parameters.failOnValidationError }}
+          projectPath: '${{ parameters.projectPath }}'
+          projectSearchRoot: ''
+
+      # SqlClient builds its reference assembly into a sibling output tree. Validate it separately
+      # before packing so malformed ref documentation is attributed to the source build rather than
+      # surfacing only after the assembled package is extracted in package_validation.
+      - ${{ if eq(parameters.packageShortName, 'SqlClient') }}:
+        - template: /eng/pipelines/onebranch/steps/validate-xml-docs-step.yml@self
+          parameters:
+            displayName: 'Validate generated reference XML documentation'
+            snippetsDirectory: ''
+            documentationPath: '$(BUILD_OUTPUT)/Microsoft.Data.SqlClient.ref/Package-Release'
+            packagesPath: ''
+            extractPath: ''
+            reportPath: '$(JOB_OUTPUT)/validation/xml-docs-generated-ref.json'
+            failOn:
+              - error
+            failOnValidationError: ${{ parameters.failOnValidationError }}
+            projectPath: '$(REPO_ROOT)/src/Microsoft.Data.SqlClient/ref/Microsoft.Data.SqlClient.csproj'
+            projectSearchRoot: ''
 
       - ${{ if eq(parameters.shouldSignPackage, true) }}:
           # ESRP sign the DLLs.
@@ -212,7 +312,7 @@ jobs:
           dependencyArguments: $(sqlServerVersionArgument)
           packageFullName: ${{ parameters.packageFullName }}
           packageShortName: ${{ parameters.packageShortName }}
-          revision: ${{ parameters.revision }}
+          fileVersion: ${{ parameters.fileVersion }}
           versionPropertySuffix: ${{ parameters.versionPropertySuffix }}
           packageVersion: ${{ parameters.packageVersion }}
 

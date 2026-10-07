@@ -40,8 +40,11 @@ parameters:
 
   # The agent image to use for the build.  This must exist in both the ADO-1ES-Pool and
   # ADO-CI-1ES-Pool agent pools.
-  - name: agentImage
-    displayName: Agent Image
+  #
+  # This keeps a default so that manual runs can pick a Windows agent when that is what we
+  # want to validate.
+  - name: poolImage
+    displayName: Pool Image
     type: string
     default: ADO-UB24
     values:
@@ -76,6 +79,9 @@ parameters:
       - diagnostic
 
 variables:
+  # Provides 'general_purpose_pool_name', the 1ES pool that hosts most jobs in this project.
+  - group: sqlclient-pipeline-config-v1
+
   # Whether this is an internal (ADO.Net project) or public (Public project) build.
   - name: isInternalBuild
     value: ${{ eq(variables['System.TeamProject'], 'ADO.Net') }}
@@ -93,12 +99,9 @@ jobs:
     displayName: Build NuGet Packages
 
     pool:
-      ${{ if eq(variables.isInternalBuild, true) }}:
-        name: ADO-1ES-Pool
-      ${{ else }}:
-        name: ADO-CI-1ES-Pool
+      name: $(general_purpose_pool_name)
       demands:
-        - ImageOverride -equals ${{ parameters.agentImage }}
+        - ImageOverride -equals ${{ parameters.poolImage }}
 
     steps:
 

@@ -19,12 +19,22 @@ public class CspCertificateFixture : CertificateFixtureBase
 {
     public CspCertificateFixture()
     {
-        CspCertificate = CreateCertificate(nameof(CspCertificate), Array.Empty<string>(), Array.Empty<string>(), true);
+        // NOTE: If this constructor throws, xUnit never calls Dispose, so the certificate placed in the
+        //   store (and its persisted CSP key container) would be leaked.
+        try
+        {
+            CspCertificate = CreateCertificate(nameof(CspCertificate), Array.Empty<string>(), Array.Empty<string>(), true);
 
-        AddToStore(CspCertificate, StoreLocation.CurrentUser, StoreName.My);
+            AddToStore(CspCertificate, StoreLocation.CurrentUser, StoreName.My);
 
-        CspCertificatePath = $"{StoreLocation.CurrentUser}/{StoreName.My}/{CspCertificate.Thumbprint}";
-        CspKeyPath = GetCspPathFromCertificate();
+            CspCertificatePath = $"{StoreLocation.CurrentUser}/{StoreName.My}/{CspCertificate.Thumbprint}";
+            CspKeyPath = GetCspPathFromCertificate();
+        }
+        catch
+        {
+            Dispose();
+            throw;
+        }
     }
 
     public X509Certificate2 CspCertificate { get; }

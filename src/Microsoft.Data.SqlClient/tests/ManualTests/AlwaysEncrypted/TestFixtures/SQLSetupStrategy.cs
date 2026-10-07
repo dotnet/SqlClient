@@ -69,6 +69,38 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             ColumnMasterKeyPath = customKeyPath;
         }
 
+        /// <summary>
+        /// Runs the supplied setup action, disposing this fixture if the action throws.
+        /// </summary>
+        /// <remarks>
+        /// Derived types perform their setup from their constructors. When a constructor throws,
+        /// xUnit never receives the instance and therefore never disposes it, so every column master
+        /// key, column encryption key and table created before the failure would be leaked into the
+        /// (shared, long lived) test database. Because the object names embed a GUID, those leaks are
+        /// permanent and accumulate on every run, eventually exhausting SQL Server's per-database
+        /// object identifiers (error 3807).
+        /// </remarks>
+        protected void SetupOrCleanUp(Action setupAction)
+        {
+            try
+            {
+                setupAction();
+            }
+            catch
+            {
+                try
+                {
+                    Dispose();
+                }
+                catch (Exception disposeException)
+                {
+                    Console.WriteLine($"{GetType().Name}: cleanup after failed setup did not complete: {disposeException}");
+                }
+
+                throw;
+            }
+        }
+
         internal virtual void SetupDatabase()
         {
             foreach (string value in DataTestUtility.AEConnStringsSetup)
@@ -274,16 +306,48 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         protected override void Dispose(bool disposing)
         {
-            databaseObjects.Reverse();
-            foreach (string value in DataTestUtility.AEConnStringsSetup)
+            try
             {
-                using (SqlConnection sqlConnection = new SqlConnection(value))
+                foreach (string value in DataTestUtility.AEConnStringsSetup)
                 {
-                    sqlConnection.Open();
-                    databaseObjects.ForEach(o => o.Drop(sqlConnection));
+                    try
+                    {
+                        using (SqlConnection sqlConnection = new SqlConnection(value))
+                        {
+                            sqlConnection.Open();
+
+                            // NOTE: Objects are dropped in reverse creation order so that dependants
+                            //   (tables) are removed before their dependencies (keys). A local copy is
+                            //   reversed rather than the field itself, so that repeated disposal (which
+                            //   can happen when setup fails) does not restore the original order.
+                            List<DbObject> objectsToDrop = new List<DbObject>(databaseObjects);
+                            objectsToDrop.Reverse();
+
+                            foreach (DbObject databaseObject in objectsToDrop)
+                            {
+                                // Each drop is best-effort: one failure must not prevent the remaining
+                                // objects from being dropped, or the certificate from being removed.
+                                try
+                                {
+                                    databaseObject.Drop(sqlConnection);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine($"{GetType().Name}: failed to drop '{databaseObject.Name}': {ex.Message}");
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"{GetType().Name}: failed to clean up database objects: {ex.Message}");
+                    }
                 }
             }
-            base.Dispose(disposing);
+            finally
+            {
+                base.Dispose(disposing);
+            }
         }
     }
 }

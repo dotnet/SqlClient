@@ -17,6 +17,12 @@ parameters:
   - name: artifactName
     type: string
 
+  # True to enable diagnostic output.  Forwarded to publish-symbols-step.yml, which defines
+  # what it enables.
+  - name: debug
+    type: boolean
+    default: false
+
   # The full NuGet package name (e.g. Microsoft.Data.SqlClient.Internal.Logging).
   - name: packageFullName
     type: string
@@ -64,6 +70,9 @@ jobs:
         value: false
       - name: ob_sdl_binskim_enabled
         value: false
+      # No packages are published here, so there is nothing to describe in an SBOM.
+      - name: ob_sdl_sbom_enabled
+        value: false
       # Path where the downloaded artifact will be placed.
       - name: artifactPath
         value: '$(Pipeline.Workspace)/${{ parameters.packageFullName }}'
@@ -95,6 +104,7 @@ jobs:
         parameters:
           artifactName: '${{ parameters.packageFullName }}_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_${{ parameters.packageVersion }}_$(System.TimelineId)_$(System.JobAttempt)'
           azureSubscription: '${{ parameters.symbolsAzureSubscription }}'
+          debug: ${{ parameters.debug }}
           packageName: '${{ parameters.packageFullName }}'
           publishProjectName: '${{ parameters.symbolsPublishProjectName }}'
           publishServer: '${{ parameters.symbolsPublishServer }}'

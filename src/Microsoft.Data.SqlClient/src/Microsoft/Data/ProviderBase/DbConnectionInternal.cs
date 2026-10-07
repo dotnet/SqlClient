@@ -401,7 +401,7 @@ namespace Microsoft.Data.ProviderBase
 
         #region Public/Internal Methods
 
-        internal void ActivateConnection(Transaction transaction)
+        internal void ActivateConnection(Transaction transaction, TimeoutTimer timeout)
         {
             // Internal method called from the connection pooler so we don't expose
             // the Activate method publicly.
@@ -413,7 +413,7 @@ namespace Microsoft.Data.ProviderBase
             // active-connections gauge negative.
             Metrics.EnterActiveConnection();
 
-            Activate(transaction);
+            Activate(transaction, timeout);
         }
 
         internal void AddWeakReference(object value, int tag)
@@ -941,11 +941,13 @@ namespace Microsoft.Data.ProviderBase
         #region Protected Methods
 
         /// <summary>
-        /// Activates the connection, preparing it for active use.
-        /// An activated connection has an owner and is checked out from the connection pool (if pooling is enabled).
+        /// Activates the connection, preparing it for active use, within the caller's remaining
+        /// open timeout. An activated connection has an owner and is checked out from the
+        /// connection pool (if pooling is enabled).
         /// </summary>
         /// <param name="transaction">The transaction in which the connection should enlist.</param>
-        protected abstract void Activate(Transaction transaction);
+        /// <param name="timeout">The remaining time budget of the open operation.</param>
+        protected abstract void Activate(Transaction transaction, TimeoutTimer timeout);
 
         /// <summary>
         /// Cleanup connection's transaction-specific structures (currently used by Delegated transaction).

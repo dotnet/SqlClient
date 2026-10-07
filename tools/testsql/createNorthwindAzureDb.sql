@@ -1,7 +1,21 @@
-/******* RUN THIS SCRIPT MANUALLY *******/
-/******* IN order to run below script no other connection should exist with Azure DB *******/
---ALTER DATABASE [Northwind] SET READ_COMMITTED_SNAPSHOT OFF 
---GO
+/*********************************************************************************/
+/*
+    Azure SQL Database enables READ_COMMITTED_SNAPSHOT (RCSI) by default, unlike
+    SQL Server. Under RCSI a READ COMMITTED reader returns the last committed row
+    version instead of blocking on an uncommitted writer, which silently changes
+    the behaviour tests depend on. Turn it off to match createNorthwindDb.sql.
+
+    WITH ROLLBACK IMMEDIATE terminates other sessions, so this no longer requires
+    the database to be free of connections.
+
+    CURRENT is used so the statements apply to whichever database is being
+    provisioned, rather than a hard-coded name.
+*/
+/*********************************************************************************/
+ALTER DATABASE CURRENT SET READ_COMMITTED_SNAPSHOT OFF WITH ROLLBACK IMMEDIATE;
+GO
+ALTER DATABASE CURRENT SET ALLOW_SNAPSHOT_ISOLATION OFF;
+GO
 /*********************************************************************************/
 
 ALTER DATABASE SCOPED CONFIGURATION SET MAXDOP = 0;

@@ -48,7 +48,7 @@ Discovery approach (works regardless of layout):
 2. Read the relevant file from the target branch, e.g. `git show ${input:branch}:<path>`, and find the package's default/`PackageVersion` property.
 3. Prefer the explicit shipped version: on a release branch the actual version may be supplied by the pipeline (`...PackageVersion`) rather than the `...VersionDefault` fallback, so confirm against the milestone/release artifacts rather than assuming the default.
 
-Dependency sources (read from `${input:branch}`): the per-package project file (`src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj`, the AKV `.csproj`, `Abstractions.csproj`, `Azure.csproj`, `Logging.csproj`, `Microsoft.SqlServer.Server.csproj`) plus the centrally-managed concrete versions in `Directory.Packages.props`. Framework-conditional versions (e.g., `net9.0` vs everything else) are handled by `Condition` attributes there.
+Dependency sources (read from `${input:branch}`): the per-package project file (`src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj`, the AKV `.csproj`, `Abstractions.csproj`, `Azure.csproj`, `Logging.csproj`, `Microsoft.SqlServer.Server.csproj`) plus the centrally-managed concrete versions in `Directory.Packages.props`. Framework-conditional versions (e.g., `net10.0` vs everything else) are handled by `Condition` attributes there.
 
 > **Companion package version alignment (7.0.2 and later):** Starting with 7.0.2, the companion packages (`AzureKeyVaultProvider`, `Extensions.Azure`, `Extensions.Abstractions`, `Internal.Logging`) ship version-aligned with the core `Microsoft.Data.SqlClient` driver. When generating notes for an aligned release, use the core MDS version (read from the target branch) for these companion packages — their per-package default version on `main` may point at a different next version and must not be assumed to be the shipped version. `Microsoft.SqlServer.Server` continues to version independently.
 
@@ -91,9 +91,9 @@ When writing notes:
 - If the change affects **only some TFMs**, include an explicit qualifier in the relevant bullet or section title.
 - Use concise qualifiers like:
   - `(net462 only)`
-  - `(net8.0/net9.0 only)`
+  - `(net10.0 only)`
 
-Do not infer TFM scope from labels alone; verify from changed files and code paths.
+Do not infer TFM scope from labels alone; verify from changed files and code paths on the target release branch. Older releases and independently targeted packages may use different TFMs.
 
 ### 2.2. Determine Operating System (OS) Scope Per Change
 
@@ -116,7 +116,7 @@ When writing notes:
   - `(Unix only)`
   - `(Linux only)`
   - `(macOS only)`
-- If both TFM and OS are scoped, combine them in one qualifier, for example: `(net8.0/net9.0 on Windows only)`.
+- If both TFM and OS are scoped, combine them in one qualifier, for example: `(net10.0 on Windows only)`.
 
 Do not infer OS scope from labels alone; verify from changed files and code paths.
 

@@ -24,10 +24,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly string s_dbConnectionString = new SqlConnectionStringBuilder(s_connectionString) { InitialCatalog = s_databaseName }.ConnectionString;
         private static readonly string s_createDatabaseCmd = $"CREATE DATABASE {s_databaseName}";
         private static readonly string s_createTableCmd = $"CREATE TABLE {s_tableName} (NAME NVARCHAR(40), AGE INT)";
-        private static readonly string s_alterDatabaseSingleCmd = $"ALTER DATABASE {s_databaseName} SET SINGLE_USER WITH ROLLBACK IMMEDIATE;";
-        private static readonly string s_alterDatabaseMultiCmd = $"ALTER DATABASE {s_databaseName} SET MULTI_USER WITH ROLLBACK IMMEDIATE;";
+        private static readonly string s_alterDatabaseSingleCmd = $"IF (EXISTS(SELECT 1 FROM sys.databases WHERE name = '{s_databaseName}')) ALTER DATABASE {s_databaseName} SET SINGLE_USER WITH ROLLBACK IMMEDIATE;";
+        private static readonly string s_alterDatabaseMultiCmd = $"IF (EXISTS(SELECT 1 FROM sys.databases WHERE name = '{s_databaseName}')) ALTER DATABASE {s_databaseName} SET MULTI_USER WITH ROLLBACK IMMEDIATE;";
         private static readonly string s_selectTableCmd = $"SELECT COUNT(*) FROM {s_tableName}";
-        private static readonly string s_dropDatabaseCmd = $"DROP DATABASE {s_databaseName}";
+        private static readonly string s_dropDatabaseCmd = $"IF (EXISTS(SELECT 1 FROM sys.databases WHERE name = '{s_databaseName}')) DROP DATABASE {s_databaseName}";
 
         // Synapse: Stored procedure sp_who2 does not exist or is not supported.
         // Synapse: SqlConnection.ServerProcessId is always retrieved as 0.
@@ -263,8 +263,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                // Kill all the connections, set Database to SINGLE_USER Mode and drop Database
-                DataTestUtility.RunNonQuery(s_connectionString, s_alterDatabaseSingleCmd, 4);
+                // Kill all the connections, set Database to SINGLE_USER Mode and drop Database.
+                // NOTE: The database name embeds a GUID, so failing to drop it leaks a database that
+                //   nothing will ever reclaim. Switching to SINGLE_USER is only an optimization to
+                //   evict other sessions, so its failure must not prevent the drop from running.
+                try
+                {
+                    DataTestUtility.RunNonQuery(s_connectionString, s_alterDatabaseSingleCmd, 4);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"{nameof(ConnectionKilledTest)}: failed to set '{s_databaseName}' to SINGLE_USER: {ex.Message}");
+                }
+
                 DataTestUtility.RunNonQuery(s_connectionString, s_dropDatabaseCmd, 4);
             }
         }

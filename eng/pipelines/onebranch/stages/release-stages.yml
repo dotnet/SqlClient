@@ -112,6 +112,10 @@ stages:
       ${{ else }}:
         displayName: Release to NuGet Test
       dependsOn:
+        # Nothing is published unless every produced package passed validation.  This stage also
+        # depends on all four build stages, but we keep the complete list here anyway to prevent
+        # regressions if package validation changes its dependencies.
+        - package_validation
         - ${{ if or(parameters.releaseSqlServer, parameters.releaseSqlClient) }}:
           - build_independent
         - ${{ if parameters.releaseSqlClient }}:

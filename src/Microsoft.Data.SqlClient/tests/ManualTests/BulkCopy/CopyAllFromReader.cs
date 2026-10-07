@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -6,6 +6,7 @@ using System.Collections;
 using System.Data.Common;
 using System.Diagnostics;
 using Microsoft.Data.SqlClient.ManualTesting.Tests;
+using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
@@ -13,72 +14,60 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
     [Trait("Set", "2")]
     public class CopyAllFromReader
     {
-        private static readonly string destinationTable = null;
         private static readonly string sourceTable = "employees";
-        private static readonly string initialQueryTemplate = "create table {0} (col1 int, col2 nvarchar(20), col3 nvarchar(10))";
+        private const string TableDefinition = "(col1 int, col2 nvarchar(20), col3 nvarchar(10))";
         private static readonly string sourceQueryTemplate = "select top 5 EmployeeID, LastName, FirstName from {0}";
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Test()
         {
             string srcConstr = DataTestUtility.TCPConnectionString;
             string dstConstr = DataTestUtility.TCPConnectionString;
-            string dstTable = DataTestUtility.GetShortName("SqlBulkCopyTest_CopyAllFromReader", false);
             Debug.Assert((int)SqlBulkCopyOptions.UseInternalTransaction == 1 << 5, "Compiler screwed up the options");
 
-            dstTable = destinationTable != null ? destinationTable : dstTable;
-
             string sourceQuery = string.Format(sourceQueryTemplate, sourceTable);
-            string initialQuery = string.Format(initialQueryTemplate, dstTable);
 
             using (SqlConnection dstConn = new SqlConnection(dstConstr))
-            using (SqlCommand dstCmd = dstConn.CreateCommand())
             {
                 dstConn.Open();
-                try
+                using Table dstTable = new Table(dstConn, "SqlBulkCopyTest_CopyAllFromReader", TableDefinition);
+
+                using (SqlConnection srcConn = new SqlConnection(srcConstr))
+                using (SqlCommand srcCmd = new SqlCommand(sourceQuery, srcConn))
                 {
-                    Helpers.TryExecute(dstCmd, initialQuery);
-                    using (SqlConnection srcConn = new SqlConnection(srcConstr))
-                    using (SqlCommand srcCmd = new SqlCommand(sourceQuery, srcConn))
+                    srcConn.Open();
+
+                    using (DbDataReader reader = srcCmd.ExecuteReader())
                     {
-                        srcConn.Open();
-
-                        using (DbDataReader reader = srcCmd.ExecuteReader())
+                        IDictionary stats;
+                        long expectedSelectCount = DataTestUtility.IsAzureSynapse ? 4 : 13;
+                        long expectedSelectRows = DataTestUtility.IsAzureSynapse ? 4 : 15;
+                        using (SqlBulkCopy bulkcopy = new SqlBulkCopy(dstConn))
                         {
-                            IDictionary stats;
-                            long expectedSelectCount = DataTestUtility.IsAzureSynapse ? 4 : 13;
-                            long expectedSelectRows = DataTestUtility.IsAzureSynapse ? 4 : 15;
-                            using (SqlBulkCopy bulkcopy = new SqlBulkCopy(dstConn))
-                            {
-                                bulkcopy.DestinationTableName = dstTable;
-                                dstConn.StatisticsEnabled = true;
-                                bulkcopy.WriteToServer(reader);
-                                dstConn.StatisticsEnabled = false;
-                                stats = dstConn.RetrieveStatistics();
-                            }
-                            Helpers.VerifyResults(dstConn, dstTable, 3, 5);
-
-                            Assert.True(0 < (long)stats["BytesReceived"], "BytesReceived is non-positive.");
-                            Assert.True(0 < (long)stats["BytesSent"], "BytesSent is non-positive.");
-                            DataTestUtility.AssertEqualsWithDescription((long)0, (long)stats["UnpreparedExecs"], "Non-zero UnpreparedExecs value: " + (long)stats["UnpreparedExecs"]);
-                            DataTestUtility.AssertEqualsWithDescription((long)0, (long)stats["PreparedExecs"], "Non-zero PreparedExecs value: " + (long)stats["PreparedExecs"]);
-                            DataTestUtility.AssertEqualsWithDescription((long)0, (long)stats["Prepares"], "Non-zero Prepares value: " + (long)stats["Prepares"]);
-                            DataTestUtility.AssertEqualsWithDescription((long)0, (long)stats["CursorOpens"], "Non-zero CursorOpens value: " + (long)stats["CursorOpens"]);
-                            DataTestUtility.AssertEqualsWithDescription((long)0, (long)stats["IduRows"], "Non-zero IduRows value: " + (long)stats["IduRows"]);
-
-                            DataTestUtility.AssertEqualsWithDescription((long)3, stats["BuffersReceived"], "Unexpected BuffersReceived value.");
-                            DataTestUtility.AssertEqualsWithDescription((long)3, stats["BuffersSent"], "Unexpected BuffersSent value.");
-                            DataTestUtility.AssertEqualsWithDescription((long)0, stats["IduCount"], "Unexpected IduCount value.");
-                            DataTestUtility.AssertEqualsWithDescription(expectedSelectCount, stats["SelectCount"], "Unexpected SelectCount value.");
-                            DataTestUtility.AssertEqualsWithDescription((long)3, stats["ServerRoundtrips"], "Unexpected ServerRoundtrips value.");
-                            DataTestUtility.AssertEqualsWithDescription(expectedSelectRows, stats["SelectRows"], "Unexpected SelectRows value.");
-                            DataTestUtility.AssertEqualsWithDescription((long)2, stats["SumResultSets"], "Unexpected SumResultSets value.");
-                            DataTestUtility.AssertEqualsWithDescription((long)0, stats["Transactions"], "Unexpected Transactions value.");
+                            bulkcopy.DestinationTableName = dstTable.Name;
+                            dstConn.StatisticsEnabled = true;
+                            bulkcopy.WriteToServer(reader);
+                            dstConn.StatisticsEnabled = false;
+                            stats = dstConn.RetrieveStatistics();
                         }
+                        Helpers.VerifyResults(dstConn, dstTable.Name, 3, 5);
+
+                        Assert.True(0 < (long)stats["BytesReceived"], "BytesReceived is non-positive.");
+                        Assert.True(0 < (long)stats["BytesSent"], "BytesSent is non-positive.");
+                        DataTestUtility.AssertEqualsWithDescription((long)0, (long)stats["UnpreparedExecs"], "Non-zero UnpreparedExecs value: " + (long)stats["UnpreparedExecs"]);
+                        DataTestUtility.AssertEqualsWithDescription((long)0, (long)stats["PreparedExecs"], "Non-zero PreparedExecs value: " + (long)stats["PreparedExecs"]);
+                        DataTestUtility.AssertEqualsWithDescription((long)0, (long)stats["Prepares"], "Non-zero Prepares value: " + (long)stats["Prepares"]);
+                        DataTestUtility.AssertEqualsWithDescription((long)0, (long)stats["CursorOpens"], "Non-zero CursorOpens value: " + (long)stats["CursorOpens"]);
+                        DataTestUtility.AssertEqualsWithDescription((long)0, (long)stats["IduRows"], "Non-zero IduRows value: " + (long)stats["IduRows"]);
+
+                        DataTestUtility.AssertEqualsWithDescription((long)3, stats["BuffersReceived"], "Unexpected BuffersReceived value.");
+                        DataTestUtility.AssertEqualsWithDescription((long)3, stats["BuffersSent"], "Unexpected BuffersSent value.");
+                        DataTestUtility.AssertEqualsWithDescription((long)0, stats["IduCount"], "Unexpected IduCount value.");
+                        DataTestUtility.AssertEqualsWithDescription(expectedSelectCount, stats["SelectCount"], "Unexpected SelectCount value.");
+                        DataTestUtility.AssertEqualsWithDescription((long)3, stats["ServerRoundtrips"], "Unexpected ServerRoundtrips value.");
+                        DataTestUtility.AssertEqualsWithDescription(expectedSelectRows, stats["SelectRows"], "Unexpected SelectRows value.");
+                        DataTestUtility.AssertEqualsWithDescription((long)2, stats["SumResultSets"], "Unexpected SumResultSets value.");
+                        DataTestUtility.AssertEqualsWithDescription((long)0, stats["Transactions"], "Unexpected Transactions value.");
                     }
-                }
-                finally
-                {
-                    Helpers.TryExecute(dstCmd, "drop table " + dstTable);
                 }
             }
         }

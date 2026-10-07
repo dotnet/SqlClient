@@ -651,7 +651,7 @@ public class WaitHandleDbConnectionPoolTransactionTest : IDisposable
     //       ----- Inner Stack Trace -----
     //        at Microsoft.Data.SqlClient.UnitTests.ConnectionPool.WaitHandleDbConnectionPoolTransactionTest.<>c__DisplayClass29_0.<TwoThreads_SharedTransaction_AccessSameTransactedEntry>b__1() in WaitHandleDbConnectionPoolTransactionTest.cs:line 670
     //        at System.Threading.Tasks.Task.InnerInvoke()
-    [Trait("Category", "flaky")]
+    [Trait("category", "flaky")]
     [Fact]
     public void TwoThreads_SharedTransaction_AccessSameTransactedEntry()
     {
@@ -953,7 +953,7 @@ public class WaitHandleDbConnectionPoolTransactionTest : IDisposable
             }
         }
 
-        protected override void Activate(Transaction? transaction)
+        protected override void Activate(Transaction? transaction, TimeoutTimer timeout)
         {
             EnlistedTransaction = transaction;
         }

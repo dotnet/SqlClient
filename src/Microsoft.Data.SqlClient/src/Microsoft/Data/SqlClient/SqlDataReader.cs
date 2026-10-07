@@ -455,7 +455,7 @@ namespace Microsoft.Data.SqlClient
         }
 
 #if !NETFRAMEWORK
-        [SuppressMessage("ReflectionAnalysis", "IL2111",
+        [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2111",
                    Justification = "System.Type.TypeInitializer would not be used in dataType and providerSpecificDataType columns.")]
 #endif
         internal DataTable BuildSchemaTable()
@@ -1229,6 +1229,8 @@ namespace Microsoft.Data.SqlClient
 
             return _data[i].VariantInternalStorageType;
         }
+
+        internal bool IsSmallMoney(int i) => _data[i].IsSmallMoney;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetEnumerator/*' />
         public override IEnumerator GetEnumerator()

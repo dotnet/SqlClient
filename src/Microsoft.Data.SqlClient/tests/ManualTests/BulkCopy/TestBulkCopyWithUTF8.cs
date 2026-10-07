@@ -4,6 +4,7 @@
 
 using System;
 using System.Data;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.ManualTesting.Tests;
 using Xunit;
@@ -17,11 +18,10 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
     [Trait("Set", "2")]
     public sealed class TestBulkCopyWithUtf8 : IDisposable
     {
-        private static string s_sourceTable = DataTestUtility.GetShortName("SourceTableForUTF8Data");
-        private static string s_destinationTable = DataTestUtility.GetShortName("DestinationTableForUTF8Data");
-        private static string s_testValue = "test";
-        private static byte[] s_testValueInUtf8Bytes = new byte[] { 0x74, 0x65, 0x73, 0x74 };
-        private static readonly string s_insertQuery = $"INSERT INTO {s_sourceTable} VALUES('{s_testValue}')";
+        private static readonly string s_sourceTable = DataTestUtility.GetShortName("SourceTableForUTF8Data");
+        private static readonly string s_destinationTable = DataTestUtility.GetShortName("DestinationTableForUTF8Data");
+        private static readonly string s_testValue = GlobalizationTestData.CreatePacketSpanningText();
+        private static readonly byte[] s_testValueInUtf8Bytes = Encoding.UTF8.GetBytes(s_testValue);
 
         /// <summary>
         /// Constructor: Initializes and populates source and destination tables required for the tests.
@@ -37,7 +37,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
 
             using SqlConnection sourceConnection = new SqlConnection(GetConnectionString(true));
             sourceConnection.Open();
-            SetupTables(sourceConnection, s_sourceTable, s_destinationTable, s_insertQuery);
+            SetupTables(sourceConnection, s_sourceTable, s_destinationTable);
         }
 
         /// <summary>
@@ -61,11 +61,14 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         /// <summary>
         /// Builds a connection string with or without Multiple Active Result Sets (MARS) property.
         /// </summary>
+        /// <param name="enableMars">Whether Multiple Active Result Sets is enabled.</param>
+        /// <returns>A connection string configured with a small packet size for boundary coverage.</returns>
         private string GetConnectionString(bool enableMars)
         {
             return new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
             {
-                MultipleActiveResultSets = enableMars
+                MultipleActiveResultSets = enableMars,
+                PacketSize = 512
             }.ConnectionString;
         }
 
@@ -73,14 +76,18 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         /// Creates source and destination tables with a varchar(max) column with a collation setting
         /// that stores the data in UTF8 encoding and inserts the data in the source table.
         /// </summary>
-        private void SetupTables(SqlConnection connection, string sourceTable, string destinationTable, string insertQuery)
+        /// <param name="connection">The open connection used to create and populate the tables.</param>
+        /// <param name="sourceTable">The source table name.</param>
+        /// <param name="destinationTable">The destination table name.</param>
+        private void SetupTables(SqlConnection connection, string sourceTable, string destinationTable)
         {
             string columnDefinition = "(str_col varchar(max) COLLATE Latin1_General_100_CS_AS_KS_WS_SC_UTF8)";
             DataTestUtility.CreateTable(connection, sourceTable, columnDefinition);
             DataTestUtility.CreateTable(connection, destinationTable, columnDefinition);
             using SqlCommand insertCommand = connection.CreateCommand();
-            insertCommand.CommandText = insertQuery;
-            Helpers.TryExecute(insertCommand, insertQuery);
+            insertCommand.CommandText = $"INSERT INTO {sourceTable} VALUES(@value)";
+            insertCommand.Parameters.Add(new SqlParameter("@value", SqlDbType.NVarChar, -1) { Value = s_testValue });
+            insertCommand.ExecuteNonQuery();
         }
 
         /// <summary>
@@ -104,6 +111,11 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
             sourceConnection.Open();
             using SqlConnection destinationConnection = new SqlConnection(connectionString);
             destinationConnection.Open();
+
+            using (SqlCommand sourceVerifyCommand = new SqlCommand($"SELECT CAST(str_col AS varbinary(max)) FROM {s_sourceTable}", sourceConnection))
+            {
+                Assert.Equal(s_testValueInUtf8Bytes, sourceVerifyCommand.ExecuteScalar());
+            }
 
             // Read data from source table
             using SqlCommand sourceDataCommand = new SqlCommand($"SELECT str_col FROM {s_sourceTable}", sourceConnection);
@@ -135,7 +147,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
             Assert.Equal(1, Convert.ToInt16(countCommand.ExecuteScalar()));
 
             // Read the data from destination table as varbinary to verify the UTF-8 byte sequence
-            using SqlCommand verifyCommand = new SqlCommand($"SELECT cast(str_col as varbinary) FROM {s_destinationTable}", destinationConnection);
+            using SqlCommand verifyCommand = new SqlCommand($"SELECT CAST(str_col AS varbinary(max)) FROM {s_destinationTable}", destinationConnection);
             using SqlDataReader verifyReader = verifyCommand.ExecuteReader(CommandBehavior.SequentialAccess);
 
             // Verify that we have data in the destination table
@@ -170,6 +182,11 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
             using SqlConnection destinationConnection = new SqlConnection(connectionString);
             await destinationConnection.OpenAsync();
 
+            using (SqlCommand sourceVerifyCommand = new SqlCommand($"SELECT CAST(str_col AS varbinary(max)) FROM {s_sourceTable}", sourceConnection))
+            {
+                Assert.Equal(s_testValueInUtf8Bytes, await sourceVerifyCommand.ExecuteScalarAsync());
+            }
+
             // Read data from source table
             using SqlCommand sourceDataCommand = new SqlCommand($"SELECT str_col FROM {s_sourceTable}", sourceConnection);
             using SqlDataReader reader = await sourceDataCommand.ExecuteReaderAsync(CommandBehavior.SequentialAccess);
@@ -200,7 +217,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
             Assert.Equal(1, Convert.ToInt16(await countCommand.ExecuteScalarAsync()));
 
             // Read the data from destination table as varbinary to verify the UTF-8 byte sequence
-            using SqlCommand verifyCommand = new SqlCommand($"SELECT cast(str_col as varbinary) FROM {s_destinationTable}", destinationConnection);
+            using SqlCommand verifyCommand = new SqlCommand($"SELECT CAST(str_col AS varbinary(max)) FROM {s_destinationTable}", destinationConnection);
             using SqlDataReader verifyReader = await verifyCommand.ExecuteReaderAsync(CommandBehavior.SequentialAccess);
 
             // Verify that we have data in the destination table
