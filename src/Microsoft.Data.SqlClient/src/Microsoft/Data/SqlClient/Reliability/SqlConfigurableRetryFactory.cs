@@ -110,6 +110,10 @@ namespace Microsoft.Data.SqlClient
             return new SqlRetryLogicProvider(retryLogic);
         }
 
+        /// <summary>
+        /// A provider which does not retry, shared by every command and connection
+        /// that has no configured retry logic.
+        /// </summary>
         internal static SqlRetryLogicBaseProvider NoneRetryProvider =>
             LazyInitializer.EnsureInitialized(ref s_noneRetryProvider, CreateNoneRetryProvider);
 

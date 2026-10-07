@@ -276,7 +276,7 @@ AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverB
 
 ### Trimming
 
-`EnableAppConfig` removes the configuration reading from a trimmed or Native AOT application only when set at publish time:
+Setting `EnableAppConfig` to `false` at publish time removes the configuration reading from a trimmed or Native AOT application:
 
 ```xml
 <ItemGroup>
