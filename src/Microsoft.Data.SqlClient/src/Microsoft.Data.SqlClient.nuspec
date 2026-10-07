@@ -36,66 +36,53 @@
 
     <dependencies>
       <group targetFramework="net462">
-        <dependency id="Microsoft.Bcl.Cryptography" version="8.0.0" />
-        <dependency id="Microsoft.Bcl.TimeProvider" version="8.0.1" />
+        <dependency id="Microsoft.Bcl.Cryptography" version="10.0.12" />
+        <dependency id="Microsoft.Bcl.TimeProvider" version="10.0.12" />
         <dependency id="Microsoft.Data.SqlClient.Extensions.Abstractions" version="$SqlClientVersionRange$" />
         <dependency id="Microsoft.Data.SqlClient.Internal.Logging" version="$SqlClientVersionRange$" />
         <dependency id="Microsoft.Data.SqlClient.SNI" version="$SniVersionRange$" />
-        <dependency id="Microsoft.Extensions.Caching.Memory" version="8.0.1" exclude="Compile" />
-        <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="8.16.0" />
-        <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="8.16.0" />
+        <dependency id="Microsoft.Extensions.Caching.Memory" version="10.0.12" exclude="Compile" />
+        <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="8.23.0" />
+        <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="8.23.0" />
         <dependency id="System.Buffers" version="4.6.1" />
         <dependency id="System.Data.Common" version="4.3.0" />
-        <dependency id="System.Diagnostics.DiagnosticSource" version="10.0.10" />
+        <dependency id="System.Diagnostics.DiagnosticSource" version="10.0.12" />
         <dependency id="System.Memory" version="4.6.3" />
         <dependency id="System.Runtime.InteropServices.RuntimeInformation" version="4.3.0" />
-        <dependency id="System.Security.Cryptography.Pkcs" version="8.0.1" />
-        <dependency id="System.Text.Json" version="10.0.10" />
-        <dependency id="System.Threading.Channels" version="10.0.3" />
-        <dependency id="System.Threading.RateLimiting" version="8.0.0" />
+        <dependency id="System.Security.Cryptography.Pkcs" version="10.0.12" />
+        <dependency id="System.Text.Json" version="10.0.12" />
+        <dependency id="System.Threading.Channels" version="10.0.12" />
+        <dependency id="System.Threading.RateLimiting" version="10.0.12" />
         <dependency id="System.ValueTuple" version="4.6.2" />
       </group>
-      <group targetFramework="net8.0">
-        <dependency id="Microsoft.Bcl.Cryptography" version="8.0.0" />
+      <group targetFramework="net10.0">
+        <dependency id="Microsoft.Bcl.Cryptography" version="10.0.12" />
         <dependency id="Microsoft.Data.SqlClient.Extensions.Abstractions" version="$SqlClientVersionRange$" />
         <dependency id="Microsoft.Data.SqlClient.Internal.Logging" version="$SqlClientVersionRange$" />
         <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="$SniVersionRange$" exclude="Compile" />
-        <dependency id="Microsoft.Extensions.Caching.Memory" version="8.0.1" exclude="Compile" />
-        <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="8.16.0" />
-        <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="8.16.0" />
+        <dependency id="Microsoft.Extensions.Caching.Memory" version="10.0.12" exclude="Compile" />
+        <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="8.23.0" />
+        <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="8.23.0" />
         <dependency id="Microsoft.SqlServer.Server" version="$SqlServerVersionRange$" />
-        <dependency id="System.Configuration.ConfigurationManager" version="8.0.1" exclude="Compile" />
-        <dependency id="System.Security.Cryptography.Pkcs" version="8.0.1" />
-        <dependency id="System.Threading.RateLimiting" version="8.0.0" />
-      </group>
-      <group targetFramework="net9.0">
-        <dependency id="Microsoft.Bcl.Cryptography" version="9.0.18" />
-        <dependency id="Microsoft.Data.SqlClient.Extensions.Abstractions" version="$SqlClientVersionRange$" />
-        <dependency id="Microsoft.Data.SqlClient.Internal.Logging" version="$SqlClientVersionRange$" />
-        <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="$SniVersionRange$" exclude="Compile" />
-        <dependency id="Microsoft.Extensions.Caching.Memory" version="9.0.18" exclude="Compile" />
-        <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="8.16.0" />
-        <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="8.16.0" />
-        <dependency id="Microsoft.SqlServer.Server" version="$SqlServerVersionRange$" />
-        <dependency id="System.Configuration.ConfigurationManager" version="9.0.18" exclude="Compile" />
-        <dependency id="System.Security.Cryptography.Pkcs" version="9.0.18" />
-        <dependency id="System.Threading.RateLimiting" version="9.0.18" />
+        <dependency id="System.Configuration.ConfigurationManager" version="10.0.12" exclude="Compile" />
+        <dependency id="System.Security.Cryptography.Pkcs" version="10.0.12" />
+        <dependency id="System.Threading.RateLimiting" version="10.0.12" />
       </group>
       <group targetFramework="netstandard2.0">
-        <dependency id="Microsoft.Bcl.Cryptography" version="8.0.0" />
-        <dependency id="Microsoft.Bcl.TimeProvider" version="8.0.1" />
+        <dependency id="Microsoft.Bcl.Cryptography" version="10.0.12" />
+        <dependency id="Microsoft.Bcl.TimeProvider" version="10.0.12" />
         <dependency id="Microsoft.Data.SqlClient.Extensions.Abstractions" version="$SqlClientVersionRange$" />
         <dependency id="Microsoft.Data.SqlClient.Internal.Logging" version="$SqlClientVersionRange$" />
         <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="$SniVersionRange$" exclude="Compile" />
-        <dependency id="Microsoft.Extensions.Caching.Memory" version="8.0.1" exclude="Compile" />
-        <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="8.16.0" />
-        <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="8.16.0" />
+        <dependency id="Microsoft.Extensions.Caching.Memory" version="10.0.12" exclude="Compile" />
+        <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="8.23.0" />
+        <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="8.23.0" />
         <dependency id="Microsoft.SqlServer.Server" version="$SqlServerVersionRange$" />
-        <dependency id="System.Configuration.ConfigurationManager" version="8.0.1" exclude="Compile" />
-        <dependency id="System.Security.Cryptography.Pkcs" version="8.0.1" />
-        <dependency id="System.Text.Json" version="10.0.10" />
-        <dependency id="System.Threading.Channels" version="10.0.3" />
-        <dependency id="System.Threading.RateLimiting" version="8.0.0" />
+        <dependency id="System.Configuration.ConfigurationManager" version="10.0.12" exclude="Compile" />
+        <dependency id="System.Security.Cryptography.Pkcs" version="10.0.12" />
+        <dependency id="System.Text.Json" version="10.0.12" />
+        <dependency id="System.Threading.Channels" version="10.0.12" />
+        <dependency id="System.Threading.RateLimiting" version="10.0.12" />
       </group>
     </dependencies>
 
@@ -108,11 +95,7 @@
         <reference file="Microsoft.Data.SqlClient.dll" />
         <reference file="Microsoft.Data.SqlClient.xml" />
       </group>
-      <group targetFramework="net8.0">
-        <reference file="Microsoft.Data.SqlClient.dll" />
-        <reference file="Microsoft.Data.SqlClient.xml" />
-      </group>
-      <group targetFramework="net9.0">
+      <group targetFramework="net10.0">
         <reference file="Microsoft.Data.SqlClient.dll" />
         <reference file="Microsoft.Data.SqlClient.xml" />
       </group>
@@ -134,8 +117,9 @@
       should be packaged.
     -->
 
-    <!-- Lib and Runtime Binaries ================================================== -->
-    <!-- lib/net462 - These contain the implementation -->
+    <!-- Lib Binaries ================================================== -->
+
+    <!-- lib/net462 -->
     <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\Microsoft.Data.SqlClient.dll" target="lib\net462\" exclude="" />
     <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\Microsoft.Data.SqlClient.pdb" target="lib\net462\" exclude="" />
     <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\Microsoft.Data.SqlClient.xml" target="lib\net462\" exclude="" />
@@ -155,64 +139,43 @@
     <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\zh-Hans\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\zh-Hans\" exclude="" />
     <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net462\zh-Hant\Microsoft.Data.SqlClient.resources.dll" target="lib\net462\zh-Hant\" exclude="" />
 
-    <!-- lib/net8.0 - These contain the implementation -->
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net8.0\Microsoft.Data.SqlClient.dll" target="lib\net8.0\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net8.0\Microsoft.Data.SqlClient.pdb" target="lib\net8.0\" exclude="" />
-    <file src="Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\net8.0\Microsoft.Data.SqlClient.xml" target="lib\net8.0\" exclude="" />
+    <!-- lib/net10.0 - These contain the implementation -->
+    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net10.0\Microsoft.Data.SqlClient.dll" target="lib\net10.0\" exclude="" />
+    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net10.0\Microsoft.Data.SqlClient.pdb" target="lib\net10.0\" exclude="" />
+    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net10.0\Microsoft.Data.SqlClient.xml" target="lib\net10.0\" exclude="" />
 
-    <!-- lib/net8.0 Localized Resources -->
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net8.0\cs\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\cs\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net8.0\de\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\de\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net8.0\es\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\es\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net8.0\fr\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\fr\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net8.0\it\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\it\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net8.0\ja\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\ja\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net8.0\ko\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\ko\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net8.0\pl\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\pl\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net8.0\pt-BR\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\pt-BR\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net8.0\ru\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\ru\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net8.0\tr\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\tr\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net8.0\zh-Hans\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\zh-Hans\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net8.0\zh-Hant\Microsoft.Data.SqlClient.resources.dll" target="lib\net8.0\zh-Hant\" exclude="" />
-
-    <!-- lib/net9.0 - These contain the implementation -->
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net9.0\Microsoft.Data.SqlClient.dll" target="lib\net9.0\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net9.0\Microsoft.Data.SqlClient.pdb" target="lib\net9.0\" exclude="" />
-    <file src="Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\net9.0\Microsoft.Data.SqlClient.xml" target="lib\net9.0\" exclude="" />
-
-    <!-- lib/net9.0 Localized Resources -->
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net9.0\cs\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\cs\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net9.0\de\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\de\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net9.0\es\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\es\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net9.0\fr\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\fr\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net9.0\it\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\it\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net9.0\ja\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\ja\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net9.0\ko\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\ko\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net9.0\pl\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\pl\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net9.0\pt-BR\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\pt-BR\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net9.0\ru\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\ru\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net9.0\tr\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\tr\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net9.0\zh-Hans\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\zh-Hans\" exclude="" />
-    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net9.0\zh-Hant\Microsoft.Data.SqlClient.resources.dll" target="lib\net9.0\zh-Hant\" exclude="" />
+    <!-- lib/net10.0 Localized Resources -->
+    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net10.0\cs\Microsoft.Data.SqlClient.resources.dll" target="lib\net10.0\cs\" exclude="" />
+    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net10.0\de\Microsoft.Data.SqlClient.resources.dll" target="lib\net10.0\de\" exclude="" />
+    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net10.0\es\Microsoft.Data.SqlClient.resources.dll" target="lib\net10.0\es\" exclude="" />
+    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net10.0\fr\Microsoft.Data.SqlClient.resources.dll" target="lib\net10.0\fr\" exclude="" />
+    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net10.0\it\Microsoft.Data.SqlClient.resources.dll" target="lib\net10.0\it\" exclude="" />
+    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net10.0\ja\Microsoft.Data.SqlClient.resources.dll" target="lib\net10.0\ja\" exclude="" />
+    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net10.0\ko\Microsoft.Data.SqlClient.resources.dll" target="lib\net10.0\ko\" exclude="" />
+    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net10.0\pl\Microsoft.Data.SqlClient.resources.dll" target="lib\net10.0\pl\" exclude="" />
+    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net10.0\pt-BR\Microsoft.Data.SqlClient.resources.dll" target="lib\net10.0\pt-BR\" exclude="" />
+    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net10.0\ru\Microsoft.Data.SqlClient.resources.dll" target="lib\net10.0\ru\" exclude="" />
+    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net10.0\tr\Microsoft.Data.SqlClient.resources.dll" target="lib\net10.0\tr\" exclude="" />
+    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net10.0\zh-Hans\Microsoft.Data.SqlClient.resources.dll" target="lib\net10.0\zh-Hans\" exclude="" />
+    <file src="Microsoft.Data.SqlClient\$ReferenceType$-$Configuration$\net10.0\zh-Hant\Microsoft.Data.SqlClient.resources.dll" target="lib\net10.0\zh-Hant\" exclude="" />
 
     <!-- @TODO: This is a temporary measure - removing the notsupported DLLs will come next -->
     <!-- lib/netstandard2.0 - These are PlatformNotSupportedException assemblies -->
     <file src="Microsoft.Data.SqlClient.notsupported\$ReferenceType$-$Configuration$\netstandard2.0\Microsoft.Data.SqlClient.dll" target="lib\netstandard2.0\" exclude="" />
     <file src="Microsoft.Data.SqlClient.notsupported\$ReferenceType$-$Configuration$\netstandard2.0\Microsoft.Data.SqlClient.pdb" target="lib\netstandard2.0\" exclude="" />
-    <file src="Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\netstandard2.0\Microsoft.Data.SqlClient.xml" target="lib\netstandard2.0\" exclude="" />
+    <!-- Sourced from the reference project, unlike the other lib targets, because the
+         implementation project does not build netstandard2.0.  The untrimmed copy is used so that
+         this target carries the same full documentation as every other lib target. -->
+    <file src="Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\netstandard2.0\untrimmed\Microsoft.Data.SqlClient.xml" target="lib\netstandard2.0\" exclude="" />
 
     <!-- Ref Binaries ================================================== -->
     <!-- ref/net462 -->
     <file src="Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\net462\Microsoft.Data.SqlClient.dll" target="ref\net462\" exclude="" />
     <file src="Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\net462\Microsoft.Data.SqlClient.xml" target="ref\net462\" exclude="" />
 
-    <!-- ref/net8.0 -->
-    <file src="Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\net8.0\Microsoft.Data.SqlClient.dll" target="ref\net8.0\" exclude="" />
-    <file src="Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\net8.0\Microsoft.Data.SqlClient.xml" target="ref\net8.0\" exclude="" />
-
-    <!-- ref/net9.0 -->
-    <file src="Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\net9.0\Microsoft.Data.SqlClient.dll" target="ref\net9.0\" exclude="" />
-    <file src="Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\net9.0\Microsoft.Data.SqlClient.xml" target="ref\net9.0\" exclude="" />
+    <!-- ref/net10.0 -->
+    <file src="Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\net10.0\Microsoft.Data.SqlClient.dll" target="ref\net10.0\" exclude="" />
+    <file src="Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\net10.0\Microsoft.Data.SqlClient.xml" target="ref\net10.0\" exclude="" />
 
     <!-- ref/netstandard2.0 -->
     <file src="Microsoft.Data.SqlClient.ref\$ReferenceType$-$Configuration$\netstandard2.0\Microsoft.Data.SqlClient.dll" target="ref\netstandard2.0\" exclude="" />

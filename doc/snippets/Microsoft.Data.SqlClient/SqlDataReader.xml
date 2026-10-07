@@ -183,7 +183,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection>, a
         The value of the specified column.
       </returns>
       <remarks>
-        Not supported for <see cref="T:Microsoft.Data.SqlClient" />.
+        Not supported for <see cref="N:Microsoft.Data.SqlClient" />.
       </remarks>
       <exception cref="T:System.InvalidCastException">
         The specified cast is not valid.

@@ -119,7 +119,7 @@ public sealed class SqlClientConnectionCloseAfter : System.Collections.Generic.I
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseBefore"]/SqlClientConnectionCloseBefore/*'/>
 public sealed class SqlClientConnectionCloseBefore : System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string, object>>
 {
-    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseBefore"]//*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientConnectionCloseBefore"]/Name/*'/>
     public const string Name = "Microsoft.Data.SqlClient.WriteConnectionCloseBefore";
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientDiagnostic.xml' path='docs/members[@name="SqlClientDiagnostic"]/OperationId/*'/>
     public System.Guid OperationId => throw null;

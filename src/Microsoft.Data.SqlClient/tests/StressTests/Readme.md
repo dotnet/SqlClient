@@ -7,8 +7,6 @@ It exercises the driver under unfavorable conditions to identify failures.
 This is a console application targeting the SqlClient test framework matrix (not the shipped driver TFMs):
 
 - .NET 10.0
-- .NET 9.0
-- .NET 8.0
 - .NET Framework 4.6.2 (Windows only; higher .NET Framework versions are supported at runtime via
   compatibility)
 
@@ -20,7 +18,7 @@ Define fuzz tests for new driver features and APIs, and run them before each GA 
 
 Use the SDK pinned in the repository's [global.json](../../../../global.json) and install the runtime
 for the framework you want to run. See [BUILDGUIDE.md](../../../../BUILDGUIDE.md) for prerequisites.
-The project declares all four frameworks on every host; select a modern .NET framework when building
+The project declares both frameworks on every host; select `net10.0` when building
 or running on Linux/macOS.
 
 Create a local configuration based on
@@ -65,7 +63,7 @@ Build the application using the top-level project `SqlClient.Stress.Runner`:
 
 ```bash
 cd src/Microsoft.Data.SqlClient/tests/StressTests
-dotnet build SqlClient.Stress.Runner -c Debug -f net9.0
+dotnet build SqlClient.Stress.Runner -c Debug -f net10.0
 ```
 
 Run the `cd` command from the repository root. On Windows, use `-f net462` to build the .NET Framework
@@ -93,13 +91,13 @@ Set `STRESS_CONFIG_FILE` to your prepared configuration first.
 export STRESS_CONFIG_FILE=/path/to/config.jsonc
 
 # Via dotnet run CLI:
-dotnet run --no-build -f net9.0 --project SqlClient.Stress.Runner -- --assembly SqlClient.Stress.Tests
+dotnet run --no-build -f net10.0 --project SqlClient.Stress.Runner -- --assembly SqlClient.Stress.Tests
 
 # Via dotnet CLI:
-dotnet SqlClient.Stress.Runner/bin/Debug/net9.0/stresstest.dll --assembly SqlClient.Stress.Tests
+dotnet SqlClient.Stress.Runner/bin/Debug/net10.0/stresstest.dll --assembly SqlClient.Stress.Tests
 
 # With a specific config file and all output to console:
-dotnet run --no-build -f net9.0 --project SqlClient.Stress.Runner -e STRESS_CONFIG_FILE=/path/to/config.jsonc -- --assembly SqlClient.Stress.Tests --console
+dotnet run --no-build -f net10.0 --project SqlClient.Stress.Runner -e STRESS_CONFIG_FILE=/path/to/config.jsonc -- --assembly SqlClient.Stress.Tests --console
 ```
 
 ```powershell
@@ -107,13 +105,13 @@ dotnet run --no-build -f net9.0 --project SqlClient.Stress.Runner -e STRESS_CONF
 $env:STRESS_CONFIG_FILE = "C:\path\to\config.jsonc"
 
 # Via dotnet run CLI:
-dotnet run --no-build -f net9.0 --project SqlClient.Stress.Runner -- --assembly SqlClient.Stress.Tests
+dotnet run --no-build -f net10.0 --project SqlClient.Stress.Runner -- --assembly SqlClient.Stress.Tests
 
 # Via executable (after building -f net462):
 .\SqlClient.Stress.Runner\bin\Debug\net462\stresstest.exe --assembly SqlClient.Stress.Tests
 
 # With a specific config file and all output to console:
-dotnet run --no-build -f net9.0 --project SqlClient.Stress.Runner -e STRESS_CONFIG_FILE=C:\path\to\config.jsonc -- --assembly SqlClient.Stress.Tests --console
+dotnet run --no-build -f net10.0 --project SqlClient.Stress.Runner -e STRESS_CONFIG_FILE=C:\path\to\config.jsonc -- --assembly SqlClient.Stress.Tests --console
 ```
 
 ## Supported arguments
