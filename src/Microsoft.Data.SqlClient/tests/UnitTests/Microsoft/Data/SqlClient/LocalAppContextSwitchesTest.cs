@@ -45,6 +45,7 @@ public class LocalAppContextSwitchesTest
         switchesHelper.UseLegacyIdleTimeoutBehavior = null;
         switchesHelper.UseMinimumLoginTimeout = null;
         #if NET
+        switchesHelper.EnableAppConfig = null;
         switchesHelper.GlobalizationInvariantMode = null;
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
@@ -70,6 +71,7 @@ public class LocalAppContextSwitchesTest
         Assert.False(switchesHelper.UseLegacyFailoverAlternationOnLoginSqlErrors);
         Assert.False(switchesHelper.EnableMultiSubnetFailoverByDefault);
         #if NET
+        Assert.True(switchesHelper.EnableAppConfig);
         Assert.False(switchesHelper.GlobalizationInvariantMode);
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
