@@ -9,11 +9,13 @@ using System.Data.SqlTypes;
 using System.Globalization;
 using System.Reflection;
 using Microsoft.Data.SqlClient.Server;
+using Microsoft.Data.SqlClient.Tests.CollectionDefinitions;
 using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
 {
+    [Collection(nameof(GlobalizationInvariantModeTests))]
     public class SqlMetaDataTest
     {
         [Theory]
