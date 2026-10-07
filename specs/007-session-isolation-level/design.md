@@ -5,8 +5,7 @@
 
 This is a design-rationale note, not a feature specification. It explains why two
 superficially identical bugs — both described as "TransactionScope + connection pooling +
-wrong isolation level" — are in fact **opposite failures** that require two separate,
-independently switchable fixes.
+wrong isolation level" — are in fact **opposite failures** that require two separate fixes.
 
 ---
 
@@ -67,11 +66,12 @@ since 2017 with production impact.
 | | |
 |---|---|
 | Code path | `SqlConnectionInternal.Activate()` — the pool **checkout** path, before enlistment |
-| Mechanism | Track `_isolationLevelDirty` when a TM `Begin` sets a non-default level; on the next checkout, if the connection is **not** enlisted, issue `SET TRANSACTION ISOLATION LEVEL READ COMMITTED;` |
+| Mechanism | Track `_isolationLevelDirty` when a TM `Begin` or successful ambient reassertion sets a non-default level; on the next checkout, if the connection is neither enlisted nor an active delegated root, issue `SET TRANSACTION ISOLATION LEVEL READ COMMITTED;` |
 | Direction | **Scrub** stale session state on the way out of the pool |
-| App context switch | `Switch.Microsoft.Data.SqlClient.UseLegacyIsolationLevelBehavior` — introduced by PR #4330; it does not exist on `main` or on the #4335 branch |
-| Error handling | A plain T-SQL rejection (e.g. Synapse dedicated pools accept only `READ UNCOMMITTED`) degrades gracefully; transport failures doom the connection |
-| Cost | **One extra round trip on `Open()`**, paid only when a previous `Begin` raised the isolation level *and* the connection is actually reused. `PrepareResetConnection` performs no I/O of its own — it only sets a flag consumed at the next packet write — so the legacy close path sent nothing, and this batch is a genuinely new exchange. Both PRs therefore cost one round trip; they differ only in *which* checkout pays it. |
+| App context switch | `Switch.Microsoft.Data.SqlClient.EnableTransactionIsolationLevelReset` (default `false`; the fix is initially opt-in) |
+| Error handling | Synapse dedicated pools are skipped up front; any reset failure dooms the connection so an unknown isolation level is never handed to the caller |
+| Timeout | The reset uses the caller's remaining `Open` budget, including time consumed in the pool. `Command Timeout` does not apply; `Connect Timeout=0` remains intentionally infinite. Existing pool-wait/login compatibility behavior is unchanged. |
+| Cost | **One extra round trip on `Open()`**, paid only when a previous `Begin` or reassertion set a tracked non-default level *and* the connection is eligible for reset and actually reused. The queued `sp_reset_connection` rides this batch's TDS header instead of the caller's first command, so the reset is not billed twice — but the batch itself is an exchange the legacy path did not make. |
 
 ---
 
@@ -125,10 +125,9 @@ documented `TransactionScope` `Serializable` default silently run read-committed
 | Code path | `SqlConnectionInternal.Enlist()` — the **re-enlistment / checkout** path (the `else if` on the equality short-circuit) |
 | Mechanism | When a reset is pending, re-issue `SET TRANSACTION ISOLATION LEVEL <ambient>` mapped from `Transaction.IsolationLevel` |
 | Direction | **Re-assert** session state on the way back out of the pool |
-| App context switch | None — the previous behavior is a correctness bug, not a compatibility contract |
-| Special case | `ReadCommitted` is **skipped** — `sp_reset_connection` already returns the session to `READ COMMITTED`, and no database setting renames that level (`READ_COMMITTED_SNAPSHOT` changes the behavior of `READ COMMITTED`, not its name), so the batch would be a no-op |
-| Special case | `Snapshot` **is** re-asserted. Moving *into* `SNAPSHOT` part-way through a transaction begun at another level aborts that transaction, but the preserved transaction on this path was itself begun under snapshot isolation by the TM request — so returning to `SNAPSHOT` is legal, and necessary, because the reset may have cleared it |
-| Cost | One extra round trip per pooled re-checkout inside a scope, on all back ends, except when the ambient level is `ReadCommitted` |
+| Isolation levels | Re-assert `ReadUncommitted`, `RepeatableRead`, `Serializable`, and `Snapshot`. Skip `ReadCommitted` (no reassertion needed), `Unspecified`, and `Chaos` (no statement mapping). Reasserting `Snapshot` preserves the level under which the delegated transaction began; it does not introduce Snapshot into a transaction begun at another level. Skipped entirely on dedicated Synapse endpoints, which reject the statement with error 104409. |
+| Activation | Unconditional; no compatibility switch |
+| Cost | One extra round trip on a pooled re-checkout with a reset pending and one of the mapped non-default levels, on all back ends |
 
 #### Measured cost
 
@@ -162,7 +161,7 @@ than merely cheap.
   exist today, and it would reorder the level change relative to anything not issued through
   `SqlCommand`. Worth revisiting as an optimization once the pooling rewrite settles.
 - **Re-assert only when the level differs from `READ COMMITTED`.** This is what ships — see the
-  `ReadCommitted` special case above.
+  isolation-level mapping above.
 
 ---
 
@@ -175,25 +174,24 @@ than merely cheap.
 | Who is harmed | An **unrelated later** pool consumer | The **same caller**, next `Open()` in the scope |
 | Affected servers | On-prem SQL Server (reset does not clear) | Azure SQL DB (reset does clear) |
 | API surface | `SqlTransaction` **and** `TransactionScope` | `TransactionScope` only |
-| Trigger | TM `Begin` set a non-default level | Re-enlist short-circuit with a pending reset |
-| Code path | `Activate()` (pool **checkout**, not enlisted) | `Enlist()` (pool **checkout**, re-attaching to the same transaction) |
+| Trigger | TM `Begin` or ambient reassertion set a non-default level | Re-enlist short-circuit with a pending reset |
+| Code path | `Activate()` (pool **checkout**, neither enlisted nor a delegated root) | `Enlist()` (pool **checkout**, re-attaching to the same transaction) |
 | T-SQL emitted | `SET ... READ COMMITTED` (fixed value) | `SET ... <ambient level>` (dynamic value) |
 | Trigger condition | `_isolationLevelDirty` | `_parser._fResetConnection` on the equal-transaction branch |
+| Activation | Opt-in via `EnableTransactionIsolationLevelReset` (default `false`) | Unconditional; independent of the #96 switch |
 | Direction of fix | **Scrub** session state | **Re-assert** session state |
-| App context switch | `UseLegacyIsolationLevelBehavior` (added by #4330) | None |
-| `Snapshot` handling | Reset to `READ COMMITTED` like any other level | **Re-asserted** |
-| `ReadCommitted` handling | Never dirty, so never scrubbed | **Skipped** — the reset already lands there |
+| `Snapshot` handling | Reset to `READ COMMITTED` like any other non-default level after the transaction ends | Re-assert `SNAPSHOT` inside the same transaction |
+| `ReadCommitted` handling | Does not mark the session dirty | **Skipped** — the reset already lands there |
 
 ---
 
 ## 5. Why neither fix subsumes the other
 
 **Would #4330 alone fix #146?** No — and it is explicitly built not to make #146 worse. #4330
-runs on the **checkout** path (`Activate()`) but only ever writes `READ COMMITTED`, which is the
-*wrong* level for the #146 repro (the ambient level there is `Serializable` / `ReadUncommitted`).
-Its scrub is therefore gated on the connection **not** being enlisted, so it never fires on the
-re-attach path #4335 owns. Without that gate it would turn #146 from an Azure-only bug into a
-universal one.
+only ever writes `READ COMMITTED`, which is the *wrong* level for the #146 repro (the ambient
+level there is `Serializable` / `ReadUncommitted`). Its scrub is therefore gated on the
+connection **neither** being enlisted **nor** an active delegated root, so it never fires on the re-attach path #4335 owns. Without
+that gate it would turn #146 from an Azure-only bug into a universal one.
 
 **Would #4335 alone fix #96?** No. It fires only inside `Enlist()` on the
 "same transaction re-attach" branch — i.e. while an ambient `TransactionScope` is still open.
@@ -210,23 +208,67 @@ place:
 
 Both now sit on the checkout side of the pooling lifecycle, but they are distinguished by
 enlistment state and require different values written, different trigger conditions, and
-different `Snapshot` semantics. Merging them would also mean a single app context switch
-governing two unrelated behavior changes, preventing an application from opting into one
-without the other.
+different `Snapshot` semantics. The #96 reset is independently gated so applications can opt
+into that behavior without changing the #146 path.
 
 ---
 
 ## 6. Why the two PRs should still be reviewed together
 
-- They touch the same file (`SqlConnectionInternal.cs`), use the same helper pattern, and add
-  tests to the same folder (`tests/ManualTests/SQL/TransactionTest/`) — so they **will conflict
-  textually** and should be sequenced. Whichever lands second should extract the shared
-  `SET`-batch helper rather than leaving a second near-copy in the file.
+- They touch the same file (`SqlConnectionInternal.cs`) and add tests to the same folder
+  (`tests/ManualTests/SQL/TransactionTest/`), so their combined activation/enlistment behavior
+  must be validated when integrating the second fix.
 - Both rest on the same `sp_reset_connection` premise, which a reviewer need only validate once.
 - With both merged the end-to-end behavior becomes coherent:
   - inside a live scope, the ambient level is honored on every open (#4335);
   - once the transaction ends and the connection is vended again, the stale level is scrubbed
-    (#4330).
+    when the reset switch is enabled (#4330).
+- The #96 switch controls only its stale-session scrub; opting in does not alter the #146
+  re-enlistment behavior.
+
+### A note on cost
+
+Both PRs add one extra round trip; they differ only in *which* checkout pays it. #4330 pays it
+on the first `Open()` after a connection whose isolation level was raised is reused. #4335 pays
+it on re-checkouts with a reset pending and a mapped non-default isolation level; `ReadCommitted`,
+`Unspecified`, and `Chaos` add no reassertion round trip. Neither is free, and #4330's earlier claim of "no
+extra round trip" was incorrect: `PrepareResetConnection` performs no I/O of its own (it only
+sets a flag that is consumed at the next packet write), so the legacy close path sent nothing at
+all.
+
+#4330 performs this I/O in `Activate()` rather than on the pool-return side. Two constraints
+rule out the return path:
+
+- On return the connection may still be enlisted in a live `TransactionScope`, because `Close()`
+  is routinely called inside the scope. Issuing `SET` there would downgrade the level for the
+  next connection vended into that same scope from the transacted pool — exactly the #146 defect.
+- `ResetConnection()`, the other pool-return hook, is also invoked by the pool from
+  `PutObjectFromTransactedPool`, which runs on the `System.Transactions` transaction-completion
+  callback thread while holding a lock on the connection; that call site explicitly avoids socket
+  work on a thread it does not own.
+
+`Activate()` runs on the checkout path. The enlistment and delegated-root gates defer the scrub
+until transaction ownership has ended, retaining the dirty flag for a later checkout. The cost
+is only paid by connections that are actually reused.
+
+### Endpoint classification boundary
+
+The dedicated Synapse exemption matches the `.sql.azuresynapse.` host segment, consistent with
+`IsAzureSynapseOnDemandEndpoint`, rather than a list of cloud domain suffixes. Only the host is
+inspected (protocol prefix, instance/pipe name and port are stripped), and the segment must
+directly follow a single workspace label, optionally followed by `.privatelink`. Workspace names
+ending in `-ondemand` (serverless, including Private Link) remain eligible for the reset. Names
+that merely contain the segment elsewhere (for example `contoso.workspace.sql.azuresynapse.net`
+or `workspace.example.sql.azuresynapse.net`) are not exempt.
+
+Because labels after the segment are not validated, any cloud suffix, including future or custom
+ones such as `workspace.sql.azuresynapse.net.example`, is treated as a dedicated endpoint and
+skips the reset. This is a deliberate tradeoff: it avoids maintaining a suffix list and covers
+sovereign clouds, at the cost of skipping the opt-in reset for a non-Synapse server that happens
+to use such a DNS name. Custom aliases that do not contain the segment are not detected; they
+follow the normal opt-in reset path, where a rejection dooms the connection and fails `Open`
+rather than silently handing out a potentially dirty session. This static classification does
+not establish runtime capabilities of arbitrary TDS endpoints.
 
 #### Dirty-tracking interaction
 
@@ -235,18 +277,14 @@ non-default level. In the common delegated case that `Begin` is the first `Open(
 scope — the same event that establishes the level #4335 later re-asserts — so the re-assert
 re-writes an already-tracked value and nothing goes untracked.
 
-The residual case is a connection that joined an **already-promoted** transaction via
-`PropagateTransactionCookie`: no local `Begin` runs, so the flag stays `false` and a level
-raised by the re-assert would not be scrubbed on a later checkout. Whichever PR lands second
-should set the flag on the re-assert path to close this.
+For a connection that joined an **already-promoted** transaction via
+`PropagateTransactionCookie`, no local `Begin` runs. The integrated reassertion path therefore
+also sets `_isolationLevelDirty` after a successful non-default `SET`, so the next eligible
+checkout can scrub that level when the #96 switch is enabled.
 
-### Suggested review order
+### Integration order
 
-1. **#4330** first — broader blast radius (all servers, both `SqlTransaction` and
-   `TransactionScope`), long-standing and frequently requested, and self-contained on the
-   activate path.
-2. **#4335** second — rebase onto #4330, extract the shared `SET`-batch helper, and set
-   `_isolationLevelDirty` on the re-assert path.
-
-Note: #4335 no longer adds an app context switch, so the `LocalAppContextSwitches` conflict the
-two PRs would otherwise have had is already gone.
+**#4335 merged first.** #4330 merges that main revision and validates both regression suites
+together. Reassertion remains unconditional, while scrubbing remains opt-in. The reset uses
+the remaining caller timeout; broader remaining-budget work for other in-open calls, including
+reassertion, remains tracked in #4582.

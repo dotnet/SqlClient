@@ -467,10 +467,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             }
 
             /// <inheritdoc />
-            protected override void Activate(Transaction transaction)
+            protected override void Activate(Transaction transaction, TimeoutTimer timeout)
             {
                 Activations++;
-                base.Activate(transaction);
+                base.Activate(transaction, timeout);
             }
 
             /// <inheritdoc />

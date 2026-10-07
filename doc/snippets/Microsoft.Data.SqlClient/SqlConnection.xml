@@ -1400,7 +1400,7 @@ For more information on working with events, see [Connection Events](https://lea
         The cancellation token.
       </param>
       <summary>
-        An asynchronous version of <see cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema()" />, which returns schema information for the data source of this <see cref="T:Microsoft.Data.SqlClient.SqlConnection" />. For more information about schemas, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql-server-schema-collections">SQL Server Schema Collections</see>.
+        An asynchronous version of <see cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema" />, which returns schema information for the data source of this <see cref="T:Microsoft.Data.SqlClient.SqlConnection" />. For more information about schemas, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql-server-schema-collections">SQL Server Schema Collections</see>.
       </summary>
       <returns>
         A task representing the asynchronous operation.
@@ -1704,7 +1704,7 @@ For more information on working with events, see [Connection Events](https://lea
         The cancellation token.
       </param>
       <summary>
-        An asynchronous version of <see cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema(string)" />, which returns schema information for the data source of this <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> using the specified string for the schema name.
+        An asynchronous version of <see cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema(System.String)" />, which returns schema information for the data source of this <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> using the specified string for the schema name.
       </summary>
       <returns>
         A task representing the asynchronous operation.
@@ -1758,7 +1758,7 @@ For more information on working with events, see [Connection Events](https://lea
         The cancellation token.
       </param>
       <summary>
-        An asynchronous version of <see cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema(string, string[])" />, which returns schema information for the data source of this <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> using the specified string for the schema name and the specified string array for the restriction values.
+        An asynchronous version of <see cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema(System.String,System.String[])" />, which returns schema information for the data source of this <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> using the specified string for the schema name and the specified string array for the restriction values.
       </summary>
       <returns>
         A task representing the asynchronous operation.

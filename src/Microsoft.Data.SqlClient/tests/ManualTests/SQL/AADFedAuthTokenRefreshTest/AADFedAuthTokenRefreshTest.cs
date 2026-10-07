@@ -7,7 +7,6 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using Azure.Core;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.Common.SystemDataInternals;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals;
 using Microsoft.Data.SqlClient.Tests.Common;
@@ -26,26 +25,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             _testOutputHelper = testOutputHelper;
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAADPasswordConnStrSetup))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAzureConnStringSetup), nameof(DataTestUtility.IsUserManagedIdentitySupported))]
         public void FedAuthTokenRefreshTest()
         {
-            #pragma warning disable 0618 // Type or member is obsolete
-            SqlAuthenticationProvider original = SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword);
-            #pragma warning restore 0618 // Type or member is obsolete
+            SqlAuthenticationProvider original = SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity);
 
             try
             {
-                #pragma warning disable 0618 // Type or member is obsolete
-                SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, new UsernamePasswordProvider(DataTestUtility.ApplicationClientId));
-                #pragma warning restore 0618 // Type or member is obsolete
+                SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity, new UserAssignedManagedIdentityProvider());
 
-                string connectionString = DataTestUtility.AADPasswordConnectionString;
+                string connectionString = DataTestUtility.GetUserIdentityConnectionString();
 
-                using SqlConnection connection = new SqlConnection(connectionString);
+                using SqlConnection connection = new(connectionString);
                 connection.Open();
 
-                string oldTokenHash = "";
-                DateTime? oldExpiryDateTime = FedAuthTokenHelper.SetTokenExpiryDateTime(connection, minutesToExpire: 1, out oldTokenHash);
+                DateTime? oldExpiryDateTime = FedAuthTokenHelper.SetTokenExpiryDateTime(connection, minutesToExpire: 1, out string oldTokenHash);
                 Assert.True(oldExpiryDateTime != null, "Failed to make token expiry to expire in one minute.");
 
                 // Convert and display the old expiry into local time which should be in 1 minute from now
@@ -62,7 +56,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.True(result != string.Empty, "The connection's command must return a value");
 
                 // The new connection will use the same FedAuthToken but will refresh it first as it will expire in 1 minute.
-                using (SqlConnection connection2 = new SqlConnection(connectionString))
+                using (SqlConnection connection2 = new(connectionString))
                 {
                     connection2.Open();
 
@@ -86,9 +80,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 if (original is not null)
                 {
                     // Reset to driver internal provider.
-                    #pragma warning disable 0618 // Type or member is obsolete
-                    SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, original);
-                    #pragma warning restore 0618 // Type or member is obsolete
+                    SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity, original);
                 }
             }
         }
@@ -97,7 +89,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// Verifies both pools replace connections with expired or nearly expired tokens and
         /// invoke the callback when the cached token also needs refreshing, for Open and OpenAsync.
         /// </summary>
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsAADPasswordConnStrSetup))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsManagedIdentitySetup))]
         [InlineData(false, false, -1)]
         [InlineData(false, true, -1)]
         [InlineData(true, false, -1)]
@@ -111,7 +103,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using var poolVersion = new ConnectionPoolVersionScope(usePoolV2);
             string[] credentialKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
             var builder = new SqlConnectionStringBuilder(
-                DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credentialKeys))
+                DataTestUtility.TCPConnectionString.RemoveKeysInConnStr(credentialKeys))
             {
                 Pooling = true,
                 MinPoolSize = 0,
@@ -119,7 +111,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 ConnectTimeout = 30,
                 Enlist = false
             };
-            var credential = DataTestUtility.GetTokenCredential();
             SqlAuthenticationToken callbackToken = null;
             int callbackInvocations = 0;
             using var connection = new SqlConnection(builder.ConnectionString)
@@ -127,10 +118,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 AccessTokenCallback = async (parameters, cancellationToken) =>
                 {
                     Interlocked.Increment(ref callbackInvocations);
-                    const string suffix = "/.default";
-                    string scope = parameters.Resource.EndsWith(suffix) ? parameters.Resource : parameters.Resource + suffix;
-                    AccessToken token = await credential.GetTokenAsync(new TokenRequestContext(new[] { scope }), cancellationToken);
-                    callbackToken = new SqlAuthenticationToken(token.Token, token.ExpiresOn);
+                    cancellationToken.ThrowIfCancellationRequested();
+                    SqlAuthenticationToken token = await DataTestUtility.GetSqlAuthenticationTokenAsync();
+                    cancellationToken.ThrowIfCancellationRequested();
+                    callbackToken = token;
                     return callbackToken;
                 }
             };

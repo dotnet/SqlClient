@@ -36,7 +36,7 @@ export PYTHONDONTWRITEBYTECODE=1
 ####################################################################################################
 
 configuration="Release"
-framework="net9.0"
+framework="net10.0"
 resultsSubDir="perf-results"
 baselineVersion=""
 # Alternative to --baseline-version: benchmark against Microsoft.Data.SqlClient built from ANOTHER
@@ -255,12 +255,8 @@ install_dotnet() {
     # SDK pinned by global.json (used to build MDS + the perf project).
     "${installScript}" --version "${sdkVersion}" --install-dir "${DOTNET_ROOT}" --no-path
 
-    # Shared runtimes for the frameworks the benchmarks may run against.  Installing all three keeps
-    # the script robust regardless of the --framework selected by the pipeline.
-    local channel
-    for channel in 8.0 9.0 10.0; do
-        "${installScript}" --channel "${channel}" --runtime dotnet --install-dir "${DOTNET_ROOT}" --no-path
-    done
+    # Shared runtime for the net10.0 benchmarks.
+    "${installScript}" --channel "10.0" --runtime dotnet --install-dir "${DOTNET_ROOT}" --no-path
 
     rm -f "${installScript}"
 }

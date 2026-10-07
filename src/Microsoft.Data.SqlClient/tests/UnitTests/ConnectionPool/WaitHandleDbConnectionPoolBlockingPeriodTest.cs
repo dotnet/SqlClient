@@ -425,7 +425,7 @@ public class WaitHandleDbConnectionPoolBlockingPeriodTest : IDisposable
             }
         }
 
-        protected override void Activate(Transaction? transaction)
+        protected override void Activate(Transaction? transaction, TimeoutTimer timeout)
         {
             EnlistedTransaction = transaction;
         }

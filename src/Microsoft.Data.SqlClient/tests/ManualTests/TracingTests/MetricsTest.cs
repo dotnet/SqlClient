@@ -36,7 +36,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             var ahc = SqlClientEventSourceProps.ActiveHardConnections;
             var npc = SqlClientEventSourceProps.NonPooledConnections;
 
-            using (var conn = new SqlConnection(stringBuilder.ToString()))
+            using (var conn = DataTestUtility.CreateConnection(stringBuilder.ToString()))
             {
                 if (SupportsActiveConnectionCounters)
                 {
@@ -83,7 +83,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             var ac = SqlClientEventSourceProps.ActiveConnections;
             var fc = SqlClientEventSourceProps.FreeConnections;
 
-            using (var conn = new SqlConnection(stringBuilder.ToString()))
+            using (var conn = DataTestUtility.CreateConnection(stringBuilder.ToString()))
             {
                 if (SupportsActiveConnectionCounters)
                 {
@@ -138,7 +138,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
             }
 
-            using (var conn2 = new SqlConnection(stringBuilder.ToString()))
+            using (var conn2 = DataTestUtility.CreateConnection(stringBuilder.ToString()))
             {
                 conn2.Open();
 
@@ -168,7 +168,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             var stringBuilder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { Pooling = false, Enlist = false };
 
-            using (var conn = new SqlConnection(stringBuilder.ToString()))
+            using (var conn = DataTestUtility.CreateConnection(stringBuilder.ToString()))
             using (new TransactionScope())
             {
                 conn.Open();
@@ -213,7 +213,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // Verify counters at each step in the lifecycle of a transacted connection
             using (var txScope = new TransactionScope())
             {
-                using (var conn = new SqlConnection(stringBuilder.ToString()))
+                using (var conn = DataTestUtility.CreateConnection(stringBuilder.ToString()))
                 {
                     conn.Open();
                     conn.EnlistTransaction(System.Transactions.Transaction.Current);
@@ -357,7 +357,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             GC.WaitForPendingFinalizers();
             System.Threading.Thread.Sleep(200); // give the pooler some time to reclaim the connection and avoid the conflict.
 
-            using (SqlConnection conn = new SqlConnection(stringBuilder.ToString()))
+            using (SqlConnection conn = DataTestUtility.CreateConnection(stringBuilder.ToString()))
             {
                 conn.Open();
 
@@ -384,7 +384,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             long acpg = SqlClientEventSourceProps.ActiveConnectionPoolGroups;
             long iacpg = SqlClientEventSourceProps.InactiveConnectionPoolGroups;
 
-            using (SqlConnection conn = new SqlConnection(stringBuilder.ToString()))
+            using (SqlConnection conn = DataTestUtility.CreateConnection(stringBuilder.ToString()))
             {
                 conn.Open();
 
@@ -411,7 +411,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static InternalConnectionWrapper CreateEmancipatedConnection(string connectionString)
         {
-            SqlConnection connection = new SqlConnection(connectionString);
+            SqlConnection connection = DataTestUtility.CreateConnection(connectionString);
             connection.Open();
             return new InternalConnectionWrapper(connection);
         }

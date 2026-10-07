@@ -763,7 +763,9 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                _retryLogicProvider ??= SqlConfigurableRetryLogicManager.CommandProvider;
+                _retryLogicProvider ??= LocalAppContextSwitches.EnableAppConfig
+                    ? SqlConfigurableRetryLogicManager.CommandProvider
+                    : SqlConfigurableRetryFactory.NoneRetryProvider;
                 return _retryLogicProvider;
             }
             set => _retryLogicProvider = value;

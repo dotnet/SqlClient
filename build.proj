@@ -84,7 +84,7 @@
       Allowed values: (true|false)
     -->
     <PackBuild Condition="'$(PackBuild)' == ''">true</PackBuild>
-    <PackBuildArgument Condition="'$(PackBuild.ToLower())' != 'true'">
+    <PackBuildArgument Condition="'$(PackBuild)' != 'true'">
       --no-build
     </PackBuildArgument>
 
@@ -219,7 +219,7 @@
       Allowed values: (Package|Project)
     -->
     <ReferenceType Condition="'$(ReferenceType)' == ''">Project</ReferenceType>
-    <ReferenceTypeArgument Condition="'$(ReferenceType.ToLower())' == 'package'">
+    <ReferenceTypeArgument Condition="'$(ReferenceType)' == 'package'">
       -p:ReferenceType=Package
     </ReferenceTypeArgument>
 
@@ -289,7 +289,7 @@
       Allowed values: (true|false)
     -->
     <EnableAnalyzers Condition="'$(EnableAnalyzers)' == ''">false</EnableAnalyzers>
-    <EnableAnalyzersArgument Condition="'$(EnableAnalyzers.ToLower())' == 'true'">
+    <EnableAnalyzersArgument Condition="'$(EnableAnalyzers)' == 'true'">
       -p:EnableAnalyzers=true
     </EnableAnalyzersArgument>
 
@@ -310,7 +310,7 @@
       Allowed values: (true|false)
     -->
     <InternalAnalyzers Condition="'$(InternalAnalyzers)' == ''">false</InternalAnalyzers>
-    <EnableAnalyzersArgument Condition="'$(EnableAnalyzers.ToLower())' == 'true' AND '$(InternalAnalyzers.ToLower())' == 'true'">$(EnableAnalyzersArgument)
+    <EnableAnalyzersArgument Condition="'$(EnableAnalyzers)' == 'true' AND '$(InternalAnalyzers)' == 'true'">$(EnableAnalyzersArgument)
       -p:InternalAnalyzers=true
     </EnableAnalyzersArgument>
 
@@ -322,7 +322,7 @@
                       as -p:RestoreConfigFile.
       Default value:  [blank]
     -->
-    <EnableAnalyzersArgument Condition="'$(EnableAnalyzers.ToLower())' == 'true' AND '$(InternalAnalyzers.ToLower())' == 'true' AND '$(InternalAnalyzersNugetConfig)' != ''">$(EnableAnalyzersArgument)
+    <EnableAnalyzersArgument Condition="'$(EnableAnalyzers)' == 'true' AND '$(InternalAnalyzers)' == 'true' AND '$(InternalAnalyzersNugetConfig)' != ''">$(EnableAnalyzersArgument)
       -p:RestoreConfigFile="$(InternalAnalyzersNugetConfig)"
     </EnableAnalyzersArgument>
 
@@ -333,7 +333,7 @@
                       default (see Directory.Packages.props); the private ADO.Net pipeline pins it.
       Default value:  [blank]
     -->
-    <EnableAnalyzersArgument Condition="'$(EnableAnalyzers.ToLower())' == 'true' AND '$(InternalAnalyzers.ToLower())' == 'true' AND '$(InternalAnalyzersVersion)' != ''">$(EnableAnalyzersArgument)
+    <EnableAnalyzersArgument Condition="'$(EnableAnalyzers)' == 'true' AND '$(InternalAnalyzers)' == 'true' AND '$(InternalAnalyzersVersion)' != ''">$(EnableAnalyzersArgument)
       -p:InternalAnalyzersVersion=$(InternalAnalyzersVersion)
     </EnableAnalyzersArgument>
 
@@ -391,7 +391,7 @@
       Allowed value:  (true|false)
     -->
     <TestCodeCoverage Condition="'$(TestCodeCoverage)' == ''">true</TestCodeCoverage>
-    <TestCodeCoverageArgument Condition="'$(TestCodeCoverage.ToLower())' == 'true'">
+    <TestCodeCoverageArgument Condition="'$(TestCodeCoverage)' == 'true'">
       --collect "Code coverage"
       --settings "$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/CodeCoverage.runsettings"
     </TestCodeCoverageArgument>
@@ -428,7 +428,7 @@
       Allowed values: (category_expression|none)
     -->
     <TestFilters Condition="'$(TestFilters)' == ''">category!=failing&amp;category!=flaky&amp;category!=interactive</TestFilters>
-    <TestFilters Condition="'$(TestFilters.ToLower())' == 'none'" />
+    <TestFilters Condition="'$(TestFilters)' == 'none'" />
     <!--
       Exclude tests in the "signed" category when building unsigned assemblies.  We have some tests
       that require signed assemblies, and they would fail with strong name validation exceptions on
@@ -615,7 +615,7 @@
     the first step of this target.
   -->
   <PropertyGroup>
-    <BuildSqlClientNotSupportedDependsOn Condition="'$(ReferenceType.ToLower())' == 'package' AND '$(SkipDependencyPack)' != 'true'">PackLogging;PackAbstractions;PackSqlServer</BuildSqlClientNotSupportedDependsOn>
+    <BuildSqlClientNotSupportedDependsOn Condition="'$(ReferenceType)' == 'package' AND '$(SkipDependencyPack)' != 'true'">PackLogging;PackAbstractions;PackSqlServer</BuildSqlClientNotSupportedDependsOn>
   </PropertyGroup>
   <Target Name="BuildSqlClientNotSupported" DependsOnTargets="$(BuildSqlClientNotSupportedDependsOn)">
     <PropertyGroup>
@@ -666,7 +666,7 @@
 
   <!-- BuildSqlClientRef: Builds the ref binaries project for SqlClient, which is OS-agnostic -->
   <PropertyGroup>
-    <BuildSqlClientRefDependsOn Condition="'$(ReferenceType.ToLower())' == 'package' AND '$(SkipDependencyPack)' != 'true'">PackLogging;PackAbstractions;PackSqlServer</BuildSqlClientRefDependsOn>
+    <BuildSqlClientRefDependsOn Condition="'$(ReferenceType)' == 'package' AND '$(SkipDependencyPack)' != 'true'">PackLogging;PackAbstractions;PackSqlServer</BuildSqlClientRefDependsOn>
   </PropertyGroup>
   <Target Name="BuildSqlClientRef" DependsOnTargets="$(BuildSqlClientRefDependsOn)">
     <PropertyGroup>
@@ -698,7 +698,7 @@
 
   <!-- BuildSqlClientImpl: Builds implementation assemblies of SqlClient -->
   <PropertyGroup>
-    <BuildSqlClientImplDependsOn Condition="'$(ReferenceType.ToLower())' == 'package' AND '$(SkipDependencyPack)' != 'true'">PackLogging;PackAbstractions;PackSqlServer</BuildSqlClientImplDependsOn>
+    <BuildSqlClientImplDependsOn Condition="'$(ReferenceType)' == 'package' AND '$(SkipDependencyPack)' != 'true'">PackLogging;PackAbstractions;PackSqlServer</BuildSqlClientImplDependsOn>
   </PropertyGroup>
   <Target Name="BuildSqlClientImpl" DependsOnTargets="$(BuildSqlClientImplDependsOn)">
     <PropertyGroup>
@@ -737,7 +737,7 @@
     built before packing.
   -->
   <PropertyGroup>
-    <PackSqlClientDependsOn Condition="'$(PackBuild.ToLower())' == 'true'">BuildSqlClient</PackSqlClientDependsOn>
+    <PackSqlClientDependsOn Condition="'$(PackBuild)' == 'true'">BuildSqlClient</PackSqlClientDependsOn>
   </PropertyGroup>
 
   <!--
@@ -774,12 +774,12 @@
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
 
     <!-- In Package mode, mirror produced packages into local feed (packages/) for downstream restore. -->
-    <ItemGroup Condition="'$(ReferenceType.ToLower())' == 'package'">
+    <ItemGroup Condition="'$(ReferenceType)' == 'package'">
       <SqlClientPackedArtifacts Include="$(SqlClientPackageArtifactRoot)*.nupkg" />
       <SqlClientPackedArtifacts Include="$(SqlClientPackageArtifactRoot)*.snupkg" />
     </ItemGroup>
     <Copy
-      Condition="'$(ReferenceType.ToLower())' == 'package'"
+      Condition="'$(ReferenceType)' == 'package'"
       SourceFiles="@(SqlClientPackedArtifacts)"
       DestinationFolder="$(PackagesDir)"
       SkipUnchangedFiles="true" />
@@ -826,12 +826,12 @@
       <LogFilePrefix Condition="'$(TestFramework)' != ''">$(LogFilePrefix)-$(TestFramework)</LogFilePrefix>
       <LogFilePrefix Condition="'$(TestSet)' != ''">$(LogFilePrefix)-$(TestSet)</LogFilePrefix>
 
-      <!-- Join test sets together, if any were selected -->
-      <NormalizedTestSet>$(TestSet.ToUpper())</NormalizedTestSet>
-      <TestSetFilter Condition="$(NormalizedTestSet.Contains('1'))">Set=1</TestSetFilter>
-      <TestSetFilter Condition="$(NormalizedTestSet.Contains('2'))">$(TestSetFilter)|Set=2</TestSetFilter>
-      <TestSetFilter Condition="$(NormalizedTestSet.Contains('3'))">$(TestSetFilter)|Set=3</TestSetFilter>
-      <TestSetFilter Condition="$(NormalizedTestSet.Contains('AE'))">$(TestSetFilter)|Set=AE</TestSetFilter>
+      <!-- Join test sets together, if any were selected. -->
+      <TestSetFilter Condition="$(TestSet.Contains('1'))">Set=1</TestSetFilter>
+      <TestSetFilter Condition="$(TestSet.Contains('2'))">$(TestSetFilter)|Set=2</TestSetFilter>
+      <TestSetFilter Condition="$(TestSet.Contains('3'))">$(TestSetFilter)|Set=3</TestSetFilter>
+      <!-- String.Contains() is case-sensitive, so use IndexOf() instead. -->
+      <TestSetFilter Condition="$(TestSet.IndexOf('AE', 'OrdinalIgnoreCase')) &gt;= 0">$(TestSetFilter)|Set=AE</TestSetFilter>
       <TestSetFilter>$(TestSetFilter.Trim('|'))</TestSetFilter>
 
       <!-- Combine existing filters with test set filters -->
@@ -903,7 +903,7 @@
 
   <!-- BuildAkvProvider: Builds Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider -->
   <PropertyGroup>
-    <BuildAkvProviderDependsOn Condition="'$(ReferenceType.ToLower())' == 'package' AND '$(SkipDependencyPack)' != 'true'">PackSqlClient;PackLogging</BuildAkvProviderDependsOn>
+    <BuildAkvProviderDependsOn Condition="'$(ReferenceType)' == 'package' AND '$(SkipDependencyPack)' != 'true'">PackSqlClient;PackLogging</BuildAkvProviderDependsOn>
   </PropertyGroup>
   <Target Name="BuildAkvProvider" DependsOnTargets="$(BuildAkvProviderDependsOn)">
     <PropertyGroup>
@@ -966,12 +966,12 @@
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
 
     <!-- In Package mode, mirror produced packages into local feed (packages/) for downstream restore. -->
-    <ItemGroup Condition="'$(ReferenceType.ToLower())' == 'package'">
+    <ItemGroup Condition="'$(ReferenceType)' == 'package'">
       <AkvProviderPackedArtifacts Include="$(AkvProviderArtifactRoot)*.nupkg" />
       <AkvProviderPackedArtifacts Include="$(AkvProviderArtifactRoot)*.snupkg" />
     </ItemGroup>
     <Copy
-      Condition="'$(ReferenceType.ToLower())' == 'package'"
+      Condition="'$(ReferenceType)' == 'package'"
       SourceFiles="@(AkvProviderPackedArtifacts)"
       DestinationFolder="$(PackagesDir)"
       SkipUnchangedFiles="true" />
@@ -1017,7 +1017,7 @@
 
   <!-- BuildAbstractions: Builds Microsoft.Data.SqlClient.Extensions.Abstractions -->
   <PropertyGroup>
-    <BuildAbstractionsDependsOn Condition="'$(ReferenceType.ToLower())' == 'package' AND '$(SkipDependencyPack)' != 'true'">PackLogging</BuildAbstractionsDependsOn>
+    <BuildAbstractionsDependsOn Condition="'$(ReferenceType)' == 'package' AND '$(SkipDependencyPack)' != 'true'">PackLogging</BuildAbstractionsDependsOn>
   </PropertyGroup>
   <Target Name="BuildAbstractions" DependsOnTargets="$(BuildAbstractionsDependsOn)">
     <PropertyGroup>
@@ -1077,12 +1077,12 @@
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
 
     <!-- In Package mode, mirror produced packages into local feed (packages/) for downstream restore. -->
-    <ItemGroup Condition="'$(ReferenceType.ToLower())' == 'package'">
+    <ItemGroup Condition="'$(ReferenceType)' == 'package'">
       <AbstractionsPackedArtifacts Include="$(AbstractionsArtifactRoot)*.nupkg" />
       <AbstractionsPackedArtifacts Include="$(AbstractionsArtifactRoot)*.snupkg" />
     </ItemGroup>
     <Copy
-      Condition="'$(ReferenceType.ToLower())' == 'package'"
+      Condition="'$(ReferenceType)' == 'package'"
       SourceFiles="@(AbstractionsPackedArtifacts)"
       DestinationFolder="$(PackagesDir)"
       SkipUnchangedFiles="true" />
@@ -1128,7 +1128,7 @@
 
   <!-- BuildAzure: Builds Microsoft.Data.SqlClient.Extensions.Azure -->
   <PropertyGroup>
-    <BuildAzureDependsOn Condition="'$(ReferenceType.ToLower())' == 'package' AND '$(SkipDependencyPack)' != 'true'">PackLogging;PackAbstractions</BuildAzureDependsOn>
+    <BuildAzureDependsOn Condition="'$(ReferenceType)' == 'package' AND '$(SkipDependencyPack)' != 'true'">PackLogging;PackAbstractions</BuildAzureDependsOn>
   </PropertyGroup>
   <Target Name="BuildAzure" DependsOnTargets="$(BuildAzureDependsOn)">
     <PropertyGroup>
@@ -1188,12 +1188,12 @@
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
 
     <!-- In Package mode, mirror produced packages into local feed (packages/) for downstream restore. -->
-    <ItemGroup Condition="'$(ReferenceType.ToLower())' == 'package'">
+    <ItemGroup Condition="'$(ReferenceType)' == 'package'">
       <AzurePackedArtifacts Include="$(AzureArtifactRoot)*.nupkg" />
       <AzurePackedArtifacts Include="$(AzureArtifactRoot)*.snupkg" />
     </ItemGroup>
     <Copy
-      Condition="'$(ReferenceType.ToLower())' == 'package'"
+      Condition="'$(ReferenceType)' == 'package'"
       SourceFiles="@(AzurePackedArtifacts)"
       DestinationFolder="$(PackagesDir)"
       SkipUnchangedFiles="true" />
@@ -1286,12 +1286,12 @@
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
 
     <!-- In Package mode, mirror produced packages into local feed (packages/) for downstream restore. -->
-    <ItemGroup Condition="'$(ReferenceType.ToLower())' == 'package'">
+    <ItemGroup Condition="'$(ReferenceType)' == 'package'">
       <LoggingPackedArtifacts Include="$(LoggingArtifactRoot)*.nupkg" />
       <LoggingPackedArtifacts Include="$(LoggingArtifactRoot)*.snupkg" />
     </ItemGroup>
     <Copy
-      Condition="'$(ReferenceType.ToLower())' == 'package'"
+      Condition="'$(ReferenceType)' == 'package'"
       SourceFiles="@(LoggingPackedArtifacts)"
       DestinationFolder="$(PackagesDir)"
       SkipUnchangedFiles="true" />
@@ -1354,12 +1354,12 @@
     <Exec ConsoleToMsBuild="true" Command="$(DotnetCommand)" />
 
     <!-- In Package mode, mirror produced packages into local feed (packages/) for downstream restore. -->
-    <ItemGroup Condition="'$(ReferenceType.ToLower())' == 'package'">
+    <ItemGroup Condition="'$(ReferenceType)' == 'package'">
       <SqlServerPackedArtifacts Include="$(SqlServerArtifactRoot)*.nupkg" />
       <SqlServerPackedArtifacts Include="$(SqlServerArtifactRoot)*.snupkg" />
     </ItemGroup>
     <Copy
-      Condition="'$(ReferenceType.ToLower())' == 'package'"
+      Condition="'$(ReferenceType)' == 'package'"
       SourceFiles="@(SqlServerPackedArtifacts)"
       DestinationFolder="$(PackagesDir)"
       SkipUnchangedFiles="true" />

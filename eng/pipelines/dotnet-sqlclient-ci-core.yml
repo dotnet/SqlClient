@@ -15,7 +15,7 @@ parameters:
   #
   - name: targetFrameworks
     type: object
-    default: [net462, net8.0, net9.0, net10.0]
+    default: [net462, net10.0]
 
   # The target frameworks to build and run tests for on Unix.
   #
@@ -23,27 +23,20 @@ parameters:
   #
   - name: targetFrameworksUnix
     type: object
-    default: [net8.0, net9.0, net10.0]
+    default: [net10.0]
 
   # The target frameworks to build and run tests for on Windows, for the
   # primary test configurations (local SQL Server 2025 and Azure SQL).
   #
-  # These configurations carry the broadest coverage, so newer runtimes are
-  # validated here first before being enabled across every configuration.
-  #
-  # Note: The driver does not ship a net10.0 target framework, so net10.0 test
-  # assemblies resolve the net9.0 driver build.  Including net10.0 here
-  # validates the driver running on the .NET 10 runtime.
-  #
   - name: primaryTargetFrameworks
     type: object
-    default: [net462, net8.0, net9.0, net10.0]
+    default: [net462, net10.0]
 
   # The target frameworks to build and run tests for on Unix, for the primary
   # test configurations (local SQL Server 2025 and Azure SQL).
   - name: primaryTargetFrameworksUnix
     type: object
-    default: [net8.0, net9.0, net10.0]
+    default: [net10.0]
 
   # Netcore Version for Test Utilities
   - name: netcoreVersionTestUtils
@@ -446,7 +439,7 @@ stages:
           pool: ${{parameters.defaultPoolName }}
           images:
             Win22_Sql19_x86: ADO-MMS22-SQL19
-          TargetFrameworks: [net462, net8.0, net9.0]
+          TargetFrameworks: [net462, net10.0]
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
           testSets: ${{parameters.testSets }}
@@ -464,7 +457,7 @@ stages:
             LocalDbAppName: $(LocalDbAppName)
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
             AliasName: $(SQLAliasName)
-            x86TestTargetFrameworks: [net462, net8.0, net9.0]
+            x86TestTargetFrameworks: [net462, net10.0]
             SQLRootPath: $(SQL19RootPath)
             enableLocalDB: true
 
@@ -499,7 +492,7 @@ stages:
           pool: ${{parameters.defaultPoolName }}
           images:
             Win25_Sql25_x86: ADO-MMS25-SQL25
-          TargetFrameworks: [net462, net8.0, net9.0]
+          TargetFrameworks: [net462, net10.0]
           netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
           buildPlatforms: ${{parameters.buildPlatforms }}
           testSets: ${{parameters.testSets }}
@@ -517,7 +510,7 @@ stages:
             LocalDbAppName: $(LocalDbAppName)
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
             AliasName: $(SQLAliasName)
-            x86TestTargetFrameworks: [net462, net8.0, net9.0]
+            x86TestTargetFrameworks: [net462, net10.0]
             SQLRootPath: $(SQL25RootPath)
             enableLocalDB: true
 
@@ -553,16 +546,14 @@ stages:
           configSqlFor: azure
           operatingSystem: Windows
           configProperties:
-            TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING)
-            NPConnectionString: $(AZURE_DB_NP_CONN_STRING)
-            AADAuthorityURL: $(AADAuthorityURL)
+            TCPConnectionString: $(AZURE_SQL_CONN_STRING_WestUS2)
+            NPConnectionString: $(AZURE_SQL_CONN_STRING_WestUS2)
             # Pipeline runs against forks of the repo don't have access to Library secrets, so we
             # omit them entirely from the configProperties, which causes the dependent tests to be
             # skipped.
             ${{ if eq(variables['System.PullRequest.IsFork'], 'False') }}:
-              AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR)
               AADServicePrincipalSecret: $(AADServicePrincipalSecret)
-            AADServicePrincipalId: $(AADServicePrincipalId)
+              AADServicePrincipalId: $(AADServicePrincipalId)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
             AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
             SupportsIntegratedSecurity: false
@@ -583,11 +574,9 @@ stages:
           configSqlFor: azure
           operatingSystem: Windows
           configProperties:
-            TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING)
-            NPConnectionString: $(AZURE_DB_NP_CONN_STRING)
-            AADAuthorityURL: $(AADAuthorityURL)
+            TCPConnectionString: $(AZURE_SQL_CONN_STRING_WestUS2)
+            NPConnectionString: $(AZURE_SQL_CONN_STRING_WestUS2)
             ${{ if eq(variables['System.PullRequest.IsFork'], 'False') }}:
-              AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR)
               AADServicePrincipalSecret: $(AADServicePrincipalSecret)
             AADServicePrincipalId: $(AADServicePrincipalId)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
@@ -610,13 +599,11 @@ stages:
           configSqlFor: azure
           operatingSystem: Windows
           configProperties:
-            TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING_eastus)
-            NPConnectionString: $(AZURE_DB_NP_CONN_STRING_eastus)
-            AADAuthorityURL: $(AADAuthorityURL)
+            TCPConnectionString: $(AZURE_SQL_CONN_STRING_EastUS)
+            NPConnectionString: $(AZURE_SQL_CONN_STRING_EastUS)
             ${{ if eq(variables['System.PullRequest.IsFork'], 'False') }}:
-              AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR_eastus)
               AADServicePrincipalSecret: $(AADServicePrincipalSecret)
-            AADServicePrincipalId: $(AADServicePrincipalId)
+              AADServicePrincipalId: $(AADServicePrincipalId)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
             AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
             SupportsIntegratedSecurity: false
@@ -716,13 +703,11 @@ stages:
           configSqlFor: azure
           operatingSystem: Linux
           configProperties:
-            TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING)
-            NPConnectionString: $(AZURE_DB_NP_CONN_STRING)
-            AADAuthorityURL: $(AADAuthorityURL)
+            TCPConnectionString: $(AZURE_SQL_CONN_STRING_WestUS2)
+            NPConnectionString: $(AZURE_SQL_CONN_STRING_WestUS2)
             ${{ if eq(variables['System.PullRequest.IsFork'], 'False') }}:
-              AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR)
               AADServicePrincipalSecret: $(AADServicePrincipalSecret)
-            AADServicePrincipalId: $(AADServicePrincipalId)
+              AADServicePrincipalId: $(AADServicePrincipalId)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
             AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
             SupportsIntegratedSecurity: false
@@ -773,7 +758,6 @@ stages:
               TCPConnectionStringNoneVBS: $(SQL_TCP_CONN_STRING_NoneVBS)
               TCPConnectionStringAASSGX: $(SQL_TCP_CONN_STRING_AASSGX)
               EnclaveEnabled: true
-              AADAuthorityURL: $(AADAuthorityURL)
               AADServicePrincipalId: $(AADServicePrincipalId)
               AADServicePrincipalSecret: $(AADServicePrincipalSecret)
               AzureKeyVaultUrl: $(AzureKeyVaultUrl)

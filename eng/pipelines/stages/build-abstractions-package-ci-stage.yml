@@ -122,7 +122,7 @@ stages:
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           jobNameSuffix: linux
           netFrameworkRuntimes: []
-          netRuntimes: [net8.0, net9.0, net10.0]
+          netRuntimes: [net10.0]
           poolName: ${{ parameters.poolName }}
           poolImage: ADO-UB24
 
@@ -137,13 +137,12 @@ stages:
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           jobNameSuffix: windows
           netFrameworkRuntimes: [net462]
-          netRuntimes: [net8.0, net9.0, net10.0]
+          netRuntimes: [net10.0]
           poolName: ${{ parameters.poolName }}
           poolImage: ADO-Win25
 
       # ------------------------------------------------------------------------
       # Build and test on macOS.
-
       - ${{ if eq(parameters.runMacOSTests, true) }}:
         - template: /eng/pipelines/jobs/test-abstractions-package-ci-job.yml@self
           parameters:
@@ -153,12 +152,11 @@ stages:
             dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
             jobNameSuffix: macos
             netFrameworkRuntimes: []
-            netRuntimes: [net8.0, net9.0, net10.0]
+            netRuntimes: [net10.0]
             # Our 1ES pools do not offer macOS images, so this job runs on the Microsoft-hosted
             # 'Azure Pipelines' pool.
             poolName: Azure Pipelines
             poolImage: macos-latest
-
       # ------------------------------------------------------------------------
       # Create and publish the NuGet package.
 

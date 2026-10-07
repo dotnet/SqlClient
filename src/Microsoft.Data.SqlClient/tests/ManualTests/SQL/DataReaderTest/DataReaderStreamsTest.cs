@@ -426,7 +426,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string query = "SELECT convert(xml,NULL) AS XmlData, convert(nvarchar(max),NULL) as TextData, convert(varbinary(max),NULL) as StreamData";
 
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection connection = DataTestUtility.CreateConnection())
             using (SqlCommand command = new SqlCommand(query, connection))
             {
                 connection.Open();
@@ -508,7 +508,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string query = "SELECT convert(xml,NULL) AS XmlData, convert(nvarchar(max),NULL) as TextData";
 
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection connection = DataTestUtility.CreateConnection())
             using (SqlCommand command = new SqlCommand(query, connection))
             {
                 connection.Open();
@@ -537,7 +537,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string query = $"SELECT CAST('{expectedXml}' AS NVARCHAR(MAX))";
 
             string returnedXml = null;
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection connection = DataTestUtility.CreateConnection())
             using (SqlCommand command = new SqlCommand(query, connection))
             {
                 connection.Open();
@@ -576,7 +576,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             bool expectNull,
             bool checkNull)
         {
-            using SqlConnection connection = new (DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             await connection.OpenAsync();
 
             using SqlCommand command = new(
@@ -627,7 +627,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             bool expectNull,
             bool checkNull)
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             await connection.OpenAsync();
 
             using SqlCommand command = new(
@@ -669,7 +669,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             bool expectNull,
             bool checkNull)
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             await connection.OpenAsync();
 
             using SqlCommand command = new(
@@ -720,7 +720,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             bool expectNull,
             bool checkNull)
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             await connection.OpenAsync();
 
             using SqlCommand command = new(
@@ -767,7 +767,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             bool expectNull,
             bool checkNull)
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             await connection.OpenAsync();
 
             using SqlCommand command = new(
@@ -809,7 +809,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             bool expectNull,
             bool checkNull)
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             await connection.OpenAsync();
 
             using SqlCommand command = new(
@@ -860,7 +860,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             bool expectNull,
             bool checkNull)
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             await connection.OpenAsync();
 
             using SqlCommand command = new(
@@ -907,7 +907,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             bool expectNull,
             bool checkNull)
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             await connection.OpenAsync();
 
             using SqlCommand command = new(
@@ -953,7 +953,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string? value,
             bool expectNull)
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             connection.Open();
 
             using SqlCommand command = new(
@@ -994,7 +994,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string? value,
             bool expectNull)
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             connection.Open();
 
             using SqlCommand command = new(
@@ -1028,7 +1028,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string? value,
             bool expectNull)
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             connection.Open();
 
             using SqlCommand command = new(

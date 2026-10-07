@@ -10,7 +10,7 @@
 
   <!-- Target Frameworks =============================================== -->
   <PropertyGroup>
-    <TargetFrameworks>net462;net8.0;net9.0;net10.0</TargetFrameworks>
+    <TargetFrameworks>net462;net10.0</TargetFrameworks>
   </PropertyGroup>
 
   <!-- Compiler Options ================================================ -->
@@ -50,6 +50,9 @@
                       Condition="'$(ReferenceType)' == 'Package'"/>
 
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient.Extensions/Azure/src/Azure.csproj" />
+
+    <!-- Shared test helpers (StringExtensions for composing AAD connection strings, etc.) -->
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/Common/Microsoft.Data.SqlClient.TestCommon.csproj" />
   </ItemGroup>
 
   <!-- References for netfx -->
