@@ -628,6 +628,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Timeout expired.  The connection timeout period elapsed before the transaction isolation level of the pooled connection could be reset..
+        /// </summary>
+        internal static string ADP_IsolationLevelResetTimeout {
+            get {
+                return ResourceManager.GetString("ADP_IsolationLevelResetTimeout", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Keyword not supported: &apos;{0}&apos;..
         /// </summary>
         internal static string ADP_KeywordNotSupported {

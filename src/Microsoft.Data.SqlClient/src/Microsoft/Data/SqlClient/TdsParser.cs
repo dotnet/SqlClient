@@ -9960,7 +9960,12 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        // timeout is in seconds; zero or less means no timeout.
         internal Task TdsExecuteSQLBatch(string text, int timeout, SqlNotificationRequest notificationRequest, TdsParserStateObject stateObj, bool sync, bool callerHasConnectionLock = false, byte[] enclavePackage = null)
+            => TdsExecuteSQLBatchWithMillisecondTimeout(text, (long)timeout * 1000L, notificationRequest, stateObj, sync, callerHasConnectionLock, enclavePackage);
+
+        // timeoutMilliseconds is in milliseconds; zero or less means no timeout.
+        internal Task TdsExecuteSQLBatchWithMillisecondTimeout(string text, long timeoutMilliseconds, SqlNotificationRequest notificationRequest, TdsParserStateObject stateObj, bool sync, bool callerHasConnectionLock = false, byte[] enclavePackage = null)
         {
             if (TdsParserState.Broken == State || TdsParserState.Closed == State)
             {
@@ -10010,7 +10015,7 @@ namespace Microsoft.Data.SqlClient
                 //  accidentally execute after the transaction has completed on a different thread.
                 _connHandler.CheckEnlistedTransactionBinding();
 
-                stateObj.SetTimeoutSeconds(timeout);
+                stateObj.SetTimeoutMilliseconds(timeoutMilliseconds);
 
                 if ((!_fMARS) && (_physicalStateObj.HasOpenResult))
                 {
