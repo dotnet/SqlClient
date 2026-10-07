@@ -116,7 +116,7 @@ namespace Microsoft.Data.SqlClient
 #endif
                     {
                         List<byte> payload = await JsonSerializer
-                            .DeserializeAsync<List<byte>>(stream, cancellationToken: cancellationToken)
+                            .DeserializeAsync(stream, SqlClientJsonSerializerContext.Default.ListByte, cancellationToken)
                             .ConfigureAwait(false);
 
                         return payload?.ToArray();
