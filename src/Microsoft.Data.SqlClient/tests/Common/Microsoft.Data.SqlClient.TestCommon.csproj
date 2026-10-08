@@ -28,6 +28,12 @@
 
   <!-- References ====================================================== -->
   <!-- Test target reference -->
+  <!-- Internal helpers require a driver with matching internals and an InternalsVisibleTo grant. -->
+  <PropertyGroup Condition="'$(ReferenceType)' == 'Package'">
+    <!-- Map to the closest TFM shipped in the driver package. -->
+    <_SqlClientPackageTfm Condition="'$(TargetFramework)' == 'net462'">net462</_SqlClientPackageTfm>
+    <_SqlClientPackageTfm Condition="'$(_SqlClientPackageTfm)' == ''">net10.0</_SqlClientPackageTfm>
+  </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj"
                       Condition="'$(ReferenceType)' != 'Package'" />
@@ -36,14 +42,22 @@
     <!-- to every project in the build, so this project must honour it too; otherwise the      -->
     <!-- CPM-managed (unpublished, in-development) version is used here and restore fails with -->
     <!-- NU1102/NU1605 for consumers that pinned an older baseline. Under Central Package      -->
-    <!-- Management a plain Version is ignored, so VersionOverride is used; when                -->
-    <!-- MdsPackageVersion is empty the CPM-managed version applies. The two Includes are       -->
-    <!-- mutually exclusive on whether MdsPackageVersion was provided.                          -->
+    <!-- Management a plain Version is ignored, so VersionOverride is used; when               -->
+    <!-- MdsPackageVersion is empty the CPM-managed version applies. The two Includes are      -->
+    <!-- mutually exclusive on whether MdsPackageVersion was provided.                         -->
     <PackageReference Include="Microsoft.Data.SqlClient"
-                      Condition="'$(ReferenceType)' == 'Package' and '$(MdsPackageVersion)' == ''" />
+                      Condition="'$(ReferenceType)' == 'Package' and '$(MdsPackageVersion)' == ''"
+                      GeneratePathProperty="true"
+                      ExcludeAssets="compile" />
     <PackageReference Include="Microsoft.Data.SqlClient"
                       Condition="'$(ReferenceType)' == 'Package' and '$(MdsPackageVersion)' != ''"
-                      VersionOverride="$(MdsPackageVersion)" />
+                      VersionOverride="$(MdsPackageVersion)"
+                      GeneratePathProperty="true"
+                      ExcludeAssets="compile" />
+    <!-- Compile against the implementation DLL; the package's ref assembly omits internals. -->
+    <Reference Include="Microsoft.Data.SqlClient"
+               Condition="'$(ReferenceType)' == 'Package'"
+               HintPath="$(PkgMicrosoft_Data_SqlClient)/lib/$(_SqlClientPackageTfm)/Microsoft.Data.SqlClient.dll" />
   </ItemGroup>
 
   <!-- References for netfx -->
