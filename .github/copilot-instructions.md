@@ -11,7 +11,7 @@
 
 ## 📚 Project Overview
 This project is a .NET data provider for SQL Server, enabling .NET applications to interact with SQL Server databases. It supports various features like connection pooling, transaction management, and asynchronous operations.
-The project builds from a **single unified project** at `src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj`. Its framework and platform selection is defined by the project and imported build files. Public API declarations are unified under `src/Microsoft.Data.SqlClient/ref/`; the legacy `netfx/` and `netcore/` directories are no longer used.
+Driver source and public API declarations are unified under `src/Microsoft.Data.SqlClient/src/` and `src/Microsoft.Data.SqlClient/ref/`, with multi-target projects in both directories. On this release branch, `build.proj` still selects implementation and reference projects under the legacy `netfx/` and `netcore/` directories. Those projects compile the unified sources and remain active build surfaces; preserve them while directing new code and API declarations to the unified directories. Framework and platform selection is defined by the selected projects and imported build files.
 The project includes:
 - **Public APIs**: Defined by `src/Microsoft.Data.SqlClient/ref/Microsoft.Data.SqlClient.csproj` and the reference source files beside it.
 - **Implementations**: All source code in `src/Microsoft.Data.SqlClient/src/`.

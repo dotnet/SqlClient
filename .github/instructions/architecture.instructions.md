@@ -5,12 +5,18 @@ applyTo: "**"
 
 ## Project Structure
 
-This repository contains the official Microsoft ADO.NET data provider for SQL Server. The driver is built from a **single unified project** that multi-targets all supported frameworks.
+This repository contains the official Microsoft ADO.NET data provider for SQL Server. Driver source and public API declarations are unified, but legacy projects remain active on this release branch during the unified-project migration.
 
 ```
 src/
 ├── Microsoft.Data.SqlClient/
 │   ├── add-ons/                    # Azure Key Vault provider
+│   ├── netcore/                    # Active legacy .NET build projects
+│   │   ├── src/                    # Compiles unified implementation sources
+│   │   └── ref/                    # Compiles unified public API declarations
+│   ├── netfx/                      # Active legacy .NET Framework build projects
+│   │   ├── src/                    # Compiles unified implementation sources
+│   │   └── ref/                    # Compiles unified public API declarations
 │   ├── ref/                        # Unified public API declarations
 │   │   └── Microsoft.Data.SqlClient.csproj # Multi-target reference project
 │   ├── src/                        # ✅ PRIMARY - Unified source for all platforms
@@ -31,13 +37,15 @@ src/
 ## Unified Project Model
 
 ### Architecture Goal
-The driver implementation is built from `src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj`; its public API declarations are built from `src/Microsoft.Data.SqlClient/ref/Microsoft.Data.SqlClient.csproj`. Check those projects and their imported build files for framework and platform selection.
+The unified implementation and reference projects are `src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj` and `src/Microsoft.Data.SqlClient/ref/Microsoft.Data.SqlClient.csproj`. They coexist with legacy projects still selected by `build.proj` on this release branch. Check the selected projects and their imported build files for framework and platform selection.
 
 **All new code MUST go into `src/Microsoft.Data.SqlClient/src/`**. Do NOT add files to the legacy `netcore/src/` or `netfx/src/` directories.
 
 ### Legacy Folders
-The former `netcore/` and `netfx/` source and reference directories are no longer
-used. Do not recreate them; use the unified `src/` and `ref/` directories.
+The `netcore/` and `netfx/` directories remain active build surfaces on this release branch:
+- `build.proj` selects their implementation and reference projects for restore and build.
+- `tools/targets/CompareMdsRefAssemblies.targets` builds and compares both legacy reference projects and the unified reference project.
+- The legacy projects compile sources from the unified `src/` and `ref/` directories. Add new code and API declarations there, not in the legacy trees, and preserve the legacy project files while they remain in use.
 
 ### OS Targeting with `TargetOs`
 The unified project uses a `TargetOs` MSBuild property to handle OS-specific compilation:
@@ -91,6 +99,8 @@ The unified project uses conditional `ItemGroup` elements for dependencies:
 `src/Microsoft.Data.SqlClient/ref/Microsoft.Data.SqlClient.csproj` builds the unified
 reference sources for `net462`, `net8.0`, `net9.0`, and `netstandard2.0`. Declarations
 are grouped by namespace, with conditional compilation for framework differences.
+The active `netcore/ref/` and `netfx/ref/` projects compile these same source files;
+`CompareMdsRefAssemblies` validates both legacy and unified reference assemblies.
 
 **IMPORTANT**: Public API changes MUST update the corresponding files under
 `src/Microsoft.Data.SqlClient/ref/` for every affected target framework.

@@ -123,7 +123,8 @@ suggested fix safe; an answered concern is not new merely at a higher priority.
 ### 4. Check regression protection
 
 Inspect current-head CI and coverage first. If execution is authorized and safe,
-use [BUILDGUIDE.md](../../../BUILDGUIDE.md) and [TESTGUIDE.md](../../../TESTGUIDE.md)
+use [BUILDGUIDE.md](../../../BUILDGUIDE.md) and the
+[testing instructions](../../instructions/testing.instructions.md)
 for a focused test that answers an unresolved question, not a repeat of known CI.
 Verify tests ran, including skip conditions; compare baseline/head with equivalent
 configuration. Optional mutation experiments belong only in disposable isolated

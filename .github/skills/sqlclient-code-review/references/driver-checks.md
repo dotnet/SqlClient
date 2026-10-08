@@ -131,7 +131,8 @@ specific token, negotiated feature, and protocol revision.
 ## Authentication, encryption, and diagnostics
 
 - Inspect added code, configuration, samples, and comments for embedded credentials
-  per `.github/instructions/secrets.instructions.md`; never reproduce secret values.
+  per the [repository security guidance](../../../../policy/coding-best-practices.md#security-considerations);
+  never reproduce secret values.
   Run scanners or retrieve scanning alerts only when the host authorizes those
   capabilities. Otherwise inspect redacted results for the reviewed revision
   supplied by the user or trusted CI, or report a secret-scanning verification gap.
