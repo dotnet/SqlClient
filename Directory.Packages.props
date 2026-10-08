@@ -155,11 +155,9 @@
     <PackageVersion Include="System.Buffers" Version="4.6.1" />
     <PackageVersion Include="System.Data.Common" Version="4.3.0" />
     <!--
-      Azure.Core 1.51.1 and System.ClientModel 1.9.0 require DiagnosticSource
-      >= 10.0.2 and System.Text.Json >= 10.0.1 on their legacy targets.
-      These existing 10.x floors are graph-required exceptions to runtime-band
-      alignment; pinning them to 8.x/9.x would fail restore with NU1109.
-      Revisit with the upstream dependencies, not by lowering these pins alone.
+      The 10.x band matches the supported modern runtime and the floor LTS
+      for legacy targets. Transitive pinning can publish these servicing
+      versions as explicit minimums in SDK-generated package dependencies.
     -->
     <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="10.0.12" />
     <PackageVersion Include="System.Memory" Version="4.6.3" />
