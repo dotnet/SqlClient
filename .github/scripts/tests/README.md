@@ -2,6 +2,9 @@
 
 This directory contains tests for the shell scripts used by the
 [cherry-pick-hotfix](./../../../.github/workflows/cherry-pick-hotfix.yml),
+[hotfix-label-issue](./../../../.github/workflows/hotfix-label-issue.yml),
+[sync-hotfix-label-to-pr](./../../../.github/workflows/sync-hotfix-label-to-pr.yml),
+[close-backport-issue](./../../../.github/workflows/close-backport-issue.yml),
 [check-milestone](./../../../.github/workflows/check-milestone.yml) and
 [recheck-milestones](./../../../.github/workflows/recheck-milestones.yml) GitHub Actions workflows.
 These tests are intended to be run manually by developers when they are changing the associated
@@ -90,6 +93,10 @@ bats .github/scripts/tests/cherry-pick-to-release.bats
 bats .github/scripts/tests/check-milestone-branch.bats
 bats .github/scripts/tests/check-milestone-version.bats
 bats .github/scripts/tests/recheck-milestones-for-release-branch.bats
+bats .github/scripts/tests/create-backport-issue.bats
+bats .github/scripts/tests/sync-hotfix-label-to-pr.bats
+bats .github/scripts/tests/sync-hotfix-label-from-issue.bats
+bats .github/scripts/tests/close-backport-issue.bats
 ```
 
 ### Run a specific test by name
@@ -120,6 +127,10 @@ bats --formatter pretty .github/scripts/tests/
 | `check-milestone-branch.bats` | Tests milestone validation against the pull request target branch. |
 | `check-milestone-version.bats` | Tests milestone validation against the canonical SqlClient version. |
 | `recheck-milestones-for-release-branch.bats` | Tests milestone rechecks when a release branch is created. |
+| `create-backport-issue.bats` | Tests Hotfix label validation, duplicate backport-issue detection, milestone lookup, child issue creation, and native sub-issue linking. |
+| `sync-hotfix-label-to-pr.bats` | Tests collecting Hotfix labels from a PR's closing issues and idempotently syncing them onto the PR. |
+| `sync-hotfix-label-from-issue.bats` | Tests finding PRs that close a labeled issue, syncing labels, and dispatching reconciliation for already-merged PRs. |
+| `close-backport-issue.bats` | Tests closing open backport issues referenced by a merged release-branch PR. |
 
 ## How the Tests Work
 
