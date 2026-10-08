@@ -204,6 +204,9 @@
   <data name="ADP_PooledOpenTimeout" xml:space="preserve">
     <value>Tempo limite expirado.  O período de tempo limite foi atingido antes que fosse obtida uma conexão do pool.  Isso pode ter ocorrido porque todas as conexões do pool estavam em uso e o tamanho máximo do pool foi atingido.</value>
   </data>
+  <data name="ADP_IsolationLevelResetTimeout" xml:space="preserve">
+    <value>Timeout expired.  The connection timeout period elapsed before the transaction isolation level of the pooled connection could be reset.</value>
+  </data>
   <data name="ADP_NonPooledOpenTimeout" xml:space="preserve">
     <value>Tempo limite atingido ao tentar abrir a conexão. O período decorrido antes da tentativa de abrir a conexão foi excedido. Talvez isso tenha ocorrido por causa de muitas tentativas de conexão não em pool simultâneas.</value>
   </data>

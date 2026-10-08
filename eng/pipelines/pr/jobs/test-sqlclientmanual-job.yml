@@ -218,11 +218,11 @@ jobs:
           arguments: >-
             -t:TestSqlClientManual
             -p:Configuration=${{ parameters.buildConfiguration }}
-            -p:BuildNumber='$(Build.BuildNumber)'
-            -p:BuildSuffix='${{ parameters.buildSuffix }}'
+            -p:BuildNumber="$(Build.BuildNumber)"
+            -p:BuildSuffix="${{ parameters.buildSuffix }}"
             -p:TestFramework=${{ parameters.platformDotnet }}
             -p:TestSet=${{ parameters.testSet }}
-            -p:TestResultsFolderPath=${{ variables.testResultsPath }}
+            -p:TestResultsFolderPath="${{ variables.testResultsPath }}"
 
       # Publish test results
       - template: /eng/pipelines/pr/steps/publish-test-results-step.yml@self

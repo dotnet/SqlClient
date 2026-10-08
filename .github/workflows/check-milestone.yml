@@ -6,8 +6,9 @@
 #
 # Check Milestone
 #
-# Validates that every pull request has an open milestone assigned, and that
-# the milestone is consistent with the branch the PR targets.
+# Validates that every pull request has an open milestone assigned, that
+# milestones on PRs targeting main match SqlClientNextVersion, and that the
+# milestone is consistent with the branch the PR targets.
 #
 # Milestones map to release branches by major.minor:
 #
@@ -54,11 +55,10 @@ jobs:
           echo "::error::Milestone '${{ github.event.pull_request.milestone.title }}' is ${{ github.event.pull_request.milestone.state }}. Please assign an open milestone."
           exit 1
 
-      - name: Checkout scripts
+      - name: Checkout branch check inputs
         if: github.event.pull_request.milestone != null
         uses: actions/checkout@v6
         with:
-          # Only the scripts directory is needed; skip full history.
           sparse-checkout: .github/scripts
           sparse-checkout-cone-mode: false
 
@@ -71,3 +71,25 @@ jobs:
           DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: bash "${GITHUB_WORKSPACE}/.github/scripts/check-milestone-branch.sh"
+
+  check-milestone-version:
+    name: Check milestone matches next SqlClient version
+    if: github.event.pull_request.milestone != null
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout version check inputs
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            .github/scripts
+            src/Microsoft.Data.SqlClient/Versions.props
+          sparse-checkout-cone-mode: false
+
+      - name: Validate milestone version
+        env:
+          MILESTONE_TITLE: ${{ github.event.pull_request.milestone.title }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: bash "${GITHUB_WORKSPACE}/.github/scripts/check-milestone-version.sh"

@@ -204,6 +204,9 @@
   <data name="ADP_PooledOpenTimeout" xml:space="preserve">
     <value>Истекло время ожидания. Время ожидания истекло раньше, чем удалось получить подключение из пула. Возможно, все подключения в пуле уже используются и достигнут максимальный размер пула.</value>
   </data>
+  <data name="ADP_IsolationLevelResetTimeout" xml:space="preserve">
+    <value>Timeout expired.  The connection timeout period elapsed before the transaction isolation level of the pooled connection could be reset.</value>
+  </data>
   <data name="ADP_NonPooledOpenTimeout" xml:space="preserve">
     <value>Превышено время ожидания открытия соединения. Период времени, прошедший до попытки открыть соединение, превысил максимум. Это могло случиться из-за слишком большого числа одновременных попыток соединения не из пула.</value>
   </data>

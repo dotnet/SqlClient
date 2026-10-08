@@ -95,16 +95,13 @@
   <!-- Dependencies shared by multiple projects -->
 
   <ItemGroup>
-    <PackageVersion Include="Azure.Core" Version="1.51.1" />
+    <PackageVersion Include="Azure.Core" Version="1.62.0" />
     <PackageVersion Include="Microsoft.Identity.Client" Version="4.84.2" />
   </ItemGroup>
 
-  <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">
-    <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="9.0.18" />
-  </ItemGroup>
-
-  <ItemGroup Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">
-    <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
+  <!-- .NET 10 is the lowest supported runtime band, including legacy/Standard dependencies. -->
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="10.0.12" />
   </ItemGroup>
 
   <!-- ===================================================================== -->
@@ -144,7 +141,6 @@
   <!-- Azure Dependencies -->
 
   <ItemGroup>
-    <PackageVersion Include="Azure.Identity" Version="1.18.0" />
     <PackageVersion Include="Microsoft.Identity.Client.Broker" Version="4.84.2" />
   </ItemGroup>
 
@@ -154,8 +150,8 @@
   <ItemGroup>
     <PackageVersion Include="Microsoft.Data.SqlClient.SNI" Version="$(SniVersionRange)" />
     <PackageVersion Include="Microsoft.Data.SqlClient.SNI.runtime" Version="$(SniVersionRange)" />
-    <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.16.0" />
-    <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.16.0" />
+    <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.23.0" />
+    <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.23.0" />
     <PackageVersion Include="System.Buffers" Version="4.6.1" />
     <PackageVersion Include="System.Data.Common" Version="4.3.0" />
     <!--
@@ -165,28 +161,20 @@
       alignment; pinning them to 8.x/9.x would fail restore with NU1109.
       Revisit with the upstream dependencies, not by lowering these pins alone.
     -->
-    <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="10.0.3" />
+    <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="10.0.12" />
     <PackageVersion Include="System.Memory" Version="4.6.3" />
     <PackageVersion Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
-    <PackageVersion Include="System.Text.Json" Version="10.0.3" />
+    <PackageVersion Include="System.Text.Json" Version="10.0.12" />
     <PackageVersion Include="System.ValueTuple" Version="4.6.2" />
-    <PackageVersion Include="System.Threading.Channels" Version="10.0.3" />
+    <PackageVersion Include="System.Threading.Channels" Version="10.0.12" />
   </ItemGroup>
 
-  <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">
-    <PackageVersion Include="Microsoft.Bcl.Cryptography" Version="9.0.18" />
-    <PackageVersion Include="Microsoft.Bcl.TimeProvider" Version="9.0.18" />
-    <PackageVersion Include="System.Threading.RateLimiting" Version="9.0.18" />
-    <PackageVersion Include="System.Configuration.ConfigurationManager" Version="9.0.18" />
-    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="9.0.18" />
-  </ItemGroup>
-
-  <ItemGroup Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">
-    <PackageVersion Include="Microsoft.Bcl.Cryptography" Version="8.0.0" />
-    <PackageVersion Include="Microsoft.Bcl.TimeProvider" Version="8.0.1" />
-    <PackageVersion Include="System.Threading.RateLimiting" Version="8.0.0" />
-    <PackageVersion Include="System.Configuration.ConfigurationManager" Version="8.0.1" />
-    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="8.0.1" />
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.Bcl.Cryptography" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Bcl.TimeProvider" Version="10.0.12" />
+    <PackageVersion Include="System.Threading.RateLimiting" Version="10.0.12" />
+    <PackageVersion Include="System.Configuration.ConfigurationManager" Version="10.0.12" />
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.12" />
   </ItemGroup>
 
   <!-- ===================================================================== -->

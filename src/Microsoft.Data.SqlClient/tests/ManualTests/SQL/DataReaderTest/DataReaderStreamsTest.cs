@@ -89,7 +89,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         using (XmlReader xmlReader = await reader.GetFieldValueAsync<XmlReader>(1))
                         {
                             isAsync = xmlReader.Settings.Async;
-                            outputXml = GetXmlDocumentContents(xmlReader);
+                            outputXml = GetXmlReaderContents(xmlReader);
                         }
                     }
                 }
@@ -207,7 +207,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         using (XmlReader xmlReader = reader.GetFieldValue<XmlReader>(1))
                         {
                             isAsync = xmlReader.Settings.Async;
-                            outputXml = GetXmlDocumentContents(xmlReader);
+                            outputXml = GetXmlReaderContents(xmlReader);
                         }
                     }
                 }
@@ -364,7 +364,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         using (XmlReader xmlReader = reader.GetXmlReader(1))
                         {
                             isAsync = xmlReader.Settings.Async;
-                            outputXml = GetXmlDocumentContents(xmlReader);
+                            outputXml = GetXmlReaderContents(xmlReader);
                         }
                     }
                 }
@@ -426,7 +426,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string query = "SELECT convert(xml,NULL) AS XmlData, convert(nvarchar(max),NULL) as TextData, convert(varbinary(max),NULL) as StreamData";
 
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection connection = DataTestUtility.CreateConnection())
             using (SqlCommand command = new SqlCommand(query, connection))
             {
                 connection.Open();
@@ -481,7 +481,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     // get a clean reader over the same field and check that the value is empty
                     using (XmlReader xmlReader = GetValue<XmlReader>(reader, 0, accessorType))
                     {
-                        Assert.Equal(GetXmlDocumentContents(xmlReader), string.Empty);
+                        Assert.Equal(GetXmlReaderContents(xmlReader), string.Empty);
                     }
 
                     using (TextReader textReader = GetValue<TextReader>(reader, 1, accessorType))
@@ -508,7 +508,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string query = "SELECT convert(xml,NULL) AS XmlData, convert(nvarchar(max),NULL) as TextData";
 
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection connection = DataTestUtility.CreateConnection())
             using (SqlCommand command = new SqlCommand(query, connection))
             {
                 connection.Open();
@@ -537,7 +537,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string query = $"SELECT CAST('{expectedXml}' AS NVARCHAR(MAX))";
 
             string returnedXml = null;
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection connection = DataTestUtility.CreateConnection())
             using (SqlCommand command = new SqlCommand(query, connection))
             {
                 connection.Open();
@@ -576,7 +576,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             bool expectNull,
             bool checkNull)
         {
-            using SqlConnection connection = new (DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             await connection.OpenAsync();
 
             using SqlCommand command = new(
@@ -627,7 +627,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             bool expectNull,
             bool checkNull)
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             await connection.OpenAsync();
 
             using SqlCommand command = new(
@@ -669,7 +669,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             bool expectNull,
             bool checkNull)
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             await connection.OpenAsync();
 
             using SqlCommand command = new(
@@ -720,7 +720,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             bool expectNull,
             bool checkNull)
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             await connection.OpenAsync();
 
             using SqlCommand command = new(
@@ -767,7 +767,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             bool expectNull,
             bool checkNull)
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             await connection.OpenAsync();
 
             using SqlCommand command = new(
@@ -809,7 +809,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             bool expectNull,
             bool checkNull)
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             await connection.OpenAsync();
 
             using SqlCommand command = new(
@@ -860,7 +860,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             bool expectNull,
             bool checkNull)
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             await connection.OpenAsync();
 
             using SqlCommand command = new(
@@ -907,7 +907,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             bool expectNull,
             bool checkNull)
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             await connection.OpenAsync();
 
             using SqlCommand command = new(
@@ -953,7 +953,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string? value,
             bool expectNull)
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             connection.Open();
 
             using SqlCommand command = new(
@@ -994,7 +994,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string? value,
             bool expectNull)
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             connection.Open();
 
             using SqlCommand command = new(
@@ -1028,7 +1028,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string? value,
             bool expectNull)
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             connection.Open();
 
             using SqlCommand command = new(
@@ -1169,6 +1169,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (XmlWriter xmlWriter = XmlWriter.Create(stringWriter, settings))
             {
                 int index = 1;
+                // Purposefully start with root-level text to confuse the encoding-detection logic
+                // in XmlTextReaderImpl so it would assume UTF-8. This ensures tests will fail if a
+                // SqlDataReader creates an XmlReader over a UTF-16LE stream without explicitly
+                // specifying the encoding.
+                xmlWriter.WriteString("foo");
                 xmlWriter.WriteStartElement("root");
                 while (buffer.Length / 2 < (packetSize * forcedPacketCount))
                 {
@@ -1232,15 +1237,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return queryBuilder.ToString();
         }
 
-        private static string GetXmlDocumentContents(XmlReader xmlReader)
+        /// <summary>
+        /// Serializes the contents of the specified <see cref="XmlReader"/> to a
+        /// <see langword="string"/>.
+        /// </summary>
+        /// <param name="xmlReader">The reader whose contents are to be serialized.</param>
+        /// <returns>
+        /// A string representation of the contents of <paramref name="xmlReader"/>.
+        /// </returns>
+        private static string GetXmlReaderContents(XmlReader xmlReader)
         {
-            string outputXml;
-            XmlDocument document = new XmlDocument();
-            document.Load(xmlReader);
-
             XmlWriterSettings settings = new XmlWriterSettings
             {
-                ConformanceLevel = ConformanceLevel.Document,
+                ConformanceLevel = ConformanceLevel.Fragment,
                 Encoding = Encoding.Unicode,
                 Indent = true,
                 OmitXmlDeclaration = true
@@ -1250,10 +1259,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (StringWriter stringWriter = new StringWriter(buffer))
             using (XmlWriter xmlWriter = XmlWriter.Create(stringWriter, settings))
             {
-                document.WriteContentTo(xmlWriter);
+                xmlWriter.WriteNode(xmlReader, defattr: false);
             }
-            outputXml = buffer.ToString();
-            return outputXml;
+            return buffer.ToString();
         }
 
         private static byte[] GetStreamContents(Stream stream)

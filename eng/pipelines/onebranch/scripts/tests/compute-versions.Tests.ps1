@@ -257,14 +257,14 @@ Describe 'File version component validation' {
         @{
             Product = 'SqlClient'; Property = 'SqlClientPackageVersion'
             RelativeProject = 'src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj'
-            TargetFramework = 'net8.0'
+            TargetFramework = 'net10.0'
             Properties = @('-p:SqlClientPackageVersion=7.1.0.123')
             ExpectedFileVersion = '7.1.0.123.0'
         }
         @{
             Product = 'SqlClient'; Property = 'SqlClientNextVersion'
             RelativeProject = 'src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj'
-            TargetFramework = 'net8.0'
+            TargetFramework = 'net10.0'
             Properties = @('-p:SqlClientNextVersion=7.1.0.123', '-p:BuildNumber=1234')
             ExpectedFileVersion = '7.1.0.123.1234'
         }
@@ -296,13 +296,13 @@ Describe 'File version component validation' {
         @{
             Product = 'SqlClient'; Description = 'short'
             RelativeProject = 'src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj'
-            TargetFramework = 'net8.0'
+            TargetFramework = 'net10.0'
             FileVersion = '1.2'
         }
         @{
             Product = 'SqlClient'; Description = 'non-numeric'
             RelativeProject = 'src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj'
-            TargetFramework = 'net8.0'
+            TargetFramework = 'net10.0'
             FileVersion = 'abc'
         }
         @{
@@ -331,7 +331,7 @@ Describe 'File version component validation' {
         @{
             Product = 'SqlClient'
             RelativeProject = 'src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj'
-            TargetFramework = 'net8.0'
+            TargetFramework = 'net10.0'
         }
         @{
             Product = 'SqlServer'

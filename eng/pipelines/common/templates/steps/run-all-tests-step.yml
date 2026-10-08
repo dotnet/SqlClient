@@ -35,7 +35,6 @@ parameters:
   # The C# project reference type to use when building and packing the packages.
   - name: referenceType
     type: string
-    default: Package
     values:
       # Reference sibling packages as NuGet packages.
       - Package

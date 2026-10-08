@@ -16,36 +16,46 @@ The primary test projects for Microsoft.Data.SqlClient are under
 | Functional tests | [src/Microsoft.Data.SqlClient/tests/FunctionalTests/Microsoft.Data.SqlClient.FunctionalTests.csproj](src/Microsoft.Data.SqlClient/tests/FunctionalTests/Microsoft.Data.SqlClient.FunctionalTests.csproj) | Functional tests for public and internal behavior. Some tests use simulated servers or local test infrastructure. |
 | Manual tests     | [src/Microsoft.Data.SqlClient/tests/ManualTests/Microsoft.Data.SqlClient.ManualTests.csproj](src/Microsoft.Data.SqlClient/tests/ManualTests/Microsoft.Data.SqlClient.ManualTests.csproj)                 | Integration tests that generally require a configured SQL Server or Azure SQL target.                             |
 
-These projects target `net8.0`, `net9.0`, and `net10.0` on all platforms. On Windows, they also target `net462`.
+These projects declare `net462` and `net10.0`. The `net462` tests require Windows and .NET Framework 4.6.2
+or a compatible later runtime; the project framework lists are not automatically reduced on Linux/macOS.
+Select `-p:TestFramework=net10.0` when using `build.proj`, or `--framework net10.0` with `dotnet test`.
+The examples below select `net10.0` unless stated otherwise. Install the .NET 10 runtime to run modern tests.
+Existing dual-target companion tests also use `net462;net10.0`; modern-only projects, including performance
+tests, use only `net10.0`. Stress projects use `net462;net10.0`. PackageCompatibility tool tests remain on
+`net481;net10.0` with xUnit v3, and their Framework target requires Windows and .NET Framework 4.8.1.
+The historical `tools/SniCloseLegacyRepro` test matrix is unchanged.
 
 ## Recommended Entry Point
 
 Use [build.proj](build.proj) from the repository root:
 
-```bash
+```text
 dotnet build build.proj -t:<test_target> [optional_parameters]
 ```
 
 Since `build.proj` is the only project file in the repo root, it can be omitted when building from
 the root:
 
-```bash
+```text
 dotnet build -t:<test_target> [optional_parameters]
 ```
 
 The command-line examples below will assume that `build.proj` is selected by default and will omit
 it from the `dotnet build` command.
 
-Test targets build the projects they depend on, so a separate build step is not required for normal test runs.
+In the default project-reference mode, test targets build the projects they depend on, so a separate
+build step is not required. In package mode, prepare the referenced packages first; see
+[Package Mode Builds](BUILDGUIDE.md#package-mode-builds).
 
 ## Test Targets
 
 | Target                    | Description                                                                                                              |
 |---------------------------|--------------------------------------------------------------------------------------------------------------------------|
-| `Test`                    | Runs all test targets in the repository. This can take a long time and is not recommended for routine local development. |
+| `Test`                    | Runs the Abstractions, Azure, AKV Provider, and SqlClient test targets below. Excludes tool tests and performance/stress runners. |
 | `TestAbstractions`        | Runs Microsoft.Data.SqlClient.Extensions.Abstractions tests.                                                             |
+| `TestAkvProvider`         | Runs Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider tests.                                               |
 | `TestAzure`               | Runs Microsoft.Data.SqlClient.Extensions.Azure tests.                                                                    |
-| `TestSqlClient`           | Runs all Microsoft.Data.SqlClient test projects.                                                                         |
+| `TestSqlClient`           | Runs the SqlClient unit, functional, and manual test projects.                                                           |
 | `TestSqlClientUnit`       | Runs Microsoft.Data.SqlClient unit tests.                                                                                |
 | `TestSqlClientFunctional` | Runs Microsoft.Data.SqlClient functional tests.                                                                          |
 | `TestSqlClientManual`     | Runs Microsoft.Data.SqlClient manual tests.                                                                              |
@@ -55,55 +65,55 @@ Test targets build the projects they depend on, so a separate build step is not 
 Run the SqlClient unit tests:
 
 ```bash
-dotnet build -t:TestSqlClientUnit
+dotnet build -t:TestSqlClientUnit -p:TestFramework=net10.0
 ```
 
 Run the SqlClient functional tests:
 
 ```bash
-dotnet build -t:TestSqlClientFunctional
+dotnet build -t:TestSqlClientFunctional -p:TestFramework=net10.0
 ```
 
 Run the SqlClient manual tests:
 
 ```bash
-dotnet build -t:TestSqlClientManual
+dotnet build -t:TestSqlClientManual -p:TestFramework=net10.0
 ```
 
 Run only manual test set 2:
 
 ```bash
-dotnet build -t:TestSqlClientManual -p:TestSet=2
+dotnet build -t:TestSqlClientManual -p:TestFramework=net10.0 -p:TestSet=2
 ```
 
 Run manual test sets 1 and 3:
 
 ```bash
-dotnet build -t:TestSqlClientManual -p:TestSet=13
+dotnet build -t:TestSqlClientManual -p:TestFramework=net10.0 -p:TestSet=13
 ```
 
 Run Always Encrypted manual tests:
 
 ```bash
-dotnet build -t:TestSqlClientManual -p:TestSet=AE
+dotnet build -t:TestSqlClientManual -p:TestFramework=net10.0 -p:TestSet=AE
 ```
 
 Run a specific target framework:
 
 ```bash
-dotnet build -t:TestSqlClientFunctional -p:TestFramework=net8.0
+dotnet build -t:TestSqlClientFunctional -p:TestFramework=net10.0
 ```
 
 Run functional tests against an x86 `dotnet` installation:
 
-```bash
-dotnet build -t:TestSqlClientFunctional -p:DotnetPath='C:\path\to\dotnet\x86\'
+```powershell
+dotnet build -t:TestSqlClientFunctional -p:TestFramework=net10.0 -p:DotnetPath='C:\path\to\dotnet\x86\'
 ```
 
 Run all Azure extension tests, including `interactive` tests, while still excluding tests marked `failing` or `flaky`:
 
 ```bash
-dotnet build -t:TestAzure -p:TestFilters=category!=failing
+dotnet build -t:TestAzure -p:TestFramework=net10.0 -p:TestFilters='category!=failing&category!=flaky'
 ```
 
 ## Test Parameters
@@ -114,12 +124,12 @@ The most commonly used test parameters are:
 |-----------------------------|-----------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------|
 | `-p:Configuration=`         | `Debug`                                                   | Build configuration. Use `Debug` or `Release`.                                                                                |
 | `-p:DotnetPath=`            | Empty                                                     | Path to the folder containing the `dotnet` binary. The path must end with `\` or `/`.                                         |
-| `-p:ReferenceType=`         | `Project`                                                 | For functional and manual SqlClient tests, use `Project` to test the source project or `Package` to test a package reference. |
+| `-p:ReferenceType=`         | `Project`                                                 | For unit, functional, and manual SqlClient tests, use `Project` to test the source project or `Package` to test package references. |
 | `-p:TestBlameTimeout=`      | `10m`                                                     | Enables hang blame collection with the specified timeout. Use `0` to disable hang timeouts.                                   |
 | `-p:TestCodeCoverage=`      | `true`                                                    | Collects code coverage when set to `true`.                                                                                    |
-| `-p:TestFilters=`           | `category!=failing&category!=flaky&category!=interactive` | xUnit filter expression. Use `none` to run without the default filter.                                                        |
-| `-p:TestFramework=`         | Empty                                                     | Target framework to run. If omitted, all target frameworks supported by the project and host OS are run.                      |
-| `-p:TestResultsFolderPath=` | `test_results`                                            | Directory where test results are written.                                                                                     |
+| `-p:TestFilters=`           | `category!=failing&category!=flaky&category!=interactive` | xUnit filter expression. Use `none` to disable this filter; test-set selection and conditional skips still apply.              |
+| `-p:TestFramework=`         | Empty                                                     | Target framework to run. If omitted, all project frameworks are selected, including Windows-only `net462`.                     |
+| `-p:TestResultsFolderPath=` | `test_results` under the repository root                   | Absolute directory where test results are written.                                                                          |
 | `-p:TestSet=`               | Empty                                                     | Selects manual test sets. Supported values include `1`, `2`, `3`, `AE`, and combinations such as `13` or `12AE`.              |
 
 ## Test Filters
@@ -132,24 +142,28 @@ The most commonly used test parameters are:
 | `flaky`       | Intermittently failing tests.                                                       |
 | `interactive` | Tests that require user interaction or external setup not suitable for normal runs. |
 
+Unsigned runs also exclude `category=signed`, unless `TestFilters=none` is specified. An explicit
+`TestFilters` expression replaces the default `failing`, `flaky`, and `interactive` exclusions, so include
+any you still want to exclude. Trait keys must match the source: use lowercase `category` and uppercase `Set`.
+
 Examples:
 
 Run a single test by fully-qualified name:
 
 ```bash
-dotnet build -t:TestSqlClientUnit -p:TestFilters=FullyQualifiedName=Namespace.ClassName.MethodName
+dotnet build -t:TestSqlClientUnit -p:TestFramework=net10.0 -p:TestFilters=FullyQualifiedName=Namespace.ClassName.MethodName
 ```
 
 Run only flaky tests while investigating quarantine failures:
 
 ```bash
-dotnet build -t:TestSqlClientManual -p:TestFilters=category=flaky
+dotnet build -t:TestSqlClientManual -p:TestFramework=net10.0 -p:TestFilters=category=flaky
 ```
 
 Disable the default filter:
 
 ```bash
-dotnet build -t:TestSqlClientFunctional -p:TestFilters=none
+dotnet build -t:TestSqlClientFunctional -p:TestFramework=net10.0 -p:TestFilters=none
 ```
 
 When passing filter expressions that contain shell-sensitive characters such as `&`, quote or escape the value as
@@ -162,17 +176,19 @@ common parameters consistent. For quick local investigation, you can run a test 
 
 ```bash
 dotnet test src/Microsoft.Data.SqlClient/tests/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj \
+  --framework net10.0 \
   -p:Configuration=Debug \
-  --filter "category!=failing&category!=flaky&category!=interactive"
+  --filter 'category!=failing&category!=flaky&category!=interactive&category!=signed'
 ```
 
-For manual tests, pass `TestSet` to the test project when needed:
+For manual tests, select the `Set` trait in the filter. `TestSet` is interpreted by `build.proj`, not by the
+test project; passing `-p:TestSet=2` directly to `dotnet test` does not select a set:
 
 ```bash
 dotnet test src/Microsoft.Data.SqlClient/tests/ManualTests/Microsoft.Data.SqlClient.ManualTests.csproj \
+  --framework net10.0 \
   -p:Configuration=Debug \
-  -p:TestSet=2 \
-  --filter "category!=failing&category!=flaky&category!=interactive"
+  --filter 'category!=failing&category!=flaky&category!=interactive&category!=signed&Set=2'
 ```
 
 ## Manual Test Prerequisites
@@ -196,8 +212,9 @@ conditional tests are skipped.
 
 ## Manual Test Configuration
 
-Edit the source configuration file at `src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/
-config.jsonc`. The test utilities project copies that file to the test output directory, where the manual tests load it
+Edit the source configuration file at
+`src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.jsonc`.
+The test utilities project copies that file to the test output directory, where the manual tests load it
 by default.
 
 The template file is:
@@ -236,37 +253,40 @@ For SQL Server in a Linux container, WSL, or another host where SQL authenticati
 You can override the config file path with the `TEST_MDS_CONFIG` environment variable:
 
 ```bash
-TEST_MDS_CONFIG=/path/to/config.jsonc dotnet build -t:TestSqlClientManual -p:TestSet=2
+TEST_MDS_CONFIG=/path/to/config.jsonc dotnet build -t:TestSqlClientManual -p:TestFramework=net10.0 -p:TestSet=2
 ```
 
 On PowerShell:
 
 ```powershell
 $env:TEST_MDS_CONFIG = "C:\path\to\config.jsonc"
-dotnet build -t:TestSqlClientManual -p:TestSet=2
+dotnet build -t:TestSqlClientManual -p:TestFramework=net10.0 -p:TestSet=2
 ```
 
 ## Configuration Properties
 
-`SupportsEntraIntegrated` applies to Azure SQL Database, Azure SQL Managed Instance, and SQL Server
-2022 or later configured for Microsoft Entra authentication through Azure Arc.
+`MDS_TCPConnectionString` can override `TCPConnectionString` after the configuration file is loaded.
+Keep credentials in local ignored configuration or environment variables, not in committed files.
+
+The Azure extension tests also read this configuration. `SupportsEntraIntegrated` enables their
+Entra Integrated authentication test; it is distinct from `SupportsIntegratedSecurity`. Supported targets
+include Azure SQL Database, Azure SQL Managed Instance, and SQL Server 2022 or later configured for
+Microsoft Entra authentication through Azure Arc.
 
 | Property                         | Description                                                                                 | Example or notes                                                                       |
 |----------------------------------|---------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------|
-| `TCPConnectionString`            | Connection string for a TCP-enabled SQL Server or Azure SQL database.                       | `Data Source=tcp:localhost;Database=Northwind;Integrated Security=true;Encrypt=false;` |
+| `TCPConnectionString`            | Connection string for a TCP-enabled SQL Server or Azure SQL database. For Azure SQL, also configure `UserManagedIdentityClientId` or enable `SupportsSystemAssignedManagedIdentity` so tests can acquire an access token. | `Data Source=tcp:localhost;Database=Northwind;Integrated Security=true;Encrypt=false;` or `Data Source=<servername>.database.windows.net;Database=<dbname>;` |
 | `NPConnectionString`             | Connection string for a Named Pipes-enabled SQL Server instance.                            | `Data Source=np:localhost;Database=Northwind;Integrated Security=true;Encrypt=false;`  |
 | `TCPConnectionStringHGSVBS`      | Optional connection string for SQL Server with VBS enclave and HGS attestation.             | Include `Attestation Protocol=HGS` and `Enclave Attestation Url`.                      |
 | `TCPConnectionStringNoneVBS`     | Optional connection string for SQL Server with VBS enclave and no attestation.              | Include `Attestation Protocol=None`.                                                   |
 | `TCPConnectionStringAASSGX`      | Optional connection string for SQL Server with SGX enclave and Microsoft Azure Attestation. | Include `Attestation Protocol=AAS` and `Enclave Attestation Url`.                      |
 | `EnclaveEnabled`                 | Enables tests that require an enclave-configured server.                                    | `true` or `false`.                                                                     |
 | `TracingEnabled`                 | Enables tracing-related tests.                                                              | `true` or `false`.                                                                     |
-| `AADAuthorityURL`                | Optional OAuth authority for `AADPasswordConnectionString`.                                 | `https://login.windows.net/<tenant>`                                                   |
-| `AADPasswordConnectionString`    | Optional connection string for Microsoft Entra ID password authentication tests.            | Uses `Authentication=Active Directory Password`.                                       |
 | `AADServicePrincipalId`          | Optional application ID for service-principal authentication tests.                         | Former docs may refer to this as a secure principal ID.                                |
 | `AADServicePrincipalSecret`      | Optional application secret for service-principal authentication tests.                     | Keep this only in local, ignored config files or secure pipeline variables.            |
 | `AzureKeyVaultURL`               | Optional Azure Key Vault URL for Always Encrypted tests.                                    | `https://<keyvaultname>.vault.azure.net/`                                              |
 | `AzureKeyVaultTenantId`          | Optional Entra ID tenant ID for Azure Key Vault tests.                                      | Tenant ID GUID.                                                                        |
-| `SupportsEntraIntegrated`        | Whether the target supports Entra Integrated authentication for the Windows identity.       | `true` or `false`; defaults to `false`. See supported targets above.                   |
+| `SupportsEntraIntegrated`        | Whether the target supports Entra Integrated authentication for the Windows identity used by the Azure extension tests. | `true` or `false`; defaults to `false`. See supported targets above. |
 | `SupportsIntegratedSecurity`     | Whether the user running tests has integrated-security access to the target SQL Server.     | `true` or `false`.                                                                     |
 | `LocalDbAppName`                 | Optional LocalDB instance name. Empty disables LocalDB testing.                             | `MSSQLLocalDB` or another local instance.                                              |
 | `LocalDbSharedInstanceName`      | Optional shared LocalDB instance name.                                                      | Used only when testing shared LocalDB.                                                 |
@@ -278,7 +298,8 @@ dotnet build -t:TestSqlClientManual -p:TestSet=2
 | `IsDNSCachingSupportedCR`        | Enables DNS caching control-ring tests.                                                     | `true` or `false`.                                                                     |
 | `IsDNSCachingSupportedTR`        | Enables DNS caching tenant-ring tests.                                                      | `true` or `false`.                                                                     |
 | `EnclaveAzureDatabaseConnString` | Optional Azure SQL database connection string for enclave tests.                            | Feature-specific tests only.                                                           |
-| `ManagedIdentitySupported`       | Whether managed identity tests should run.                                                  | Defaults to `true`. Set `false` if unavailable.                                        |
+| `SupportsSystemAssignedManagedIdentity` | Whether system-assigned managed identity tests should run.                          | Defaults to `false`. Requires `ManagedIdentitySupported`.                              |
+| `ManagedIdentitySupported`       | Whether managed identity tests should run.                                                  | When omitted, defaults to `true` in manual tests and `false` in Azure extension tests. Set explicitly for the target environment. |
 | `UserManagedIdentityClientId`    | Optional client ID for user-assigned managed identity tests.                                | Feature-specific tests only.                                                           |
 | `KerberosDomainUser`             | Optional Kerberos test domain user.                                                         | Feature-specific tests only.                                                           |
 | `KerberosDomainPassword`         | Optional Kerberos test domain password.                                                     | Keep only in local, ignored config files or secure pipeline variables.                 |
@@ -288,7 +309,8 @@ dotnet build -t:TestSqlClientManual -p:TestSet=2
 
 ## Manual Test Sets
 
-The manual test project is split into compile-time sets so large runs can be parallelized.
+Manual tests are grouped using `[Trait("Set", "...")]` attributes so large runs can be partitioned.
+All sets are compiled; `build.proj` converts `TestSet` into a runtime filter and combines it with `TestFilters`.
 
 | TestSet | Coverage                                                                                                                                         |
 |---------|--------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -297,7 +319,8 @@ The manual test project is split into compile-time sets so large runs can be par
 | `3`     | Additional integration coverage, including LocalDB, pooling, parameters, transactions, JSON, Kerberos, UDT, vector, and other SQL feature tests. |
 | `AE`    | Always Encrypted tests.                                                                                                                          |
 
-If `TestSet` is omitted, all sets are compiled and run. You can combine sets by concatenating values, for example
+If `TestSet` is omitted, no set filter is added (the other filters and conditional skips still apply).
+You can combine sets by concatenating values, for example
 `-p:TestSet=23` or `-p:TestSet=12AE`.
 
 ## Results and Diagnostics
@@ -306,23 +329,23 @@ Test results are written to the `test_results` directory by default. Override th
 `TestResultsFolderPath`:
 
 ```bash
-dotnet build -t:TestSqlClientUnit -p:TestResultsFolderPath=/tmp/sqlclient-test-results
+dotnet build -t:TestSqlClientUnit -p:TestFramework=net10.0 -p:TestResultsFolderPath="$PWD/test_results/unit"
 ```
 
 Hang blame collection is enabled by default with a `10m` timeout. To increase the timeout:
 
 ```bash
-dotnet build -t:TestSqlClientManual -p:TestBlameTimeout=30m
+dotnet build -t:TestSqlClientManual -p:TestFramework=net10.0 -p:TestBlameTimeout=30m
 ```
 
 To disable hang blame collection:
 
 ```bash
-dotnet build -t:TestSqlClientManual -p:TestBlameTimeout=0
+dotnet build -t:TestSqlClientManual -p:TestFramework=net10.0 -p:TestBlameTimeout=0
 ```
 
 Code coverage is enabled by default. To disable it for a faster local run:
 
 ```bash
-dotnet build -t:TestSqlClientUnit -p:TestCodeCoverage=false
+dotnet build -t:TestSqlClientUnit -p:TestFramework=net10.0 -p:TestCodeCoverage=false
 ```

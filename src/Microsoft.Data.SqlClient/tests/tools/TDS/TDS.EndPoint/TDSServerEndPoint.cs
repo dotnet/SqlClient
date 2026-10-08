@@ -110,6 +110,26 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         }
 
         /// <summary>
+        /// Forcibly close every active client connection without
+        /// stopping the TCP listener.  The server continues to
+        /// accept new connections (e.g. reconnection attempts).
+        /// </summary>
+        public void DisconnectAll()
+        {
+            IList<T> snapshot;
+
+            lock (Connections)
+            {
+                snapshot = new List<T>(Connections);
+            }
+
+            foreach (T connection in snapshot)
+            {
+                connection.Dispose();
+            }
+        }
+
+        /// <summary>
         /// Stop the listener thread
         /// </summary>
         public void Stop()

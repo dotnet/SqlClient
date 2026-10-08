@@ -141,7 +141,6 @@
           Condition="'$(SqlClientVersionsImported)' != 'true'" />
 
   <ItemGroup Condition="$(BuildForRelease) == 'true'">
-    <SourceRoot Include="$(MSBuildThisFileDirectory)/" />
     <EmbeddedFiles Include="$(GeneratedAssemblyInfoFile)" />
   </ItemGroup>
 

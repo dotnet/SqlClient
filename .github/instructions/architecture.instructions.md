@@ -11,11 +11,8 @@ This repository contains the official Microsoft ADO.NET data provider for SQL Se
 src/
 ├── Microsoft.Data.SqlClient/
 │   ├── add-ons/                    # Azure Key Vault provider
-│   ├── netcore/                    # ⚠️ LEGACY - being phased out
-│   │   └── ref/                    # Reference assemblies for .NET Core/.NET
-│   ├── netfx/                      # ⚠️ LEGACY - being phased out
-│   │   └── ref/                    # Reference assemblies for .NET Framework
-│   ├── ref/                        # Shared reference assembly files
+│   ├── ref/                        # Unified public API declarations
+│   │   └── Microsoft.Data.SqlClient.csproj # Multi-target reference project
 │   ├── src/                        # ✅ PRIMARY - Unified source for all platforms
 │   │   ├── Microsoft.Data.SqlClient.csproj  # Multi-target project file
 │   │   ├── Interop/               # P/Invoke and native interop
@@ -34,19 +31,13 @@ src/
 ## Unified Project Model
 
 ### Architecture Goal
-The driver is transitioning away from separate `netfx/` and `netcore/` project files toward a **single unified project** at `src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj`. This project targets the modern .NET TFMs on every host and conditionally adds .NET Framework on Windows:
-
-```xml
-<TargetFrameworks>net8.0;net9.0</TargetFrameworks>
-<TargetFrameworks Condition="'$(NormalizedTargetOs)' == 'windows_nt'">$(TargetFrameworks);net462</TargetFrameworks>
-```
+The driver implementation is built from `src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj`; its public API declarations are built from `src/Microsoft.Data.SqlClient/ref/Microsoft.Data.SqlClient.csproj`. Check those projects and their imported build files for framework and platform selection.
 
 **All new code MUST go into `src/Microsoft.Data.SqlClient/src/`**. Do NOT add files to the legacy `netcore/src/` or `netfx/src/` directories.
 
 ### Legacy Folders
-The `netcore/` and `netfx/` directories are legacy artifacts from the old dual-project model:
-- `netcore/src/` and `netfx/src/` — **DEPRECATED**. These contain legacy project files that are being phased out. Do not add new code here.
-- `netcore/ref/` and `netfx/ref/` — **STILL ACTIVE**. Reference assemblies remain in these directories and define the public API surface for each target framework.
+The former `netcore/` and `netfx/` source and reference directories are no longer
+used. Do not recreate them; use the unified `src/` and `ref/` directories.
 
 ### OS Targeting with `TargetOs`
 The unified project uses a `TargetOs` build property to handle OS-specific compilation:
@@ -64,9 +55,9 @@ This defines preprocessor constants:
 > **NOTE**: These constants are prefixed with `_` (underscore) to avoid conflict with .NET 5+ built-in OS-specific target framework preprocessor flags.
 
 ### Platform-Specific Files
-The driver supports both .NET Framework and .NET Core/.NET 8+. Platform-specific code uses file suffixes:
+The driver supports .NET Framework 4.6.2+ and .NET 10+. Platform-specific code uses file suffixes:
 - `.netfx.cs` — .NET Framework only (compiled when targeting `net462`)
-- `.netcore.cs` — .NET Core/.NET only (compiled when targeting `net8.0`/`net9.0`)
+- `.netcore.cs` — .NET only (compiled when targeting `net10.0`)
 - `.windows.cs` — Windows only (compiled when `_WINDOWS` is defined)
 - `.unix.cs` — Unix/Linux/macOS only (compiled when `_UNIX` is defined)
 
@@ -78,31 +69,40 @@ When writing code that differs by platform, use these preprocessor directives:
 | Directive | When to Use |
 |-----------|------------|
 | `#if NETFRAMEWORK` | Code for .NET Framework (`net462`) only |
-| `#if NET` | Code for .NET Core/.NET 8+ only |
+| `#if NET` | Code for .NET 10+ only |
 | `#if _WINDOWS` | Code for Windows OS (any framework) |
 | `#if _UNIX` | Code for Unix/Linux/macOS OS (any framework) |
 
 Guidelines:
-1. All code must compile for the TFMs supported by the current target OS: `net8.0`/`net9.0` everywhere, plus `net462` on Windows builds
+1. Driver code must compile for `net10.0` everywhere and `net462` for Windows runtime support
 2. Use `#if NETFRAMEWORK` or `#if NET` for framework-specific code paths
 3. Use `#if _WINDOWS` or `#if _UNIX` for OS-specific code paths
 4. Avoid APIs that don't exist on a target platform without conditional compilation
-5. Prefer `#if NET` over `#if NETCOREAPP` for .NET (net8.0/net9.0) code paths to keep conditions consistent
+5. Prefer `#if NET` over `#if NETCOREAPP` for .NET (`net10.0`) code paths to keep conditions consistent
 
 ### Framework-Specific Dependencies
 The unified project uses conditional `ItemGroup` elements for dependencies:
 
 - **net462**: References `System.Configuration`, `System.EnterpriseServices`, `System.Transactions`, plus `Microsoft.Data.SqlClient.SNI` native package
-- **net8.0/net9.0**: References `Microsoft.Data.SqlClient.SNI.runtime`, `System.Configuration.ConfigurationManager`, `Microsoft.SqlServer.Server`
+- **net10.0**: References `Microsoft.Data.SqlClient.SNI.runtime`, `System.Configuration.ConfigurationManager`, `Microsoft.SqlServer.Server`
 - **Shared**: `Azure.Core`, `Azure.Identity`, `Microsoft.Bcl.Cryptography`, `Microsoft.Extensions.Caching.Memory`, `Microsoft.IdentityModel.*`, `System.Security.Cryptography.Pkcs`
 
 ### Reference Assemblies
-The `ref/` directories define the public API surface:
-- `netcore/ref/` — Public APIs for .NET Core/.NET (includes `Microsoft.Data.SqlClient.cs`, `Microsoft.Data.SqlClient.Manual.cs`)
-- `netfx/ref/` — Public APIs for .NET Framework (includes `Microsoft.Data.SqlClient.cs`)
-- `ref/` — Shared reference assembly files (e.g., `Microsoft.Data.SqlClient.Batch.cs`, `Microsoft.Data.SqlClient.Batch.NetCoreApp.cs`)
+`src/Microsoft.Data.SqlClient/ref/Microsoft.Data.SqlClient.csproj` builds the unified
+reference sources for `net462`, `net10.0`, and `netstandard2.0`. Declarations
+are grouped by namespace, with conditional compilation for framework differences.
 
-**IMPORTANT**: Any public API changes MUST update the corresponding reference assembly in the appropriate `ref/` directory.
+**IMPORTANT**: Public API changes MUST update the corresponding files under
+`src/Microsoft.Data.SqlClient/ref/` for every affected target framework.
+
+The unsupported-platform project also retains `netstandard2.0`; neither this target nor the reference
+assembly expands supported driver runtimes below .NET Framework 4.6.2 or .NET 10.
+Existing dual-target tests use `net462;net10.0`; modern-only projects, including performance tests, use
+`net10.0` only. Standard-only companions retain their existing `netstandard` targets. Azure extensions
+target `net462;netstandard2.0`. Microsoft.SqlServer.Server remains independently
+versioned and retains `net46;netstandard2.0`; raising its framework floor is a separate change.
+Preserve every `net481` target: PackageCompatibility tool/tests use `net481;net10.0` with xUnit v3,
+and AzureSqlConnector uses `net481;net10.0-windows`. Do not migrate the historical SniCloseLegacyRepro matrix.
 
 ### Build Output
 Build artifacts are organized by reference mode, configuration, OS, and framework:
@@ -127,7 +127,7 @@ Two implementations exist:
 ### Native SNI
 - Windows-only native library (C++)
 - Shipped as separate NuGet packages:
-  - `Microsoft.Data.SqlClient.SNI` — For .NET Framework (`net462`)
+  - `Microsoft.Data.SqlClient.SNI` — For .NET Framework (`net462` driver target)
   - `Microsoft.Data.SqlClient.SNI.runtime` — For .NET Core/.NET on Windows
 - Provides optimal performance on Windows
 
@@ -185,5 +185,5 @@ Column-level encryption implementation:
 ## Dependencies and Framework Support
 
 - .NET Framework 4.6.2+
-- .NET 8.0+
+- .NET 10.0+
 - See `Directory.Packages.props` for centralized package version management

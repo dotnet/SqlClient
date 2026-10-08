@@ -201,7 +201,7 @@ jobs:
   - template: /eng/pipelines/common/steps/install-dotnet.yml@self
     parameters:
       debug: ${{ parameters.debug }}
-      runtimes: [8.x, 9.x]
+      runtimes: [10.x]
 
   # Restore dotnet CLI tools (e.g. pwsh, apicompat) before building.
   - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
@@ -226,8 +226,6 @@ jobs:
           TCPConnectionString: ${{ parameters.configProperties.TCPConnectionString }}
         ${{ if parameters.configProperties.NPConnectionString }}:
           NPConnectionString: ${{ parameters.configProperties.NPConnectionString }}
-        ${{ if parameters.configProperties.AADAuthorityURL }}:
-          AADAuthorityURL: ${{ parameters.configProperties.AADAuthorityURL }}
         ${{ if parameters.configProperties.TCPConnectionStringHGSVBS }}:
           TCPConnectionStringHGSVBS: ${{ parameters.configProperties.TCPConnectionStringHGSVBS }}
         ${{ if parameters.configProperties.TCPConnectionStringNoneVBS }}:
@@ -238,8 +236,6 @@ jobs:
           EnclaveEnabled: ${{ eq(parameters.configProperties.EnclaveEnabled, 'true') }}
         ${{ if parameters.configProperties.TracingEnabled }}:
           TracingEnabled: ${{ eq(parameters.configProperties.TracingEnabled, 'true') }}
-        ${{ if parameters.configProperties.AADPasswordConnectionString }}:
-          AADPasswordConnectionString: ${{ parameters.configProperties.AADPasswordConnectionString }}
         ${{ if parameters.configProperties.AADServicePrincipalId }}:
           AADServicePrincipalId: ${{ parameters.configProperties.AADServicePrincipalId }}
         ${{ if parameters.configProperties.AADServicePrincipalSecret }}:
@@ -334,7 +330,7 @@ jobs:
           forceX86: true
           debug: ${{ parameters.debug }}
           installDir: $(dotnetx86RootPath)
-          runtimes: [8.x, 9.x]
+          runtimes: [10.x]
 
   # Ensure TestResults directory exists so that publish steps don't fail when
   # tests are skipped due to a setup failure.

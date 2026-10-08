@@ -42,7 +42,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified,
                 EnclaveAttestationUrl = ""
             };
-            using SqlConnection sqlConnection = new(builder.ConnectionString);
+            using SqlConnection sqlConnection = DataTestUtility.CreateConnection(builder.ConnectionString);
 
             sqlConnection.Open();
             Customer customer = new(45, "Microsoft", "Corporation");
@@ -91,7 +91,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             };
 
             // Setup record to query
-            using (SqlConnection sqlConnection = new(builder.ConnectionString))
+            using (SqlConnection sqlConnection = DataTestUtility.CreateConnection(builder.ConnectionString))
             {
                 sqlConnection.Open();
                 Customer customer = new(88, "Microsoft2", "Corporation2");
@@ -121,7 +121,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             // The third connection is for making sure we test 3 times as the minimum number of connections to reproduce the issue previously.
             for (int i = 0; i < 3; i++)
             {
-                using (SqlConnection sqlConnection = new SqlConnection(builder.ConnectionString))
+                using (SqlConnection sqlConnection = DataTestUtility.CreateConnection(builder.ConnectionString))
                 {
                     sqlConnection.Open();
                     // Setup connection using the empty key store provider thereby forcing a decryption error.
@@ -173,7 +173,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 EnclaveAttestationUrl = ""
             };
 
-            using SqlConnection sqlConnection = new(builder.ConnectionString);
+            using SqlConnection sqlConnection = DataTestUtility.CreateConnection(builder.ConnectionString);
 
             sqlConnection.Open();
 
