@@ -1202,9 +1202,13 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
         /// <summary>
         /// Advances <paramref name="reader"/> by one row on the sync or async path.
         /// </summary>
-        /// <param name="reader">The reader to advance. Side effect: the reader's position moves.</param>
+        /// <param name="reader">
+        /// The reader to advance. Side effect: the reader's position moves.
+        /// </param>
         /// <param name="async"><see langword="true"/> to use the async overload.</param>
-        /// <returns><see langword="true"/> if a row was read; otherwise <see langword="false"/>.</returns>
+        /// <returns>
+        /// <see langword="true"/> if a row was read; otherwise <see langword="false"/>.
+        /// </returns>
         private static async Task<bool> Read(SqlDataReader reader, bool async)
         {
             if (async)
@@ -1218,9 +1222,13 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
         /// <summary>
         /// Advances <paramref name="reader"/> to the next result set on the sync or async path.
         /// </summary>
-        /// <param name="reader">The reader to advance. Side effect: the reader's position moves.</param>
+        /// <param name="reader">
+        /// The reader to advance. Side effect: the reader's position moves.
+        /// </param>
         /// <param name="async"><see langword="true"/> to use the async overload.</param>
-        /// <returns><see langword="true"/> if another result set exists; otherwise <see langword="false"/>.</returns>
+        /// <returns>
+        /// <see langword="true"/> if another result set exists; otherwise <see langword="false"/>.
+        /// </returns>
         private static async Task<bool> NextResult(SqlDataReader reader, bool async)
         {
             if (async)
@@ -1234,7 +1242,8 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
         /// <summary>
         /// Regression guard for issue #4321: an error rethrown by THROW inside a CATCH block
         /// reaches the client after the DONE token that closed the TRY block's result set, and
-        /// must still be raised as a <see cref="SqlException"/> from <see cref="SqlDataReader.Read"/>
+        /// must still be raised as a <see cref="SqlException"/>
+        /// from <see cref="SqlDataReader.Read"/>
         /// rather than being silently dropped so the batch looks like it returned no rows.
         ///
         /// The TRY block's result set is empty, so no row can be returned and the first
@@ -1271,12 +1280,14 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [InlineData(false)]
         [InlineData(true)]
-        public static async Task ErrorRethrownFromCatchBlock_AfterOutputClause_IsSurfacedByRead(bool async)
+        public static async Task ErrorRethrownFromCatchBlock_AfterOutputClause_IsSurfacedByRead(
+            bool async)
         {
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
             await Open(connection, async);
 
-            using Table table = new(connection, "DataReaderTest_Issue4321_Output", "([Id] INT NOT NULL)");
+            using Table table = new(
+                connection, "DataReaderTest_Issue4321_Output", "([Id] INT NOT NULL)");
 
             using SqlCommand command = connection.CreateCommand();
             command.CommandText =

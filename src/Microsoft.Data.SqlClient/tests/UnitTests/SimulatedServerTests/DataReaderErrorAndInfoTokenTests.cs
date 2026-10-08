@@ -139,12 +139,16 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
     /// <summary>
     /// Advances <paramref name="reader"/> by one row on the sync or async path.
     /// </summary>
-    /// <param name="reader">The reader to advance. Side effect: the reader's position moves.</param>
+    /// <param name="reader">
+    /// The reader to advance. Side effect: the reader's position moves.
+    /// </param>
     /// <param name="async">
     /// <see langword="true"/> to call <see cref="SqlDataReader.ReadAsync()"/>;
     /// <see langword="false"/> to call <see cref="SqlDataReader.Read"/>.
     /// </param>
-    /// <returns><see langword="true"/> if a row was read; otherwise <see langword="false"/>.</returns>
+    /// <returns>
+    /// <see langword="true"/> if a row was read; otherwise <see langword="false"/>.
+    /// </returns>
     private static async Task<bool> Read(SqlDataReader reader, bool async)
     {
         if (async)
@@ -158,12 +162,16 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
     /// <summary>
     /// Advances <paramref name="reader"/> to the next result set on the sync or async path.
     /// </summary>
-    /// <param name="reader">The reader to advance. Side effect: the reader's position moves.</param>
+    /// <param name="reader">
+    /// The reader to advance. Side effect: the reader's position moves.
+    /// </param>
     /// <param name="async">
     /// <see langword="true"/> to call <see cref="SqlDataReader.NextResultAsync()"/>;
     /// <see langword="false"/> to call <see cref="SqlDataReader.NextResult"/>.
     /// </param>
-    /// <returns><see langword="true"/> if another result set exists; otherwise <see langword="false"/>.</returns>
+    /// <returns>
+    /// <see langword="true"/> if another result set exists; otherwise <see langword="false"/>.
+    /// </returns>
     private static async Task<bool> NextResult(SqlDataReader reader, bool async)
     {
         if (async)
@@ -218,7 +226,10 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
     /// Builds the ERROR token used throughout these tests: server error 8134 ("Divide by zero"),
     /// severity 16, matching what SQL Server sends for the batches in issue #4321.
     /// </summary>
-    /// <returns>An ERROR token that the reader is expected to turn into a <see cref="SqlException"/>.</returns>
+    /// <returns>
+    /// An ERROR token that normally becomes a <see cref="SqlException"/>, or an
+    /// <see cref="SqlConnection.InfoMessage"/> when user-error forwarding is enabled.
+    /// </returns>
     private static TDSErrorToken DivideByZeroError() =>
         new(DivideByZeroErrorNumber, 1, 16, DivideByZeroMessage, "simulated", string.Empty, 2);
 
@@ -251,7 +262,9 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
     {
         RespondWith(
             SingleIntColumnMetadata(),
-            new TDSDoneToken(TDSDoneTokenStatusType.More | TDSDoneTokenStatusType.Count, TDSDoneTokenCommandType.Select, 0),
+            new TDSDoneToken(
+                TDSDoneTokenStatusType.More | TDSDoneTokenStatusType.Count,
+                TDSDoneTokenCommandType.Select, 0),
             new TDSDoneToken(TDSDoneTokenStatusType.More, TDSDoneTokenCommandType.Done, 0),
             DivideByZeroError(),
             new TDSDoneToken(TDSDoneTokenStatusType.Error, TDSDoneTokenCommandType.Done, 0));
@@ -276,7 +289,9 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
     {
         RespondWith(
             SingleIntColumnMetadata(),
-            new TDSDoneToken(TDSDoneTokenStatusType.Final | TDSDoneTokenStatusType.Count, TDSDoneTokenCommandType.Select, 0));
+            new TDSDoneToken(
+                TDSDoneTokenStatusType.Final | TDSDoneTokenStatusType.Count,
+                TDSDoneTokenCommandType.Select, 0));
     }
 
     /// <summary>
@@ -290,7 +305,9 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
         RespondWith(
             metadata,
             IntRow(metadata, value),
-            new TDSDoneToken(TDSDoneTokenStatusType.More | TDSDoneTokenStatusType.Count, TDSDoneTokenCommandType.Select, 1),
+            new TDSDoneToken(
+                TDSDoneTokenStatusType.More | TDSDoneTokenStatusType.Count,
+                TDSDoneTokenCommandType.Select, 1),
             DivideByZeroError(),
             new TDSDoneToken(TDSDoneTokenStatusType.Error, TDSDoneTokenCommandType.Done, 0));
     }
@@ -308,7 +325,9 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
         RespondWith(
             metadata,
             IntRow(metadata, value),
-            new TDSDoneToken(TDSDoneTokenStatusType.More | TDSDoneTokenStatusType.Count, TDSDoneTokenCommandType.Select, 1),
+            new TDSDoneToken(
+                TDSDoneTokenStatusType.More | TDSDoneTokenStatusType.Count,
+                TDSDoneTokenCommandType.Select, 1),
             new TDSInfoToken(50000, 1, 0, message, "simulated", string.Empty, 1),
             new TDSDoneToken(TDSDoneTokenStatusType.Final, TDSDoneTokenCommandType.Done, 0));
     }
@@ -323,10 +342,14 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
         RespondWith(
             first,
             IntRow(first, 1),
-            new TDSDoneToken(TDSDoneTokenStatusType.More | TDSDoneTokenStatusType.Count, TDSDoneTokenCommandType.Select, 1),
+            new TDSDoneToken(
+                TDSDoneTokenStatusType.More | TDSDoneTokenStatusType.Count,
+                TDSDoneTokenCommandType.Select, 1),
             second,
             IntRow(second, 2),
-            new TDSDoneToken(TDSDoneTokenStatusType.Final | TDSDoneTokenStatusType.Count, TDSDoneTokenCommandType.Select, 1));
+            new TDSDoneToken(
+                TDSDoneTokenStatusType.Final | TDSDoneTokenStatusType.Count,
+                TDSDoneTokenCommandType.Select, 1));
     }
 
     /// <summary>
@@ -348,7 +371,9 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
         RespondWith(
             first,
             IntRow(first, 1),
-            new TDSDoneToken(TDSDoneTokenStatusType.More | TDSDoneTokenStatusType.Count, TDSDoneTokenCommandType.Select, 1),
+            new TDSDoneToken(
+                TDSDoneTokenStatusType.More | TDSDoneTokenStatusType.Count,
+                TDSDoneTokenCommandType.Select, 1),
             second,
             IntRow(second, 2),
             DivideByZeroError(),
@@ -370,11 +395,15 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
         RespondWith(
             first,
             IntRow(first, 1),
-            new TDSDoneToken(TDSDoneTokenStatusType.More | TDSDoneTokenStatusType.Count, TDSDoneTokenCommandType.Select, 1),
+            new TDSDoneToken(
+                TDSDoneTokenStatusType.More | TDSDoneTokenStatusType.Count,
+                TDSDoneTokenCommandType.Select, 1),
             second,
             new TDSInfoToken(50000, 1, 0, DeferredInfoMessage, "simulated", string.Empty, 1),
             IntRow(second, 2),
-            new TDSDoneToken(TDSDoneTokenStatusType.Final | TDSDoneTokenStatusType.Count, TDSDoneTokenCommandType.Select, 1));
+            new TDSDoneToken(
+                TDSDoneTokenStatusType.Final | TDSDoneTokenStatusType.Count,
+                TDSDoneTokenCommandType.Select, 1));
     }
 
     /// <summary>
@@ -416,6 +445,44 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
 
         Assert.Equal((int)DivideByZeroErrorNumber, ex.Number);
         Assert.Contains(DivideByZeroMessage, ex.Message);
+    }
+
+    /// <summary>
+    /// A trailing class-16 ERROR must reach InfoMessage instead of throwing when
+    /// FireInfoMessageEventOnUserErrors is enabled. Checks delivery during Read, before
+    /// NextResult or disposal can drain the stream and hide a missed event.
+    /// </summary>
+    /// <param name="async"><see langword="true"/> to exercise the async read path.</param>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Read_TrailingError_WithInfoMessageEnabled_RaisesEvent(bool async)
+    {
+        using SqlConnection connection = new(_connectionString)
+        {
+            FireInfoMessageEventOnUserErrors = true
+        };
+        await Open(connection, async);
+
+        List<SqlInfoMessageEventArgs> messages = new();
+        connection.InfoMessage += (_, e) => messages.Add(e);
+        RespondWithTrailingError();
+
+        using SqlCommand command = CreateCommand(connection);
+        using SqlDataReader reader = await ExecuteReader(command, async);
+        Assert.Empty(messages);
+
+        // The empty result's first read must deliver the ERROR as an event, not throw.
+        Assert.False(await Read(reader, async));
+        SqlInfoMessageEventArgs message = Assert.Single(messages);
+        Assert.Single(message.Errors);
+        SqlError error = message.Errors[0];
+        Assert.Equal((int)DivideByZeroErrorNumber, error.Number);
+        Assert.Equal((byte)16, error.Class);
+        Assert.Equal(DivideByZeroMessage, error.Message);
+
+        Assert.False(await NextResult(reader, async));
+        Assert.Single(messages);
     }
 
     // --------------------------------------------------------------------------
@@ -604,7 +671,8 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
         using SqlCommand command = CreateCommand(connection);
         using SqlDataReader reader = await ExecuteReader(command, async);
 
-        SqlException ex = await Assert.ThrowsAnyAsync<SqlException>(() => NextResult(reader, async));
+        SqlException ex = await Assert.ThrowsAnyAsync<SqlException>(
+            () => NextResult(reader, async));
 
         Assert.Equal((int)DivideByZeroErrorNumber, ex.Number);
     }
@@ -666,7 +734,8 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task InfoMessage_BelongingToLaterResultSet_DoesNotFireWhileReadingEarlierOne(bool async)
+    public async Task InfoMessage_BelongingToLaterResultSet_DoesNotFireWhileReadingEarlierOne(
+        bool async)
     {
         using SqlConnection connection = new(_connectionString);
         await Open(connection, async);
