@@ -30,7 +30,7 @@
   <!-- Test target reference -->
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj"
-                      Condition="'$(ReferenceType)' != 'Package'" />
+                      Condition="'$(ReferenceType)' == 'Project'" />
     <!-- In Package mode the perf pipeline can pin a specific released MDS version (e.g. a     -->
     <!-- performance baseline) by passing -p:MdsPackageVersion=<version>. That property flows  -->
     <!-- to every project in the build, so this project must honour it too; otherwise the      -->
