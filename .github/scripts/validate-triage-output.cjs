@@ -6,7 +6,7 @@
 // and partial batches before any queued comment or label change reaches GitHub.
 const fs = require('node:fs');
 
-const TEMPLATE_PLACEHOLDER_PATTERN = /<([^<>\r\n]+)>/g;
+const TEMPLATE_PLACEHOLDER_PATTERN = /<([^<>]+)>/g;
 const TEMPLATE_FIELD_PATTERN =
     /^(?:list|fields?|values?|authors?|types?|versions?|areas?|results?|details?|descriptions?|summaries?|items?|labels?)$/i;
 const GENERIC_ARGUMENTS_PATTERN =
@@ -17,7 +17,7 @@ function hasTemplatePlaceholder(text) {
     return [...text.matchAll(TEMPLATE_PLACEHOLDER_PATTERN)].some((match) => {
         const contents = match[1];
         const value = contents.trim();
-        if (contents !== value || /^(?:https?:\/\/|mailto:)\S+$/i.test(value)) {
+        if (/^(?:https?:\/\/|mailto:)\S+$/i.test(value)) {
             return false;
         }
         return TEMPLATE_FIELD_PATTERN.test(value) ||
@@ -73,6 +73,9 @@ function validateTriageOutput(output) {
     if (comments.length > 1) {
         throw new Error('Triage must publish at most one comment.');
     }
+    if (incomplete && noop) {
+        throw new Error('Triage cannot combine no-op and incomplete results.');
+    }
     if (comments.length === 0) {
         if (!incomplete && !noop) {
             throw new Error('Triage output has no summary or explicit no-op/incomplete result.');
@@ -84,6 +87,11 @@ function validateTriageOutput(output) {
     }
     if (incomplete || noop) {
         throw new Error('Triage cannot publish a summary alongside an incomplete or no-op result.');
+    }
+    const commentIndex = output.items.indexOf(comments[0]);
+    if (output.items.slice(0, commentIndex).some(item =>
+        ['add_labels', 'remove_labels'].includes(item.type))) {
+        throw new Error('Triage cannot change labels before its summary comment.');
     }
 
     const body = comments[0].body;

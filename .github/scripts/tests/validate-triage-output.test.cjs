@@ -35,9 +35,19 @@ test('accepts initial, follow-up, and on-demand summaries with multiline content
 });
 
 test('accepts a summary followed by an allowed label operation', () => {
-    const value = output(summary);
-    value.items.push({ type: 'add_labels', labels: ['Auto-Triage: Waiting for Author'] });
-    validateTriageOutput(value);
+    for (const type of ['add_labels', 'remove_labels']) {
+        const value = output(summary);
+        value.items.push({ type, labels: ['Auto-Triage: Waiting for Author'] });
+        validateTriageOutput(value);
+    }
+});
+
+test('rejects label operations before the summary', () => {
+    for (const type of ['add_labels', 'remove_labels']) {
+        const value = output(summary);
+        value.items.unshift({ type, labels: ['Auto-Triage: Waiting for Author'] });
+        assert.throws(() => validateTriageOutput(value), /before/);
+    }
 });
 
 test('preserves explicit no-op and failure reporting without a comment', () => {
@@ -123,6 +133,22 @@ test('requires populated Analysis and Next Steps sections', () => {
     ))), /Next Steps/);
 });
 
+test('rejects multiline template placeholders embedded in completed-looking prose', () => {
+    for (const placeholder of [
+        '<2-4 sentences: what the issue is about, which component is likely affected,\nand severity assessment (P0-P3)>',
+        '< missing\ndetails >',
+    ]) {
+        for (const [content, message] of [
+            ['Cancellation leaves the operation running. Investigate the async cancellation path; P1.', /Analysis/],
+            ['- Ask the author for their SQL Server version.', /Next Steps/],
+        ]) {
+            const body = summary.replace(content, `Observed failure. ${placeholder}`);
+            assert.throws(() => validateTriageOutput(output(body)), message);
+            assert.throws(() => validateTriageOutput(output(body.replaceAll('\n', '\r\n'))), message);
+        }
+    }
+});
+
 test('rejects marker-prefixed drafts in check rows and required sections', () => {
     for (const draft of [
         'TODO: replace this with the actual analysis.',
@@ -178,6 +204,11 @@ test('rejects multiple comments and mixed success/incomplete outcomes', () => {
     assert.throws(() => validateTriageOutput({
         items: [output(summary).items[0], { type: 'noop', reason: 'No action needed' }],
     }), /no-op/);
+    for (const type of ['report_incomplete', 'missing_tool', 'missing_data']) {
+        const items = [{ type: 'noop', reason: 'No action needed' }, { type, reason: 'Context unavailable' }];
+        assert.throws(() => validateTriageOutput({ items }), /no-op.*incomplete/);
+        assert.throws(() => validateTriageOutput({ items: [...items].reverse() }), /no-op.*incomplete/);
+    }
 });
 
 test('rejects output errors even when a complete summary is queued', () => {

@@ -17,6 +17,8 @@ They also reject partial safe-output batches with recorded errors while
 allowing C# generic type syntax in completed summaries. Draft prefixes such as
 `TODO:` and `TBD:` are rejected in required fields and list items; ordinary
 mentions of those markers within completed prose remain valid.
+Coverage also includes multiline template placeholders, label operations queued
+before the summary, and contradictory no-op/incomplete results.
 
 ## Shell script tests
 
