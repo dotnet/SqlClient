@@ -9741,6 +9741,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The authority &apos;{0}&apos; is not a valid Entra ID authority. Expected an absolute HTTPS URL containing a tenant, e.g. &apos;https://login.microsoftonline.com/&lt;tenant&gt;&apos;..
+        /// </summary>
+        internal static string SQL_InvalidAuthority {
+            get {
+                return ResourceManager.GetString("SQL_InvalidAuthority", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Buffer offset &apos;{1}&apos; plus the bytes available &apos;{0}&apos; is greater than the length of the passed in buffer..
         /// </summary>
         internal static string SQL_InvalidBufferSizeOrIndex {
