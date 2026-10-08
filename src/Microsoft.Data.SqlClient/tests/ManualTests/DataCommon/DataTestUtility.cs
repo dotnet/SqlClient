@@ -93,6 +93,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static bool? s_isJsonSupported;
         private static bool? s_isVectorSupported;
         private static bool? s_isVectorFloat16Supported;
+        private static bool? s_isVectorBaseTypeConversionSupported;
 
         // Login permissions
         private static bool? s_isSysAdmin;
@@ -188,6 +189,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 IsSqlVectorSupported &&
                 CheckVectorFloat16Supported();
 
+        /// <summary>
+        /// A TCP connection string which opts in to the vector feature extension version that
+        /// covers the <c>float16</c> base type.
+        /// </summary>
+        /// <remarks>
+        /// The <c>Vector Type Support</c> keyword defaults to <c>v1</c>, so a float16 column is
+        /// returned as a <c>varchar(max)</c> containing a JSON array unless a connection asks
+        /// for <c>v2</c>. Tests which exercise the native float16 representation must use this.
+        /// </remarks>
+        public static string VectorFloat16ConnectionString =>
+            new SqlConnectionStringBuilder(TCPConnectionString)
+            {
+                VectorTypeSupport = SqlVectorTypeSupport.V2
+            }.ConnectionString;
+
         public static bool IsDebugBuild
         {
             get
@@ -241,6 +257,47 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (System.Text.Json.JsonException)
             {
                 // Server returned a payload we can't parse as a float[] JSON array.
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Determines whether the server converts between the <c>float32</c> and
+        /// <c>float16</c> vector base types.
+        /// </summary>
+        /// <remarks>
+        /// Some SQL Server builds block both implicit and explicit conversion between vector
+        /// base types and report error 42238; others allow it. Tests which write a value whose
+        /// base type differs from the column's depend on the server performing the conversion,
+        /// so they are skipped rather than failed where it is blocked. Implies
+        /// <see cref="IsSqlVectorFloat16Supported"/>.
+        /// </remarks>
+        public static bool IsSqlVectorBaseTypeConversionSupported =>
+            s_isVectorBaseTypeConversionSupported ??= IsSqlVectorFloat16Supported &&
+                CheckVectorBaseTypeConversionSupported();
+
+        private static bool CheckVectorBaseTypeConversionSupported()
+        {
+            try
+            {
+                using SqlConnection connection = new(TCPConnectionString);
+                connection.Open();
+
+                // Casts in both directions, since a server could permit one and not the other.
+                using SqlCommand command = new(
+                    "DECLARE @f32 AS VECTOR(3, float32) = '[1.5,2.5,3.5]';" +
+                    "DECLARE @f16 AS VECTOR(3, float16) = CAST(@f32 AS VECTOR(3, float16));" +
+                    "DECLARE @back AS VECTOR(3, float32) = CAST(@f16 AS VECTOR(3, float32));" +
+                    "SELECT 1;",
+                    connection);
+
+                command.ExecuteScalar();
+                return true;
+            }
+            catch (SqlException)
+            {
+                // Conversion between base types is blocked on this server (error 42238), so
+                // only a value whose base type already matches the column can be written.
                 return false;
             }
         }

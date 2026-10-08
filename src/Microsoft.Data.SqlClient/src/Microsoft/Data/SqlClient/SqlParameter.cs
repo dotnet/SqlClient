@@ -773,7 +773,17 @@ namespace Microsoft.Data.SqlClient
                 switch (elementType)
                 {
                     case MetaType.SqlVectorElementType.Float32:
-                        return SqlVector<float>.CreateNull(elementCount);
+                        return SqlVector<float>.CreateNullFromServer(elementCount);
+                    case MetaType.SqlVectorElementType.Float16:
+                        #if NET
+                        return SqlVector<Half>.CreateNullFromServer(elementCount);
+                        #else
+                        // System.Half is unavailable, so a float16 vector has no faithful
+                        // strongly typed representation and is surfaced as single precision.
+                        // A float16 column may declare more dimensions than can be sent as
+                        // float32, so the server's count is taken as given.
+                        return SqlVector<float>.CreateNullFromServer(elementCount);
+                        #endif
                     default:
                         throw SQL.VectorTypeNotSupported(elementType.ToString());
                 }
@@ -782,6 +792,20 @@ namespace Microsoft.Data.SqlClient
             {
                 case MetaType.SqlVectorElementType.Float32:
                     return new SqlVector<float>((byte[])_sqlBufferReturnValue.Value);
+                case MetaType.SqlVectorElementType.Float16:
+                    #if NET
+                    return new SqlVector<Half>((byte[])_sqlBufferReturnValue.Value);
+                    #else
+                    // Defensive. A .NET Framework caller has no way to declare a float16
+                    // vector parameter: the declared base type comes from the value, and
+                    // both forms available there — a SqlVector<float> and a JSON string —
+                    // declare float32, so a server which converts between base types
+                    // returns float32 here. Kept so that a server which returns the
+                    // column's own base type regardless is still read correctly rather
+                    // than misinterpreting the payload. Widening binary16 to binary32 is
+                    // exact, so no information is lost.
+                    return SqlVector<float>.FromTdsPayload((byte[])_sqlBufferReturnValue.Value);
+                    #endif
                 default:
                     throw SQL.VectorTypeNotSupported(elementType.ToString());
             }
@@ -1688,6 +1712,43 @@ namespace Microsoft.Data.SqlClient
             return ShouldSerializePrecision() ? PrecisionInternal : ValuePrecision(CoercedValue);
         }
 
+        /// <summary>
+        /// The vector properties of this parameter's value: its base type, element count,
+        /// and payload.
+        /// </summary>
+        /// <remarks>
+        /// A caller may supply a vector either as a <see cref="SqlTypes.SqlVector{T}"/> or as
+        /// a JSON array in a string. The latter is the only form available to a .NET
+        /// Framework caller round-tripping a <c>float16</c> column, which has no
+        /// <c>System.Half</c> to be surfaced as and so is read as a string; a
+        /// <see cref="System.Data.Common.DbDataAdapter"/> update built from that column
+        /// therefore pairs a string value with <c>SqlDbType.Vector</c>. Both forms are
+        /// described here so that the declaration and the payload agree whichever was used.
+        /// </remarks>
+        internal ISqlVector GetVectorProperties()
+        {
+            if (Value is ISqlVector vector)
+            {
+                return vector;
+            }
+
+            if (Value is string json)
+            {
+                try
+                {
+                    return SqlVector<float>.CreateForConversion(
+                        JsonSerializer.Deserialize(json, SqlClientJsonSerializerContext.Default.SingleArray));
+                }
+                catch (Exception ex) when (ex is ArgumentNullException || ex is JsonException)
+                {
+                    throw ADP.InvalidJsonStringForVector(json, ex);
+                }
+            }
+
+            // Validate rejects every other type, so this is unreachable for a valid value.
+            throw ADP.InvalidCast();
+        }
+
         internal object GetCoercedValue()
         {
             // NOTE: User can change the Udt at any time
@@ -1939,6 +2000,21 @@ namespace Microsoft.Data.SqlClient
                     _value = DBNull.Value;
                     return MetaType.GetDefaultMetaType();
                 }
+
+                if (_metaType.SqlDbType == SqlDbTypeExtensions.Vector &&
+                    _direction == ParameterDirection.Input &&
+                    _value is string)
+                {
+                    // A JSON array is sent as text and parsed by the server into whatever
+                    // base type the destination column has. Building a vector from it here
+                    // instead would fix the base type to float32, which a column of another
+                    // base type then needs the server to convert — and not every build does.
+                    // Sending the text keeps this form working against every server, which
+                    // matters because it is the only one available to a .NET Framework
+                    // caller round-tripping a float16 column through a DbDataAdapter.
+                    return MetaType.MetaMaxVarChar;
+                }
+
                 return _metaType;
             }
             if (_value != null && DBNull.Value != _value)
@@ -2385,11 +2461,18 @@ namespace Microsoft.Data.SqlClient
                     {
                         value = ((ISqlVector)value).VectorPayload;
                     }
+                    #if NET
+                    else if (currentType == typeof(SqlVector<Half>))
+                    {
+                        value = ((ISqlVector)value).VectorPayload;
+                    }
+                    #endif
                     else if (currentType == typeof(string) && destinationType.SqlDbType == SqlDbTypeExtensions.Vector)
                     {
                         try
                         {
-                            value = ((ISqlVector)new SqlVector<float>(JsonSerializer.Deserialize((string)value, SqlClientJsonSerializerContext.Default.SingleArray))).VectorPayload;
+                            value = ((ISqlVector)SqlVector<float>.CreateForConversion(
+                                JsonSerializer.Deserialize((string)value, SqlClientJsonSerializerContext.Default.SingleArray))).VectorPayload;
                         }
                         catch (Exception ex) when (ex is ArgumentNullException || ex is JsonException)
                         {

@@ -1902,6 +1902,9 @@
   <data name="SQLCR_NoCRAckAtReconnection" xml:space="preserve">
     <value>The server did not acknowledge a recovery attempt, connection recovery is not possible.</value>
   </data>
+  <data name="DbConnectionString_VectorTypeSupport" xml:space="preserve">
+    <value>The level of vector type support to negotiate with the server.</value>
+  </data>
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>Defines the blocking period behavior for a connection pool.</value>
   </data>
@@ -2160,8 +2163,14 @@
   <data name="SQL_VectorTypeNotSupported" xml:space="preserve">
     <value>Unsupported Vector type '{0}'.</value>
   </data>
+  <data name="SQL_VectorBaseTypeNotNegotiated" xml:space="preserve">
+    <value>The vector base type '{0}' is not supported for the vector type support level negotiated with the server. Set the 'Vector Type Support' connection string keyword to '{1}' to use it.</value>
+  </data>
   <data name="ADP_NullOutputParameterValueForVector" xml:space="preserve">
     <value>'null' value not supported for output parameter '{0}' of SqlDbtype Vector.</value>
+  </data>
+  <data name="ADP_VectorValueOutOfRangeForBaseType" xml:space="preserve">
+    <value>The value {0} cannot be represented by a vector with a base type of {1}.</value>
   </data>
   <data name="ADP_InvalidVectorHeader" xml:space="preserve">
     <value>Invalid vector header received.</value>

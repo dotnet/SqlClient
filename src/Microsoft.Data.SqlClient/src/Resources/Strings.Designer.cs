@@ -610,6 +610,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The value {0} cannot be represented by a vector with a base type of {1}..
+        /// </summary>
+        internal static string ADP_VectorValueOutOfRangeForBaseType {
+            get {
+                return ResourceManager.GetString("ADP_VectorValueOutOfRangeForBaseType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Invalid vector header received..
         /// </summary>
         internal static string ADP_InvalidVectorHeader {
@@ -1524,6 +1533,15 @@ namespace System {
         internal static string DbConnectionString_PersistSecurityInfo {
             get {
                 return ResourceManager.GetString("DbConnectionString_PersistSecurityInfo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The level of vector type support to negotiate with the server..
+        /// </summary>
+        internal static string DbConnectionString_VectorTypeSupport {
+            get {
+                return ResourceManager.GetString("DbConnectionString_VectorTypeSupport", resourceCulture);
             }
         }
         
@@ -4314,6 +4332,15 @@ namespace System {
         internal static string SQL_VectorTypeNotSupported {
             get {
                 return ResourceManager.GetString("SQL_VectorTypeNotSupported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The vector base type &apos;{0}&apos; is not supported for the vector type support level negotiated with the server. Set the &apos;Vector Type Support&apos; connection string keyword to &apos;{1}&apos; to use it..
+        /// </summary>
+        internal static string SQL_VectorBaseTypeNotNegotiated {
+            get {
+                return ResourceManager.GetString("SQL_VectorBaseTypeNotNegotiated", resourceCulture);
             }
         }
         

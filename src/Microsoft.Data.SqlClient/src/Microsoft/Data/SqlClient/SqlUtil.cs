@@ -570,6 +570,22 @@ namespace Microsoft.Data.SqlClient
             return ADP.NotSupported(StringsHelper.GetString(Strings.SQL_VectorTypeNotSupported, value));
         }
 
+        /// <summary>
+        /// A vector base type was used which the connection did not negotiate with the server.
+        /// </summary>
+        /// <remarks>
+        /// Rejected by the client rather than left to the server, which reports it as a
+        /// malformed protocol stream when the feature extension was not requested at all,
+        /// and otherwise accepts the value even though the connection reads such a column
+        /// back as a JSON string. Both outcomes are worse than naming the keyword which
+        /// enables the base type, which is also what the JDBC and ODBC drivers do.
+        /// </remarks>
+        internal static Exception VectorBaseTypeNotNegotiated(string baseType, string requiredKeywordValue)
+        {
+            return ADP.InvalidOperation(
+                StringsHelper.GetString(Strings.SQL_VectorBaseTypeNotNegotiated, baseType, requiredKeywordValue));
+        }
+
         internal static Exception XmlReaderNotSupportOnColumnType(string columnName)
         {
             return ADP.InvalidCast(StringsHelper.GetString(Strings.SQL_XmlReaderNotSupportOnColumnType, columnName));

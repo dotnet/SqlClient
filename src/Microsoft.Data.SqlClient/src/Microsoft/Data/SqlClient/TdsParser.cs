@@ -84,6 +84,17 @@ namespace Microsoft.Data.SqlClient
 
         private SqlCollation _defaultCollation;                         // default collation from the server
 
+        /// <summary>
+        /// The default collation reported by the server, used for a column whose destination
+        /// type carries no collation of its own but which is sent as character data.
+        /// </summary>
+        internal SqlCollation DefaultCollation => _defaultCollation;
+
+        /// <summary>
+        /// The code page which corresponds to <see cref="DefaultCollation"/>.
+        /// </summary>
+        internal int DefaultCodePage => _defaultCodePage;
+
         private int _defaultCodePage;
 
         private int _defaultLCID;
@@ -9209,7 +9220,12 @@ namespace Microsoft.Data.SqlClient
                 // Feature Data Length
                 WriteInt(1, _physicalStateObj);
 
-                _physicalStateObj.WriteByte(TdsEnums.MAX_SUPPORTED_VECTOR_VERSION);
+                // The version the connection asks for, rather than the highest this client
+                // understands, so that an application opts in to a newer representation
+                // rather than receiving it on upgrade.
+                _physicalStateObj.WriteByte(
+                    VectorTypeSupportUtilities.ToFeatureExtensionVersion(
+                        _connHandler.ConnectionOptions.VectorTypeSupport));
             }
 
             return len;
@@ -10743,7 +10759,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         // For vector type we need to write the size in bytes required to represent
                         // vector value when communicating with SQL Server.
-                        var sqlVectorProps = ((ISqlVector)param.Value);
+                        var sqlVectorProps = param.GetVectorProperties();
                         maxsize = sqlVectorProps.Size;
                     }
 
@@ -10772,7 +10788,11 @@ namespace Microsoft.Data.SqlClient
             else if (mt.SqlDbType == SqlDbTypeExtensions.Vector)
             {
                 // For vector type we need to write scale as the element type of the vector.
-                stateObj.WriteByte(((ISqlVector)param.Value).ElementType);
+                byte elementType = param.GetVectorProperties().ElementType;
+
+                VectorTypeSupportUtilities.ThrowIfBaseTypeNotNegotiated(elementType, Capabilities.VectorVersion);
+
+                stateObj.WriteByte(elementType);
             }
 
             // write out collation or xml metadata
@@ -10858,7 +10878,7 @@ namespace Microsoft.Data.SqlClient
                     // for codePageEncoded types, WriteValue simply expects the number of characters
                     // For plp types, we also need the encoded byte size
                     // For vector type we need to write scale as the element type of the vector.
-                    byte writeScale = mt.SqlDbType == SqlDbTypeExtensions.Vector ? ((ISqlVector)param.Value).ElementType : param.GetActualScale();
+                    byte writeScale = mt.SqlDbType == SqlDbTypeExtensions.Vector ? param.GetVectorProperties().ElementType : param.GetActualScale();
                     writeParamTask = WriteValue(value, mt, isParameterEncrypted ? (byte)0 : writeScale, actualSize, codePageByteSize, isParameterEncrypted ? 0 : param.Offset, stateObj, isParameterEncrypted ? 0 : param.Size, isDataFeed);
                 }
             }
@@ -11653,6 +11673,14 @@ namespace Microsoft.Data.SqlClient
                             stateObj.WriteByteArray(s_jsonMetadataSubstituteSequence, s_jsonMetadataSubstituteSequence.Length, 0);
                             break;
                         case SqlDbTypeExtensions.Vector:
+                            // The scale carries the destination column's base type. A
+                            // connection which did not negotiate that base type is told the
+                            // column is a varchar(max) instead, so this does not arise today
+                            // and the value travels as text; the check guards the invariant
+                            // rather than a reachable case, and keeps this path consistent
+                            // with the parameter path.
+                            VectorTypeSupportUtilities.ThrowIfBaseTypeNotNegotiated(md.scale, Capabilities.VectorVersion);
+
                             stateObj.WriteByte(md.tdsType);
                             WriteTokenLength(md.tdsType, md.length, stateObj);
                             stateObj.WriteByte(md.scale);
