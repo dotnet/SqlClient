@@ -1349,6 +1349,15 @@ The <xref:Microsoft.Data.SqlClient.SqlDataReader.GetSchemaTable%2A> method retur
       </summary>
       <value><see langword="true" /> if the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> contains one or more rows; otherwise <see langword="false" />.
       </value>
+      <remarks>
+        Informational messages from the server do not determine whether a result set contains rows.
+        These messages are available through the <see cref="E:Microsoft.Data.SqlClient.SqlConnection.InfoMessage" /> event.
+      </remarks>
+      <example>
+        <format type="text/markdown"><![CDATA[
+[!code-csharp[SqlDataReader_HasRows Example#1](~/../sqlclient/doc/samples/SqlDataReader_HasRows.cs#1)]
+]]></format>
+      </example>
     </HasRows>
     <IsClosed>
       <summary>

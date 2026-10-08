@@ -20,8 +20,10 @@ namespace SqlDataReader_HasRows
             using (connection)
             {
                 SqlCommand command = new SqlCommand(
+                  "PRINT N'Reading categories'; PRINT N'Informational messages do not affect HasRows'; " +
                   "SELECT CategoryID, CategoryName FROM Categories;",
                   connection);
+                connection.InfoMessage += (sender, args) => Console.WriteLine(args.Message);
                 connection.Open();
 
                 SqlDataReader reader = command.ExecuteReader();
