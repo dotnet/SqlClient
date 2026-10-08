@@ -27,13 +27,6 @@ namespace Microsoft.Data.SqlClient
         private const string ActiveDirectoryDefault = "active directory default";
         private const string ActiveDirectoryWorkloadIdentity = "active directory workload identity";
 
-        // The name of our Azure extension assembly.
-        private const string azureAssemblyName = "Microsoft.Data.SqlClient.Extensions.Azure";
-
-        // The public key token of our Azure extension assembly, used to avoid loading imposter
-        // assemblies.
-        private static readonly byte[] s_azurePublicKeyToken = [ 0x23, 0xec, 0x7f, 0xc2, 0xd6, 0xea, 0xa4, 0xa5 ];
-
         static SqlAuthenticationProviderManager()
         {
             TryReadConfigurationSection(out SqlAuthenticationProviderConfigurationSection? configurationSection);
@@ -45,70 +38,15 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 // Try to load our Azure extension.
-                #if STRONG_NAME_SIGNING
-
-                // When strong-name signing is enabled, build a fully-qualified AssemblyName
-                // that includes the expected public key token.
-
-                SqlClientEventSource.Log.TryTraceEvent(
-                    nameof(SqlAuthenticationProviderManager) +
-                    ": Attempting to load Azure extension assembly={0} with " +
-                    "expected public key token={1}",
-                    azureAssemblyName,
-                    BitConverter.ToString(s_azurePublicKeyToken).Replace("-", ""));
-
-                var qualifiedName = new AssemblyName(azureAssemblyName);
-                qualifiedName.SetPublicKeyToken(s_azurePublicKeyToken);
-
-                // The .NET Framework runtime will enforce the token during binding, causing Load()
-                // to throw.  This prevents an untrusted assembly from being loaded and having its
-                // module initializers run.  This will throw if the public key token doesn't match.
-                //
-                // The .NET runtime ignores the public key token and will happily load any assembly
-                // with the same simple name.
-                //
-                var assembly = Assembly.Load(qualifiedName);
-
-                #if NET
-                // For the .NET runtime, we will check the public key token ourselves.
-                //
-                // Note that a null assembly is handled below.
-                if (assembly is not null)
-                {
-                    byte[]? actualToken = assembly.GetName().GetPublicKeyToken();
-
-                    if (actualToken is null || !actualToken.AsSpan().SequenceEqual(s_azurePublicKeyToken))
-                    {
-                        SqlClientEventSource.Log.TryTraceEvent(
-                            nameof(SqlAuthenticationProviderManager) +
-                            ": Azure extension assembly={0} has an " +
-                            "unexpected public key token; " +
-                            "no default Active Directory provider installed",
-                            assembly.GetName());
-                        return;
-                    }
-                }
-                #endif
-
-                #else
-
-                SqlClientEventSource.Log.TryTraceEvent(
-                    nameof(SqlAuthenticationProviderManager) +
-                    ": Attempting to load Azure extension assembly={0} without " +
-                    "strong name verification; ensure this assembly is from a trusted source",
-                    azureAssemblyName);
-
-                var assembly = Assembly.Load(azureAssemblyName);
-
-                #endif
+                var assembly = AzureExtensionLoader.Load(nameof(SqlAuthenticationProviderManager));
 
                 if (assembly is null)
                 {
                     SqlClientEventSource.Log.TryTraceEvent(
                         nameof(SqlAuthenticationProviderManager) +
-                        ": Azure extension assembly={0} not found; " +
+                        ": Azure extension assembly={0} not usable; " +
                         "no default Active Directory provider installed",
-                        azureAssemblyName);
+                        AzureExtensionLoader.AssemblyName);
                     return;
                 }
 
@@ -216,7 +154,7 @@ namespace Microsoft.Data.SqlClient
                     ": Azure extension assembly={0} not found or " +
                     "not usable; no default provider installed; " +
                     "{1}: {2}",
-                    azureAssemblyName,
+                    AzureExtensionLoader.AssemblyName,
                     ex.GetType().Name,
                     ex.Message);
             }
