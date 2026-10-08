@@ -352,6 +352,35 @@ function Split-DocIdArguments {
 }
 
 <#
+    Returns the text inside every delimited group in a documentation ID, nested groups included, so
+    each can be validated in its own right rather than only the outermost one.
+
+    Balance is the caller's responsibility: every caller runs after the pairing check for that
+    delimiter, which returns on failure, so an unmatched delimiter never reaches here.
+#>
+function Get-DocIdGroupContents {
+    param(
+        [Parameter(Mandatory)][AllowEmptyString()][string]$Text,
+        [Parameter(Mandatory)][char]$Open,
+        [Parameter(Mandatory)][char]$Close
+    )
+
+    $contents = [System.Collections.Generic.List[string]]::new()
+    $starts = [System.Collections.Generic.Stack[int]]::new()
+    for ($index = 0; $index -lt $Text.Length; $index++) {
+        if ($Text[$index] -eq $Open) {
+            $starts.Push($index)
+        }
+        elseif ($Text[$index] -eq $Close -and $starts.Count -gt 0) {
+            $start = $starts.Pop()
+            $contents.Add($Text.Substring($start + 1, $index - $start - 1))
+        }
+    }
+
+    return $contents
+}
+
+<#
     Reduces a documentation ID parameter to the bare type identifier so it can be compared against
     the C# alias set: array, pointer and by-reference markers are stripped, as are generic
     arguments, which are validated separately as parameters in their own right.
@@ -469,24 +498,171 @@ function Test-Cref {
         return
     }
 
+    # Balance alone does not make a generic argument list well formed. A constructed generic names
+    # one or more type arguments, so an empty list or an empty entry names no type at all, and
+    # nothing downstream objected: Get-DocIdCoreTypeName cuts the body at the first brace, so
+    # T:System.Collections.Generic.List{} reduced to the perfectly ordinary name List and passed.
+    # Every group is checked, nested ones included, so an inner {} is caught as readily as an
+    # outer one.
+    foreach ($genericArguments in (Get-DocIdGroupContents -Text $body -Open '{' -Close '}')) {
+        if ([string]::IsNullOrWhiteSpace($genericArguments)) {
+            Add-Finding @Context -Category 'invalid-docid' -Cref $Cref -Message (
+                "Cref '$trimmed' has an empty generic argument list. A constructed generic names " +
+                'one or more type arguments between { and }.')
+            return
+        }
+
+        foreach ($genericArgument in (Split-DocIdArguments -Arguments $genericArguments)) {
+            if ([string]::IsNullOrWhiteSpace($genericArgument)) {
+                Add-Finding @Context -Category 'invalid-docid' -Cref $Cref -Message (
+                    "Cref '$trimmed' has an empty generic argument. Documentation IDs separate " +
+                    'generic arguments with a single comma, and write no leading, repeated or ' +
+                    'trailing separator.')
+                return
+            }
+        }
+    }
+
+    # The array suffix brackets must pair up as well. They are checked alongside the braces rather
+    # than left to the signature reading below, because nothing downstream looks at them: the
+    # argument splitter tracks bracket depth only to decide where a comma separates parameters,
+    # and Get-DocIdCoreTypeName trims them off whether or not they matched. An unmatched one
+    # therefore reduced to a perfectly ordinary type name and was never reported, so
+    # M:System.String.IndexOf(System.Char[) passed the gate and reached Open Publishing as an
+    # unresolved xref.
+    $bracketDepth = 0
+    foreach ($character in $body.ToCharArray()) {
+        if ($character -eq '[') {
+            $bracketDepth++
+        }
+        elseif ($character -eq ']') {
+            $bracketDepth--
+
+            # A closing bracket with nothing open cannot be balanced by anything later, and leaving
+            # the count negative reports it below.
+            if ($bracketDepth -lt 0) {
+                break
+            }
+        }
+    }
+
+    if ($bracketDepth -ne 0) {
+        Add-Finding @Context -Category 'invalid-docid' -Cref $Cref -Message (
+            "Cref '$trimmed' has unbalanced square brackets around an array suffix. " +
+            'Documentation IDs pair every [ with a later ].')
+        return
+    }
+
+    # Balance is not enough here either. An array suffix encloses a dimension list and nothing
+    # else: empty for one dimension, commas for more, or the lower-bound spelling that records a
+    # bound and an optional size. Anything else is balanced but meaningless, and
+    # Get-DocIdCoreTypeName trims the brackets away whichever text they hold, so
+    # Use(System.Char[x]) reduced to the ordinary name System.Char and drew no finding.
+    foreach ($dimensions in (Get-DocIdGroupContents -Text $body -Open '[' -Close ']')) {
+        if ($dimensions -notmatch '^(?:\d+:\d*)?(?:,(?:\d+:\d*)?)*$') {
+            Add-Finding @Context -Category 'invalid-docid' -Cref $Cref -Message (
+                "Cref '$trimmed' writes '[$dimensions]', which is not a documentation-ID " +
+                'dimension list. Write [] for one dimension, [,] for more, or the lower-bound ' +
+                'form [0:,0:].')
+            return
+        }
+    }
+
+    # The parentheses must pair up too, and a documentation ID carries at most one parameter list,
+    # so they form a single matched pair that never nests. That is checked here rather than left to
+    # the signature reading below, which takes the argument text from the first '(' to the last
+    # ')': a stray delimiter anywhere between them is swallowed into that text instead of being
+    # reported, so M:System.String.IndexOf(System.Char)) yields the argument 'System.Char)', which
+    # names no type and reaches the published documentation as an unresolved xref.
+    $parenthesisDepth = 0
+    $deepestParenthesisDepth = 0
+    $parameterLists = 0
+    foreach ($character in $body.ToCharArray()) {
+        if ($character -eq '(') {
+            $parenthesisDepth++
+            if ($parenthesisDepth -eq 1) {
+                $parameterLists++
+            }
+            if ($parenthesisDepth -gt $deepestParenthesisDepth) {
+                $deepestParenthesisDepth = $parenthesisDepth
+            }
+        }
+        elseif ($character -eq ')') {
+            $parenthesisDepth--
+
+            # A closing parenthesis with nothing open cannot be balanced by anything later, and
+            # leaving the count negative reports it below.
+            if ($parenthesisDepth -lt 0) {
+                break
+            }
+        }
+    }
+
+    if ($parenthesisDepth -gt 0) {
+        Add-Finding @Context -Category 'invalid-docid' -Cref $Cref -Message (
+            "Cref '$trimmed' has an unterminated parameter list.")
+        return
+    }
+
+    if ($parenthesisDepth -lt 0) {
+        Add-Finding @Context -Category 'invalid-docid' -Cref $Cref -Message (
+            "Cref '$trimmed' has a ')' that closes no parameter list. Documentation IDs pair " +
+            'every ( with a later ).')
+        return
+    }
+
+    if ($deepestParenthesisDepth -gt 1 -or $parameterLists -gt 1) {
+        Add-Finding @Context -Category 'invalid-docid' -Cref $Cref -Message (
+            "Cref '$trimmed' has more than one parameter list. A documentation ID writes one " +
+            'matched pair of parentheses, which never nests.')
+        return
+    }
+
+    # Only a member that can be overloaded carries a parameter list: a method, written M:, and an
+    # indexed property, written P:. A namespace, type, field or event has nothing to disambiguate,
+    # so parentheses there are outside the grammar. This is checked before the arguments are read
+    # because the signature rules below accept them on any prefix, and a well-formed argument list
+    # on the wrong kind would otherwise pass unexamined and reach Open Publishing as an
+    # xref-not-found.
+    if ($parameterLists -eq 1 -and $prefix -ne 'M' -and $prefix -ne 'P') {
+        $withoutSignature = $body.Substring(0, $body.IndexOf('('))
+        $kind = switch ($prefix) {
+            'N' { 'a namespace' }
+            'T' { 'a type' }
+            'F' { 'a field' }
+            'E' { 'an event' }
+            default { 'a member' }
+        }
+        $suggestion = if ([string]::IsNullOrWhiteSpace($withoutSignature)) {
+            ''
+        }
+        else {
+            # Which correction is right depends on what the author meant, and the cref alone does
+            # not say. Naming a parameter list is far more often a sign that the prefix is wrong
+            # than that the list is spurious. The one occurrence this rule found in doc/snippets
+            # was an 'E:' on DbDataAdapter.Update, which is a method, so suggesting the
+            # prefix-preserving form alone would send the author to a cref that still resolves to
+            # nothing. Offer both, with the member-kind correction first.
+            " Either this names a method, in which case use 'M:$body', or the parameter list is " +
+            "spurious, in which case use '${prefix}:$withoutSignature'."
+        }
+
+        Add-Finding @Context -Category 'invalid-docid' -Cref $Cref -Message (
+            "Cref '$trimmed' writes a parameter list on $kind. Only a method, written 'M:', " +
+            "and an indexed property, written 'P:', carry one.$suggestion")
+        return
+    }
+
     $signatureStart = $body.IndexOf('(')
     $namePart = if ($signatureStart -ge 0) { $body.Substring(0, $signatureStart) } else { $body }
 
     if ($signatureStart -ge 0) {
         # The conversion-operator return marker (~) trails the parameter list, so the argument text
-        # ends at the last ')' rather than at the end of the body.
+        # ends at the last ')' rather than at the end of the body. The scan above leaves exactly
+        # one matched pair, so that ')' is this list's own and the arithmetic below cannot ask
+        # Substring for a negative length; an exception there would abandon the run without writing
+        # the report that report-only mode exists to produce.
         $signatureEnd = $body.LastIndexOf(')')
-
-        # Catches a missing ')' and one that precedes the '(', which is not a parameter list at
-        # all. LastIndexOf answers -1 when the character is absent, which is below every valid
-        # opening position, so both forms fail this comparison. Reaching the arithmetic below with
-        # either would ask Substring for a negative length, and the resulting exception would
-        # abandon the run without writing the report that report-only mode exists to produce.
-        if ($signatureEnd -lt $signatureStart) {
-            Add-Finding @Context -Category 'invalid-docid' -Cref $Cref -Message (
-                "Cref '$trimmed' has an unterminated parameter list.")
-            return
-        }
 
         $arguments = $body.Substring($signatureStart + 1, $signatureEnd - $signatureStart - 1)
 
@@ -528,6 +704,20 @@ function Test-Cref {
         # operator's return type is part of its signature, so it is scanned with the parameters.
         $signatureTypes = [System.Collections.Generic.List[string]]::new()
         foreach ($argument in (Split-DocIdArguments -Arguments $arguments)) {
+            # A comma separates two parameters, so an empty entry means one is missing: a leading,
+            # repeated or trailing separator. The splitter returns those entries as empty strings
+            # and everything downstream tolerates them, because Get-DocIdCoreTypeName reduces an
+            # empty argument to an empty name that matches no C# alias. The signature is still
+            # malformed and names no overload, so M:System.String.IndexOf(,System.Char) reached
+            # Open Publishing as an unresolved xref.
+            if ([string]::IsNullOrWhiteSpace($argument)) {
+                Add-Finding @Context -Category 'invalid-docid' -Cref $Cref -Message (
+                    "Cref '$trimmed' has an empty parameter in its signature. Documentation IDs " +
+                    'separate parameters with a single comma, and write no leading, repeated or ' +
+                    'trailing separator.')
+                return
+            }
+
             $signatureTypes.Add($argument)
         }
         if ($null -ne $returnType) {

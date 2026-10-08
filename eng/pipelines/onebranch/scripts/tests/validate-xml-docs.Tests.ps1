@@ -195,7 +195,275 @@ Describe 'validate-xml-docs.ps1' {
             $report | Should -Exist
             $finding = (Get-Report -Path $report).Findings | Select-Object -First 1
             $finding.Category | Should -Be 'invalid-docid'
-            $finding.Message | Should -BeLike '*unterminated parameter list*'
+            $finding.Message | Should -BeLike "*')' that closes no parameter list*"
+        }
+
+        <#
+            The argument text is read from the first '(' to the last ')', so a closing parenthesis
+            with nothing open was swallowed into it rather than reported: the extra-closer form
+            below yielded the argument 'System.Char)', which names no type and would have reached
+            Open Publishing as an xref-not-found.
+        #>
+        It 'rejects a closing parenthesis that closes no parameter list' -ForEach @(
+            @{ Cref = 'M:Microsoft.Data.SqlClient.Sample.Use(System.Char))' }
+            @{ Cref = 'M:Microsoft.Data.SqlClient.Sample.Use)' }
+        ) {
+            $snippets = New-SnippetDirectory -Crefs @($Cref)
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -SnippetsDirectory $snippets -ReportPath $report -ReportOnly
+
+            $findings = @((Get-Report -Path $report).Findings)
+            $findings.Count | Should -Be 1
+            $findings[0].Category | Should -Be 'invalid-docid'
+            $findings[0].Message | Should -BeLike "*')' that closes no parameter list*"
+        }
+
+        <#
+            Both forms balance, so a count alone accepts them. A documentation ID writes one
+            parameter list and never nests it, and the argument text of either form names no type.
+        #>
+        It 'rejects nested and repeated parameter lists' -ForEach @(
+            @{ Cref = 'M:Microsoft.Data.SqlClient.Sample.Use((System.Char))' }
+            @{ Cref = 'M:Microsoft.Data.SqlClient.Sample.Use(System.Char)(System.Int32)' }
+        ) {
+            $snippets = New-SnippetDirectory -Crefs @($Cref)
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -SnippetsDirectory $snippets -ReportPath $report -ReportOnly
+
+            $findings = @((Get-Report -Path $report).Findings)
+            $findings.Count | Should -Be 1
+            $findings[0].Category | Should -Be 'invalid-docid'
+            $findings[0].Message | Should -BeLike '*more than one parameter list*'
+        }
+
+        <#
+            The controls for the rules above. Each carries exactly one matched pair, including the
+            conversion operator whose return marker trails it.
+        #>
+        It 'accepts a well-formed parameter list' -ForEach @(
+            @{ Cref = 'M:Microsoft.Data.SqlClient.Sample.Use(System.Char)' }
+            @{ Cref = 'M:Microsoft.Data.SqlClient.Sample.Use(System.Char,System.Int32)' }
+            @{ Cref = 'M:Microsoft.Data.SqlClient.Sample.Use(System.Collections.Generic.List{System.String})' }
+            @{ Cref = 'M:Microsoft.Data.SqlClient.Sample.op_Implicit(System.Byte)~System.Decimal' }
+        ) {
+            $snippets = New-SnippetDirectory -Crefs @($Cref)
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -SnippetsDirectory $snippets -ReportPath $report -ReportOnly
+
+            @((Get-Report -Path $report).Findings) | Should -BeNullOrEmpty
+        }
+
+        <#
+            A parameter list disambiguates overloads, so only a method and an indexed property
+            carry one. The signature rules read the argument text from any prefix, so a well-formed
+            list on a namespace, type, field or event parsed cleanly and produced no finding at
+            all, leaving a UID that names nothing to reach Open Publishing as an xref-not-found.
+            The message offers both corrections because the cref alone cannot say which was meant:
+            the real occurrence this rule found wrote 'E:' on a method.
+        #>
+        It 'rejects a parameter list on a member kind that cannot carry one' -ForEach @(
+            @{ Cref = 'T:System.String(System.Int32)'; Kind = 'a type'; Name = 'System.String'; Parameter = 'System.Int32'; Suggestion = "'T:System.String'" }
+            @{ Cref = 'N:Microsoft.Data.SqlClient(System.Int32)'; Kind = 'a namespace'; Name = 'Microsoft.Data.SqlClient'; Parameter = 'System.Int32'; Suggestion = "'N:Microsoft.Data.SqlClient'" }
+            @{ Cref = 'F:Microsoft.Data.SqlClient.SqlClientFactory.Instance(System.Int32)'; Kind = 'a field'; Name = 'Microsoft.Data.SqlClient.SqlClientFactory.Instance'; Parameter = 'System.Int32'; Suggestion = "'F:Microsoft.Data.SqlClient.SqlClientFactory.Instance'" }
+            @{ Cref = 'E:System.Data.Common.DbDataAdapter.Update(System.Data.DataSet)'; Kind = 'an event'; Name = 'System.Data.Common.DbDataAdapter.Update'; Parameter = 'System.Data.DataSet'; Suggestion = "'E:System.Data.Common.DbDataAdapter.Update'" }
+        ) {
+            $snippets = New-SnippetDirectory -Crefs @($Cref)
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -SnippetsDirectory $snippets -ReportPath $report -ReportOnly
+
+            $findings = @((Get-Report -Path $report).Findings)
+            $findings.Count | Should -Be 1
+            $findings[0].Category | Should -Be 'invalid-docid'
+            $findings[0].Message | Should -BeLike "*parameter list on $Kind*"
+            $findings[0].Message | Should -BeLike "*use 'M:$Name($Parameter)'*"
+            $findings[0].Message | Should -BeLike "*use $Suggestion*"
+        }
+
+        <#
+            The controls for the rule above. An indexed property is the one non-method kind whose
+            documentation ID carries a parameter list, so rejecting it would flag correct
+            documentation.
+        #>
+        It 'accepts a parameter list on a method and on an indexed property' -ForEach @(
+            @{ Cref = 'M:Microsoft.Data.SqlClient.Sample.Use(System.Char)' }
+            @{ Cref = 'P:Microsoft.Data.SqlClient.SqlParameterCollection.Item(System.Int32)' }
+            @{ Cref = 'P:Microsoft.Data.SqlClient.SqlParameterCollection.Item(System.String)' }
+        ) {
+            $snippets = New-SnippetDirectory -Crefs @($Cref)
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -SnippetsDirectory $snippets -ReportPath $report -ReportOnly
+
+            @((Get-Report -Path $report).Findings) | Should -BeNullOrEmpty
+        }
+
+        <#
+            A comma separates two parameters, so an empty entry means one is missing. The splitter
+            returns those as empty strings and nothing downstream objected: an empty argument
+            reduces to an empty type name, which matches no C# alias, so the signature passed the
+            gate while naming no overload.
+        #>
+        It 'rejects an empty parameter in a signature' -ForEach @(
+            @{ Cref = 'M:System.String.IndexOf(,System.Char)' }
+            @{ Cref = 'M:System.String.IndexOf(System.Char,)' }
+            @{ Cref = 'M:System.String.IndexOf(System.Char,,System.Int32)' }
+        ) {
+            $snippets = New-SnippetDirectory -Crefs @($Cref)
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -SnippetsDirectory $snippets -ReportPath $report -ReportOnly
+
+            $findings = @((Get-Report -Path $report).Findings)
+            $findings.Count | Should -Be 1
+            $findings[0].Category | Should -Be 'invalid-docid'
+            $findings[0].Message | Should -BeLike '*empty parameter in its signature*'
+        }
+
+        <#
+            A whitespace-only argument is the same defect wearing a disguise. The whitespace rule
+            reports first and then carries on against the stripped form, so this cref draws both
+            findings rather than being excused by the first.
+        #>
+        It 'rejects a whitespace-only parameter once the whitespace is stripped' {
+            $snippets = New-SnippetDirectory -Crefs @('M:System.String.IndexOf(System.Char, ,System.Int32)')
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -SnippetsDirectory $snippets -ReportPath $report -ReportOnly
+
+            $messages = @((Get-Report -Path $report).Findings.Message)
+            $messages | Should -Not -BeNullOrEmpty
+            ($messages -like '*contains whitespace*') | Should -Not -BeNullOrEmpty
+            ($messages -like '*empty parameter in its signature*') | Should -Not -BeNullOrEmpty
+        }
+
+        <#
+            Nothing downstream reads the array brackets: the splitter tracks their depth only to
+            place commas, and Get-DocIdCoreTypeName trims them whether or not they matched, so an
+            unmatched bracket reduced to an ordinary type name and went unreported.
+        #>
+        It 'rejects unbalanced square brackets around an array suffix' -ForEach @(
+            @{ Cref = 'M:System.String.IndexOf(System.Char[)' }
+            @{ Cref = 'M:System.String.IndexOf(System.Char])' }
+            @{ Cref = 'M:Microsoft.Data.SqlClient.Sample.Use(System.Int32[,)' }
+            @{ Cref = 'T:System.Byte[' }
+        ) {
+            $snippets = New-SnippetDirectory -Crefs @($Cref)
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -SnippetsDirectory $snippets -ReportPath $report -ReportOnly
+
+            $findings = @((Get-Report -Path $report).Findings)
+            $findings.Count | Should -Be 1
+            $findings[0].Category | Should -Be 'invalid-docid'
+            $findings[0].Message | Should -BeLike '*unbalanced square brackets*'
+        }
+
+        <#
+            The controls for the two rules above. Every array suffix the documentation-ID grammar
+            writes must still pass, including the multidimensional forms whose commas sit inside
+            the brackets rather than separating parameters.
+        #>
+        It 'accepts well-formed array suffixes in a signature' -ForEach @(
+            @{ Cref = 'M:System.String.IndexOf(System.Char[],System.Int32)' }
+            @{ Cref = 'M:System.String.IndexOf(System.Char[0:,0:])' }
+            @{ Cref = 'M:Microsoft.Data.SqlClient.Sample.Use(System.Int32[,])' }
+            @{ Cref = 'M:Microsoft.Data.SqlClient.Sample.Use(System.Collections.Generic.List{System.String[]})' }
+        ) {
+            $snippets = New-SnippetDirectory -Crefs @($Cref)
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -SnippetsDirectory $snippets -ReportPath $report -ReportOnly
+
+            @((Get-Report -Path $report).Findings) | Should -BeNullOrEmpty
+        }
+
+        <#
+            Pairing the brackets leaves a balanced but meaningless suffix unexamined. An array
+            suffix encloses a dimension list and nothing else, and Get-DocIdCoreTypeName trims the
+            brackets away whichever text they hold, so each of these reduced to an ordinary type
+            name and drew no finding.
+        #>
+        It 'rejects an array suffix that is not a dimension list' -ForEach @(
+            @{ Cref = 'M:Microsoft.Data.SqlClient.Sample.Use(System.Char[x])'; Suffix = '[x]' }
+            @{ Cref = 'M:Microsoft.Data.SqlClient.Sample.Use(System.Char[1])'; Suffix = '[1]' }
+            @{ Cref = 'M:Microsoft.Data.SqlClient.Sample.Use(System.Char[[]])'; Suffix = '[[]]' }
+            @{ Cref = 'M:Microsoft.Data.SqlClient.Sample.Use(System.Char[0:x])'; Suffix = '[0:x]' }
+        ) {
+            $snippets = New-SnippetDirectory -Crefs @($Cref)
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -SnippetsDirectory $snippets -ReportPath $report -ReportOnly
+
+            $findings = @((Get-Report -Path $report).Findings)
+            $findings.Count | Should -Be 1
+            $findings[0].Category | Should -Be 'invalid-docid'
+            $findings[0].Message | Should -BeLike '*is not a documentation-ID dimension list*'
+
+            # Asserted literally rather than with -BeLike, whose wildcard syntax would read the
+            # brackets in the quoted suffix as a character class and match almost anything.
+            $findings[0].Message.Contains("writes '$Suffix'") | Should -BeTrue
+        }
+
+        <#
+            A constructed generic names one or more type arguments, so an empty list or an empty
+            entry names no type at all. Balance alone accepted both, because Get-DocIdCoreTypeName
+            cuts the body at the first brace: T:...List{} reduced to the ordinary name List.
+            Nested groups are covered too, which is why the inner {} case is here.
+        #>
+        It 'rejects an empty generic argument list' -ForEach @(
+            @{ Cref = 'T:System.Collections.Generic.List{}' }
+            @{ Cref = 'T:System.Collections.Generic.List{System.Collections.Generic.List{}}' }
+            @{ Cref = 'M:Microsoft.Data.SqlClient.Sample.Use(System.Collections.Generic.List{})' }
+        ) {
+            $snippets = New-SnippetDirectory -Crefs @($Cref)
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -SnippetsDirectory $snippets -ReportPath $report -ReportOnly
+
+            $findings = @((Get-Report -Path $report).Findings)
+            $findings.Count | Should -Be 1
+            $findings[0].Category | Should -Be 'invalid-docid'
+            $findings[0].Message | Should -BeLike '*empty generic argument list*'
+        }
+
+        It 'rejects an empty generic argument' -ForEach @(
+            @{ Cref = 'T:System.Collections.Generic.Dictionary{System.String,}' }
+            @{ Cref = 'T:System.Collections.Generic.Dictionary{,System.String}' }
+            @{ Cref = 'T:System.Collections.Generic.Dictionary{System.String,,System.Int32}' }
+            @{ Cref = 'T:System.Collections.Generic.List{System.Collections.Generic.Dictionary{System.String,}}' }
+        ) {
+            $snippets = New-SnippetDirectory -Crefs @($Cref)
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -SnippetsDirectory $snippets -ReportPath $report -ReportOnly
+
+            $findings = @((Get-Report -Path $report).Findings)
+            $findings.Count | Should -Be 1
+            $findings[0].Category | Should -Be 'invalid-docid'
+            $findings[0].Message | Should -BeLike '*empty generic argument*'
+        }
+
+        <#
+            The controls for the two generic rules. Nesting is the case that matters: the check
+            walks every brace group rather than the outermost one, so a valid inner list must not
+            be mistaken for an empty one.
+        #>
+        It 'accepts well-formed generic argument lists' -ForEach @(
+            @{ Cref = 'T:System.Collections.Generic.List{System.String}' }
+            @{ Cref = 'T:System.Collections.Generic.Dictionary{System.String,System.Int32}' }
+            @{ Cref = 'T:System.Collections.Generic.List{System.Collections.Generic.List{System.String}}' }
+            @{ Cref = 'M:Microsoft.Data.SqlClient.Sample.Use(System.Collections.Generic.Dictionary{System.String,System.Collections.Generic.List{System.Int32}})' }
+        ) {
+            $snippets = New-SnippetDirectory -Crefs @($Cref)
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            & $scriptPath -SnippetsDirectory $snippets -ReportPath $report -ReportOnly
+
+            @((Get-Report -Path $report).Findings) | Should -BeNullOrEmpty
         }
 
         It 'rejects a C# alias in a method signature' {
