@@ -124,11 +124,8 @@ namespace Microsoft.Data.SqlClient
                         // Perform Attestation per VSM protocol
                         VerifyAttestationInfo(enclaveSessionParameters.AttestationUrl, info.HealthReport, info.EnclaveReportPackage);
 
-                        // Verify the enclave public key is bound to the signed report, before it is used for key exchange
-                        VerifyEnclavePublicKeyBinding(info.EnclaveReportPackage, info.Identity);
-
                         // Set up shared secret and validate signature
-                        byte[] sharedSecret = GetSharedSecret(info.Identity, info.EnclaveDHInfo, clientDHKey);
+                        byte[] sharedSecret = GetSharedSecret(info.EnclaveReportPackage, info.Identity, info.EnclaveDHInfo, clientDHKey);
 
                         // add session to cache
                         sqlEnclaveSession = AddEnclaveSessionToCache(enclaveSessionParameters, sharedSecret, info.SessionId, out counter);
@@ -186,7 +183,7 @@ namespace Microsoft.Data.SqlClient
                 cancellationToken).ConfigureAwait(false);
 
             // Set up shared secret and validate signature
-            byte[] sharedSecret = GetSharedSecret(info.Identity, info.EnclaveDHInfo, clientDHKey);
+            byte[] sharedSecret = GetSharedSecret(info.EnclaveReportPackage, info.Identity, info.EnclaveDHInfo, clientDHKey);
 
             // add session to cache
             SqlEnclaveSession sqlEnclaveSession =
@@ -608,9 +605,15 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // Derives the shared secret between the client and enclave.
-        private byte[] GetSharedSecret(EnclavePublicKey enclavePublicKey, EnclaveDiffieHellmanInfo enclaveDHInfo, ECDiffieHellman clientDHKey)
+        // Derives the session's shared secret from the enclave's public key, after verifying that the
+        // signed report commits to that key. The binding check lives here, rather than in each caller,
+        // so that no attestation path can derive a secret from an unbound key.
+        // This is internal to allow for targeted unit testing.
+        internal static byte[] GetSharedSecret(EnclaveReportPackage enclaveReportPackage, EnclavePublicKey enclavePublicKey, EnclaveDiffieHellmanInfo enclaveDHInfo, ECDiffieHellman clientDHKey)
         {
+            // Verify the enclave public key is bound to the signed report, before it is used for key exchange
+            VerifyEnclavePublicKeyBinding(enclaveReportPackage, enclavePublicKey);
+
             // Perform signature verification. The enclave's DiffieHellman public key was signed by the enclave's RSA public key.
             using (RSA rsa = KeyConverter.CreateRSAFromPublicKeyBlob(enclavePublicKey.PublicKey))
             {
