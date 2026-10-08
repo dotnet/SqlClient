@@ -31,13 +31,12 @@
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <!--
-      Do NOT enable CentralPackageTransitivePinningEnabled. This repository
-      produces NuGet library packages (not applications). Transitive pinning
-      promotes every pinned transitive dependency into a direct NuGet
-      dependency in the generated .nuspec, polluting consumers' dependency
-      graphs with packages they never asked for.
+      Enable central transitive pinning so centrally managed versions can
+      remediate transitive dependencies. Keep pins compatible with each target
+      framework's dependency graph, and review packed dependencies: NuGet can
+      promote pinned transitive dependencies into direct package dependencies.
     -->
-    <CentralPackageTransitivePinningEnabled>false</CentralPackageTransitivePinningEnabled>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
 
   <!--
@@ -155,6 +154,11 @@
     <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.23.0" />
     <PackageVersion Include="System.Buffers" Version="4.6.1" />
     <PackageVersion Include="System.Data.Common" Version="4.3.0" />
+    <!--
+      The 10.x band matches the supported modern runtime and the floor LTS
+      for legacy targets. Transitive pinning can publish these servicing
+      versions as explicit minimums in SDK-generated package dependencies.
+    -->
     <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="10.0.12" />
     <PackageVersion Include="System.Memory" Version="4.6.3" />
     <PackageVersion Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
