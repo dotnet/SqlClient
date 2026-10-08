@@ -25,6 +25,19 @@ tests, use only `net10.0`. Stress projects use `net462;net10.0`. PackageCompatib
 `net481;net10.0` with xUnit v3, and their Framework target requires Windows and .NET Framework 4.8.1.
 The historical `tools/SniCloseLegacyRepro` test matrix is unchanged.
 
+## CI Platform Coverage
+
+PR validation runs tests on Windows and Linux only. The
+[project-reference](eng/pipelines/sqlclient-pr-project-ref-pipeline.yml) and
+[package-reference](eng/pipelines/sqlclient-pr-package-ref-pipeline.yml) PR pipelines set
+`runMacOSTests: false`, excluding macOS SqlClient/AKV, Abstractions, and Azure extension tests
+and their packaging dependencies. The [unified PR pipeline](eng/pipelines/pr/sqlclient-pr-pipeline.yml)
+already has a Windows/Linux-only platform matrix.
+
+The [shared CI template](eng/pipelines/dotnet-sqlclient-ci-core.yml) defaults `runMacOSTests` to `true`,
+so scheduled and push-triggered CI retains macOS coverage. Local macOS testing remains supported.
+See [Pipeline Script Tests](eng/pipelines/scripts/tests/README.md) for platform-selection regression checks.
+
 ## Recommended Entry Point
 
 Use [build.proj](build.proj) from the repository root:
