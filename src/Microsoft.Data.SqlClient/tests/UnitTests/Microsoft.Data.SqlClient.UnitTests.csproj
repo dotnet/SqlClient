@@ -38,6 +38,7 @@
   </PropertyGroup>
 
   <!-- References ====================================================== -->
+  <Import Project="../tools/ConnectivityTestHost/ConnectivityTestHost.targets" />
   <!-- Test target reference -->
   <ItemGroup Condition="'$(ReferenceType)' != 'Package'">
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj" />
