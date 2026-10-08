@@ -71,6 +71,17 @@
     <None Include="PackageReadme.md" Pack="true" PackagePath="README.md" />
   </ItemGroup>
 
+  <!-- Embedded resources ============================================== -->
+  <ItemGroup>
+    <EmbeddedResource Update="Resources/Strings.resx">
+      <StronglyTypedManifestPrefix>Microsoft.Data.SqlClient.Resources</StronglyTypedManifestPrefix>
+      <StronglyTypedLanguage>C#</StronglyTypedLanguage>
+      <StronglyTypedClassName>Strings</StronglyTypedClassName>
+      <StronglyTypedNamespace>Microsoft.Data.SqlClient.Extensions.Abstractions.Resources</StronglyTypedNamespace>
+      <StronglyTypedFileName>$(IntermediateOutputPath)Strings.Designer.cs</StronglyTypedFileName>
+    </EmbeddedResource>
+  </ItemGroup>
+
   <!-- References ====================================================== -->
   <!-- Reference to Logging  -->
   <ItemGroup>

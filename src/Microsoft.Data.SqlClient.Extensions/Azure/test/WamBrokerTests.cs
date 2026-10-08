@@ -2,7 +2,9 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.Globalization;
 using System.Reflection;
+using System.Resources;
 
 namespace Microsoft.Data.SqlClient.Extensions.Azure.Test;
 
@@ -26,6 +28,36 @@ public class WamBrokerTests
             BindingFlags.Instance | BindingFlags.NonPublic);
         Assert.NotNull(field);
         return (Func<object>?)field!.GetValue(provider);
+    }
+
+    /// <summary>
+    /// Invalid parent callbacks use the full resource template for the active framework.
+    /// </summary>
+    [ConditionalFact(typeof(Config), nameof(Config.OnWindows))]
+    public void GetParentWindow_InvalidCallback_UsesResource()
+    {
+        ActiveDirectoryAuthenticationProvider provider = new();
+        provider.SetParentActivityOrWindowFunc(() => new object());
+        MethodInfo? method = typeof(ActiveDirectoryAuthenticationProvider).GetMethod(
+            "GetParentWindow", BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(method);
+
+        TargetInvocationException invocation = Assert.Throws<TargetInvocationException>(
+            () => method!.Invoke(provider, null));
+        InvalidOperationException exception = Assert.IsType<InvalidOperationException>(invocation.InnerException);
+        ResourceManager resources = new(
+            "Microsoft.Data.SqlClient.Resources.Strings",
+            typeof(ActiveDirectoryAuthenticationProvider).Assembly);
+#if NETFRAMEWORK
+        const string Key = "InvalidParentWindowNetFramework";
+#else
+        const string Key = "InvalidParentWindow";
+#endif
+        string? message = resources.GetString(Key);
+        Assert.NotNull(message);
+        Assert.Equal(string.Format(CultureInfo.CurrentCulture, message!,
+            nameof(ActiveDirectoryAuthenticationProvider.SetParentActivityOrWindowFunc), typeof(object).FullName),
+            exception.Message);
     }
 
     /// <summary>

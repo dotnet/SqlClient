@@ -2,6 +2,9 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.Globalization;
+using System.Resources;
+
 namespace Microsoft.Data.SqlClient.Extensions.Azure.Test;
 
 /// <summary>
@@ -162,5 +165,17 @@ public class AuthorityParsingTests
         // The message identifies the offending authority, and is not the generic catch-all text.
         Assert.Contains(BadAuthority, ex.Message, StringComparison.Ordinal);
         Assert.DoesNotContain("Unexpected error", ex.Message, StringComparison.Ordinal);
+
+        ResourceManager resources = new(
+            "Microsoft.Data.SqlClient.Resources.Strings",
+            typeof(ActiveDirectoryAuthenticationProvider).Assembly);
+        string? authorityMessage = resources.GetString("InvalidAuthority");
+        string? failureMessage = resources.GetString("AuthenticationFailed");
+        Assert.NotNull(authorityMessage);
+        Assert.NotNull(failureMessage);
+        Assert.Equal(
+            string.Format(CultureInfo.CurrentCulture, failureMessage!,
+                method, string.Format(CultureInfo.CurrentCulture, authorityMessage!, BadAuthority)),
+            ex.Message);
     }
 }
