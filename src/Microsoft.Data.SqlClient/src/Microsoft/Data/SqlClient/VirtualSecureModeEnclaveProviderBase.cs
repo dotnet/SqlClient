@@ -9,7 +9,6 @@ using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography.Pkcs;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Data.Common;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace Microsoft.Data.SqlClient

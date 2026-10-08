@@ -359,7 +359,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
         [Fact]
         public async Task CreateEnclaveSessionAsync_WhenGateWaitTimesOut_AttestsAnyway()
         {
-            FakeAttestationEnclaveProvider provider = new FakeAttestationEnclaveProvider(TimeSpan.Zero);
+            FakeAttestationEnclaveProvider provider = new FakeAttestationEnclaveProvider(TimeSpan.Zero, gateTimeoutInMilliseconds: 1);
             TaskCompletionSource<bool> hold =
                 new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
             provider.HoldAttestation = hold;
@@ -383,8 +383,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
                     timeoutSource.Cancel();
                     Assert.Same(attestationStarted, completed);
                 }
-                provider.GateTimeoutInMilliseconds = 1;
-
                 blocked = Task.Run(() => AttestAsync(provider, blockedParameters));
 
                 // Reaching two attestations while the first is still parked is only possible if the second
@@ -401,15 +399,17 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
                 Assert.NotNull(heldSession);
                 Assert.NotNull(blockedSession);
                 Assert.NotEqual(heldSession.SessionId, blockedSession.SessionId);
+                Assert.Equal(2, provider.AttestationCount);
 
                 // Disable timeout fallthrough so a lost gate release fails via cancellation instead
                 // of silently attesting anyway.
-                provider.GateTimeoutInMilliseconds = Timeout.Infinite;
+                FakeAttestationEnclaveProvider followUpProvider =
+                    new FakeAttestationEnclaveProvider(TimeSpan.Zero, gateTimeoutInMilliseconds: Timeout.Infinite);
                 using (CancellationTokenSource gateWaitTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(30)))
                 {
-                    Assert.NotNull(await AttestAsync(provider, NewSessionParameters(), gateWaitTimeout.Token));
+                    Assert.NotNull(await AttestAsync(followUpProvider, NewSessionParameters(), gateWaitTimeout.Token));
                 }
-                Assert.Equal(3, provider.AttestationCount);
+                Assert.Equal(1, followUpProvider.AttestationCount);
             }
             finally
             {
@@ -771,20 +771,22 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             }
 
             /// <summary>
+            /// Uses a fixed gate timeout to exercise timeout fallthrough or an infinite wait without
+            /// changing the production providers' timeout.
+            /// </summary>
+            internal FakeAttestationEnclaveProvider(TimeSpan attestationDelay, int gateTimeoutInMilliseconds)
+                : base(gateTimeoutInMilliseconds)
+            {
+                _attestationDelay = attestationDelay;
+            }
+
+            /// <summary>
             /// When set, the next attestation throws and the flag is cleared, so a single provider
             /// instance can be used to exercise both a failed and a subsequent successful attestation.
             /// </summary>
             internal bool FailNextAttestation { get; set; }
 
             protected override bool GeneratesNonceForAttestation => true;
-
-            /// <summary>
-            /// How long this provider waits for the async attestation gate. Tests that exercise the
-            /// timeout fallthrough set a small value so they do not wait out the production timeout.
-            /// </summary>
-            internal int GateTimeoutInMilliseconds { get; set; } = 15 * 1000;
-
-            protected override int AsyncAttestationGateTimeoutInMilliseconds => GateTimeoutInMilliseconds;
 
             internal int AttestationCount => Volatile.Read(ref _attestationCount);
 

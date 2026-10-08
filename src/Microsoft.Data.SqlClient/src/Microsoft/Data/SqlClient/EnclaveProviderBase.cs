@@ -73,6 +73,8 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Members
+        private readonly int _asyncAttestationGateTimeoutInMilliseconds;
+
         private static readonly EnclaveSessionCache SessionCache = new EnclaveSessionCache();
 
         private static AutoResetEvent sessionLockEvent = new AutoResetEvent(true);
@@ -126,6 +128,18 @@ namespace Microsoft.Data.SqlClient
         protected static readonly MemoryCache ThreadRetryCache = new MemoryCache(new MemoryCacheOptions());
         private static readonly TimeSpan s_threadRetryCacheTimeout = TimeSpan.FromMinutes(10);
         #endregion
+
+        protected EnclaveProviderBase()
+            : this(LockTimeoutMaxInMilliseconds)
+        {
+        }
+
+        // Test-only constructor for exercising the process-wide gate with a fixed timeout.
+        // Production providers use the parameterless constructor and its 15-second wait.
+        internal EnclaveProviderBase(int asyncAttestationGateTimeoutInMilliseconds)
+        {
+            _asyncAttestationGateTimeoutInMilliseconds = asyncAttestationGateTimeoutInMilliseconds;
+        }
 
         #region protected methods
         // Helper method to get the enclave session from the cache if present
@@ -261,12 +275,6 @@ namespace Microsoft.Data.SqlClient
             return Task.FromResult((sqlEnclaveSession, counter, customData, customDataLength));
         }
 
-        // How long a caller waits for the async attestation gate before giving up and attesting on its
-        // own. This instance-scoped seam lets tests exercise the timeout fallthrough without waiting
-        // out the production timeout; because the gate is process-wide, production providers must not
-        // override it with a shorter timeout.
-        protected virtual int AsyncAttestationGateTimeoutInMilliseconds => LockTimeoutMaxInMilliseconds;
-
         // Indicates whether this provider's attestation protocol uses a client-generated nonce.
         // Mirrors the value each provider passes to GetEnclaveSessionHelper on the synchronous path.
         protected abstract bool GeneratesNonceForAttestation { get; }
@@ -310,7 +318,7 @@ namespace Microsoft.Data.SqlClient
             // rather than failing. This mirrors the synchronous design's deliberate choice to favour
             // progress over strict collapsing when the gate holder is unusually slow.
             bool gateAcquired = await s_asyncAttestationGate
-                .WaitAsync(AsyncAttestationGateTimeoutInMilliseconds, cancellationToken)
+                .WaitAsync(_asyncAttestationGateTimeoutInMilliseconds, cancellationToken)
                 .ConfigureAwait(false);
 
             try
