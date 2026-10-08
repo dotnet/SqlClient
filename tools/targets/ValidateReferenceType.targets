@@ -1,0 +1,26 @@
+<!--
+  Licensed to the .NET Foundation under one or more agreements. The .NET Foundation licenses this
+  file to you under the MIT license.
+-->
+<Project>
+  <!--
+    ReferenceType selects between project and package references. It is compared positively
+    (== 'Project' or == 'Package') everywhere it is consumed, so an unrecognized value selects
+    neither branch and would otherwise produce confusing downstream errors, or silently build in
+    the wrong mode. Fail fast instead.
+
+    This file is imported both by src/Directory.Build.targets, which covers every project build,
+    and by build.proj, which runs it via InitialTargets so that orchestrated builds are validated
+    before any child build is spawned.
+  -->
+  <Target Name="ValidateReferenceType"
+          BeforeTargets="Restore;BeforeBuild">
+    <PropertyGroup>
+      <_ReferenceTypeIsValid>false</_ReferenceTypeIsValid>
+      <_ReferenceTypeIsValid Condition="'$(ReferenceType)' == 'Project'">true</_ReferenceTypeIsValid>
+      <_ReferenceTypeIsValid Condition="'$(ReferenceType)' == 'Package'">true</_ReferenceTypeIsValid>
+    </PropertyGroup>
+    <Error Condition="'$(_ReferenceTypeIsValid)' == 'false'"
+           Text="Invalid ReferenceType '$(ReferenceType)'. Allowed values are 'Project' and 'Package'." />
+  </Target>
+</Project>

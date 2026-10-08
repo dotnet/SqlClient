@@ -19,15 +19,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private const string COL_PROGRAM_NAME = "ProgramName";
         private const string COL_HOSTNAME = "HostName";
         private static readonly string s_databaseName = "d_" + Guid.NewGuid().ToString().Replace('-', '_');
-        private static readonly string s_tableName = DataTestUtility.GenerateObjectName();
+        private static readonly string s_tableName = DataTestUtility.GetShortName("ConnectivityTest");
         private static readonly string s_connectionString = DataTestUtility.TCPConnectionString;
         private static readonly string s_dbConnectionString = new SqlConnectionStringBuilder(s_connectionString) { InitialCatalog = s_databaseName }.ConnectionString;
         private static readonly string s_createDatabaseCmd = $"CREATE DATABASE {s_databaseName}";
         private static readonly string s_createTableCmd = $"CREATE TABLE {s_tableName} (NAME NVARCHAR(40), AGE INT)";
-        private static readonly string s_alterDatabaseSingleCmd = $"ALTER DATABASE {s_databaseName} SET SINGLE_USER WITH ROLLBACK IMMEDIATE;";
-        private static readonly string s_alterDatabaseMultiCmd = $"ALTER DATABASE {s_databaseName} SET MULTI_USER WITH ROLLBACK IMMEDIATE;";
+        private static readonly string s_alterDatabaseSingleCmd = $"IF (EXISTS(SELECT 1 FROM sys.databases WHERE name = '{s_databaseName}')) ALTER DATABASE {s_databaseName} SET SINGLE_USER WITH ROLLBACK IMMEDIATE;";
+        private static readonly string s_alterDatabaseMultiCmd = $"IF (EXISTS(SELECT 1 FROM sys.databases WHERE name = '{s_databaseName}')) ALTER DATABASE {s_databaseName} SET MULTI_USER WITH ROLLBACK IMMEDIATE;";
         private static readonly string s_selectTableCmd = $"SELECT COUNT(*) FROM {s_tableName}";
-        private static readonly string s_dropDatabaseCmd = $"DROP DATABASE {s_databaseName}";
+        private static readonly string s_dropDatabaseCmd = $"IF (EXISTS(SELECT 1 FROM sys.databases WHERE name = '{s_databaseName}')) DROP DATABASE {s_databaseName}";
 
         // Synapse: Stored procedure sp_who2 does not exist or is not supported.
         // Synapse: SqlConnection.ServerProcessId is always retrieved as 0.
@@ -40,7 +40,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 ApplicationName = "HostNameTest"
             };
 
-            using (SqlConnection sqlConnection = new(builder.ConnectionString))
+            using (SqlConnection sqlConnection = DataTestUtility.CreateConnection(builder.ConnectionString))
             {
                 sqlConnection.Open();
                 int sqlClientSPID = sqlConnection.ServerProcessId;
@@ -97,7 +97,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 ConnectTimeout = 0 // Infinite
             };
 
-            using SqlConnection conn = new(builder.ConnectionString);
+            using SqlConnection conn = DataTestUtility.CreateConnection(builder.ConnectionString);
             CancellationTokenSource cts = new(30000);
             // Will throw TaskCanceledException and fail the test in the event of a hang
             await conn.OpenAsync(cts.Token);
@@ -145,7 +145,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string sqlProviderName = builder.ApplicationName;
             string sqlProviderProcessID = Process.GetCurrentProcess().Id.ToString();
 
-            using (SqlConnection sqlConnection = new SqlConnection(builder.ConnectionString))
+            using (SqlConnection sqlConnection = DataTestUtility.CreateConnection(builder.ConnectionString))
             {
                 sqlConnection.Open();
                 string strCommand = $"SELECT PROGRAM_NAME,HOSTPROCESS FROM SYS.SYSPROCESSES WHERE PROGRAM_NAME LIKE ('%{sqlProviderName}%')";
@@ -263,8 +263,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                // Kill all the connections, set Database to SINGLE_USER Mode and drop Database
-                DataTestUtility.RunNonQuery(s_connectionString, s_alterDatabaseSingleCmd, 4);
+                // Kill all the connections, set Database to SINGLE_USER Mode and drop Database.
+                // NOTE: The database name embeds a GUID, so failing to drop it leaks a database that
+                //   nothing will ever reclaim. Switching to SINGLE_USER is only an optimization to
+                //   evict other sessions, so its failure must not prevent the drop from running.
+                try
+                {
+                    DataTestUtility.RunNonQuery(s_connectionString, s_alterDatabaseSingleCmd, 4);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"{nameof(ConnectionKilledTest)}: failed to set '{s_databaseName}' to SINGLE_USER: {ex.Message}");
+                }
+
                 DataTestUtility.RunNonQuery(s_connectionString, s_dropDatabaseCmd, 4);
             }
         }
@@ -280,7 +291,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             };
 
             // No connection resiliency
-            using (SqlConnection conn = new(builder.ConnectionString))
+            using (SqlConnection conn = DataTestUtility.CreateConnection(builder.ConnectionString))
             {
                 conn.Open();
                 InternalConnectionWrapper wrapper = new(conn, true, builder.ConnectionString);
@@ -300,7 +311,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             builder.ConnectRetryCount = 2;
             // Also check SPID changes with connection resiliency
-            using (SqlConnection conn = new(builder.ConnectionString))
+            using (SqlConnection conn = DataTestUtility.CreateConnection(builder.ConnectionString))
             {
                 conn.Open();
                 int clientSPID = conn.ServerProcessId;
@@ -377,7 +388,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 ConnectTimeout = 15,
                 ConnectRetryCount = 3
             };
-            using SqlConnection sqlConnection = new(connectionStringBuilder.ConnectionString);
+            using SqlConnection sqlConnection = DataTestUtility.CreateConnection(connectionStringBuilder.ConnectionString);
             Stopwatch timer = new();
 
             timer.Start();
@@ -403,7 +414,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 ConnectTimeout = 15,
                 ConnectRetryCount = 3
             };
-            using SqlConnection sqlConnection = new(connectionStringBuilder.ConnectionString);
+            using SqlConnection sqlConnection = DataTestUtility.CreateConnection(connectionStringBuilder.ConnectionString);
             Stopwatch timer = new();
 
             timer.Start();
@@ -427,7 +438,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 DataSource = DataTestUtility.AliasName
             };
-            using SqlConnection sqlConnection = new(builder.ConnectionString);
+            using SqlConnection sqlConnection = DataTestUtility.CreateConnection(builder.ConnectionString);
             Assert.Equal(DataTestUtility.AliasName, builder.DataSource);
             try
             {
@@ -472,7 +483,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             SqlConnectionStringBuilder b = new(DataTestUtility.TCPConnectionString);
             b.DataSource = "admin:localhost";
-            using SqlConnection sqlConnection = new(b.ConnectionString);
+            using SqlConnection sqlConnection = DataTestUtility.CreateConnection(b.ConnectionString);
             sqlConnection.Open();
         }
 
@@ -505,14 +516,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // This test may fail if Encrypt = false but the test server requires encryption
             b.TrustServerCertificate = false;
 
-            using SqlConnection sqlConnection = new(b.ConnectionString);
+            using SqlConnection sqlConnection = DataTestUtility.CreateConnection(b.ConnectionString);
             sqlConnection.Open();
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void ConnectionFireInfoMessageEventOnUserErrorsShouldSucceed()
         {
-            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (var connection = DataTestUtility.CreateConnection())
             {
                 string command = "print";
                 string commandParam = "OK";

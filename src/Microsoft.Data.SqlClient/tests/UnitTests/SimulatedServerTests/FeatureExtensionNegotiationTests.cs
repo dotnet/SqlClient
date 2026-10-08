@@ -15,7 +15,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests;
 
 // Serializes execution with other SimulatedServerTests classes to avoid port/resource conflicts.
 // Required here because IClassFixture shares a single TdsServer instance across all tests in this class.
-[Collection("SimulatedServerTests")]
+[Collection(SimulatedServerTestCollection.Name)]
 public class FeatureExtensionNegotiationTests : IClassFixture<TdsServerFixture>
 {
     private TdsServer _server;

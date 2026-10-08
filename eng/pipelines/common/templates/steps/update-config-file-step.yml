@@ -41,14 +41,6 @@ parameters:
     type: boolean
     default: false
 
-  - name: AADAuthorityURL
-    type: string
-    default: ''
-
-  - name: AADPasswordConnectionString
-    type: string
-    default: ''
-
   - name: AADServicePrincipalId
     type: string
     default: ''
@@ -121,6 +113,10 @@ parameters:
     type: boolean
     default: true
 
+  - name: IsManagedInstance
+    type: boolean
+    default: false
+
   - name: WorkloadIdentityFederationServiceConnectionId
     type: string
     default: ''
@@ -151,10 +147,6 @@ steps:
           $p.TCPConnectionString="${{parameters.TCPConnectionString }}"
 
           $p.NPConnectionString="${{parameters.NPConnectionString }}"
-
-          $p.AADAuthorityURL="${{parameters.AADAuthorityURL }}"
-
-          $p.AADPasswordConnectionString="${{parameters.AADPasswordConnectionString }}"
 
           $p.AADServicePrincipalId="${{parameters.AADServicePrincipalId }}"
 
@@ -191,6 +183,7 @@ steps:
           $p.UseManagedSNIOnWindows=[System.Convert]::ToBoolean("${{parameters.UseManagedSNIOnWindows }}")
           $p.SupportsIntegratedSecurity=[System.Convert]::ToBoolean("${{parameters.SupportsIntegratedSecurity }}")
           $p.ManagedIdentitySupported=[System.Convert]::ToBoolean("${{parameters.ManagedIdentitySupported }}")
+          $p.IsManagedInstance=[System.Convert]::ToBoolean("${{parameters.IsManagedInstance }}")
           $p.IsDNSCachingSupportedTR=[System.Convert]::ToBoolean("${{parameters.IsDNSCachingSupportedTR }}")
           $p.IsDNSCachingSupportedCR=[System.Convert]::ToBoolean("${{parameters.IsDNSCachingSupportedCR }}")
           $p.TracingEnabled=[System.Convert]::ToBoolean("${{parameters.TracingEnabled }}")

@@ -13,6 +13,7 @@ namespace Microsoft.Data.SqlClient.UnitTests;
 /// <summary>
 /// Provides unit tests for verifying the default values of all SqlClient-specific AppContext switches.
 /// </summary>
+[Collection(AppContextSwitchTestCollection.Name)]
 public class LocalAppContextSwitchesTest
 {
     /// <summary>
@@ -33,6 +34,7 @@ public class LocalAppContextSwitchesTest
         switchesHelper.EnableMultiSubnetFailoverByDefault = null;
         switchesHelper.IgnoreServerProvidedFailoverPartner = null;
         switchesHelper.UseLegacyFailoverAlternationOnLoginSqlErrors = null;
+        switchesHelper.EnableTransactionIsolationLevelReset = null;
         switchesHelper.LegacyRowVersionNullBehavior = null;
         switchesHelper.LegacyVarTimeZeroScaleBehaviour = null;
         switchesHelper.MakeReadAsyncBlocking = null;
@@ -41,9 +43,11 @@ public class LocalAppContextSwitchesTest
         switchesHelper.UseCompatibilityAsyncBehaviour = null;
         switchesHelper.UseCompatibilityProcessSni = null;
         switchesHelper.UseConnectionPoolV2 = null;
+        switchesHelper.UseOverallConnectTimeoutForPoolWait = null;
         switchesHelper.UseLegacyIdleTimeoutBehavior = null;
         switchesHelper.UseMinimumLoginTimeout = null;
         #if NET
+        switchesHelper.EnableAppConfig = null;
         switchesHelper.GlobalizationInvariantMode = null;
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
@@ -67,8 +71,10 @@ public class LocalAppContextSwitchesTest
         Assert.False(switchesHelper.TruncateScaledDecimal);
         Assert.False(switchesHelper.IgnoreServerProvidedFailoverPartner);
         Assert.False(switchesHelper.UseLegacyFailoverAlternationOnLoginSqlErrors);
+        Assert.False(switchesHelper.EnableTransactionIsolationLevelReset);
         Assert.False(switchesHelper.EnableMultiSubnetFailoverByDefault);
         #if NET
+        Assert.True(switchesHelper.EnableAppConfig);
         Assert.False(switchesHelper.GlobalizationInvariantMode);
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {

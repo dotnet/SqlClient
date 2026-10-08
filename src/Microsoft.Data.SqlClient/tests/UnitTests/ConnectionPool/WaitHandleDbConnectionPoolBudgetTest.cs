@@ -22,6 +22,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool;
 /// budget-propagation coverage already in place for
 /// <c>ChannelDbConnectionPool</c>.
 /// </summary>
+[Collection(AppContextSwitchTestCollection.Name)]
 public class WaitHandleDbConnectionPoolBudgetTest : IDisposable
 {
     private const int DefaultMaxPoolSize = 50;
@@ -217,7 +218,7 @@ public class WaitHandleDbConnectionPoolBudgetTest : IDisposable
             }
         }
 
-        protected override void Activate(Transaction? transaction)
+        protected override void Activate(Transaction? transaction, TimeoutTimer timeout)
         {
             EnlistedTransaction = transaction;
         }

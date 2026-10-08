@@ -29,6 +29,15 @@ internal static class LocalAppContextSwitches
         "Switch.Microsoft.Data.SqlClient.DisableTNIRByDefaultInConnectionString";
     #endif
 
+    #if NET
+    /// <summary>
+    /// The name of the app context switch that controls whether SqlClient
+    /// reads app.config.
+    /// </summary>
+    private const string EnableAppConfigString =
+        "Switch.Microsoft.Data.SqlClient.EnableAppConfig";
+    #endif
+
     /// <summary>
     /// The name of the app context switch that controls whether
     /// MultiSubnetFailover is enabled by default in the connection string.
@@ -64,6 +73,13 @@ internal static class LocalAppContextSwitches
     /// </summary>
     private const string UseLegacyFailoverAlternationOnLoginSqlErrorsString =
         "Switch.Microsoft.Data.SqlClient.UseLegacyFailoverAlternationOnLoginSqlErrors";
+
+    /// <summary>
+    /// The name of the app context switch that controls whether pooled connections
+    /// reset a changed SQL Server session transaction isolation level before reuse.
+    /// </summary>
+    private const string EnableTransactionIsolationLevelResetString =
+        "Switch.Microsoft.Data.SqlClient.EnableTransactionIsolationLevelReset";
 
     /// <summary>
     /// The name of the app context switch that controls whether to preserve
@@ -139,7 +155,7 @@ internal static class LocalAppContextSwitches
     private const string UseOverallConnectTimeoutForPoolWaitString =
         "Switch.Microsoft.Data.SqlClient.UseOverallConnectTimeoutForPoolWait";
 
-    #if NET && _WINDOWS
+    #if NET
     /// <summary>
     /// The name of the app context switch that controls whether to use the
     /// managed SNI implementation instead of the native SNI implementation on
@@ -186,6 +202,13 @@ internal static class LocalAppContextSwitches
     private static SwitchValue s_disableTnirByDefault = SwitchValue.None;
     #endif
 
+    #if NET
+    /// <summary>
+    /// The cached value of the EnableAppConfig switch.
+    /// </summary>
+    private static SwitchValue s_enableAppConfig = SwitchValue.None;
+    #endif
+
     /// <summary>
     /// The cached value of the EnableMultiSubnetFailoverByDefault switch.
     /// </summary>
@@ -207,6 +230,11 @@ internal static class LocalAppContextSwitches
     /// The cached value of the UseLegacyFailoverAlternationOnLoginSqlErrors switch.
     /// </summary>
     private static SwitchValue s_useLegacyFailoverAlternationOnLoginSqlErrors = SwitchValue.None;
+
+    /// <summary>
+    /// The cached value of the EnableTransactionIsolationLevelReset switch.
+    /// </summary>
+    private static SwitchValue s_enableTransactionIsolationLevelReset = SwitchValue.None;
 
     /// <summary>
     /// The cached value of the LegacyRowVersionNullBehavior switch.
@@ -258,7 +286,7 @@ internal static class LocalAppContextSwitches
     /// </summary>
     private static SwitchValue s_useOverallConnectTimeoutForPoolWait = SwitchValue.None;
 
-    #if NET && _WINDOWS
+    #if NET
     /// <summary>
     /// The cached value of the UseManagedNetworking switch.
     /// </summary>
@@ -283,6 +311,30 @@ internal static class LocalAppContextSwitches
     /// </summary>
     static LocalAppContextSwitches()
     {
+        ApplyAppConfigSwitchOverrides();
+    }
+
+    /// <summary>
+    /// Applies the switch values found in the AppContextSwitchOverridesSection of
+    /// the default app config file, unless app.config reading is disabled.
+    /// </summary>
+    /// <returns>
+    /// True when app.config was read, false when the EnableAppConfig switch is
+    /// disabled and it was not.
+    /// </returns>
+    /// <remarks>
+    /// Separated from the static constructor so that it can be tested: the
+    /// constructor runs once per process, before any test can observe it.
+    /// </remarks>
+    internal static bool ApplyAppConfigSwitchOverrides()
+    {
+        // Read before any override is applied, so this switch itself cannot be
+        // set from the config file it gates.
+        if (!EnableAppConfig)
+        {
+            return false;
+        }
+
         IAppContextSwitchOverridesSection appContextSwitch = AppConfigManager.FetchConfigurationSection<AppContextSwitchOverridesSection>(AppContextSwitchOverridesSection.Name);
 
         try
@@ -295,6 +347,8 @@ internal static class LocalAppContextSwitches
             // Don't throw an exception for an invalid config file
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.ctor|INFO>: {1}", nameof(LocalAppContextSwitches), e);
         }
+
+        return true;
     }
     #endif
 
@@ -327,6 +381,32 @@ internal static class LocalAppContextSwitches
             DisableTnirByDefaultString,
             defaultValue: false,
             ref s_disableTnirByDefault);
+    #endif
+
+    #if NET
+    /// <summary>
+    /// When set to false, SqlClient does not read app.config.  Configurable
+    /// retry logic, authentication providers and switch overrides are then not
+    /// taken from the configuration file.
+    ///
+    /// ILLink.Substitutions.xml allows the configuration reading, and the type
+    /// resolution it drives, to be trimmed away when the corresponding
+    /// AppContext switch is set at compile time. In such cases, this property
+    /// will return a constant value, even if the AppContext switch is set or
+    /// reset at runtime.
+    ///
+    /// The default value of this switch is true.
+    /// </summary>
+    public static bool EnableAppConfig =>
+        AcquireAndReturn(
+            EnableAppConfigString,
+            defaultValue: true,
+            ref s_enableAppConfig);
+    #else
+    /// <summary>
+    /// Trimming does not apply to .NET Framework, so app.config is always read.
+    /// </summary>
+    public static bool EnableAppConfig => true;
     #endif
 
     /// <summary>
@@ -457,6 +537,19 @@ internal static class LocalAppContextSwitches
             UseLegacyFailoverAlternationOnLoginSqlErrorsString,
             defaultValue: false,
             ref s_useLegacyFailoverAlternationOnLoginSqlErrors);
+
+    /// <summary>
+    /// When set to true, a pooled connection whose session transaction isolation
+    /// level was changed by a transaction is reset to READ COMMITTED before the
+    /// connection is handed to a later caller.
+    ///
+    /// The default value of this switch is false.
+    /// </summary>
+    public static bool EnableTransactionIsolationLevelReset =>
+        AcquireAndReturn(
+            EnableTransactionIsolationLevelResetString,
+            defaultValue: false,
+            ref s_enableTransactionIsolationLevelReset);
 
     /// <summary>
     /// In System.Data.SqlClient and Microsoft.Data.SqlClient prior to 3.0.0 a
@@ -612,7 +705,7 @@ internal static class LocalAppContextSwitches
             defaultValue: false,
             ref s_useOverallConnectTimeoutForPoolWait);
 
-    #if NET && _WINDOWS
+    #if NET
     /// <summary>
     /// When set to true, .NET on Windows will use the managed SNI
     /// implementation instead of the native SNI implementation.
@@ -621,24 +714,22 @@ internal static class LocalAppContextSwitches
     /// trimmed away when the corresponding AppContext switch is set at compile
     /// time. In such cases, this property will return a constant value, even if
     /// the AppContext switch is set or reset at runtime. See the
-    /// ILLink.Substitutions.Windows.xml and ILLink.Substitutions.Unix.xml
-    /// resource files for details.
+    /// ILLink.Substitutions.xml resource file for details.
     ///
-    /// The default value of this switch is false.
+    /// The default value of this switch is false on Windows and true on non-Windows platforms.
     /// </summary>
     public static bool UseManagedNetworking
     {
         get
         {
+            if (!OsConstants.IsWindows)
+            {
+                return true;
+            }
+
             if (s_useManagedNetworking != SwitchValue.None)
             {
                 return s_useManagedNetworking == SwitchValue.True;
-            }
-
-            if (!OsConstants.IsWindows)
-            {
-                s_useManagedNetworking = SwitchValue.True;
-                return true;
             }
 
             if (AppContext.TryGetSwitch(UseManagedNetworkingOnWindowsString, out bool returnedValue) && returnedValue)
@@ -651,12 +742,6 @@ internal static class LocalAppContextSwitches
             return false;
         }
     }
-    #elif NET
-    /// <summary>
-    /// .NET Core on Unix does not support native SNI, so this will always be
-    /// true.
-    /// </summary>
-    public static bool UseManagedNetworking => true;
     #else
     /// <summary>
     /// .NET Framework does not support the managed SNI, so this will always be

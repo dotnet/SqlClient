@@ -52,9 +52,19 @@ public class WaitHandleDbConnectionPoolBlockingPeriodTest : IDisposable
     /// <see cref="BlockingPeriodErrorState"/> uses it as its clock so the exit timer can be driven
     /// deterministically; otherwise the system clock is used.
     /// </summary>
+    /// <remarks>
+    /// The default connection string pins Pool Blocking Period to AlwaysBlock so the tests that
+    /// assert the pool enters its blocking-period error state do not depend on endpoint
+    /// classification. Under Auto, blocking is enabled only when the data source is not an Azure
+    /// endpoint, and ADPHelper (used by the simulated-server Azure routing tests) temporarily
+    /// registers "localhost" as an Azure endpoint in the process-wide
+    /// ADP.s_azureSqlServerEndpoints list. A pool resolves whether blocking is enabled exactly
+    /// once, at construction, so a pool built inside that window would never block - making those
+    /// assertions flaky under parallel collection execution.
+    /// </remarks>
     private WaitHandleDbConnectionPool CreatePool(
         SqlConnectionFactory connectionFactory,
-        string connectionString = "Data Source=localhost;",
+        string connectionString = "Data Source=localhost;Pool Blocking Period=AlwaysBlock;",
         TimeProvider? timeProvider = null)
     {
         var poolGroupOptions = new DbConnectionPoolGroupOptions(
@@ -118,6 +128,34 @@ public class WaitHandleDbConnectionPoolBlockingPeriodTest : IDisposable
         Assert.Equal(failure.Message, thrown.Message);
         Assert.True(pool.ErrorOccurred);
         Assert.Equal(1, factory.CreateConnectionCallCount);
+    }
+
+    /// <summary>
+    /// Shutdown preserves the cached error for admitted waiters and lets its timer expire.
+    /// </summary>
+    [Fact]
+    public void Shutdown_WhileBlocked_PreservesErrorUntilExpiry()
+    {
+        // Arrange
+        var clock = new FakeTimeProvider();
+        SqlException failure = SqlExceptionHelper.CreateSqlException("server unreachable");
+        var factory = new ConfigurableSqlConnectionFactory(_ => throw failure);
+        var pool = CreatePool(factory, timeProvider: clock);
+        using var owner = new SqlConnection();
+
+        Assert.Throws<SqlException>(() => TryGetConnectionSync(pool, owner, out _));
+
+        // Act
+        pool.Shutdown();
+
+        // Assert
+        Assert.True(pool.ErrorOccurred);
+
+        // Act: expire the preserved blocking period.
+        clock.Advance(TimeSpan.FromSeconds(5));
+
+        // Assert
+        Assert.False(pool.ErrorOccurred);
     }
 
     /// <summary>
@@ -387,7 +425,7 @@ public class WaitHandleDbConnectionPoolBlockingPeriodTest : IDisposable
             }
         }
 
-        protected override void Activate(Transaction? transaction)
+        protected override void Activate(Transaction? transaction, TimeoutTimer timeout)
         {
             EnlistedTransaction = transaction;
         }

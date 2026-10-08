@@ -10,7 +10,7 @@
 # The NuGet packages have the following properties:
 #
 #   Name:     Microsoft.Data.SqlClient.Extensions.Abstractions
-#   Version:  <abstractionsPackageVersion> (from parameter)
+#   Version:  <packageVersion> (from parameter)
 #
 # The following NuGet packages are published:
 #
@@ -30,18 +30,23 @@ parameters:
     type: string
     default: Abstractions.Artifacts
 
-  # The assembly file version to stamp into the DLLs.
-  - name: abstractionsAssemblyFileVersion
-    type: string
-
-  # The version to apply to the NuGet package and DLLs.
-  - name: abstractionsPackageVersion
-    type: string
-
   # Additional stages we depend on, if any.
   - name: additionalDependsOn
     type: object
     default: []
+
+  # The name of the pool to use for jobs that require customized VM images.
+  #
+  # Supplied by the caller so that the pool name flows down from the pipeline
+  # root, rather than being read from a variable group at this depth.
+  #
+  # Any pool specified here must contain images with the following names:
+  #
+  #   - ADO-Win25
+  #   - ADO-UB24
+  #
+  - name: poolName
+    type: string
 
   # The type of build to produce (Release or Debug)
   - name: buildConfiguration
@@ -74,17 +79,9 @@ parameters:
     type: string
     default: Logging.Artifacts
 
-  # The Logging package version to depend on.
-  #
-  # This is used when the referenceType is 'Package'.
-  - name: loggingPackageVersion
-    type: string
-    default: ''
-
   # The C# project reference type to use when building and packing the packages.
   - name: referenceType
     type: string
-    default: Project
     values:
       # Reference sibling packages as NuGet packages.
       - Package
@@ -98,8 +95,13 @@ stages:
 
     dependsOn:
       - secrets_stage
+      - compute_versions_ci
       - ${{ each dep in parameters.additionalDependsOn }}:
         - ${{ dep }}
+
+    variables:
+      - name: packageVersion
+        value: $[ stageDependencies.compute_versions_ci.compute_versions_job.outputs['versions.SqlClientPackageVersion'] ]
 
     jobs:
 
@@ -114,9 +116,9 @@ stages:
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           jobNameSuffix: linux
           netFrameworkRuntimes: []
-          netRuntimes: [net8.0, net9.0, net10.0]
-          poolName: Azure Pipelines
-          vmImage: ubuntu-latest
+          netRuntimes: [net10.0]
+          poolName: ${{ parameters.poolName }}
+          poolImage: ADO-UB24
 
       # ------------------------------------------------------------------------
       # Build and test on Windows
@@ -129,9 +131,9 @@ stages:
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           jobNameSuffix: windows
           netFrameworkRuntimes: [net462]
-          netRuntimes: [net8.0, net9.0, net10.0]
-          poolName: Azure Pipelines
-          vmImage: windows-latest
+          netRuntimes: [net10.0]
+          poolName: ${{ parameters.poolName }}
+          poolImage: ADO-Win25
 
       # ------------------------------------------------------------------------
       # Build and test on macOS.
@@ -144,18 +146,22 @@ stages:
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           jobNameSuffix: macos
           netFrameworkRuntimes: []
-          netRuntimes: [net8.0, net9.0, net10.0]
+          netRuntimes: [net10.0]
+          # Our 1ES pools do not offer macOS images, so this job runs on the Microsoft-hosted
+          # 'Azure Pipelines' pool.
           poolName: Azure Pipelines
-          vmImage: macos-latest
+          poolImage: macos-latest
 
       # ------------------------------------------------------------------------
       # Create and publish the NuGet package.
 
       - template: /eng/pipelines/jobs/pack-abstractions-package-ci-job.yml@self
         parameters:
+          poolName: ${{ parameters.poolName }}
+          poolImage: ADO-UB24
           abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
-          abstractionsAssemblyFileVersion: ${{ parameters.abstractionsAssemblyFileVersion }}
-          abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+          # The version is computed by this stage (see the packageVersion variable above).
+          packageVersion: $(packageVersion)
           buildConfiguration: ${{ parameters.buildConfiguration }}
           debug: ${{ parameters.debug }}
           dependsOn:
@@ -166,5 +172,4 @@ stages:
             - test_abstractions_package_job_macos
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
-          loggingPackageVersion: ${{ parameters.loggingPackageVersion }}
           referenceType: ${{ parameters.referenceType }}

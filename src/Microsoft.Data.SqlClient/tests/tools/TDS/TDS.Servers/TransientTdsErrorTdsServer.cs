@@ -106,7 +106,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             // Serialize DONE token into the response packet
             responseMessage.Add(doneToken);
 
-            RequestCounter++;
+            Interlocked.Increment(ref RequestCounter);
 
             // Put a single message into the collection and return it
             return new TDSMessageCollection(responseMessage);

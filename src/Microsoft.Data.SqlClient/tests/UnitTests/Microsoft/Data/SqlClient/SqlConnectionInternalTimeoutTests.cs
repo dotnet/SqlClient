@@ -23,6 +23,7 @@ namespace Microsoft.Data.SqlClient.UnitTests;
 /// <see cref="SqlConnectionInternal.ResolveLoginTimeout"/> helper keeps this
 /// branch coverage free of any real network connection.
 /// </summary>
+[Collection(AppContextSwitchTestCollection.Name)]
 public class SqlConnectionInternalTimeoutTests
 {
     /// <summary>

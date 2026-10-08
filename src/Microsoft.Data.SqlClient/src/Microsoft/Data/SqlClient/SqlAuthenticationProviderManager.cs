@@ -36,23 +36,7 @@ namespace Microsoft.Data.SqlClient
 
         static SqlAuthenticationProviderManager()
         {
-            SqlAuthenticationProviderConfigurationSection? configurationSection = null;
-
-            try
-            {
-                // New configuration section "SqlClientAuthenticationProviders" for Microsoft.Data.SqlClient accepted to avoid conflicts with older one.
-                configurationSection = FetchConfigurationSection<SqlClientAuthenticationProviderConfigurationSection>(SqlClientAuthenticationProviderConfigurationSection.Name);
-                if (configurationSection == null)
-                {
-                    // If configuration section is not yet found, try with old Configuration Section name for backwards compatibility
-                    configurationSection = FetchConfigurationSection<SqlAuthenticationProviderConfigurationSection>(SqlAuthenticationProviderConfigurationSection.Name);
-                }
-            }
-            catch (ConfigurationErrorsException e)
-            {
-                // Don't throw an error for invalid config files
-                SqlClientEventSource.Log.TryTraceEvent("static SqlAuthenticationProviderManager: Unable to load custom SqlAuthenticationProviders or SqlClientAuthenticationProviders. ConfigurationManager failed to load due to configuration errors: {0}", e);
-            }
+            TryReadConfigurationSection(out SqlAuthenticationProviderConfigurationSection? configurationSection);
 
             Instance = new SqlAuthenticationProviderManager(configurationSection);
 
@@ -68,8 +52,9 @@ namespace Microsoft.Data.SqlClient
 
                 SqlClientEventSource.Log.TryTraceEvent(
                     nameof(SqlAuthenticationProviderManager) +
-                    $": Attempting to load Azure extension assembly={azureAssemblyName} with " +
-                    "expected public key token=" +
+                    ": Attempting to load Azure extension assembly={0} with " +
+                    "expected public key token={1}",
+                    azureAssemblyName,
                     BitConverter.ToString(s_azurePublicKeyToken).Replace("-", ""));
 
                 var qualifiedName = new AssemblyName(azureAssemblyName);
@@ -96,9 +81,10 @@ namespace Microsoft.Data.SqlClient
                     {
                         SqlClientEventSource.Log.TryTraceEvent(
                             nameof(SqlAuthenticationProviderManager) +
-                            $": Azure extension assembly={assembly.GetName()} has an " +
+                            ": Azure extension assembly={0} has an " +
                             "unexpected public key token; " +
-                            "no default Active Directory provider installed");
+                            "no default Active Directory provider installed",
+                            assembly.GetName());
                         return;
                     }
                 }
@@ -108,8 +94,9 @@ namespace Microsoft.Data.SqlClient
 
                 SqlClientEventSource.Log.TryTraceEvent(
                     nameof(SqlAuthenticationProviderManager) +
-                    $": Attempting to load Azure extension assembly={azureAssemblyName} without " +
-                    "strong name verification; ensure this assembly is from a trusted source");
+                    ": Attempting to load Azure extension assembly={0} without " +
+                    "strong name verification; ensure this assembly is from a trusted source",
+                    azureAssemblyName);
 
                 var assembly = Assembly.Load(azureAssemblyName);
 
@@ -119,16 +106,18 @@ namespace Microsoft.Data.SqlClient
                 {
                     SqlClientEventSource.Log.TryTraceEvent(
                         nameof(SqlAuthenticationProviderManager) +
-                        $": Azure extension assembly={azureAssemblyName} not found; " +
-                        "no default Active Directory provider installed");
+                        ": Azure extension assembly={0} not found; " +
+                        "no default Active Directory provider installed",
+                        azureAssemblyName);
                     return;
                 }
 
                 SqlClientEventSource.Log.TryTraceEvent(
                     nameof(SqlAuthenticationProviderManager) +
-                    $": Azure extension assembly={assembly.GetName()} found; " +
+                    ": Azure extension assembly={0} found; " +
                     "attempting to set as default provider for all Active " +
-                    "Directory authentication methods");
+                    "Directory authentication methods",
+                    assembly.GetName());
 
                 // Look for the authentication provider class.
                 const string className = "Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider";
@@ -138,8 +127,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     SqlClientEventSource.Log.TryTraceEvent(
                         nameof(SqlAuthenticationProviderManager) +
-                        $": Azure extension does not contain class={className}; " +
-                        "no default Active Directory provider installed");
+                        ": Azure extension does not contain class={0}; " +
+                        "no default Active Directory provider installed",
+                        className);
 
                     return;
                 }
@@ -171,8 +161,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     SqlClientEventSource.Log.TryTraceEvent(
                         nameof(SqlAuthenticationProviderManager) +
-                        $": Failed to instantiate Azure extension class={className}; " +
-                        "no default Active Directory provider installed");
+                        ": Failed to instantiate Azure extension class={0}; " +
+                        "no default Active Directory provider installed",
+                        className);
 
                     return;
                 }
@@ -197,8 +188,9 @@ namespace Microsoft.Data.SqlClient
 
                 SqlClientEventSource.Log.TryTraceEvent(
                     nameof(SqlAuthenticationProviderManager) +
-                    $": Azure extension class={className} installed as " +
-                    "provider for all Active Directory authentication methods");
+                    ": Azure extension class={0} installed as " +
+                    "provider for all Active Directory authentication methods",
+                    className);
             }
             // All of these exceptions mean we couldn't find or instantiate the
             // Azure extension's authentication provider, in which case we
@@ -221,9 +213,12 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlClientEventSource.Log.TryTraceEvent(
                     nameof(SqlAuthenticationProviderManager) +
-                    $": Azure extension assembly={azureAssemblyName} not found or " +
+                    ": Azure extension assembly={0} not found or " +
                     "not usable; no default provider installed; " +
-                    $"{ex.GetType().Name}: {ex.Message}");
+                    "{1}: {2}",
+                    azureAssemblyName,
+                    ex.GetType().Name,
+                    ex.Message);
             }
             // Any other exceptions are fatal.
         }
@@ -471,6 +466,49 @@ namespace Microsoft.Data.SqlClient
                     Instance._sqlAuthLogger.LogInfo(nameof(SqlAuthenticationProviderManager), methodName, $"Added auth provider {GetProviderType(provider)}, overriding existed provider {GetProviderType(oldProvider)} for authentication {authenticationMethod}.");
                     return provider;
                 });
+            return true;
+        }
+
+        /// <summary>
+        /// Reads the authentication provider configuration section from app.config,
+        /// unless app.config reading is disabled.
+        /// </summary>
+        /// <param name="configurationSection">
+        /// The section that was found, or null if there is none or app.config was not read.
+        /// </param>
+        /// <returns>
+        /// True when app.config was read, false when the EnableAppConfig switch is
+        /// disabled and it was not.
+        /// </returns>
+        /// <remarks>
+        /// Separated from the static constructor so that it can be tested: the
+        /// constructor runs once per process, before any test can observe it.
+        /// </remarks>
+        internal static bool TryReadConfigurationSection(out SqlAuthenticationProviderConfigurationSection? configurationSection)
+        {
+            configurationSection = null;
+
+            if (!LocalAppContextSwitches.EnableAppConfig)
+            {
+                return false;
+            }
+
+            try
+            {
+                // New configuration section "SqlClientAuthenticationProviders" for Microsoft.Data.SqlClient accepted to avoid conflicts with older one.
+                configurationSection = FetchConfigurationSection<SqlClientAuthenticationProviderConfigurationSection>(SqlClientAuthenticationProviderConfigurationSection.Name);
+                if (configurationSection == null)
+                {
+                    // If configuration section is not yet found, try with old Configuration Section name for backwards compatibility
+                    configurationSection = FetchConfigurationSection<SqlAuthenticationProviderConfigurationSection>(SqlAuthenticationProviderConfigurationSection.Name);
+                }
+            }
+            catch (ConfigurationErrorsException e)
+            {
+                // Don't throw an error for invalid config files
+                SqlClientEventSource.Log.TryTraceEvent("static SqlAuthenticationProviderManager: Unable to load custom SqlAuthenticationProviders or SqlClientAuthenticationProviders. ConfigurationManager failed to load due to configuration errors: {0}", e);
+            }
+
             return true;
         }
 

@@ -204,6 +204,9 @@
   <data name="ADP_PooledOpenTimeout" xml:space="preserve">
     <value>Timeout abgelaufen. Das Zeitlimit ist vor dem Anfordern einer Verbindung aus dem Pool abgelaufen. Möglicherweise werden alle Verbindungen im Pool bereits verwendet, und die maximale Poolgröße wurde erreicht.</value>
   </data>
+  <data name="ADP_IsolationLevelResetTimeout" xml:space="preserve">
+    <value>Timeout expired.  The connection timeout period elapsed before the transaction isolation level of the pooled connection could be reset.</value>
+  </data>
   <data name="ADP_NonPooledOpenTimeout" xml:space="preserve">
     <value>Timeout beim Versuch, die Verbindung zu öffnen. Die Zeitspanne, die vor dem Versuch, die Verbindung zu öffnen, verstreichen kann, wurde überschritten. Die Ursache sind möglicherweise zu viele gleichzeitige Versuche, Verbindungen ohne Pooling herzustellen.</value>
   </data>
@@ -1968,6 +1971,9 @@
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
     <value>Fehler bei der Signaturüberprüfung des Enclave-Berichts. Die Berichtssignatur stimmt nicht mit der Signatur überein, die mit dem HGS-Stammzertifikat berechnet wurde. Überprüfen Sie die DNS-Zuordnung für den Endpunkt – Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2160553. Wenn sie korrekt ist, wenden Sie sich an den Kundensupport.</value>
   </data>
+  <data name="VerifyEnclaveKeyBindingFailed" xml:space="preserve">
+    <value>Der Enklavennachweis ist fehlgeschlagen, weil der signierte Enklavenbericht nicht an den öffentlichen Enklavenschlüssel gebunden wurde, der zum Einrichten der Sitzung verwendet wurde. Der öffentliche Enclave-Schlüssel muss mit dem Wert übereinstimmen, für den vom signierten Bericht ein Commit ausgeführt wurde. Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2160553. Wenn sie korrekt ist, wenden Sie sich an den Kundensupport.</value>
+  </data>
   <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
     <value>Der von SQL Server empfangene Enclavebericht weist nicht das richtige Format auf. Wenden Sie sich an den Kundensupport.</value>
   </data>
@@ -2079,6 +2085,9 @@
   <data name="ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity" xml:space="preserve">
     <value>AccessTokenCallback-Eigenschaft kann nicht festgelegt werden, wenn das Schlüsselwort für Verbindungszeichenfolgen 'Integrated Security' auf 'true' oder 'SSPI' gesetzt wurde.</value>
   </data>
+  <data name="ADP_InvalidMixedUsageOfAccessTokenProperties" xml:space="preserve">
+    <value>Es kann nur eine der Eigenschaften AccessToken, AccessTokenCallback oder SspiContextProvider festgelegt werden.</value>
+  </data>
   <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
     <value>Die Eigenschaft AccessTokenCallback kann nicht festgelegt werden, wenn in der Verbindungszeichenfolge "Authentication=Active Directory Default" angegeben wurde.</value>
   </data>
@@ -2127,6 +2136,12 @@
   <data name="SQL_RemoteCertificateDoesNotMatchServerCertificate" xml:space="preserve">
     <value>Das vom Server bereitgestellte Zertifikat stimmt nicht mit dem Zertifikat überein, das über die ServerCertificate-Option bereitgestellt wurde.</value>
   </data>
+  <data name="SQL_ServerCertificateFileLoadFailed" xml:space="preserve">
+    <value>Die mit der Option „ServerCertificate“ angegebene Zertifikatdatei konnte nicht geladen oder geparst werden: '{0}'.</value>
+  </data>
+  <data name="SQL_ServerCertificateNotAvailable" xml:space="preserve">
+    <value>Die Option „ServerCertificate“ wurde angegeben, aber der Server hat kein Zertifikat bereitgestellt, mit dem es verglichen werden kann.</value>
+  </data>
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>Ungültiger Versuch, „JsonDocument“ für Spalte „{0}“ abzurufen. „JsonDocument“ wird nur für Spalten vom Typ JSON unterstützt.</value>
   </data>
@@ -2156,6 +2171,9 @@
   </data>
   <data name="SQL_ConnectionPoolNoEmptySlot" xml:space="preserve">
     <value>Im Verbindungspool wurde kein freier Slot gefunden.</value>
+  </data>
+  <data name="SQL_ConnectionPoolReplaceConnectionFailed" xml:space="preserve">
+    <value>Die Verbindung konnte nicht ersetzt werden, da sie nicht mehr im Verbindungspool vorhanden ist.</value>
   </data>
   <data name="SQL_ConnectionPoolShutDown" xml:space="preserve">
     <value>Der Verbindungspool wurde heruntergefahren.</value>

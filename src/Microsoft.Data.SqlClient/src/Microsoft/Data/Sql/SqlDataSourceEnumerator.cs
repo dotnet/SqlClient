@@ -27,15 +27,9 @@ namespace Microsoft.Data.Sql
             #if NETFRAMEWORK
             return SqlDataSourceEnumeratorNativeHelper.GetDataSources();
             #else
-
-            #if _UNIX
-            return SqlDataSourceEnumeratorManagedHelper.GetDataSources();
-            #else
             return SqlClient.LocalAppContextSwitches.UseManagedNetworking
                 ? SqlDataSourceEnumeratorManagedHelper.GetDataSources()
                 : SqlDataSourceEnumeratorNativeHelper.GetDataSources();
-            #endif
-
             #endif
         }
     }

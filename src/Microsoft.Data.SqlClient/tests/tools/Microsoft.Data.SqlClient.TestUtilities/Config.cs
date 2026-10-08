@@ -27,8 +27,6 @@ namespace Microsoft.Data.SqlClient.TestUtilities
         public string? TCPConnectionStringAASSGX = null;
         public bool EnclaveEnabled = false;
         public bool TracingEnabled = false;
-        public string? AADAuthorityURL = null;
-        public string? AADPasswordConnectionString = null;
         public string? AADServicePrincipalId = null;
         public string? AADServicePrincipalSecret = null;
         public string? AzureKeyVaultURL = null;
@@ -45,6 +43,7 @@ namespace Microsoft.Data.SqlClient.TestUtilities
         public bool IsDNSCachingSupportedTR = false;  // this is for the tenant ring
         public string? EnclaveAzureDatabaseConnString = null;
         public bool ManagedIdentitySupported = true;
+        public bool SupportsSystemAssignedManagedIdentity = false;
         public string? UserManagedIdentityClientId = null;
         public string? PowerShellPath = null;
         public string? AliasName = null;

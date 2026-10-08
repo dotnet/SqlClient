@@ -133,7 +133,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             builder.DataSource = dataSource;
             builder.ConnectTimeout = 1;
 
-            using (SqlConnection connection = new SqlConnection(builder.ConnectionString))
+            using (SqlConnection connection = DataTestUtility.CreateConnection(builder.ConnectionString))
             {
                 string expectedErrorMsg = "(provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)";
                 VerifyConnectionFailure<SqlException>(() => connection.Open(), expectedErrorMsg);

@@ -23,34 +23,39 @@
 
   <!-- Target Frameworks =============================================== -->
   <PropertyGroup>
-    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
-
-    <!-- Default TargetOs to host OS if not specified (eg, during IDE development). -->
-    <TargetOs Condition="'$(TargetOs)' == ''">$(OS)</TargetOs>
-
-    <!-- Add net462 when targeting Windows. Building net462 is supported on any host OS. -->
-    <TargetFrameworks Condition="'$(TargetOs)' == 'Windows_NT'">$(TargetFrameworks);net462</TargetFrameworks>
+    <TargetFrameworks>net462;net10.0</TargetFrameworks>
   </PropertyGroup>
 
   <!-- References ====================================================== -->
   <!-- Test target reference -->
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj"
-                      Condition="'$(ReferenceType)' != 'Package'" />
+                      Condition="'$(ReferenceType)' == 'Project'" />
+    <!-- In Package mode the perf pipeline can pin a specific released MDS version (e.g. a     -->
+    <!-- performance baseline) by passing -p:MdsPackageVersion=<version>. That property flows  -->
+    <!-- to every project in the build, so this project must honour it too; otherwise the      -->
+    <!-- CPM-managed (unpublished, in-development) version is used here and restore fails with -->
+    <!-- NU1102/NU1605 for consumers that pinned an older baseline. Under Central Package      -->
+    <!-- Management a plain Version is ignored, so VersionOverride is used; when                -->
+    <!-- MdsPackageVersion is empty the CPM-managed version applies. The two Includes are       -->
+    <!-- mutually exclusive on whether MdsPackageVersion was provided.                          -->
     <PackageReference Include="Microsoft.Data.SqlClient"
-                      Condition="'$(ReferenceType)' == 'Package'" />
+                      Condition="'$(ReferenceType)' == 'Package' and '$(MdsPackageVersion)' == ''" />
+    <PackageReference Include="Microsoft.Data.SqlClient"
+                      Condition="'$(ReferenceType)' == 'Package' and '$(MdsPackageVersion)' != ''"
+                      VersionOverride="$(MdsPackageVersion)" />
   </ItemGroup>
 
   <!-- References for netfx -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
-    <PackageReference Include="Azure.Identity" />
+    <PackageReference Include="Azure.Core" />
     <PackageReference Include="Azure.Security.KeyVault.Keys" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" />
   </ItemGroup>
 
   <!-- References for netcore -->
   <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
-    <PackageReference Include="Azure.Identity" />
+    <PackageReference Include="Azure.Core" />
     <PackageReference Include="Azure.Security.KeyVault.Keys" />
   </ItemGroup>
 </Project>

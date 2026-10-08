@@ -23,7 +23,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests;
 // Serializes execution with other SimulatedServerTests classes.  Required here because
 // DebugAssertSuppressor mutates the global Trace.Listeners collection, which is not
 // safe to do concurrently with other tests that may trigger Debug.Assert.
-[Collection("SimulatedServerTests")]
+[Collection(SimulatedServerTestCollection.Name)]
 public class TdsTokenBoundsTests : IDisposable
 {
     private readonly TdsServerFixture _fixture;

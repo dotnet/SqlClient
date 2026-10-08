@@ -837,7 +837,7 @@ namespace Microsoft.Data.Common
             // NOTE: Using lazy thread-safety since we don't care if two threads both happen to update the value at the same time
             if (s_systemDataVersion is null)
             {
-                s_systemDataVersion = new Version(ThisAssembly.InformationalVersion);
+                s_systemDataVersion = new Version(ThisAssembly.FileVersion);
             }
 
             return s_systemDataVersion;
@@ -845,7 +845,10 @@ namespace Microsoft.Data.Common
 
 
         private const string ONDEMAND_PREFIX = "-ondemand";
-        private const string AZURE_SYNAPSE = "-ondemand.sql.azuresynapse.";
+        private const string AZURE_SYNAPSE = ".sql.azuresynapse.";
+        private const string AZURE_SYNAPSE_ONDEMAND = ONDEMAND_PREFIX + AZURE_SYNAPSE;
+        private const string PRIVATELINK = ".privatelink";
+        private static readonly char[] s_dataSourceHostTerminators = { '\\', ',' };
         private const string FABRIC_DATAWAREHOUSE = "datawarehouse.fabric.microsoft.com";
         private const string PBI_DATAWAREHOUSE = "datawarehouse.pbidedicated.microsoft.com";
         private const string PBI_DATAWAREHOUSE2 = ".pbidedicated.microsoft.com";
@@ -893,8 +896,94 @@ namespace Microsoft.Data.Common
         internal static bool IsAzureSynapseOnDemandEndpoint(string dataSource)
         {
             return IsEndpoint(dataSource, s_azureSynapseOnDemandEndpoints)
-                || dataSource.IndexOf(AZURE_SYNAPSE, StringComparison.OrdinalIgnoreCase) >= 0;
+                || dataSource.IndexOf(AZURE_SYNAPSE_ONDEMAND, StringComparison.OrdinalIgnoreCase) >= 0;
         }
+
+        /// <summary>
+        /// Determines whether the data source addresses an Azure Synapse Analytics <em>dedicated</em>
+        /// SQL pool.
+        /// </summary>
+        /// <remarks>Like <see cref="IsAzureSynapseOnDemandEndpoint"/>, this recognises Synapse by the
+        /// ".sql.azuresynapse." host segment rather than a list of cloud domains. Dedicated pools are
+        /// addressed as "&lt;workspace&gt;.sql.azuresynapse.&lt;cloud suffix&gt;", while serverless
+        /// (on-demand) pools carry an "-ondemand" suffix on the workspace name, including Private Link
+        /// names ("&lt;workspace&gt;-ondemand.privatelink.sql.azuresynapse...."), and are excluded.
+        /// Only the host name is inspected: the protocol prefix, port and instance/pipe name are
+        /// ignored, and the segment must directly follow the workspace label (optionally followed by
+        /// ".privatelink"). Because no list of cloud suffixes is maintained, labels after the
+        /// segment are not validated, so a custom DNS name such as
+        /// "&lt;workspace&gt;.sql.azuresynapse.net.example" is still treated as Synapse.</remarks>
+        internal static bool IsAzureSynapseDedicatedPoolEndpoint(string dataSource)
+        {
+            if (string.IsNullOrEmpty(dataSource))
+            {
+                return false;
+            }
+
+            GetDataSourceHostRange(dataSource, out int hostStart, out int hostEnd);
+            int synapse = dataSource.IndexOf(AZURE_SYNAPSE, hostStart, hostEnd - hostStart, StringComparison.OrdinalIgnoreCase);
+            if (synapse <= hostStart)
+            {
+                return false;
+            }
+
+            int workspaceEnd = synapse;
+            if (EndsWithOrdinalIgnoreCase(dataSource, hostStart, workspaceEnd, PRIVATELINK))
+            {
+                workspaceEnd -= PRIVATELINK.Length;
+            }
+
+            int workspaceLength = workspaceEnd - hostStart;
+            // Synapse workspace names cannot contain '.', so the segment must follow a single label.
+            return workspaceLength > 0
+                && dataSource.IndexOf('.', hostStart, workspaceLength) < 0
+                && !EndsWithOrdinalIgnoreCase(dataSource, hostStart, workspaceEnd, ONDEMAND_PREFIX);
+        }
+
+        // Locates, without allocating, the host within a data source of the form
+        // "[protocol:]host[\instance][,port]", including named pipe forms such as
+        // "np:\\host\pipe\sql\query". The host occupies [start, end) of dataSource.
+        internal static void GetDataSourceHostRange(string dataSource, out int start, out int end)
+        {
+            start = 0;
+            end = dataSource.Length;
+            TrimRange(dataSource, ref start, ref end);
+
+            int colon = dataSource.IndexOf(':', start, end - start);
+            if (colon >= 0)
+            {
+                start = colon + 1;
+                TrimRange(dataSource, ref start, ref end);
+            }
+            while (start < end && dataSource[start] == '\\')
+            {
+                start++;
+            }
+
+            int separator = dataSource.IndexOfAny(s_dataSourceHostTerminators, start, end - start);
+            if (separator >= 0)
+            {
+                end = separator;
+            }
+            TrimRange(dataSource, ref start, ref end);
+        }
+
+        internal static void TrimRange(string value, ref int start, ref int end)
+        {
+            while (start < end && char.IsWhiteSpace(value[start]))
+            {
+                start++;
+            }
+            while (end > start && char.IsWhiteSpace(value[end - 1]))
+            {
+                end--;
+            }
+        }
+
+        // Returns whether value[start, end) ends with suffix, using an ordinal, case-insensitive comparison.
+        internal static bool EndsWithOrdinalIgnoreCase(string value, int start, int end, string suffix)
+            => end - start >= suffix.Length
+                && string.Compare(value, end - suffix.Length, suffix, 0, suffix.Length, StringComparison.OrdinalIgnoreCase) == 0;
 
         internal static bool IsAzureSqlServerEndpoint(string dataSource)
         {
@@ -1337,6 +1426,9 @@ namespace Microsoft.Data.Common
         internal static Exception PooledOpenTimeout()
             => ADP.InvalidOperation(StringsHelper.GetString(Strings.ADP_PooledOpenTimeout));
 
+        internal static Exception IsolationLevelResetTimeout()
+            => ADP.InvalidOperation(StringsHelper.GetString(Strings.ADP_IsolationLevelResetTimeout));
+
         internal static Exception NonPooledOpenTimeout()
             => ADP.TimeoutException(StringsHelper.GetString(Strings.ADP_NonPooledOpenTimeout));
 #endregion
@@ -1395,9 +1487,6 @@ namespace Microsoft.Data.Common
 
         internal static ArgumentException InvalidSizeValue(int value)
             => Argument(StringsHelper.GetString(Strings.ADP_InvalidSizeValue, value.ToString(CultureInfo.InvariantCulture)));
-
-        internal static ArgumentException ParameterValueOutOfRange(decimal value)
-            => ADP.Argument(StringsHelper.GetString(Strings.ADP_ParameterValueOutOfRange, value.ToString((IFormatProvider)null)));
 
         internal static ArgumentException ParameterValueOutOfRange(SqlDecimal value) => ADP.Argument(StringsHelper.GetString(Strings.ADP_ParameterValueOutOfRange, value.ToString()));
 
@@ -1490,6 +1579,9 @@ namespace Microsoft.Data.Common
 
         internal static Exception InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity()
             => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity));
+
+        internal static Exception InvalidMixedUsageOfAccessTokenProperties()
+            => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAccessTokenProperties));
         #endregion
 
         internal static readonly IntPtr s_ptrZero = IntPtr.Zero;
