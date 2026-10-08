@@ -73,6 +73,8 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Members
+        private readonly int _asyncAttestationGateTimeoutInMilliseconds;
+
         private static readonly EnclaveSessionCache SessionCache = new EnclaveSessionCache();
 
         private static AutoResetEvent sessionLockEvent = new AutoResetEvent(true);
@@ -109,12 +111,35 @@ namespace Microsoft.Data.SqlClient
         // attestation info from the server; only the attestation service call itself is shared. This
         // is a deliberate trade: it buys an ownership model that is sound under ConfigureAwait(false)
         // at the cost of some redundant per-caller work during a cold start.
+        //
+        // This gate uses the provider's async timeout, which defaults to LockTimeoutMaxInMilliseconds,
+        // and does not participate in the synchronous path's adaptive 'lockTimeoutInMilliseconds',
+        // which sync callers drive to zero on a failed acquisition and restore on a successful one.
+        // The decoupling is deliberate and symmetric: async callers neither degrade that value for sync
+        // callers nor are degraded by it, so the async timeout cannot be collapsed to zero by unrelated
+        // synchronous contention.
         private static readonly SemaphoreSlim s_asyncAttestationGate = new SemaphoreSlim(1, 1);
 
-        // It is used to save the attestation url and nonce value across API calls
+        // Records the managed thread IDs that are part way through an attestation sequence, so that
+        // GetEnclaveSessionHelper can tell a re-entrant call on such a thread from a fresh caller and
+        // avoid making it wait on a gate it effectively already holds. The entry is keyed by, and
+        // holds, the thread ID; entries expire after s_threadRetryCacheTimeout in case the sequence is
+        // abandoned. Used by the synchronous path only.
         protected static readonly MemoryCache ThreadRetryCache = new MemoryCache(new MemoryCacheOptions());
         private static readonly TimeSpan s_threadRetryCacheTimeout = TimeSpan.FromMinutes(10);
         #endregion
+
+        protected EnclaveProviderBase()
+            : this(LockTimeoutMaxInMilliseconds)
+        {
+        }
+
+        // Test-only constructor for exercising the process-wide gate with a fixed timeout.
+        // Production providers use the parameterless constructor and its 15-second wait.
+        internal EnclaveProviderBase(int asyncAttestationGateTimeoutInMilliseconds)
+        {
+            _asyncAttestationGateTimeoutInMilliseconds = asyncAttestationGateTimeoutInMilliseconds;
+        }
 
         #region protected methods
         // Helper method to get the enclave session from the cache if present
@@ -293,7 +318,7 @@ namespace Microsoft.Data.SqlClient
             // rather than failing. This mirrors the synchronous design's deliberate choice to favour
             // progress over strict collapsing when the gate holder is unusually slow.
             bool gateAcquired = await s_asyncAttestationGate
-                .WaitAsync(LockTimeoutMaxInMilliseconds, cancellationToken)
+                .WaitAsync(_asyncAttestationGateTimeoutInMilliseconds, cancellationToken)
                 .ConfigureAwait(false);
 
             try
