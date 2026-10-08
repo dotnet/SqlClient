@@ -204,6 +204,9 @@
   <data name="ADP_PooledOpenTimeout" xml:space="preserve">
     <value>Timeout scaduto. Il tempo disponibile è scaduto prima di aver ottenuto la connessione dal pool.  Ciò potrebbe essere accaduto perché tutte le connessioni dal pool erano in uso ed era già stata raggiunta la dimensione massima del pool.</value>
   </data>
+  <data name="ADP_IsolationLevelResetTimeout" xml:space="preserve">
+    <value>Timeout expired.  The connection timeout period elapsed before the transaction isolation level of the pooled connection could be reset.</value>
+  </data>
   <data name="ADP_NonPooledOpenTimeout" xml:space="preserve">
     <value>Timeout durante il tentativo di aprire la connessione. È stato superato il periodo di tempo trascorso prima del tentativo di apertura della connessione. È possibile che si siano verificati troppi tentativi di connessione simultanei non in pool.</value>
   </data>
