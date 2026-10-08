@@ -99,6 +99,9 @@
          Attestation enclave provider. -->
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
+    <!-- Pin IdentityModel's Microsoft.Bcl.Cryptography dependency to the version SqlClient uses,
+         rather than the older one IdentityModel asks for. -->
+    <PackageReference Include="Microsoft.Bcl.Cryptography" />
   </ItemGroup>
 
   <!-- CodeGen Targets ================================================= -->
