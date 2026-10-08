@@ -34,6 +34,7 @@ namespace SqlCommand_Prepare
                 command.Parameters.Add(descParam);
 
                 // Call Prepare after setting the Commandtext and Parameters.
+                // Leave EnableOptimizedParameterBinding disabled: SqlClient uses an internal output plan handle.
                 command.Prepare();
                 command.ExecuteNonQuery();
 
