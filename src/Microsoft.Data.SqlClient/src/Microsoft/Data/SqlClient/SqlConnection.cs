@@ -28,13 +28,11 @@ using Microsoft.Data.SqlClient.Utilities;
 using Microsoft.SqlServer.Server;
 
 #if NETFRAMEWORK
-using System.Runtime.CompilerServices;
 using System.Security.Permissions;
 using System.Security.Principal;
 #endif
 
 #if NETFRAMEWORK
-[assembly: InternalsVisibleTo("System.Data.DataSetExtensions, PublicKey=" + Microsoft.Data.SqlClient.AssemblyRef.EcmaPublicKeyFull)] // DevDiv Bugs 92166
 // NOTE: The current Microsoft.VSDesigner editor attributes are implemented for System.Data.SqlClient, and are not publicly available.
 // New attributes that are designed to work with Microsoft.Data.SqlClient and are publicly documented should be included in future.
 #endif
