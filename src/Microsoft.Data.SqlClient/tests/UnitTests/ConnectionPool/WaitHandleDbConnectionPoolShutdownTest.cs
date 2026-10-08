@@ -43,9 +43,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             return pool;
         }
 
-        // State transitions to ShuttingDown on Shutdown.
+        /// <summary>Shutdown permanently stops the pool from accepting new requests.</summary>
         [Fact]
-        public void Shutdown_TransitionsState_ToShuttingDown()
+        public void Shutdown_StopsRunning()
         {
             var pool = CreatePool();
             Assert.True(pool.IsRunning);
@@ -53,7 +53,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             pool.Shutdown();
 
             Assert.False(pool.IsRunning);
-            Assert.Equal(DbConnectionPoolState.ShuttingDown, pool.State);
         }
 
         // Cleanup timer is disposed.
@@ -127,7 +126,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             pool.Shutdown();
             pool.Shutdown();
             pool.Shutdown();
-            Assert.Equal(DbConnectionPoolState.ShuttingDown, pool.State);
+            Assert.False(pool.IsRunning);
         }
 
         // Cleanup callback after shutdown is a no-op.
@@ -141,12 +140,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             // create requests.
             var ex = Record.Exception(() => pool.CleanupCallback(state: null));
             Assert.Null(ex);
-            Assert.Equal(DbConnectionPoolState.ShuttingDown, pool.State);
+            Assert.False(pool.IsRunning);
         }
 
         // Sync caller arriving after shutdown gets a null connection (factory will
         // see this and return up the retry chain). The pool's TryGetConnection short-circuits
-        // on State != Running.
+        // when IsRunning is false.
         [Fact]
         public void TryGetConnection_AfterShutdown_ReturnsNullWithoutBlocking()
         {
@@ -159,7 +158,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
                 out DbConnectionInternal? conn);
 
-            // TryGetConnection returns true with a null connection when State != Running.
+            // TryGetConnection returns true with a null connection when IsRunning is false.
             Assert.True(completed);
             Assert.Null(conn);
         }
@@ -343,11 +342,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var pool = CreatePool();
             pool.Shutdown();
             Assert.Null(pool._cleanupTimer);
-            Assert.Equal(DbConnectionPoolState.ShuttingDown, pool.State);
 
             pool.Startup();
 
-            Assert.Equal(DbConnectionPoolState.ShuttingDown, pool.State);
             Assert.False(pool.IsRunning);
             // No new cleanup timer must have been scheduled against a shut-down pool.
             Assert.Null(pool._cleanupTimer);
