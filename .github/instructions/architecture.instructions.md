@@ -98,7 +98,8 @@ are grouped by namespace, with conditional compilation for framework differences
 The unsupported-platform project also retains `netstandard2.0`; neither this target nor the reference
 assembly expands supported driver runtimes below .NET Framework 4.6.2 or .NET 10.
 Existing dual-target tests use `net462;net10.0`; modern-only projects, including performance tests, use
-`net10.0` only. Standard-only companions retain their existing `netstandard` targets. Azure extensions
+`net10.0` only. Abstractions targets `netstandard2.0;net10.0` for AOT-safe authentication registration.
+Other standard-only companions retain their existing `netstandard` targets. Azure extensions
 target `net462;netstandard2.0`. Microsoft.SqlServer.Server remains independently
 versioned and retains `net46;netstandard2.0`; raising its framework floor is a separate change.
 Preserve every `net481` target: PackageCompatibility tool/tests use `net481;net10.0` with xUnit v3,

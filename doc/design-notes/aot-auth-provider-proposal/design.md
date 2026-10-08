@@ -115,7 +115,9 @@ then:
   registry.GetProvider(method) → provider.AcquireTokenAsync(...)
 ```
 
-Any bootstrap failure is cached and rethrown from every later registry access (L2).
+Any bootstrap failure is cached. Public `GetProvider`/`SetProvider` preserve their existing
+`null`/`false` results and log the original failure with corrective guidance on every
+unsuccessful access (L2), including when tracing is enabled after the first failure.
 
 ### Ordering hazards any implementation must avoid
 
@@ -398,9 +400,9 @@ builds, and processes composed at runtime: plugin hosts, PowerShell modules, cus
 
 - **At bootstrap,** Abstractions loads `Microsoft.Data.SqlClient` by name and compares its exact
   family version with its own. On a mismatch, the bootstrap fails with an
-  `InvalidOperationException` naming both versions. Like any bootstrap failure (L2), it is
-  rethrown from `GetProvider`, `SetProvider` and the default-provider factory — exactly the calls a
-  mix breaks.
+  internal `InvalidOperationException` naming both versions. Like any bootstrap failure (L2),
+  it is logged with upgrade guidance while `GetProvider`/`SetProvider` return `null`/`false`.
+  This preserves the existing public API behaviour without silently accepting the mix.
 - **When discovery loads the Azure assembly,** it compares that assembly's family version too and
   fails the same way. This catches a current SqlClient paired with Azure 1.0.0, a combination in
   which SqlClient and Abstractions agree with each other.
@@ -416,6 +418,6 @@ The bugs are described, with evidence, in [findings](findings.md#latent-bugs-on-
 | Bug | Fix |
 |---|---|
 | L1 — `SqlAuthenticationInitializer` cannot register providers | Publish the registry before invoking the initializer; its registrations rank as Config |
-| L2 — an invalid `app.config` provider silently disables the registry | Cache the bootstrap failure; rethrow the original exception from `GetProvider`, `SetProvider` and the fed-auth path |
+| L2 — an invalid `app.config` provider silently disables the registry | Cache the bootstrap failure; preserve public `null`/`false` results and log failure details and corrective guidance on every unsuccessful access |
 | L3 — `SetProvider` returns `false` under NativeAOT | Delete the reflective bridge; the public API calls the registry directly |
 | L4 — the bridge loads `Microsoft.Data.SqlClient` without verifying its signature | Delete the reflective bridge |

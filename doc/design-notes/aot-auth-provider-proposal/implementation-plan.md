@@ -23,8 +23,10 @@
    and update the ref assemblies. Publish the registry before invoking the initializer, so its
    registrations succeed (latent bug L1); they rank in the Config tier.
 5. Cache any bootstrap failure (bad provider type, bad initializer type, provider rejecting its
-   method) and surface the original exception from the public `GetProvider`/`SetProvider` and the
-   fed-auth path, instead of returning `null`/`false` (latent bug L2).
+   method), preserving public `GetProvider`/`SetProvider` results of `null`/`false`.
+   Log the original failure and corrective guidance on every unsuccessful access, so observers
+   can diagnose the problem even when tracing is enabled after the initial failure (L2).
+   Registration argument and callback failures likewise return `false` with actionable traces.
 6. Multi-target Abstractions `netstandard2.0;net10.0`. Add internal polyfills for
    `RequiresUnreferencedCode`, `RequiresDynamicCode`, `FeatureSwitchDefinition` and `FeatureGuard`
    to the `netstandard2.0` build only, following Logging's `UnconditionalSuppressMessageAttribute`
@@ -64,6 +66,28 @@
 
 No new public API in Phase 1. The ref-assembly change is limited to relocating
 `SqlAuthenticationInitializer`.
+
+### Phase 1 validation commands
+
+The implementation includes repeatable process-isolated tests of real configuration handlers,
+initializer registration, precedence, bootstrap errors, and disabled gates. The runtime checks
+also replace the driver with an older-version fixture and verify that disabling both discovery
+switches cannot bypass exact family version validation:
+
+```bash
+dotnet tool run pwsh -- -File src/Microsoft.Data.SqlClient.Extensions/Abstractions/test/RunAuthenticationTests.ps1 -Publish
+dotnet tool run pwsh -- -File src/Microsoft.Data.SqlClient.Extensions/Abstractions/test/RunVersionChecks.ps1
+```
+
+The first command requires Linux and a native linker (gcc); it publishes and executes both
+trimmed and NativeAOT .NET 10 apps. On Windows, use `-Framework net462` without `-Publish`
+to exercise the permanently reflective .NET Framework path. Both commands are wired into CI.
+The second covers exact family version checks in PackageReference metadata and
+`packages.config`, including the emergency `SqlClientEnforceFamilyVersions=false` build opt-out.
+
+SqlClient 8.0 implementation assets target `net462;net10.0`, with reference and unsupported
+assets additionally targeting `netstandard2.0`. All family packages must be upgraded together.
+The phase 2 factory API and generator are not implemented by phase 1.
 
 ## Phase 2 — Default-provider factory and generated fast path
 
@@ -115,14 +139,14 @@ with the generator. Trimmed apps lose nothing they have today at any point. Ship
 | Config parsing | SqlClient, typed | Abstractions, untyped |
 | `SqlAuthenticationInitializer` | SqlClient | Abstractions + type forward |
 | Initializer's `SetProvider` calls | Silently fail | Work |
-| Invalid `app.config` provider | Public API returns `null`/`false` for the process lifetime | Original exception surfaced |
+| Invalid `app.config` provider | Public API returns `null`/`false` for the process lifetime | Same results, with cached failure details and actionable traces on every access |
 | Precedence | Permanent flag, order-dependent | Explicit tiers |
 | Gating | None | Two switches + feature guards |
 | Trim annotations | None on auth paths | `[RequiresUnreferencedCode]`/`[RequiresDynamicCode]` on reflective methods |
 | Abstractions TFMs | `netstandard2.0` | `netstandard2.0;net10.0` |
 | Azure provider acquisition | Reflection only | Default-provider factory (explicit or generated), reflection fallback |
 | New public API | — | `SetDefaultProviderFactory`, `TrySetDefaultProviderFactory`, `SqlAuthenticationProviderFactoryContext` (Abstractions); `ActiveDirectoryAuthenticationProvider.CreateDefault` (Azure) |
-| Mixed family versions | Silently accepted | Build error + runtime exception |
+| Mixed family versions | Silently accepted | Build error + logged runtime failure (`GetProvider`/`SetProvider` return `null`/`false`) |
 | AOT validation | None | CI publish tests |
 
 Useful salvage exists in two closed, unmerged PRs: the registry relocation and its tests from

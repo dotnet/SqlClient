@@ -588,26 +588,11 @@
   <data name="SQL_NonLocalSSEInstance" xml:space="preserve">
     <value>不支援非本端使用者執行個體的 SSE 執行個體重新導向。</value>
   </data>
-  <data name="SQL_UnsupportedAuthentication" xml:space="preserve">
-    <value>不支援驗證 '{0}'。</value>
-  </data>
-  <data name="SQL_CannotCreateAuthProvider" xml:space="preserve">
-    <value>無法為 '{0}' 具現化類型為 '{1}' 的驗證提供者。</value>
-  </data>
-  <data name="SQL_CannotCreateAuthInitializer" xml:space="preserve">
-    <value>無法將類型為 '{0}' 的 SqlAuthenticationInitializer 具現化。</value>
-  </data>
-  <data name="SQL_UnsupportedAuthenticationByProvider" xml:space="preserve">
-    <value>提供者 '{0}' 不支援驗證 '{1}'。</value>
-  </data>
   <data name="SQL_CannotFindAuthProvider" xml:space="preserve">
     <value>找不到 '{0}' 的驗證提供者。</value>
   </data>
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
     <value>找不到 '{0}' 的驗證提供者。請安裝 'Microsoft.Data.SqlClient.Extensions.Azure' NuGet 套件 (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure)，以使用 Active Directory (Entra ID) 認證方法。</value>
-  </data>
-  <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>設定 'useWamBroker' 需要 'Microsoft.Data.SqlClient.Extensions.Azure' 套件以公開 'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions'。請將 'Microsoft.Data.SqlClient.Extensions.Azure' 套件升級至至少 v1.1.0，其中包含此類型。</value>
   </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>參數 '{0}' 不能是 Null 或空白。</value>

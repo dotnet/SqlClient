@@ -157,7 +157,8 @@ Concretely:
    reports it rather than supporting it. A build-time check shipped in Abstractions' `build/` and
    `buildTransitive/` folders fails the build when the family's package versions differ. A
    runtime check compares the exact family versions of the loaded SqlClient and Azure assemblies
-   and makes `GetProvider`/`SetProvider` throw a descriptive exception on a mismatch.
+   and logs a descriptive failure with upgrade guidance on a mismatch.
+   `GetProvider`/`SetProvider` preserve their existing `null`/`false` failure results.
 8. **A source generator in the Azure package (B7)** registers
    `ActiveDirectoryAuthenticationProvider.CreateDefault` through `TrySetDefaultProviderFactory` for
    `net10.0+` consumers, rooting the provider statically.
@@ -258,7 +259,7 @@ Abstractions has no upper bound.
 | `app.config` providers, JIT (`net10.0`, `net462`) | Config parsing | Always reflective, by R1 |
 | `app.config` under trimming/AOT | Not available; non-functional on `main` today as well | Removed cleanly |
 | `net8.0`/`net9.0` app | SqlClient 8.0 resolves to its `netstandard2.0` PlatformNotSupported asset | — |
-| Any mixed family versions (e.g. SqlClient 7.0.1 with 8.x packages) | Build error (E2); runtime exception from `GetProvider`/`SetProvider` (E3) | — |
+| Any mixed family versions (e.g. SqlClient 7.0.1 with 8.x packages) | Build error (E2); logged runtime failure with `null`/`false` from `GetProvider`/`SetProvider` (E3) | — |
 
 ---
 

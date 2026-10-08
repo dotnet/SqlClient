@@ -242,6 +242,8 @@ AppContext switches allow runtime behavior changes without modifying connection 
 
 | Switch Name | Default | Description |
 |-------------|---------|-------------|
+| `Switch.Microsoft.Data.SqlClient.EnableAppConfig` | `true` | Enables authentication app.config parsing and initializer execution; trimmed/AOT .NET 10 publishes remove this guarded path |
+| `Switch.Microsoft.Data.SqlClient.EnableAzureExtensionDiscovery` | `true` | Enables reflective Azure provider discovery; trimmed/AOT .NET 10 publishes remove this guarded path |
 | `Switch.Microsoft.Data.SqlClient.DisableTNIRByDefaultInConnectionString` | `false` | Disables Transparent Network IP Resolution by default |
 | `Switch.Microsoft.Data.SqlClient.EnableAppConfig` | `true` | .NET only. Controls whether SqlClient reads app.config: configurable retry logic, authentication providers and switch overrides. See [Trimming](#trimming) |
 | `Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault` | `false` | Sets `MultiSubnetFailover=true` as the default for all connections |
@@ -288,6 +290,19 @@ Setting `EnableAppConfig` to `false` at publish time removes the configuration r
 Setting it only at run time, with `AppContext.SetSwitch` or `runtimeconfig.json`, stops the reading but leaves the trim warnings. On .NET Framework the switch has no effect, since trimming does not apply there.
 
 ### Guidelines for Adding New Switches
+Authentication gates live in Abstractions' `AuthenticationFeatureSwitches.cs`, not
+`LocalAppContextSwitches.cs`. They default to `true` to preserve existing JIT behavior.
+For publish-time trimming, use a runtime host configuration option with `Trim="true"`:
+
+```xml
+<RuntimeHostConfigurationOption Include="Switch.Microsoft.Data.SqlClient.EnableAppConfig"
+                                Value="false" Trim="true" />
+<RuntimeHostConfigurationOption Include="Switch.Microsoft.Data.SqlClient.EnableAzureExtensionDiscovery"
+                                Value="false" Trim="true" />
+```
+
+Setting an AppContext switch at runtime does not influence publish-time trimming.
+
 1. Define the switch name constant in `LocalAppContextSwitches.cs`
 2. Add a cached property with lazy evaluation pattern (see existing switches)
 3. Default to `false` — the switch should opt-in to the new behavior

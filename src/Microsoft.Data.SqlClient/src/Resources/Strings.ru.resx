@@ -588,26 +588,11 @@
   <data name="SQL_NonLocalSSEInstance" xml:space="preserve">
     <value>Перенаправление экземпляра SSE не поддерживается для нелокальных пользовательских интерфейсов.</value>
   </data>
-  <data name="SQL_UnsupportedAuthentication" xml:space="preserve">
-    <value>Проверка подлинности "{0}" не поддерживается.</value>
-  </data>
-  <data name="SQL_CannotCreateAuthProvider" xml:space="preserve">
-    <value>Не удалось создать экземпляр поставщика проверки подлинности с типом "{1}" для "{0}".</value>
-  </data>
-  <data name="SQL_CannotCreateAuthInitializer" xml:space="preserve">
-    <value>Не удалось создать экземпляр SqlAuthenticationInitializer с типом "{0}".</value>
-  </data>
-  <data name="SQL_UnsupportedAuthenticationByProvider" xml:space="preserve">
-    <value>Поставщик "{0}" не поддерживает проверку подлинности "{1}".</value>
-  </data>
   <data name="SQL_CannotFindAuthProvider" xml:space="preserve">
     <value>Не удается найти поставщик проверки подлинности для "{0}".</value>
   </data>
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
     <value>Не удается найти поставщик проверки подлинности для "{0}". Установите пакет NuGet "Microsoft.Data.SqlClient.Extensions.Azure" (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure) для использования методов проверки подлинности Active Directory (Entra ID).</value>
-  </data>
-  <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>Для установки параметра "useWamBroker" требуется, чтобы пакет "Microsoft.Data.SqlClient.Extensions.Azure" предоставлял доступ к "Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions". Обновите пакет "Microsoft.Data.SqlClient.Extensions.Azure" как минимум до версии v1.1.0, в которую входит этот тип.</value>
   </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>Параметр «{0}» не может иметь значение NULL или быть пустым.</value>

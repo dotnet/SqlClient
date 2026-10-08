@@ -9,6 +9,12 @@ parameters:
   # the step succeeds.
   - name: failOnValidationError
     type: boolean
+  - name: resourcesDirectory
+    type: string
+    default: src/Microsoft.Data.SqlClient/src/Resources
+  - name: allowlistSection
+    type: string
+    default: AllowedEnglishValueMatches
 
 steps:
   # Compose the argument line first so the optional switch can be appended without repeating the
@@ -21,8 +27,9 @@ steps:
   # other than True or False is rejected rather than assumed, so an unrecognised value cannot
   # silently downgrade validation to warnings.
   - pwsh: |
-      $arguments = '-ResourcesDirectory "$(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient/src/Resources"' +
-                   ' -AllowlistPath "$(Build.SourcesDirectory)/.config/LocalizationValidationAllowlist.json"'
+      $arguments = '-ResourcesDirectory "$(Build.SourcesDirectory)/${{ parameters.resourcesDirectory }}"' +
+                   ' -AllowlistPath "$(Build.SourcesDirectory)/.config/LocalizationValidationAllowlist.json"' +
+                   ' -AllowlistSection "${{ parameters.allowlistSection }}"'
 
       $failOnValidationError = '${{ parameters.failOnValidationError }}'
       if ($failOnValidationError -eq 'False') {

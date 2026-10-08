@@ -160,6 +160,13 @@ jobs:
           parameters:
             failOnValidationError: ${{ parameters.failOnValidationError }}
 
+      - ${{ if eq(parameters.packageShortName, 'Abstractions') }}:
+        - template: /eng/pipelines/onebranch/steps/validate-localization-step.yml@self
+          parameters:
+            resourcesDirectory: src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Resources
+            allowlistSection: AbstractionsAllowedEnglishValueMatches
+            failOnValidationError: ${{ parameters.failOnValidationError }}
+
       # Validate the documentation snippet sources.  This requires no build, so a malformed
       # cross-reference is reported in seconds against the file and line a developer edits, rather
       # than surfacing much later as an xref-not-found warning during API docs ingestion.

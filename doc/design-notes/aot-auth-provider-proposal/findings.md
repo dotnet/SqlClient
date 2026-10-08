@@ -140,7 +140,8 @@ that cannot be loaded makes the static constructor throw. Through the public API
 swallows it: every subsequent `GetProvider` returns `null` and every `SetProvider` returns `false`
 for the life of the process, with only a trace to show why (measured). On the fed-auth path the
 same failure surfaces as a `TypeInitializationException` (code reading). Fix: cache the failure
-and throw the original exception from the public API and the fed-auth path alike (G2).
+and log its details with corrective guidance on each unsuccessful public registry access (G2),
+preserving the existing `null`/`false` results rather than introducing new public exceptions.
 
 **L3 — `SetProvider` returns `false` under NativeAOT** ([Problem](README.md#measured)). Fixed by deleting
 the bridge.

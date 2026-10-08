@@ -191,6 +191,8 @@ Describe 'supported target frameworks' {
                     'src\Microsoft.Data.SqlClient\tests\StressTests\SqlClient.Stress.Runner\SqlClient.Stress.Runner.csproj'
                     'src\Microsoft.Data.SqlClient\tests\StressTests\SqlClient.Stress.Tests\SqlClient.Stress.Tests.csproj'
                     'src\Microsoft.Data.SqlClient.Extensions\Abstractions\test\Abstractions.Test.csproj'
+                    'src\Microsoft.Data.SqlClient.Extensions\Abstractions\test\ConfigurationTest\ConfigurationTest.csproj'
+                    'src\Microsoft.Data.SqlClient.Extensions\Abstractions\test\RuntimeVersionTest\RuntimeVersionTest.csproj'
                     'src\Microsoft.Data.SqlClient.Extensions\Azure\test\Azure.Test.csproj'
                     'src\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider\test\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.Test.csproj'
                 )
@@ -217,7 +219,6 @@ Describe 'supported target frameworks' {
                 Frameworks = 'netstandard2.0'
                 Projects = @(
                     'src\Microsoft.Data.SqlClient.Internal\Logging\src\Logging.csproj'
-                    'src\Microsoft.Data.SqlClient.Extensions\Abstractions\src\Abstractions.csproj'
                     'src\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider\src\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj'
                     'src\Microsoft.Data.SqlClient\tests\tools\Microsoft.Data.SqlClient.TestUtilities\Microsoft.Data.SqlClient.TestUtilities.csproj'
                     'src\Microsoft.Data.SqlClient\tests\tools\TDS\TDS\TDS.csproj'
@@ -227,9 +228,14 @@ Describe 'supported target frameworks' {
                 )
             }
             @{
+                Frameworks = 'netstandard2.0;net10.0'
+                Projects = @('src\Microsoft.Data.SqlClient.Extensions\Abstractions\src\Abstractions.csproj')
+            }
+            @{
                 Frameworks = 'net10.0'
                 Projects = @(
                     'src\Microsoft.Data.SqlClient\tests\PerformanceTests\Microsoft.Data.SqlClient.PerformanceTests.csproj'
+                    'src\Microsoft.Data.SqlClient.Extensions\Abstractions\test\PublishTest\PublishTest.csproj'
                     'src\Microsoft.Data.SqlClient\tests\tools\Microsoft.Data.SqlClient.ExtUtilities\Microsoft.Data.SqlClient.ExtUtilities.csproj'
                     'tools\GenAPI\Microsoft.DotNet.GenAPI\Microsoft.DotNet.GenAPI.csproj'
                     'tools\PackageValidator\src\PackageValidator.csproj'

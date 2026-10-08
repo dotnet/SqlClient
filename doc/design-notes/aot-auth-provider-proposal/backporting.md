@@ -107,25 +107,25 @@ Abstractions. So:
   numbered 1.0.0.
 - **E3 compares exact family versions** (`AssemblyInformationalVersionAttribute`), so it detects
   same-major mixes. With an older SqlClient, the old SqlClient's own Azure discovery keeps
-  working, but `GetProvider`, `SetProvider` and the default-provider factory throw a descriptive
-  exception instead of silently using a registry the old SqlClient never reads.
-- **Azure 1.0.0 with a patched SqlClient** fails at discovery with a descriptive exception (E3)
+  working, but `GetProvider`/`SetProvider` return `null`/`false` and emit descriptive diagnostics
+  instead of silently using a registry the old SqlClient never reads.
+- **Azure 1.0.0 with a patched SqlClient** fails at discovery with descriptive diagnostics (E3)
   instead of falling back to the legacy `(string)` constructor. The version-tolerant probing is
   removed, as in 8.0.
 - **`SqlAuthenticationInitializer` relocates behind a type forward,** as in 8.0. A compilation
   that sees both an older SqlClient and the patched Abstractions fails with CS0433, but that
   graph is already reported by E2.
 
-These are new failures from the existing public API in a patch, unlike BP5's L2 rule. They replace
-silent failures in an unsupported configuration, so they're justified, but the release notes must
-call them out together with the upgrade instruction: update every family package together.
+These checks reject an unsupported configuration while preserving the public API's existing
+failure results. Release notes must call out the enforcement together with the upgrade
+instruction: update every family package together.
 
 **BP5 — Scope the latent-bug fixes for servicing.**
 
 | Bug | Servicing |
 |---|---|
 | L1 initializer cannot register | Fix — calls that failed now succeed |
-| L2 invalid `app.config` provider disables the registry | **Do not start throwing** from the public `GetProvider`/`SetProvider` in a patch: an app with a broken but unused auth config would begin crashing. Emit an error-level trace and keep today's return values; the fed-auth path keeps its existing exception. Throwing ships in 8.0 |
+| L2 invalid `app.config` provider disables the registry | Preserve public `GetProvider`/`SetProvider` return values, as in 8.0. Cache the bootstrap failure and emit actionable Trace-keyword diagnostics on each unsuccessful registry access. |
 | L3 AOT `SetProvider` returns `false` | Fix |
 | L4 bridge loads unverified SqlClient | Fix — the bridge is deleted |
 

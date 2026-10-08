@@ -2963,7 +2963,7 @@ namespace Microsoft.Data.SqlClient.Connection
             // Username to use in error messages.
             string? username = null;
 
-            SqlAuthenticationProvider? authProvider = SqlAuthenticationProviderManager.GetProvider(ConnectionOptions.Authentication);
+            SqlAuthenticationProvider? authProvider = SqlAuthenticationProvider.GetProvider(ConnectionOptions.Authentication);
             if (authProvider == null && _accessTokenCallback == null)
             {
                 throw SQL.CannotFindAuthProvider(ConnectionOptions.Authentication);

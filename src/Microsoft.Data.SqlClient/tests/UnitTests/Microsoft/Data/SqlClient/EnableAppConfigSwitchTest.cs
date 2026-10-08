@@ -12,7 +12,8 @@ namespace Microsoft.Data.SqlClient.UnitTests;
 /// <summary>
 /// Tests that the EnableAppConfig switch gates every app.config reader: the
 /// configurable retry logic providers, the switch overrides applied during
-/// static initialization, and the authentication provider section.
+/// static initialization. Authentication configuration is covered by the
+/// Abstractions configuration-process tests.
 /// </summary>
 [Collection(AppContextSwitchTestCollection.Name)]
 public class EnableAppConfigSwitchTest
@@ -85,25 +86,6 @@ public class EnableAppConfigSwitchTest
         Assert.Equal(enabled, LocalAppContextSwitches.ApplyAppConfigSwitchOverrides());
     }
 
-    /// <summary>
-    /// The switch gates the authentication provider section read during static
-    /// initialization.
-    /// </summary>
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void AuthenticationProvidersAreReadOnlyWhenEnabled(bool enabled)
-    {
-        using LocalAppContextSwitchesHelper switchesHelper = new();
-        switchesHelper.EnableAppConfig = enabled;
-
-        Assert.Equal(
-            enabled,
-            SqlAuthenticationProviderManager.TryReadConfigurationSection(out SqlAuthenticationProviderConfigurationSection? section));
-
-        // No test host supplies the section, so it is null either way.
-        Assert.Null(section);
-    }
 }
 
 #endif

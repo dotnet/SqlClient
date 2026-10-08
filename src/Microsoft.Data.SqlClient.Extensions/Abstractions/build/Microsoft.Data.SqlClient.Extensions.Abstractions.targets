@@ -1,0 +1,93 @@
+<Project>
+  <!--
+    Consumer-side validation for the lockstep-versioned SqlClient package family.
+    Abstractions.csproj packs this file into both build/ and buildTransitive/, so NuGet imports
+    it for direct consumers and, with PackageReference, consumers of transitive dependencies.
+
+    Authentication types now live in Abstractions. Mixing family releases can therefore break
+    type forwarding or authentication bootstrap. Validate the resolved package versions during
+    the consumer's build, including trimmed/Native AOT builds where reflective runtime version
+    checks may be removed.
+
+    The family consists of SqlClient, Abstractions, Extensions.Azure, Internal.Logging, and the
+    AlwaysEncrypted.AzureKeyVaultProvider. Microsoft.SqlServer.Server and the native SNI packages
+    are independently versioned and intentionally excluded. Only family packages present in the
+    consumer's resolved assets or packages.config are checked; optional packages are not required.
+
+    This checks package version metadata, not assembly versions, version ranges, or API compatibility.
+    It does not restore, install, or upgrade packages. A mismatch produces SQLCLIENT001 and should
+    be resolved by upgrading the installed family packages together. Historical extension versions
+    of 1.0.0 shipped alongside SqlClient 7.0.0/7.0.1 are not automatically mapped or exempted.
+  -->
+  <PropertyGroup>
+    <!--
+      Enabled by default, but preserve an explicit consumer override. For emergency recovery use
+      -p:SqlClientEnforceFamilyVersions=false, or set the property in the consumer project.
+      This disables this build check only; it does not make mixed packages compatible or disable
+      runtime authentication version checks.
+    -->
+    <SqlClientEnforceFamilyVersions Condition="'$(SqlClientEnforceFamilyVersions)' == ''">true</SqlClientEnforceFamilyVersions>
+  </PropertyGroup>
+
+  <!--
+    Run after package asset or reference resolution supplies the metadata below. MSBuild executes
+    a target at most once per project build, even when both listed hooks are reached.
+    Skip design-time builds to avoid interrupting IDE project evaluation and IntelliSense.
+  -->
+  <Target Name="ValidateSqlClientFamilyPackageVersions"
+          AfterTargets="ResolvePackageAssets;ResolveReferences"
+          Condition="'$(SqlClientEnforceFamilyVersions)' == 'true' And '$(DesignTimeBuild)' != 'true'">
+    <ItemGroup>
+      <!--
+        Inspect compile references and runtime assets, including RID-specific assets, so the check
+        is not limited to packages whose assemblies appear in one particular asset group.
+        Project references without NuGetPackageId metadata are outside this package-version check.
+      -->
+      <_SqlClientFamilyAsset Include="@(ResolvedCompileFileDefinitions);@(ReferencePath);@(RuntimeCopyLocalItems);@(RuntimeTargetsCopyLocalItems)"
+          Condition="'%(NuGetPackageId)' == 'Microsoft.Data.SqlClient' Or
+                     '%(NuGetPackageId)' == 'Microsoft.Data.SqlClient.Extensions.Abstractions' Or
+                     '%(NuGetPackageId)' == 'Microsoft.Data.SqlClient.Extensions.Azure' Or
+                     '%(NuGetPackageId)' == 'Microsoft.Data.SqlClient.Internal.Logging' Or
+                     '%(NuGetPackageId)' == 'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider'">
+        <FamilyVersion>%(NuGetPackageVersion)</FamilyVersion>
+        <FamilyId>%(NuGetPackageId)</FamilyId>
+      </_SqlClientFamilyAsset>
+    </ItemGroup>
+
+    <!--
+      Use the resolved Abstractions package version as the expected family version. Distinct removes
+      repeated versions contributed by multiple assets from the same package. Compare the reported
+      version strings directly, including prerelease labels; there is no semantic-version parsing.
+      Assets with no version metadata, or builds with no Abstractions version metadata, are skipped
+      by the Error condition rather than assigned a guessed version.
+    -->
+    <ItemGroup>
+      <_SqlClientAbstractionsVersion Include="@(_SqlClientFamilyAsset)"
+          Condition="'%(_SqlClientFamilyAsset.FamilyId)' == 'Microsoft.Data.SqlClient.Extensions.Abstractions'" />
+    </ItemGroup>
+    <PropertyGroup>
+      <_SqlClientExpectedFamilyVersion>@(_SqlClientAbstractionsVersion->'%(FamilyVersion)'->Distinct())</_SqlClientExpectedFamilyVersion>
+    </PropertyGroup>
+    <Error Code="SQLCLIENT001"
+           Condition="'%(_SqlClientFamilyAsset.FamilyVersion)' != '' And '$(_SqlClientExpectedFamilyVersion)' != '' And '%(_SqlClientFamilyAsset.FamilyVersion)' != '$(_SqlClientExpectedFamilyVersion)'"
+           Text="SqlClient family version mismatch: %(_SqlClientFamilyAsset.FamilyId) is %(_SqlClientFamilyAsset.FamilyVersion), but Abstractions is $(_SqlClientExpectedFamilyVersion). Upgrade all family packages together. Extensions shipped with SqlClient 7.0.0/7.0.1 were numbered 1.0.0. Emergency opt-out: SqlClientEnforceFamilyVersions=false." />
+    <!--
+      Legacy packages.config projects do not provide the PackageReference asset metadata above.
+      When packages.config exists, read Abstractions' installed version directly and find family
+      entries with a different version. If Abstractions is absent, this fallback performs no check.
+    -->
+    <XmlPeek XmlInputPath="$(MSBuildProjectDirectory)/packages.config"
+             Query="/packages/package[@id='Microsoft.Data.SqlClient.Extensions.Abstractions']/@version"
+             Condition="Exists('$(MSBuildProjectDirectory)/packages.config')">
+      <Output TaskParameter="Result" PropertyName="_SqlClientConfigExpectedVersion" />
+    </XmlPeek>
+    <XmlPeek XmlInputPath="$(MSBuildProjectDirectory)/packages.config"
+             Query="/packages/package[(@id='Microsoft.Data.SqlClient' or @id='Microsoft.Data.SqlClient.Extensions.Azure' or @id='Microsoft.Data.SqlClient.Internal.Logging' or @id='Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider') and @version!='$(_SqlClientConfigExpectedVersion)']"
+             Condition="'$(_SqlClientConfigExpectedVersion)' != ''">
+      <Output TaskParameter="Result" ItemName="_SqlClientConfigMismatch" />
+    </XmlPeek>
+    <Error Code="SQLCLIENT001"
+           Condition="'@(_SqlClientConfigMismatch)' != ''"
+           Text="SqlClient family version mismatch in packages.config: %(_SqlClientConfigMismatch.Identity), but Abstractions is $(_SqlClientConfigExpectedVersion). Upgrade all family packages together. Extensions shipped with SqlClient 7.0.0/7.0.1 were numbered 1.0.0. Emergency opt-out: SqlClientEnforceFamilyVersions=false." />
+  </Target>
+</Project>
