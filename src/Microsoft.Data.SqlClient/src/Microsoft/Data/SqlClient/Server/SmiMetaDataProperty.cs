@@ -18,12 +18,13 @@ namespace Microsoft.Data.SqlClient.Server
         DefaultFields = 0x0,
         SortOrder = 0x1,
         UniqueKey = 0x2,
+        ComputedFields = 0x3,
     }
 
     // Simple collection for properties.  Could extend to IDictionary support if needed in future.
     internal class SmiMetaDataPropertyCollection
     {
-        private const int SelectorCount = 3;  // number of elements in SmiPropertySelector
+        private const int SelectorCount = 4;  // number of elements in SmiPropertySelector
 
         private readonly SmiMetaDataProperty[] _properties;
         private bool _isReadOnly;
@@ -32,6 +33,7 @@ namespace Microsoft.Data.SqlClient.Server
         private static readonly SmiDefaultFieldsProperty s_emptyDefaultFields = new SmiDefaultFieldsProperty(new List<bool>());
         private static readonly SmiOrderProperty s_emptySortOrder = new SmiOrderProperty(new List<SmiOrderProperty.SmiColumnOrder>());
         private static readonly SmiUniqueKeyProperty s_emptyUniqueKey = new SmiUniqueKeyProperty(new List<bool>());
+        private static readonly SmiComputedFieldsProperty s_emptyIsComputedField = new SmiComputedFieldsProperty(new List<bool>());
 
         internal static readonly SmiMetaDataPropertyCollection s_emptyInstance = CreateEmptyInstance();
 
@@ -49,6 +51,7 @@ namespace Microsoft.Data.SqlClient.Server
             _properties[(int)SmiPropertySelector.DefaultFields] = s_emptyDefaultFields;
             _properties[(int)SmiPropertySelector.SortOrder] = s_emptySortOrder;
             _properties[(int)SmiPropertySelector.UniqueKey] = s_emptyUniqueKey;
+            _properties[(int)SmiPropertySelector.ComputedFields] = s_emptyIsComputedField;
         }
 
         internal SmiMetaDataProperty this[SmiPropertySelector key]
@@ -264,6 +267,69 @@ namespace Microsoft.Data.SqlClient.Server
                 }
 
                 if (_defaults[columnOrd])
+                {
+                    returnValue += columnOrd;
+                }
+            }
+            returnValue += ")";
+
+            return returnValue;
+        }
+
+        #endregion
+    }
+
+    internal class SmiComputedFieldsProperty : SmiMetaDataProperty
+    {
+        #region private fields
+
+        private readonly IList<bool> _computed;
+
+        #endregion
+
+        #region internal interface
+
+        internal SmiComputedFieldsProperty(IList<bool> computedFields) => _computed = new System.Collections.ObjectModel.ReadOnlyCollection<bool>(computedFields);
+
+        internal bool this[int ordinal]
+        {
+            get
+            {
+                if (_computed.Count <= ordinal)
+                {
+                    return false;
+                }
+                else
+                {
+                    return _computed[ordinal];
+                }
+            }
+        }
+
+        [Conditional("DEBUG")]
+        internal void CheckCount(int countToMatch)
+        {
+            Debug.Assert(0 == _computed.Count || countToMatch == _computed.Count,
+                    "SmiComputedFieldsProperty.CheckCount: ComputedFieldsProperty size (" + _computed.Count +
+                    ") not equal to checked size (" + countToMatch + ")");
+        }
+
+        internal override string TraceString()
+        {
+            string returnValue = "ComputedFields(";
+            bool delimit = false;
+            for (int columnOrd = 0; columnOrd < _computed.Count; columnOrd++)
+            {
+                if (delimit)
+                {
+                    returnValue += ",";
+                }
+                else
+                {
+                    delimit = true;
+                }
+
+                if (_computed[columnOrd])
                 {
                     returnValue += columnOrd;
                 }

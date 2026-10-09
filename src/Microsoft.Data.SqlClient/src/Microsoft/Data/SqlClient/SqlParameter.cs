@@ -1334,9 +1334,11 @@ namespace Microsoft.Data.SqlClient
                             bool[] keyCols = new bool[fieldCount];
                             bool[] defaultFields = new bool[fieldCount];
                             bool[] sortOrdinalSpecified = new bool[fieldCount];
+                            bool[] computedFields = new bool[fieldCount];
                             int maxSortOrdinal = -1;  // largest sort ordinal seen, used to optimize locating holes in the list
                             bool hasKey = false;
                             bool hasDefault = false;
+                            bool hasComputedFields = false;
                             int sortCount = 0;
                             SmiOrderProperty.SmiColumnOrder[] sort = new SmiOrderProperty.SmiColumnOrder[fieldCount];
                             fields = new List<SmiExtendedMetaData>(fieldCount);
@@ -1354,6 +1356,16 @@ namespace Microsoft.Data.SqlClient
                                 {
                                     defaultFields[i] = true;
                                     hasDefault = true;
+                                }
+
+                                if (colMeta.IsComputed)
+                                {
+                                    // A computed column will always have a default value, so skip writing
+                                    // its values out to the TDS stream.
+                                    defaultFields[i] = true;
+                                    computedFields[i] = true;
+                                    hasDefault = true;
+                                    hasComputedFields = true;
                                 }
 
                                 sort[i]._order = colMeta.SortOrder;
@@ -1398,6 +1410,14 @@ namespace Microsoft.Data.SqlClient
                                 }
 
                                 props[SmiPropertySelector.DefaultFields] = new SmiDefaultFieldsProperty(new List<bool>(defaultFields));
+                            }
+
+                            if (hasComputedFields)
+                            {
+                                // We've already created props list in default value handling
+                                Debug.Assert(props is not null);
+
+                                props[SmiPropertySelector.ComputedFields] = new SmiComputedFieldsProperty(new List<bool>(computedFields));
                             }
 
                             if (0 < sortCount)
