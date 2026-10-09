@@ -21,6 +21,8 @@ Coverage also includes multiline template placeholders, label operations queued
 before the summary, and contradictory no-op/incomplete results.
 Comparison operators in completed prose remain valid; angle-bracket detection
 targets known template fields and instructions rather than arbitrary bracketed text.
+Generic arguments such as `Task<Result>` and `List<Item>`, including nested
+types, and XML documentation tags are covered by acceptance regressions.
 
 ## Shell script tests
 

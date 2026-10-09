@@ -149,6 +149,25 @@ test('accepts comparison operators in completed triage prose', () => {
     }
 });
 
+test('accepts generic types and XML documentation in completed prose', () => {
+    for (const text of [
+        'The failing method returns Task<Result>.',
+        'The reproduction uses List<Item>.',
+        'The reproduction uses Task<List<Item>>.',
+        'The metadata is stored in Dictionary<string, Result>.',
+        'The XML documentation contains a <summary>description</summary> tag.',
+        'The XML payload contains <items><result>1</result></items>.',
+        'The component is wrapped in Task<Component>.',
+    ]) {
+        for (const content of [
+            'Cancellation leaves the operation running. Investigate the async cancellation path; P1.',
+            '- Ask the author for their SQL Server version.',
+        ]) {
+            validateTriageOutput(output(summary.replace(content, text)));
+        }
+    }
+});
+
 test('rejects known workflow template instructions embedded in prose', () => {
     for (const template of [
         '<Bug / Feature / Question / Task>',

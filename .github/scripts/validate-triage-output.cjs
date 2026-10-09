@@ -8,7 +8,7 @@ const fs = require('node:fs');
 
 const TEMPLATE_PLACEHOLDER_PATTERN = /<([^<>]+)>/g;
 const TEMPLATE_FIELD_PATTERN =
-    /^(?:(?:the|missing|affected)\s+)*(?:list|fields?|values?|authors?|types?|versions?|areas?|components?|results?|details?|descriptions?|summaries?|items?|labels?)$/i;
+    /^(?:list|component|(?:the\s+)?affected\s+component|missing\s+details)$/i;
 const TEMPLATE_INSTRUCTION_PATTERN =
     /^(?:fill in\b|2-4 sentences:|Actionable items\.|Bug\s*\/|All required environment details\b|Best matching area\b|None found\s*\/|Not indicated\s*\/)/i;
 
@@ -16,7 +16,9 @@ function hasTemplatePlaceholder(text) {
     // Match known template forms, not arbitrary angle brackets used by comparisons or C# generics.
     return [...text.matchAll(TEMPLATE_PLACEHOLDER_PATTERN)].some((match) => {
         const value = match[1].trim();
-        return TEMPLATE_FIELD_PATTERN.test(value) || TEMPLATE_INSTRUCTION_PATTERN.test(value);
+        const followsTypeName = /[A-Za-z_][\w.]*$/.test(text.slice(0, match.index));
+        return TEMPLATE_INSTRUCTION_PATTERN.test(value) ||
+            (!followsTypeName && TEMPLATE_FIELD_PATTERN.test(value));
     });
 }
 
