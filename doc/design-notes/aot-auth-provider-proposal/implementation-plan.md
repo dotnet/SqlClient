@@ -17,20 +17,24 @@
 3. Read `<SqlClientAuthenticationProviders>` and `<SqlAuthenticationProviders>` through
    `ConfigurationManager.GetSection` and `ElementInformation.Properties`. Accept a section only if
    its handler's full type name is one of the two SqlClient section types, mirroring today's exact
-   type check. Leave the section types in SqlClient, with a comment explaining why they look unused
-   and a unit test pinning their names, namespaces and property sets.
+   type check. Make both section handlers public and move them to Abstractions. Type-forward them
+   from SqlClient, its reference assemblies and unsupported-platform assemblies, retaining their
+   names, namespaces, property sets and defaults. Test both assembly-qualified resolution and
+   parsing of unchanged configuration declarations naming `Microsoft.Data.SqlClient`.
 4. Move `SqlAuthenticationInitializer` to Abstractions, add it to `TypeForwards.Abstractions.cs`,
    and update the ref assemblies. Publish the registry before invoking the initializer, so its
    registrations succeed (latent bug L1); they rank in the Config tier.
 5. Cache any bootstrap failure (bad provider type, bad initializer type, provider rejecting its
-   method) and surface the original exception from the public `GetProvider`/`SetProvider` and the
-   fed-auth path, instead of returning `null`/`false` (latent bug L2).
+   method), preserving public `GetProvider`/`SetProvider` results of `null`/`false`.
+   Log the original failure and corrective guidance on every unsuccessful access, so observers
+   can diagnose the problem even when tracing is enabled after the initial failure (L2).
+   Registration argument and callback failures likewise return `false` with actionable traces.
 6. Multi-target Abstractions `netstandard2.0;net10.0`. Add internal polyfills for
    `RequiresUnreferencedCode`, `RequiresDynamicCode`, `FeatureSwitchDefinition` and `FeatureGuard`
    to the `netstandard2.0` build only, following Logging's `UnconditionalSuppressMessageAttribute`
    precedent. Enable `IsAotCompatible` for `net10.0`.
-7. Add `System.Configuration.ConfigurationManager` to Abstractions as a compile-excluded
-   dependency, as SqlClient already ships it, versioned per
+7. Add `System.Configuration.ConfigurationManager` to Abstractions as a dependency with compile
+   assets available to consumers of the public section handlers, versioned per
    `3rd-party-package-versions.instructions.md`. On .NET Framework its asset forwards to in-box
    `System.Configuration`.
 8. Add `Strings.resx` to Abstractions for the five auth messages. Copy the existing 13 locale
@@ -62,8 +66,46 @@
 13. Document the switches in `.github/instructions/features.instructions.md`, including that
     trimming requires the publish-time `RuntimeHostConfigurationOption … Trim="true"` form.
 
-No new public API in Phase 1. The ref-assembly change is limited to relocating
-`SqlAuthenticationInitializer`.
+Phase 1 exposes the two existing section handlers as public configuration APIs and relocates
+them and `SqlAuthenticationInitializer` behind type forwards. Reference and unsupported-platform
+assemblies share the driver's forwarding declarations.
+
+### Phase 1 validation commands
+
+The implementation includes repeatable process-isolated tests of real configuration handlers,
+initializer registration, precedence, bootstrap errors, and disabled gates. The runtime checks
+also replace the driver with an older-version fixture and verify that disabling both discovery
+switches cannot bypass exact family version validation:
+
+```bash
+dotnet tool run pwsh -- -File src/Microsoft.Data.SqlClient.Extensions/Abstractions/test/RunAuthenticationTests.ps1 -Publish
+dotnet tool run pwsh -- -File src/Microsoft.Data.SqlClient.Extensions/Abstractions/test/RunVersionChecks.ps1
+```
+
+Section-handler relocation was verified on Linux with 64 Abstractions tests and 10 focused
+driver schema/type-forwarding tests on .NET 10. All six configuration scenarios, both
+runtime-version mismatch scenarios, and trimmed/NativeAOT publishes and executables passed.
+Reference and unsupported-platform assemblies built for `net462`, `net10.0` and `netstandard2.0`.
+The `net462` configuration fixture also built without warnings.
+
+An isolated consumer referencing only a locally packed Abstractions package compiled both
+public handlers and their configuration base/property types for `net462` and `net10.0`,
+without a direct configuration package reference, and executed successfully on .NET 10.
+This exposed a family-version target bug with metadata-free SDK references; the target now
+uses qualified metadata, and the version-check script includes such a reference as a regression.
+Running the .NET Framework configuration and consumer executables still requires Windows.
+
+The first command requires Linux and a native linker (gcc); it publishes and executes both
+trimmed and NativeAOT .NET 10 apps. On Windows, use `-Framework net462` without `-Publish`
+to exercise the permanently reflective .NET Framework path. These checks run in the modern
+`sqlclient-pr` pipeline's dedicated [authentication validation stage](../../../eng/pipelines/pr/stages/authentication-validation-stage.yml),
+independently of package builds and SQL Server secret provisioning.
+The second covers exact family version checks in PackageReference metadata and
+`packages.config`, including the emergency `SqlClientEnforceFamilyVersions=false` build opt-out.
+
+SqlClient 8.0 implementation assets target `net462;net10.0`, with reference and unsupported
+assets additionally targeting `netstandard2.0`. All family packages must be upgraded together.
+The phase 2 factory API and generator are not implemented by phase 1.
 
 ## Phase 2 — Default-provider factory and generated fast path
 
@@ -111,18 +153,18 @@ with the generator. Trimmed apps lose nothing they have today at any point. Ship
 | AOT `SetProvider` | Silently returns `false` | Works |
 | Bootstrap location | SqlClient static constructor | Abstractions, first registry access |
 | `InternalsVisibleTo` between production assemblies | None | None |
-| Config section types | SqlClient | **Unchanged** — still the handlers `app.config` binds to |
+| Config section types | Internal, SqlClient | Public, Abstractions + type forwards; existing `app.config` declarations unchanged |
 | Config parsing | SqlClient, typed | Abstractions, untyped |
 | `SqlAuthenticationInitializer` | SqlClient | Abstractions + type forward |
 | Initializer's `SetProvider` calls | Silently fail | Work |
-| Invalid `app.config` provider | Public API returns `null`/`false` for the process lifetime | Original exception surfaced |
+| Invalid `app.config` provider | Public API returns `null`/`false` for the process lifetime | Same results, with cached failure details and actionable traces on every access |
 | Precedence | Permanent flag, order-dependent | Explicit tiers |
 | Gating | None | Two switches + feature guards |
 | Trim annotations | None on auth paths | `[RequiresUnreferencedCode]`/`[RequiresDynamicCode]` on reflective methods |
 | Abstractions TFMs | `netstandard2.0` | `netstandard2.0;net10.0` |
 | Azure provider acquisition | Reflection only | Default-provider factory (explicit or generated), reflection fallback |
 | New public API | — | `SetDefaultProviderFactory`, `TrySetDefaultProviderFactory`, `SqlAuthenticationProviderFactoryContext` (Abstractions); `ActiveDirectoryAuthenticationProvider.CreateDefault` (Azure) |
-| Mixed family versions | Silently accepted | Build error + runtime exception |
+| Mixed family versions | Silently accepted | Build error + logged runtime failure (`GetProvider`/`SetProvider` return `null`/`false`) |
 | AOT validation | None | CI publish tests |
 
 Useful salvage exists in two closed, unmerged PRs: the registry relocation and its tests from

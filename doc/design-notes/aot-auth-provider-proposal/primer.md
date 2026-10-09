@@ -186,8 +186,10 @@ publishes. It also silences IL2026/IL3050 at guarded call sites.
 
 ### Measured subtleties
 
-**The attributes must be on separate properties.** Shape **C** (one property) stayed PRESENT in
-every configuration.
+**The attributes must be on separate properties for automatic removal.** Shape **C** (one
+property) stayed PRESENT in default trimmed/AOT publishes. It does trim when the application
+explicitly supplies a publish-time `false` switch value; combining the attributes is not
+inherently invalid, but loses the no-configuration behaviour required here.
 
 **IL4000 is unavoidable here.** A guard body reading `AppContext` is not a recognised shape. One
 documented suppression per guard. Shape **D** (bare `RuntimeFeature.IsDynamicCodeSupported`)
@@ -362,8 +364,9 @@ Two rules shape this proposal:
 >    assembly is CS0122 (measured).
 
 Rule 1 is why `SqlAuthenticationInitializer` (public) can move into Abstractions, and why
-"declarations in Abstractions, definitions higher up" is impossible. Rule 2 is why the internal
-config section types **cannot** move while existing `app.config` files name them as
+"declarations in Abstractions, definitions higher up" is impossible. Rule 2 means the section
+handlers must become public for this move without a production friend-assembly relationship.
+Their type forwards preserve existing `app.config` names ending in
 `…, Microsoft.Data.SqlClient` (see [Role of the configuration section types](design.md#role-of-the-configuration-section-types)).
 
 ### Module initializers
@@ -462,10 +465,11 @@ Relevant details on `main`:
   (`src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.nuspec`) that lists files explicitly,
   including 13 per-locale resource assemblies per TFM. It ships **no** `build/` folder. It declares
   `System.Configuration.ConfigurationManager` with `exclude="Compile"` on `net8.0`/`net9.0`
-  (`net10.0` in 8.0).
+  (`net10.0` in 8.0). This relocation removes that compile exclusion so the public configuration
+  APIs can be consumed.
 - Abstractions and Azure pack from their `.csproj`. Adding a generator to Azure is one `<None
-  Pack="true" …>` item. Adding a compile-excluded dependency to Abstractions is a
-  `PackageReference` with `ExcludeAssets="compile"`/`PrivateAssets` tuning.
+  Pack="true" …>` item. Abstractions' configuration dependency flows compile assets because its
+  public section handlers expose types from that dependency.
 - The repo has no analyzer-packaging precedent today.
 - Abstractions is the one package present in every family graph, which is why E2's version
   check ships in its `build/` and `buildTransitive/` folders.
