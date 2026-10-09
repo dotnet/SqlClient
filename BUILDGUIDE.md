@@ -56,6 +56,24 @@ package the project. The `build.proj` file provides convenient targets to accomp
 > This section is not exhaustive of all targets or parameters to `build.proj`. Complete documentation is available in
 > [`build.proj`](build.proj).
 
+### Authentication configuration compatibility checks
+
+The executable fixtures under `src/Microsoft.Data.SqlClient/tests/AuthenticationTests/`
+run in separate processes to validate both current and legacy app.config section
+declarations, their forwarded handler types, initializer activation and configured
+provider precedence, without SQL Server or identity-service access.
+
+```bash
+dotnet build build.proj -t:TestAuthenticationConfiguration -p:Configuration=Release -p:TestFramework=net10.0 -p:ReferenceType=Project
+dotnet build build.proj -t:TestAuthenticationConfiguration -p:Configuration=Release -p:TestFramework=net10.0 -p:ReferenceType=Package
+```
+
+Package mode prepares local packages unless `-p:SkipDependencyPack=true` is supplied.
+Use `-p:PackageVersionSqlClient=<version>` for prebuilt packages and an isolated
+`NUGET_PACKAGES` directory when validating package changes to avoid stale cache entries.
+On Windows, select `-p:TestFramework=net462` to execute .NET Framework checks.
+Cross-building .NET Framework on Linux does not execute those scenarios.
+
 ### Building Projects
 
 From the root of your repository, run `dotnet build` against `build.proj` with a build target, following this pattern:

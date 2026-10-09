@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>AuthenticationConfigurationTest</AssemblyName>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net462;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(ReferenceType)' == 'Project'">
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
+    <PackageReference Include="Microsoft.Data.SqlClient" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="*.config" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>
