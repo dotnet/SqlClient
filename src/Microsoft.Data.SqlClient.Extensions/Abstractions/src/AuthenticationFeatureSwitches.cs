@@ -8,7 +8,7 @@ namespace Microsoft.Data.SqlClient;
 
 /// <summary>
 /// Defines authentication bootstrap switches and capability guards so configuration loading, Azure
-/// extension discovery can be excluded from trimmed or AOT builds.
+/// extension discovery, and runtime version checks can be excluded from trimmed or AOT builds.
 /// </summary>
 /// <remarks>
 /// Configuration and discovery default to enabled to preserve existing runtime behavior.  Each
@@ -54,6 +54,14 @@ internal static class AuthenticationFeatureSwitches
     #endregion
 
     #region Trimming Guards
+
+    /// <summary>Indicates whether bootstrap may inspect loaded SqlClient family assembly versions.</summary>
+    // Fixed trimmed/AOT images cannot replace assemblies; their package graph is checked at build time.
+    [FeatureGuard(typeof(RequiresUnreferencedCodeAttribute))]
+    [FeatureGuard(typeof(RequiresDynamicCodeAttribute))]
+    [UnconditionalSuppressMessage("Trimming", "IL4000",
+        Justification = "Runtime assembly replacement is unavailable in fixed trimmed/AOT images; the package graph is checked at build time.")]
+    internal static bool IsRuntimeVersionValidationSupported => true;
 
     /// <summary>
     /// Guards the reflection-based authentication configuration and initializer loading path.

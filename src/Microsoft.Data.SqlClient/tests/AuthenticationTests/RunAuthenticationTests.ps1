@@ -9,7 +9,8 @@ param(
     [string]$ReferenceType = 'Project',
     [ValidateSet('Debug', 'Release')]
     [string]$Configuration = 'Release',
-    [string]$PackageVersionSqlClient
+    [string]$PackageVersionSqlClient,
+    [switch]$RuntimeVersions
 )
 
 $ErrorActionPreference = 'Stop'
@@ -52,4 +53,27 @@ try {
     }
 } finally {
     [System.IO.File]::WriteAllBytes($configPath, $originalConfig)
+}
+
+if ($RuntimeVersions) {
+    $replacementProject = Join-Path $PSScriptRoot 'RuntimeVersionTest/RuntimeVersionTest.csproj'
+    Invoke-DotNet -CommandArguments (@('build', $replacementProject, '-c', $Configuration, '-f', $Framework) + $buildOptions)
+    $driver = Join-Path $output 'Microsoft.Data.SqlClient.dll'
+    $backup = "$driver.$([guid]::NewGuid().ToString('n')).original"
+    Copy-Item -LiteralPath $driver -Destination $backup
+    try {
+        Copy-Item -LiteralPath (Join-Path $PSScriptRoot "RuntimeVersionTest/bin/$Configuration/$Framework/Microsoft.Data.SqlClient.dll") `
+            -Destination $driver -Force
+        foreach ($scenario in @('bad-runtime', 'bad-runtime-disabled')) {
+            if ($Framework -eq 'net462') {
+                & $app $scenario
+                if ($LASTEXITCODE -ne 0) { throw "Runtime version test failed: $scenario" }
+            } else {
+                Invoke-DotNet -CommandArguments @($app, $scenario)
+            }
+        }
+    } finally {
+        Copy-Item -LiteralPath $backup -Destination $driver -Force
+        Remove-Item -LiteralPath $backup
+    }
 }

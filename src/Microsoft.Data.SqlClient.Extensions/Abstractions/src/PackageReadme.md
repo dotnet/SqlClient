@@ -22,7 +22,7 @@ This package supports:
 ## Authentication registration
 
 The provider registry and bootstrap live in this package. `GetProvider` and `SetProvider`
-work directly, including under NativeAOT, without loading SqlClient through reflection.
+work directly, including under NativeAOT, without a reflective registration bridge to SqlClient.
 Configuration providers and configured initializers take precedence over application
 registrations; application registrations take precedence over the discovered Azure default.
 Registry initialization failures return `null` and `false`, respectively. Null providers,
@@ -47,6 +47,23 @@ reflective paths are removed automatically. Explicitly construct and register a 
 each required authentication method before opening connections. The Azure provider is supplied
 by `Microsoft.Data.SqlClient.Extensions.Azure`. Publish-time overrides use
 `RuntimeHostConfigurationOption` with `Trim="true"`; runtime changes cannot affect trimming.
+
+## Package version policy
+
+Upgrade all installed SqlClient family packages to the same exact version, including
+prerelease labels: SqlClient, Abstractions, Azure, Logging and AKV. SqlServer.Server
+and native SNI are independently versioned.
+
+Logging supplies the consumer build/transitive checks (`SQLCLIENT001`). Untrimmed
+registry bootstrap also compares the loaded SqlClient and discovered Azure assemblies'
+informational versions against Abstractions, excluding source-control build metadata.
+Mismatches are cached and traced with upgrade/restart guidance; `GetProvider` and
+`SetProvider` return `null` and `false`. Disabling configuration or Azure discovery
+does not disable the SqlClient runtime check.
+
+Trimmed/NativeAOT fixed images remove reflective runtime validation and rely on
+build-time package validation. The emergency `SqlClientEnforceFamilyVersions=false`
+build opt-out does not disable runtime checks or make mixed versions supported.
 
 ## Authentication configuration
 

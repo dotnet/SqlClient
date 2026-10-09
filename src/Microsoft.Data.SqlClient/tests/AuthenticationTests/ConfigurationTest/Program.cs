@@ -4,8 +4,40 @@
 
 using Microsoft.Data.SqlClient;
 using System.Configuration;
+using System.Collections.Concurrent;
+using System.Diagnostics.Tracing;
 
 string scenario = args.Single();
+if (scenario is "bad-runtime" or "bad-runtime-disabled")
+{
+    if (scenario == "bad-runtime-disabled")
+    {
+        AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.EnableAppConfig", false);
+        AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.EnableAzureExtensionDiscovery", false);
+        Require(!SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDefault, new TestProvider()),
+            "Disabling configuration and discovery bypassed runtime version enforcement.");
+    }
+    else
+    {
+        Require(SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryDefault) is null,
+            "Mismatched driver bootstrap returned a provider.");
+    }
+
+    using var listener = new AuthenticationTraceListener();
+    Require(SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryDefault) is null,
+        "Cached version failure did not return null.");
+    Require(!SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDefault, new TestProvider()),
+        "Cached version failure did not return false.");
+    Require(listener.Messages.Any(message => message.Contains("version mismatch") &&
+        message.Contains("7.0.1") && message.Contains("Upgrade all SqlClient family packages together")),
+        "Cached runtime mismatch diagnostics omitted the exact version or corrective guidance.");
+    Require(listener.Messages.Any(message => message.Contains("GetProvider") && message.Contains("restart")) &&
+        listener.Messages.Any(message => message.Contains("SetProvider") && message.Contains("restart")),
+        "Cached version failures did not diagnose both registry entry points.");
+    Console.WriteLine("PASS: " + scenario);
+    return;
+}
+
 string sectionName = scenario switch
 {
     "configured" => "SqlClientAuthenticationProviders",
@@ -56,4 +88,28 @@ public sealed class TestProvider : SqlAuthenticationProvider
     /// <inheritdoc />
     public override Task<SqlAuthenticationToken> AcquireTokenAsync(SqlAuthenticationParameters parameters) =>
         throw new NotSupportedException();
+}
+
+/// <summary>Captures diagnostics when tracing is enabled after the original bootstrap failure.</summary>
+internal sealed class AuthenticationTraceListener : EventListener
+{
+    internal ConcurrentQueue<string> Messages { get; } = new();
+
+    /// <inheritdoc />
+    protected override void OnEventSourceCreated(EventSource eventSource)
+    {
+        if (eventSource.Name == "Microsoft.Data.SqlClient.EventSource")
+        {
+            EnableEvents(eventSource, EventLevel.Informational, (EventKeywords)2);
+        }
+    }
+
+    /// <inheritdoc />
+    protected override void OnEventWritten(EventWrittenEventArgs eventData)
+    {
+        if (eventData.EventId == 3 && eventData.Payload?[0] is string message)
+        {
+            Messages.Enqueue(message);
+        }
+    }
 }

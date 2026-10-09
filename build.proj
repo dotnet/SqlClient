@@ -622,6 +622,10 @@
     <Exec Command="&quot;$(DotnetPath)dotnet&quot; tool run pwsh -- -NonInteractive -NoProfile -File &quot;$(AuthenticationTestsScript)&quot; -Framework $(AuthenticationTestFramework) -ReferenceType $(ReferenceType) -Configuration $(Configuration) $(AuthenticationPackageVersionArgument)"
           WorkingDirectory="$(RepoRoot)" />
   </Target>
+  <Target Name="TestAuthenticationRuntimeVersions" DependsOnTargets="$(TestAuthenticationConfigurationDependsOn)">
+    <Exec Command="&quot;$(DotnetPath)dotnet&quot; tool run pwsh -- -NonInteractive -NoProfile -File &quot;$(AuthenticationTestsScript)&quot; -Framework $(AuthenticationTestFramework) -ReferenceType $(ReferenceType) -Configuration $(Configuration) $(AuthenticationPackageVersionArgument) -RuntimeVersions"
+          WorkingDirectory="$(RepoRoot)" />
+  </Target>
 
   <!-- BuildSqlClient: Builds all binaries for SqlClient -->
   <Target Name="BuildSqlClient" DependsOnTargets="BuildSqlClientImpl;BuildSqlClientRef;BuildSqlClientNotSupported" />
