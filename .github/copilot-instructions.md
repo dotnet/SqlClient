@@ -132,8 +132,9 @@ When a new issue is created, follow these steps:
 - Tag reviewers based on `CODEOWNERS` file
 
 ## 🌿 Branch Naming
-- All branches created by AI agents **must** use the `dev/automation/` prefix (e.g. `dev/automation/fix-connection-timeout`).
-- Do **not** create branches directly under `main`, `dev/`, or any other top-level prefix.
+- **Interactive agents**, working under direct human guidance, may create and use branches under `dev/<name>/` when the human specifies or approves the namespace and branch name (e.g., `dev/paul/aot/phase-1.1`).
+- **Autonomous agents**, working without interactive human direction, **must** create branches under `dev/automation/` (e.g., `dev/automation/fix-connection-timeout`).
+- Do **not** create branches outside these namespaces or directly under `dev/`.
 
 ## 🧠 Contextual Awareness
 - All source code is in `src/Microsoft.Data.SqlClient/src/`. Do NOT add code to legacy `netfx/src/` or `netcore/src/` directories.
