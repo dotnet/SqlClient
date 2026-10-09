@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 [assembly: System.Runtime.CompilerServices.TypeForwardedTo(typeof(Microsoft.Data.SqlClient.SqlAuthenticationMethod))]
+[assembly: System.Runtime.CompilerServices.TypeForwardedTo(typeof(Microsoft.Data.SqlClient.SqlAuthenticationInitializer))]
 [assembly: System.Runtime.CompilerServices.TypeForwardedTo(typeof(Microsoft.Data.SqlClient.SqlAuthenticationParameters))]
 [assembly: System.Runtime.CompilerServices.TypeForwardedTo(typeof(Microsoft.Data.SqlClient.SqlAuthenticationProvider))]
 [assembly: System.Runtime.CompilerServices.TypeForwardedTo(typeof(Microsoft.Data.SqlClient.SqlAuthenticationProviderException))]

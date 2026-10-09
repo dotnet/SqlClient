@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">text/microsoft-resx</resheader>
+      <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+      <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+    <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+    <data name="SQL_CannotCreateAuthProvider" xml:space="preserve">
+    <value>'{0}'에 대해 '{1}' 형식을 사용하여 인증 공급자를 인스턴스화하지 못했습니다.</value>
+  </data>
+  <data name="SQL_CannotCreateAuthInitializer" xml:space="preserve">
+    <value>'{0}' 형식을 사용하여 SqlAuthenticationInitializer를 인스턴스화하지 못했습니다.</value>
+  </data>
+  <data name="SQL_UnsupportedAuthenticationByProvider" xml:space="preserve">
+    <value>'{0}' 공급자에서 '{1}' 인증을 지원하지 않습니다.</value>
+  </data>
+  <data name="SQL_UnsupportedAuthentication" xml:space="preserve">
+    <value>'{0}' 인증을 사용할 수 없습니다.</value>
+  </data>
+  <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
+    <value>'useWamBroker'를 설정하려면 'Microsoft.Data.SqlClient.Extensions.Azure' 패키지가 'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions'를 노출해야 합니다. 이 형식을 포함하는 'Microsoft.Data.SqlClient.Extensions.Azure' 패키지를 v1.1.0 이상으로 업그레이드하세요.</value>
+  </data>
+</root>

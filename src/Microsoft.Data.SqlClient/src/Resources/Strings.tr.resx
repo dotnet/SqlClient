@@ -591,26 +591,11 @@
   <data name="SQL_NonLocalSSEInstance" xml:space="preserve">
     <value>SSE Örneği yeniden yönlendirmesi, yerel olmayan kullanıcı örnekleri için desteklenmiyor.</value>
   </data>
-  <data name="SQL_UnsupportedAuthentication" xml:space="preserve">
-    <value>'{0}' kimlik doğrulaması desteklenmiyor.</value>
-  </data>
-  <data name="SQL_CannotCreateAuthProvider" xml:space="preserve">
-    <value>'{0}' için '{1}' türüne sahip bir kimlik doğrulama sağlayıcısı örneği oluşturulamadı.</value>
-  </data>
-  <data name="SQL_CannotCreateAuthInitializer" xml:space="preserve">
-    <value>'{0}' türüne sahip bir SqlAuthenticationInitializer örneği oluşturulamadı.</value>
-  </data>
-  <data name="SQL_UnsupportedAuthenticationByProvider" xml:space="preserve">
-    <value>'{0}' adlı sağlayıcı, '{1}' kimlik doğrulamasını desteklemiyor.</value>
-  </data>
   <data name="SQL_CannotFindAuthProvider" xml:space="preserve">
     <value>'{0}' için kimlik doğrulama sağlayıcısı bulunamıyor.</value>
   </data>
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
     <value>'{0}' için kimlik doğrulaması sağlayıcısı bulunamıyor. Active Directory (Entra ID) kimlik doğrulaması yöntemlerini kullanmak için ‘Microsoft.Data.SqlClient.Extensions.Azure’ NuGet paketini (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure) yükleyin.</value>
-  </data>
-  <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>'useWamBroker' ayarı, 'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions' türünü kullanıma sunmak için 'Microsoft.Data.SqlClient.Extensions.Azure' paketini gerektirir. Bu türü içeren en az v1.1.0 sürümüne ulaşmak için 'Microsoft.Data.SqlClient.Extensions.Azure' paketini yükseltin.</value>
   </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>'{0}' parametresi null veya boş olamaz.</value>

@@ -2,7 +2,9 @@
   <!-- General Properties ============================================== -->
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient.Extensions.Abstractions</AssemblyName>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <!-- Preserve legacy compatibility while enabling modern trimming and AOT analysis. -->
+    <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+    <IsAotCompatible Condition="'$(TargetFramework)' == 'net10.0'">true</IsAotCompatible>
   </PropertyGroup>
 
   <!-- Compiler Options ================================================ -->
@@ -83,5 +85,11 @@
   </ItemGroup>
 
   <!-- CodeGen Targets ================================================= -->
+  <ItemGroup>
+    <!-- Match AuthenticationStrings' ResourceManager base name for neutral and localized resources. -->
+    <EmbeddedResource Update="Resources/Strings*.resx">
+      <LogicalName>Microsoft.Data.SqlClient.Authentication.%(Filename).resources</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
   <Import Project="$(ToolsDir)targets\GenerateThisAssemblyCs.targets" />
 </Project>

@@ -161,6 +161,12 @@ Located in `ConnectionPool/`:
 - Pool groups manage pools for different connection strings
 
 ### Authentication Providers
+The provider registry, authentication configuration handlers and `SqlAuthenticationInitializer`
+live in `Microsoft.Data.SqlClient.Extensions/Abstractions`, targeting `netstandard2.0;net10.0`.
+The driver forwards their public types and delegates authentication lookup directly.
+Abstractions' cached feature switches and separate capability guards keep explicit registration
+AOT-safe while removing reflective configuration and Azure discovery from trimmed/AOT publishes.
+
 Located in `SSPI/` and authentication-related files:
 - Windows Authentication (SSPI/Kerberos)
 - SQL Server Authentication

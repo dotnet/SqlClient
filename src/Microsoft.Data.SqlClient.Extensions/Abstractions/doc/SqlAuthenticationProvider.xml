@@ -129,7 +129,16 @@ See the LICENSE file in the project root for more information.
     <GetProvider>
       <summary>Gets an authentication provider by method.</summary>
       <param name="authenticationMethod">The authentication method.</param>
-      <returns>The authentication provider or <see langword="null" /> if not found.</returns>
+      <returns>The authentication provider or <see langword="null" /> if not found or registry initialization fails.</returns>
+      <remarks>
+        Bootstraps the registry on first access. Configuration and reflective Azure discovery
+        are unavailable in trimmed and NativeAOT .NET 10 publishes; explicitly register providers
+        with SetProvider. Registry initialization failures return null and emit diagnostic traces
+        through Microsoft.Data.SqlClient.EventSource with the Trace keyword (0x2).
+        Failures are cached and logged on subsequent accesses, including when tracing is enabled
+        after the first failure. Correct the reported configuration or package version problem
+        and restart the application.
+      </remarks>
     </GetProvider>
     <SetProvider>
       <summary>Sets an authentication provider by method.</summary>
@@ -138,6 +147,15 @@ See the LICENSE file in the project root for more information.
       <returns>
         <see langword="true" /> if the operation succeeded; otherwise, <see langword="false" /> (for example, the existing provider disallows overriding).
       </returns>
+      <remarks>
+        Works directly under NativeAOT. Configuration providers and configured initializers
+        cannot be overwritten by application registrations. Application registrations replace
+        the discovered Azure default. A null provider, unsupported method, throwing provider
+        callback or failed registry initialization returns false and emits diagnostic traces
+        through Microsoft.Data.SqlClient.EventSource with the Trace keyword (0x2).
+        Failed registrations do not replace the existing provider. Registry initialization
+        failures are cached; correct the reported cause and restart the application.
+      </remarks>
     </SetProvider>
   </members>
 </docs>

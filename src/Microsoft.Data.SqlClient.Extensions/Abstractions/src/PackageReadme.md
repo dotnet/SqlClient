@@ -17,6 +17,36 @@ The abstractions package allows for:
 This package supports:
 
 - .NET Standard 2.0 (compatible with .NET Framework 4.6.1+, .NET Core 2.0+, and .NET 5+)
+- .NET 10.0 (trim/AOT-analyzed authentication registration)
+
+## Authentication registration
+
+The provider registry and bootstrap live in this package. `GetProvider` and `SetProvider`
+work directly, including under NativeAOT, without loading SqlClient through reflection.
+Configuration providers and configured initializers take precedence over application
+registrations; application registrations take precedence over the discovered Azure default.
+Registry initialization failures return `null` and `false`, respectively. Null providers,
+unsupported methods and throwing registration callbacks also return `false`, without replacing
+the existing provider. These failures are traced through `Microsoft.Data.SqlClient.EventSource`
+(Informational level, Trace keyword `0x2`) with corrective guidance.
+Bootstrap failures are cached and logged on subsequent accesses; correct the cause and restart
+the application.
+
+Recoverable resource lookup or formatting failures fall back to the resource key and
+culture-formatted argument values, identifying unformattable arguments by type and preserving
+the original exception cause. Fatal runtime errors propagate instead of being masked.
+
+Untrimmed applications retain app.config loading and automatic Azure discovery. These switches
+default to `true` and are cached independently on first access for the lifetime of the process:
+
+- `Switch.Microsoft.Data.SqlClient.EnableAppConfig`
+- `Switch.Microsoft.Data.SqlClient.EnableAzureExtensionDiscovery`
+
+Set switches before first registry access. On .NET 10 trimmed and NativeAOT publishes, both
+reflective paths are removed automatically. Explicitly construct and register a provider for
+each required authentication method before opening connections. The Azure provider is supplied
+by `Microsoft.Data.SqlClient.Extensions.Azure`. Publish-time overrides use
+`RuntimeHostConfigurationOption` with `Trim="true"`; runtime changes cannot affect trimming.
 
 ## Authentication configuration
 
@@ -29,8 +59,8 @@ remain valid. Section names, properties (`providers`, `initializerType`,
 
 `System.Configuration.ConfigurationManager` is a transitive compile dependency, so
 consumers can use the handlers and their configuration base types without adding a
-separate package reference. Authentication initialization and provider loading remain
-in the driver.
+separate package reference. `SqlAuthenticationInitializer` is also defined in Abstractions
+and forwarded from SqlClient, preserving existing compiled consumers and initializer declarations.
 
 See the repository's `doc/samples/SqlAuthenticationProviders.config` for a section
 declaration and custom provider example.

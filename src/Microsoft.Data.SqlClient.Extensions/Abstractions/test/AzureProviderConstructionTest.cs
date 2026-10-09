@@ -6,105 +6,11 @@ using System;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace Microsoft.Data.SqlClient.UnitTests;
+namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
 
-public class SqlAuthenticationProviderManagerTests
+/// <summary>Preserves Azure constructor selection for configured client IDs and broker options.</summary>
+public class AzureProviderConstructionTest
 {
-    private class Provider : SqlAuthenticationProvider
-    {
-        public override Task<SqlAuthenticationToken> AcquireTokenAsync(
-            SqlAuthenticationParameters parameters)
-        {
-            return Task.FromResult(
-                new SqlAuthenticationToken(
-                    "SampleAccessToken", DateTimeOffset.UtcNow.AddMinutes(5)));
-        }
-
-        public override bool IsSupported(SqlAuthenticationMethod authenticationMethod)
-        {
-            return authenticationMethod == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow;
-        }
-    }
-
-    // Verify that we can get and set providers via both the Abstractions
-    // package and Manager class interchangeably.
-    //
-    // This tests the dynamic assembly loading code in the Abstractions
-    // package.
-    [Fact]
-    public void Abstractions_And_Manager_GetSetProvider_Equivalent()
-    {
-        // Set via Manager, get via both.
-        Provider provider1 = new();
-
-        Assert.True(
-            SqlAuthenticationProviderManager.SetProvider(
-                // GOTCHA: On .NET Framework, the dummy provider is already
-                // registered as the default provider for Interactive, so we
-                // use DeviceCodeFlow instead.
-                SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow,
-                provider1));
-
-        Assert.Same(
-            provider1,
-            SqlAuthenticationProviderManager.GetProvider(
-                SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
-
-        Assert.Same(
-            provider1,
-            SqlAuthenticationProvider.GetProvider(
-                SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
-
-        // Set via Abstractions, get via both.
-        Provider provider2 = new();
-
-        Assert.True(
-            SqlAuthenticationProvider.SetProvider(
-                SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow,
-                provider2));
-
-        Assert.Same(
-            provider2,
-            SqlAuthenticationProviderManager.GetProvider(
-                SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
-
-        Assert.Same(
-            provider2,
-            SqlAuthenticationProvider.GetProvider(
-                SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
-    }
-
-    // Regression: the manager's static initializer reflectively constructs the Azure extension's
-    // ActiveDirectoryAuthenticationProvider. That class has overlapping 1-arg constructors
-    // ((string) and (ProviderOptions)), so calling Activator.CreateInstance(type, [null]) used
-    // to throw AmbiguousMatchException -- which surfaced as TypeInitializationException from
-    // GetProvider and broke every AD-authenticated connection. Calling GetProvider for an AD
-    // method must succeed (returning either the registered provider or null) and must not throw.
-    [Fact]
-    public void GetProvider_ForActiveDirectoryMethod_DoesNotThrow()
-    {
-        foreach (SqlAuthenticationMethod method in new[]
-        {
-            SqlAuthenticationMethod.ActiveDirectoryIntegrated,
-            #pragma warning disable CS0618 // ActiveDirectoryPassword is obsolete.
-            SqlAuthenticationMethod.ActiveDirectoryPassword,
-            #pragma warning restore CS0618
-            SqlAuthenticationMethod.ActiveDirectoryInteractive,
-            SqlAuthenticationMethod.ActiveDirectoryServicePrincipal,
-            SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow,
-            SqlAuthenticationMethod.ActiveDirectoryManagedIdentity,
-            SqlAuthenticationMethod.ActiveDirectoryMSI,
-            SqlAuthenticationMethod.ActiveDirectoryDefault,
-            SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity,
-        })
-        {
-            // No assertion on the value -- the provider may or may not be installed depending on
-            // whether the Azure extension is on disk. We only assert no throw (which is what a
-            // TypeInitializationException from the static initializer would do).
-            _ = SqlAuthenticationProviderManager.GetProvider(method);
-        }
-    }
-
     // CreateAzureAuthenticationProvider tests ----------------------------------------------
     //
     // Each Stub* container mimics one shape the real Azure extension might expose:
@@ -179,10 +85,11 @@ public class SqlAuthenticationProviderManagerTests
         }
     }
 
+    /// <summary>Unconfigured discovery avoids ambiguous null constructor arguments.</summary>
     [Fact]
     public void CreateAzureAuthenticationProvider_NeitherConfigured_UsesParameterlessCtor()
     {
-        var instance = SqlAuthenticationProviderManager.CreateAzureAuthenticationProvider(
+        var instance = SqlAuthenticationProviderRegistry.CreateAzureAuthenticationProvider(
             typeof(StubModern.ActiveDirectoryAuthenticationProvider),
             typeof(StubModern.ActiveDirectoryAuthenticationProviderOptions),
             applicationClientId: null,
@@ -196,10 +103,11 @@ public class SqlAuthenticationProviderManagerTests
         Assert.Null(stub.CapturedUseWamBroker);
     }
 
+    /// <summary>Modern Azure extensions receive client IDs through the options constructor.</summary>
     [Fact]
     public void CreateAzureAuthenticationProvider_AppIdOnly_OptionsAvailable_UsesOptionsCtor()
     {
-        var instance = SqlAuthenticationProviderManager.CreateAzureAuthenticationProvider(
+        var instance = SqlAuthenticationProviderRegistry.CreateAzureAuthenticationProvider(
             typeof(StubModern.ActiveDirectoryAuthenticationProvider),
             typeof(StubModern.ActiveDirectoryAuthenticationProviderOptions),
             applicationClientId: "app-123",
@@ -212,10 +120,11 @@ public class SqlAuthenticationProviderManagerTests
         Assert.Equal(false, stub.CapturedUseWamBroker);
     }
 
+    /// <summary>Legacy constructor selection remains compatible until phase 2 removes the fallback.</summary>
     [Fact]
     public void CreateAzureAuthenticationProvider_AppIdOnly_OptionsMissing_FallsBackToStringCtor()
     {
-        var instance = SqlAuthenticationProviderManager.CreateAzureAuthenticationProvider(
+        var instance = SqlAuthenticationProviderRegistry.CreateAzureAuthenticationProvider(
             typeof(StubLegacy.ActiveDirectoryAuthenticationProvider),
             optionsType: null,
             applicationClientId: "legacy-456",
@@ -229,10 +138,11 @@ public class SqlAuthenticationProviderManagerTests
         Assert.Null(stub.CapturedUseWamBroker);
     }
 
+    /// <summary>Incompatible Azure types are not constructed with invalid arguments.</summary>
     [Fact]
     public void CreateAzureAuthenticationProvider_AppIdOnly_NoCompatibleCtor_ReturnsNull()
     {
-        var instance = SqlAuthenticationProviderManager.CreateAzureAuthenticationProvider(
+        var instance = SqlAuthenticationProviderRegistry.CreateAzureAuthenticationProvider(
             typeof(StubMinimal.ActiveDirectoryAuthenticationProvider),
             optionsType: null,
             applicationClientId: "no-ctor",
@@ -241,11 +151,12 @@ public class SqlAuthenticationProviderManagerTests
         Assert.Null(instance);
     }
 
+    /// <summary>A broker override without Azure options produces a localized error.</summary>
     [Fact]
     public void CreateAzureAuthenticationProvider_UseWamBroker_OptionsMissing_Throws()
     {
         InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() =>
-            SqlAuthenticationProviderManager.CreateAzureAuthenticationProvider(
+            SqlAuthenticationProviderRegistry.CreateAzureAuthenticationProvider(
                 typeof(StubLegacy.ActiveDirectoryAuthenticationProvider),
                 optionsType: null,
                 applicationClientId: null,
@@ -255,10 +166,11 @@ public class SqlAuthenticationProviderManagerTests
         Assert.Contains("Microsoft.Data.SqlClient.Extensions.Azure", ex.Message);
     }
 
+    /// <summary>The configured broker flag and client ID reach the modern options constructor.</summary>
     [Fact]
     public void CreateAzureAuthenticationProvider_UseWamBroker_OptionsAvailable_UsesOptionsCtor()
     {
-        var instance = SqlAuthenticationProviderManager.CreateAzureAuthenticationProvider(
+        var instance = SqlAuthenticationProviderRegistry.CreateAzureAuthenticationProvider(
             typeof(StubModern.ActiveDirectoryAuthenticationProvider),
             typeof(StubModern.ActiveDirectoryAuthenticationProviderOptions),
             applicationClientId: "app-789",
