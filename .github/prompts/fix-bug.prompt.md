@@ -37,7 +37,7 @@ Follow this workflow step-by-step:
 - Ensure the fix compiles for ALL target frameworks: `net462`, `net8.0`, `net9.0`.
 - If the fix requires platform-specific code, use the appropriate conditional compilation directives.
 - Do NOT introduce breaking changes to public APIs.
-- If a public API must change, update the reference assemblies in `netcore/ref/` and `netfx/ref/`.
+- If a public API must change, update the corresponding sources under `src/Microsoft.Data.SqlClient/ref/`, including conditional declarations for each affected framework.
 
 ## 5. Validate
 - Verify the failing test now passes with the fix applied.
