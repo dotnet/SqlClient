@@ -60,14 +60,14 @@ package the project. The `build.proj` file provides convenient targets to accomp
 
 From the root of your repository, run `dotnet build` against `build.proj` with a build target, following this pattern:
 
-```text
+```bash
 dotnet build build.proj -t:<build_target> [optional_parameters]
 ```
 
 Since `build.proj` is the only project file in the repo root, it can be omitted when building from
 the root:
 
-```text
+```bash
 dotnet build -t:<build_target> [optional_parameters]
 ```
 
@@ -174,7 +174,7 @@ information about test procedures, including config file setup, see [TESTGUIDE.m
 
 From the root of your repository, run `dotnet build` against `build.proj` with a test target, following this pattern:
 
-```text
+```bash
 dotnet build -t:<test_target> [optional_parameters]
 ```
 
@@ -224,25 +224,25 @@ metacharacters such as `&`, `|`, or parentheses.
 Run Microsoft.Data.SqlClient unit tests:
 
 ```bash
-dotnet build -t:TestSqlClientUnit -p:TestFramework=net10.0
+dotnet build -t:TestSqlClientUnit
 ```
 
 Run Microsoft.Data.SqlClient manual test set 2:
 
 ```bash
-dotnet build -t:TestSqlClientManual -p:TestFramework=net10.0 -p:TestSet=2
+dotnet build -t:TestSqlClientManual -p:TestSet=2
 ```
 
 Run Microsoft.Data.SqlClient functional tests against x86 dotnet:
 
-```powershell
-dotnet build -t:TestSqlClientFunctional -p:TestFramework=net10.0 -p:DotnetPath='C:\path\to\dotnet\x86\'
+```bash
+dotnet build -t:TestSqlClientFunctional -p:DotnetPath='C:\path\to\dotnet\x86\'
 ```
 
 Run all Microsoft.Data.SqlClient.Extensions.Azure unit tests, including interactive, but excluding failing tests:
 
 ```bash
-dotnet build -t:TestAzure -p:TestFramework=net10.0 -p:TestFilters="category!=failing"
+dotnet build -t:TestAzure -p:TestFilters=category!=failing
 ```
 
 Run Microsoft.Data.SqlClient functional tests against the .NET 10 runtime:
@@ -257,7 +257,7 @@ Just like building and testing the various projects in this repository, packagin
 also handled by `build.proj`. From the root of your repository, run `dotnet build` against `build.proj` with a pack target,
 following this pattern:
 
-```text
+```bash
 dotnet build -t:<pack_target> [optional_parameters]
 ```
 
@@ -546,16 +546,19 @@ $ sqlcmd -S localhost -U "<user>"
 
 Omit `-P` so `sqlcmd` prompts for the password instead of placing it in shell history.
 
-The default `runnerconfig.jsonc` expects a database named `sqlclient-perf-db`,
-but you may change the config to use any existing database.  The benchmarks
+The default `runnerconfig.default.jsonc` expects a database named
+`sqlclient-perf-db`, but you may change the generated `runnerconfig.jsonc`
+to use any existing database.  The benchmarks
 create and drop their own tables (typically prefixed with `perf_`) in this
 database; other existing tables are left untouched.
 
 ### Configure Runner
 
-Configure the benchmarks by editing the `runnerconfig.jsonc` file directly in the
+Configure the benchmarks by editing the `runnerconfig.jsonc` file in the
 `PerformanceTests` directory with an appropriate connection string and benchmark
-settings:
+settings. If the file does not exist, the build creates it from
+`runnerconfig.default.jsonc`; `runnerconfig.jsonc` is ignored by git so local
+connection strings and benchmark settings can stay local.
 
 ```jsonc
 {
@@ -602,11 +605,10 @@ the current working directory. Run the commands below from the `PerformanceTests
 directory, or set the configuration environment variables to absolute file paths.
 Configuration-only edits do not require rebuilding the benchmark binaries.
 
-Optionally, to keep local configuration out of your git workspace,
-copy `runnerconfig.jsonc` to a new file, make your edits
-there, and then specify the new file with the RUNNER_CONFIG environment
-variable. The same approach works for `datatypes.json` via the
-`DATATYPES_CONFIG` environment variable.
+Optionally, to avoid requiring a build after each config change, copy
+`runnerconfig.jsonc` to a new file, make your edits there, and then specify the
+new file with the RUNNER_CONFIG environment variable. The same approach works
+for `datatypes.json` via the `DATATYPES_CONFIG` environment variable.
 
 PowerShell:
 
