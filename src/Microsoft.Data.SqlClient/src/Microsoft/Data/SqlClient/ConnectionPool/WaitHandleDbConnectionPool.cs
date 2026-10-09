@@ -363,7 +363,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <see cref="MinPoolSize"/> that have been on <c>_stackOld</c> for a full cleanup
         /// period) and promotes the remaining <c>_stackNew</c> entries onto <c>_stackOld</c>
         /// so they become eligible for pruning on the next tick. Connections held in the
-        /// <see cref="TransactedConnectionPool"/> are not touched here — the transaction-end
+        /// <see cref="TransactedConnectionPool"/> are not touched here; the transaction-end
         /// event is responsible for releasing them.
         /// </summary>
         /// <remarks>

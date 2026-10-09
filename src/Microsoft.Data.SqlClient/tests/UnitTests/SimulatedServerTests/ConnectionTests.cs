@@ -100,7 +100,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         [InlineData(42109)]
         // Quarantine tracked in https://github.com/dotnet/SqlClient/pull/4344.
         // The original intermittent async retry failure did not retain assertion/exception details.
-        [Trait("Category", "flaky")]
         public async Task TransientFault_RetryEnabled_ShouldSucceed_Async(uint errorCode)
         {
             using TransientTdsErrorTdsServer server = new(

@@ -749,7 +749,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         [InlineData(42109)]
         // Quarantined due to intermittent failure:
         //     Assert.Equal() Failure: Strings differ
-        //                            ↓ (pos 14)
+        //                            v (pos 14)
         //   Expected: "localhost,56862"
         //   Actual:   "localhost,56861"
         [Trait("Category", "flaky")]
