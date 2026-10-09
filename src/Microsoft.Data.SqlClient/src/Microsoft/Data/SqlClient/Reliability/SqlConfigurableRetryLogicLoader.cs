@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -357,28 +357,30 @@ namespace Microsoft.Data.SqlClient
         {
             #if NET
             private bool _isSubscribed;
+            private readonly AssemblyLoadContext _currentAssemblyLoadContext;
             #endif
 
             internal AssemblyResolutionSubscription(bool subscribe)
             {
-            #if NET
+                #if NET
                 if (subscribe)
                 {
-                    AssemblyLoadContext.Default.Resolving += Default_Resolving;
+                    _currentAssemblyLoadContext = AssemblyLoadContext.GetLoadContext(Assembly.GetExecutingAssembly());
+                    _currentAssemblyLoadContext?.Resolving += Default_Resolving;
                     _isSubscribed = true;
                 }
-            #endif
+                #endif
             }
 
             public void Dispose()
             {
-            #if NET
+                #if NET
                 if (_isSubscribed)
                 {
-                    AssemblyLoadContext.Default.Resolving -= Default_Resolving;
+                    _currentAssemblyLoadContext?.Resolving -= Default_Resolving;
                     _isSubscribed = false;
                 }
-            #endif
+                #endif
             }
         }
 
@@ -399,10 +401,11 @@ namespace Microsoft.Data.SqlClient
             string methodName = nameof(AssemblyResolver);
 
             string fullPath = MakeFullPath(ProbingDirectory, arg.Name);
+            AssemblyLoadContext currentAlc = AssemblyLoadContext.GetLoadContext(Assembly.GetExecutingAssembly());
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Looking for '{2}' assembly by '{3}' full path."
                 , TypeName, methodName, arg, fullPath);
 
-            return fullPath == null ? null : AssemblyLoadContext.Default.LoadFromAssemblyPath(fullPath);
+            return fullPath != null && currentAlc != null ? currentAlc.LoadFromAssemblyPath(fullPath) : null;
         }
         
         /// <summary>
@@ -411,8 +414,8 @@ namespace Microsoft.Data.SqlClient
         /// <remarks>
         /// This handler is only subscribed while a configured retry logic provider is being
         /// resolved and constructed, and only when a custom retry logic type has been configured.
-        /// It must not remain subscribed to <see cref="AssemblyLoadContext.Default"/> after that,
-        /// because doing so changes assembly resolution behavior for the entire application.
+        /// It must not remain subscribed to the calling <see cref="AssemblyLoadContext"/> after that,
+        /// because doing so can change assembly resolution behavior for the entire application.
         /// </remarks>
         private static Assembly Default_Resolving(AssemblyLoadContext arg1, AssemblyName arg2)
         {
@@ -426,8 +429,8 @@ namespace Microsoft.Data.SqlClient
         }
         
         /// <summary>
-        /// Performs a case-sensitive search to resolve the specified type name 
-        /// and its related assemblies in default assembly load context if they aren't loaded yet.
+        /// Performs a case-sensitive search to resolve the specified type name and its related
+        /// assemblies in the calling assembly load context if they aren't loaded yet.
         /// </summary>
         /// <returns>Resolved type if it could resolve the type; otherwise, the `SqlConfigurableRetryFactory` type.</returns>
         private static Type LoadType(string fullyQualifiedName)
