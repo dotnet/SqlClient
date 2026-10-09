@@ -19,6 +19,8 @@ allowing C# generic type syntax in completed summaries. Draft prefixes such as
 mentions of those markers within completed prose remain valid.
 Coverage also includes multiline template placeholders, label operations queued
 before the summary, and contradictory no-op/incomplete results.
+Comparison operators in completed prose remain valid; angle-bracket detection
+targets known template fields and instructions rather than arbitrary bracketed text.
 
 ## Shell script tests
 

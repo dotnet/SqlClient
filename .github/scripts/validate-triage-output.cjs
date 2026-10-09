@@ -8,21 +8,15 @@ const fs = require('node:fs');
 
 const TEMPLATE_PLACEHOLDER_PATTERN = /<([^<>]+)>/g;
 const TEMPLATE_FIELD_PATTERN =
-    /^(?:list|fields?|values?|authors?|types?|versions?|areas?|results?|details?|descriptions?|summaries?|items?|labels?)$/i;
-const GENERIC_ARGUMENTS_PATTERN =
-    /^[A-Za-z_][\w.?\[\]]*(?:\s*,\s*[A-Za-z_][\w.?\[\]]*)*$/;
+    /^(?:(?:the|missing|affected)\s+)*(?:list|fields?|values?|authors?|types?|versions?|areas?|components?|results?|details?|descriptions?|summaries?|items?|labels?)$/i;
+const TEMPLATE_INSTRUCTION_PATTERN =
+    /^(?:fill in\b|2-4 sentences:|Actionable items\.|Bug\s*\/|All required environment details\b|Best matching area\b|None found\s*\/|Not indicated\s*\/)/i;
 
 function hasTemplatePlaceholder(text) {
-    // Distinguish unfilled template fields from legitimate C# generics and Markdown autolinks.
+    // Match known template forms, not arbitrary angle brackets used by comparisons or C# generics.
     return [...text.matchAll(TEMPLATE_PLACEHOLDER_PATTERN)].some((match) => {
-        const contents = match[1];
-        const value = contents.trim();
-        if (/^(?:https?:\/\/|mailto:)\S+$/i.test(value)) {
-            return false;
-        }
-        return TEMPLATE_FIELD_PATTERN.test(value) ||
-            !GENERIC_ARGUMENTS_PATTERN.test(value) ||
-            !/[A-Za-z_][\w.]*$/.test(text.slice(0, match.index));
+        const value = match[1].trim();
+        return TEMPLATE_FIELD_PATTERN.test(value) || TEMPLATE_INSTRUCTION_PATTERN.test(value);
     });
 }
 

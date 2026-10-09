@@ -133,6 +133,38 @@ test('requires populated Analysis and Next Steps sections', () => {
     ))), /Next Steps/);
 });
 
+test('accepts comparison operators in completed triage prose', () => {
+    for (const text of [
+        'Rows with value < 10 and value > 0 fail.',
+        'Rows with value<10 and value>0 fail.',
+        'Rows with value < upperBound and value > lowerBound fail.',
+        'Rows with value <= 10 and value >= 0 fail.',
+    ]) {
+        for (const content of [
+            'Cancellation leaves the operation running. Investigate the async cancellation path; P1.',
+            '- Ask the author for their SQL Server version.',
+        ]) {
+            validateTriageOutput(output(summary.replace(content, text)));
+        }
+    }
+});
+
+test('rejects known workflow template instructions embedded in prose', () => {
+    for (const template of [
+        '<Bug / Feature / Question / Task>',
+        '<All required environment details provided for investigation>',
+        '<Best matching area from classification table>',
+        '<None found / Potentially related: #NNN, #NNN>',
+        '<Not indicated / Likely regression from vX.Y.Z / Inconclusive>',
+        '<Actionable items. Be specific, not vague.>',
+    ]) {
+        assert.throws(() => validateTriageOutput(output(summary.replace(
+            'Cancellation leaves the operation running. Investigate the async cancellation path; P1.',
+            `Observed failure. ${template}`
+        ))), /Analysis/);
+    }
+});
+
 test('rejects multiline template placeholders embedded in completed-looking prose', () => {
     for (const placeholder of [
         '<2-4 sentences: what the issue is about, which component is likely affected,\nand severity assessment (P0-P3)>',
