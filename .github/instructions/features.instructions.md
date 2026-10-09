@@ -243,7 +243,8 @@ AppContext switches allow runtime behavior changes without modifying connection 
 | Switch Name | Default | Description |
 |-------------|---------|-------------|
 | `Switch.Microsoft.Data.SqlClient.DisableTNIRByDefaultInConnectionString` | `false` | Disables Transparent Network IP Resolution by default |
-| `Switch.Microsoft.Data.SqlClient.EnableAppConfig` | `true` | .NET only. Controls whether SqlClient reads app.config: configurable retry logic, authentication providers and switch overrides. See [Trimming](#trimming) |
+| `Switch.Microsoft.Data.SqlClient.EnableAppConfig` | `true` | Controls authentication configuration in Abstractions and .NET-only driver retry/switch overrides. Trimmed/AOT authentication paths are removed automatically. See [Trimming](#trimming) |
+| `Switch.Microsoft.Data.SqlClient.EnableAzureExtensionDiscovery` | `true` | Controls reflective Azure authentication discovery; trimmed/AOT .NET 10 publishes remove this guarded path |
 | `Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault` | `false` | Sets `MultiSubnetFailover=true` as the default for all connections |
 | `Switch.Microsoft.Data.SqlClient.EnableTransactionIsolationLevelReset` | `false` | Resets a changed session transaction isolation level to `READ COMMITTED` before a pooled connection is reused |
 | `Switch.Microsoft.Data.SqlClient.EnableUserAgent` | varies | Controls sending user agent information to SQL Server |
@@ -288,6 +289,14 @@ Setting `EnableAppConfig` to `false` at publish time removes the configuration r
 Setting it only at run time, with `AppContext.SetSwitch` or `runtimeconfig.json`, stops the reading but leaves the trim warnings. On .NET Framework the switch has no effect, since trimming does not apply there.
 
 ### Guidelines for Adding New Switches
+Authentication gates live in Abstractions' `AuthenticationFeatureSwitches.cs`, separately from
+the driver's `LocalAppContextSwitches.cs`. Both authentication switches default to `true` and
+cache their first value. Separate capability guards remove authentication configuration,
+initializer loading and Azure discovery automatically in trimmed/AOT .NET 10 publishes.
+Explicit provider registration remains available. Authentication's EnableAppConfig gate also
+applies on .NET Framework; the driver's retry/switch-override readers remain .NET-only.
+Runtime AppContext changes do not affect publish-time trimming.
+
 1. Define the switch name constant in `LocalAppContextSwitches.cs`
 2. Add a cached property with lazy evaluation pattern (see existing switches)
 3. Default to `false` — the switch should opt-in to the new behavior
