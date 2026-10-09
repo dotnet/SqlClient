@@ -12,7 +12,7 @@ namespace Interop.Windows.Advapi32
     {
         internal static long GetAuthenticationId(SafeAccessTokenHandle token)
         {
-            if (!GetTokenInformation(token, 10 /* TokenStatistics */, out TokenStatistics statistics,
+            if (!GetTokenInformation(token, TokenInformationClass.TokenStatistics, out TokenStatistics statistics,
                 Marshal.SizeOf<TokenStatistics>(), out _))
             {
                 throw new Win32Exception(Marshal.GetLastWin32Error());
@@ -40,7 +40,7 @@ namespace Interop.Windows.Advapi32
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool GetTokenInformation(
             SafeAccessTokenHandle token,
-            int informationClass,
+            TokenInformationClass informationClass,
             out TokenStatistics statistics,
             int bufferLength,
             out int returnLength);
@@ -48,6 +48,11 @@ namespace Interop.Windows.Advapi32
         [DllImport("advapi32.dll", ExactSpelling = true, SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool IsTokenRestricted(SafeAccessTokenHandle token);
+
+        private enum TokenInformationClass
+        {
+            TokenStatistics = 10
+        }
 
         [StructLayout(LayoutKind.Sequential)]
         private struct Luid

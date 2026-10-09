@@ -27,7 +27,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             _isRestricted = isRestricted;
             _isNetwork = isNetwork;
             _authenticationId = authenticationId;
-            _hashCode = unchecked(((sidString == null ? 0 : sidString.GetHashCode()) * 397) ^ authenticationId.GetHashCode());
+            _hashCode = unchecked(((((sidString == null ? 0 : sidString.GetHashCode()) * 397) ^ authenticationId.GetHashCode()) * 397
+                ^ (isRestricted ? 1 : 0)) * 397 ^ (isNetwork ? 1 : 0));
         }
 
         // @TODO: Make auto-property

@@ -13,6 +13,9 @@ namespace Microsoft.Data.SqlClient.Tests.Common;
 /// </summary>
 public static class WindowsImpersonationHelper
 {
+    private const int Logon32LogonNewCredentials = 9;
+    private const int Logon32ProviderWinnt50 = 3;
+
     /// <summary>
     /// Creates a new logon session with alternate outbound credentials. Windows does not validate
     /// these credentials until network authentication, so unit tests can use placeholders.
@@ -23,10 +26,10 @@ public static class WindowsImpersonationHelper
     /// <returns>A token owned by the caller, which must be disposed.</returns>
     public static SafeAccessTokenHandle LogonNetOnly(string userName, string domain, string password)
     {
-        if (!LogonUser(userName, domain, password, 9, 3, out SafeAccessTokenHandle token))
+        if (!LogonUser(userName, domain, password, Logon32LogonNewCredentials, Logon32ProviderWinnt50, out SafeAccessTokenHandle token))
         {
             int error = Marshal.GetLastWin32Error();
-            token.Dispose();
+            token?.Dispose();
             throw new Win32Exception(error);
         }
 
