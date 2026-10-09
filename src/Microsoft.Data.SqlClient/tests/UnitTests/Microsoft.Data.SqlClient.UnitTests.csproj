@@ -113,6 +113,7 @@
 
   <!-- References for netcore -->
   <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
+    <Compile Include="../PerformanceTests/ConnectivityLoad.cs" Link="PerformanceTests/ConnectivityLoad.cs" />
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
     <!-- See the net462 group above for why this reference is declared explicitly. -->
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />

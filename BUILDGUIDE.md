@@ -648,3 +648,64 @@ $ dotnet run -c Release -f net10.0
 
 $ RUNNER_CONFIG=~/.configs/runnerconfig.jsonc dotnet run -c Release -f net10.0
 ```
+
+### Sustained async connectivity scorecard
+
+Enable `Benchmarks.ConnectivityLoadRunnerConfig` in your external runner config
+and select only this unit:
+
+```bash
+PERF_BENCHMARK=ConnectivityLoad RUNNER_CONFIG=~/.configs/runnerconfig.jsonc \
+  dotnet run -c Release -f net10.0
+```
+
+This benchmark runs 1, 16, and 64 concurrent async worker loops by default against the
+configured SQL Server. Each loop awaits `OpenAsync` and disposes the connection;
+it does not manufacture network delays or synchronously wait on async tasks.
+`Pooling=false` measures repeated physical connections, while `Pooling=true`
+measures mostly warm-pool checkout/return after the initial ramp. Each iteration
+starts with its own pool cleared. No tables or special server are required.
+`Concurrency` and `Pooling` arrays in the load config select the parameter cases.
+For example, `"Concurrency": [16], "Pooling": [false]` runs only physical opens
+at concurrency 16, allowing each case to be measured in its own fresh process.
+
+`DurationSeconds` (default 10) controls how long loops admit new operations.
+Already-started opens finish before the measurement ends; their time and
+successful completions are included. An open failure fails the invocation,
+stops new admissions and drains in-flight operations instead of reporting a
+misleading improvement. Keep a finite connection timeout in the connection string.
+Failed benchmark cases make the `ConnectivityLoad` process exit nonzero.
+`SampleIntervalMilliseconds` (default 10) controls a dedicated observer thread,
+so sampling can continue even when the thread pool is starved. Sampling integrates
+observed occupancy using actual timestamps, including a final sample.
+
+The custom diagnoser adds these values to the BenchmarkDotNet summary and full
+JSON reports, excluding warmup invocations:
+
+| Metric | Meaning |
+| --- | --- |
+| Avg workers | Time-weighted occupied thread-pool workers. |
+| Worker ms/open | Integrated occupied worker time divided by successful opens. |
+| Opens/sec | Successful opens divided by actual measured elapsed time. |
+| Peak workers | Largest sampled occupied-worker count. |
+| Peak TP threads | Largest sampled existing thread-pool count, including idle threads. |
+| Peak process threads | Largest sampled process thread count, including dedicated threads and the observer. |
+| CPU ms/open | Process CPU time divided by successful opens. |
+| Opens / Samples / Measured sec | Totals across measured invocations, for checking normalization and sampling. |
+
+Occupancy is `GetMaxThreads` minus `GetAvailableThreads`, **not a blocked-thread
+counter**: it includes CPU work, other process activity, and connection disposal.
+Interpret lower occupancy alongside throughput and CPU cost. This is a
+closed-loop workload, so improved async can increase throughput without lowering
+average occupancy. Longer runs reduce sampling noise but do not remove systematic
+server/network variation or exercise cold/expired authentication caches by themselves.
+The process-thread peak guards against moving blocking off the thread pool onto
+dedicated threads. All peaks and integrated occupancy are sampling estimates;
+short waits between samples can be missed.
+
+Use fresh benchmark processes for baseline and candidate, keep concurrency,
+duration, sampling interval, SDK/CPU settings, authentication, and server/network
+conditions matched, and repeat runs. The suite's in-process toolchain preserves
+driver switches but does not reset thread-pool history between parameter cases.
+The existing perf comparison script emits custom metric deltas in JSON and a
+separate Markdown table; its execution-time regression gate is unchanged.

@@ -58,6 +58,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             new BenchmarkUnit("ConnectionPoolChurn", b => b.ConnectionPoolChurnRunnerConfig, typeof(ConnectionPoolChurnRunner)),
             new BenchmarkUnit("ConnectionPoolRamp", b => b.ConnectionPoolRampRunnerConfig, typeof(ConnectionPoolRampRunner)),
             new BenchmarkUnit("ConnectionPoolThreadPoolPressure", b => b.ConnectionPoolThreadPoolPressureRunnerConfig, typeof(ConnectionPoolThreadPoolPressureRunner)),
+            new BenchmarkUnit("ConnectivityLoad", b => b.ConnectivityLoadRunnerConfig, typeof(ConnectivityLoadRunner)),
         };
 
         /// <summary>
@@ -106,7 +107,13 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
 
             foreach (BenchmarkUnit unit in toRun)
             {
-                BenchmarkRunner.Run(unit.RunnerType, BenchmarkConfig.s_instance(unit.Selector(_config.Benchmarks)));
+                var summary = BenchmarkRunner.Run(unit.RunnerType, BenchmarkConfig.s_instance(unit.Selector(_config.Benchmarks)));
+                if (unit.RunnerType == typeof(ConnectivityLoadRunner)
+                    && (summary.HasCriticalValidationErrors || !summary.Reports.Any() || summary.Reports.Any(report => !report.Success)))
+                {
+                    Console.Error.WriteLine("Connectivity load failed; its scorecard cannot be used for comparison.");
+                    Environment.ExitCode = 1;
+                }
             }
 
             // TODOs:
