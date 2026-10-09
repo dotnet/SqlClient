@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net462;net10.0</TargetFrameworks>
+    <UseAppHost>false</UseAppHost>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(ReferenceType)' != 'Package'">
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(ReferenceType)' == 'Package'">
+    <PackageReference Include="Microsoft.Data.SqlClient" Condition="'$(MdsPackageVersion)' == ''" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Condition="'$(MdsPackageVersion)' != ''" VersionOverride="$(MdsPackageVersion)" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
+    <Reference Include="System.Transactions" />
+  </ItemGroup>
+</Project>

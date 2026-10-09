@@ -1,0 +1,19 @@
+<Project>
+  <ItemGroup>
+    <ProjectReference Include="$(MSBuildThisFileDirectory)ConnectivityTestHost.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+  <Target Name="CopyConnectivityTestHost" AfterTargets="Build" Condition="'$(TargetFramework)' != ''">
+    <MSBuild Projects="$(MSBuildThisFileDirectory)ConnectivityTestHost.csproj"
+             Targets="GetTargetPath" Properties="TargetFramework=$(TargetFramework)">
+      <Output TaskParameter="TargetOutputs" ItemName="_ConnectivityHostAssembly" />
+    </MSBuild>
+    <PropertyGroup>
+      <_ConnectivityHostDirectory>@(_ConnectivityHostAssembly->'%(RootDir)%(Directory)')</_ConnectivityHostDirectory>
+    </PropertyGroup>
+    <ItemGroup>
+      <_ConnectivityHostFiles Include="$(_ConnectivityHostDirectory)**/*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_ConnectivityHostFiles)"
+          DestinationFiles="@(_ConnectivityHostFiles->'$(OutDir)ConnectivityTestHost/%(RecursiveDir)%(Filename)%(Extension)')" />
+  </Target>
+</Project>

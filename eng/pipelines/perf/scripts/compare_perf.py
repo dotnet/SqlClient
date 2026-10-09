@@ -4,6 +4,7 @@
 Reads every ``*-report-full.json`` under a baseline directory and a current
 directory, matches benchmarks by (Type, Method, Parameters), and computes the
 per-benchmark delta in mean execution time and allocated memory.
+Custom diagnoser metrics are also compared by their stable descriptor IDs.
 
 Outputs:
   * a GitHub-flavoured markdown table (``--out-md``), and
@@ -49,6 +50,18 @@ def _load_benchmarks(directory):
                 continue
             memory = bench.get("Memory") or {}
             alloc = memory.get("BytesAllocatedPerOperation")
+            metrics = {}
+            for metric in bench.get("Metrics", []) or []:
+                descriptor = metric.get("Descriptor") or {}
+                metric_id = descriptor.get("Id")
+                value = metric.get("Value")
+                if metric_id is not None and value is not None:
+                    metrics[metric_id] = {
+                        "value": float(value),
+                        "displayName": descriptor.get("DisplayName") or metric_id,
+                        "unit": descriptor.get("Unit") or "",
+                        "greaterIsBetter": descriptor.get("TheGreaterTheBetter"),
+                    }
 
             key = f"{btype}.{method}({params})"
             records[key] = {
@@ -57,6 +70,7 @@ def _load_benchmarks(directory):
                 "parameterSignature": params,
                 "meanNs": float(mean_ns),
                 "allocatedBytes": float(alloc) if alloc is not None else None,
+                "metrics": metrics,
             }
     return records
 
@@ -90,7 +104,25 @@ def build_comparison(baseline_dir, current_dir, threshold_pct):
             "currentMeanMs": (c["meanNs"] / NS_PER_MS) if c else None,
             "baselineAllocBytes": b["allocatedBytes"] if b else None,
             "currentAllocBytes": c["allocatedBytes"] if c else None,
+            "metrics": [],
         }
+        baseline_metrics = b["metrics"] if b else {}
+        current_metrics = c["metrics"] if c else {}
+        for metric_id in sorted(set(baseline_metrics) | set(current_metrics)):
+            bm = baseline_metrics.get(metric_id)
+            cm = current_metrics.get(metric_id)
+            metadata = cm or bm
+            base_value = bm["value"] if bm else None
+            current_value = cm["value"] if cm else None
+            entry["metrics"].append({
+                "id": metric_id,
+                "displayName": metadata["displayName"],
+                "unit": metadata["unit"],
+                "greaterIsBetter": metadata["greaterIsBetter"],
+                "baselineValue": base_value,
+                "currentValue": current_value,
+                "deltaPct": _pct(base_value, current_value),
+            })
 
         if b and c:
             entry["meanDeltaPct"] = _pct(b["meanNs"], c["meanNs"])
@@ -203,6 +235,28 @@ def render_markdown(entries, baseline_version, threshold_pct):
             )
         )
     lines.append("")
+    metric_entries = [(entry, metric) for entry in entries for metric in entry.get("metrics", [])]
+    if metric_entries:
+        lines.extend([
+            "## Diagnoser metrics",
+            "",
+            "Values use the diagnoser's units and normalization; these deltas do not change "
+            "the execution-time regression gate.",
+            "",
+            "| Benchmark | Method | Params | Metric | Unit | Baseline | Current | Delta |",
+            "| --------- | ------ | ------ | ------ | ---- | -------- | ------- | ----- |",
+        ])
+        for entry, metric in metric_entries:
+            baseline = metric["baselineValue"]
+            current = metric["currentValue"]
+            lines.append(
+                f"| {entry['benchmarkName']} | {entry['methodName']} | "
+                f"{entry['parameterSignature'] or '-'} | {metric['displayName']} | "
+                f"{metric['unit'] or '-'} | "
+                f"{f'{baseline:.4f}' if baseline is not None else '-'} | "
+                f"{f'{current:.4f}' if current is not None else '-'} | "
+                f"{_fmt_pct(metric['deltaPct'])} |")
+        lines.append("")
     return "\n".join(lines)
 
 

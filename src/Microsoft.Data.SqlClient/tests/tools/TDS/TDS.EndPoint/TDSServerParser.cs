@@ -116,6 +116,15 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                             responseMessages = Server.OnAttention(Session, MessageBeingReceived);
                             break;
                         }
+                    case TDSMessageType.TransactionManager:
+                        {
+                            if (!(Server is ITDSTransactionServer transactionServer))
+                            {
+                                throw new NotSupportedException("This test peer does not support transaction-manager requests.");
+                            }
+                            responseMessages = transactionServer.OnTransactionManagerRequest(Session, MessageBeingReceived);
+                            break;
+                        }
                     case TDSMessageType.FederatedAuthenticationToken:
                         {
                             // Call into the subscriber to process the packet

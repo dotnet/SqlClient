@@ -74,6 +74,15 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         public RunnerJob ConnectionPoolChurnRunnerConfig;
         public RunnerJob ConnectionPoolRampRunnerConfig;
         public RunnerJob ConnectionPoolThreadPoolPressureRunnerConfig;
+        public ConnectivityLoadJob ConnectivityLoadRunnerConfig;
+    }
+
+    public class ConnectivityLoadJob : RunnerJob
+    {
+        public int[] Concurrency = new[] { 1, 16, 64 };
+        public bool[] Pooling = new[] { false, true };
+        public int DurationSeconds = 10;
+        public int SampleIntervalMilliseconds = 10;
     }
 
     public class RunnerJob
