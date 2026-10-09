@@ -38,9 +38,8 @@ public class UnloadableAssemblyLoadContextTest
         string connStr = DataTestUtility.TCPConnectionString;
         string typeName = typeof(EntryPoint).FullName!;
         string libraryPath = typeof(EntryPoint).Assembly.Location;
-        string mdsPath = typeof(SqlConnection).Assembly.Location;
 
-        WeakReference alcWeakReference = await LoadAndUnloadAssemblyLoadContext(typeName, libraryPath, mdsPath, connStr);
+        WeakReference alcWeakReference = await LoadAndUnloadAssemblyLoadContext(typeName, libraryPath, connStr);
 
         for (int i = 0; i < 10 && alcWeakReference.IsAlive; i++)
         {
@@ -56,6 +55,8 @@ public class UnloadableAssemblyLoadContextTest
     /// Creates an unloadable <see cref="AssemblyLoadContext"/>, then acts within it to open a SqlConnection
     /// and to execute a command.
     /// </summary>
+    /// <param name="typeName">The full name of the entry point type to load into the AssemblyLoadContext.</param>
+    /// <param name="assemblyPath">The path to the assembly containing the entry point type.</param>
     /// <param name="connectionString">The connection to open.</param>
     /// <returns>A <see cref="WeakReference"/> to the AssemblyLoadContext.</returns>
     /// <remarks>
@@ -64,18 +65,13 @@ public class UnloadableAssemblyLoadContextTest
     /// in order to ensure that this weak reference is guaranteed to be out of scope in the method's caller.
     /// </remarks>
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private static async Task<WeakReference> LoadAndUnloadAssemblyLoadContext(string typeName, string assemblyPath, string mdsPath, string connectionString)
+    private static async Task<WeakReference> LoadAndUnloadAssemblyLoadContext(string typeName, string assemblyPath, string connectionString)
     {
         // This method loads the entry point type into a new, collectible AssemblyLoadContext and
         // verifies that the entry point type is referencing the SqlConnection type in the correct
         // AssemblyLoadContext.
         // It then manually instantiates this entry point type, and invokes GetDate and GetDateAsync.
-        Dictionary<string, string> assemblyPathMappings = new()
-        {
-            { "Microsoft.Data.SqlClient", mdsPath }
-        };
-
-        UnloadableAssemblyLoadContext alc = new(nameof(SecondaryAssemblyLoadContext_Unloads), assemblyPath, assemblyPathMappings);
+        UnloadableAssemblyLoadContext alc = new(nameof(SecondaryAssemblyLoadContext_Unloads), assemblyPath);
         WeakReference weakRef = new(alc, trackResurrection: true);
         Assembly loadedAsm = alc.LoadFromAssemblyPath(assemblyPath);
 
@@ -111,22 +107,17 @@ public class UnloadableAssemblyLoadContextTest
 
     private sealed class UnloadableAssemblyLoadContext : AssemblyLoadContext
     {
-        private readonly Dictionary<string, string> _assemblyPathMappings;
         private readonly AssemblyDependencyResolver _resolver;
 
-        public UnloadableAssemblyLoadContext(string name, string assemblyPath, Dictionary<string, string> assemblyPathMappings)
+        public UnloadableAssemblyLoadContext(string name, string assemblyPath)
             : base(name, isCollectible: true)
         {
-            _assemblyPathMappings = assemblyPathMappings;
             _resolver = new AssemblyDependencyResolver(assemblyPath);
         }
 
         protected override Assembly? Load(AssemblyName assemblyName)
         {
-            string? resolvedAssemblyPath = assemblyName.Name is not null
-                && _assemblyPathMappings.TryGetValue(assemblyName.Name, out string? mappedPath)
-                ? mappedPath
-                : _resolver.ResolveAssemblyToPath(assemblyName);
+            string? resolvedAssemblyPath = _resolver.ResolveAssemblyToPath(assemblyName);
 
             return resolvedAssemblyPath is not null
                 ? LoadFromAssemblyPath(resolvedAssemblyPath)
