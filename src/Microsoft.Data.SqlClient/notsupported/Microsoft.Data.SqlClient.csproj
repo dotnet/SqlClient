@@ -105,6 +105,10 @@
   </PropertyGroup>
 
   <!-- References ====================================================== -->
+  <ItemGroup>
+    <!-- GenAPI does not reproduce forwards from the reference assembly. -->
+    <Compile Include="../src/TypeForwards.Abstractions.cs" Link="TypeForwards.Abstractions.cs" />
+  </ItemGroup>
   <!--
     Reference the ref project to cause it to be built, so we can use it as the contract to build
     not supported assemblies against. Note, this must be set to output item type of none otherwise
