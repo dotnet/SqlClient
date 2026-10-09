@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using Microsoft.Data.SqlClient.Tests.Common;
 using Microsoft.Data.SqlClient.Tests.Common.ConfigurableRetryLogic;
 
 namespace Microsoft.Data.SqlClient.UnloadableLibrary;
@@ -15,8 +16,10 @@ namespace Microsoft.Data.SqlClient.UnloadableLibrary;
 /// test fails, we can be confident that the failure is due to SqlClient itself rather that to another
 /// assembly that was loaded into the same context.
 /// </remarks>
-public sealed class EntryPoint
+public sealed class EntryPoint : IDisposable
 {
+    private readonly LocalAppContextSwitchesHelper _appContextSwitchesHelper;
+
     public static string? AssemblyLoadContextName =>
         #if NET
         System.Runtime.Loader.AssemblyLoadContext.GetLoadContext(typeof(SqlConnection).Assembly)?.Name;
@@ -28,7 +31,10 @@ public sealed class EntryPoint
 
     public EntryPoint(string connectionString)
     {
-        AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", true);
+        _appContextSwitchesHelper = new LocalAppContextSwitchesHelper();
+        #if NET
+        _appContextSwitchesHelper.UseManagedNetworking = true;
+        #endif
 
         ConnectionString = connectionString;
 
@@ -67,5 +73,10 @@ public sealed class EntryPoint
 
         await conn.OpenAsync().ConfigureAwait(false);
         await cmd.ExecuteScalarAsync().ConfigureAwait(false);
+    }
+
+    public void Dispose()
+    {
+        _appContextSwitchesHelper.Dispose();
     }
 }

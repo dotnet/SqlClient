@@ -33,8 +33,6 @@ public class UnloadableAssemblyLoadContextTest
     [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup))]
     public async Task SecondaryAssemblyLoadContext_Unloads()
     {
-        using LocalAppContextSwitchesHelper savedAppContextSwitchState = new();
-
         string connStr = DataTestUtility.TCPConnectionString;
         string typeName = typeof(EntryPoint).FullName!;
         string libraryPath = typeof(EntryPoint).Assembly.Location;
@@ -99,6 +97,11 @@ public class UnloadableAssemblyLoadContextTest
         Assert.NotNull(getDateTask);
 
         await getDateTask;
+
+        MethodInfo? disposeMethod = unloadableLibraryType.GetMethod(nameof(EntryPoint.Dispose));
+        Assert.NotNull(disposeMethod);
+
+        disposeMethod.Invoke(instantiated, null);
 
         alc.Unload();
 
