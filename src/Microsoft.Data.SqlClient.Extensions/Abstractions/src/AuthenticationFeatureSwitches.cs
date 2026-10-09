@@ -55,6 +55,14 @@ internal static class AuthenticationFeatureSwitches
 
     #region Trimming Guards
 
+    /// <summary>Indicates whether bootstrap may inspect loaded SqlClient family assembly versions.</summary>
+    // Fixed trimmed/AOT images cannot replace assemblies; their package graph is checked at build time.
+    [FeatureGuard(typeof(RequiresUnreferencedCodeAttribute))]
+    [FeatureGuard(typeof(RequiresDynamicCodeAttribute))]
+    [UnconditionalSuppressMessage("Trimming", "IL4000",
+        Justification = "Runtime assembly replacement is unavailable in fixed trimmed/AOT images; the package graph is checked at build time.")]
+    internal static bool IsRuntimeVersionValidationSupported => true;
+
     /// <summary>
     /// Guards the reflection-based authentication configuration and initializer loading path.
     /// </summary>
