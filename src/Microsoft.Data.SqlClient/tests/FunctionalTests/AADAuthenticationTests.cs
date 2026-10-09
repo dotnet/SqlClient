@@ -52,15 +52,14 @@ namespace Microsoft.Data.SqlClient.Tests
 
         /// <summary>
         /// Tests whether a dummy SQL Auth provider is registered due to
-        /// configuration in an app.config file.  Only .NET Framework reads
-        /// from the app.config file, so this test is only valid for that
-        /// runtime.
+        /// configuration in an app.config file. This test host supplies the
+        /// configuration only on .NET Framework; the dedicated AuthenticationTests
+        /// harness also covers untrimmed .NET configuration loading.
         ///
         /// See the app.config file in the same directory as this file.
         /// 
-        /// .NET (Core) reads similar configuration from appsettings.json, but
-        /// our SqlAuthenticationProviderManager does not currently support
-        /// that configuration source.
+        /// The Abstractions authentication registry does not currently support
+        /// appsettings.json as a configuration source.
         /// </summary>
         [ConditionalFact(typeof(TestUtility), nameof(TestUtility.IsNetFramework))]
         public async Task IsDummySqlAuthenticationProviderSetByDefault()

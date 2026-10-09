@@ -591,26 +591,11 @@
   <data name="SQL_NonLocalSSEInstance" xml:space="preserve">
     <value>Přesměrování instance SSE není podporováno u uživatelských instancí, které nejsou místní.</value>
   </data>
-  <data name="SQL_UnsupportedAuthentication" xml:space="preserve">
-    <value>Ověřování {0} není podporované.</value>
-  </data>
-  <data name="SQL_CannotCreateAuthProvider" xml:space="preserve">
-    <value>Pro {0} se nepodařilo vytvořit instanci zprostředkovatele ověřování s typem {1}.</value>
-  </data>
-  <data name="SQL_CannotCreateAuthInitializer" xml:space="preserve">
-    <value>Nepodařilo se vytvořit instanci SqlAuthenticationInitializer s typem {0}.</value>
-  </data>
-  <data name="SQL_UnsupportedAuthenticationByProvider" xml:space="preserve">
-    <value>Zprostředkovatel {0} nepodporuje ověřování {1}.</value>
-  </data>
   <data name="SQL_CannotFindAuthProvider" xml:space="preserve">
     <value>Pro {0} nelze najít zprostředkovatele ověřování.</value>
   </data>
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
     <value>Pro {0} nelze najít zprostředkovatele ověřování. Nainstalujte balíček NuGet Microsoft.Data.SqlClient.Extensions.Azure (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure), abyste mohli používat metody ověřování Active Directory (Entra ID).</value>
-  </data>
-  <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>Nastavení useWamBroker vyžaduje balíček Microsoft.Data.SqlClient.Extensions.Azure, aby se zpřístupnilo Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions. Upgradujte balíček Microsoft.Data.SqlClient.Extensions.Azure alespoň na verzi 1.1.0, která zahrnuje tento typ.</value>
   </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>Parametr {0} nesmí obsahovat hodnotu Null ani nesmí být prázdný.</value>

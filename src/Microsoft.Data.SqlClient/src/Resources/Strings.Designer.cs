@@ -3040,24 +3040,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Failed to instantiate a SqlAuthenticationInitializer with type &apos;{0}&apos;..
-        /// </summary>
-        internal static string SQL_CannotCreateAuthInitializer {
-            get {
-                return ResourceManager.GetString("SQL_CannotCreateAuthInitializer", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Failed to instantiate an authentication provider with type &apos;{1}&apos; for &apos;{0}&apos;..
-        /// </summary>
-        internal static string SQL_CannotCreateAuthProvider {
-            get {
-                return ResourceManager.GetString("SQL_CannotCreateAuthProvider", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Cannot create normalizer for &apos;{0}&apos;..
         /// </summary>
         internal static string SQL_CannotCreateNormalizer {
@@ -3072,15 +3054,6 @@ namespace System {
         internal static string SQL_CannotFindActiveDirectoryAuthProvider {
             get {
                 return ResourceManager.GetString("SQL_CannotFindActiveDirectoryAuthProvider", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Setting &apos;useWamBroker&apos; requires the &apos;Microsoft.Data.SqlClient.Extensions.Azure&apos; package to expose &apos;Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions&apos;. Upgrade the &apos;Microsoft.Data.SqlClient.Extensions.Azure&apos; package to a version that includes this type..
-        /// </summary>
-        internal static string SQL_UseWamBrokerRequiresAzureExtensionUpgrade {
-            get {
-                return ResourceManager.GetString("SQL_UseWamBrokerRequiresAzureExtensionUpgrade", resourceCulture);
             }
         }
         
@@ -4233,24 +4206,6 @@ namespace System {
         internal static string SQL_UnknownSysTxIsolationLevel {
             get {
                 return ResourceManager.GetString("SQL_UnknownSysTxIsolationLevel", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The authentication &apos;{0}&apos; is not supported..
-        /// </summary>
-        internal static string SQL_UnsupportedAuthentication {
-            get {
-                return ResourceManager.GetString("SQL_UnsupportedAuthentication", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The provider &apos;{0}&apos; does not support authentication &apos;{1}&apos;..
-        /// </summary>
-        internal static string SQL_UnsupportedAuthenticationByProvider {
-            get {
-                return ResourceManager.GetString("SQL_UnsupportedAuthenticationByProvider", resourceCulture);
             }
         }
         

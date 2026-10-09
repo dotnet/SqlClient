@@ -21,8 +21,10 @@ Require(configurationSection.ElementInformation.Properties.Count == 4 && section
 Require(section.GetType().Assembly.GetName().Name == "Microsoft.Data.SqlClient.Extensions.Abstractions",
     "The assembly-qualified handler was not forwarded to Abstractions.");
 Require(SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive) is TestProvider,
-    "The driver's typed section retrieval did not load the configured provider.");
-Require(TestInitializer.Initialized, "The configured driver initializer did not run.");
+    "The Abstractions registry did not load the configured provider.");
+Require(TestInitializer.Initialized, "The configured initializer did not run.");
+Require(typeof(SqlAuthenticationInitializer).Assembly.GetName().Name == "Microsoft.Data.SqlClient.Extensions.Abstractions",
+    "The initializer type did not relocate to Abstractions.");
 Require(!SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive, new TestProvider()),
     "Application registration replaced the configured provider.");
 Console.WriteLine("PASS: " + scenario);
@@ -36,7 +38,7 @@ static void Require(bool condition, string message)
     }
 }
 
-/// <summary>Proves initializer activation still uses the driver-owned type in this intermediate layer.</summary>
+/// <summary>Proves configured initializers activate through the forwarded Abstractions type.</summary>
 public sealed class TestInitializer : SqlAuthenticationInitializer
 {
     public static bool Initialized;

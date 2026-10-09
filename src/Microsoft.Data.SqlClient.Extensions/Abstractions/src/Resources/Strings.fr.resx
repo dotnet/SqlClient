@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">text/microsoft-resx</resheader>
+      <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+      <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+    <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+    <data name="SQL_CannotCreateAuthProvider" xml:space="preserve">
+    <value>Échec de l'instanciation d'un fournisseur d'authentification ayant le type '{1}' pour '{0}'.</value>
+  </data>
+  <data name="SQL_CannotCreateAuthInitializer" xml:space="preserve">
+    <value>Échec de l'instanciation d'un SqlAuthenticationInitializer ayant le type '{0}'.</value>
+  </data>
+  <data name="SQL_UnsupportedAuthenticationByProvider" xml:space="preserve">
+    <value>Le fournisseur '{0}' ne prend pas en charge l'authentification '{1}'.</value>
+  </data>
+  <data name="SQL_UnsupportedAuthentication" xml:space="preserve">
+    <value>L'authentification '{0}' n'est pas prise en charge.</value>
+  </data>
+  <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
+    <value>Le paramètre « useWamBroker » nécessite le package « Microsoft.Data.SqlClient.Extensions.Azure » pour exposer « Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions ». Mettez à niveau le package « Microsoft.Data.SqlClient.Extensions.Azure » vers la version 1.1.0 ou ultérieure, qui inclut ce type.</value>
+  </data>
+</root>

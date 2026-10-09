@@ -11,11 +11,9 @@ public class DefaultAuthProviderTests
     // authentication methods, and not for any other methods.
     //
     // Note that this isn't testing anything in the Azure package.  It actually
-    // tests the static constructor of the SqlAuthenticationProviderManager
-    // class in the MDS package and the static GetProvider() and SetProvider()
-    // methods of the SqlAuthenticationProvider class in the Abstractions
-    // package.  We're testing this here because this test project uses both of
-    // those packages, and this is a convenient place to put such a test.
+    // tests registry bootstrap and the static GetProvider() and SetProvider()
+    // methods in Abstractions. We're testing this here because this project
+    // includes the real Azure provider for discovery.
     //
     // TODO(https://sqlclientdrivers.visualstudio.com/ADO.Net/_workitems/edit/41888):
     // Move this test to a more appropriate location once we have one.
