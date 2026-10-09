@@ -74,6 +74,18 @@ Use `-p:PackageVersionSqlClient=<version>` for prebuilt packages and an isolated
 On Windows, select `-p:TestFramework=net462` to execute .NET Framework checks.
 Cross-building .NET Framework on Linux does not execute those scenarios.
 
+`TestAuthenticationRuntimeVersions` additionally replaces the driver DLL with a
+fixture retaining its assembly binding version but carrying an older informational
+version. Both ordinary bootstrap and bootstrap with configuration/discovery disabled
+must reject it, cache the failure, and trace upgrade/restart guidance:
+
+```bash
+dotnet build build.proj -t:TestAuthenticationRuntimeVersions -p:Configuration=Release -p:TestFramework=net10.0 -p:ReferenceType=Project
+```
+
+The same target accepts `ReferenceType=Package` and the package-preparation options above.
+The runner restores the original DLL even if a scenario fails.
+
 ### Building Projects
 
 From the root of your repository, run `dotnet build` against `build.proj` with a build target, following this pattern:

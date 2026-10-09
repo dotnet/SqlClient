@@ -62,6 +62,10 @@ internal sealed class SqlAuthenticationProviderRegistry
             _initializing = true;
             try
             {
+                if (AuthenticationFeatureSwitches.IsRuntimeVersionValidationSupported)
+                {
+                    ValidateSqlClientVersion();
+                }
                 if (AuthenticationFeatureSwitches.IsAppConfigSupported)
                 {
                     LoadConfiguration();
@@ -205,6 +209,7 @@ internal sealed class SqlAuthenticationProviderRegistry
                 return;
             }
 
+            ValidateFamilyVersion(assembly);
             SqlClientEventSource.Log.TryTraceEvent(
                 nameof(SqlAuthenticationProviderRegistry) +
                 ": Azure extension assembly={0} found; " +
@@ -692,6 +697,53 @@ internal sealed class SqlAuthenticationProviderRegistry
         }
         return default;
     }
+
+    /// <summary>Loads SqlClient and validates its exact family version against Abstractions.</summary>
+    /// <remarks>A missing SqlClient assembly is logged and does not prevent registration.</remarks>
+    /// <exception cref="InvalidOperationException">The family versions differ or cannot be determined.</exception>
+    [RequiresUnreferencedCode("The SqlClient assembly is loaded by name for version validation.")]
+    [RequiresDynamicCode("The SqlClient assembly is loaded dynamically.")]
+    private static void ValidateSqlClientVersion()
+    {
+        Assembly assembly;
+        try
+        {
+            assembly = Assembly.Load("Microsoft.Data.SqlClient");
+        }
+        catch (FileNotFoundException e)
+        {
+            SqlClientEventSource.Log.TryTraceEvent(
+                "SqlClient version validation skipped: assembly not installed. {0}", e.Message);
+            return;
+        }
+        ValidateFamilyVersion(assembly);
+    }
+
+    /// <summary>Enforces exact family-version agreement between an assembly and Abstractions.</summary>
+    /// <param name="assembly">The loaded SqlClient family assembly to validate.</param>
+    /// <exception cref="InvalidOperationException">The family versions differ or cannot be determined.</exception>
+    internal static void ValidateFamilyVersion(Assembly assembly)
+    {
+        string expected = GetFamilyVersion(typeof(SqlAuthenticationProvider).Assembly);
+        string actual = GetFamilyVersion(assembly);
+        if (!string.Equals(expected, actual, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException(
+                $"SqlClient family version mismatch: {assembly.GetName().Name} is {actual}, " +
+                $"but Microsoft.Data.SqlClient.Extensions.Abstractions is {expected}. " +
+                "Upgrade all SqlClient family packages together.");
+        }
+    }
+
+    /// <summary>Reads an assembly's informational version without build metadata.</summary>
+    /// <param name="assembly">The assembly whose family version is required.</param>
+    /// <returns>The version including any prerelease label, but excluding the build metadata suffix.</returns>
+    /// <exception cref="InvalidOperationException">The assembly has no informational version attribute.</exception>
+    private static string GetFamilyVersion(Assembly assembly) =>
+        assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+            .InformationalVersion.Split('+')[0]
+            ?? throw new InvalidOperationException(
+                $"Cannot determine the exact SqlClient family version of {assembly.GetName().Name}.");
 
     /// <summary>Maps a configured authentication method name to its enum value, ignoring case.</summary>
     /// <param name="authentication">The authentication method name from a configured provider entry.</param>

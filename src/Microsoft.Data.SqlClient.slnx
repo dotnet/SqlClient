@@ -204,6 +204,7 @@
   </Folder>
   <Folder Name="/test/AuthenticationTests/">
     <Project Path="Microsoft.Data.SqlClient/tests/AuthenticationTests/ConfigurationTest/ConfigurationTest.csproj" />
+    <Project Path="Microsoft.Data.SqlClient/tests/AuthenticationTests/RuntimeVersionTest/RuntimeVersionTest.csproj" />
   </Folder>
   <Folder Name="/test/Stress/">
     <Project Path="Microsoft.Data.SqlClient/tests/StressTests/IMonitorLoader/IMonitorLoader.csproj" />
