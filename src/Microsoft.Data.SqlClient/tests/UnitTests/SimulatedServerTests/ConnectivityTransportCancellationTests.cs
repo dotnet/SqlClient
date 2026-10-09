@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+// The attempt counter observes managed-SNI SniTcpHandle traces; .NET Framework always uses native SNI.
+#if NET
 using System;
 using System.Diagnostics;
 using System.Net;
@@ -95,5 +97,5 @@ public class ConnectivityTransportCancellationTests
         Assert.Same(task, await Task.WhenAny(task, Task.Delay(Watchdog)));
         await task;
     }
-
 }
+#endif

@@ -1,8 +1,9 @@
 # Async connectivity reproductions
 
-This focused suite retains five demonstrated mechanisms from
-[#3459](https://github.com/dotnet/SqlClient/issues/3459), plus the controls and
-test infrastructure needed to distinguish defects from inadmissible setups.
+This focused suite retains five demonstrated async connectivity mechanisms
+(worker starvation, transport cancellation, and transaction lock inversion),
+plus the controls and test infrastructure needed to distinguish defects from
+inadmissible setups. The related issue for each mechanism is linked below.
 It changes no production behavior or public APIs.
 
 ## Retained reproductions
@@ -12,10 +13,10 @@ Test classes are under
 
 | Mechanism | Desired-behavior test | Local baseline and essential controls |
 |---|---|---|
-| Async authentication starvation | `ConnectivityProcessTests.OpenAsync_TokenBurst_WithCappedWorkers_Completes` | Every V2 worker reaches held Login7. After Login7 release, zero workers are available and the token callback cannot enter. Generous-worker V2 and capped V1/non-pooled controls complete. |
+| Async authentication starvation | `ConnectivityProcessTests.OpenAsync_TokenBurst_WithCappedWorkers_Completes` | Every V2 worker reaches held Login7. After Login7 release, zero workers are available and the token callback cannot enter. Generous-worker V2 and capped V1/non-pooled controls complete. Relevant to [#3459](https://github.com/dotnet/SqlClient/issues/3459). |
 | Additional user-thread OpenAsync behind occupied workers | `ConnectivityProcessTests.OpenAsync_AdditionalOpen_WithCappedWorkers_MakesProgress` | A non-pool caller obtains a Task, but physical login to a separate, unheld endpoint cannot progress until the original Login7 replies release workers. The recovery control completes every open under the unchanged cap. This covers the starvation mechanism in [#3118](https://github.com/dotnet/SqlClient/issues/3118), not its exact TLS/error signature. |
 | Synchronous provider-authentication worker starvation | `ConnectivityAuthenticationPressureTests.Open_ProviderAuthentication_WithCappedWorkerCallers_Completes` | Cold and genuinely expired fake managed-identity tokens stall both pools before provider entry with zero workers available. Increasing workers during cleanup completes the same callers. Warm-cache, generous-worker, dedicated-caller, and direct-async controls distinguish worker pressure from provider/cache failures. Relevant to [#2152](https://github.com/dotnet/SqlClient/issues/2152)/[#2470](https://github.com/dotnet/SqlClient/issues/2470), which primarily report synchronous Open. |
-| Physical TCP attempts continue after public cancellation | `ConnectivityTransportCancellationTests.OpenAsync_RefusedConnect_AfterPublicCancellation_StartsNoNewAttempt` | Gate the first actual refused TCP connect, confirm public cancellation, then release physical work. Attempts grow from 1 to 13; the desired count remains 1. An uncancelled control proves the internal retry path is reachable with configurable retries disabled. Relevant to [#1619](https://github.com/dotnet/SqlClient/issues/1619). |
+| Physical TCP attempts continue after public cancellation | `ConnectivityTransportCancellationTests.OpenAsync_RefusedConnect_AfterPublicCancellation_StartsNoNewAttempt` (.NET only; it observes managed-SNI traces) | Gate the first actual refused TCP connect, confirm public cancellation, then release physical work. Attempts grow from 1 to 13; the desired count remains 1. An uncancelled control proves the internal retry path is reachable with configurable retries disabled. Relevant to [#1619](https://github.com/dotnet/SqlClient/issues/1619). |
 | Cancelled-scope rollback/physical-open lock inversion | `ConnectivityTransactionTests.OpenAsync_AmbientTransaction_CancelledAfterBegin_ScopeAndPhysicalWorkComplete` | Real BEGIN completes before a post-BEGIN gate. After public cancellation, rollback owns the connection monitor while physical opening owns the parser monitor. Releasing the gate produces `LOCK_CYCLE_STALLED`. Post-BEGIN, pre-enlistment cancellation, held-BEGIN, and actual sync/async commit/rollback controls establish phase ordering and wire validity. Relevant to [#4696](https://github.com/dotnet/SqlClient/issues/4696). |
 
 **Keep both `ConnectivityProcessTests` anchors.** Their worker caps are accepted
