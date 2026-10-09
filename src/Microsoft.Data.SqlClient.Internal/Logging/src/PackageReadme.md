@@ -22,6 +22,33 @@ This package provides **ETW EventSource tracing and diagnostics** for [Microsoft
 
 ## Supportability
 
+### SqlClient family version validation
+
+Logging ships a consumer MSBuild target in `build/` and `buildTransitive/`.
+NuGet imports it for direct package consumers and transitive PackageReference
+consumers. After package/reference resolution it compares installed
+`Microsoft.Data.SqlClient`, `Microsoft.Data.SqlClient.Extensions.Abstractions`,
+`Microsoft.Data.SqlClient.Extensions.Azure`, and
+`Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider` package versions
+against the **resolved Logging package version**. Optional packages are not required.
+`Microsoft.SqlServer.Server` and native SNI packages are excluded.
+
+Versions must match exactly, including prerelease labels; a mismatch fails the
+build with **SQLCLIENT001**. Upgrade all installed family packages together.
+Historical extensions numbered `1.0.0` are not mapped to driver `7.0.0`/`7.0.1`.
+The check uses resolved compile/runtime asset metadata for PackageReference and
+installed versions in `packages.config` for legacy consumers. It does not check
+assembly versions, restore ranges, or API compatibility. Assets missing version
+metadata and builds without a Logging version anchor are skipped. Design-time
+builds are skipped.
+
+For emergency recovery, set `SqlClientEnforceFamilyVersions=false` in the
+consumer project or pass `-p:SqlClientEnforceFamilyVersions=false`. This disables
+only this build check; it does not make mixed versions compatible. Excluding the
+package's build assets also prevents target import. Ordinary project references
+do not propagate NuGet buildTransitive targets, so this check does not enforce
+in-tree Project-mode versions.
+
 This package supports:
 
 - .NET Standard 2.0 (compatible with .NET Framework 4.6.1+, .NET Core 2.0+, and .NET 5+)

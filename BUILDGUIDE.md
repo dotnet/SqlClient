@@ -253,6 +253,38 @@ dotnet build -t:TestSqlClientFunctional -p:TestFramework=net10.0
 
 ### Packaging Projects
 
+#### Consumer family-version check
+
+The Logging package owns `ValidateSqlClientFamilyPackageVersions` and ships it in
+both `build/` and `buildTransitive/`. NuGet imports it into direct consumers and
+transitive PackageReference consumers (unless build assets are excluded).
+Installed Logging, Abstractions, SqlClient, Extensions.Azure, and AKV packages
+must match the resolved Logging version exactly, including prerelease labels.
+Optional family packages are not required; independently versioned
+Microsoft.SqlServer.Server and native SNI packages are excluded. The target uses
+resolved compile/runtime package metadata or legacy `packages.config`, not
+assembly versions or declared version ranges, and skips design-time builds.
+Missing version metadata or a missing Logging anchor is not guessed.
+
+**SQLCLIENT001** means installed family versions differ. Upgrade them together;
+historical extension `1.0.0` versions are not automatically mapped to driver
+`7.0.0`/`7.0.1`. The emergency escape hatch is
+`-p:SqlClientEnforceFamilyVersions=false` (or that property in the consumer
+project). It suppresses this check only, not incompatibilities.
+Ordinary project references do not propagate NuGet buildTransitive assets:
+Project-mode repository builds are not validated by this consumer target.
+
+Run the focused synthetic and isolated NuGet consumer regression suite with:
+
+```powershell
+pwsh -NoProfile -File src/Microsoft.Data.SqlClient.Internal/Logging/test/RunVersionChecks.ps1
+```
+
+The suite packs the real Logging project, creates small family-package fixtures
+in a private local feed, and verifies automatic imports for both direct and
+transitive package consumers. It uses a unique directory under Logging/test and
+removes that directory on completion; no SQL Server is required.
+
 Just like building and testing the various projects in this repository, packaging the projects into NuGet packages is
 also handled by `build.proj`. From the root of your repository, run `dotnet build` against `build.proj` with a pack target,
 following this pattern:

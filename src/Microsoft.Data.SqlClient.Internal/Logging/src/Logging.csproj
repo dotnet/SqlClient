@@ -75,6 +75,8 @@
   <ItemGroup>
     <None Include="$(RepoRoot)/tools/icons/dotnet.png" Pack="true" PackagePath="/" />
     <None Include="PackageReadme.md" Pack="true" PackagePath="README.md" />
+    <None Include="../build/Microsoft.Data.SqlClient.Internal.Logging.targets"
+          Pack="true" PackagePath="build/;buildTransitive/" />
   </ItemGroup>
 
   <!-- CodeGen Targets ================================================= -->
