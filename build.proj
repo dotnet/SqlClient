@@ -616,14 +616,28 @@
     <AuthenticationTestFramework Condition="'$(TestFramework)' != ''">$(TestFramework)</AuthenticationTestFramework>
     <AuthenticationTestFramework Condition="'$(AuthenticationTestFramework)' == ''">net10.0</AuthenticationTestFramework>
     <AuthenticationPackageVersionArgument Condition="'$(PackageVersionSqlClient)' != ''">-PackageVersionSqlClient "$(PackageVersionSqlClient)"</AuthenticationPackageVersionArgument>
-    <TestAuthenticationConfigurationDependsOn Condition="'$(ReferenceType)' == 'Package' AND '$(SkipDependencyPack)' != 'true'">PackSqlClient</TestAuthenticationConfigurationDependsOn>
+    <AuthenticationFileVersionArgument Condition="'$(FileVersionSqlClient)' != ''">-FileVersionSqlClient "$(FileVersionSqlClient)"</AuthenticationFileVersionArgument>
+    <AuthenticationSqlServerVersionArgument Condition="'$(PackageVersionSqlServer)' != ''">-PackageVersionSqlServer "$(PackageVersionSqlServer)"</AuthenticationSqlServerVersionArgument>
+    <AuthenticationBuildNumberArgument Condition="'$(BuildNumber)' != ''">-BuildNumber "$(BuildNumber)"</AuthenticationBuildNumberArgument>
+    <AuthenticationBuildSuffixArgument Condition="'$(BuildSuffix)' != ''">-BuildSuffix "$(BuildSuffix)"</AuthenticationBuildSuffixArgument>
+    <AuthenticationPublishArgument Condition="'$(AuthenticationPublish)' == 'true'">-Publish</AuthenticationPublishArgument>
+    <AuthenticationCommand>&quot;$(DotnetPath)dotnet&quot; tool run pwsh -- -NonInteractive -NoProfile -File &quot;$(AuthenticationTestsScript)&quot; -Framework $(AuthenticationTestFramework) -ReferenceType $(ReferenceType) -Configuration $(Configuration) $(AuthenticationPackageVersionArgument) $(AuthenticationFileVersionArgument) $(AuthenticationSqlServerVersionArgument) $(AuthenticationBuildNumberArgument) $(AuthenticationBuildSuffixArgument)</AuthenticationCommand>
+    <TestAuthenticationConfigurationDependsOn Condition="'$(ReferenceType)' == 'Package' AND '$(SkipDependencyPack)' != 'true'">PackSqlClient;PackAzure</TestAuthenticationConfigurationDependsOn>
   </PropertyGroup>
   <Target Name="TestAuthenticationConfiguration" DependsOnTargets="$(TestAuthenticationConfigurationDependsOn)">
-    <Exec Command="&quot;$(DotnetPath)dotnet&quot; tool run pwsh -- -NonInteractive -NoProfile -File &quot;$(AuthenticationTestsScript)&quot; -Framework $(AuthenticationTestFramework) -ReferenceType $(ReferenceType) -Configuration $(Configuration) $(AuthenticationPackageVersionArgument)"
+    <Exec Command="$(AuthenticationCommand)"
           WorkingDirectory="$(RepoRoot)" />
   </Target>
   <Target Name="TestAuthenticationRuntimeVersions" DependsOnTargets="$(TestAuthenticationConfigurationDependsOn)">
-    <Exec Command="&quot;$(DotnetPath)dotnet&quot; tool run pwsh -- -NonInteractive -NoProfile -File &quot;$(AuthenticationTestsScript)&quot; -Framework $(AuthenticationTestFramework) -ReferenceType $(ReferenceType) -Configuration $(Configuration) $(AuthenticationPackageVersionArgument) -RuntimeVersions"
+    <Exec Command="$(AuthenticationCommand) -RuntimeVersions"
+          WorkingDirectory="$(RepoRoot)" />
+  </Target>
+  <Target Name="TestAuthentication" DependsOnTargets="$(TestAuthenticationConfigurationDependsOn)">
+    <Exec Command="$(AuthenticationCommand) -AllScenarios -RuntimeVersions $(AuthenticationPublishArgument)"
+          WorkingDirectory="$(RepoRoot)" />
+  </Target>
+  <Target Name="BuildAuthenticationTests" DependsOnTargets="$(TestAuthenticationConfigurationDependsOn)">
+    <Exec Command="$(AuthenticationCommand) -BuildOnly"
           WorkingDirectory="$(RepoRoot)" />
   </Target>
 
@@ -1396,7 +1410,7 @@
   </PropertyGroup>
 
   <!-- BuildTests: Builds the driver test projects for their declared target frameworks. -->
-  <Target Name="BuildTests" DependsOnTargets="BuildAbstractionsTests;BuildAkvProviderTests;BuildSqlClientTestsUnit;BuildSqlClientTestsFunctional;BuildSqlClientTestsManual;BuildSqlClientTestsPerformance;BuildSqlClientTestsStress;BuildAzureTests" />
+  <Target Name="BuildTests" DependsOnTargets="BuildAbstractionsTests;BuildAkvProviderTests;BuildSqlClientTestsUnit;BuildSqlClientTestsFunctional;BuildSqlClientTestsManual;BuildSqlClientTestsPerformance;BuildSqlClientTestsStress;BuildAzureTests;BuildAuthenticationTests" />
 
   <!-- BuildAkvProviderTests: Builds the AKV Provider test project (OS-agnostic). -->
   <Target Name="BuildAkvProviderTests">

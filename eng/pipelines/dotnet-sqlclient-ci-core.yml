@@ -162,6 +162,13 @@ variables:
     value: SqlServer.Artifacts
 
 stages:
+  - template: /eng/pipelines/pr/stages/authentication-validation-stage.yml@self
+    parameters:
+      poolName: ${{ parameters.defaultPoolName }}
+      linuxPoolImage: ADO-UB24
+      windowsPoolImage: ADO-Win25
+      buildConfiguration: ${{ parameters.buildConfiguration }}
+
   # Compute all package versions up front. Build and test stages consume the
   # compute_versions_ci outputs directly, so no version parameters are passed here.
   - template: /eng/pipelines/stages/compute-versions-ci-stage.yml@self
