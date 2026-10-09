@@ -10,6 +10,7 @@ using System.Diagnostics;
 using System.Security.Authentication;
 using System.Threading;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Parser;
 
 namespace Microsoft.Data.SqlClient.ManagedSni
 {

@@ -6,6 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.Data.SqlTypes;
 using System.Reflection;
+using Microsoft.Data.SqlClient.Parser;
+using Microsoft.Data.SqlClient.Parser.Tokens;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests

@@ -17,6 +17,7 @@ using System.Transactions;
 using Interop.Common.Sni;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Connection;
+using Microsoft.Data.SqlClient.Parser;
 
 #if NET
 using System.Net.Sockets;

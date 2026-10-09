@@ -5,6 +5,7 @@
 using Microsoft.Data.SqlClient.Internal;
 using System;
 using System.Text;
+using Microsoft.Data.SqlClient.Parser;
 
 #nullable enable
 
