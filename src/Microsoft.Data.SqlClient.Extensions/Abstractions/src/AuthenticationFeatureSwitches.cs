@@ -8,7 +8,7 @@ namespace Microsoft.Data.SqlClient;
 
 /// <summary>
 /// Defines authentication bootstrap switches and capability guards so configuration loading, Azure
-/// extension discovery can be excluded from trimmed or AOT builds.
+/// extension discovery, and runtime version checks can be excluded from trimmed or AOT builds.
 /// </summary>
 /// <remarks>
 /// Configuration and discovery default to enabled to preserve existing runtime behavior.  Each

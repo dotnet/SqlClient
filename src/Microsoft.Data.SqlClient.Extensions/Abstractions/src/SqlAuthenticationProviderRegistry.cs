@@ -43,7 +43,7 @@ internal sealed class SqlAuthenticationProviderRegistry
     private ExceptionDispatchInfo? _bootstrapFailure;
 
     /// <summary>
-    /// Runs the enabled configuration and Azure discovery steps on first access.
+    /// Runs the enabled version validation, configuration and Azure discovery steps on first access.
     /// </summary>
     /// <remarks>
     /// Reentrant initializer registrations can use the registry while bootstrap is in progress.
@@ -129,7 +129,7 @@ internal sealed class SqlAuthenticationProviderRegistry
     /// Discovers the optional Azure extension and registers its provider as the authentication default.
     /// </summary>
     /// <remarks>
-    /// Validates the extension's public key token in signed builds.
+    /// Validates the extension's family version and, in signed builds, its public key token.
     /// Defaults do not replace existing registrations. Handled loading or construction failures
     /// are logged and leave the application responsible for supplying a provider.
     /// </remarks>
