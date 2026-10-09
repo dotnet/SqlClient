@@ -70,8 +70,8 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         [Benchmark]
         public async Task WithTransactionAsync()
         {
-            using var txn = (SqlTransaction)await _connection.BeginTransactionAsync();
-            using var cmd = new SqlCommand($"INSERT INTO {_tableName} (Value) VALUES (1)", _connection, txn);
+            await using var txn = (SqlTransaction)await _connection.BeginTransactionAsync();
+            await using var cmd = new SqlCommand($"INSERT INTO {_tableName} (Value) VALUES (1)", _connection, txn);
             await cmd.ExecuteNonQueryAsync();
             await txn.CommitAsync();
         }
@@ -79,7 +79,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         [Benchmark]
         public async Task WithoutTransactionAsync()
         {
-            using var cmd = new SqlCommand($"INSERT INTO {_tableName} (Value) VALUES (1)", _connection);
+            await using var cmd = new SqlCommand($"INSERT INTO {_tableName} (Value) VALUES (1)", _connection);
             await cmd.ExecuteNonQueryAsync();
         }
     }

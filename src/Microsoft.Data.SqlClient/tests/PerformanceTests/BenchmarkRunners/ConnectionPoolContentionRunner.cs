@@ -187,9 +187,9 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 {
                     for (int op = 0; op < OpsPerWorker; op++)
                     {
-                        using var conn = new SqlConnection(_connectionString);
+                        await using var conn = new SqlConnection(_connectionString);
                         await conn.OpenAsync();
-                        using var cmd = conn.CreateCommand();
+                        await using var cmd = conn.CreateCommand();
                         cmd.CommandText = "SELECT 1";
                         _ = await cmd.ExecuteScalarAsync();
                         // Dispose returns the connection to the pool.

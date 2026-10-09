@@ -221,10 +221,10 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         [Benchmark]
         public async Task ReadDataAsync()
         {
-            using var conn = new SqlConnection(_connectionString);
+            await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
-            using var cmd = new SqlCommand($"SELECT Data FROM {ActiveTableName}", conn);
-            using var reader = await cmd.ExecuteReaderAsync();
+            await using var cmd = new SqlCommand($"SELECT Data FROM {ActiveTableName}", conn);
+            await using var reader = await cmd.ExecuteReaderAsync();
             if (ColumnType == "JSON")
             {
                 while (await reader.ReadAsync())

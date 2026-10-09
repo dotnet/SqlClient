@@ -120,9 +120,10 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         /// Creates table on database
         /// </summary>
         /// <param name="sqlConnection"></param>
-        public Table CreateTable(SqlConnection sqlConnection)
+        /// <param name="commandTimeoutSeconds">Timeout for setup SQL, outside the benchmark measurement.</param>
+        public Table CreateTable(SqlConnection sqlConnection, int commandTimeoutSeconds = 30)
         {
-            DropTable(sqlConnection);
+            DropTable(sqlConnection, commandTimeoutSeconds);
             string columnList = "";
             for (int i = 0; i < Columns.Count; i++)
             {
@@ -134,15 +135,21 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             }
             string query = @$"CREATE TABLE {Name} ("
                 + columnList + ")";
-            DbUtils.ExecuteNonQuery(query, sqlConnection);
+            DbUtils.ExecuteNonQuery(query, sqlConnection, commandTimeoutSeconds);
             return this;
         }
 
-        public Table InsertBulkRows(long rowCount, SqlConnection sqlConnection)
+        /// <summary>Populates a fixture outside timing and disposes the client-side row buffer.</summary>
+        /// <param name="rowCount">Number of rows to create.</param>
+        /// <param name="sqlConnection">Open fixture connection.</param>
+        /// <param name="commandTimeoutSeconds">Bulk-copy timeout in seconds.</param>
+        /// <returns>The populated fixture.</returns>
+        public Table InsertBulkRows(long rowCount, SqlConnection sqlConnection, int commandTimeoutSeconds = 30)
         {
-            DataTable dataTable = AsDataTable(rowCount);
+            using DataTable dataTable = AsDataTable(rowCount);
 
             using SqlBulkCopy sqlBulkCopy = new(sqlConnection);
+            sqlBulkCopy.BulkCopyTimeout = commandTimeoutSeconds;
             sqlBulkCopy.DestinationTableName = Name;
             sqlBulkCopy.WriteToServer(dataTable);
             return this;
@@ -151,10 +158,12 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         /// <summary>
         /// Drops table on database
         /// </summary>
-        public void DropTable(SqlConnection sqlConnection)
+        /// <param name="sqlConnection">Open fixture connection.</param>
+        /// <param name="commandTimeoutSeconds">Cleanup SQL timeout in seconds.</param>
+        public void DropTable(SqlConnection sqlConnection, int commandTimeoutSeconds = 30)
         {
             string query = $"DROP TABLE IF EXISTS {Name}";
-            DbUtils.ExecuteNonQuery(query, sqlConnection);
+            DbUtils.ExecuteNonQuery(query, sqlConnection, commandTimeoutSeconds);
         }
     }
 }
