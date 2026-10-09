@@ -23,7 +23,7 @@ This package supports:
 ## Authentication registration
 
 The provider registry and bootstrap live in this package. `GetProvider` and `SetProvider`
-work directly, including under NativeAOT, without loading SqlClient through reflection.
+work directly, including under NativeAOT, without a reflective registration bridge to SqlClient.
 Configuration providers and configured initializers take precedence over application
 registrations; application registrations take precedence over the discovered Azure default.
 Recoverable configuration failures are traced without preventing later configured providers,
@@ -84,6 +84,22 @@ processing authentication configuration or consulting the authentication discove
 Both loaders enforce the same assembly identity checks in signed builds.
 Publish-time overrides use
 `RuntimeHostConfigurationOption` with `Trim="true"`; runtime changes cannot affect trimming.
+
+## Package version policy
+
+Upgrade all installed SqlClient family packages to the same exact version, including
+prerelease labels: SqlClient, Abstractions, Azure, Logging and AKV. SqlServer.Server
+and native SNI are independently versioned.
+
+Untrimmed registry bootstrap compares the loaded SqlClient and discovered Azure assemblies'
+informational versions against Abstractions, excluding source-control build metadata.
+Mismatches are cached and traced with upgrade/restart guidance; `GetProvider` and
+`SetProvider` return `null` and `false`. Disabling configuration or Azure discovery
+does not disable the SqlClient runtime check.
+
+Trimmed/NativeAOT fixed images remove reflective runtime validation. Ensure the
+resolved package versions match before publishing; consumer build-time enforcement
+is maintained separately from authentication bootstrap. Mixed versions are not supported.
 
 ## Authentication configuration
 

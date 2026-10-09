@@ -131,6 +131,15 @@ Strict configuration parsing is not introduced: configuration reading retains it
 policy. Registration without loading the driver, explicit registration under trimming/NativeAOT,
 and the independent `EnableAzureExtensionDiscovery` switch are new capabilities.
 
+Upgrade SqlClient, Abstractions, Azure, Logging and AKV together to the same exact package
+version, including prerelease labels. Untrimmed bootstrap validates loaded SqlClient and
+discovered Azure informational versions against Abstractions; source-control build metadata
+is ignored. Disabling app.config
+or discovery does not disable the SqlClient runtime check. Fixed trimmed/AOT images remove
+reflective runtime validation, so ensure the resolved package versions match before
+publishing. Consumer build-time enforcement is maintained separately from authentication
+bootstrap. SqlServer.Server and native SNI remain independently versioned.
+
 With this package reference, you can continue to use Entra ID authentication modes directly in your connection string:
 
 ```csharp
