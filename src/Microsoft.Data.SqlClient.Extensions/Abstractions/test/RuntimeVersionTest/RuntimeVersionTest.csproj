@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- A replacement DLL with a matching assembly identity but an older exact family version. -->
+  <PropertyGroup>
+    <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
+    <TargetFrameworks>net462;net10.0</TargetFrameworks>
+    <Version>7.0.1</Version>
+    <AssemblyVersion>8.0.0.0</AssemblyVersion>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+</Project>

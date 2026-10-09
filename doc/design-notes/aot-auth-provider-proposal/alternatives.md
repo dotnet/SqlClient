@@ -121,11 +121,13 @@ initializer — which **preserves today's semantics**: any registry access trigg
 
 #### Variants
 
-- **A4-Full — move the registry, Azure discovery, `app.config` *parsing* and
-  `SqlAuthenticationInitializer`; leave the two section *types* in SqlClient as the schema.**
+- **A4-Full — move the registry, Azure discovery, `app.config` parsing,
+  `SqlAuthenticationInitializer` and both section types to Abstractions.**
+  The section handlers become public and are forwarded from SqlClient to preserve existing config files.
   Preserves today's semantics exactly, including `SetProvider` returning `false` for a method
   claimed by configuration (measured, [A.3](experiments.md#a3-what-the-section-handler-does)). Cost: Abstractions
-  acquires `System.Configuration.ConfigurationManager` (compile-excluded) and localized resources.
+  acquires `System.Configuration.ConfigurationManager` with compile assets available to consumers,
+  plus localized resources.
 - **A4-Conservative — move the registry and Azure discovery; leave `app.config` parsing in
   SqlClient.** Abstractions gains **no new dependency**. But config seeding needs IVT or a narrow
   public seam, D3 tiers become mandatory, and one divergence appears: if `app.config` claims a

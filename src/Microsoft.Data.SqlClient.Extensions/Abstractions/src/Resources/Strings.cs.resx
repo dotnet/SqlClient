@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">text/microsoft-resx</resheader>
+      <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+      <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+    <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+    <data name="SQL_CannotCreateAuthProvider" xml:space="preserve">
+    <value>Pro {0} se nepodařilo vytvořit instanci zprostředkovatele ověřování s typem {1}.</value>
+  </data>
+  <data name="SQL_CannotCreateAuthInitializer" xml:space="preserve">
+    <value>Nepodařilo se vytvořit instanci SqlAuthenticationInitializer s typem {0}.</value>
+  </data>
+  <data name="SQL_UnsupportedAuthenticationByProvider" xml:space="preserve">
+    <value>Zprostředkovatel {0} nepodporuje ověřování {1}.</value>
+  </data>
+  <data name="SQL_UnsupportedAuthentication" xml:space="preserve">
+    <value>Ověřování {0} není podporované.</value>
+  </data>
+  <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
+    <value>Nastavení useWamBroker vyžaduje balíček Microsoft.Data.SqlClient.Extensions.Azure, aby se zpřístupnilo Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions. Upgradujte balíček Microsoft.Data.SqlClient.Extensions.Azure alespoň na verzi 1.1.0, která zahrnuje tento typ.</value>
+  </data>
+</root>

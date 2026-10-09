@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>AuthenticationConfigurationTest</AssemblyName>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net462;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/Abstractions.csproj" />
+    <ProjectReference Include="../../../Azure/src/Azure.csproj" />
+    <ProjectReference Include="../../../../Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj" />
+    <None Update="*.config" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

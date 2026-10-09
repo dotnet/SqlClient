@@ -63,6 +63,26 @@ Install-Package Microsoft.Data.SqlClient.Extensions.Azure
 
 This package provides the `ActiveDirectoryAuthenticationProvider`, which uses `Azure.Identity` credential types supplied by [Azure.Core](https://www.nuget.org/packages/Azure.Core) to handle token acquisition, caching, and credential management.
 
+All SqlClient family packages must use the same exact package version. The Abstractions package
+enforces this at build time; untrimmed authentication bootstrap also checks loaded family versions.
+Runtime mismatches preserve `SqlAuthenticationProvider.GetProvider`/`SetProvider` failure results
+of `null`/`false` and emit upgrade guidance through `Microsoft.Data.SqlClient.EventSource`
+(Informational level, Trace keyword `0x2`).
+`Microsoft.SqlServer.Server` is versioned separately.
+
+In trimmed and NativeAOT .NET 10 applications, register the provider explicitly before opening
+connections, because reflective Azure discovery and authentication `app.config` loading are removed:
+
+```csharp
+SqlAuthenticationProvider.SetProvider(
+    SqlAuthenticationMethod.ActiveDirectoryDefault,
+    new ActiveDirectoryAuthenticationProvider());
+```
+
+Untrimmed applications retain automatic discovery. The opt-out switches
+`Switch.Microsoft.Data.SqlClient.EnableAppConfig` and
+`Switch.Microsoft.Data.SqlClient.EnableAzureExtensionDiscovery` both default to `true`.
+
 With this package reference, you can continue to use Entra ID authentication modes directly in your connection string:
 
 ```csharp

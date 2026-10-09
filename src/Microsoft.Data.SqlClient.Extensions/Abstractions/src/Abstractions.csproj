@@ -2,7 +2,10 @@
   <!-- General Properties ============================================== -->
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient.Extensions.Abstractions</AssemblyName>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <!-- netstandard2.0 preserves compatibility for existing consumers, including .NET Framework;
+         net10.0 enables trimming/AOT analysis and publish-time removal of reflective bootstrap paths. -->
+    <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+    <IsAotCompatible Condition="'$(TargetFramework)' == 'net10.0'">true</IsAotCompatible>
   </PropertyGroup>
 
   <!-- Compiler Options ================================================ -->
@@ -72,14 +75,27 @@
   </ItemGroup>
 
   <!-- References ====================================================== -->
-  <!-- Reference to Logging  -->
   <ItemGroup>
+    <!-- Reference to Logging  -->
     <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Internal/Logging/src/Logging.csproj"
                       Condition="'$(ReferenceType)' != 'Package'" />
     <PackageReference Include="Microsoft.Data.SqlClient.Internal.Logging"
                       Condition="'$(ReferenceType)' == 'Package'" />
+
+    <PackageReference Include="System.Configuration.ConfigurationManager"
+                      PrivateAssets="contentfiles;build;buildTransitive;analyzers" />
   </ItemGroup>
 
   <!-- CodeGen Targets ================================================= -->
+  <ItemGroup>
+    <!-- Match AuthenticationStrings' ResourceManager base name for neutral and localized resources. -->
+    <EmbeddedResource Update="Resources/Strings*.resx">
+      <LogicalName>Microsoft.Data.SqlClient.Authentication.%(Filename).resources</LogicalName>
+    </EmbeddedResource>
+    <!-- Ship family-version validation targets for direct and transitive NuGet consumers. -->
+    <None Include="../build/Microsoft.Data.SqlClient.Extensions.Abstractions.targets"
+          Pack="true" PackagePath="build/;buildTransitive/" />
+  </ItemGroup>
+  <!-- Generate internal ThisAssembly file and package version constants before compilation. -->
   <Import Project="$(ToolsDir)targets\GenerateThisAssemblyCs.targets" />
 </Project>

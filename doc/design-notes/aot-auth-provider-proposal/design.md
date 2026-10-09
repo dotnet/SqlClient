@@ -10,7 +10,7 @@ orders the work.
 | Mechanism | Section | Approach |
 |---|---|---|
 | Relocate the registry, bootstrap and config parsing into Abstractions | [What moves and what stays](#what-moves-and-what-stays) | [A4-Full](alternatives.md#a4-move-the-authentication-pipeline-into-abstractions--selected) |
-| Keep the config section types in SqlClient as schema | [Role of the configuration section types](#role-of-the-configuration-section-types) | A4-Full |
+| Move the public config section types to Abstractions and forward them from SqlClient | [Role of the configuration section types](#role-of-the-configuration-section-types) | A4-Full |
 | Bootstrap on first registry access | [Bootstrap](#bootstrap) | A4 |
 | Order-independent precedence | [Precedence tiers](#precedence-tiers) | [D3](alternatives.md#d3-order-independent-tiers--selected) |
 | Switches and feature guards | [Gating](#gating) | [C2](alternatives.md#c2-feature-guard-shape--selected), [C3](alternatives.md#c3-split-the-gates-aligned-with-enableappconfig--selected) |
@@ -29,11 +29,11 @@ discovery. Each dependency was audited for a move into Abstractions
 
 | Dependency | Status on `main` | Consequence for the move |
 |---|---|---|
-| `SqlAuthenticationProviderConfigurationSection`, `SqlClientAuthenticationProviderConfigurationSection` | `internal`, in SqlClient | **Stay in SqlClient** — see [the next section](#role-of-the-configuration-section-types) |
+| `SqlAuthenticationProviderConfigurationSection`, `SqlClientAuthenticationProviderConfigurationSection` | `internal`, in SqlClient | Become public in Abstractions, with type forwards from SqlClient — see [the next section](#role-of-the-configuration-section-types) |
 | `SqlAuthenticationInitializer` | **public**, in SqlClient and its ref assembly | Moves with a `[TypeForwardedTo]` (public, downward). `TypeForwards.Abstractions.cs` already forwards five types this way |
 | `SqlClientLogger` | public, SqlClient-only | Does not move; replaced with `SqlClientEventSource` from Logging, which Abstractions already references |
 | `SQL.CannotCreateAuthProvider`, `CannotCreateSqlAuthInitializer`, `UnsupportedAuthenticationByProvider`, `UnsupportedAuthentication`, `UseWamBrokerRequiresAzureExtensionUpgrade` | SqlClient; five `Strings` entries localized into 13 locales | Abstractions has no resources today. Add `Strings.resx` and copy the existing translations. Exception *types* are BCL (`ArgumentException`, `NotSupportedException`, `InvalidOperationException`), so behaviour is unchanged |
-| `System.Configuration` (`net462`) / `System.Configuration.ConfigurationManager` (shipped `exclude="Compile"`) | SqlClient references both | **The only genuinely new dependency** for Abstractions. Ship it compile-excluded so it does not leak into third-party provider authors' compilations |
+| `System.Configuration` (`net462`) / `System.Configuration.ConfigurationManager` | SqlClient references both | Abstractions also references the package. Its compile assets flow to consumers because the public section handlers expose configuration base and property types |
 | `STRONG_NAME_SIGNING` public-key-token check | SqlClient | Moves as-is; `src/Directory.Build.props` defines the constant for every signed project |
 | Feature switches, guards, polyfills | None exist for auth | New in Abstractions |
 | `CreateAzureAuthenticationProvider` unit tests | `tests/UnitTests/.../SqlAuthenticationProviderManagerTests.cs` | Move to `Abstractions.Test` with the code |
@@ -52,12 +52,13 @@ Customers' configuration files name the section types explicitly:
 </configSections>
 ```
 
-That string is a contract. An internal type cannot be type-forwarded (`typeof` of another
-assembly's internal type is CS0122, measured), so the types cannot leave SqlClient without either
-breaking every such file or becoming public API.
+That string is a contract. Both section handlers become public in Abstractions, retaining their
+exact namespaces and names. SqlClient, its reference assemblies and its unsupported-platform
+assemblies forward them to Abstractions, so existing declarations naming `Microsoft.Data.SqlClient`
+continue to resolve. Their use in configuration is treated as a public API contract.
 
-After the move **no SqlClient code calls them**, but `System.Configuration` still depends on them
-entirely. They are the **section handlers**, and they remain the parser and schema for the XML:
+`System.Configuration` still depends on the relocated handlers. They remain the parser and
+schema for the XML:
 
 1. **Instantiation.** `ConfigurationManager.GetSection` loads the type named in `<configSections>`
    and constructs it. If that type cannot be loaded, the read fails —
@@ -76,14 +77,15 @@ Abstractions consumes the result without referencing the type. It casts to the b
 | "initializerType" | "providers"].Value`. Measured on .NET 10 against SqlClient 7.1.1's real
 handler: every value was returned, including the provider list.
 
-The split is therefore: **SqlClient owns the schema that config files bind to; Abstractions owns
-the behaviour.** That keeps today's file format working unchanged on `net462` and `net10.0`.
+Abstractions now owns both the schema and the behaviour. SqlClient supplies the forwarding
+metadata that preserves existing assembly-qualified configuration names. The section names,
+properties, defaults and precedence remain unchanged. See the
+[configuration sample](../../samples/SqlAuthenticationProviders.config).
 
 Alternatives rejected:
 
-- **Move the types and forward them** — impossible while they are internal (CS0122).
-- **Make them public and forward them** — new public types that exist only as configuration
-  schema (G3).
+- **Move the types while retaining internal visibility** — a forwarding declaration cannot
+  reference them under the existing cross-assembly visibility rules (CS0122).
 - **New handler types in Abstractions, keep SqlClient's for old files** — two schemas to maintain
   for one feature, and new files would be gratuitously different.
 
@@ -115,7 +117,9 @@ then:
   registry.GetProvider(method) → provider.AcquireTokenAsync(...)
 ```
 
-Any bootstrap failure is cached and rethrown from every later registry access (L2).
+Any bootstrap failure is cached. Public `GetProvider`/`SetProvider` preserve their existing
+`null`/`false` results and log the original failure with corrective guidance on every
+unsuccessful access (L2), including when tracing is enabled after the first failure.
 
 ### Ordering hazards any implementation must avoid
 
@@ -180,7 +184,7 @@ The shape, measured as shape B in [findings](findings.md#measured-trimmer-and-il
 internal static bool EnableAzureExtensionDiscovery =>
     AppContext.TryGetSwitch("Switch.Microsoft.Data.SqlClient.EnableAzureExtensionDiscovery", out bool v) ? v : true;
 
-// A separate property: putting all three attributes on one property is never trimmed (shape C).
+// A separate property: combined attributes do not trim by default without a publish-time switch value (shape C).
 [FeatureGuard(typeof(RequiresUnreferencedCodeAttribute))]
 [FeatureGuard(typeof(RequiresDynamicCodeAttribute))]
 [UnconditionalSuppressMessage("Trimming", "IL4000",
@@ -340,8 +344,9 @@ Abstractions targets `netstandard2.0;net10.0`:
   carries internal polyfills of `RequiresUnreferencedCode`, `RequiresDynamicCode`,
   `FeatureSwitchDefinition` and `FeatureGuard`. The trimmer matches these by name (measured), but
   the analyzer does not run for this TFM.
-- Both assets take a compile-excluded dependency on `System.Configuration.ConfigurationManager`,
-  versioned per `3rd-party-package-versions.instructions.md`.
+- Both assets take a dependency on `System.Configuration.ConfigurationManager`, versioned per
+  `3rd-party-package-versions.instructions.md`. Compile assets flow to consumers because the
+  public section handlers expose configuration types.
 
 ## Mixed-version enforcement
 
@@ -398,9 +403,9 @@ builds, and processes composed at runtime: plugin hosts, PowerShell modules, cus
 
 - **At bootstrap,** Abstractions loads `Microsoft.Data.SqlClient` by name and compares its exact
   family version with its own. On a mismatch, the bootstrap fails with an
-  `InvalidOperationException` naming both versions. Like any bootstrap failure (L2), it is
-  rethrown from `GetProvider`, `SetProvider` and the default-provider factory — exactly the calls a
-  mix breaks.
+  internal `InvalidOperationException` naming both versions. Like any bootstrap failure (L2),
+  it is logged with upgrade guidance while `GetProvider`/`SetProvider` return `null`/`false`.
+  This preserves the existing public API behaviour without silently accepting the mix.
 - **When discovery loads the Azure assembly,** it compares that assembly's family version too and
   fails the same way. This catches a current SqlClient paired with Azure 1.0.0, a combination in
   which SqlClient and Abstractions agree with each other.
@@ -416,6 +421,6 @@ The bugs are described, with evidence, in [findings](findings.md#latent-bugs-on-
 | Bug | Fix |
 |---|---|
 | L1 — `SqlAuthenticationInitializer` cannot register providers | Publish the registry before invoking the initializer; its registrations rank as Config |
-| L2 — an invalid `app.config` provider silently disables the registry | Cache the bootstrap failure; rethrow the original exception from `GetProvider`, `SetProvider` and the fed-auth path |
+| L2 — an invalid `app.config` provider silently disables the registry | Cache the bootstrap failure; preserve public `null`/`false` results and log failure details and corrective guidance on every unsuccessful access |
 | L3 — `SetProvider` returns `false` under NativeAOT | Delete the reflective bridge; the public API calls the registry directly |
 | L4 — the bridge loads `Microsoft.Data.SqlClient` without verifying its signature | Delete the reflective bridge |

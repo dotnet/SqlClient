@@ -64,7 +64,7 @@
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="8.23.0" />
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="8.23.0" />
         <dependency id="Microsoft.SqlServer.Server" version="$SqlServerVersionRange$" />
-        <dependency id="System.Configuration.ConfigurationManager" version="10.0.12" exclude="Compile" />
+        <dependency id="System.Configuration.ConfigurationManager" version="10.0.12" />
         <dependency id="System.Security.Cryptography.Pkcs" version="10.0.12" />
         <dependency id="System.Threading.RateLimiting" version="10.0.12" />
       </group>
@@ -78,7 +78,7 @@
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="8.23.0" />
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="8.23.0" />
         <dependency id="Microsoft.SqlServer.Server" version="$SqlServerVersionRange$" />
-        <dependency id="System.Configuration.ConfigurationManager" version="10.0.12" exclude="Compile" />
+        <dependency id="System.Configuration.ConfigurationManager" version="10.0.12" />
         <dependency id="System.Security.Cryptography.Pkcs" version="10.0.12" />
         <dependency id="System.Text.Json" version="10.0.12" />
         <dependency id="System.Threading.Channels" version="10.0.12" />

@@ -36,6 +36,19 @@ BeforeAll {
 }
 
 Describe 'validate-localization.ps1' {
+    It 'selects an independent allowlist for a second resource assembly' {
+        $resources = New-ResourcesDirectory
+        Set-ResourceFile (Join-Path $resources 'Strings.resx') @{ Greeting = 'Hello' }
+        Set-ResourceFile (Join-Path $resources 'Strings.fr.resx') @{ Greeting = 'Bonjour' }
+        $allowlist = Join-Path $resources 'allowlist.json'
+        @{
+            AllowedEnglishValueMatches = @{ 'Strings.fr.resx' = @('UnrelatedDriverKey') }
+            AbstractionsAllowedEnglishValueMatches = @{}
+        } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $allowlist
+        { & $scriptPath -ResourcesDirectory $resources -AllowlistPath $allowlist `
+            -AllowlistSection AbstractionsAllowedEnglishValueMatches } | Should -Not -Throw
+    }
+
     It 'accepts complete localized files with translated values' {
         $resources = New-ResourcesDirectory
         Set-ResourceFile (Join-Path $resources 'Strings.resx') @{ Greeting = 'Hello'; Farewell = 'Goodbye' }

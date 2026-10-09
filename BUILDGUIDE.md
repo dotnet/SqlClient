@@ -91,7 +91,8 @@ extend the driver's runtime support below .NET Framework 4.6.2 or .NET 10.
 | Driver reference and unsupported-platform assemblies | `net462;net10.0;netstandard2.0` |
 | Existing dual-target tests, stress projects, and their shared helpers | `net462;net10.0` |
 | Modern-only projects, including performance tests | `net10.0` |
-| AKV Provider, Abstractions, Logging, and standard-only test utilities | `netstandard2.0` only |
+| Abstractions | `netstandard2.0;net10.0` |
+| AKV Provider, Logging, and standard-only test utilities | `netstandard2.0` only |
 | Azure extensions | `net462;netstandard2.0` |
 | Microsoft.SqlServer.Server (independently versioned; unchanged here) | `net46;netstandard2.0` |
 | PackageCompatibility tool and tests (xUnit v3) | `net481;net10.0` |

@@ -242,34 +242,9 @@ namespace Microsoft.Data.SqlClient
 
         // SQL.ActiveDirectoryAuth
         //
-        internal static Exception UnsupportedAuthentication(string authentication)
-        {
-            return ADP.NotSupported(StringsHelper.GetString(Strings.SQL_UnsupportedAuthentication, authentication));
-        }
-
         internal static Exception UnsupportedAuthenticationSpecified(SqlAuthenticationMethod authentication)
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_UnsupportedAuthenticationSpecified, authentication));
-        }
-
-        internal static Exception CannotCreateAuthProvider(string authentication, string type, Exception e)
-        {
-            return ADP.Argument(StringsHelper.GetString(Strings.SQL_CannotCreateAuthProvider, authentication, type), e);
-        }
-
-        internal static Exception CannotCreateSqlAuthInitializer(string type, Exception e)
-        {
-            return ADP.Argument(StringsHelper.GetString(Strings.SQL_CannotCreateAuthInitializer, type), e);
-        }
-
-        internal static Exception UnsupportedAuthenticationByProvider(string authentication, string type)
-        {
-            return ADP.NotSupported(StringsHelper.GetString(Strings.SQL_UnsupportedAuthenticationByProvider, type, authentication));
-        }
-
-        internal static Exception UseWamBrokerRequiresAzureExtensionUpgrade()
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_UseWamBrokerRequiresAzureExtensionUpgrade));
         }
 
         internal static Exception CannotFindAuthProvider(SqlAuthenticationMethod authentication)
@@ -2150,4 +2125,3 @@ namespace Microsoft.Data.SqlClient
         }
     }
 }
-

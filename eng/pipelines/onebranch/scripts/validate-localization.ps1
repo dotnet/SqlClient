@@ -11,6 +11,9 @@
 .PARAMETER ReportOnly
     Report validation findings as warnings without failing. Malformed or missing inputs still fail,
     because a run that could not examine the resources has produced no result to report.
+
+.PARAMETER AllowlistSection
+    Property containing the allowlist for the resource set being validated.
 #>
 
 # Licensed to the .NET Foundation under one or more agreements.
@@ -25,7 +28,9 @@ param(
 
     [string]$AllowlistPath,
 
-    [switch]$ReportOnly
+    [switch]$ReportOnly,
+
+    [string]$AllowlistSection = 'AllowedEnglishValueMatches'
 )
 
 Set-StrictMode -Version Latest
@@ -83,9 +88,9 @@ if (-not [string]::IsNullOrWhiteSpace($AllowlistPath)) {
     }
 
     $configuration = Get-Content -LiteralPath $AllowlistPath -Raw | ConvertFrom-Json
-    $englishValueMatchesProperty = $configuration.PSObject.Properties['AllowedEnglishValueMatches']
+    $englishValueMatchesProperty = $configuration.PSObject.Properties[$AllowlistSection]
     if ($null -eq $englishValueMatchesProperty) {
-        throw "Localization allowlist file '$AllowlistPath' must define 'AllowedEnglishValueMatches'."
+        throw "Localization allowlist file '$AllowlistPath' must define '$AllowlistSection'."
     }
 
     foreach ($fileProperty in $englishValueMatchesProperty.Value.PSObject.Properties) {

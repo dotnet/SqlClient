@@ -12,6 +12,9 @@
   <PropertyGroup>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <!-- Nested fixtures build independently. Exclude all their items so their output DLLs
+         cannot become candidate assembly references when resolving .NET Framework assemblies. -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);PublishTest/**;ConfigurationTest/**;RuntimeVersionTest/**</DefaultItemExcludes>
   </PropertyGroup>
 
   <!-- Global Usings =================================================== -->

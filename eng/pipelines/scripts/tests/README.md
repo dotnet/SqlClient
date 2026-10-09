@@ -30,7 +30,7 @@ Add `-Output Detailed` to see per-test results.
 | ---- | ------ |
 | `Open-LocalizationPr.Tests.ps1` | `Open-LocalizationPr.ps1` — de-duplication of the scheduled localization pull request. |
 | `Install-DockerCli.macos.Tests.ps1` | `Install-DockerCli.macos.ps1` — Homebrew bottle selection for the macOS docker CLI. |
-| `Pipeline-Arguments.Tests.ps1` | PR build/pack/test argument quoting and the repository's CI variable naming convention. |
+| `Pipeline-Arguments.Tests.ps1` | PR build/pack/test argument quoting, the repository's CI variable naming convention, and authentication-validation stage wiring, platform coverage and setup order. |
 | `Build-Orchestration.Tests.ps1` | MSBuild test filters, dependency-pack ordering/version forwarding, local restore freshness, and generated command-line argument quoting. |
 
 The localization and Docker helper tests mock `git`, `tar`, `Invoke-RestMethod`,

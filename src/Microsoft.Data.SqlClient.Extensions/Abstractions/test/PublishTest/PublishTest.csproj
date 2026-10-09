@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <TrimmerSingleWarn>false</TrimmerSingleWarn>
+    <ILLinkTreatWarningsAsErrors>true</ILLinkTreatWarningsAsErrors>
+    <PublishTrimmed Condition="'$(PublishMode)' == 'trim'">true</PublishTrimmed>
+    <PublishAot Condition="'$(PublishMode)' == 'aot'">true</PublishAot>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/Abstractions.csproj"
+                      GlobalPropertiesToRemove="PublishTrimmed;PublishAot" />
+    <ProjectReference Include="../../../Azure/src/Azure.csproj"
+                      GlobalPropertiesToRemove="PublishTrimmed;PublishAot" />
+    <!-- Azure is deliberately never referenced in source: discovery must be absent. -->
+  </ItemGroup>
+</Project>

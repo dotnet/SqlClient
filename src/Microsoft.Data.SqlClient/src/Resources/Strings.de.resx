@@ -588,26 +588,11 @@
   <data name="SQL_NonLocalSSEInstance" xml:space="preserve">
     <value>Die Umleitung der SSE-Instanz wird bei nicht lokalen Benutzerinstanzen nicht unterstützt.</value>
   </data>
-  <data name="SQL_UnsupportedAuthentication" xml:space="preserve">
-    <value>Die Authentifizierung "{0}" wird nicht unterstützt.</value>
-  </data>
-  <data name="SQL_CannotCreateAuthProvider" xml:space="preserve">
-    <value>Fehler beim Instanziieren eines Authentifizierungsanbieters des Typs "{1}" für "{0}".</value>
-  </data>
-  <data name="SQL_CannotCreateAuthInitializer" xml:space="preserve">
-    <value>Fehler beim Instanziieren eines SqlAuthenticationInitializer des Typs "{0}".</value>
-  </data>
-  <data name="SQL_UnsupportedAuthenticationByProvider" xml:space="preserve">
-    <value>Die Authentifizierung "{1}" wird vom Anbieter "{0}" nicht unterstützt.</value>
-  </data>
   <data name="SQL_CannotFindAuthProvider" xml:space="preserve">
     <value>Für "{0}" wurde kein Authentifizierungsanbieter gefunden.</value>
   </data>
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
     <value>Für „{0}“ wurde kein Authentifizierungsanbieter gefunden. Installieren Sie das NuGet-Paket „Microsoft.Data.SqlClient.Extensions.Azure“ (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure), um Active Directory (Entra ID)-Authentifizierungsmethoden zu verwenden.</value>
-  </data>
-  <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>Die Einstellung „useWamBroker“ erfordert das Paket „Microsoft.Data.SqlClient.Extensions.Azure“, um „Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions“ bereitzustellen. Aktualisieren Sie das Paket „Microsoft.Data.SqlClient.Extensions.Azure“ auf mindestens Version 1.1.0, die diesen Typ enthält.</value>
   </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>Der Parameter "{0}" darf nicht NULL oder leer sein.</value>
