@@ -298,6 +298,20 @@ def _verify(cluster, database, run_table, results_table, pipeline_ids,
               file=sys.stderr)
         return 1
 
+    # None means the '.show ingestion failures' diagnostic itself could not run (typically a missing
+    # monitoring role), which is NOT the same as "no failures".  Report it as the unknown that it is
+    # rather than reusing the reassuring "no failures were reported" wording below, which would be
+    # factually wrong and would hide a real, repeatable permissions problem behind a soft warning.
+    if failures is None:
+        print(f"##vso[task.logissue type=warning]Kusto ingestion not yet queryable after "
+              f"{timeout_s}s ({run_table}={run_have}/{expected_run}, "
+              f"{results_table}={res_have}/{expected_results}), AND the ingestion-failure "
+              f"diagnostic could not be run (see above), so it is unknown whether ingestion "
+              f"actually failed. Not failing the step, but treat this run's telemetry as "
+              f"unverified and grant the ingestion principal the Database Monitor role so this "
+              f"check can do its job.", file=sys.stderr)
+        return 0
+
     print(f"##vso[task.logissue type=warning]Kusto ingestion not yet queryable after "
           f"{timeout_s}s ({run_table}={run_have}/{expected_run}, "
           f"{results_table}={res_have}/{expected_results}), but no ingestion failures were "
