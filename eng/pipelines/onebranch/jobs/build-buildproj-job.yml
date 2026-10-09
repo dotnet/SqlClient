@@ -153,11 +153,19 @@ jobs:
     steps:
       - template: /eng/pipelines/onebranch/steps/script-output-environment-variables-step.yml@self
 
-      # Localized resources ship with the SqlClient driver. Validate them before analysis and
-      # building so missing or untranslated strings fail every SqlClient build.
+      # Validate each resource-owning assembly before analysis and building.
       - ${{ if eq(parameters.packageShortName, 'SqlClient') }}:
         - template: /eng/pipelines/onebranch/steps/validate-localization-step.yml@self
           parameters:
+            resourcesDirectory: src/Microsoft.Data.SqlClient/src/Resources
+            allowlistSection: AllowedEnglishValueMatches
+            failOnValidationError: ${{ parameters.failOnValidationError }}
+
+      - ${{ if eq(parameters.packageShortName, 'Abstractions') }}:
+        - template: /eng/pipelines/onebranch/steps/validate-localization-step.yml@self
+          parameters:
+            resourcesDirectory: src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Resources
+            allowlistSection: AbstractionsAllowedEnglishValueMatches
             failOnValidationError: ${{ parameters.failOnValidationError }}
 
       # Validate the documentation snippet sources.  This requires no build, so a malformed
