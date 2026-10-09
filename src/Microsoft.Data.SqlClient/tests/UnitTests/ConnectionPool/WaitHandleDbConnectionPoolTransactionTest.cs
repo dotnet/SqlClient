@@ -47,7 +47,8 @@ public class WaitHandleDbConnectionPoolTransactionTest : IDisposable
     private WaitHandleDbConnectionPool CreatePool(
         int maxPoolSize = DefaultMaxPoolSize,
         int minPoolSize = DefaultMinPoolSize,
-        bool hasTransactionAffinity = true)
+        bool hasTransactionAffinity = true,
+        int idleTimeout = 0)
     {
         var poolGroupOptions = new DbConnectionPoolGroupOptions(
             poolByIdentity: false,
@@ -56,7 +57,7 @@ public class WaitHandleDbConnectionPoolTransactionTest : IDisposable
             creationTimeout: DefaultCreationTimeoutInMilliseconds,
             loadBalanceTimeout: 0,
             hasTransactionAffinity: hasTransactionAffinity,
-            idleTimeout: 0
+            idleTimeout: idleTimeout
         );
 
         var dbConnectionPoolGroup = new DbConnectionPoolGroup(
@@ -911,6 +912,76 @@ public class WaitHandleDbConnectionPoolTransactionTest : IDisposable
         Assert.NotSame(txn1, txn2);
         Assert.Same(conn1, conn2);
         AssertPoolMetrics();
+    }
+
+    #endregion
+
+    #region Pruning Tests
+
+    /// <summary>
+    /// Verifies that cleanup prunes general idle connections but preserves and reuses
+    /// connections held by an active transaction.
+    /// </summary>
+    [Fact]
+    public void Pruning_IgnoresTransactedConnections()
+    {
+        _pool.Shutdown();
+        _pool.Clear();
+        _pool = CreatePool(idleTimeout: 60);
+
+        // Arrange - place a connection into the transacted pool by returning it
+        // while a transaction is active. The connection lives in
+        // TransactedConnectionPool, not in the general pool's _stackOld/_stackNew.
+        using var scope = new TransactionScope();
+        var transaction = Transaction.Current;
+        Assert.NotNull(transaction);
+
+        var owner = new SqlConnection();
+        var conn = GetConnection(owner);
+        Assert.NotNull(conn);
+        ReturnConnection(conn, owner);
+
+        // Sanity: connection sits in the transacted pool, not the general pool.
+        Assert.Single(_pool.TransactedConnectionPool.TransactedConnections);
+        Assert.Single(_pool.TransactedConnectionPool.TransactedConnections[transaction]);
+        Assert.Equal(0, _pool.IdleCount);
+
+        // A general idle connection proves cleanup actually prunes rather than being disabled.
+        using (var suppressedScope = new TransactionScope(TransactionScopeOption.Suppress))
+        {
+            using var idleOwner = new SqlConnection();
+            var idleConnection = GetConnection(idleOwner);
+            Assert.NotNull(idleConnection);
+            ReturnConnection(idleConnection, idleOwner);
+            suppressedScope.Complete();
+        }
+        Assert.Equal(1, _pool.IdleCount);
+        int poolCountBefore = _pool.Count;
+
+        // Act - invoke pruning twice. The cleanup pass moves connections from
+        // _stackNew to _stackOld on one tick and destroys aged entries on the
+        // next, so running it twice mirrors a full prune cycle.
+        var waitHandlePool = (WaitHandleDbConnectionPool)_pool;
+        waitHandlePool.CleanupCallback(null);
+        waitHandlePool.CleanupCallback(null);
+
+        // Assert - the transacted connection must still be tracked in the
+        // transacted pool and must not have been destroyed.
+        Assert.Single(_pool.TransactedConnectionPool.TransactedConnections);
+        Assert.True(_pool.TransactedConnectionPool.TransactedConnections.ContainsKey(transaction));
+        Assert.Single(_pool.TransactedConnectionPool.TransactedConnections[transaction]);
+        Assert.Equal(0, _pool.IdleCount);
+        Assert.Equal(poolCountBefore - 1, _pool.Count);
+        Assert.False(conn.IsConnectionDoomed,
+            "Transacted connection should not be doomed by the pruning process.");
+
+        // The transacted connection must still be reusable for the same transaction.
+        var owner2 = new SqlConnection();
+        var conn2 = GetConnection(owner2);
+        Assert.Same(conn, conn2);
+        ReturnConnection(conn2, owner2);
+
+        scope.Complete();
     }
 
     #endregion
