@@ -177,7 +177,8 @@ internal sealed class SqlAuthenticationProviderRegistry
     }
 
     /// <summary>
-    /// Discovers and registers Azure defaults using the supplied assembly loader.
+    /// Discovers and registers Azure defaults using the supplied assembly loader, after
+    /// validating the extension's family version.
     /// </summary>
     /// <param name="loadAssembly">
     /// The assembly loader; production uses <see cref="LoadAzureExtensionAssembly"/> to validate
@@ -344,7 +345,8 @@ internal sealed class SqlAuthenticationProviderRegistry
     #region Bootstrap, Configuration and Registration Methods
 
     /// <summary>
-    /// Runs the enabled configuration and Azure discovery steps on first access.
+    /// Runs the enabled version validation, configuration and Azure discovery steps on first
+    /// access.
     /// </summary>
     /// <param name="getSection">
     /// The section reader, or null to use the process-wide ConfigurationManager.
