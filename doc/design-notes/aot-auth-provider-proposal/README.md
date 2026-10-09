@@ -31,8 +31,9 @@ generated fast path.** Delivered in two phases, the design:
   registration, so AOT apps get the Azure provider with no code, or with one line where the
   generator is not used.
 
-Phase 1 needs **no new public API** (one public type relocates behind a type forward). Phase 2
-adds a small one: the default-provider factory, which the generator uses too. Neither phase needs
+Phase 1 exposes the two existing configuration section handlers as public APIs and relocates
+them and the initializer behind type forwards. Phase 2 adds the default-provider factory,
+which the generator uses too. Neither phase needs
 `InternalsVisibleTo` or a cross-assembly bootstrap hook. Every trimming and AOT claim is
 backed by measurement with real `PublishTrimmed` and `PublishAot` builds
 ([experiments](experiments.md)).
@@ -133,8 +134,9 @@ Concretely:
 
 1. **Relocation (A4-Full).** The registry, Azure discovery, `app.config` parsing and
    `SqlAuthenticationInitializer` move into Abstractions. SqlClient calls only the public
-   `SqlAuthenticationProvider.GetProvider`. The two `app.config` section *types* stay in SqlClient
-   as the configuration schema that existing config files bind to by name. Abstractions reads the
+   `SqlAuthenticationProvider.GetProvider`. The two `app.config` section types become public in
+   Abstractions and are forwarded from SqlClient so existing config files still resolve them.
+   Abstractions reads the
    parsed values untyped (see [Role of the configuration section types](design.md#role-of-the-configuration-section-types)).
    No IVT, no hook, no module initializer.
 2. **Bootstrap on first registry access**, in the same assembly, which keeps today's guarantee
@@ -178,13 +180,14 @@ boundaries are crossed by reflection:
                                                           └─ Azure discovery ── reflection ──▶ Azure
 ```
 
-**After**, everything except the configuration *schema* lives in Abstractions, which both
-SqlClient and Azure already reference:
+**After**, both the configuration schema and authentication behaviour live in Abstractions,
+which SqlClient and Azure already reference:
 
 ```
    SqlClient ──────── direct call ────────▶  Abstractions
    (fed-auth path)                            ├─ registry (Config > User > Default tiers)
-   config section types (schema only)         ├─ bootstrap, run on first registry access
+   type forwards for section handlers        ├─ public configuration section handlers
+                                              ├─ bootstrap, run on first registry access
                                               │    ├─ app.config parsing      [gated: EnableAppConfig]
                                               │    ├─ default-provider factory ◀── Set… (app/library) / TrySet… (generated)
                                               │    └─ Azure discovery         [gated: EnableAzureExtensionDiscovery]
@@ -197,9 +200,9 @@ Five mechanisms make this work. Each is specified in [design.md](design.md):
 - **Relocation.** The registry and bootstrap move down a layer, so the public API and SqlClient
   both call them directly. The bootstrap still runs on the first registry access, as today's static
   constructor does, so configuration and discovery always happen before any read or write. The two
-  `app.config` section types stay in SqlClient because customers' config files name them; they
-  remain the schema that `System.Configuration` parses, and Abstractions reads the parsed values
-  without referencing them ([details](design.md#role-of-the-configuration-section-types)).
+  `app.config` section types become public in Abstractions and remain the schema that
+  `System.Configuration` parses. Type forwards preserve configuration files naming the
+  SqlClient assembly ([details](design.md#role-of-the-configuration-section-types)).
 - **Gating.** Each reflective path sits behind a switch property *and* a separate
   `[FeatureGuard]` property. The .NET 10 trimmer and AOT compiler treat a guard as `false`
   whenever trimming is on, so the reflection disappears from every trimmed or AOT publish with no
@@ -230,9 +233,9 @@ works under NativeAOT with no new API. Phase 2 reduces that to one line,
 the generator.
 
 **It satisfies R3 without `InternalsVisibleTo`, and keeps new public API small and useful.**
-`GetProvider`/`SetProvider` keep their signatures, and the one public type that relocates does so
-behind a type forward. The only additions are the default-provider factory (two methods and a
-context type) and `ActiveDirectoryAuthenticationProvider.CreateDefault`. These are the same
+`GetProvider`/`SetProvider` keep their signatures, and relocated types have forwards in SqlClient.
+The additions are the two public configuration section handlers, the default-provider factory
+(two methods and a context type) and `ActiveDirectoryAuthenticationProvider.CreateDefault`. The factory APIs are the same
 entry points the generator uses, and they replace today's per-method workaround.
 
 **It accepts R4 honestly while shrinking it.** Reflection remains where it must — .NET Framework,
@@ -306,8 +309,9 @@ applies mechanically. The servicing context adds constraints, detailed in
    should carry need API review. See [design.md](design.md#default-provider-factory).
 4. **Untyped config reading on .NET Framework.** Measured on .NET 10 against SqlClient's real
    handler; not yet run on .NET Framework (Linux host). Covered by [Phase 1 step 12](implementation-plan.md#phase-1--relocation-correctness-gating-and-enforcement-blocking).
-5. **The section types look unused** once parsing moves. Someone may delete or "tidy" them, which
-   would break every existing `app.config`. Mitigated by the pinning test and a comment.
+5. **Section-handler forwarding compatibility.** Preserve forwards in the driver, reference and
+   unsupported-platform assemblies and keep configuration dependency compile assets available.
+   Pin handler names and schemas, and test unchanged assembly-qualified `app.config` declarations.
 6. **Relocating `SqlAuthenticationInitializer`** is binary-compatible, but a graph containing both
    an old SqlClient (which still defines the type) and the new Abstractions sees two definitions
    and fails to compile (CS0433). Only reachable with SqlClient 7.0.0/7.0.1, which E2 blocks.

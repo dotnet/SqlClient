@@ -155,6 +155,12 @@
   </Target>
 
   <!-- References ====================================================== -->
+  <ItemGroup>
+    <!-- Emit the same type forwards as the driver so the compile-time contract preserves
+         the original SqlClient type identities for types now defined in Abstractions.
+         Referencing Abstractions alone does not emit forwarding metadata. -->
+    <Compile Include="../src/TypeForwards.Abstractions.cs" Link="TypeForwards.Abstractions.cs" />
+  </ItemGroup>
   <!-- Reference to Abstractions -->
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj"

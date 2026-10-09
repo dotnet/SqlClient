@@ -100,13 +100,42 @@ Conclusions:
    configuration.** ILLink and ILC treat a `RequiresUnreferencedCode` feature guard as `false`
    whenever trimming is enabled. This is what eliminates the silent-failure mode.
 2. Shape A works only when the application knows about the switch, and it is not analyzer-clean.
-3. The attributes must be on **separate** properties; shape C never trims by default.
+3. The attributes must be on **separate** properties for automatic removal; shape C does not
+   trim by default, but does trim with an explicit publish-time `false` switch value.
 4. Shape D trims under AOT only, guards only `RequiresDynamicCode`, and leaves IL2026.
 5. IL4000 is unavoidable for a `RequiresUnreferencedCode` guard backed by `AppContext`, so each
    guard property needs one justified suppression.
 6. With `[FeatureSwitchDefinition]`, the .NET 10 toolchain honours the switch without any
    `ILLink.Substitutions.xml`. That is **not** true for .NET 8 (see
    [Backporting](backporting.md)).
+
+### Combined-property regression experiment (2026-10-09)
+
+Rechecked the actual Abstractions implementation and its existing `PublishTest` fixture on
+Linux x64, SDK 10.0.401, ILLink/ILC 10.0.12. Both switch getters retained their lazy caches;
+the experiment moved both `FeatureGuard` attributes onto each `FeatureSwitchDefinition`
+property, removed the forwarding guards, and changed registry checks to use the combined getters.
+
+| Configuration | Observed result |
+|---|---|
+| Combined getters without the existing IL4000 suppressions | Strict library build failed with four IL4000 errors, one per capability per getter |
+| Combined getters with the existing justified suppressions | All 38 .NET 10 Abstractions tests passed with warnings treated as errors; trim and AOT analyzers were enabled |
+| Combined getters, default trimmed publish | Failed with IL2026 at both registry bootstrap calls; configuration reflection remained reachable |
+| Combined getters, default NativeAOT publish | Failed with IL2026 and IL3050 at both bootstrap calls |
+| Combined getters, trimmed publish with both switches explicitly `false` | Publish and executable passed; decompilation showed all three bootstrap guard branches reduced to `if (false)` |
+| Restored separate getters, default trimmed and NativeAOT publishes | Both publishes and executables passed without custom switch values; trimmed decompilation showed all three bootstrap guard branches reduced to `if (false)` |
+
+Default publish checks used `-c Release -r linux-x64 -p:PublishMode=trim` or
+`-p:PublishMode=aot`, with `-p:TreatWarningsAsErrors=true` and no explicit custom feature values.
+The trimmed control additionally supplied:
+
+```text
+-p:_ExtraTrimmerArgs=--feature Switch.Microsoft.Data.SqlClient.EnableAppConfig false --feature Switch.Microsoft.Data.SqlClient.EnableAzureExtensionDiscovery false
+```
+
+The experiment establishes that combining the attributes is supported with explicit switch
+values, but does not preserve this package's automatic removal contract. The separate-property
+implementation was restored; the caches were retained.
 
 ## `netstandard2.0`: polyfills work, the analyzer does not
 

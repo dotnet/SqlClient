@@ -9,16 +9,19 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests;
 
-/// <summary>Pins the internal section names and schema consumed by existing app.config files.</summary>
+/// <summary>Pins the public section names, forwarding and schema consumed by existing app.config files.</summary>
 public class AuthenticationConfigurationSchemaTest
 {
-    /// <summary>Both original handlers stay in SqlClient and retain every supported property.</summary>
+    /// <summary>Both handlers live in Abstractions while preserving their original assembly-qualified names and schema.</summary>
     [Theory]
     [InlineData(typeof(SqlAuthenticationProviderConfigurationSection), "SqlAuthenticationProviders")]
     [InlineData(typeof(SqlClientAuthenticationProviderConfigurationSection), "SqlClientAuthenticationProviders")]
     public void HandlerContractIsPreserved(Type type, string sectionName)
     {
-        Assert.Equal("Microsoft.Data.SqlClient", type.Assembly.GetName().Name);
+        Assert.Equal("Microsoft.Data.SqlClient.Extensions.Abstractions", type.Assembly.GetName().Name);
+        Assert.True(type.IsPublic);
+        Assert.Same(type, typeof(SqlConnection).Assembly.GetType(type.FullName!, throwOnError: true));
+        Assert.Same(type, Type.GetType(type.FullName + ", Microsoft.Data.SqlClient", throwOnError: true));
         Assert.Equal("Microsoft.Data.SqlClient." + sectionName.Replace("Providers", "ProviderConfigurationSection"),
             type.FullName);
         var section = Assert.IsAssignableFrom<ConfigurationSection>(Activator.CreateInstance(type));
@@ -26,6 +29,8 @@ public class AuthenticationConfigurationSchemaTest
             section.ElementInformation.Properties.Cast<PropertyInformation>()
                 .Select(p => p.Name).OrderBy(n => n, StringComparer.Ordinal));
         Assert.IsType<ProviderSettingsCollection>(section.ElementInformation.Properties["providers"].Value);
+        Assert.Equal(sectionName, type.GetField("Name")!.GetRawConstantValue());
+        Assert.Equal(string.Empty, section.ElementInformation.Properties["initializerType"].Value);
         Assert.Equal(string.Empty, section.ElementInformation.Properties["applicationClientId"].Value);
         Assert.Equal(string.Empty, section.ElementInformation.Properties["useWamBroker"].Value);
     }

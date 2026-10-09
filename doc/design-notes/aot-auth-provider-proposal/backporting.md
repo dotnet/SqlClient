@@ -145,10 +145,12 @@ Release owners can include it; if they do, it emits for `net8.0+` consumers, sin
 provider as on .NET 10.
 
 **BP7 — New dependency and resources in a patch.** Abstractions acquires
-`System.Configuration.ConfigurationManager` (compile-excluded) and a `Strings.resx` whose
+`System.Configuration.ConfigurationManager` and a `Strings.resx` whose
 translations are copied from SqlClient. Both release branches run the localization pipeline
 (`release/7.0`'s head is a OneLocBuild commit). The dependency's version follows the branch's
 existing SqlClient choice for the floor LTS (8.x).
+If the public section-handler relocation is backported, include its type forwards and allow
+configuration dependency compile assets to flow to consumers of those public APIs.
 
 **BP8 — 7.0 specifics.**
 

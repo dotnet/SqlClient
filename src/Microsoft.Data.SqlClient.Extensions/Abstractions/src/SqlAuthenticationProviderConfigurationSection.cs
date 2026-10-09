@@ -6,13 +6,12 @@ using System.Configuration;
 
 namespace Microsoft.Data.SqlClient
 {
-    // These names and properties are app.config contracts. Keep the handlers in SqlClient
-    // even though Abstractions now owns authentication bootstrap and reads the values untyped.
     /// <summary>
-    /// The configuration section definition for reading app.config.
+    /// Defines the legacy SqlAuthenticationProviders section for configuring authentication in app.config.
     /// </summary>
-    internal class SqlAuthenticationProviderConfigurationSection : ConfigurationSection
+    public class SqlAuthenticationProviderConfigurationSection : ConfigurationSection
     {
+        /// <summary>The name of the legacy authentication configuration section.</summary>
         public const string Name = "SqlAuthenticationProviders";
 
         /// <summary>
@@ -44,10 +43,11 @@ namespace Microsoft.Data.SqlClient
     }
 
     /// <summary>
-    /// The configuration section definition for reading app.config.
+    /// Defines the SqlClientAuthenticationProviders section for configuring authentication in app.config.
     /// </summary>
-    internal class SqlClientAuthenticationProviderConfigurationSection : SqlAuthenticationProviderConfigurationSection
+    public class SqlClientAuthenticationProviderConfigurationSection : SqlAuthenticationProviderConfigurationSection
     {
+        /// <summary>The name of the current authentication configuration section.</summary>
         public new const string Name = "SqlClientAuthenticationProviders";
     }
 

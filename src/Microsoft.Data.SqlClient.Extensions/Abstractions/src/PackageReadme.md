@@ -34,11 +34,27 @@ Enable this tracing to diagnose unsuccessful registration or initialization. Boo
 are cached and logged on every subsequent access, even if tracing was enabled after the first
 failure; correct the configuration or package versions and restart the application.
 
+If resource lookup or error-message formatting fails, the message falls back to the resource
+key and culture-formatted argument values, preserving the intended exception and its original
+cause. Arguments that cannot be formatted are identified by type. These recoverable
+message-generation failures are also traced.
+
 On untrimmed applications, Azure discovery and the existing `app.config` sections still work.
+The public `SqlAuthenticationProviderConfigurationSection` and
+`SqlClientAuthenticationProviderConfigurationSection` handlers are defined in Abstractions
+and type-forwarded from SqlClient. Existing section declarations that name
+`Microsoft.Data.SqlClient` remain valid; their section names, properties and defaults are unchanged.
+The `System.Configuration.ConfigurationManager` dependency supplies their public configuration
+base types and is available to consuming projects at compile time.
+
 The following AppContext switches disable those paths before the first registry access:
 
 - `Switch.Microsoft.Data.SqlClient.EnableAppConfig` (default `true`)
 - `Switch.Microsoft.Data.SqlClient.EnableAzureExtensionDiscovery` (default `true`)
+
+Each switch is read and cached independently on first access for the lifetime of the
+process, matching SqlClient's other switches. Set them before using SqlClient;
+subsequent runtime changes do not affect cached values.
 
 On .NET 10 trimmed and NativeAOT publishes, both reflective paths are removed automatically.
 Register an explicitly constructed provider for each required method before opening a connection:

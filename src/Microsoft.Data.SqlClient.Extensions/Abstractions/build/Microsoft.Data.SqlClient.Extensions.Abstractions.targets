@@ -43,14 +43,15 @@
         is not limited to packages whose assemblies appear in one particular asset group.
         Project references without NuGetPackageId metadata are outside this package-version check.
       -->
-      <_SqlClientFamilyAsset Include="@(ResolvedCompileFileDefinitions);@(ReferencePath);@(RuntimeCopyLocalItems);@(RuntimeTargetsCopyLocalItems)"
-          Condition="'%(NuGetPackageId)' == 'Microsoft.Data.SqlClient' Or
-                     '%(NuGetPackageId)' == 'Microsoft.Data.SqlClient.Extensions.Abstractions' Or
-                     '%(NuGetPackageId)' == 'Microsoft.Data.SqlClient.Extensions.Azure' Or
-                     '%(NuGetPackageId)' == 'Microsoft.Data.SqlClient.Internal.Logging' Or
-                     '%(NuGetPackageId)' == 'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider'">
-        <FamilyVersion>%(NuGetPackageVersion)</FamilyVersion>
-        <FamilyId>%(NuGetPackageId)</FamilyId>
+      <_SqlClientResolvedAsset Include="@(ResolvedCompileFileDefinitions);@(ReferencePath);@(RuntimeCopyLocalItems);@(RuntimeTargetsCopyLocalItems)" />
+      <_SqlClientFamilyAsset Include="@(_SqlClientResolvedAsset)"
+          Condition="'%(_SqlClientResolvedAsset.NuGetPackageId)' == 'Microsoft.Data.SqlClient' Or
+                     '%(_SqlClientResolvedAsset.NuGetPackageId)' == 'Microsoft.Data.SqlClient.Extensions.Abstractions' Or
+                     '%(_SqlClientResolvedAsset.NuGetPackageId)' == 'Microsoft.Data.SqlClient.Extensions.Azure' Or
+                     '%(_SqlClientResolvedAsset.NuGetPackageId)' == 'Microsoft.Data.SqlClient.Internal.Logging' Or
+                     '%(_SqlClientResolvedAsset.NuGetPackageId)' == 'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider'">
+        <FamilyVersion>%(_SqlClientResolvedAsset.NuGetPackageVersion)</FamilyVersion>
+        <FamilyId>%(_SqlClientResolvedAsset.NuGetPackageId)</FamilyId>
       </_SqlClientFamilyAsset>
     </ItemGroup>
 

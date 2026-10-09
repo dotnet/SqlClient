@@ -131,8 +131,6 @@ jobs:
           debug: ${{ parameters.debug }}
           runtimes: [10.x]
 
-      - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
-
       # The Windows agent images include a suitable .NET Framework runtime, so
       # we don't have to install one explicitly.
 
@@ -191,48 +189,3 @@ jobs:
               --no-build
               -f ${{ runtime }}
               --filter "category = flaky"
-
-      # These script-driven checks build their own Release fixtures independently of
-      # buildConfiguration. Each authentication scenario runs in a fresh process because
-      # bootstrap state and configuration cannot be reset reliably inside a unit-test host.
-      # They verify current and legacy app.config sections, disabled feature switches,
-      # invalid providers/initializers, unsupported methods, and runtime family-version mismatches.
-      # Linux additionally publishes and executes trimmed and Native AOT applications.
-      - ${{ if eq(parameters.jobNameSuffix, 'linux') }}:
-        - task: DotNetCoreCLI@2
-          displayName: Test authentication bootstrap, trimming, and Native AOT
-          inputs:
-            command: custom
-            custom: tool
-            workingDirectory: $(Build.SourcesDirectory)
-            arguments: >-
-              run pwsh --
-              -File src/Microsoft.Data.SqlClient.Extensions/Abstractions/test/RunAuthenticationTests.ps1
-              -Publish
-
-        # Exercise build-time family-version enforcement with PackageReference asset metadata
-        # and packages.config: matching versions pass, mismatches fail with SQLCLIENT001,
-        # independently versioned SqlServer is excluded, and the emergency opt-out works.
-        - task: DotNetCoreCLI@2
-          displayName: Test SqlClient family package versions
-          inputs:
-            command: custom
-            custom: tool
-            workingDirectory: $(Build.SourcesDirectory)
-            arguments: >-
-              run pwsh --
-              -File src/Microsoft.Data.SqlClient.Extensions/Abstractions/test/RunVersionChecks.ps1
-
-      # Run the fresh-process configuration and runtime-version scenarios against .NET Framework
-      # on Windows; trimmed/Native AOT publishing is covered by the Linux step above.
-      - ${{ if eq(parameters.jobNameSuffix, 'windows') }}:
-        - task: DotNetCoreCLI@2
-          displayName: Test .NET Framework authentication configuration and runtime versions
-          inputs:
-            command: custom
-            custom: tool
-            workingDirectory: $(Build.SourcesDirectory)
-            arguments: >-
-              run pwsh --
-              -File src/Microsoft.Data.SqlClient.Extensions/Abstractions/test/RunAuthenticationTests.ps1
-              -Framework net462

@@ -7,66 +7,80 @@ using System.Diagnostics.CodeAnalysis;
 namespace Microsoft.Data.SqlClient;
 
 /// <summary>
-/// Defines authentication bootstrap switches and capability guards so configuration loading,
-/// Azure extension discovery, and runtime version checks can be excluded from trimmed or AOT builds.
+/// Defines authentication bootstrap switches and capability guards so configuration loading, Azure
+/// extension discovery, and runtime version checks can be excluded from trimmed or AOT builds.
 /// </summary>
 /// <remarks>
-/// Configuration and discovery default to enabled to preserve existing runtime behavior.
-/// Publish-time switch values allow trimming tools to remove guarded reflection paths;
-/// changing an AppContext switch at runtime does not change what was retained during publishing.
+/// Configuration and discovery default to enabled to preserve existing runtime behavior.  Each
+/// switch is read on first access and cached for the lifetime of the process.  Publish-time switch
+/// values allow trimming tools to remove guarded reflection paths; changing an AppContext switch at
+/// runtime does not change what was retained during publishing.
 /// </remarks>
 internal static class AuthenticationFeatureSwitches
 {
-    /// <summary>
-    /// Indicates whether authentication bootstrap may inspect loaded SqlClient family assembly versions.
-    /// </summary>
-    /// <remarks>
-    /// Returns true during ordinary execution. The FeatureGuard attributes identify the guarded
-    /// path as requiring unreferenced code and dynamic code capabilities for trimming and AOT analysis.
-    /// The IL4000 suppression permits this guard because fixed trimmed/AOT images cannot replace
-    /// assemblies at runtime and their package graph is validated at build time.
-    /// </remarks>
-    [FeatureGuard(typeof(RequiresUnreferencedCodeAttribute))]
-    [FeatureGuard(typeof(RequiresDynamicCodeAttribute))]
-    [UnconditionalSuppressMessage("Trimming", "IL4000",
-        Justification = "Runtime assembly replacement is unavailable in fixed trimmed/AOT images; the package graph is checked at build time.")]
-    internal static bool IsRuntimeVersionValidationSupported => true;
+    #region Feature Switches
 
     /// <summary>
     /// Gets whether authentication providers and initializers may be loaded from app.config.
     /// </summary>
     /// <remarks>
-    /// Defaults to true when the AppContext switch is unset. FeatureSwitchDefinition associates
-    /// this property with the named switch so trimming tools can substitute its publish-time value.
+    /// Defaults to true when the AppContext switch is unset.
     /// </remarks>
+    // Associates this property with the named switch so trimming tools can substitute its
+    // publish-time value.
     [FeatureSwitchDefinition("Switch.Microsoft.Data.SqlClient.EnableAppConfig")]
     internal static bool EnableAppConfig =>
-        !AppContext.TryGetSwitch("Switch.Microsoft.Data.SqlClient.EnableAppConfig", out bool enabled) ||
-        enabled;
+        AcquireAndReturn(
+            "Switch.Microsoft.Data.SqlClient.EnableAppConfig",
+            ref s_enableAppConfig,
+            defaultValue: true);
 
     /// <summary>
-    /// Gets whether authentication bootstrap may discover the Azure extension provider through reflection.
+    /// Gets whether authentication bootstrap may discover the Azure extension provider through
+    /// reflection.
     /// </summary>
     /// <remarks>
-    /// Defaults to true when the AppContext switch is unset. FeatureSwitchDefinition associates
-    /// this property with the named switch so trimming tools can substitute its publish-time value.
+    /// Defaults to true when the AppContext switch is unset.
     /// </remarks>
+    // Associates this property with the named switch so trimming tools can substitute its
+    // publish-time value.
     [FeatureSwitchDefinition("Switch.Microsoft.Data.SqlClient.EnableAzureExtensionDiscovery")]
     internal static bool EnableAzureExtensionDiscovery =>
-        !AppContext.TryGetSwitch("Switch.Microsoft.Data.SqlClient.EnableAzureExtensionDiscovery",
-            out bool enabled) || enabled;
+        AcquireAndReturn(
+            "Switch.Microsoft.Data.SqlClient.EnableAzureExtensionDiscovery",
+            ref s_enableAzureExtensionDiscovery,
+            defaultValue: true);
+
+    #endregion
+
+    #region Trimming Guards
+
+    /// <summary>
+    /// Indicates whether authentication bootstrap may inspect loaded SqlClient family assembly
+    /// versions.
+    /// </summary>
+    // Guards reflection-based version validation so trimming can remove it from fixed images.
+    [FeatureGuard(typeof(RequiresUnreferencedCodeAttribute))]
+    // Guards dynamic assembly loading so NativeAOT can remove runtime version validation.
+    [FeatureGuard(typeof(RequiresDynamicCodeAttribute))]
+    // Fixed trimmed/AOT images cannot replace assemblies; their package graph is checked at build
+    // time.
+    [UnconditionalSuppressMessage("Trimming", "IL4000",
+        Justification = "Runtime assembly replacement is unavailable in fixed trimmed/AOT images; the package graph is checked at build time.")]
+    internal static bool IsRuntimeVersionValidationSupported => true;
 
     /// <summary>
     /// Guards the reflection-based authentication configuration and initializer loading path.
     /// </summary>
     /// <remarks>
-    /// Follows EnableAppConfig. The FeatureGuard attributes declare that a true value permits
-    /// calls requiring unreferenced code and dynamic code capabilities.
-    /// The IL4000 suppression permits a switch-backed guard because disabling the switch at
-    /// publish time lets trimming tools replace it with false and remove the guarded path.
+    /// Follows EnableAppConfig.
     /// </remarks>
+    // Marks this property as guarding calls requiring unreferenced code. Keep it separate from the
+    // switch definition so trimming removes the guarded path without a publish-time switch value.
     [FeatureGuard(typeof(RequiresUnreferencedCodeAttribute))]
+    // Marks this property as guarding calls requiring dynamic code.
     [FeatureGuard(typeof(RequiresDynamicCodeAttribute))]
+    // Permits a switch-backed guard because trimming replaces this capability guard with false.
     [UnconditionalSuppressMessage("Trimming", "IL4000",
         Justification = "The separate AppContext feature switch backs this guard; trimming replaces it with false.")]
     internal static bool IsAppConfigSupported => EnableAppConfig;
@@ -75,14 +89,52 @@ internal static class AuthenticationFeatureSwitches
     /// Guards reflection-based Azure extension discovery and provider construction.
     /// </summary>
     /// <remarks>
-    /// Follows EnableAzureExtensionDiscovery. The FeatureGuard attributes declare that a true
-    /// value permits calls requiring unreferenced code and dynamic code capabilities.
-    /// The IL4000 suppression permits a switch-backed guard because disabling the switch at
-    /// publish time lets trimming tools replace it with false and remove the guarded path.
+    /// Follows EnableAzureExtensionDiscovery.
     /// </remarks>
+    // Marks this property as guarding calls requiring unreferenced code. Keep it separate from the
+    // switch definition so trimming removes the guarded path without a publish-time switch value.
     [FeatureGuard(typeof(RequiresUnreferencedCodeAttribute))]
+    // Marks this property as guarding calls requiring dynamic code.
     [FeatureGuard(typeof(RequiresDynamicCodeAttribute))]
+    // Permits a switch-backed guard because trimming replaces this capability guard with false.
     [UnconditionalSuppressMessage("Trimming", "IL4000",
         Justification = "The separate AppContext feature switch backs this guard; trimming replaces it with false.")]
     internal static bool IsAzureExtensionDiscoverySupported => EnableAzureExtensionDiscovery;
+
+    #endregion
+
+    #region Helpers
+
+    // The possible states of a feature switch.
+    private enum SwitchValue : byte
+    {
+        None = 0,
+        True = 1,
+        False = 2
+    }
+
+    // Cached feature switch values.
+    private static SwitchValue s_enableAppConfig;
+    private static SwitchValue s_enableAzureExtensionDiscovery;
+
+    // Acquires the feature switch value from AppContext if it hasn't been cached yet.  Switches
+    // that aren't set will assume the default value.
+    private static bool AcquireAndReturn(
+        string switchName, ref SwitchValue switchValue, bool defaultValue)
+    {
+        // Short circuit if we've already cached the switch value.
+        if (switchValue != SwitchValue.None)
+        {
+            return switchValue == SwitchValue.True;
+        }
+
+        // Acquire the switch value from AppContext.  If not present, use the default value.
+        bool enabled =
+            AppContext.TryGetSwitch(switchName, out bool acquiredValue) ? acquiredValue : defaultValue;
+
+        switchValue = enabled ? SwitchValue.True : SwitchValue.False;
+        return enabled;
+    }
+
+    #endregion
 }

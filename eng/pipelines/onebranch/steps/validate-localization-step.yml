@@ -11,10 +11,8 @@ parameters:
     type: boolean
   - name: resourcesDirectory
     type: string
-    default: src/Microsoft.Data.SqlClient/src/Resources
   - name: allowlistSection
     type: string
-    default: AllowedEnglishValueMatches
 
 steps:
   # Compose the argument line first so the optional switch can be appended without repeating the

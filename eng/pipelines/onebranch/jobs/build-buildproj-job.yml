@@ -158,6 +158,8 @@ jobs:
       - ${{ if eq(parameters.packageShortName, 'SqlClient') }}:
         - template: /eng/pipelines/onebranch/steps/validate-localization-step.yml@self
           parameters:
+            resourcesDirectory: src/Microsoft.Data.SqlClient/src/Resources
+            allowlistSection: AllowedEnglishValueMatches
             failOnValidationError: ${{ parameters.failOnValidationError }}
 
       - ${{ if eq(parameters.packageShortName, 'Abstractions') }}:

@@ -10,7 +10,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
-using System.Threading;
 using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient;
@@ -77,7 +76,7 @@ internal sealed class SqlAuthenticationProviderRegistry
                 }
                 _initialized = true;
             }
-            catch (Exception e) when (IsRecoverableException(e))
+            catch (Exception e) when (ExceptionHelpers.IsRecoverableException(e))
             {
                 // Keep the original exception, rather than poisoning a static constructor.
                 SqlClientEventSource.Log.TryTraceEvent(
@@ -493,7 +492,7 @@ internal sealed class SqlAuthenticationProviderRegistry
                 Instance.EnsureInitialized();
                 return Instance._providers.TryGetValue(authenticationMethod, out SqlAuthenticationProvider? value) ? value : null;
             }
-            catch (Exception e) when (IsRecoverableException(e))
+            catch (Exception e) when (ExceptionHelpers.IsRecoverableException(e))
             {
                 SqlClientEventSource.Log.TryTraceEvent(
                     "SqlAuthenticationProvider.GetProvider failed for {0}; returning null. " +
@@ -504,21 +503,6 @@ internal sealed class SqlAuthenticationProviderRegistry
                 return null;
             }
         }
-    }
-
-    /// <summary>Determines whether a registry failure can be logged and converted to a null/false result.</summary>
-    /// <param name="exception">The failure to examine, including its inner exception chain.</param>
-    /// <returns>False if any exception in the chain indicates memory exhaustion, stack overflow, access violation or thread abort; otherwise true.</returns>
-    private static bool IsRecoverableException(Exception exception)
-    {
-        for (Exception? current = exception; current is not null; current = current.InnerException)
-        {
-            if (current is OutOfMemoryException or StackOverflowException or AccessViolationException or ThreadAbortException)
-            {
-                return false;
-            }
-        }
-        return true;
     }
 
     /// <summary>Reflectively constructs an Azure authentication provider using the configured overrides.</summary>
@@ -629,7 +613,7 @@ internal sealed class SqlAuthenticationProviderRegistry
                 return Instance.Register(authenticationMethod, provider,
                     Instance._runningInitializer ? RegistrationTier.Config : RegistrationTier.User);
             }
-            catch (Exception e) when (IsRecoverableException(e))
+            catch (Exception e) when (ExceptionHelpers.IsRecoverableException(e))
             {
                 SqlClientEventSource.Log.TryTraceEvent(
                     "SqlAuthenticationProvider.SetProvider failed for {0}; returning false. " +

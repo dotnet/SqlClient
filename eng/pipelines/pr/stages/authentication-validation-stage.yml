@@ -1,0 +1,92 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+parameters:
+  # Name of the customized 1ES pool used by both authentication validation jobs.
+  - name: poolName
+    type: string
+
+  # Linux image selected by imageOverride for .NET 10, trimming, NativeAOT and family-version
+  # checks. Must provide GCC for the linux-x64 NativeAOT publish.
+  - name: linuxPoolImage
+    type: string
+
+  # Windows image selected by imageOverride for net462 configuration and runtime-version
+  # checks. Must include .NET Framework 4.6.2 or a compatible later runtime.
+  - name: windowsPoolImage
+    type: string
+
+stages:
+  - stage: test_authentication
+    displayName: Test Authentication Registration
+    # The scripts build their own Release fixtures and require no package artifacts or SQL secrets.
+    dependsOn: []
+
+    jobs:
+      - job: test_authentication_linux
+        displayName: Authentication Registration - Linux .NET 10
+        pool:
+          name: ${{ parameters.poolName }}
+          demands:
+            - imageOverride -equals ${{ parameters.linuxPoolImage }}
+
+        steps:
+          - template: /eng/pipelines/common/steps/install-dotnet.yml@self
+            parameters:
+              runtimes: [10.x]
+
+          - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
+
+          # Fresh processes isolate bootstrap state and app.config for configuration, initializer,
+          # precedence, disabled-switch and runtime-version scenarios. Linux also publishes and
+          # executes trimmed and NativeAOT applications to verify explicit registration.
+          - task: DotNetCoreCLI@2
+            displayName: Test authentication bootstrap, trimming, and Native AOT
+            inputs:
+              command: custom
+              custom: tool
+              workingDirectory: $(Build.SourcesDirectory)
+              arguments: >-
+                run pwsh --
+                -File src/Microsoft.Data.SqlClient.Extensions/Abstractions/test/RunAuthenticationTests.ps1
+                -Publish
+
+          # Test exact family versions for PackageReference metadata and packages.config,
+          # including mismatches, independently versioned SqlServer and the emergency opt-out.
+          - task: DotNetCoreCLI@2
+            displayName: Test SqlClient family package versions
+            inputs:
+              command: custom
+              custom: tool
+              workingDirectory: $(Build.SourcesDirectory)
+              arguments: >-
+                run pwsh --
+                -File src/Microsoft.Data.SqlClient.Extensions/Abstractions/test/RunVersionChecks.ps1
+
+      - job: test_authentication_netfx
+        displayName: Authentication Registration - Windows .NET Framework
+        pool:
+          name: ${{ parameters.poolName }}
+          demands:
+            - imageOverride -equals ${{ parameters.windowsPoolImage }}
+
+        steps:
+          - template: /eng/pipelines/common/steps/install-dotnet.yml@self
+
+          - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
+
+          # Exercise the permanently reflective .NET Framework configuration and runtime-version
+          # paths in fresh processes. The Windows image supplies the .NET Framework runtime.
+          - task: DotNetCoreCLI@2
+            displayName: Test .NET Framework authentication configuration and runtime versions
+            inputs:
+              command: custom
+              custom: tool
+              workingDirectory: $(Build.SourcesDirectory)
+              arguments: >-
+                run pwsh --
+                -File src/Microsoft.Data.SqlClient.Extensions/Abstractions/test/RunAuthenticationTests.ps1
+                -Framework net462

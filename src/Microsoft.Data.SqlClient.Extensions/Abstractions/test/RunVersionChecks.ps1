@@ -20,7 +20,8 @@ try {
                 )
                 $assets = ''
                 if ($kind -eq 'PackageReference') {
-                    $assets = '<ItemGroup>' + (($items | ForEach-Object {
+                    # SDK/framework references may have no NuGet package metadata.
+                    $assets = '<ItemGroup><ReferencePath Include="FrameworkReferenceWithoutPackageMetadata.dll" />' + (($items | ForEach-Object {
                         "<ResolvedCompileFileDefinitions Include='$($_.Id)'><NuGetPackageId>$($_.Id)</NuGetPackageId><NuGetPackageVersion>$($_.Version)</NuGetPackageVersion></ResolvedCompileFileDefinitions>"
                     }) -join '') + '</ItemGroup>'
                 } else {
@@ -48,7 +49,7 @@ try {
             }
         }
     }
-    Write-Host 'PASS: exact family versions, packages.config, excluded SqlServer, and emergency opt-out.'
+    Write-Host 'PASS: exact family versions, metadata-free framework references, packages.config, excluded SqlServer, and emergency opt-out.'
 } finally {
     # Only remove the unique, fully resolved fixture directory created above.
     Remove-Item -LiteralPath $temp -Recurse -Force

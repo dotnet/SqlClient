@@ -105,6 +105,12 @@
   </PropertyGroup>
 
   <!-- References ====================================================== -->
+  <ItemGroup>
+    <!-- This alternative SqlClient assembly needs its own forwards to preserve resolution
+         of assembly-qualified type names, including existing app.config section declarations.
+         GenAPI does not reproduce these forwards, and referencing Abstractions alone is insufficient. -->
+    <Compile Include="../src/TypeForwards.Abstractions.cs" Link="TypeForwards.Abstractions.cs" />
+  </ItemGroup>
   <!--
     Reference the ref project to cause it to be built, so we can use it as the contract to build
     not supported assemblies against. Note, this must be set to output item type of none otherwise

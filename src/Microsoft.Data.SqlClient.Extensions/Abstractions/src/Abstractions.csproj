@@ -2,6 +2,8 @@
   <!-- General Properties ============================================== -->
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient.Extensions.Abstractions</AssemblyName>
+    <!-- netstandard2.0 preserves compatibility for existing consumers, including .NET Framework;
+         net10.0 enables trimming/AOT analysis and publish-time removal of reflective bootstrap paths. -->
     <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
     <IsAotCompatible Condition="'$(TargetFramework)' == 'net10.0'">true</IsAotCompatible>
   </PropertyGroup>
@@ -81,7 +83,7 @@
                       Condition="'$(ReferenceType)' == 'Package'" />
 
     <PackageReference Include="System.Configuration.ConfigurationManager"
-                      PrivateAssets="compile;contentfiles;build;buildTransitive;analyzers" />
+                      PrivateAssets="contentfiles;build;buildTransitive;analyzers" />
   </ItemGroup>
 
   <!-- CodeGen Targets ================================================= -->

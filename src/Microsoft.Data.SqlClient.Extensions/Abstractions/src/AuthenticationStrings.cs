@@ -4,6 +4,8 @@
 
 using System.Globalization;
 using System.Resources;
+using System.Text;
+using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient;
 
@@ -21,17 +23,77 @@ internal static class AuthenticationStrings
 
     /// <summary>
     /// Retrieves a resource using the current UI culture and formats it using the current culture.
+    /// Recoverable lookup or formatting failures are logged and produce a fallback containing
+    /// the resource key and argument values.
     /// </summary>
     /// <param name="key">The authentication resource key.</param>
     /// <param name="args">Values to substitute into the resource's format placeholders.</param>
-    /// <returns>The localized, formatted message.</returns>
-    /// <exception cref="MissingManifestResourceException">
-    /// The resource key cannot be found, or the resource set cannot be loaded.
-    /// </exception>
-    internal static string Format(string key, params object[] args) =>
-        string.Format(CultureInfo.CurrentCulture,
-            s_resources.GetString(key, CultureInfo.CurrentUICulture)
-                ?? throw new MissingManifestResourceException(key), args);
+    /// <returns>The localized message, or a generic diagnostic message if formatting fails.</returns>
+    internal static string Format(string key, params object[] args)
+    {
+        try
+        {
+            string? format = s_resources.GetString(key, CultureInfo.CurrentUICulture);
+            if (format is not null)
+            {
+                return string.Format(CultureInfo.CurrentCulture, format, args);
+            }
+
+            SqlClientEventSource.Log.TryTraceEvent(
+                "AuthenticationStrings.Format | Resource '{0}' was not found. Check the authentication resource keys and deployed resource assemblies; using a fallback message.",
+                key);
+        }
+        catch (Exception e) when (ExceptionHelpers.IsRecoverableException(e))
+        {
+            SqlClientEventSource.Log.TryTraceEvent(
+                "AuthenticationStrings.Format | Resource '{0}' could not be formatted ({1}). Check the deployed resource assemblies, format placeholders and argument values; using a fallback message.",
+                key, e.GetType().FullName);
+        }
+
+        args ??= Array.Empty<object>();
+        var builder = new StringBuilder();
+        builder.Append(key ?? "<null>").Append(": [");
+        for (int i = 0; i < args.Length; i++)
+        {
+            if (i > 0)
+            {
+                builder.Append(", ");
+            }
+
+            builder.Append(FormatArgument(args[i]));
+        }
+        return builder.Append(']').ToString();
+    }
+
+    /// <summary>
+    /// Formats an argument using the current culture. Recoverable formatting failures are logged
+    /// and replaced with a type-name placeholder; fatal runtime errors propagate.
+    /// </summary>
+    /// <param name="argument">The value to format, or null.</param>
+    /// <returns>
+    /// The formatted value, "&lt;null&gt;" for null, or "&lt;unformattable: type-name&gt;" if the
+    /// value cannot be formatted.
+    /// </returns>
+    internal static string FormatArgument(object? argument)
+    {
+        if (argument is null)
+        {
+            return "<null>";
+        }
+
+        try
+        {
+            return string.Format(CultureInfo.CurrentCulture, "{0}", argument);
+        }
+        catch (Exception e) when (ExceptionHelpers.IsRecoverableException(e))
+        {
+            string typeName = argument.GetType().FullName ?? argument.GetType().Name;
+            SqlClientEventSource.Log.TryTraceEvent(
+                "AuthenticationStrings.Format | Argument of type '{0}' could not be formatted ({1}); using a type-name placeholder. Check the argument's formatting implementation.",
+                typeName, e.GetType().FullName);
+            return "<unformattable: " + typeName + ">";
+        }
+    }
 
     /// <summary>
     /// Creates an argument exception for a provider construction failure, preserving its cause.
