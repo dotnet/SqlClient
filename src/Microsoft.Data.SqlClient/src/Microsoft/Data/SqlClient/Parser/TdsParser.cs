@@ -4793,13 +4793,13 @@ namespace Microsoft.Data.SqlClient.Parser
                     {
                         return result;
                     }
-                    if (rec.XmlSchemaCollection is null)
+                    if (rec.XmlTypeInfo is null)
                     {
-                        rec.XmlSchemaCollection = new SqlMetaDataXmlSchemaCollection();
+                        rec.XmlTypeInfo = new TdsXmlTypeInfo();
                     }
                     if (len != 0)
                     {
-                        result = stateObj.TryReadString(len, out rec.XmlSchemaCollection.Database);
+                        result = stateObj.TryReadString(len, out rec.XmlTypeInfo.Database);
                         if (result != TdsOperationStatus.Done)
                         {
                             return result;
@@ -4813,7 +4813,7 @@ namespace Microsoft.Data.SqlClient.Parser
                     }
                     if (len != 0)
                     {
-                        result = stateObj.TryReadString(len, out rec.XmlSchemaCollection.OwningSchema);
+                        result = stateObj.TryReadString(len, out rec.XmlTypeInfo.OwningSchema);
                         if (result != TdsOperationStatus.Done)
                         {
                             return result;
@@ -4829,7 +4829,7 @@ namespace Microsoft.Data.SqlClient.Parser
 
                     if (slen != 0)
                     {
-                        result = stateObj.TryReadString(slen, out rec.XmlSchemaCollection.Name);
+                        result = stateObj.TryReadString(slen, out rec.XmlTypeInfo.Name);
                         if (result != TdsOperationStatus.Done)
                         {
                             return result;
@@ -5551,13 +5551,13 @@ namespace Microsoft.Data.SqlClient.Parser
                         {
                             return result;
                         }
-                        if (col.XmlSchemaCollection is null)
+                        if (col.XmlTypeInfo is null)
                         {
-                            col.XmlSchemaCollection = new SqlMetaDataXmlSchemaCollection();
+                            col.XmlTypeInfo = new TdsXmlTypeInfo();
                         }
                         if (byteLen != 0)
                         {
-                            result = stateObj.TryReadString(byteLen, out col.XmlSchemaCollection.Database);
+                            result = stateObj.TryReadString(byteLen, out col.XmlTypeInfo.Database);
                             if (result != TdsOperationStatus.Done)
                             {
                                 return result;
@@ -5571,7 +5571,7 @@ namespace Microsoft.Data.SqlClient.Parser
                         }
                         if (byteLen != 0)
                         {
-                            result = stateObj.TryReadString(byteLen, out col.XmlSchemaCollection.OwningSchema);
+                            result = stateObj.TryReadString(byteLen, out col.XmlTypeInfo.OwningSchema);
                             if (result != TdsOperationStatus.Done)
                             {
                                 return result;
@@ -5586,7 +5586,7 @@ namespace Microsoft.Data.SqlClient.Parser
                         }
                         if (byteLen != 0)
                         {
-                            result = stateObj.TryReadString(shortLen, out col.XmlSchemaCollection.Name);
+                            result = stateObj.TryReadString(shortLen, out col.XmlTypeInfo.Name);
                             if (result != TdsOperationStatus.Done)
                             {
                                 return result;
@@ -5791,13 +5791,13 @@ namespace Microsoft.Data.SqlClient.Parser
             {
                 return result;
             }
-            if (metaData.Udt is null)
+            if (metaData.UdtTypeInfo is null)
             {
-                metaData.Udt = new SqlMetaDataUdt();
+                metaData.UdtTypeInfo = new TdsUdtTypeInfo();
             }
             if (byteLength != 0)
             {
-                result = stateObj.TryReadString(byteLength, out metaData.Udt.DatabaseName);
+                result = stateObj.TryReadString(byteLength, out metaData.UdtTypeInfo.DatabaseName);
                 if (result != TdsOperationStatus.Done)
                 {
                     return result;
@@ -5812,7 +5812,7 @@ namespace Microsoft.Data.SqlClient.Parser
             }
             if (byteLength != 0)
             {
-                result = stateObj.TryReadString(byteLength, out metaData.Udt.SchemaName);
+                result = stateObj.TryReadString(byteLength, out metaData.UdtTypeInfo.SchemaName);
                 if (result != TdsOperationStatus.Done)
                 {
                     return result;
@@ -5827,7 +5827,7 @@ namespace Microsoft.Data.SqlClient.Parser
             }
             if (byteLength != 0)
             {
-                result = stateObj.TryReadString(byteLength, out metaData.Udt.TypeName);
+                result = stateObj.TryReadString(byteLength, out metaData.UdtTypeInfo.TypeName);
                 if (result != TdsOperationStatus.Done)
                 {
                     return result;
@@ -5841,7 +5841,7 @@ namespace Microsoft.Data.SqlClient.Parser
             }
             if (shortLength != 0)
             {
-                result = stateObj.TryReadString(shortLength, out metaData.Udt.AssemblyQualifiedName);
+                result = stateObj.TryReadString(shortLength, out metaData.UdtTypeInfo.AssemblyQualifiedName);
                 if (result != TdsOperationStatus.Done)
                 {
                     return result;
