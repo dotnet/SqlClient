@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -9,10 +9,13 @@ using System.Data.SqlTypes;
 using System.Globalization;
 using System.Reflection;
 using Microsoft.Data.SqlClient.Server;
+using Microsoft.Data.SqlClient.Tests.CollectionDefinitions;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
 {
+    [Collection(nameof(GlobalizationInvariantModeTests))]
     public class SqlMetaDataTest
     {
         [Theory]
@@ -227,6 +230,60 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(SortOrder.Ascending, metaData.SortOrder);
             Assert.Equal(0, metaData.SortOrdinal);
         }
+
+        #if NET
+        /// <summary>
+        /// Verifies that constructors which do not explicitly specify a string locale throw in
+        /// invariant globalization mode.
+        /// </summary>
+        /// <param name="dbType">The char- or text-based <see cref="SqlDbType"/> to test.</param>
+        [Theory]
+        [MemberData(nameof(ConstructorCharData))]
+        [MemberData(nameof(ConstructorTextData))]
+        public void ConstructorWithDefaultLocale_ThrowsInInvariantGlobalizationMode(SqlDbType dbType)
+        {
+            using LocalAppContextSwitchesHelper helper = new();
+
+            helper.GlobalizationInvariantMode = true;
+
+            Assert.Throws<NotSupportedException>(() => new SqlMetaData("col1", dbType));
+            Assert.Throws<NotSupportedException>(() => new SqlMetaData("col1", dbType, true, true, SortOrder.Ascending, 0));
+            Assert.Throws<NotSupportedException>(() => new SqlMetaData("col1", dbType, 0));
+            Assert.Throws<NotSupportedException>(() => new SqlMetaData("col1", dbType, 0, true, true, SortOrder.Ascending, 0));
+        }
+
+        /// <summary>
+        /// Verifies that constructors which take a maximum length and an explicit locale do not throw
+        /// in invariant globalization mode.
+        /// </summary>
+        /// <param name="dbType">The char-based <see cref="SqlDbType"/> to test.</param>
+        /// <see cref="ConstructorWithMaxLengthTextExplicitLocale_DoesNotThrowInInvariantGlobalizationMode"/>
+        [Theory]
+        [MemberData(nameof(ConstructorCharData))]
+        public void ConstructorWithMaxLengthAndExplicitLocale_DoesNotThrowInInvariantGlobalizationMode(SqlDbType dbType)
+        {
+            using LocalAppContextSwitchesHelper helper = new();
+
+            helper.GlobalizationInvariantMode = true;
+            ConstructorWithMaxLengthAndLocale(dbType);
+        }
+
+        /// <summary>
+        /// Verifies that constructors which take a maximum length and an explicit locale do not throw
+        /// in invariant globalization mode.
+        /// </summary>
+        /// <param name="dbType">The text-based <see cref="SqlDbType"/> to test.</param>
+        /// <see cref="ConstructorWithMaxLengthAndExplicitLocale_DoesNotThrowInInvariantGlobalizationMode"/>
+        [Theory]
+        [MemberData(nameof(ConstructorTextData))]
+        public void ConstructorWithMaxLengthTextExplicitLocale_DoesNotThrowInInvariantGlobalizationMode(SqlDbType dbType)
+        {
+            using LocalAppContextSwitchesHelper helper = new();
+
+            helper.GlobalizationInvariantMode = true;
+            ConstructorWithMaxLengthTextAndLocale(dbType);
+        }
+        #endif
 
         [Fact]
         public void ConstructorWithDefaultLocaleInvalidType_Throws()
