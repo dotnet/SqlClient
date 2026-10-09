@@ -155,6 +155,9 @@
   </Target>
 
   <!-- References ====================================================== -->
+  <ItemGroup>
+    <Compile Include="../src/TypeForwards.Abstractions.cs" Link="TypeForwards.Abstractions.cs" />
+  </ItemGroup>
   <!-- Reference to Abstractions -->
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj"
