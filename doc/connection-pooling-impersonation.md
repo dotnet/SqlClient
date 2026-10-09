@@ -49,6 +49,8 @@ The `InvalidNetOnlyCredentials_*` tests need only an integrated-security
 shared-memory data source also works). They use a network-only token with
 placeholder credentials, which cannot open a new physical connection, so any
 successful open under that token proves it received a process-account connection.
+If the environment accepts the placeholder credentials (an unpooled probe open
+succeeds, as can happen with some loopback configurations), these tests skip.
 They also verify that the failed open does not put the process account's pool into
 its error blocking period.
 

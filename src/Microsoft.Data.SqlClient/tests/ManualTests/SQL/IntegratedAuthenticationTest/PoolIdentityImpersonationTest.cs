@@ -64,6 +64,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using var poolVersion = new ConnectionPoolVersionScope(usePoolV2);
             using SafeAccessTokenHandle token = CreateInvalidToken();
             string connectionString = BuildConnectionString(minPoolSize: minPoolSize);
+            await SkipUnlessInvalidCredentialsRejected(token, connectionString, async);
             try
             {
                 string processLogin = await GetLogin(connectionString, async);
@@ -98,6 +99,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using var poolVersion = new ConnectionPoolVersionScope(usePoolV2);
             using SafeAccessTokenHandle token = CreateInvalidToken();
             string connectionString = BuildConnectionString();
+            await SkipUnlessInvalidCredentialsRejected(token, connectionString, async);
             try
             {
                 await Assert.ThrowsAsync<SqlException>(
@@ -200,6 +202,33 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         private static SafeAccessTokenHandle CreateInvalidToken() =>
             WindowsImpersonationHelper.LogonNetOnly("<user>", "EXAMPLE", "<pwd>");
+
+        /// <summary>
+        /// The invalid-credential probes rely on the server rejecting the placeholder outbound
+        /// credentials. Some environments (for example, loopback authentication that falls back
+        /// to the local logon session) accept them, so a successful open would not prove pool
+        /// sharing. Verify the precondition with an unpooled connection and skip otherwise.
+        /// </summary>
+        private static async Task SkipUnlessInvalidCredentialsRejected(
+            SafeAccessTokenHandle token, string connectionString, bool async)
+        {
+            var unpooled = new SqlConnectionStringBuilder(connectionString)
+            {
+                Pooling = false,
+                MinPoolSize = 0
+            };
+            try
+            {
+                await WindowsIdentity.RunImpersonated(token, () => GetLogin(unpooled.ConnectionString, async));
+            }
+            catch (SqlException)
+            {
+                return;
+            }
+
+            throw new Microsoft.DotNet.XUnitExtensions.SkipTestException(
+                "The server accepted placeholder network-only credentials, so pool sharing cannot be detected.");
+        }
 
         /// <summary>Creates a unique pool group using the configured server and integrated security.</summary>
         private static string BuildConnectionString(int loadBalanceTimeout = 0, int minPoolSize = 0)
