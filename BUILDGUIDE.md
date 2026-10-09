@@ -109,7 +109,8 @@ extend the driver's runtime support below .NET Framework 4.6.2 or .NET 10.
 | Driver reference and unsupported-platform assemblies | `net462;net10.0;netstandard2.0` |
 | Existing dual-target tests, stress projects, and their shared helpers | `net462;net10.0` |
 | Modern-only projects, including performance tests | `net10.0` |
-| AKV Provider, Abstractions, Logging, and standard-only test utilities | `netstandard2.0` only |
+| Abstractions | `netstandard2.0;net10.0` |
+| AKV Provider, Logging, and standard-only test utilities | `netstandard2.0` only |
 | Azure extensions | `net462;netstandard2.0` |
 | Microsoft.SqlServer.Server (independently versioned; unchanged here) | `net46;netstandard2.0` |
 | PackageCompatibility tool and tests (xUnit v3) | `net481;net10.0` |
@@ -200,6 +201,7 @@ dotnet build -t:<test_target> [optional_parameters]
 |----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
 | `Test`                     | Runs the driver and extension test targets. Without `TestFramework`, all declared frameworks are attempted, including .NET Framework. _This takes considerable time and requires configured servers_. |
 | `TestAbstractions`         | Runs all tests for Microsoft.Data.SqlClient.Extensions.Abstractions                                                                                 |
+| `TestAuthenticationConfiguration` | Runs the dedicated current/legacy app.config compatibility scenarios without SQL Server. |
 | `TestAkvProvider`          | Runs the unit test project for Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.                                                      |
 | `TestAzure`                | Runs all tests for Microsoft.Data.SqlClient.Extensions.Azure                                                                                        |
 | `TestSqlClient`            | Runs the unit, functional, and manual test projects for Microsoft.Data.SqlClient.                                                                    |
@@ -213,6 +215,21 @@ The `Test` aggregate does not include the tool tests, performance benchmarks, st
 PowerShell script tests. The tool test targets use their own runner options rather than the driver
 test parameters below; see the [PackageCompatibility](tools/PackageCompatibility/README.md) and
 [PackageValidator](tools/PackageValidator/README.md) guides.
+
+Authentication registry, callback, switch, formatter and exception tests are ordinary xUnit tests
+under `Extensions/Abstractions/test`. Executable compatibility scenarios live separately under
+`src/Microsoft.Data.SqlClient/tests/AuthenticationTests/`. Run these focused targets on Linux:
+
+```bash
+dotnet build build.proj -t:TestAbstractions -p:TestFramework=net10.0 -p:ReferenceType=Project
+dotnet build build.proj -t:TestAuthenticationConfiguration -p:TestFramework=net10.0 -p:ReferenceType=Project
+```
+
+The configuration target supports `ReferenceType=Package` and prepares packages unless
+`SkipDependencyPack=true`; use a unique `PackageVersionSqlClient` and an isolated NuGet cache
+when validating local packages. It checks transitive configuration compile assets, forwarded
+handlers and initializer activation for both section declarations. Executing `net462` scenarios
+requires Windows; a Linux cross-build is not runtime validation.
 
 > [!TIP]
 > In project-reference mode, test targets automatically build their dependencies. In package mode,

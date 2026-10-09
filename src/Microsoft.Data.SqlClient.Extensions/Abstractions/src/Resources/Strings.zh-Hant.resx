@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">text/microsoft-resx</resheader>
+      <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+      <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+    <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+    <data name="SQL_CannotCreateAuthProvider" xml:space="preserve">
+    <value>無法為 '{0}' 具現化類型為 '{1}' 的驗證提供者。</value>
+  </data>
+  <data name="SQL_CannotCreateAuthInitializer" xml:space="preserve">
+    <value>無法將類型為 '{0}' 的 SqlAuthenticationInitializer 具現化。</value>
+  </data>
+  <data name="SQL_UnsupportedAuthenticationByProvider" xml:space="preserve">
+    <value>提供者 '{0}' 不支援驗證 '{1}'。</value>
+  </data>
+  <data name="SQL_UnsupportedAuthentication" xml:space="preserve">
+    <value>不支援驗證 '{0}'。</value>
+  </data>
+  <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
+    <value>設定 'useWamBroker' 需要 'Microsoft.Data.SqlClient.Extensions.Azure' 套件以公開 'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions'。請將 'Microsoft.Data.SqlClient.Extensions.Azure' 套件升級至至少 v1.1.0，其中包含此類型。</value>
+  </data>
+</root>
