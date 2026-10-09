@@ -1,5 +1,31 @@
 # GitHub Actions Script Tests
 
+## Agentic triage output tests
+
+`validate-triage-output.test.cjs` uses the built-in Node.js test runner (Node.js
+20 or newer). No npm dependencies are needed. Run it from the repository root:
+
+```bash
+node --test .github/scripts/tests/validate-triage-output.test.cjs
+```
+
+These tests also run in `verify-aw-lock.yml`. They cover the validation gate
+before triage comments and labels are published: complete summaries, explicit
+no-op/failure results, placeholder comments, unfinished templates, quoted/fenced
+examples, duplicate comments, and mixed success/incomplete outcomes.
+They also reject partial safe-output batches with recorded errors while
+allowing C# generic type syntax in completed summaries. Draft prefixes such as
+`TODO:` and `TBD:` are rejected in required fields and list items; ordinary
+mentions of those markers within completed prose remain valid.
+Coverage also includes multiline template placeholders, label operations queued
+before the summary, and contradictory no-op/incomplete results.
+Comparison operators in completed prose remain valid; angle-bracket detection
+targets known template fields and instructions rather than arbitrary bracketed text.
+Generic arguments such as `Task<Result>` and `List<Item>`, including nested
+types, and XML documentation tags are covered by acceptance regressions.
+
+## Shell script tests
+
 This directory contains tests for the shell scripts used by the
 [cherry-pick-hotfix](./../../../.github/workflows/cherry-pick-hotfix.yml),
 [check-milestone](./../../../.github/workflows/check-milestone.yml) and
