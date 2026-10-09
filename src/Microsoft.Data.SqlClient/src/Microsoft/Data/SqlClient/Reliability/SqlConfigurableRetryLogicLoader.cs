@@ -429,8 +429,8 @@ namespace Microsoft.Data.SqlClient
         }
         
         /// <summary>
-        /// Performs a case-sensitive search to resolve the specified type name 
-        /// and its related assemblies in default assembly load context if they aren't loaded yet.
+        /// Performs a case-sensitive search to resolve the specified type name and its related
+        /// assemblies in the calling assembly load context if they aren't loaded yet.
         /// </summary>
         /// <returns>Resolved type if it could resolve the type; otherwise, the `SqlConfigurableRetryFactory` type.</returns>
         private static Type LoadType(string fullyQualifiedName)

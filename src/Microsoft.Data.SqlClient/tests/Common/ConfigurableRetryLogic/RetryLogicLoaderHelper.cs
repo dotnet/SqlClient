@@ -6,6 +6,11 @@ using System.Reflection;
 
 namespace Microsoft.Data.SqlClient.Tests.Common.ConfigurableRetryLogic;
 
+/// <summary>
+/// Contains helper methods for creating and configuring instances of
+/// SqlConfigurableRetryLogicLoader and its associated configuration objects without needing
+/// to populate an app.config file.
+/// </summary>
 public static class RetryLogicLoaderHelper
 {
     private const string ConfigurationLoaderTypeName = "Microsoft.Data.SqlClient.SqlConfigurableRetryLogicLoader";
@@ -32,6 +37,13 @@ public static class RetryLogicLoaderHelper
         ];
     private static readonly ConstructorInfo s_loaderCtorInfo = s_configurationLoaderType.GetConstructor(s_cfgLoaderParamsType)!;
 
+    /// <summary>
+    /// Creates and returns an instance of SqlConfigurableRetryLogicLoader with the specified
+    /// connection and command retry logic configurations.
+    /// </summary>
+    /// <param name="cnnConfig">The configuration for the connection retry logic.</param>
+    /// <param name="cmdConfig">The configuration for the command retry logic.</param>
+    /// <returns>The created loader instance.</returns>
     public static object CreateLoader(RetryLogicConfigs cnnConfig, RetryLogicConfigs cmdConfig)
     {
         object cnnCfgObj = Activator.CreateInstance(s_cnnCfgType)!;
@@ -57,6 +69,16 @@ public static class RetryLogicLoaderHelper
         return s_loaderCtorInfo.Invoke([cnnCfgObj, cmdCfgObj, default!, default!]);
     }
 
+    /// <summary>
+    /// Creates and returns an instance of SqlConfigurableRetryLogicLoader with the specified
+    /// connection and command retry logic configurations, and also retrieves the associated
+    /// connection and command providers.
+    /// </summary>
+    /// <param name="cnnCfg">The configuration for the connection retry logic.</param>
+    /// <param name="cmdCfg">The configuration for the command retry logic.</param>
+    /// <param name="cnnProvider">When this method returns, contains the connection provider.</param>
+    /// <param name="cmdProvider">When this method returns, contains the command provider.</param>
+    /// <returns>The created loader instance.</returns>
     public static object ReturnLoaderAndProviders(RetryLogicConfigs cnnCfg, RetryLogicConfigs cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider)
     {
         object loaderObj = CreateLoader(cnnCfg, cmdCfg);
@@ -66,6 +88,14 @@ public static class RetryLogicLoaderHelper
         return loaderObj;
     }
 
+    /// <summary>
+    /// Creates a RetryLogicConfigs object with random values for its properties, optionally specifying
+    /// default values for certain mandatory properties.
+    /// </summary>
+    /// <param name="method">The retry method to use.</param>
+    /// <param name="authorizedSqlCondition">The authorized SQL condition.</param>
+    /// <param name="transientErrors">The transient errors.</param>
+    /// <returns>The created retry logic configuration.</returns>
     public static RetryLogicConfigs CreateRandomConfig(string? method, string? authorizedSqlCondition = null, string transientErrors = DefaultTransientErrors)
     {
         TimeSpan start = TimeSpan.Zero;

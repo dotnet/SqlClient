@@ -108,6 +108,10 @@ public class UnloadableAssemblyLoadContextTest
         return weakRef;
     }
 
+    /// <summary>
+    /// Defines an unloadable <see cref="AssemblyLoadContext"/> that resolves assemblies
+    /// using an <see cref="AssemblyDependencyResolver"/>.
+    /// </summary>
     private sealed class UnloadableAssemblyLoadContext : AssemblyLoadContext
     {
         private readonly AssemblyDependencyResolver _resolver;
@@ -118,6 +122,12 @@ public class UnloadableAssemblyLoadContextTest
             _resolver = new AssemblyDependencyResolver(assemblyPath);
         }
 
+        /// <summary>
+        /// Resolves assemblies using the <see cref="AssemblyDependencyResolver"/>
+        /// and loads them into this <see cref="AssemblyLoadContext"/>.
+        /// </summary>
+        /// <param name="assemblyName">The object that describes the assembly to be resolved.</param>
+        /// <returns>The resolved assembly, or null if it could not be resolved.</returns>
         protected override Assembly? Load(AssemblyName assemblyName)
         {
             string? resolvedAssemblyPath = _resolver.ResolveAssemblyToPath(assemblyName);
