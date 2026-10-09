@@ -18,6 +18,23 @@ This package supports:
 
 - .NET Standard 2.0 (compatible with .NET Framework 4.6.1+, .NET Core 2.0+, and .NET 5+)
 
+## Authentication configuration
+
+The public `SqlAuthenticationProviderConfigurationSection` (legacy
+`SqlAuthenticationProviders`) and `SqlClientAuthenticationProviderConfigurationSection`
+(`SqlClientAuthenticationProviders`) handlers are defined in this package and forwarded
+from SqlClient. Existing app.config section declarations naming `Microsoft.Data.SqlClient`
+remain valid. Section names, properties (`providers`, `initializerType`,
+`applicationClientId`, `useWamBroker`) and empty defaults are unchanged.
+
+`System.Configuration.ConfigurationManager` is a transitive compile dependency, so
+consumers can use the handlers and their configuration base types without adding a
+separate package reference. Authentication initialization and provider loading remain
+in the driver.
+
+See the repository's `doc/samples/SqlAuthenticationProviders.config` for a section
+declaration and custom provider example.
+
 ## Installation
 
 Install the package via NuGet:

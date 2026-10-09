@@ -202,6 +202,9 @@
       <Platform Solution="*|x86" Project="x86" />
     </Project>
   </Folder>
+  <Folder Name="/test/AuthenticationTests/">
+    <Project Path="Microsoft.Data.SqlClient/tests/AuthenticationTests/ConfigurationTest/ConfigurationTest.csproj" />
+  </Folder>
   <Folder Name="/test/Stress/">
     <Project Path="Microsoft.Data.SqlClient/tests/StressTests/IMonitorLoader/IMonitorLoader.csproj" />
     <Project Path="Microsoft.Data.SqlClient/tests/StressTests/SqlClient.Stress.Common/SqlClient.Stress.Common.csproj" />
