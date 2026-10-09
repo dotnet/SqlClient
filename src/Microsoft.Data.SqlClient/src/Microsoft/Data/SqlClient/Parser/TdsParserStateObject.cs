@@ -226,8 +226,8 @@ namespace Microsoft.Data.SqlClient.Parser
         private readonly byte[] _partialHeaderBuffer = new byte[TdsEnums.HEADER_LEN];   // Scratch buffer for ProcessHeader
         internal int _partialHeaderBytesRead;
 
-        internal _SqlMetaDataSet _cleanupMetaData;
-        internal _SqlMetaDataSetCollection _cleanupAltMetaDataSetArray;
+        internal TdsColumnMetadataToken _cleanupMetaData;
+        internal TdsAltMetadataCollection _cleanupAltMetaDataSetArray;
 
         private SniContext _sniContext = SniContext.Undefined;
 #if DEBUG
@@ -4932,8 +4932,8 @@ namespace Microsoft.Data.SqlClient.Parser
                 private int _inBytesPacket;
                 private byte _messageStatus;
                 internal NullBitmap _nullBitmapInfo;
-                private _SqlMetaDataSet _cleanupMetaData;
-                internal _SqlMetaDataSetCollection _cleanupAltMetaDataSetArray;
+                private TdsColumnMetadataToken _cleanupMetaData;
+                internal TdsAltMetadataCollection _cleanupAltMetaDataSetArray;
                 private SnapshottedStateFlags _state;
                 private ulong _longLen;
                 private ulong _longLenLeft;
@@ -5096,7 +5096,7 @@ namespace Microsoft.Data.SqlClient.Parser
             {
                 if (_stateObj._cleanupAltMetaDataSetArray != null && object.ReferenceEquals(_replayStateData?._cleanupAltMetaDataSetArray ?? default, _stateObj._cleanupAltMetaDataSetArray))
                 {
-                    _stateObj._cleanupAltMetaDataSetArray = (_SqlMetaDataSetCollection)_stateObj._cleanupAltMetaDataSetArray.Clone();
+                    _stateObj._cleanupAltMetaDataSetArray = (TdsAltMetadataCollection)_stateObj._cleanupAltMetaDataSetArray.Clone();
                 }
             }
 

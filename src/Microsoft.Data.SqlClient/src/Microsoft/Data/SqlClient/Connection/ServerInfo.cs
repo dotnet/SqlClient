@@ -59,23 +59,23 @@ namespace Microsoft.Data.SqlClient.Connection
         /// </summary>
         internal ServerInfo(
             SqlConnectionOptions userOptions,
-            RoutingInfo routing,
+            TdsEnvChangeRoutingInfo routingInfo,
             string preRoutingServerName,
             string serverSpn)
         {
-            Debug.Assert(userOptions != null && routing != null);
-            Debug.Assert(routing.ServerName != null, "server name should never be null");
+            Debug.Assert(userOptions != null && routingInfo != null);
+            Debug.Assert(routingInfo.ServerName != null, "server name should never be null");
 
             // Ensure user server name is not null
             // NOTE: string.Format should be used here to ensure invariant culture is used for port number.
-            UserServerName = routing == null || routing.ServerName == null
+            UserServerName = routingInfo == null || routingInfo.ServerName == null
                 ? string.Empty
-                : string.Format(CultureInfo.InvariantCulture, "{0},{1}", routing.ServerName, routing.Port);
+                : string.Format(CultureInfo.InvariantCulture, "{0},{1}", routingInfo.ServerName, routingInfo.Port);
 
             PreRoutingServerName = preRoutingServerName;
             UserProtocol = TdsEnums.TCP;
             SetDerivedNames(UserProtocol, UserServerName);
-            ResolvedDatabaseName = routing?.DatabaseName ?? userOptions.InitialCatalog;
+            ResolvedDatabaseName = routingInfo?.DatabaseName ?? userOptions.InitialCatalog;
             ServerSPN = serverSpn;
         }
 
