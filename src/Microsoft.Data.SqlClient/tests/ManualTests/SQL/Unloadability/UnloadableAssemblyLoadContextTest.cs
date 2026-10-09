@@ -116,6 +116,12 @@ public class UnloadableAssemblyLoadContextTest
     {
         private readonly AssemblyDependencyResolver _resolver;
 
+        /// <summary>
+        /// Insntantiates a new unloadable <see cref="AssemblyLoadContext"/> with the specified
+        /// name and assembly path.
+        /// </summary>
+        /// <param name="name">Name of this <see cref="UnloadableAssemblyLoadContext"/>.</param>
+        /// <param name="assemblyPath">Path to the assembly.</param>
         public UnloadableAssemblyLoadContext(string name, string assemblyPath)
             : base(name, isCollectible: true)
         {
