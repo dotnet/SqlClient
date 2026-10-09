@@ -4,6 +4,7 @@
 
 using System;
 using System.Security.Principal;
+using Interop.Windows.Advapi32;
 
 namespace Microsoft.Data.SqlClient.ConnectionPool
 {
@@ -17,14 +18,16 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private readonly string _sidString;
         private readonly bool _isRestricted;
         private readonly bool _isNetwork;
+        private readonly long _authenticationId;
         private readonly int _hashCode;
 
-        private DbConnectionPoolIdentity(string sidString, bool isRestricted, bool isNetwork)
+        private DbConnectionPoolIdentity(string sidString, bool isRestricted, bool isNetwork, long authenticationId = 0)
         {
             _sidString = sidString;
             _isRestricted = isRestricted;
             _isNetwork = isNetwork;
-            _hashCode = sidString == null ? 0 : sidString.GetHashCode();
+            _authenticationId = authenticationId;
+            _hashCode = unchecked(((sidString == null ? 0 : sidString.GetHashCode()) * 397) ^ authenticationId.GetHashCode());
         }
 
         // @TODO: Make auto-property
@@ -41,7 +44,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 DbConnectionPoolIdentity that = (DbConnectionPoolIdentity)value;
                 result = _sidString == that._sidString &&
                          _isRestricted == that._isRestricted &&
-                         _isNetwork == that._isNetwork;
+                         _isNetwork == that._isNetwork &&
+                         _authenticationId == that._authenticationId;
             }
 
             return result;
@@ -54,9 +58,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         internal static DbConnectionPoolIdentity GetCurrent()
         {
-            return LocalAppContextSwitches.UseManagedNetworking
-                ? GetCurrentManaged()
-                : GetCurrentNative();
+            return OsConstants.IsWindows ? GetCurrentWindows() : GetCurrentManaged();
         }
 
         #if NETFRAMEWORK
@@ -84,30 +86,32 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             return current;
         }
 
-        private static DbConnectionPoolIdentity GetCurrentNative()
+        private static DbConnectionPoolIdentity GetCurrentWindows()
         {
             DbConnectionPoolIdentity current;
             using (WindowsIdentity identity = WindowsIdentity.GetCurrent())
             {
-                IntPtr token = identity.AccessToken.DangerousGetHandle();
                 SecurityIdentifier user = identity.User;
                 bool isNetwork = user.IsWellKnown(WellKnownSidType.NetworkSid);
                 string sidString = user.Value;
 
-                // Win32NativeMethods.IsTokenRestricted will raise exception if the native call fails
-                SniNativeWrapper.SniIsTokenRestricted(token, out bool isRestricted);
+                // NEW_CREDENTIALS logons retain the local SID but use different outbound credentials.
+                // Key by the logon session, not TokenId, so duplicated tokens still share a pool.
+                long authenticationId = Advapi32.GetAuthenticationId(identity.AccessToken);
+                bool isRestricted = Advapi32.GetIsTokenRestricted(identity.AccessToken);
 
                 var lastIdentity = s_lastIdentity;
                 if (lastIdentity != null &&
                     lastIdentity._sidString == sidString &&
                     lastIdentity._isRestricted == isRestricted &&
-                    lastIdentity._isNetwork == isNetwork)
+                    lastIdentity._isNetwork == isNetwork &&
+                    lastIdentity._authenticationId == authenticationId)
                 {
                     current = lastIdentity;
                 }
                 else
                 {
-                    current = new DbConnectionPoolIdentity(sidString, isRestricted, isNetwork);
+                    current = new DbConnectionPoolIdentity(sidString, isRestricted, isNetwork, authenticationId);
                 }
             }
             s_lastIdentity = current;
@@ -115,4 +119,3 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         }
     }
 }
-

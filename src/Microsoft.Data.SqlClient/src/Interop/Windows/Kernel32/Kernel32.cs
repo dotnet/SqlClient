@@ -79,5 +79,8 @@ namespace Interop.Windows.Kernel32
 
         [DllImport(DllName, SetLastError = true, ExactSpelling = true)]
         internal static extern bool SetThreadErrorMode(uint dwNewMode, out uint lpOldMode);
+
+        [DllImport(DllName, ExactSpelling = true, SetLastError = true)]
+        internal static extern void SetLastError(uint error);
     }
 }
