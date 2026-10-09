@@ -48,6 +48,41 @@ BeforeAll {
 }
 
 Describe 'Validation step templates' {
+    It 'requires an explicit localization <Parameter> without a default' -ForEach @(
+        @{ Parameter = 'resourcesDirectory' }
+        @{ Parameter = 'allowlistSection' }
+    ) {
+        $content = Get-Content -LiteralPath (Join-Path $script:stepsPath 'validate-localization-step.yml') -Raw
+        $declaration = [regex]::Match(
+            $content,
+            "(?ms)^  - name: $Parameter\r?\n(?<settings>.*?)(?=^  - name:|^steps:)")
+        $declaration.Success | Should -BeTrue
+        $declaration.Groups['settings'].Value | Should -Match '(?m)^    type: string\s*$'
+        $declaration.Groups['settings'].Value | Should -Not -Match '(?m)^\s+default:'
+    }
+
+    It 'passes explicit localization inputs for <Package>' -ForEach @(
+        @{
+            Package = 'SqlClient'
+            ResourcesDirectory = 'src/Microsoft.Data.SqlClient/src/Resources'
+            AllowlistSection = 'AllowedEnglishValueMatches'
+        }
+        @{
+            Package = 'Abstractions'
+            ResourcesDirectory = 'src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Resources'
+            AllowlistSection = 'AbstractionsAllowedEnglishValueMatches'
+        }
+    ) {
+        $content = Get-Content -LiteralPath (Join-Path $script:jobsPath 'build-buildproj-job.yml') -Raw
+        $pattern = '(?ms)^      - \$\{\{ if eq\(parameters\.packageShortName, ''' + $Package +
+            '''\) \}\}:\r?\n(?<steps>.*?)(?=^      - |\z)'
+        $block = [regex]::Match($content, $pattern)
+        $block.Success | Should -BeTrue
+        $block.Groups['steps'].Value | Should -Match 'validate-localization-step\.yml@self'
+        $block.Groups['steps'].Value | Should -Match ([regex]::Escape("resourcesDirectory: $ResourcesDirectory"))
+        $block.Groups['steps'].Value | Should -Match ([regex]::Escape("allowlistSection: $AllowlistSection"))
+    }
+
     It 'never passes a switch using the -Switch:Value form' -ForEach @(
         @{ Template = 'validate-xml-docs-step.yml' }
         @{ Template = 'validate-localization-step.yml' }
