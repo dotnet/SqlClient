@@ -205,7 +205,7 @@
     <value>已超過連接逾時的設定。在取得集區連接之前超過逾時等待的時間，可能的原因為所有的共用連接已在使用中，並已達共用集區大小的最大值。</value>
   </data>
   <data name="ADP_IsolationLevelResetTimeout" xml:space="preserve">
-    <value>Timeout expired.  The connection timeout period elapsed before the transaction isolation level of the pooled connection could be reset.</value>
+    <value>等候逾時已過時。 集區連線的交易隔離層級在連線逾時期間結束前無法重設。</value>
   </data>
   <data name="ADP_NonPooledOpenTimeout" xml:space="preserve">
     <value>嘗試開啟連線時發生逾時。已超過嘗試開啟連線前所經過的時間。這可能是過多同時非共用連線嘗試所造成。</value>
