@@ -205,7 +205,7 @@
     <value>超时时间已到。超时时间已到，但是尚未从池中获取连接。出现这种情况可能是因为所有池连接均在使用，并且达到了最大池大小。</value>
   </data>
   <data name="ADP_IsolationLevelResetTimeout" xml:space="preserve">
-    <value>Timeout expired.  The connection timeout period elapsed before the transaction isolation level of the pooled connection could be reset.</value>
+    <value>超时已过期。 在重置池连接的事务隔离级别之前，已达到连接超时时长。</value>
   </data>
   <data name="ADP_NonPooledOpenTimeout" xml:space="preserve">
     <value>尝试打开连接时超时。在尝试打开连接之前超时时间已过。出现这种情况可能是因为同时进行了太多非池化连接尝试。</value>

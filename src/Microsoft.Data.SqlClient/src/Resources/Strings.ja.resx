@@ -205,7 +205,7 @@
     <value>タイムアウトに達しました。プールから接続を取得する前にタイムアウト期間が過ぎました。プールされた接続がすべて使用中で、プール サイズの制限値に達した可能性があります。</value>
   </data>
   <data name="ADP_IsolationLevelResetTimeout" xml:space="preserve">
-    <value>Timeout expired.  The connection timeout period elapsed before the transaction isolation level of the pooled connection could be reset.</value>
+    <value>タイムアウトの期限が切れました。 プール済み接続のトランザクション分離レベルがリセット可能になる前に、接続タイムアウトの期間が経過しました。</value>
   </data>
   <data name="ADP_NonPooledOpenTimeout" xml:space="preserve">
     <value>接続を開く試行がタイムアウトしました。接続を開く試行を行う前にタイムアウト期間が過ぎました。非プールの同時の接続試行が多すぎた可能性があります。</value>
