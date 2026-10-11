@@ -57,7 +57,7 @@ public sealed class EntryPoint : IDisposable
             MaxTimeInterval = TimeSpan.FromSeconds(30),
             MinTimeInterval = TimeSpan.FromSeconds(1),
             NumberOfTries = 1,
-            RetryLogicType = typeof(SqlConfigurableRetryFactory).FullName,
+            RetryLogicType = typeof(SqlConfigurableRetryFactory).AssemblyQualifiedName,
             RetryMethodName = nameof(SqlConfigurableRetryFactory.CreateNoneRetryProvider)
         };
         RetryLogicConfigs commandConfigs = RetryLogicLoaderHelper.CreateRandomConfig(method: null, authorizedSqlCondition: null);
