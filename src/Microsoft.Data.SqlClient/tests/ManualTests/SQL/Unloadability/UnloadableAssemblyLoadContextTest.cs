@@ -122,7 +122,7 @@ public class UnloadableAssemblyLoadContextTest
         private readonly AssemblyDependencyResolver _resolver;
 
         /// <summary>
-        /// Insntantiates a new unloadable <see cref="AssemblyLoadContext"/> with the specified
+        /// Instantiates a new unloadable <see cref="AssemblyLoadContext"/> with the specified
         /// name and assembly path.
         /// </summary>
         /// <param name="name">Name of this <see cref="UnloadableAssemblyLoadContext"/>.</param>
