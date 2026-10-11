@@ -6719,7 +6719,8 @@ namespace Microsoft.Data.SqlClient
                         lo = BinaryPrimitives.ReadUInt32LittleEndian(unencryptedBytes.AsSpan(4));
 
                         long l = (((long)mid) << 0x20) + ((long)lo);
-                        value.SetToMoney(l);
+                        value.SetToMoney(l, isSmallMoney: tdsType == TdsEnums.SQLMONEY4 ||
+                            (tdsType == TdsEnums.SQLMONEYN && denormalizedLength == 4));
                         break;
                     }
 
@@ -7287,7 +7288,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         return result;
                     }
-                    value.SetToMoney(intValue);
+                    value.SetToMoney(intValue, isSmallMoney: true);
                     break;
 
                 case TdsEnums.SQLDATETIMN:
@@ -7751,7 +7752,16 @@ namespace Microsoft.Data.SqlClient
 
                 case TdsEnums.SQLTIME:
                     stateObj.WriteByte(mt.Scale); //propbytes: scale
-                    WriteTime((TimeSpan)value, mt.Scale, length, stateObj);
+#if NET
+                    if (value is TimeOnly timeOnly)
+                    {
+                        WriteTime(timeOnly.ToTimeSpan(), mt.Scale, length, stateObj);
+                    }
+                    else
+#endif
+                    {
+                        WriteTime((TimeSpan)value, mt.Scale, length, stateObj);
+                    }
                     break;
 
                 case TdsEnums.SQLDATETIMEOFFSET:
@@ -7789,7 +7799,7 @@ namespace Microsoft.Data.SqlClient
         internal Task WriteSqlVariantDataRowValue(object value, TdsParserStateObject stateObj, bool canAccumulate = true)
         {
             // handle null values
-            if (value == null || (DBNull.Value == value))
+            if (ADP.IsNull(value))
             {
                 WriteInt(TdsEnums.FIXEDNULL, stateObj);
                 return null;
@@ -7904,8 +7914,7 @@ namespace Microsoft.Data.SqlClient
 
                 case TdsEnums.SQLMONEY:
                     {
-                        WriteSqlVariantHeader(10, metatype.TDSType, metatype.PropBytes, stateObj);
-                        WriteCurrency((decimal)value, 8, stateObj);
+                        WriteSqlVariantMoney((SqlMoney)value, stateObj, isSmallMoney: false);
                         break;
                     }
 
@@ -7927,7 +7936,16 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLTIME:
                     WriteSqlVariantHeader(8, metatype.TDSType, metatype.PropBytes, stateObj);
                     stateObj.WriteByte(metatype.Scale); //propbytes: scale
-                    WriteTime((TimeSpan)value, metatype.Scale, 5, stateObj);
+#if NET
+                    if (value is TimeOnly timeOnly)
+                    {
+                        WriteTime(timeOnly.ToTimeSpan(), metatype.Scale, 5, stateObj);
+                    }
+                    else
+#endif
+                    {
+                        WriteTime((TimeSpan)value, metatype.Scale, 5, stateObj);
+                    }
                     break;
 
                 case TdsEnums.SQLDATETIMEOFFSET:
@@ -7956,6 +7974,14 @@ namespace Microsoft.Data.SqlClient
             WriteInt(length, stateObj);
             stateObj.WriteByte(tdstype);
             stateObj.WriteByte(propbytes);
+        }
+
+        internal void WriteSqlVariantMoney(SqlMoney value, TdsParserStateObject stateObj, bool isSmallMoney)
+        {
+            int length = isSmallMoney ? 4 : 8;
+            byte type = (byte)(isSmallMoney ? TdsEnums.SQLMONEY4 : TdsEnums.SQLMONEY);
+            WriteSqlVariantHeader(length + 2, type, 0, stateObj);
+            WriteSqlMoney(value, length, stateObj);
         }
 
         internal void WriteSqlVariantDateTime2(DateTime value, TdsParserStateObject stateObj)
@@ -9952,7 +9978,12 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        // timeout is in seconds; zero or less means no timeout.
         internal Task TdsExecuteSQLBatch(string text, int timeout, SqlNotificationRequest notificationRequest, TdsParserStateObject stateObj, bool sync, bool callerHasConnectionLock = false, byte[] enclavePackage = null)
+            => TdsExecuteSQLBatchWithMillisecondTimeout(text, (long)timeout * 1000L, notificationRequest, stateObj, sync, callerHasConnectionLock, enclavePackage);
+
+        // timeoutMilliseconds is in milliseconds; zero or less means no timeout.
+        internal Task TdsExecuteSQLBatchWithMillisecondTimeout(string text, long timeoutMilliseconds, SqlNotificationRequest notificationRequest, TdsParserStateObject stateObj, bool sync, bool callerHasConnectionLock = false, byte[] enclavePackage = null)
         {
             if (TdsParserState.Broken == State || TdsParserState.Closed == State)
             {
@@ -10002,7 +10033,7 @@ namespace Microsoft.Data.SqlClient
                 //  accidentally execute after the transaction has completed on a different thread.
                 _connHandler.CheckEnlistedTransactionBinding();
 
-                stateObj.SetTimeoutSeconds(timeout);
+                stateObj.SetTimeoutMilliseconds(timeoutMilliseconds);
 
                 if ((!_fMARS) && (_physicalStateObj.HasOpenResult))
                 {
@@ -10433,7 +10464,10 @@ namespace Microsoft.Data.SqlClient
                     // If Precision is specified, verify value precision vs param precision
                     if (precision != 0)
                     {
-                        if (precision < adjustedValue.Precision)
+                        // Precision metadata can overstate zero's required digits.
+                        // Compare magnitudes to recognize negative zero as well.
+                        if (precision < adjustedValue.Precision &&
+                            (SqlDecimal.Abs(adjustedValue) != new SqlDecimal(0)).IsTrue)
                         {
                             throw ADP.ParameterValueOutOfRange(adjustedValue);
                         }

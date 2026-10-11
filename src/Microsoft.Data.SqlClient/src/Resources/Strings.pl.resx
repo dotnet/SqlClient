@@ -204,6 +204,9 @@
   <data name="ADP_PooledOpenTimeout" xml:space="preserve">
     <value>Upłynął limit czasu.  Upłynął limit czasu przed uzyskaniem połączenia z puli.  Mogło to być spowodowane tym, że wszystkie połączenia w puli były używane i osiągnięto maksymalny rozmiar puli.</value>
   </data>
+  <data name="ADP_IsolationLevelResetTimeout" xml:space="preserve">
+    <value>Timeout expired.  The connection timeout period elapsed before the transaction isolation level of the pooled connection could be reset.</value>
+  </data>
   <data name="ADP_NonPooledOpenTimeout" xml:space="preserve">
     <value>Przekroczono limit czasu podczas próby otwarcia połączenia.  Przekroczono limit okresu przed próbą otwarcia połączenia.  Mogło to mieć miejsce z powodu zbyt wielu jednoczesnych prób nawiązania połączenia bez puli.</value>
   </data>

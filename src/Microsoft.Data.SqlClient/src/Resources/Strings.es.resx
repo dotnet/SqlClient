@@ -204,6 +204,9 @@
   <data name="ADP_PooledOpenTimeout" xml:space="preserve">
     <value>Valor de tiempo de espera caducado. El período de tiempo de espera expiró antes de obtener una conexión del grupo. Esto puede suceder porque todas las conexiones de la agrupación estaban en uso y se alcanzó el máximo tamaño del grupo.</value>
   </data>
+  <data name="ADP_IsolationLevelResetTimeout" xml:space="preserve">
+    <value>Timeout expired.  The connection timeout period elapsed before the transaction isolation level of the pooled connection could be reset.</value>
+  </data>
   <data name="ADP_NonPooledOpenTimeout" xml:space="preserve">
     <value>Tiempo de espera agotado al intentar abrir la conexión. El periodo de tiempo de espera se ha superado antes de intentar abrir la conexión. Probablemente se produjo por haber demasiados intentos de conexión no agrupada a la vez.</value>
   </data>

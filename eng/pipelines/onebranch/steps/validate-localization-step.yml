@@ -4,13 +4,41 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
+parameters:
+  # When true, localization findings fail this step.  When false, they are reported as warnings and
+  # the step succeeds.
+  - name: failOnValidationError
+    type: boolean
+
 steps:
+  # Compose the argument line first so the optional switch can be appended without repeating the
+  # whole list.  The variable is set immediately before the task that reads it.
+  #
+  # The switch is appended as a bare token because the PowerShell task dot-sources the script under
+  # -Command, where a -Switch:Value form binds the value as a string and is rejected.
+  #
+  # Report-only is enabled only by the value False (the comparison is case-insensitive).  Any value
+  # other than True or False is rejected rather than assumed, so an unrecognised value cannot
+  # silently downgrade validation to warnings.
+  - pwsh: |
+      $arguments = '-ResourcesDirectory "$(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient/src/Resources"' +
+                   ' -AllowlistPath "$(Build.SourcesDirectory)/.config/LocalizationValidationAllowlist.json"'
+
+      $failOnValidationError = '${{ parameters.failOnValidationError }}'
+      if ($failOnValidationError -eq 'False') {
+          $arguments += ' -ReportOnly'
+      }
+      elseif ($failOnValidationError -ne 'True') {
+          throw "Unexpected failOnValidationError value '$failOnValidationError'."
+      }
+
+      Write-Host "##vso[task.setvariable variable=validateLocalizationArguments]$arguments"
+    displayName: 'Compose localization validation arguments'
+
   - task: PowerShell@2
     displayName: 'Validate localized resources'
     inputs:
       targetType: filePath
       pwsh: true
       filePath: $(Build.SourcesDirectory)/eng/pipelines/onebranch/scripts/validate-localization.ps1
-      arguments: >-
-        -ResourcesDirectory "$(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient/src/Resources"
-        -AllowlistPath "$(Build.SourcesDirectory)/.config/LocalizationValidationAllowlist.json"
+      arguments: $(validateLocalizationArguments)

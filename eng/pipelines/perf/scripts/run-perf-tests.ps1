@@ -22,7 +22,7 @@
 [CmdletBinding()]
 param(
     [string]$Configuration = "Release",
-    [string]$Framework = "net9.0",
+    [string]$Framework = "net10.0",
     [string]$ResultsSubdir = "perf-results",
     [string]$BaselineVersion = "",
     # Alternative to -BaselineVersion: benchmark against Microsoft.Data.SqlClient built from ANOTHER
@@ -192,7 +192,7 @@ $env:DOTNET_CLI_TELEMETRY_OPTOUT = "1"
 $env:DOTNET_SKIP_FIRST_TIME_EXPERIENCE = "1"
 
 ####################################################################################################
-# 1. Install the .NET SDK (pinned by global.json) and the runtimes for the target frameworks.
+# 1. Install the .NET SDK (pinned by global.json) and the runtime for the target framework.
 ####################################################################################################
 
 function Install-DotNet {
@@ -213,9 +213,7 @@ function Install-DotNet {
     Invoke-WebRequest -UseBasicParsing "https://dot.net/v1/dotnet-install.ps1" -OutFile $installScript
 
     & $installScript -Version $sdkVersion -InstallDir $dotnetRoot
-    foreach ($channel in @("8.0", "9.0", "10.0")) {
-        & $installScript -Channel $channel -Runtime dotnet -InstallDir $dotnetRoot
-    }
+    & $installScript -Channel "10.0" -Runtime dotnet -InstallDir $dotnetRoot
 }
 
 $hasNet10Sdk = $false

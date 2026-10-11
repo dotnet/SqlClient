@@ -6,13 +6,15 @@
 
   <!-- Target Frameworks =============================================== -->
   <PropertyGroup>
-    <TargetFrameworks>net462;net8.0;net9.0</TargetFrameworks>
+    <TargetFrameworks>net462;net10.0</TargetFrameworks>
   </PropertyGroup>
 
   <!-- Compiler Options ================================================ -->
   <PropertyGroup>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- Opt into the documentation snippet compile inputs declared in src/Directory.Build.targets. -->
+    <IncludesDocumentationSnippets>true</IncludesDocumentationSnippets>
     <RootNamespace />
   </PropertyGroup>
 
@@ -238,7 +240,7 @@
   <!-- Reference to Abstractions -->
   <ItemGroup>
     <ProjectReference Include="$(AbstractionsProjectPath)"
-                      Condition="'$(ReferenceType)' != 'Package'" />
+                      Condition="'$(ReferenceType)' == 'Project'" />
     <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Abstractions"
                       Condition="'$(ReferenceType)' == 'Package'" />
   </ItemGroup>
@@ -246,7 +248,7 @@
   <!-- Reference to Logging -->
   <ItemGroup>
     <ProjectReference Include="$(LoggingProjectPath)"
-                      Condition="'$(ReferenceType)' != 'Package'" />
+                      Condition="'$(ReferenceType)' == 'Project'" />
     <PackageReference Include="Microsoft.Data.SqlClient.Internal.Logging"
                       Condition="'$(ReferenceType)' == 'Package'" />
   </ItemGroup>
@@ -254,7 +256,7 @@
   <!-- Reference to SqlServer -->
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)/src/Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj"
-                      Condition="'$(ReferenceType)' != 'Package'" />
+                      Condition="'$(ReferenceType)' == 'Project'" />
     <PackageReference Include="Microsoft.SqlServer.Server"
                       Condition="'$(ReferenceType)' == 'Package'" />
   </ItemGroup>

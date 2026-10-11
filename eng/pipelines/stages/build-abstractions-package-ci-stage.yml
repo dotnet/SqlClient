@@ -82,7 +82,6 @@ parameters:
   # The C# project reference type to use when building and packing the packages.
   - name: referenceType
     type: string
-    default: Project
     values:
       # Reference sibling packages as NuGet packages.
       - Package
@@ -117,7 +116,7 @@ stages:
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           jobNameSuffix: linux
           netFrameworkRuntimes: []
-          netRuntimes: [net8.0, net9.0, net10.0]
+          netRuntimes: [net10.0]
           poolName: ${{ parameters.poolName }}
           poolImage: ADO-UB24
 
@@ -132,7 +131,7 @@ stages:
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           jobNameSuffix: windows
           netFrameworkRuntimes: [net462]
-          netRuntimes: [net8.0, net9.0, net10.0]
+          netRuntimes: [net10.0]
           poolName: ${{ parameters.poolName }}
           poolImage: ADO-Win25
 
@@ -147,7 +146,7 @@ stages:
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           jobNameSuffix: macos
           netFrameworkRuntimes: []
-          netRuntimes: [net8.0, net9.0, net10.0]
+          netRuntimes: [net10.0]
           # Our 1ES pools do not offer macOS images, so this job runs on the Microsoft-hosted
           # 'Azure Pipelines' pool.
           poolName: Azure Pipelines

@@ -43,12 +43,16 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     #if NETFRAMEWORK
     private readonly bool? _disableTnirByDefaultOriginal;
     #endif
+    #if NET
+    private readonly bool? _enableAppConfigOriginal;
+    #endif
     private readonly bool? _enableMultiSubnetFailoverByDefaultOriginal;
     #if NET
     private readonly bool? _globalizationInvariantModeOriginal;
     #endif
     private readonly bool? _ignoreServerProvidedFailoverPartnerOriginal;
     private readonly bool? _useLegacyFailoverAlternationOnLoginSqlErrorsOriginal;
+    private readonly bool? _enableTransactionIsolationLevelResetOriginal;
     private readonly bool? _legacyRowVersionNullBehaviorOriginal;
     private readonly bool? _legacyVarTimeZeroScaleBehaviourOriginal;
     private readonly bool? _makeReadAsyncBlockingOriginal;
@@ -97,6 +101,10 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             _disableTnirByDefaultOriginal =
                 GetSwitchValue("s_disableTnirByDefault");
             #endif
+            #if NET
+            _enableAppConfigOriginal =
+                GetSwitchValue("s_enableAppConfig");
+            #endif
             _enableMultiSubnetFailoverByDefaultOriginal =
                 GetSwitchValue("s_enableMultiSubnetFailoverByDefault");
             #if NET
@@ -107,6 +115,8 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
                 GetSwitchValue("s_ignoreServerProvidedFailoverPartner");
             _useLegacyFailoverAlternationOnLoginSqlErrorsOriginal =
                 GetSwitchValue("s_useLegacyFailoverAlternationOnLoginSqlErrors");
+            _enableTransactionIsolationLevelResetOriginal =
+                GetSwitchValue("s_enableTransactionIsolationLevelReset");
             _legacyRowVersionNullBehaviorOriginal =
                 GetSwitchValue("s_legacyRowVersionNullBehavior");
             _legacyVarTimeZeroScaleBehaviourOriginal =
@@ -159,6 +169,11 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
                 "s_disableTnirByDefault",
                 _disableTnirByDefaultOriginal);
             #endif
+            #if NET
+            SetSwitchValue(
+                "s_enableAppConfig",
+                _enableAppConfigOriginal);
+            #endif
             SetSwitchValue(
                 "s_enableMultiSubnetFailoverByDefault",
                 _enableMultiSubnetFailoverByDefaultOriginal);
@@ -173,6 +188,9 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
             SetSwitchValue(
                 "s_useLegacyFailoverAlternationOnLoginSqlErrors",
                 _useLegacyFailoverAlternationOnLoginSqlErrorsOriginal);
+            SetSwitchValue(
+                "s_enableTransactionIsolationLevelReset",
+                _enableTransactionIsolationLevelResetOriginal);
             SetSwitchValue(
                 "s_legacyRowVersionNullBehavior", 
                 _legacyRowVersionNullBehaviorOriginal);
@@ -242,6 +260,17 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     }
     #endif
 
+    #if NET
+    /// <summary>
+    /// Get or set the EnableAppConfig switch value.
+    /// </summary>
+    public bool? EnableAppConfig
+    {
+        get => GetSwitchPropertyValue(nameof(EnableAppConfig));
+        set => SetSwitchValue("s_enableAppConfig", value);
+    }
+    #endif
+
     /// <summary>
     /// Get or set the EnableMultiSubnetFailoverByDefault switch value.
     /// </summary>
@@ -278,6 +307,15 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     {
         get => GetSwitchPropertyValue(nameof(UseLegacyFailoverAlternationOnLoginSqlErrors));
         set => SetSwitchValue("s_useLegacyFailoverAlternationOnLoginSqlErrors", value);
+    }
+
+    /// <summary>
+    /// Get or set the EnableTransactionIsolationLevelReset switch value.
+    /// </summary>
+    public bool? EnableTransactionIsolationLevelReset
+    {
+        get => GetSwitchPropertyValue(nameof(EnableTransactionIsolationLevelReset));
+        set => SetSwitchValue("s_enableTransactionIsolationLevelReset", value);
     }
 
     /// <summary>

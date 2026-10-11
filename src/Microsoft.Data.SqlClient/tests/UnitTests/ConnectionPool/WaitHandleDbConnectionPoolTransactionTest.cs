@@ -953,7 +953,7 @@ public class WaitHandleDbConnectionPoolTransactionTest : IDisposable
             }
         }
 
-        protected override void Activate(Transaction? transaction)
+        protected override void Activate(Transaction? transaction, TimeoutTimer timeout)
         {
             EnlistedTransaction = transaction;
         }

@@ -11,9 +11,9 @@
 
 ## 📚 Project Overview
 This project is a .NET data provider for SQL Server, enabling .NET applications to interact with SQL Server databases. It supports various features like connection pooling, transaction management, and asynchronous operations.
-The project builds from a **single unified project** at `src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj`. It targets `net8.0` and `net9.0` on all supported hosts, and adds `net462` only when building on Windows. The legacy `netfx/` and `netcore/` directories are being phased out — only their `ref/` folders (which define the public API surface) remain active.
+The project builds from a **single unified project** at `src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj`, targeting `net462;net10.0` (minimum runtime compatibility: .NET Framework 4.6.2 and .NET 10). Public API declarations are unified under `src/Microsoft.Data.SqlClient/ref/`; reference and unsupported-platform projects additionally preserve `netstandard2.0`. The legacy `netfx/` and `netcore/` directories are no longer used.
 The project includes:
-- **Public APIs**: Defined in `netcore/ref/` and `netfx/ref/` directories.
+- **Public APIs**: Defined by `src/Microsoft.Data.SqlClient/ref/Microsoft.Data.SqlClient.csproj` and the reference source files beside it.
 - **Implementations**: All source code in `src/Microsoft.Data.SqlClient/src/`.
 - **Tests**: Located in the `tests/` directory, covering unit and integration tests.
   - **Unit Tests**: Located in `src/Microsoft.Data.SqlClient/tests/UnitTests/`.
@@ -51,12 +51,12 @@ This project includes several key products and libraries that facilitate SQL Ser
 - **Logging and Diagnostics**: Provides event source tracing diagnostic capabilities for troubleshooting.
 - **Failover Support**: Handles automatic failover scenarios for high availability.
   - Compatibility switch: `Switch.Microsoft.Data.SqlClient.UseLegacyFailoverAlternationOnLoginSqlErrors` (default `false`) can restore legacy alternation behavior in `LoginWithFailover` for login-phase SQL errors.
-- **Cross-Platform Support**: Compatible with both .NET Framework and .NET Core, allowing applications to run on Windows, Linux, and macOS.
+- **Cross-Platform Support**: Compatible with .NET Framework 4.6.2+ on Windows and .NET 10+ on Windows, Linux, and macOS.
 - **Column Encryption AKV Provider**: Supports Azure Key Vault (AKV) provider for acquiring keys from Azure Key Vault to be used for encryption and decryption.
 
 ## 🧩 SNI Implementations
 There are two implementations of the SQL Server Network Interface (SNI) layer used in this project:
-- **Managed SNI**: A managed implementation of SNI that is used in .NET Core and .NET 5+ environments. It provides cross-platform support for SQL Server connectivity.
+- **Managed SNI**: A managed implementation of SNI that is used in .NET 10+ environments. It provides cross-platform support for SQL Server connectivity.
 - **Native SNI**: A native implementation of SNI that is used in .NET Framework and .NET Core environments on Windows. It's shipped as part of the `Microsoft.Data.SqlClient.SNI` and `Microsoft.Data.SqlClient.SNI.Runtime` packages.
   - **Microsoft.Data.SqlClient.SNI**: This package provides the native SNI layer for .NET Framework applications.
   - **Microsoft.Data.SqlClient.SNI.Runtime**: This package provides the native SNI layer for .NET Core applications on Windows.
@@ -137,7 +137,7 @@ When a new issue is created, follow these steps:
 
 ## 🧠 Contextual Awareness
 - All source code is in `src/Microsoft.Data.SqlClient/src/`. Do NOT add code to legacy `netfx/src/` or `netcore/src/` directories.
-- Only `ref/` folders in `netcore/ref/` and `netfx/ref/` remain active for defining the public API surface.
+- Public API changes must update the unified `src/Microsoft.Data.SqlClient/ref/` sources for each affected target framework.
 - Check for platform-specific differences using file suffixes (`.netfx.cs`, `.netcore.cs`, `.windows.cs`, `.unix.cs`) and conditional compilation (`#if NETFRAMEWORK`, `#if NET`, `#if _WINDOWS`, `#if _UNIX`).
 - Respect API compatibility rules across .NET versions
 - Do not introduce breaking changes without proper justification and documentation

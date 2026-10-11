@@ -204,6 +204,9 @@
   <data name="ADP_PooledOpenTimeout" xml:space="preserve">
     <value>Expiration du délai d'attente. Le délai d'attente s'est écoulé avant obtention d'une connexion du pool. Ceci est probablement dû au fait que toutes les connexions regroupées sont en cours d'utilisation et que la taille maximale du pool a été atteinte.</value>
   </data>
+  <data name="ADP_IsolationLevelResetTimeout" xml:space="preserve">
+    <value>Timeout expired.  The connection timeout period elapsed before the transaction isolation level of the pooled connection could be reset.</value>
+  </data>
   <data name="ADP_NonPooledOpenTimeout" xml:space="preserve">
     <value>Lors de la tentative d'ouverture de connexion, le délai d'attente a expiré. La durée écoulée avant la tentative d'ouverture de connexion a été dépassée.</value>
   </data>
