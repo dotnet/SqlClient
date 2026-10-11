@@ -18,6 +18,9 @@ namespace Microsoft.Data.SqlClient
 {
     internal sealed partial class SNILoadHandle : SafeHandle
     {
+        // Explicit static ctor avoids 'beforefieldinit', which can otherwise let the runtime
+        // eagerly run SingletonInstance's native initialization on non-Windows platforms.
+        static SNILoadHandle() { }
         internal static readonly SNILoadHandle SingletonInstance = new SNILoadHandle();
 
         internal readonly SqlAsyncCallbackDelegate ReadAsyncCallbackDispatcher = new SqlAsyncCallbackDelegate(ReadDispatcher);

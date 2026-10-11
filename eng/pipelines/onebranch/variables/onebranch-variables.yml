@@ -32,6 +32,15 @@ variables:
   # SymbolsUploadAccount
   - group: 'symbols-variables-v3'
 
+  # These variables point the SDL Roslyn analysis step at the internal Microsoft.Internal.Analyzers
+  # package (the "IA*" rules). The package is Microsoft-internal and confidential, so the feed URL
+  # and pinned version live in this ADO.Net-project variable group rather than in the repo. Consumed
+  # by eng/pipelines/onebranch/steps/roslyn-analyzers-buildproj-step.yml.
+  #
+  # InternalAnalyzersFeed
+  # InternalAnalyzersVersion
+  - group: 'internal-analyzers-variables-v1'
+
   # Well-Known Variables ###################################################
 
   # Directory where downloaded pipeline artifacts (NuGet packages from earlier
@@ -54,16 +63,13 @@ variables:
   - name: Packaging.EnableSBOMSigning
     value: true
 
-  # Keep this as a runtime variable reference in globalSdl.apiscan.versionNumber. Passing the
-  # quoted value directly through an Azure template expression perturbs '6.10' to the number 6.1.
-  - name: ApiScanSoftwareVersion
-    value: '6.10'
-
   # OneBranch supplies a variety of container images we must use for our jobs.
+  #
+  # https://eng.ms/docs/products/onebranch/infrastructureandimages/containerimages/containerimages
 
   # Windows jobs use this image.
   - name: WindowsContainerImage
-    value: onebranch.azurecr.io/windows/ltsc2022/vse2022:latest
+    value: onebranch.azurecr.io/windows/ltsc2025/vse2026:latest
 
   # Linux jobs use this image.
   - name: LinuxContainerImage

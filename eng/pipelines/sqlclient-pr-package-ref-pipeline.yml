@@ -34,9 +34,11 @@ pr:
   branches:
     include:
       # GitHub repo branch targets that will trigger PR validation builds.
-      - dev/*
-      - feat/*
-      - main
+      #
+      # GOTCHA: Currently disabled on all but release/* due to limited resources.
+      #- dev/*
+      #- feat/*
+      #- main
       - release/*
 
   paths:
@@ -87,25 +89,19 @@ parameters:
   #
   # These are _not_ the target frameworks to build the driver packages for.
   #
-  # Note: We are excluding .NET 10.0 here to avoid consuming too many resources
-  # during PR pipeline runs.  The periodic CI pipeline runs include .NET 10.0.
-  #
   - name: targetFrameworks
     displayName: Target Frameworks on Windows
     type: object
-    default: [net462, net8.0, net9.0]
+    default: [net462, net10.0]
 
   # The target frameworks to build and run tests for on Unix.
   #
   # These are _not_ the target frameworks to build the driver packages for.
   #
-  # Note: We are excluding .NET 10.0 here to avoid consuming too many resources
-  # during PR pipeline runs.  The periodic CI pipeline runs include .NET 10.0.
-  #
   - name: targetFrameworksUnix
     displayName: Target Frameworks on Unix
     type: object
-    default: [net8.0, net9.0]
+    default: [net10.0]
 
   # The timeout, in minutes, for each test job.
   - name: testJobTimeout
@@ -135,11 +131,18 @@ extends:
     debug: ${{ parameters.debug }}
     targetFrameworks: ${{ parameters.targetFrameworks }}
     targetFrameworksUnix: ${{ parameters.targetFrameworksUnix }}
+    # Keep the primary (SQL 2025 / Azure SQL) configurations on the same set of
+    # target frameworks as everything else.
+    primaryTargetFrameworks: ${{ parameters.targetFrameworks }}
+    primaryTargetFrameworksUnix: ${{ parameters.targetFrameworksUnix }}
     testJobTimeout: ${{ parameters.testJobTimeout }}
     testSets: ${{ parameters.testSets }}
     useManagedSNI: ${{ parameters.useManagedSNI }}
     # Legacy SQL Server tests (2016/2017) run in CI only, not on PRs.
     runLegacySqlTests: false
+    # SQL Server 2022 coverage runs in CI only.  PR validation covers SQL
+    # Server 2019, 2025 and Azure SQL.
+    runSql22Tests: false
     # Don't run the AE tests in Debug mode; they rarely succeed.
     ${{ if eq(parameters.buildConfiguration, 'Debug') }}:
       runAlwaysEncryptedTests: false

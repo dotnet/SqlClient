@@ -1,0 +1,112 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Builds and runs tools/PackageValidator over a directory of produced NuGet packages.
+#
+# The validator is invoked once for the whole directory rather than once per package, because its
+# most valuable checks are cross-package: it confirms that every package in the SqlClient family
+# carries the same version and that their inter-package dependency ranges agree.  Running it per
+# package would silently skip all of those findings.
+#
+# Two invocations are made over the same inputs.  The first writes a machine-readable report and is
+# ungated, so the artifact exists even for a failing run.  It still fails the step if the validator
+# itself errors, because the report it produced could not then be trusted.  The second renders the
+# human-readable report and applies the gate, so a failed build shows the findings in its own log.
+
+parameters:
+  # Directory scanned recursively for .nupkg files.  Sibling .snupkg files must sit beside their
+  # .nupkg for symbol matching to resolve, which is how the build jobs publish them.
+  - name: packagesPath
+    type: string
+
+  # Path of the JSON report to write.
+  - name: reportPath
+    type: string
+
+  # Expected versions shared by the whole SqlClient family (Logging, Abstractions, SqlClient,
+  # Azure, AkvProvider), applied as wildcard expectations.  Pointing every package at the same
+  # value is what proves they agree, and also catches every package being consistently wrong.
+  - name: sqlClientPackageVersion
+    type: string
+
+  - name: sqlClientFileVersion
+    type: string
+
+  # Expected versions for the separately-versioned Microsoft.SqlServer.Server, applied as a per-id
+  # override of the family wildcard.  Left empty when SqlServer is not built this run: its package
+  # is then absent from the drop, and the validator rejects an expectation with an empty value.
+  - name: sqlServerPackageVersion
+    type: string
+    default: ''
+
+  - name: sqlServerFileVersion
+    type: string
+    default: ''
+
+  # Finding severities and/or categories that fail the build.  Run the validator with --help to
+  # see the full set of categories.
+  - name: failOn
+    type: object
+    default:
+      - error
+
+  # When true, gate findings fail this step.  When false, they are reported as warnings and the
+  # step succeeds.
+  - name: failOnValidationError
+    type: boolean
+
+steps:
+  - task: DotNetCoreCLI@2
+    displayName: 'build.proj - BuildPackageValidator'
+    inputs:
+      command: build
+      projects: '$(REPO_ROOT)/build.proj'
+      arguments: >-
+        -t:BuildPackageValidator
+        -p:Configuration=Release
+
+  # Compose the argument line first so the optional switch can be appended without repeating the
+  # whole list.  The variable is set immediately before the task that reads it.
+  #
+  # The switch is appended as a bare token because the PowerShell task dot-sources the script under
+  # -Command, where a -Switch:Value form binds the value as a string and is rejected.
+  #
+  # Report-only is enabled only by the value False (the comparison is case-insensitive).  Any value
+  # other than True or False is rejected rather than assumed, so an unrecognised value cannot
+  # silently downgrade validation to warnings.
+  - pwsh: |
+      $arguments = '-ValidatorPath "$(REPO_ROOT)/tools/PackageValidator/src/bin/Release/net10.0/PackageValidator.dll"' +
+                   ' -PackagesPath "${{ parameters.packagesPath }}"' +
+                   ' -ReportPath "${{ parameters.reportPath }}"' +
+                   ' -SqlClientPackageVersion "${{ parameters.sqlClientPackageVersion }}"' +
+                   ' -SqlClientFileVersion "${{ parameters.sqlClientFileVersion }}"' +
+                   ' -SqlServerPackageVersion "${{ parameters.sqlServerPackageVersion }}"' +
+                   ' -SqlServerFileVersion "${{ parameters.sqlServerFileVersion }}"' +
+                   ' -FailOn "${{ join(',', parameters.failOn) }}"'
+
+      $failOnValidationError = '${{ parameters.failOnValidationError }}'
+      if ($failOnValidationError -eq 'False') {
+          $arguments += ' -ReportOnly'
+      }
+      elseif ($failOnValidationError -ne 'True') {
+          throw "Unexpected failOnValidationError value '$failOnValidationError'."
+      }
+
+      Write-Host "##vso[task.setvariable variable=validatePackagesArguments]$arguments"
+    displayName: 'Compose package validation arguments'
+
+  - task: PowerShell@2
+    displayName: 'Validate NuGet packages'
+    inputs:
+      targetType: filePath
+      pwsh: true
+      filePath: $(REPO_ROOT)/eng/pipelines/onebranch/scripts/validate-packages.ps1
+      arguments: $(validatePackagesArguments)
+      # The script inspects PackageValidator's exit codes itself and decides what they mean: a
+      # tripped gate is a warning in report-only mode and a throw otherwise.  $LASTEXITCODE still
+      # holds the tool's code afterwards, which the task would otherwise re-propagate and fail a
+      # report-only run.
+      ignoreLASTEXITCODE: true

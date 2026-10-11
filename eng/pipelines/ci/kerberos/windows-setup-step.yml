@@ -1,0 +1,52 @@
+####################################################################################################
+# Licensed to the .NET Foundation under one or more agreements.  The .NET Foundation licenses this
+# file to you under the MIT license.  See the LICENSE file in the project root for more information.
+####################################################################################################
+
+# Configures a domain-connected Windows agent for Kerberos integration tests.
+
+parameters:
+
+  - name: useManagedSNI
+    type: boolean
+
+steps:
+
+  - pwsh: |
+      $managedSni = [System.Convert]::ToBoolean($env:MANAGED_SNI)
+      $jdata = Get-Content -Raw "config.default.jsonc" | ConvertFrom-Json
+      foreach ($p in $jdata) {
+          $p.TCPConnectionString = $env:REMOTE_TCP_CONN_STRING
+          $p.NPConnectionString = $env:REMOTE_NP_CONN_STRING
+          $p.SupportsIntegratedSecurity = $true
+          $p.UseManagedSNIOnWindows = $managedSni
+      }
+      $jdata | ConvertTo-Json | Set-Content "config.jsonc"
+    workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities
+    displayName: Update test config.jsonc
+    env:
+      REMOTE_TCP_CONN_STRING: $(REMOTE_TCP_CONN_STRING)
+      REMOTE_NP_CONN_STRING: $(REMOTE_NP_CONN_STRING)
+      MANAGED_SNI: '${{ parameters.useManagedSNI }}'
+
+  - powershell: |
+      $svc = Get-Service -Name SQLBrowser -ErrorAction SilentlyContinue
+      if ($null -ne $svc) {
+          Set-Service -StartupType Automatic SQLBrowser
+          if ($svc.Status -ne 'Running') { Start-Service SQLBrowser }
+          Get-Service SQLBrowser | Select-Object Name, StartType, Status
+      }
+    displayName: Start SQL Server Browser
+
+  - powershell: |
+      Set-DtcNetworkSetting -DtcName "Local" `
+        -InboundTransactionsEnabled $true `
+        -OutboundTransactionsEnabled $true `
+        -RemoteClientAccessEnabled $true `
+        -Confirm:$false
+
+      Get-NetFirewallRule -DisplayName "Distributed Transaction Coordinator (RPC)"      | Set-NetFirewallRule -Profile Domain -Action Allow -Enabled True
+      Get-NetFirewallRule -DisplayName "Distributed Transaction Coordinator (RPC-EPMAP)" | Set-NetFirewallRule -Profile Domain -Action Allow -Enabled True
+      Get-NetFirewallRule -DisplayName "Distributed Transaction Coordinator (TCP-Out)"   | Set-NetFirewallRule -Profile Domain -Action Allow -Enabled True
+      Get-NetFirewallRule -DisplayName "Distributed Transaction Coordinator (TCP-In)"    | Set-NetFirewallRule -Profile Domain -Action Allow -Enabled True
+    displayName: Enable Network DTC Access

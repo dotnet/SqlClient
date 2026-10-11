@@ -7,23 +7,6 @@
 # This file contains variables that relate to the various packages that are produced via the
 # OneBranch official/non-official pipelines. They are grouped by the packages they represent.
 #
-# VERSION STRATEGY
-# ================
-# Package versions are computed by Versions.props using one input:
-#   - BuildNumber   ($(Build.BuildNumber), provided by ADO)
-#
-# The SqlClient *family* (Internal.Logging, Extensions.Abstractions, Microsoft.Data.SqlClient,
-# Extensions.Azure, and the AlwaysEncrypted.AzureKeyVaultProvider) shares a single version defined
-# by SqlClientNextVersion in src/Microsoft.Data.SqlClient/Versions.props.  Microsoft.SqlServer.Server
-# is versioned separately by SqlServerNextVersion.
-#
-# The *NextVersion properties define the base version:
-#   - On main:           X.Y.Z-preview1  → official produces "X.Y.Z-preview1"
-#   - On release/X.Y:    X.Y.Z           → official produces "X.Y.Z"
-#
-# No per-package version variables are needed here — Versions.props is the single source.
-# Downstream stages obtain the computed versions via the compute-versions stage.
-#
 # ARTIFACT NAMING
 # ===============
 # OneBranch automatically publishes pipeline artifacts from all jobs named as:

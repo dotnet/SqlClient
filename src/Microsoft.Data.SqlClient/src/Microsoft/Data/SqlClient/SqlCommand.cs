@@ -763,7 +763,9 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                _retryLogicProvider ??= SqlConfigurableRetryLogicManager.CommandProvider;
+                _retryLogicProvider ??= LocalAppContextSwitches.EnableAppConfig
+                    ? SqlConfigurableRetryLogicManager.CommandProvider
+                    : SqlConfigurableRetryFactory.NoneRetryProvider;
                 return _retryLogicProvider;
             }
             set => _retryLogicProvider = value;
@@ -1306,7 +1308,7 @@ namespace Microsoft.Data.SqlClient
         #region Internal Methods
 
         // @TODO: This is only called by SqlCommandBuilder, it should live there. EXCEPT for the one call to ValidateCommand and setting _parameters at the end. Is that really necessary?
-        // @TODO: This also an crazy long method.
+        // @TODO: This method is also excessively long.
         internal void DeriveParameters()
         {
             switch (CommandType)

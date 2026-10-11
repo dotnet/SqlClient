@@ -42,7 +42,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void SQLBU503290Test()
         {
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection conn = DataTestUtility.CreateConnection())
             {
                 conn.Open();
                 SqlParameter p = new SqlParameter("@p", SqlDbType.DateTimeOffset);
@@ -89,7 +89,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             createProcN += " SET @p3 = NULL";
             createProcN += " SET @p4 = NULL";
 
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection conn = DataTestUtility.CreateConnection())
             {
                 try
                 {
@@ -548,7 +548,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             createProcN += " SET @p1 = NULL";
             createProcN += " SET @p2 = NULL";
 
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection conn = DataTestUtility.CreateConnection())
             {
                 try
                 {
@@ -779,7 +779,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 "'9999-12-31 15:59:59.997 -08:00')";
             string tableInsert2 = "INSERT INTO " + tableName + " VALUES (NULL, NULL, NULL, NULL, NULL, NULL)";
 
-            using (SqlConnection conn = new SqlConnection(new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+            using (SqlConnection conn = DataTestUtility.CreateConnection(new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
             {
                 TypeSystemVersion = "SQL Server 2008"
             }.ConnectionString))
@@ -812,7 +812,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
             }
 
-            using (SqlConnection conn = new SqlConnection(new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+            using (SqlConnection conn = DataTestUtility.CreateConnection(new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
             {
                 TypeSystemVersion = "SQL Server 2005"
             }.ConnectionString))
@@ -870,7 +870,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 "'9999-12-31 15:59:59.997 -08:00')";
             string prepTableDst3 = "CREATE TABLE " + tempTableDst + " (ci int, c0 dateTime, c1 date, c2 time(7), c3 datetime2(3), c4 datetimeoffset)";
 
-            using SqlConnection conn = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection conn = DataTestUtility.CreateConnection();
             conn.Open();
             using SqlCommand cmd = conn.CreateCommand();
             cmd.CommandText = prepTableSrc1;
@@ -881,7 +881,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             try
             {
-                using SqlConnection connDst = new(DataTestUtility.TCPConnectionString);
+                using SqlConnection connDst = DataTestUtility.CreateConnection();
                 connDst.Open();
                 using SqlCommand cmd2 = connDst.CreateCommand();
                 cmd2.CommandText = prepTableDst3;

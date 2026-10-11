@@ -10,6 +10,8 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Data.Common;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Logging;
@@ -128,6 +130,53 @@ namespace Microsoft.Data.SqlClient
         internal override void InvalidateEnclaveSession(EnclaveSessionParameters enclaveSessionParameters, SqlEnclaveSession enclaveSessionToInvalidate)
         {
             InvalidateEnclaveSessionHelper(enclaveSessionParameters, enclaveSessionToInvalidate);
+        }
+
+        // The Azure Attestation protocol uses a client-generated nonce to prevent token replay.
+        protected override bool GeneratesNonceForAttestation => true;
+
+        // Asynchronous counterpart of CreateEnclaveSession. Performs the attestation service round
+        // trip (OpenID Connect metadata download) asynchronously.
+        //
+        // The async attestation gate is taken and released by the sealed CreateEnclaveSessionAsync in
+        // EnclaveProviderBase, which also re-checks the session cache before calling this method.
+        protected override async Task<(SqlEnclaveSession SqlEnclaveSession, long Counter)> CreateEnclaveSessionCoreAsync(
+            byte[] attestationInfo,
+            ECDiffieHellman clientDHKey,
+            EnclaveSessionParameters enclaveSessionParameters,
+            byte[] customData,
+            int customDataLength,
+            CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrEmpty(enclaveSessionParameters.AttestationUrl) || customData == null || customDataLength <= 0)
+            {
+                throw SQL.AttestationFailed(Strings.FailToCreateEnclaveSession);
+            }
+
+            byte[] nonce = customData;
+
+            IdentityModelEventSource.ShowPII = true;
+
+            // Deserialize the payload
+            AzureAttestationInfo attestInfo = new AzureAttestationInfo(attestationInfo);
+
+            // Validate the attestation info
+            await VerifyAzureAttestationInfoAsync(
+                enclaveSessionParameters.AttestationUrl,
+                attestInfo.EnclaveType,
+                attestInfo.AttestationToken.AttestationToken,
+                attestInfo.Identity,
+                nonce,
+                cancellationToken).ConfigureAwait(false);
+
+            // Set up shared secret and validate signature
+            byte[] sharedSecret = GetSharedSecret(attestInfo.Identity, nonce, attestInfo.EnclaveType, attestInfo.EnclaveDHInfo, clientDHKey);
+
+            // add session to cache
+            SqlEnclaveSession sqlEnclaveSession =
+                AddEnclaveSessionToCache(enclaveSessionParameters, sharedSecret, attestInfo.SessionId, out long counter);
+
+            return (sqlEnclaveSession, counter);
         }
         #endregion
 
@@ -317,6 +366,90 @@ namespace Microsoft.Data.SqlClient
             ValidateAttestationClaims(enclaveType, attestationToken, enclavePublicKey, nonce);
         }
 
+        // Performs Attestation per the protocol used by Azure Attestation Service.
+        // Asynchronous counterpart of VerifyAzureAttestationInfo.
+        private async Task VerifyAzureAttestationInfoAsync(
+            string attestationUrl,
+            EnclaveType enclaveType,
+            string attestationToken,
+            EnclavePublicKey enclavePublicKey,
+            byte[] nonce,
+            CancellationToken cancellationToken)
+        {
+            bool shouldForceUpdateSigningKeys = false;
+            string attestationInstanceUrl = GetAttestationInstanceUrl(attestationUrl);
+
+            bool shouldRetryValidation;
+            bool isSignatureValid;
+            string exceptionMessage = string.Empty;
+            do
+            {
+                shouldRetryValidation = false;
+
+                // Get the OpenId config object for the signing keys
+                OpenIdConnectConfiguration openIdConfig =
+                    await GetOpenIdConfigForSigningKeysAsync(attestationInstanceUrl, shouldForceUpdateSigningKeys, cancellationToken)
+                        .ConfigureAwait(false);
+
+                // Verify the token signature against the signing keys downloaded from meta data end point
+                bool isKeySigningExpired;
+                isSignatureValid = VerifyTokenSignatureCore(attestationToken, attestationInstanceUrl, openIdConfig.SigningKeys, out isKeySigningExpired, out exceptionMessage);
+
+                if (isKeySigningExpired)
+                {
+                    // Wait for SigningKeyRetryInSec sec before retrying to download the signing keys again.
+                    // The synchronous path blocks the calling thread here; the async path must not.
+                    await Task.Delay(SigningKeyRetryInSec * 1000, cancellationToken).ConfigureAwait(false);
+                }
+
+                // In cases if we fail to validate the token, since we are using the old signing keys
+                // let's re-download the signing keys again and re-validate the token signature
+                if (!isSignatureValid && isKeySigningExpired && !shouldForceUpdateSigningKeys)
+                {
+                    shouldForceUpdateSigningKeys = true;
+                    shouldRetryValidation = true;
+                }
+            }
+            while (shouldRetryValidation);
+
+            if (!isSignatureValid)
+            {
+                throw SQL.AttestationFailed(string.Format(Strings.AttestationTokenSignatureValidationFailed, exceptionMessage));
+            }
+
+            // Validate claims in the token
+            ValidateAttestationClaims(enclaveType, attestationToken, enclavePublicKey, nonce);
+        }
+
+        // For the given attestation url it downloads the token signing keys from the well-known openid configuration end point.
+        // It also caches that information for 1 day to avoid DDOS attacks.
+        // Asynchronous counterpart of GetOpenIdConfigForSigningKeys: the metadata download is awaited
+        // instead of being blocked on with Task.Result.
+        private async Task<OpenIdConnectConfiguration> GetOpenIdConfigForSigningKeysAsync(string url, bool forceUpdate, CancellationToken cancellationToken)
+        {
+            OpenIdConnectConfiguration openIdConnectConfig = OpenIdConnectConfigurationCache.Get<OpenIdConnectConfiguration>(url);
+            if (forceUpdate || openIdConnectConfig == null)
+            {
+                // Compute the meta data endpoint
+                string openIdMetadataEndpoint = url + AttestationUrlSuffix;
+
+                try
+                {
+                    IConfigurationManager<OpenIdConnectConfiguration> configurationManager =
+                        new ConfigurationManager<OpenIdConnectConfiguration>(openIdMetadataEndpoint, new OpenIdConnectConfigurationRetriever());
+                    openIdConnectConfig = await configurationManager.GetConfigurationAsync(cancellationToken).ConfigureAwait(false);
+                }
+                catch (Exception exception) when (!(exception is OperationCanceledException && cancellationToken.IsCancellationRequested))
+                {
+                    throw SQL.AttestationFailed(string.Format(Strings.GetAttestationTokenSigningKeysFailed, GetInnerMostExceptionMessage(exception)), exception);
+                }
+
+                OpenIdConnectConfigurationCache.Set<OpenIdConnectConfiguration>(url, openIdConnectConfig, absoluteExpirationRelativeToNow: s_openIdConnectConfigurationCacheTimeout);
+            }
+
+            return openIdConnectConfig;
+        }
+
         // Returns the innermost exception value
         private static string GetInnerMostExceptionMessage(Exception exception)
         {
@@ -385,7 +518,27 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Verifies the attestation token is signed by correct signing keys.
+        //
+        // On the SecurityTokenValidationException retry path this blocks the calling thread for
+        // SigningKeyRetryInSec seconds. The delay is applied here (rather than in VerifyTokenSignatureCore)
+        // so that the asynchronous path can await the same backoff instead of blocking a thread pool thread.
         private bool VerifyTokenSignature(string attestationToken, string tokenIssuerUrl, ICollection<SecurityKey> issuerSigningKeys, out bool isKeySigningExpired, out string exceptionMessage)
+        {
+            bool isSignatureValid = VerifyTokenSignatureCore(attestationToken, tokenIssuerUrl, issuerSigningKeys, out isKeySigningExpired, out exceptionMessage);
+
+            if (isKeySigningExpired)
+            {
+                // Sleep for SigningKeyRetryInSec sec before retrying to download the signing keys again.
+                Thread.Sleep(SigningKeyRetryInSec * 1000);
+            }
+
+            return isSignatureValid;
+        }
+
+        // Verifies the attestation token is signed by correct signing keys, without applying the
+        // signing key retry backoff. Callers are responsible for the backoff so that synchronous and
+        // asynchronous callers can each wait in the manner appropriate to them.
+        private bool VerifyTokenSignatureCore(string attestationToken, string tokenIssuerUrl, ICollection<SecurityKey> issuerSigningKeys, out bool isKeySigningExpired, out string exceptionMessage)
         {
             exceptionMessage = string.Empty;
             bool isSignatureValid = false;
@@ -417,9 +570,6 @@ namespace Microsoft.Data.SqlClient
             catch (SecurityTokenValidationException securityTokenException)
             {
                 isKeySigningExpired = true;
-
-                // Sleep for SigningKeyRetryInSec sec before retrying to download the signing keys again.
-                Thread.Sleep(SigningKeyRetryInSec * 1000);
                 exceptionMessage = GetInnerMostExceptionMessage(securityTokenException);
             }
             catch (Exception exception)

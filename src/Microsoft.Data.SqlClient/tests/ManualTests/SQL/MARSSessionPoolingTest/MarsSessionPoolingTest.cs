@@ -192,7 +192,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [Trait("Category", "flaky")]
+        [Trait("category", "flaky")]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
         [InlineData(CommandType.Text)]
         [InlineData(CommandType.StoredProcedure)]
@@ -228,7 +228,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [Trait("Category", "flaky")] // Assert.Equal() Failure: Values differ
+        [Trait("category", "flaky")] // Assert.Equal() Failure: Values differ
                                      // Expected: 5
                                      // Actual:   4
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
@@ -301,7 +301,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [Trait("Category", "flaky")]
+        [Trait("category", "flaky")]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotManagedInstance))]
         [InlineData(CommandType.Text)]
         [InlineData(CommandType.StoredProcedure)]

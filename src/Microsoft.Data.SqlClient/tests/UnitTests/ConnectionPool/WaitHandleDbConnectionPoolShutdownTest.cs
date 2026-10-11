@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common.ConnectionString;
@@ -17,7 +18,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
     /// </summary>
     public class WaitHandleDbConnectionPoolShutdownTest
     {
-        private static WaitHandleDbConnectionPool CreatePool(int maxPoolSize = 5)
+        private static WaitHandleDbConnectionPool CreatePool(int maxPoolSize = 5, SqlConnectionFactory? factory = null)
         {
             var poolGroupOptions = new DbConnectionPoolGroupOptions(
                 poolByIdentity: false,
@@ -34,7 +35,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 poolGroupOptions);
 
             var pool = new WaitHandleDbConnectionPool(
-                new WaitHandleDbConnectionPoolTransactionTest.MockSqlConnectionFactory(),
+                factory ?? new WaitHandleDbConnectionPoolTransactionTest.MockSqlConnectionFactory(),
                 dbConnectionPoolGroup,
                 DbConnectionPoolIdentity.NoIdentity,
                 new DbConnectionPoolProviderInfo());
@@ -67,13 +68,17 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Null(pool._cleanupTimer);
         }
 
-        // Drains idle stacks.
+        /// <summary>
+        /// Leaves idle connections for the factory's explicit or deferred Clear call.
+        /// </summary>
         [Fact]
-        public void Shutdown_DrainsIdleStacks()
+        public void Shutdown_LeavesIdleConnectionsUntilClear()
         {
+            // Arrange
             var pool = CreatePool();
 
-            // Vend a few connections then return them so they sit in _stackNew.
+            // An empty pool would pass even if Shutdown still called Clear internally.
+            // Keep idle inventory so the two lifecycle operations have distinguishable effects.
             var owner1 = new SqlConnection();
             var owner2 = new SqlConnection();
             pool.TryGetConnection(owner1, taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? c1);
@@ -86,10 +91,32 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(2, pool.IdleCount);
             Assert.Equal(2, pool.Count);
 
-            pool.Shutdown();
+            try
+            {
+                // Act
+                pool.Shutdown();
 
-            Assert.Equal(0, pool.IdleCount);
-            Assert.Equal(0, pool.Count);
+                // Assert: unchanged inventory and poolability detect both effects of an
+                // unintended Clear: draining idle objects and marking them non-poolable.
+                Assert.False(pool.IsRunning);
+                Assert.Equal(2, pool.IdleCount);
+                Assert.Equal(2, pool.Count);
+                Assert.True(c1!.CanBePooled);
+                Assert.True(c2!.CanBePooled);
+
+                // Act: perform the Clear that the factory owns, separately from shutdown.
+                pool.Clear();
+
+                // Assert
+                Assert.Equal(0, pool.IdleCount);
+                Assert.Equal(0, pool.Count);
+            }
+            finally
+            {
+                // Cleanup
+                pool.Shutdown();
+                pool.Clear();
+            }
         }
 
         // Shutdown is idempotent.
@@ -160,70 +187,151 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(0, Volatile.Read(ref pool._waitCount));
         }
 
-        // Shutdown wakes up a thread parked in WaitHandle.WaitAny.
-        [Trait("Category", "flaky")]
-        //     Failed Microsoft.Data.SqlClient.UnitTests.ConnectionPool.WaitHandleDbConnectionPoolShutdownTest.Shutdown_UnblocksSyncWaiter [5 s]
-        // ##[error]EXEC(0,0): Error Message:
-        // EXEC : error Message:  [D:\a\_work\1\s\build.proj]
-        //      Waiter did not park within 5s.
-        //     Stack Trace:
-        //        at Microsoft.Data.SqlClient.UnitTests.ConnectionPool.WaitHandleDbConnectionPoolShutdownTest.Shutdown_UnblocksSyncWaiter() in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\tests\UnitTests\ConnectionPool\WaitHandleDbConnectionPoolShutdownTest.cs:line 207
-        [Fact]
-        public void Shutdown_UnblocksSyncWaiter()
+        /// <summary>
+        /// Starts with no idle connections. Pauses the first physical connection creation
+        /// while it holds the creation semaphore, then admits a second request that waits
+        /// for that semaphore. Shuts down the pool before releasing the first creation.
+        /// Both requests create their own connections on the retired pool, and both
+        /// connections are destroyed when returned. In the cancellation case, the worker
+        /// returns and destroys the second connection instead of delivering it to the caller.
+        /// </summary>
+        [Theory]
+        [InlineData(false, false)]
+        [InlineData(true, false)]
+        [InlineData(true, true)]
+        public async Task Shutdown_InFlightRequest_CompletesOnRetiredPool(bool async, bool cancel)
         {
-            var pool = CreatePool(maxPoolSize: 1);
+            // Arrange
+            // Initiate a request to the pool. It will be blocked by the gated connection factory.
+            using var factory = new GatedConnectionFactory();
+            var pool = CreatePool(maxPoolSize: 2, factory: factory);
+            using var firstOwner = new SqlConnection();
+            using var pendingOwner = new SqlConnection();
+            var completion = new TaskCompletionSource<DbConnectionInternal>();
+            Task<DbConnectionInternal?> first = Acquire(pool, firstOwner, completion: null);
+            Task<DbConnectionInternal?>? pending = null;
 
-            // Saturate the pool.
-            var owner = new SqlConnection();
-            Assert.True(pool.TryGetConnection(owner, taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? blocking));
-            Assert.NotNull(blocking);
+            // Make sure the first request is blocked in the connection factory. Then, initiate a second request.
+            // The second request will be blocked on the create semaphore in the pool.
+            Assert.True(factory.Entered.Wait(TimeSpan.FromSeconds(10)));
+            pending = Acquire(pool, pendingOwner, async ? completion : null);
+            // Make sure the second request is also blocked.
+            Assert.True(SpinWait.SpinUntil(() => Volatile.Read(ref pool._waitCount) == 2, TimeSpan.FromSeconds(10)));
+            Assert.Equal(1, factory.CreateCount);
+            Assert.False(first.IsCompleted);
+            Assert.False(pending.IsCompleted);
 
-            // Park a sync waiter on a worker thread with a long creation timeout.
-            DbConnectionInternal? waiterResult = null;
-            bool waiterCompleted = false;
-            Exception? waiterEx = null;
-
-            var t = new Thread(() =>
-            {
-                try
-                {
-                    waiterCompleted = pool.TryGetConnection(
-                        new SqlConnection(),
-                        taskCompletionSource: null,
-                        TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
-                        out waiterResult);
-                }
-                catch (Exception ex)
-                {
-                    waiterEx = ex;
-                }
-            })
-            { IsBackground = true };
-            t.Start();
-
-            // Wait deterministically until the worker has incremented _waitCount, which
-            // happens immediately before it enters WaitHandle.WaitAny. Polling avoids the
-            // CI-flakiness of a fixed Thread.Sleep on slow agents. Volatile.Read ensures
-            // we see the worker's Interlocked.Increment without depending on CPU memory
-            // ordering of plain int reads.
-            var deadline = DateTime.UtcNow.AddSeconds(5);
-            while (DateTime.UtcNow < deadline && Volatile.Read(ref pool._waitCount) < 1)
-            {
-                Thread.Yield();
-            }
-            Assert.True(Volatile.Read(ref pool._waitCount) >= 1, "Waiter did not park within 5s.");
-            Assert.True(t.IsAlive, "Waiter should be parked, but thread already exited.");
-
+            // Act
+            // Now, shut down the pool. New requests will no longer be accepted, but in-flight requests should proceed.
             pool.Shutdown();
+            if (cancel)
+            {
+                completion.SetCanceled();
+            }
 
-            Assert.True(t.Join(TimeSpan.FromSeconds(5)), "Waiter did not unblock within 5s of Shutdown.");
-            // Acceptable outcomes: either returned false/null (timed out / abandoned) or
-            // returned true/null (state-check short-circuit). Either way, it must NOT block
-            // forever, and it must NOT vend a real connection from a shut-down pool.
-            Assert.Null(waiterResult);
-            Assert.Null(waiterEx);
-            // Suppress unused warning - presence of waiterCompleted just documents the contract.
-            _ = waiterCompleted;
+            // Unblock the first request, allowing both to proceed, in turn.
+            factory.Release.Set();
+
+            // Assert
+            // Wait for the first request to complete
+            Assert.False(pool.IsRunning);
+            Assert.Same(first, await Task.WhenAny(first, Task.Delay(TimeSpan.FromSeconds(10))));
+            DbConnectionInternal? firstConnection = await first;
+            Assert.NotNull(firstConnection);
+            Assert.Same(pool, firstConnection.Pool);
+
+            // Wait for the second request to complete
+            Assert.Same(pending, await Task.WhenAny(pending, Task.Delay(TimeSpan.FromSeconds(10))));
+            if (cancel)
+            {
+                await Assert.ThrowsAnyAsync<OperationCanceledException>(() => pending);
+                Assert.True(SpinWait.SpinUntil(() => pool.Count == 1 && Volatile.Read(ref pool._waitCount) == 0, TimeSpan.FromSeconds(10)));
+            }
+            else
+            {
+                DbConnectionInternal? pendingConnection = await pending;
+                Assert.NotNull(pendingConnection);
+                Assert.Same(pool, pendingConnection.Pool);
+                Assert.Equal(0, Volatile.Read(ref pool._waitCount));
+            }
+
+            // Assert that both requests created new connections
+            Assert.Equal(2, factory.CreateCount);
+
+            // Cleanup
+            factory.Release.Set();
+            pool.Shutdown();
+            await ReturnWhenCompleted(pool, firstOwner, first);
+            if (pending is not null)
+            {
+                await ReturnWhenCompleted(pool, pendingOwner, pending);
+            }
+
+            // Assert: returned connections were destroyed rather than pooled.
+            Assert.Equal(0, pool.IdleCount);
+            Assert.Equal(0, pool.Count);
+        }
+
+        /// <summary>Starts a sync acquisition on a dedicated thread or queues an async acquisition.</summary>
+        private static Task<DbConnectionInternal?> Acquire(WaitHandleDbConnectionPool pool, SqlConnection owner,
+            TaskCompletionSource<DbConnectionInternal>? completion)
+        {
+            TimeoutTimer timer = TimeoutTimer.StartNew(TimeSpan.FromSeconds(15));
+            if (completion is null)
+            {
+                return Task.Factory.StartNew(() =>
+                {
+                    Assert.True(pool.TryGetConnection(owner, null, timer, out DbConnectionInternal connection));
+                    return (DbConnectionInternal?)connection;
+                }, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+            }
+            // A false return here means async acquisition was queued, not that it failed.
+            // Its eventual result is delivered through completion.Task.
+            Assert.False(pool.TryGetConnection(owner, completion, timer, out DbConnectionInternal pending));
+            Assert.Null(pending);
+            return completion.Task!;
+        }
+
+        /// <summary>Drains test work and returns successful acquisitions even when an assertion failed.</summary>
+        private static async Task ReturnWhenCompleted(WaitHandleDbConnectionPool pool, SqlConnection owner, Task<DbConnectionInternal?> task)
+        {
+            Assert.Same(task, await Task.WhenAny(task, Task.Delay(TimeSpan.FromSeconds(20))));
+            if (task.Status == TaskStatus.RanToCompletion && task.Result is { } connection)
+            {
+                pool.ReturnInternalConnection(connection, owner);
+            }
+            else if (task.IsFaulted)
+            {
+                // Observe failures during assertion cleanup without replacing the original failure.
+                _ = task.Exception;
+            }
+        }
+
+        /// <summary>Holds the first physical creation so a second acquisition waits on its semaphore.</summary>
+        private sealed class GatedConnectionFactory : WaitHandleDbConnectionPoolTransactionTest.MockSqlConnectionFactory, IDisposable
+        {
+            internal readonly ManualResetEventSlim Entered = new();
+            internal readonly ManualResetEventSlim Release = new();
+            private int _calls;
+
+            internal int CreateCount => Volatile.Read(ref _calls);
+
+            protected override DbConnectionInternal CreateConnection(SqlConnectionOptions options, ConnectionPoolKey poolKey,
+                DbConnectionPoolGroupProviderInfo poolGroupProviderInfo, IDbConnectionPool pool, DbConnection owningConnection, TimeoutTimer timeout)
+            {
+                if (Interlocked.Increment(ref _calls) == 1)
+                {
+                    Entered.Set();
+                    Assert.True(Release.Wait(TimeSpan.FromSeconds(15)), "Physical creation was not released.");
+                }
+                return base.CreateConnection(options, poolKey, poolGroupProviderInfo, pool, owningConnection, timeout);
+            }
+
+            public void Dispose()
+            {
+                Entered.Dispose();
+                Release.Dispose();
+            }
         }
 
         // Startup() must be a no-op when the pool has already been shut down. Without the

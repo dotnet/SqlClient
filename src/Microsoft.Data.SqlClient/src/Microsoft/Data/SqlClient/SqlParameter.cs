@@ -2389,7 +2389,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         try
                         {
-                            value = ((ISqlVector)new SqlVector<float>(JsonSerializer.Deserialize<float[]>((string)value))).VectorPayload;
+                            value = ((ISqlVector)new SqlVector<float>(JsonSerializer.Deserialize((string)value, SqlClientJsonSerializerContext.Default.SingleArray))).VectorPayload;
                         }
                         catch (Exception ex) when (ex is ArgumentNullException || ex is JsonException)
                         {

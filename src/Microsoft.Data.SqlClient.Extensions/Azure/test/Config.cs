@@ -38,15 +38,13 @@ internal static class Config
 
     internal static bool AdoPool { get; } = false;
     internal static bool DebugEmit { get; } = false;
-    internal static bool IntegratedSecuritySupported { get; } = false;
+    internal static bool EntraIntegratedSupported { get; } = false;
     internal static bool ManagedIdentitySupported { get; } = false;
-    // @TODO Remove PasswordConnectionString from config; AAD Password auth is deprecated
-    internal static string PasswordConnectionString { get; } = string.Empty;
+    internal static string TCPConnectionString { get; } = string.Empty;
     internal static string ServicePrincipalId { get; } = string.Empty;
     internal static string ServicePrincipalSecret { get; } = string.Empty;
     internal static string SystemAccessToken { get; } = string.Empty;
     internal static bool SystemAssignedManagedIdentitySupported { get; } = false;
-    internal static string TcpConnectionString { get; } = string.Empty;
     internal static string TenantId { get; } = string.Empty;
     internal static bool UseManagedSniOnWindows { get; } = false;
     internal static string UserManagedIdentityClientId { get; } = string.Empty;
@@ -56,16 +54,16 @@ internal static class Config
 
     #region Conditional Fact/Theory Helpers
 
-    internal static bool HasPasswordConnectionString() => !PasswordConnectionString.IsEmpty();
+    internal static bool IsAzureSqlConnectionString() => !TCPConnectionString.IsEmpty() && IsAzureSqlServer();
     internal static bool HasServicePrincipal() => !ServicePrincipalId.IsEmpty() && !ServicePrincipalSecret.IsEmpty();
     internal static bool HasSystemAccessToken() => !SystemAccessToken.IsEmpty();
-    internal static bool HasTcpConnectionString() => !TcpConnectionString.IsEmpty();
+    internal static bool HasTcpConnectionString() => !TCPConnectionString.IsEmpty();
     internal static bool HasTenantId() => !TenantId.IsEmpty();
     internal static bool HasUserManagedIdentityClientId() => !UserManagedIdentityClientId.IsEmpty();
     internal static bool HasWorkloadIdentityFederationServiceConnectionId() => !WorkloadIdentityFederationServiceConnectionId.IsEmpty();
 
     internal static bool IsAzureSqlServer() =>
-        Utils.IsAzureSqlServer(new SqlConnectionStringBuilder(TcpConnectionString).DataSource);
+        Utils.IsAzureSqlServer(new SqlConnectionStringBuilder(TCPConnectionString).DataSource);
 
     internal static bool OnAdoPool() => AdoPool;
     internal static bool OnLinux() => RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
@@ -73,7 +71,7 @@ internal static class Config
     internal static bool OnWindows() => RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
     internal static bool OnUnix() => OnLinux() || OnMacOS();
 
-    internal static bool SupportsIntegratedSecurity() => IntegratedSecuritySupported;
+    internal static bool SupportsEntraIntegrated() => EntraIntegratedSupported;
     internal static bool SupportsManagedIdentity() => ManagedIdentitySupported;
     internal static bool SupportsSystemAssignedManagedIdentity() => SystemAssignedManagedIdentitySupported;
 
@@ -115,14 +113,13 @@ internal static class Config
             // The sample file is copied to the build output directory as
             // config.jsonc by the TestUtilities project file.
             //
-            IntegratedSecuritySupported = GetBool(root, "SupportsIntegratedSecurity");
+            EntraIntegratedSupported = GetBool(root, "SupportsEntraIntegrated");
             ManagedIdentitySupported = GetBool(root, "ManagedIdentitySupported");
-            PasswordConnectionString = GetString(root, "AADPasswordConnectionString");
             ServicePrincipalId = GetString(root, "AADServicePrincipalId");
             ServicePrincipalSecret = GetString(root, "AADServicePrincipalSecret");
             SystemAssignedManagedIdentitySupported =
                 GetBool(root, "SupportsSystemAssignedManagedIdentity");
-            TcpConnectionString = GetString(root, "TCPConnectionString");
+            TCPConnectionString = GetString(root, "TCPConnectionString");
             TenantId = GetString(root, "AzureKeyVaultTenantId");
             UseManagedSniOnWindows = GetBool(root, "UseManagedSNIOnWindows");
             UserManagedIdentityClientId = GetString(root, "UserManagedIdentityClientId");
@@ -160,13 +157,9 @@ internal static class Config
             Console.WriteLine(
                 $"  DebugEmit:                              {DebugEmit}");
             Console.WriteLine(
-                $"  IntegratedSecuritySupported:            {IntegratedSecuritySupported}");
+                $"  EntraIntegratedSupported:               {EntraIntegratedSupported}");
             Console.WriteLine(
                 $"  ManagedIdentitySupported:               {ManagedIdentitySupported}");
-            Console.WriteLine(
-                $"  PasswordConnectionString:               {PasswordConnectionString}");
-            Console.WriteLine(
-                $"                                          {Base64Encode(PasswordConnectionString)}");
             Console.WriteLine(
                 $"  ServicePrincipalId:                     {ServicePrincipalId}");
             Console.WriteLine(
@@ -178,9 +171,9 @@ internal static class Config
             Console.WriteLine(
                 $"  SystemAssignedManagedIdentitySupported: {SystemAssignedManagedIdentitySupported}");
             Console.WriteLine(
-                $"  TcpConnectionString:                    {TcpConnectionString}");
+                $"  TcpConnectionString:                    {TCPConnectionString}");
             Console.WriteLine(
-                $"                                          {Base64Encode(TcpConnectionString)}");
+                $"                                          {Base64Encode(TCPConnectionString)}");
             Console.WriteLine(
                 $"  TenantId:                               {TenantId}");
             Console.WriteLine(
