@@ -85,25 +85,30 @@ public class UnloadableAssemblyLoadContextTest
         object? instantiated = Activator.CreateInstance(unloadableLibraryType, [connectionString]);
         Assert.NotNull(instantiated);
 
-        MethodInfo? getDateMethod = unloadableLibraryType.GetMethod(nameof(EntryPoint.GetDate));
-        Assert.NotNull(getDateMethod);
+        try
+        {
+            MethodInfo? getDateMethod = unloadableLibraryType.GetMethod(nameof(EntryPoint.GetDate));
+            Assert.NotNull(getDateMethod);
 
-        getDateMethod.Invoke(instantiated, null);
+            getDateMethod.Invoke(instantiated, null);
 
-        MethodInfo? getDateAsyncMethod = unloadableLibraryType.GetMethod(nameof(EntryPoint.GetDateAsync));
-        Assert.NotNull(getDateAsyncMethod);
+            MethodInfo? getDateAsyncMethod = unloadableLibraryType.GetMethod(nameof(EntryPoint.GetDateAsync));
+            Assert.NotNull(getDateAsyncMethod);
 
-        Task? getDateTask = getDateAsyncMethod.Invoke(instantiated, null) as Task;
-        Assert.NotNull(getDateTask);
+            Task? getDateTask = getDateAsyncMethod.Invoke(instantiated, null) as Task;
+            Assert.NotNull(getDateTask);
 
-        await getDateTask;
+            await getDateTask;
+        }
+        finally
+        {
+            MethodInfo? disposeMethod = unloadableLibraryType.GetMethod(nameof(EntryPoint.Dispose));
+            Assert.NotNull(disposeMethod);
 
-        MethodInfo? disposeMethod = unloadableLibraryType.GetMethod(nameof(EntryPoint.Dispose));
-        Assert.NotNull(disposeMethod);
+            disposeMethod.Invoke(instantiated, null);
 
-        disposeMethod.Invoke(instantiated, null);
-
-        alc.Unload();
+            alc.Unload();
+        }
 
         return weakRef;
     }
