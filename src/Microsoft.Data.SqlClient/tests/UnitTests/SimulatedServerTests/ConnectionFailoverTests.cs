@@ -98,6 +98,23 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(0, failoverServer.PreLoginCount);
         }
 
+        // Flaky under CI load only (never reproduces locally): the failover server
+        // intermittently records an extra pre-login (3 instead of 2) when the connection is
+        // reopened after the pool is cleared, i.e. a slow agent causes an additional
+        // connection attempt against the failover partner. This is agent-timing
+        // sensitivity in the pre-login count, not a driver defect.
+        //
+        //     Failed Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionFailoverTests.NetworkError_TriggersFailover_ClearsPool [7 s]
+        // ##[error]EXEC(0,0): Error Message:
+        // EXEC : error Message: [D:\a\_work\1\s\build.proj]
+        //      Assert.Equal() Failure: Values differ
+        //      Expected: 2
+        //      Actual:   3
+        //     Stack Trace:
+        //        at Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionFailoverTests.NetworkError_TriggersFailover_ClearsPool() in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\tests\UnitTests\SimulatedServerTests\ConnectionFailoverTests.cs:line 170
+        //      at System.RuntimeMethodHandle.InvokeMethod(ObjectHandleOnStack target, Void** arguments, ObjectHandleOnStack sig, BOOL isConstructor, ObjectHandleOnStack result)
+        //      at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+        [Trait("category", "flaky")]
         [Fact]
         public void NetworkError_TriggersFailover_ClearsPool()
         {

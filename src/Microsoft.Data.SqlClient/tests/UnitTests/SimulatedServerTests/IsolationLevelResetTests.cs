@@ -288,7 +288,9 @@ public sealed class IsolationLevelResetTests
             DataSource = $"127.0.0.1,{server.EndPoint.Port}",
             Encrypt = SqlConnectionEncryptOption.Optional,
             Pooling = false,
-            ConnectTimeout = connectTimeout,
+            // The reset under test consumes the fake-clock timer below, not this setting; a generous
+            // setup login timeout keeps the real Open() from timing out on slow CI agents.
+            ConnectTimeout = 30,
             CommandTimeout = commandTimeout
         }.ConnectionString);
         connection.Open();
