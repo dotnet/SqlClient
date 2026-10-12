@@ -64,7 +64,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/NegotiatedEncryptionProtocol/*' />
         public SslProtocols? NegotiatedEncryptionProtocol { get; }
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[        @name="SqlConnectionEncryptionInfo"]/PresentedServerCertificateHash256/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/PresentedServerCertificateHash256/*' />
                 public ReadOnlyMemory<byte>? PresentedServerCertificateHash256 =>
                     _presentedServerCertificateHash256 is null
                         ? (ReadOnlyMemory<byte>?)null
