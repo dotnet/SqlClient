@@ -92,7 +92,7 @@ function validateTriageOutput(output) {
 
     const body = comments[0].body;
     if (typeof body !== 'string' ||
-        !/^## (?:\u{1F50D} )?Triage Summary(?: \(updated after author response\)| \(on-demand re-triage\))? *\r?\n/u.test(body.trim())) {
+        !/^## (?:\u{1F50D} )?Triage Summary(?: \(updated after author response\)| \(on-demand re-triage\))? *\r?\n/u.test(body)) {
         throw new Error('Comment must start with the completed Triage Summary heading.');
     }
     // Require the workflow's five check rows and both prose sections, not merely its heading.

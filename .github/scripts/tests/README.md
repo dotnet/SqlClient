@@ -23,6 +23,8 @@ Comparison operators in completed prose remain valid; angle-bracket detection
 targets known template fields and instructions rather than arbitrary bracketed text.
 Generic arguments such as `Task<Result>` and `List<Item>`, including nested
 types, and XML documentation tags are covered by acceptance regressions.
+The summary heading must start at the beginning of the body; leading indentation
+cannot turn a code-block heading into an accepted Markdown heading.
 
 ## Shell script tests
 

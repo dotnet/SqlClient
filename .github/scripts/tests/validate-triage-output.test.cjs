@@ -64,6 +64,12 @@ test('rejects the placeholder bodies observed in failed runs, even with attribut
     }
 });
 
+test('rejects indented headings even when the remaining summary is valid prose', () => {
+    for (const indentation of ['    ', '\t', '\n    ', '\r\n\t']) {
+        assert.throws(() => validateTriageOutput(output(indentation + summary)), /Triage Summary/);
+    }
+});
+
 test('rejects quoted or fenced copies of the summary', () => {
     for (const body of [
         summary.split('\n').map(line => `> ${line}`).join('\n'),
