@@ -2498,6 +2498,61 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             cmd.ExecuteNonQuery();
         }
 
+        /// <summary>
+        /// Enclave queries reuse a same-policy session across connections and establish a new
+        /// session after invalidation, for both synchronous and asynchronous execution.
+        /// Run with each configured HGS, AAS, and None enclave connection.
+        /// </summary>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore), nameof(DataTestUtility.EnclaveEnabled))]
+        [ClassData(typeof(AEConnectionStringProviderWithBooleanVariable))]
+        public async Task TestEnclaveSessionReuseAcrossConnections(string connectionString, bool isAsync)
+        {
+            CleanUpTable(connectionString, _tableName);
+            const int customerId = 50;
+            InsertRows(_tableName, 1, GetValues(dataHint: customerId), connectionString);
+
+            object originalSession = null;
+            for (int attempt = 0; attempt < 3; attempt++)
+            {
+                using SqlConnection connection = new(connectionString);
+                if (isAsync)
+                {
+                    await connection.OpenAsync();
+                }
+                else
+                {
+                    connection.Open();
+                }
+
+                using SqlCommand command = new(
+                    $"SELECT CustomerId FROM [{_tableName}] WHERE CustomerId > @CustomerId",
+                    connection, null, SqlCommandColumnEncryptionSetting.Enabled);
+                command.Parameters.Add("@CustomerId", SqlDbType.Int).Value = 0;
+                using SqlDataReader reader = isAsync
+                    ? await command.ExecuteReaderAsync()
+                    : command.ExecuteReader();
+                object session = CommandHelper.GetEnclaveSession(command);
+
+                Assert.True(isAsync ? await reader.ReadAsync() : reader.Read());
+                Assert.Equal(customerId, reader.GetInt32(0));
+                Assert.False(isAsync ? await reader.ReadAsync() : reader.Read());
+
+                if (attempt == 0)
+                {
+                    originalSession = session;
+                }
+                else if (attempt == 1)
+                {
+                    Assert.Same(originalSession, session);
+                    CommandHelper.InvalidateEnclaveSession(command);
+                }
+                else
+                {
+                    Assert.NotSame(originalSession, session);
+                }
+            }
+        }
+
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.EnclaveEnabled))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestRetryWhenAEEnclaveCacheIsStale(string connectionString)
