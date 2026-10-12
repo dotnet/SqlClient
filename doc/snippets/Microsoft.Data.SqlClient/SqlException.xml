@@ -738,6 +738,25 @@
       <seealso cref="P:Microsoft.Data.SqlClient.SqlException.Procedure" />
       <seealso cref="P:Microsoft.Data.SqlClient.SqlException.LineNumber" />
     </BatchCommand>
+    <EncryptionInfo>
+      <summary>
+        Gets a diagnostic snapshot describing the connection encryption and server certificate validation state associated with this exception.
+      </summary>
+      <value>
+        A non-null <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptionInfo" />. Individual properties of the snapshot are <see langword="null" /> when the corresponding information is not available.
+      </value>
+      <remarks>
+        <para>
+          This property never returns <see langword="null" />. A <see langword="null" /> property value on the returned snapshot means the information is not available; it does not indicate that encryption or certificate validation succeeded.
+        </para>
+        <para>
+          The snapshot is not serialized with the exception; a deserialized <see cref="T:Microsoft.Data.SqlClient.SqlException" /> returns a snapshot with all properties set to <see langword="null" />. The snapshot is not included in <see cref="P:System.Exception.Message" /> or in the output of <see cref="M:Microsoft.Data.SqlClient.SqlException.ToString" />.
+        </para>
+        <para>
+          In the current release, the driver does not yet populate this information and the returned snapshot has all properties set to <see langword="null" />.
+        </para>
+      </remarks>
+    </EncryptionInfo>
     <DbBatchCommand>
       <summary>
         If this <see cref="T:Microsoft.Data.SqlClient.SqlException" /> was thrown when executing a <see cref="T:Microsoft.Data.SqlClient.SqlBatch" />, references the specific <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> which triggered the exception.
