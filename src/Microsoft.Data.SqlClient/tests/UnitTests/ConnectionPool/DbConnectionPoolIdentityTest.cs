@@ -188,6 +188,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         [InlineData(true, true)]
         public async Task GetConnection_NetOnlyLogon_PreservesIdentity(bool usePoolV2, bool async)
         {
+#if NETFRAMEWORK
+            // Load EnterpriseServices before placeholder outbound credentials affect assembly resolution.
+            _ = System.Transactions.Transaction.Current;
+#endif
             using SafeAccessTokenHandle token = CreateToken();
             DbConnectionPoolIdentity identity = WindowsIdentity.RunImpersonated(token, DbConnectionPoolIdentity.GetCurrent);
             var factory = new IdentityRecordingFactory();

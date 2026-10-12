@@ -35,7 +35,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             && !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("SQLCLIENT_NETONLY_USER"))
             && !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("SQLCLIENT_NETONLY_DOMAIN"))
             && !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("SQLCLIENT_NETONLY_PASSWORD"))
-            && DataTestUtility.AreConnStringsSetup();
+            && (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("SQLCLIENT_NETONLY_CONNECTION_STRING"))
+                || DataTestUtility.AreConnStringsSetup());
+
+        /// <summary>Identifies CI jobs where alternate-account coverage must execute.</summary>
+        public static bool RequiresNetOnlyTests =>
+            string.Equals(Environment.GetEnvironmentVariable("SQLCLIENT_NETONLY_REQUIRED"), "true", StringComparison.OrdinalIgnoreCase);
+
+        /// <summary>Runs required CI cases even when missing configuration must be reported.</summary>
+        public static bool RunConfiguredTests => RequiresNetOnlyTests || IsConfigured;
 
         /// <summary>
         /// Needs only an integrated-security connection string: invalid network-only credentials
@@ -117,42 +125,49 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// Connections returned under alternate outbound credentials must not be reused by the
         /// process account after impersonation ends, for either pool and either Open API.
         /// </summary>
-        [ConditionalTheory(nameof(IsConfigured))]
+        [ConditionalTheory(nameof(RunConfiguredTests))]
         [InlineData(false, false)]
         [InlineData(false, true)]
         [InlineData(true, false)]
         [InlineData(true, true)]
         public async Task NetOnlyImpersonation_RevertsLogin(bool usePoolV2, bool async)
         {
+            AssertConfiguration();
             using var poolVersion = new ConnectionPoolVersionScope(usePoolV2);
             using SafeAccessTokenHandle token = CreateToken();
             string connectionString = BuildConnectionString();
-            string original = await GetLogin(connectionString, async);
-            string impersonated = await WindowsIdentity.RunImpersonated(token, () => GetLogin(connectionString, async));
-            Assert.NotEqual(original, impersonated);
-            Assert.Equal(original, await GetLogin(connectionString, async));
+            string expected = await VerifyUnpooledLogins(token, connectionString, async);
+            try
+            {
+                string original = await GetLogin(connectionString, async);
+                string impersonated = await WindowsIdentity.RunImpersonated(token, () => GetLogin(connectionString, async));
+                Assert.Equal(expected, impersonated);
+                Assert.NotEqual(original, impersonated);
+                Assert.Equal(original, await GetLogin(connectionString, async));
+            }
+            finally
+            {
+                using var poolConnection = new SqlConnection(connectionString);
+                SqlConnection.ClearPool(poolConnection);
+            }
         }
 
         /// <summary>
         /// Returning an expired connection outside impersonation must not replenish the owning
         /// pool with process-account connections or cache a process-account login failure.
         /// </summary>
-        [ConditionalTheory(nameof(IsConfigured))]
+        [ConditionalTheory(nameof(RunConfiguredTests))]
         [InlineData(false, false)]
         [InlineData(false, true)]
         [InlineData(true, false)]
         [InlineData(true, true)]
         public async Task NetOnlyImpersonation_Replenishment_PreservesLogin(bool usePoolV2, bool async)
         {
+            AssertConfiguration();
             using var poolVersion = new ConnectionPoolVersionScope(usePoolV2);
             using SafeAccessTokenHandle token = CreateToken();
             string connectionString = BuildConnectionString(loadBalanceTimeout: 1, minPoolSize: 3);
-            var unpooled = new SqlConnectionStringBuilder(connectionString)
-            {
-                Pooling = false,
-                MinPoolSize = 0
-            };
-            string expected = await WindowsIdentity.RunImpersonated(token, () => GetLogin(unpooled.ConnectionString, async));
+            string expected = await VerifyUnpooledLogins(token, connectionString, async);
             var opened = new List<SqlConnection>();
             try
             {
@@ -187,6 +202,45 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     connection.Dispose();
                 }
             }
+        }
+
+        /// <summary>Fails required CI coverage instead of skipping when provisioning is incomplete.</summary>
+        private static void AssertConfiguration()
+        {
+            Assert.True(IsConfigured, "Network-only tests require Windows, configured credentials, and a SQL Server connection.");
+            if (RequiresNetOnlyTests)
+            {
+                string configured = Environment.GetEnvironmentVariable("SQLCLIENT_NETONLY_CONNECTION_STRING");
+                Assert.False(string.IsNullOrWhiteSpace(configured),
+                    "Required network-only tests need an explicit TCP connection string.");
+                Assert.StartsWith("tcp:", new SqlConnectionStringBuilder(configured).DataSource, StringComparison.OrdinalIgnoreCase);
+            }
+        }
+
+        /// <summary>Proves outbound authentication uses the configured account before testing pooling.</summary>
+        /// <param name="token">The alternate outbound logon token.</param>
+        /// <param name="connectionString">The connection string to probe without pooling.</param>
+        /// <param name="async">Whether to use asynchronous SQL APIs.</param>
+        /// <returns>The verified alternate SQL login.</returns>
+        private static async Task<string> VerifyUnpooledLogins(
+            SafeAccessTokenHandle token, string connectionString, bool async)
+        {
+            var unpooled = new SqlConnectionStringBuilder(connectionString)
+            {
+                Pooling = false,
+                MinPoolSize = 0
+            };
+            string alternate = await WindowsIdentity.RunImpersonated(token, () => GetLogin(unpooled.ConnectionString, async));
+            string expected = $"{Environment.GetEnvironmentVariable("SQLCLIENT_NETONLY_DOMAIN")}\\{Environment.GetEnvironmentVariable("SQLCLIENT_NETONLY_USER")}";
+            Assert.True(string.Equals(expected, alternate, StringComparison.OrdinalIgnoreCase),
+                $"Expected outbound login '{expected}', but SQL Server authenticated '{alternate}'.");
+            if (RequiresNetOnlyTests)
+            {
+                string original = await GetLogin(unpooled.ConnectionString, async);
+                Assert.False(string.Equals(original, alternate, StringComparison.OrdinalIgnoreCase),
+                    "The process and network-only accounts must authenticate as different SQL logins.");
+            }
+            return alternate;
         }
 
         /// <summary>Creates the configured network-only token without persisting credentials.</summary>
@@ -233,7 +287,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// <summary>Creates a unique pool group using the configured server and integrated security.</summary>
         private static string BuildConnectionString(int loadBalanceTimeout = 0, int minPoolSize = 0)
         {
-            var builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+            string configured = Environment.GetEnvironmentVariable("SQLCLIENT_NETONLY_CONNECTION_STRING");
+            var builder = new SqlConnectionStringBuilder(
+                string.IsNullOrWhiteSpace(configured) ? DataTestUtility.TCPConnectionString : configured)
             {
                 IntegratedSecurity = true,
                 Pooling = true,

@@ -68,6 +68,10 @@ parameters:
     type: number
     default: 2
 
+  - name: enableNetOnlyTests
+    type: boolean
+    default: false
+
 steps:
 - ${{ if parameters.debug }}:
   - powershell: 'dotnet sdk check'
@@ -192,6 +196,13 @@ steps:
   - task: DotNetCoreCLI@2
     displayName: 'Run Manual Tests ${{parameters.msbuildArchitecture }}'
     condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
+    ${{ if parameters.enableNetOnlyTests }}:
+      env:
+        SQLCLIENT_NETONLY_REQUIRED: 'true'
+        SQLCLIENT_NETONLY_USER: $(netOnlyUser)
+        SQLCLIENT_NETONLY_DOMAIN: $(netOnlyDomain)
+        SQLCLIENT_NETONLY_PASSWORD: $(netOnlyPassword)
+        SQLCLIENT_NETONLY_CONNECTION_STRING: $(netOnlyConnectionString)
     inputs:
       command: build
       projects: build.proj

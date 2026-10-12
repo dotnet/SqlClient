@@ -60,7 +60,20 @@ The remaining tests require an alternate account, supplied through the
 source or test configuration. The login-reversion test requires both the process
 account and the alternate account to authenticate successfully as different SQL
 logins; the replenishment test requires only the alternate account to succeed. Use
-a TCP connection: loopback TCP authentication uses network-only credentials, but
-local named-pipe and shared-memory connections cannot be opened under a
-network-only impersonation token. Managed networking is selected through the
+a TCP connection and verify the configured account is actually authenticated:
+some loopback configurations may fall back to the process identity. Local
+named-pipe and shared-memory transports do not exercise outbound credentials.
+Managed networking is selected through the
 existing `Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows` setting.
+
+Windows local-server Set 3 CI jobs for the default SQL instance provision a unique
+non-administrator local account and a SQL Windows login with access to `master`.
+The generated password is passed only as a secret test-process environment
+variable. An always-run cleanup step removes the SQL login and local account.
+These jobs set `SQLCLIENT_NETONLY_REQUIRED=true` and
+`SQLCLIENT_NETONLY_CONNECTION_STRING` to an explicit TCP endpoint using `master`;
+missing prerequisites fail the successful-login tests rather than skipping them.
+Both successful-login tests first verify that an unpooled connection authenticates
+as the configured alternate account. Required CI coverage also verifies that the
+process account authenticates as a different login, preventing loopback fallback
+from producing a false pass.

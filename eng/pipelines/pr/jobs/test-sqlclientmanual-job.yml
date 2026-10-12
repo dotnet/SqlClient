@@ -208,9 +208,21 @@ jobs:
           Write-Host "##vso[task.setvariable variable=TEST_MDS_CONFIG]$configPath"
         displayName: 'Generate manual test config'
 
+      - ${{ if and(eq(parameters.platformOperatingSystem, 'Windows'), parameters.isLocalServer, eq(parameters.testSet, '3')) }}:
+        - template: /eng/pipelines/common/templates/steps/configure-netonly-account-step.yml@self
+          parameters:
+            mode: setup
+
       # Execute TestSqlClientManual target from build.proj
       - task: DotNetCoreCLI@2
         displayName: 'Test: SqlClientManual ${{ parameters.testSet }}'
+        ${{ if and(eq(parameters.platformOperatingSystem, 'Windows'), parameters.isLocalServer, eq(parameters.testSet, '3')) }}:
+          env:
+            SQLCLIENT_NETONLY_REQUIRED: 'true'
+            SQLCLIENT_NETONLY_USER: $(netOnlyUser)
+            SQLCLIENT_NETONLY_DOMAIN: $(netOnlyDomain)
+            SQLCLIENT_NETONLY_PASSWORD: $(netOnlyPassword)
+            SQLCLIENT_NETONLY_CONNECTION_STRING: $(netOnlyConnectionString)
         inputs:
           command: build
           projects: build.proj
@@ -223,6 +235,11 @@ jobs:
             -p:TestFramework=${{ parameters.platformDotnet }}
             -p:TestSet=${{ parameters.testSet }}
             -p:TestResultsFolderPath="${{ variables.testResultsPath }}"
+
+      - ${{ if and(eq(parameters.platformOperatingSystem, 'Windows'), parameters.isLocalServer, eq(parameters.testSet, '3')) }}:
+        - template: /eng/pipelines/common/templates/steps/configure-netonly-account-step.yml@self
+          parameters:
+            mode: cleanup
 
       # Publish test results
       - template: /eng/pipelines/pr/steps/publish-test-results-step.yml@self
