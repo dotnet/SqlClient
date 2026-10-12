@@ -4,145 +4,68 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# This pipeline builds and tests the following packages using project
-# references:
-#
-#   - Microsoft.SqlServer.Server
-#   - Microsoft.Data.SqlClient
-#   - Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
-#
-# It is triggered by pushes to PRs that target the main, dev/*, feat/*, and
-# release/* branches in GitHub.  The dev/* pattern includes dev/automation/*
-# branches created by AI agents.
-#
-# It maps to the "PR-SqlClient-Project" pipeline in the Public project:
-#
-# https://dev.azure.com/SqlClientDrivers/public/_build?definitionId=2197
+# Temporary, manually triggered experiment for validating that the
+# dotnetMSI-managed-identity service connection can list Azure Key Vault keys.
 
-# Set the pipeline run name to the day-of-year and the daily run counter.
-# This becomes BuildNumber, used as the revision component of FileVersion
-# (Major.Minor.Patch.Revision). Revision must fit in a 16-bit unsigned int (max 65535).
-# Format $(DayOfYear)$(Rev:rr) yields e.g. 15401 (day 154, run 01) — always < 65535.
-name: $(DayOfYear)$(Rev:rr)
+name: akv-service-connection-$(Date:yyyyMMdd)$(Rev:.r)
 
-# Trigger PR validation runs for all pushes to PRs that target the specified
-# branches.
-#
-# https://learn.microsoft.com/en-us/azure/devops/pipelines/repos/github?view=azure-devops&tabs=yaml#pr-triggers
-#
-pr:
-  branches:
-    include:
-      # GitHub repo branch targets that will trigger PR validation builds.
-      - dev/*
-      - feat/*
-      - main
-      - release/*
-
-  paths:
-    include:
-      - .azuredevops/*
-      - .config/*
-      - doc/*
-      - eng/pipelines/*
-      - src/*
-      - tools/*
-      - azurepipelines-coverage.yml
-      - build.proj
-      - Directory.Packages.props
-      - dotnet-tools.json
-      - global.json
-      - NuGet.config
-    exclude:
-      - eng/pipelines/ci/*
-      - eng/pipelines/onebranch/*
-
-# Do not trigger commit or schedule runs for this pipeline.
 trigger: none
+pr: none
 
-# Pipeline parameters, visible in the Azure DevOps UI.
-parameters:
+variables:
+  - group: sqlclient-pipeline-config-v1
+  - group: ADO Test Configuration Properties
 
-  # The C# build configuration to use; defaults to Debug.
-  - name: buildConfiguration
-    displayName: Build Configuration
-    type: string
-    default: Debug
-    values:
-      - Debug
-      - Release
+jobs:
+  - job: list_azure_key_vault_keys
+    displayName: List Azure Key Vault key names
+    timeoutInMinutes: 10
+    pool:
+      name: $(general_purpose_pool_name)
+      demands:
+        - imageOverride -equals ADO-UB24
 
-  - name: buildPlatforms
-    displayName: Build Platforms on Windows
-    type: object
-    default: [AnyCPU]
+    steps:
+      - task: AzureCLI@2
+        displayName: List Azure Key Vault key names
+        env:
+          AZURE_KEY_VAULT_URL: $(AzureKeyVaultUrl)
+        inputs:
+          azureSubscription: dotnetMSI-managed-identity
+          scriptType: pscore
+          scriptLocation: inlineScript
+          inlineScript: |
+            $ErrorActionPreference = 'Stop'
 
-  # True to emit debug information and steps.
-  - name: debug
-    displayName: Enable debug output
-    type: boolean
-    default: false
+            $vaultUrl = $env:AZURE_KEY_VAULT_URL
+            if ([string]::IsNullOrWhiteSpace($vaultUrl)) {
+                throw 'AzureKeyVaultUrl is not configured.'
+            }
 
-  # The target frameworks to build and run tests for on Windows.
-  #
-  # These are _not_ the target frameworks to build the driver packages for.
-  #
-  - name: targetFrameworks
-    displayName: Target Frameworks on Windows
-    type: object
-    default: [net462, net10.0]
+            $uri = $null
+            if (-not [Uri]::TryCreate($vaultUrl, [UriKind]::Absolute, [ref]$uri) -or
+                $uri.Scheme -ne [Uri]::UriSchemeHttps -or
+                -not $uri.IsDefaultPort -or
+                -not [string]::IsNullOrEmpty($uri.UserInfo) -or
+                -not [string]::IsNullOrEmpty($uri.Query) -or
+                -not [string]::IsNullOrEmpty($uri.Fragment) -or
+                $uri.AbsolutePath.Trim('/') -ne '') {
+                throw 'AzureKeyVaultUrl must be an HTTPS Azure Key Vault base URL.'
+            }
 
-  # The target frameworks to build and run tests for on Unix.
-  #
-  # These are _not_ the target frameworks to build the driver packages for.
-  #
-  - name: targetFrameworksUnix
-    displayName: Target Frameworks on Unix
-    type: object
-    default: [net10.0]
+            if ($uri.DnsSafeHost -notmatch '^(?<vaultName>[a-zA-Z0-9-]+)\.vault\.azure\.net$') {
+                throw 'AzureKeyVaultUrl must use the public Azure Key Vault domain.'
+            }
 
-  # The timeout, in minutes, for each test job.
-  - name: testJobTimeout
-    displayName: Test job timeout (in minutes)
-    type: number
-    default: 90
+            $keyNames = az keyvault key list `
+                --vault-name $Matches.vaultName `
+                --query '[].name' `
+                --output tsv
 
-  - name: testSets
-    displayName: Test Sets
-    type: object
-    default: [1, 2, 3]
+            if ($LASTEXITCODE -ne 0) {
+                throw "Failed to list keys from Azure Key Vault (exit code $LASTEXITCODE)."
+            }
 
-  - name: useManagedSNI
-    displayName: |
-      Use Managed/Native SNI on Windows,
-      values [false, true], [false] or [true] are allowed
-    type: object
-    default: [false, true]
-
-extends:
-  template: /eng/pipelines/dotnet-sqlclient-ci-core.yml@self
-  parameters:
-    buildConfiguration: ${{ parameters.buildConfiguration }}
-    buildPlatforms: ${{ parameters.buildPlatforms }}
-    buildSuffix: 'pr'
-    referenceType: Project
-    debug: ${{ parameters.debug }}
-    targetFrameworks: ${{ parameters.targetFrameworks }}
-    targetFrameworksUnix: ${{ parameters.targetFrameworksUnix }}
-    # Keep the primary (SQL 2025 / Azure SQL) configurations on the same set of
-    # target frameworks as everything else.
-    primaryTargetFrameworks: ${{ parameters.targetFrameworks }}
-    primaryTargetFrameworksUnix: ${{ parameters.targetFrameworksUnix }}
-    testJobTimeout: ${{ parameters.testJobTimeout }}
-    testSets: ${{ parameters.testSets }}
-    useManagedSNI: ${{ parameters.useManagedSNI }}
-    # macOS coverage runs in CI only, not on PRs.
-    runMacOSTests: false
-    # Legacy SQL Server tests (2016/2017) run in CI only, not on PRs.
-    runLegacySqlTests: false
-    # SQL Server 2022 coverage runs in CI only.  PR validation covers SQL
-    # Server 2019, 2025 and Azure SQL.
-    runSql22Tests: false
-    # Don't run the AE tests in Debug mode; they rarely succeed.
-    ${{ if eq(parameters.buildConfiguration, 'Debug') }}:
-      runAlwaysEncryptedTests: false
+            $keyNames | Sort-Object -Unique | ForEach-Object {
+                Write-Host $_
+            }
