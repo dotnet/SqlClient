@@ -172,6 +172,6 @@ The feature is delivered as a stack of pull requests:
 | Slice | Content |
 | --- | --- |
 | **A** | Public API surface only. Both getters return an empty snapshot. |
-| **B** | Capture the negotiated mode and TLS protocol (Managed and Native SNI). |
-| **C** | Capture certificate details: hash, validation errors, and chain status. |
-| **D** | Attach the snapshot to `SqlException` on failure paths. |
+| **B** | Capture the negotiated mode and TLS protocol, and attach the snapshot to `SqlException` when opening fails. |
+| **C** | Capture certificate details (hash, validation errors, and chain status) in Managed SNI, on both successful and failed attempts. |
+| **D** | Native SNI interop for the certificate details. |
