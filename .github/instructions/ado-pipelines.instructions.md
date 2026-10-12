@@ -50,6 +50,7 @@ Reusable core CI pipeline consumed by both project-reference and package-referen
 | `useManagedSNI` | Test with managed SNI | `[false, true]` |
 | `testJobTimeout` | Test job timeout (minutes) | Required |
 | `runAlwaysEncryptedTests` | Include AE tests | `true` |
+| `runMacOSTests` | Include macOS driver and extension tests; disabled by both PR pipelines | `true` |
 | `enableStressTests` | Include stress test stage | `false` |
 
 ### CI Reference Pipelines
@@ -61,6 +62,7 @@ Reusable core CI pipeline consumed by both project-reference and package-referen
 - `sqlclient-pr-package-ref-pipeline.yml` — PR validation with package references
 
 These pipelines trigger on pull requests and run a subset of the full CI matrix to provide fast feedback.
+PR tests run on Windows and Linux only; macOS driver and extension coverage remains in CI.
 
 ### Official/Signing Pipeline (`dotnet-sqlclient-signing-pipeline.yml`)
 Signs and publishes NuGet packages. Used for official releases. Requires secure service connections and key vault access for code signing.
