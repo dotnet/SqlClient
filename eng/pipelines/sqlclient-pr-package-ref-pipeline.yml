@@ -138,6 +138,8 @@ extends:
     testJobTimeout: ${{ parameters.testJobTimeout }}
     testSets: ${{ parameters.testSets }}
     useManagedSNI: ${{ parameters.useManagedSNI }}
+    # macOS coverage runs in CI only, not on PRs.
+    runMacOSTests: false
     # Don't run the AE tests in Debug mode; they rarely succeed.
     ${{ if eq(parameters.buildConfiguration, 'Debug') }}:
       runAlwaysEncryptedTests: false
