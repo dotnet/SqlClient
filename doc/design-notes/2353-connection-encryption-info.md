@@ -182,6 +182,23 @@ comparison and is not reported as a mismatch.
 - **Diagnostics only:** the snapshot must not be used to make security decisions; the
   driver's own validation is authoritative.
 
+### Negotiated mode mapping
+
+`NegotiatedEncryptionMode` reflects the final state of the physical connection after
+login, derived from the client `Encrypt` setting and the server's PRELOGIN response:
+
+| Client `Encrypt` | Server PRELOGIN `ENCRYPTION` | Reported mode | Protocol |
+| --- | --- | --- | --- |
+| `Strict` (TDS 8.0) | — (TLS before PRELOGIN) | `Strict` | Negotiated TLS version |
+| `Mandatory` / `true` | `ENCRYPT_OFF`, `ENCRYPT_ON`, `ENCRYPT_REQ` | `Full` | Negotiated TLS version |
+| `Optional` / `false` | `ENCRYPT_ON` / `ENCRYPT_REQ` | `Full` | Negotiated TLS version |
+| `Optional` / `false` | `ENCRYPT_OFF` (TLS removed after LOGIN7) | `LoginOnly` | Negotiated TLS version |
+| `Optional` / `false` | `ENCRYPT_NOT_SUP` | `None` | `null` |
+
+The mode is recorded only once the TLS handshake (if any) completes; if PRELOGIN or the
+handshake fails, mode and protocol remain `null`. Values are captured per physical login
+attempt and reset for every routing, retry, and failover attempt.
+
 ## 5. Scope
 
 The API reports negotiated encryption, TLS protocol, the server-selected cipher suite, the server-presented certificate's
