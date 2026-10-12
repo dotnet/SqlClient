@@ -1,4 +1,4 @@
-﻿<docs>
+<docs>
   <members name="SqlException">
     <SqlException>
       <summary>
@@ -753,7 +753,7 @@
           The snapshot is not serialized with the exception; a deserialized <see cref="T:Microsoft.Data.SqlClient.SqlException" /> returns a snapshot with all properties set to <see langword="null" />. The snapshot is not included in <see cref="P:System.Exception.Message" /> or in the output of <see cref="M:Microsoft.Data.SqlClient.SqlException.ToString" />.
         </para>
         <para>
-          In the current release, the driver does not yet populate this information and the returned snapshot has all properties set to <see langword="null" />.
+          When a connection fails to open, the snapshot contains the values captured by the final connection attempt (for example, the negotiated encryption mode and TLS protocol, if the failure occurred after they were determined). Values from earlier attempts, such as attempts before a retry, redirect, or failover, are not included. Exceptions unrelated to opening a connection return a snapshot with all properties set to <see langword="null" />. In the current release, the certificate-related properties are always <see langword="null" />.
         </para>
       </remarks>
     </EncryptionInfo>

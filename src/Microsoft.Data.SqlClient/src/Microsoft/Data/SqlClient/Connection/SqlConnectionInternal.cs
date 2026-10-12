@@ -253,6 +253,18 @@ namespace Microsoft.Data.SqlClient.Connection
         /// </remarks>
         private bool _databaseEnvChangeReceived;
 
+        /// <summary>
+        /// Per-attempt collector for encryption details. Allocated on the first login attempt,
+        /// reset at the start of each physical attempt, and released once login completes.
+        /// </summary>
+        private EncryptionInfoCapture _encryptionInfoCapture;
+
+        /// <summary>
+        /// Immutable encryption snapshot published after a successful login. Remains
+        /// <see cref="SqlConnectionEncryptionInfo.Empty"/> until then.
+        /// </summary>
+        private SqlConnectionEncryptionInfo _encryptionInfo = SqlConnectionEncryptionInfo.Empty;
+
         private readonly SqlCredential _credential;
 
         private string _currentLanguage;
@@ -600,6 +612,20 @@ namespace Microsoft.Data.SqlClient.Connection
         {
             get => CurrentTransaction?.HasParentTransaction == true;
         }
+
+        /// <summary>
+        /// Gets the collector for the in-progress physical login attempt, or <see langword="null"/>
+        /// when no login is in progress. Written by <see cref="TdsParser"/> during the pre-login
+        /// handshake.
+        /// </summary>
+        internal EncryptionInfoCapture EncryptionInfoCapture => _encryptionInfoCapture;
+
+        /// <summary>
+        /// Gets the immutable encryption snapshot for this physical connection. Populated once
+        /// login succeeds and shared by every <see cref="SqlConnection"/> that later uses this
+        /// physical connection (including pooled reuse and MARS sessions).
+        /// </summary>
+        internal SqlConnectionEncryptionInfo EncryptionInfo => _encryptionInfo;
 
         // @TODO: Make auto-property
         internal DbConnectionPoolIdentity Identity
@@ -2301,6 +2327,10 @@ namespace Microsoft.Data.SqlClient.Connection
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.AttemptOneLogin|ADV> {0}, timeout={1}[msec], server={2}", ObjectID, timeout.MillisecondsRemaining, serverInfo.ExtendedServerName);
             RoutingInfo = null; // forget routing information
 
+            // Each physical attempt (retry, redirect, routing, failover) starts with a clean capture
+            // so only the terminal attempt's values are published.
+            (_encryptionInfoCapture ??= new EncryptionInfoCapture()).Reset();
+
             _parser._physicalStateObj.SniContext = SniContext.Snix_Connect;
 
             #if NETFRAMEWORK
@@ -3421,6 +3451,23 @@ namespace Microsoft.Data.SqlClient.Connection
         }
 
         /// <summary>
+        /// Attaches the encryption values captured by the terminal login attempt to a failed-open
+        /// <see cref="SqlException"/>. Only values that were actually captured are attached;
+        /// exceptions raised before any value was captured, and non-<see cref="SqlException"/>
+        /// exceptions, are left unchanged.
+        /// </summary>
+        private void AttachEncryptionInfo(Exception e)
+        {
+            EncryptionInfoCapture capture = _encryptionInfoCapture;
+            _encryptionInfoCapture = null;
+
+            if (capture is { HasValues: true } && e is SqlException sqlException && sqlException.EncryptionInfo.IsEmpty)
+            {
+                sqlException.EncryptionInfo = capture.ToSnapshot();
+            }
+        }
+
+        /// <summary>
         /// Attempt to log in to a host that does not have a failover partner.
         /// </summary>
         /// <remarks>
@@ -4188,11 +4235,15 @@ namespace Microsoft.Data.SqlClient.Connection
             }
             catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
+                AttachEncryptionInfo(e);
                 LoginFailure();
                 throw;
             }
 
             _timeoutErrorInternal.SetAllCompleteMarker();
+
+            _encryptionInfo = _encryptionInfoCapture?.ToSnapshot() ?? SqlConnectionEncryptionInfo.Empty;
+            _encryptionInfoCapture = null;
 
             #if DEBUG
             _parser._physicalStateObj.InvalidateDebugOnlyCopyOfSniContext();
