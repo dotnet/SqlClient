@@ -120,6 +120,11 @@ parameters:
     type: boolean
     default: true
 
+  # Include macOS driver and extension tests in CI; PR pipelines disable them.
+  - name: runMacOSTests
+    type: boolean
+    default: true
+
   # If true, run manual tests against legacy SQL Server versions (2016, 2017).
   # Enabled for CI pipelines; disabled for PR pipelines to keep validation fast.
   - name: runLegacySqlTests
@@ -214,6 +219,7 @@ stages:
   - template: /eng/pipelines/stages/build-abstractions-package-ci-stage.yml@self
     parameters:
       poolName: ${{ parameters.defaultPoolName }}
+      runMacOSTests: ${{ parameters.runMacOSTests }}
       abstractionsArtifactsName: $(abstractionsArtifactsName)
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}
@@ -254,6 +260,7 @@ stages:
   - template: /eng/pipelines/stages/build-azure-package-ci-stage.yml@self
     parameters:
       poolName: ${{ parameters.defaultPoolName }}
+      runMacOSTests: ${{ parameters.runMacOSTests }}
       abstractionsArtifactsName: $(abstractionsArtifactsName)
       azureArtifactsName: $(azureArtifactsName)
       buildConfiguration: ${{ parameters.buildConfiguration }}
@@ -724,24 +731,25 @@ stages:
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
 
         # macOS with local SQL Server 2025 (docker), x64 build platform.
-        mac_sql25:
-          pool: Azure Pipelines
-          images:
-            MacOSLatest_Sql25: macos-latest
-          TargetFrameworks: ${{parameters.targetFrameworksUnix }}
-          netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
-          buildPlatforms: [AnyCPU]
-          testSets: ${{parameters.testSets }}
-          useManagedSNI: [true]
-          configSqlFor: local
-          operatingSystem: Mac
-          configProperties:
-            TCPConnectionString: $(SQL_TCP_CONN_STRING)
-            NPConnectionString: $(SQL_NP_CONN_STRING)
-            SupportsIntegratedSecurity: false
-            ManagedIdentitySupported: false
-            LocalDbAppName: $(LocalDbAppName)
-            LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
+        ${{ if eq(parameters.runMacOSTests, true) }}:
+          mac_sql25:
+            pool: Azure Pipelines
+            images:
+              MacOSLatest_Sql25: macos-latest
+            TargetFrameworks: ${{parameters.targetFrameworksUnix }}
+            netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
+            buildPlatforms: [AnyCPU]
+            testSets: ${{parameters.testSets }}
+            useManagedSNI: [true]
+            configSqlFor: local
+            operatingSystem: Mac
+            configProperties:
+              TCPConnectionString: $(SQL_TCP_CONN_STRING)
+              NPConnectionString: $(SQL_NP_CONN_STRING)
+              SupportsIntegratedSecurity: false
+              ManagedIdentitySupported: false
+              LocalDbAppName: $(LocalDbAppName)
+              LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
 
         # Enclave tests
         #
