@@ -18,6 +18,19 @@ The primary test projects for Microsoft.Data.SqlClient are under
 
 These projects target `net8.0`, `net9.0`, and `net10.0` on all platforms. On Windows, they also target `net462`.
 
+## CI Platform Coverage
+
+PR validation runs tests on Windows and Linux only. The
+[project-reference](eng/pipelines/sqlclient-pr-project-ref-pipeline.yml) and
+[package-reference](eng/pipelines/sqlclient-pr-package-ref-pipeline.yml) PR pipelines set
+`runMacOSTests: false`, excluding macOS SqlClient/AKV, Abstractions, and Azure extension tests
+and their packaging dependencies. The [unified PR pipeline](eng/pipelines/pr/sqlclient-pr-pipeline.yml)
+already has a Windows/Linux-only platform matrix.
+
+The [shared CI template](eng/pipelines/dotnet-sqlclient-ci-core.yml) defaults `runMacOSTests` to `true`,
+so scheduled and push-triggered CI retains macOS coverage. Local macOS testing remains supported.
+See [Pipeline Script Tests](eng/pipelines/scripts/tests/README.md) for platform-selection regression checks.
+
 ## Recommended Entry Point
 
 Use [build.proj](build.proj) from the repository root:

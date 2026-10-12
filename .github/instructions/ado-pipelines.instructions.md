@@ -47,6 +47,7 @@ Key parameters:
 - `testSets` — test partitions; default `[1, 2, 3]`
 - `useManagedSNI` — SNI variants to test; default `[false, true]`
 - `runAlwaysEncryptedTests` — include AE test set; default `true`
+- `runMacOSTests` — include macOS driver and extension tests; default `true` for CI, disabled by both project/package PR pipelines
 - `runLegacySqlTests` — include SQL Server 2016/2017 manual-test legs; default `true`
 - `debug` — enable debug output; default `false`
 - `dotnetVerbosity` — build verbosity; default `normal`
@@ -70,6 +71,7 @@ When adding a new build stage, respect the dependency graph and pass artifact na
 ## PR vs CI Pipeline Differences
 
 PR pipelines:
+- Run tests on Windows and Linux only; macOS driver and extension coverage remains in CI
 - Trigger on PRs targeting `release/7.1`; path filters vary by pipeline
 - Exception: the legacy `sqlclient-pr-package-ref-pipeline.yml` has an empty branch include list, so it has no PR trigger and is manual-queue only
 - Use reduced TFM matrix: `[net462, net8.0, net9.0]` (excludes net10.0)
