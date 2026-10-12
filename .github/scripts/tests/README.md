@@ -25,6 +25,10 @@ Generic arguments such as `Task<Result>` and `List<Item>`, including nested
 types, and XML documentation tags are covered by acceptance regressions.
 The summary heading must start at the beginning of the body; leading indentation
 cannot turn a code-block heading into an accepted Markdown heading.
+Initial and follow-up summaries must queue exactly one Waiting for Author label
+operation matching the Environment row; on-demand summaries must leave labels
+unchanged. Tests also reject diagnostic placeholders within required fields,
+duplicate required rows/sections, and unfinished content in additional prose.
 
 ## Shell script tests
 

@@ -48,7 +48,7 @@ function meaningful(value) {
         !/^<[\s\S]*>$/.test(text) &&
         !hasTemplatePlaceholder(text) &&
         !/^\s*(?:(?:[-+]|\d+[.)])\s+)?(?:todo|tbd|placeholder)\b/im.test(text) &&
-        !/^(?:todo|tbd|test(?: message)?(?: please ignore)?|placeholder)$/i.test(text);
+        !/^(?:todo|tbd|test(?: message| simple body)?(?: please ignore)?|placeholder)$/i.test(text);
 }
 
 function validateTriageOutput(output) {
@@ -98,19 +98,52 @@ function validateTriageOutput(output) {
     // Require the workflow's five check rows and both prose sections, not merely its heading.
     const prose = proseOnly(body.replace(/\r\n?/g, '\n').trim());
     const table = prose.split(/^### /m)[0];
+    let environment;
     for (const field of ['Issue type', 'Environment', 'Area', 'Duplicates', 'Regression']) {
-        const row = table.split('\n').find(line => line.startsWith(`| ${field} |`));
+        const rows = table.split('\n').filter(line => line.startsWith(`| ${field} |`));
+        if (prose.split('\n').filter(line => line.startsWith(`| ${field} |`)).length > 1) {
+            throw new Error(`Duplicate triage check row: ${field}.`);
+        }
+        const row = rows[0];
         const match = row?.match(/^\| [^|]+ \| (.*?) \| *$/);
         if (!match || !meaningful(match[1])) {
             throw new Error(`Missing or unfinished triage check row: ${field}.`);
         }
+        if (field === 'Environment') {
+            environment = match[1].replace(/[*_`]/g, '').trim();
+        }
     }
     const sections = prose.split(/^### /m).slice(1);
     for (const heading of ['Analysis', 'Next Steps']) {
-        const section = sections.find(value => value.split('\n', 1)[0].trim() === heading);
+        const matchingSections = sections.filter(value => value.split('\n', 1)[0].trim() === heading);
+        if (matchingSections.length > 1) {
+            throw new Error(`Duplicate triage section: ${heading}.`);
+        }
+        const section = matchingSections[0];
         const content = section?.split('\n').slice(1).join('\n').split(/^#{1,3} /m)[0];
         if (!section || !meaningful(content)) {
             throw new Error(`Missing or unfinished triage section: ${heading}.`);
+        }
+    }
+    // Extra prose must not reintroduce unfinished content outside the required fields.
+    if (!meaningful(prose) ||
+        /^(?:\s*(?:[-+]|\d+[.)])\s+)?\s*(?:test simple body|2-4 sentences:|Actionable items\.)/im.test(prose)) {
+        throw new Error('Unfinished triage content outside the required fields.');
+    }
+
+    const labels = output.items.filter(item => ['add_labels', 'remove_labels'].includes(item.type));
+    const onDemand = body.split('\n', 1)[0].includes('(on-demand re-triage)');
+    if (onDemand) {
+        if (labels.length > 0) {
+            throw new Error('On-demand triage must preserve label state.');
+        }
+    } else {
+        const missingEnvironment = /^(?:\u26A0\uFE0F?\s*)?(?:Missing|Partial):/iu.test(environment);
+        const expectedType = missingEnvironment ? 'add_labels' : 'remove_labels';
+        if (labels.length !== 1 || labels[0].type !== expectedType ||
+            !Array.isArray(labels[0].labels) || labels[0].labels.length !== 1 ||
+            labels[0].labels[0] !== 'Auto-Triage: Waiting for Author') {
+            throw new Error(`Triage requires exactly one ${expectedType} operation for the Waiting for Author label.`);
         }
     }
 }

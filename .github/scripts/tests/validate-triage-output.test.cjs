@@ -25,7 +25,17 @@ Cancellation leaves the operation running. Investigate the async cancellation pa
 - Ask the author for their SQL Server version.
 `;
 
-const output = (body) => ({ items: [{ type: 'add_comment', body }], errors: [] });
+const waitingLabel = 'Auto-Triage: Waiting for Author';
+const output = (body) => ({
+    items: [
+        { type: 'add_comment', body },
+        ...(!body.includes('Triage Summary (on-demand re-triage)') ? [{
+            type: /\| Environment \| (?:Missing:|.*Partial:)/.test(body) ? 'add_labels' : 'remove_labels',
+            labels: [waitingLabel],
+        }] : []),
+    ],
+    errors: [],
+});
 
 test('accepts initial, follow-up, and on-demand summaries with multiline content', () => {
     for (const suffix of ['', ' (updated after author response)', ' (on-demand re-triage)']) {
@@ -36,8 +46,9 @@ test('accepts initial, follow-up, and on-demand summaries with multiline content
 
 test('accepts a summary followed by an allowed label operation', () => {
     for (const type of ['add_labels', 'remove_labels']) {
-        const value = output(summary);
-        value.items.push({ type, labels: ['Auto-Triage: Waiting for Author'] });
+        const body = type === 'add_labels' ? summary :
+            summary.replace('Missing: SQL Server version', 'All required environment details provided');
+        const value = output(body);
         validateTriageOutput(value);
     }
 });
@@ -53,6 +64,79 @@ test('rejects label operations before the summary', () => {
 test('preserves explicit no-op and failure reporting without a comment', () => {
     for (const type of ['noop', 'report_incomplete', 'missing_tool', 'missing_data']) {
         validateTriageOutput({ items: [{ type, reason: 'Required context unavailable' }] });
+    }
+});
+
+test('enforces label state for initial, follow-up, and on-demand summaries', () => {
+    for (const suffix of ['', ' (updated after author response)', ' (on-demand re-triage)']) {
+        for (const environment of [
+            'Missing: SQL Server version',
+            '\u26A0\uFE0F Missing: SQL Server version',
+            '\u26A0\uFE0F Partial: received OS; still missing SQL Server version',
+            'All required environment details provided',
+        ]) {
+            const body = summary.replace('Triage Summary', `Triage Summary${suffix}`)
+                .replace('Missing: SQL Server version', environment);
+            const onDemand = suffix.includes('on-demand');
+            const expected = /Missing:|Partial:/.test(environment) ? 'add_labels' : 'remove_labels';
+            const comment = { type: 'add_comment', body };
+            const label = { type: expected, labels: [waitingLabel] };
+            validateTriageOutput({ items: onDemand ? [comment] : [comment, label] });
+            const invalid = onDemand ? [
+                [comment, label],
+                [comment, { ...label, type: expected === 'add_labels' ? 'remove_labels' : 'add_labels' }],
+            ] : [
+                [comment],
+                [comment, { ...label, type: expected === 'add_labels' ? 'remove_labels' : 'add_labels' }],
+                [comment, label, label],
+                [comment, { ...label, labels: [] }],
+                [comment, { ...label, labels: ['Unrelated label'] }],
+                [comment, { ...label, labels: [waitingLabel, 'Unrelated label'] }],
+            ];
+            for (const items of invalid) {
+                assert.throws(() => validateTriageOutput({ items }), /label/i);
+            }
+        }
+    }
+});
+
+test('rejects diagnostic placeholders inside required rows and sections', () => {
+    for (const content of [
+        'Bug',
+        'Cancellation leaves the operation running. Investigate the async cancellation path; P1.',
+        '- Ask the author for their SQL Server version.',
+    ]) {
+        assert.throws(() => validateTriageOutput(output(summary.replace(
+            content, 'test simple body'
+        ))), /unfinished/);
+    }
+});
+
+test('rejects duplicate required rows and sections', () => {
+    for (const field of ['Issue type', 'Environment', 'Area', 'Duplicates', 'Regression']) {
+        const row = summary.split('\n').find(line => line.startsWith(`| ${field} |`));
+        for (const duplicate of [row, `| ${field} | |`, `| ${field} | <list> |`]) {
+            assert.throws(() => validateTriageOutput(output(summary.replace(row, `${row}\n${duplicate}`))), /duplicate/i);
+            assert.throws(() => validateTriageOutput(output(
+                summary + `\n### Additional Context\n\n${duplicate}\n`
+            )), /duplicate/i);
+        }
+    }
+    for (const heading of ['Analysis', 'Next Steps']) {
+        assert.throws(() => validateTriageOutput(output(
+            summary + `\n### ${heading}\n\nCompleted prose.\n`
+        )), /duplicate/i);
+    }
+});
+
+test('rejects unfinished content outside required fields without rejecting quoted examples', () => {
+    for (const draft of ['Additional context: <missing details>', 'TODO: finish the report',
+        '2-4 sentences: what the issue is about', 'Actionable items. Be specific, not vague.']) {
+        assert.throws(() => validateTriageOutput(output(
+            summary + `\n### Additional Context\n\n${draft}\n`
+        )), /unfinished/i);
+        validateTriageOutput(output(summary + `\n### Additional Context\n\n> ${draft}\n`));
+        validateTriageOutput(output(summary + `\n### Additional Context\n\n\`\`\`text\n${draft}\n\`\`\`\n`));
     }
 });
 
