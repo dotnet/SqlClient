@@ -115,7 +115,12 @@ namespace Microsoft.Data.SqlClient
 
                     InternalTransaction.Commit();
                 }
-                // @TODO: CER Exception Handling was removed here (see GH#3581)
+                catch (Exception ex) when (ADP.IsUnrecoverableException(ex))
+                {
+                    _connection.Abort(ex);
+                    diagnosticScope.SetException(ex);
+                    throw;
+                }
                 catch (SqlException ex)
                 {
                     diagnosticScope.SetException(ex);
@@ -147,11 +152,18 @@ namespace Microsoft.Data.SqlClient
         {
             if (disposing)
             {
-                if (!IsZombied && !Is2005PartialZombie)
+                try
                 {
-                    InternalTransaction.Dispose();
+                    if (!IsZombied && !Is2005PartialZombie)
+                    {
+                        InternalTransaction.Dispose();
+                    }
                 }
-                // @TODO: CER Exception Handling was removed here (see GH#3581)
+                catch (Exception ex) when (ADP.IsUnrecoverableException(ex))
+                {
+                    _connection.Abort(ex);
+                    throw;
+                }
             }
 
             base.Dispose(disposing);
@@ -196,7 +208,12 @@ namespace Microsoft.Data.SqlClient
                         _isFromApi = true;
                         InternalTransaction.Rollback();
                     }
-                    // @TODO: CER Exception Handling was removed here (see GH#3581)
+                    catch (Exception ex) when (ADP.IsUnrecoverableException(ex))
+                    {
+                        _connection.Abort(ex);
+                        diagnosticScope.SetException(ex);
+                        throw;
+                    }
                     catch (Exception ex)
                     {
                         diagnosticScope.SetException(ex);
@@ -246,7 +263,12 @@ namespace Microsoft.Data.SqlClient
                     _isFromApi = true;
                     InternalTransaction.Rollback(transactionName);
                 }
-                // @TODO: CER Exception Handling was removed here (see GH#3581)
+                catch (Exception ex) when (ADP.IsUnrecoverableException(ex))
+                {
+                    _connection.Abort(ex);
+                    diagnosticScope.SetException(ex);
+                    throw;
+                }
                 catch (Exception ex)
                 {
                     diagnosticScope.SetException(ex);
@@ -282,7 +304,11 @@ namespace Microsoft.Data.SqlClient
 
                     InternalTransaction.Save(savePointName);
                 }
-                // @TODO: CER Exception Handling was removed here (see GH#3581)
+                catch (Exception ex) when (ADP.IsUnrecoverableException(ex))
+                {
+                    _connection.Abort(ex);
+                    throw;
+                }
                 finally
                 {
                     SqlStatistics.StopTimer(statistics);

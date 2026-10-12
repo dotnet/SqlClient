@@ -1416,7 +1416,11 @@ namespace Microsoft.Data.SqlClient
                 statistics = SqlStatistics.StartTimer(Statistics);
                 InnerConnection.ChangeDatabase(database);
             }
-            // @TODO: CER Exception Handling was removed here (see GH#3581)
+            catch (Exception e) when (ADP.IsUnrecoverableException(e))
+            {
+                Abort(e);
+                throw;
+            }
             finally
             {
                 SqlStatistics.StopTimer(statistics);
@@ -1455,7 +1459,18 @@ namespace Microsoft.Data.SqlClient
             // the command will no longer be cancelable.  It might be desirable to be able to cancel the close operation, but this is
             // outside of the scope of Whidbey RTM.  See (SqlCommand::Cancel) for other lock.
             _originalConnectionId = ClientConnectionId;
-            InnerConnection.CloseConnection(this, ConnectionFactory);
+            DbConnectionInternal innerConnection = InnerConnection;
+            try
+            {
+                innerConnection.CloseConnection(this, ConnectionFactory);
+            }
+            catch (Exception e) when (ADP.IsUnrecoverableException(e))
+            {
+                // Close can already have replaced the outer connection with a closed singleton.
+                innerConnection.DoomThisConnection();
+                Abort(e);
+                throw;
+            }
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Close/*' />
@@ -1522,7 +1537,12 @@ namespace Microsoft.Data.SqlClient
                         _statistics._closeTimestamp = ADP.TimerCurrent();
                     }
                 }
-                // @TODO: CER Exception Handling was removed here (see GH#3581)
+                catch (Exception ex) when (ADP.IsUnrecoverableException(ex))
+                {
+                    e = ex;
+                    Abort(ex);
+                    throw;
+                }
                 catch (Exception ex)
                 {
                     e = ex;
@@ -1988,17 +2008,70 @@ namespace Microsoft.Data.SqlClient
             DbConnectionInternal innerConnection = _innerConnection;
             if (ConnectionState.Open == innerConnection.State)
             {
-                Interlocked.CompareExchange(ref _innerConnection, DbConnectionClosedPreviouslyOpened.SingletonInstance, innerConnection);
-                innerConnection.DoomThisConnection();
+                if (innerConnection is SqlConnectionInternal tdsConnection && tdsConnection.Parser is TdsParser parser)
+                {
+                    // Pool return may notify readers. They must take their broken-connection
+                    // cleanup path rather than drain or acquire the parser lock recursively.
+                    parser.State = TdsParserState.Broken;
+                }
+
+                try
+                {
+                    innerConnection.DoomThisConnection();
+                }
+                catch (Exception traceException) when (ADP.IsCatchableExceptionType(traceException) || ADP.IsUnrecoverableException(traceException))
+                {
+                    // DoomThisConnection sets the flag before emitting its diagnostic event.
+                }
+                finally
+                {
+                    if (ReferenceEquals(Interlocked.CompareExchange(
+                        ref _innerConnection, DbConnectionClosedPreviouslyOpened.SingletonInstance, innerConnection), innerConnection))
+                    {
+                        // Detaching the outer connection also transfers its checked-out lease.
+                        // A losing caller must leave release to the concurrent close/abort owner.
+                        if (innerConnection.Pool is IDbConnectionPool pool)
+                        {
+                            pool.ReturnInternalConnection(innerConnection, this);
+                        }
+                        else if (innerConnection is SqlConnectionInternal)
+                        {
+                            // There is no pool to retire this physical connection. Dispose
+                            // directly; normal Close could re-enter protocol cleanup.
+                            try
+                            {
+                                innerConnection.Dispose();
+                            }
+                            finally
+                            {
+                                try
+                                {
+                                    innerConnection.Metrics.ExitNonPooledConnection();
+                                }
+                                finally
+                                {
+                                    innerConnection.Metrics.HardDisconnectRequest();
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
-            if (e is OutOfMemoryException)
+            try
             {
-                SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionHelper.Abort|RES|INFO|CPOOL> {0}, Aborting operation due to asynchronous exception: OutOfMemory", ObjectID);
+                if (e is OutOfMemoryException)
+                {
+                    SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionHelper.Abort|RES|INFO|CPOOL> {0}, Aborting operation due to asynchronous exception: OutOfMemory", ObjectID);
+                }
+                else
+                {
+                    SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionHelper.Abort|RES|INFO|CPOOL> {0}, Aborting operation due to asynchronous exception: {1}", ObjectID, e);
+                }
             }
-            else
+            catch (Exception traceException) when (ADP.IsCatchableExceptionType(traceException) || ADP.IsUnrecoverableException(traceException))
             {
-                SqlClientEventSource.Log.TryTraceEvent("<prov.DbConnectionHelper.Abort|RES|INFO|CPOOL> {0}, Aborting operation due to asynchronous exception: {1}", ObjectID, e);
+                // Diagnostics must not replace the failure that invalidated the connection.
             }
         }
 
@@ -2218,7 +2291,14 @@ namespace Microsoft.Data.SqlClient
                         if (retryTask.IsFaulted)
                         {
                             Exception e = retryTask.Exception.InnerException;
-                            _parent.CloseInnerConnection();
+                            if (ADP.IsUnrecoverableException(e))
+                            {
+                                _parent.Abort(e);
+                            }
+                            else
+                            {
+                                _parent.CloseInnerConnection();
+                            }
                             _parent._currentCompletion = null;
                             _result.SetException(retryTask.Exception.InnerException);
                         }
@@ -2256,7 +2336,14 @@ namespace Microsoft.Data.SqlClient
                 }
                 catch (Exception e)
                 {
-                    _parent.CloseInnerConnection();
+                    if (ADP.IsUnrecoverableException(e))
+                    {
+                        _parent.Abort(e);
+                    }
+                    else
+                    {
+                        _parent.CloseInnerConnection();
+                    }
                     _parent._currentCompletion = null;
                     _result.SetException(e);
                 }
@@ -2363,6 +2450,19 @@ namespace Microsoft.Data.SqlClient
         /// </remarks>
         internal bool TryOpenInner(TaskCompletionSource<DbConnectionInternal> retry, bool forceNewConnection)
         {
+            try
+            {
+                return TryOpenInnerCore(retry, forceNewConnection);
+            }
+            catch (Exception e) when (ADP.IsUnrecoverableException(e))
+            {
+                Abort(e);
+                throw;
+            }
+        }
+
+        private bool TryOpenInnerCore(TaskCompletionSource<DbConnectionInternal> retry, bool forceNewConnection)
+        {
             // Create a single TimeoutTimer that represents the overall connection-open budget for this
             // attempt. The timer is threaded through every layer (inner connection state transitions,
             // connection factory, pool wait, physical connection establishment) so that all of those
@@ -2423,8 +2523,6 @@ namespace Microsoft.Data.SqlClient
                 tdsInnerConnection.Parser.Statistics = null;
                 _statistics = null; // in case of previous Open/Close/reset_CollectStats sequence
             }
-            // @TODO: CER Exception Handling was removed here (see GH#3581)
-
             return true;
         }
 

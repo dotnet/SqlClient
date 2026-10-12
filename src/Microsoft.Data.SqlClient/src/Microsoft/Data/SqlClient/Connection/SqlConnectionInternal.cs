@@ -464,7 +464,11 @@ namespace Microsoft.Data.SqlClient.Connection
                     }
                 }
             }
-            // @TODO: CER Exception Handling was removed here (see GH#3581)
+            catch (Exception e) when (ADP.IsUnrecoverableException(e))
+            {
+                DoomThisConnection();
+                throw;
+            }
             finally
             {
                 ThreadHasParserLockForClose = false;
@@ -847,8 +851,16 @@ namespace Microsoft.Data.SqlClient.Connection
             // This is a user-initiated enlistment rather than a connection-open. Every batch this
             // path can emit is bounded by the connect timeout, matching the other enlistment I/O
             // in this file (EnlistNonNull, GetDTCAddress, PropagateTransactionCookie).
-            Enlist(transaction, ConnectionOptions.ConnectTimeout);
-            // @TODO: CER Exception Handling was removed here (see GH#3581)
+            try
+            {
+                Enlist(transaction, ConnectionOptions.ConnectTimeout);
+            }
+            catch (Exception e) when (ADP.IsUnrecoverableException(e))
+            {
+                DoomThisConnection();
+                Connection?.Abort(e);
+                throw;
+            }
         }
 
         internal SqlTransaction BeginSqlTransaction(
@@ -884,7 +896,12 @@ namespace Microsoft.Data.SqlClient.Connection
                 transaction.InternalTransaction.RestoreBrokenConnection = false;
                 return transaction;
             }
-            // @TODO: CER Exception Handling was removed here (see GH#3581)
+            catch (Exception e) when (ADP.IsUnrecoverableException(e))
+            {
+                DoomThisConnection();
+                Connection?.Abort(e);
+                throw;
+            }
             finally
             {
                 SqlStatistics.StopTimer(statistics);
@@ -1119,7 +1136,12 @@ namespace Microsoft.Data.SqlClient.Connection
                 }
 
                 return false;
-                // @TODO: CER Exception Handling was removed here (see GH#3581)
+            }
+            catch (Exception e) when (ADP.IsUnrecoverableException(e))
+            {
+                DoomThisConnection();
+                parent.Abort(e);
+                throw;
             }
             finally
             {
@@ -2157,7 +2179,11 @@ namespace Microsoft.Data.SqlClient.Connection
                     }
                 }
             }
-            // @TODO: CER Exception Handling was removed here (see GH#3581)
+            catch (Exception e) when (ADP.IsUnrecoverableException(e))
+            {
+                DoomThisConnection();
+                throw;
+            }
             catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
                 // If an exception occurred, the inner connection will be marked as unusable and
@@ -2850,17 +2876,29 @@ namespace Microsoft.Data.SqlClient.Connection
                     stateObj,
                     isDelegateControlRequest);
             }
+            catch (Exception e) when (ADP.IsUnrecoverableException(e))
+            {
+                parser._state = TdsParserState.Broken;
+                DoomThisConnection();
+                throw;
+            }
             finally
             {
-                if (mustPutSession)
+                try
                 {
-                    parser.PutSession(stateObj);
+                    if (mustPutSession)
+                    {
+                        // A broken parser retires the session through the pool's ownership path.
+                        parser.PutSession(stateObj);
+                    }
                 }
-
-                if (releaseConnectionLock)
+                finally
                 {
-                    ThreadHasParserLockForClose = false;
-                    _parserLock.Release();
+                    if (releaseConnectionLock)
+                    {
+                        ThreadHasParserLockForClose = false;
+                        _parserLock.Release();
+                    }
                 }
             }
         }

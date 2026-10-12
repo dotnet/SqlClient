@@ -396,7 +396,11 @@ namespace Microsoft.Data.SqlClient
                 CachedAsyncState.SetActiveConnectionAndResult(completion, nameof(EndExecuteReader), _activeConnection);
                 _stateObj.ReadSni(completion);
             }
-            // @TODO: CER Exception Handling was removed here (see GH#3581)
+            catch (Exception e) when (ADP.IsUnrecoverableException(e))
+            {
+                AbortOnUnrecoverableException(e);
+                throw;
+            }
             catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
                 // Similarly, if an exception occurs put the stateObj back into the pool.
@@ -645,6 +649,13 @@ namespace Microsoft.Data.SqlClient
                     shouldCacheForAlwaysEncrypted: !forDescribeParameterEncryption);
                 return reader;
             }
+            catch (Exception e) when (ADP.IsUnrecoverableException(e))
+            {
+                processFinallyBlock = false;
+                AbortOnUnrecoverableException(e);
+                reader?.AbortOnUnrecoverableException(e);
+                throw;
+            }
             catch (Exception e)
             {
                 processFinallyBlock = ADP.IsCatchableExceptionType(e);
@@ -731,6 +742,11 @@ namespace Microsoft.Data.SqlClient
                 success = true;
                 return result;
             }
+            catch (Exception e) when (ADP.IsUnrecoverableException(e))
+            {
+                AbortOnUnrecoverableException(e);
+                throw;
+            }
             catch (Exception e)
             {
                 if (e is SqlException sqlException)
@@ -795,6 +811,12 @@ namespace Microsoft.Data.SqlClient
                     {
                         throw SQL.SynchronousCallMayNotPend();
                     }
+                }
+                catch (Exception e) when (ADP.IsUnrecoverableException(e))
+                {
+                    AbortOnUnrecoverableException(e);
+                    ds?.AbortOnUnrecoverableException(e);
+                    throw;
                 }
                 catch (Exception e)
                 {
@@ -864,6 +886,12 @@ namespace Microsoft.Data.SqlClient
 
                     // @TODO: Why does the command set whether the reader is initialized??
                     ds.IsInitialized = true;
+                }
+                catch (Exception e) when (ADP.IsUnrecoverableException(e))
+                {
+                    ds.AbortOnUnrecoverableException(e);
+                    AbortOnUnrecoverableException(e);
+                    throw;
                 }
                 catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                 {
@@ -1279,7 +1307,8 @@ namespace Microsoft.Data.SqlClient
             bool asyncWrite,
             bool isRetry, // @TODO: This isn't used in netfx?
             SqlDataReader ds = null,
-            bool describeParameterEncryptionRequest = false) // @TODO: This is hidden by an overload
+            bool describeParameterEncryptionRequest = false,
+            EncryptionAsyncCleanup encryptionCleanup = null) // @TODO: This is hidden by an overload
         {
             Debug.Assert(!asyncWrite || isAsync, "AsyncWrite should be always accompanied by Async");
 
@@ -1310,7 +1339,9 @@ namespace Microsoft.Data.SqlClient
                         ds,
                         reconnectTask,
                         reconnectionStart,
-                        completion);
+                        completion,
+                        describeParameterEncryptionRequest,
+                        encryptionCleanup);
 
                     task = completion.Task;
                     return ds;
@@ -1337,10 +1368,19 @@ namespace Microsoft.Data.SqlClient
             string optionSettings = null;
             bool processFinallyBlock = true;
             bool decrementAsyncCountOnFailure = false;
+            SqlConnectionInternal asyncConnection = null;
 
             if (isAsync)
             {
-                _activeConnection.GetOpenTdsConnection().IncrementAsyncCount();
+                asyncConnection = _activeConnection.GetOpenTdsConnection();
+                if (encryptionCleanup is not null)
+                {
+                    encryptionCleanup.IncrementCount(asyncConnection);
+                }
+                else
+                {
+                    asyncConnection.IncrementAsyncCount();
+                }
                 decrementAsyncCountOnFailure = true;
             }
 
@@ -1591,7 +1631,8 @@ namespace Microsoft.Data.SqlClient
                     decrementAsyncCountOnFailure = false;
                     if (writeTask is not null)
                     {
-                        task = RunExecuteReaderTdsSetupContinuation(runBehavior, ds, optionSettings, writeTask);
+                        task = RunExecuteReaderTdsSetupContinuation(runBehavior, ds, optionSettings, writeTask,
+                            asyncConnection, encryptionCleanup);
                     }
                     else
                     {
@@ -1612,14 +1653,22 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception e)
             {
-                processFinallyBlock = ADP.IsCatchableExceptionType(e);
+                processFinallyBlock = !ADP.IsUnrecoverableException(e) && ADP.IsCatchableExceptionType(e);
+                if (ADP.IsUnrecoverableException(e))
+                {
+                    AbortOnUnrecoverableException(e, asyncConnection);
+                    ds?.AbortOnUnrecoverableException(e);
+                }
 
                 if (decrementAsyncCountOnFailure)
                 {
-                    if (_activeConnection.InnerConnection is SqlConnectionInternal innerConnectionTds)
+                    if (encryptionCleanup is not null)
                     {
-                        // It may be closed
-                        innerConnectionTds.DecrementAsyncCount();
+                        encryptionCleanup.ReleaseCount();
+                    }
+                    else
+                    {
+                        asyncConnection.DecrementAsyncCount();
                     }
                 }
 
@@ -1642,7 +1691,9 @@ namespace Microsoft.Data.SqlClient
             RunBehavior runBehavior,
             SqlDataReader ds,
             string optionSettings,
-            Task writeTask)
+            Task writeTask,
+            SqlConnectionInternal asyncConnection,
+            EncryptionAsyncCleanup encryptionCleanup)
         {
             // @TODO: Why use the state version if we can't make this a static helper?
             return AsyncHelper.CreateContinuationTaskWithState(
@@ -1650,14 +1701,33 @@ namespace Microsoft.Data.SqlClient
                 state: _activeConnection,
                 onSuccess: sqlConnection =>
                 {
-                    // This will throw if the connection is closed.
-                    // @TODO: So... can we have something that specifically does that?
-                    sqlConnection.GetOpenTdsConnection();
-                    CachedAsyncState.SetAsyncReaderState(ds, runBehavior, optionSettings);
+                    try
+                    {
+                        sqlConnection.GetOpenTdsConnection();
+                        CachedAsyncState.SetAsyncReaderState(ds, runBehavior, optionSettings);
+                    }
+                    catch (Exception e) when (ADP.IsUnrecoverableException(e))
+                    {
+                        AbortOnUnrecoverableException(e, asyncConnection);
+                        ds?.AbortOnUnrecoverableException(e);
+                        throw;
+                    }
                 },
-                onFailure: static (sqlConnection, _) =>
+                onFailure: (sqlConnection, e) =>
                 {
-                    sqlConnection.GetOpenTdsConnection().DecrementAsyncCount();
+                    if (ADP.IsUnrecoverableException(e))
+                    {
+                        AbortOnUnrecoverableException(e, asyncConnection);
+                        ds?.AbortOnUnrecoverableException(e);
+                    }
+                    if (encryptionCleanup is not null)
+                    {
+                        encryptionCleanup.ReleaseCount();
+                    }
+                    else
+                    {
+                        asyncConnection.DecrementAsyncCount();
+                    }
                 });
         }
 
@@ -1673,7 +1743,9 @@ namespace Microsoft.Data.SqlClient
             SqlDataReader ds,
             Task reconnectTask,
             long reconnectionStart,
-            TaskCompletionSource<object> completion) // @TODO: I think this can be an untyped TCS.
+            TaskCompletionSource<object> completion,
+            bool describeParameterEncryptionRequest,
+            EncryptionAsyncCleanup encryptionCleanup) // @TODO: I think this can be an untyped TCS.
         {
             CancellationTokenSource timeoutCts = new CancellationTokenSource();
             AsyncHelper.SetTimeoutException(
@@ -1708,7 +1780,9 @@ namespace Microsoft.Data.SqlClient
                         out Task subTask,
                         asyncWrite,
                         isRetry,
-                        ds);
+                        ds,
+                        describeParameterEncryptionRequest,
+                        encryptionCleanup);
 
                     if (subTask is null)
                     {

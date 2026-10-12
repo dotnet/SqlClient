@@ -130,12 +130,18 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             SniHandle? sessionHandle = _sessionHandle;
             if (sessionHandle is not null)
             {
-                ReadAsyncCallback(IntPtr.Zero, PacketHandle.FromManagedPacket(packet), error);
-                SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.ReadAsyncCallback | Info | State Object Id {0}, Session Id {1}, Error code returned {2}", _objectID, sessionHandle.ConnectionId, error);
+                try
+                {
+                    ReadAsyncCallback(IntPtr.Zero, PacketHandle.FromManagedPacket(packet), error);
+                    SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.ReadAsyncCallback | Info | State Object Id {0}, Session Id {1}, Error code returned {2}", _objectID, sessionHandle.ConnectionId, error);
 #if DEBUG
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObjectManaged.ReadAsyncCallback | TRC | State Object Id {0}, Session Id {1}, Packet Id = {2}, Error code returned {3}", _objectID, sessionHandle.ConnectionId, packet?._id, error);
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObjectManaged.ReadAsyncCallback | TRC | State Object Id {0}, Session Id {1}, Packet Id = {2}, Error code returned {3}", _objectID, sessionHandle.ConnectionId, packet?._id, error);
 #endif
-                sessionHandle?.ReturnPacket(packet);
+                }
+                finally
+                {
+                    sessionHandle.ReturnPacket(packet);
+                }
             }
             else
             {
@@ -222,12 +228,8 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         {
             SniHandle sessionHandle = GetSessionSNIHandleHandleOrThrow();
 
-            error = sessionHandle.Receive(out SniPacket packet, timeoutRemaining);
-
             SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.ReadSyncOverAsync | Info | State Object Id {0}, Session Id {1}", _objectID, sessionHandle.ConnectionId);
-#if DEBUG
-            SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObjectManaged.ReadSyncOverAsync | TRC | State Object Id {0}, Session Id {1}, Packet {2} received, Packet owner Id {3}, Packet dataLeft {4}", _objectID, sessionHandle.ConnectionId, packet?._id, packet?._owner.ConnectionId, packet?.DataLeft);
-#endif
+            error = sessionHandle.Receive(out SniPacket packet, timeoutRemaining);
             return PacketHandle.FromManagedPacket(packet);
         }
 
@@ -240,22 +242,27 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         internal override void ReleasePacket(PacketHandle syncReadPacket)
         {
             SniPacket packet = syncReadPacket.ManagedPacket;
-            SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.ReleasePacket | Info | State Object Id {0}, Session Id {1}, Packet DataLeft {2}", _objectID, _sessionHandle?.ConnectionId, packet?.DataLeft);
-#if DEBUG
-            SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObjectManaged.ReleasePacket | TRC | State Object Id {0}, Session Id {1}, Packet {2} will be released, Packet Owner Id {3}, Packet dataLeft {4}", _objectID, _sessionHandle?.ConnectionId, packet?._id, packet?._owner.ConnectionId, packet?.DataLeft);
-#endif
-            if (packet is not null)
+            SniHandle? sessionHandle = _sessionHandle;
+            try
             {
-                SniHandle? sessionHandle = _sessionHandle;
-                if (sessionHandle is not null)
+                SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.ReleasePacket | Info | State Object Id {0}, Session Id {1}, Packet DataLeft {2}", _objectID, sessionHandle?.ConnectionId, packet?.DataLeft);
+#if DEBUG
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObjectManaged.ReleasePacket | TRC | State Object Id {0}, Session Id {1}, Packet {2} will be released, Packet Owner Id {3}, Packet dataLeft {4}", _objectID, sessionHandle?.ConnectionId, packet?._id, packet?._owner.ConnectionId, packet?.DataLeft);
+#endif
+            }
+            finally
+            {
+                if (packet is not null)
                 {
-                    sessionHandle.ReturnPacket(packet);
-                }
-                else
-                {
-                    // clear the packet and drop it to GC because we no longer know how to return it to the correct owner
-                    // this can only happen if a packet is in-flight when the _sessionHandle is cleared
-                    packet.Release();
+                    if (sessionHandle is not null)
+                    {
+                        sessionHandle.ReturnPacket(packet);
+                    }
+                    else
+                    {
+                        // An in-flight packet can outlive the session handle.
+                        packet.Release();
+                    }
                 }
             }
         }
@@ -269,9 +276,8 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         internal override PacketHandle ReadAsync(SessionHandle handle, out uint error)
         {
             SniPacket? packet = null;
+            SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.ReadAsync | Info | State Object Id {0}, Session Id {1}", _objectID, _sessionHandle?.ConnectionId);
             error = handle.ManagedHandle.ReceiveAsync(ref packet);
-
-            SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.ReadAsync | Info | State Object Id {0}, Session Id {1}, Packet DataLeft {2}", _objectID, _sessionHandle?.ConnectionId, packet?.DataLeft);
             return PacketHandle.FromManagedPacket(packet);
         }
 

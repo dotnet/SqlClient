@@ -2348,6 +2348,12 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(result == TdsOperationStatus.Done, "Should always return Done when _syncOverAsync is set");
                 return dataReady;
             }
+            catch (Exception e) when (ADP.IsUnrecoverableException(e))
+            {
+                _state = TdsParserState.Broken;
+                _connHandler?.DoomThisConnection();
+                throw;
+            }
             finally
             {
                 stateObj._syncOverAsync = syncOverAsync;
@@ -5157,7 +5163,12 @@ namespace Microsoft.Data.SqlClient
                 }
                 Run(RunBehavior.Clean, null, null, null, stateObj);
             }
-            // @TODO: CER Exception Handling was removed here (see GH#3581)
+            catch (Exception e) when (ADP.IsUnrecoverableException(e))
+            {
+                _state = TdsParserState.Broken;
+                _connHandler?.DoomThisConnection();
+                throw;
+            }
             catch
             {
                 _connHandler.DoomThisConnection();
@@ -9915,40 +9926,59 @@ namespace Microsoft.Data.SqlClient
 
         internal void FailureCleanup(TdsParserStateObject stateObj, Exception e)
         {
-            int old_outputPacketNumber = stateObj._outputPacketNumber;
-            SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.FailureCleanup|ERR> Exception caught on ExecuteXXX: '{0}'", e);
-
-            if (stateObj.HasOpenResult)
-            { // SQL BU DT 383773 - need to decrement openResultCount if operation failed.
-                stateObj.DecrementOpenResultCount();
+            bool unrecoverable = ADP.IsUnrecoverableException(e);
+            if (unrecoverable)
+            {
+                _state = TdsParserState.Broken;
+                _connHandler?.DoomThisConnection();
             }
 
-            // be sure to wipe out our buffer if we started sending stuff
-            stateObj.ResetBuffer();
-            stateObj.ResetPacketCounters();
-
-            if (old_outputPacketNumber != 1 && _state == TdsParserState.OpenLoggedIn)
+            try
             {
-                Debug.Assert(_connHandler._parserLock.ThreadMayHaveLock, "Should not be calling into FailureCleanup without first taking the parser lock");
-
-                bool originalThreadHasParserLock = _connHandler.ThreadHasParserLockForClose;
-                try
+                int old_outputPacketNumber = stateObj._outputPacketNumber;
+                if (!unrecoverable)
                 {
-                    // Dev11 Bug 385286 : ExecuteNonQueryAsync hangs when trying to write a parameter which generates ArgumentException and while handling that exception the server disconnects the connection
-                    // Need to set this to true such that if we have an error sending\processing the attention, we won't deadlock ourselves
-                    _connHandler.ThreadHasParserLockForClose = true;
+                    SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.FailureCleanup|ERR> Exception caught on ExecuteXXX: '{0}'", e);
+                }
 
-                    // If _outputPacketNumber prior to ResetBuffer was not equal to 1, a packet was already
-                    // sent to the server and so we need to send an attention and process the attention ack.
-                    stateObj.SendAttention();
-                    ProcessAttention(stateObj);
+                if (stateObj.HasOpenResult)
+                { // SQL BU DT 383773 - need to decrement openResultCount if operation failed.
+                    stateObj.DecrementOpenResultCount();
                 }
-                finally
+
+                // be sure to wipe out our buffer if we started sending stuff
+                stateObj.ResetBuffer();
+                stateObj.ResetPacketCounters();
+
+                if (old_outputPacketNumber != 1 && _state == TdsParserState.OpenLoggedIn)
                 {
-                    // Reset the ThreadHasParserLock value in case our caller expects it to be set\not set
-                    _connHandler.ThreadHasParserLockForClose = originalThreadHasParserLock;
+                    Debug.Assert(_connHandler._parserLock.ThreadMayHaveLock, "Should not be calling into FailureCleanup without first taking the parser lock");
+
+                    bool originalThreadHasParserLock = _connHandler.ThreadHasParserLockForClose;
+                    try
+                    {
+                        // Dev11 Bug 385286 : ExecuteNonQueryAsync hangs when trying to write a parameter which generates ArgumentException and while handling that exception the server disconnects the connection
+                        // Need to set this to true such that if we have an error sending\processing the attention, we won't deadlock ourselves
+                        _connHandler.ThreadHasParserLockForClose = true;
+
+                        // If _outputPacketNumber prior to ResetBuffer was not equal to 1, a packet was already
+                        // sent to the server and so we need to send an attention and process the attention ack.
+                        stateObj.SendAttention();
+                        ProcessAttention(stateObj);
+                    }
+                    finally
+                    {
+                        // Reset the ThreadHasParserLock value in case our caller expects it to be set\not set
+                        _connHandler.ThreadHasParserLockForClose = originalThreadHasParserLock;
+                    }
+                    SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.FailureCleanup|ERR> Exception rethrown.");
                 }
-                SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.FailureCleanup|ERR> Exception rethrown.");
+            }
+            catch (Exception failure) when (ADP.IsUnrecoverableException(failure))
+            {
+                _state = TdsParserState.Broken;
+                _connHandler?.DoomThisConnection();
+                throw;
             }
         }
 
@@ -10897,7 +10927,6 @@ namespace Microsoft.Data.SqlClient
         private void TdsExecuteRPC_OnFailure(Exception exc, TdsParserStateObject stateObj)
         {
             FailureCleanup(stateObj, exc);
-            // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
 
         private void ExecuteFlushTaskCallback(Task tsk, TdsParserStateObject stateObj, TaskCompletionSource<object> completion, bool releaseConnectionLock)
@@ -10911,14 +10940,24 @@ namespace Microsoft.Data.SqlClient
 
                     try
                     {
-                        FailureCleanup(stateObj, tsk.Exception);
+                        FailureCleanup(stateObj, exc);
                     }
-                    // @TODO: CER Exception Handling was removed here (see GH#3581)
+                    catch (Exception e) when (ADP.IsUnrecoverableException(e))
+                    {
+                        _state = TdsParserState.Broken;
+                        _connHandler?.DoomThisConnection();
+                        completion.TrySetException(e);
+                        throw;
+                    }
                     catch (Exception e)
                     {
                         exc = e;
                     }
                     completion.SetException(exc);
+                }
+                else if (tsk.IsCanceled)
+                {
+                    completion.SetCanceled();
                 }
                 else
                 {
@@ -12623,15 +12662,23 @@ namespace Microsoft.Data.SqlClient
 
                 StripPreamble(buffer, ref offset, ref count);
 
-                Task task = null;
-                if (count > 0)
+                try
                 {
-                    _parser.WriteInt(count, _stateObj); // write length of chunk
-                    task = _stateObj.WriteByteArray(buffer, count, offset, canAccumulate: false);
-                }
+                    Task task = null;
+                    if (count > 0)
+                    {
+                        _parser.WriteInt(count, _stateObj); // write length of chunk
+                        task = _stateObj.WriteByteArray(buffer, count, offset, canAccumulate: false);
+                    }
 
-                return task ?? Task.CompletedTask;
-                // @TODO: CER Exception Handling was removed here (see GH#3581)
+                    return task ?? Task.CompletedTask;
+                }
+                catch (Exception e) when (ADP.IsUnrecoverableException(e))
+                {
+                    _parser._state = TdsParserState.Broken;
+                    _parser._connHandler?.DoomThisConnection();
+                    throw;
+                }
             }
 
             internal static void ValidateWriteParameters(byte[] buffer, int offset, int count)

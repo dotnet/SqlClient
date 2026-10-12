@@ -439,7 +439,7 @@ namespace Microsoft.Data.SqlClient
             {
                 parts = MultipartIdentifier.ParseMultipartIdentifier(DestinationTableName, Strings.SQL_BulkCopyDestinationTableName, true);
             }
-            catch (Exception e)
+            catch (Exception e) when (!ADP.IsUnrecoverableException(e))
             {
                 throw SQL.BulkLoadInvalidDestinationTable(DestinationTableName, e);
             }
@@ -1137,6 +1137,11 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                             _internalTransaction = null;
                         }
                     }
+                    catch (Exception e) when (ADP.IsUnrecoverableException(e))
+                    {
+                        AbortBulkCopy(e);
+                        throw;
+                    }
                     catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                     {
                         ADP.TraceExceptionWithoutRethrow(e);
@@ -1602,8 +1607,13 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             internalConnection.ThreadHasParserLockForClose = true;
             try
             {
-                // @TODO: CER Exception Handling was removed here (see GH#3581)
                 _parser.Run(RunBehavior.UntilDone, null, null, bulkCopyHandler, _stateObj);
+            }
+            catch (Exception e) when (ADP.IsUnrecoverableException(e))
+            {
+                internalConnection.DoomThisConnection();
+                AbortBulkCopy(e);
+                throw;
             }
             finally
             {
@@ -1649,6 +1659,62 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 }
                 _internalTransaction.Dispose();
                 _internalTransaction = null;
+            }
+        }
+
+        private void AbortBulkCopy(Exception exception)
+        {
+            // Abandon protocol recovery before callers can roll back or return this session.
+            _internalTransaction = null;
+            TdsParserStateObject stateObject = _stateObj;
+            _stateObj = null;
+            if (stateObject != null)
+            {
+                stateObject._bulkCopyOpperationInProgress = false;
+                stateObject._bulkCopyWriteTimeout = false;
+            }
+            if (_parser != null)
+            {
+                _parser.State = TdsParserState.Broken;
+            }
+            try
+            {
+                _parser?.Connection?.DoomThisConnection();
+                if (stateObject != null && ReferenceEquals(stateObject.Owner, this))
+                {
+                    stateObject.Parser.PutSession(stateObject);
+                }
+            }
+            finally
+            {
+                _connection?.Abort(exception);
+            }
+        }
+
+        private void CompleteBulkCopy()
+        {
+            try
+            {
+                AbortTransaction();
+            }
+            catch (Exception e) when (ADP.IsUnrecoverableException(e))
+            {
+                AbortBulkCopy(e);
+                throw;
+            }
+            finally
+            {
+                _isBulkCopyingInProgress = false;
+                if (_parser != null)
+                {
+                    _parser._asyncWrite = false;
+                }
+                if (_parserLock != null)
+                {
+                    SqlConnectionInternal.SyncAsyncLock parserLock = _parserLock;
+                    _parserLock = null;
+                    parserLock.Release();
+                }
             }
         }
 
@@ -1824,7 +1890,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                             {
                                 throw SQL.BulkLoadCannotConvertValue(value.GetType(), mt, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), ADP.ParameterValueOutOfRange(sqlValue));
                             }
-                            catch (Exception e)
+                            catch (Exception e) when (!ADP.IsUnrecoverableException(e))
                             {
                                 throw SQL.BulkLoadCannotConvertValue(value.GetType(), mt, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), e);
                             }
@@ -1928,7 +1994,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
                 return value;
             }
-            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
+            catch (Exception e) when (!ADP.IsUnrecoverableException(e) && ADP.IsCatchableExceptionType(e))
             {
                 throw SQL.BulkLoadCannotConvertValue(value.GetType(), type, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), e);
             }
@@ -2286,17 +2352,26 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                     TaskCompletionSource<object> tcs = new TaskCompletionSource<object>();
                     reconnectTask.ContinueWith((t) =>
                     {
-                        Task writeTask = WriteRowSourceToServerAsync(columnCount, ctoken);
-                        if (writeTask == null)
+                        try
                         {
-                            tcs.SetResult(null);
+                            Task writeTask = WriteRowSourceToServerAsync(columnCount, ctoken);
+                            if (writeTask == null)
+                            {
+                                tcs.SetResult(null);
+                            }
+                            else
+                            {
+                                AsyncHelper.ContinueTaskWithState(writeTask, tcs,
+                                    state: tcs,
+                                    onSuccess: static (object state) => ((TaskCompletionSource<object>)state).SetResult(null)
+                                );
+                            }
                         }
-                        else
+                        catch (Exception e) when (ADP.IsUnrecoverableException(e))
                         {
-                            AsyncHelper.ContinueTaskWithState(writeTask, tcs,
-                                state: tcs,
-                                onSuccess: static (object state) => ((TaskCompletionSource<object>)state).SetResult(null)
-                            );
+                            AbortBulkCopy(e);
+                            tcs.TrySetException(e);
+                            throw;
                         }
                     }, ctoken); // We do not need to propagate exception, etc, from reconnect task, we just need to wait for it to finish.
                     return tcs.Task;
@@ -2308,6 +2383,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             }
 
             bool finishedSynchronously = true;
+            int cleanupClaimed = 0;
             _isBulkCopyingInProgress = true;
 
             CreateOrValidateConnection(nameof(WriteToServer));
@@ -2324,60 +2400,49 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 Task resultTask = WriteToServerInternalAsync(ctoken); // resultTask is null for sync, but Task for async.
                 if (resultTask != null)
                 {
-                    finishedSynchronously = false;
-                    return resultTask.ContinueWith(
-                        static (Task task, object state) =>
+                    Task continuation = resultTask.ContinueWith(
+                        task =>
                         {
-                            SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
+                            if (Interlocked.Exchange(ref cleanupClaimed, 1) != 0)
+                            {
+                                return task;
+                            }
                             try
                             {
-                                // If there is one, on success transactions will be committed.
-                                sqlBulkCopy.AbortTransaction();
+                                Exception exception = task.Exception?.InnerException;
+                                if (ADP.IsUnrecoverableException(exception))
+                                {
+                                    internalConnection.DoomThisConnection();
+                                    AbortBulkCopy(exception);
+                                }
                             }
                             finally
                             {
-                                sqlBulkCopy._isBulkCopyingInProgress = false;
-                                if (sqlBulkCopy._parser != null)
-                                {
-                                    sqlBulkCopy._parser._asyncWrite = false;
-                                }
-                                if (sqlBulkCopy._parserLock != null)
-                                {
-                                    sqlBulkCopy._parserLock.Release();
-                                    sqlBulkCopy._parserLock = null;
-                                }
+                                CompleteBulkCopy();
                             }
                             return task;
                         },
-                        state: this,
                         scheduler: TaskScheduler.Default
                     ).Unwrap();
+                    finishedSynchronously = false;
+                    return continuation;
                 }
                 return null;
             }
-            // @TODO: CER Exception Handling was removed here (see GH#3581)
+            catch (Exception e) when (ADP.IsUnrecoverableException(e))
+            {
+                internalConnection.DoomThisConnection();
+                AbortBulkCopy(e);
+                throw;
+            }
             finally
             {
                 _columnMappings.ReadOnly = false;
-                if (finishedSynchronously)
+                // A continuation can run before registration returns, or registration/Unwrap can
+                // fail. Either frame may clean up, but only one can release the parser lock.
+                if (finishedSynchronously && Interlocked.Exchange(ref cleanupClaimed, 1) == 0)
                 {
-                    try
-                    {
-                        AbortTransaction(); // If there is one, on success transactions will be committed.
-                    }
-                    finally
-                    {
-                        _isBulkCopyingInProgress = false;
-                        if (_parser != null)
-                        {
-                            _parser._asyncWrite = false;
-                        }
-                        if (_parserLock != null)
-                        {
-                            _parserLock.Release();
-                            _parserLock = null;
-                        }
-                    }
+                    CompleteBulkCopy();
                 }
             }
         }
@@ -2594,6 +2659,11 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                     source.SetResult(null);
                 }
             }
+            catch (Exception ex) when (ADP.IsUnrecoverableException(ex))
+            {
+                AbortBulkCopy(ex);
+                throw;
+            }
             catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
             {
                 if (source != null)
@@ -2644,6 +2714,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 {
                     if (--_rowsUntilNotification == 0)
                     {
+                        TdsParserStateObject stateObj = _stateObj;
                         // Fire event during operation. This is the users chance to abort the operation.
                         try
                         {
@@ -2658,6 +2729,11 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                                 exception = ADP.OpenConnectionRequired(nameof(CheckAndRaiseNotification), _connection.State);
                             }
                         }
+                        catch (Exception e) when (ADP.IsUnrecoverableException(e))
+                        {
+                            AbortBulkCopy(e);
+                            throw;
+                        }
                         catch (Exception e)
                         {
                             if (!ADP.IsCatchableExceptionType(e))
@@ -2671,7 +2747,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                         }
                         finally
                         {
-                            _stateObj.BcpLock = false;
+                            stateObj.BcpLock = false;
                         }
                         if (!abortOperation)
                         {
@@ -2803,6 +2879,11 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                     source.TrySetResult(null); // This is set only on the last call of async copy. But may not be set if everything runs synchronously.
                 }
             }
+            catch (Exception ex) when (ADP.IsUnrecoverableException(ex))
+            {
+                AbortBulkCopy(ex);
+                throw;
+            }
             catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
             {
                 if (source != null)
@@ -2880,6 +2961,11 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                     }
                 }
             }
+            catch (Exception ex) when (ADP.IsUnrecoverableException(ex))
+            {
+                AbortBulkCopy(ex);
+                throw;
+            }
             catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
             {
                 if (source != null)
@@ -2942,8 +3028,18 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                                 state.CopyBatchesAsync(internalResults, updateBulkCommandText, cts, source);
                             }
                         },
-                        onFailure: static (state, _) => state.CopyBatchesAsyncContinuedOnError(cleanupParser: false),
-                        onCancellation: static state => state.CopyBatchesAsyncContinuedOnError(cleanupParser: true));
+                        onFailure: (state, exception) =>
+                        {
+                            if (ADP.IsUnrecoverableException(exception))
+                            {
+                                state.AbortBulkCopy(exception);
+                            }
+                            else
+                            {
+                                state.CopyBatchesAsyncContinuedOnError(cleanupParser: false, source);
+                            }
+                        },
+                        onCancellation: state => state.CopyBatchesAsyncContinuedOnError(cleanupParser: true, source));
 
                     return source.Task;
                 }
@@ -2951,6 +3047,11 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 {
                     return CopyBatchesAsyncContinuedOnSuccess(internalResults, updateBulkCommandText, cts, source);
                 }
+            }
+            catch (Exception ex) when (ADP.IsUnrecoverableException(ex))
+            {
+                AbortBulkCopy(ex);
+                throw;
             }
             catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
             {
@@ -3001,18 +3102,38 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                                 state.RunParser();
                                 state.CommitTransaction();
                             }
+                            catch (Exception e) when (ADP.IsUnrecoverableException(e))
+                            {
+                                state.AbortBulkCopy(e);
+                                throw;
+                            }
                             catch (Exception)
                             {
-                                state.CopyBatchesAsyncContinuedOnError(cleanupParser: false);
+                                state.CopyBatchesAsyncContinuedOnError(cleanupParser: false, source);
                                 throw;
                             }
 
                             // Always call back into CopyBatchesAsync
                             state.CopyBatchesAsync(internalResults, updateBulkCommandText, cts, source);
                         },
-                        onFailure: static (state, _ ) => state.CopyBatchesAsyncContinuedOnError(cleanupParser: false));
+                        onFailure: (state, exception) =>
+                        {
+                            if (ADP.IsUnrecoverableException(exception))
+                            {
+                                state.AbortBulkCopy(exception);
+                            }
+                            else
+                            {
+                                state.CopyBatchesAsyncContinuedOnError(cleanupParser: false, source);
+                            }
+                        });
                     return source.Task;
                 }
+            }
+            catch (Exception ex) when (ADP.IsUnrecoverableException(ex))
+            {
+                AbortBulkCopy(ex);
+                throw;
             }
             catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
             {
@@ -3029,23 +3150,31 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         }
 
         // Takes care of cleaning up the parser, stateObj and transaction when CopyBatchesAsync fails.
-        private void CopyBatchesAsyncContinuedOnError(bool cleanupParser)
+        private void CopyBatchesAsyncContinuedOnError(bool cleanupParser, TaskCompletionSource<object> source = null)
         {
-            if ((cleanupParser) && (_parser != null) && (_stateObj != null))
+            try
             {
-                _parser._asyncWrite = false;
-                Task task = _parser.WriteBulkCopyDone(_stateObj);
-                Debug.Assert(task == null, "Write should not pend when error occurs");
-                RunParser();
-            }
+                if ((cleanupParser) && (_parser != null) && (_stateObj != null))
+                {
+                    _parser._asyncWrite = false;
+                    Task task = _parser.WriteBulkCopyDone(_stateObj);
+                    Debug.Assert(task == null, "Write should not pend when error occurs");
+                    RunParser();
+                }
 
-            if (_stateObj != null)
+                if (_stateObj != null)
+                {
+                    CleanUpStateObject();
+                }
+
+                AbortTransaction();
+            }
+            catch (Exception e) when (ADP.IsUnrecoverableException(e))
             {
-                CleanUpStateObject();
+                AbortBulkCopy(e);
+                source?.TrySetException(e);
+                throw;
             }
-            // @TODO: CER Exception Handling was removed here (see GH#3581)
-
-            AbortTransaction();
         }
 
         // Cleans the stateobj. Used in a number of places, specially in  exceptions.
@@ -3053,7 +3182,8 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         {
             if (_stateObj != null)
             {
-                _parser.Connection.ThreadHasParserLockForClose = true;
+                SqlConnectionInternal internalConnection = _parser.Connection;
+                internalConnection.ThreadHasParserLockForClose = true;
                 try
                 {
                     _stateObj.ResetBuffer();
@@ -3069,9 +3199,15 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                     _stateObj._bulkCopyWriteTimeout = false;
                     _stateObj = null;
                 }
+                catch (Exception e) when (ADP.IsUnrecoverableException(e))
+                {
+                    internalConnection.DoomThisConnection();
+                    AbortBulkCopy(e);
+                    throw;
+                }
                 finally
                 {
-                    _parser.Connection.ThreadHasParserLockForClose = false;
+                    internalConnection.ThreadHasParserLockForClose = false;
                 }
             }
         }
@@ -3150,9 +3286,14 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                                 {
                                     sqlBulkCopy.CleanUpStateObject(isCancelRequested: false);
                                 }
+                                catch (Exception e) when (ADP.IsUnrecoverableException(e))
+                                {
+                                    source.TrySetException(e);
+                                    throw;
+                                }
                                 finally
                                 {
-                                    if (source != null)
+                                    if (source != null && !source.Task.IsCompleted)
                                     {
                                         if (cts.IsCancellationRequested)
                                         {   // We may get cancellation req even after the entire copy.
@@ -3176,7 +3317,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                     {
                         CleanUpStateObject(isCancelRequested: false);
                     }
-                    catch (Exception cleanupEx)
+                    catch (Exception cleanupEx) when (!ADP.IsUnrecoverableException(cleanupEx))
                     {
                         Debug.Fail($"Unexpected exception during {nameof(CleanUpStateObject)} (ignored)", cleanupEx.ToString());
                     }
@@ -3187,6 +3328,11 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                     }
                 }
             }
+            catch (Exception ex) when (ADP.IsUnrecoverableException(ex))
+            {
+                AbortBulkCopy(ex);
+                throw;
+            }
             catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
             {
                 ResetLocalColumnMappings();
@@ -3195,7 +3341,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 {
                     CleanUpStateObject();
                 }
-                catch (Exception cleanupEx)
+                catch (Exception cleanupEx) when (!ADP.IsUnrecoverableException(cleanupEx))
                 {
                     Debug.Fail($"Unexpected exception during {nameof(CleanUpStateObject)} (ignored)", cleanupEx.ToString());
                 }
@@ -3364,6 +3510,12 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                     WriteToServerInternalRestContinuedAsync(internalResults, cts, source); // internalResults is valid here.
                 }
             }
+            catch (Exception ex) when (ADP.IsUnrecoverableException(ex))
+            {
+                internalConnection.DoomThisConnection();
+                AbortBulkCopy(ex);
+                throw;
+            }
             catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
             {
                 if (source != null)
@@ -3440,6 +3592,11 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                         });
                     return resultTask;
                 }
+            }
+            catch (Exception ex) when (ADP.IsUnrecoverableException(ex))
+            {
+                AbortBulkCopy(ex);
+                throw;
             }
             catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
             {
