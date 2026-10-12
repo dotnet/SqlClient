@@ -49,13 +49,13 @@ function Invoke-NetOnlySql {
     param([string] $Query, [string] $LoginName, [string] $SidHex)
     $builder = New-Object System.Data.SqlClient.SqlConnectionStringBuilder
     # Shared memory forces a local connection without SQL Browser/TCP configuration.
-    $builder.DataSource = 'lpc:.'
+    $builder['Data Source'] = 'lpc:.'
     if ($InstanceName -ne 'MSSQLSERVER') {
-        $builder.DataSource = "lpc:.\$InstanceName"
+        $builder['Data Source'] = "lpc:.\$InstanceName"
     }
-    $builder.InitialCatalog = 'master'
-    $builder.IntegratedSecurity = $true
-    $builder.ConnectTimeout = 15
+    $builder['Initial Catalog'] = 'master'
+    $builder['Integrated Security'] = $true
+    $builder['Connect Timeout'] = 15
     $connection = New-Object System.Data.SqlClient.SqlConnection $builder.ConnectionString
     try {
         $connection.Open()
@@ -127,7 +127,7 @@ try {
         $password = $null
         try {
             $account = New-LocalUser -Name $AccountName -Password $securePassword `
-                -Description "SqlClient temporary net-only account: $AccountName" -ErrorAction Stop
+                -Description "SqlClient net-only: $AccountName" -ErrorAction Stop
         }
         finally {
             $securePassword.Dispose()
@@ -158,7 +158,7 @@ CREATE LOGIN $quotedLogin FROM WINDOWS WITH DEFAULT_DATABASE = [master];
             $AccountSid = ''
         }
         if ($account) {
-            if ($account.Description -ne "SqlClient temporary net-only account: $AccountName") {
+            if ($account.Description -ne "SqlClient net-only: $AccountName") {
                 throw "Refusing to delete local account '$AccountName': ownership description does not match."
             }
             if ($AccountSid -and $account.SID.Value -ne $AccountSid) {
