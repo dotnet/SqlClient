@@ -23,12 +23,15 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             public string Name { get; }
             public Func<Benchmarks, RunnerJob> Selector { get; }
             public Type RunnerType { get; }
+            public OpenAsyncScoreboardCase ScoreboardCase { get; }
 
-            public BenchmarkUnit(string name, Func<Benchmarks, RunnerJob> selector, Type runnerType)
+            public BenchmarkUnit(string name, Func<Benchmarks, RunnerJob> selector, Type runnerType,
+                OpenAsyncScoreboardCase scoreboardCase = null)
             {
                 Name = name;
                 Selector = selector;
                 RunnerType = runnerType;
+                ScoreboardCase = scoreboardCase;
             }
         }
 
@@ -77,6 +80,16 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             //   PERF_BENCHMARK=<Name>    -> run only that unit (if enabled).
             //   neither                  -> run every enabled unit (default; unchanged behaviour).
             List<BenchmarkUnit> enabled = s_units.Where(IsEnabled).ToList();
+            if (_config.Benchmarks.OpenAsyncScoreboardRunnerConfig?.Enabled == true)
+            {
+                if (_config.OpenAsyncScoreboard == null)
+                {
+                    throw new ArgumentException("OpenAsyncScoreboard configuration is required.");
+                }
+                enabled.AddRange(_config.OpenAsyncScoreboard.GetCases().Select(scoreboardCase =>
+                    new BenchmarkUnit(scoreboardCase.CaseId, b => b.OpenAsyncScoreboardRunnerConfig,
+                        typeof(OpenAsyncScoreboardRunner), scoreboardCase)));
+            }
 
             if (Environment.GetEnvironmentVariable("PERF_LIST_BENCHMARKS") != null)
             {
@@ -104,9 +117,25 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 }
             }
 
+            if (string.IsNullOrWhiteSpace(only) && toRun.Any(unit => unit.ScoreboardCase != null))
+            {
+                Console.Error.WriteLine("OpenAsync scoreboard requires PERF_BENCHMARK to select one " +
+                    "case per process. Use the existing perf scripts with the openasync-preliminary profile.");
+                Environment.ExitCode = 2;
+                return;
+            }
             foreach (BenchmarkUnit unit in toRun)
             {
-                BenchmarkRunner.Run(unit.RunnerType, BenchmarkConfig.s_instance(unit.Selector(_config.Benchmarks)));
+                OpenAsyncScoreboardRunner.SelectedCase = unit.ScoreboardCase;
+                var summary = BenchmarkRunner.Run(unit.RunnerType,
+                    BenchmarkConfig.s_instance(unit.Selector(_config.Benchmarks), unit.ScoreboardCase != null));
+                if (summary.HasCriticalValidationErrors || summary.Reports.Length == 0 ||
+                    summary.Reports.Any(report => !report.Success || report.ResultStatistics == null))
+                {
+                    Console.Error.WriteLine($"Benchmark '{unit.Name}' failed; its results are not valid measurements.");
+                    Environment.ExitCode = 1;
+                    return;
+                }
             }
 
             // TODOs:

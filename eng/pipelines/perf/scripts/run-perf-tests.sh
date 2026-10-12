@@ -58,6 +58,7 @@ failOnRegression="false"
 runMode="interleaved"
 # Best-of-N: total interleaved passes for a flagged unit before a regression is confirmed (1 disables).
 confirmationRuns="3"
+benchmarkProfile="default"
 # Optional SqlClient behaviour flags (true/false).  Empty means "leave the checked-in runnerconfig
 # default untouched".  These are written into the runner config the benchmarks run against AND, via
 # the pipeline's Kusto translation (--config-override), recorded in PerfRun.Config so a run's
@@ -83,6 +84,7 @@ usage() {
          "--switch-under-test <${SUPPORTED_SWITCHES[*]}>]" \
          "[--regression-threshold <pct>] [--fail-on-regression]" \
          "[--run-mode interleaved|sequential] [--confirmation-runs <N>]" \
+         "[--benchmark-profile default|openasync-preliminary]" \
          "[--use-managed-sni-on-windows true|false] [--use-optimized-async-behaviour true|false]" \
          "[--use-connection-pool-v2 true|false]" >&2
 }
@@ -100,6 +102,7 @@ while [[ $# -gt 0 ]]; do
         --fail-on-regression) failOnRegression="true"; shift 1 ;;
         --run-mode) runMode="$2"; shift 2 ;;
         --confirmation-runs) confirmationRuns="$2"; shift 2 ;;
+        --benchmark-profile) benchmarkProfile="$2"; shift 2 ;;
         --use-managed-sni-on-windows) useManagedSniOnWindows="$2"; shift 2 ;;
         --use-optimized-async-behaviour) useOptimizedAsyncBehaviour="$2"; shift 2 ;;
         --use-connection-pool-v2) useConnectionPoolV2="$2"; shift 2 ;;
@@ -107,6 +110,19 @@ while [[ $# -gt 0 ]]; do
         *) echo "Unknown argument: $1" >&2; usage; exit 2 ;;
     esac
 done
+
+case "${benchmarkProfile}" in
+    default) ;;
+    openasync-preliminary)
+        if [[ "${failOnRegression}" == "true" ]]; then
+            echo "ERROR: openasync-preliminary is report-only; --fail-on-regression is not allowed." >&2
+            exit 2
+        fi
+        echo "Preliminary profile: per-case processes, one pass, no regression confirmation reruns."
+        confirmationRuns="1"
+        ;;
+    *) echo "ERROR: unknown --benchmark-profile '${benchmarkProfile}'." >&2; exit 2 ;;
+esac
 
 # Validate queue-time inputs up front so a typo fails fast with a clear message instead of silently
 # falling back to a different code path (e.g. '--run-mode interleave' would otherwise run sequentially)
@@ -191,6 +207,7 @@ echo "  Repo root      : ${REPO_ROOT}"
 echo "  Perf project   : ${PERF_PROJECT}"
 echo "  Configuration  : ${configuration}"
 echo "  Framework      : ${framework}"
+echo "  Profile        : ${benchmarkProfile}"
 echo "  Results dir    : ${RESULTS_DIR}"
 echo "  Baseline ver   : ${baselineVersion:-<none, current-only>}"
 echo "  Baseline ref   : ${baselineSourceRef:-<none>}"
@@ -412,10 +429,12 @@ write_runner_config() {
     local dst="$1"
     local switch_name="${2:-}"
     local switch_value="${3:-}"
-    python3 - "$PERF_DIR/runnerconfig.jsonc" "$dst" "$switch_name" "$switch_value" <<'PY'
+    python3 - "$PERF_DIR/runnerconfig.jsonc" "$dst" "$switch_name" "$switch_value" "$SCRIPT_DIR" "$benchmarkProfile" <<'PY'
 import json, os, re, sys
 
 src, dst, switch_name, switch_value = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
+sys.path.insert(0, sys.argv[5])
+from openasync_report import apply_profile
 
 with open(src, "r", encoding="utf-8-sig") as fh:
     text = fh.read()
@@ -424,6 +443,7 @@ with open(src, "r", encoding="utf-8-sig") as fh:
 # inside string values, so a simple line-comment strip is safe here.
 text = re.sub(r'(?m)^\s*//.*$', '', text)
 cfg = json.loads(text)
+apply_profile(cfg, sys.argv[6])
 
 server = os.environ["SQL_SERVER"]
 password = os.environ["SQL_PASSWORD"]
@@ -773,13 +793,17 @@ if [[ -n "${baselineLabel}" ]]; then
     printf '%s\n' "${baselineLabel}" > "${RESULTS_DIR}/baseline-label.txt"
 fi
 
-if [[ -n "${baselineLabel}" && "${runMode}" == "interleaved" ]]; then
+if [[ ( -n "${baselineLabel}" && "${runMode}" == "interleaved" ) || "${benchmarkProfile}" == "openasync-preliminary" ]]; then
     ################################################################################################
     # Interleaved + best-of-N (wiki 339 §2.2/§2.3/§2.6).  Build both variants once, then let the
     # orchestrator run one unit at a time (baseline then candidate) and confirm any flagged
     # regression across N passes before it counts toward the gate.
     ################################################################################################
-    if [[ -n "${switchUnderTest}" ]]; then
+    baselineExeDir=""
+    if [[ -z "${baselineLabel}" ]]; then
+        build_variant "current" "${PERF_PROJECT}"
+        currentExeDir="${REPO_ROOT}/perf-build-current"
+    elif [[ -n "${switchUnderTest}" ]]; then
         # Switch A/B measures one build against itself with a switch flipped, so building the same
         # project twice would just burn several minutes producing identical bits.  Build once and
         # point both variants at it; the orchestrator runs each variant in its own working directory
@@ -795,7 +819,6 @@ if [[ -n "${baselineLabel}" && "${runMode}" == "interleaved" ]]; then
     fi
 
     interleave_args=(
-        --baseline-exe-dir "${baselineExeDir}"
         --current-exe-dir "${currentExeDir}"
         --assembly "PerformanceTests.dll"
         --results-dir "${RESULTS_DIR}"
@@ -803,7 +826,14 @@ if [[ -n "${baselineLabel}" && "${runMode}" == "interleaved" ]]; then
         --reps "${confirmationRuns}"
         --baseline-version "${baselineLabel}"
         --client-cpus "${PERF_CLIENT_CPUS:-}"
+        --benchmark-profile "${benchmarkProfile}"
     )
+    if [[ -n "${baselineExeDir}" ]]; then
+        interleave_args+=(--baseline-exe-dir "${baselineExeDir}")
+    fi
+    if [[ "${benchmarkProfile}" == "openasync-preliminary" ]]; then
+        interleave_args+=(--unit-timeout-minutes 10)
+    fi
     # --switch-under-test: baseline and current subprocesses need DIFFERENT RUNNER_CONFIG values (the
     # switch off vs on), even though both are otherwise the same build/env; every other baseline
     # flavour keeps sharing the single ambient RUNNER_CONFIG set above.

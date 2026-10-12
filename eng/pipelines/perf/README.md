@@ -16,6 +16,7 @@ database.
 | `scripts/run-perf-tests.sh` | Linux on-VM entry point: install SDK, create DB, run benchmarks (interleaved or sequential), compare. Baseline is a released package (`--baseline-version`), another git ref's source (`--baseline-source-ref`), or the same source with one runner-config switch flipped off (`--switch-under-test`). |
 | `scripts/run-perf-tests.ps1` | Windows equivalent (ProcessorAffinity instead of `taskset`). |
 | `scripts/interleave_perf.py` | Interleaved + best-of-N orchestrator: runs each unit baseline↔candidate back-to-back and confirms regressions across N passes. |
+| `scripts/openasync_report.py` | Shared preliminary profile configuration and validated per-invocation supplemental reporting (imported by the existing scripts). |
 | `scripts/compare_perf.py` | Compares baseline vs current BenchmarkDotNet JSON → delta (md + json). Reused by the orchestrator. |
 | `scripts/perf_to_kusto.py` | Translates BenchmarkDotNet "full" JSON → Kusto `PerfRun` + `PerfBenchmarkResult` NDJSON. |
 | `scripts/ingest_kusto.py` | Queued Kusto ingestion (az CLI auth, runs on the agent). |
@@ -64,6 +65,7 @@ context variables are available (the VM is behind NAT and lacks the pipeline ide
 | `regressionThreshold` | `10` | Percent slowdown (current vs baseline mean) flagged as a regression. |
 | `failOnRegression` | `false` | When `true`, a candidate-slower regression **fails** the run (gate). In interleaved mode only **confirmed** regressions (best-of-N majority) fail. Default off. |
 | `benchmarkRunMode` | `interleaved` | `interleaved` (per-unit baseline↔candidate + best-of-N confirmation) or `sequential` (legacy two full passes). |
+| `benchmarkProfile` | `default` | `default` preserves the normal suite; `openasync-preliminary` selects the bounded, report-only E1–E4 scoreboard described below. Available in all three existing pipelines. |
 | `confirmationRuns` | `3` | Best-of-N: interleaved passes for a flagged unit before a regression is confirmed. `1` disables confirmation. Interleaved mode only. |
 | `useManagedSniOnWindows` | `false` | SqlClient `UseManagedSniOnWindows` flag. Applied to the runner config for **both** passes on the VM and recorded in `PerfRun.Config`. Default matches the checked-in `runnerconfig.jsonc`. |
 | `useOptimizedAsyncBehaviour` | `true` | SqlClient `UseOptimizedAsyncBehaviour` flag. Applied to both passes and recorded in `PerfRun.Config`. Default matches `runnerconfig.jsonc`. |
@@ -74,6 +76,69 @@ The following values are **fixed constants** in the pipeline (not parameters or 
 are invariant for this pipeline: `buildConfiguration = Release`, `sourcesSubDir = dotnet-sqlclient`
 (the multi-repo checkout folder for `self`, which must match the ADO repository name), and
 `driverName = Microsoft.Data.SqlClient` (recorded on every row as `DriverName` / `DerivedRunId`).
+
+### Preliminary OpenAsync E1–E4 profile
+
+For the **initial current-only run**, queue the existing main pipeline with:
+
+```text
+benchmarkProfile: openasync-preliminary
+baselineVersion: ''
+failOnRegression: false
+enableKustoIngestion: false
+```
+
+Alternatively use the existing PR pipeline with `benchmarkProfile: openasync-preliminary`,
+`baselineSourceRef: ''`, and `failOnRegression: false`. The default profile and existing baseline
+defaults are unchanged: **explicitly clear the baseline selector for current-only measurements**.
+Do not use the experiment pipeline for that first current-only run; it always selects a switch A/B
+baseline. Later switch experiments can use its `benchmarkProfile: openasync-preliminary` with
+`failIfSwitchSlower: false`. Compatible package baselines and source baselines containing the same
+cases remain supported; a source baseline without all 24 cases fails explicitly before measurement.
+
+The existing script options are `--benchmark-profile openasync-preliminary` (bash) and
+`-BenchmarkProfile openasync-preliminary` (PowerShell). Omit all baseline/switch selectors for
+current-only execution. `--fail-on-regression` / `-FailOnRegression` is rejected with this profile.
+It always uses the existing per-unit orchestration, even if `benchmarkRunMode=sequential`, with
+**one orchestration pass**, not regression-triggered best-of-N reruns (`confirmationRuns` is ignored).
+
+The injected config disables every other benchmark and enables `OpenAsyncScoreboardRunnerConfig`:
+`LaunchCount=1`, `IterationCount=3`, `InvocationCount=1`, `WarmupCount=0`,
+`RunStrategy=Monitoring`, `TimeoutMinutes=5`. Root `OpenAsyncScoreboard` settings select
+`Scenarios=[E1,E2,E3,E4]`, `Apis=[Sync,Async]`, `Concurrency=[1,8,32]`,
+`OperationsPerWorker=16`, `SaturatedPoolSize=4`, `HoldMilliseconds=10`.
+E4 has **one open per worker**, retained until the cohort finishes; E2 alone uses the hold duration.
+The BDN job retains all three actual measured iterations without outlier removal.
+Each distinct selector (for example `OpenAsyncScoreboard-E1-Async-8`) launches in its own process,
+including current-only runs. A 10-minute process-tree watchdog bounds each unit, in addition to
+the BDN timeout and existing pipeline timeout.
+
+Artifacts are retained under `perf-results/<variant>/<case>/`, so identical BDN report filenames
+from singleton parameter cases cannot overwrite one another. Supplemental `openasync-<GUID>.json`
+files accompany the normal BDN JSON/Markdown reports. These are schema-v1 **measured invocation**
+records only, not warmup/diagnostic invocations. `openasync-summary.md` and
+`openasync-summary.json` sit alongside the existing `summary.md` / `comparison/` BDN batch output.
+Their rows retain **each invocation separately**, including:
+
+- successful opens/second using invocation elapsed time;
+- p50/p95/p99 individual-open latency (`completion - start`) and async task-return time
+  (`task return - start`), using linear-interpolated percentiles;
+- success/canceled/failed outcomes, worker admission timings and peak outstanding/open counts;
+- CPU, process allocation and GC deltas, process/ThreadPool thread snapshots, and runtime/driver metadata.
+
+Absent task timings are **N/A/null**, never zero. Missing reports, missing/duplicate samples or
+invocations, incompatible case metadata, non-finite/negative durations, failed/canceled opens, and
+BDN errors fail the run. These are **preliminary instrumented measurements**, not phase-compliance
+evidence or proof of blocked threads. Thread-count snapshots do not prove blocking; instrumented
+throughput is not an uninstrumented throughput result. No invocation percentiles are pooled and no
+BDN batch mean is presented as individual-open latency. Supplemental measurements are published as
+artifacts; existing Kusto translation remains BDN-only.
+
+Run the SQL-independent Python regression tests from the repository root:
+
+```powershell
+python -B -m unittest discover -s eng\pipelines\perf\scripts\tests -p test_openasync_report.py
+```
 
 ### Kusto (Azure Data Explorer) ingestion variables
 

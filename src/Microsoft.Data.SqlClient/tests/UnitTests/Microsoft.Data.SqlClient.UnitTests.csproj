@@ -112,6 +112,9 @@
 
   <!-- References for netcore -->
   <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
+    <!-- Test pure measurement helpers without loading BenchmarkDotNet or another runner. -->
+    <Compile Include="..\PerformanceTests\Config\OpenAsyncScoreboardOptions.cs" Link="PerformanceMeasurements\OpenAsyncScoreboardOptions.cs" />
+    <Compile Include="..\PerformanceTests\Measurements\OpenAsyncWorkload.cs" Link="PerformanceMeasurements\OpenAsyncWorkload.cs" />
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
     <!-- See the net462 group above for why this reference is declared explicitly. -->
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />

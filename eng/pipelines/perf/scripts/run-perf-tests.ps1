@@ -46,6 +46,8 @@ param(
     # Best-of-N: total interleaved passes for a flagged unit before a regression is confirmed.
     [ValidateRange(1, [int]::MaxValue)]
     [int]$ConfirmationRuns = 3,
+    [ValidateSet("default", "openasync-preliminary")]
+    [string]$BenchmarkProfile = "default",
     # Optional SqlClient behaviour flags (true/false, or empty to leave the checked-in
     # runnerconfig.jsonc default untouched).  Written into the runner config the benchmarks run
     # against and, via the pipeline's Kusto translation, recorded in PerfRun.Config.
@@ -69,6 +71,13 @@ param(
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
+if ($BenchmarkProfile -eq "openasync-preliminary") {
+    if ($FailOnRegression) {
+        throw "openasync-preliminary is report-only; -FailOnRegression is not allowed."
+    }
+    Write-Host "Preliminary profile: per-case processes, one pass, no regression confirmation reruns."
+    $ConfirmationRuns = 1
+}
 
 ####################################################################################################
 # Native-command error handling
@@ -134,6 +143,7 @@ Write-Host "  Repo root       : $RepoRoot"
 Write-Host "  Perf project    : $PerfProject"
 Write-Host "  Configuration   : $Configuration"
 Write-Host "  Framework       : $Framework"
+Write-Host "  Profile         : $BenchmarkProfile"
 Write-Host "  Results dir     : $ResultsDir"
 Write-Host "  Run mode        : $RunMode (confirmation runs: $ConfirmationRuns)"
 Write-Host "  Baseline ver    : $(if ($BaselineVersion) { $BaselineVersion } else { '<none, current-only>' })"
@@ -379,6 +389,19 @@ function Write-RunnerConfig {
     Set-CfgBool $cfg "UseOptimizedAsyncBehaviour" $asyncValue
     Set-CfgBool $cfg "UseConnectionPoolV2" $poolValue
     $cfg | ConvertTo-Json -Depth 10 | Set-Content -Path $Dst -Encoding UTF8
+    if ($BenchmarkProfile -eq "openasync-preliminary") {
+        $profileCode = @'
+import json, sys
+sys.path.insert(0, sys.argv[1])
+from openasync_report import apply_profile
+with open(sys.argv[2], encoding="utf-8-sig") as handle:
+    config = json.load(handle)
+apply_profile(config, sys.argv[3])
+with open(sys.argv[2], "w", encoding="utf-8") as handle:
+    json.dump(config, handle, indent=2)
+'@
+        Invoke-Native { $profileCode | python3 - $ScriptDir $Dst $BenchmarkProfile } "Profile configuration failed"
+    }
     Write-Host "Wrote runner config to $Dst (Server=tcp:$SqlServer,1433; Initial Catalog=$DbName)"
 }
 
@@ -769,13 +792,16 @@ if (-not [string]::IsNullOrEmpty($BaselineLabel)) {
     Set-Content -Path (Join-Path $ResultsDir "baseline-label.txt") -Value $BaselineLabel -Encoding ascii
 }
 
-if ((-not [string]::IsNullOrEmpty($BaselineLabel)) -and ($RunMode -eq "interleaved")) {
+if (((-not [string]::IsNullOrEmpty($BaselineLabel)) -and ($RunMode -eq "interleaved")) -or ($BenchmarkProfile -eq "openasync-preliminary")) {
     ####################################################################################################
     # Interleaved + best-of-N (wiki 339 §2.2/§2.3/§2.6).  Build both variants once, then let the
     # orchestrator run one unit at a time (baseline then candidate) and confirm any flagged
     # regression across N passes before it counts toward the gate.
     ####################################################################################################
-    if (-not [string]::IsNullOrEmpty($SwitchUnderTest)) {
+    $baselineExeDir = ""
+    if ([string]::IsNullOrEmpty($BaselineLabel)) {
+        $currentExeDir = Build-Variant "current" $PerfProject @()
+    } elseif (-not [string]::IsNullOrEmpty($SwitchUnderTest)) {
         # Switch A/B measures one build against itself with a switch flipped, so building the same
         # project twice would just burn several minutes producing identical bits.  Build once and
         # point both variants at it; the orchestrator runs each variant in its own working directory
@@ -788,15 +814,21 @@ if ((-not [string]::IsNullOrEmpty($BaselineLabel)) -and ($RunMode -eq "interleav
     }
 
     $interleaveArgs = @(
-        "--baseline-exe-dir", $baselineExeDir,
         "--current-exe-dir", $currentExeDir,
         "--assembly", "PerformanceTests.dll",
         "--results-dir", $ResultsDir,
         "--threshold", $RegressionThreshold,
         "--reps", $ConfirmationRuns,
-        "--baseline-version", $BaselineLabel,
-        "--client-cpus", "$($env:PERF_CLIENT_CPUS)"
+        "--baseline-version=$BaselineLabel",
+        "--client-cpus=$($env:PERF_CLIENT_CPUS)",
+        "--benchmark-profile", $BenchmarkProfile
     )
+    if (-not [string]::IsNullOrEmpty($baselineExeDir)) {
+        $interleaveArgs += @("--baseline-exe-dir", $baselineExeDir)
+    }
+    if ($BenchmarkProfile -eq "openasync-preliminary") {
+        $interleaveArgs += @("--unit-timeout-minutes", "10")
+    }
     # -SwitchUnderTest: baseline and current subprocesses need DIFFERENT RUNNER_CONFIG values (the
     # switch off vs on), even though both are otherwise the same build/env; every other baseline
     # flavour keeps sharing the single ambient RUNNER_CONFIG set above.

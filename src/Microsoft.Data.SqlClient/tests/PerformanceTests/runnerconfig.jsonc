@@ -199,6 +199,17 @@
             "InvocationCount": 1,
             "WarmupCount": 1,
             "RowCount": 0
+        },
+        // Opt-in instrumented E1-E4 cohorts. Use the openasync-preliminary perf profile
+        // to launch each API/scenario/concurrency configuration in a fresh process.
+        "OpenAsyncScoreboardRunnerConfig": {
+            "Enabled": false,
+            "LaunchCount": 1,
+            "IterationCount": 3,
+            "InvocationCount": 1,
+            "WarmupCount": 0,
+            "RunStrategy": "Monitoring",
+            "TimeoutMinutes": 5
         }
     }
 }

@@ -29,6 +29,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         public bool WaitForProfiler;
         public bool UseNativeMemoryAndETWProfiler;
         public Benchmarks Benchmarks;
+        public OpenAsyncScoreboardOptions OpenAsyncScoreboard = new OpenAsyncScoreboardOptions();
 
         /// <summary>
         /// Load the benchmark configuration from a JSON file.
@@ -74,6 +75,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         public RunnerJob ConnectionPoolChurnRunnerConfig;
         public RunnerJob ConnectionPoolRampRunnerConfig;
         public RunnerJob ConnectionPoolThreadPoolPressureRunnerConfig;
+        public RunnerJob OpenAsyncScoreboardRunnerConfig;
     }
 
     public class RunnerJob

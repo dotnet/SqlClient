@@ -651,3 +651,41 @@ $ dotnet run -c Release -f net10.0
 
 $ RUNNER_CONFIG=~/.configs/runnerconfig.jsonc dotnet run -c Release -f net10.0
 ```
+
+### Preliminary Open/OpenAsync scoreboard
+
+The opt-in `openasync-preliminary` profile uses this same PerformanceTests project
+and the [existing perf pipeline](eng/pipelines/perf/README.md). It measures E1 warm
+pooled reuse, E2 fixed-capacity pool contention with matched asynchronous holds,
+E3 repeated nonpooled opens, and E4 a cold ramp retaining connections until the
+entire cohort finishes opening. Both APIs run on normal ThreadPool workers;
+non-open work is identical.
+
+Select `benchmarkProfile: openasync-preliminary`, `platform: linux`, and an empty
+`baselineVersion` for an initial current-source run. Leave `failOnRegression`
+false. The scripts enable `OpenAsyncScoreboardRunnerConfig`, enumerate the
+scenario/API/concurrency matrix, and run each configuration in its own process.
+Ordinary perf defaults and existing benchmarks are unchanged.
+
+The preliminary matrix uses concurrency 1, 8 and 32, with 16 operations per
+worker (one for E4), a four-connection E2 pool and a 10 ms E2 hold. Concurrency 1
+is an unsaturated E2 control. Each process uses BenchmarkDotNet Monitoring with
+three actual iterations, one invocation per iteration, and no warmup. These
+iterations share process/ThreadPool/JIT state; only configurations, not
+iterations, have process isolation. Do not combine first-iteration cold effects
+with later iterations without identifying them.
+
+Versioned `openasync-*.json` artifacts supplement the BDN reports with individual
+open/task-return timestamps, outcomes, admission delay, peak outstanding opens
+and owned connections, and process-wide CPU/allocation/GC/thread observations.
+Only BDN's actual workload stage emits these samples; warmup and extra diagnostic
+executions do not. BDN duration is a whole cohort, not an individual open.
+Supplementary elapsed time includes worker admission, holds, closes and matched
+between-operation yields, but excludes SQL pool prewarming and JSON export.
+
+These are **instrumented, report-only preliminary results**, not proof of full
+async compliance or uninstrumented maximum throughput. This increment does not
+collect blocked-thread stacks, unrelated-work latency, server saturation, or
+phase-specific dependency evidence. Missing diagnostics are not zero values.
+Failed opens, invalid accounting, missing artifacts and watchdog expiry fail
+the run; slow but valid measurements do not.

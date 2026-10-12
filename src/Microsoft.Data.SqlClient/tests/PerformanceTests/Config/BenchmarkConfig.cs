@@ -11,6 +11,7 @@ using BenchmarkDotNet.Exporters.Json;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Toolchains;
 using BenchmarkDotNet.Toolchains.InProcess.Emit;
+using Perfolizer.Mathematics.OutlierDetection;
 #if WINDOWS
 using BenchmarkDotNet.Diagnostics.Windows;
 #endif
@@ -54,28 +55,41 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 ? strategy
                 : RunStrategy.Throughput;
 
-        public static ManualConfig s_instance(RunnerJob runnerJob)
+        public static ManualConfig s_instance(RunnerJob runnerJob, bool openAsyncScoreboard = false)
         {
+            if (openAsyncScoreboard && (runnerJob.LaunchCount != 1 || runnerJob.InvocationCount != 1 ||
+                runnerJob.IterationCount <= 0 || runnerJob.WarmupCount < 0 ||
+                !string.Equals(runnerJob.RunStrategy, "Monitoring", StringComparison.OrdinalIgnoreCase) ||
+                UseNativeMemoryAndEtwProfiler))
+            {
+                throw new ArgumentException("OpenAsync scoreboard requires Monitoring, one launch/invocation, " +
+                    "positive iterations, nonnegative warmup and no native/ETW profiler.");
+            }
+            Job job = Job.MediumRun.WithToolchain(BuildToolchain(runnerJob))
+                .WithLaunchCount(runnerJob.LaunchCount)
+                .WithInvocationCount(runnerJob.InvocationCount)
+                .WithIterationCount(runnerJob.IterationCount)
+                .WithWarmupCount(runnerJob.WarmupCount)
+                .WithUnrollFactor(1)
+                .WithStrategy(ResolveRunStrategy(runnerJob))
+                .WithEnvironmentVariable("COMPlus_gcServer", "1");
+            if (openAsyncScoreboard)
+            {
+                job = job.WithOutlierMode(OutlierMode.DontRemove);
+            }
             ManualConfig config = DefaultConfig.Instance
                 .WithOption(ConfigOptions.DisableOptimizationsValidator, true)
                 .WithOption(ConfigOptions.DontOverwriteResults, true)
-                .AddDiagnoser(MemoryDiagnoser.Default)
-                .AddDiagnoser(ThreadingDiagnoser.Default)
                 .AddExporter(MarkdownExporter.GitHub)
                 // Emit the BenchmarkDotNet "full" JSON report (*-report-full.json) so the perf
                 // pipeline can translate results into the Kusto performance-results schema.
                 .AddExporter(JsonExporter.Full)
-                .AddJob(
-                    Job.MediumRun.WithToolchain(BuildToolchain(runnerJob))
-                    .WithLaunchCount(runnerJob.LaunchCount)
-                    .WithInvocationCount(runnerJob.InvocationCount)
-                    .WithIterationCount(runnerJob.IterationCount)
-                    .WithWarmupCount(runnerJob.WarmupCount)
-                    .WithUnrollFactor(1)
-                    .WithStrategy(ResolveRunStrategy(runnerJob))
-                    .WithEnvironmentVariable("COMPlus_gcServer", "1")
-                )
+                .AddJob(job)
                 .WithOptions(ConfigOptions.JoinSummary);
+
+            config = openAsyncScoreboard
+                ? config.AddDiagnoser(new OpenAsyncMeasurementDiagnoser())
+                : config.AddDiagnoser(MemoryDiagnoser.Default).AddDiagnoser(ThreadingDiagnoser.Default);
 
 #if WINDOWS
             if (UseNativeMemoryAndEtwProfiler)

@@ -30,7 +30,9 @@ import argparse
 import glob
 import json
 import os
+import re
 import shutil
+import signal
 import subprocess
 import sys
 
@@ -38,6 +40,7 @@ import sys
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, SCRIPT_DIR)
 import compare_perf  # noqa: E402  (local module, sits next to this script)
+import openasync_report  # noqa: E402
 
 
 # --------------------------------------------------------------------------------------------------
@@ -109,7 +112,8 @@ def apply_affinity(proc, cpus):
 # --------------------------------------------------------------------------------------------------
 # Running one unit and collecting its artifacts.
 # --------------------------------------------------------------------------------------------------
-def run_unit_process(exe_dir, assembly, unit, cwd, cpus, log_path, env_overrides=None):
+def run_unit_process(exe_dir, assembly, unit, cwd, cpus, log_path, env_overrides=None,
+                     timeout_seconds=None):
     """Run one benchmark *unit* from the build at *exe_dir* in *cwd*.
 
     Returns the subprocess return code.  Kept as a small seam so tests can substitute
@@ -128,33 +132,91 @@ def run_unit_process(exe_dir, assembly, unit, cwd, cpus, log_path, env_overrides
 
     with open(log_path, "w", encoding="utf-8") as log:
         proc = subprocess.Popen(cmd, cwd=cwd, env=env, stdout=log,
-                                stderr=subprocess.STDOUT)
+                                stderr=subprocess.STDOUT,
+                                start_new_session=timeout_seconds is not None and os.name != "nt")
         apply_affinity(proc, cpus)
-        return proc.wait()
+        try:
+            return proc.wait(timeout=timeout_seconds)
+        except subprocess.TimeoutExpired:
+            # Kill the BDN child too, not just its launcher, before running another case.
+            if os.name == "nt":
+                subprocess.run(["taskkill", "/PID", str(proc.pid), "/T", "/F"],
+                               stdout=log, stderr=subprocess.STDOUT, check=True, timeout=30)
+            else:
+                os.killpg(proc.pid, signal.SIGKILL)
+            proc.wait(timeout=30)
+            raise RuntimeError(f"benchmark unit '{unit}' exceeded {timeout_seconds}s watchdog") from None
 
 
 def _report_files(root):
     return sorted(glob.glob(os.path.join(root, "**", "*-report-full.json"), recursive=True))
 
 
-def collect_results(cwd, dest):
+def collect_results(cwd, dest, unit=None, strict=False):
     """Copy the BenchmarkDotNet reports produced under *cwd* into *dest*.
 
     Returns the set of benchmark ``Type`` names found (used to map a unit to the
     report rows it produced, so best-of-N can re-run the right unit for a flagged key).
     """
+    if unit is not None:
+        if not re.fullmatch(r"[A-Za-z0-9_-]+", unit):
+            raise ValueError("Unsafe benchmark unit name")
+        dest = os.path.join(dest, unit)
+        if os.path.isdir(dest):
+            shutil.rmtree(dest)
     os.makedirs(dest, exist_ok=True)
     types = set()
     artifacts = os.path.join(cwd, "BenchmarkDotNet.Artifacts")
-    for path in _report_files(artifacts):
+    # Preserve supplements even when BDN reported an exception.
+    for path in glob.glob(os.path.join(artifacts, "**", "openasync-*.json"), recursive=True):
+        shutil.copy2(path, os.path.join(dest, os.path.basename(path)))
+    reports = _report_files(artifacts)
+    if strict and len(reports) != 1:
+        raise ValueError(f"{unit}: expected one BDN report for the selected parameter case")
+    for path in reports:
         shutil.copy2(path, os.path.join(dest, os.path.basename(path)))
         try:
             with open(path, "r", encoding="utf-8-sig") as fh:
-                for bench in json.load(fh).get("Benchmarks", []):
+                benchmarks = json.load(fh).get("Benchmarks", [])
+                if strict and len(benchmarks) != 1:
+                    raise ValueError("Expected a singleton BDN parameter case")
+                for bench in benchmarks:
+                    if strict:
+                        # BDN can truncate Parameters for display; FullName retains the actual value.
+                        parameters = bench.get("FullName") or bench.get("Parameters", "")
+                        if not isinstance(parameters, str) or not re.search(
+                                r"(?<![A-Za-z0-9_-])" + re.escape(unit) + r"(?![A-Za-z0-9_-])",
+                                parameters):
+                            raise ValueError("BDN parameter case does not match selected unit")
+                        stats = bench.get("Statistics") or {}
+                        openasync_report.number(stats.get("Mean"), "BDN Mean", positive=True)
+                        if stats.get("N") != 3:
+                            raise ValueError("Expected all 3 actual BDN iterations, without outlier removal")
+                        measurements = bench.get("Measurements")
+                        if not isinstance(measurements, list):
+                            raise ValueError("Missing BDN measurement records")
+                        actual = [item for item in measurements
+                                  if item.get("IterationMode") == "Workload"
+                                  and item.get("IterationStage") == "Actual"]
+                        if len(actual) != 3:
+                            raise ValueError("Expected exactly 3 BDN Workload/Actual records")
+                        indices = set()
+                        for item in actual:
+                            launch = openasync_report.number(item.get("LaunchIndex"), "BDN LaunchIndex",
+                                                             integer=True)
+                            iteration = openasync_report.number(item.get("IterationIndex"),
+                                                                "BDN IterationIndex", integer=True)
+                            openasync_report.number(item.get("Nanoseconds"), "BDN Nanoseconds", positive=True)
+                            if item.get("Operations") != 1:
+                                raise ValueError("Expected one BDN invocation per measured iteration")
+                            indices.add((launch, iteration))
+                        if len(indices) != 3 or len({launch for launch, _ in indices}) != 1:
+                            raise ValueError("Expected 3 distinct actual iterations in one BDN launch")
                     if bench.get("Type"):
                         types.add(bench["Type"])
         except (OSError, ValueError):
-            pass
+            if strict:
+                raise
     # Also keep the human-readable GitHub markdown reports alongside, best effort.
     for md in glob.glob(os.path.join(artifacts, "**", "*-report-github.md"), recursive=True):
         shutil.copy2(md, os.path.join(dest, os.path.basename(md)))
@@ -168,7 +230,8 @@ class Runner:
     """Holds the invariant run parameters and performs interleaved unit passes."""
 
     def __init__(self, baseline_dir, current_dir, assembly, work_dir, cpus,
-                 baseline_runner_config=None, current_runner_config=None):
+                 baseline_runner_config=None, current_runner_config=None,
+                 benchmark_profile="default", unit_timeout_seconds=None):
         self.baseline_dir = baseline_dir
         self.current_dir = current_dir
         self.assembly = assembly
@@ -179,13 +242,20 @@ class Runner:
         # same build). None means "no override" -> both variants use the ambient RUNNER_CONFIG.
         self.baseline_runner_config = baseline_runner_config
         self.current_runner_config = current_runner_config
+        self.benchmark_profile = benchmark_profile
+        self.unit_timeout_seconds = unit_timeout_seconds
 
-    def list_units(self):
-        cmd = ["dotnet", os.path.join(self.current_dir, self.assembly)]
+    def list_units(self, variant="current"):
+        exe_dir = self.baseline_dir if variant == "baseline" else self.current_dir
+        config = self.baseline_runner_config if variant == "baseline" else self.current_runner_config
+        cmd = ["dotnet", os.path.join(exe_dir, self.assembly)]
         env = dict(os.environ)
         env["PERF_LIST_BENCHMARKS"] = "1"
         env.pop("PERF_BENCHMARK", None)
-        out = subprocess.check_output(cmd, cwd=self.work_dir, env=env, text=True)
+        if config:
+            env["RUNNER_CONFIG"] = config
+        out = subprocess.check_output(cmd, cwd=self.work_dir, env=env, text=True,
+                                      timeout=60 if self.benchmark_profile == openasync_report.PROFILE else None)
         return [line.strip() for line in out.splitlines() if line.strip()]
 
     def _run_one(self, variant, exe_dir, unit, rep, agg_dir):
@@ -198,11 +268,16 @@ class Runner:
                          else self.current_runner_config)
         env_overrides = {"RUNNER_CONFIG": runner_config} if runner_config else None
         rc = run_unit_process(exe_dir, self.assembly, unit, cwd, self.cpus, log_path,
-                              env_overrides=env_overrides)
+                              env_overrides=env_overrides, timeout_seconds=self.unit_timeout_seconds)
         if rc != 0:
+            if self.benchmark_profile == openasync_report.PROFILE:
+                collect_results(cwd, agg_dir, unit=unit)
             _tail(log_path)
             raise RuntimeError(f"benchmark unit '{unit}' ({variant}, rep {rep}) failed (exit {rc}).")
-        types = collect_results(cwd, agg_dir)
+        preliminary = self.benchmark_profile == openasync_report.PROFILE
+        types = collect_results(cwd, agg_dir, unit=unit if preliminary else None, strict=preliminary)
+        if preliminary:
+            openasync_report.load_case(os.path.join(agg_dir, unit), unit)
         if not types:
             _tail(log_path)
             raise RuntimeError(
@@ -217,9 +292,11 @@ class Runner:
         """
         unit_types = {}
         for unit in units:
-            print(f"[rep {rep}] {unit}: baseline -> candidate", flush=True)
+            print(f"[rep {rep}] {unit}: "
+                  f"{'baseline -> ' if self.baseline_dir else ''}candidate", flush=True)
             # Interleaved: measure baseline and candidate for this unit back-to-back.
-            self._run_one("baseline", self.baseline_dir, unit, rep, baseline_agg)
+            if self.baseline_dir:
+                self._run_one("baseline", self.baseline_dir, unit, rep, baseline_agg)
             types = self._run_one("current", self.current_dir, unit, rep, current_agg)
             unit_types[unit] = types
         return unit_types
@@ -250,6 +327,22 @@ def orchestrate(runner, units, results_dir, threshold, reps):
 
     # --- Pass 1: interleave every enabled unit -----------------------------------------------------
     unit_types = runner.interleave(units, 1, baseline_agg, current_agg)
+    if runner.benchmark_profile == openasync_report.PROFILE:
+        openasync_report.write_summary(results_dir, units, bool(runner.baseline_dir))
+        # BDN batch results remain available, but are not used for a preliminary regression verdict.
+        entries = []
+        for unit in units:
+            unit_entries = compare_perf.build_comparison(
+                os.path.join(baseline_agg, unit), os.path.join(current_agg, unit), threshold)
+            # Parameter display truncation can hide E1/E2, so never key across case directories.
+            for entry in unit_entries:
+                entry["parameterSignature"] = f"Case={unit}"
+                entry["key"] = f"{entry['benchmarkName']}.{entry['methodName']}(Case={unit})"
+            entries.extend(unit_entries)
+        for entry in entries:
+            entry.update(status="report-only", regressionReps=0, totalReps=1,
+                         confirmedRegression=False)
+        return entries, [], []
     type_to_unit = {}
     for unit, types in unit_types.items():
         for t in types:
@@ -317,7 +410,19 @@ _ICON = {
 }
 
 
-def render_markdown(entries, confirmed, unconfirmed, baseline_version, threshold, reps):
+def render_markdown(entries, confirmed, unconfirmed, baseline_version, threshold, reps,
+                    benchmark_profile="default"):
+    if benchmark_profile == openasync_report.PROFILE:
+        lines = ["# Preliminary OpenAsync BDN batch results", "", openasync_report.NOTICE, "",
+                 "See **openasync-summary.md** and **openasync-summary.json** for per-invocation "
+                 "individual-open measurements. BDN means below are instrumented batch means.", "",
+                 "| Benchmark | Parameters | Baseline batch ms | Current batch ms |",
+                 "| --- | --- | ---: | ---: |"]
+        for entry in entries:
+            lines.append(f"| {entry['benchmarkName']} | {entry['parameterSignature']} | "
+                         f"{compare_perf._fmt_ms(entry['baselineMeanMs'])} | "
+                         f"{compare_perf._fmt_ms(entry['currentMeanMs'])} |")
+        return "\n".join(lines)
     improvements = [e for e in entries if e["status"] == "improvement"]
     lines = []
     lines.append("# SqlClient Performance Comparison (interleaved, best-of-N)")
@@ -364,7 +469,7 @@ def render_markdown(entries, confirmed, unconfirmed, baseline_version, threshold
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--baseline-exe-dir", required=True,
+    parser.add_argument("--baseline-exe-dir",
                         help="Directory of the baseline (released package) build.")
     parser.add_argument("--current-exe-dir", required=True,
                         help="Directory of the candidate (from-source) build.")
@@ -388,10 +493,27 @@ def main(argv=None):
                         help="CPU set to pin the benchmark client to, e.g. '16-31'.")
     parser.add_argument("--fail-on-regression", action="store_true",
                         help="Exit non-zero if any CONFIRMED regression is detected.")
+    parser.add_argument("--benchmark-profile", choices=("default", openasync_report.PROFILE),
+                        default="default")
+    parser.add_argument("--unit-timeout-minutes", type=float, default=None,
+                        help="Per-unit process-tree watchdog; preliminary profile defaults to 10.")
     args = parser.parse_args(argv)
 
     if args.reps < 1:
         parser.error("--reps must be >= 1")
+    preliminary = args.benchmark_profile == openasync_report.PROFILE
+    if preliminary and args.fail_on_regression:
+        parser.error("openasync-preliminary is report-only; --fail-on-regression is not allowed")
+    if not preliminary and not args.baseline_exe_dir:
+        parser.error("--baseline-exe-dir is required for the default interleaved profile")
+    if preliminary:
+        args.reps = 1
+        if args.unit_timeout_minutes is None:
+            args.unit_timeout_minutes = 10
+        if not 0 < args.unit_timeout_minutes <= 10:
+            parser.error("preliminary --unit-timeout-minutes must be in (0, 10]")
+    if args.unit_timeout_minutes is not None:
+        openasync_report.number(args.unit_timeout_minutes, "unit timeout", positive=True)
 
     results_dir = os.path.abspath(args.results_dir)
     work_dir = os.path.abspath(args.work_dir) if args.work_dir \
@@ -405,28 +527,41 @@ def main(argv=None):
     else:
         print("PERF_CLIENT_CPUS not set; running without CPU pinning.", file=sys.stderr)
 
-    runner = Runner(os.path.abspath(args.baseline_exe_dir),
+    runner = Runner(os.path.abspath(args.baseline_exe_dir) if args.baseline_exe_dir else None,
                     os.path.abspath(args.current_exe_dir),
                     args.assembly, work_dir, cpus,
                     baseline_runner_config=args.baseline_runner_config,
-                    current_runner_config=args.current_runner_config)
+                    current_runner_config=args.current_runner_config,
+                    benchmark_profile=args.benchmark_profile,
+                    unit_timeout_seconds=args.unit_timeout_minutes * 60
+                    if args.unit_timeout_minutes is not None else None)
 
     units = runner.list_units()
     if not units:
         print("ERROR: no enabled benchmark units were reported by the current build.", file=sys.stderr)
         return 1
     print(f"Enabled units ({len(units)}): {', '.join(units)}")
+    if preliminary:
+        if len(units) != len(openasync_report.CASES) or set(units) != set(openasync_report.CASES):
+            raise RuntimeError("Current build does not discover the exact preliminary E1-E4 case matrix")
+        if runner.baseline_dir:
+            baseline_units = runner.list_units("baseline")
+            if len(baseline_units) != len(units) or set(baseline_units) != set(units):
+                raise RuntimeError("Incompatible baseline: missing preliminary OpenAsync cases; "
+                                   "use current-only or a source baseline that supports the profile")
 
     entries, confirmed, unconfirmed = orchestrate(
         runner, units, results_dir, args.threshold, args.reps)
 
     # Outputs.
     comparison_dir = os.path.join(results_dir, "comparison")
-    md = render_markdown(entries, confirmed, unconfirmed, args.baseline_version, args.threshold, args.reps)
+    md = render_markdown(entries, confirmed, unconfirmed, args.baseline_version, args.threshold, args.reps,
+                         args.benchmark_profile)
     with open(os.path.join(comparison_dir, "comparison.md"), "w", encoding="utf-8") as fh:
         fh.write(md + "\n")
     with open(os.path.join(comparison_dir, "comparison.json"), "w", encoding="utf-8") as fh:
         json.dump({
+            "benchmarkProfile": args.benchmark_profile,
             "baselineVersion": args.baseline_version,
             "thresholdPct": args.threshold,
             "confirmationRuns": args.reps,
