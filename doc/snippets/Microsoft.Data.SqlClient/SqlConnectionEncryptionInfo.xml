@@ -41,22 +41,25 @@
         On runtimes where <see cref="T:System.Security.Authentication.SslProtocols" /> does not define a named member for the negotiated version (for example, TLS 1.3 on .NET Framework), the numeric protocol value is preserved.
       </remarks>
     </NegotiatedEncryptionProtocol>
-    <PresentedServerCertificateThumbprint>
+    <PresentedServerCertificateHash256>
       <summary>
-        Gets an identifier of the leaf certificate presented by the server during the TLS handshake.
+        Gets the SHA-256 hash of the leaf certificate presented by the server during the TLS handshake.
       </summary>
       <value>
-        A thumbprint string for the presented server certificate, or <see langword="null" /> if no certificate was presented or the identifier is not available.
+        A 32-byte SHA-256 hash of the complete DER-encoded server-presented leaf certificate, or <see langword="null" /> if no certificate was presented or the hash is not available.
       </value>
       <remarks>
         <para>
-          The identifier is provided for correlation with server-side configuration. It identifies the certificate the server presented, regardless of whether that certificate passed validation.
+          The hash is computed over the complete DER encoding of the certificate the server presented. It is not a hash of the public key only, and it does not describe a certificate configured by the caller (for example, through <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ServerCertificate" />).
         </para>
         <para>
-          The identifier algorithm and representation are provisional and may change before this API is finalized.
+          The hash identifies the certificate for correlation with server-side configuration, regardless of whether the certificate passed validation. Validation results are reported separately through <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptionInfo.ValidationErrors" /> and <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptionInfo.ChainStatus" />.
+        </para>
+        <para>
+          The returned memory is read-only and owned by the snapshot.
         </para>
       </remarks>
-    </PresentedServerCertificateThumbprint>
+    </PresentedServerCertificateHash256>
     <ValidationErrors>
       <summary>
         Gets the server certificate validation errors observed by the driver.
