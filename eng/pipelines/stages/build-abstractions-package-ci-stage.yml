@@ -61,6 +61,11 @@ parameters:
     type: boolean
     default: false
 
+  # Include macOS tests unless the caller disables them for PR validation.
+  - name: runMacOSTests
+    type: boolean
+    default: true
+
   # The verbosity level for the dotnet CLI commands.
   - name: dotnetVerbosity
     type: string
@@ -137,21 +142,20 @@ stages:
 
       # ------------------------------------------------------------------------
       # Build and test on macOS.
-
-      - template: /eng/pipelines/jobs/test-abstractions-package-ci-job.yml@self
-        parameters:
-          buildConfiguration: ${{ parameters.buildConfiguration }}
-          debug: ${{ parameters.debug }}
-          displayNamePrefix: macOS
-          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-          jobNameSuffix: macos
-          netFrameworkRuntimes: []
-          netRuntimes: [net10.0]
-          # Our 1ES pools do not offer macOS images, so this job runs on the Microsoft-hosted
-          # 'Azure Pipelines' pool.
-          poolName: Azure Pipelines
-          poolImage: macos-latest
-
+      - ${{ if eq(parameters.runMacOSTests, true) }}:
+        - template: /eng/pipelines/jobs/test-abstractions-package-ci-job.yml@self
+          parameters:
+            buildConfiguration: ${{ parameters.buildConfiguration }}
+            debug: ${{ parameters.debug }}
+            displayNamePrefix: macOS
+            dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+            jobNameSuffix: macos
+            netFrameworkRuntimes: []
+            netRuntimes: [net10.0]
+            # Our 1ES pools do not offer macOS images, so this job runs on the Microsoft-hosted
+            # 'Azure Pipelines' pool.
+            poolName: Azure Pipelines
+            poolImage: macos-latest
       # ------------------------------------------------------------------------
       # Create and publish the NuGet package.
 
@@ -169,7 +173,8 @@ stages:
             # producing the NuGet package.
             - test_abstractions_package_job_linux
             - test_abstractions_package_job_windows
-            - test_abstractions_package_job_macos
+            - ${{ if eq(parameters.runMacOSTests, true) }}:
+              - test_abstractions_package_job_macos
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
           referenceType: ${{ parameters.referenceType }}

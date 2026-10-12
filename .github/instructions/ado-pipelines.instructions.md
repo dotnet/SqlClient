@@ -47,6 +47,7 @@ Key parameters:
 - `testSets` — test partitions; default `[1, 2, 3]`
 - `useManagedSNI` — SNI variants to test; default `[false, true]`
 - `runAlwaysEncryptedTests` — include AE test set; default `true`
+- `runMacOSTests` — include macOS driver and extension tests; default `true` for CI, disabled by both project/package PR pipelines
 - `runLegacySqlTests` — include SQL Server 2016/2017 manual-test legs; default `true`
 - `debug` — enable debug output; default `false`
 - `dotnetVerbosity` — build verbosity; default `normal`
@@ -70,6 +71,7 @@ When adding a new build stage, respect the dependency graph and pass artifact na
 ## PR vs CI Pipeline Differences
 
 PR pipelines:
+- Run tests on Windows and Linux only; macOS driver and extension coverage remains in CI
 - Trigger on PRs to `dev/*`, `feat/*`, `main`; exclude `eng/pipelines/onebranch/*` paths
 - Use `[net462, net10.0]` on Windows and `[net10.0]` on Unix
 - Timeout: 90 minutes
