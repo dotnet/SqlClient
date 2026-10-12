@@ -131,8 +131,11 @@ Default-mode binary chunk/stream access can be particularly expensive: the curre
 Small buffers therefore expose repeated full-value copying, not just network throughput. These
 cases intentionally remain in the suite to make such regressions/improvements visible.
 
-The harness forwards standard BenchmarkDotNet arguments, including `--filter`. For a focused
-run of all materialization methods and the 1 MiB chunk/stream arguments:
+The harness supports BenchmarkDotNet selection and information arguments, including `--filter`,
+`--list`, `--info`, and `--help`. Execution jobs come from RUNNER_CONFIG; command-line job settings
+do not override the validated configuration. Failed units retain a failing process exit code,
+but later selected units still run. For a focused run of all materialization methods and the
+1 MiB chunk/stream arguments:
 
 ```powershell
 $env:PERF_BENCHMARK = 'LargeDataRead'

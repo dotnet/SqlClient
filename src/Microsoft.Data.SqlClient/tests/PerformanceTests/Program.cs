@@ -129,8 +129,9 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 // Match across all enabled units before treating an empty selection as a failure.
                 // Keep the unit's job settings when executing the selected benchmarks.
                 using BenchmarkRunInfo benchmarks = BenchmarkConverter.TypeToBenchmarks(unit.RunnerType, config);
-                if (!benchmarks.BenchmarksCases.Any(benchmark =>
-                    argumentConfig.GetFilters().All(filter => filter.Predicate(benchmark))))
+                var selectedCases = benchmarks.BenchmarksCases.Where(benchmark =>
+                    argumentConfig.GetFilters().All(filter => filter.Predicate(benchmark))).ToArray();
+                if (selectedCases.Length == 0)
                 {
                     continue;
                 }
@@ -139,13 +140,16 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 {
                     commandJob.Validate();
                 }
-                Summary summary = BenchmarkRunner.Run(unit.RunnerType, config, args);
+                // Execute the selected cases with the validated unit job. Passing args here
+                // would parse them again and allow CLI job settings to override that job.
+                var selectedBenchmarks = new BenchmarkRunInfo(selectedCases, benchmarks.Type, benchmarks.Config);
+                Summary summary = BenchmarkRunner.Run(selectedBenchmarks);
                 if (summary.HasCriticalValidationErrors || !summary.Reports.Any() ||
                     summary.Reports.Any(report => !report.Success))
                 {
                     Console.Error.WriteLine($"Benchmark unit '{unit.Name}' failed; results are incomplete.");
                     Environment.ExitCode = 1;
-                    return;
+                    // Retain the failing exit code while allowing later units to report results.
                 }
             }
             if (!matched)
