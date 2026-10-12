@@ -61,7 +61,8 @@ context variables are available (the VM is behind NAT and lacks the pipeline ide
 | `platform` | `linux` | `linux` or `windows` VM + client. |
 | `dotnetFramework` | `net10.0` | TFM the benchmarks run against (`net10.0` only). |
 | `testTimeoutMinutes` | `180` | Template timeout waiting for the VM run. |
-| `baselineVersion` | `7.0.2` | **Baseline Version** — released MDS the branch is compared against. Empty = current-only (no baseline pass / comparison). |
+| `baselineVersion` | `7.0.2` | **Baseline Version** — released MDS the branch is compared against. Ignored when `currentOnly` is true. |
+| `currentOnly` | `false` | Skip the baseline pass/comparison; avoids Azure DevOps rejecting an empty queue-time string parameter. |
 | `regressionThreshold` | `10` | Percent slowdown (current vs baseline mean) flagged as a regression. |
 | `failOnRegression` | `false` | When `true`, a candidate-slower regression **fails** the run (gate). In interleaved mode only **confirmed** regressions (best-of-N majority) fail. Default off. |
 | `benchmarkRunMode` | `interleaved` | `interleaved` (per-unit baseline↔candidate + best-of-N confirmation) or `sequential` (legacy two full passes). |
@@ -83,14 +84,14 @@ For the **initial current-only run**, queue the existing main pipeline with:
 
 ```text
 benchmarkProfile: openasync-preliminary
-baselineVersion: ''
+currentOnly: true
 failOnRegression: false
 enableKustoIngestion: false
 ```
 
 Alternatively use the existing PR pipeline with `benchmarkProfile: openasync-preliminary`,
-`baselineSourceRef: ''`, and `failOnRegression: false`. The default profile and existing baseline
-defaults are unchanged: **explicitly clear the baseline selector for current-only measurements**.
+`currentOnly: true`, and `failOnRegression: false`. The default profile and existing baseline
+defaults are unchanged: **explicitly select currentOnly for current-source measurements**.
 Do not use the experiment pipeline for that first current-only run; it always selects a switch A/B
 baseline. Later switch experiments can use its `benchmarkProfile: openasync-preliminary` with
 `failIfSwitchSlower: false`. Compatible package baselines and source baselines containing the same
@@ -182,7 +183,8 @@ PR-only parameters (everything else is identical to the table above):
 
 | Parameter | Default | Description |
 | --------- | ------- | ----------- |
-| `baselineSourceRef` | `main` | Git ref of this repo whose **source** is the baseline. Empty = current-only (no baseline pass / comparison). |
+| `baselineSourceRef` | `main` | Git ref of this repo whose **source** is the baseline. Ignored when `currentOnly` is true. |
+| `currentOnly` | `false` | Skip the baseline pass/comparison without passing an empty queue-time string parameter. |
 | `baselineRepoUrl` | `https://github.com/dotnet/SqlClient.git` | Fallback remote used to obtain the baseline ref when the VM copy of the checkout cannot fetch it from its own `origin`. |
 | `testTimeoutMinutes` | `210` | Higher than the main pipeline's `180` because **both** sides are built from source. |
 
@@ -527,7 +529,7 @@ translated NDJSON as the `perf-kusto-payloads` artifact for manual/backfill inge
 | `NU1507` during the baseline pass | Multiple NuGet sources under CPM. The baseline uses a single-source config; ensure `perf-baseline-nuget.config` is being passed via `-p:RestoreConfigFile`. |
 | Baseline restore fails to find MDS | `baselineVersion` isn't a published NuGet.org version, or the VM has no outbound access to `api.nuget.org`. |
 | Baseline pass fails to compile: `CS1061 ... does not contain a definition for <member>` | A benchmark calls an MDS API newer than `baselineVersion`. Guard it with the `MDS_GE_<major>` constants and add an older fallback — see [Benchmarks must compile against the oldest baseline](#benchmarks-must-compile-against-the-oldest-baseline). |
-| No comparison / summary | The baseline pass was skipped (empty `baselineVersion` / `baselineSourceRef`) or one pass produced no `*-report-full.json`. |
+| No comparison / summary | The baseline pass was skipped (`currentOnly: true`, or no baseline argument in a direct script run) or one pass produced no `*-report-full.json`. |
 | `--switch-under-test is mutually exclusive with --baseline-version and --baseline-source-ref` | A switch experiment was combined with a source baseline. The experiment pipeline never does this; if you are invoking the scripts directly, clear the baseline selector — varying source and config at once makes the delta unattributable. |
 | Switch experiment shows a ~0% delta everywhere | Expected for benchmarks the switch does not touch. If *every* benchmark is flat, check the run log's `Switch A/B` line actually names the switch, and that the switch is one the driver reads at startup via the runner config. |
 | Baseline source ref not found (PR pipeline) | `baselineSourceRef` is not a branch on `origin`, and the fallback `git clone --branch <ref>` of `baselineRepoUrl` also failed (ref does not exist there, or the VM has no outbound access to the remote). The reason git gave is echoed into the build log and saved to `<results>/diagnostics/git-*.log`. |

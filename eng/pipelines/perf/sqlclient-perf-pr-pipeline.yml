@@ -65,12 +65,17 @@ parameters:
     default: 210
 
   # The git ref of THIS repository whose source is used as the baseline.  Defaults to the branch a
-  # PR normally targets; override at queue time to compare against a release branch instead.  Set to
-  # an empty string to skip the baseline pass and run current-only.
+  # PR normally targets; override at queue time to compare against a release branch instead.
+  # Use currentOnly to skip the baseline pass.
   - name: baselineSourceRef
     displayName: Baseline Source Ref (branch)
     type: string
     default: main
+
+  - name: currentOnly
+    displayName: Run current source only (ignore baseline ref)
+    type: boolean
+    default: false
 
   # Remote used to obtain the baseline ref when it cannot be fetched from the VM copy of the
   # checkout's own 'origin' (e.g. the source tree reached the VM without its .git directory, or
@@ -159,10 +164,10 @@ variables:
   # Source-baseline flags, omitted entirely when no baseline is requested: on bash an empty value
   # would let arg parsing consume the following flag as the baseline ref and corrupt every
   # subsequent argument, so both platforms omit them symmetrically.
-  - ${{ if and(eq(parameters.platform, 'windows'), ne(parameters.baselineSourceRef, '')) }}:
+  - ${{ if and(not(parameters.currentOnly), eq(parameters.platform, 'windows'), ne(parameters.baselineSourceRef, '')) }}:
     - name: PerfArgsBaseline
       value: '-BaselineSourceRef ${{ parameters.baselineSourceRef }} -BaselineRepoUrl ${{ parameters.baselineRepoUrl }}'
-  - ${{ elseif ne(parameters.baselineSourceRef, '') }}:
+  - ${{ elseif and(not(parameters.currentOnly), ne(parameters.baselineSourceRef, '')) }}:
     - name: PerfArgsBaseline
       value: '--baseline-source-ref ${{ parameters.baselineSourceRef }} --baseline-repo-url ${{ parameters.baselineRepoUrl }}'
   - ${{ else }}:
@@ -235,7 +240,7 @@ extends:
       # every run identically.
       # NOTE: the tag intentionally has no ':' - build tags are placed in the request URL path and a
       # colon trips ADO's "potentially dangerous Request.Path" filter.
-      - ${{ if ne(parameters.baselineSourceRef, '') }}:
+      - ${{ if and(not(parameters.currentOnly), ne(parameters.baselineSourceRef, '')) }}:
         - bash: |
             set -euo pipefail
             labelFile="$RESULTS_DIR/baseline-label.txt"

@@ -79,11 +79,17 @@ parameters:
 
   # The released Microsoft.Data.SqlClient version the branch under test is benchmarked against.
   # Manually managed: bump this after each stable release (e.g. to the latest 7.0.x).  Overridable
-  # at queue time.  Set to an empty string to skip the baseline pass and run current-only.
+  # at queue time. Use currentOnly to skip the baseline pass.
   - name: baselineVersion
     displayName: Baseline Version
     type: string
     default: 7.0.2
+
+  # Azure DevOps rejects empty queue-time string parameters.
+  - name: currentOnly
+    displayName: Run current source only (ignore baseline version)
+    type: boolean
+    default: false
 
   # Percent slowdown (current vs baseline mean) that the comparison flags as a regression.
   - name: regressionThreshold
@@ -189,10 +195,10 @@ variables:
   # Baseline-version flag, omitted entirely when no baseline is requested: on bash an empty value
   # would let arg parsing consume the following flag as the baseline version and corrupt every
   # subsequent argument, so both platforms omit it symmetrically.
-  - ${{ if and(eq(parameters.platform, 'windows'), ne(parameters.baselineVersion, '')) }}:
+  - ${{ if and(not(parameters.currentOnly), eq(parameters.platform, 'windows'), ne(parameters.baselineVersion, '')) }}:
     - name: PerfArgsBaseline
       value: '-BaselineVersion ${{ parameters.baselineVersion }}'
-  - ${{ elseif ne(parameters.baselineVersion, '') }}:
+  - ${{ elseif and(not(parameters.currentOnly), ne(parameters.baselineVersion, '')) }}:
     - name: PerfArgsBaseline
       value: '--baseline-version ${{ parameters.baselineVersion }}'
   - ${{ else }}:
@@ -262,7 +268,7 @@ extends:
       # even if a later step fails; omitted entirely when no baseline pass is requested.
       # NOTE: the tag intentionally has no ':' - build tags are placed in the request URL
       # path and a colon trips ADO's "potentially dangerous Request.Path" filter.
-      - ${{ if ne(parameters.baselineVersion, '') }}:
+      - ${{ if and(not(parameters.currentOnly), ne(parameters.baselineVersion, '')) }}:
         - bash: |
             echo "##vso[build.addbuildtag]Baseline ${{ parameters.baselineVersion }}"
           displayName: 'Tag build with baseline version'
@@ -300,7 +306,10 @@ extends:
           SOURCE_BRANCH: $(Build.SourceBranch)
           PLATFORM: ${{ parameters.platform }}
           RUN_MODE: ${{ parameters.benchmarkRunMode }}
-          BASELINE_VERSION: ${{ parameters.baselineVersion }}
+          ${{ if not(parameters.currentOnly) }}:
+            BASELINE_VERSION: ${{ parameters.baselineVersion }}
+          ${{ else }}:
+            BASELINE_VERSION: ''
           CFG_USE_MANAGED_SNI: ${{ lower(parameters.useManagedSniOnWindows) }}
           CFG_USE_OPTIMIZED_ASYNC: ${{ lower(parameters.useOptimizedAsyncBehaviour) }}
           CFG_USE_CONNECTION_POOL_V2: ${{ lower(parameters.useConnectionPoolV2) }}

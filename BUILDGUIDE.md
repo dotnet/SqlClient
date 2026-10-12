@@ -661,8 +661,8 @@ E3 repeated nonpooled opens, and E4 a cold ramp retaining connections until the
 entire cohort finishes opening. Both APIs run on normal ThreadPool workers;
 non-open work is identical.
 
-Select `benchmarkProfile: openasync-preliminary`, `platform: linux`, and an empty
-`baselineVersion` for an initial current-source run. Leave `failOnRegression`
+Select `benchmarkProfile: openasync-preliminary`, `platform: linux`, and
+`currentOnly: true` for an initial current-source run. Leave `failOnRegression`
 false. The scripts enable `OpenAsyncScoreboardRunnerConfig`, enumerate the
 scenario/API/concurrency matrix, and run each configuration in its own process.
 Ordinary perf defaults and existing benchmarks are unchanged.
