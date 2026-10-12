@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 
@@ -18,6 +19,13 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal static SqlConnectionEncryptionInfo Empty { get; } = new();
 
+        /// <summary>
+        /// Length in bytes of a SHA-256 hash.
+        /// </summary>
+        internal const int CertificateHash256Length = 32;
+
+        private readonly byte[]? _presentedServerCertificateHash256;
+
         private SqlConnectionEncryptionInfo()
         {
         }
@@ -29,13 +37,23 @@ namespace Microsoft.Data.SqlClient
         internal SqlConnectionEncryptionInfo(
             SqlConnectionEncryptionMode? negotiatedEncryptionMode,
             SslProtocols? negotiatedEncryptionProtocol,
-            string? presentedServerCertificateThumbprint,
+            byte[]? presentedServerCertificateHash256,
             SqlServerCertificateValidationErrors? validationErrors,
             X509ChainStatusFlags? chainStatus)
         {
             NegotiatedEncryptionMode = negotiatedEncryptionMode;
             NegotiatedEncryptionProtocol = negotiatedEncryptionProtocol;
-            PresentedServerCertificateThumbprint = presentedServerCertificateThumbprint;
+            if (presentedServerCertificateHash256 is not null)
+            {
+                if (presentedServerCertificateHash256.Length != CertificateHash256Length)
+                {
+                    throw new ArgumentException(
+                        $"A SHA-256 certificate hash must be {CertificateHash256Length} bytes.",
+                        nameof(presentedServerCertificateHash256));
+                }
+
+                _presentedServerCertificateHash256 = (byte[])presentedServerCertificateHash256.Clone();
+            }
             ValidationErrors = validationErrors;
             ChainStatus = chainStatus;
         }
@@ -46,8 +64,11 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/NegotiatedEncryptionProtocol/*' />
         public SslProtocols? NegotiatedEncryptionProtocol { get; }
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/PresentedServerCertificateThumbprint/*' />
-        public string? PresentedServerCertificateThumbprint { get; }
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[        @name="SqlConnectionEncryptionInfo"]/PresentedServerCertificateHash256/*' />
+                public ReadOnlyMemory<byte>? PresentedServerCertificateHash256 =>
+                    _presentedServerCertificateHash256 is null
+                        ? (ReadOnlyMemory<byte>?)null
+                        : new ReadOnlyMemory<byte>(_presentedServerCertificateHash256);
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/ValidationErrors/*' />
         public SqlServerCertificateValidationErrors? ValidationErrors { get; }
@@ -61,7 +82,7 @@ namespace Microsoft.Data.SqlClient
         internal bool IsEmpty =>
             NegotiatedEncryptionMode is null &&
             NegotiatedEncryptionProtocol is null &&
-            PresentedServerCertificateThumbprint is null &&
+            _presentedServerCertificateHash256 is null &&
             ValidationErrors is null &&
             ChainStatus is null;
     }
