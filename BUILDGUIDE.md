@@ -391,6 +391,9 @@ The above documentation is the default mode of operation, and is the recommended
 depend on NuGet packages. This mode is useful for verifying that packages work with each other, especially in automated
 build scenarios. For completeness, and debugging of automated builds, this section documents behavior of "package mode".
 
+`ReferenceType` accepts only `Project` and `Package`. Any other value fails the build with an
+explicit error, whether a project is built directly or through `build.proj`.
+
 To switch to "package mode", set the `ReferenceType` parameter in `build.proj` to `Package`. And, optionally, include
 one or both of the following parameters:
 

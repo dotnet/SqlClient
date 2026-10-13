@@ -323,7 +323,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 => throw new NotImplementedException();
 
             public override void EnlistTransaction(Transaction transaction) { }
-            protected override void Activate(Transaction transaction) { }
+            protected override void Activate(Transaction transaction, TimeoutTimer timeout) { }
             protected override void Deactivate() { }
             internal override void ResetConnection() { }
         }

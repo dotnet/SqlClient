@@ -240,7 +240,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                          LOG ON
                                           (NAME = PhotoLibrary_log,
                                            FILENAME = '{fileStreamDir}PhotoLibrary_log.ldf')";
-                    using SqlConnection con = new(new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { InitialCatalog = "master", IntegratedSecurity = true }.ConnectionString);
+                    using SqlConnection con = DataTestUtility.CreateConnection(new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { InitialCatalog = "master", IntegratedSecurity = true }.ConnectionString);
                     con.Open();
                     using SqlCommand cmd = con.CreateCommand();
                     cmd.CommandText = createDBQuery;

@@ -14,7 +14,7 @@ using Azure.Identity;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests;
 
-internal class ManagedIdentityProvider : SqlAuthenticationProvider
+internal class UserAssignedManagedIdentityProvider : SqlAuthenticationProvider
 {
     // Our cache of managed identity user Ids to credential instances.
     private readonly ConcurrentDictionary<string, ManagedIdentityCredential>

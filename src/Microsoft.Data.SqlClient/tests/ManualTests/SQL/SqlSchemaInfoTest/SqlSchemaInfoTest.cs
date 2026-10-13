@@ -9,6 +9,7 @@ using System.Data;
 using System.Data.Common;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -16,13 +17,29 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     [Trait("Set", "3")]
     public static class SqlSchemaInfoTest
     {
+        // SqlInitialCatalogConverter only lists databases when the connection string has
+        // Integrated Security or a User ID; access token auth provides neither.
+        public static bool HasConnStringCredentials
+        {
+            get
+            {
+                if (!DataTestUtility.AreConnStringsSetup())
+                {
+                    return false;
+                }
+
+                SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
+                return builder.IntegratedSecurity || !string.IsNullOrEmpty(builder.UserID);
+            }
+        }
+
         #region TestMethods
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [InlineData(true)]
         [InlineData(false)]
         public static void TestGetSchema(bool openTransaction)
         {
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection conn = DataTestUtility.CreateConnection())
             {
                 SqlTransaction transaction = null;
 
@@ -43,7 +60,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     Assert.Equal(1, dataBases.Rows.Count);
                     Assert.Equal(firstDatabaseName, dataBases.Rows[0]["database_name"] as string);
 
-                    string nonexistentDatabaseName = DataTestUtility.GenerateRandomCharacters("NonExistentDatabase_");
+                    string nonexistentDatabaseName = TestRandomUtilities.GenerateRandomCharacters("NonExistentDatabase_");
                     dataBases = conn.GetSchema("DATABASES", [nonexistentDatabaseName]);
 
                     Assert.Equal(0, dataBases.Rows.Count);
@@ -76,7 +93,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [InlineData(false)]
         public static async Task TestGetSchemaAsync(bool openTransaction)
         {
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection conn = DataTestUtility.CreateConnection())
             {
                 SqlTransaction transaction = null;
 
@@ -97,7 +114,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     Assert.Equal(1, dataBases.Rows.Count);
                     Assert.Equal(firstDatabaseName, dataBases.Rows[0]["database_name"] as string);
 
-                    string nonexistentDatabaseName = DataTestUtility.GenerateRandomCharacters("NonExistentDatabase_");
+                    string nonexistentDatabaseName = TestRandomUtilities.GenerateRandomCharacters("NonExistentDatabase_");
                     dataBases = await conn.GetSchemaAsync("DATABASES", [nonexistentDatabaseName]);
 
                     Assert.Equal(0, dataBases.Rows.Count);
@@ -127,7 +144,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void TestCommandBuilder()
         {
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection connection = DataTestUtility.CreateConnection())
             using (SqlCommandBuilder commandBuilder = new SqlCommandBuilder())
             using (SqlCommand command = connection.CreateCommand())
             {
@@ -158,10 +175,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // This test validates behavior of SqlInitialCatalogConverter used to present database names in PropertyGrid
         // with the SqlConnectionStringBuilder object presented in the control underneath.
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalFact(typeof(SqlSchemaInfoTest), nameof(HasConnStringCredentials))]
         public static void TestInitialCatalogStandardValues()
         {
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection connection = DataTestUtility.CreateConnection())
             {
                 string currentDb = connection.Database;
                 SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connection.ConnectionString);
