@@ -88,6 +88,10 @@ credential name acquired inside impersonation with `ORIGINAL_LOGIN()`,
 All SQL opens are unpooled. It covers independent same-account sessions,
 different accounts, restoration, and invalid credentials with the same name,
 using sync/async APIs and the pipeline-selected native/managed networking.
+For these configured local accounts, SSPI can return `user@machine` while SQL
+returns `machine\user`; the experiment recognizes both exact account forms,
+logs the raw names, and independently verifies SQL's SAM-form login and SID.
+This is not general domain-alias normalization or a production pool-key rule.
 The additional credentials are mapped through `SQLCLIENT_NETONLY_PEER_USER`,
 `SQLCLIENT_NETONLY_PEER_DOMAIN`, and `SQLCLIENT_NETONLY_PEER_PASSWORD`.
 Nothing is provisioned on the developer machine.

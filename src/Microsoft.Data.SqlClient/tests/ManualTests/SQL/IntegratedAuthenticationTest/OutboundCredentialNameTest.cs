@@ -63,7 +63,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 User(false), Domain(false), "<invalid-pwd>");
             await WindowsIdentity.RunImpersonated(invalid, async () =>
             {
-                AssertName(Expected(false), CredentialName());
+                AssertCredentialName(false, CredentialName());
                 SqlException failure = await Assert.ThrowsAsync<SqlException>(() => ReadLogin(connectionString, async));
                 Assert.NotEqual(-2, failure.Number);
                 _output.WriteLine($"A/invalid: same SSPI name, SQL rejected credentials; error={failure.Number}.");
@@ -100,7 +100,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 TokenStatistics before = Statistics();
                 Assert.NotEqual(process.AuthenticationId.ToString(), before.AuthenticationId.ToString());
                 string cachedName = CredentialName();
-                AssertName(Expected(false), cachedName);
+                AssertCredentialName(false, cachedName);
                 await ProbeCurrent(false, connectionString, async, "override/before");
                 if (!WriteSessionCredential(target))
                 {
@@ -131,7 +131,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         AssertLogin(actual, selectedPeer);
                         Log("override/after", freshName, actual);
                         _output.WriteLine(selectedPeer
-                            ? $"Override selected B; cachedNameMatchesSql={string.Equals(cachedName, actual.Original, StringComparison.OrdinalIgnoreCase)}."
+                            ? $"Override selected B; cachedNameMatchesSqlAccount={CredentialNameMatchesAccount(Domain(true), User(true), cachedName)}."
                             : "UNCOVERED: SQL retained A; this target override was not selected by this environment.");
                     }
                 }
@@ -194,14 +194,37 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private async Task<Login> ProbeCurrent(bool peer, string connectionString, bool async, string label)
         {
             string name = CredentialName();
-            AssertName(Expected(peer), name);
+            AssertCredentialName(peer, name);
             Login login = await ReadLogin(connectionString, async);
             AssertLogin(login, peer);
             Log(label, name, login);
             return login;
         }
 
-        /// <summary>Checks SAM-form names without treating case differences as distinct accounts.</summary>
+        /// <summary>Checks the two observed SSPI formats against the exact configured local account.</summary>
+        private static void AssertCredentialName(bool peer, string actual) =>
+            Assert.True(CredentialNameMatchesAccount(Domain(peer), User(peer), actual),
+                $"Expected SSPI name for '{Expected(peer)}', received '{actual}'.");
+
+        /// <summary>Recognizes local SAM and user-at-machine forms without resolving domain aliases.</summary>
+        private static bool CredentialNameMatchesAccount(string domain, string user, string actual) =>
+            string.Equals(domain + "\\" + user, actual, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(user + "@" + domain, actual, StringComparison.OrdinalIgnoreCase);
+
+        /// <summary>Preserves exact account matching across the two SSPI formats observed in CI.</summary>
+        [Theory]
+        [InlineData(@"machine\account", true)]
+        [InlineData("account@machine", true)]
+        [InlineData(@"MACHINE\ACCOUNT", true)]
+        [InlineData("ACCOUNT@MACHINE", true)]
+        [InlineData(@"machine\other", false)]
+        [InlineData("other@machine", false)]
+        [InlineData(@"other\account", false)]
+        [InlineData("account@other", false)]
+        public void OutboundName_LocalAccountFormats(string actual, bool expected) =>
+            Assert.Equal(expected, CredentialNameMatchesAccount("machine", "account", actual));
+
+        /// <summary>Checks SQL SAM-form names without treating case differences as distinct accounts.</summary>
         private static void AssertName(string expected, string actual) =>
             Assert.True(string.Equals(expected, actual, StringComparison.OrdinalIgnoreCase),
                 $"Expected '{expected}', received '{actual}'.");
