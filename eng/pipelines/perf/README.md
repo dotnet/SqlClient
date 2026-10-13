@@ -270,6 +270,15 @@ SQLCMD through `SQLCMDPASSWORD`, never serialized or printed.
 No `dotnet-stack` pin exists in the repository tool manifest. On Linux the launcher checks its
 repository-local observer tool directory, installs **dotnet-stack 9.0.652701** only if absent,
 and verifies that version. Tool install, captures, snapshot count and shutdown are bounded.
+Tool restore uses an isolated configuration containing only the repository-approved
+governed feed, excluding the local package directory and ambient caller configuration.
+Governed-feed access is still required; there is no direct NuGet.org fallback.
+The SDK 10 install uses `--allow-roll-forward` for this net8.0 tool. Provisioning evidence
+is written directly under published results at `diagnostics/observer-tools/`:
+`NuGet.Config`, `provisioning.json` (source/cwd/tool paths), `install.log`
+(when installation is needed), `version.log`, and
+`sql-capability-preflight.json`. Failures and timeouts retain those logs even when no
+benchmark process starts; the error identifies the exact log path.
 The full Diagnostic matrix currently fails explicitly on Windows; existing default and
 preliminary Windows paths are unchanged. Stack capture can suspend the client: **Diagnostic
 timings must not be compared with Sampled timings**. Missing native allocation attribution,

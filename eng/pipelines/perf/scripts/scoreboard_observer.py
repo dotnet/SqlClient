@@ -16,6 +16,7 @@ import threading
 import time
 
 STACK_VERSION = "9.0.652701"
+STACK_SOURCE = "https://sqlclientdrivers.pkgs.visualstudio.com/public/_packaging/sqlclient/nuget/v3/index.json"
 SQL = """
 SET NOCOUNT ON;
 SELECT
@@ -118,25 +119,54 @@ def association(capture, window):
     return "AmbiguousBoundary"
 
 
-def prepare_tools(work_dir):
+def prepare_tools(work_dir, results_dir=None):
     """Only install the declared pinned tool after observing its local executable is missing."""
     if os.name == "nt":
         raise RuntimeError("Diagnostic capability unsupported on Windows in this increment; "
                            "use Linux for the full Diagnostic matrix (Sampled remains supported)")
     tool_dir = Path(work_dir) / "observer-tools"
     tool_dir.mkdir(parents=True, exist_ok=True)
+    diagnostics = Path(results_dir) / "diagnostics" / "observer-tools" if results_dir else tool_dir
+    diagnostics.mkdir(parents=True, exist_ok=True)
+    # Keep the approved repository feed, excluding local packages and unrelated caller
+    # configuration: unlike project restore, tool restore starts from the launcher's cwd.
+    config = diagnostics / "NuGet.Config"
+    config.write_text(
+        '<?xml version="1.0" encoding="utf-8"?>\n'
+        '<configuration><packageSources><clear />'
+        f'<add key="governed" value="{STACK_SOURCE}" />'
+        '</packageSources></configuration>\n', encoding="utf-8")
+    (diagnostics / "provisioning.json").write_text(json.dumps({
+        "Tool": "dotnet-stack", "Version": STACK_VERSION, "PackageSource": STACK_SOURCE,
+        "WorkingDirectory": str(Path.cwd()), "ToolDirectory": str(tool_dir),
+        "NuGetConfigPath": str(config),
+    }, indent=2), encoding="utf-8")
+
+    def logged_command(command, name, timeout, env=None):
+        path = diagnostics / name
+        with path.open("w", encoding="utf-8") as log:
+            try:
+                result = subprocess.run(command, stdout=log, stderr=subprocess.STDOUT,
+                                        timeout=timeout, env=env)
+            except (subprocess.TimeoutExpired, OSError) as error:
+                log.write(f"\nProvisioning failed: {type(error).__name__}\n")
+                raise RuntimeError(f"Diagnostic provisioning failed ({type(error).__name__}); "
+                                   f"see {path}") from None
+        return result
+
     stack = tool_dir / "dotnet-stack"
     if not stack.exists():
-        with (tool_dir / "install.log").open("w", encoding="utf-8") as log:
-            result = subprocess.run(
-                ["dotnet", "tool", "install", "dotnet-stack", "--version", STACK_VERSION,
-                 "--tool-path", str(tool_dir), "--allow-roll-forward"],
-                stdout=log, stderr=subprocess.STDOUT, timeout=180)
+        result = logged_command(
+            ["dotnet", "tool", "install", "dotnet-stack", "--version", STACK_VERSION,
+             "--tool-path", str(tool_dir), "--allow-roll-forward", "--configfile", str(config)],
+            "install.log", 180)
         if result.returncode:
-            raise RuntimeError("Pinned dotnet-stack installation failed; see observer-tools/install.log")
-    version = subprocess.run([str(stack), "--version"], capture_output=True, text=True, timeout=15)
-    if version.returncode or STACK_VERSION not in version.stdout:
-        raise RuntimeError("dotnet-stack does not match the declared pinned version")
+            raise RuntimeError(f"Pinned dotnet-stack installation failed (exit {result.returncode}); "
+                               f"see {diagnostics / 'install.log'}")
+    version = logged_command([str(stack), "--version"], "version.log", 15)
+    if version.returncode or STACK_VERSION not in (diagnostics / "version.log").read_text(encoding="utf-8"):
+        raise RuntimeError(f"dotnet-stack does not match the declared pinned version; "
+                           f"see {diagnostics / 'version.log'}")
     sqlcmd = shutil.which("sqlcmd")
     if not sqlcmd:
         sqlcmd = next((path for path in ("/opt/mssql-tools18/bin/sqlcmd", "/opt/mssql-tools/bin/sqlcmd")
@@ -145,13 +175,14 @@ def prepare_tools(work_dir):
         raise RuntimeError("Diagnostic capability requires provisioned SQLCMD and SQL environment credentials")
     sql_env = dict(os.environ)
     sql_env["SQLCMDPASSWORD"] = os.environ["SQL_PASSWORD"]
-    preflight = tool_dir / "sql-capability-preflight.json"
-    with preflight.open("w", encoding="utf-8") as output:
-        result = subprocess.run(sql_command(sqlcmd), stdout=output, stderr=subprocess.STDOUT,
-                                env=sql_env, timeout=20)
+    preflight = diagnostics / "sql-capability-preflight.json"
+    result = logged_command(sql_command(sqlcmd), preflight.name, 20, env=sql_env)
     if result.returncode:
-        raise RuntimeError("SQL Diagnostic capability/permission preflight failed; see observer-tools")
-    validate_sql(json.loads(preflight.read_text(encoding="utf-8-sig").strip()))
+        raise RuntimeError(f"SQL Diagnostic capability/permission preflight failed; see {preflight}")
+    try:
+        validate_sql(json.loads(preflight.read_text(encoding="utf-8-sig").strip()))
+    except (ValueError, TypeError):
+        raise RuntimeError(f"Invalid SQL Diagnostic capability/permission preflight output; see {preflight}") from None
     return {"stack": str(stack), "sqlcmd": sqlcmd, "sql_capability_verified": True}
 
 

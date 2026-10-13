@@ -581,16 +581,89 @@ class CollectionTests(unittest.TestCase):
         (tool_dir / "dotnet-stack").write_text("", encoding="utf-8")
         platform = SimpleNamespace(name="posix", path=os.path,
                                    environ={"SQL_SERVER": "test", "SQL_PASSWORD": "<pwd>"})
-        results = [subprocess.CompletedProcess([], 0, stdout=observer.STACK_VERSION),
-                   subprocess.CompletedProcess([], 1)]
+        def provision(command, **kwargs):
+            version = "--version" in command
+            kwargs["stdout"].write(observer.STACK_VERSION if version else "SQL permission denied")
+            return subprocess.CompletedProcess(command, 0 if version else 1)
+
         with mock.patch.object(observer, "os", platform), \
                 mock.patch.object(observer.shutil, "which", return_value="sqlcmd"), \
-                mock.patch.object(observer.subprocess, "run", side_effect=results) as run:
+                mock.patch.object(observer.subprocess, "run", side_effect=provision) as run:
             with self.assertRaisesRegex(RuntimeError, "permission preflight"):
                 observer.prepare_tools(str(self.root))
         self.assertEqual(run.call_count, 2)
         self.assertNotIn("<pwd>", run.call_args.args[0])
         self.assertEqual(run.call_args.kwargs["env"]["SQLCMDPASSWORD"], "<pwd>")
+
+    def test_tool_install_uses_approved_feed_and_preserves_failure_log_in_results(self):
+        results = self.root / "published"
+        platform = SimpleNamespace(name="posix", path=os.path, environ={})
+
+        def fail(command, **kwargs):
+            kwargs["stdout"].write("Unable to load the configured NuGet service index.")
+            return subprocess.CompletedProcess(command, 1)
+
+        with mock.patch.object(observer, "os", platform), \
+                mock.patch.object(observer.subprocess, "run", side_effect=fail) as run:
+            with self.assertRaisesRegex(RuntimeError, "published.*install.log"):
+                observer.prepare_tools(str(self.root / "work"), str(results))
+        command = run.call_args.args[0]
+        config = Path(command[command.index("--configfile") + 1])
+        self.assertIn("<clear />", config.read_text())
+        self.assertIn(observer.STACK_SOURCE, config.read_text())
+        self.assertIn('key="governed"', config.read_text())
+        self.assertNotIn("nuget.org", config.read_text())
+        self.assertNotIn('key="local"', config.read_text())
+        self.assertEqual(command[command.index("--version") + 1], "9.0.652701")
+        self.assertIn("--allow-roll-forward", command)
+        self.assertEqual(run.call_args.kwargs["timeout"], 180)
+        self.assertIn("Unable to load", (results / "diagnostics" / "observer-tools" / "install.log").read_text())
+        metadata = json.loads((results / "diagnostics" / "observer-tools" / "provisioning.json").read_text())
+        self.assertEqual(metadata["WorkingDirectory"], str(Path.cwd()))
+        self.assertEqual(metadata["PackageSource"], observer.STACK_SOURCE)
+
+    def test_tool_install_timeout_preserves_partial_output_in_results(self):
+        platform = SimpleNamespace(name="posix", path=os.path, environ={})
+
+        def timeout(command, **kwargs):
+            kwargs["stdout"].write("Restore started.\n")
+            raise subprocess.TimeoutExpired(command, kwargs["timeout"])
+
+        with mock.patch.object(observer, "os", platform), \
+                mock.patch.object(observer.subprocess, "run", side_effect=timeout):
+            with self.assertRaisesRegex(RuntimeError, "TimeoutExpired.*published"):
+                observer.prepare_tools(str(self.root / "work"), str(self.root / "published"))
+        output = (self.root / "published" / "diagnostics" / "observer-tools" / "install.log").read_text()
+        self.assertIn("Restore started.", output)
+        self.assertIn("TimeoutExpired", output)
+
+    def test_successful_tool_and_sql_preflight_retains_all_readiness_logs(self):
+        platform = SimpleNamespace(name="posix", path=os.path,
+                                   environ={"SQL_SERVER": "test", "SQL_PASSWORD": "<pwd>"})
+        sql = {key: 0 for key in ("ActiveUserRequests", "RunnableTasks", "RunningTasks",
+                                 "SchedulerRunnableQueue", "SchedulerCurrentTasks", "UserSessions",
+                                 "Connections", "LoginsCounter")}
+        sql["Waits"] = []
+
+        def provision(command, **kwargs):
+            if command[0] == "dotnet":
+                output = "Tool installed."
+            elif "--version" in command:
+                output = observer.STACK_VERSION + "+240cb1ce5bc30594c515206764241d7982e384af"
+            else:
+                self.assertNotIn("<pwd>", command)
+                output = json.dumps(sql)
+            kwargs["stdout"].write(output)
+            return subprocess.CompletedProcess(command, 0)
+
+        with mock.patch.object(observer, "os", platform), \
+                mock.patch.object(observer.shutil, "which", return_value="sqlcmd"), \
+                mock.patch.object(observer.subprocess, "run", side_effect=provision):
+            tools = observer.prepare_tools(str(self.root / "work"), str(self.root / "published"))
+        self.assertTrue(tools["sql_capability_verified"])
+        logs = self.root / "published" / "diagnostics" / "observer-tools"
+        for name in ("install.log", "version.log", "sql-capability-preflight.json", "provisioning.json"):
+            self.assertTrue((logs / name).is_file())
 
 
 class ObserverTests(unittest.TestCase):

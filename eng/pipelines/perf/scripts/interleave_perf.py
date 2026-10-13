@@ -671,7 +671,7 @@ def main(argv=None):
                 raise RuntimeError("Incompatible baseline: missing selected profile units; "
                                    "use current-only or a source baseline that supports the profile")
     if full:
-        runner.diagnostic_tools = scoreboard_observer.prepare_tools(work_dir)
+        runner.diagnostic_tools = scoreboard_observer.prepare_tools(work_dir, results_dir)
 
     entries, confirmed, unconfirmed = orchestrate(
         runner, units, results_dir, args.threshold, args.reps)
