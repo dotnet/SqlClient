@@ -77,3 +77,26 @@ Both successful-login tests first verify that an unpooled connection authenticat
 as the configured alternate account. Required CI coverage also verifies that the
 process account authenticates as a different login, preventing loopback fallback
 from producing a false pass.
+
+## CI-only outbound-name experiment
+
+The same designated jobs also provision a second disposable non-admin account
+and SQL Windows login, using separate secret variables and always-run cleanup.
+`OutboundCredentialNameTest` compares a fresh, targetless Negotiate SSPI
+credential name acquired inside impersonation with `ORIGINAL_LOGIN()`,
+`SUSER_SNAME()`, `SUSER_SID()` and connection authentication/transport properties.
+All SQL opens are unpooled. It covers independent same-account sessions,
+different accounts, restoration, and invalid credentials with the same name,
+using sync/async APIs and the pipeline-selected native/managed networking.
+The additional credentials are mapped through `SQLCLIENT_NETONLY_PEER_USER`,
+`SQLCLIENT_NETONLY_PEER_DOMAIN`, and `SQLCLIENT_NETONLY_PEER_PASSWORD`.
+Nothing is provisioned on the developer machine.
+
+A separate probe writes a SQL-SPN override using `CRED_PERSIST_SESSION` only
+inside a fresh disposable network-only session, then deletes that exact target.
+It records whether SQL selects the override and whether the targetless name,
+`AuthenticationId`, or `ModifiedId` changes. An unavailable credential store or
+an override not selected by SQL is explicitly reported as uncovered, not proof
+that name-based caching is safe. Local accounts exercise NTLM, not Kerberos or
+domain aliases. These probes do not implement outbound-name pooling or change
+the driver's identity/replenishment strategy.

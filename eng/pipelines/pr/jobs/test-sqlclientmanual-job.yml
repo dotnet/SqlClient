@@ -212,6 +212,10 @@ jobs:
         - template: /eng/pipelines/common/templates/steps/configure-netonly-account-step.yml@self
           parameters:
             mode: setup
+        - template: /eng/pipelines/common/templates/steps/configure-netonly-account-step.yml@self
+          parameters:
+            mode: setup
+            variablePrefix: netOnlyPeer
 
       # Execute TestSqlClientManual target from build.proj
       - task: DotNetCoreCLI@2
@@ -223,6 +227,9 @@ jobs:
             SQLCLIENT_NETONLY_DOMAIN: $(netOnlyDomain)
             SQLCLIENT_NETONLY_PASSWORD: $(netOnlyPassword)
             SQLCLIENT_NETONLY_CONNECTION_STRING: $(netOnlyConnectionString)
+            SQLCLIENT_NETONLY_PEER_USER: $(netOnlyPeerUser)
+            SQLCLIENT_NETONLY_PEER_DOMAIN: $(netOnlyPeerDomain)
+            SQLCLIENT_NETONLY_PEER_PASSWORD: $(netOnlyPeerPassword)
         inputs:
           command: build
           projects: build.proj
@@ -240,6 +247,10 @@ jobs:
         - template: /eng/pipelines/common/templates/steps/configure-netonly-account-step.yml@self
           parameters:
             mode: cleanup
+        - template: /eng/pipelines/common/templates/steps/configure-netonly-account-step.yml@self
+          parameters:
+            mode: cleanup
+            variablePrefix: netOnlyPeer
 
       # Publish test results
       - template: /eng/pipelines/pr/steps/publish-test-results-step.yml@self

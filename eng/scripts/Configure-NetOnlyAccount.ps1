@@ -15,6 +15,7 @@ the caller maps it to SQLCLIENT_NETONLY_CONNECTION_STRING for manual tests.
 Port must match the configured local SQL instance TCP listener. Cleanup accepts
 netOnlyUser and netOnlySid from that job; blank/unexpanded values are safe.
 No policy, group membership, server role, or database user is changed.
+VariablePrefix selects independent netOnly or netOnlyPeer lifecycle variables.
 #>
 [CmdletBinding()]
 param(
@@ -28,6 +29,9 @@ param(
     [ValidateRange(1, 65535)]
     [int] $Port = 1433,
 
+    [ValidateSet('netOnly', 'netOnlyPeer')]
+    [string] $VariablePrefix = 'netOnly',
+
     [AllowEmptyString()]
     [string] $AccountName = '',
 
@@ -40,6 +44,7 @@ $ErrorActionPreference = 'Stop'
 
 function Set-PipelineVariable {
     param([string] $Name, [string] $Value, [switch] $Secret)
+    $Name = $VariablePrefix + $Name.Substring('netOnly'.Length)
     $escaped = $Value.Replace('%', '%AZP25').Replace("`r", '%0D').Replace("`n", '%0A')
     $secretFlag = if ($Secret) { 'true' } else { 'false' }
     Write-Host "##vso[task.setvariable variable=$Name;issecret=$secretFlag]$escaped"
@@ -86,7 +91,7 @@ function Get-AccountSidHex {
 }
 
 if ($Mode -eq 'cleanup' -and
-    ([string]::IsNullOrWhiteSpace($AccountName) -or $AccountName -eq '$(netOnlyUser)')) {
+    ([string]::IsNullOrWhiteSpace($AccountName) -or $AccountName -eq ('$(' + $VariablePrefix + 'User)'))) {
     Write-Host 'Net-only setup did not publish an account; cleanup has nothing to remove.'
     return
 }
@@ -154,7 +159,7 @@ CREATE LOGIN $quotedLogin FROM WINDOWS WITH DEFAULT_DATABASE = [master];
             throw "Refusing cleanup of unexpected account name '$AccountName'."
         }
         $account = Get-LocalUser | Where-Object { $_.Name -eq $AccountName }
-        if ($AccountSid -eq '$(netOnlySid)') {
+        if ($AccountSid -eq ('$(' + $VariablePrefix + 'Sid)')) {
             $AccountSid = ''
         }
         if ($account) {
