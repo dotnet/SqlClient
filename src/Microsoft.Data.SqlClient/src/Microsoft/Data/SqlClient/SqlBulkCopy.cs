@@ -1375,7 +1375,15 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             if (_isAsyncBulkCopy && _dbDataReaderRowSource != null)
             {
                 // This will call ReadAsync for DbDataReader (for SqlDataReader it will be truly async read; for non-SqlDataReader it may block.)
-                Task<bool> readTask = _dbDataReaderRowSource.ReadAsync(cts);
+                Task<bool> readTask;
+                try
+                {
+                    readTask = _dbDataReaderRowSource.ReadAsync(cts);
+                }
+                catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
+                {
+                    return AwaitReadFromDbDataReaderAsync(Task.FromException<bool>(ex));
+                }
 
                 // Fast path: the read completed synchronously and successfully.
                 // Update state inline and report "ran synchronously" by returning
@@ -1389,7 +1397,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 // The read pended (or faulted/cancelled): await it via a small async
                 // helper instead of ReadAsync(...).ContinueWith(...).Unwrap(), which
                 // allocated an extra continuation + wrapper Task per row.
-                return AwaitReadFromDbDataReaderAsync(readTask, cts);
+                return AwaitReadFromDbDataReaderAsync(readTask);
             }
             else
             { // This will call Read for DataRows, DataTable and IDataReader (this includes all IDataReader except DbDataReader)
@@ -1417,22 +1425,17 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
         // Awaits a pended DbDataReader.ReadAsync and records whether more rows
         // remain. Only reached when the read did not complete synchronously.
-        private async Task AwaitReadFromDbDataReaderAsync(Task<bool> readTask, CancellationToken cts)
+        private async Task AwaitReadFromDbDataReaderAsync(Task<bool> readTask)
         {
             try
             {
                 _hasMoreRowToCopy = await readTask.ConfigureAwait(false);
             }
-            catch (OperationCanceledException oce) when (!cts.IsCancellationRequested)
+            catch (OperationCanceledException oce) when (readTask.IsFaulted)
             {
-                // The reader *faulted* with an OperationCanceledException even though
-                // the caller's token was never signaled (e.g. it returned
-                // Task.FromException with an OCE). Awaiting that would mark this task
-                // Canceled, and the bulk-copy driver treats a canceled batch as
-                // "clean up the parser" (send BulkCopyDone, committing the rows
-                // already written). That is wrong: this is a fault and must abort.
-                // Wrap it so the task stays Faulted; it is unwrapped at the public
-                // completion boundary so callers still observe the original exception.
+                // Keep a faulted reader OCE faulted across this await boundary.
+                // A genuinely canceled read does not match the filter and remains
+                // canceled. The marker is unwrapped at the completion boundary.
                 throw new BulkCopyAbortException(oce);
             }
         }
@@ -3121,55 +3124,43 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                         onSuccess: (object state) =>
                         {
                             SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
-                            // Bulk copy task is completed at this moment.
-                            if (task.IsCanceled)
+                            // Bulk copy task completed successfully.
+                            sqlBulkCopy.ResetLocalColumnMappings();
+                            try
                             {
-                                sqlBulkCopy.ResetLocalColumnMappings();
-                                try
-                                {
-                                    sqlBulkCopy.CleanUpStateObject();
-                                }
-                                finally
-                                {
-                                    source.SetCanceled();
-                                }
+                                sqlBulkCopy.CleanUpStateObject(isCancelRequested: false);
                             }
-                            else if (task.Exception != null)
+                            finally
                             {
-                                sqlBulkCopy.ResetLocalColumnMappings();
-                                // Unwrap the internal marker used to keep a faulted
-                                // reader OperationCanceledException from being treated
-                                // as cancellation, so callers observe the original
-                                // exception.
-                                Exception inner = task.Exception.InnerException;
-                                if (inner is BulkCopyAbortException abort && abort.InnerException != null)
+                                if (source != null)
                                 {
-                                    inner = abort.InnerException;
-                                }
-                                source.SetException(inner);
-                            }
-                            else
-                            {
-                                sqlBulkCopy.ResetLocalColumnMappings();
-                                try
-                                {
-                                    sqlBulkCopy.CleanUpStateObject(isCancelRequested: false);
-                                }
-                                finally
-                                {
-                                    if (source != null)
+                                    if (cts.IsCancellationRequested)
+                                    {   // We may get cancellation req even after the entire copy.
+                                        source.SetCanceled();
+                                    }
+                                    else
                                     {
-                                        if (cts.IsCancellationRequested)
-                                        {   // We may get cancellation req even after the entire copy.
-                                            source.SetCanceled();
-                                        }
-                                        else
-                                        {
-                                            source.SetResult(null);
-                                        }
+                                        source.SetResult(null);
                                     }
                                 }
                             }
+                        },
+                        onFailure: (object state, Exception exception) =>
+                        {
+                            SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
+                            sqlBulkCopy.ResetLocalColumnMappings();
+                            if (exception is BulkCopyAbortException abort && abort.InnerException != null)
+                            {
+                                // Set the original exception before AsyncHelper tries
+                                // to propagate the marker.
+                                source.TrySetException(abort.InnerException);
+                            }
+                        },
+                        onCancellation: (object state) =>
+                        {
+                            SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
+                            sqlBulkCopy.ResetLocalColumnMappings();
+                            sqlBulkCopy.CleanUpStateObject();
                         });
                     return;
                 }
@@ -3214,6 +3205,10 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
                 if (source != null)
                 {
+                    if (ex is BulkCopyAbortException abort && abort.InnerException != null)
+                    {
+                        ex = abort.InnerException;
+                    }
                     source.TrySetException(ex);
                 }
                 else
@@ -3448,6 +3443,15 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                             else
                             {
                                 sqlBulkCopy.WriteToServerInternalRestAsync(ctoken, source); // Passing the same completion which will be completed by the Callee.
+                            }
+                        },
+                        onFailure: (object state, Exception exception) =>
+                        {
+                            if (exception is BulkCopyAbortException abort && abort.InnerException != null)
+                            {
+                                // Preserve Faulted status while exposing the reader's
+                                // original exception instead of the internal marker.
+                                source.TrySetException(abort.InnerException);
                             }
                         });
                     return resultTask;

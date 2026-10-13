@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -6,6 +6,7 @@ using System;
 using System.Collections;
 using System.Data;
 using System.Data.Common;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.ManualTesting.Tests;
@@ -172,10 +173,15 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
                 Task writeTask = bulkCopy.WriteToServerAsync(reader, CancellationToken.None);
 
                 // Wait for completion without unwrapping, so we can inspect the status.
-                Assert.Throws<AggregateException>(() => writeTask.Wait());
+                AggregateException agg = Assert.Throws<AggregateException>(() => writeTask.Wait());
 
                 Assert.True(writeTask.IsFaulted, "Expected a Faulted task; actual status: " + writeTask.Status);
                 Assert.False(writeTask.IsCanceled, "Task must not be Canceled for a faulted read.");
+
+                // Callers must observe the original OperationCanceledException, not the
+                // internal BulkCopyAbortException marker used to preserve Faulted status.
+                Exception observed = agg.Flatten().InnerException;
+                Assert.IsType<OperationCanceledException>(observed);
 
                 // The faulted read must abort the batch; no rows should have been
                 // committed to the destination.
@@ -221,12 +227,310 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
 
                 Assert.True(writeTask.IsCanceled, "Expected a Canceled task; actual status: " + writeTask.Status);
                 Assert.False(writeTask.IsFaulted, "Task must not be Faulted for a synchronous-EOF cancellation.");
+                Assert.Equal(1, GetRowCount(connection, tableName));
             }
             finally
             {
                 DataTestUtility.DropTable(connection, tableName);
             }
         }
+
+        // Regression test: a reader whose ReadAsync returns a genuinely *canceled*
+        // task (TaskStatus.Canceled) must surface WriteToServerAsync as Canceled,
+        // even when the caller token is never signaled. The antecedent status must
+        // be preserved and must not be converted into a fault.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        public void WriteToServerAsyncWithCanceledReadShouldReportCanceled()
+        {
+            string tableName = DataTestUtility.GetShortName("BulkCancel");
+
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            connection.Open();
+
+            try
+            {
+                CreateSingleIntColumnTable(connection, tableName);
+
+                // Pre-canceled token used only to produce a genuinely Canceled read
+                // task; it is NOT the caller token passed to WriteToServerAsync.
+                CancellationTokenSource readerCts = new CancellationTokenSource();
+                readerCts.Cancel();
+
+                FaultingDbDataReader reader = new FaultingDbDataReader(
+                    rowsBeforeFault: 2,
+                    faultFactory: () => Task.FromCanceled<bool>(readerCts.Token));
+
+                using SqlBulkCopy bulkCopy = new SqlBulkCopy(connection)
+                {
+                    DestinationTableName = tableName,
+                };
+
+                // Caller token is never canceled.
+                Task writeTask = bulkCopy.WriteToServerAsync(reader, CancellationToken.None);
+
+                Assert.Throws<AggregateException>(() => writeTask.Wait());
+
+                Assert.True(writeTask.IsCanceled, "Expected a Canceled task; actual status: " + writeTask.Status);
+                Assert.False(writeTask.IsFaulted, "Task must not be Faulted for a genuinely canceled read.");
+                Assert.Equal(2, GetRowCount(connection, tableName));
+            }
+            finally
+            {
+                DataTestUtility.DropTable(connection, tableName);
+            }
+        }
+
+        // Regression test: a reader whose ReadAsync returns a task faulted with a
+        // non-OperationCanceledException must surface WriteToServerAsync as Faulted
+        // with the original exception type preserved and must not commit partial
+        // data.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        public void WriteToServerAsyncWithFaultedReadShouldPreserveOriginalException()
+        {
+            string tableName = DataTestUtility.GetShortName("BulkFaultEx");
+
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            connection.Open();
+
+            try
+            {
+                CreateSingleIntColumnTable(connection, tableName);
+
+                FaultingDbDataReader reader = new FaultingDbDataReader(
+                    rowsBeforeFault: 2,
+                    faultFactory: () => Task.FromException<bool>(new InvalidOperationException("reader boom")));
+
+                using SqlBulkCopy bulkCopy = new SqlBulkCopy(connection)
+                {
+                    DestinationTableName = tableName,
+                };
+
+                Task writeTask = bulkCopy.WriteToServerAsync(reader, CancellationToken.None);
+
+                AggregateException agg = Assert.Throws<AggregateException>(() => writeTask.Wait());
+
+                Assert.True(writeTask.IsFaulted, "Expected a Faulted task; actual status: " + writeTask.Status);
+                Assert.False(writeTask.IsCanceled, "Task must not be Canceled for a faulted read.");
+
+                // The original exception type and message must be preserved to the caller.
+                Exception observed = agg.Flatten().InnerException;
+                InvalidOperationException ioe = Assert.IsType<InvalidOperationException>(observed);
+                Assert.Equal("reader boom", ioe.Message);
+
+                // No rows should have been committed to the destination.
+                Assert.Equal(0, GetRowCount(connection, tableName));
+            }
+            finally
+            {
+                DataTestUtility.DropTable(connection, tableName);
+            }
+        }
+
+        // Regression test: a faulted OperationCanceledException from the initial
+        // ReadAsync must preserve Faulted status and expose the original exception.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        public void WriteToServerAsyncWithInitialFaultedReadShouldPreserveOriginalException()
+        {
+            string tableName = DataTestUtility.GetShortName("BulkInitialFault");
+
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            connection.Open();
+
+            try
+            {
+                CreateSingleIntColumnTable(connection, tableName);
+                ScriptedDbDataReader reader = new ScriptedDbDataReader(
+                    (_, _) => Task.FromException<bool>(new OperationCanceledException()));
+
+                using SqlBulkCopy bulkCopy = new SqlBulkCopy(connection)
+                {
+                    DestinationTableName = tableName,
+                };
+
+                Task writeTask = bulkCopy.WriteToServerAsync(reader, CancellationToken.None);
+                AggregateException agg = Assert.Throws<AggregateException>(() => writeTask.Wait());
+
+                Assert.True(writeTask.IsFaulted, "Expected a Faulted task; actual status: " + writeTask.Status);
+                Assert.False(writeTask.IsCanceled, "Initial fault must not be reported as Canceled.");
+                Assert.IsType<OperationCanceledException>(agg.Flatten().InnerException);
+                Assert.Equal(0, GetRowCount(connection, tableName));
+            }
+            finally
+            {
+                DataTestUtility.DropTable(connection, tableName);
+            }
+        }
+
+        // Regression test: caller-token cancellation must not turn a reader task
+        // that is Faulted with an OperationCanceledException into cancellation.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        public void WriteToServerAsyncWithCallerCancellationAndFaultedReadShouldRemainFaulted()
+        {
+            string tableName = DataTestUtility.GetShortName("BulkCallerFault");
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            connection.Open();
+
+            try
+            {
+                CreateSingleIntColumnTable(connection, tableName);
+                using CancellationTokenSource cts = new CancellationTokenSource();
+                ScriptedDbDataReader reader = new ScriptedDbDataReader((readNumber, _) =>
+                {
+                    if (readNumber == 2)
+                    {
+                        cts.Cancel();
+                        return Task.FromException<bool>(new OperationCanceledException());
+                    }
+
+                    return Task.FromResult(true);
+                });
+
+                using SqlBulkCopy bulkCopy = new SqlBulkCopy(connection)
+                {
+                    DestinationTableName = tableName,
+                };
+
+                Task writeTask = bulkCopy.WriteToServerAsync(reader, cts.Token);
+                AggregateException agg = Assert.Throws<AggregateException>(() => writeTask.Wait());
+
+                Assert.True(writeTask.IsFaulted, "Expected a Faulted task; actual status: " + writeTask.Status);
+                Assert.False(writeTask.IsCanceled, "A faulted read must not become Canceled.");
+                Assert.IsType<OperationCanceledException>(agg.Flatten().InnerException);
+                Assert.Equal(0, GetRowCount(connection, tableName));
+            }
+            finally
+            {
+                DataTestUtility.DropTable(connection, tableName);
+            }
+        }
+
+        // Regression test: a reader that throws an OCE synchronously after the
+        // async row loop has started must preserve the original fault semantics.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        public void WriteToServerAsyncWithSynchronousReaderExceptionShouldPreserveOriginalException()
+        {
+            string tableName = DataTestUtility.GetShortName("BulkSyncFault");
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            connection.Open();
+
+            try
+            {
+                CreateSingleIntColumnTable(connection, tableName);
+                ScriptedDbDataReader reader = new ScriptedDbDataReader((readNumber, _) =>
+                {
+                    if (readNumber >= 2)
+                    {
+                        throw new OperationCanceledException();
+                    }
+
+                    return Task.FromResult(true);
+                });
+
+                using SqlBulkCopy bulkCopy = new SqlBulkCopy(connection)
+                {
+                    DestinationTableName = tableName,
+                };
+
+                Task writeTask = bulkCopy.WriteToServerAsync(reader, CancellationToken.None);
+                AggregateException agg = Assert.Throws<AggregateException>(() => writeTask.Wait());
+
+                Assert.True(writeTask.IsFaulted, "Expected a Faulted task; actual status: " + writeTask.Status);
+                Assert.False(writeTask.IsCanceled, "A synchronous reader fault must not become Canceled.");
+                Assert.IsType<OperationCanceledException>(agg.Flatten().InnerException);
+                Assert.Equal(0, GetRowCount(connection, tableName));
+            }
+            finally
+            {
+                DataTestUtility.DropTable(connection, tableName);
+            }
+        }
+
+        // Regression test: cancellation observed during the row loop must finalize
+        // the partial batch and leave the connection usable.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        public void WriteToServerAsyncWithMidBatchCancellationShouldCommitRowsReadBeforeCancellation()
+        {
+            string tableName = DataTestUtility.GetShortName("BulkMidCancel");
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            connection.Open();
+
+            try
+            {
+                CreateSingleIntColumnTable(connection, tableName);
+                using CancellationTokenSource cts = new CancellationTokenSource();
+                ScriptedDbDataReader reader = new ScriptedDbDataReader((readNumber, _) =>
+                {
+                    if (readNumber == 2)
+                    {
+                        cts.Cancel();
+                    }
+
+                    return Task.FromResult(true);
+                });
+
+                using SqlBulkCopy bulkCopy = new SqlBulkCopy(connection)
+                {
+                    DestinationTableName = tableName,
+                };
+
+                Task writeTask = bulkCopy.WriteToServerAsync(reader, cts.Token);
+                Assert.Throws<AggregateException>(() => writeTask.Wait());
+
+                Assert.True(writeTask.IsCanceled, "Expected a Canceled task; actual status: " + writeTask.Status);
+                Assert.False(writeTask.IsFaulted, "Mid-batch cancellation must not be Faulted.");
+                Assert.Equal(2, GetRowCount(connection, tableName));
+            }
+            finally
+            {
+                DataTestUtility.DropTable(connection, tableName);
+            }
+        }
+
+#if DEBUG
+        // The DEBUG-only hook makes the pending-write continuations deterministic,
+        // covering CopyColumnsAsyncContinued and the async row loop without relying
+        // on network timing.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        public void WriteToServerAsyncWithPendingWritesShouldCompleteAndKeepConnectionUsable()
+        {
+            string tableName = DataTestUtility.GetShortName("BulkPendingWrite");
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            connection.Open();
+
+            try
+            {
+                CreateSingleIntColumnTable(connection, tableName);
+                ScriptedDbDataReader reader = new ScriptedDbDataReader(
+                    (readNumber, _) => Task.FromResult(readNumber < 3));
+
+                using SqlBulkCopy bulkCopy = new SqlBulkCopy(connection)
+                {
+                    DestinationTableName = tableName,
+                };
+
+                PropertyInfo writeHook = typeof(SqlBulkCopy).GetProperty(
+                    "SetAlwaysTaskOnWrite",
+                    BindingFlags.Static | BindingFlags.NonPublic);
+                Assert.NotNull(writeHook);
+                bool previous = (bool)writeHook.GetValue(null);
+                try
+                {
+                    writeHook.SetValue(null, true);
+                    bulkCopy.WriteToServerAsync(reader, CancellationToken.None).GetAwaiter().GetResult();
+                }
+                finally
+                {
+                    writeHook.SetValue(null, previous);
+                }
+
+                Assert.Equal(3, GetRowCount(connection, tableName));
+            }
+            finally
+            {
+                DataTestUtility.DropTable(connection, tableName);
+            }
+        }
+#endif
 
         private static void CreateSingleIntColumnTable(SqlConnection connection, string tableName)
         {
@@ -240,6 +544,31 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
             using SqlCommand command = connection.CreateCommand();
             command.CommandText = $"select count(*) from {tableName}";
             return (int)command.ExecuteScalar();
+        }
+
+        // A single-int-column reader whose ReadAsync behavior is scripted by read number.
+        // The delegate may return a completed, faulted, or canceled task, or throw
+        // synchronously, allowing the bulk-copy status boundaries to be tested without
+        // depending on network timing.
+        private sealed class ScriptedDbDataReader : SingleIntColumnDbDataReader
+        {
+            private readonly Func<int, CancellationToken, Task<bool>> _readFactory;
+            private int _rowsRead;
+
+            public ScriptedDbDataReader(Func<int, CancellationToken, Task<bool>> readFactory)
+            {
+                _readFactory = readFactory;
+            }
+
+            public override int GetInt32(int ordinal) => _rowsRead;
+
+            public override object GetValue(int ordinal) => _rowsRead;
+
+            public override Task<bool> ReadAsync(CancellationToken cancellationToken)
+            {
+                int readNumber = _rowsRead++;
+                return _readFactory(readNumber, cancellationToken);
+            }
         }
 
         // A single-int-column reader that returns a configurable number of rows and
