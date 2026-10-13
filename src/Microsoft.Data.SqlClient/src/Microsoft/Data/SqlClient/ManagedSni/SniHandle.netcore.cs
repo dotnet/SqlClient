@@ -11,6 +11,7 @@ using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.Parser;
 
 namespace Microsoft.Data.SqlClient.ManagedSni
@@ -123,6 +124,13 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// Gets a value that indicates the security protocol used to authenticate this connection.
         /// </summary>
         public virtual SslProtocols ProtocolVersion { get; } = 0;
+
+        /// <summary>
+        /// Gets the server certificate details captured during the most recent TLS handshake on
+        /// this handle, or <see langword="null"/> if the certificate validation callback has not
+        /// run since TLS was last enabled.
+        /// </summary>
+        public virtual ServerCertificateCapture ServerCertificateCapture => null;
 
         #if DEBUG
         /// <summary>

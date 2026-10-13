@@ -6,6 +6,7 @@
 using System.Net.Security;
 #endif
 using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
 
 #nullable enable
 
@@ -30,6 +31,18 @@ namespace Microsoft.Data.SqlClient.Connection
     internal sealed class EncryptionInfoCapture
     {
         /// <summary>
+        /// Gets the SHA-256 hash of the presented server certificate for the current attempt, or
+        /// <see langword="null"/> if the transport did not observe a presented certificate.
+        /// </summary>
+        public byte[]? CertificateHash256 { get; private set; }
+
+        /// <summary>
+        /// Gets the combined chain status flags for the current attempt, or <see langword="null"/>
+        /// if the chain was not consulted or is unavailable.
+        /// </summary>
+        public X509ChainStatusFlags? ChainStatus { get; private set; }
+
+        /// <summary>
         /// Gets the IANA TLS cipher suite identifier negotiated for the current attempt, or
         /// <see langword="null"/> if the transport did not report one.
         /// </summary>
@@ -38,7 +51,13 @@ namespace Microsoft.Data.SqlClient.Connection
         /// <summary>
         /// Gets a value indicating whether any value has been captured for the current attempt.
         /// </summary>
-        public bool HasValues => Mode is not null || Protocol is not null || CipherSuite is not null;
+        public bool HasValues =>
+            Mode is not null ||
+            Protocol is not null ||
+            CipherSuite is not null ||
+            CertificateHash256 is not null ||
+            ValidationErrors is not null ||
+            ChainStatus is not null;
 
         /// <summary>
         /// Gets the final negotiated encryption mode for the current attempt, or
@@ -51,6 +70,12 @@ namespace Microsoft.Data.SqlClient.Connection
         /// if no TLS handshake completed or the transport did not report a protocol.
         /// </summary>
         public SslProtocols? Protocol { get; private set; }
+
+        /// <summary>
+        /// Gets SqlClient's effective certificate validation verdict for the current attempt, or
+        /// <see langword="null"/> if SqlClient did not evaluate the certificate.
+        /// </summary>
+        public SqlServerCertificateValidationErrors? ValidationErrors { get; private set; }
 
         /// <summary>
         /// Applies the failure-path rule for a TLS failure on the current attempt: the negotiated
@@ -113,6 +138,31 @@ namespace Microsoft.Data.SqlClient.Connection
         }
 
         /// <summary>
+        /// Records the server certificate details observed by the transport during the TLS
+        /// handshake. A <see langword="null"/> <paramref name="capture"/> leaves the certificate
+        /// fields unavailable.
+        /// </summary>
+        /// <param name="capture">The transport's certificate capture, if any.</param>
+        public void RecordServerCertificate(ServerCertificateCapture? capture)
+        {
+            if (capture is null)
+            {
+                return;
+            }
+
+            CertificateHash256 = capture.Hash256;
+            ValidationErrors = capture.ValidationErrors;
+            ChainStatus = capture.ChainStatus;
+
+            // A protocol already determined for this attempt takes precedence over one reported
+            // alongside the certificate details.
+            if (Protocol is null && capture.Protocol is SslProtocols protocol && protocol != SslProtocols.None)
+            {
+                Protocol = protocol;
+            }
+        }
+
+        /// <summary>
         /// Clears all captured values. Called at the start of each physical login attempt.
         /// </summary>
         public void Reset()
@@ -120,6 +170,9 @@ namespace Microsoft.Data.SqlClient.Connection
             Mode = null;
             Protocol = null;
             CipherSuite = null;
+            CertificateHash256 = null;
+            ValidationErrors = null;
+            ChainStatus = null;
         }
 
         /// <summary>
@@ -127,18 +180,18 @@ namespace Microsoft.Data.SqlClient.Connection
         /// <see cref="SqlConnectionEncryptionInfo.Empty"/> when nothing was captured.
         /// </summary>
         /// <remarks>
-        /// Certificate fields are never inferred here; they remain unavailable. On .NET the captured
-        /// identifier, already limited to <c>0</c>..<c>0xFFFF</c> by <see cref="RecordCipherSuite"/>,
-        /// is converted to <c>TlsCipherSuite</c> at this boundary.
+        /// Certificate fields are never inferred here; they are published only as recorded by the
+        /// transport. On .NET the captured identifier, already limited to <c>0</c>..<c>0xFFFF</c> by
+        /// <see cref="RecordCipherSuite"/>, is converted to <c>TlsCipherSuite</c> at this boundary.
         /// </remarks>
         public SqlConnectionEncryptionInfo ToSnapshot() =>
             HasValues
                 ? new SqlConnectionEncryptionInfo(
                     negotiatedEncryptionMode: Mode,
                     negotiatedEncryptionProtocol: Protocol,
-                    presentedServerCertificate: null,
-                    validationErrors: null,
-                    chainStatus: null,
+                    presentedServerCertificate: CertificateHash256,
+                    validationErrors: ValidationErrors,
+                    chainStatus: ChainStatus,
 #if NET
                     negotiatedCipherSuite: (TlsCipherSuite?)CipherSuite)
 #else
