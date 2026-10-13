@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -120,5 +120,20 @@ namespace Microsoft.Data.SqlClient.Tests
             InvalidCastException ex = Assert.Throws<InvalidCastException>(() => collection.Add(new SqlCommand()));
             Assert.Contains("Microsoft.Data.SqlClient.SqlCommand", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
+
+        #if NETFRAMEWORK
+        [Fact]
+        public void CollectionObsoleteAdd_Succeeds()
+        {
+            SqlCommand command = new();
+            SqlParameterCollection collection = command.Parameters;
+
+            #pragma warning disable CS0618 // Type or member is obsolete
+            collection.Add("@Test", 1);
+            #pragma warning restore CS0618
+            Assert.Equal(1, collection.Count);
+            Assert.Equal("@Test", collection[0].ParameterName);
+        }
+        #endif
     }
 }
