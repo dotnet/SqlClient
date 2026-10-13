@@ -92,6 +92,11 @@ For these configured local accounts, SSPI can return `user@machine` while SQL
 returns `machine\user`; the experiment recognizes both exact account forms,
 logs the raw names, and independently verifies SQL's SAM-form login and SID.
 This is not general domain-alias normalization or a production pool-key rule.
+Matched no-prequery and SSPI-prequery controls reuse the passing regression
+preflight's unpooled open path and record logon-session IDs. A separate
+cacheable/recompiled SQL comparison distinguishes context-sensitive scalar
+results from the original authenticated login; normal identity probes recompile
+the statement and retain strict configured-login and SID assertions.
 The additional credentials are mapped through `SQLCLIENT_NETONLY_PEER_USER`,
 `SQLCLIENT_NETONLY_PEER_DOMAIN`, and `SQLCLIENT_NETONLY_PEER_PASSWORD`.
 Nothing is provisioned on the developer machine.

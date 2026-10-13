@@ -199,6 +199,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Pooling = false,
                 MinPoolSize = 0
             }.ConnectionString;
+            Log("Control/cacheable-process", "(no SSPI query)", await ReadLogin(connectionString, async, false));
             using SafeAccessTokenHandle control = CreateToken(false);
             using SafeAccessTokenHandle queried = CreateToken(false);
             string controlLogin = await WindowsIdentity.RunImpersonated(control, async () =>
@@ -207,6 +208,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 string login = await PoolIdentityImpersonationTest.GetLogin(connectionString, async);
                 _output.WriteLine($"Control/no-SSPI: beforeOpenAuthenticationId={beforeOpen}; "
                     + $"afterOpenAuthenticationId={Statistics().AuthenticationId}; SQL={login}; async={async}.");
+                Login cached = await ReadLogin(connectionString, async, false);
+                Login recompiled = await ReadLogin(connectionString, async);
+                Log("Control/cacheable-A", "(no SSPI query)", cached);
+                Log("Control/recompiled-A", "(no SSPI query)", recompiled);
+                AssertName(Expected(false), cached.Original);
+                AssertLogin(recompiled, false);
                 return login;
             });
             string queriedLogin = await WindowsIdentity.RunImpersonated(queried, async () =>
@@ -287,8 +294,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             $"{label}: SSPI={name}; ORIGINAL_LOGIN={login.Original}; SUSER_SNAME={login.Current}; "
             + $"SUSER_SID={login.Sid}; auth_scheme={login.Authentication}; transport={login.Transport}.");
 
-        /// <summary>Reads authentication properties of the current session without server-level permissions.</summary>
-        private static async Task<Login> ReadLogin(string connectionString, bool async)
+        /// <summary>Reads current-session properties, normally recompiling context-sensitive scalar expressions.</summary>
+        private static async Task<Login> ReadLogin(string connectionString, bool async, bool recompile = true)
         {
             using var connection = new SqlConnection(connectionString);
             if (async) await connection.OpenAsync();
@@ -296,7 +303,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using var command = new SqlCommand(
                 "SELECT ORIGINAL_LOGIN(), SUSER_SNAME(), SUSER_SID(), "
                 + "CONVERT(varchar(30), CONNECTIONPROPERTY('auth_scheme')), "
-                + "CONVERT(varchar(30), CONNECTIONPROPERTY('net_transport'))", connection);
+                + "CONVERT(varchar(30), CONNECTIONPROPERTY('net_transport'))"
+                + (recompile ? " OPTION (RECOMPILE)" : ""), connection);
             using SqlDataReader reader = async ? await command.ExecuteReaderAsync() : command.ExecuteReader();
             Assert.True(async ? await reader.ReadAsync() : reader.Read());
             return new Login
