@@ -933,6 +933,10 @@ namespace Microsoft.Data.SqlClient.Parser
             _physicalStateObj.WritePacket(TdsEnums.HARDFLUSH);
         }
 
+        // SSL provider identifier reported in SNI error details; equal to SSL_PROV in both the
+        // native (Interop.Windows.Sni.Provider) and managed (ManagedSni.SniProviders) enums.
+        private const int SslProviderId = 6;
+
         private void EnableSsl(uint info, SqlConnectionEncryptOption encrypt, bool integratedSecurity, string serverCertificateFilename)
         {
             uint error = 0;
@@ -1806,6 +1810,17 @@ namespace Microsoft.Data.SqlClient.Parser
             Debug.Assert(SniContext.Undefined != stateObj.DebugOnlyCopyOfSniContext || ((_fMARS) && ((_state == TdsParserState.Closed) || (_state == TdsParserState.Broken))), "SniContext must not be None");
 #endif
             TdsParserStateObject.SniErrorDetails details = stateObj.GetErrorDetails();
+
+            if (details.Provider == SslProviderId)
+            {
+                // Native SNI (Schannel) defers server certificate verification, so EnableSsl can
+                // report success and the verdict only surfaces as an SSL provider error on the first
+                // post-handshake I/O (the LOGIN7 write). TLS was therefore never established for this
+                // attempt: discard the encryption details recorded by EnableSsl. Managed SNI only
+                // reports SSL provider errors from a failed handshake, before anything is recorded.
+                // After login completes the capture is released, so published snapshots are unaffected.
+                _connHandler?.EncryptionInfoCapture?.Reset();
+            }
 
             if (details.SniErrorNumber != 0)
             {
