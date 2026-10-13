@@ -177,8 +177,9 @@ attempt and reset for every routing, retry, and failover attempt.
 verification: `EnableSsl` reports success, and an untrusted or mismatched certificate only
 surfaces as an SNI error from the SSL provider on the first post-handshake I/O (the LOGIN7
 write). Because TLS was never established, any SNI error attributed to the SSL provider while
-a login attempt is in progress discards the mode and protocol recorded for that attempt, so
-`SqlException.EncryptionInfo` reports them as `null`. The check lives in
+a login attempt is in progress clears the negotiated mode and protocol recorded for that
+attempt (and only those; other captured state such as certificate details from later slices
+is kept), so `SqlException.EncryptionInfo` reports them as `null`. The check lives in
 `TdsParser.ProcessSNIError`, the single place every SNI error (sync and async, native and
 managed) becomes a `SqlError`. This was chosen over deferring the commit until a later packet
 exchange: it adds no state machine to the login path, and it keeps the values when TLS really
