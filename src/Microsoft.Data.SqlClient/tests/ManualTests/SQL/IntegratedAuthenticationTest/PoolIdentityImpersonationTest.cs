@@ -285,7 +285,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         /// <summary>Creates a unique pool group using the configured server and integrated security.</summary>
-        private static string BuildConnectionString(int loadBalanceTimeout = 0, int minPoolSize = 0)
+        internal static string BuildConnectionString(int loadBalanceTimeout = 0, int minPoolSize = 0)
         {
             string configured = Environment.GetEnvironmentVariable("SQLCLIENT_NETONLY_CONNECTION_STRING");
             var builder = new SqlConnectionStringBuilder(
@@ -306,7 +306,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         /// <summary>Opens and disposes a connection after reading its authenticated SQL login.</summary>
-        private static async Task<string> GetLogin(string connectionString, bool async)
+        internal static async Task<string> GetLogin(string connectionString, bool async)
         {
             using SqlConnection connection = await Open(connectionString, async);
             return await SelectLogin(connection, async);

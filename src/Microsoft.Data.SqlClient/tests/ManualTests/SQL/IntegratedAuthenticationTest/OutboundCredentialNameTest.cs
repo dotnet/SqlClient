@@ -42,6 +42,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public async Task OutboundName_UnpooledSqlAuthentication(bool async)
         {
             AssertConfiguration();
+            await DiagnosePrequery(async);
             string connectionString = ConnectionString();
             string processName = CredentialName();
             TokenStatistics processStatistics = Statistics();
@@ -190,14 +191,55 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private Task<Login> Probe(SafeAccessTokenHandle token, bool peer, string connectionString, bool async, string label) =>
             WindowsIdentity.RunImpersonated(token, () => ProbeCurrent(peer, connectionString, async, label));
 
+        /// <summary>Isolates name-query effects using the passing regression preflight's unpooled open path.</summary>
+        private async Task DiagnosePrequery(bool async)
+        {
+            string connectionString = new SqlConnectionStringBuilder(PoolIdentityImpersonationTest.BuildConnectionString())
+            {
+                Pooling = false,
+                MinPoolSize = 0
+            }.ConnectionString;
+            using SafeAccessTokenHandle control = CreateToken(false);
+            using SafeAccessTokenHandle queried = CreateToken(false);
+            string controlLogin = await WindowsIdentity.RunImpersonated(control, async () =>
+            {
+                string beforeOpen = Statistics().AuthenticationId.ToString();
+                string login = await PoolIdentityImpersonationTest.GetLogin(connectionString, async);
+                _output.WriteLine($"Control/no-SSPI: beforeOpenAuthenticationId={beforeOpen}; "
+                    + $"afterOpenAuthenticationId={Statistics().AuthenticationId}; SQL={login}; async={async}.");
+                return login;
+            });
+            string queriedLogin = await WindowsIdentity.RunImpersonated(queried, async () =>
+            {
+                string lookupId = Statistics().AuthenticationId.ToString();
+                string name = CredentialName();
+                string beforeOpen = Statistics().AuthenticationId.ToString();
+                string login = await PoolIdentityImpersonationTest.GetLogin(connectionString, async);
+                _output.WriteLine($"Control/acquire-query-free: SSPI={name}; lookupAuthenticationId={lookupId}; "
+                    + $"beforeOpenAuthenticationId={beforeOpen}; afterOpenAuthenticationId={Statistics().AuthenticationId}; "
+                    + $"SQL={login}; async={async}.");
+                Assert.Equal(lookupId, beforeOpen);
+                AssertCredentialName(false, name);
+                return login;
+            });
+            AssertName(Expected(false), controlLogin);
+            AssertName(Expected(false), queriedLogin);
+        }
+
         /// <summary>Checks the preconnection name and the authenticated SQL name and SID.</summary>
         private async Task<Login> ProbeCurrent(bool peer, string connectionString, bool async, string label)
         {
+            string lookupId = Statistics().AuthenticationId.ToString();
             string name = CredentialName();
             AssertCredentialName(peer, name);
+            string beforeOpen = Statistics().AuthenticationId.ToString();
             Login login = await ReadLogin(connectionString, async);
-            AssertLogin(login, peer);
             Log(label, name, login);
+            _output.WriteLine($"{label}: lookupAuthenticationId={lookupId}; beforeOpenAuthenticationId={beforeOpen}; "
+                + $"afterOpenAuthenticationId={Statistics().AuthenticationId}; async={async}; "
+                + $"managedSNI={DataTestUtility.UseManagedSNIOnWindows}.");
+            Assert.Equal(lookupId, beforeOpen);
+            AssertLogin(login, peer);
             return login;
         }
 
