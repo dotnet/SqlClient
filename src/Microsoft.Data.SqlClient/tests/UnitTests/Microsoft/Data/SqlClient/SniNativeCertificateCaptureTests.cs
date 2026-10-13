@@ -599,6 +599,40 @@ namespace Microsoft.Data.SqlClient.UnitTests
         }
 
         [Fact]
+        public void EncryptionInfoCapture_DeferredValidationFailure_KeepsCertificateFieldsAndClearsNegotiated()
+        {
+            // Native ChainPolicy failure: EnableSsl and the handshake wait report success, so the
+            // certificate details and the negotiated values are recorded; the verdict then surfaces as
+            // an SSL provider error on the LOGIN7 write, and ProcessSNIError calls ClearNegotiated.
+            byte[] hash = Hash(7);
+            const uint available = 0x1 | 0x2 | 0x4 | 0x8 | 0x10;
+            ServerCertificateCapture? certificate = SniNativeCertificateCapture.Map(Build(
+                available,
+                mode: 3,
+                protocol: 0x800,
+                errors: (uint)(SqlServerCertificateValidationErrors.HostNameMismatch | SqlServerCertificateValidationErrors.ChainError),
+                chain: (uint)X509ChainStatusFlags.UntrustedRoot,
+                cbHash: 32,
+                hash: hash));
+
+            var capture = new EncryptionInfoCapture();
+            capture.Reset();
+            capture.RecordServerCertificate(certificate);
+            capture.Record(SqlConnectionEncryptionMode.Full, SslProtocols.None);
+            Assert.Equal(SslProtocols.Tls12, capture.Protocol);
+
+            capture.ClearNegotiated();
+
+            Assert.True(capture.HasValues);
+            SqlConnectionEncryptionInfo snapshot = capture.ToSnapshot();
+            Assert.Null(snapshot.NegotiatedEncryptionMode);
+            Assert.Null(snapshot.NegotiatedEncryptionProtocol);
+            Assert.Equal(hash, snapshot.PresentedServerCertificateHash256!.Value.ToArray());
+            Assert.Equal(SqlServerCertificateValidationErrors.HostNameMismatch | SqlServerCertificateValidationErrors.ChainError, snapshot.ValidationErrors);
+            Assert.Equal(X509ChainStatusFlags.UntrustedRoot, snapshot.ChainStatus);
+        }
+
+        [Fact]
         public void EncryptionInfoCapture_ResetClearsTransportProtocol()
         {
             var capture = new EncryptionInfoCapture();
