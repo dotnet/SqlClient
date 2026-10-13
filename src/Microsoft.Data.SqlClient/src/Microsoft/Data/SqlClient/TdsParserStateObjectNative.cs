@@ -451,6 +451,14 @@ namespace Microsoft.Data.SqlClient
         internal override uint WaitForSSLHandShakeToComplete(out SslProtocols protocolVersion) =>
             SniNativeWrapper.SniWaitForSslHandshakeToComplete(Handle, GetTimeoutRemaining(), out protocolVersion);
 
+        /// <summary>
+        /// Reads the certificate details native SNI recorded for the most recent TLS handshake on this
+        /// connection. Native SNI keeps them until the handle is closed, including after a failed
+        /// handshake. Returns <see langword="null"/> when the loaded SNI library does not support it.
+        /// </summary>
+        internal override Connection.ServerCertificateCapture GetServerCertificateCapture() =>
+            _sessionHandle is null ? null : SniNativeCertificateCapture.Default.TryCapture(_sessionHandle);
+
         internal override SniErrorDetails GetErrorDetails()
         {
             SniNativeWrapper.SniGetLastError(out SniError sniError);

@@ -977,6 +977,11 @@ namespace Microsoft.Data.SqlClient
 #endif
             {
                 error = _physicalStateObj.WaitForSSLHandShakeToComplete(out protocol);
+
+                // For an asynchronous native handshake the certificate details are complete only once
+                // the handshake wait returns; refresh them before any failure is reported.
+                _connHandler?.EncryptionInfoCapture?.RecordServerCertificate(_physicalStateObj.GetServerCertificateCapture());
+
                 if (error != TdsEnums.SNI_SUCCESS)
                 {
                     RecordFailedTlsAttempt(encrypt);
