@@ -46,8 +46,10 @@ param(
     # Best-of-N: total interleaved passes for a flagged unit before a regression is confirmed.
     [ValidateRange(1, [int]::MaxValue)]
     [int]$ConfirmationRuns = 3,
-    [ValidateSet("default", "openasync-preliminary")]
+    [ValidateSet("default", "openasync-preliminary", "openasync-scoreboard", "openasync-controls")]
     [string]$BenchmarkProfile = "default",
+    [ValidateRange(1, [int]::MaxValue)]
+    [int]$ScoreboardRepetitions = 3,
     # Optional SqlClient behaviour flags (true/false, or empty to leave the checked-in
     # runnerconfig.jsonc default untouched).  Written into the runner config the benchmarks run
     # against and, via the pipeline's Kusto translation, recorded in PerfRun.Config.
@@ -71,11 +73,14 @@ param(
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
-if ($BenchmarkProfile -eq "openasync-preliminary") {
+if ($BenchmarkProfile -ne "default") {
     if ($FailOnRegression) {
-        throw "openasync-preliminary is report-only; -FailOnRegression is not allowed."
+        throw "The selected profile is report-only; -FailOnRegression is not allowed."
     }
-    Write-Host "Preliminary profile: per-case processes, one pass, no regression confirmation reruns."
+    if ($BenchmarkProfile -eq "openasync-scoreboard" -and $BaselineVersion -and $UseConnectionPoolV2 -eq "true") {
+        throw "Package baseline V2 support is not established; run the package comparison with legacy pooling and current V2 separately."
+    }
+    Write-Host "Selected profile: per-unit processes, no regression-triggered reruns."
     $ConfirmationRuns = 1
 }
 
@@ -389,7 +394,7 @@ function Write-RunnerConfig {
     Set-CfgBool $cfg "UseOptimizedAsyncBehaviour" $asyncValue
     Set-CfgBool $cfg "UseConnectionPoolV2" $poolValue
     $cfg | ConvertTo-Json -Depth 10 | Set-Content -Path $Dst -Encoding UTF8
-    if ($BenchmarkProfile -eq "openasync-preliminary") {
+    if ($BenchmarkProfile -ne "default") {
         $profileCode = @'
 import json, sys
 sys.path.insert(0, sys.argv[1])
@@ -792,7 +797,7 @@ if (-not [string]::IsNullOrEmpty($BaselineLabel)) {
     Set-Content -Path (Join-Path $ResultsDir "baseline-label.txt") -Value $BaselineLabel -Encoding ascii
 }
 
-if (((-not [string]::IsNullOrEmpty($BaselineLabel)) -and ($RunMode -eq "interleaved")) -or ($BenchmarkProfile -eq "openasync-preliminary")) {
+if (((-not [string]::IsNullOrEmpty($BaselineLabel)) -and ($RunMode -eq "interleaved")) -or ($BenchmarkProfile -ne "default")) {
     ####################################################################################################
     # Interleaved + best-of-N (wiki 339 §2.2/§2.3/§2.6).  Build both variants once, then let the
     # orchestrator run one unit at a time (baseline then candidate) and confirm any flagged
@@ -821,12 +826,13 @@ if (((-not [string]::IsNullOrEmpty($BaselineLabel)) -and ($RunMode -eq "interlea
         "--reps", $ConfirmationRuns,
         "--baseline-version=$BaselineLabel",
         "--client-cpus=$($env:PERF_CLIENT_CPUS)",
-        "--benchmark-profile", $BenchmarkProfile
+        "--benchmark-profile", $BenchmarkProfile,
+        "--scoreboard-repetitions", $ScoreboardRepetitions
     )
     if (-not [string]::IsNullOrEmpty($baselineExeDir)) {
         $interleaveArgs += @("--baseline-exe-dir", $baselineExeDir)
     }
-    if ($BenchmarkProfile -eq "openasync-preliminary") {
+    if ($BenchmarkProfile -ne "default") {
         $interleaveArgs += @("--unit-timeout-minutes", "10")
     }
     # -SwitchUnderTest: baseline and current subprocesses need DIFFERENT RUNNER_CONFIG values (the

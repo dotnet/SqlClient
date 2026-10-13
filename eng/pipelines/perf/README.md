@@ -66,7 +66,8 @@ context variables are available (the VM is behind NAT and lacks the pipeline ide
 | `regressionThreshold` | `10` | Percent slowdown (current vs baseline mean) flagged as a regression. |
 | `failOnRegression` | `false` | When `true`, a candidate-slower regression **fails** the run (gate). In interleaved mode only **confirmed** regressions (best-of-N majority) fail. Default off. |
 | `benchmarkRunMode` | `interleaved` | `interleaved` (per-unit baseline↔candidate + best-of-N confirmation) or `sequential` (legacy two full passes). |
-| `benchmarkProfile` | `default` | `default` preserves the normal suite; `openasync-preliminary` selects the bounded, report-only E1–E4 scoreboard described below. Available in all three existing pipelines. |
+| `benchmarkProfile` | `default` | `default` preserves the normal suite; `openasync-preliminary` selects the original E1–E4 matrix; `openasync-scoreboard` selects v2 E1–E6, Sampled + Diagnostic; `openasync-controls` selects the existing M1/M2 controls. All three existing pipelines expose this option. |
+| `scoreboardRepetitions` | `3` | Independent, predeclared process repetitions for `openasync-scoreboard` only. Not best-of-N. Preliminary remains one process repetition. |
 | `confirmationRuns` | `3` | Best-of-N: interleaved passes for a flagged unit before a regression is confirmed. `1` disables confirmation. Interleaved mode only. |
 | `useManagedSniOnWindows` | `false` | SqlClient `UseManagedSniOnWindows` flag. Applied to the runner config for **both** passes on the VM and recorded in `PerfRun.Config`. Default matches the checked-in `runnerconfig.jsonc`. |
 | `useOptimizedAsyncBehaviour` | `true` | SqlClient `UseOptimizedAsyncBehaviour` flag. Applied to both passes and recorded in `PerfRun.Config`. Default matches `runnerconfig.jsonc`. |
@@ -127,6 +128,10 @@ Their rows retain **each invocation separately**, including:
 - success/canceled/failed outcomes, worker admission timings and peak outstanding/open counts;
 - CPU, process allocation and GC deltas, process/ThreadPool thread snapshots, and runtime/driver metadata.
 
+The preliminary profile also accepts schema-v2 Sampled artifacts from the extended runner,
+without changing its 24 cases, 16 operations (E4: one), zero warmups or single process repetition.
+Legacy schema-v1 artifacts retain their existing strict validation.
+
 Absent task timings are **N/A/null**, never zero. Missing reports, missing/duplicate samples or
 invocations, incompatible case metadata, non-finite/negative durations, failed/canceled opens, and
 BDN errors fail the run. These are **preliminary instrumented measurements**, not phase-compliance
@@ -139,6 +144,141 @@ Run the SQL-independent Python regression tests from the repository root:
 
 ```powershell
 python -B -m unittest discover -s eng\pipelines\perf\scripts\tests -p test_openasync_report.py
+```
+
+### Existing M1/M2 controls
+
+Select `benchmarkProfile: openasync-controls` to run only the existing
+`SqlConnectionRunnerConfig` and `ConnectionPoolChurnRunnerConfig` workloads separately from
+the instrumented scoreboard. The profile changes **only enable flags**: existing workload
+definitions, data settings, and BDN job tuning remain unchanged; every other benchmark is disabled.
+It reuses both run scripts and the same three pipeline YAMLs. Script selection is
+`--benchmark-profile openasync-controls` / `-BenchmarkProfile openasync-controls`.
+
+Controls produce normal BDN reports and the existing `summary.md` / `comparison/` outputs,
+not scoreboard-schema artifacts. They are report-only: leave `failOnRegression=false`
+(`failIfSwitchSlower=false` in the experiment pipeline); requesting the gate is rejected.
+Confirmation is fixed to one pass with no regression-triggered best-of-N reruns.
+`scoreboardRepetitions` does not apply. Current-only runs omit the baseline selector;
+compatible baseline and same-source switch comparisons still use the existing entrypoints.
+The `default` profile's workload selection and regression policies are unchanged.
+
+### Full OpenAsync scoreboard (schema v2)
+
+Select `benchmarkProfile: openasync-scoreboard`, `scoreboardRepetitions: 3`,
+`platform: linux`, `failOnRegression: false` (experiment: `failIfSwitchSlower: false`).
+For initial current-only execution, explicitly clear `baselineVersion` (main pipeline) or
+`baselineSourceRef` (PR pipeline). Keep `enableKustoIngestion: false` for the main pipeline:
+the existing translator is BDN-only and does not replace the v2 supplemental report.
+Scripts accept `--scoreboard-repetitions N` / `-ScoreboardRepetitions N`.
+
+This profile selects 96 cases: E1–E6 × Sync/Async × concurrency 1/8/32/64 ×
+Sampled/Diagnostic. Sampled selectors retain the four-component form;
+Diagnostic appends `-Diagnostic`. It uses Monitoring, one launch/invocation, three actual
+iterations and **two retained warmup iterations**, 64 operations per worker (E4: one),
+pool capacity four for E2/E6, and 10 ms holds there. E6 independently offers Baseline,
+Overload and Recovery phases of 2,000 ms each, at 25/800/25 requests per second, into
+a bounded queue of 64. Offers—including rejections—are retained and checked against the
+predeclared schedule. Only accepted offers generate open samples; all accepted requests must drain.
+The fixed 25/s baseline/recovery rate leaves recovery headroom even at concurrency one with 10 ms holds;
+100/s would not be safely below that configuration's service capacity.
+E5 uses the same asynchronous `SELECT 1` query after both opening APIs.
+
+The existing launcher executes each case in a new process for each predeclared repetition.
+Odd repetitions run Sync before Async and baseline before current; even repetitions reverse both.
+No measurements are selected or discarded based on observed performance. The ten-minute
+process-tree watchdog still bounds each case. Artifacts are isolated under
+`repetitions/repN/<variant>/<case>/`; warmups stay in their own `warmup/` subdirectory,
+never counted toward the three measured invocations. Process repetition, PID, RunId, stage,
+and invocation remain attached to every supplemental summary row.
+Each preliminary/full scoreboard process launch receives a fresh `PERF_RUN_ID` UUID
+and `PERF_PROCESS_REPETITION`; the runner retains that identity across its invocations.
+
+`openasync-summary.json` retains per-invocation open/return/pending-return distributions,
+completed-at-return fraction, E4 common-epoch completion distribution, E5 lifecycle/query
+distributions, and E6 phase offered/accepted/rejected/started/completed counts, offer lateness,
+admission and offered-to-post-close tails, backlog at phase boundaries, and remaining drain.
+E6 fixed windows begin at the recorded `Load.GenerationStartMilliseconds`, not invocation
+epoch zero. `Offered`/`Accepted`/`Rejected` and `OfferCohort*` fields describe the
+scheduled offer phase; `ActuallyOffered`/`ActuallyAccepted`/`ActuallyRejected`,
+`Started`, `OpenCompleted`, and post-close `Completed` count wall-clock activity
+within each window across **all** offer cohorts. Thus overload-offered requests
+finishing in Recovery contribute to Recovery activity and completion-window tails.
+`CompletedByOfferPhase` preserves that distinction. Boundary backlog counts accepted
+actual offers at or before the boundary minus their lifecycle completions at or before
+it. Recovery additionally has predeclared overlapping late-half (last 1,000 ms) and
+late-quarter (last 500 ms) windows; these are not additional independent samples.
+Post-schedule generation delay and final drain have separate activity/backlog rows.
+Activity windows are start-inclusive/end-exclusive, except final drain includes its end.
+E6 sample counts come from accepted offers; configured operations-per-worker is metadata,
+not an expected sample count.
+Repetition variability lists the independent throughput values and their standard deviation,
+matching invocation positions; it **does not pool percentile samples**. Warmups are labeled
+separately. Process-wide resource counters are not per-operation attribution.
+
+Comparisons require matching workload version, shape, instrumentation, connection settings,
+and load options—not equal driver or runtime versions. Requested switches are retained, but
+their presence is **not evidence that an older package implements them**. Package baselines
+(including 7.0.2) must be run with legacy pooling; scripts reject combining a package baseline
+with `UseConnectionPoolV2=true`. Run current-source V2 separately, or use the existing
+same-source switch experiment. No numerical performance gates are enabled.
+
+#### Diagnostic evidence and limitations
+
+The managed Diagnostic observer records independent 10 ms resource snapshots and bounded
+unrelated ThreadPool probes. The report checks probe accounting, retains dropped probes and
+work outstanding when measurement stopped, and separates post-workload drainage. Busy-worker
+counts are an availability-derived proxy, **not blocked-thread evidence**. Last-GC polling
+retains observed pauses and the number of missed collections, not a complete GC event timeline.
+Workload peaks use only `AfterWorkload=false` snapshots whose timestamps do not exceed
+`min(Diagnostics.WindowEndMilliseconds, ElapsedMilliseconds)`. CPU/allocation/GC counters are cumulative: the report takes last-minus-first
+in-window deltas, never sums them. Insufficient in-window observations yield null, not zero.
+Probes that finish after the workload are retained and labeled `PostWorkload`; their distribution
+is separate from probes completed within the measurement window.
+
+The existing Python launcher additionally observes the atomic `diagnostic-invocation.json`
+marker, collecting only when the matching PID/case is active in `WorkloadActual`:
+
+After process exit, the observer reconciles all three actual windows from their exported
+`StartedUtc`/`CompletedUtc` fields, including invocations whose markers were never observed.
+Missing observation opportunities produce `InsufficientWindowSamples`; they do not require
+artificial waits in the workload. Missing/malformed exported windows and collector/tool errors
+still fail. Capture intervals are checked against those windows before attributing observations.
+`Covered` means at least one fully contained capture from each requested external collector;
+it does **not** mean complete temporal coverage or that every blocked thread was observed.
+
+- Raw `dotnet-stack report` snapshots plus exact observed thread counts containing **both**
+  a SqlClient open frame and a recognized blocking primitive. Total thread count is never
+  used to infer blocked opens.
+- SQLCMD DMV snapshots of active user requests, runnable/running tasks, scheduler queues,
+  session/connection counts, cumulative waits and their deltas. Scheduler-monitor SQL process
+  CPU is nullable when unavailable. These are **instance-wide**, include observer overhead,
+  and are not attributed exclusively to the benchmark.
+
+Raw files and structured start/end timestamps are preserved in `external-diagnostics/`.
+Snapshots crossing an invocation boundary are explicitly `AmbiguousBoundary`, not proof of
+what happened inside that invocation. Completely out-of-window captures are `OutsideActual`;
+neither becomes a cohort stack/server metric. A marker-only observer can miss a very short invocation:
+prepared, successful collectors then report **`InsufficientWindowSamples`**, retaining the coverage
+counts and raw intervals, with null cohort metrics—not zero blocked threads or a proven pass. Collector
+errors, malformed output, timeouts, missing SQL permissions and unsupported capability fail
+the case. Required SQL access includes the server-state/performance-state DMV permissions for
+the server version; a separate, explicitly unmeasured capability preflight checks these even when
+the cohorts are too short to observe. Credentials come only from the provisioned environment and are passed to
+SQLCMD through `SQLCMDPASSWORD`, never serialized or printed.
+
+No `dotnet-stack` pin exists in the repository tool manifest. On Linux the launcher checks its
+repository-local observer tool directory, installs **dotnet-stack 9.0.652701** only if absent,
+and verifies that version. Tool install, captures, snapshot count and shutdown are bounded.
+The full Diagnostic matrix currently fails explicitly on Windows; existing default and
+preliminary Windows paths are unchanged. Stack capture can suspend the client: **Diagnostic
+timings must not be compared with Sampled timings**. Missing native allocation attribution,
+complete GC pause traces, and dependency-phase evidence remain explicitly unavailable.
+
+Run both legacy and full-profile offline tests:
+
+```powershell
+python -B -m unittest discover -s eng\pipelines\perf\scripts\tests
 ```
 
 ### Kusto (Azure Data Explorer) ingestion variables

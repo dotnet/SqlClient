@@ -52,6 +52,13 @@ parameters:
     values:
       - default
       - openasync-preliminary
+      - openasync-scoreboard
+      - openasync-controls
+
+  - name: scoreboardRepetitions
+    displayName: Independent scoreboard process repetitions (not best-of-N)
+    type: number
+    default: 3
 
   # Target OS for the perf VM and the benchmark client.
   - name: platform
@@ -177,6 +184,12 @@ parameters:
 # KustoServiceConnection is empty, so the pipeline still runs + compares before the cluster/database/
 # service connection are provisioned.
 variables:
+  - ${{ if eq(parameters.platform, 'windows') }}:
+    - name: PerfArgsScoreboard
+      value: '-ScoreboardRepetitions ${{ parameters.scoreboardRepetitions }}'
+  - ${{ else }}:
+    - name: PerfArgsScoreboard
+      value: '--scoreboard-repetitions ${{ parameters.scoreboardRepetitions }}'
   - group: ADX Cluster Variables
 
   # Pre-computed testScriptArgs chunks (paulmedynski's review suggestion).  The Windows entry point
@@ -249,7 +262,7 @@ extends:
     # per-platform / baseline / fail-gate argument chunks are pre-computed in the 'variables' block
     # above (PerfArgsCommon / PerfArgsBaseline / PerfArgsFail); assemble them here.  Empty chunks
     # collapse to harmless extra spaces that both PowerShell and bash arg parsing ignore.
-    testScriptArgs: '$(PerfArgsCommon) $(PerfArgsBaseline) $(PerfArgsFail)'
+    testScriptArgs: '$(PerfArgsCommon) $(PerfArgsBaseline) $(PerfArgsFail) $(PerfArgsScoreboard)'
 
     # Subfolder (relative to testRootDir on the VM) the script writes results into.  The template
     # copies this VM folder back to the agent, but always lands it at a fixed location:

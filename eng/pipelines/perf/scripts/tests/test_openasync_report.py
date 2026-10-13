@@ -339,7 +339,12 @@ class ArtifactTests(unittest.TestCase):
             self.assertEqual(run.call_count, 24 * variants)
             for call in run.call_args_list:
                 expected = "baseline-config" if "baseline" in Path(call.args[3]).parts else "current-config"
-                self.assertEqual(call.kwargs["env_overrides"], {"RUNNER_CONFIG": expected})
+                environment = call.kwargs["env_overrides"]
+                self.assertEqual(environment["RUNNER_CONFIG"], expected)
+                self.assertEqual(environment["PERF_PROCESS_REPETITION"], "1")
+                self.assertTrue(environment["PERF_RUN_ID"])
+            self.assertEqual(len({call.kwargs["env_overrides"]["PERF_RUN_ID"]
+                                  for call in run.call_args_list}), 24 * variants)
             summary = json.loads((output / "openasync-summary.json").read_text())
             self.assertEqual(len(summary["Invocations"]), 72 * variants)
             comparison = json.loads((output / "comparison" / "comparison.json").read_text())

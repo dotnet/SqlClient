@@ -59,6 +59,7 @@ runMode="interleaved"
 # Best-of-N: total interleaved passes for a flagged unit before a regression is confirmed (1 disables).
 confirmationRuns="3"
 benchmarkProfile="default"
+scoreboardRepetitions="3"
 # Optional SqlClient behaviour flags (true/false).  Empty means "leave the checked-in runnerconfig
 # default untouched".  These are written into the runner config the benchmarks run against AND, via
 # the pipeline's Kusto translation (--config-override), recorded in PerfRun.Config so a run's
@@ -84,7 +85,7 @@ usage() {
          "--switch-under-test <${SUPPORTED_SWITCHES[*]}>]" \
          "[--regression-threshold <pct>] [--fail-on-regression]" \
          "[--run-mode interleaved|sequential] [--confirmation-runs <N>]" \
-         "[--benchmark-profile default|openasync-preliminary]" \
+         "[--benchmark-profile default|openasync-preliminary|openasync-scoreboard|openasync-controls] [--scoreboard-repetitions <N>]" \
          "[--use-managed-sni-on-windows true|false] [--use-optimized-async-behaviour true|false]" \
          "[--use-connection-pool-v2 true|false]" >&2
 }
@@ -103,6 +104,7 @@ while [[ $# -gt 0 ]]; do
         --run-mode) runMode="$2"; shift 2 ;;
         --confirmation-runs) confirmationRuns="$2"; shift 2 ;;
         --benchmark-profile) benchmarkProfile="$2"; shift 2 ;;
+        --scoreboard-repetitions) scoreboardRepetitions="$2"; shift 2 ;;
         --use-managed-sni-on-windows) useManagedSniOnWindows="$2"; shift 2 ;;
         --use-optimized-async-behaviour) useOptimizedAsyncBehaviour="$2"; shift 2 ;;
         --use-connection-pool-v2) useConnectionPoolV2="$2"; shift 2 ;;
@@ -113,16 +115,22 @@ done
 
 case "${benchmarkProfile}" in
     default) ;;
-    openasync-preliminary)
+    openasync-preliminary|openasync-scoreboard|openasync-controls)
         if [[ "${failOnRegression}" == "true" ]]; then
-            echo "ERROR: openasync-preliminary is report-only; --fail-on-regression is not allowed." >&2
+            echo "ERROR: the selected profile is report-only; --fail-on-regression is not allowed." >&2
             exit 2
         fi
-        echo "Preliminary profile: per-case processes, one pass, no regression confirmation reruns."
+        echo "Selected profile: per-unit processes, no regression-triggered reruns."
         confirmationRuns="1"
         ;;
     *) echo "ERROR: unknown --benchmark-profile '${benchmarkProfile}'." >&2; exit 2 ;;
 esac
+if ! [[ "${scoreboardRepetitions}" =~ ^[0-9]+$ ]] || [[ "${scoreboardRepetitions}" -lt 1 ]]; then
+    echo "ERROR: --scoreboard-repetitions must be positive." >&2; exit 2
+fi
+if [[ "${benchmarkProfile}" == "openasync-scoreboard" && -n "${baselineVersion}" && "${useConnectionPoolV2}" == "true" ]]; then
+    echo "ERROR: package baseline V2 support is not established; run the package comparison with legacy pooling and current V2 separately." >&2; exit 2
+fi
 
 # Validate queue-time inputs up front so a typo fails fast with a clear message instead of silently
 # falling back to a different code path (e.g. '--run-mode interleave' would otherwise run sequentially)
@@ -793,7 +801,7 @@ if [[ -n "${baselineLabel}" ]]; then
     printf '%s\n' "${baselineLabel}" > "${RESULTS_DIR}/baseline-label.txt"
 fi
 
-if [[ ( -n "${baselineLabel}" && "${runMode}" == "interleaved" ) || "${benchmarkProfile}" == "openasync-preliminary" ]]; then
+if [[ ( -n "${baselineLabel}" && "${runMode}" == "interleaved" ) || "${benchmarkProfile}" != "default" ]]; then
     ################################################################################################
     # Interleaved + best-of-N (wiki 339 §2.2/§2.3/§2.6).  Build both variants once, then let the
     # orchestrator run one unit at a time (baseline then candidate) and confirm any flagged
@@ -827,11 +835,12 @@ if [[ ( -n "${baselineLabel}" && "${runMode}" == "interleaved" ) || "${benchmark
         --baseline-version "${baselineLabel}"
         --client-cpus "${PERF_CLIENT_CPUS:-}"
         --benchmark-profile "${benchmarkProfile}"
+        --scoreboard-repetitions "${scoreboardRepetitions}"
     )
     if [[ -n "${baselineExeDir}" ]]; then
         interleave_args+=(--baseline-exe-dir "${baselineExeDir}")
     fi
-    if [[ "${benchmarkProfile}" == "openasync-preliminary" ]]; then
+    if [[ "${benchmarkProfile}" != "default" ]]; then
         interleave_args+=(--unit-timeout-minutes 10)
     fi
     # --switch-under-test: baseline and current subprocesses need DIFFERENT RUNNER_CONFIG values (the

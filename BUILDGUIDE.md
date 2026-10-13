@@ -652,7 +652,7 @@ $ dotnet run -c Release -f net10.0
 $ RUNNER_CONFIG=~/.configs/runnerconfig.jsonc dotnet run -c Release -f net10.0
 ```
 
-### Preliminary Open/OpenAsync scoreboard
+### Open/OpenAsync scoreboard
 
 The opt-in `openasync-preliminary` profile uses this same PerformanceTests project
 and the [existing perf pipeline](eng/pipelines/perf/README.md). It measures E1 warm
@@ -678,14 +678,37 @@ with later iterations without identifying them.
 Versioned `openasync-*.json` artifacts supplement the BDN reports with individual
 open/task-return timestamps, outcomes, admission delay, peak outstanding opens
 and owned connections, and process-wide CPU/allocation/GC/thread observations.
-Only BDN's actual workload stage emits these samples; warmup and extra diagnostic
-executions do not. BDN duration is a whole cohort, not an individual open.
+Only BDN's actual workload stage contributes to the measured distributions.
+Schema v2 retains warmup samples under a separate `warmup` directory; they must
+not be combined with actual samples. BDN duration is a whole cohort, not an individual open.
 Supplementary elapsed time includes worker admission, holds, closes and matched
 between-operation yields, but excludes SQL pool prewarming and JSON export.
 
-These are **instrumented, report-only preliminary results**, not proof of full
-async compliance or uninstrumented maximum throughput. This increment does not
-collect blocked-thread stacks, unrelated-work latency, server saturation, or
-phase-specific dependency evidence. Missing diagnostics are not zero values.
+For the expanded suite, select `benchmarkProfile: openasync-scoreboard`. It adds
+E5 matched open/query/close and E6 independently scheduled baseline/overload/recovery
+arrivals, concurrency 64, 64 operations per worker outside E4/E6, and separate
+Sampled/Diagnostic configurations. Each configuration has three independent
+process repetitions, with two warmup and three actual invocations per process.
+E6 uses 2-second phases, offered rates 25/800/25 per second, queue capacity 64,
+a four-connection pool, and matched 10 ms holds. Rejected offers remain in the
+results; accepted work is drained rather than truncated at the phase boundary.
+
+Diagnostic mode adds thread/queue/memory/GC timelines, independently scheduled
+unrelated-work probes, and external stack/SQL Server observations through the
+existing perf scripts. It cannot be launched directly without those collectors.
+Stack capture can pause the client; keep these results separate from Sampled
+performance. Short measurement windows may have insufficient external samples.
+Latest-GC polling is not a complete GC pause trace, and worker occupancy is not
+blocked-stack attribution. Probe drops and post-workload execution are reported.
+
+Use `benchmarkProfile: openasync-controls` for the existing M1/M2 BDN controls.
+Leave `currentOnly` false and select a baseline version to compare the same
+benchmark sources against a released package. Compare V2 in a separate
+current-source run; do not assume the package baseline supports that pool.
+
+These are **instrumented, report-only results**, not proof of full async
+compliance or uninstrumented maximum throughput. Controlled D-fixtures,
+phase-specific cancellation/failure/recovery and transactional profiles are not
+covered by this scoreboard. Missing diagnostics are not zero values.
 Failed opens, invalid accounting, missing artifacts and watchdog expiry fail
 the run; slow but valid measurements do not.

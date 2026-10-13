@@ -3,7 +3,7 @@
 ## Status and scope
 
 This plan implements the [test inventory](openasync-test-inventory.md) and
-[detailed cases](openasync-test-cases.md). Except for the initial implementation
+[detailed cases](openasync-test-cases.md). Except for the implementation
 status below, it records proposed changes, not completed coverage. The inventory's 32 active definitions and 47 detailed
 subcases retain their IDs; subcases and recovery combinations are not additional
 top-level definitions.
@@ -24,7 +24,7 @@ Paths below are relative to `src\Microsoft.Data.SqlClient\tests` unless stated
 otherwise. Suggested new class/file names may change to match nearby conventions;
 case IDs, responsibilities, and project ownership are the stable contract.
 
-### Initial performance implementation
+### Performance implementation
 
 The initial E1-E4 adapter is `PerformanceTests\BenchmarkRunners\OpenAsyncScoreboardRunner.cs`,
 selected through the existing registry/configuration and the opt-in
@@ -46,18 +46,46 @@ reset between that case's iterations.
 
 The supplementary schema records per-open/task-return observations, admission
 delay, actual peak outstanding/owned counts, failures and process-wide resource
-deltas. It excludes BDN warmup and diagnostic invocations through workload-stage
-signals. Export and pool setup/cleanup occur outside the timed benchmark.
+deltas. It separates actual and warmup samples through workload-stage signals;
+schema v2 retains warmup files in a separate directory. Export and pool
+setup/cleanup occur outside the timed benchmark.
 Infrastructure, acquisition or accounting failures invalidate the run.
 Source/package baseline selection remains the existing pipeline's responsibility.
 
-This is an **instrumented preliminary subset**, not completion of the foundation,
-scoreboard or async-compliance milestones. Blocked-stack attribution,
-unrelated-work latency, server saturation telemetry, controlled D-fixtures and
-their R variants are still unimplemented. Throughput includes matched yields,
-holds and close costs; it is not a pure driver-overhead measurement. Initial lab
-results must retain each iteration and state these limitations. Commands and
-artifact interpretation are documented in `BUILDGUIDE.md` and the perf README.
+The expanded `openasync-scoreboard` profile keeps the same executable and adds:
+
+| Area | Implemented measurement |
+| --- | --- |
+| E5 | Matched open/query/close using the same asynchronous `SELECT 1` for both opening APIs. Open, query, and whole connection lifecycle have distinct timestamps and outcomes. |
+| E6 | A dedicated generator offers work independently of completion through a bounded queue. Normal ThreadPool workers execute baseline, overload, and recovery traffic; every offer, rejection, accepted request, lifecycle completion, and final drain is accounted for. |
+| Repetitions | E1-E6, Sync/Async, concurrency 1/8/32/64, separate Sampled/Diagnostic modes: 96 configurations. Three fresh-process repetitions, each with two warmup and three actual Monitoring invocations, replace best-of-N reruns. Source/package comparisons use the same benchmark source. |
+| In-process diagnostics | A dedicated observer samples ThreadPool/process/memory/ownership timelines and independently posts bounded unrelated-work probes. Probe drops and post-workload drain remain visible. Latest-GC polling records observed pause data and skipped GC indices; it is not a complete GC event trace. |
+| External diagnostics | Diagnostic processes require the perf scripts' stack and SQL Server observers. Timestamped raw evidence is separate from Sampled timing; windows too short for usable captures report insufficient observations, not zero blocking or zero server load. |
+| M1/M2 controls | The `openasync-controls` profile selects the existing `ConnectionPoolChurnRunner` and `SqlConnectionRunner`; their ordinary BDN measurements remain separate from scoreboard samples. |
+
+E1/E2/E3/E5 now use 64 operations per worker in the expanded profile; E4
+retains one. E6 uses three 2-second arrival windows, rates 25/800/25 requests
+per second, queue capacity 64, a four-connection pool and matched 10 ms holds.
+The low rate intentionally leaves the concurrency-one control unsaturated.
+E6's configured operation count is not its actual request count. Reports must
+distinguish a request's offered phase from the wall-clock phase in which it
+starts or completes, and account for backlog across recovery boundaries.
+
+`UnitTests\OpenAsyncExtendedWorkloadTests.cs` and
+`UnitTests\OpenAsyncDiagnosticsTests.cs` cover these pure helpers, including
+cancellation/failure accounting, bounded offers/probes and drain ordering.
+They are harness tests, not new evidence of driver async compliance.
+
+This remains an **instrumented, report-only suite**, not completion of the
+foundation or async-compliance milestones. Controlled D-fixtures, their R
+variants, M4/M5, dedicated M3 characterization, transactional profiles and
+cross-platform attribution remain future work. E1 already supplies warm
+task-return observations, but is not an uninstrumented driver-overhead benchmark.
+Throughput includes matched yields, holds, queries where applicable and close
+costs. Sampled and Diagnostic timings must not be pooled; stack capture can pause
+the target, and ThreadPool occupancy alone does not identify blocked Open calls.
+Commands and artifact interpretation are documented in `BUILDGUIDE.md` and the
+perf README.
 
 ### Repository-wide comparison scope
 

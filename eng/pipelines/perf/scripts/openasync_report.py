@@ -11,6 +11,12 @@ import os
 
 
 PROFILE = "openasync-preliminary"
+FULL_PROFILE = "openasync-scoreboard"
+CONTROLS_PROFILE = "openasync-controls"
+CONTROL_UNITS = ["SqlConnection", "ConnectionPoolChurn"]
+FULL_CASES = [f"OpenAsyncScoreboard-E{scenario}-{api}-{concurrency}{suffix}"
+              for scenario in range(1, 7) for concurrency in (1, 8, 32, 64)
+              for suffix in ("", "-Diagnostic") for api in ("Sync", "Async")]
 CASES = [f"OpenAsyncScoreboard-{scenario}-{api}-{concurrency}"
          for scenario in ("E1", "E2", "E3", "E4")
          for api in ("Sync", "Async") for concurrency in (1, 8, 32)]
@@ -40,7 +46,14 @@ def apply_profile(config, profile):
     """Modify only the opt-in profile; keep default configs untouched."""
     if profile == "default":
         return
-    if profile != PROFILE:
+    if profile == CONTROLS_PROFILE:
+        selected = {unit + "RunnerConfig" for unit in CONTROL_UNITS}
+        if not selected.issubset(config["Benchmarks"]):
+            raise ValueError("Controls profile requires the existing SqlConnection and ConnectionPoolChurn configs")
+        for name, benchmark in config["Benchmarks"].items():
+            benchmark["Enabled"] = name in selected
+        return
+    if profile not in (PROFILE, FULL_PROFILE):
         raise ValueError("Unknown benchmark profile")
     for benchmark in config["Benchmarks"].values():
         benchmark["Enabled"] = False
@@ -53,6 +66,14 @@ def apply_profile(config, profile):
         "Concurrency": [1, 8, 32], "OperationsPerWorker": 16,
         "SaturatedPoolSize": 4, "HoldMilliseconds": 10,
     }
+    if profile == FULL_PROFILE:
+        config["Benchmarks"]["OpenAsyncScoreboardRunnerConfig"]["WarmupCount"] = 2
+        config["OpenAsyncScoreboard"].update(
+            Scenarios=["E1", "E2", "E3", "E4", "E5", "E6"],
+            Concurrency=[1, 8, 32, 64], InstrumentationModes=["Sampled", "Diagnostic"],
+            LoadConcurrency=[1, 8, 32, 64],
+            OperationsPerWorker=64, LoadPhaseMilliseconds=2000, LoadQueueCapacity=64,
+            LoadBaseRate=25, LoadOverloadRate=800)
 
 
 def number(value, field, integer=False, positive=False):
@@ -210,12 +231,22 @@ def load_case(directory, case):
     if len(paths) != 3:
         raise ValueError(f"{case}: expected exactly 3 measured invocation supplements, found {len(paths)}")
     rows = []
+    versions = set()
     for path in paths:
         with open(path, encoding="utf-8-sig") as handle:
-            rows.append(summarize_invocation(json.load(handle), case))
+            data = json.load(handle)
+        versions.add(data.get("SchemaVersion"))
+        if data.get("SchemaVersion") == 2:
+            import scoreboard_report
+            rows.append(scoreboard_report.summarize(data, case, 1, preliminary=True))
+        else:
+            rows.append(summarize_invocation(data, case))
+    if len(versions) != 1:
+        raise ValueError(f"{case}: mixed invocation schema versions")
     if len({row["Invocation"] for row in rows}) != 3:
         raise ValueError(f"{case}: duplicate invocation identifiers")
-    identity = {field: rows[0].get(field) for field in IDENTITY_FIELDS + OPTIONAL_METADATA}
+    identity = {field: rows[0].get(field) for field in IDENTITY_FIELDS + OPTIONAL_METADATA
+                + ("ProcessId", "ProcessRepetition", "RunId")}
     if any(any(row.get(field) != value for field, value in identity.items()) for row in rows):
         raise ValueError(f"{case}: invocation metadata changed within case")
     return sorted(rows, key=lambda row: row["Invocation"])
@@ -253,5 +284,7 @@ def write_summary(results_dir, units, has_baseline):
             f"{row['ThreadPoolThreadsBefore']}→{row['ThreadPoolThreadsAfter']} |")
     with open(os.path.join(results_dir, "openasync-summary.md"), "w", encoding="utf-8") as handle:
         handle.write("\n".join(lines) + "\n")
-    if any(row["Outcomes"]["Failed"] or row["Outcomes"]["Canceled"] for row in rows):
+    if any(row["Outcomes"]["Failed"] or row["Outcomes"]["Canceled"]
+           or (row.get("LifecycleOutcomes") or {}).get("Failed")
+           or (row.get("LifecycleOutcomes") or {}).get("Canceled") or row.get("WasCanceled") for row in rows):
         raise ValueError("OpenAsync run contains failed/canceled opens; see supplemental summary")

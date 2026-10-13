@@ -16,6 +16,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests
 {
+    /// <summary>Checks scoreboard matrix compatibility and matched acquisition lifecycles without SQL Server.</summary>
     public class OpenAsyncScoreboardTests
     {
         [Fact]
@@ -42,7 +43,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         {
             var invalid = new[]
             {
-                new OpenAsyncScoreboardOptions { Scenarios = new[] { "E5" } },
+                new OpenAsyncScoreboardOptions { Scenarios = new[] { "E7" } },
                 new OpenAsyncScoreboardOptions { Scenarios = Array.Empty<string>() },
                 new OpenAsyncScoreboardOptions { Apis = new[] { "Async", "Async" } },
                 new OpenAsyncScoreboardOptions { Apis = new[] { "async" } },
@@ -50,7 +51,16 @@ namespace Microsoft.Data.SqlClient.UnitTests
                 new OpenAsyncScoreboardOptions { Concurrency = new[] { 1, 1 } },
                 new OpenAsyncScoreboardOptions { OperationsPerWorker = 0 },
                 new OpenAsyncScoreboardOptions { SaturatedPoolSize = 0 },
-                new OpenAsyncScoreboardOptions { HoldMilliseconds = -1 }
+                new OpenAsyncScoreboardOptions { HoldMilliseconds = -1 },
+                new OpenAsyncScoreboardOptions { InstrumentationModes = new[] { "sampled" } },
+                new OpenAsyncScoreboardOptions { InstrumentationModes = new[] { "Sampled", "Sampled" } },
+                new OpenAsyncScoreboardOptions { InstrumentationModes = Array.Empty<string>() },
+                new OpenAsyncScoreboardOptions { LoadConcurrency = new[] { 0 } },
+                new OpenAsyncScoreboardOptions { LoadConcurrency = new[] { 1, 1 } },
+                new OpenAsyncScoreboardOptions { LoadPhaseMilliseconds = 0 },
+                new OpenAsyncScoreboardOptions { LoadQueueCapacity = 0 },
+                new OpenAsyncScoreboardOptions { LoadBaseRate = 0 },
+                new OpenAsyncScoreboardOptions { LoadOverloadRate = 25 }
             };
             Assert.All(invalid, options => Assert.Throws<ArgumentException>(() => options.GetCases()));
             Assert.Throws<OverflowException>(() => new OpenAsyncScoreboardOptions
@@ -85,9 +95,14 @@ namespace Microsoft.Data.SqlClient.UnitTests
             });
             Assert.Equal(4, result.AdmissionMilliseconds.Length);
             Assert.Equal(12, result.Samples.Select(s => (s.Worker, s.Operation)).Distinct().Count());
+            Assert.Equal(12, result.Samples.Select(s => s.RequestId).Distinct().Count());
             Assert.All(result.Samples, sample =>
             {
                 Assert.InRange(sample.StartMilliseconds, 0, sample.CompletionMilliseconds);
+                Assert.NotNull(sample.LifecycleCompletionMilliseconds);
+                Assert.True(sample.LifecycleCompletionMilliseconds >= sample.CompletionMilliseconds);
+                Assert.Null(sample.OfferedMilliseconds);
+                Assert.Null(sample.Phase);
                 if (api == "Async")
                 {
                     Assert.True(sample.CompletedAtReturn);
@@ -212,7 +227,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
                 OperationsPerWorker = operations
             }.GetCases().Single();
 
-        private sealed class FakeConnection : DbConnection
+        internal sealed class FakeConnection : DbConnection
         {
             private readonly Func<CancellationToken, Task> _open;
             private readonly Action? _onOpened;
@@ -273,5 +288,5 @@ namespace Microsoft.Data.SqlClient.UnitTests
             }
         }
     }
-    #endif
 }
+#endif
