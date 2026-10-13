@@ -205,7 +205,7 @@
     <value>Časový limit vypršel.  Časový limit vypršel před získáním připojení od fondu.  Pravděpodobným důvodem je využití všech připojení fondu a dosažení maximální velikosti fondu.</value>
   </data>
   <data name="ADP_IsolationLevelResetTimeout" xml:space="preserve">
-    <value>Timeout expired.  The connection timeout period elapsed before the transaction isolation level of the pooled connection could be reset.</value>
+    <value>Vypršel časový limit.  Časový limit připojení uplynul před resetováním úrovně izolace transakce připojení ve fondu.</value>
   </data>
   <data name="ADP_NonPooledOpenTimeout" xml:space="preserve">
     <value>Při pokusu o otevření připojení vypršel časový limit.  Byl překročen časový interval, který vypršel před pokusem o otevření připojení.  Tato situace pravděpodobně nastala z důvodu příliš velkého počtu souběžných pokusů o otevření připojení, které nejsou získávány z fondu.</value>
