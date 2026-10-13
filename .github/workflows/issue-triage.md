@@ -56,6 +56,30 @@ tools:
     min-integrity: none
 
 safe-outputs:
+  steps:
+    - name: Checkout trusted triage validator
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        ref: ${{ github.sha }}
+        path: triage-validator
+        sparse-checkout: .github/scripts
+        persist-credentials: false
+    - name: Validate triage output before publishing
+      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+      env:
+        GH_AW_AGENT_OUTPUT: ${{ steps.setup-agent-output-env.outputs.GH_AW_AGENT_OUTPUT }}
+      with:
+        script: |
+          const path = require('node:path');
+          const fs = require('node:fs');
+          const { validateTriageOutput } = require(path.join(process.env.GITHUB_WORKSPACE,
+            'triage-validator', '.github', 'scripts', 'validate-triage-output.cjs'));
+          const filename = process.env.GH_AW_AGENT_OUTPUT;
+          if (!filename) {
+            throw new Error('Missing agent output; refusing to publish unvalidated triage output.');
+          }
+          validateTriageOutput(JSON.parse(fs.readFileSync(filename, 'utf8')));
+          core.info('Triage output validated before safe-output publication.');
   # One triage summary per run. `hide-older-comments` collapses previous
   # summaries so only the latest is visible.
   add-comment:
@@ -130,10 +154,11 @@ For a multi-line summary saved to a temporary file, use the allowed `jq -Rs`
 command to construct the JSON payload with `item_number` and `body`, then
 submit it once through `safeoutputs add_comment .`.
 
-If preparation or submission fails, inspect the error before retrying.
-Do not repeatedly retry a denied command or probe with a write. If the
-failure cannot be resolved with the available tools, call `report_incomplete`
-with the actual error and stop without submitting placeholder content.
+If preparation fails, inspect and correct it before attempting submission.
+Once `add_comment` has been attempted, never retry it, even if its result is
+ambiguous or reports an error. Report the actual error via `report_incomplete`
+and stop without changing labels; do not probe with another write. Only
+manage labels after the completed comment is accepted.
 
 ---
 
