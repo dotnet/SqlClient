@@ -251,6 +251,34 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.True(ex.EncryptionInfo.IsEmpty);
         }
 
+        [Theory]
+        [InlineData(ServerEncryption.Off, false)]
+        [InlineData(ServerEncryption.Off, true)]
+        [InlineData(ServerEncryption.Required, false)]
+        [InlineData(ServerEncryption.Required, true)]
+        public async Task Open_UntrustedServerCertificate_ExceptionEncryptionInfoIsEmpty(ServerEncryption serverEncryption, bool async)
+        {
+            // The fixture certificate is self-signed and not installed in any trusted store, so
+            // certificate validation fails. Native SNI (Schannel) defers that verdict until the first
+            // write after the handshake (LOGIN7), managed SNI fails the handshake itself. Either way TLS
+            // was never established, so no negotiated mode or protocol may be reported.
+            using TdsServer server = new(CreateArguments<TdsServerArguments>(serverEncryption));
+            server.Start();
+
+            using SqlConnection connection = new(BuildConnectionString(
+                server.EndPoint.Port,
+                SqlConnectionEncryptOption.Mandatory,
+                trustServerCertificate: false));
+
+            SqlException ex = await Assert.ThrowsAsync<SqlException>(() => OpenAsync(connection, async));
+
+            Assert.True(server.PreLoginCount >= 1);
+            Assert.True(ex.EncryptionInfo.IsEmpty);
+            Assert.Null(ex.EncryptionInfo.NegotiatedEncryptionMode);
+            Assert.Null(ex.EncryptionInfo.NegotiatedEncryptionProtocol);
+            Assert.True(connection.EncryptionInfo.IsEmpty);
+        }
+
         #endregion
 
         #region Attempt isolation
@@ -353,13 +381,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             bool mars = false,
             bool readOnlyIntent = false,
             int connectTimeout = 15,
-            int connectRetryCount = 0)
+            int connectRetryCount = 0,
+            bool trustServerCertificate = true)
         {
             SqlConnectionStringBuilder builder = new()
             {
                 DataSource = "localhost," + port,
                 Encrypt = encrypt ?? SqlConnectionEncryptOption.Optional,
-                TrustServerCertificate = true,
+                TrustServerCertificate = trustServerCertificate,
                 Pooling = pooling,
                 MultipleActiveResultSets = mars,
                 ApplicationIntent = readOnlyIntent ? ApplicationIntent.ReadOnly : ApplicationIntent.ReadWrite,
