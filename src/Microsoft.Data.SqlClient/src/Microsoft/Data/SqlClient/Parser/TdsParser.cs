@@ -1817,8 +1817,8 @@ namespace Microsoft.Data.SqlClient.Parser
                 // report success and the verdict only surfaces as an SSL provider error on the first
                 // post-handshake I/O (the LOGIN7 write). TLS was therefore never established for this
                 // attempt: discard the negotiated mode and protocol recorded by EnableSsl. Other
-                // captured state (e.g. certificate details) is intentionally kept. Managed SNI only
-                // reports SSL provider errors from a failed handshake, before anything is recorded.
+                // captured state (e.g. certificate details) is intentionally kept. On Managed SNI a
+                // failed handshake fails EnableSsl, so mode and protocol were never recorded.
                 // After login completes the capture is released, so published snapshots are unaffected.
                 _connHandler?.EncryptionInfoCapture?.ClearNegotiated();
             }
