@@ -1816,10 +1816,11 @@ namespace Microsoft.Data.SqlClient
                 // Native SNI (Schannel) defers server certificate verification, so EnableSsl can
                 // report success and the verdict only surfaces as an SSL provider error on the first
                 // post-handshake I/O (the LOGIN7 write). TLS was therefore never established for this
-                // attempt: discard the encryption details recorded by EnableSsl. Managed SNI only
+                // attempt: discard the negotiated mode and protocol recorded by EnableSsl. Other
+                // captured state (e.g. certificate details) is intentionally kept. Managed SNI only
                 // reports SSL provider errors from a failed handshake, before anything is recorded.
                 // After login completes the capture is released, so published snapshots are unaffected.
-                _connHandler?.EncryptionInfoCapture?.Reset();
+                _connHandler?.EncryptionInfoCapture?.ClearNegotiated();
             }
 
             if (details.SniErrorNumber != 0)

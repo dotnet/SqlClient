@@ -53,6 +53,17 @@ namespace Microsoft.Data.SqlClient.Connection
         }
 
         /// <summary>
+        /// Clears only the negotiated encryption mode and TLS protocol, leaving any other captured
+        /// state intact. Used when the TLS session for the current attempt turns out never to have been
+        /// established (for example Native SNI deferred certificate validation failure).
+        /// </summary>
+        public void ClearNegotiated()
+        {
+            Mode = null;
+            Protocol = null;
+        }
+
+        /// <summary>
         /// Records the negotiated encryption mode and, when known, the negotiated TLS protocol.
         /// </summary>
         /// <param name="mode">The negotiated encryption mode.</param>
