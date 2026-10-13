@@ -33,8 +33,10 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [Fact]
         public void DataSetExtensionsFriendAssemblyMatchesTargetFramework()
         {
-            var friends = typeof(SqlConnection).Assembly.GetCustomAttributes<InternalsVisibleToAttribute>()
-                .Where(attribute => new AssemblyName(attribute.AssemblyName).Name == "System.Data.DataSetExtensions");
+            var friends = typeof(SqlConnection).Assembly
+                .GetCustomAttributes<InternalsVisibleToAttribute>()
+                .Where(attribute =>
+                    new AssemblyName(attribute.AssemblyName).Name == "System.Data.DataSetExtensions");
 
 #if NETFRAMEWORK
             Assert.Equal("System.Data.DataSetExtensions, PublicKey=00000000000000000400000000000000",
