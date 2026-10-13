@@ -123,7 +123,7 @@ namespace Microsoft.Data.SqlClient
                             }
                             else if (readTask.IsFaulted)
                             {
-                                reader.Dispose();
+                                reader.CloseOnError(readTask.Exception.InnerException);
                                 s_diagnosticListener.WriteCommandError(
                                     operationId,
                                     this,
@@ -178,6 +178,7 @@ namespace Microsoft.Data.SqlClient
         private static object CompleteExecuteScalar(SqlDataReader reader, bool returnLastResult)
         {
             object result = null;
+            Exception failure = null;
             try
             {
                 do
@@ -193,10 +194,22 @@ namespace Microsoft.Data.SqlClient
                 while (reader.NextResult())
                 { }
             }
+            catch (Exception e) when (ADP.IsUnrecoverableException(e))
+            {
+                failure = e;
+                throw;
+            }
             finally
             {
-                // Clean off the wire
-                reader.Close();
+                if (failure != null)
+                {
+                    reader.CloseOnError(failure);
+                }
+                else
+                {
+                    // Ordinary completion and recoverable failures retain normal draining.
+                    reader.Close();
+                }
             }
 
             return result;
@@ -284,7 +297,7 @@ namespace Microsoft.Data.SqlClient
                             }
                             else if (readTask.IsFaulted)
                             {
-                                reader.Dispose();
+                                reader.CloseOnError(readTask.Exception.InnerException);
                                 
                                 s_diagnosticListener.WriteCommandError(
                                     operationId,
@@ -297,6 +310,7 @@ namespace Microsoft.Data.SqlClient
                             else
                             {
                                 Exception exception = null;
+                                Exception failure = null;
                                 object result = null;
                                 try
                                 {
@@ -309,6 +323,10 @@ namespace Microsoft.Data.SqlClient
                                         }
                                         catch (Exception e)
                                         {
+                                            if (ADP.IsUnrecoverableException(e))
+                                            {
+                                                throw;
+                                            }
                                             // @TODO: Yeah, this code doesn't understand how finally blocks work.
                                             exception = e;
                                         }
@@ -319,9 +337,21 @@ namespace Microsoft.Data.SqlClient
                                     while (await reader.NextResultAsync(cancellationToken).ConfigureAwait(false))
                                     { }
                                 }
+                                catch (Exception e) when (ADP.IsUnrecoverableException(e))
+                                {
+                                    failure = e;
+                                    throw;
+                                }
                                 finally
                                 {
-                                    reader.Dispose();
+                                    if (failure != null)
+                                    {
+                                        reader.CloseOnError(failure);
+                                    }
+                                    else
+                                    {
+                                        reader.Dispose();
+                                    }
                                 }
 
                                 if (exception is not null)

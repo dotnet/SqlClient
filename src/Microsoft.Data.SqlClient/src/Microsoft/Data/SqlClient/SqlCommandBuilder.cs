@@ -12,7 +12,6 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using Microsoft.Data.Common;
 using Microsoft.Data.Sql;
-using Microsoft.Data.SqlClient.Connection;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -256,21 +255,8 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.ArgumentNull(nameof(command));
             }
 
-            SqlConnection connection = command.Connection;
-            SqlConnectionInternal innerConnection = connection?.InnerConnection as SqlConnectionInternal;
-            try
-            {
-                command.DeriveParameters();
-            }
-            catch (Exception e) when (ADP.IsUnrecoverableException(e))
-            {
-                innerConnection?.DoomThisConnection();
-                if (innerConnection is null || ReferenceEquals(connection?.InnerConnection, innerConnection))
-                {
-                    connection?.Abort(e);
-                }
-                throw;
-            }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
+            command.DeriveParameters();
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetSchemaTable/*'/>

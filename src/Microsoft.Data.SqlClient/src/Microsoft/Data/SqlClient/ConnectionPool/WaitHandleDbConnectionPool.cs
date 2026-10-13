@@ -537,8 +537,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private DbConnectionInternal CreateObject(DbConnection owningObject, DbConnectionInternal oldConnection, TimeoutTimer timeout)
         {
             DbConnectionInternal newObj = null;
-            bool replacingRegisteredConnection = false;
-            bool countedNewConnection = false;
 
             try
             {
@@ -549,85 +547,26 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                 lock (_objectList)
                 {
-                    int replacementIndex = oldConnection != null && oldConnection.Pool == this
-                        ? _objectList.IndexOf(oldConnection)
-                        : -1;
-                    if (replacementIndex >= 0)
+                    if ((oldConnection != null) && (oldConnection.Pool == this))
                     {
-                        // Replacing a registered object does not change the pooled population.
-                        // Keep its slot so a failed replacement can restore it without allocation.
-                        replacingRegisteredConnection = true;
-                        _objectList[replacementIndex] = newObj;
+                        // The replacement takes over the old connection's place in the pool. The
+                        // caller disposes the old connection once the replacement is in place, so
+                        // account for its departure here rather than leaving the gauge inflated.
+                        if (_objectList.Remove(oldConnection))
+                        {
+                            Metrics.ExitPooledConnection();
+                        }
                     }
-                    else
-                    {
-                        Metrics.EnterPooledConnection();
-                        countedNewConnection = true;
-                        _objectList.Add(newObj);
-                    }
+                    _objectList.Add(newObj);
                     _totalObjects = _objectList.Count;
+
+                    Metrics.EnterPooledConnection();
                 }
 
                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.CreateObject|RES|CPOOL> {0}, Connection {1}, Added to pool.", Id, newObj?.ObjectID);
 
                 // A successful creation clears any prior error state and resets backoff.
                 _errorState.Clear();
-            }
-            catch (Exception e) when (ADP.IsUnrecoverableException(e))
-            {
-                if (newObj != null)
-                {
-                    try
-                    {
-                        newObj.DoomThisConnection();
-                    }
-                    finally
-                    {
-                        try
-                        {
-                            lock (_objectList)
-                            {
-                                int newIndex = _objectList.IndexOf(newObj);
-                                if (newIndex >= 0)
-                                {
-                                    if (replacingRegisteredConnection)
-                                    {
-                                        _objectList[newIndex] = oldConnection;
-                                    }
-                                    else
-                                    {
-                                        _objectList.RemoveAt(newIndex);
-                                    }
-                                }
-                                _totalObjects = _objectList.Count;
-                            }
-                        }
-                        finally
-                        {
-                            // Factory ownership transferred even if List.Add failed. Release
-                            // the physical resource independently of registration cleanup.
-                            try
-                            {
-                                newObj.Dispose();
-                            }
-                            finally
-                            {
-                                try
-                                {
-                                    if (countedNewConnection)
-                                    {
-                                        Metrics.ExitPooledConnection();
-                                    }
-                                }
-                                finally
-                                {
-                                    Metrics.HardDisconnectRequest();
-                                }
-                            }
-                        }
-                    }
-                }
-                throw;
             }
             catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
@@ -657,20 +596,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         private void DeactivateObject(DbConnectionInternal obj)
         {
-            try
-            {
-                SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.DeactivateObject|RES|CPOOL> {0}, Connection {1}, Deactivating.", Id, obj.ObjectID);
-                obj.DeactivateConnection();
-            }
-            catch (Exception e) when (ADP.IsUnrecoverableException(e))
-            {
-                // PrePush has already made this connection ineligible for reclamation.
-                // Remove it from capacity before allowing the failed return to escape.
-                obj.DoomThisConnection();
-                DestroyObject(obj);
-                QueuePoolCreateRequest();
-                throw;
-            }
+            SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.DeactivateObject|RES|CPOOL> {0}, Connection {1}, Deactivating.", Id, obj.ObjectID);
+            obj.DeactivateConnection();
 
             bool returnToGeneralPool = false;
             bool destroyObject = false;
@@ -842,12 +769,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             do
             {
-                int workerId = Environment.CurrentManagedThreadId;
-                Exception terminatingException = null;
+                bool started = false;
 
                 try
                 {
-                    if (Interlocked.CompareExchange(ref _pendingOpensWaiting, workerId, 0) != 0)
+                    started = Interlocked.CompareExchange(ref _pendingOpensWaiting, 1, 0) == 0;
+                    if (!started)
                     {
                         return;
                     }
@@ -884,13 +811,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                 next.Timeout,
                                 out connection);
                         }
-                        catch (Exception e) when (ADP.IsUnrecoverableException(e))
-                        {
-                            terminatingException = e;
-                            connection?.DoomThisConnection();
-                            next.Completion.TrySetException(e);
-                            throw;
-                        }
+                        // @TODO: CER Exception Handling was removed here (see GH#3581)
                         catch (Exception e)
                         {
                             caughtException = e;
@@ -917,15 +838,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 }
                 finally
                 {
-                    Interlocked.CompareExchange(ref _pendingOpensWaiting, 0, workerId);
-                    if (terminatingException != null)
+                    if (started)
                     {
-                        // Release the worker role first so newly queued requests can start a
-                        // successor rather than relying on this terminating worker.
-                        while (_pendingOpens.TryDequeue(out PendingGetConnection pending))
-                        {
-                            pending.Completion.TrySetException(terminatingException);
-                        }
+                        Interlocked.Exchange(ref _pendingOpensWaiting, 0);
                     }
                 }
             } while (_pendingOpens.TryPeek(out next));
@@ -1228,12 +1143,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             {
                 obj.ActivateConnection(transaction);
             }
-            catch (Exception e)
+            catch
             {
-                if (ADP.IsUnrecoverableException(e))
-                {
-                    obj.DoomThisConnection();
-                }
                 // if Activate throws an exception
                 // put it back in the pool or have it properly disposed of
                 this.ReturnInternalConnection(obj, owningObject);
@@ -1434,7 +1345,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                                     QueuePoolCreateRequest();
                                 }
                             }
-                            catch (Exception e) when (!ADP.IsUnrecoverableException(e) && ADP.IsCatchableExceptionType(e))
+                            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                             {
                                 // Now that CreateObject can throw, we need to catch the exception and discard it.
                                 // There is no further action we can take beyond tracing.  The error will be

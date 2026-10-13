@@ -243,42 +243,6 @@ namespace Microsoft.Data.SqlClient
                 _activeConnection.EnclaveAttestationUrl,
                 _activeConnection.Database);
 
-        private sealed class EncryptionAsyncCleanup
-        {
-            internal SqlConnectionInternal Connection { get; private set; }
-            private int _ownsCount;
-            private int _cleanupOwner;
-            internal volatile bool Aborted;
-
-            internal EncryptionAsyncCleanup(SqlConnectionInternal connection)
-            {
-                Connection = connection;
-            }
-
-            internal void IncrementCount(SqlConnectionInternal connection)
-            {
-                Connection = connection;
-                Connection.IncrementAsyncCount();
-                _ownsCount = 1;
-            }
-
-            internal void ReleaseCount()
-            {
-                // One logical release across registration failure and immediate continuations.
-                // This does not make the exchange and decrement atomic against ThreadAbort.
-                if (Interlocked.Exchange(ref _ownsCount, 0) != 0)
-                {
-                    Connection.DecrementAsyncCount();
-                }
-            }
-
-            internal bool TryStartContinuation() =>
-                Interlocked.CompareExchange(ref _cleanupOwner, 1, 0) == 0;
-
-            internal bool TryCancelContinuation() =>
-                Interlocked.CompareExchange(ref _cleanupOwner, 2, 0) == 0;
-        }
-
         // @TODO: Isn't this doing things asynchronously? We should just have a purely asynchronous and a purely synchronous pathway instead of this mix of check this check that and flags.
         private SqlDataReader GetParameterEncryptionDataReader(
             out Task returnTask,
@@ -286,20 +250,15 @@ namespace Microsoft.Data.SqlClient
             SqlDataReader describeParameterEncryptionDataReader,
             ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap,
             bool describeParameterEncryptionNeeded,
-            bool isRetry,
-            EncryptionAsyncCleanup cleanup)
+            bool isRetry)
         {
             returnTask = AsyncHelper.CreateContinuationTaskWithState(
                 taskToContinue: fetchInputParameterEncryptionInfoTask,
                 state: this,
                 onSuccess: sqlCommand =>
                 {
-                    if (!cleanup.TryStartContinuation())
-                    {
-                        return;
-                    }
-
                     bool processFinallyBlockAsync = true;
+                    bool decrementAsyncCountInFinallyBlockAsync = true;
 
                     try
                     {
@@ -309,7 +268,12 @@ namespace Microsoft.Data.SqlClient
                         // If it is async, then TryFetchInputParameterEncryptionInfo ->
                         // RunExecuteReaderTds would have incremented the async count. Decrement it
                         // when we are about to complete async execute reader.
-                        cleanup.ReleaseCount();
+                        SqlConnectionInternal internalConnectionTds = sqlCommand._activeConnection.GetOpenTdsConnection();
+                        if (internalConnectionTds is not null)
+                        {
+                            internalConnectionTds.DecrementAsyncCount();
+                            decrementAsyncCountInFinallyBlockAsync = false;
+                        }
 
                         // Complete executereader.
                         // @TODO: If we can remove this reference, this could be a static lambda
@@ -332,14 +296,6 @@ namespace Microsoft.Data.SqlClient
                         }
                         #endif
                     }
-                    catch (Exception e) when (ADP.IsUnrecoverableException(e))
-                    {
-                        processFinallyBlockAsync = false;
-                        cleanup.Aborted = true;
-                        sqlCommand.AbortOnUnrecoverableException(e, cleanup.Connection);
-                        describeParameterEncryptionDataReader?.AbortOnUnrecoverableException(e);
-                        throw;
-                    }
                     catch (Exception e)
                     {
                         processFinallyBlockAsync = ADP.IsCatchableExceptionType(e);
@@ -348,36 +304,20 @@ namespace Microsoft.Data.SqlClient
                     finally
                     {
                         sqlCommand.PrepareTransparentEncryptionFinallyBlock(
-                            closeDataReader: processFinallyBlockAsync && !cleanup.Aborted,
-                            clearDataStructures: true,
-                            cleanup: cleanup,
+                            closeDataReader: processFinallyBlockAsync,
+                            decrementAsyncCount: decrementAsyncCountInFinallyBlockAsync,
+                            clearDataStructures: processFinallyBlockAsync,
                             wasDescribeParameterEncryptionNeeded: describeParameterEncryptionNeeded,
                             describeParameterEncryptionRpcOriginalRpcMap: describeParameterEncryptionRpcOriginalRpcMap,
                             describeParameterEncryptionDataReader: describeParameterEncryptionDataReader);
                     }
                 },
-                onFailure: (sqlCommand, exception) =>
+                onFailure: static (sqlCommand, exception) =>
                 {
-                    if (cleanup.TryStartContinuation())
+                    sqlCommand.CachedAsyncState?.ResetAsyncState();
+                    if (exception is not null)
                     {
-                        if (ADP.IsUnrecoverableException(exception))
-                        {
-                            cleanup.Aborted = true;
-                            sqlCommand.AbortOnUnrecoverableException(exception, cleanup.Connection);
-                            describeParameterEncryptionDataReader?.AbortOnUnrecoverableException(exception);
-                        }
-                        cleanup.ReleaseCount();
-                        sqlCommand.ClearDescribeParameterEncryptionRequests();
-                        sqlCommand.CachedAsyncState?.ResetAsyncState();
-                    }
-                },
-                onCancellation: sqlCommand =>
-                {
-                    if (cleanup.TryStartContinuation())
-                    {
-                        cleanup.ReleaseCount();
-                        sqlCommand.ClearDescribeParameterEncryptionRequests();
-                        sqlCommand.CachedAsyncState?.ResetAsyncState();
+                        throw exception;
                     }
                 });
 
@@ -389,17 +329,12 @@ namespace Microsoft.Data.SqlClient
             SqlDataReader describeParameterEncryptionDataReader,
             ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap,
             bool describeParameterEncryptionNeeded,
-            bool isRetry,
-            EncryptionAsyncCleanup cleanup)
+            bool isRetry)
         {
             returnTask = Task.Run(() =>
             {
-                if (!cleanup.TryStartContinuation())
-                {
-                    return;
-                }
-
                 bool processFinallyBlockAsync = true;
+                bool decrementAsyncCountInFinallyBlockAsync = true;
 
                 try
                 {
@@ -409,7 +344,12 @@ namespace Microsoft.Data.SqlClient
                     // If it is async, then TryFetchInputParameterEncryptionInfo ->
                     // RunExecuteReaderTds would have incremented the async count. Decrement it
                     // when we are about to complete async execute reader.
-                    cleanup.ReleaseCount();
+                    SqlConnectionInternal internalConnectionTds = _activeConnection.GetOpenTdsConnection();
+                    if (internalConnectionTds is not null)
+                    {
+                        internalConnectionTds.DecrementAsyncCount();
+                        decrementAsyncCountInFinallyBlockAsync = false;
+                    }
 
                     // Complete executereader.
                     describeParameterEncryptionDataReader = CompleteAsyncExecuteReader(
@@ -431,14 +371,6 @@ namespace Microsoft.Data.SqlClient
                     }
                     #endif
                 }
-                catch (Exception e) when (ADP.IsUnrecoverableException(e))
-                {
-                    processFinallyBlockAsync = false;
-                    cleanup.Aborted = true;
-                    AbortOnUnrecoverableException(e, cleanup.Connection);
-                    describeParameterEncryptionDataReader?.AbortOnUnrecoverableException(e);
-                    throw;
-                }
                 catch (Exception e)
                 {
                     processFinallyBlockAsync = ADP.IsCatchableExceptionType(e);
@@ -447,9 +379,9 @@ namespace Microsoft.Data.SqlClient
                 finally
                 {
                     PrepareTransparentEncryptionFinallyBlock(
-                        closeDataReader: processFinallyBlockAsync && !cleanup.Aborted,
-                        clearDataStructures: true,
-                        cleanup: cleanup,
+                        closeDataReader: processFinallyBlockAsync,
+                        decrementAsyncCount: decrementAsyncCountInFinallyBlockAsync,
+                        clearDataStructures: processFinallyBlockAsync,
                         wasDescribeParameterEncryptionNeeded: describeParameterEncryptionNeeded,
                         describeParameterEncryptionRpcOriginalRpcMap: describeParameterEncryptionRpcOriginalRpcMap,
                         describeParameterEncryptionDataReader: describeParameterEncryptionDataReader);
@@ -676,10 +608,8 @@ namespace Microsoft.Data.SqlClient
             // A flag to indicate if finallyblock needs to execute.
             bool processFinallyBlock = true;
 
-            EncryptionAsyncCleanup cleanup = isAsync
-                ? new EncryptionAsyncCleanup(_activeConnection.GetOpenTdsConnection())
-                : null;
-            bool cleanupHere = !isAsync;
+            // A flag to indicate if we need to decrement async count on the connection in finally block.
+            bool decrementAsyncCountInFinallyBlock = false;
 
             // Flag to indicate if exception is caught during the execution, to govern clean up.
             bool exceptionCaught = false;
@@ -699,8 +629,7 @@ namespace Microsoft.Data.SqlClient
                         out describeParameterEncryptionNeeded,
                         out fetchInputParameterEncryptionInfoTask,
                         out describeParameterEncryptionRpcOriginalRpcMap,
-                        isRetry,
-                        cleanup);
+                        isRetry);
 
                     Debug.Assert(describeParameterEncryptionNeeded || describeParameterEncryptionDataReader == null,
                         "describeParameterEncryptionDataReader should be null if we don't need to request describe parameter encryption request.");
@@ -723,6 +652,9 @@ namespace Microsoft.Data.SqlClient
                     Debug.Assert(describeParameterEncryptionDataReader != null,
                         "describeParameterEncryptionDataReader should not be null, as it is required to get results of describe parameter encryption.");
 
+                    // If we are in async execution, we need to decrement our async count on exception.
+                    decrementAsyncCountInFinallyBlock = isAsync;
+
                     // Fire up another task to read the results of describe parameter encryption
                     if (fetchInputParameterEncryptionInfoTask is not null)
                     {
@@ -736,8 +668,9 @@ namespace Microsoft.Data.SqlClient
                             describeParameterEncryptionDataReader,
                             describeParameterEncryptionRpcOriginalRpcMap,
                             describeParameterEncryptionNeeded,
-                            isRetry,
-                            cleanup);
+                            isRetry);
+
+                        decrementAsyncCountInFinallyBlock = false;
                     }
                     else
                     {
@@ -754,8 +687,9 @@ namespace Microsoft.Data.SqlClient
                                 describeParameterEncryptionDataReader,
                                 describeParameterEncryptionRpcOriginalRpcMap,
                                 describeParameterEncryptionNeeded,
-                                isRetry,
-                                cleanup);
+                                isRetry);
+
+                            decrementAsyncCountInFinallyBlock = false;
                         }
                         else
                         {
@@ -776,48 +710,33 @@ namespace Microsoft.Data.SqlClient
                         #endif
                     }
                 }
-                catch (Exception e) when (ADP.IsUnrecoverableException(e))
-                {
-                    processFinallyBlock = false;
-                    if (cleanup is not null)
-                    {
-                        cleanup.Aborted = true;
-                    }
-                    cleanupHere = cleanup?.TryCancelContinuation() ?? true;
-                    AbortOnUnrecoverableException(e, cleanup?.Connection);
-                    describeParameterEncryptionDataReader?.AbortOnUnrecoverableException(e);
-                    throw;
-                }
                 catch (Exception e)
                 {
+                    // @TODO: should this also check if processFinallyBlock has been cleared in the try?
                     processFinallyBlock = ADP.IsCatchableExceptionType(e);
                     exceptionCaught = true;
-                    cleanupHere = cleanup?.TryCancelContinuation() ?? true;
                     throw;
                 }
                 finally
                 {
-                    if (cleanupHere)
-                    {
-                        PrepareTransparentEncryptionFinallyBlock(
-                            closeDataReader: processFinallyBlock && (!isAsync || exceptionCaught),
-                            clearDataStructures: true,
-                            cleanup: cleanup,
-                            wasDescribeParameterEncryptionNeeded: describeParameterEncryptionNeeded,
-                            describeParameterEncryptionRpcOriginalRpcMap: describeParameterEncryptionRpcOriginalRpcMap,
-                            describeParameterEncryptionDataReader: describeParameterEncryptionDataReader);
-                    }
+                    // Free up the state only for synchronous execution. For asynchronous
+                    // execution, free only if there was an exception.
+                    // @TODO: processFinallyBlock should probably switch this entire method?
+                    PrepareTransparentEncryptionFinallyBlock(
+                        closeDataReader: (processFinallyBlock && !isAsync) || exceptionCaught,
+                        decrementAsyncCount: decrementAsyncCountInFinallyBlock && exceptionCaught,
+                        clearDataStructures: (processFinallyBlock && !isAsync) || exceptionCaught,
+                        wasDescribeParameterEncryptionNeeded: describeParameterEncryptionNeeded,
+                        describeParameterEncryptionRpcOriginalRpcMap: describeParameterEncryptionRpcOriginalRpcMap,
+                        describeParameterEncryptionDataReader: describeParameterEncryptionDataReader);
                 }
             }
             catch (Exception e)
             {
-                if (cleanupHere)
+                CachedAsyncState?.ResetAsyncState();
+                if (ADP.IsCatchableExceptionType(e))
                 {
-                    CachedAsyncState?.ResetAsyncState();
-                    if (!ADP.IsUnrecoverableException(e) && ADP.IsCatchableExceptionType(e))
-                    {
-                        ReliablePutStateObject();
-                    }
+                    ReliablePutStateObject();
                 }
 
                 throw;
@@ -830,13 +749,11 @@ namespace Microsoft.Data.SqlClient
         private void PrepareTransparentEncryptionFinallyBlock(
             bool closeDataReader,
             bool clearDataStructures,
-            EncryptionAsyncCleanup cleanup,
+            bool decrementAsyncCount,
             bool wasDescribeParameterEncryptionNeeded, // @TODO: This isn't used anywhere
             ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap,
             SqlDataReader describeParameterEncryptionDataReader)
         {
-            cleanup?.ReleaseCount();
-
             if (clearDataStructures)
             {
                 // Clear some state variables in SqlCommand that reflect in-progress describe
@@ -846,6 +763,13 @@ namespace Microsoft.Data.SqlClient
                 {
                     describeParameterEncryptionRpcOriginalRpcMap = null;
                 }
+            }
+
+            if (decrementAsyncCount)
+            {
+                // Decrement the async count
+                SqlConnectionInternal internalConnection = _activeConnection.GetOpenTdsConnection();
+                internalConnection?.DecrementAsyncCount();
             }
 
             if (closeDataReader)
@@ -1316,8 +1240,7 @@ namespace Microsoft.Data.SqlClient
             out bool inputParameterEncryptionNeeded,
             out Task task,
             out ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap,
-            bool isRetry,
-            EncryptionAsyncCleanup cleanup) // @TODO: Does this really matter? When we run the RPC we say it's never a retry.
+            bool isRetry) // @TODO: Does this really matter? When we run the RPC we say it's never a retry.
         {
             inputParameterEncryptionNeeded = false;
             task = null;
@@ -1474,8 +1397,7 @@ namespace Microsoft.Data.SqlClient
                     asyncWrite,
                     isRetry: false,
                     ds: null,
-                    describeParameterEncryptionRequest: true,
-                    encryptionCleanup: cleanup);
+                    describeParameterEncryptionRequest: true);
             }
             else
             {

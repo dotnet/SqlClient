@@ -1254,12 +1254,7 @@ namespace Microsoft.Data.SqlClient
 
                         InternalPrepare();
                     }
-                    catch (Exception e) when (ADP.IsUnrecoverableException(e))
-                    {
-                        processFinallyBlock = false;
-                        AbortOnUnrecoverableException(e);
-                        throw;
-                    }
+                    // @TODO: CER Exception Handling was removed here (see GH#3581)
                     catch (Exception e)
                     {
                         processFinallyBlock = ADP.IsCatchableExceptionType(e);
@@ -1549,13 +1544,6 @@ namespace Microsoft.Data.SqlClient
                     parameters.Add(p);
                 }
             }
-            catch (Exception e) when (ADP.IsUnrecoverableException(e))
-            {
-                processFinallyBlock = false;
-                AbortOnUnrecoverableException(e);
-                r?.AbortOnUnrecoverableException(e);
-                throw;
-            }
             catch (Exception e)
             {
                 processFinallyBlock = ADP.IsCatchableExceptionType(e);
@@ -1563,16 +1551,11 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                try
+                if (processFinallyBlock)
                 {
-                    if (processFinallyBlock)
-                    {
-                        r?.Close();
-                    }
-                }
-                finally
-                {
-                    // Always unhook the user's connection, including after an aborted read.
+                    r?.Close();
+
+                    // always unhook the user's connection
                     paramsCmd.Connection = null;
                 }
             }
@@ -2779,38 +2762,6 @@ namespace Microsoft.Data.SqlClient
         private void PropertyChanging()
         {
             IsDirty = true;
-        }
-
-        private void AbortOnUnrecoverableException(Exception exception, SqlConnectionInternal connection = null)
-        {
-            // Doom the physical owner before detaching state or clearing async availability.
-            TdsParserStateObject stateObject = _stateObj;
-            TdsParser parser = stateObject?.Parser ?? connection?.Parser;
-            connection ??= parser?.Connection;
-            _stateObj = null;
-            if (parser != null)
-            {
-                parser.State = TdsParserState.Broken;
-            }
-            try
-            {
-                connection?.DoomThisConnection();
-                if (stateObject?.Owner is SqlDataReader reader)
-                {
-                    reader.AbortOnUnrecoverableException(exception);
-                }
-                else if (stateObject != null && ReferenceEquals(stateObject.Owner, this))
-                {
-                    parser.PutSession(stateObject);
-                }
-            }
-            finally
-            {
-                if (connection is null || ReferenceEquals(_activeConnection?.InnerConnection, connection))
-                {
-                    _activeConnection?.Abort(exception);
-                }
-            }
         }
 
         private void PutStateObject()

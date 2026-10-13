@@ -318,11 +318,7 @@ namespace Microsoft.Data.SqlClient
                     _activeConnection);
                 _stateObj.ReadSni(completion);
             }
-            catch (Exception e) when (ADP.IsUnrecoverableException(e))
-            {
-                AbortOnUnrecoverableException(e);
-                throw;
-            }
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
             catch (Exception)
             {
                 // Similarly, if an exception occurs put the stateObj back into the pool.
@@ -509,12 +505,6 @@ namespace Microsoft.Data.SqlClient
                             throw SQL.SynchronousCallMayNotPend();
                         }
                     }
-                    catch (Exception e) when (ADP.IsUnrecoverableException(e))
-                    {
-                        processFinallyBlock = false;
-                        AbortOnUnrecoverableException(e);
-                        throw;
-                    }
                     finally
                     {
                         // Don't reset the state for internal end. The user end will do that eventually.
@@ -533,11 +523,7 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception e)
             {
-                processFinallyBlock = !ADP.IsUnrecoverableException(e) && ADP.IsCatchableExceptionType(e);
-                if (ADP.IsUnrecoverableException(e))
-                {
-                    AbortOnUnrecoverableException(e);
-                }
+                processFinallyBlock = ADP.IsCatchableExceptionType(e);
                 throw;
             }
             finally
@@ -883,12 +869,6 @@ namespace Microsoft.Data.SqlClient
                         throw SQL.SynchronousCallMayNotPend();
                     }
                 }
-            }
-            catch (Exception e) when (ADP.IsUnrecoverableException(e))
-            {
-                processFinallyBlock = false;
-                AbortOnUnrecoverableException(e);
-                throw;
             }
             catch (Exception e)
             {

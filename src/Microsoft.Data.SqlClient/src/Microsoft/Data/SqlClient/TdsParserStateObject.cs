@@ -474,11 +474,6 @@ namespace Microsoft.Data.SqlClient
 
         internal object Owner
         {
-            get
-            {
-                _owner.TryGetTarget(out object owner);
-                return owner;
-            }
             set
             {
                 Debug.Assert(value == null || !_owner.TryGetTarget(out object target) || value is SqlDataReader reader1 && reader1.Command == target, "Should not be changing the owner of an owned stateObj");
@@ -1043,8 +1038,8 @@ namespace Microsoft.Data.SqlClient
 
         internal int IncrementPendingCallbacks()
         {
-            SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObject.IncrementPendingCallbacks | ADV | State Object Id {0}, incrementing _pendingCallbacks from: {1}", _objectID, _pendingCallbacks);
             int remaining = Interlocked.Increment(ref _pendingCallbacks);
+            SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObject.IncrementPendingCallbacks | ADV | State Object Id {0}, after incrementing _pendingCallbacks: {1}", _objectID, _pendingCallbacks);
             Debug.Assert(0 < remaining && remaining <= 3, $"_pendingCallbacks values is invalid after incrementing: {remaining}");
             return remaining;
         }
@@ -1052,8 +1047,9 @@ namespace Microsoft.Data.SqlClient
         internal int DecrementPendingCallbacks(bool release)
         {
             int remaining = Interlocked.Decrement(ref _pendingCallbacks);
-            FreeGcHandle(remaining, release);
             SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObject.DecrementPendingCallbacks | ADV | State Object Id {0}, after decrementing _pendingCallbacks: {1}", _objectID, _pendingCallbacks);
+
+            FreeGcHandle(remaining, release);
 
             // NOTE: TdsParserSessionPool may call DecrementPendingCallbacks on a TdsParserStateObject which is already disposed
             // This is not dangerous (since the stateObj is no longer in use), but we need to add a workaround in the assert for it
@@ -3531,24 +3527,23 @@ namespace Microsoft.Data.SqlClient
             bool readFromNetwork = !PartialPacketContainsCompletePacket();
             uint error;
 
+            bool shouldDecrement = false;
             try
             {
                 Interlocked.Increment(ref _readingCount);
-                try
+                shouldDecrement = true;
+
+                if (readFromNetwork)
                 {
-                    if (readFromNetwork)
-                    {
-                        readPacket = ReadSyncOverAsync(GetTimeoutRemaining(), out error);
-                    }
-                    else
-                    {
-                        error = TdsEnums.SNI_SUCCESS;
-                    }
+                    readPacket = ReadSyncOverAsync(GetTimeoutRemaining(), out error);
                 }
-                finally
+                else
                 {
-                    Interlocked.Decrement(ref _readingCount);
+                    error = TdsEnums.SNI_SUCCESS;
                 }
+
+                Interlocked.Decrement(ref _readingCount);
+                shouldDecrement = false;
 
                 if (_parser.MARSOn)
                 { // Only take reset lock on MARS and Async.
@@ -3586,14 +3581,13 @@ namespace Microsoft.Data.SqlClient
                     ReadSniError(this, error);
                 }
             }
-            catch (Exception e) when (ADP.IsUnrecoverableException(e))
-            {
-                _parser.State = TdsParserState.Broken;
-                _parser.Connection?.DoomThisConnection();
-                throw;
-            }
             finally
             {
+                if (shouldDecrement)
+                {
+                    Interlocked.Decrement(ref _readingCount);
+                }
+
                 if (readFromNetwork)
                 {
                     if (!IsPacketEmpty(readPacket))
@@ -3620,6 +3614,8 @@ namespace Microsoft.Data.SqlClient
             //    to the outstanding GCRoot until AppDomain.Unload.
             // We live with the above for the time being due to the constraints of the current
             // reliability infrastructure provided by the CLR.
+            SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObject.ReadAsyncCallback | Info | State Object Id {0}, Entered ReadAsyncCallback.", _objectID);
+
             TaskCompletionSource<object> source = _networkPacketTaskSource;
 #if DEBUG
             if ((s_forcePendingReadsToWaitForUser) && (_realNetworkPacketTaskSource != null))
@@ -3635,10 +3631,9 @@ namespace Microsoft.Data.SqlClient
                 return;
             }
 
-            Exception processingException = null;
+            bool processFinallyBlock = true;
             try
             {
-                SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObject.ReadAsyncCallback | Info | State Object Id {0}, Entered ReadAsyncCallback.", _objectID);
 #if NET
                 Debug.Assert((packet.Type == 0 && PartialPacketContainsCompletePacket()) || (CheckPacket(packet, source) && source != null), "AsyncResult null on callback");
 #else
@@ -3676,35 +3671,14 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception e)
             {
-                processingException = e;
-                // Native success does not make a partially processed packet safe to reuse.
-                _parser.State = TdsParserState.Broken;
-                _parser.Connection?.DoomThisConnection();
+                processFinallyBlock = ADP.IsCatchableExceptionType(e);
                 throw;
             }
             finally
             {
                 // pendingCallbacks may be 2 after decrementing, this indicates that a fatal timeout is occurring, and therefore we shouldn't complete the task
-                int pendingCallbacks = int.MaxValue;
-                try
-                {
-                    pendingCallbacks = DecrementPendingCallbacks(false); // may dispose of GC handle.
-                }
-                catch (Exception e)
-                {
-                    _parser.State = TdsParserState.Broken;
-                    _parser.Connection?.DoomThisConnection();
-                    source?.TrySetException(processingException ?? e);
-                    throw;
-                }
-                finally
-                {
-                    if (processingException != null)
-                    {
-                        source?.TrySetException(processingException);
-                    }
-                }
-                if (processingException == null && source != null && pendingCallbacks < 2)
+                int pendingCallbacks = DecrementPendingCallbacks(false); // may dispose of GC handle.
+                if ((processFinallyBlock) && (source != null) && (pendingCallbacks < 2))
                 {
                     if (error == 0)
                     {
@@ -3999,23 +3973,8 @@ namespace Microsoft.Data.SqlClient
                         if (!handle.IsNull)
                         {
                             IncrementPendingCallbacks();
-                            try
-                            {
-                                readPacket = ReadAsync(handle, out error);
-                            }
-                            catch (Exception e)
-                            {
-                                if (ADP.IsUnrecoverableException(e))
-                                {
-                                    _parser.State = TdsParserState.Broken;
-                                    _parser.Connection?.DoomThisConnection();
-                                }
-                                if (error != TdsEnums.SNI_SUCCESS_IO_PENDING)
-                                {
-                                    DecrementPendingCallbacks(false);
-                                }
-                                throw;
-                            }
+
+                            readPacket = ReadAsync(handle, out error);
 
                             if (!(TdsEnums.SNI_SUCCESS == error || TdsEnums.SNI_SUCCESS_IO_PENDING == error))
                             {
@@ -4050,6 +4009,12 @@ namespace Microsoft.Data.SqlClient
                     Debug.Assert(!readFromNetwork || IsValidPacket(readPacket) , "ReadNetworkPacket should not have been null on this async operation!");
                     // Evaluate this condition for MANAGED_SNI. This may not be needed because the network call is happening Async and only the callback can receive a success.
                     ReadAsyncCallback(IntPtr.Zero, readPacket, 0);
+
+                    // Only release packet for Managed SNI as for Native SNI packet is released in finally block.
+                    if (LocalAppContextSwitches.UseManagedNetworking && readFromNetwork && !IsPacketEmpty(readPacket))
+                    {
+                        ReleasePacket(readPacket);
+                    }
                 }
                 else if (TdsEnums.SNI_SUCCESS_IO_PENDING != error)
                 { // FAILURE!
@@ -4080,23 +4045,9 @@ namespace Microsoft.Data.SqlClient
                 // DO NOT HANDLE PENDING READ HERE - which is TdsEnums.SNI_SUCCESS_IO_PENDING state.
                 // That is handled by user who initiated async read, or by ReadNetworkPacket which is sync over async.
             }
-            catch (Exception e)
-            {
-                if (ADP.IsUnrecoverableException(e))
-                {
-                    _parser.State = TdsParserState.Broken;
-                    _parser.Connection?.DoomThisConnection();
-                }
-                SetTimeoutStateStopped();
-                ChangeNetworkPacketTimeout(Timeout.Infinite, Timeout.Infinite);
-                completion.TrySetException(e);
-                throw;
-            }
             finally
             {
-                // A pending managed read transfers its packet to the callback. Synchronously
-                // returned packets remain ours even if callback processing throws.
-                if (!LocalAppContextSwitches.UseManagedNetworking || error != TdsEnums.SNI_SUCCESS_IO_PENDING)
+                if (!LocalAppContextSwitches.UseManagedNetworking)
                 {
                     if (readFromNetwork && !IsPacketEmpty(readPacket))
                     {
@@ -4134,25 +4085,23 @@ namespace Microsoft.Data.SqlClient
 
                             PacketHandle syncReadPacket = default;
                             bool readFromNetwork = true;
+                            bool shouldDecrement = false;
                             try
                             {
                                 Interlocked.Increment(ref _readingCount);
-                                try
+                                shouldDecrement = true;
+                                readFromNetwork = !PartialPacketContainsCompletePacket();
+                                if (readFromNetwork)
                                 {
-                                    readFromNetwork = !PartialPacketContainsCompletePacket();
-                                    if (readFromNetwork)
-                                    {
-                                        syncReadPacket = ReadSyncOverAsync(stateObj.GetTimeoutRemaining(), out error);
-                                    }
-                                    else
-                                    {
-                                        error = TdsEnums.SNI_SUCCESS;
-                                    }
+                                    syncReadPacket = ReadSyncOverAsync(stateObj.GetTimeoutRemaining(), out error);
                                 }
-                                finally
+                                else
                                 {
-                                    Interlocked.Decrement(ref _readingCount);
+                                    error = TdsEnums.SNI_SUCCESS;
                                 }
+
+                                Interlocked.Decrement(ref _readingCount);
+                                shouldDecrement = false;
 
                                 if (TdsEnums.SNI_SUCCESS == error)
                                 {
@@ -4166,14 +4115,13 @@ namespace Microsoft.Data.SqlClient
                                     fail = true; // Subsequent read failed, time to give up.
                                 }
                             }
-                            catch (Exception e) when (ADP.IsUnrecoverableException(e))
-                            {
-                                _parser.State = TdsParserState.Broken;
-                                _parser.Connection?.DoomThisConnection();
-                                throw;
-                            }
                             finally
                             {
+                                if (shouldDecrement)
+                                {
+                                    Interlocked.Decrement(ref _readingCount);
+                                }
+
                                 if (readFromNetwork && !IsPacketEmpty(syncReadPacket))
                                 {
                                     // Be sure to release packet, otherwise it will be leaked by native.

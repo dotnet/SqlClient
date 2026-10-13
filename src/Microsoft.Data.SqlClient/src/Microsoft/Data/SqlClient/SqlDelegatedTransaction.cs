@@ -78,21 +78,6 @@ namespace Microsoft.Data.SqlClient
 
         public void Initialize()
         {
-            SqlConnectionInternal connection = _connection;
-            try
-            {
-                InitializeCore();
-            }
-            catch (Exception e) when (ADP.IsUnrecoverableException(e))
-            {
-                connection.DoomThisConnection();
-                connection.Connection?.Abort(e);
-                throw;
-            }
-        }
-
-        private void InitializeCore()
-        {
             // if we get here, then we know for certain that we're the delegated
             // transaction.
             SqlConnectionInternal connection = _connection;
@@ -119,6 +104,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             _active = true;
+            // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
 
         internal bool IsActive
@@ -172,12 +158,6 @@ namespace Microsoft.Data.SqlClient
 
                         promoteException = null;
                     }
-                    catch (Exception e) when (ADP.IsUnrecoverableException(e))
-                    {
-                        connection.DoomThisConnection();
-                        usersConnection?.Abort(e);
-                        throw;
-                    }
                     catch (SqlException e)
                     {
                         promoteException = e;
@@ -196,6 +176,7 @@ namespace Microsoft.Data.SqlClient
                         connection.DoomThisConnection();
                     }
                 }
+                // @TODO: CER Exception Handling was removed here (see GH#3581)
 
                 //Throw exception only if Transaction is still active and not yet aborted.
                 if (promoteException != null)
@@ -255,12 +236,6 @@ namespace Microsoft.Data.SqlClient
                             connection.ExecuteTransaction(TransactionRequest.Rollback, null, System.Data.IsolationLevel.Unspecified, _internalTransaction, true);
                         }
                     }
-                    catch (Exception e) when (ADP.IsUnrecoverableException(e))
-                    {
-                        connection.DoomThisConnection();
-                        usersConnection?.Abort(e);
-                        throw;
-                    }
                     catch (SqlException e)
                     {
                         ADP.TraceExceptionWithoutRethrow(e);
@@ -293,6 +268,7 @@ namespace Microsoft.Data.SqlClient
                 // that the transaction is aborted, because it will be eventually.
                 connection.CleanupConnectionOnTransactionCompletion(_atomicTransaction);
                 enlistment.Aborted();
+                // @TODO: CER Exception Handling was removed here (see GH#3581)
             }
             else
             {
@@ -341,12 +317,6 @@ namespace Microsoft.Data.SqlClient
 
                             connection.ExecuteTransaction(TransactionRequest.Commit, null, System.Data.IsolationLevel.Unspecified, _internalTransaction, true);
                             commitException = null;
-                        }
-                        catch (Exception e) when (ADP.IsUnrecoverableException(e))
-                        {
-                            connection.DoomThisConnection();
-                            usersConnection?.Abort(e);
-                            throw;
                         }
                         catch (SqlException e)
                         {
@@ -401,6 +371,7 @@ namespace Microsoft.Data.SqlClient
                         enlistment.Committed();
                     }
                 }
+                // @TODO: CER Exception Handling was removed here (see GH#3581)
             }
             else
             {

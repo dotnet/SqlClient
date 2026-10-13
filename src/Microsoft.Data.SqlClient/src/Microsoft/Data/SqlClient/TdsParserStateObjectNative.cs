@@ -278,8 +278,8 @@ namespace Microsoft.Data.SqlClient
         {
             if ((0 == remaining || release) && _gcHandle.IsAllocated)
             {
-                _gcHandle.Free();
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParserStateObject.DecrementPendingCallbacks|ADV> {0}, FREEING HANDLE!", ObjectID);
+                _gcHandle.Free();
             }
         }
 
