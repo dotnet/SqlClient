@@ -57,15 +57,62 @@ jobs:
                 throw 'AzureKeyVaultUrl must use the public Azure Key Vault domain.'
             }
 
-            $keyNames = az keyvault key list `
-                --vault-name $Matches.vaultName `
-                --query '[].name' `
+            $accessToken = az account get-access-token `
+                --resource https://vault.azure.net `
+                --query accessToken `
                 --output tsv
 
-            if ($LASTEXITCODE -ne 0) {
-                throw "Failed to list keys from Azure Key Vault (exit code $LASTEXITCODE)."
+            if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($accessToken)) {
+                throw 'The service connection could not acquire an Azure Key Vault access token.'
             }
 
-            $keyNames | Sort-Object -Unique | ForEach-Object {
-                Write-Host $_
+            $httpClient = [System.Net.Http.HttpClient]::new()
+            try {
+                $httpClient.Timeout = [TimeSpan]::FromSeconds(30)
+                $httpClient.DefaultRequestHeaders.Authorization =
+                    [System.Net.Http.Headers.AuthenticationHeaderValue]::new('Bearer', $accessToken)
+
+                $keysUrl = [Uri]::new($uri, 'keys?api-version=7.4')
+                try {
+                    $response = $httpClient.GetAsync($keysUrl).GetAwaiter().GetResult()
+                }
+                catch [System.Threading.Tasks.TaskCanceledException] {
+                    throw "Timed out after 30 seconds connecting to $($uri.DnsSafeHost). Check the Key Vault firewall, private endpoint, DNS, and agent network route."
+                }
+
+                $responseBody = $response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
+                if (-not $response.IsSuccessStatusCode) {
+                    $errorCode = 'Unknown'
+                    $errorMessage = $response.ReasonPhrase
+                    try {
+                        $errorResponse = $responseBody | ConvertFrom-Json
+                        if ($errorResponse.error.code) {
+                            $errorCode = $errorResponse.error.code
+                        }
+                        if ($errorResponse.error.message) {
+                            $errorMessage = $errorResponse.error.message
+                        }
+                    }
+                    catch [System.ArgumentException] {
+                        # Preserve the HTTP status when the service returns a non-JSON error.
+                    }
+
+                    throw "Azure Key Vault returned HTTP $([int]$response.StatusCode) ($errorCode): $errorMessage"
+                }
+
+                $keyNames = ($responseBody | ConvertFrom-Json).value |
+                    ForEach-Object { ([Uri]$_.kid).Segments[2].TrimEnd('/') } |
+                    Sort-Object -Unique
+
+                if ($keyNames.Count -eq 0) {
+                    Write-Host 'The service connection can access the vault, but it contains no keys.'
+                }
+                else {
+                    $keyNames | ForEach-Object {
+                        Write-Host $_
+                    }
+                }
+            }
+            finally {
+                $httpClient.Dispose()
             }
