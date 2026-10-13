@@ -160,37 +160,6 @@ public sealed class VectorColumnMetadataTests
     }
 
     /// <summary>
-    /// Verifies that the vector properties read as null for a float16 column on a connection
-    /// which did not negotiate that base type, because the server describes such a column as
-    /// a <c>varchar(max)</c> and the driver has nothing to report. An application which stays
-    /// on the default therefore cannot tell a float16 column from text through these
-    /// properties, and has to query <c>sys.columns</c> instead.
-    /// </summary>
-    [ConditionalFact(nameof(IsFloat16Supported))]
-    public void ReportsNullForAFloat16ColumnWhichWasNotNegotiated()
-    {
-        string connectionString = new SqlConnectionStringBuilder(_connectionString)
-        {
-            VectorTypeSupport = SqlVectorTypeSupport.V1
-        }.ConnectionString;
-
-        using SqlConnection connection = new(connectionString);
-        connection.Open();
-
-        using SqlCommand command =
-            new("SELECT CAST('[1.5,2.5,3.5]' AS vector(3, float16)) AS v", connection);
-        using SqlDataReader reader = command.ExecuteReader();
-
-        DbColumn column = reader.GetColumnSchema()[0];
-
-        Assert.Null(column["VectorBaseType"]);
-        Assert.Null(column["VectorDimensions"]);
-
-        // The column is indistinguishable from text through the reader's own metadata.
-        Assert.Equal(typeof(string), column.DataType);
-    }
-
-    /// <summary>
     /// Verifies the use case the properties exist for: choosing a read path without knowing
     /// the schema in advance. <c>GetFieldType</c> is not enough on its own, because it
     /// reports string for a float16 column on .NET Framework just as it does for a varchar

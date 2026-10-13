@@ -1488,43 +1488,33 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         }
 
         /// <summary>
-        /// Whether a value bound for a vector column must be rewritten to that column's base
-        /// type by the client before it is sent.
+        /// Whether a vector destination column is supplied from a textual source, in which
+        /// case the value is parsed into the destination's base type by the client.
         /// </summary>
         /// <remarks>
-        /// The <c>INSERT BULK</c> declaration states the destination's base type and the
-        /// server performs no conversion within the data stream, because elements of each
-        /// base type differ in size. So any value which does not already carry the
-        /// destination's base type has to be rewritten here.
+        /// A JSON array is always coerced to a float32 payload, so it has to be rewritten
+        /// when the destination's base type is not float32. The server does not convert
+        /// within the data stream: the <c>INSERT BULK</c> declaration states the
+        /// destination's base type, and elements of each base type differ in size.
         /// <para>
-        /// That covers every in-memory representation. A JSON array is coerced to a float32
-        /// payload whatever the destination, and a <see cref="SqlTypes.SqlVector{T}"/>
-        /// carries the base type of its own element type, which the caller chose rather than
-        /// the column. Both are converted, with the same range check, so that a value which
-        /// cannot be represented is reported against the value rather than as a length
-        /// mismatch from the server.
+        /// The source column's declared type is not enough on its own. A column declared as
+        /// <see cref="object"/> reports no useful type while still yielding a JSON string
+        /// row by row, so the value is examined as well. Only a string counts: a raw vector
+        /// payload is a byte array, so it is never mistaken for text.
         /// </para>
         /// <para>
-        /// A payload read from another vector column is the one case left alone: it is
-        /// transferred as the raw bytes the server sent, so a copy between columns of
-        /// different base types is reported by the server rather than silently narrowed.
-        /// Such a value is a byte array, which is neither of the cases above. On .NET
-        /// Framework a float16 column has no <c>System.Half</c> to report, so it describes
-        /// itself as a string and is converted rather than rejected; that divergence is
+        /// A payload read from another vector column is left as it is, so a copy between
+        /// columns of different base types is reported by the server rather than being
+        /// silently narrowed. On .NET Framework a float16 column has no <c>System.Half</c>
+        /// to report, so it describes itself as a string and takes the textual path above:
+        /// such a copy is converted by the client rather than rejected. That divergence is
         /// inherent to the base type having no native representation there, and is covered
         /// by <c>BulkCopiesFloat16ToFloat32ThroughTheTextualRepresentation</c>.
         /// </para>
-        /// <para>
-        /// The source column's declared type is not enough on its own, because a column
-        /// declared as <see cref="object"/> reports no useful type while still yielding a
-        /// JSON string row by row, so the value is examined as well.
-        /// </para>
         /// </remarks>
-        private bool NeedsVectorBaseTypeConversion(int sourceOrdinal, _SqlMetaData metadata, object value) =>
+        private bool IsTextSourcedVectorColumn(int sourceOrdinal, _SqlMetaData metadata, object value) =>
             metadata.type == SqlDbTypeExtensions.Vector &&
-            (GetSourceColumnType(sourceOrdinal) == typeof(string) ||
-             value is string ||
-             value is ISqlVector);
+            (GetSourceColumnType(sourceOrdinal) == typeof(string) || value is string);
 
         private SourceColumnMetadata GetColumnMetadata(int ordinal)
         {
@@ -1866,16 +1856,10 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         /// column's base type, leaving payloads which already use that base type untouched.
         /// </summary>
         /// <remarks>
-        /// Used for any in-memory value, whose payload carries the base type it was built
-        /// with rather than the destination's. The server does not convert within the bulk
-        /// copy data stream, because binary16 and binary32 elements differ in size and the
-        /// <c>INSERT BULK</c> declaration fixes the element width.
-        /// <para>
-        /// The element count limit is checked here rather than when the intermediate was
-        /// built, because it depends on the element width and so on the base type the value
-        /// is finally sent as. A float16 column accepts twice as many elements as a float32
-        /// one, and the intermediate is always float32.
-        /// </para>
+        /// Used only for a textual source, whose JSON array is always coerced to a float32
+        /// payload regardless of the destination's base type. The server does not convert
+        /// within the bulk copy data stream, because binary16 and binary32 elements differ
+        /// in size and the <c>INSERT BULK</c> declaration fixes the element width.
         /// </remarks>
         private static object ConvertVectorToBaseType(object value, byte destinationElementType)
         {
@@ -1886,18 +1870,12 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 return value;
             }
 
-            byte[] converted = SqlTypes.SqlVectorPayload.ConvertElementType(payload, destinationElementType);
-
-            SqlTypes.SqlVectorPayload.ThrowIfLengthExceedsBaseType(
-                (converted.Length - TdsEnums.VECTOR_HEADER_SIZE) / MetaType.GetVectorElementSize(destinationElementType),
-                destinationElementType);
-
-            return converted;
+            return SqlTypes.SqlVectorPayload.ConvertElementType(payload, destinationElementType);
         }
 
         private object ConvertValue(object value, _SqlMetaData metadata, bool isNull, ref bool isSqlType, out bool coercedToDataFeed, int sourceOrdinal)
         {
-            bool needsVectorBaseTypeConversion = NeedsVectorBaseTypeConversion(sourceOrdinal, metadata, value);
+            bool isTextSourcedVector = IsTextSourcedVectorColumn(sourceOrdinal, metadata, value);
             coercedToDataFeed = false;
 
             if (isNull)
@@ -1984,13 +1962,17 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                         mt = MetaType.GetMetaTypeFromSqlDbType(type.SqlDbType, false);
                         value = SqlParameter.CoerceValue(value, mt, out coercedToDataFeed, out typeChanged, false);
 
-                        // Coercion reduces every representation to a payload carrying the
-                        // base type the value had, which for an in-memory value is the one
-                        // the caller chose rather than the column's. The INSERT BULK
-                        // declaration states the destination's base type and the server does
-                        // not convert within the data stream, so the payload is rewritten
-                        // here. Decided before coercion, which erases the distinction.
-                        if (needsVectorBaseTypeConversion)
+                        // A JSON string is always coerced to a float32 payload, so a textual
+                        // source bound for a column with a different base type has to be
+                        // rewritten to that base type. The INSERT BULK declaration states the
+                        // destination's base type, and the server does not convert within the
+                        // data stream, because binary16 and binary32 elements differ in size.
+                        //
+                        // Only a textual source is converted. A payload read from another
+                        // vector column keeps its own base type, so copying between columns
+                        // of different base types is reported by the server rather than being
+                        // silently narrowed.
+                        if (isTextSourcedVector)
                         {
                             value = ConvertVectorToBaseType(value, scale);
                         }
