@@ -210,10 +210,12 @@ is kept), so `SqlException.EncryptionInfo` reports them as `null`. The check liv
 managed) becomes a `SqlError`. This was chosen over deferring the commit until a later packet
 exchange: it adds no state machine to the login path, and it keeps the values when TLS really
 completed and the login fails for another reason (for example error 18456, or a lost
-connection reported by the TCP provider). Managed SNI is unaffected because it validates the
-certificate inside the handshake and reports SSL provider errors only from a failed handshake,
-before anything is recorded. Once login completes the capture is released, so SSL errors on an
-open connection never alter a published snapshot.
+connection reported by the TCP provider). On Managed SNI the certificate is validated inside
+the handshake, so a validation failure fails `EnableSsl` and mode and protocol are never
+recorded. In both cases, mode and protocol are not recorded, or are cleared, when the TLS
+handshake or deferred validation fails; certificate fields are not affected by this reset.
+Once login completes the capture is released, so SSL errors on an open connection never alter
+a published snapshot.
 
 ## 5. Scope
 
