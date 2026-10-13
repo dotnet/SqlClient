@@ -103,6 +103,50 @@ def invocation(case, repetition=1, index=1, stage="WorkloadActual"):
 
 
 class SchemaTests(unittest.TestCase):
+    def test_negative_managed_heap_estimate_is_retained_in_warmup_summary(self):
+        case = "OpenAsyncScoreboard-E3-Sync-32-Diagnostic"
+        data = invocation(case, stage="WorkloadWarmup")
+        diagnostics = data["Diagnostics"]
+        diagnostics["WindowEndMilliseconds"] = 1000
+        initial = dict(diagnostics["Timeline"][0], ManagedHeapBytes=128)
+        negative = dict(initial, TimestampMilliseconds=953.7822, ManagedHeapBytes=-586072,
+                        Gen2Collections=4)
+        final = dict(negative, TimestampMilliseconds=1001, AfterWorkload=True, ManagedHeapBytes=256)
+        diagnostics["Timeline"] = [initial, negative, final]
+        row = report.summarize(data, case, 1, "WorkloadWarmup")
+        summary = row["DiagnosticSummary"]
+        self.assertEqual(row["Diagnostics"]["Timeline"][1]["ManagedHeapBytes"], -586072)
+        self.assertEqual(row["MeasurementStage"], "WorkloadWarmup")
+        self.assertEqual(summary["PeakManagedHeapBytes"], 128)
+        self.assertEqual(summary["PeakWorkingSetBytes"], 1)
+        self.assertEqual(summary["InWindowCumulativeDeltas"]["Gen2Collections"], 3)
+        self.assertEqual(summary["ManagedHeapEstimateSamples"]["All"],
+                         {"Total": 3, "Available": 2, "Unavailable": 1, "Negative": 1})
+        self.assertEqual(summary["ManagedHeapEstimateSamples"]["WithinWorkload"],
+                         {"Total": 2, "Available": 1, "Unavailable": 1, "Negative": 1})
+
+    def test_heap_peak_is_unavailable_when_all_in_window_estimates_are_negative(self):
+        data = diagnostic()
+        data["Timeline"][0]["ManagedHeapBytes"] = -586072
+        summary = report.summarize_diagnostics(data, elapsed=10)
+        self.assertIsNone(summary["PeakManagedHeapBytes"])
+        self.assertEqual(summary["ManagedHeapEstimateSamples"]["WithinWorkload"]["Available"], 0)
+        self.assertEqual(summary["ManagedHeapEstimateSamples"]["WithinWorkload"]["Unavailable"], 1)
+        self.assertEqual(summary["PeakWorkingSetBytes"], 1)
+
+    def test_heap_estimates_require_integers_and_exact_metrics_reject_negatives(self):
+        for value in (None, True, "-586072", -586072.0, 1.0, float("nan"), float("inf")):
+            data = diagnostic()
+            data["Timeline"][0]["ManagedHeapBytes"] = value
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                report.summarize_diagnostics(data)
+        for field in ("WorkingSetBytes", "PrivateMemoryBytes", "HeapSizeAfterLastGcBytes",
+                      "TotalAllocatedBytes", "Gen2Collections", "CpuMilliseconds", "OwnedConnections"):
+            data = diagnostic()
+            data["Timeline"][0][field] = -1
+            with self.subTest(field=field), self.assertRaises(ValueError):
+                report.summarize_diagnostics(data)
+
     def test_serializer_utc_fields_accept_sampled_nulls_and_diagnostic_offsets(self):
         case = "OpenAsyncScoreboard-E1-Async-1"
         data = invocation(case)

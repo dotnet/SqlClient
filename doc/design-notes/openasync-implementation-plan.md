@@ -84,6 +84,9 @@ task-return observations, but is not an uninstrumented driver-overhead benchmark
 Throughput includes matched yields, holds, queries where applicable and close
 costs. Sampled and Diagnostic timings must not be pooled; stack capture can pause
 the target, and ThreadPool occupancy alone does not identify blocked Open calls.
+Raw negative managed-heap estimates are retained as explicit unavailable
+observations and excluded only from heap-size statistics, not from other
+timeline metrics.
 Commands and artifact interpretation are documented in `BUILDGUIDE.md` and the
 perf README.
 

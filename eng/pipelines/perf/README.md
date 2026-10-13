@@ -233,6 +233,13 @@ retains observed pauses and the number of missed collections, not a complete GC 
 Workload peaks use only `AfterWorkload=false` snapshots whose timestamps do not exceed
 `min(Diagnostics.WindowEndMilliseconds, ElapsedMilliseconds)`. CPU/allocation/GC counters are cumulative: the report takes last-minus-first
 in-window deltas, never sums them. Insufficient in-window observations yield null, not zero.
+`ManagedHeapBytes` is the approximate `GC.GetTotalMemory(false)` estimate, which can
+be negative during concurrent collection. Negative signed-integer observations stay
+unchanged in raw timelines but are unavailable for heap statistics: the heap peak uses
+only nonnegative in-window observations, or null if none are available.
+`ManagedHeapEstimateSamples` reports total, available, unavailable, and negative counts
+for all snapshots and separately within the workload, including warmup summary rows.
+Other snapshot metrics are retained, and exact counters still reject negative values.
 Probes that finish after the workload are retained and labeled `PostWorkload`; their distribution
 is separate from probes completed within the measurement window.
 
@@ -266,6 +273,13 @@ the case. Required SQL access includes the server-state/performance-state DMV pe
 the server version; a separate, explicitly unmeasured capability preflight checks these even when
 the cohorts are too short to observe. Credentials come only from the provisioned environment and are passed to
 SQLCMD through `SQLCMDPASSWORD`, never serialized or printed.
+Both preflight and measured captures use SQLCMD `-b -y 0` (unlimited variable-length
+output), without the incompatible `-h`/`-W` options. The query returns one named
+`nvarchar(max)` JSON cell and explicitly enables `QUOTED_IDENTIFIER` before the
+ring-buffer XML method call, independent of SQLCMD's session default. Parsing accepts
+headerless output or its exact named
+header/separator, rejoins display-wrapped lines without trimming their contents,
+and rejects truncated JSON or extra error text. Raw SQLCMD output remains preserved.
 
 No `dotnet-stack` pin exists in the repository tool manifest. On Linux the launcher checks its
 repository-local observer tool directory, installs **dotnet-stack 9.0.652701** only if absent,

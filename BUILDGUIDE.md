@@ -699,7 +699,10 @@ existing perf scripts. It cannot be launched directly without those collectors.
 Stack capture can pause the client; keep these results separate from Sampled
 performance. Short measurement windows may have insufficient external samples.
 Latest-GC polling is not a complete GC pause trace, and worker occupancy is not
-blocked-stack attribution. Probe drops and post-workload execution are reported.
+blocked-stack attribution. Raw managed-heap estimates can be negative during
+collection; these observations are retained and counted as unavailable, not
+clamped to zero or included in heap-size statistics. Probe drops and
+post-workload execution are reported.
 
 Use `benchmarkProfile: openasync-controls` for the existing M1/M2 BDN controls.
 Leave `currentOnly` false and select a baseline version to compare the same

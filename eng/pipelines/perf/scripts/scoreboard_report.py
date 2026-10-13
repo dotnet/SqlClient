@@ -272,7 +272,10 @@ def summarize_diagnostics(data, elapsed=None):
                       "PendingWorkItems", "CompletedWorkItems", "ProcessThreads", "CpuMilliseconds",
                       "WorkingSetBytes", "PrivateMemoryBytes", "ManagedHeapBytes", "HeapSizeAfterLastGcBytes",
                       "FragmentedBytes", "TotalAllocatedBytes", "Gen0Collections", "Gen1Collections", "Gen2Collections"):
-            legacy.number(sample.get(field), field, integer=field != "CpuMilliseconds")
+            if field == "ManagedHeapBytes":
+                need(type(sample.get(field)) is int, "ManagedHeapBytes must be a signed integer estimate")
+            else:
+                legacy.number(sample.get(field), field, integer=field != "CpuMilliseconds")
     probe = data.get("UnrelatedWork")
     need(isinstance(probe, dict), "Missing unrelated-work accounting")
     for field in ("Capacity", "Scheduled", "Posted", "Executed", "Dropped", "OutstandingAtStop"):
@@ -313,6 +316,13 @@ def summarize_diagnostics(data, elapsed=None):
              f"Cumulative in-window counter decreased: {field}")
         deltas[field] = values[-1] - values[0] if len(values) >= 2 else None
     peak = lambda field: max((sample[field] for sample in in_window), default=None)
+
+    def heap_estimate_counts(observations):
+        negative = sum(sample["ManagedHeapBytes"] < 0 for sample in observations)
+        return dict(Total=len(observations), Available=len(observations) - negative,
+                    Unavailable=negative, Negative=negative)
+
+    available_heap = [sample["ManagedHeapBytes"] for sample in in_window if sample["ManagedHeapBytes"] >= 0]
     return dict(UnrelatedDispatchMilliseconds=legacy.distribution(dispatch),
                 UnrelatedScheduledToExecutedMilliseconds=legacy.distribution(overall),
                 ProbeOfferLatenessMilliseconds=legacy.distribution(lateness),
@@ -332,7 +342,11 @@ def summarize_diagnostics(data, elapsed=None):
                 PeakBusyWorkerProxy=peak("BusyWorkerThreads"),
                 PeakPendingWorkItems=peak("PendingWorkItems"),
                 PeakWorkingSetBytes=peak("WorkingSetBytes"),
-                PeakManagedHeapBytes=peak("ManagedHeapBytes"),
+                PeakManagedHeapBytes=max(available_heap, default=None),
+                ManagedHeapEstimateSamples=dict(All=heap_estimate_counts(timeline),
+                                                WithinWorkload=heap_estimate_counts(in_window)),
+                ManagedHeapInterpretation="GC.GetTotalMemory(false) is approximate; negative estimates "
+                                          "are retained raw but unavailable for heap statistics.",
                 PeakOutstandingOpens=peak("OutstandingOpens"), PeakOwnedConnections=peak("OwnedConnections"),
                 BusyWorkerInterpretation="Availability-derived proxy; not blocked-thread evidence")
 

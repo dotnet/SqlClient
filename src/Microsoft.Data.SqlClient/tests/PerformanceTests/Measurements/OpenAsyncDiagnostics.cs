@@ -28,6 +28,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         public double CpuMilliseconds { get; set; }
         public long WorkingSetBytes { get; set; }
         public long PrivateMemoryBytes { get; set; }
+        /// <summary>Raw runtime estimate; negative observations represent unavailable heap sizes, not zero.</summary>
         public long ManagedHeapBytes { get; set; }
         public long HeapSizeAfterLastGcBytes { get; set; }
         public long FragmentedBytes { get; set; }
