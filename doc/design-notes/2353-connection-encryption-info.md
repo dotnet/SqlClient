@@ -236,9 +236,18 @@ is used only when its `dwAvailable` flag is set; structures with `cbSize < 64` o
 cached; the certificate fields then remain `null`. If only the hash export exists, the
 hash is still captured.
 
-**Known gap:** in Schannel automatic validation (`Encrypt` without
-`HostNameInCertificate`), native SNI doesn't report validation errors or chain status on
-failure. Those fields remain `null`; they are never derived from HRESULTs or messages.
+**Known gaps:**
+
+- In Schannel automatic validation (`Encrypt` without `HostNameInCertificate`), native SNI
+  doesn't report validation errors or chain status on failure. Those fields remain `null`;
+  they are never derived from HRESULTs or messages. The certificate hash is also
+  unavailable on failure in this mode: Schannel invalidates the security context when its
+  automatic validation rejects the certificate, so SNI can't query the presented
+  certificate.
+- In chain-policy validation (`HostNameInCertificate` set), a certificate that both fails
+  the chain and doesn't match the host name reports only `ChainError`, while Managed SNI
+  reports `HostNameMismatch | ChainError`. `CertVerifyCertificateChainPolicy` with
+  `CERT_CHAIN_POLICY_SSL` returns a single error, and chain errors take precedence.
 
 These exports are introduced by an upcoming native SNI package; until it ships, Native SNI
 reports no certificate details.
