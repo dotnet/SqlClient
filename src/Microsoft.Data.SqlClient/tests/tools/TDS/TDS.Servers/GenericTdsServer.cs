@@ -127,6 +127,9 @@ namespace Microsoft.SqlServer.TDS.Servers
 
         public IPEndPoint EndPoint => _endpoint.ServerEndPoint;
 
+        /// <summary>Listener address; local-only reproductions select loopback before starting.</summary>
+        public IPAddress ListenAddress { get; set; } = IPAddress.Any;
+
         /// <summary>
         /// Server configuration
         /// </summary>
@@ -174,7 +177,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             }
             _endpoint = new TDSServerEndPoint(this)
             {
-                ServerEndPoint = new IPEndPoint(IPAddress.Any, 0),
+                ServerEndPoint = new IPEndPoint(ListenAddress, 0),
                 EndpointName = methodName,
                 EventLog = Arguments.Log
             };

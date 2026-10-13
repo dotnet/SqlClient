@@ -38,6 +38,7 @@
   </PropertyGroup>
 
   <!-- References ====================================================== -->
+  <Import Project="../tools/ConnectivityTestHost/ConnectivityTestHost.targets" />
   <!-- Test target reference -->
   <ItemGroup Condition="'$(ReferenceType)' == 'Project'">
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj" />
@@ -112,6 +113,7 @@
 
   <!-- References for netcore -->
   <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
+    <Compile Include="../PerformanceTests/ConnectivityLoad.cs" Link="PerformanceTests/ConnectivityLoad.cs" />
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
     <!-- See the net462 group above for why this reference is declared explicitly. -->
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />

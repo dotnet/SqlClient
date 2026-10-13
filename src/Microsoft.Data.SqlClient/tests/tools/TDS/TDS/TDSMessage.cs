@@ -314,6 +314,13 @@ namespace Microsoft.SqlServer.TDS
                         // Do nothing
                         break;
                     }
+                case TDSMessageType.TransactionManager:
+                    {
+                        var transaction = new TransactionManager.TDSTransactionManagerToken();
+                        transaction.Inflate(_dataStream);
+                        Add(transaction);
+                        break;
+                    }
                 case TDSMessageType.FederatedAuthenticationToken:
                     {
                         Add(new TDSFedAuthToken(_dataStream));

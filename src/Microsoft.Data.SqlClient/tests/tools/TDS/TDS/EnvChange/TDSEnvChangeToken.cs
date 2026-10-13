@@ -191,6 +191,9 @@ namespace Microsoft.SqlServer.TDS.EnvChange
                         break;
                     }
                 case TDSEnvChangeTokenType.SQLCollation:
+                case TDSEnvChangeTokenType.BeginTransaction:
+                case TDSEnvChangeTokenType.CommitTransaction:
+                case TDSEnvChangeTokenType.RollbackTransaction:
                     {
                         // Read new value length
                         byte valueLength = (byte)source.ReadByte();
@@ -348,6 +351,9 @@ namespace Microsoft.SqlServer.TDS.EnvChange
                         break;
                     }
                 case TDSEnvChangeTokenType.SQLCollation:
+                case TDSEnvChangeTokenType.BeginTransaction:
+                case TDSEnvChangeTokenType.CommitTransaction:
+                case TDSEnvChangeTokenType.RollbackTransaction:
                     {
                         // Write new value length
                         cache.WriteByte((byte)(NewValue != null ? ((byte[])NewValue).Length : 0));

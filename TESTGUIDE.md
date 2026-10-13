@@ -5,6 +5,9 @@ tests.
 
 For build prerequisites and general `build.proj` usage, see [BUILDGUIDE.md](BUILDGUIDE.md).
 
+For isolated worker-starvation, cancellation, and transaction-lock reproductions,
+see [Async connectivity reproductions](doc/async-connectivity-reproductions.md).
+
 ## Test Projects
 
 The primary test projects for Microsoft.Data.SqlClient are under

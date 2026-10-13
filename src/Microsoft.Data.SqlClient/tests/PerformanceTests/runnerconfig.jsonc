@@ -199,6 +199,21 @@
             "InvocationCount": 1,
             "WarmupCount": 1,
             "RowCount": 0
+        },
+        // Opt-in sustained real-server load; no artificial server delays.
+        "ConnectivityLoadRunnerConfig": {
+            "Enabled": false,
+            "LaunchCount": 1,
+            "IterationCount": 5,
+            "InvocationCount": 1,
+            "WarmupCount": 1,
+            "RowCount": 0,
+            "RunStrategy": "Monitoring",
+            "Concurrency": [1, 16, 64],
+            "Pooling": [false, true],
+            "DurationSeconds": 10,
+            "SampleIntervalMilliseconds": 10,
+            "TimeoutMinutes": 10
         }
     }
 }
