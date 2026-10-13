@@ -123,12 +123,7 @@ namespace Microsoft.Data.SqlClient
                             }
                             else if (readTask.IsFaulted)
                             {
-                                reader.CloseOnError(readTask.Exception.InnerException);
-                                s_diagnosticListener.WriteCommandError(
-                                    operationId,
-                                    this,
-                                    _transaction,
-                                    readTask.Exception.InnerException);
+                                CloseScalarReaderOnError(reader, readTask.Exception.InnerException, operationId);
                                 source.SetException(readTask.Exception.InnerException);
                             }
                             else
@@ -174,6 +169,27 @@ namespace Microsoft.Data.SqlClient
         #endregion
         
         #region Private Methods
+
+        private void CloseScalarReaderOnError(SqlDataReader reader, Exception exception, Guid operationId)
+        {
+            if (ADP.IsUnrecoverableException(exception))
+            {
+                try
+                {
+                    s_diagnosticListener.WriteCommandError(operationId, this, _transaction, exception);
+                }
+                finally
+                {
+                    // Fatal cleanup rethrows the original error, including if a listener throws.
+                    reader.CloseOnError(exception);
+                }
+            }
+            else
+            {
+                reader.CloseOnError(exception);
+                s_diagnosticListener.WriteCommandError(operationId, this, _transaction, exception);
+            }
+        }
 
         private static object CompleteExecuteScalar(SqlDataReader reader, bool returnLastResult)
         {
@@ -297,13 +313,7 @@ namespace Microsoft.Data.SqlClient
                             }
                             else if (readTask.IsFaulted)
                             {
-                                reader.CloseOnError(readTask.Exception.InnerException);
-                                
-                                s_diagnosticListener.WriteCommandError(
-                                    operationId,
-                                    this,
-                                    _transaction,
-                                    readTask.Exception.InnerException);
+                                CloseScalarReaderOnError(reader, readTask.Exception.InnerException, operationId);
                                 
                                 source.SetException(readTask.Exception.InnerException);
                             }
@@ -346,7 +356,7 @@ namespace Microsoft.Data.SqlClient
                                 {
                                     if (failure != null)
                                     {
-                                        reader.CloseOnError(failure);
+                                        CloseScalarReaderOnError(reader, failure, operationId);
                                     }
                                     else
                                     {
