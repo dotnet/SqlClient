@@ -388,6 +388,8 @@ namespace Microsoft.Data.SqlClient.Parser
             }
         }
 
+        internal override Connection.ServerCertificateCapture? GetServerCertificateCapture() => _sessionHandle?.ServerCertificateCapture;
+
         internal override uint SetConnectionBufferSize(ref uint unsignedPacketSize)
         {
             GetSessionSNIHandleHandleOrThrow().SetBufferSize((int)unsignedPacketSize);
