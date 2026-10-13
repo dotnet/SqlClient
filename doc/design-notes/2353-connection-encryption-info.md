@@ -287,10 +287,14 @@ negotiated. When a pooled connection is checked out, its automatic enlistment (`
 `Enlist`) can fail without a new login; that exception carries the snapshot the physical
 connection published when it logged in. Exceptions raised before any value was observed, and
 non-`SqlException` failures, keep `Empty`.
-- **Managed SNI** validates the server certificate inside the handshake, so a validation
-  failure fails `EnableSsl`. In this slice Managed SNI does not capture the negotiated protocol
-  on a failed handshake, so the exception reports the mode with a `null` protocol. Slice C adds
-  capture of `SslStream.SslProtocol` from the validation callback.
+- **Managed SNI** validates the server certificate inside the handshake, in the
+  `RemoteCertificateValidationCallback`. `SslStream` agrees the protocol version before it
+  raises the callback, so the callback records `SslStream.SslProtocol` with the certificate
+  details. When validation fails `EnableSsl` fails; `TdsParser.EnableSsl` first assigns the
+  captured protocol and certificate details to the accumulator, so the exception reports the mode
+  selected at PRELOGIN together with that protocol. A protocol already determined for the attempt
+  takes precedence over the one reported with the certificate details. Managed SNI is used only on
+  .NET (`net10.0`).
 - **Native SNI.** With the current SNI package, native SNI also rejects an untrusted server
   certificate during the handshake, so this slice reports the mode but no protocol for that
   failure (the tests assert this for both SNI implementations). If a deferred validation
@@ -311,6 +315,24 @@ No transport sets it in this slice, so the property stays `null`; Slice C record
 SNI contract. On failure an observed cipher suite is kept, like the protocol. A cipher suite is
 only reported once a ServerHello selected it, so it is not dropped when the protocol is
 unavailable.
+
+### Managed SNI certificate capture
+
+Managed SNI records certificate details from the `RemoteCertificateValidationCallback`
+that runs during the TLS handshake. Capture reuses the callback's inputs and SqlClient's
+existing verdict; it performs no extra validation or network work and doesn't change
+trust decisions, messages, or tracing. Values are reset at the start of every TLS
+handshake and recorded whether the handshake succeeds or fails. The callback also records the
+TLS protocol agreed for the handshake (see **Failure path** above).
+
+| Field | Source | `null` when |
+| --- | --- | --- |
+| `PresentedServerCertificateHash256` | SHA-256 of the presented leaf certificate's DER encoding (`GetRawCertData()`) | No certificate was presented. Captured even when `TrustServerCertificate` bypasses validation. |
+| `ServerCertificateValidationErrors` | Effective SqlClient verdict: `ServerCertificateMissing`, `ChainError`, `HostNameMismatch` (after `HostNameInCertificate`), `PinnedCertificateMismatch` (`ServerCertificate`); `None` when validation passed | Validation was bypassed, or the configured `ServerCertificate` file could not be read. |
+| `ServerCertificateChainStatus` | Bitwise OR of the original callback chain's `ChainStatus` flags (no chain rebuild); `NoError` when the chain was evaluated cleanly | Validation was bypassed, `ServerCertificate` pinning is used (the chain isn't consulted), no certificate was presented, or the platform reported a chain error without flags. |
+
+Native SNI does not yet report certificate details; those fields remain `null` there.
+
 ## 5. Scope
 
 The API reports negotiated encryption, TLS protocol, the server-selected cipher suite, the

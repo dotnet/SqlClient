@@ -955,6 +955,22 @@ namespace Microsoft.Data.SqlClient.Parser
 #endif
             error = _physicalStateObj.EnableSsl(ref info, encrypt == SqlConnectionEncryptOption.Strict, serverCertificateFilename);
 
+            // The certificate validation callback runs synchronously within EnableSsl, so whatever the
+            // transport observed is complete here; record it before any failure is reported so that
+            // the login exception carries it.
+            ServerCertificateCapture certificateCapture = _physicalStateObj.GetServerCertificateCapture();
+            EncryptionInfoAccumulator accumulator = _connHandler?.EncryptionInfoAccumulator;
+            if (accumulator is not null && certificateCapture is not null)
+            {
+                accumulator.CertificateHash256 = certificateCapture.Hash256;
+                accumulator.ValidationErrors = certificateCapture.ValidationErrors;
+                accumulator.ChainStatus = certificateCapture.ChainStatus;
+
+                // A protocol already determined for this attempt takes precedence over one reported
+                // alongside the certificate details.
+                accumulator.Protocol ??= certificateCapture.Protocol;
+            }
+
             if (error != TdsEnums.SNI_SUCCESS)
             {
                 _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
