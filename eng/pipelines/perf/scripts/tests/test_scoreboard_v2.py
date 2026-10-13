@@ -26,6 +26,12 @@ import scoreboard_observer as observer
 import scoreboard_report as report
 
 
+def sqlcmd_output(data, width=65535, headers=True):
+    payload = json.dumps(data)
+    header = f"{observer.SQL_JSON_COLUMN}\n{'-' * len(observer.SQL_JSON_COLUMN)}\n" if headers else ""
+    return header + "\n".join(payload[index:index + width] for index in range(0, len(payload), width)) + "\n"
+
+
 def diagnostic():
     timeline = dict(TimestampMilliseconds=0, AfterWorkload=False)
     for name in ("OutstandingOpens", "OwnedConnections", "WorkerThreads", "BusyWorkerThreads",
@@ -472,7 +478,9 @@ class CollectionTests(unittest.TestCase):
             else:
                 self.assertNotIn("<pwd>", args)
                 self.assertEqual(env["SQLCMDPASSWORD"], "<pwd>")
-                path.write_text(json.dumps(sql), encoding="utf-8")
+                self.assertNotIn("-h", args)
+                self.assertEqual(args[args.index("-y") + 1], "0")
+                path.write_text(sqlcmd_output(sql, width=80), encoding="utf-8")
 
         calls = threading.local()
         def boundary_marker():
@@ -652,7 +660,9 @@ class CollectionTests(unittest.TestCase):
                 output = observer.STACK_VERSION + "+240cb1ce5bc30594c515206764241d7982e384af"
             else:
                 self.assertNotIn("<pwd>", command)
-                output = json.dumps(sql)
+                self.assertNotIn("-h", command)
+                self.assertEqual(command[command.index("-y") + 1], "0")
+                output = sqlcmd_output(sql, width=80)
             kwargs["stdout"].write(output)
             return subprocess.CompletedProcess(command, 0)
 
@@ -667,6 +677,45 @@ class CollectionTests(unittest.TestCase):
 
 
 class ObserverTests(unittest.TestCase):
+    def test_sqlcmd_command_uses_compatible_unlimited_output_options(self):
+        with mock.patch.dict(os.environ, {"SQL_SERVER": "test"}):
+            command = observer.sql_command("sqlcmd")
+        self.assertEqual(command[command.index("-y") + 1], "0")
+        self.assertEqual(command[command.index("-w") + 1], "65535")
+        self.assertNotIn("-h", command)
+        self.assertNotIn("-W", command)
+        self.assertIn("-b", command)
+        query = command[command.index("-Q") + 1]
+        self.assertIn("SET NOCOUNT ON", query)
+        self.assertIn("DECLARE @Snapshot nvarchar(max)", query)
+        self.assertIn(f"SELECT @Snapshot AS [{observer.SQL_JSON_COLUMN}]", query)
+
+    def test_sqlcmd_parser_preserves_large_wrapped_json_and_optional_headers(self):
+        sql = {key: 0 for key in ("ActiveUserRequests", "RunnableTasks", "RunningTasks",
+                                 "SchedulerRunnableQueue", "SchedulerCurrentTasks", "UserSessions",
+                                 "Connections", "LoginsCounter")}
+        sql["Waits"] = [{"WaitType": f"WAIT_{index}", "Tasks": index, "Milliseconds": index * 3}
+                        for index in range(3000)]
+        self.assertGreater(len(json.dumps(sql)), 65535)
+        for headers in (True, False):
+            with self.subTest(headers=headers):
+                self.assertEqual(observer.parse_sql_output(sqlcmd_output(sql, headers=headers)), sql)
+        # Include whitespace within a wrapped JSON string; trimming each physical line corrupts it.
+        sql["Waits"] = [{"WaitType": "ABC DEF", "Tasks": 0, "Milliseconds": 0}]
+        self.assertEqual(observer.parse_sql_output(sqlcmd_output(sql, width=1)), sql)
+
+    def test_sqlcmd_parser_rejects_errors_truncation_and_unrecognized_framing(self):
+        for text in (
+            'Sqlcmd: The -h and the -y 0 options are mutually exclusive.',
+            '{"Waits": [',
+            '{"Waits": []}\nMsg 297, Level 16: permission denied',
+            f'{observer.SQL_JSON_COLUMN}\nmissing separator\n{{"Waits":[]}}',
+            'OtherColumn\n-----------\n{"Waits":[]}',
+            '{"Waits":[]}\n(1 rows affected)',
+        ):
+            with self.subTest(text=text), self.assertRaises(ValueError):
+                observer.parse_sql_output(text)
+
     def test_utc_intervals_not_active_marker_alone_determine_association(self):
         window = {"StartedUtc": "2026-01-01T00:00:01Z", "CompletedUtc": "2026-01-01T00:00:02Z"}
         def capture(start, end):

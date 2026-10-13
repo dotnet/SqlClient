@@ -17,8 +17,10 @@ import time
 
 STACK_VERSION = "9.0.652701"
 STACK_SOURCE = "https://sqlclientdrivers.pkgs.visualstudio.com/public/_packaging/sqlclient/nuget/v3/index.json"
-SQL = """
+SQL_JSON_COLUMN = "SqlClientObserverJson"
+SQL = f"""
 SET NOCOUNT ON;
+DECLARE @Snapshot nvarchar(max) = (
 SELECT
  (SELECT COUNT(*) FROM sys.dm_exec_requests r JOIN sys.dm_exec_sessions s ON r.session_id = s.session_id
   WHERE r.session_id <> @@SPID AND s.is_user_process = 1) ActiveUserRequests,
@@ -36,7 +38,9 @@ SELECT
   ORDER BY monitor.timestamp DESC) SqlProcessCpuPercent,
  JSON_QUERY((SELECT wait_type AS WaitType, waiting_tasks_count AS Tasks, wait_time_ms AS Milliseconds
              FROM sys.dm_os_wait_stats FOR JSON PATH)) Waits
-FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
+FOR JSON PATH, WITHOUT_ARRAY_WRAPPER
+);
+SELECT @Snapshot AS [{SQL_JSON_COLUMN}];
 """
 
 
@@ -77,7 +81,7 @@ def waits_delta(before, after):
 
 
 def validate_sql(sql):
-    if not isinstance(sql.get("Waits"), list):
+    if not isinstance(sql, dict) or not isinstance(sql.get("Waits"), list):
         raise ValueError("SQL observer did not return cumulative wait counters")
     for key in ("ActiveUserRequests", "RunnableTasks", "RunningTasks", "SchedulerRunnableQueue",
                 "SchedulerCurrentTasks", "UserSessions", "Connections", "LoginsCounter"):
@@ -87,8 +91,24 @@ def validate_sql(sql):
 
 def sql_command(sqlcmd):
     return [sqlcmd, "-S", os.environ["SQL_SERVER"], "-U", "sa",
-            "-C", "-b", "-l", "15", "-t", "15", "-h", "-1", "-y", "0",
+            "-C", "-b", "-l", "15", "-t", "15", "-y", "0",
             "-w", "65535", "-Q", SQL]
+
+
+def parse_sql_output(text):
+    """Preserve the unlimited-width JSON cell, removing only known SQLCMD framing."""
+    lines = text.lstrip("\ufeff").splitlines()
+    while lines and not lines[0].strip():
+        lines.pop(0)
+    if lines and lines[0].strip() == SQL_JSON_COLUMN:
+        lines.pop(0)
+        if not lines or not re.fullmatch(r"-+", lines.pop(0).strip()):
+            raise ValueError("SQLCMD JSON header is missing its separator")
+    # -w can wrap a single nvarchar(max) cell, even inside a JSON string.
+    # Do not strip individual lines: spaces within values must survive wrapping.
+    sql = json.loads("".join(lines).strip())
+    validate_sql(sql)
+    return sql
 
 
 def timestamp(text):
@@ -180,7 +200,7 @@ def prepare_tools(work_dir, results_dir=None):
     if result.returncode:
         raise RuntimeError(f"SQL Diagnostic capability/permission preflight failed; see {preflight}")
     try:
-        validate_sql(json.loads(preflight.read_text(encoding="utf-8-sig").strip()))
+        parse_sql_output(preflight.read_text(encoding="utf-8-sig"))
     except (ValueError, TypeError):
         raise RuntimeError(f"Invalid SQL Diagnostic capability/permission preflight output; see {preflight}") from None
     return {"stack": str(stack), "sqlcmd": sqlcmd, "sql_capability_verified": True}
@@ -256,8 +276,7 @@ class Observer:
         end = utc()
         sql = None
         if sql_capture:
-            sql = json.loads(sql_path.read_text(encoding="utf-8-sig").strip())
-            validate_sql(sql)
+            sql = parse_sql_output(sql_path.read_text(encoding="utf-8-sig"))
         counts = stack_counts(stack_path.read_text(encoding="utf-8", errors="replace")) if stack_capture else None
         previous = next((record for record in reversed(self.records) if record["Sql"] is not None), None)
         login_delta = sql["LoginsCounter"] - previous["Sql"]["LoginsCounter"] if previous and sql else None
