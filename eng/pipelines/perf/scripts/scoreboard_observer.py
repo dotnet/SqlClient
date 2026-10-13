@@ -20,6 +20,7 @@ STACK_SOURCE = "https://sqlclientdrivers.pkgs.visualstudio.com/public/_packaging
 SQL_JSON_COLUMN = "SqlClientObserverJson"
 SQL = f"""
 SET NOCOUNT ON;
+SET QUOTED_IDENTIFIER ON;
 DECLARE @Snapshot nvarchar(max) = (
 SELECT
  (SELECT COUNT(*) FROM sys.dm_exec_requests r JOIN sys.dm_exec_sessions s ON r.session_id = s.session_id

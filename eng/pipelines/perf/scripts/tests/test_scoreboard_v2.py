@@ -677,6 +677,17 @@ class CollectionTests(unittest.TestCase):
 
 
 class ObserverTests(unittest.TestCase):
+    def test_shared_sql_batch_sets_required_xml_session_options_before_query(self):
+        with mock.patch.dict(os.environ, {"SQL_SERVER": "test"}):
+            command = observer.sql_command("sqlcmd")
+        query = command[command.index("-Q") + 1]
+        query_start = query.index("DECLARE @Snapshot")
+        for setting in ("SET NOCOUNT ON;", "SET QUOTED_IDENTIFIER ON;"):
+            self.assertLess(query.index(setting), query_start)
+        self.assertIn("monitor.Payload.value(", query)
+        self.assertIn("FROM sys.dm_os_ring_buffers", query)
+        self.assertIn("SqlProcessCpuPercent", query)
+
     def test_sqlcmd_command_uses_compatible_unlimited_output_options(self):
         with mock.patch.dict(os.environ, {"SQL_SERVER": "test"}):
             command = observer.sql_command("sqlcmd")
