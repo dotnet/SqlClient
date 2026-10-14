@@ -340,6 +340,12 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Contains("dbType", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
+        /// <summary>
+        /// Verifies that the constructors which take a specified length and an explicit locale
+        /// populate all relevant properties. Verifies character-based data.
+        /// </summary>
+        /// <param name="dbType">A character-based <see cref="SqlDbType"/>.</param>
+        /// <see cref="ConstructorWithMaxLengthAndExplicitLocale_DoesNotThrowInInvariantGlobalizationMode"/>
         [Theory]
         [MemberData(
             nameof(ConstructorCharData)
@@ -389,6 +395,12 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(0, metaData.SortOrdinal);
         }
 
+        /// <summary>
+        /// Verifies that the constructors which take an explicit locale populate all relevant
+        /// properties. Verifies text-based data.
+        /// </summary>
+        /// <param name="dbType">A text-based <see cref="SqlDbType"/>.</param>
+        /// <see cref="ConstructorWithMaxLengthTextExplicitLocale_DoesNotThrowInInvariantGlobalizationMode"/>
         [Theory]
         [MemberData(
             nameof(ConstructorTextData)
