@@ -15,8 +15,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     /// <summary>Observes local SSPI context names and accepted token SIDs without SQL or network traffic.</summary>
     internal static class LocalSspiDiagnostic
     {
-        /// <summary>Runs a bounded handshake, retaining the acquisition and client-call impersonation scope.</summary>
-        internal static void Run(SafeAccessTokenHandle token, string label, string expectedSid, ITestOutputHelper output)
+        /// <summary>
+        /// Runs a bounded handshake, retaining the acquisition and client-call impersonation scope,
+        /// and returns the accepted context's token user SID.
+        /// </summary>
+        internal static string Run(SafeAccessTokenHandle token, string label, string expectedSid, ITestOutputHelper output)
         {
             using var server = new Session(false);
             using Session client = token == null ? new Session(true)
@@ -38,8 +41,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     finally { Array.Clear(clientBlob, 0, clientBlob.Length); }
                     if (server.Complete && client.Complete)
                     {
-                        server.Observe(label, expectedSid, output);
-                        return;
+                        return server.Observe(label, expectedSid, output);
                     }
                 }
                 throw new InvalidOperationException("Local SSPI handshake exceeded four rounds.");
@@ -131,7 +133,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             /// <summary>Separately queries the SSPI name, negotiated package, and accepted access token.</summary>
-            internal void Observe(string label, string expectedSid, ITestOutputHelper output)
+            internal string Observe(string label, string expectedSid, ITestOutputHelper output)
             {
                 Check(QueryContextAttributes(ref _context, 1, out IntPtr name));
                 string contextName;
@@ -150,6 +152,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     Assert.True(package == "NTLM" || package == "Kerberos",
                         $"Unexpected negotiated SSPI package '{package}'.");
                     if (expectedSid != null) Assert.Equal(expectedSid, identity.User.Value);
+                    return identity.User.Value;
                 }
             }
 

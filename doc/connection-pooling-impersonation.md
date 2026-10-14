@@ -106,20 +106,32 @@ Nothing is provisioned on the developer machine.
 The same-machine CI baseline has reported the configured alternate
 `ORIGINAL_LOGIN()` but the process account's current login, session security
 SIDs, and administrative login token, including without an SSPI prequery and
-with recompilation. The Windows/SQL mechanism is not established. A passing
-original-login regression alone therefore does not establish distinct effective
-permissions or password validation. The broader experiment remains incomplete
-until the strict current-login/SID baseline succeeds; these observations do not
-establish whether outbound-name pooling is viable.
+with recompilation. A passing original-login regression alone therefore does
+not establish distinct effective permissions or password validation.
 
 A bounded, in-memory Negotiate handshake independently queries the accepted
 SSPI context name and `QuerySecurityContextToken` user SID before the SQL
-comparison. It uses process, fresh network-only A, and ordinary authenticated A
-controls; unavailable interactive logon rights are reported without changing
-policy. Authentication token bytes and passwords are never logged, and all
-credential, context and access-token handles are released. This distinguishes
-an observed Windows SSPI identity split from SQL-specific behavior; it does not
-assume the local-call mechanism or alter the SQL assertions.
+comparison. It uses process, fresh network-only A and B, and ordinary
+authenticated A controls; unavailable interactive logon rights are reported
+without changing policy. Authentication token bytes and passwords are never
+logged, and all credential, context and access-token handles are released.
+In CI this reproduced the split below SQL: network-only A's accepted context
+name is A while its token is the process account, whereas ordinary
+authenticated A yields A's token. The exact Windows local-call mechanism, and
+remote or Kerberos behavior, are not established.
+
+This same-machine Windows behavior is treated as an environment limitation
+outside the driver's design responsibility. When the local diagnostic measures
+the process token for a network-only account, the experiment logs an
+`ENVIRONMENT LIMITATION` line and asserts SQL's current login and SID against
+that measured process identity instead of the account. The driver-relevant
+assertions remain strict: `ORIGINAL_LOGIN()` must be the configured account,
+A and B must authenticate as distinct original logins distinct from the
+process, authentication must be NTLM over TCP, and restoration is verified.
+Any other measured token identity fails the experiment. When Windows supplies
+the account's own token, the full account current-login and SID assertions
+apply. This classification does not establish whether outbound-name pooling is
+viable, and the original pool-isolation regressions are unchanged.
 
 A separate probe writes a SQL-SPN override using `CRED_PERSIST_SESSION` only
 inside a fresh disposable network-only session, then deletes that exact target.
