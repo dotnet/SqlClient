@@ -6,6 +6,9 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests.CollectionDefinitions;
 
+/// <summary>
+/// Groups and serializes all tests which change the process-wide globalization invariant mode.
+/// </summary>
 [CollectionDefinition(nameof(GlobalizationInvariantModeTests), DisableParallelization = true)]
 public class GlobalizationInvariantModeTests
 {
