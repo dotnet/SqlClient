@@ -24,7 +24,7 @@ namespace Microsoft.Data.SqlClient
         [ConfigurationProperty("applicationClientId", IsRequired = false)]
         public string ApplicationClientId => this["applicationClientId"] as string ?? string.Empty;
 
-        /// <summary>Gets the Windows Authentication Manager broker preference, or an empty string when unset.</summary>
+        /// <summary>Gets the Web Account Manager broker preference, or an empty string when unset.</summary>
         /// <remarks>The value is a string to distinguish an unset preference from an explicit false value.</remarks>
         [ConfigurationProperty("useWamBroker", IsRequired = false)]
         public string UseWamBroker => this["useWamBroker"] as string ?? string.Empty;
