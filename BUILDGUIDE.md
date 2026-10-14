@@ -384,6 +384,18 @@ turns missing or malformed validation inputs into success. Localization report-o
 mode marks findings as `SucceededWithIssues`; it does not claim that translations
 passed validation.
 
+## Localization Validation
+
+OneBranch validates localized resources before building the SqlClient and Abstractions
+assemblies. Each caller explicitly supplies its resource directory and isolated allowlist
+section in [LocalizationValidationAllowlist.json](.config/LocalizationValidationAllowlist.json):
+`AllowedEnglishValueMatches` for SqlClient and `AbstractionsAllowedEnglishValueMatches`
+for Abstractions. The script defaults to the driver's section for direct callers.
+
+The existing `failOnValidationError` flag controls whether findings fail the build or
+are reported as warnings. Missing or malformed validator inputs always fail. Do not
+allowlist untranslated development strings merely to make validation pass.
+
 ## Versioning
 
 Versioning can be accomplished by using a mix of different parameters to the `build.proj` targets:
