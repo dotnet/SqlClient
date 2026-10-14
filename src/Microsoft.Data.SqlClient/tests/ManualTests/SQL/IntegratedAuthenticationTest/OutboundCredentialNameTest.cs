@@ -295,7 +295,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             + $"SUSER_SID={login.Sid}; auth_scheme={login.Authentication}; transport={login.Transport}.");
 
         /// <summary>Reads current-session properties, normally recompiling context-sensitive scalar expressions.</summary>
-        private static async Task<Login> ReadLogin(string connectionString, bool async, bool recompile = true)
+        private async Task<Login> ReadLogin(string connectionString, bool async, bool recompile = true)
         {
             using var connection = new SqlConnection(connectionString);
             if (async) await connection.OpenAsync();
@@ -305,16 +305,45 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 + "CONVERT(varchar(30), CONNECTIONPROPERTY('auth_scheme')), "
                 + "CONVERT(varchar(30), CONNECTIONPROPERTY('net_transport'))"
                 + (recompile ? " OPTION (RECOMPILE)" : ""), connection);
+            Login login;
+            using (SqlDataReader reader = async ? await command.ExecuteReaderAsync() : command.ExecuteReader())
+            {
+                Assert.True(async ? await reader.ReadAsync() : reader.Read());
+                login = new Login
+                {
+                    Original = reader.GetString(0),
+                    Current = reader.GetString(1),
+                    Sid = new SecurityIdentifier((byte[])reader.GetValue(2), 0).Value,
+                    Authentication = reader.GetString(3),
+                    Transport = reader.GetString(4)
+                };
+            }
+            if (!string.Equals(login.Original, login.Current, StringComparison.OrdinalIgnoreCase))
+            {
+                await LogSqlSecurityContext(connection, async);
+            }
+            return login;
+        }
+
+        /// <summary>Diagnoses mismatched identities using only the current session and its login token.</summary>
+        private async Task LogSqlSecurityContext(SqlConnection connection, bool async)
+        {
+            using var command = new SqlCommand(
+                "SELECT login_name, original_login_name, CONVERT(varchar(172), security_id, 1), "
+                + "CONVERT(varchar(172), original_security_id, 1), CONVERT(varchar(10), IS_SRVROLEMEMBER('sysadmin')) "
+                + "FROM sys.dm_exec_sessions WHERE session_id = @@SPID; "
+                + "SELECT name, type, usage, CONVERT(varchar(172), sid, 1) FROM sys.login_token", connection);
             using SqlDataReader reader = async ? await command.ExecuteReaderAsync() : command.ExecuteReader();
             Assert.True(async ? await reader.ReadAsync() : reader.Read());
-            return new Login
+            _output.WriteLine($"SQL/session: login_name={reader.GetString(0)}; original_login_name={reader.GetString(1)}; "
+                + $"security_id={reader.GetString(2)}; original_security_id={reader.GetString(3)}; "
+                + $"sysadmin={(reader.IsDBNull(4) ? "NULL" : reader.GetString(4))}.");
+            Assert.True(async ? await reader.NextResultAsync() : reader.NextResult());
+            while (async ? await reader.ReadAsync() : reader.Read())
             {
-                Original = reader.GetString(0),
-                Current = reader.GetString(1),
-                Sid = new SecurityIdentifier((byte[])reader.GetValue(2), 0).Value,
-                Authentication = reader.GetString(3),
-                Transport = reader.GetString(4)
-            };
+                _output.WriteLine($"SQL/login-token: name={reader.GetString(0)}; type={reader.GetString(1)}; "
+                    + $"usage={reader.GetString(2)}; sid={reader.GetString(3)}.");
+            }
         }
 
         /// <summary>Acquires a fresh targetless Negotiate credential under the effective identity.</summary>
