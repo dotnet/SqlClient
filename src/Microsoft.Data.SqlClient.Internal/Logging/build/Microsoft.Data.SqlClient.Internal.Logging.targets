@@ -40,10 +40,13 @@
 
     <!-- Legacy packages.config consumers import build/ explicitly through NuGet installation.
          Read installed versions from the manifest, independently of assembly reference metadata. -->
-    <PropertyGroup Condition="'$(RestoreProjectStyle)' == 'PackagesConfig'">
+    <PropertyGroup>
       <!-- Match NuGet: prefer the project-specific manifest, replacing spaces with underscores. -->
-      <_SqlClientConfigPath>$(MSBuildProjectDirectory)/packages.$(MSBuildProjectName.Replace(' ', '_')).config</_SqlClientConfigPath>
-      <_SqlClientConfigPath Condition="!Exists('$(_SqlClientConfigPath)')">$(MSBuildProjectDirectory)/packages.config</_SqlClientConfigPath>
+      <_SqlClientConfigPath Condition="'$(RestoreProjectStyle)' == 'PackagesConfig' Or
+                                       ('$(RestoreProjectStyle)' == '' And '@(PackageReference)' == '')">$(MSBuildProjectDirectory)/packages.$(MSBuildProjectName.Replace(' ', '_')).config</_SqlClientConfigPath>
+      <_SqlClientConfigPath Condition="('$(RestoreProjectStyle)' == 'PackagesConfig' Or
+                                        ('$(RestoreProjectStyle)' == '' And '@(PackageReference)' == '')) And
+                                       !Exists('$(_SqlClientConfigPath)')">$(MSBuildProjectDirectory)/packages.config</_SqlClientConfigPath>
     </PropertyGroup>
     <XmlPeek XmlInputPath="$(_SqlClientConfigPath)"
              Query="/packages/package[translate(@id, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='microsoft.data.sqlclient.internal.logging']/@version"

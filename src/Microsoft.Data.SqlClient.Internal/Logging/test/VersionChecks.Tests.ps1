@@ -150,12 +150,7 @@ BeforeAll {
                     ForEach-Object { "<$_ Include='MetadataFree-$_.dll' />" }) -join ''
             $assets = "<ItemGroup>$bare$entries</ItemGroup>"
         }
-        $projectStyle = if ($AssetKind -like 'packages*.config') {
-            '<RestoreProjectStyle>PackagesConfig</RestoreProjectStyle>'
-        } else {
-            ''
-        }
-        Set-Content $project "<Project><PropertyGroup>$projectStyle</PropertyGroup>$assets<Import Project='$targets' /></Project>"
+        Set-Content $project "<Project>$assets<Import Project='$targets' /></Project>"
         # Act/assert: run the real shipped target and require the expected diagnostic, not just failure.
         Invoke-CheckedDotnet (@('msbuild', $project, '-t:ValidateSqlClientFamilyPackageVersions', '-v:quiet', '-nologo') + $Properties) $Mismatch $Evidence
     }
@@ -319,6 +314,12 @@ Describe 'Synthetic family-version validation' -Tag 'Synthetic' {
 }
 
 Describe 'Project-specific legacy manifests' -Tag 'Synthetic', 'LegacyManifest' {
+    It 'detects mismatches in packages.config when RestoreProjectStyle is unset' {
+        Test-Synthetic $synthetic 'packages.config' @(
+            @{ Id = $logging; Version = '8.0.0' }, @{ Id = $family[0]; Version = '8.0.1' }
+        ) $true @() $family[0]
+    }
+
     # Conflicting manifests expose incorrect selection; matching files alone cannot prove precedence.
     It 'detects mismatches without a fallback packages.config' {
         Test-Synthetic $synthetic 'packages.VersionTest.config' @(
