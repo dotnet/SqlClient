@@ -150,7 +150,12 @@ BeforeAll {
                     ForEach-Object { "<$_ Include='MetadataFree-$_.dll' />" }) -join ''
             $assets = "<ItemGroup>$bare$entries</ItemGroup>"
         }
-        Set-Content $project "<Project>$assets<Import Project='$targets' /></Project>"
+        $projectStyle = if ($AssetKind -like 'packages*.config') {
+            '<RestoreProjectStyle>PackagesConfig</RestoreProjectStyle>'
+        } else {
+            ''
+        }
+        Set-Content $project "<Project><PropertyGroup>$projectStyle</PropertyGroup>$assets<Import Project='$targets' /></Project>"
         # Act/assert: run the real shipped target and require the expected diagnostic, not just failure.
         Invoke-CheckedDotnet (@('msbuild', $project, '-t:ValidateSqlClientFamilyPackageVersions', '-v:quiet', '-nologo') + $Properties) $Mismatch $Evidence
     }
@@ -180,7 +185,8 @@ BeforeAll {
     function Test-Consumer {
         param([string] $Name, [bool] $Transitive, [string] $FamilyVersion,
             [string] $Package = '', [bool] $Mismatch = $false, [string[]] $Properties = @(),
-            [bool] $RuntimeOnly = $false, [bool] $ExcludeBuild = $false)
+            [bool] $RuntimeOnly = $false, [bool] $ExcludeBuild = $false,
+            [bool] $NeighboringLegacyManifest = $false)
         $directory = Join-Path $work $Name
         New-Item -ItemType Directory $directory | Out-Null
         # Arrange: the wrapper makes Logging transitive without importing the target by hand.
@@ -198,11 +204,16 @@ BeforeAll {
             $references += "<PackageReference Include='$id' Version='[1.0.0]' />"
         }
         $project = Join-Path $directory 'Consumer.csproj'
+        if ($NeighboringLegacyManifest) {
+            $manifest = "<packages><package id='$logging' version='$anchor' /><package id='$($family[0])' version='8.0.0-preview2' /></packages>"
+            Set-Content (Join-Path $directory 'packages.config') $manifest
+        }
         Set-Content $project @"
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup>
   <ItemGroup>$references</ItemGroup>
   <Target Name="ReportVersionCheck" AfterTargets="ValidateSqlClientFamilyPackageVersions">
+    <Message Importance="high" Text="RESTORE_PROJECT_STYLE=`$(RestoreProjectStyle)" />
     <Message Importance="high" Text="VERSION_CHECK_ANCHOR=`$(_SqlClientExpectedFamilyVersion)" />
   </Target>
 </Project>
@@ -231,7 +242,15 @@ BeforeAll {
             }
         }
         # Assert both automatic import and the resolved anchor; an arbitrary build error is not success.
-        $evidence = if ($Mismatch) { $Package } elseif (-not $ExcludeBuild -and $Properties.Count -eq 0) { "VERSION_CHECK_ANCHOR=$anchor" } else { '' }
+        $evidence = if ($NeighboringLegacyManifest) {
+            'RESTORE_PROJECT_STYLE=PackageReference'
+        } elseif ($Mismatch) {
+            $Package
+        } elseif (-not $ExcludeBuild -and $Properties.Count -eq 0) {
+            "VERSION_CHECK_ANCHOR=$anchor"
+        } else {
+            ''
+        }
         Invoke-CheckedDotnet (@('build', $project, '--no-restore', '-v:minimal', '-nologo') + $Properties) $Mismatch $evidence
         Write-Host "PASS: consumer $Name (automatic NuGet import, expected mismatch=$Mismatch)"
     }
@@ -391,5 +410,9 @@ Describe 'Packaged direct and transitive consumers' -Tag 'Consumer' {
     It 'validates <Name>' -ForEach $consumerCases {
         # Restore and build a fresh consumer so generated imports and resolved assets are real.
         Test-Consumer $Name $Transitive $Version $Package $Mismatch $Properties $RuntimeOnly $ExcludeBuild
+    }
+
+    It 'ignores a mismatching neighboring packages.config for a PackageReference consumer' {
+        Test-Consumer 'direct-neighboring-packages-config' $false $anchor -NeighboringLegacyManifest $true
     }
 }
