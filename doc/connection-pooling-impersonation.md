@@ -93,13 +93,24 @@ returns `machine\user`; the experiment recognizes both exact account forms,
 logs the raw names, and independently verifies SQL's SAM-form login and SID.
 This is not general domain-alias normalization or a production pool-key rule.
 Matched no-prequery and SSPI-prequery controls reuse the passing regression
-preflight's unpooled open path and record logon-session IDs. A separate
+preflight's unpooled open path and record logon-session IDs. Both arms collect
+their observations before strict SQL identity assertions, so a baseline mismatch
+does not prevent capturing the SSPI-prequery arm. A separate
 cacheable/recompiled SQL comparison distinguishes context-sensitive scalar
 results from the original authenticated login; normal identity probes recompile
 the statement and retain strict configured-login and SID assertions.
 The additional credentials are mapped through `SQLCLIENT_NETONLY_PEER_USER`,
 `SQLCLIENT_NETONLY_PEER_DOMAIN`, and `SQLCLIENT_NETONLY_PEER_PASSWORD`.
 Nothing is provisioned on the developer machine.
+
+The same-machine CI baseline has reported the configured alternate
+`ORIGINAL_LOGIN()` but the process account's current login, session security
+SIDs, and administrative login token, including without an SSPI prequery and
+with recompilation. The Windows/SQL mechanism is not established. A passing
+original-login regression alone therefore does not establish distinct effective
+permissions or password validation. The broader experiment remains incomplete
+until the strict current-login/SID baseline succeeds; these observations do not
+establish whether outbound-name pooling is viable.
 
 A separate probe writes a SQL-SPN override using `CRED_PERSIST_SESSION` only
 inside a fresh disposable network-only session, then deletes that exact target.

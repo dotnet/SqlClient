@@ -202,7 +202,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Log("Control/cacheable-process", "(no SSPI query)", await ReadLogin(connectionString, async, false));
             using SafeAccessTokenHandle control = CreateToken(false);
             using SafeAccessTokenHandle queried = CreateToken(false);
-            string controlLogin = await WindowsIdentity.RunImpersonated(control, async () =>
+            var controlResults = await WindowsIdentity.RunImpersonated(control, async () =>
             {
                 string beforeOpen = Statistics().AuthenticationId.ToString();
                 string login = await PoolIdentityImpersonationTest.GetLogin(connectionString, async);
@@ -212,11 +212,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Login recompiled = await ReadLogin(connectionString, async);
                 Log("Control/cacheable-A", "(no SSPI query)", cached);
                 Log("Control/recompiled-A", "(no SSPI query)", recompiled);
-                AssertName(Expected(false), cached.Original);
-                AssertLogin(recompiled, false);
-                return login;
+                return (Original: login, Cached: cached, Recompiled: recompiled);
             });
-            string queriedLogin = await WindowsIdentity.RunImpersonated(queried, async () =>
+            var queriedResults = await WindowsIdentity.RunImpersonated(queried, async () =>
             {
                 string lookupId = Statistics().AuthenticationId.ToString();
                 string name = CredentialName();
@@ -227,10 +225,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     + $"SQL={login}; async={async}.");
                 Assert.Equal(lookupId, beforeOpen);
                 AssertCredentialName(false, name);
-                return login;
+                Login cached = await ReadLogin(connectionString, async, false);
+                Login recompiled = await ReadLogin(connectionString, async);
+                Log("Control/queried-cacheable-A", name, cached);
+                Log("Control/queried-recompiled-A", name, recompiled);
+                return (Original: login, Cached: cached, Recompiled: recompiled);
             });
-            AssertName(Expected(false), controlLogin);
-            AssertName(Expected(false), queriedLogin);
+            AssertName(Expected(false), controlResults.Original);
+            AssertName(Expected(false), queriedResults.Original);
+            AssertName(Expected(false), controlResults.Cached.Original);
+            AssertName(Expected(false), queriedResults.Cached.Original);
+            AssertLogin(controlResults.Recompiled, false);
+            AssertLogin(queriedResults.Recompiled, false);
         }
 
         /// <summary>Checks the preconnection name and the authenticated SQL name and SID.</summary>
