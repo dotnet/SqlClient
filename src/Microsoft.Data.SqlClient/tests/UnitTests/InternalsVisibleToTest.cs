@@ -12,7 +12,7 @@ using Xunit;
 namespace Microsoft.Data.SqlClient.UnitTests
 {
     /// <summary>
-    /// Verifies internal access and framework-specific friend assembly metadata.
+    /// Verifies internal access and the absence of the obsolete DataSetExtensions friend grant.
     /// </summary>
     public class InternalsVisibleToTest
     {
@@ -28,22 +28,17 @@ namespace Microsoft.Data.SqlClient.UnitTests
         }
 
         /// <summary>
-        /// Preserves the exact DataSetExtensions friend identity on .NET Framework only.
+        /// Ensures the obsolete DataSetExtensions friend grant is absent on every target framework.
         /// </summary>
         [Fact]
-        public void DataSetExtensionsFriendAssemblyMatchesTargetFramework()
+        public void DataSetExtensionsIsNotGrantedInternalAccess()
         {
             var friends = typeof(SqlConnection).Assembly
                 .GetCustomAttributes<InternalsVisibleToAttribute>()
                 .Where(attribute =>
                     new AssemblyName(attribute.AssemblyName).Name == "System.Data.DataSetExtensions");
 
-#if NETFRAMEWORK
-            Assert.Equal("System.Data.DataSetExtensions, PublicKey=00000000000000000400000000000000",
-                Assert.Single(friends).AssemblyName);
-#else
             Assert.Empty(friends);
-#endif
         }
     }
 }
