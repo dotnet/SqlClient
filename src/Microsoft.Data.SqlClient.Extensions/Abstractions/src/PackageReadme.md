@@ -58,16 +58,15 @@ Upgrade all installed SqlClient family packages to the same exact version, inclu
 prerelease labels: SqlClient, Abstractions, Azure, Logging and AKV. SqlServer.Server
 and native SNI are independently versioned.
 
-Logging supplies the consumer build/transitive checks (`SQLCLIENT001`). Untrimmed
-registry bootstrap also compares the loaded SqlClient and discovered Azure assemblies'
+Untrimmed registry bootstrap compares the loaded SqlClient and discovered Azure assemblies'
 informational versions against Abstractions, excluding source-control build metadata.
 Mismatches are cached and traced with upgrade/restart guidance; `GetProvider` and
 `SetProvider` return `null` and `false`. Disabling configuration or Azure discovery
 does not disable the SqlClient runtime check.
 
-Trimmed/NativeAOT fixed images remove reflective runtime validation and rely on
-build-time package validation. The emergency `SqlClientEnforceFamilyVersions=false`
-build opt-out does not disable runtime checks or make mixed versions supported.
+Trimmed/NativeAOT fixed images remove reflective runtime validation. Ensure the
+resolved package versions match before publishing; consumer build-time enforcement
+is maintained separately from authentication bootstrap. Mixed versions are not supported.
 
 ## Authentication configuration
 
