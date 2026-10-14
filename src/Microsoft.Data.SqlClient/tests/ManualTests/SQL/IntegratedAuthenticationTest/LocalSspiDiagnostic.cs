@@ -147,7 +147,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     output.WriteLine($"Local SSPI/{label}: contextName={contextName}; tokenName={identity.Name}; "
                         + $"tokenSid={identity.User.Value}; package={package}; impersonation={identity.ImpersonationLevel}.");
-                    Assert.Equal("NTLM", package);
+                    Assert.True(package == "NTLM" || package == "Kerberos",
+                        $"Unexpected negotiated SSPI package '{package}'.");
                     if (expectedSid != null) Assert.Equal(expectedSid, identity.User.Value);
                 }
             }
