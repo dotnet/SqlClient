@@ -26,16 +26,9 @@ parameters:
     type: string
     default: '1433'
 
-  - name: variablePrefix
-    type: string
-    default: netOnly
-    values:
-      - netOnly
-      - netOnlyPeer
-
 steps:
   - task: PowerShell@2
-    displayName: '${{ parameters.mode }} temporary ${{ parameters.variablePrefix }} account [Win]'
+    displayName: '${{ parameters.mode }} temporary net-only account [Win]'
     ${{ if eq(parameters.mode, 'cleanup') }}:
       condition: always()
     inputs:
@@ -44,13 +37,11 @@ steps:
       script: |
         & "$(Build.SourcesDirectory)\eng\scripts\Configure-NetOnlyAccount.ps1" `
           -Mode $env:NETONLY_MODE -InstanceName $env:NETONLY_INSTANCE -Port $env:NETONLY_PORT `
-          -AccountName $env:NETONLY_ACCOUNT -AccountSid $env:NETONLY_SID `
-          -VariablePrefix $env:NETONLY_PREFIX
+          -AccountName $env:NETONLY_ACCOUNT -AccountSid $env:NETONLY_SID
     env:
       NETONLY_MODE: ${{ parameters.mode }}
       NETONLY_INSTANCE: ${{ parameters.instanceName }}
       NETONLY_PORT: ${{ parameters.port }}
-      NETONLY_PREFIX: ${{ parameters.variablePrefix }}
       # Undefined ADO macros are treated as absent by cleanup.
-      NETONLY_ACCOUNT: $(${{ parameters.variablePrefix }}User)
-      NETONLY_SID: $(${{ parameters.variablePrefix }}Sid)
+      NETONLY_ACCOUNT: $(netOnlyUser)
+      NETONLY_SID: $(netOnlySid)

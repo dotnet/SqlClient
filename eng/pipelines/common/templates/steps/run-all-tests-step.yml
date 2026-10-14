@@ -203,9 +203,6 @@ steps:
         SQLCLIENT_NETONLY_DOMAIN: $(netOnlyDomain)
         SQLCLIENT_NETONLY_PASSWORD: $(netOnlyPassword)
         SQLCLIENT_NETONLY_CONNECTION_STRING: $(netOnlyConnectionString)
-        SQLCLIENT_NETONLY_PEER_USER: $(netOnlyPeerUser)
-        SQLCLIENT_NETONLY_PEER_DOMAIN: $(netOnlyPeerDomain)
-        SQLCLIENT_NETONLY_PEER_PASSWORD: $(netOnlyPeerPassword)
     inputs:
       command: build
       projects: build.proj

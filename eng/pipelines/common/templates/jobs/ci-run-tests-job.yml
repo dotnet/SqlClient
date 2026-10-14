@@ -345,10 +345,6 @@ jobs:
     - template: /eng/pipelines/common/templates/steps/configure-netonly-account-step.yml@self
       parameters:
         mode: setup
-    - template: /eng/pipelines/common/templates/steps/configure-netonly-account-step.yml@self
-      parameters:
-        mode: setup
-        variablePrefix: netOnlyPeer
 
   # Gate: record that all setup steps (SDK install, build, SQL config, x86 SDK
   # install, etc.) completed successfully.  Test steps condition on this variable
@@ -389,10 +385,6 @@ jobs:
     - template: /eng/pipelines/common/templates/steps/configure-netonly-account-step.yml@self
       parameters:
         mode: cleanup
-    - template: /eng/pipelines/common/templates/steps/configure-netonly-account-step.yml@self
-      parameters:
-        mode: cleanup
-        variablePrefix: netOnlyPeer
 
   - template: /eng/pipelines/common/templates/steps/publish-test-results-step.yml@self
     parameters:
