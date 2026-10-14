@@ -79,12 +79,13 @@ diagnostic guidance through `Microsoft.Data.SqlClient.EventSource` (Informationa
 Trace keyword `0x2`). Bootstrap failures are cached; correct the cause and restart the application.
 
 Upgrade SqlClient, Abstractions, Azure, Logging and AKV together to the same exact package
-version, including prerelease labels. Logging supplies the `SQLCLIENT001` consumer build
-check. Untrimmed bootstrap also validates loaded SqlClient and discovered Azure informational
-versions against Abstractions; source-control build metadata is ignored. Disabling app.config
+version, including prerelease labels. Untrimmed bootstrap validates loaded SqlClient and
+discovered Azure informational versions against Abstractions; source-control build metadata
+is ignored. Disabling app.config
 or discovery does not disable the SqlClient runtime check. Fixed trimmed/AOT images remove
-reflective runtime validation and rely on build-time package checks. SqlServer.Server and
-native SNI remain independently versioned.
+reflective runtime validation, so ensure the resolved package versions match before
+publishing. Consumer build-time enforcement is maintained separately from authentication
+bootstrap. SqlServer.Server and native SNI remain independently versioned.
 
 With this package reference, you can continue to use Entra ID authentication modes directly in your connection string:
 
