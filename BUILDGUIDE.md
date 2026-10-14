@@ -354,6 +354,19 @@ while Source Link only maps `/_/`. NuGet Package Explorer reports this as
 **Contains untracked sources (obj)** for both Source Link and Deterministic, even when all `obj`
 sources are embedded and the compiler's deterministic flag is enabled.
 
+## OneBranch Validation
+
+The non-official OneBranch pipeline defaults **Fail on validation errors**
+(`failOnValidationError`) to `true`. Localization, XML documentation, and package
+validation findings fail the build by default. Select `false` at queue time to
+report findings as warnings so pending translations do not block the rest of a
+development build. Official builds always use `true`.
+
+This flag is independent of **Fail on SDL errors** (`failOnSdlError`). Neither flag
+turns missing or malformed validation inputs into success. Localization report-only
+mode marks findings as `SucceededWithIssues`; it does not claim that translations
+passed validation.
+
 ## Versioning
 
 Versioning can be accomplished by using a mix of different parameters to the `build.proj` targets:

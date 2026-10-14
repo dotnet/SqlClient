@@ -36,7 +36,7 @@ Validation runs in three places and shares one gating switch.
 
 ### `failOnValidationError`
 
-All three honour the `failOnValidationError` queue-time parameter, which defaults to `true`.
+All three honour the `failOnValidationError` queue-time parameter, which defaults to `true` in non-official runs. Set it to `false` explicitly for report-only validation. Official runs remain strict. This parameter is independent of `failOnSdlError`; disabling SDL failure gating does not change validation gating.
 
 When `false`, findings are logged as warnings and the build continues. This exists because the gates span jobs that depend on one another: a hard failure in an early gate aborts the build stage, so the later gates never run and a single run cannot show the full picture. Turning it off lets one run exercise every gate at once, which is how a newly added gate or a known backlog of findings is assessed.
 
