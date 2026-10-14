@@ -32,6 +32,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             || (PoolIdentityImpersonationTest.IsConfigured
                 && !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("SQLCLIENT_NETONLY_PEER_USER")));
 
+        public static bool CanRunLocalSspi => RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+
+        /// <summary>Verifies the bounded in-memory SSPI harness against the existing process identity without provisioning.</summary>
+        [ConditionalFact(nameof(CanRunLocalSspi))]
+        public void LocalSspi_ProcessControl()
+        {
+            using WindowsIdentity process = WindowsIdentity.GetCurrent();
+            LocalSspiDiagnostic.Run(null, "process", process.User.Value, _output);
+        }
+
         /// <summary>
         /// Tests two real accounts, independent same-account logons, invalid same-name credentials,
         /// and restoration with both Open APIs and the CI-selected networking implementation.
@@ -42,6 +52,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public async Task OutboundName_UnpooledSqlAuthentication(bool async)
         {
             AssertConfiguration();
+            DiagnoseLocalSspi();
             await DiagnosePrequery(async);
             string connectionString = ConnectionString();
             string processName = CredentialName();
@@ -190,6 +201,33 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// <summary>Queries SSPI and SQL inside the same impersonation scope, awaiting all SQL work.</summary>
         private Task<Login> Probe(SafeAccessTokenHandle token, bool peer, string connectionString, bool async, string label) =>
             WindowsIdentity.RunImpersonated(token, () => ProbeCurrent(peer, connectionString, async, label));
+
+        /// <summary>Separates accepted Windows SSPI token identity from SQL's security context without policy changes.</summary>
+        private void DiagnoseLocalSspi()
+        {
+            using (WindowsIdentity process = WindowsIdentity.GetCurrent())
+                LocalSspiDiagnostic.Run(null, "process", process.User.Value, _output);
+            using SafeAccessTokenHandle netonly = CreateToken(false);
+            LocalSspiDiagnostic.Run(netonly, "netonly-A", null, _output);
+            if (!LogonAuthenticated(User(false), Domain(false),
+                Environment.GetEnvironmentVariable("SQLCLIENT_NETONLY_PASSWORD"), 2, 0, out SafeAccessTokenHandle ordinary))
+            {
+                int error = Marshal.GetLastWin32Error();
+                ordinary?.Dispose();
+                if (error != 1385) throw new Win32Exception(error, "Ordinary A logon control failed.");
+                _output.WriteLine("UNCOVERED: ordinary A logon control lacks interactive logon rights; no policy changed.");
+                return;
+            }
+            using (ordinary)
+                LocalSspiDiagnostic.Run(ordinary, "authenticated-A",
+                    ((SecurityIdentifier)new NTAccount(Domain(false), User(false))
+                        .Translate(typeof(SecurityIdentifier))).Value, _output);
+        }
+
+        [DllImport("advapi32.dll", EntryPoint = "LogonUserW", CharSet = CharSet.Unicode, ExactSpelling = true, SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool LogonAuthenticated(string user, string domain, string password,
+            int logonType, int provider, out SafeAccessTokenHandle token);
 
         /// <summary>Isolates name-query effects using the passing regression preflight's unpooled open path.</summary>
         private async Task DiagnosePrequery(bool async)

@@ -112,6 +112,15 @@ permissions or password validation. The broader experiment remains incomplete
 until the strict current-login/SID baseline succeeds; these observations do not
 establish whether outbound-name pooling is viable.
 
+A bounded, in-memory Negotiate handshake independently queries the accepted
+SSPI context name and `QuerySecurityContextToken` user SID before the SQL
+comparison. It uses process, fresh network-only A, and ordinary authenticated A
+controls; unavailable interactive logon rights are reported without changing
+policy. Authentication token bytes and passwords are never logged, and all
+credential, context and access-token handles are released. This distinguishes
+an observed Windows SSPI identity split from SQL-specific behavior; it does not
+assume the local-call mechanism or alter the SQL assertions.
+
 A separate probe writes a SQL-SPN override using `CRED_PERSIST_SESSION` only
 inside a fresh disposable network-only session, then deletes that exact target.
 It records whether SQL selects the override and whether the targetless name,
