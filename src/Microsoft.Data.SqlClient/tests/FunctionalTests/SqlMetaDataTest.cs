@@ -347,19 +347,8 @@ namespace Microsoft.Data.SqlClient.Tests
             , DisableDiscoveryEnumeration = true
 #endif
             )]
-        public void ConstructorWithMaxLengthAndLocale(SqlDbType dbType)
-        {
-            long maxLength = 5L;
-            long locale = 0L;
-            SqlMetaData metaData = new SqlMetaData("col1", dbType, maxLength, locale, SqlCompareOptions.IgnoreCase, true, true, SortOrder.Ascending, 0);
-            Assert.Equal("col1", metaData.Name);
-            Assert.Equal(locale, metaData.LocaleId);
-            Assert.Equal(maxLength, metaData.MaxLength);
-            Assert.True(metaData.UseServerDefault);
-            Assert.True(metaData.IsUniqueKey);
-            Assert.Equal(SortOrder.Ascending, metaData.SortOrder);
-            Assert.Equal(0, metaData.SortOrdinal);
-        }
+        public void ConstructorWithMaxLengthAndLocale(SqlDbType dbType) =>
+            ConstructorWithLengthAndLocale(dbType, maxLength: 5);
 
         [Fact]
         public void ConstructorWithMaxLengthAndLocaleInvalidType_Throws()
@@ -407,19 +396,8 @@ namespace Microsoft.Data.SqlClient.Tests
             , DisableDiscoveryEnumeration = true
 #endif
             )]
-        public void ConstructorWithMaxLengthTextAndLocale(SqlDbType dbType)
-        {
-            long maxLength = SqlMetaData.Max;
-            long locale = 0L;
-            SqlMetaData metaData = new SqlMetaData("col1", dbType, maxLength, locale, SqlCompareOptions.IgnoreCase, true, true, SortOrder.Ascending, 0);
-            Assert.Equal("col1", metaData.Name);
-            Assert.Equal(locale, metaData.LocaleId);
-            Assert.Equal(maxLength, metaData.MaxLength);
-            Assert.True(metaData.UseServerDefault);
-            Assert.True(metaData.IsUniqueKey);
-            Assert.Equal(SortOrder.Ascending, metaData.SortOrder);
-            Assert.Equal(0, metaData.SortOrdinal);
-        }
+        public void ConstructorWithMaxLengthTextAndLocale(SqlDbType dbType) =>
+            ConstructorWithLengthAndLocale(dbType, maxLength: SqlMetaData.Max);
 
         [Theory]
         [MemberData(
@@ -456,6 +434,77 @@ namespace Microsoft.Data.SqlClient.Tests
                 SqlMetaData metaData = new SqlMetaData("col1", SqlDbType.NText, maxLength, locale, invalidCompareOptions, true, true, SortOrder.Ascending, 0);
             });
             Assert.Contains("invalid", ex.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static void ConstructorWithLengthAndLocale(SqlDbType dbType, long maxLength)
+        {
+            long locale = 0L;
+            Type userDefinedType = typeof(SqlMetaDataTest);
+            SqlCompareOptions compareOptions = SqlCompareOptions.IgnoreCase;
+            SqlMetaData metaData = new SqlMetaData("col1",
+                dbType,
+                maxLength,
+                locale,
+                compareOptions,
+                useServerDefault: true,
+                isUniqueKey: true,
+                columnSortOrder: SortOrder.Ascending,
+                sortOrdinal: 0);
+            AssertCommonFields(metaData);
+            AssertTvpFields(metaData);
+
+            metaData = new SqlMetaData("col1",
+                dbType,
+                maxLength,
+                precision: 15,
+                scale: 5,
+                locale,
+                compareOptions,
+                userDefinedType,
+                useServerDefault: true,
+                isUniqueKey: true,
+                columnSortOrder: SortOrder.Ascending,
+                sortOrdinal: 0);
+            AssertCommonFields(metaData);
+            AssertTvpFields(metaData);
+            AssertIgnoredFields(metaData);
+
+            metaData = new SqlMetaData("col1", dbType, maxLength, locale, compareOptions);
+            AssertCommonFields(metaData);
+
+            metaData = new SqlMetaData("col1",
+                dbType,
+                maxLength,
+                precision: 15,
+                scale: 5,
+                locale,
+                compareOptions,
+                userDefinedType);
+            AssertCommonFields(metaData);
+            AssertIgnoredFields(metaData);
+
+            static void AssertIgnoredFields(SqlMetaData metaData)
+            {
+                Assert.Null(metaData.Type);
+                Assert.NotEqual(15, metaData.Precision);
+                Assert.NotEqual(5, metaData.Scale);
+            }
+
+            static void AssertTvpFields(SqlMetaData metaData)
+            {
+                Assert.True(metaData.UseServerDefault);
+                Assert.True(metaData.IsUniqueKey);
+                Assert.Equal(SortOrder.Ascending, metaData.SortOrder);
+                Assert.Equal(0, metaData.SortOrdinal);
+            }
+
+            void AssertCommonFields(SqlMetaData metaData)
+            {
+                Assert.Equal(compareOptions, metaData.CompareOptions);
+                Assert.Equal("col1", metaData.Name);
+                Assert.Equal(locale, metaData.LocaleId);
+                Assert.Equal(maxLength, metaData.MaxLength);
+            }
         }
 
         public static IEnumerable<object[]> ConstructorBinaryData()
