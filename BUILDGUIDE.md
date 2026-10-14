@@ -272,8 +272,10 @@ historical extension `1.0.0` versions are not automatically mapped to driver
 `7.0.0`/`7.0.1`. The emergency escape hatch is
 `-p:SqlClientEnforceFamilyVersions=false` (or that property in the consumer
 project). It suppresses this check only, not incompatibilities.
-Ordinary project references do not propagate NuGet buildTransitive assets:
-Project-mode repository builds are not validated by this consumer target.
+NuGet buildTransitive assets can propagate through project-reference chains when a
+referenced project consumes Logging as a package. Project-mode repository builds
+reference Logging's source project directly, so they do not import its packaged
+targets and are not validated by this consumer target.
 
 Run `dotnet tool restore` first to restore the repository's pinned PowerShell tool.
 The regression suite also requires Pester 5.7.1:

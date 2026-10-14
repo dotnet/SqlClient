@@ -46,6 +46,28 @@ BeforeDiscovery {
         @{ Kind = 'packages.config' }
         @{ Kind = 'packages.VersionTest.config' }
     )
+    $legacyCaseCases = @(
+        foreach ($kind in @('packages.config', 'packages.VersionTest.config')) {
+            foreach ($id in $family) {
+                foreach ($casing in @('lowercase Logging', 'uppercase family', 'mixed casing')) {
+                    foreach ($scenario in @('matching', 'mismatching', 'opt-out')) {
+                        @{
+                            Kind = $kind; Casing = $casing; Scenario = $scenario
+                            LoggingId = if ($casing -eq 'uppercase family') {
+                                'Microsoft.Data.SqlClient.Internal.Logging'
+                            } else {
+                                'microsoft.data.sqlclient.internal.logging'
+                            }
+                            Id = if ($casing -eq 'lowercase Logging') { $id } else { $id.ToUpperInvariant() }
+                            Version = if ($scenario -eq 'matching') { '8.0.0' } else { '8.0.1' }
+                            Mismatch = $scenario -eq 'mismatching'
+                            OptOut = $scenario -eq 'opt-out'
+                        }
+                    }
+                }
+            }
+        }
+    )
     # Exercise the same contracts with Logging referenced directly and through a wrapper package.
     $consumerCases = @(
         foreach ($transitive in @($false, $true)) {
@@ -311,6 +333,15 @@ Describe 'Project-specific legacy manifests' -Tag 'Synthetic', 'LegacyManifest' 
         Test-Synthetic $synthetic 'packages.Version_Test.config' @(
             @{ Id = $logging; Version = '8.0.0' }, @{ Id = $family[0]; Version = '8.0.1' }
         ) $true @() $family[0] -ProjectName 'Version Test'
+    }
+}
+
+Describe 'Case-insensitive legacy package IDs' -Tag 'Synthetic', 'LegacyCase' {
+    It '<Kind>: <Casing>, <Id> (<Scenario>)' -ForEach $legacyCaseCases {
+        $items = @(@{ Id = $LoggingId; Version = '8.0.0' }, @{ Id = $Id; Version = $Version })
+        $properties = if ($OptOut) { @('-p:SqlClientEnforceFamilyVersions=false') } else { @() }
+        $evidence = if ($Mismatch) { $Id } else { '' }
+        Test-Synthetic $synthetic $Kind $items $Mismatch $properties $evidence
     }
 }
 

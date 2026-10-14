@@ -48,9 +48,11 @@ builds are skipped.
 For emergency recovery, set `SqlClientEnforceFamilyVersions=false` in the
 consumer project or pass `-p:SqlClientEnforceFamilyVersions=false`. This disables
 only this build check; it does not make mixed versions compatible. Excluding the
-package's build assets also prevents target import. Ordinary project references
-do not propagate NuGet buildTransitive targets, so this check does not enforce
-in-tree Project-mode versions.
+package's build assets also prevents target import. NuGet buildTransitive targets
+can propagate through project-reference chains when a referenced project consumes
+Logging as a package. A direct project reference to Logging's source project does
+not import its packaged targets, so this check does not enforce in-tree Project-mode
+versions.
 
 This package supports:
 

@@ -46,12 +46,12 @@
       <_SqlClientConfigPath Condition="!Exists('$(_SqlClientConfigPath)')">$(MSBuildProjectDirectory)/packages.config</_SqlClientConfigPath>
     </PropertyGroup>
     <XmlPeek XmlInputPath="$(_SqlClientConfigPath)"
-             Query="/packages/package[@id='Microsoft.Data.SqlClient.Internal.Logging']/@version"
+             Query="/packages/package[translate(@id, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='microsoft.data.sqlclient.internal.logging']/@version"
              Condition="Exists('$(_SqlClientConfigPath)')">
       <Output TaskParameter="Result" PropertyName="_SqlClientConfigExpectedVersion" />
     </XmlPeek>
     <XmlPeek XmlInputPath="$(_SqlClientConfigPath)"
-             Query="/packages/package[(@id='Microsoft.Data.SqlClient.Internal.Logging' or @id='Microsoft.Data.SqlClient.Extensions.Abstractions' or @id='Microsoft.Data.SqlClient' or @id='Microsoft.Data.SqlClient.Extensions.Azure' or @id='Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider') and @version!='$(_SqlClientConfigExpectedVersion)']"
+             Query="/packages/package[(translate(@id, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='microsoft.data.sqlclient.internal.logging' or translate(@id, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='microsoft.data.sqlclient.extensions.abstractions' or translate(@id, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='microsoft.data.sqlclient' or translate(@id, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='microsoft.data.sqlclient.extensions.azure' or translate(@id, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='microsoft.data.sqlclient.alwaysencrypted.azurekeyvaultprovider') and @version!='$(_SqlClientConfigExpectedVersion)']"
              Condition="'$(_SqlClientConfigExpectedVersion)' != ''">
       <Output TaskParameter="Result" ItemName="_SqlClientConfigMismatch" />
     </XmlPeek>
