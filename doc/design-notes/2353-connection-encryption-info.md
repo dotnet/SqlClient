@@ -247,27 +247,30 @@ login, derived from the client `Encrypt` setting and the server's PRELOGIN respo
 | `Optional` / `false` | `ENCRYPT_OFF` (TLS removed after LOGIN7) | `LoginOnly` | Negotiated TLS version |
 | `Optional` / `false` | `ENCRYPT_NOT_SUP` | `None` | `null` |
 
-The mode is recorded only once the TLS handshake (if any) completes; if PRELOGIN or the
-handshake fails, mode and protocol remain `null`. Values are captured per physical login
+**Failure path.** Only values actually observed for the attempt are published; the requested
+settings and the server's PRELOGIN response are never used as substitutes. On success the mode
+is recorded once the TLS handshake (if any) completes. When TLS fails after a protocol was
+observed, the attempt reports that protocol and the mode that was being negotiated, matching
+the design-review rule that observed values are kept on certificate-validation failures. The
+mode is never reported on a failed attempt without an observed protocol, so a PRELOGIN failure
+or an early handshake failure leaves both `null`. Values are captured per physical login
 attempt and reset for every routing, retry, and failover attempt.
 
-**Deferred certificate validation (Native SNI).** Schannel defers server certificate
-verification: `EnableSsl` reports success, and an untrusted or mismatched certificate only
-surfaces as an SNI error from the SSL provider on the first post-handshake I/O (the LOGIN7
-write). Because TLS was never established, any SNI error attributed to the SSL provider while
-a login attempt is in progress clears the negotiated mode and protocol recorded for that
-attempt (and only those; other captured state such as certificate details from later slices
-is kept), so `SqlException.EncryptionInfo` reports them as `null`. The check lives in
-`TdsParser.ProcessSNIError`, the single place every SNI error (sync and async, native and
-managed) becomes a `SqlError`. This was chosen over deferring the commit until a later packet
-exchange: it adds no state machine to the login path, and it keeps the values when TLS really
-completed and the login fails for another reason (for example error 18456, or a lost
-connection reported by the TCP provider). On Managed SNI the certificate is validated inside
-the handshake, so a validation failure fails `EnableSsl` and mode and protocol are never
-recorded. In both cases, mode and protocol are not recorded, or are cleared, when the TLS
-handshake or deferred validation fails; certificate fields are not affected by this reset.
-Once login completes the capture is released, so SSL errors on an open connection never alter
-a published snapshot.
+- **Managed SNI** validates the server certificate inside the handshake, so a validation
+  failure fails `EnableSsl`. In this slice Managed SNI does not capture the negotiated protocol
+  on a failed handshake, so `TdsParser.EnableSsl` records no mode and both stay `null`. Slice C
+  adds capture of `SslStream.SslProtocol` from the validation callback; after that, the failure
+  path records the mode through `EncryptionInfoCapture.RecordModeIfProtocolObserved`.
+- **Native SNI** (Schannel) defers server certificate verification: `EnableSsl` reports
+  success with the negotiated protocol, and an untrusted or mismatched certificate only surfaces
+  as an SSL-provider SNI error on the first post-handshake I/O (the LOGIN7 write). The mode and
+  protocol from the completed handshake are kept. `TdsParser.ProcessSNIError`, the single place
+  every SNI error becomes a `SqlError`, calls `EncryptionInfoCapture.DiscardUnobservedNegotiation`
+  on SSL-provider errors during login, which drops the mode only when no protocol was observed.
+
+These rules only touch mode and protocol; certificate fields are never affected. Once login
+completes the capture is released, so SSL errors on an open connection never alter a published
+snapshot.
 
 ## 5. Scope
 
