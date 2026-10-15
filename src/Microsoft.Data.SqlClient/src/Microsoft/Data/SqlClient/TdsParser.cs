@@ -956,6 +956,7 @@ namespace Microsoft.Data.SqlClient
 
             if (error != TdsEnums.SNI_SUCCESS)
             {
+                RecordFailedTlsAttempt(encrypt);
                 _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
                 ThrowExceptionAndWarning(_physicalStateObj);
             }
@@ -973,6 +974,7 @@ namespace Microsoft.Data.SqlClient
                 error = _physicalStateObj.WaitForSSLHandShakeToComplete(out protocol);
                 if (error != TdsEnums.SNI_SUCCESS)
                 {
+                    RecordFailedTlsAttempt(encrypt);
                     _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
                     ThrowExceptionAndWarning(_physicalStateObj);
                 }
@@ -1035,22 +1037,37 @@ namespace Microsoft.Data.SqlClient
             }
 #endif
 
-            SqlConnectionEncryptionMode mode;
+            capture.Record(GetTlsEncryptionMode(encrypt), protocol);
+        }
+
+        /// <summary>
+        /// Maps the TLS-using encryption state of the current attempt to the public mode.
+        /// </summary>
+        private SqlConnectionEncryptionMode GetTlsEncryptionMode(SqlConnectionEncryptOption encrypt)
+        {
             if (encrypt == SqlConnectionEncryptOption.Strict)
             {
-                mode = SqlConnectionEncryptionMode.Strict;
-            }
-            else if (_encryptionOption == EncryptionOptions.LOGIN)
-            {
-                mode = SqlConnectionEncryptionMode.LoginOnly;
-            }
-            else
-            {
-                Debug.Assert(_encryptionOption == EncryptionOptions.ON, "Unexpected encryption option after TLS handshake");
-                mode = SqlConnectionEncryptionMode.Full;
+                return SqlConnectionEncryptionMode.Strict;
             }
 
-            capture.Record(mode, protocol);
+            if (_encryptionOption == EncryptionOptions.LOGIN)
+            {
+                return SqlConnectionEncryptionMode.LoginOnly;
+            }
+
+            Debug.Assert(_encryptionOption == EncryptionOptions.ON, "Unexpected encryption option for a TLS handshake");
+            return SqlConnectionEncryptionMode.Full;
+        }
+
+        /// <summary>
+        /// Records what was observed for a TLS handshake that failed on the current attempt. The
+        /// mode is published only when the transport reported the TLS protocol agreed for this
+        /// attempt (for example, captured in the certificate validation callback before the
+        /// certificate was rejected); requested settings alone are not evidence.
+        /// </summary>
+        private void RecordFailedTlsAttempt(SqlConnectionEncryptOption encrypt)
+        {
+            _connHandler?.EncryptionInfoCapture?.RecordModeIfProtocolObserved(GetTlsEncryptionMode(encrypt));
         }
 
         private PreLoginHandshakeStatus ConsumePreLoginHandshake(
@@ -1815,12 +1832,11 @@ namespace Microsoft.Data.SqlClient
             {
                 // Native SNI (Schannel) defers server certificate verification, so EnableSsl can
                 // report success and the verdict only surfaces as an SSL provider error on the first
-                // post-handshake I/O (the LOGIN7 write). TLS was therefore never established for this
-                // attempt: discard the negotiated mode and protocol recorded by EnableSsl. Other
-                // captured state (e.g. certificate details) is intentionally kept. On Managed SNI a
-                // failed handshake fails EnableSsl, so mode and protocol were never recorded.
+                // post-handshake I/O (the LOGIN7 write). Per the failure-path rule, the mode and
+                // protocol recorded by EnableSsl are kept when the protocol agreed for this attempt was
+                // observed, and the mode is discarded otherwise; certificate details are always kept.
                 // After login completes the capture is released, so published snapshots are unaffected.
-                _connHandler?.EncryptionInfoCapture?.ClearNegotiated();
+                _connHandler?.EncryptionInfoCapture?.DiscardUnobservedNegotiation();
             }
 
             if (details.SniErrorNumber != 0)

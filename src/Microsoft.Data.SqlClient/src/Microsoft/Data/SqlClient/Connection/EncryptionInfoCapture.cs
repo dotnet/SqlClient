@@ -53,14 +53,32 @@ namespace Microsoft.Data.SqlClient.Connection
         }
 
         /// <summary>
-        /// Clears only the negotiated encryption mode and TLS protocol, leaving any other captured
-        /// state intact. Used when the TLS session for the current attempt turns out never to have been
-        /// established (for example Native SNI deferred certificate validation failure).
+        /// Applies the failure-path rule for a TLS failure on the current attempt: the negotiated
+        /// mode and protocol are published only when they were actually observed. A TLS protocol
+        /// version agreed for this attempt is the evidence of that; without it the mode is cleared,
+        /// since requested settings and server pre-login responses are not substitutes. Certificate
+        /// fields are never affected.
         /// </summary>
-        public void ClearNegotiated()
+        public void DiscardUnobservedNegotiation()
         {
-            Mode = null;
-            Protocol = null;
+            if (Protocol is null)
+            {
+                Mode = null;
+            }
+        }
+
+        /// <summary>
+        /// Records the negotiated encryption mode for a failed TLS attempt, but only when a TLS
+        /// protocol version was observed for this attempt (for example, reported by the transport's
+        /// certificate validation callback before the certificate was rejected).
+        /// </summary>
+        /// <param name="mode">The encryption mode the attempt was negotiating.</param>
+        public void RecordModeIfProtocolObserved(SqlConnectionEncryptionMode mode)
+        {
+            if (Protocol is not null)
+            {
+                Mode = mode;
+            }
         }
 
         /// <summary>
