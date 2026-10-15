@@ -368,6 +368,8 @@ namespace Microsoft.Data.SqlClient
                     _currentAssemblyLoadContext = AssemblyLoadContext.GetLoadContext(Assembly.GetExecutingAssembly());
                     _currentAssemblyLoadContext?.Resolving += AssemblyLoadContext_Resolving;
                     _isSubscribed = true;
+                    SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Attached Resolving hook to '{2}' AssemblyLoadContext.",
+                                                           nameof(AssemblyResolutionSubscription), "ctor", _currentAssemblyLoadContext?.Name ?? "(null)");
                 }
                 #endif
             }
@@ -379,6 +381,8 @@ namespace Microsoft.Data.SqlClient
                 {
                     _currentAssemblyLoadContext?.Resolving -= AssemblyLoadContext_Resolving;
                     _isSubscribed = false;
+                    SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Removed Resolving hook from '{2}' AssemblyLoadContext.",
+                                                           nameof(AssemblyResolutionSubscription), nameof(Dispose), _currentAssemblyLoadContext?.Name ?? "(null)");
                 }
                 #endif
             }
@@ -402,8 +406,8 @@ namespace Microsoft.Data.SqlClient
 
             string fullPath = MakeFullPath(ProbingDirectory, arg.Name);
             AssemblyLoadContext currentAlc = AssemblyLoadContext.GetLoadContext(Assembly.GetExecutingAssembly());
-            SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Looking for '{2}' assembly by '{3}' full path."
-                , TypeName, methodName, arg, fullPath);
+            SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Looking for '{2}' assembly in '{3}' ALC by '{4}' full path."
+                , TypeName, methodName, arg, currentAlc?.Name ?? "(null)", fullPath);
 
             return fullPath != null && currentAlc != null ? currentAlc.LoadFromAssemblyPath(fullPath) : null;
         }
