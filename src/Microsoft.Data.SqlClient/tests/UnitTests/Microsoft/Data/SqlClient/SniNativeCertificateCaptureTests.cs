@@ -599,11 +599,12 @@ namespace Microsoft.Data.SqlClient.UnitTests
         }
 
         [Fact]
-        public void EncryptionInfoCapture_DeferredValidationFailure_KeepsCertificateFieldsAndClearsNegotiated()
+        public void EncryptionInfoCapture_DeferredValidationFailure_KeepsObservedNegotiationAndCertificateFields()
         {
             // Native ChainPolicy failure: EnableSsl and the handshake wait report success, so the
             // certificate details and the negotiated values are recorded; the verdict then surfaces as
-            // an SSL provider error on the LOGIN7 write, and ProcessSNIError calls ClearNegotiated.
+            // an SSL provider error on the LOGIN7 write, and ProcessSNIError applies the failure-path
+            // rule. The protocol was observed for this attempt, so mode and protocol are kept.
             byte[] hash = Hash(7);
             const uint available = 0x1 | 0x2 | 0x4 | 0x8 | 0x10;
             ServerCertificateCapture? certificate = SniNativeCertificateCapture.Map(Build(
@@ -621,15 +622,46 @@ namespace Microsoft.Data.SqlClient.UnitTests
             capture.Record(SqlConnectionEncryptionMode.Full, SslProtocols.None);
             Assert.Equal(SslProtocols.Tls12, capture.Protocol);
 
-            capture.ClearNegotiated();
+            capture.DiscardUnobservedNegotiation();
 
-            Assert.True(capture.HasValues);
+            SqlConnectionEncryptionInfo snapshot = capture.ToSnapshot();
+            Assert.Equal(SqlConnectionEncryptionMode.Full, snapshot.NegotiatedEncryptionMode);
+            Assert.Equal(SslProtocols.Tls12, snapshot.NegotiatedEncryptionProtocol);
+            Assert.Equal(hash, snapshot.PresentedServerCertificateHash256!.Value.ToArray());
+            Assert.Equal(SqlServerCertificateValidationErrors.HostNameMismatch | SqlServerCertificateValidationErrors.ChainError, snapshot.ValidationErrors);
+            Assert.Equal(X509ChainStatusFlags.UntrustedRoot, snapshot.ChainStatus);
+        }
+
+        [Fact]
+        public void EncryptionInfoCapture_FailureWithoutObservedProtocol_DiscardsMode()
+        {
+            byte[] hash = Hash(9);
+            var capture = new EncryptionInfoCapture();
+            capture.RecordServerCertificate(new ServerCertificateCapture(hash, SqlServerCertificateValidationErrors.ChainError, X509ChainStatusFlags.UntrustedRoot));
+            capture.Record(SqlConnectionEncryptionMode.Full, SslProtocols.None);
+
+            capture.DiscardUnobservedNegotiation();
+
             SqlConnectionEncryptionInfo snapshot = capture.ToSnapshot();
             Assert.Null(snapshot.NegotiatedEncryptionMode);
             Assert.Null(snapshot.NegotiatedEncryptionProtocol);
             Assert.Equal(hash, snapshot.PresentedServerCertificateHash256!.Value.ToArray());
-            Assert.Equal(SqlServerCertificateValidationErrors.HostNameMismatch | SqlServerCertificateValidationErrors.ChainError, snapshot.ValidationErrors);
-            Assert.Equal(X509ChainStatusFlags.UntrustedRoot, snapshot.ChainStatus);
+            Assert.Equal(SqlServerCertificateValidationErrors.ChainError, snapshot.ValidationErrors);
+        }
+
+        [Fact]
+        public void EncryptionInfoCapture_RecordModeIfProtocolObserved_RequiresProtocol()
+        {
+            var withoutProtocol = new EncryptionInfoCapture();
+            withoutProtocol.RecordServerCertificate(new ServerCertificateCapture(Hash(1), SqlServerCertificateValidationErrors.ChainError, null));
+            withoutProtocol.RecordModeIfProtocolObserved(SqlConnectionEncryptionMode.Full);
+            Assert.Null(withoutProtocol.Mode);
+
+            var withProtocol = new EncryptionInfoCapture();
+            withProtocol.RecordServerCertificate(new ServerCertificateCapture(Hash(1), SqlServerCertificateValidationErrors.ChainError, null, SslProtocols.Tls12));
+            withProtocol.RecordModeIfProtocolObserved(SqlConnectionEncryptionMode.Strict);
+            Assert.Equal(SqlConnectionEncryptionMode.Strict, withProtocol.Mode);
+            Assert.Equal(SslProtocols.Tls12, withProtocol.Protocol);
         }
 
         [Fact]
