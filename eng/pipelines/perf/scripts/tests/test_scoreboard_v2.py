@@ -18,6 +18,7 @@ from types import SimpleNamespace
 import unittest
 from unittest import mock
 import uuid
+import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import interleave_perf
@@ -368,6 +369,42 @@ class CollectionTests(unittest.TestCase):
         self.root.mkdir()
         self.addCleanup(shutil.rmtree, self.root)
         self.case = "OpenAsyncScoreboard-E4-Async-1"
+
+    def test_raw_archive_round_trip_preserves_evidence_and_visible_reports(self):
+        directory = self.root / "repetitions" / "rep1" / "current" / self.case
+        self.write_case(directory, self.case, 1)
+        external = directory / "external-diagnostics"
+        external.mkdir()
+        (external / "stack.txt").write_bytes(b"observed stack\n" * 10000)
+        bdn = directory / "runner-report-full.json"
+        bdn.write_text("{}", encoding="utf-8")
+        summary = self.root / "openasync-summary.json"
+        summary.write_text("{}", encoding="utf-8")
+        expected = {path.relative_to(self.root).as_posix(): path.read_bytes()
+                    for path in directory.rglob("*") if path.is_file() and path != bdn}
+        report.package_raw_measurements(self.root)
+        archive_path = self.root / "raw-measurements-rep1.zip"
+        with zipfile.ZipFile(archive_path) as archive:
+            self.assertEqual(set(archive.namelist()), set(expected))
+            for name, content in expected.items():
+                self.assertEqual(archive.read(name), content)
+                self.assertFalse((self.root / name).exists())
+            archive.extractall(self.root)
+        self.assertTrue(bdn.exists())
+        self.assertTrue(summary.exists())
+        self.assertEqual(len(report.load_case(directory, self.case, 1)), 5)
+        with self.assertRaisesRegex(ValueError, "Archive already exists"):
+            report.package_raw_measurements(self.root)
+        self.assertTrue((directory / "openasync-1.json").exists())
+
+    def test_failed_archive_verification_preserves_originals(self):
+        directory = self.root / "repetitions" / "rep1" / "current" / self.case
+        self.write_case(directory, self.case, 1)
+        with mock.patch.object(zipfile.ZipFile, "testzip", return_value="corrupt-member"):
+            with self.assertRaisesRegex(ValueError, "verification failed"):
+                report.package_raw_measurements(self.root)
+        self.assertEqual(len(list(directory.rglob("openasync-*.json"))), 5)
+        self.assertFalse((self.root / "raw-measurements-rep1.zip").exists())
 
     def write_case(self, directory, case, repetition):
         directory.mkdir(parents=True, exist_ok=True)

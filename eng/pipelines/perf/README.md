@@ -165,6 +165,16 @@ The `default` profile's workload selection and regression policies are unchanged
 
 ### Full OpenAsync scoreboard (schema v2)
 
+After successful full-profile validation and summary generation, raw per-open,
+warmup and external-diagnostic files are streamed into `raw-measurements-repN.zip`
+archives. Every member is CRC-verified before its original file is removed.
+Top-level summaries and BenchmarkDotNet reports remain directly accessible for
+existing reporting/ingestion. This prevents multi-gigabyte uncompressed diagnostic
+trees from exhausting the pipeline artifact publisher. Extract the archives into
+the downloaded results directory before rerunning raw-data validation or analysis;
+their entries preserve the complete `repetitions/repN/<variant>/<case>/` paths.
+Packaging failures fail the run and preserve the unarchived evidence.
+
 Select `benchmarkProfile: openasync-scoreboard`, `scoreboardRepetitions: 3`,
 `platform: linux`, `failOnRegression: false` (experiment: `failIfSwitchSlower: false`).
 For initial current-only execution, explicitly clear `baselineVersion` (main pipeline) or

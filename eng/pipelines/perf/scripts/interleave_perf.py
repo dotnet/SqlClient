@@ -697,6 +697,9 @@ def main(argv=None):
     shutil.copyfile(os.path.join(comparison_dir, "comparison.md"),
                     os.path.join(results_dir, "summary.md"))
 
+    if full:
+        scoreboard_report.package_raw_measurements(results_dir)
+
     print(f"Interleaved comparison complete: {len(confirmed)} confirmed regression(s), "
           f"{len(unconfirmed)} unconfirmed.")
 

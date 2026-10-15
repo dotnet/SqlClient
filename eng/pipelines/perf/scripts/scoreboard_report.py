@@ -11,6 +11,7 @@ from datetime import datetime
 from pathlib import Path
 import re
 import statistics
+import zipfile
 
 import openasync_report as legacy
 
@@ -32,6 +33,35 @@ EQUIVALENCE_FIELDS = (
 def need(condition, message):
     if not condition:
         raise ValueError(message)
+
+
+def package_raw_measurements(results_dir):
+    """Stream raw evidence into verified archives before the pipeline artifact upload."""
+    root = Path(results_dir)
+    for repetition in sorted((root / "repetitions").glob("rep*")):
+        files = sorted(path for path in repetition.rglob("*") if path.is_file()
+                       and (path.name.startswith("openasync-") and path.suffix == ".json"
+                            or "external-diagnostics" in path.relative_to(repetition).parts))
+        if not files:
+            continue
+        need(not any(path.is_symlink() for path in files), "Cannot archive symlinked measurements")
+        destination = root / f"raw-measurements-{repetition.name}.zip"
+        need(not destination.exists(), f"Archive already exists: {destination.name}")
+        temporary = destination.with_suffix(".zip.tmp")
+        need(not temporary.exists(), f"Incomplete archive already exists: {temporary.name}")
+        with zipfile.ZipFile(temporary, "x", compression=zipfile.ZIP_DEFLATED,
+                             compresslevel=6, allowZip64=True) as archive:
+            for path in files:
+                archive.write(path, path.relative_to(root).as_posix())
+        with zipfile.ZipFile(temporary) as archive:
+            need(len(archive.infolist()) == len(files) and archive.testzip() is None,
+                 f"Raw measurement archive verification failed: {temporary.name}")
+        temporary.rename(destination)
+        # Originals are removed only after every member passes a streamed CRC check.
+        for path in files:
+            path.unlink()
+        print(f"Preserved {len(files)} raw evidence files in {destination.name} "
+              f"({destination.stat().st_size} bytes); extract into the results directory to reanalyze.")
 
 
 def finite_tree(value):
