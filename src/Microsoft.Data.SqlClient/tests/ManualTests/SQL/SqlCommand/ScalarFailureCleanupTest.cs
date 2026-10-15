@@ -5,6 +5,7 @@
 using System;
 using System.Data;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals;
 using Xunit;
@@ -209,6 +210,62 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 connection.StateChange -= onStateChange;
                 SqlConnection.ClearPool(connection);
             }
+        }
+
+        /// <summary>
+        /// Fatal cleanup must wait for the session monitor held by cancellation before retiring
+        /// transport resources. Holding that monitor models an in-flight Cancel without racing native I/O.
+        /// </summary>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void FatalCleanup_WaitsForCancellationLock(bool mars)
+        {
+            var builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+            {
+                Pooling = false,
+                MultipleActiveResultSets = mars,
+                Enlist = false
+            };
+            using SqlConnection connection = new(builder.ConnectionString);
+            connection.Open();
+            using SqlCommand command = new("SELECT 1", connection);
+            using SqlDataReader reader = command.ExecuteReader();
+            object stateObj = typeof(SqlDataReader)
+                .GetField("_stateObj", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(reader);
+            MethodInfo closeOnError = typeof(SqlDataReader)
+                .GetMethod("CloseOnError", BindingFlags.Instance | BindingFlags.NonPublic);
+            var failure = new OutOfMemoryException("Fatal retirement sentinel");
+            Exception actual = null;
+            int completed = 0;
+            var worker = new Thread(() =>
+            {
+                try
+                {
+                    actual = Record.Exception(() => closeOnError.Invoke(reader, new object[] { failure }));
+                }
+                finally
+                {
+                    Volatile.Write(ref completed, 1);
+                }
+            }) { IsBackground = true };
+            bool reachedCleanup;
+            bool completedWhileLocked;
+            lock (stateObj)
+            {
+                worker.Start();
+                reachedCleanup = SpinWait.SpinUntil(
+                    () => Volatile.Read(ref completed) != 0 ||
+                        (reader.IsClosed && (worker.ThreadState & ThreadState.WaitSleepJoin) != 0),
+                    TimeSpan.FromSeconds(10));
+                completedWhileLocked = Volatile.Read(ref completed) != 0;
+            }
+
+            Assert.True(worker.Join(TimeSpan.FromSeconds(10)), "Fatal cleanup did not finish after releasing the cancellation lock.");
+            Assert.True(reachedCleanup, "Worker did not reach fatal cleanup.");
+            Assert.False(completedWhileLocked, "Session retirement bypassed the cancellation lock.");
+            Assert.Same(failure, Assert.IsType<TargetInvocationException>(actual).InnerException);
+            Assert.True(reader.IsClosed);
         }
 
         /// <summary>Opens a connection using the API variant under test.</summary>

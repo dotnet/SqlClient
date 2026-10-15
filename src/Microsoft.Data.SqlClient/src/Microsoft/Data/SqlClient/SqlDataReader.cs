@@ -988,8 +988,12 @@ namespace Microsoft.Data.SqlClient
                 parser?.Connection?.DoomThisConnection();
                 if (parser != null && stateObj != null)
                 {
-                    // Returning to a broken parser retires the session without protocol I/O.
-                    parser.PutSession(stateObj);
+                    // Wait for in-flight cancellation before retiring its transport resources.
+                    lock (stateObj)
+                    {
+                        // Returning to a broken parser retires the session without protocol I/O.
+                        parser.PutSession(stateObj);
+                    }
                 }
             }
             finally
