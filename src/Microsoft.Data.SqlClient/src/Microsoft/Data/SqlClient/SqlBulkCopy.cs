@@ -630,7 +630,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         }
 
         // Creates and then executes initial query to get information about the target table
-        private async ValueTask<BulkCopySimpleResultSet> CreateAndExecuteInitialQueryAsync()
+        private async Task<BulkCopySimpleResultSet> CreateAndExecuteInitialQueryAsync()
         {
             // Check if we have valid cached metadata for the current destination table
             if (IsCachedMetadataValid())
@@ -2112,7 +2112,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 _rowEnumerator = rows.GetEnumerator();
                 _isAsyncBulkCopy = true;
 
-                return WriteRowSourceToServerAsync(table.Columns.Count, cancellationToken).AsTask();
+                return WriteRowSourceToServerAsync(table.Columns.Count, cancellationToken);
             }
             finally
             {
@@ -2152,7 +2152,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 _rowSourceType = ValueSourceType.DbDataReader;
                 _isAsyncBulkCopy = true;
 
-                return WriteRowSourceToServerAsync(reader.FieldCount, cancellationToken).AsTask();
+                return WriteRowSourceToServerAsync(reader.FieldCount, cancellationToken);
             }
             finally
             {
@@ -2191,7 +2191,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 _rowSourceType = ValueSourceType.IDataReader;
                 _isAsyncBulkCopy = true;
 
-                return WriteRowSourceToServerAsync(reader.FieldCount, cancellationToken).AsTask();
+                return WriteRowSourceToServerAsync(reader.FieldCount, cancellationToken);
             }
             finally
             {
@@ -2238,7 +2238,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 _rowEnumerator = table.Rows.GetEnumerator();
                 _isAsyncBulkCopy = true;
 
-                return WriteRowSourceToServerAsync(table.Columns.Count, cancellationToken).AsTask();
+                return WriteRowSourceToServerAsync(table.Columns.Count, cancellationToken);
             }
             finally
             {
@@ -2246,7 +2246,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             }
         }
 
-        private async ValueTask WriteRowSourceToServerAsync(int columnCount, CancellationToken ctoken)
+        private async Task WriteRowSourceToServerAsync(int columnCount, CancellationToken ctoken)
         {
             // If user's token is canceled, return a canceled task
             ctoken.ThrowIfCancellationRequested();
@@ -3006,7 +3006,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         // It carries on the source which is passed from the WriteToServerInternalRest and performs SetResult when the entire copy is done.
         // The carried on source may be null in case of Sync copy. So no need to SetResult at that time.
         // It launches the copy operation.
-        private async ValueTask WriteToServerInternalRestContinuedAsync(BulkCopySimpleResultSet internalResults, CancellationToken cts)
+        private async Task WriteToServerInternalRestContinuedAsync(BulkCopySimpleResultSet internalResults, CancellationToken cts)
         {
             Task task = null;
             string updateBulkCommandText = null;
@@ -3067,7 +3067,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         // It carries on the source from its caller WriteToServerInternal.
         // source is null in case of Sync bcp. But valid in case of Async bcp.
         // It calls the WriteToServerInternalRestContinuedAsync as a continuation of the initial query task.
-        private async ValueTask WriteToServerInternalRestAsync(CancellationToken cts)
+        private async Task WriteToServerInternalRestAsync(CancellationToken cts)
         {
             Debug.Assert(_hasMoreRowToCopy, "first time it is true, otherwise this method would not have been called.");
             _hasMoreRowToCopy = true;
@@ -3175,7 +3175,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             await WriteToServerInternalRestContinuedAsync(internalResults, cts).ConfigureAwait(false);
         }
 
-        private async ValueTask WriteToServerInternalAsync(CancellationToken ctoken)
+        private async Task WriteToServerInternalAsync(CancellationToken ctoken)
         {
             if (_connection == null)
             {
