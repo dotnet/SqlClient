@@ -9,6 +9,7 @@ using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 
 namespace Microsoft.Data.SqlClient.PerformanceTests.BenchmarkRunners.DataTypeReaderRunner;
 
+/// <summary>Compares supported encrypted individual types using Default command behavior.</summary>
 public class AlwaysEncrypted : DataTypeReaderRunnerBase
 {
     private ColumnMasterKeyCertificateFixture _cmkCertificate;
@@ -17,29 +18,25 @@ public class AlwaysEncrypted : DataTypeReaderRunnerBase
 
     public override IEnumerable<DataType> ExecutedTypes => AvailableTypes.Where(t => t.EncryptionSupported);
 
-    protected override RunnerJob Configuration => s_config.Benchmarks.AlwaysEncryptedDataTypeReaderRunnerConfig;
+    protected override CommandRunnerJob Configuration => s_config.Benchmarks.AlwaysEncryptedDataTypeReaderRunnerConfig;
 
-    protected override SqlConnection OpenConnection()
+    protected override SqlConnectionStringBuilder CreateConnectionStringBuilder()
     {
         SqlConnectionStringBuilder builder = new(s_config.ConnectionString)
         {
             ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Enabled
         };
-        SqlConnection conn = new(builder.ToString());
-
-        conn.Open();
-        return conn;
+        return builder;
     }
 
     protected override Table CreateTable()
     {
         _cmkCertificate = new ColumnMasterKeyCertificateFixture();
-        _masterKey = new CertificateBackedColumnMasterKey(_connection, nameof(_masterKey), _cmkCertificate, false);
-        _encryptionKey = new ColumnEncryptionKey(_connection, nameof(AlwaysEncrypted), _masterKey);
+        _masterKey = new CertificateBackedColumnMasterKey(Connection, nameof(_masterKey), _cmkCertificate, false);
+        _encryptionKey = new ColumnEncryptionKey(Connection, nameof(AlwaysEncrypted), _masterKey);
 
         return Table.Build(Type.Name)
-            .AddColumn(new Column(Type, encryptionKey: _encryptionKey))
-            .CreateTable(_connection);
+            .AddColumn(new Column(Type, encryptionKey: _encryptionKey));
     }
 
     protected override void OnCleanup()
