@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
 
 #nullable enable
 
@@ -41,7 +42,30 @@ namespace Microsoft.Data.SqlClient.Connection
         /// <summary>
         /// Gets a value indicating whether any value has been captured for the current attempt.
         /// </summary>
-        public bool HasValues => Mode is not null || Protocol is not null;
+        public bool HasValues =>
+            Mode is not null ||
+            Protocol is not null ||
+            CertificateHash256 is not null ||
+            ValidationErrors is not null ||
+            ChainStatus is not null;
+
+        /// <summary>
+        /// Gets the SHA-256 hash of the presented server certificate for the current attempt, or
+        /// <see langword="null"/> if the transport did not observe a presented certificate.
+        /// </summary>
+        public byte[]? CertificateHash256 { get; private set; }
+
+        /// <summary>
+        /// Gets SqlClient's effective certificate validation verdict for the current attempt, or
+        /// <see langword="null"/> if SqlClient did not evaluate the certificate.
+        /// </summary>
+        public SqlServerCertificateValidationErrors? ValidationErrors { get; private set; }
+
+        /// <summary>
+        /// Gets the combined chain status flags for the current attempt, or <see langword="null"/>
+        /// if the chain was not consulted or is unavailable.
+        /// </summary>
+        public X509ChainStatusFlags? ChainStatus { get; private set; }
 
         /// <summary>
         /// Clears all captured values. Called at the start of each physical login attempt.
@@ -50,6 +74,34 @@ namespace Microsoft.Data.SqlClient.Connection
         {
             Mode = null;
             Protocol = null;
+            CertificateHash256 = null;
+            ValidationErrors = null;
+            ChainStatus = null;
+        }
+
+        /// <summary>
+        /// Records the server certificate details observed by the transport during the TLS
+        /// handshake. A <see langword="null"/> <paramref name="capture"/> leaves the certificate
+        /// fields unavailable.
+        /// </summary>
+        /// <param name="capture">The transport's certificate capture, if any.</param>
+        public void RecordServerCertificate(ServerCertificateCapture? capture)
+        {
+            if (capture is null)
+            {
+                return;
+            }
+
+            CertificateHash256 = capture.Hash256;
+            ValidationErrors = capture.ValidationErrors;
+            ChainStatus = capture.ChainStatus;
+
+            // A protocol already determined for this attempt takes precedence over one reported
+            // alongside the certificate details.
+            if (Protocol is null && capture.Protocol is SslProtocols protocol && protocol != SslProtocols.None)
+            {
+                Protocol = protocol;
+            }
         }
 
         /// <summary>
@@ -100,16 +152,17 @@ namespace Microsoft.Data.SqlClient.Connection
         /// <see cref="SqlConnectionEncryptionInfo.Empty"/> when nothing was captured.
         /// </summary>
         /// <remarks>
-        /// Certificate fields are never inferred here; they remain unavailable.
+        /// Certificate fields are never inferred here; they are published only as recorded by the
+        /// transport.
         /// </remarks>
         public SqlConnectionEncryptionInfo ToSnapshot() =>
             HasValues
                 ? new SqlConnectionEncryptionInfo(
                     negotiatedEncryptionMode: Mode,
                     negotiatedEncryptionProtocol: Protocol,
-                    presentedServerCertificateHash256: null,
-                    validationErrors: null,
-                    chainStatus: null)
+                    presentedServerCertificateHash256: CertificateHash256,
+                    validationErrors: ValidationErrors,
+                    chainStatus: ChainStatus)
                 : SqlConnectionEncryptionInfo.Empty;
     }
 }

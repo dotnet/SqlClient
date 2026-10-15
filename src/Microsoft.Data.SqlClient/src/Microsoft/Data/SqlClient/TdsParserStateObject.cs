@@ -572,6 +572,13 @@ namespace Microsoft.Data.SqlClient
 
         internal abstract uint EnableSsl(ref uint info, bool tlsFirst, string serverCertificateFilename);
 
+        /// <summary>
+        /// Gets the server certificate details captured by the transport during the most recent
+        /// call to <see cref="EnableSsl"/>, or <see langword="null"/> if the transport does not
+        /// capture them or no certificate validation callback ran.
+        /// </summary>
+        internal virtual Connection.ServerCertificateCapture GetServerCertificateCapture() => null;
+
         internal abstract uint CheckConnection();
 
         internal abstract PacketHandle GetResetWritePacket(int dataSize);

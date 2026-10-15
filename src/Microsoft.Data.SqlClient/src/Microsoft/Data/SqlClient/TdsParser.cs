@@ -954,6 +954,11 @@ namespace Microsoft.Data.SqlClient
 #endif
             error = _physicalStateObj.EnableSsl(ref info, encrypt == SqlConnectionEncryptOption.Strict, serverCertificateFilename);
 
+            // The certificate validation callback runs synchronously within EnableSsl, so whatever the
+            // transport observed is complete here; record it before any failure is reported so that
+            // the login exception carries it.
+            _connHandler?.EncryptionInfoCapture?.RecordServerCertificate(_physicalStateObj.GetServerCertificateCapture());
+
             if (error != TdsEnums.SNI_SUCCESS)
             {
                 RecordFailedTlsAttempt(encrypt);
