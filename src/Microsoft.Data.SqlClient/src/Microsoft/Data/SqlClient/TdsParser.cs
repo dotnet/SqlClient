@@ -13921,34 +13921,15 @@ namespace Microsoft.Data.SqlClient
                 ||
                 (buff.Length >= offst + len)
                 ||
-                (buff.Length >= (startOffsetByteCount >> 1) + 1),
+                (buff.Length >= (startOffsetByteCount >> 1) + (startOffsetByteCount & 1)),
                 "Invalid length sent to ReadPlpUnicodeChars()!"
             );
             charsLeft = len;
 
-            // If total data length is known up front from the plp header by being not SQL_PLP_UNKNOWNLEN
-            //  and the number of chars required is less than int.max/2 allocate the entire buffer now to avoid
-            //  later needing to repeatedly allocate new target buffers and copy data as we discover new data
-            if (buff == null && stateObj._longlen != TdsEnums.SQL_PLP_UNKNOWNLEN && stateObj._longlen < (int.MaxValue >> 1))
-            {
-                int stateLen = (int)stateObj._longlen >> 1;
-                if (supportRentedBuff && stateLen < 1073741824) // 1 Gib
-                {
-                    buff = ArrayPool<char>.Shared.Rent(Math.Min(stateLen, len));
-                    rentedBuff = true;
-                }
-                else
-                {
-                    buff = new char[Math.Min(stateLen, len)];
-                    rentedBuff = false;
-                }
-            }
-
             TdsOperationStatus result;
 
             bool partialReadInProgress = (startOffsetByteCount & 0x1) == 1;
-            bool restartingDataSizeCount = startOffsetByteCount == 0;
-            int currentPacketId = 0;
+            int snapshotPacketId = -1;
 
             if (stateObj._longlenleft == 0)
             {
@@ -13971,24 +13952,38 @@ namespace Microsoft.Data.SqlClient
 
             while (charsLeft > 0)
             {
+                if (stateObj._inBytesPacket == 0 || stateObj._inBytesUsed == stateObj._inBytesRead)
+                {
+                    result = stateObj.TryPrepareBuffer();
+                    if (result != TdsOperationStatus.Done)
+                    {
+                        return result;
+                    }
+                }
+
                 if (!partialReadInProgress)
                 {
                     charsRead = (int)Math.Min((stateObj._longlenleft + 1) >> 1, (ulong)charsLeft);
+                    int availableBytes = Math.Min(stateObj._inBytesPacket, stateObj._inBytesRead - stateObj._inBytesUsed);
+                    // Size from received payload, not the advertised total/chunk length.
+                    // Reserve one character for a single byte: its other half can arrive
+                    // in the next packet or PLP chunk and is handled by the paths below.
+                    charsRead = Math.Min(charsRead, Math.Max(1, availableBytes / sizeof(char)));
                     if ((buff == null) || (buff.Length < (offst + charsRead)))
                     {
                         char[] newbuf;
                         bool returnRentedBufferAfterCopy = rentedBuff;
-                        if (supportRentedBuff && (offst + charsRead) < 1073741824) // 1 Gib
+                        int requiredLength = checked(offst + charsRead);
+                        int newLength = TdsParserStateObject.GetPlpBufferSize(buff?.Length ?? 0,
+                            requiredLength, stateObj._longlen / sizeof(char));
+                        if (supportRentedBuff && newLength < 1073741824) // 1 Gib
                         {
-                            newbuf = ArrayPool<char>.Shared.Rent(offst + charsRead);
+                            newbuf = ArrayPool<char>.Shared.Rent(newLength);
                             rentedBuff = true;
                         }
                         else
                         {
-                            // grow by an arbitrary number of packets to avoid needing to reallocate
-                            //  the newbuf on each loop iteration of long packet sequences which causes
-                            //  a performance problem as we spend large amounts of time copying and in gc
-                            newbuf = new char[offst + charsRead + (stateObj.GetPacketSize() * 8)];
+                            newbuf = new char[newLength];
                             rentedBuff = false;
                         }
 
@@ -14017,7 +14012,7 @@ namespace Microsoft.Data.SqlClient
 
                         if (writeDataSizeToSnapshot)
                         {
-                            currentPacketId = IncrementSnapshotDataSize(stateObj, restartingDataSizeCount, currentPacketId, charsRead * 2);
+                            stateObj.AddPlpSnapshotDataSize(charsRead * 2, ref snapshotPacketId);
                         }
                     }
                 }
@@ -14028,6 +14023,12 @@ namespace Microsoft.Data.SqlClient
                     && (charsLeft > 0)
                 )
                 {
+                    if (!partialReadInProgress && offst == buff.Length)
+                    {
+                        // A packet-bounded read may fill the buffer before this chunk's
+                        // trailing byte. Let the next iteration reserve its character slot.
+                        continue;
+                    }
                     byte b1 = 0;
                     byte b2 = 0;
                     if (partialReadInProgress)
@@ -14051,7 +14052,7 @@ namespace Microsoft.Data.SqlClient
                             // we need to write the single b1 byte to the array because we may run out of data
                             // and need to wait for another packet
                             buff[offst] = (char)((b1 & 0xff));
-                            currentPacketId = IncrementSnapshotDataSize(stateObj, restartingDataSizeCount, currentPacketId, 1);
+                            stateObj.AddPlpSnapshotDataSize(1, ref snapshotPacketId);
                         }
 
                         result = stateObj.TryReadPlpLength(false, out _);
@@ -14077,7 +14078,7 @@ namespace Microsoft.Data.SqlClient
 
                     if (writeDataSizeToSnapshot)
                     {
-                        currentPacketId = IncrementSnapshotDataSize(stateObj, restartingDataSizeCount, currentPacketId, 1);
+                        stateObj.AddPlpSnapshotDataSize(1, ref snapshotPacketId);
                     }
                 }
                 if (stateObj._longlenleft == 0)
@@ -14103,36 +14104,6 @@ namespace Microsoft.Data.SqlClient
             }
 
             return TdsOperationStatus.Done;
-
-            static int IncrementSnapshotDataSize(TdsParserStateObject stateObj, bool resetting, int previousPacketId, int value)
-            {
-                int current = 0;
-                if (resetting)
-                {
-                    int currentPacketId = stateObj.GetSnapshotPacketID();
-                    if (previousPacketId == currentPacketId)
-                    {
-                        // we have already reset it the first time we saw it so just add normally
-                        current = stateObj.GetSnapshotDataSize();
-                    }
-                    else
-                    {
-                        // a packet we haven't seen before, reset the size
-                        current = 0;
-                    }
-
-                    stateObj.AddSnapshotDataSize(current + value);
-
-                    // return new packetid so next time we see this packet we know it isn't new
-                    return currentPacketId;
-                }
-                else
-                {
-                    current = stateObj.GetSnapshotDataSize();
-                    stateObj.AddSnapshotDataSize(current + value);
-                    return previousPacketId;
-                }
-            }
         }
 
         internal int ReadPlpAnsiChars(ref char[] buff, int offst, int len, SqlMetaDataPriv metadata, TdsParserStateObject stateObj)

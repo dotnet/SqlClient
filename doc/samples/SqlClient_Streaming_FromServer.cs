@@ -44,7 +44,7 @@ namespace SqlClient_Streaming_FromServer
                                 {
                                     using (Stream data = reader.GetStream(0))
                                     {
-
+                                        // A file keeps memory bounded; copying into a MemoryStream would materialize the entire value.
                                         // Asynchronously copy the stream from the server to the file we just created
                                         await data.CopyToAsync(file);
                                     }
