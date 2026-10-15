@@ -71,6 +71,50 @@ public class AuthenticationRegistryTest
         Assert.Same(second, SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.SqlPassword));
     }
 
+    /// <summary>Fatal failures in later aggregate entries propagate from every registration callback without replacing the provider.</summary>
+    [Theory]
+    [InlineData("IsSupported")]
+    [InlineData("BeforeLoad")]
+    [InlineData("BeforeUnload")]
+    public void AggregateCallbackFailurePropagatesAndPreservesProvider(string callback)
+    {
+        var failure = new AggregateException(
+            new InvalidOperationException("Ordinary failure"), new OutOfMemoryException("Test fatal failure"));
+        var first = new ThrowingProvider(callback == "BeforeUnload" ? callback : null, failure);
+        var replacement = new ThrowingProvider(callback == "BeforeUnload" ? null : callback, failure);
+        Assert.True(SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.NotSpecified, first));
+
+        try
+        {
+            Assert.Same(failure, Assert.Throws<AggregateException>(() =>
+                SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.NotSpecified, replacement)));
+            Assert.Same(first, SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.NotSpecified));
+        }
+        finally
+        {
+            first.Throw = false;
+            Assert.True(SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.NotSpecified, new Provider(true)));
+        }
+    }
+
+    /// <summary>Application-provider support checks can wait for another thread to look up the existing provider.</summary>
+    [Fact]
+    public void SupportValidationAllowsCrossThreadLookup()
+    {
+        var first = new Provider(true);
+        Assert.True(SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.SqlPassword, first));
+        var replacement = new LookupProvider();
+
+        bool registered = SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.SqlPassword, replacement);
+
+        Assert.NotNull(replacement.Lookup);
+        Assert.True(replacement.Lookup.Wait(TimeSpan.FromSeconds(10)), "Cross-thread lookup did not complete.");
+        Assert.True(registered, "Support validation blocked a cross-thread registry lookup.");
+        Assert.Same(first, replacement.Lookup.Result);
+        Assert.Equal(1, replacement.SupportChecks);
+        Assert.Same(replacement, SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.SqlPassword));
+    }
+
     private sealed class Provider(bool supported) : SqlAuthenticationProvider
     {
         internal int Loads;
@@ -82,7 +126,7 @@ public class AuthenticationRegistryTest
             throw new NotSupportedException();
     }
 
-    private sealed class ThrowingProvider(string? callback) : SqlAuthenticationProvider
+    private sealed class ThrowingProvider(string? callback, Exception? failure = null) : SqlAuthenticationProvider
     {
         internal bool Throw { get; set; } = true;
 
@@ -105,9 +149,25 @@ public class AuthenticationRegistryTest
         {
             if (Throw && callback == name)
             {
-                throw new InvalidOperationException("Test callback failure: " + name);
+                throw failure ?? new InvalidOperationException("Test callback failure: " + name);
             }
         }
+    }
+
+    private sealed class LookupProvider : SqlAuthenticationProvider
+    {
+        internal Task<SqlAuthenticationProvider?>? Lookup { get; private set; }
+        internal int SupportChecks { get; private set; }
+
+        public override bool IsSupported(SqlAuthenticationMethod method)
+        {
+            SupportChecks++;
+            Lookup = Task.Run(() => SqlAuthenticationProvider.GetProvider(method));
+            return Lookup.Wait(TimeSpan.FromSeconds(10));
+        }
+
+        public override Task<SqlAuthenticationToken> AcquireTokenAsync(SqlAuthenticationParameters parameters) =>
+            throw new NotSupportedException();
     }
 
     private sealed class AuthenticationTraceListener : EventListener

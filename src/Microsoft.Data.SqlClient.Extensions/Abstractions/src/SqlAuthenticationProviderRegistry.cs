@@ -586,34 +586,32 @@ internal sealed class SqlAuthenticationProviderRegistry
     /// <remarks>
     /// Recoverable failures and precedence refusals emit diagnostic traces. Registrations made
     /// by a configured initializer receive configuration precedence rather than application precedence.
+    /// After bootstrap, application-provider support validation runs outside the registry lock.
     /// </remarks>
     internal static bool SetProvider(SqlAuthenticationMethod authenticationMethod, SqlAuthenticationProvider provider)
     {
-        lock (Instance._sync)
+        try
         {
-            try
+            Instance.EnsureInitialized();
+            if (provider is null)
             {
-                Instance.EnsureInitialized();
-                if (provider is null)
-                {
-                    throw new ArgumentNullException(nameof(provider));
-                }
-                return Instance.Register(authenticationMethod, provider,
-                    Instance._runningInitializer ? RegistrationTier.Config : RegistrationTier.User);
+                throw new ArgumentNullException(nameof(provider));
             }
-            catch (Exception e) when (ExceptionHelpers.IsRecoverableException(e))
-            {
-                SqlClientEventSource.Log.TryTraceEvent(
-                    "SqlAuthenticationProvider.SetProvider failed for {0}; returning false. " +
-                    "Pass a non-null provider that supports this method and fix any throwing IsSupported, " +
-                    "BeforeLoad or BeforeUnload callbacks. For bootstrap errors, check app.config provider and " +
-                    "initializer type names, public parameterless constructors and initializer implementations, " +
-                    "and upgrade all SqlClient family " +
-                    "packages together to the same version. Bootstrap failures are cached; correct the cause and " +
-                    "restart the application. Error: {1}",
-                    authenticationMethod, e);
-                return false;
-            }
+            return Instance.Register(authenticationMethod, provider,
+                Instance._runningInitializer ? RegistrationTier.Config : RegistrationTier.User);
+        }
+        catch (Exception e) when (ExceptionHelpers.IsRecoverableException(e))
+        {
+            SqlClientEventSource.Log.TryTraceEvent(
+                "SqlAuthenticationProvider.SetProvider failed for {0}; returning false. " +
+                "Pass a non-null provider that supports this method and fix any throwing IsSupported, " +
+                "BeforeLoad or BeforeUnload callbacks. For bootstrap errors, check app.config provider and " +
+                "initializer type names, public parameterless constructors and initializer implementations, " +
+                "and upgrade all SqlClient family " +
+                "packages together to the same version. Bootstrap failures are cached; correct the cause and " +
+                "restart the application. Error: {1}",
+                authenticationMethod, e);
+            return false;
         }
     }
 
@@ -623,9 +621,10 @@ internal sealed class SqlAuthenticationProviderRegistry
     /// <param name="tier">The precedence assigned to this registration.</param>
     /// <returns>True if registered; false if precedence prevents replacement.</returns>
     /// <remarks>
-    /// Called while holding the registry lock. Replacement invokes the old provider's BeforeUnload
-    /// and the new provider's BeforeLoad before updating the registration; first registrations do
-    /// not invoke these callbacks. Callback failures propagate without publishing the replacement.
+    /// Validates support before acquiring the registry lock; bootstrap may already hold that lock.
+    /// Precedence checks, replacement callbacks and publication remain synchronized. Replacement invokes
+    /// the old provider's BeforeUnload and the new provider's BeforeLoad before updating the registration;
+    /// first registrations do not invoke these callbacks. Callback failures do not publish the replacement.
     /// </remarks>
     /// <exception cref="NotSupportedException">The provider does not support the authentication method.</exception>
     private bool Register(SqlAuthenticationMethod authenticationMethod,
@@ -635,27 +634,30 @@ internal sealed class SqlAuthenticationProviderRegistry
         {
             throw AuthenticationStrings.UnsupportedAuthenticationByProvider(authenticationMethod.ToString(), provider.GetType().Name);
         }
-        if (_tiers.TryGetValue(authenticationMethod, out RegistrationTier oldTier) &&
-            (oldTier > tier || (tier == RegistrationTier.Default && oldTier == tier)))
+        lock (_sync)
         {
-            SqlClientEventSource.Log.TryTraceEvent(
-                "Authentication registration refused for {0}: existing tier {1} takes precedence over {2}. " +
-                "To change a configuration-owned provider, update app.config or its initializer rather than " +
-                "overriding it with an application registration.",
-                authenticationMethod, oldTier, tier);
+            if (_tiers.TryGetValue(authenticationMethod, out RegistrationTier oldTier) &&
+                (oldTier > tier || (tier == RegistrationTier.Default && oldTier == tier)))
+            {
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "Authentication registration refused for {0}: existing tier {1} takes precedence over {2}. " +
+                    "To change a configuration-owned provider, update app.config or its initializer rather than " +
+                    "overriding it with an application registration.",
+                    authenticationMethod, oldTier, tier);
 
-            // The app has already specified a Provider for this
-            // authentication method, so we won't override it.
-            return false;
+                // The app has already specified a Provider for this
+                // authentication method, so we won't override it.
+                return false;
+            }
+            if (_providers.TryGetValue(authenticationMethod, out SqlAuthenticationProvider? oldProvider))
+            {
+                oldProvider.BeforeUnload(authenticationMethod);
+                provider.BeforeLoad(authenticationMethod);
+            }
+            _providers[authenticationMethod] = provider;
+            _tiers[authenticationMethod] = tier;
+            return true;
         }
-        if (_providers.TryGetValue(authenticationMethod, out SqlAuthenticationProvider? oldProvider))
-        {
-            oldProvider.BeforeUnload(authenticationMethod);
-            provider.BeforeLoad(authenticationMethod);
-        }
-        _providers[authenticationMethod] = provider;
-        _tiers[authenticationMethod] = tier;
-        return true;
     }
 
     /// <summary>
