@@ -27,6 +27,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
     /// the server did not select "tds/8.0", instead of silently continuing over TLS without
     /// the protocol binding TDS 8.0 depends on.
     /// </summary>
+    /// <remarks>
+    /// The end-to-end cases force the process-wide UseManagedNetworking switch on Windows, so this
+    /// class runs in the non-parallel AppContext switch collection to avoid affecting concurrent
+    /// connection tests.
+    /// </remarks>
+    [Collection(AppContextSwitchTestCollection.Name)]
     public class SniTds8AlpnValidationTest
     {
         private static readonly SslApplicationProtocol s_tds8 = new(TdsEnums.TDS8_Protocol);
