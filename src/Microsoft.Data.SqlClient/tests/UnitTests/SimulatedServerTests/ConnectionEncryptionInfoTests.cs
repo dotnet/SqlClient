@@ -455,18 +455,27 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// <summary>
         /// These tests use TrustServerCertificate=true, so SqlClient never evaluates the certificate:
         /// the verdict and chain status are always unavailable. Managed SNI still records the hash of
-        /// the presented certificate whenever a TLS handshake took place; native SNI does not capture
-        /// certificate details.
+        /// the presented certificate whenever a TLS handshake took place; native SNI records it only
+        /// when sni.dll provides the certificate capture exports.
         /// </summary>
         private void AssertBypassedCertificateFields(SqlConnectionEncryptionInfo info, ServerEncryption serverEncryption)
         {
-            if (serverEncryption != ServerEncryption.NotSupported && LocalAppContextSwitches.UseManagedNetworking)
+            if (serverEncryption != ServerEncryption.NotSupported)
             {
-                using System.Security.Cryptography.SHA256 sha256 = System.Security.Cryptography.SHA256.Create();
-                Assert.NotNull(info.PresentedServerCertificateHash256);
-                Assert.Equal(
-                    sha256.ComputeHash(_certificate.RawData),
-                    info.PresentedServerCertificateHash256.Value.ToArray());
+                // Native SNI captures the hash only with an sni.dll that has the certificate capture
+                // exports. Until the SNI package with those exports ships, accept either a null hash
+                // (older sni.dll) or the correct hash. Managed SNI must always capture it.
+                if (LocalAppContextSwitches.UseManagedNetworking)
+                {
+                    Assert.NotNull(info.PresentedServerCertificateHash256);
+                }
+
+                if (info.PresentedServerCertificateHash256 is ReadOnlyMemory<byte> hash)
+                {
+                    using System.Security.Cryptography.SHA256 sha256 = System.Security.Cryptography.SHA256.Create();
+                    Assert.Equal(32, hash.Length);
+                    Assert.Equal(sha256.ComputeHash(_certificate.RawData), hash.ToArray());
+                }
             }
             else
             {
