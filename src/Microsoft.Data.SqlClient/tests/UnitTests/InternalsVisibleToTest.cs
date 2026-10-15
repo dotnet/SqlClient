@@ -12,7 +12,7 @@ using Xunit;
 namespace Microsoft.Data.SqlClient.UnitTests
 {
     /// <summary>
-    /// Verifies internal access and the absence of the obsolete DataSetExtensions friend grant.
+    /// Verifies internal access and the complete set of friend assembly grants.
     /// </summary>
     public class InternalsVisibleToTest
     {
@@ -28,17 +28,26 @@ namespace Microsoft.Data.SqlClient.UnitTests
         }
 
         /// <summary>
-        /// Ensures the obsolete DataSetExtensions friend grant is absent on every target framework.
+        /// Ensures only UnitTests receives internal access, with its public key for signed builds.
         /// </summary>
         [Fact]
-        public void DataSetExtensionsIsNotGrantedInternalAccess()
+        public void FriendAssembliesMatchExpectedList()
         {
-            var friends = typeof(SqlConnection).Assembly
+            var driverAssembly = typeof(SqlConnection).Assembly;
+            var friends = driverAssembly
                 .GetCustomAttributes<InternalsVisibleToAttribute>()
-                .Where(attribute =>
-                    new AssemblyName(attribute.AssemblyName).Name == "System.Data.DataSetExtensions");
+                .Select(attribute => attribute.AssemblyName);
 
-            Assert.Empty(friends);
+            string expectedFriend = "UnitTests";
+            if (driverAssembly.GetName().GetPublicKey() is { Length: > 0 })
+            {
+                byte[]? testPublicKey = typeof(InternalsVisibleToTest).Assembly.GetName().GetPublicKey();
+                Assert.NotNull(testPublicKey);
+                Assert.NotEmpty(testPublicKey);
+                expectedFriend += ", PublicKey=" + BitConverter.ToString(testPublicKey).Replace("-", "");
+            }
+
+            Assert.Equal(expectedFriend, Assert.Single(friends), ignoreCase: true);
         }
     }
 }
