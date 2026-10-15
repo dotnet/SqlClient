@@ -46,6 +46,7 @@ public class LocalAppContextSwitchesTest
         switchesHelper.UseOverallConnectTimeoutForPoolWait = null;
         switchesHelper.UseLegacyIdleTimeoutBehavior = null;
         switchesHelper.UseMinimumLoginTimeout = null;
+        switchesHelper.UseLegacyUdtAssemblyLoad = null;
         #if NET
         switchesHelper.EnableAppConfig = null;
         switchesHelper.GlobalizationInvariantMode = null;
@@ -73,6 +74,7 @@ public class LocalAppContextSwitchesTest
         Assert.False(switchesHelper.UseLegacyFailoverAlternationOnLoginSqlErrors);
         Assert.False(switchesHelper.EnableTransactionIsolationLevelReset);
         Assert.False(switchesHelper.EnableMultiSubnetFailoverByDefault);
+        Assert.False(switchesHelper.UseLegacyUdtAssemblyLoad);
         #if NET
         Assert.True(switchesHelper.EnableAppConfig);
         Assert.False(switchesHelper.GlobalizationInvariantMode);
