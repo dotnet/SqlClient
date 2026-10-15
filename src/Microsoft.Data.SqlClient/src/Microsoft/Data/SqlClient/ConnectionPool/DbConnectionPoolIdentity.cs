@@ -27,8 +27,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             _isRestricted = isRestricted;
             _isNetwork = isNetwork;
             _authenticationId = authenticationId;
-            _hashCode = unchecked(((((sidString == null ? 0 : sidString.GetHashCode()) * 397) ^ authenticationId.GetHashCode()) * 397
-                ^ (isRestricted ? 1 : 0)) * 397 ^ (isNetwork ? 1 : 0));
+            _hashCode = (sidString, isRestricted, isNetwork, authenticationId).GetHashCode();
         }
 
         // @TODO: Make auto-property
@@ -43,10 +42,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             if (!result && value != null)
             {
                 DbConnectionPoolIdentity that = (DbConnectionPoolIdentity)value;
-                result = _sidString == that._sidString &&
-                         _isRestricted == that._isRestricted &&
-                         _isNetwork == that._isNetwork &&
-                         _authenticationId == that._authenticationId;
+                result = DeepEquals(that._sidString, that._isRestricted, that._isNetwork, that._authenticationId);
             }
 
             return result;
@@ -57,8 +53,15 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             return _hashCode;
         }
 
+        private bool DeepEquals(string sidString, bool isRestricted, bool isNetwork, long authenticationId) =>
+            _sidString == sidString &&
+            _isRestricted == isRestricted &&
+            _isNetwork == isNetwork &&
+            _authenticationId == authenticationId;
+
         internal static DbConnectionPoolIdentity GetCurrent()
         {
+            // Windows token identity applies to both managed and native networking.
             return OsConstants.IsWindows ? GetCurrentWindows() : GetCurrentManaged();
         }
 
@@ -77,9 +80,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             var lastIdentity = s_lastIdentity;
             
             DbConnectionPoolIdentity current = lastIdentity != null &&
-                                               lastIdentity._sidString == sidString &&
-                                               !lastIdentity._isRestricted &&
-                                               !lastIdentity._isNetwork
+                                               lastIdentity.DeepEquals(sidString, isRestricted: false, isNetwork: false, authenticationId: 0)
                 ? lastIdentity
                 : new DbConnectionPoolIdentity(sidString, isRestricted: false, isNetwork: false);
 
@@ -103,10 +104,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                 var lastIdentity = s_lastIdentity;
                 if (lastIdentity != null &&
-                    lastIdentity._sidString == sidString &&
-                    lastIdentity._isRestricted == isRestricted &&
-                    lastIdentity._isNetwork == isNetwork &&
-                    lastIdentity._authenticationId == authenticationId)
+                    lastIdentity.DeepEquals(sidString, isRestricted, isNetwork, authenticationId))
                 {
                     current = lastIdentity;
                 }

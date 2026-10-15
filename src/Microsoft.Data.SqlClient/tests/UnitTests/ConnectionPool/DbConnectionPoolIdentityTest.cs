@@ -29,6 +29,32 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
     {
         public static bool IsWindows => RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
 
+        /// <summary>Equality compares every pool-key field and equal keys have equal hashes.</summary>
+        [Theory]
+        [InlineData("sid", false, false, 1L, true)]
+        [InlineData("other", false, false, 1L, false)]
+        [InlineData("sid", true, false, 1L, false)]
+        [InlineData("sid", false, true, 1L, false)]
+        [InlineData("sid", false, false, 2L, false)]
+        public void Equals_ComparesAllIdentityFields(
+            string sid, bool restricted, bool network, long authenticationId, bool equal)
+        {
+            ConstructorInfo constructor = typeof(DbConnectionPoolIdentity).GetConstructor(
+                BindingFlags.Instance | BindingFlags.NonPublic, binder: null,
+                new[] { typeof(string), typeof(bool), typeof(bool), typeof(long) }, modifiers: null)!;
+            var first = (DbConnectionPoolIdentity)constructor.Invoke(new object[] { "sid", false, false, 1L });
+            var second = (DbConnectionPoolIdentity)constructor.Invoke(new object[] { sid, restricted, network, authenticationId });
+
+            Assert.Equal(equal, first.Equals(second));
+            Assert.Equal(equal, second.Equals(first));
+            Assert.False(first.Equals(null));
+            Assert.True(first.Equals(first));
+            if (equal)
+            {
+                Assert.Equal(first.GetHashCode(), second.GetHashCode());
+            }
+        }
+
         /// <summary>
         /// Network-only logons keep the local SID but must have distinct pool identities, while
         /// repeated reads and duplicated tokens from the same logon session remain equivalent.
@@ -65,6 +91,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 DbConnectionPoolIdentity repeated = DbConnectionPoolIdentity.GetCurrent();
                 Assert.Equal(firstIdentity, repeated);
                 Assert.Equal(firstIdentity.GetHashCode(), repeated.GetHashCode());
+                Assert.Same(repeated, DbConnectionPoolIdentity.GetCurrent());
                 using WindowsIdentity duplicate = WindowsIdentity.GetCurrent();
                 WindowsIdentity.RunImpersonated(duplicate.AccessToken, () =>
                     Assert.Equal(firstIdentity, DbConnectionPoolIdentity.GetCurrent()));

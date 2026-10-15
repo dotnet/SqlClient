@@ -35,8 +35,6 @@ namespace Interop.Windows.Sni
 
         uint SniInitialize(IntPtr pmo);
 
-        uint SniIsTokenRestricted(IntPtr token, out bool isRestricted);
-
         uint SniOpenSyncExWrapper(ref SniClientConsumerInfo pClientConsumerInfo, out IntPtr ppConn);
 
         uint SniOpenWrapper(
