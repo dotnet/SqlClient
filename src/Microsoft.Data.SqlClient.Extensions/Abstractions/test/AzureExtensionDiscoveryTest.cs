@@ -7,11 +7,11 @@ using System.Threading;
 
 namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test
 {
-    /// <summary>Verifies Azure discovery handles ordinary constructor failures but propagates wrapped fatal errors.</summary>
+    /// <summary>Verifies Azure discovery handles ordinary constructor failures but propagates fatal errors.</summary>
     [Collection(AuthenticationFeatureSwitchTestCollection.Name)]
     public class AzureExtensionDiscoveryTest
     {
-        /// <summary>Exercises the discovery catch filter with exceptions wrapped by reflective provider construction.</summary>
+        /// <summary>Exercises the discovery catch filter with direct or reflection-wrapped constructor exceptions.</summary>
         [Theory]
         [InlineData(typeof(InvalidOperationException), true)]
         [InlineData(typeof(OutOfMemoryException), false)]
@@ -31,9 +31,12 @@ namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test
                 }
                 else
                 {
-                    TargetInvocationException constructor = Assert.Throws<TargetInvocationException>(
+                    Exception? constructor = Record.Exception(
                         () => registry.LoadAzureExtension(() => typeof(ThrowingProvider).Assembly));
-                    Assert.Same(failure, constructor.InnerException);
+                    // .NET Framework propagates some fatal constructor exceptions without a reflection wrapper.
+                    Assert.Same(failure, constructor is TargetInvocationException invocation
+                        ? invocation.InnerException
+                        : constructor);
                 }
             }
             finally
