@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Data;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals;
@@ -119,6 +120,93 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
+                SqlConnection.ClearPool(connection);
+            }
+        }
+
+        /// <summary>
+        /// Fatal settings restoration must honor reader connection ownership and release the pool
+        /// checkout, without replacing the initiating failure if a connection-close subscriber throws.
+        /// </summary>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [InlineData(false, false, false)]
+        [InlineData(false, true, false)]
+        [InlineData(false, true, true)]
+        [InlineData(true, false, false)]
+        [InlineData(true, true, false)]
+        [InlineData(true, true, true)]
+        public void ReaderClose_FatalRestorationHonorsConnectionOwnership(bool mars, bool closeConnection, bool throwOnClose)
+        {
+            var builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+            {
+                ApplicationName = nameof(ReaderClose_FatalRestorationHonorsConnectionOwnership) + Guid.NewGuid(),
+                Pooling = true,
+                MaxPoolSize = 1,
+                MinPoolSize = 0,
+                ConnectTimeout = 5,
+                ConnectRetryCount = 0,
+                MultipleActiveResultSets = mars,
+                Enlist = false
+            };
+            using SqlConnection connection = new(builder.ConnectionString);
+            int closedEvents = 0;
+            StateChangeEventHandler onStateChange = (_, args) =>
+            {
+                if (args.CurrentState == ConnectionState.Closed)
+                {
+                    closedEvents++;
+                    if (throwOnClose)
+                    {
+                        throw new InvalidOperationException("Secondary close failure");
+                    }
+                }
+            };
+            try
+            {
+                connection.Open();
+                var original = new InternalConnectionWrapper(connection);
+                using SqlCommand command = new("SELECT 1", connection);
+                using SqlDataReader reader = command.ExecuteReader(
+                    closeConnection ? CommandBehavior.CloseConnection : CommandBehavior.Default);
+                var failure = new OutOfMemoryException("Fatal restoration sentinel");
+                int notifications = 0;
+                connection.InfoMessage += (_, _) =>
+                {
+                    notifications++;
+                    throw failure;
+                };
+                connection.StateChange += onStateChange;
+
+                // Replace the existing restoration batch, not the cleanup implementation, so
+                // Close encounters a deterministic fatal callback after draining the result.
+                typeof(SqlDataReader).GetField("_resetOptionsString", BindingFlags.Instance | BindingFlags.NonPublic)
+                    .SetValue(reader, "RAISERROR ('Fatal restoration sentinel', 10, 1);");
+
+                Assert.Same(failure, Record.Exception(() => reader.Close()));
+                Assert.Equal(1, notifications);
+                Assert.True(reader.IsClosed);
+                Assert.Equal(closeConnection ? 1 : 0, closedEvents);
+                if (!closeConnection)
+                {
+                    // Without CloseConnection, releasing the checkout remains the caller's responsibility.
+                    connection.Close();
+                }
+                Assert.Equal(ConnectionState.Closed, connection.State);
+                reader.Close();
+                Assert.Equal(1, notifications);
+                Assert.Equal(1, closedEvents);
+
+                // With CloseConnection, this borrow must succeed without explicitly closing the
+                // original connection or clearing the one-slot pool.
+                using SqlConnection next = new(builder.ConnectionString);
+                next.Open();
+                Assert.False(original.IsInternalConnectionOf(next));
+                using SqlCommand probe = new("SELECT 42", next);
+                Assert.Equal(42, probe.ExecuteScalar());
+            }
+            finally
+            {
+                connection.StateChange -= onStateChange;
                 SqlConnection.ClearPool(connection);
             }
         }

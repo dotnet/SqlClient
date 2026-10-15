@@ -966,6 +966,7 @@ namespace Microsoft.Data.SqlClient
             ExceptionDispatchInfo failure = ExceptionDispatchInfo.Capture(exception);
             TdsParser parser = _parser;
             TdsParserStateObject stateObj = _stateObj;
+            SqlConnection connectionToClose = IsCommandBehavior(CommandBehavior.CloseConnection) ? _connection : null;
 
             // Do not attempt normal draining or server-setting restoration on this reader.
             _isClosed = true;
@@ -993,8 +994,16 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                // Teardown is best effort; it must not replace the initiating fatal error.
-                failure.Throw();
+                try
+                {
+                    // Preserve reader ownership even when retiring the session fails.
+                    connectionToClose?.Close();
+                }
+                finally
+                {
+                    // Neither session teardown nor connection closure may replace the fatal error.
+                    failure.Throw();
+                }
             }
         }
 
