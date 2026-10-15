@@ -256,13 +256,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         [InlineData(ServerEncryption.Off, true)]
         [InlineData(ServerEncryption.Required, false)]
         [InlineData(ServerEncryption.Required, true)]
-        public async Task Open_UntrustedServerCertificate_ExceptionHasNoNegotiatedModeOrProtocol(ServerEncryption serverEncryption, bool async)
+        public async Task Open_UntrustedServerCertificate_ExceptionReportsOnlyObservedModeAndProtocol(ServerEncryption serverEncryption, bool async)
         {
             // The fixture certificate is self-signed and not installed in any trusted store, so
-            // certificate validation fails. Native SNI (Schannel) defers that verdict until the first
-            // write after the handshake (LOGIN7), managed SNI fails the handshake itself. Either way TLS
-            // was never established, so no negotiated mode or protocol may be reported. (Certificate
-            // details may be present once later slices capture them, so only mode/protocol are asserted.)
+            // certificate validation fails. Native SNI (Schannel) defers that verdict until the LOGIN7
+            // write and keeps the mode and protocol observed during the completed handshake. Managed SNI
+            // fails inside the handshake and, in this slice, observes no protocol. The mode is never
+            // reported without an observed protocol. Certificate fields are not asserted here.
             using TdsServer server = new(CreateArguments<TdsServerArguments>(serverEncryption));
             server.Start();
 
@@ -274,8 +274,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             SqlException ex = await Assert.ThrowsAsync<SqlException>(() => OpenAsync(connection, async));
 
             Assert.True(server.PreLoginCount >= 1);
-            Assert.Null(ex.EncryptionInfo.NegotiatedEncryptionMode);
-            Assert.Null(ex.EncryptionInfo.NegotiatedEncryptionProtocol);
+            if (ex.EncryptionInfo.NegotiatedEncryptionProtocol is null)
+            {
+                Assert.Null(ex.EncryptionInfo.NegotiatedEncryptionMode);
+            }
+            else
+            {
+                Assert.Equal(SqlConnectionEncryptionMode.Full, ex.EncryptionInfo.NegotiatedEncryptionMode);
+            }
             Assert.True(connection.EncryptionInfo.IsEmpty);
         }
 
