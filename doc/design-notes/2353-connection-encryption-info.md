@@ -185,8 +185,9 @@ attempt and reset for every routing, retry, and failover attempt.
   through `EncryptionInfoCapture.RecordModeIfProtocolObserved` only if that protocol was
   captured. A protocol already determined for the attempt takes precedence over the one
   reported with the certificate details. Managed SNI is used only on .NET (`net10.0`).
-- **Native SNI** (Schannel) defers server certificate verification: `EnableSsl` reports
-  success with the negotiated protocol, and an untrusted or mismatched certificate only surfaces
+- **Native SNI** reports the protocol through `dwProtocol` in the certificate capture, or
+  through the handshake wait. Schannel can defer server certificate verification: `EnableSsl`
+  reports success with the negotiated protocol, and an untrusted or mismatched certificate only surfaces
   as an SSL-provider SNI error on the first post-handshake I/O (the LOGIN7 write). The mode and
   protocol from the completed handshake are kept. `TdsParser.ProcessSNIError`, the single place
   every SNI error becomes a `SqlError`, calls `EncryptionInfoCapture.DiscardUnobservedNegotiation`
