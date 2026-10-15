@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using Microsoft.Data.SqlClient.Tests;
 using Microsoft.Data.SqlClient.Tests.Common;
 using Microsoft.Data.SqlClient.Tests.Common.ConfigurableRetryLogic;
 
@@ -29,6 +30,8 @@ public sealed class EntryPoint : IDisposable
 
     public string ConnectionString { get; }
 
+    public SqlRetryLogicBaseProvider RetryLogicProvider { get; }
+
     /// <summary>
     /// Instantiates the entry point, specifying the connection string to use.
     /// </summary>
@@ -46,10 +49,11 @@ public sealed class EntryPoint : IDisposable
 
         ConnectionString = connectionString;
 
-        InitializeRetryProviders();
+        InitializeRetryProviders(out SqlRetryLogicBaseProvider cnnProvider);
+        RetryLogicProvider = cnnProvider;
     }
 
-    private void InitializeRetryProviders()
+    private void InitializeRetryProviders(out SqlRetryLogicBaseProvider connectionRetryLogicProvider)
     {
         RetryLogicConfigs connectionConfigs = new()
         {
@@ -57,12 +61,12 @@ public sealed class EntryPoint : IDisposable
             MaxTimeInterval = TimeSpan.FromSeconds(30),
             MinTimeInterval = TimeSpan.FromSeconds(1),
             NumberOfTries = 1,
-            RetryLogicType = typeof(SqlConfigurableRetryFactory).AssemblyQualifiedName,
-            RetryMethodName = nameof(SqlConfigurableRetryFactory.CreateNoneRetryProvider)
+            RetryLogicType = typeof(CustomConfigurableRetryLogic).AssemblyQualifiedName,
+            RetryMethodName = nameof(CustomConfigurableRetryLogic.GetDefaultRetry)
         };
         RetryLogicConfigs commandConfigs = RetryLogicLoaderHelper.CreateRandomConfig(method: null, authorizedSqlCondition: null);
 
-        RetryLogicLoaderHelper.CreateLoader(connectionConfigs, commandConfigs);
+        RetryLogicLoaderHelper.ReturnLoaderAndProviders(connectionConfigs, commandConfigs, out connectionRetryLogicProvider, out _);
     }
 
     /// <summary>

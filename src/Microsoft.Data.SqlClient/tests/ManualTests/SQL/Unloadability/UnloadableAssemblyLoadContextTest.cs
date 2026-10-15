@@ -12,6 +12,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Loader;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.Tests;
 using Microsoft.Data.SqlClient.Tests.Common;
 using Microsoft.Data.SqlClient.UnloadableLibrary;
 using Xunit;
@@ -87,6 +88,14 @@ public class UnloadableAssemblyLoadContextTest
         {
             instantiated = Activator.CreateInstance(unloadableLibraryType, [connectionString]);
             Assert.NotNull(instantiated);
+
+            PropertyInfo? retryLogicProviderProperty = unloadableLibraryType.GetProperty(nameof(EntryPoint.RetryLogicProvider));
+            Assert.NotNull(retryLogicProviderProperty);
+
+            object? retryLogicProvider = retryLogicProviderProperty.GetValue(instantiated);
+            Assert.NotNull(retryLogicProvider);
+
+            Assert.Equal(nameof(CustomRetryLogicProvider), retryLogicProvider.GetType().Name);
 
             MethodInfo? getDateMethod = unloadableLibraryType.GetMethod(nameof(EntryPoint.GetDate));
             Assert.NotNull(getDateMethod);

@@ -21,5 +21,6 @@
                       Condition="'$(ReferenceType)' == 'Package'" />
 
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/Common/Microsoft.Data.SqlClient.TestCommon.csproj" />
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/CustomConfigurableRetryLogic/CustomRetryLogicProvider.csproj" />
   </ItemGroup>
 </Project>
