@@ -747,7 +747,7 @@ if (-not [string]::IsNullOrEmpty($BaselineVersion)) {
         "-p:ReferenceType=Package",
         "-p:MdsPackageVersion=$BaselineVersion",
         "-p:RestoreConfigFile=$BaselineNuGetConfig",
-        "-p:WarningsNotAsErrors=NU1902%3BNU1903" # Allow dependencies with vulnerabilities on baseline tests
+        "-p:WarningsNotAsErrors=NU1901%3BNU1902%3BNU1903%3BNU1904" # Allow dependencies with vulnerabilities on baseline tests
     )
 } elseif (-not [string]::IsNullOrEmpty($BaselineSourceRef)) {
     # Source baseline: build the baseline ref's OWN perf project so the driver under measurement is
