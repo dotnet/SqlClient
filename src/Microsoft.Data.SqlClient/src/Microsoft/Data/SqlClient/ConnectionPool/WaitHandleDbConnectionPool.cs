@@ -61,7 +61,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         // We can't get at the key in the dictionary without enumerating entries, so we stash an extra
         // copy as part of the value.
 
-        private sealed class PendingGetConnection
+        internal sealed class PendingGetConnection
         {
             public PendingGetConnection(long dueTime, DbConnection owner, TaskCompletionSource<DbConnectionInternal> completion, TimeoutTimer timeout, PoolPruningGuard.Lease lease)
             {
@@ -77,6 +77,30 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             private PoolPruningGuard.Lease _lease;
             /// <summary>Releases the pruning lease once the request is processed; idempotent.</summary>
             public void ReleaseLease() => _lease.Dispose();
+
+            // 0 = unclaimed, 1 = claimed by a worker or abandoned by a failed scheduler.
+            private int _claimed;
+
+            /// <summary>
+            /// Claims the request for a worker. Only the claimant may process it and release its
+            /// lease, so a worker never loses admission while it is creating a connection.
+            /// </summary>
+            public bool TryClaim() => Interlocked.CompareExchange(ref _claimed, 1, 0) == 0;
+
+            /// <summary>
+            /// Releases the lease of a request no worker has claimed. Returns
+            /// <see langword="false"/> when a worker already owns it; that worker keeps the
+            /// lease until it finishes and releases it itself.
+            /// </summary>
+            public bool TryAbandon()
+            {
+                if (!TryClaim())
+                {
+                    return false;
+                }
+                ReleaseLease();
+                return true;
+            }
             public DbConnection Owner { get; private set; }
             public TaskCompletionSource<DbConnectionInternal> Completion { get; private set; }
             public TimeoutTimer Timeout { get; private set; }
@@ -791,6 +815,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                     while (_pendingOpens.TryDequeue(out next))
                     {
+                        if (!next.TryClaim())
+                        {
+                            // Abandoned after a scheduling failure; its lease is already released.
+                            continue;
+                        }
+
                         if (next.Completion.Task.IsCompleted)
                         {
                             next.ReleaseLease();
@@ -985,9 +1015,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 }
                 catch (Exception e)
                 {
-                    // No worker will run for this request: fail it and release its lease now.
-                    // ReleaseLease is idempotent, so a later worker dequeuing it is harmless.
-                    pendingGetConnection.ReleaseLease();
+                    // Fail the request. Release its lease only if no worker has claimed it; a worker
+                    // that already dequeued it keeps the lease until its create finishes, and its
+                    // TrySetResult then fails so it returns the connection to the pool.
+                    pendingGetConnection.TryAbandon();
                     taskCompletionSource.TrySetException(e);
                     throw;
                 }
