@@ -82,11 +82,12 @@ public class UnloadableAssemblyLoadContextTest
 
         Assert.Equal(alc.Name, alcName);
 
-        object? instantiated = Activator.CreateInstance(unloadableLibraryType, [connectionString]);
-        Assert.NotNull(instantiated);
-
+        object? instantiated = null;
         try
         {
+            instantiated = Activator.CreateInstance(unloadableLibraryType, [connectionString]);
+            Assert.NotNull(instantiated);
+
             MethodInfo? getDateMethod = unloadableLibraryType.GetMethod(nameof(EntryPoint.GetDate));
             Assert.NotNull(getDateMethod);
 
@@ -102,10 +103,13 @@ public class UnloadableAssemblyLoadContextTest
         }
         finally
         {
-            MethodInfo? disposeMethod = unloadableLibraryType.GetMethod(nameof(EntryPoint.Dispose));
-            Assert.NotNull(disposeMethod);
+            if (instantiated is not null)
+            {
+                MethodInfo? disposeMethod = unloadableLibraryType.GetMethod(nameof(EntryPoint.Dispose));
+                Assert.NotNull(disposeMethod);
 
-            disposeMethod.Invoke(instantiated, null);
+                disposeMethod.Invoke(instantiated, null);
+            }
 
             alc.Unload();
         }
