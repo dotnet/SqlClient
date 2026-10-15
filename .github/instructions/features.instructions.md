@@ -286,7 +286,7 @@ Setting `EnableAppConfig` to `false` at publish time removes the configuration r
 </ItemGroup>
 ```
 
-Setting it only at run time, with `AppContext.SetSwitch` or `runtimeconfig.json`, stops the reading but leaves the trim warnings. On .NET Framework the switch has no effect, since trimming does not apply there.
+Setting it only at run time, with `AppContext.SetSwitch` or `runtimeconfig.json`, stops the reading but cannot remove code at publish time. On .NET Framework, the switch disables authentication configuration loading in Abstractions; the driver's retry configuration and switch-override readers remain .NET-only. Trimming does not apply to .NET Framework.
 
 ### Guidelines for Adding New Switches
 Authentication gates live in Abstractions' `AuthenticationFeatureSwitches.cs`, separately from

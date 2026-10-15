@@ -92,7 +92,7 @@ internal static class AuthenticationFeatureSwitches
     #region Helpers
 
     // The possible states of a feature switch.
-    private enum SwitchValue : byte
+    internal enum SwitchValue : byte
     {
         None = 0,
         True = 1,
@@ -100,8 +100,8 @@ internal static class AuthenticationFeatureSwitches
     }
 
     // Cached feature switch values.
-    private static SwitchValue s_enableAppConfig;
-    private static SwitchValue s_enableAzureExtensionDiscovery;
+    internal static SwitchValue s_enableAppConfig;
+    internal static SwitchValue s_enableAzureExtensionDiscovery;
 
     // Acquires the feature switch value from AppContext if it hasn't been cached yet.  Switches
     // that aren't set will assume the default value.

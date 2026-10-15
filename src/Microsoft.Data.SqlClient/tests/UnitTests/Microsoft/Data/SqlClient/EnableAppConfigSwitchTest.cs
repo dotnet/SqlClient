@@ -12,8 +12,8 @@ namespace Microsoft.Data.SqlClient.UnitTests;
 /// <summary>
 /// Tests that the EnableAppConfig switch gates every app.config reader: the
 /// configurable retry logic providers, the switch overrides applied during
-/// static initialization. Authentication configuration is covered by the
-/// dedicated AuthenticationTests configuration-process harness.
+/// static initialization. A dedicated process harness for authentication
+/// configuration is deferred to #4817.
 /// </summary>
 [Collection(AppContextSwitchTestCollection.Name)]
 public class EnableAppConfigSwitchTest

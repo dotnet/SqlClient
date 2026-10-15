@@ -131,70 +131,63 @@ internal sealed class SqlAuthenticationProviderRegistry
     /// </remarks>
     [RequiresUnreferencedCode("Azure extension discovery loads types and constructors by name.")]
     [RequiresDynamicCode("Azure extension discovery constructs providers dynamically.")]
-    private void LoadAzureExtension()
+    private void LoadAzureExtension() => LoadAzureExtension(LoadAzureExtensionAssembly);
+
+    /// <summary>Loads the Azure extension, validating its identity in signed builds.</summary>
+    /// <returns>The trusted Azure assembly, or null if its public key token is invalid.</returns>
+    [RequiresUnreferencedCode("Azure extension discovery loads an assembly by name.")]
+    private static Assembly? LoadAzureExtensionAssembly()
     {
-        // If our Azure extensions package is present, use its authentication provider as our
-        // default.
-        try
-        {
-            // Try to load our Azure extension.
 #if STRONG_NAME_SIGNING
+        SqlClientEventSource.Log.TryTraceEvent(
+            nameof(SqlAuthenticationProviderRegistry) +
+            ": Attempting to load Azure extension assembly={0} with " +
+            "expected public key token={1}",
+            azureAssemblyName,
+            BitConverter.ToString(s_azurePublicKeyToken).Replace("-", ""));
 
-                // When strong-name signing is enabled, build a fully-qualified AssemblyName
-                // that includes the expected public key token.
+        var qualifiedName = new AssemblyName(azureAssemblyName);
+        qualifiedName.SetPublicKeyToken(s_azurePublicKeyToken);
 
-                SqlClientEventSource.Log.TryTraceEvent(
-                    nameof(SqlAuthenticationProviderRegistry) +
-                    ": Attempting to load Azure extension assembly={0} with " +
-                    "expected public key token={1}",
-                    azureAssemblyName,
-                    BitConverter.ToString(s_azurePublicKeyToken).Replace("-", ""));
-
-                var qualifiedName = new AssemblyName(azureAssemblyName);
-                qualifiedName.SetPublicKeyToken(s_azurePublicKeyToken);
-
-                // The .NET Framework runtime will enforce the token during binding, causing Load()
-                // to throw.  This prevents an untrusted assembly from being loaded and having its
-                // module initializers run.  This will throw if the public key token doesn't match.
-                //
-                // The .NET runtime ignores the public key token and will happily load any assembly
-                // with the same simple name.
-                //
-                var assembly = Assembly.Load(qualifiedName);
+        // .NET Framework enforces the token during binding; .NET requires the explicit check below.
+        var assembly = Assembly.Load(qualifiedName);
 
 #if !NETFRAMEWORK
-                // For the .NET runtime, we will check the public key token ourselves.
-                //
-                // Note that a null assembly is handled below.
-                if (assembly is not null)
-                {
-                    byte[]? actualToken = assembly.GetName().GetPublicKeyToken();
-
-                    if (actualToken is null || !actualToken.SequenceEqual(s_azurePublicKeyToken))
-                    {
-                        SqlClientEventSource.Log.TryTraceEvent(
-                            nameof(SqlAuthenticationProviderRegistry) +
-                            ": Azure extension assembly={0} has an " +
-                            "unexpected public key token; " +
-                            "no default Active Directory provider installed",
-                            assembly.GetName());
-                        return;
-                    }
-                }
+        if (assembly is not null)
+        {
+            byte[]? actualToken = assembly.GetName().GetPublicKeyToken();
+            if (actualToken is null || !actualToken.SequenceEqual(s_azurePublicKeyToken))
+            {
+                SqlClientEventSource.Log.TryTraceEvent(
+                    nameof(SqlAuthenticationProviderRegistry) +
+                    ": Azure extension assembly={0} has an " +
+                    "unexpected public key token; " +
+                    "no default Active Directory provider installed",
+                    assembly.GetName());
+                return null;
+            }
+        }
 #endif
-
 #else
-
-            SqlClientEventSource.Log.TryTraceEvent(
-                nameof(SqlAuthenticationProviderRegistry) +
-                ": Attempting to load Azure extension assembly={0} without " +
-                "strong name verification; ensure this assembly is from a trusted source",
-                azureAssemblyName);
-
-            var assembly = Assembly.Load(azureAssemblyName);
-
+        SqlClientEventSource.Log.TryTraceEvent(
+            nameof(SqlAuthenticationProviderRegistry) +
+            ": Attempting to load Azure extension assembly={0} without " +
+            "strong name verification; ensure this assembly is from a trusted source",
+            azureAssemblyName);
+        var assembly = Assembly.Load(azureAssemblyName);
 #endif
+        return assembly;
+    }
 
+    /// <summary>Discovers and registers Azure defaults using the supplied assembly loader.</summary>
+    /// <param name="loadAssembly">The assembly loader; production uses the signed-identity validation above.</param>
+    [RequiresUnreferencedCode("Azure extension discovery loads types and constructors by name.")]
+    [RequiresDynamicCode("Azure extension discovery constructs providers dynamically.")]
+    internal void LoadAzureExtension(Func<Assembly?> loadAssembly)
+    {
+        try
+        {
+            Assembly? assembly = loadAssembly();
             if (assembly is null)
             {
                 SqlClientEventSource.Log.TryTraceEvent(
@@ -290,7 +283,7 @@ internal sealed class SqlAuthenticationProviderRegistry
         // simply have no default and the app must provide one if they
         // attempt to use Active Directory authentication.
         catch (Exception ex)
-        when (ex is
+        when (ExceptionHelpers.IsRecoverableException(ex) && ex is (
                   AmbiguousMatchException or
                   ArgumentException or
                   BadImageFormatException or
@@ -302,7 +295,7 @@ internal sealed class SqlAuthenticationProviderRegistry
                   NotSupportedException or
                   TargetInvocationException or
                   TypeInitializationException or
-                  TypeLoadException)
+                  TypeLoadException))
         {
             SqlClientEventSource.Log.TryTraceEvent(
                 nameof(SqlAuthenticationProviderRegistry) +
