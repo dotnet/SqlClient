@@ -751,6 +751,7 @@ if [[ -n "${baselineVersion}" ]]; then
         -p:ReferenceType=Package
         -p:MdsPackageVersion="${baselineVersion}"
         -p:RestoreConfigFile="${BASELINE_NUGET_CONFIG}"
+        -p:WarningsNotAsErrors=NU1902%3BNU1903 # Allow dependencies with vulnerabilities on baseline tests
     )
 elif [[ -n "${baselineSourceRef}" ]]; then
     # Source baseline: build the baseline ref's OWN perf project so the driver under measurement is
