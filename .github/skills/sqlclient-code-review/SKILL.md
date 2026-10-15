@@ -86,6 +86,9 @@ Map affected entry points to callers, helpers, alternate implementations, and te
 Load only relevant sections of [driver checks](references/driver-checks.md), including
 API/build/package surfaces when touched. Check affected sync/async, framework,
 OS/SNI, and switch variants; do not demand unrelated matrix combinations.
+For new or changed user-facing message text, check resource-backed localization
+using the [localization checks](references/driver-checks.md#user-facing-strings-and-localization),
+including exception wrappers and affected sibling assemblies.
 
 ### 2. Trace the behavior
 
@@ -153,6 +156,9 @@ establish wire correctness, and one OS run does not establish all variants.
   new AppContext switch mechanically. Follow local policy and verify the actual
   lifetime, scheduling, compatibility, and performance implications.
 - No finding quota. A review with no actionable findings is valid.
+- Hard-coded user-visible error prose bypasses localization and is a functional
+  defect, not a style nit. Report reachable changed occurrences, not unrelated
+  legacy strings or diagnostic/protocol literals.
 
 ### 6. Report or publish
 

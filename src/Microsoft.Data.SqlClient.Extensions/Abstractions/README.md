@@ -90,6 +90,20 @@ This new looser coupling gives applications the flexibility to depend on only
 the main MDS package, or on MDS and a subset of it extension packages if
 desired.
 
+## Localization
+
+User-facing authentication messages belong to the assembly that raises them:
+`Azure/src/Resources/Strings.resx` or `Abstractions/src/Resources/Strings.resx`.
+The extension projects generate internal typed accessors during the build.
+Use complete message templates with positional placeholders, including exception
+wrappers, rather than concatenating English fragments in code.
+
+Resource lookup uses `CurrentUICulture`; arguments are formatted with
+`CurrentCulture`. The neutral resources preserve the existing English messages.
+Cultures without translated satellite resources fall back to those messages;
+extracting text into resources does not itself supply translations. Each
+extension owns its resources so it does not depend on the driver for localization.
+
 ## Consuming
 
 There are several ways that applications may consume MDS and its extensions:

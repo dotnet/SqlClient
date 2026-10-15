@@ -2,6 +2,9 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.Globalization;
+using AzureStrings = Microsoft.Data.SqlClient.Extensions.Azure.Resources.Strings;
+
 namespace Microsoft.Data.SqlClient.Extensions.Azure;
 
 /// <summary>
@@ -19,7 +22,7 @@ internal class AuthenticationException : SqlAuthenticationProviderException
     internal AuthenticationException(
         SqlAuthenticationMethod method,
         string message)
-    : base($"Failed to acquire access token for {method}: {message}", null)
+    : base(string.Format(CultureInfo.CurrentCulture, AzureStrings.AuthenticationFailed, method, message), null)
     {
     }
 
@@ -44,7 +47,7 @@ internal class AuthenticationException : SqlAuthenticationProviderException
         failureCode,
         shouldRetry,
         retryPeriod,
-        $"Failed to acquire access token for {method}: {message}",
+        string.Format(CultureInfo.CurrentCulture, AzureStrings.AuthenticationFailed, method, message),
         causedBy)
     {
     }

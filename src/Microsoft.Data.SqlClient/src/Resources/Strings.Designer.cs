@@ -3839,6 +3839,33 @@ namespace System {
                 return ResourceManager.GetString("SQL_PendingBeginXXXExists", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Capacity must be less than or equal to Int32.MaxValue..
+        /// </summary>
+        internal static string SQL_PoolCapacityTooLarge {
+            get {
+                return ResourceManager.GetString("SQL_PoolCapacityTooLarge", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Capacity must be greater than zero..
+        /// </summary>
+        internal static string SQL_PoolCapacityZero {
+            get {
+                return ResourceManager.GetString("SQL_PoolCapacityZero", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Idle timeout cannot be negative..
+        /// </summary>
+        internal static string SQL_PoolIdleTimeoutNegative {
+            get {
+                return ResourceManager.GetString("SQL_PoolIdleTimeoutNegative", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   Looks up a localized string similar to Precision value &apos;{0}&apos; is either less than 0 or greater than the maximum allowed precision of 38..
