@@ -5,6 +5,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using BenchmarkDotNet.ConsoleArguments;
+using BenchmarkDotNet.ConsoleArguments.ListBenchmarks;
+using BenchmarkDotNet.Loggers;
+using BenchmarkDotNet.Reports;
 using BenchmarkDotNet.Running;
 
 namespace Microsoft.Data.SqlClient.PerformanceTests
@@ -67,7 +71,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         /// Initializes a new instance of the <see cref="Program"/> class,
         /// which loads the benchmark configuration and runs the benchmarks.
         /// </summary>
-        public Program()
+        public Program(string[] args = null)
         {
             _config = Config.Load();
             SetupConfigurations();
@@ -124,22 +128,60 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 Environment.ExitCode = 2;
                 return;
             }
+            args ??= Array.Empty<string>();
+            var (parsed, argumentConfig, options) = ConfigParser.Parse(args, ConsoleLogger.Default);
+            if (!parsed)
+            {
+                Environment.ExitCode = args.Contains("--help") || args.Contains("-h") ? 0 : 1;
+                return;
+            }
+            if (options.PrintInformation || options.ListBenchmarkCaseMode != ListBenchmarkCaseMode.Disabled)
+            {
+                BenchmarkSwitcher.FromTypes(toRun.Select(unit => unit.RunnerType).ToArray()).Run(args);
+                return;
+            }
+
+            bool matched = false;
             foreach (BenchmarkUnit unit in toRun)
             {
                 OpenAsyncScoreboardRunner.SelectedCase = unit.ScoreboardCase;
-                var summary = BenchmarkRunner.Run(unit.RunnerType,
-                    BenchmarkConfig.s_instance(unit.Selector(_config.Benchmarks), unit.ScoreboardCase != null));
-                if (summary.HasCriticalValidationErrors || summary.Reports.Length == 0 ||
-                    summary.Reports.Any(report => !report.Success || report.ResultStatistics == null))
+                RunnerJob job = unit.Selector(_config.Benchmarks);
+                var config = BenchmarkConfig.s_instance(job, unit.ScoreboardCase != null);
+                // Match across all enabled units before treating an empty selection as a failure.
+                // Keep the unit's job settings when executing the selected benchmarks.
+                using BenchmarkRunInfo benchmarks = BenchmarkConverter.TypeToBenchmarks(unit.RunnerType, config);
+                var selectedCases = benchmarks.BenchmarksCases.Where(benchmark =>
+                    argumentConfig.GetFilters().All(filter => filter.Predicate(benchmark))).ToArray();
+                if (selectedCases.Length == 0)
                 {
-                    Console.Error.WriteLine($"Benchmark '{unit.Name}' failed; its results are not valid measurements.");
-                    Environment.ExitCode = 1;
-                    return;
+                    continue;
                 }
+                matched = true;
+                if (job is CommandRunnerJob commandJob)
+                {
+                    commandJob.Validate();
+                }
+                // Execute the selected cases with the validated unit job. Passing args here
+                // would parse them again and allow CLI job settings to override that job.
+                var selectedBenchmarks = new BenchmarkRunInfo(selectedCases, benchmarks.Type, benchmarks.Config);
+                Summary summary = BenchmarkRunner.Run(selectedBenchmarks);
+                if (summary.HasCriticalValidationErrors || !summary.Reports.Any() ||
+                    summary.Reports.Any(report => !report.Success ||
+                        (unit.ScoreboardCase != null && report.ResultStatistics == null)))
+                {
+                    Console.Error.WriteLine($"Benchmark unit '{unit.Name}' failed; results are incomplete.");
+                    Environment.ExitCode = 1;
+                    // Retain the failing exit code while allowing later units to report results.
+                }
+            }
+            if (!matched)
+            {
+                Console.Error.WriteLine("No benchmarks matched the selection across enabled units.");
+                Environment.ExitCode = 1;
             }
 
             // TODOs:
-            // Prepared/Regular Parameterized queries
+            // Explicitly prepared commands
             // Always Encrypted
         }
 
@@ -217,6 +259,6 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         /// <summary>
         /// The main entry point for the performance tests program.
         /// </summary>
-        public static void Main() => _ = new Program();
+        public static void Main(string[] args) => _ = new Program(args);
     }
 }

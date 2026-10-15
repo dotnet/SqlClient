@@ -109,7 +109,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             {
                 tasks[i] = Task.Run(async () =>
                 {
-                    using var conn = new SqlConnection(_connectionString);
+                    await using var conn = new SqlConnection(_connectionString);
                     try
                     {
                         await conn.OpenAsync();

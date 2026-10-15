@@ -36,7 +36,7 @@
 
     <dependencies>
       <group targetFramework="net462">
-        <dependency id="Microsoft.Bcl.Cryptography" version="10.0.12" />
+        <dependency id="Microsoft.Bcl.Cryptography" version="10.0.13" />
         <dependency id="Microsoft.Bcl.TimeProvider" version="10.0.12" />
         <dependency id="Microsoft.Data.SqlClient.Extensions.Abstractions" version="$SqlClientVersionRange$" />
         <dependency id="Microsoft.Data.SqlClient.Internal.Logging" version="$SqlClientVersionRange$" />
@@ -49,14 +49,14 @@
         <dependency id="System.Diagnostics.DiagnosticSource" version="10.0.12" />
         <dependency id="System.Memory" version="4.6.3" />
         <dependency id="System.Runtime.InteropServices.RuntimeInformation" version="4.3.0" />
-        <dependency id="System.Security.Cryptography.Pkcs" version="10.0.12" />
+        <dependency id="System.Security.Cryptography.Pkcs" version="10.0.13" />
         <dependency id="System.Text.Json" version="10.0.12" />
         <dependency id="System.Threading.Channels" version="10.0.12" />
         <dependency id="System.Threading.RateLimiting" version="10.0.12" />
         <dependency id="System.ValueTuple" version="4.6.2" />
       </group>
       <group targetFramework="net10.0">
-        <dependency id="Microsoft.Bcl.Cryptography" version="10.0.12" />
+        <dependency id="Microsoft.Bcl.Cryptography" version="10.0.13" />
         <dependency id="Microsoft.Data.SqlClient.Extensions.Abstractions" version="$SqlClientVersionRange$" />
         <dependency id="Microsoft.Data.SqlClient.Internal.Logging" version="$SqlClientVersionRange$" />
         <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="$SniVersionRange$" exclude="Compile" />
@@ -65,11 +65,11 @@
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="8.23.0" />
         <dependency id="Microsoft.SqlServer.Server" version="$SqlServerVersionRange$" />
         <dependency id="System.Configuration.ConfigurationManager" version="10.0.12" exclude="Compile" />
-        <dependency id="System.Security.Cryptography.Pkcs" version="10.0.12" />
+        <dependency id="System.Security.Cryptography.Pkcs" version="10.0.13" />
         <dependency id="System.Threading.RateLimiting" version="10.0.12" />
       </group>
       <group targetFramework="netstandard2.0">
-        <dependency id="Microsoft.Bcl.Cryptography" version="10.0.12" />
+        <dependency id="Microsoft.Bcl.Cryptography" version="10.0.13" />
         <dependency id="Microsoft.Bcl.TimeProvider" version="10.0.12" />
         <dependency id="Microsoft.Data.SqlClient.Extensions.Abstractions" version="$SqlClientVersionRange$" />
         <dependency id="Microsoft.Data.SqlClient.Internal.Logging" version="$SqlClientVersionRange$" />
@@ -79,7 +79,7 @@
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="8.23.0" />
         <dependency id="Microsoft.SqlServer.Server" version="$SqlServerVersionRange$" />
         <dependency id="System.Configuration.ConfigurationManager" version="10.0.12" exclude="Compile" />
-        <dependency id="System.Security.Cryptography.Pkcs" version="10.0.12" />
+        <dependency id="System.Security.Cryptography.Pkcs" version="10.0.13" />
         <dependency id="System.Text.Json" version="10.0.12" />
         <dependency id="System.Threading.Channels" version="10.0.12" />
         <dependency id="System.Threading.RateLimiting" version="10.0.12" />

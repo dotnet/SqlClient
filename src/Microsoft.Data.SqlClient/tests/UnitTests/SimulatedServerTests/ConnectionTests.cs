@@ -98,6 +98,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
+        // Quarantine tracked in https://github.com/dotnet/SqlClient/pull/4344.
+        // The original intermittent async retry failure did not retain assertion/exception details.
         public async Task TransientFault_RetryEnabled_ShouldSucceed_Async(uint errorCode)
         {
             using TransientTdsErrorTdsServer server = new(
@@ -183,6 +185,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
+        // Quarantined due to intermittent failure:
+        //   Assert.Equal() Failure: Values differ
+        //   Expected: 40613
+        //   Actual:   42108
+        [Trait("Category", "flaky")]
         public void TransientFault_RetryDisabled_ShouldFail(uint errorCode)
         {
             using TransientTdsErrorTdsServer server = new(

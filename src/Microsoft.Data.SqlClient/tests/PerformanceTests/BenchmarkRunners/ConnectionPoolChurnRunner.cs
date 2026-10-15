@@ -155,7 +155,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         {
             for (int i = 0; i < OpsPerInvocation; i++)
             {
-                using var conn = new SqlConnection(_connectionString);
+                await using var conn = new SqlConnection(_connectionString);
                 await conn.OpenAsync();
                 // Dispose returns the connection to the pool.
             }
