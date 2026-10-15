@@ -164,11 +164,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageVersion Include="Microsoft.Bcl.Cryptography" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Bcl.Cryptography" Version="10.0.13" />
     <PackageVersion Include="Microsoft.Bcl.TimeProvider" Version="10.0.12" />
     <PackageVersion Include="System.Threading.RateLimiting" Version="10.0.12" />
     <PackageVersion Include="System.Configuration.ConfigurationManager" Version="10.0.12" />
-    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.12" />
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
   </ItemGroup>
 
   <!-- ===================================================================== -->
