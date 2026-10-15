@@ -145,6 +145,56 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         /// <summary>
+        /// When a worker has claimed a queued request, a failed scheduler must not release that
+        /// request's lease: the worker may be creating a connection and still needs admission.
+        /// </summary>
+        [Fact]
+        public void PendingRequest_ClaimedByWorker_SchedulerCannotReleaseLease()
+        {
+            var guard = new PoolPruningGuard();
+            var pool = new FakePool();
+            WaitHandleDbConnectionPool.PendingGetConnection request = NewPendingRequest(guard);
+
+            Assert.True(request.TryClaim());
+            Assert.False(request.TryAbandon());
+
+            // The worker still holds admission, so pruning is refused until it releases.
+            Assert.False(guard.TryPrune(pool));
+            Assert.True(guard.IsRunning);
+
+            request.ReleaseLease();
+            Assert.True(guard.TryPrune(pool));
+        }
+
+        /// <summary>
+        /// When the scheduler abandons a request before any worker claims it, it releases the lease
+        /// and a worker that later dequeues the request must not process it.
+        /// </summary>
+        [Fact]
+        public void PendingRequest_AbandonedBeforeClaim_ReleasesLeaseAndBlocksWorker()
+        {
+            var guard = new PoolPruningGuard();
+            var pool = new FakePool();
+            WaitHandleDbConnectionPool.PendingGetConnection request = NewPendingRequest(guard);
+
+            Assert.True(request.TryAbandon());
+            Assert.False(request.TryClaim());
+            Assert.True(guard.TryPrune(pool));
+        }
+
+        private static WaitHandleDbConnectionPool.PendingGetConnection NewPendingRequest(PoolPruningGuard guard)
+        {
+            PoolPruningGuard.Lease lease = guard.TryEnter();
+            Assert.True(lease.IsActive);
+            return new WaitHandleDbConnectionPool.PendingGetConnection(
+                dueTime: 0,
+                owner: null!,
+                completion: new TaskCompletionSource<DbConnectionInternal>(),
+                timeout: TimeoutTimer.StartNew(TimeSpan.FromSeconds(1)),
+                lease: lease);
+        }
+
+        /// <summary>
         /// Minimal pool stub; the guard only reads <see cref="Count"/> and <see cref="ErrorOccurred"/>
         /// and calls <see cref="Shutdown"/>. Moq cannot proxy the internal interface.
         /// </summary>
