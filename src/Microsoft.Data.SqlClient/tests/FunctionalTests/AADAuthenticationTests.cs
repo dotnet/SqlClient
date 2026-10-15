@@ -53,8 +53,8 @@ namespace Microsoft.Data.SqlClient.Tests
         /// <summary>
         /// Tests whether a dummy SQL Auth provider is registered due to
         /// configuration in an app.config file. This test host supplies the
-        /// configuration only on .NET Framework; the dedicated AuthenticationTests
-        /// harness also covers untrimmed .NET configuration loading.
+        /// configuration only on .NET Framework. A dedicated process harness for
+        /// untrimmed .NET configuration loading is deferred to #4817.
         ///
         /// See the app.config file in the same directory as this file.
         /// 

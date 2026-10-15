@@ -201,7 +201,6 @@ dotnet build -t:<test_target> [optional_parameters]
 |----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
 | `Test`                     | Runs the driver and extension test targets. Without `TestFramework`, all declared frameworks are attempted, including .NET Framework. _This takes considerable time and requires configured servers_. |
 | `TestAbstractions`         | Runs all tests for Microsoft.Data.SqlClient.Extensions.Abstractions                                                                                 |
-| `TestAuthenticationConfiguration` | Runs the dedicated current/legacy app.config compatibility scenarios without SQL Server. |
 | `TestAkvProvider`          | Runs the unit test project for Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.                                                      |
 | `TestAzure`                | Runs all tests for Microsoft.Data.SqlClient.Extensions.Azure                                                                                        |
 | `TestSqlClient`            | Runs the unit, functional, and manual test projects for Microsoft.Data.SqlClient.                                                                    |
@@ -217,19 +216,19 @@ test parameters below; see the [PackageCompatibility](tools/PackageCompatibility
 [PackageValidator](tools/PackageValidator/README.md) guides.
 
 Authentication registry, callback, switch, formatter and exception tests are ordinary xUnit tests
-under `Extensions/Abstractions/test`. Executable compatibility scenarios live separately under
-`src/Microsoft.Data.SqlClient/tests/AuthenticationTests/`. Run these focused targets on Linux:
+under `src/Microsoft.Data.SqlClient.Extensions/Abstractions/test`. Run this focused target on Linux:
 
 ```bash
 dotnet build build.proj -t:TestAbstractions -p:TestFramework=net10.0 -p:ReferenceType=Project
-dotnet build build.proj -t:TestAuthenticationConfiguration -p:TestFramework=net10.0 -p:ReferenceType=Project
 ```
 
-The configuration target supports `ReferenceType=Package` and prepares packages unless
-`SkipDependencyPack=true`; use a unique `PackageVersionSqlClient` and an isolated NuGet cache
-when validating local packages. It checks transitive configuration compile assets, forwarded
-handlers and initializer activation for both section declarations. Executing `net462` scenarios
-requires Windows; a Linux cross-build is not runtime validation.
+Signed Abstractions builds use the repository test public key for their `InternalsVisibleTo`
+grant. The cache helper and discovery tests access internal members in both signed and unsigned builds.
+
+The executable current/legacy app.config compatibility harness is deferred to
+[#4817](https://github.com/dotnet/SqlClient/pull/4817); its scenario project and test target are
+not available in this layer. Executing `net462` tests requires Windows; a Linux cross-build is
+not runtime validation.
 
 > [!TIP]
 > In project-reference mode, test targets automatically build their dependencies. In package mode,
