@@ -2563,6 +2563,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The server did not negotiate the required TLS application protocol &apos;{0}&apos; (negotiated: &apos;{1}&apos;). The connection was closed because strict encryption requires TDS 8.0..
+        /// </summary>
+        internal static string SNI_TDS8_ApplicationProtocolNotNegotiated {
+            get {
+                return ResourceManager.GetString("SNI_TDS8_ApplicationProtocolNotNegotiated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Incorrect physicalConnection type..
         /// </summary>
         internal static string SNI_IncorrectPhysicalConnectionType {
