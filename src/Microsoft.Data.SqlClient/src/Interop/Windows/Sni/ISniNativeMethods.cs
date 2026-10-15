@@ -19,6 +19,8 @@ namespace Interop.Windows.Sni
 
         uint SniClose(IntPtr pConn);
 
+        uint SniGetCertValidationInfo(SNIHandle pConn, ref SniCertValidationInfo pInfo);
+
         uint SniGetMaxComposedSpnLength();
 
         uint SniGetInfoWrapper(SNIHandle pConn, QueryType queryType, out bool pbQueryInfo);
@@ -30,6 +32,8 @@ namespace Interop.Windows.Sni
         uint SniGetInfoWrapper(SNIHandle pConn, QueryType queryType, out ushort portNumber);
 
         void SniGetLastError(out SniError pLastError);
+
+        unsafe uint SniGetServerCertificateHash(SNIHandle pConn, byte* pbHash, uint cbHash, out uint pcbWritten);
 
         uint SniGetPeerAddrStrWrapper(SNIHandle pConn, int bufferSize, StringBuilder addrBuffer, out uint addrLength);
 

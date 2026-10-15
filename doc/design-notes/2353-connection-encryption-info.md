@@ -175,7 +175,7 @@ is recorded once the TLS handshake (if any) completes. When TLS fails after a pr
 observed, the attempt reports that protocol and the mode that was being negotiated, matching
 the design-review rule that observed values are kept on certificate-validation failures. The
 mode is never reported on a failed attempt without an observed protocol, so a PRELOGIN failure
-or an early handshake failure leaves both `null`. Values are captured per physical login
+or an early handshake failure leaves both `null` (Native SNI may still report the protocol it attempted; see below). Values are captured per physical login
 attempt and reset for every routing, retry, and failover attempt.
 
 - **Managed SNI** validates the server certificate inside the handshake, in the
@@ -185,8 +185,9 @@ attempt and reset for every routing, retry, and failover attempt.
   through `EncryptionInfoCapture.RecordModeIfProtocolObserved` only if that protocol was
   captured. A protocol already determined for the attempt takes precedence over the one
   reported with the certificate details. Managed SNI is used only on .NET (`net10.0`).
-- **Native SNI** (Schannel) defers server certificate verification: `EnableSsl` reports
-  success with the negotiated protocol, and an untrusted or mismatched certificate only surfaces
+- **Native SNI** reports the protocol through `dwProtocol` in the certificate capture, or
+  through the handshake wait. Schannel can defer server certificate verification: `EnableSsl`
+  reports success with the negotiated protocol, and an untrusted or mismatched certificate only surfaces
   as an SSL-provider SNI error on the first post-handshake I/O (the LOGIN7 write). The mode and
   protocol from the completed handshake are kept. `TdsParser.ProcessSNIError`, the single place
   every SNI error becomes a `SqlError`, calls `EncryptionInfoCapture.DiscardUnobservedNegotiation`
@@ -211,7 +212,46 @@ TLS protocol agreed for the handshake (see **Failure path** above).
 | `ServerCertificateValidationErrors` | Effective SqlClient verdict: `ServerCertificateMissing`, `ChainError`, `HostNameMismatch` (after `HostNameInCertificate`), `PinnedCertificateMismatch` (`ServerCertificate`); `None` when validation passed | Validation was bypassed, or the configured `ServerCertificate` file could not be read. |
 | `ServerCertificateChainStatus` | Bitwise OR of the original callback chain's `ChainStatus` flags (no chain rebuild); `NoError` when the chain was evaluated cleanly | Validation was bypassed, `ServerCertificate` pinning is used (the chain isn't consulted), no certificate was presented, or the platform reported a chain error without flags. |
 
-Native SNI does not yet report certificate details; those fields remain `null` there.
+### Native SNI certificate capture
+
+Native SNI (Windows) records the same details through two `sni.dll` exports,
+`SNIGetCertValidationInfoWrapper` and `SNIGetServerCertificateHashWrapper`, that return
+values SNI saved during the client TLS handshake. SqlClient queries them after the
+handshake completes and again when it fails (before the handle closes). Querying performs
+no validation or network work, never changes `SNIGetLastError`, and never throws: any
+error leaves the fields `null` without changing the connection outcome or the thrown
+exception.
+
+`SNI_CERT_VALIDATION_INFO` is a 64-byte, blittable structure of `DWORD` fields. A field
+is used only when its `dwAvailable` flag is set; structures with `cbSize < 64` or
+`dwVersion < 1` are ignored, and trailing data from newer versions is ignored.
+
+| Field | Native source (`dwAvailable` flag) | Mapping |
+| --- | --- | --- |
+| `PresentedServerCertificateHash256` | `rgbHash` (`HASH`, `cbHash == 32`) | 32 bytes copied |
+| `ServerCertificateValidationErrors` | `dwValidationErrors` (`VALIDATION_ERRORS`) | Same bit values; unknown bits preserved |
+| `ServerCertificateChainStatus` | `dwChainStatus` (`CHAIN_STATUS`) | Raw `CERT_TRUST_*` error status equals `X509ChainStatusFlags`; unknown bits preserved |
+| `NegotiatedProtocol` | `dwProtocol` (`PROTOCOL`) | `SP_PROT_*` client bits mapped as for the handshake result; used only when the protocol was not already recorded (for example, after a failed handshake) |
+
+**Older `sni.dll`:** a missing export is detected once (`EntryPointNotFoundException`) and
+cached; the certificate fields then remain `null`. If only the hash export exists, the
+hash is still captured.
+
+**Known gaps:**
+
+- In Schannel automatic validation (`Encrypt` without `HostNameInCertificate`), native SNI
+  doesn't report validation errors or chain status on failure. Those fields remain `null`;
+  they are never derived from HRESULTs or messages. The certificate hash is also
+  unavailable on failure in this mode: Schannel invalidates the security context when its
+  automatic validation rejects the certificate, so SNI can't query the presented
+  certificate.
+- In chain-policy validation (`HostNameInCertificate` set), a certificate that both fails
+  the chain and doesn't match the host name reports only `ChainError`, while Managed SNI
+  reports `HostNameMismatch | ChainError`. `CertVerifyCertificateChainPolicy` with
+  `CERT_CHAIN_POLICY_SSL` returns a single error, and chain errors take precedence.
+
+These exports are introduced by an upcoming native SNI package; until it ships, Native SNI
+reports no certificate details.
 
 ## 5. Scope
 
@@ -231,4 +271,4 @@ The feature is delivered as a stack of pull requests:
 | **A** | Public API surface only. Both getters return an empty snapshot. |
 | **B** | Capture the negotiated mode and TLS protocol, and attach the snapshot to `SqlException` when opening fails. |
 | **C** | Capture certificate details (hash, validation errors, and chain status) in Managed SNI, on both successful and failed attempts. |
-| **D** | Native SNI interop for the certificate details. |
+| **D** | Native SNI interop for the certificate details, degrading gracefully with older `sni.dll` versions. |
