@@ -366,7 +366,7 @@ namespace Microsoft.Data.SqlClient
                 if (subscribe)
                 {
                     _currentAssemblyLoadContext = AssemblyLoadContext.GetLoadContext(Assembly.GetExecutingAssembly());
-                    _currentAssemblyLoadContext?.Resolving += Default_Resolving;
+                    _currentAssemblyLoadContext?.Resolving += AssemblyLoadContext_Resolving;
                     _isSubscribed = true;
                 }
                 #endif
@@ -377,7 +377,7 @@ namespace Microsoft.Data.SqlClient
                 #if NET
                 if (_isSubscribed)
                 {
-                    _currentAssemblyLoadContext?.Resolving -= Default_Resolving;
+                    _currentAssemblyLoadContext?.Resolving -= AssemblyLoadContext_Resolving;
                     _isSubscribed = false;
                 }
                 #endif
@@ -417,9 +417,9 @@ namespace Microsoft.Data.SqlClient
         /// It must not remain subscribed to the calling <see cref="AssemblyLoadContext"/> after that,
         /// because doing so can change assembly resolution behavior for the entire application.
         /// </remarks>
-        private static Assembly Default_Resolving(AssemblyLoadContext arg1, AssemblyName arg2)
+        private static Assembly AssemblyLoadContext_Resolving(AssemblyLoadContext arg1, AssemblyName arg2)
         {
-            string methodName = nameof(Default_Resolving);
+            string methodName = nameof(AssemblyLoadContext_Resolving);
 
             string target = MakeFullPath(ProbingDirectory, arg2.Name);
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Looking for '{2}' assembly that is requested by '{3}' ALC from '{4}' path."
