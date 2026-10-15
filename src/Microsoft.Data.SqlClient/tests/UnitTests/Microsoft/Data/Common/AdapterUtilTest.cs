@@ -80,6 +80,118 @@ public class AdapterUtilTest
         ADP.ValidateTdsVersion(tdsVersion);
 
     /// <summary>
+    /// Verifies that Azure Synapse Analytics dedicated SQL pool endpoints are recognised, and that
+    /// serverless (on-demand) pools and unrelated endpoints are not.
+    /// </summary>
+    /// <remarks>
+    /// Dedicated pools reject SET TRANSACTION ISOLATION LEVEL for every level except
+    /// READ UNCOMMITTED, so the session isolation level reset performed on connection checkout skips
+    /// them. Serverless pools accept the statement and must not be skipped.
+    /// </remarks>
+    [Theory]
+    // Dedicated pools.
+    [InlineData("myworkspace.sql.azuresynapse.net", true)]
+    [InlineData("MYWORKSPACE.SQL.AZURESYNAPSE.NET", true)]
+    [InlineData("tcp:myworkspace.sql.azuresynapse.net,1433", true)]
+    [InlineData("myworkspace.sql.azuresynapse.net\\instance", true)]
+    [InlineData("myworkspace.sql.azuresynapse.azure.cn", true)]
+    [InlineData("myworkspace.sql.azuresynapse.usgovcloudapi.net", true)]
+    [InlineData("myworkspace.privatelink.sql.azuresynapse.net", true)]
+    [InlineData("tcp:MYWORKSPACE.privatelink.sql.azuresynapse.azure.cn,1433", true)]
+    [InlineData("myworkspace.privatelink.sql.azuresynapse.usgovcloudapi.net\\instance", true)]
+    [InlineData(" tcp:myworkspace.sql.azuresynapse.net. ,1433", true)]
+    // Synapse is recognised by its host segment, so other cloud suffixes are also covered.
+    [InlineData("myworkspace.sql.azuresynapse.cloud.example", true)]
+    // Serverless / on-demand pools use the same suffix but carry an "-ondemand" workspace suffix.
+    [InlineData("myworkspace-ondemand.sql.azuresynapse.net", false)]
+    [InlineData("MYWORKSPACE-ONDEMAND.SQL.AZURESYNAPSE.NET", false)]
+    [InlineData("tcp:myworkspace-ondemand.sql.azuresynapse.net,1433", false)]
+    [InlineData("myworkspace-ondemand.privatelink.sql.azuresynapse.net", false)]
+    [InlineData("tcp:MYWORKSPACE-ONDEMAND.privatelink.sql.azuresynapse.net,1433", false)]
+    [InlineData("myworkspace-ondemand.privatelink.sql.azuresynapse.azure.cn", false)]
+    [InlineData("myworkspace-ondemand.privatelink.sql.azuresynapse.usgovcloudapi.net\\instance", false)]
+    [InlineData("myworkspace-ondemand.sql.azuresynapse.azure.cn", false)]
+    [InlineData("myworkspace-ondemand.sql.azuresynapse.usgovcloudapi.net", false)]
+    // Unrelated endpoints.
+    [InlineData("myserver.database.windows.net", false)]
+    [InlineData("myserver-ondemand.database.windows.net", false)]
+    [InlineData("sql.azuresynapse.net", false)]
+    // Only the host is inspected, and the Synapse segment must directly follow the workspace label.
+    [InlineData("np:\\\\myworkspace.sql.azuresynapse.net\\pipe\\sql\\query", true)]
+    [InlineData("evil.myworkspace.sql.azuresynapse.net", false)]
+    [InlineData("myworkspace.evil.privatelink.sql.azuresynapse.net", false)]
+    [InlineData("myserver.contoso.com\\myworkspace.sql.azuresynapse.net", false)]
+    [InlineData("tcp:myserver.contoso.com,1433\\x.sql.azuresynapse.net", false)]
+    [InlineData("np:\\\\myserver\\pipe\\x.sql.azuresynapse.net\\query", false)]
+    [InlineData(".sql.azuresynapse.net", false)]
+    [InlineData("localhost", false)]
+    [InlineData("", false)]
+    public void IsAzureSynapseDedicatedPoolEndpoint_ClassifiesDataSource(string dataSource, bool expected) =>
+        Assert.Equal(expected, ADP.IsAzureSynapseDedicatedPoolEndpoint(dataSource));
+
+    /// <summary>
+    /// Verifies that <see cref="ADP.GetDataSourceHostRange"/> isolates only the host name from the
+    /// supported data source forms.
+    /// </summary>
+    [Theory]
+    [InlineData("myhost", "myhost")]
+    [InlineData("  myhost  ", "myhost")]
+    [InlineData("tcp:myhost", "myhost")]
+    [InlineData("TCP: myhost ,1433", "myhost")]
+    [InlineData("np:myhost", "myhost")]
+    [InlineData("lpc:myhost", "myhost")]
+    [InlineData("admin:myhost", "myhost")]
+    [InlineData("myhost,1433", "myhost")]
+    [InlineData("myhost\\instance", "myhost")]
+    [InlineData("tcp:myhost\\instance,1433", "myhost")]
+    [InlineData("np:\\\\myhost\\pipe\\sql\\query", "myhost")]
+    [InlineData("myworkspace.sql.azuresynapse.net.", "myworkspace.sql.azuresynapse.net.")]
+    [InlineData("", "")]
+    [InlineData("   ", "")]
+    [InlineData("tcp:", "")]
+    [InlineData(",1433", "")]
+    [InlineData("\\\\myhost\\instance", "myhost")]
+    public void GetDataSourceHostRange_ReturnsHost(string dataSource, string expectedHost)
+    {
+        ADP.GetDataSourceHostRange(dataSource, out int start, out int end);
+
+        Assert.InRange(start, 0, dataSource.Length);
+        Assert.InRange(end, start, dataSource.Length);
+        Assert.Equal(expectedHost, dataSource.Substring(start, end - start));
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="ADP.TrimRange"/> trims whitespace only within the given range.
+    /// </summary>
+    [Theory]
+    [InlineData("abc", 0, 3, "abc")]
+    [InlineData("  abc  ", 0, 7, "abc")]
+    [InlineData(" a b ", 0, 5, "a b")]
+    [InlineData("x  abc  y", 1, 8, "abc")]
+    [InlineData("    ", 0, 4, "")]
+    [InlineData("", 0, 0, "")]
+    public void TrimRange_TrimsWhitespaceWithinRange(string value, int start, int end, string expected)
+    {
+        ADP.TrimRange(value, ref start, ref end);
+
+        Assert.Equal(expected, value.Substring(start, end - start));
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="ADP.EndsWithOrdinalIgnoreCase"/> compares only the given range.
+    /// </summary>
+    [Theory]
+    [InlineData("myworkspace-ondemand", 0, 20, "-ondemand", true)]
+    [InlineData("MYWORKSPACE-ONDEMAND", 0, 20, "-ondemand", true)]
+    [InlineData("myworkspace-ondemand.x", 0, 20, "-ondemand", true)]
+    [InlineData("myworkspace-ondemand.x", 0, 22, "-ondemand", false)]
+    [InlineData("-ondemand", 1, 9, "-ondemand", false)]
+    [InlineData("abc", 0, 3, "", true)]
+    [InlineData("", 0, 0, "x", false)]
+    public void EndsWithOrdinalIgnoreCase_ComparesRange(string value, int start, int end, string suffix, bool expected) =>
+        Assert.Equal(expected, ADP.EndsWithOrdinalIgnoreCase(value, start, end, suffix));
+
+    /// <summary>
     /// Verifies that the SqlClient v7.1+ TDS version validation logic implemented in ADP.ValidateTdsVersion
     /// is consistent with the legacy validation logic.
     /// </summary>

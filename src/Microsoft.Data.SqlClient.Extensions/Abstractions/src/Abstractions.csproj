@@ -8,6 +8,8 @@
   <!-- Compiler Options ================================================ -->
   <PropertyGroup>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- Opt into the documentation snippet compile inputs declared in src/Directory.Build.targets. -->
+    <IncludesDocumentationSnippets>true</IncludesDocumentationSnippets>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <RootNamespace>Microsoft.Data.SqlClient</RootNamespace>
@@ -73,7 +75,7 @@
   <!-- Reference to Logging  -->
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Internal/Logging/src/Logging.csproj"
-                      Condition="'$(ReferenceType)' != 'Package'" />
+                      Condition="'$(ReferenceType)' == 'Project'" />
     <PackageReference Include="Microsoft.Data.SqlClient.Internal.Logging"
                       Condition="'$(ReferenceType)' == 'Package'" />
   </ItemGroup>

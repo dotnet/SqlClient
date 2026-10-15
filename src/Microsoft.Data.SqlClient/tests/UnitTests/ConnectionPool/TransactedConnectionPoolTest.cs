@@ -738,7 +738,7 @@ public class TransactedConnectionPoolTest
             // Mock implementation - do nothing
         }
 
-        protected override void Activate(Transaction transaction)
+        protected override void Activate(Transaction transaction, TimeoutTimer timeout)
         {
             // Mock implementation - do nothing
         }

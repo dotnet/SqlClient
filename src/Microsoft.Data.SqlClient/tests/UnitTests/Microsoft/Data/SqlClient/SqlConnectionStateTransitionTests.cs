@@ -178,7 +178,7 @@ public class SqlConnectionStateTransitionTests
         /// No-op activation for this test double.
         /// </summary>
         /// <param name="transaction">Transaction supplied by the caller.</param>
-        protected override void Activate(Transaction transaction)
+        protected override void Activate(Transaction transaction, TimeoutTimer timeout)
         {
         }
 
@@ -273,7 +273,7 @@ public class SqlConnectionStateTransitionTests
         /// No-op activation for this test double.
         /// </summary>
         /// <param name="transaction">Transaction supplied by the caller.</param>
-        protected override void Activate(Transaction transaction)
+        protected override void Activate(Transaction transaction, TimeoutTimer timeout)
         {
         }
 

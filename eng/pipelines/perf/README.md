@@ -31,7 +31,7 @@ extends: v1/Perf.Test.Job.yml@PerfTemplates
       │   SCPs <testResultsSubDir> back, publishes it, tears the VM down)
       ▼
 ON THE VM  ── run-perf-tests.{sh,ps1}
-      1. Install the .NET SDK pinned by global.json (+ runtimes).
+      1. Install the .NET SDK pinned by global.json (+ the .NET 10.0 runtime).
       2. Create the perf database on the VM's SQL Server.
       3. Inject the VM SQL connection string into runnerconfig.
       4. Baseline pass  → MDS <baselineVersion> from NuGet.org (Package mode)   → results/baseline/
@@ -58,7 +58,7 @@ context variables are available (the VM is behind NAT and lacks the pipeline ide
 | Parameter | Default | Description |
 | --------- | ------- | ----------- |
 | `platform` | `linux` | `linux` or `windows` VM + client. |
-| `dotnetFramework` | `net9.0` | TFM the benchmarks run against (`net8.0`/`net9.0`/`net10.0`). |
+| `dotnetFramework` | `net10.0` | TFM the benchmarks run against (`net10.0` only). |
 | `testTimeoutMinutes` | `180` | Template timeout waiting for the VM run. |
 | `baselineVersion` | `7.0.2` | **Baseline Version** — released MDS the branch is compared against. Empty = current-only (no baseline pass / comparison). |
 | `regressionThreshold` | `10` | Percent slowdown (current vs baseline mean) flagged as a regression. |
@@ -241,7 +241,7 @@ longer conflates it with checkout cost.
 The same principle applies to how a benchmark schedules its workers. A sync `Open()` that has to
 wait blocks whichever thread it runs on, so a pool whose waiter wake-up needs a queued continuation
 stalls when every threadpool thread is already blocked; the wake-up waits on thread injection. On
-the TFMs the perf project builds (net8.0-net10.0) the runtime is told about cooperative blocking and
+the TFM the perf project builds (net10.0) the runtime is told about cooperative blocking and
 compensates quickly, so that stall is tens to a few hundred milliseconds, and that is the only
 expectation these benchmarks validate. On net462 the `Task` wait never notifies the pool, so the
 wake-up falls to starvation detection and hill climbing and is materially slower; the pool carries no
@@ -471,4 +471,18 @@ translated NDJSON as the `perf-kusto-payloads` artifact for manual/backfill inge
 | Ingestion auth error | The service connection's SP lacks **Database Ingestor** on the target database. |
 | "Kusto ingestion was queued, but the ingestion principal is not authorized to query the database" | The SP has **Database Ingestor** but not **Database Viewer**. Ingestion succeeded; grant **Database Viewer** so the verify step can confirm the rows landed. |
 | `Kusto ingestion not yet queryable after Ns ... no ingestion failures were reported` (warning, step passes) | Expected, harmless: queued ingestion is asynchronous and small perf payloads can take longer than the verify window to become queryable. The step **warns and passes** because `.show ingestion failures` is clean, so the rows will land shortly. The step only **fails** when `.show ingestion failures` actually reports failures — in that case confirm the `PerfRun` / `PerfBenchmarkResult` tables exist with columns matching the schema above (a schema/column-name mismatch is the usual cause; the self-contained inline JSON mapping rules out a missing server-side named mapping). |
-| Benchmarks not CPU-pinned | `PERF_CLIENT_CPUS` was not injected, or `taskset` is unavailable on the VM. |
+| Benchmarks not CPU-pinned | `PERF_CLIENT_CPUS` was not injected, or `taskset` is unavailable on the VM. For interleaved Windows runs, check stderr for `SetProcessAffinityMask` warnings with the child PID, requested mask, and Win32 error code/message. Pinning remains best effort; masks are limited to the Python process's pointer width (32 or 64 bits) and cannot span processor groups. |
+
+### Affinity regression tests
+
+Run the standard-library tests from the repository root:
+
+```text
+python -m unittest discover -s eng/pipelines/perf/scripts/tests -p test_affinity.py -v
+```
+
+On Windows, `py -3` can be used instead of `python`. The tests cover the Windows ctypes
+signature, error diagnostics, mask bounds, and unchanged Linux warning-only behavior.
+Windows-only tests also pin a disposable Python child to an available CPU and read its
+affinity back, and check the real error from an invalid handle. No SQL Server is needed,
+and the test runner's affinity is never changed.

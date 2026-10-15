@@ -15,10 +15,10 @@
   <ItemGroup>
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
     <PackageVersion Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.15.8" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="9.0.18" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.12" />
     <PackageVersion Include="Microsoft.SqlServer.SqlManagementObjects" Version="181.15.0" />
     <PackageVersion Include="Microsoft.SqlServer.Types" Version="170.1000.7" />
-    <PackageVersion Include="System.Formats.Asn1" Version="10.0.3" />
+    <PackageVersion Include="System.Formats.Asn1" Version="10.0.12" />
     <PackageVersion Include="System.Data.Odbc" Version="10.0.3" />
     <PackageVersion Include="System.Security.Principal.Windows" Version="5.0.0" />
     <PackageVersion Include="System.ServiceProcess.ServiceController" Version="10.0.3" />

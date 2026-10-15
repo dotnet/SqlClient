@@ -2,7 +2,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <AssemblyName>PerformanceTests</AssemblyName>
-    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+    <TargetFrameworks>net10.0</TargetFrameworks>
     <Configurations>Debug;Release;</Configurations>
     <StartupObject>Microsoft.Data.SqlClient.PerformanceTests.Program</StartupObject>
   </PropertyGroup>
@@ -39,7 +39,7 @@
     <!-- to "Package". If this is not specified, the build will revert to default behavior of     -->
     <!-- referencing MDS via the project.                                                         -->
     <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\src\Microsoft.Data.SqlClient.csproj"
-                      Condition="'$(ReferenceType)' != 'Package'"  />
+                      Condition="'$(ReferenceType)' == 'Project'"  />
     <!-- In Package mode the perf pipeline can pin a specific released MDS version (e.g. a    -->
     <!-- performance baseline) by passing -p:MdsPackageVersion=<version>. Under Central       -->
     <!-- Package Management a plain Version is ignored, so VersionOverride is used; when       -->

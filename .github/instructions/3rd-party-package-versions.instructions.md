@@ -3,12 +3,12 @@ applyTo: "**/Directory.Packages.props,**/*.csproj,**/Directory.Build.props,**/*.
 ---
 # Choosing Third-Party Package Dependency Versions
 
-Guidance for choosing versions of **external (third-party) NuGet package dependencies** in multi-targeted projects (e.g. `net462;net8.0;net9.0`).
+Guidance for choosing versions of **external (third-party) NuGet package dependencies** in multi-targeted projects (e.g. `net462;net10.0`).
 
 > **Scope:** This document covers dependencies consumed from NuGet — packages the SqlClient repo does NOT own. For versioning of SqlClient's own inter-sibling packages (Logging, Abstractions, SqlClient, Azure, AKV Provider, SqlServer.Server), see `sqlclient-package-versions.instructions.md`.
 
 ## Rule
-For runtime-aligned packages, **the package major must match the target runtime major**: 8.x on `net8.0`, 9.x on `net9.0`, 10.x on `net10.0`, and so on. TFMs that aren't tied to a specific runtime major (`net462`, `netstandard2.0`) get the major of the floor LTS. Other categories are versioned as described below.
+For runtime-aligned packages, **the package major must match the target runtime major**: 10.x on `net10.0` in this branch. TFMs that aren't tied to a specific runtime major (`net462`, `net481`, `netstandard2.0`) get the major of the floor LTS. Other categories are versioned as described below.
 
 Split package references into three categories:
 
@@ -22,20 +22,18 @@ Packages whose major version ships with (or is tightly coupled to) a specific .N
 - `System.Text.Json`, `System.Memory`, `System.IO.Pipelines`, `System.Formats.Asn1`, `System.Security.Cryptography.Pkcs`
 - `Microsoft.Bcl.*`
 
-Use the major version that matches the TFM. For TFMs without a corresponding runtime major (`net462`, `netstandard2.0`, etc.), use the major of the **lowest supported modern TFM** — typically the floor LTS (e.g. `8.x` while net8 is supported). This keeps the legacy targets on a long-lived, well-patched band and avoids dragging in transitive deps from a newer major:
+Use the major version that matches the TFM. For TFMs without a corresponding runtime major (`net462`, `net481`, `netstandard2.0`, etc.), use the major of the **lowest supported modern TFM** — currently .NET 10. This keeps the legacy targets on a long-lived, well-patched band and avoids dragging in transitive deps from a newer major:
 
 ```xml
-<!-- Defaults: lowest supported runtime band (e.g. net8 LTS); also applies to net462 / netstandard2.0 -->
+<!-- Defaults: .NET 10 LTS; also applies to net462 / net481 / netstandard2.0 -->
 <ItemGroup>
-  <PackageVersion Include="Microsoft.Extensions.Logging" Version="8.0.1" />
-  <PackageVersion Include="System.Text.Json"             Version="8.0.5" />
-</ItemGroup>
-
-<ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
-  <PackageVersion Update="Microsoft.Extensions.Logging" Version="9.0.0" />
-  <PackageVersion Update="System.Text.Json"             Version="9.0.0" />
+  <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.0" />
+  <PackageVersion Include="System.Text.Json"             Version="10.0.0" />
 </ItemGroup>
 ```
+
+The versions above illustrate the runtime band; use the current stable servicing versions from
+`Directory.Packages.props`. No per-modern-TFM override is needed when only `net10.0` is targeted.
 
 When the floor LTS drops out of support, bump the default block to the new floor LTS major and drop any conditional block that becomes redundant.
 
@@ -52,7 +50,7 @@ Reference one (latest stable) version unconditionally:
 
 ```xml
 <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
-<PackageVersion Include="Azure.Identity"  Version="1.17.1" />
+<PackageVersion Include="Azure.Core"      Version="1.62.0" />
 ```
 
 ### 3. Polyfills — **conditional presence, single version**
@@ -60,7 +58,7 @@ Reference one (latest stable) version unconditionally:
 Packages that only exist (or are only needed) on older TFMs. The polyfill major doesn't have to match any runtime band (older TFMs have no in-box equivalent), so pick the latest stable available:
 
 ```xml
-<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'net462'">
+<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'net462' OR '$(TargetFramework)' == 'net481'">
   <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.0" />
 </ItemGroup>
 ```
@@ -96,7 +94,7 @@ Look at the "Frameworks" tab on nuget.org or open the `.nupkg`:
 
 ### 4. Functional test — remove the reference and rebuild
 
-The decisive test for the polyfill-vs-runtime-aligned boundary: remove the `PackageReference` on a modern TFM (e.g. net8) and build.
+The decisive test for the polyfill-vs-runtime-aligned boundary: remove the `PackageReference` on the modern TFM (`net10.0`) and build.
 
 - Builds clean → package was acting as a polyfill on that TFM. Confirm category 3.
 - Fails with `CS0246`/`CS1061` (missing type or method) → the package contributes API the in-box BCL doesn't have. Treat as runtime-aligned (category 1), even if the description sounds polyfill-ish.
@@ -143,13 +141,13 @@ The reverse (customer's direct version higher than your transitive) resolves cle
 | 10.x | 10.x or higher | Clean |
 | 8.x  | 8.x or higher | Clean |
 
-Pinning runtime-aligned packages to the **band matching each TFM** means a net8 consumer transitively gets 8.x (no friction with their own 8.x reference), and a net10 consumer transitively gets 10.x.
+For libraries supporting multiple modern runtimes, pinning runtime-aligned packages to the **band matching each TFM** means, for example, a net8 consumer transitively gets 8.x (no friction with their own 8.x reference), and a net10 consumer transitively gets 10.x.
 
-Pinning everything to the latest major (e.g. `10.x` unconditionally) forces every net8 customer to roll their direct references forward or hit NU1605.
+In that example, pinning everything to the latest major (e.g. `10.x` unconditionally) forces every net8 customer to roll their direct references forward or hit NU1605. This branch no longer targets net8; its only modern band is `net10.0`, so the current default is 10.x.
 
 ### Independent packages don't have this problem
 
-`Newtonsoft.Json 13.x`, `Azure.Identity 1.17.x`, etc. aren't tied to a runtime version. Customers don't have a "matching" version in mind, and the package's own multi-targeted assets handle TFM selection internally. One version is simpler and avoids needless conditional blocks.
+`Newtonsoft.Json 13.x`, `Azure.Core 1.62.x`, etc. aren't tied to a runtime version. Customers don't have a "matching" version in mind, and the package's own multi-targeted assets handle TFM selection internally. One version is simpler and avoids needless conditional blocks.
 
 ### Framework-provided assemblies win at runtime anyway
 
