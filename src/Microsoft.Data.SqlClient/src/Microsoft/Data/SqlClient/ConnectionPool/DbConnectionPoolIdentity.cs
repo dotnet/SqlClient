@@ -8,7 +8,7 @@ using Interop.Windows.Advapi32;
 
 namespace Microsoft.Data.SqlClient.ConnectionPool
 {
-    internal sealed partial class DbConnectionPoolIdentity
+    internal sealed partial class DbConnectionPoolIdentity : IEquatable<DbConnectionPoolIdentity>
     {
         public static readonly DbConnectionPoolIdentity NoIdentity =
             new DbConnectionPoolIdentity(sidString: string.Empty, isRestricted: false, isNetwork: true);
@@ -36,13 +36,15 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             get { return _isRestricted; }
         }
 
-        public override bool Equals(object value)
+        public override bool Equals(object value) =>
+            this == NoIdentity || Equals((DbConnectionPoolIdentity)value);
+
+        public bool Equals(DbConnectionPoolIdentity value)
         {
             bool result = this == NoIdentity || this == value;
             if (!result && value != null)
             {
-                DbConnectionPoolIdentity that = (DbConnectionPoolIdentity)value;
-                result = DeepEquals(that._sidString, that._isRestricted, that._isNetwork, that._authenticationId);
+                result = DeepEquals(value._sidString, value._isRestricted, value._isNetwork, value._authenticationId);
             }
 
             return result;

@@ -45,7 +45,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             var first = (DbConnectionPoolIdentity)constructor.Invoke(new object[] { "sid", false, false, 1L });
             var second = (DbConnectionPoolIdentity)constructor.Invoke(new object[] { sid, restricted, network, authenticationId });
 
+            var equatable = Assert.IsAssignableFrom<IEquatable<DbConnectionPoolIdentity>>(first);
+            Assert.Equal(equal, equatable.Equals(second));
+            Assert.False(equatable.Equals(null!));
+            Assert.True(equatable.Equals(first));
             Assert.Equal(equal, first.Equals(second));
+            Assert.Equal(equal, first.Equals((object)second));
             Assert.Equal(equal, second.Equals(first));
             Assert.False(first.Equals(null));
             Assert.True(first.Equals(first));
