@@ -41,4 +41,41 @@ public class ExceptionHelpersTest
         Assert.True(ExceptionHelpers.IsRecoverableException(exception));
         Assert.True(ExceptionHelpers.IsRecoverableException(new FormatException("Invalid format")));
     }
+
+    /// <summary>Fatal failures in later aggregate entries remain non-recoverable through nested wrappers.</summary>
+    [Theory]
+    [InlineData(typeof(OutOfMemoryException), false)]
+    [InlineData(typeof(OutOfMemoryException), true)]
+    [InlineData(typeof(StackOverflowException), false)]
+    [InlineData(typeof(StackOverflowException), true)]
+    [InlineData(typeof(AccessViolationException), false)]
+    [InlineData(typeof(AccessViolationException), true)]
+    [InlineData(typeof(ThreadAbortException), false)]
+    [InlineData(typeof(ThreadAbortException), true)]
+    public void AggregateWithFatalExceptionIsNotRecoverable(Type exceptionType, bool nested)
+    {
+        Exception failure = (Exception)Activator.CreateInstance(exceptionType, nonPublic: true)!;
+        if (nested)
+        {
+            failure = new InvalidOperationException("Wrapper",
+                new AggregateException(new FormatException("Ordinary failure"), failure));
+        }
+        var exception = new TargetInvocationException(
+            new AggregateException(new InvalidOperationException("Ordinary failure"), failure));
+
+        Assert.False(ExceptionHelpers.IsRecoverableException(exception));
+    }
+
+    /// <summary>Empty aggregates and nested aggregates containing only ordinary failures remain recoverable.</summary>
+    [Fact]
+    public void OrdinaryAggregateIsRecoverable()
+    {
+        var exception = new AggregateException(
+            new InvalidOperationException("Ordinary failure"),
+            new TargetInvocationException(new AggregateException(
+                new FormatException("Ordinary failure"), new ArgumentException("Ordinary failure"))));
+
+        Assert.True(ExceptionHelpers.IsRecoverableException(exception));
+        Assert.True(ExceptionHelpers.IsRecoverableException(new AggregateException()));
+    }
 }
