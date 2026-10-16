@@ -218,4 +218,10 @@
     <PackageReference Include="System.Text.Json" />
     <PackageReference Include="System.Threading.Channels" />
   </ItemGroup>
+
+  <!-- Additional source files for GenAPI ============================== -->
+  <ItemGroup>
+    <!-- GenAPI does not reproduce forwards from the reference assembly. -->
+    <Compile Include="../src/TypeForwards.Abstractions.cs" Link="TypeForwards.Abstractions.cs" />
+  </ItemGroup>
 </Project>
