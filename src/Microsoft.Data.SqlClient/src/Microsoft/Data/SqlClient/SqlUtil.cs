@@ -204,6 +204,10 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ChangePasswordUseOfUnallowedKey, key));
         }
+        internal static Exception GlobalizationInvariantModeRequiresLcid()
+        {
+            return ADP.NotSupported(StringsHelper.GetString(Strings.SQL_GlobalizationInvariantModeRequiresLcid));
+        }
         internal static Exception GlobalizationInvariantModeNotSupported()
         {
             return ADP.NotSupported(StringsHelper.GetString(Strings.SQL_GlobalizationInvariantModeNotSupported));
