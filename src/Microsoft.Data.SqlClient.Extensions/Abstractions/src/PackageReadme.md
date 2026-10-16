@@ -38,6 +38,10 @@ default to `true` and are cached independently on first access for the lifetime 
 - `Switch.Microsoft.Data.SqlClient.EnableAppConfig`
 - `Switch.Microsoft.Data.SqlClient.EnableAzureExtensionDiscovery`
 
+Automatic Azure discovery requires the `ActiveDirectoryAuthenticationProviderOptions` constructor
+from a compatible `Microsoft.Data.SqlClient.Extensions.Azure` package, even when no overrides are
+configured. Discovery does not fall back to parameterless or string-based provider constructors.
+
 Set switches before first registry access. On .NET 10 trimmed and NativeAOT publishes, both
 reflective paths are removed automatically. Explicitly construct and register a provider for
 each required authentication method before opening connections. The Azure provider is supplied

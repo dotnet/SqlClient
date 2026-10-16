@@ -72,7 +72,7 @@ namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test
     {
         internal static Exception? ConstructorFailure { get; set; }
 
-        public ThrowingProvider()
+        public ThrowingProvider(ActiveDirectoryAuthenticationProviderOptions options)
         {
             if (ConstructorFailure is Exception failure)
             {
@@ -92,5 +92,16 @@ namespace Microsoft.Data.SqlClient
     /// <summary>Provides the exact type name required by discovery; test behavior resides in ThrowingProvider.</summary>
     public sealed class ActiveDirectoryAuthenticationProvider : Extensions.Abstractions.Test.ThrowingProvider
     {
+        public ActiveDirectoryAuthenticationProvider(ActiveDirectoryAuthenticationProviderOptions options)
+            : base(options)
+        {
+        }
+    }
+
+    /// <summary>Provides the options contract required by reflective Azure discovery.</summary>
+    public sealed class ActiveDirectoryAuthenticationProviderOptions
+    {
+        public string? ApplicationClientId { get; set; }
+        public bool UseWamBroker { get; set; }
     }
 }
