@@ -68,6 +68,18 @@ loading remain in the driver.
 `SqlAuthenticationInitializer` is also defined in Abstractions and forwarded from SqlClient,
 preserving existing compiled consumers and initializer declarations.
 
+If an explicitly configured initializer or provider cannot be loaded, instantiated, or applied,
+configuration application stops and registry bootstrap fails. Configured entries are not silently
+skipped. Recoverable bootstrap failures are cached as described above; earlier registrations
+and initializer/provider callback side effects are not rolled back.
+
+Malformed sections, incompatible section handlers or schema, and invalid non-empty `useWamBroker`
+values also fail bootstrap rather than being ignored. Missing sections and empty optional settings
+remain valid. Registration errors inside a configured initializer propagate to fail bootstrap,
+rather than being converted to an ignorable `false` result. Successful registrations are traced
+with their authentication method, provider type and precedence tier; refused registrations are
+traced separately and do not produce success events.
+
 Merge the following example into the application's app.config, replacing
 `ExampleAuthenticationProvider, ExampleApp` with the assembly-qualified name of an
 application-defined `SqlAuthenticationProvider`. The handler declaration continues to

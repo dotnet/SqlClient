@@ -65,6 +65,19 @@ namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test
                     () => registry.LoadAzureExtension(() => throw failure)));
             }
         }
+
+        /// <summary>Recoverable loading failures are handled even when they are not reflection or binding errors.</summary>
+        [Theory]
+        [InlineData(typeof(InvalidOperationException))]
+        [InlineData(typeof(IOException))]
+        [InlineData(typeof(UnauthorizedAccessException))]
+        public void RecoverableAssemblyLoaderFailureIsHandled(Type exceptionType)
+        {
+            Exception failure = (Exception)Activator.CreateInstance(exceptionType)!;
+            var registry = new SqlAuthenticationProviderRegistry();
+
+            registry.LoadAzureExtension(() => throw failure);
+        }
     }
 
     /// <summary>Simulates Azure provider constructor failures without depending on the Azure package.</summary>

@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.Configuration;
 using System.Reflection;
 using System.Threading;
 
@@ -10,6 +11,20 @@ namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
 /// <summary>Verifies fatal errors are never treated as recoverable, including through exception wrappers.</summary>
 public class ExceptionHelpersTest
 {
+    /// <summary>Configuration wrappers preserve whether their underlying failure is recoverable.</summary>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ConfigurationErrorHonorsInnerFailure(bool fatal)
+    {
+        Exception failure = fatal
+            ? new OutOfMemoryException("Test fatal configuration failure")
+            : new InvalidOperationException("Ordinary configuration failure");
+
+        Assert.Equal(!fatal, ExceptionHelpers.IsRecoverableException(
+            new ConfigurationErrorsException("Invalid configuration", failure)));
+    }
+
     /// <summary>Fatal runtime errors remain non-recoverable even when wrapped by other exceptions.</summary>
     [Theory]
     [InlineData(typeof(OutOfMemoryException), false)]

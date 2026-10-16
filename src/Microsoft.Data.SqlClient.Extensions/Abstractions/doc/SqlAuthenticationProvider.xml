@@ -150,9 +150,12 @@ See the LICENSE file in the project root for more information.
       <remarks>
         Works directly under NativeAOT. Configuration providers and configured initializers
         cannot be overwritten by application registrations. Application registrations replace
-        the discovered Azure default. A null provider, unsupported method, throwing provider
-        callback or failed registry initialization returns false and emits diagnostic traces
+        the discovered Azure default. Outside configured initializer execution, a null provider,
+        unsupported method, recoverable provider callback failure or recoverable registry
+        initialization failure returns false and emits diagnostic traces
         through Microsoft.Data.SqlClient.EventSource with the Trace keyword (0x2).
+        During a configured initializer, registration errors propagate so registry initialization
+        cannot succeed after a failed configuration-owned registration.
         Failed registrations do not replace the existing provider. Registry initialization
         failures are cached; correct the reported cause and restart the application.
       </remarks>

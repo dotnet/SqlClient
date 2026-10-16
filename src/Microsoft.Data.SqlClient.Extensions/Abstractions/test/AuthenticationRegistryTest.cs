@@ -3,13 +3,107 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Collections.Concurrent;
+using System.Configuration;
 using System.Diagnostics.Tracing;
+using System.Reflection;
 
 namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
 
 /// <summary>Validates errors and callback compatibility of the direct provider registry.</summary>
+[Collection(AuthenticationFeatureSwitchTestCollection.Name)]
 public class AuthenticationRegistryTest
 {
+    /// <summary>Discovery reports attempts, not installation, when existing defaults reject it.</summary>
+    [Fact]
+    public void AzureDiscoveryTraceDoesNotClaimRejectedRegistrationsSucceeded()
+    {
+        var registry = new SqlAuthenticationProviderRegistry();
+        using (var firstListener = new AuthenticationTraceListener())
+        {
+            registry.LoadAzureExtension(() => typeof(ThrowingProvider).Assembly);
+            Assert.Contains(
+                "Authentication provider registered for ActiveDirectoryIntegrated: provider " +
+                "Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider, tier Default.",
+                firstListener.Messages);
+        }
+
+        using var listener = new AuthenticationTraceListener();
+        registry.LoadAzureExtension(() => typeof(ThrowingProvider).Assembly);
+
+        Assert.Contains(listener.Messages, message =>
+            message.Contains("existing tier Default takes precedence over Default"));
+        Assert.DoesNotContain(listener.Messages, message =>
+            message.StartsWith("Authentication provider registered for ", StringComparison.Ordinal));
+        Assert.Contains(
+            "SqlAuthenticationProviderRegistry: Attempted to register Azure extension " +
+            "class=Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider as the default " +
+            "for Active Directory authentication methods; existing registrations were preserved",
+            listener.Messages);
+    }
+
+    /// <summary>Deferred trace formatting preserves configuration diagnostics and broker values.</summary>
+    [Theory]
+    [InlineData("true", "Received user-defined UseWamBroker=True.")]
+    [InlineData("false", "Received user-defined UseWamBroker=False.")]
+    [InlineData("", "No user-defined UseWamBroker found.")]
+    public void ConfigurationTraceMessagesPreserveText(string brokerValue, string brokerMessage)
+    {
+        using var listener = new AuthenticationTraceListener();
+        var section = new SqlClientAuthenticationProviderConfigurationSection();
+        section.ElementInformation.Properties["useWamBroker"].Value = brokerValue;
+
+        // Avoid changing process-wide configuration or registering providers in the shared registry.
+        MethodInfo apply = typeof(SqlAuthenticationProviderRegistry).GetMethod(
+            "ApplyConfiguration", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        apply.Invoke(new SqlAuthenticationProviderRegistry(), [section]);
+
+        Assert.Contains("SqlAuthenticationProviderRegistry | " + brokerMessage, listener.Messages);
+        Assert.Contains(
+            "SqlAuthenticationProviderRegistry | No user-defined Application Client Id found.",
+            listener.Messages);
+        Assert.Contains(
+            "SqlAuthenticationProviderRegistry | No user-defined SqlAuthenticationInitializer found.",
+            listener.Messages);
+        Assert.Contains(
+            "SqlAuthenticationProviderRegistry | No user-defined auth providers.",
+            listener.Messages);
+    }
+
+    /// <summary>Registration errors inside configured initializers must abort configuration.</summary>
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void InitializerRegistrationFailuresAreNotSwallowed(bool nullProvider)
+    {
+        SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.NotSpecified);
+        var registry = Assert.IsType<SqlAuthenticationProviderRegistry>(
+            typeof(SqlAuthenticationProviderRegistry).GetField(
+                "Instance", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null));
+        FieldInfo invoking = typeof(SqlAuthenticationProviderRegistry).GetField(
+            "_invokingConfiguredInitializer", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        bool original = Assert.IsType<bool>(invoking.GetValue(registry));
+
+        // Simulate callback context on the shared registry, restoring it even if an assertion fails.
+        invoking.SetValue(registry, true);
+        try
+        {
+            Exception? failure = Record.Exception(() => SqlAuthenticationProvider.SetProvider(
+                SqlAuthenticationMethod.NotSpecified, nullProvider ? null! : new Provider(false)));
+            if (nullProvider)
+            {
+                Assert.IsType<ArgumentNullException>(failure);
+            }
+            else
+            {
+                Assert.IsType<NotSupportedException>(failure);
+            }
+        }
+        finally
+        {
+            invoking.SetValue(registry, original);
+        }
+    }
+
     /// <summary>Unsupported registrations preserve the false result and explain how to fix the provider.</summary>
     [Fact]
     public void UnsupportedProviderReturnsFalseAndLogs()
@@ -53,6 +147,9 @@ public class AuthenticationRegistryTest
             message.Contains("SetProvider") && message.Contains(callback) &&
             message.Contains("returning false") && message.Contains("callbacks"));
         first.Throw = false;
+        Assert.Single(listener.Messages, message =>
+            message.StartsWith(
+                "Authentication provider registered for NotSpecified:", StringComparison.Ordinal));
         var valid = new Provider(true);
         Assert.True(SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.NotSpecified, valid));
         Assert.Same(valid, SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.NotSpecified));
@@ -62,6 +159,7 @@ public class AuthenticationRegistryTest
     [Fact]
     public void ReplacementInvokesCallbacks()
     {
+        using var listener = new AuthenticationTraceListener();
         var first = new Provider(true);
         var second = new Provider(true);
         Assert.True(SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.SqlPassword, first));
@@ -69,6 +167,10 @@ public class AuthenticationRegistryTest
         Assert.Equal(1, first.Unloads);
         Assert.Equal(1, second.Loads);
         Assert.Same(second, SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.SqlPassword));
+        Assert.Contains(
+            "Authentication provider registered for SqlPassword: provider " +
+            typeof(Provider).FullName + ", tier Application.",
+            listener.Messages);
     }
 
     /// <summary>Fatal failures in later aggregate entries propagate from every registration callback without replacing the provider.</summary>
