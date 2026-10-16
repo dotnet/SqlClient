@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.ComponentModel;
 using System.Configuration;
 
 namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
@@ -9,12 +10,15 @@ namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
 /// <summary>Pins authentication section names, configuration properties and defaults in Abstractions.</summary>
 public class AuthenticationConfigurationSchemaTest
 {
-    /// <summary>Both public handlers preserve their original names, configuration properties and empty defaults.</summary>
+    /// <summary>Both infrastructure-only handlers preserve their schema and remain hidden from IntelliSense.</summary>
     [Theory]
     [InlineData(typeof(SqlAuthenticationProviderConfigurationSection), "SqlAuthenticationProviders")]
     [InlineData(typeof(SqlClientAuthenticationProviderConfigurationSection), "SqlClientAuthenticationProviders")]
     public void HandlerContractIsPreserved(Type type, string sectionName)
     {
+        var editorBrowsable = Assert.IsType<EditorBrowsableAttribute>(
+            Assert.Single(type.GetCustomAttributes(typeof(EditorBrowsableAttribute), inherit: false)));
+        Assert.Equal(EditorBrowsableState.Never, editorBrowsable.State);
         var section = Assert.IsAssignableFrom<ConfigurationSection>(Activator.CreateInstance(type));
         Assert.Equal(new[] { "applicationClientId", "initializerType", "providers", "useWamBroker" },
             section.ElementInformation.Properties.Cast<PropertyInformation>()

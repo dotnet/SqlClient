@@ -2,11 +2,13 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.ComponentModel;
 using System.Configuration;
 
 namespace Microsoft.Data.SqlClient
 {
     /// <include file='../doc/SqlAuthenticationProviderConfigurationSection.xml' path='docs/members[@name="SqlAuthenticationProviderConfigurationSection"]/SqlAuthenticationProviderConfigurationSection/*'/>
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public class SqlAuthenticationProviderConfigurationSection : ConfigurationSection
     {
         /// <include file='../doc/SqlAuthenticationProviderConfigurationSection.xml' path='docs/members[@name="SqlAuthenticationProviderConfigurationSection"]/Name/*'/>
@@ -30,6 +32,7 @@ namespace Microsoft.Data.SqlClient
     }
 
     /// <include file='../doc/SqlAuthenticationProviderConfigurationSection.xml' path='docs/members[@name="SqlClientAuthenticationProviderConfigurationSection"]/SqlClientAuthenticationProviderConfigurationSection/*'/>
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public class SqlClientAuthenticationProviderConfigurationSection : SqlAuthenticationProviderConfigurationSection
     {
         /// <include file='../doc/SqlAuthenticationProviderConfigurationSection.xml' path='docs/members[@name="SqlClientAuthenticationProviderConfigurationSection"]/Name/*'/>
