@@ -36,6 +36,14 @@ Configuration and optional discovery are attempted once. Failed entries are not 
 accesses. Register an application provider as a workaround, or correct the cause and restart the
 application to retry configuration and discovery.
 
+Authentication configuration, activation and registration exception messages use this package's
+resources. Messages without a satellite translation fall back to neutral English. Standard
+framework exceptions retain their framework-provided messages.
+
+Recoverable resource lookup or formatting failures fall back to the resource key and
+culture-formatted argument values, identifying unformattable arguments by type and preserving
+the original exception cause. Fatal runtime errors propagate instead of being masked.
+
 Untrimmed applications retain app.config loading and automatic Azure discovery. These switches
 default to `true` and are cached independently on first access for the lifetime of the process:
 
