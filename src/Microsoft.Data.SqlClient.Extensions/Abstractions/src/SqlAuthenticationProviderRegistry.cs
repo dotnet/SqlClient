@@ -220,22 +220,8 @@ internal sealed class SqlAuthenticationProviderRegistry
                 return;
             }
 
-            // Try to instantiate it.  Behavior depends on what the app
-            // configured in <SqlClientAuthenticationProviders>:
-            //  * Neither applicationClientId nor useWamBroker -> use the
-            //    parameterless constructor (defaults to the SqlClient
-            //    first-party app id and enables WAM brokering on Windows).
-            //  * applicationClientId only -> prefer the
-            //    (ActiveDirectoryAuthenticationProviderOptions) constructor
-            //    when the Azure extension exposes it; otherwise fall back
-            //    to the legacy (string applicationClientId) constructor so
-            //    older Azure extension versions keep working.
-            //  * useWamBroker (with or without applicationClientId) ->
-            //    requires the (Options) constructor because there is no
-            //    positional analog. If the Azure extension is too old to
-            //    expose Options, throw to surface the misconfiguration.
             const string optionsTypeName = "Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions";
-            Type? optionsType = assembly.GetType(optionsTypeName);
+            Type optionsType = assembly.GetType(optionsTypeName, throwOnError: true)!;
 
             SqlAuthenticationProvider? instance = CreateAzureAuthenticationProvider(
                 type,
@@ -291,7 +277,7 @@ internal sealed class SqlAuthenticationProviderRegistry
                   FileNotFoundException or
                   MemberAccessException or
                   MethodAccessException or
-                  MissingMethodException or
+                  MissingMemberException or
                   NotSupportedException or
                   TargetInvocationException or
                   TypeInitializationException or
@@ -495,83 +481,45 @@ internal sealed class SqlAuthenticationProviderRegistry
 
     /// <summary>Reflectively constructs an Azure authentication provider using the configured overrides.</summary>
     /// <param name="providerType">The Azure authentication provider type to instantiate.</param>
-    /// <param name="optionsType">The Azure options type, or null if the extension does not expose it.</param>
+    /// <param name="optionsType">The required Azure options type.</param>
     /// <param name="applicationClientId">The application client ID override, or null to retain the default.</param>
     /// <param name="useWamBroker">The WAM broker override, or null to retain the default.</param>
     /// <returns>
-    /// The constructed provider, or null if a client-ID-only override has no compatible constructor
-    /// or reflective construction does not produce an authentication provider.
+    /// The constructed provider, or null if reflective construction does not produce an authentication provider.
     /// </returns>
     /// <remarks>
-    /// Uses the parameterless constructor when neither override is set. A client-ID-only override
-    /// prefers the options constructor and falls back to the legacy string constructor.
-    /// A broker override requires the options constructor; during bootstrap, incompatibility is
-    /// cached and logged while public GetProvider/SetProvider return null/false.
+    /// Always uses the options constructor, preserving option defaults when no overrides are configured.
+    /// Incompatible Azure contracts are logged during discovery without installing a default provider.
     /// </remarks>
-    /// <exception cref="InvalidOperationException">A broker override was requested but the extension lacks the required options constructor.</exception>
+    /// <exception cref="MissingMethodException">The extension lacks the required options constructor.</exception>
+    /// <exception cref="MissingMemberException">The options type lacks a configured property.</exception>
     [RequiresUnreferencedCode("Azure provider constructors and properties are discovered by name.")]
     [RequiresDynamicCode("Azure providers are constructed dynamically.")]
     internal static SqlAuthenticationProvider? CreateAzureAuthenticationProvider(
         Type providerType,
-        Type? optionsType,
+        Type optionsType,
         string? applicationClientId,
         bool? useWamBroker)
     {
-        if (applicationClientId is null && useWamBroker is null)
-        {
-            return Activator.CreateInstance(providerType) as SqlAuthenticationProvider;
-        }
+        ConstructorInfo optionsCtor = providerType.GetConstructor([optionsType])
+            ?? throw new MissingMethodException(providerType.FullName, $".ctor({optionsType.FullName})");
+        object? options = Activator.CreateInstance(optionsType);
 
-        ConstructorInfo? optionsCtor = optionsType is null
-            ? null
-            : providerType.GetConstructor([optionsType]);
+        if (applicationClientId is not null)
+        {
+            PropertyInfo applicationClientIdProperty = optionsType.GetProperty("ApplicationClientId")
+                ?? throw new MissingMemberException(optionsType.FullName, "ApplicationClientId");
+            applicationClientIdProperty.SetValue(options, applicationClientId);
+        }
 
         if (useWamBroker is bool useWam)
         {
-            if (optionsType is null || optionsCtor is null)
-            {
-                throw new InvalidOperationException("TODO");
-            }
-
-            var options = Activator.CreateInstance(optionsType);
-            if (options is null)
-            {
-                return null;
-            }
-
-            if (applicationClientId is not null)
-            {
-                optionsType.GetProperty("ApplicationClientId")
-                    ?.SetValue(options, applicationClientId);
-            }
-            optionsType.GetProperty("UseWamBroker")
-                ?.SetValue(options, useWam);
-
-            return optionsCtor.Invoke([options]) as SqlAuthenticationProvider;
+            PropertyInfo useWamBrokerProperty = optionsType.GetProperty("UseWamBroker")
+                ?? throw new MissingMemberException(optionsType.FullName, "UseWamBroker");
+            useWamBrokerProperty.SetValue(options, useWam);
         }
 
-        // applicationClientId-only: prefer Options when the extension exposes it,
-        // otherwise fall back to the legacy (string) ctor for backward compatibility
-        // with older Azure extension versions.
-        if (optionsType is not null && optionsCtor is not null)
-        {
-            var options = Activator.CreateInstance(optionsType);
-            if (options is null)
-            {
-                return null;
-            }
-            optionsType.GetProperty("ApplicationClientId")
-                ?.SetValue(options, applicationClientId);
-            return optionsCtor.Invoke([options]) as SqlAuthenticationProvider;
-        }
-
-        ConstructorInfo? legacyCtor = providerType.GetConstructor([typeof(string)]);
-        if (legacyCtor is not null)
-        {
-            return legacyCtor.Invoke([applicationClientId]) as SqlAuthenticationProvider;
-        }
-
-        return null;
+        return optionsCtor.Invoke([options]) as SqlAuthenticationProvider;
     }
 
     /// <summary>
