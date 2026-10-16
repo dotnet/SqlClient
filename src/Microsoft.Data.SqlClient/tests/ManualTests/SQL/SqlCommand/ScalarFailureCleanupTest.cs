@@ -99,7 +99,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 if (fatal)
                 {
                     Assert.Same(failure, actual);
-                    Assert.Equal("Broken", parser.GetType()
+                    Assert.Equal(mars ? "Closed" : "Broken", parser.GetType()
                         .GetProperty("State", BindingFlags.Instance | BindingFlags.NonPublic)
                         .GetValue(parser).ToString());
                 }
@@ -187,10 +187,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.Same(failure, Record.Exception(() => reader.Close()));
                 Assert.Equal(1, notifications);
                 Assert.True(reader.IsClosed);
-                Assert.Equal(closeConnection ? 1 : 0, closedEvents);
-                if (!closeConnection)
+                Assert.Equal(closeConnection || mars ? 1 : 0, closedEvents);
+                if (!closeConnection && !mars)
                 {
-                    // Without CloseConnection, releasing the checkout remains the caller's responsibility.
+                    // Non-MARS readers without CloseConnection retain caller ownership.
                     connection.Close();
                 }
                 Assert.Equal(ConnectionState.Closed, connection.State);
@@ -300,9 +300,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             var failure = new OutOfMemoryException("Fatal diagnostic sentinel");
             connection.InfoMessage += (_, _) => throw failure;
             int errorEvents = 0;
-            bool parserWasBroken = false;
+            string parserState = null;
             bool reusedInterruptedConnection = true;
             object reportedException = null;
+            object reportedOperation = null;
             object probeResult = null;
             var observer = new FakeDiagnosticListenerObserver(value =>
             {
@@ -313,8 +314,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
                 errorEvents++;
                 reportedException = value.Value.GetType().GetProperty("Exception").GetValue(value.Value);
-                parserWasBroken = parser.GetType().GetProperty("State", BindingFlags.Instance | BindingFlags.NonPublic)
-                    .GetValue(parser).ToString() == "Broken";
+                reportedOperation = value.Value.GetType().GetProperty("Operation").GetValue(value.Value);
+                parserState = parser.GetType().GetProperty("State", BindingFlags.Instance | BindingFlags.NonPublic)
+                    .GetValue(parser).ToString();
                 connection.Close();
                 using SqlConnection next = new(builder.ConnectionString);
                 next.Open();
@@ -335,7 +337,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
                 Assert.Equal(1, errorEvents);
                 Assert.Same(failure, reportedException);
-                Assert.True(parserWasBroken, "Diagnostic subscriber ran before quarantine.");
+                Assert.Equal("ExecuteScalarAsyncInternal", reportedOperation);
+                Assert.Equal(mars ? "Closed" : "Broken", parserState);
                 Assert.False(reusedInterruptedConnection);
                 Assert.Equal(42, probeResult);
             }
@@ -343,6 +346,53 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 observer.Disable();
                 SqlConnection.ClearPool(connection);
+            }
+        }
+
+        /// <summary>
+        /// A fatal error on one MARS reader must complete a peer's timeout-free pending read,
+        /// rather than merely disabling cancellation by marking the shared parser broken.
+        /// </summary>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        public async Task FatalCleanup_CompletesPendingMarsPeer()
+        {
+            var builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+            {
+                Pooling = false,
+                MultipleActiveResultSets = true,
+                Enlist = false
+            };
+            using SqlConnection connection = new(builder.ConnectionString);
+            await connection.OpenAsync();
+            using SqlCommand failingCommand = new("SELECT 1", connection);
+            using SqlDataReader failingReader = await failingCommand.ExecuteReaderAsync();
+            using SqlCommand peerCommand = new("WAITFOR DELAY '00:00:30'; SELECT 2;", connection)
+            {
+                CommandTimeout = 0
+            };
+            Task<SqlDataReader> pending = peerCommand.ExecuteReaderAsync();
+            Assert.False(pending.IsCompleted, "Peer must be waiting for server data before fatal cleanup.");
+            var failure = new OutOfMemoryException("Fatal MARS sentinel");
+            try
+            {
+                Exception actual = Record.Exception(() => typeof(SqlDataReader)
+                    .GetMethod("CloseOnError", BindingFlags.Instance | BindingFlags.NonPublic)
+                    .Invoke(failingReader, new object[] { failure }));
+                Assert.Same(failure, Assert.IsType<TargetInvocationException>(actual).InnerException);
+                peerCommand.Cancel();
+                Assert.Same(pending, await Task.WhenAny(pending, Task.Delay(TimeSpan.FromSeconds(5))));
+                Assert.NotNull(await Record.ExceptionAsync(async () => await pending));
+                Assert.Equal(ConnectionState.Closed, connection.State);
+            }
+            finally
+            {
+                connection.Close();
+                // Observe the peer even on a failed assertion; do not leave pending work behind.
+                await Record.ExceptionAsync(async () => await pending);
+                if (pending.Status == TaskStatus.RanToCompletion)
+                {
+                    pending.Result.Dispose();
+                }
             }
         }
 

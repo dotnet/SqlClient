@@ -966,7 +966,10 @@ namespace Microsoft.Data.SqlClient
             ExceptionDispatchInfo failure = ExceptionDispatchInfo.Capture(exception);
             TdsParser parser = _parser;
             TdsParserStateObject stateObj = _stateObj;
-            SqlConnection connectionToClose = IsCommandBehavior(CommandBehavior.CloseConnection) ? _connection : null;
+            // Breaking a MARS parser disables cancellation on every session; close the connection
+            // to notify pending peers rather than leaving them waiting on the shared transport.
+            SqlConnection connectionToClose =
+                IsCommandBehavior(CommandBehavior.CloseConnection) || parser?.MARSOn == true ? _connection : null;
 
             // Do not attempt normal draining or server-setting restoration on this reader.
             _isClosed = true;

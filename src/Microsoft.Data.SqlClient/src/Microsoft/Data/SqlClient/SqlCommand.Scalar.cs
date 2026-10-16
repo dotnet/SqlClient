@@ -4,6 +4,7 @@
 
 using System;
 using System.Data;
+using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -162,7 +163,8 @@ namespace Microsoft.Data.SqlClient
         
         #region Private Methods
 
-        private void CloseScalarReaderOnError(SqlDataReader reader, Exception exception, Guid operationId)
+        private void CloseScalarReaderOnError(SqlDataReader reader, Exception exception, Guid operationId,
+            [CallerMemberName] string operation = "")
         {
             bool unrecoverable = ADP.IsUnrecoverableException(exception);
             bool cleanupCompleted = false;
@@ -178,7 +180,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     try
                     {
-                        s_diagnosticListener.WriteCommandError(operationId, this, _transaction, exception);
+                        s_diagnosticListener.WriteCommandError(operationId, this, _transaction, exception, operation);
                     }
                     finally
                     {
