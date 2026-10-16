@@ -1963,13 +1963,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 }
 
                 DbConnectionPoolIdentity poolIdentity = Identity;
-                DbConnectionPoolIdentity currentIdentity = poolIdentity == DbConnectionPoolIdentity.NoIdentity
-                    ? DbConnectionPoolIdentity.NoIdentity
-                    : DbConnectionPoolIdentity.GetCurrent();
 
                 // Background creation must use the pool's logon session.
                 // A mismatched context skips warmup; user opens can still create on demand.
-                if (poolIdentity != DbConnectionPoolIdentity.NoIdentity && !currentIdentity.Equals(poolIdentity))
+                if (poolIdentity != DbConnectionPoolIdentity.NoIdentity && !DbConnectionPoolIdentity.GetCurrent().Equals(poolIdentity))
                 {
                     SqlClientEventSource.Log.TryPoolerTraceEvent(
                         "ChannelDbConnectionPool.RunWarmupLoopAsync | INFO | {0}, Skipping warmup for a different identity.", Id);
