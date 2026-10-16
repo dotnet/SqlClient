@@ -21,7 +21,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private readonly long _authenticationId;
         private readonly int _hashCode;
 
-        private DbConnectionPoolIdentity(string sidString, bool isRestricted, bool isNetwork, long authenticationId)
+        internal DbConnectionPoolIdentity(string sidString, bool isRestricted, bool isNetwork, long authenticationId)
         {
             _sidString = sidString;
             _isRestricted = isRestricted;

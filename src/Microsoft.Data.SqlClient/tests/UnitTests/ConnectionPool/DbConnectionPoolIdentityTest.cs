@@ -39,11 +39,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         public void Equals_ComparesAllIdentityFields(
             string sid, bool restricted, bool network, long authenticationId, bool equal)
         {
-            ConstructorInfo constructor = typeof(DbConnectionPoolIdentity).GetConstructor(
-                BindingFlags.Instance | BindingFlags.NonPublic, binder: null,
-                new[] { typeof(string), typeof(bool), typeof(bool), typeof(long) }, modifiers: null)!;
-            var first = (DbConnectionPoolIdentity)constructor.Invoke(new object[] { "sid", false, false, 1L });
-            var second = (DbConnectionPoolIdentity)constructor.Invoke(new object[] { sid, restricted, network, authenticationId });
+            var first = new DbConnectionPoolIdentity("sid", false, false, 1L);
+            var second = new DbConnectionPoolIdentity(sid, restricted, network, authenticationId);
 
             var equatable = Assert.IsAssignableFrom<IEquatable<DbConnectionPoolIdentity>>(first);
             Assert.Equal(equal, equatable.Equals(second));
