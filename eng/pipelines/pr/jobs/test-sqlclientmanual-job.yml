@@ -217,6 +217,8 @@ jobs:
       - task: DotNetCoreCLI@2
         displayName: 'Test: SqlClientManual ${{ parameters.testSet }}'
         ${{ if and(eq(parameters.platformOperatingSystem, 'Windows'), parameters.isLocalServer, eq(parameters.configDisplayName, 'localhost'), contains(parameters.testSet, '3')) }}:
+          # Configure-NetOnlyAccount.ps1 publishes these job variables in the preceding setup step.
+          # Map them explicitly into the test process, including the secret password.
           env:
             SQLCLIENT_NETONLY_REQUIRED: 'true'
             SQLCLIENT_NETONLY_USER: $(netOnlyUser)

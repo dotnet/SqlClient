@@ -197,6 +197,8 @@ steps:
     displayName: 'Run Manual Tests ${{parameters.msbuildArchitecture }}'
     condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
     ${{ if parameters.enableNetOnlyTests }}:
+      # Configure-NetOnlyAccount.ps1 publishes these job variables during net-only account setup.
+      # Map them explicitly into the test process, including the secret password.
       env:
         SQLCLIENT_NETONLY_REQUIRED: 'true'
         SQLCLIENT_NETONLY_USER: $(netOnlyUser)

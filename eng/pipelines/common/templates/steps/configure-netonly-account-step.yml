@@ -42,6 +42,7 @@ steps:
       NETONLY_MODE: ${{ parameters.mode }}
       NETONLY_INSTANCE: ${{ parameters.instanceName }}
       NETONLY_PORT: ${{ parameters.port }}
+      # Configure-NetOnlyAccount.ps1 publishes these job variables during setup for later cleanup.
       # Undefined ADO macros are treated as absent by cleanup.
       NETONLY_ACCOUNT: $(netOnlyUser)
       NETONLY_SID: $(netOnlySid)
