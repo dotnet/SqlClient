@@ -591,26 +591,11 @@
   <data name="SQL_NonLocalSSEInstance" xml:space="preserve">
     <value>Przekierowywanie wystąpienia SSE nie jest obsługiwane dla wystąpień użytkowników nielokalnych.</value>
   </data>
-  <data name="SQL_UnsupportedAuthentication" xml:space="preserve">
-    <value>Uwierzytelnianie „{0}” nie jest obsługiwane.</value>
-  </data>
-  <data name="SQL_CannotCreateAuthProvider" xml:space="preserve">
-    <value>Nie można utworzyć wystąpienia dostawcy uwierzytelniania typu {1} dla elementu {0}.</value>
-  </data>
-  <data name="SQL_CannotCreateAuthInitializer" xml:space="preserve">
-    <value>Nie można utworzyć wystąpienia elementu SqlAuthenticationInitializer typu {0}.</value>
-  </data>
-  <data name="SQL_UnsupportedAuthenticationByProvider" xml:space="preserve">
-    <value>Dostawca „{0}” nie obsługuje uwierzytelniania „{1}”.</value>
-  </data>
   <data name="SQL_CannotFindAuthProvider" xml:space="preserve">
     <value>Nie można odnaleźć dostawcy uwierzytelniania elementu {0}.</value>
   </data>
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
     <value>Cannot find an authentication provider for '{0}'. Register a provider with SqlAuthenticationProvider.SetProvider, or use a compatible 'Microsoft.Data.SqlClient.Extensions.Azure' NuGet package with automatic discovery enabled. Automatic discovery is unavailable when disabled at publish time. Trimmed JIT applications require preserved reflection contracts; NativeAOT applications should disable reflective bootstrap paths at publish time and register providers explicitly. Check Microsoft.Data.SqlClient.EventSource traces (Informational level, Trace keyword 0x2) for configuration or Azure extension loading failures.</value>
-  </data>
-  <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>Setting 'useWamBroker' requires the 'Microsoft.Data.SqlClient.Extensions.Azure' package to expose 'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions'. Upgrade the 'Microsoft.Data.SqlClient.Extensions.Azure' package to at least v7.0.2 that includes this type.</value>
   </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>Parametr „{0}” nie może mieć wartości null ani być pusty.</value>

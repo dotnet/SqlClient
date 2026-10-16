@@ -591,26 +591,11 @@
   <data name="SQL_NonLocalSSEInstance" xml:space="preserve">
     <value>不支援非本端使用者執行個體的 SSE 執行個體重新導向。</value>
   </data>
-  <data name="SQL_UnsupportedAuthentication" xml:space="preserve">
-    <value>不支援驗證 '{0}'。</value>
-  </data>
-  <data name="SQL_CannotCreateAuthProvider" xml:space="preserve">
-    <value>無法為 '{0}' 具現化類型為 '{1}' 的驗證提供者。</value>
-  </data>
-  <data name="SQL_CannotCreateAuthInitializer" xml:space="preserve">
-    <value>無法將類型為 '{0}' 的 SqlAuthenticationInitializer 具現化。</value>
-  </data>
-  <data name="SQL_UnsupportedAuthenticationByProvider" xml:space="preserve">
-    <value>提供者 '{0}' 不支援驗證 '{1}'。</value>
-  </data>
   <data name="SQL_CannotFindAuthProvider" xml:space="preserve">
     <value>找不到 '{0}' 的驗證提供者。</value>
   </data>
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
     <value>Cannot find an authentication provider for '{0}'. Register a provider with SqlAuthenticationProvider.SetProvider, or use a compatible 'Microsoft.Data.SqlClient.Extensions.Azure' NuGet package with automatic discovery enabled. Automatic discovery is unavailable when disabled at publish time. Trimmed JIT applications require preserved reflection contracts; NativeAOT applications should disable reflective bootstrap paths at publish time and register providers explicitly. Check Microsoft.Data.SqlClient.EventSource traces (Informational level, Trace keyword 0x2) for configuration or Azure extension loading failures.</value>
-  </data>
-  <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>Setting 'useWamBroker' requires the 'Microsoft.Data.SqlClient.Extensions.Azure' package to expose 'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions'. Upgrade the 'Microsoft.Data.SqlClient.Extensions.Azure' package to at least v7.0.2 that includes this type.</value>
   </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>參數 '{0}' 不能是 Null 或空白。</value>
