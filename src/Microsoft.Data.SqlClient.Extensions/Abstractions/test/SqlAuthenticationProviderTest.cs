@@ -6,6 +6,7 @@ using System.Reflection;
 
 namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
 
+/// <summary>Registration no longer depends on reflective access to a SqlClient assembly.</summary>
 public class SqlAuthenticationProviderTest
 {
     #region Test Setup
@@ -25,8 +26,7 @@ public class SqlAuthenticationProviderTest
     #region Tests
 
     /// <summary>
-    /// Test that GetProvider fails predictably when the MDS assembly can't be
-    /// found.
+    /// Without SqlClient, a method starts without a provider and supports direct registration and lookup.
     /// </summary>
     [Theory]
     #pragma warning disable CS0618 // Type or member is obsolete
@@ -40,35 +40,13 @@ public class SqlAuthenticationProviderTest
     [InlineData(SqlAuthenticationMethod.ActiveDirectoryMSI)]
     [InlineData(SqlAuthenticationMethod.ActiveDirectoryDefault)]
     [InlineData(SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity)]
-    public void GetProvider_NoMdsAssembly(SqlAuthenticationMethod method)
+    public void GetAndSetProvider_NoMdsAssembly(SqlAuthenticationMethod method)
     {
-        // GetProvider() should return null when the MDS assembly can't be
-        // found.
         Assert.Null(SqlAuthenticationProvider.GetProvider(method));
-    }
 
-    /// <summary>
-    /// Test that SetProvider fails predictably when the MDS assembly can't be
-    /// found.
-    /// </summary>
-    [Theory]
-    #pragma warning disable CS0618 // Type or member is obsolete
-    [InlineData(SqlAuthenticationMethod.ActiveDirectoryPassword)]
-    #pragma warning restore CS0618 // Type or member is obsolete
-    [InlineData(SqlAuthenticationMethod.ActiveDirectoryIntegrated)]
-    [InlineData(SqlAuthenticationMethod.ActiveDirectoryInteractive)]
-    [InlineData(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal)]
-    [InlineData(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)]
-    [InlineData(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity)]
-    [InlineData(SqlAuthenticationMethod.ActiveDirectoryMSI)]
-    [InlineData(SqlAuthenticationMethod.ActiveDirectoryDefault)]
-    [InlineData(SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity)]
-    public void SetProvider_NoMdsAssembly(SqlAuthenticationMethod method)
-    {
-        // SetProvider() should return false when the MDS assembly can't be
-        // found.
-        Assert.False(
-            SqlAuthenticationProvider.SetProvider(method, new Provider()));
+        var provider = new Provider();
+        Assert.True(SqlAuthenticationProvider.SetProvider(method, provider));
+        Assert.Same(provider, SqlAuthenticationProvider.GetProvider(method));
     }
 
     #endregion
