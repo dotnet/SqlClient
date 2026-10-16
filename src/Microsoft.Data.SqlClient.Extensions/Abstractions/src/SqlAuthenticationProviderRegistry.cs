@@ -398,7 +398,7 @@ internal sealed class SqlAuthenticationProviderRegistry
             }
             catch (Exception e)
             {
-                throw new ArgumentException("TODO", e);
+                throw AuthenticationStrings.CannotCreateSqlAuthInitializer(initializerTypeName, e);
             }
             SqlClientEventSource.Log.TryTraceEvent("SqlAuthenticationProviderRegistry | {0}", "Created user-defined SqlAuthenticationInitializer.");
         }
@@ -425,7 +425,7 @@ internal sealed class SqlAuthenticationProviderRegistry
                 }
                 catch (Exception e)
                 {
-                    throw new ArgumentException("TODO", e);
+                    throw AuthenticationStrings.CannotCreateAuthProvider(authentication.ToString(), providerSettings.Type, e);
                 }
                 if (provider is null)
                 {
@@ -433,7 +433,7 @@ internal sealed class SqlAuthenticationProviderRegistry
                 }
                 if (!provider.IsSupported(authentication))
                 {
-                    throw new NotSupportedException("TODO");
+                    throw AuthenticationStrings.UnsupportedAuthenticationByProvider(authentication.ToString(), providerSettings.Type);
                 }
 
                 Register(authentication, provider, RegistrationTier.Config);
@@ -580,7 +580,7 @@ internal sealed class SqlAuthenticationProviderRegistry
     {
         if (!provider.IsSupported(authenticationMethod))
         {
-            throw new NotSupportedException("TODO");
+            throw AuthenticationStrings.UnsupportedAuthenticationByProvider(authenticationMethod.ToString(), provider.GetType().Name);
         }
         lock (_sync)
         {
@@ -665,7 +665,7 @@ internal sealed class SqlAuthenticationProviderRegistry
             case "active directory workload identity":
                 return SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity;
             default:
-                throw new NotSupportedException("TODO");
+                throw AuthenticationStrings.UnsupportedAuthentication(authentication);
         }
     }
 
