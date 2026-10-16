@@ -1670,6 +1670,11 @@ namespace Microsoft.Data.SqlClient
                                                : ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_EnclaveProviderNotFound, enclaveType));
         }
 
+        internal static Exception AzureAttestationExtensionNotFound()
+        {
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_AzureAttestationExtensionNotFound));
+        }
+
         internal static Exception NullEnclaveSessionReturnedFromProvider(string enclaveType, string attestationUrl)
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_NullEnclaveSessionReturnedFromProvider, enclaveType, attestationUrl));
