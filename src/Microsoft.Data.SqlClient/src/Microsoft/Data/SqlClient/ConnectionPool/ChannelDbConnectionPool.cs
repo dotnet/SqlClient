@@ -1962,6 +1962,20 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     return;
                 }
 
+                DbConnectionPoolIdentity poolIdentity = Identity;
+                DbConnectionPoolIdentity currentIdentity = poolIdentity == DbConnectionPoolIdentity.NoIdentity
+                    ? DbConnectionPoolIdentity.NoIdentity
+                    : DbConnectionPoolIdentity.GetCurrent();
+
+                // Background creation must use the pool's logon session.
+                // A mismatched context skips warmup; user opens can still create on demand.
+                if (!poolIdentity.Equals(currentIdentity))
+                {
+                    SqlClientEventSource.Log.TryPoolerTraceEvent(
+                        "ChannelDbConnectionPool.RunWarmupLoopAsync | INFO | {0}, Skipping warmup for a different identity.", Id);
+                    return;
+                }
+
                 // Single pass: re-reads Count each iteration, so any below-minimum drop that happens
                 // while the loop is running is picked up here without a separate request flag.
                 //
@@ -1972,25 +1986,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 // WaitHandle pool, which skips replenishment while blocking. (Warmup still
                 // participates in the error state on its own creations - entering it on failure and
                 // clearing it on success - via OpenNewInternalConnection.)
-                DbConnectionPoolIdentity poolIdentity = Identity;
-                DbConnectionPoolIdentity currentIdentity = poolIdentity == DbConnectionPoolIdentity.NoIdentity
-                    ? DbConnectionPoolIdentity.NoIdentity
-                    : DbConnectionPoolIdentity.GetCurrent();
-
                 while (State == Running
                     && !token.IsCancellationRequested
                     && !ErrorOccurred
                     && _connectionSlots.ReservationCount < MinPoolSize)
                 {
-                    // Match the legacy pool: background creation must use the pool's logon session.
-                    // A mismatched context skips warmup; user opens can still create on demand.
-                    if (!poolIdentity.Equals(currentIdentity))
-                    {
-                        SqlClientEventSource.Log.TryPoolerTraceEvent(
-                            "ChannelDbConnectionPool.RunWarmupLoopAsync | INFO | {0}, Skipping warmup for a different identity.", Id);
-                        break;
-                    }
-
                     // Fresh per-attempt timeout budget based on the pool's CreationTimeout, since
                     // warmup has no owning Open() call to inherit a budget from. Matches the
                     // replenishment behavior of the legacy WaitHandle pool.
