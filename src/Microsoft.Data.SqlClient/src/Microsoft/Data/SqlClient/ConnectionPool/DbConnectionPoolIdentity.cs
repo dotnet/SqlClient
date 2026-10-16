@@ -27,7 +27,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             _isRestricted = isRestricted;
             _isNetwork = isNetwork;
             _authenticationId = authenticationId;
+            #if NETFRAMEWORK
             _hashCode = (sidString, isRestricted, isNetwork, authenticationId).GetHashCode();
+            #else
+            _hashCode = HashCode.Combine(sidString, isRestricted, isNetwork, authenticationId);
+            #endif
         }
 
         // @TODO: Make auto-property
