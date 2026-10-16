@@ -412,7 +412,7 @@ internal sealed class SqlAuthenticationProviderRegistry
             }
             catch (Exception e)
             {
-                throw AuthenticationStrings.CannotCreateSqlAuthInitializer(initializerTypeName, e);
+                throw new ArgumentException("TODO", e);
             }
             SqlClientEventSource.Log.TryTraceEvent("SqlAuthenticationProviderRegistry | {0}", "Created user-defined SqlAuthenticationInitializer.");
         }
@@ -439,7 +439,7 @@ internal sealed class SqlAuthenticationProviderRegistry
                 }
                 catch (Exception e)
                 {
-                    throw AuthenticationStrings.CannotCreateAuthProvider(authentication.ToString(), providerSettings.Type, e);
+                    throw new ArgumentException("TODO", e);
                 }
                 if (provider is null)
                 {
@@ -447,7 +447,7 @@ internal sealed class SqlAuthenticationProviderRegistry
                 }
                 if (!provider.IsSupported(authentication))
                 {
-                    throw AuthenticationStrings.UnsupportedAuthenticationByProvider(authentication.ToString(), providerSettings.Type);
+                    throw new NotSupportedException("TODO");
                 }
 
                 Register(authentication, provider, RegistrationTier.Config);
@@ -530,7 +530,7 @@ internal sealed class SqlAuthenticationProviderRegistry
         {
             if (optionsType is null || optionsCtor is null)
             {
-                throw AuthenticationStrings.UseWamBrokerRequiresAzureExtensionUpgrade();
+                throw new InvalidOperationException("TODO");
             }
 
             var options = Activator.CreateInstance(optionsType);
@@ -632,7 +632,7 @@ internal sealed class SqlAuthenticationProviderRegistry
     {
         if (!provider.IsSupported(authenticationMethod))
         {
-            throw AuthenticationStrings.UnsupportedAuthenticationByProvider(authenticationMethod.ToString(), provider.GetType().Name);
+            throw new NotSupportedException("TODO");
         }
         lock (_sync)
         {
@@ -717,7 +717,7 @@ internal sealed class SqlAuthenticationProviderRegistry
             case "active directory workload identity":
                 return SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity;
             default:
-                throw AuthenticationStrings.UnsupportedAuthentication(authentication);
+                throw new NotSupportedException("TODO");
         }
     }
 

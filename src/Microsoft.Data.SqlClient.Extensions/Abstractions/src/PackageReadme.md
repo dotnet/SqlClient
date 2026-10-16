@@ -32,10 +32,6 @@ the existing provider. These failures are traced through `Microsoft.Data.SqlClie
 Bootstrap failures are cached and logged on subsequent accesses; correct the cause and restart
 the application.
 
-Recoverable resource lookup or formatting failures fall back to the resource key and
-culture-formatted argument values, identifying unformattable arguments by type and preserving
-the original exception cause. Fatal runtime errors propagate instead of being masked.
-
 Untrimmed applications retain app.config loading and automatic Azure discovery. These switches
 default to `true` and are cached independently on first access for the lifetime of the process:
 

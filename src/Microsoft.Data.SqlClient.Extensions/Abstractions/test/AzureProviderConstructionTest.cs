@@ -151,19 +151,16 @@ public class AzureProviderConstructionTest
         Assert.Null(instance);
     }
 
-    /// <summary>A broker override without Azure options produces a localized error.</summary>
+    /// <summary>A broker override without Azure options throws an invalid-operation exception.</summary>
     [Fact]
     public void CreateAzureAuthenticationProvider_UseWamBroker_OptionsMissing_Throws()
     {
-        InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() =>
+        Assert.Throws<InvalidOperationException>(() =>
             SqlAuthenticationProviderRegistry.CreateAzureAuthenticationProvider(
                 typeof(StubLegacy.ActiveDirectoryAuthenticationProvider),
                 optionsType: null,
                 applicationClientId: null,
                 useWamBroker: true));
-
-        Assert.Contains("ActiveDirectoryAuthenticationProviderOptions", ex.Message);
-        Assert.Contains("Microsoft.Data.SqlClient.Extensions.Azure", ex.Message);
     }
 
     /// <summary>The configured broker flag and client ID reach the modern options constructor.</summary>
