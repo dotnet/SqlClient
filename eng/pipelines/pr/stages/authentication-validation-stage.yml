@@ -1,0 +1,81 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+parameters:
+  - name: poolName
+    type: string
+  - name: linuxPoolImage
+    type: string
+  - name: windowsPoolImage
+    type: string
+  - name: referenceTypes
+    type: object
+    default: [Project, Package]
+  - name: buildConfiguration
+    type: string
+    values: [Debug, Release]
+
+stages:
+  - stage: test_authentication
+    displayName: Authentication configuration and publishing
+    # Each job builds its own inputs through standard targets; no artifact download is assumed.
+    dependsOn: []
+    jobs:
+      - ${{ each referenceType in parameters.referenceTypes }}:
+        - job: authentication_linux_${{ referenceType }}
+          displayName: Authentication Linux ${{ referenceType }}
+          timeoutInMinutes: 90
+          pool:
+            name: ${{ parameters.poolName }}
+            demands:
+              - imageOverride -equals ${{ parameters.linuxPoolImage }}
+          variables:
+            NUGET_PACKAGES: $(Pipeline.Workspace)/authentication-linux-${{ referenceType }}/nuget
+          steps:
+            - template: /eng/pipelines/common/steps/install-dotnet.yml@self
+              parameters:
+                runtimes: [10.x]
+            - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
+            - task: DotNetCoreCLI@2
+              displayName: Scenarios, runtime mismatch, trimmed and NativeAOT execution
+              inputs:
+                command: custom
+                custom: build
+                workingDirectory: $(Build.SourcesDirectory)
+                arguments: >-
+                  build.proj -t:TestAuthentication
+                  -p:ReferenceType=${{ referenceType }}
+                  -p:Configuration=${{ parameters.buildConfiguration }}
+                  -p:TestFramework=net10.0
+                  -p:PackageVersionSqlClient=8.0.0-auth.$(Build.BuildId)
+                  -p:AuthenticationPublish=true
+
+        - job: authentication_windows_${{ referenceType }}
+          displayName: Authentication Windows ${{ referenceType }}
+          timeoutInMinutes: 90
+          pool:
+            name: ${{ parameters.poolName }}
+            demands:
+              - imageOverride -equals ${{ parameters.windowsPoolImage }}
+          variables:
+            NUGET_PACKAGES: $(Pipeline.Workspace)/authentication-windows-${{ referenceType }}/nuget
+          steps:
+            - template: /eng/pipelines/common/steps/install-dotnet.yml@self
+              parameters:
+                runtimes: [10.x]
+            - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
+            - task: DotNetCoreCLI@2
+              displayName: .NET Framework scenarios and runtime mismatch execution
+              inputs:
+                command: custom
+                custom: build
+                workingDirectory: $(Build.SourcesDirectory)
+                arguments: >-
+                  build.proj -t:TestAuthentication
+                  -p:ReferenceType=${{ referenceType }}
+                  -p:Configuration=${{ parameters.buildConfiguration }}
+                  -p:TestFramework=net462
+                  -p:PackageVersionSqlClient=8.0.0-auth.$(Build.BuildId)
