@@ -61,19 +61,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         /// <summary>
-        /// Pools without identity partitioning expose the sentinel and still replenish,
-        /// including callers that supply a null identity.
+        /// Pools without identity partitioning retain the sentinel and still replenish.
         /// </summary>
         [Theory]
-        [InlineData(false, false)]
-        [InlineData(false, true)]
-        [InlineData(true, false)]
-        [InlineData(true, true)]
-        public async Task Replenishment_WithoutIdentity_UsesNoIdentity(bool usePoolV2, bool nullIdentity)
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task Replenishment_WithoutIdentity_UsesNoIdentity(bool usePoolV2)
         {
             var factory = new ChannelDbConnectionPoolTest.CountingSuccessfulConnectionFactory();
             var group = CreateGroup(minPoolSize: 1, poolByIdentity: false);
-            DbConnectionPoolIdentity identity = nullIdentity ? null! : DbConnectionPoolIdentity.NoIdentity;
+            DbConnectionPoolIdentity identity = DbConnectionPoolIdentity.NoIdentity;
             IDbConnectionPool pool = usePoolV2
                 ? new ChannelDbConnectionPool(factory, group, identity, new DbConnectionPoolProviderInfo(), timeProvider: new FakeTimeProvider())
                 : new WaitHandleDbConnectionPool(factory, group, identity, new DbConnectionPoolProviderInfo(), timeProvider: new FakeTimeProvider());

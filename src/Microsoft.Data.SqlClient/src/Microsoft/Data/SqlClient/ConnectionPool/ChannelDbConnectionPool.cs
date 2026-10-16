@@ -163,7 +163,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         internal ChannelDbConnectionPool(
             SqlConnectionFactory connectionFactory,
             DbConnectionPoolGroup connectionPoolGroup,
-            DbConnectionPoolIdentity? identity,
+            DbConnectionPoolIdentity identity,
             DbConnectionPoolProviderInfo connectionPoolProviderInfo,
             ConcurrencyLimiter? connectionCreationRateLimiter = null,
             TimeProvider? timeProvider = null,
@@ -176,7 +176,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             PoolGroup = connectionPoolGroup;
             PoolGroupOptions = connectionPoolGroup.PoolGroupOptions;
             ProviderInfo = connectionPoolProviderInfo;
-            Identity = identity ?? DbConnectionPoolIdentity.NoIdentity;
+            Identity = identity;
             AuthenticationContexts = new();
             MaxPoolSize = Convert.ToUInt32(PoolGroupOptions.MaxPoolSize);
             TransactedConnectionPool = new(this, Metrics);

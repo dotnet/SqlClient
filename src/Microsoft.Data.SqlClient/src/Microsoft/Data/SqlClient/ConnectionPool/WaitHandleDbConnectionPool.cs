@@ -214,7 +214,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         {
             Debug.Assert(connectionPoolGroup != null, "null connectionPoolGroup");
 
-            if (identity != null && identity.IsRestricted)
+            if (identity.IsRestricted)
             {
                 throw ADP.InternalError(ADP.InternalErrorCode.AttemptingToPoolOnRestrictedToken);
             }
@@ -249,7 +249,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             _connectionPoolGroup = connectionPoolGroup;
             _connectionPoolGroupOptions = connectionPoolGroup.PoolGroupOptions;
             _connectionPoolProviderInfo = connectionPoolProviderInfo;
-            _identity = identity ?? DbConnectionPoolIdentity.NoIdentity;
+            _identity = identity;
             _timeProvider = timeProvider ?? TimeProvider.System;
 
             _waitHandles = new PoolWaitHandles();
