@@ -396,6 +396,55 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        /// <summary>
+        /// The internal async End used on an Always Encrypted metadata-cache hit must preserve
+        /// fatal metadata failures after MARS closure and balance the original physical connection's count.
+        /// No encrypted columns or keys are needed to exercise parameter-metadata caching.
+        /// </summary>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        public async Task CachedEncryptionMetadata_FatalReadPreservesExceptionAndAsyncCount()
+        {
+            var builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+            {
+                Pooling = false,
+                MultipleActiveResultSets = true,
+                ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Enabled,
+                Enlist = false
+            };
+            bool cacheEnabled = SqlConnection.ColumnEncryptionQueryMetadataCacheEnabled;
+            SqlConnection.ColumnEncryptionQueryMetadataCacheEnabled = true;
+            try
+            {
+                using SqlConnection connection = new(builder.ConnectionString);
+                await connection.OpenAsync();
+                using SqlCommand command = new(
+                    $"RAISERROR ('Fatal cached metadata sentinel', 10, 1); SELECT @value; -- {Guid.NewGuid()}", connection);
+                command.Parameters.Add("@value", SqlDbType.Int).Value = 42;
+                Assert.Equal(42, await command.ExecuteScalarAsync());
+
+                Type cacheType = typeof(SqlConnection).Assembly.GetType("Microsoft.Data.SqlClient.SqlQueryMetadataCache");
+                object cache = cacheType.GetMethod("GetInstance", BindingFlags.Static | BindingFlags.NonPublic)
+                    .Invoke(null, null);
+                FieldInfo hits = cacheType.GetField("_cacheHits", BindingFlags.Instance | BindingFlags.NonPublic);
+                long hitsBefore = (long)hits.GetValue(cache);
+                object original = connection.GetInternalConnection();
+                FieldInfo count = original.GetType().GetField("_asyncCommandCount", BindingFlags.Instance | BindingFlags.NonPublic);
+                Assert.Equal(0, count.GetValue(original));
+                var failure = new OutOfMemoryException("Fatal cached metadata sentinel");
+                connection.InfoMessage += (_, _) => throw failure;
+
+                Exception actual = await Record.ExceptionAsync(() => command.ExecuteScalarAsync());
+                Assert.True((long)hits.GetValue(cache) > hitsBefore, "Expected an encryption metadata cache hit.");
+                Assert.Same(failure, actual);
+                Assert.Equal(ConnectionState.Closed, connection.State);
+                Assert.Equal(0, count.GetValue(original));
+            }
+            finally
+            {
+                SqlConnection.ColumnEncryptionQueryMetadataCacheEnabled = cacheEnabled;
+            }
+        }
+
         /// <summary>Opens a connection using the API variant under test.</summary>
         /// <param name="connection">Connection to open.</param>
         /// <param name="async">Whether to exercise asynchronous opening.</param>
