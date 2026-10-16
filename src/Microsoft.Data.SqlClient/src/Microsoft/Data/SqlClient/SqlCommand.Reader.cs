@@ -865,6 +865,11 @@ namespace Microsoft.Data.SqlClient
                     // @TODO: Why does the command set whether the reader is initialized??
                     ds.IsInitialized = true;
                 }
+                catch (Exception e) when (ADP.IsUnrecoverableException(e))
+                {
+                    ds.CloseOnError(e);
+                    throw;
+                }
                 catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                 {
                     if (_inPrepare)
