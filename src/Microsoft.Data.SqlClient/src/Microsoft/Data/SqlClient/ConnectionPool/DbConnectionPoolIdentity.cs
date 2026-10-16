@@ -27,11 +27,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             _isRestricted = isRestricted;
             _isNetwork = isNetwork;
             _authenticationId = authenticationId;
-            #if NETFRAMEWORK
             _hashCode = (sidString, isRestricted, isNetwork, authenticationId).GetHashCode();
-            #else
-            _hashCode = HashCode.Combine(sidString, isRestricted, isNetwork, authenticationId);
-            #endif
         }
 
         // @TODO: Make auto-property
@@ -41,11 +37,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         }
 
         public override bool Equals(object value) =>
-            this == NoIdentity || Equals((DbConnectionPoolIdentity)value);
+            Equals((DbConnectionPoolIdentity)value);
 
         public bool Equals(DbConnectionPoolIdentity value)
         {
-            bool result = this == NoIdentity || this == value;
+            bool result = this == value;
             if (!result && value != null)
             {
                 result = Equals(value._sidString, value._isRestricted, value._isNetwork, value._authenticationId);

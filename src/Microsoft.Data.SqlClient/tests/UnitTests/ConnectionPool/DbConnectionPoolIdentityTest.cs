@@ -54,6 +54,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(equal, second.Equals(first));
             Assert.False(first.Equals(null));
             Assert.True(first.Equals(first));
+            Assert.False(DbConnectionPoolIdentity.NoIdentity.Equals(first));
+            Assert.False(DbConnectionPoolIdentity.NoIdentity.Equals((object)first));
+            Assert.False(first.Equals(DbConnectionPoolIdentity.NoIdentity));
+            Assert.False(DbConnectionPoolIdentity.NoIdentity.Equals(null));
+            Assert.False(DbConnectionPoolIdentity.NoIdentity.Equals((object)null!));
+            Assert.True(DbConnectionPoolIdentity.NoIdentity.Equals(DbConnectionPoolIdentity.NoIdentity));
+            Assert.True(DbConnectionPoolIdentity.NoIdentity.Equals((object)DbConnectionPoolIdentity.NoIdentity));
             if (equal)
             {
                 Assert.Equal(first.GetHashCode(), second.GetHashCode());
