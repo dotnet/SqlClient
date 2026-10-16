@@ -11,7 +11,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
     internal sealed partial class DbConnectionPoolIdentity : IEquatable<DbConnectionPoolIdentity>
     {
         public static readonly DbConnectionPoolIdentity NoIdentity =
-            new DbConnectionPoolIdentity(sidString: string.Empty, isRestricted: false, isNetwork: true);
+            new DbConnectionPoolIdentity(sidString: string.Empty, isRestricted: false, isNetwork: true, authenticationId: 0);
 
         private static DbConnectionPoolIdentity s_lastIdentity = null;
 
@@ -21,7 +21,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         private readonly long _authenticationId;
         private readonly int _hashCode;
 
-        private DbConnectionPoolIdentity(string sidString, bool isRestricted, bool isNetwork, long authenticationId = 0)
+        private DbConnectionPoolIdentity(string sidString, bool isRestricted, bool isNetwork, long authenticationId)
         {
             _sidString = sidString;
             _isRestricted = isRestricted;
@@ -44,7 +44,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             bool result = this == NoIdentity || this == value;
             if (!result && value != null)
             {
-                result = DeepEquals(value._sidString, value._isRestricted, value._isNetwork, value._authenticationId);
+                result = _sidString == value._sidString &&
+                         _isRestricted == value._isRestricted &&
+                         _isNetwork == value._isNetwork &&
+                         _authenticationId == value._authenticationId;
             }
 
             return result;
@@ -84,7 +87,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             DbConnectionPoolIdentity current = lastIdentity != null &&
                                                lastIdentity.DeepEquals(sidString, isRestricted: false, isNetwork: false, authenticationId: 0)
                 ? lastIdentity
-                : new DbConnectionPoolIdentity(sidString, isRestricted: false, isNetwork: false);
+                : new DbConnectionPoolIdentity(sidString, isRestricted: false, isNetwork: false, authenticationId: 0);
 
             s_lastIdentity = current;
             return current;
