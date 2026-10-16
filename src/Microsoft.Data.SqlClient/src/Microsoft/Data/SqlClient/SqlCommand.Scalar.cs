@@ -128,7 +128,6 @@ namespace Microsoft.Data.SqlClient
                             }
                             else
                             {
-                                Exception exception = null;
                                 object result = null;
                                 try
                                 {
@@ -139,16 +138,8 @@ namespace Microsoft.Data.SqlClient
                                     reader.Dispose();
                                 }
 
-                                if (exception is not null)
-                                {
-                                    s_diagnosticListener.WriteCommandError(operationId, this, _transaction, exception);
-                                    source.SetException(exception);
-                                }
-                                else
-                                {
-                                    s_diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
-                                    source.SetResult(result);
-                                }
+                                s_diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
+                                source.SetResult(result);
                             }
                         }
                         catch (Exception e)
@@ -172,22 +163,23 @@ namespace Microsoft.Data.SqlClient
 
         private void CloseScalarReaderOnError(SqlDataReader reader, Exception exception, Guid operationId)
         {
-            if (ADP.IsUnrecoverableException(exception))
+            bool unrecoverable = ADP.IsUnrecoverableException(exception);
+            if (!unrecoverable)
             {
-                try
-                {
-                    s_diagnosticListener.WriteCommandError(operationId, this, _transaction, exception);
-                }
-                finally
+                reader.CloseOnError(exception);
+            }
+
+            try
+            {
+                s_diagnosticListener.WriteCommandError(operationId, this, _transaction, exception);
+            }
+            finally
+            {
+                if (unrecoverable)
                 {
                     // Fatal cleanup rethrows the original error, including if a listener throws.
                     reader.CloseOnError(exception);
                 }
-            }
-            else
-            {
-                reader.CloseOnError(exception);
-                s_diagnosticListener.WriteCommandError(operationId, this, _transaction, exception);
             }
         }
 
