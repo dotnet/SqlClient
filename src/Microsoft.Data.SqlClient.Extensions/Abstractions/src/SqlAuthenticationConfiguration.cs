@@ -220,8 +220,7 @@ internal sealed class SqlAuthenticationConfiguration
             case "active directory workload identity":
                 return SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity;
             default:
-                throw new NotSupportedException(
-                    $"Configured authentication method '{authentication}' is not supported.");
+                throw AuthenticationStrings.UnsupportedAuthentication(authentication);
         }
     }
 }
