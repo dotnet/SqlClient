@@ -26,6 +26,14 @@ setup() {
   STUB_DIR="$(mktemp -d)"
   export PATH="${STUB_DIR}:${PATH}"
 
+  # Stub 'sleep' as a no-op so the backport-issue retry loop's delay (see
+  # lookup_backport_issue) doesn't slow down tests that exercise it.
+  cat > "${STUB_DIR}/sleep" <<'STUB'
+#!/usr/bin/env bash
+exit 0
+STUB
+  chmod +x "${STUB_DIR}/sleep"
+
   # Defaults — individual tests override as needed.
   export VERSION="7.0.1"
   export MERGE_COMMIT_SHA="abc123def456"
@@ -295,6 +303,287 @@ STUB
   grep -q "GIT: cherry-pick --abort" "${STUB_DIR}/git.log"
   # Should have created an empty commit.
   grep -q "GIT: commit --allow-empty" "${STUB_DIR}/git.log"
+}
+
+# ── Backport issue lookup ────────────────────────────────────────────────────
+
+@test "appends Fixes line when a backport issue is found" {
+  write_git_mock '
+    if [[ "$1" == "fetch" ]]; then exit 0; fi
+    if [[ "$1" == "cherry" ]]; then echo "+ abc123"; exit 0; fi
+    if [[ "$1" == "checkout" ]]; then exit 0; fi
+    if [[ "$1" == "rev-list" ]]; then echo "abc123def456 parent1"; exit 0; fi
+    if [[ "$1" == "cherry-pick" ]]; then exit 0; fi
+    if [[ "$1" == "push" ]]; then exit 0; fi
+    exit 0
+  '
+  write_gh_mock '
+    if [[ "$1" == "api" && "$2" == repos/*/milestones ]]; then echo "7.0.1"; exit 0; fi
+    if [[ "$1" == "pr" && "$2" == "view" ]]; then echo "4714"; exit 0; fi
+    if [[ "$1" == "api" && "$2" == repos/*/issues/*/sub_issues ]]; then echo "4900"; exit 0; fi
+    if [[ "$1" == "pr" && "$2" == "create" ]]; then
+      while [[ $# -gt 0 ]]; do
+        if [[ "$1" == "--body" ]]; then
+          printf "%s" "$2" > "'"${STUB_DIR}"'/pr-body.txt"
+          break
+        fi
+        shift
+      done
+      exit 0
+    fi
+    exit 0
+  '
+
+  run bash "${SCRIPT}"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Found backport issue #4900"* ]]
+  [ -f "${STUB_DIR}/pr-body.txt" ]
+  [[ "$(cat "${STUB_DIR}/pr-body.txt")" == *"Fixes #4900"* ]]
+  [[ "$(cat "${STUB_DIR}/pr-body.txt")" == *"<!-- backport-issue-numbers: 4900 -->"* ]]
+}
+
+@test "appends Fixes lines for every closing issue with a matching backport issue" {
+  write_git_mock '
+    if [[ "$1" == "fetch" ]]; then exit 0; fi
+    if [[ "$1" == "cherry" ]]; then echo "+ abc123"; exit 0; fi
+    if [[ "$1" == "checkout" ]]; then exit 0; fi
+    if [[ "$1" == "rev-list" ]]; then echo "abc123def456 parent1"; exit 0; fi
+    if [[ "$1" == "cherry-pick" ]]; then exit 0; fi
+    if [[ "$1" == "push" ]]; then exit 0; fi
+    exit 0
+  '
+  write_gh_mock '
+    if [[ "$1" == "api" && "$2" == repos/*/milestones ]]; then echo "7.0.1"; exit 0; fi
+    if [[ "$1" == "pr" && "$2" == "view" ]]; then printf "4714\n4715\n"; exit 0; fi
+    if [[ "$1" == "api" && "$2" == repos/*/issues/4714/sub_issues ]]; then echo "4900"; exit 0; fi
+    if [[ "$1" == "api" && "$2" == repos/*/issues/4715/sub_issues ]]; then echo "4901"; exit 0; fi
+    if [[ "$1" == "pr" && "$2" == "create" ]]; then
+      while [[ $# -gt 0 ]]; do
+        if [[ "$1" == "--body" ]]; then
+          printf "%s" "$2" > "'"${STUB_DIR}"'/pr-body.txt"
+          break
+        fi
+        shift
+      done
+      exit 0
+    fi
+    exit 0
+  '
+
+  run bash "${SCRIPT}"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Found backport issue #4900"* ]]
+  [[ "$output" == *"Found backport issue #4901"* ]]
+  [ -f "${STUB_DIR}/pr-body.txt" ]
+  [[ "$(cat "${STUB_DIR}/pr-body.txt")" == *"Fixes #4900"* ]]
+  [[ "$(cat "${STUB_DIR}/pr-body.txt")" == *"Fixes #4901"* ]]
+  [[ "$(cat "${STUB_DIR}/pr-body.txt")" == *"<!-- backport-issue-numbers: 4900 4901 -->"* ]]
+}
+
+@test "picks the sub-issue with the [VERSION] title prefix, not just any milestone match" {
+  # The parent issue has two sub-issues milestoned 7.0.1: an unrelated
+  # follow-up task (created independently of this automation) and the real
+  # backport issue created by create-backport-issue.sh, which is always
+  # titled "[VERSION] <parent title>". Matching on milestone alone would
+  # nondeterministically pick either one; the title prefix must disambiguate.
+  write_git_mock '
+    if [[ "$1" == "fetch" ]]; then exit 0; fi
+    if [[ "$1" == "cherry" ]]; then echo "+ abc123"; exit 0; fi
+    if [[ "$1" == "checkout" ]]; then exit 0; fi
+    if [[ "$1" == "rev-list" ]]; then echo "abc123def456 parent1"; exit 0; fi
+    if [[ "$1" == "cherry-pick" ]]; then exit 0; fi
+    if [[ "$1" == "push" ]]; then exit 0; fi
+    exit 0
+  '
+  write_gh_mock '
+    if [[ "$1" == "api" && "$2" == repos/*/milestones ]]; then echo "7.0.1"; exit 0; fi
+    if [[ "$1" == "pr" && "$2" == "view" ]]; then echo "4714"; exit 0; fi
+    if [[ "$1" == "api" && "$2" == repos/*/issues/4714/sub_issues ]]; then
+      jq_expr=""
+      args=("$@")
+      for ((i = 0; i < ${#args[@]}; i++)); do
+        if [[ "${args[$i]}" == "--jq" ]]; then
+          jq_expr="${args[$((i + 1))]}"
+        fi
+      done
+      printf "%s" "[{\"number\":4899,\"title\":\"Unrelated follow-up task\",\"milestone\":{\"title\":\"7.0.1\"}},{\"number\":4900,\"title\":\"[7.0.1] Fix connection timeout\",\"milestone\":{\"title\":\"7.0.1\"}}]" | jq -r "${jq_expr}"
+      exit 0
+    fi
+    if [[ "$1" == "pr" && "$2" == "create" ]]; then
+      while [[ $# -gt 0 ]]; do
+        if [[ "$1" == "--body" ]]; then
+          printf "%s" "$2" > "'"${STUB_DIR}"'/pr-body.txt"
+          break
+        fi
+        shift
+      done
+      exit 0
+    fi
+    exit 0
+  '
+
+  run bash "${SCRIPT}"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Found backport issue #4900"* ]]
+  [ -f "${STUB_DIR}/pr-body.txt" ]
+  [[ "$(cat "${STUB_DIR}/pr-body.txt")" == *"Fixes #4900"* ]]
+  [[ "$(cat "${STUB_DIR}/pr-body.txt")" != *"Fixes #4899"* ]]
+  [[ "$(cat "${STUB_DIR}/pr-body.txt")" == *"<!-- backport-issue-numbers: 4900 -->"* ]]
+  [[ "$(cat "${STUB_DIR}/pr-body.txt")" != *"4899 -->"* ]]
+}
+
+@test "omits Fixes line when the PR has no closing issue references" {
+  write_git_mock '
+    if [[ "$1" == "fetch" ]]; then exit 0; fi
+    if [[ "$1" == "cherry" ]]; then echo "+ abc123"; exit 0; fi
+    if [[ "$1" == "checkout" ]]; then exit 0; fi
+    if [[ "$1" == "rev-list" ]]; then echo "abc123def456 parent1"; exit 0; fi
+    if [[ "$1" == "cherry-pick" ]]; then exit 0; fi
+    if [[ "$1" == "push" ]]; then exit 0; fi
+    exit 0
+  '
+  write_gh_mock '
+    if [[ "$1" == "api" && "$2" == repos/*/milestones ]]; then echo "7.0.1"; exit 0; fi
+    if [[ "$1" == "pr" && "$2" == "view" ]]; then exit 0; fi
+    if [[ "$1" == "pr" && "$2" == "create" ]]; then
+      while [[ $# -gt 0 ]]; do
+        if [[ "$1" == "--body" ]]; then
+          printf "%s" "$2" > "'"${STUB_DIR}"'/pr-body.txt"
+          break
+        fi
+        shift
+      done
+      exit 0
+    fi
+    exit 0
+  '
+
+  run bash "${SCRIPT}"
+  [ "$status" -eq 0 ]
+  [ -f "${STUB_DIR}/pr-body.txt" ]
+  [[ "$(cat "${STUB_DIR}/pr-body.txt")" != *"Fixes #"* ]]
+  [[ "$(cat "${STUB_DIR}/pr-body.txt")" != *"backport-issue-numbers"* ]]
+}
+
+@test "omits Fixes line when no sub-issue matches the version" {
+  write_git_mock '
+    if [[ "$1" == "fetch" ]]; then exit 0; fi
+    if [[ "$1" == "cherry" ]]; then echo "+ abc123"; exit 0; fi
+    if [[ "$1" == "checkout" ]]; then exit 0; fi
+    if [[ "$1" == "rev-list" ]]; then echo "abc123def456 parent1"; exit 0; fi
+    if [[ "$1" == "cherry-pick" ]]; then exit 0; fi
+    if [[ "$1" == "push" ]]; then exit 0; fi
+    exit 0
+  '
+  write_gh_mock '
+    if [[ "$1" == "api" && "$2" == repos/*/milestones ]]; then echo "7.0.1"; exit 0; fi
+    if [[ "$1" == "pr" && "$2" == "view" ]]; then echo "4714"; exit 0; fi
+    if [[ "$1" == "api" && "$2" == repos/*/issues/*/sub_issues ]]; then exit 0; fi
+    if [[ "$1" == "pr" && "$2" == "create" ]]; then
+      while [[ $# -gt 0 ]]; do
+        if [[ "$1" == "--body" ]]; then
+          printf "%s" "$2" > "'"${STUB_DIR}"'/pr-body.txt"
+          break
+        fi
+        shift
+      done
+      exit 0
+    fi
+    exit 0
+  '
+
+  run bash "${SCRIPT}"
+  [ "$status" -eq 0 ]
+  [ -f "${STUB_DIR}/pr-body.txt" ]
+  [[ "$(cat "${STUB_DIR}/pr-body.txt")" != *"Fixes #"* ]]
+  [[ "$(cat "${STUB_DIR}/pr-body.txt")" != *"backport-issue-numbers"* ]]
+}
+
+@test "retries sub-issue lookup when the parent issue still carries the Hotfix label" {
+  # Simulates the race between create-backport-issue.sh (creating the
+  # backport sub-issue) and this script (looking it up), both triggered by
+  # the same "Hotfix <version>" label event: the sub-issue doesn't exist on
+  # the first lookup, but does by the second.
+  local call_count_file="${STUB_DIR}/sub_issues_calls"
+  echo 0 > "${call_count_file}"
+
+  write_git_mock '
+    if [[ "$1" == "fetch" ]]; then exit 0; fi
+    if [[ "$1" == "cherry" ]]; then echo "+ abc123"; exit 0; fi
+    if [[ "$1" == "checkout" ]]; then exit 0; fi
+    if [[ "$1" == "rev-list" ]]; then echo "abc123def456 parent1"; exit 0; fi
+    if [[ "$1" == "cherry-pick" ]]; then exit 0; fi
+    if [[ "$1" == "push" ]]; then exit 0; fi
+    exit 0
+  '
+  write_gh_mock '
+    if [[ "$1" == "api" && "$2" == repos/*/milestones ]]; then echo "7.0.1"; exit 0; fi
+    if [[ "$1" == "pr" && "$2" == "view" ]]; then echo "4714"; exit 0; fi
+    if [[ "$1" == "api" && "$2" == repos/*/issues/*/sub_issues ]]; then
+      n=$(< "'"${call_count_file}"'")
+      n=$((n + 1))
+      echo "$n" > "'"${call_count_file}"'"
+      if [[ "$n" -ge 2 ]]; then echo "4900"; fi
+      exit 0
+    fi
+    if [[ "$1" == "api" && "$2" == repos/*/issues/4714 ]]; then echo "Hotfix 7.0.1"; exit 0; fi
+    if [[ "$1" == "pr" && "$2" == "create" ]]; then
+      while [[ $# -gt 0 ]]; do
+        if [[ "$1" == "--body" ]]; then
+          printf "%s" "$2" > "'"${STUB_DIR}"'/pr-body.txt"
+          break
+        fi
+        shift
+      done
+      exit 0
+    fi
+    exit 0
+  '
+
+  run bash "${SCRIPT}"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"retrying"* ]]
+  [[ "$output" == *"Found backport issue #4900"* ]]
+  [[ "$(cat "${STUB_DIR}/pr-body.txt")" == *"Fixes #4900"* ]]
+  [[ "$(cat "${STUB_DIR}/pr-body.txt")" == *"<!-- backport-issue-numbers: 4900 -->"* ]]
+}
+
+@test "gives up after exhausting retries when the backport issue never appears" {
+  # The Hotfix label is present (so retries are attempted) but the backport
+  # sub-issue never shows up — e.g. create-backport-issue.sh failed. The
+  # script must still finish cleanly without a Fixes line, not hang or fail.
+  write_git_mock '
+    if [[ "$1" == "fetch" ]]; then exit 0; fi
+    if [[ "$1" == "cherry" ]]; then echo "+ abc123"; exit 0; fi
+    if [[ "$1" == "checkout" ]]; then exit 0; fi
+    if [[ "$1" == "rev-list" ]]; then echo "abc123def456 parent1"; exit 0; fi
+    if [[ "$1" == "cherry-pick" ]]; then exit 0; fi
+    if [[ "$1" == "push" ]]; then exit 0; fi
+    exit 0
+  '
+  write_gh_mock '
+    if [[ "$1" == "api" && "$2" == repos/*/milestones ]]; then echo "7.0.1"; exit 0; fi
+    if [[ "$1" == "pr" && "$2" == "view" ]]; then echo "4714"; exit 0; fi
+    if [[ "$1" == "api" && "$2" == repos/*/issues/*/sub_issues ]]; then exit 0; fi
+    if [[ "$1" == "api" && "$2" == repos/*/issues/4714 ]]; then echo "Hotfix 7.0.1"; exit 0; fi
+    if [[ "$1" == "pr" && "$2" == "create" ]]; then
+      while [[ $# -gt 0 ]]; do
+        if [[ "$1" == "--body" ]]; then
+          printf "%s" "$2" > "'"${STUB_DIR}"'/pr-body.txt"
+          break
+        fi
+        shift
+      done
+      exit 0
+    fi
+    exit 0
+  '
+
+  run bash "${SCRIPT}"
+  [ "$status" -eq 0 ]
+  [ -f "${STUB_DIR}/pr-body.txt" ]
+  [[ "$(cat "${STUB_DIR}/pr-body.txt")" != *"Fixes #"* ]]
+  [[ "$(cat "${STUB_DIR}/pr-body.txt")" != *"backport-issue-numbers"* ]]
 }
 
 @test "conflict PR body contains real newlines, not literal backslash-n" {
