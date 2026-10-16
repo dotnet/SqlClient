@@ -37,7 +37,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         }
 
         public override bool Equals(object value) =>
-            Equals((DbConnectionPoolIdentity)value);
+            value is DbConnectionPoolIdentity identity && Equals(identity);
 
         public bool Equals(DbConnectionPoolIdentity value)
         {
