@@ -492,9 +492,7 @@ internal sealed class SqlAuthenticationProviderRegistry
             }
             catch (Exception e) when (ExceptionHelpers.IsRecoverableException(e))
             {
-                throw new ArgumentException(
-                    "Could not create or run configured authentication initializer " +
-                    $"'{initializerTypeName}'.", e);
+                throw AuthenticationStrings.CannotCreateSqlAuthInitializer(initializerTypeName, e);
             }
             SqlClientEventSource.Log.TryTraceEvent(
                 "SqlAuthenticationProviderRegistry | Created user-defined " +
@@ -526,15 +524,13 @@ internal sealed class SqlAuthenticationProviderRegistry
                 }
                 catch (Exception e) when (ExceptionHelpers.IsRecoverableException(e))
                 {
-                    throw new ArgumentException(
-                        "Could not create configured authentication provider " +
-                        $"'{providerSettings.Type}' for method '{providerSettings.Name}'.", e);
+                    throw AuthenticationStrings.CannotCreateAuthProvider(
+                        providerSettings.Name, providerSettings.Type, e);
                 }
                 if (!provider.IsSupported(authentication))
                 {
-                    throw new NotSupportedException(
-                        $"Configured authentication provider '{providerSettings.Type}' does not " +
-                        $"support method '{providerSettings.Name}'.");
+                    throw AuthenticationStrings.UnsupportedAuthenticationByProvider(
+                        providerSettings.Name, providerSettings.Type);
                 }
 
                 if (!Register(authentication, provider, RegistrationTier.Config))
@@ -593,9 +589,8 @@ internal sealed class SqlAuthenticationProviderRegistry
         // After bootstrap, validate outside the lock to permit cross-thread registry lookups.
         if (!provider.IsSupported(authenticationMethod))
         {
-            throw new NotSupportedException(
-                $"Authentication provider '{provider.GetType().FullName}' does not support " +
-                $"method '{authenticationMethod}'.");
+            throw AuthenticationStrings.UnsupportedAuthenticationByProvider(
+                authenticationMethod.ToString(), provider.GetType().FullName!);
         }
         lock (_sync)
         {
