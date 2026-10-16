@@ -2091,7 +2091,7 @@ namespace Microsoft.Data.SqlClient
 
         // func will change type to that with a 4 byte length if the type has a two
         // byte length and a parameter length > than that expressible in 2 bytes
-        internal MetaType ValidateTypeLengths()
+        internal MetaType ValidateTypeLengths(TdsParser parser = null)
         {
             MetaType mt = InternalMetaType;
             // Since the server will automatically reject any
@@ -2103,6 +2103,20 @@ namespace Microsoft.Data.SqlClient
             { // if type has 2 byte length
                 long actualSizeInBytes = GetActualSize();
                 long sizeInCharacters = Size;
+
+                // GetActualSize returns characters for ANSI strings. Decide whether to use
+                // MAX before building the SQL declaration or writing the RPC metadata, using
+                // the same connection encoding and character slice as the serializer.
+                if (parser != null && mt.IsAnsiType && !IsNull &&
+                    actualSizeInBytes <= TdsEnums.TYPE_SIZE_LIMIT &&
+                    sizeInCharacters <= TdsEnums.TYPE_SIZE_LIMIT && sizeInCharacters != -1 &&
+                    !HasFlag(SqlParameterFlags.CoercedValueIsDataFeed) && Direction != ParameterDirection.Output)
+                {
+                    object value = GetCoercedValue();
+                    string text = value is SqlString sqlString ? sqlString.Value :
+                        value is SqlChars sqlChars ? new string(sqlChars.Value) : (string)value;
+                    actualSizeInBytes = parser.GetEncodingCharLength(text, (int)actualSizeInBytes, Offset, null);
+                }
 
                 // Bug: VSTFDevDiv #636867
                 // Notes:
