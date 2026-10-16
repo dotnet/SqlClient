@@ -1,0 +1,48 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Invoke setup and cleanup in the same Windows job, with cleanup after the tests.
+# The agent must be a local administrator with permission to manage SQL logins.
+# Setup publishes netOnlyUser, netOnlyDomain, netOnlySid, netOnlyConnectionString,
+# and secret netOnlyPassword.
+# No server roles or database users are granted; tests must use master.
+parameters:
+  - name: mode
+    type: string
+    default: setup
+    values:
+      - setup
+      - cleanup
+
+  - name: instanceName
+    type: string
+    default: MSSQLSERVER
+
+  # Must match the SQL listener, not a client alias.
+  - name: port
+    type: string
+    default: '1433'
+
+steps:
+  - task: PowerShell@2
+    displayName: '${{ parameters.mode }} temporary net-only account [Win]'
+    ${{ if eq(parameters.mode, 'cleanup') }}:
+      condition: always()
+    inputs:
+      targetType: inline
+      pwsh: false
+      script: |
+        & "$(Build.SourcesDirectory)\eng\scripts\Configure-NetOnlyAccount.ps1" `
+          -Mode $env:NETONLY_MODE -InstanceName $env:NETONLY_INSTANCE -Port $env:NETONLY_PORT `
+          -AccountName $env:NETONLY_ACCOUNT -AccountSid $env:NETONLY_SID
+    env:
+      NETONLY_MODE: ${{ parameters.mode }}
+      NETONLY_INSTANCE: ${{ parameters.instanceName }}
+      NETONLY_PORT: ${{ parameters.port }}
+      # Configure-NetOnlyAccount.ps1 publishes these job variables during setup for later cleanup.
+      # Undefined ADO macros are treated as absent by cleanup.
+      NETONLY_ACCOUNT: $(netOnlyUser)
+      NETONLY_SID: $(netOnlySid)

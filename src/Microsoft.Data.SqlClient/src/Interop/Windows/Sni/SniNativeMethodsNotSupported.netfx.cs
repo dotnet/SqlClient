@@ -61,9 +61,6 @@ namespace Interop.Windows.Sni
         public uint SniInitialize(IntPtr pmo) =>
             throw ADP.SNIPlatformNotSupported(_architecture);
 
-        public uint SniIsTokenRestricted(IntPtr token, out bool isRestricted) =>
-            throw ADP.SNIPlatformNotSupported(_architecture);
-
         public uint SniOpenSyncExWrapper(ref SniClientConsumerInfo pClientConsumerInfo, out IntPtr ppConn) =>
             throw ADP.SNIPlatformNotSupported(_architecture);
 

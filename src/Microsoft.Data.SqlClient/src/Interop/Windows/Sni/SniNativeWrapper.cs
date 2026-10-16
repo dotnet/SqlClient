@@ -118,17 +118,6 @@ namespace Microsoft.Data.SqlClient
         internal static uint SniInitialize() =>
             s_nativeMethods.SniInitialize(IntPtr.Zero);
 
-        internal static uint SniIsTokenRestricted(IntPtr token, out bool isRestricted)
-        {
-            uint result = s_nativeMethods.SniIsTokenRestricted(token, out isRestricted);
-            if (result != 0)
-            {
-                Marshal.ThrowExceptionForHR(unchecked((int)result));
-            }
-
-            return result;
-        }
-        
         internal static uint SniOpenMarsSession(
             ConsumerInfo consumerInfo,
             SNIHandle parent,
