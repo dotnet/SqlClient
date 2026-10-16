@@ -65,14 +65,25 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Stopwatch stopwatch = new();
             stopwatch.Start();
 
+            // Task.Factory.StartNew with an async delegate returns a Task<Task>, so it must be
+            // unwrapped before use in Task.WhenAny below. Without Unwrap(), WhenAny would observe
+            // only the outer task (which completes as soon as the async lambda hits its first
+            // await) instead of the actual completion of RunPacketNumberWraparound.
             Task actionTask = Task.Factory.StartNew(
-                async () => await RunPacketNumberWraparound(enumerator, cancellationTokenSource.Token),
-                TaskCreationOptions.DenyChildAttach | TaskCreationOptions.LongRunning);
+                () => RunPacketNumberWraparound(enumerator, cancellationTokenSource.Token),
+                TaskCreationOptions.DenyChildAttach | TaskCreationOptions.LongRunning).Unwrap();
             Task timeoutTask = Task.Delay(TimeSpan.FromSeconds(60), cancellationTokenSource.Token);
-            await Task.WhenAny(actionTask, timeoutTask);
+            Task completedTask = await Task.WhenAny(actionTask, timeoutTask);
 
             stopwatch.Stop();
             cancellationTokenSource.Cancel();
+
+            // Propagate any unexpected failure from the action task (e.g. a connection open
+            // failure) instead of letting it surface only as a low enumerator count below.
+            if (completedTask == actionTask)
+            {
+                await actionTask;
+            }
 
             // Assert
             Assert.True(
