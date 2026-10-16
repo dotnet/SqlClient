@@ -3,6 +3,8 @@
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient.Extensions.Abstractions.Test</AssemblyName>
     <TargetFrameworks>net462;net10.0</TargetFrameworks>
+    <!-- The Azure discovery stand-in must pass family validation before its constructor is exercised. -->
+    <InformationalVersion>$(SqlClientPackageVersion)</InformationalVersion>
 
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
