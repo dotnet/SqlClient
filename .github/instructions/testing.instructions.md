@@ -8,6 +8,7 @@ applyTo: "**/tests/**,**/*Test*.cs"
 ```
 src/Microsoft.Data.SqlClient/tests/
 ├── FunctionalTests/          # Tests without SQL Server dependency
+├── AuthenticationTests/      # Fresh-process configuration/runtime and trim/AOT fixtures
 ├── ManualTests/              # Integration tests requiring SQL Server
 ├── PerformanceTests/         # Benchmark-style perf validation
 ├── StressTests/              # Long-running stress coverage
@@ -19,6 +20,18 @@ src/Microsoft.Data.SqlClient/tests/
 ```
 
 ## Test Categories
+
+### Authentication executable scenarios
+
+Keep non-xUnit authentication configuration, DLL-replacement and publish consumers in
+`src/Microsoft.Data.SqlClient/tests/AuthenticationTests/`, not inside Abstractions unit tests.
+Use `build.proj -t:TestAuthentication` with explicit `ReferenceType=Project` or `Package`;
+Package mode prepares real local sibling packages. Use an isolated `NUGET_PACKAGES` and
+unique `PackageVersionSqlClient` to avoid stale family images. The focused configuration
+and runtime-version targets remain available. `AuthenticationPublish=true` adds Linux
+net10.0 linux-x64 trimmed/NativeAOT publishes and executions with warnings as errors.
+Windows executes net462 scenarios; Linux cross-builds are not Windows runtime validation.
+`BuildAuthenticationTests` is part of `BuildTests`; ordinary unit tests stay separate.
 
 ### Unit Tests (`UnitTests/`)
 - Test individual components in isolation
