@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals;
 using Xunit;
+using DiagnosticListener = System.Diagnostics.DiagnosticListener;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -266,6 +267,83 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.False(completedWhileLocked, "Session retirement bypassed the cancellation lock.");
             Assert.Same(failure, Assert.IsType<TargetInvocationException>(actual).InnerException);
             Assert.True(reader.IsClosed);
+        }
+
+        /// <summary>
+        /// Synchronous error subscribers must observe an already quarantined connection, even if
+        /// they close and borrow from its pool or throw a secondary exception.
+        /// </summary>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [InlineData(false, false)]
+        [InlineData(false, true)]
+        [InlineData(true, false)]
+        [InlineData(true, true)]
+        public async Task ScalarFatalError_QuarantinesBeforeDiagnosticCallback(bool mars, bool throwFromSubscriber)
+        {
+            var builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+            {
+                ApplicationName = nameof(ScalarFatalError_QuarantinesBeforeDiagnosticCallback) + Guid.NewGuid(),
+                Pooling = true,
+                MaxPoolSize = 1,
+                MinPoolSize = 0,
+                ConnectTimeout = 5,
+                ConnectRetryCount = 0,
+                MultipleActiveResultSets = mars,
+                Enlist = false
+            };
+            using SqlConnection connection = new(builder.ConnectionString);
+            await connection.OpenAsync();
+            var original = new InternalConnectionWrapper(connection);
+            object parser = ConnectionHelper.GetParser(connection.GetInternalConnection());
+            using SqlCommand command = new(
+                "SELECT 1; RAISERROR ('Fatal diagnostic sentinel', 10, 1); SELECT 2;", connection);
+            var failure = new OutOfMemoryException("Fatal diagnostic sentinel");
+            connection.InfoMessage += (_, _) => throw failure;
+            int errorEvents = 0;
+            bool parserWasBroken = false;
+            bool reusedInterruptedConnection = true;
+            object reportedException = null;
+            object probeResult = null;
+            var observer = new FakeDiagnosticListenerObserver(value =>
+            {
+                if (value.Key != "Microsoft.Data.SqlClient.WriteCommandError" ||
+                    !ReferenceEquals(command, value.Value.GetType().GetProperty("Command").GetValue(value.Value)))
+                {
+                    return;
+                }
+                errorEvents++;
+                reportedException = value.Value.GetType().GetProperty("Exception").GetValue(value.Value);
+                parserWasBroken = parser.GetType().GetProperty("State", BindingFlags.Instance | BindingFlags.NonPublic)
+                    .GetValue(parser).ToString() == "Broken";
+                connection.Close();
+                using SqlConnection next = new(builder.ConnectionString);
+                next.Open();
+                reusedInterruptedConnection = original.IsInternalConnectionOf(next);
+                using SqlCommand probe = new("SELECT 42", next);
+                probeResult = probe.ExecuteScalar();
+                if (throwFromSubscriber)
+                {
+                    throw new InvalidOperationException("Secondary diagnostic failure");
+                }
+            });
+            observer.Enable();
+            try
+            {
+                using (DiagnosticListener.AllListeners.Subscribe(observer))
+                {
+                    Assert.Same(failure, await Record.ExceptionAsync(() => command.ExecuteScalarAsync()));
+                }
+                Assert.Equal(1, errorEvents);
+                Assert.Same(failure, reportedException);
+                Assert.True(parserWasBroken, "Diagnostic subscriber ran before quarantine.");
+                Assert.False(reusedInterruptedConnection);
+                Assert.Equal(42, probeResult);
+            }
+            finally
+            {
+                observer.Disable();
+                SqlConnection.ClearPool(connection);
+            }
         }
 
         /// <summary>Opens a connection using the API variant under test.</summary>

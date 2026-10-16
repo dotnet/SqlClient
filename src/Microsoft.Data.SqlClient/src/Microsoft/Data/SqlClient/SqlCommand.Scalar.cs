@@ -4,6 +4,7 @@
 
 using System;
 using System.Data;
+using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
@@ -164,21 +165,29 @@ namespace Microsoft.Data.SqlClient
         private void CloseScalarReaderOnError(SqlDataReader reader, Exception exception, Guid operationId)
         {
             bool unrecoverable = ADP.IsUnrecoverableException(exception);
-            if (!unrecoverable)
-            {
-                reader.CloseOnError(exception);
-            }
-
+            bool cleanupCompleted = false;
             try
             {
-                s_diagnosticListener.WriteCommandError(operationId, this, _transaction, exception);
+                // Quarantine before subscribers can close or reuse the connection.
+                reader.CloseOnError(exception);
+                cleanupCompleted = true;
             }
             finally
             {
-                if (unrecoverable)
+                if (unrecoverable || cleanupCompleted)
                 {
-                    // Fatal cleanup rethrows the original error, including if a listener throws.
-                    reader.CloseOnError(exception);
+                    try
+                    {
+                        s_diagnosticListener.WriteCommandError(operationId, this, _transaction, exception);
+                    }
+                    finally
+                    {
+                        if (unrecoverable)
+                        {
+                            // Neither cleanup nor a subscriber may replace the fatal error.
+                            ExceptionDispatchInfo.Capture(exception).Throw();
+                        }
+                    }
                 }
             }
         }
