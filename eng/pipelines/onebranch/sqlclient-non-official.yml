@@ -33,9 +33,9 @@ parameters:
   #
   # Validation covers XML documentation cross-references, localized resources, and the produced
   # NuGet packages.  Those gates run at several points across the build, so a hard failure at the
-  # first one prevents the rest from running.  Set this false to let a single run reach every gate
-  # and report all findings at once, which is the practical way to assess a newly added gate or a
-  # backlog of known findings.
+  # first one prevents the rest from running. Set this false for a report-only run so pending
+  # translations do not block later validation. Validation is strict by default.
+  # Missing or malformed validator inputs still fail. This is independent of failOnSdlError.
   - name: failOnValidationError
     displayName: Fail on validation errors
     type: boolean
