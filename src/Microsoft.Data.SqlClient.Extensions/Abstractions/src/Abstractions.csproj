@@ -88,11 +88,5 @@
   </ItemGroup>
 
   <!-- CodeGen Targets ================================================= -->
-  <ItemGroup>
-    <!-- Match AuthenticationStrings' ResourceManager base name for neutral and localized resources. -->
-    <EmbeddedResource Update="Resources/Strings*.resx">
-      <LogicalName>Microsoft.Data.SqlClient.Authentication.%(Filename).resources</LogicalName>
-    </EmbeddedResource>
-  </ItemGroup>
   <Import Project="$(ToolsDir)targets\GenerateThisAssemblyCs.targets" />
 </Project>
