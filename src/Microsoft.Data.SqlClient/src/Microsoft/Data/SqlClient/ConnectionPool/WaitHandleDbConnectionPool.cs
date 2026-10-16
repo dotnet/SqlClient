@@ -249,7 +249,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             _connectionPoolGroup = connectionPoolGroup;
             _connectionPoolGroupOptions = connectionPoolGroup.PoolGroupOptions;
             _connectionPoolProviderInfo = connectionPoolProviderInfo;
-            _identity = identity;
+            _identity = identity ?? DbConnectionPoolIdentity.NoIdentity;
             _timeProvider = timeProvider ?? TimeProvider.System;
 
             _waitHandles = new PoolWaitHandles();
@@ -353,7 +353,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         public bool UseLoadBalancing => PoolGroupOptions.UseLoadBalancing;
 
-        private bool UsingIntegrateSecurity => _identity != null && DbConnectionPoolIdentity.NoIdentity != _identity;
+        private bool UsingIntegrateSecurity => DbConnectionPoolIdentity.NoIdentity != _identity;
 
         public TransactedConnectionPool TransactedConnectionPool => _transactedConnectionPool;
 

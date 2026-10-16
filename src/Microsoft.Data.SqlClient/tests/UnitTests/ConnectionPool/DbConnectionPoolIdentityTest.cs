@@ -61,6 +61,37 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         /// <summary>
+        /// Pools without identity partitioning expose the sentinel and still replenish,
+        /// including callers that supply a null identity.
+        /// </summary>
+        [Theory]
+        [InlineData(false, false)]
+        [InlineData(false, true)]
+        [InlineData(true, false)]
+        [InlineData(true, true)]
+        public async Task Replenishment_WithoutIdentity_UsesNoIdentity(bool usePoolV2, bool nullIdentity)
+        {
+            var factory = new ChannelDbConnectionPoolTest.CountingSuccessfulConnectionFactory();
+            var group = CreateGroup(minPoolSize: 1, poolByIdentity: false);
+            DbConnectionPoolIdentity identity = nullIdentity ? null! : DbConnectionPoolIdentity.NoIdentity;
+            IDbConnectionPool pool = usePoolV2
+                ? new ChannelDbConnectionPool(factory, group, identity, new DbConnectionPoolProviderInfo(), timeProvider: new FakeTimeProvider())
+                : new WaitHandleDbConnectionPool(factory, group, identity, new DbConnectionPoolProviderInfo(), timeProvider: new FakeTimeProvider());
+            try
+            {
+                Assert.Same(DbConnectionPoolIdentity.NoIdentity, pool.Identity);
+                await Replenish(pool);
+                Assert.Equal(1, factory.CreateCount);
+                Assert.Equal(1, pool.IdleCount);
+                Assert.False(pool.ErrorOccurred);
+            }
+            finally
+            {
+                pool.Shutdown();
+            }
+        }
+
+        /// <summary>
         /// Network-only logons keep the local SID but must have distinct pool identities, while
         /// repeated reads and duplicated tokens from the same logon session remain equivalent.
         /// </summary>
@@ -305,15 +336,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             #endif
         }
 
-        /// <summary>Constructs a group that pools integrated-authentication connections by identity.</summary>
+        /// <summary>Constructs an isolated group with optional integrated-authentication identity partitioning.</summary>
         /// <param name="minPoolSize">The minimum number of connections to replenish.</param>
+        /// <param name="poolByIdentity">Whether the group uses integrated-authentication identity partitioning.</param>
         /// <returns>An isolated pool group for the test.</returns>
-        private static DbConnectionPoolGroup CreateGroup(int minPoolSize) =>
+        private static DbConnectionPoolGroup CreateGroup(int minPoolSize, bool poolByIdentity = true) =>
             new DbConnectionPoolGroup(
-                new SqlConnectionOptions("Data Source=localhost;Integrated Security=true;"),
+                new SqlConnectionOptions($"Data Source=localhost;Integrated Security={poolByIdentity};"),
                 new ConnectionPoolKey("IdentityTest", null, null, null, null),
                 new DbConnectionPoolGroupOptions(
-                    poolByIdentity: true, minPoolSize: minPoolSize, maxPoolSize: 5,
+                    poolByIdentity: poolByIdentity, minPoolSize: minPoolSize, maxPoolSize: 5,
                     creationTimeout: 15000, loadBalanceTimeout: 0, hasTransactionAffinity: false, idleTimeout: 0));
 
         /// <summary>

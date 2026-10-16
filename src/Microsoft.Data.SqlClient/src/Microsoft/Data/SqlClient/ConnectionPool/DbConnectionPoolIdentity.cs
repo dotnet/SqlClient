@@ -44,10 +44,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             bool result = this == NoIdentity || this == value;
             if (!result && value != null)
             {
-                result = _sidString == value._sidString &&
-                         _isRestricted == value._isRestricted &&
-                         _isNetwork == value._isNetwork &&
-                         _authenticationId == value._authenticationId;
+                result = Equals(value._sidString, value._isRestricted, value._isNetwork, value._authenticationId);
             }
 
             return result;
@@ -58,7 +55,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             return _hashCode;
         }
 
-        private bool DeepEquals(string sidString, bool isRestricted, bool isNetwork, long authenticationId) =>
+        private bool Equals(string sidString, bool isRestricted, bool isNetwork, long authenticationId) =>
             _sidString == sidString &&
             _isRestricted == isRestricted &&
             _isNetwork == isNetwork &&
@@ -85,7 +82,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             var lastIdentity = s_lastIdentity;
             
             DbConnectionPoolIdentity current = lastIdentity != null &&
-                                               lastIdentity.DeepEquals(sidString, isRestricted: false, isNetwork: false, authenticationId: 0)
+                                               lastIdentity.Equals(sidString, isRestricted: false, isNetwork: false, authenticationId: 0)
                 ? lastIdentity
                 : new DbConnectionPoolIdentity(sidString, isRestricted: false, isNetwork: false, authenticationId: 0);
 
@@ -110,7 +107,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                 var lastIdentity = s_lastIdentity;
                 if (lastIdentity != null &&
-                    lastIdentity.DeepEquals(sidString, isRestricted, isNetwork, authenticationId))
+                    lastIdentity.Equals(sidString, isRestricted, isNetwork, authenticationId))
                 {
                     current = lastIdentity;
                 }

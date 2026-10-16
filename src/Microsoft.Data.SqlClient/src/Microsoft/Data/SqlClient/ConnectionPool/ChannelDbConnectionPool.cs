@@ -163,7 +163,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         internal ChannelDbConnectionPool(
             SqlConnectionFactory connectionFactory,
             DbConnectionPoolGroup connectionPoolGroup,
-            DbConnectionPoolIdentity identity,
+            DbConnectionPoolIdentity? identity,
             DbConnectionPoolProviderInfo connectionPoolProviderInfo,
             ConcurrencyLimiter? connectionCreationRateLimiter = null,
             TimeProvider? timeProvider = null,
@@ -176,7 +176,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             PoolGroup = connectionPoolGroup;
             PoolGroupOptions = connectionPoolGroup.PoolGroupOptions;
             ProviderInfo = connectionPoolProviderInfo;
-            Identity = identity;
+            Identity = identity ?? DbConnectionPoolIdentity.NoIdentity;
             AuthenticationContexts = new();
             MaxPoolSize = Convert.ToUInt32(PoolGroupOptions.MaxPoolSize);
             TransactedConnectionPool = new(this, Metrics);
@@ -1972,10 +1972,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 // WaitHandle pool, which skips replenishment while blocking. (Warmup still
                 // participates in the error state on its own creations - entering it on failure and
                 // clearing it on success - via OpenNewInternalConnection.)
-                DbConnectionPoolIdentity? poolIdentity = Identity;
-                DbConnectionPoolIdentity? currentIdentity = poolIdentity != null && poolIdentity != DbConnectionPoolIdentity.NoIdentity
-                    ? DbConnectionPoolIdentity.GetCurrent()
-                    : null;
+                DbConnectionPoolIdentity poolIdentity = Identity;
+                DbConnectionPoolIdentity currentIdentity = poolIdentity == DbConnectionPoolIdentity.NoIdentity
+                    ? DbConnectionPoolIdentity.NoIdentity
+                    : DbConnectionPoolIdentity.GetCurrent();
 
                 while (State == Running
                     && !token.IsCancellationRequested
@@ -1984,7 +1984,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 {
                     // Match the legacy pool: background creation must use the pool's logon session.
                     // A mismatched context skips warmup; user opens can still create on demand.
-                    if (poolIdentity != null && currentIdentity != null && !poolIdentity.Equals(currentIdentity))
+                    if (!poolIdentity.Equals(currentIdentity))
                     {
                         SqlClientEventSource.Log.TryPoolerTraceEvent(
                             "ChannelDbConnectionPool.RunWarmupLoopAsync | INFO | {0}, Skipping warmup for a different identity.", Id);
