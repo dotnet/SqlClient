@@ -105,10 +105,6 @@
   </PropertyGroup>
 
   <!-- References ====================================================== -->
-  <ItemGroup>
-    <!-- GenAPI does not reproduce forwards from the reference assembly. -->
-    <Compile Include="../src/TypeForwards.Abstractions.cs" Link="TypeForwards.Abstractions.cs" />
-  </ItemGroup>
   <!--
     Reference the ref project to cause it to be built, so we can use it as the contract to build
     not supported assemblies against. Note, this must be set to output item type of none otherwise
@@ -193,6 +189,12 @@
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
+  </ItemGroup>
+
+  <!-- Additional source files for GenAPI ============================== -->
+  <ItemGroup>
+    <!-- GenAPI does not reproduce forwards from the reference assembly. -->
+    <Compile Include="../src/TypeForwards.Abstractions.cs" Link="TypeForwards.Abstractions.cs" />
   </ItemGroup>
 
   <!-- Generate "Not Supported" Source ================================= -->
