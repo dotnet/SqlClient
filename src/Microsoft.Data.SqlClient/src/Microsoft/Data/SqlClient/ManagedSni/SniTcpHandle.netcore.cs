@@ -890,6 +890,11 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                     return ReportTcpSNIError(0, SniCommon.ConnOpenFailedError, Strings.SNI_ERROR_10);
                 }
 
+                if (_stream == null)
+                {
+                    return ReportTcpSNIError(new ObjectDisposedException(nameof(SniTcpHandle)));
+                }
+
                 try
                 {
                     // TODO: convert these to async versions that accept a cancellation token
@@ -1022,7 +1027,9 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             packet.SetAsyncIOCompletionCallback(_receiveCallback);
             try
             {
-                packet.ReadFromStreamAsync(_stream);
+                // Capture once: Dispose can clear the field while a MARS receive is re-armed.
+                Stream stream = _stream ?? throw new ObjectDisposedException(nameof(SniTcpHandle));
+                packet.ReadFromStreamAsync(stream);
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniTcpHandle), EventType.INFO, "Connection Id {0}, Data received from stream asynchronously", args0: _connectionId);
                 return TdsEnums.SNI_SUCCESS_IO_PENDING;
             }
