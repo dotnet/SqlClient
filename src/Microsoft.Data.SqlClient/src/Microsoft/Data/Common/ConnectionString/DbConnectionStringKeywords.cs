@@ -51,6 +51,7 @@ namespace Microsoft.Data.Common.ConnectionString
         internal const string TypeSystemVersion = "Type System Version";
         internal const string UserId = "User ID";
         internal const string UserInstance = "User Instance";
+        internal const string VectorTypeSupport = "Vector Type Support";
         internal const string WorkstationId = "Workstation ID";
         
         #if NETFRAMEWORK

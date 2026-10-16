@@ -1015,6 +1015,36 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(expected, builder.PacketSize);
         }
 
+        /// <summary>
+        /// Verifies that every accepted spelling of the vector type support keyword resolves
+        /// to the same value: the canonical spaced form, the unspaced synonym, and both in
+        /// arbitrary casing. The unspaced form is the one the JDBC driver uses, so it is what
+        /// a ported application is likely to be written with, and keyword lookup is
+        /// case-insensitive throughout.
+        /// </summary>
+        /// <remarks>
+        /// A connection parses its keywords through a separate table from the builder, so
+        /// both are exercised here; registering the synonym in only one of them would leave
+        /// the other rejecting the keyword outright.
+        /// </remarks>
+        /// <param name="connectionString">A connection string using one accepted spelling.</param>
+        [Theory]
+        [InlineData("Vector Type Support = V2")]
+        [InlineData("VectorTypeSupport = V2")]
+        [InlineData("vectortypesupport = V2")]
+        [InlineData("VECTORTYPESUPPORT = V2")]
+        public void VectorTypeSupportSynonymsResolveCorrectly(string connectionString)
+        {
+            SqlConnectionStringBuilder builder = new(connectionString);
+            Assert.Equal(SqlVectorTypeSupport.V2, builder.VectorTypeSupport);
+
+            // A connection parses its keywords separately from the builder, so it is checked
+            // separately too. Constructing it rejects an unrecognised keyword, and the string
+            // it was given is preserved as written.
+            SqlConnection connection = new(connectionString);
+            Assert.Equal(connectionString, connection.ConnectionString);
+        }
+
         [Theory]
         [InlineData("WorkstationID = myws")]
         [InlineData("workstationid = myws")]
