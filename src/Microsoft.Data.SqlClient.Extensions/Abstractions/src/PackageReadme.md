@@ -32,8 +32,25 @@ consumers can use the handlers and their configuration base types without adding
 separate package reference. Authentication initialization and provider loading remain
 in the driver.
 
-See the repository's `doc/samples/SqlAuthenticationProviders.config` for a section
-declaration and custom provider example.
+Merge the following example into the application's app.config, replacing
+`ExampleAuthenticationProvider, ExampleApp` with the assembly-qualified name of an
+application-defined `SqlAuthenticationProvider`. The handler declaration continues to
+name `Microsoft.Data.SqlClient`; the type forward resolves it to Abstractions.
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <configSections>
+    <section name="SqlClientAuthenticationProviders"
+             type="Microsoft.Data.SqlClient.SqlClientAuthenticationProviderConfigurationSection, Microsoft.Data.SqlClient" />
+  </configSections>
+  <SqlClientAuthenticationProviders>
+    <providers>
+      <add name="active directory default" type="ExampleAuthenticationProvider, ExampleApp" />
+    </providers>
+  </SqlClientAuthenticationProviders>
+</configuration>
+```
 
 ## Installation
 
