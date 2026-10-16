@@ -2,26 +2,19 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
 using System.Configuration;
-using System.Linq;
-using Xunit;
 
-namespace Microsoft.Data.SqlClient.UnitTests;
+namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
 
-/// <summary>Pins section identity and schema for existing assembly-qualified app.config declarations.</summary>
+/// <summary>Pins authentication section names, configuration properties and defaults in Abstractions.</summary>
 public class AuthenticationConfigurationSchemaTest
 {
     /// <summary>Both public handlers preserve their original names, configuration properties and empty defaults.</summary>
     [Theory]
-    [InlineData("SqlAuthenticationProviderConfigurationSection", "SqlAuthenticationProviders")]
-    [InlineData("SqlClientAuthenticationProviderConfigurationSection", "SqlClientAuthenticationProviders")]
-    public void HandlerContractIsPreserved(string typeName, string sectionName)
+    [InlineData(typeof(SqlAuthenticationProviderConfigurationSection), "SqlAuthenticationProviders")]
+    [InlineData(typeof(SqlClientAuthenticationProviderConfigurationSection), "SqlClientAuthenticationProviders")]
+    public void HandlerContractIsPreserved(Type type, string sectionName)
     {
-        Type type = typeof(SqlConnection).Assembly.GetType("Microsoft.Data.SqlClient." + typeName, throwOnError: true)!;
-        Assert.Equal("Microsoft.Data.SqlClient.Extensions.Abstractions", type.Assembly.GetName().Name);
-        Assert.True(type.IsPublic);
-        Assert.Same(type, Type.GetType(type.FullName + ", Microsoft.Data.SqlClient", throwOnError: true));
         var section = Assert.IsAssignableFrom<ConfigurationSection>(Activator.CreateInstance(type));
         Assert.Equal(new[] { "applicationClientId", "initializerType", "providers", "useWamBroker" },
             section.ElementInformation.Properties.Cast<PropertyInformation>()

@@ -6,34 +6,33 @@ using System.Configuration;
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <summary>Defines the legacy SqlAuthenticationProviders section for authentication configuration in app.config.</summary>
+    /// <include file='../doc/SqlAuthenticationProviderConfigurationSection.xml' path='docs/members[@name="SqlAuthenticationProviderConfigurationSection"]/SqlAuthenticationProviderConfigurationSection/*'/>
     public class SqlAuthenticationProviderConfigurationSection : ConfigurationSection
     {
-        /// <summary>The name of the legacy authentication configuration section.</summary>
+        /// <include file='../doc/SqlAuthenticationProviderConfigurationSection.xml' path='docs/members[@name="SqlAuthenticationProviderConfigurationSection"]/Name/*'/>
         public const string Name = "SqlAuthenticationProviders";
 
-        /// <summary>Gets the user-defined authentication providers.</summary>
+        /// <include file='../doc/SqlAuthenticationProviderConfigurationSection.xml' path='docs/members[@name="SqlAuthenticationProviderConfigurationSection"]/Providers/*'/>
         [ConfigurationProperty("providers")]
         public ProviderSettingsCollection Providers => (ProviderSettingsCollection)this["providers"];
 
-        /// <summary>Gets the assembly-qualified initializer type name, or an empty string when unset.</summary>
+        /// <include file='../doc/SqlAuthenticationProviderConfigurationSection.xml' path='docs/members[@name="SqlAuthenticationProviderConfigurationSection"]/InitializerType/*'/>
         [ConfigurationProperty("initializerType")]
         public string InitializerType => this["initializerType"] as string ?? string.Empty;
 
-        /// <summary>Gets the application client ID, or an empty string when unset.</summary>
+        /// <include file='../doc/SqlAuthenticationProviderConfigurationSection.xml' path='docs/members[@name="SqlAuthenticationProviderConfigurationSection"]/ApplicationClientId/*'/>
         [ConfigurationProperty("applicationClientId", IsRequired = false)]
         public string ApplicationClientId => this["applicationClientId"] as string ?? string.Empty;
 
-        /// <summary>Gets the Web Account Manager broker preference, or an empty string when unset.</summary>
-        /// <remarks>The value is a string to distinguish an unset preference from an explicit false value.</remarks>
+        /// <include file='../doc/SqlAuthenticationProviderConfigurationSection.xml' path='docs/members[@name="SqlAuthenticationProviderConfigurationSection"]/UseWamBroker/*'/>
         [ConfigurationProperty("useWamBroker", IsRequired = false)]
         public string UseWamBroker => this["useWamBroker"] as string ?? string.Empty;
     }
 
-    /// <summary>Defines the current SqlClientAuthenticationProviders section for authentication configuration in app.config.</summary>
+    /// <include file='../doc/SqlAuthenticationProviderConfigurationSection.xml' path='docs/members[@name="SqlClientAuthenticationProviderConfigurationSection"]/SqlClientAuthenticationProviderConfigurationSection/*'/>
     public class SqlClientAuthenticationProviderConfigurationSection : SqlAuthenticationProviderConfigurationSection
     {
-        /// <summary>The name of the current authentication configuration section.</summary>
+        /// <include file='../doc/SqlAuthenticationProviderConfigurationSection.xml' path='docs/members[@name="SqlClientAuthenticationProviderConfigurationSection"]/Name/*'/>
         public new const string Name = "SqlClientAuthenticationProviders";
     }
 }
