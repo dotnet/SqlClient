@@ -18,6 +18,11 @@ consider reusing a suitably scoped token. Repeated impersonation with the same
 token does not create new logon sessions. Separate processes already have
 separate pools.
 
+This is conceptually similar to `SqlConnection.AccessToken` pooling: a different
+access-token value creates a separate pool even when it represents the same
+account. Here the discriminator is the Windows logon session, not the token
+object, so duplicated tokens from the same session can still share a pool.
+
 The session ID is not a token-object identifier or an outbound-account name.
 It does not detect changes to credentials within an existing logon session.
 

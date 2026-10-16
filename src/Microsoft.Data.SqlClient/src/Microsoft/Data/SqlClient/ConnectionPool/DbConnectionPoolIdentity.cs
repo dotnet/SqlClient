@@ -96,6 +96,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             using (WindowsIdentity identity = WindowsIdentity.GetCurrent())
             {
                 SecurityIdentifier user = identity.User;
+                // TODO: Remove this SID-derived redundant key field after checking NoIdentity and non-Windows behavior.
                 bool isNetwork = user.IsWellKnown(WellKnownSidType.NetworkSid);
                 string sidString = user.Value;
 
