@@ -17,6 +17,36 @@ The abstractions package allows for:
 This package supports:
 
 - .NET Standard 2.0 (compatible with .NET Framework 4.6.1+, .NET Core 2.0+, and .NET 5+)
+- .NET 10.0 (trim/AOT-analyzed authentication registration)
+
+## Authentication registration
+
+The provider registry and bootstrap live in this package. `GetProvider` and `SetProvider`
+work directly, including under NativeAOT, without loading SqlClient through reflection.
+Configuration providers and configured initializers take precedence over application
+registrations; application registrations take precedence over the discovered Azure default.
+Registry initialization failures return `null` and `false`, respectively. Null providers,
+unsupported methods and throwing registration callbacks also return `false`, without replacing
+the existing provider. These failures are traced through `Microsoft.Data.SqlClient.EventSource`
+(Informational level, Trace keyword `0x2`) with corrective guidance.
+Bootstrap failures are cached and logged on subsequent accesses; correct the cause and restart
+the application.
+
+Untrimmed applications retain app.config loading and automatic Azure discovery. These switches
+default to `true` and are cached independently on first access for the lifetime of the process:
+
+- `Switch.Microsoft.Data.SqlClient.EnableAppConfig`
+- `Switch.Microsoft.Data.SqlClient.EnableAzureExtensionDiscovery`
+
+Automatic Azure discovery requires the `ActiveDirectoryAuthenticationProviderOptions` constructor
+from a compatible `Microsoft.Data.SqlClient.Extensions.Azure` package, even when no overrides are
+configured. Discovery does not fall back to parameterless or string-based provider constructors.
+
+Set switches before first registry access. On .NET 10 trimmed and NativeAOT publishes, both
+reflective paths are removed automatically. Explicitly construct and register a provider for
+each required authentication method before opening connections. The Azure provider is supplied
+by `Microsoft.Data.SqlClient.Extensions.Azure`. Publish-time overrides use
+`RuntimeHostConfigurationOption` with `Trim="true"`; runtime changes cannot affect trimming.
 
 ## Authentication configuration
 
@@ -34,6 +64,21 @@ Section names, properties (`providers`, `initializerType`,
 `System.Configuration.ConfigurationManager` is a transitive compile dependency required
 by the handlers' configuration base types. Authentication initialization and provider
 loading remain in the driver.
+
+`SqlAuthenticationInitializer` is also defined in Abstractions and forwarded from SqlClient,
+preserving existing compiled consumers and initializer declarations.
+
+If an explicitly configured initializer or provider cannot be loaded, instantiated, or applied,
+configuration application stops and registry bootstrap fails. Configured entries are not silently
+skipped. Recoverable bootstrap failures are cached as described above; earlier registrations
+and initializer/provider callback side effects are not rolled back.
+
+Malformed sections, incompatible section handlers or schema, and invalid non-empty `useWamBroker`
+values also fail bootstrap rather than being ignored. Missing sections and empty optional settings
+remain valid. Registration errors inside a configured initializer propagate to fail bootstrap,
+rather than being converted to an ignorable `false` result. Successful registrations are traced
+with their authentication method, provider type and precedence tier; refused registrations are
+traced separately and do not produce success events.
 
 Merge the following example into the application's app.config, replacing
 `ExampleAuthenticationProvider, ExampleApp` with the assembly-qualified name of an
