@@ -38,7 +38,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             return new EnclaveSessionParameters(
                 serverName: $"unit-test-server-{id}",
                 attestationUrl: $"https://unit.test.invalid/{id}",
-                database: $"unit-test-db-{id}");
+                database: $"unit-test-db-{id}",
+                attestationProtocol: SqlConnectionAttestationProtocol.HGS);
         }
 
         #region Default fallback behavior
