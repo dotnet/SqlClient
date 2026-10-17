@@ -32,6 +32,22 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 ClientCertificates = certificate
             };
             await sslStream.AuthenticateAsClientAsync(sslClientOptions, token);
+            ValidateNegotiatedApplicationProtocol(sslStream.NegotiatedApplicationProtocol);
+        }
+
+        /// <summary>
+        /// Ensures the server selected the TDS 8.0 ALPN protocol. Accepting a handshake that
+        /// dropped or changed ALPN would defeat the cross-protocol binding TDS 8.0 relies on.
+        /// </summary>
+        internal static void ValidateNegotiatedApplicationProtocol(SslApplicationProtocol negotiated)
+        {
+            if (negotiated != s_tdsProtocols[0])
+            {
+                throw new AuthenticationException(StringsHelper.Format(
+                    Strings.SNI_TDS8_ApplicationProtocolNotNegotiated,
+                    TdsEnums.TDS8_Protocol,
+                    negotiated.Protocol.IsEmpty ? string.Empty : negotiated.ToString()));
+            }
         }
 
         protected static void AuthenticateAsClient(SslStream sslStream, string serverNameIndication, X509CertificateCollection certificate)
