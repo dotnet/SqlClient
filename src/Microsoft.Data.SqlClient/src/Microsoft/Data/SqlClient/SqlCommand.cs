@@ -444,7 +444,9 @@ namespace Microsoft.Data.SqlClient
             CommandType = from.CommandType;
             Connection = from.Connection;
             DesignTimeVisible = from.DesignTimeVisible;
-            Transaction = from.Transaction;
+            // Copy the field. The getter returns null once the server has completed the transaction,
+            // and the clone has to keep that transaction so its next execute is rejected.
+            Transaction = from._transaction;
             UpdatedRowSource = from.UpdatedRowSource;
             _columnEncryptionSetting = from.ColumnEncryptionSetting;
 
@@ -779,10 +781,17 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                // If the transaction object has been zombied, just return null
+                // Commit and Rollback clear the internal transaction, so drop that reference.
+                // A transaction the server already completed stays attached: the getter still
+                // returns null, and the next execute is rejected instead of auto-committing.
                 if (_transaction is not null && _transaction.Connection is null)
                 {
-                    _transaction = null;
+                    if (_transaction.InternalTransaction is null)
+                    {
+                        _transaction = null;
+                    }
+
+                    return null;
                 }
 
                 return _transaction;
@@ -2981,6 +2990,14 @@ namespace Microsoft.Data.SqlClient
         // @TODO: isAsync isn't used.
         private void ValidateCommand(bool isAsync, [CallerMemberName] string method = "")
         {
+            // A transaction aborted by the server stays attached, and its connection reports null.
+            // Reject it before the command can run outside that transaction and auto-commit.
+            // Commit and Rollback clear the internal transaction; that case is handled below.
+            if (_transaction is not null && _transaction.Connection is null && _transaction.InternalTransaction is not null)
+            {
+                throw ADP.TransactionZombied(_transaction);
+            }
+
             if (_activeConnection is null)
             {
                 throw ADP.ConnectionRequired(method);
@@ -3031,7 +3048,7 @@ namespace Microsoft.Data.SqlClient
             _activeConnection.ValidateConnectionForExecute(method, this);
 
             // Check to see if the currently set transaction has completed. If so, null out our
-            // local reference.
+            // local reference. A server-aborted transaction was already rejected above.
             if (_transaction is not null && _transaction.Connection is null)
             {
                 _transaction = null;
