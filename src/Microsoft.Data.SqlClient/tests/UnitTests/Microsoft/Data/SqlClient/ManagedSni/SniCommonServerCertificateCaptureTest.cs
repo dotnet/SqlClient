@@ -173,6 +173,52 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         }
 
         /// <summary>
+        /// Managed SNI named pipes pass "." as the target server name. MatchesHostname rejects it with
+        /// an <see cref="ArgumentException"/>, which predates encryption info capture. Errors already
+        /// established must still be captured, and the exception must stay exactly as it was.
+        /// </summary>
+        [Theory]
+        [InlineData(SslPolicyErrors.RemoteCertificateChainErrors | SslPolicyErrors.RemoteCertificateNameMismatch, true)]
+        [InlineData(SslPolicyErrors.RemoteCertificateNameMismatch, false)]
+        public void ValidateSslServerCertificate_NamedPipeDotTarget_CapturesKnownErrorsAndKeepsException(SslPolicyErrors policyErrors, bool chainErrors)
+        {
+            const string NamedPipeTarget = ".";
+            using X509Certificate2 serverCert = CreateSelfSignedCertificate(ServerName);
+            using X509Chain chain = CreateChain(chainErrors ? ChainKind.Untrusted : ChainKind.Clean, serverCert)!;
+
+            Exception? legacy = null;
+            try
+            {
+                SniCommon.ValidateSslServerCertificate(Guid.NewGuid(), NamedPipeTarget, null, serverCert, null, policyErrors);
+            }
+            catch (Exception e)
+            {
+                legacy = e;
+            }
+
+            Exception? capturing = Validate(NamedPipeTarget, null, serverCert, null, policyErrors, chain, out ServerCertificateVerdict verdict);
+
+            // The pre-existing exception is neither caught nor changed.
+            Assert.IsAssignableFrom<ArgumentException>(legacy);
+            Assert.Equal(legacy!.GetType(), capturing?.GetType());
+            Assert.Equal(legacy.Message, capturing!.Message);
+
+            if (chainErrors)
+            {
+                Assert.Equal(SqlServerCertificateValidationErrors.ChainError, verdict.ValidationErrors);
+                Assert.Equal(SniCommon.CombineChainStatus(chain.ChainStatus, policyErrors), verdict.ChainStatus);
+                Assert.NotNull(verdict.ChainStatus);
+                Assert.NotEqual(X509ChainStatusFlags.NoError, verdict.ChainStatus);
+            }
+            else
+            {
+                // Nothing was established before the throw; a passing None must not be reported.
+                Assert.Null(verdict.ValidationErrors);
+                Assert.Null(verdict.ChainStatus);
+            }
+        }
+
+        /// <summary>
         /// Capturing the verdict must not change the outcome or the message of validation.
         /// </summary>
         [Theory]
