@@ -54,13 +54,6 @@ internal sealed class ConnectionCapabilities
 
     /// <summary>
     /// If true (as determined by the value of <see cref="TdsVersion"/>)
-    /// then the connection is to SQL Server 2008 R2 or newer.
-    /// </summary>
-    public bool Is2008R2OrNewer =>
-        Is2012OrNewer || TdsVersion is TdsEnums.SQL2008_VERSION;
-
-    /// <summary>
-    /// If true (as determined by the value of <see cref="TdsVersion"/>)
     /// then the connection is to SQL Server 2012 or newer.
     /// </summary>
     public bool Is2012OrNewer =>
@@ -71,19 +64,6 @@ internal sealed class ConnectionCapabilities
     /// by the receipt of a FEATUREEXTACK token of value <c>0x08</c>.
     /// </summary>
     public bool IsAzureSql { get; set; }
-
-    /// <summary>
-    /// Indicates support for the <c>date</c>, <c>time</c>, <c>datetime2</c>
-    /// and <c>datetimeoffset</c> data types. These were introduced in SQL
-    /// Server 2008.
-    /// </summary>
-    public bool ExpandedDateTimeDataTypes => Is2008R2OrNewer;
-
-    /// <summary>
-    /// Indicates support for user-defined CLR types of any length. This
-    /// was introduced in SQL Server 2008.
-    /// </summary>
-    public bool LargeUserDefinedTypes => Is2008R2OrNewer;
 
     /// <summary>
     /// Indicates support for the client to include a TDS trace header,

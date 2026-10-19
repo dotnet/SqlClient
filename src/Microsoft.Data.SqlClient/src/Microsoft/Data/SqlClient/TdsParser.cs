@@ -271,7 +271,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal bool Is2008OrNewer => Capabilities.Is2008R2OrNewer;
+        internal bool Is2008OrNewer => true;
 
         internal bool MARSOn
         {
@@ -10639,7 +10639,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else if (mt.SqlDbType == SqlDbType.Udt)
                 {
-                    int maxSupportedSize = Capabilities.LargeUserDefinedTypes ? int.MaxValue : short.MaxValue;
+                    int maxSupportedSize = int.MaxValue;
                     byte[] udtVal = null;
 
                     if (string.IsNullOrEmpty(param.UdtTypeName))
