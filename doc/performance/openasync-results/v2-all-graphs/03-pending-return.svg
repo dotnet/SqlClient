@@ -1,0 +1,159 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="768" viewBox="0 0 1120 768" role="img">
+<title>3. Time to return a pending task</title><desc>Sampled · OpenAsync only; no pending task means no distribution, not zero latency</desc>
+<rect width="1120" height="768" fill="#fff"/>
+<g font-family="Segoe UI,Arial,sans-serif" fill="#172033">
+<text x="24.00" y="30.00" font-size="22" text-anchor="start" fill="#172033" font-weight="700">3. Time to return a pending task</text>
+<text x="24.00" y="54.00" font-size="12" text-anchor="start" fill="#526075" font-weight="400">Sampled · OpenAsync only; no pending task means no distribution, not zero latency</text>
+<line x1="24.00" y1="79.00" x2="46.00" y2="79.00" stroke="#ea580c" stroke-width="3"/>
+<text x="52.00" y="83.00" font-size="12" text-anchor="start" fill="#172033" font-weight="400">OpenAsync</text>
+<text x="1090.00" y="83.00" font-size="11" text-anchor="end" fill="#526075" font-weight="400">Point = median; whisker = observed min–max</text>
+<text x="24.00" y="115.00" font-size="15" text-anchor="start" fill="#172033" font-weight="700">E1 · Warm pooled reuse</text>
+<text x="24.00" y="134.00" font-size="10" text-anchor="start" fill="#526075" font-weight="400">Median pending-return p95 (ms)</text>
+<rect x="66.0" y="145" width="280.3333333333333" height="190" fill="#f3f5f8"/>
+<text x="206.17" y="230.00" font-size="13" text-anchor="middle" fill="#526075" font-weight="400">No usable observations</text>
+<text x="206.17" y="252.00" font-size="12" text-anchor="middle" fill="#526075" font-weight="400">(not a zero result)</text>
+<text x="397.33" y="115.00" font-size="15" text-anchor="start" fill="#172033" font-weight="700">E2 · Pool contention</text>
+<text x="397.33" y="134.00" font-size="10" text-anchor="start" fill="#526075" font-weight="400">Median pending-return p95 (ms)</text>
+<line x1="439.33" y1="335.00" x2="719.67" y2="335.00" stroke="#dbe2ea" stroke-width="1"/>
+<text x="432.33" y="339.00" font-size="10" text-anchor="end" fill="#526075" font-weight="400">0</text>
+<line x1="439.33" y1="287.50" x2="719.67" y2="287.50" stroke="#dbe2ea" stroke-width="1"/>
+<text x="432.33" y="291.50" font-size="10" text-anchor="end" fill="#526075" font-weight="400">0.002</text>
+<line x1="439.33" y1="240.00" x2="719.67" y2="240.00" stroke="#dbe2ea" stroke-width="1"/>
+<text x="432.33" y="244.00" font-size="10" text-anchor="end" fill="#526075" font-weight="400">0.004</text>
+<line x1="439.33" y1="192.50" x2="719.67" y2="192.50" stroke="#dbe2ea" stroke-width="1"/>
+<text x="432.33" y="196.50" font-size="10" text-anchor="end" fill="#526075" font-weight="400">0.006</text>
+<line x1="439.33" y1="145.00" x2="719.67" y2="145.00" stroke="#dbe2ea" stroke-width="1"/>
+<text x="432.33" y="149.00" font-size="10" text-anchor="end" fill="#526075" font-weight="400">0.008</text>
+<text x="439.33" y="355.00" font-size="11" text-anchor="middle" fill="#172033" font-weight="400">1</text>
+<text x="470.48" y="355.00" font-size="11" text-anchor="middle" fill="#172033" font-weight="400">8</text>
+<text x="577.28" y="355.00" font-size="11" text-anchor="middle" fill="#172033" font-weight="400">32</text>
+<text x="719.67" y="355.00" font-size="11" text-anchor="middle" fill="#172033" font-weight="400">64</text>
+<text x="579.50" y="375.00" font-size="11" text-anchor="middle" fill="#172033" font-weight="400">Configured workers</text>
+<line x1="470.48" y1="206.75" x2="470.48" y2="176.71" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="467.48" y1="206.75" x2="473.48" y2="206.75" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="467.48" y1="176.71" x2="473.48" y2="176.71" stroke="#ea580c" stroke-width="1.4"/>
+<circle cx="470.48" cy="186.21" r="3.7" fill="#ea580c" stroke="white" stroke-width="0.8"/>
+<line x1="470.48" y1="186.21" x2="577.28" y2="180.63" stroke="#ea580c" stroke-width="2"/>
+<line x1="577.28" y1="206.75" x2="577.28" y2="171.13" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="574.28" y1="206.75" x2="580.28" y2="206.75" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="574.28" y1="171.13" x2="580.28" y2="171.13" stroke="#ea580c" stroke-width="1.4"/>
+<circle cx="577.28" cy="180.63" r="3.7" fill="#ea580c" stroke="white" stroke-width="0.8"/>
+<line x1="577.28" y1="180.63" x2="719.67" y2="183.00" stroke="#ea580c" stroke-width="2"/>
+<line x1="719.67" y1="190.13" x2="719.67" y2="178.25" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="716.67" y1="190.13" x2="722.67" y2="190.13" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="716.67" y1="178.25" x2="722.67" y2="178.25" stroke="#ea580c" stroke-width="1.4"/>
+<circle cx="719.67" cy="183.00" r="3.7" fill="#ea580c" stroke="white" stroke-width="0.8"/>
+<text x="397.33" y="396.00" font-size="10" text-anchor="start" fill="#526075" font-weight="400">At 64: OpenAsync 0.0064</text>
+<text x="770.67" y="115.00" font-size="15" text-anchor="start" fill="#172033" font-weight="700">E3 · Nonpooled opens</text>
+<text x="770.67" y="134.00" font-size="10" text-anchor="start" fill="#526075" font-weight="400">Median pending-return p95 (ms)</text>
+<line x1="812.67" y1="335.00" x2="1093.00" y2="335.00" stroke="#dbe2ea" stroke-width="1"/>
+<text x="805.67" y="339.00" font-size="10" text-anchor="end" fill="#526075" font-weight="400">0</text>
+<line x1="812.67" y1="287.50" x2="1093.00" y2="287.50" stroke="#dbe2ea" stroke-width="1"/>
+<text x="805.67" y="291.50" font-size="10" text-anchor="end" fill="#526075" font-weight="400">0.2</text>
+<line x1="812.67" y1="240.00" x2="1093.00" y2="240.00" stroke="#dbe2ea" stroke-width="1"/>
+<text x="805.67" y="244.00" font-size="10" text-anchor="end" fill="#526075" font-weight="400">0.4</text>
+<line x1="812.67" y1="192.50" x2="1093.00" y2="192.50" stroke="#dbe2ea" stroke-width="1"/>
+<text x="805.67" y="196.50" font-size="10" text-anchor="end" fill="#526075" font-weight="400">0.6</text>
+<line x1="812.67" y1="145.00" x2="1093.00" y2="145.00" stroke="#dbe2ea" stroke-width="1"/>
+<text x="805.67" y="149.00" font-size="10" text-anchor="end" fill="#526075" font-weight="400">0.8</text>
+<text x="812.67" y="355.00" font-size="11" text-anchor="middle" fill="#172033" font-weight="400">1</text>
+<text x="843.81" y="355.00" font-size="11" text-anchor="middle" fill="#172033" font-weight="400">8</text>
+<text x="950.61" y="355.00" font-size="11" text-anchor="middle" fill="#172033" font-weight="400">32</text>
+<text x="1093.00" y="355.00" font-size="11" text-anchor="middle" fill="#172033" font-weight="400">64</text>
+<text x="952.83" y="375.00" font-size="11" text-anchor="middle" fill="#172033" font-weight="400">Configured workers</text>
+<line x1="812.67" y1="261.01" x2="812.67" y2="251.29" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="809.67" y1="261.01" x2="815.67" y2="261.01" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="809.67" y1="251.29" x2="815.67" y2="251.29" stroke="#ea580c" stroke-width="1.4"/>
+<circle cx="812.67" cy="257.26" r="3.7" fill="#ea580c" stroke="white" stroke-width="0.8"/>
+<line x1="812.67" y1="257.26" x2="843.81" y2="196.30" stroke="#ea580c" stroke-width="2"/>
+<line x1="843.81" y1="220.22" x2="843.81" y2="167.14" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="840.81" y1="220.22" x2="846.81" y2="220.22" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="840.81" y1="167.14" x2="846.81" y2="167.14" stroke="#ea580c" stroke-width="1.4"/>
+<circle cx="843.81" cy="196.30" r="3.7" fill="#ea580c" stroke="white" stroke-width="0.8"/>
+<line x1="843.81" y1="196.30" x2="950.61" y2="267.08" stroke="#ea580c" stroke-width="2"/>
+<line x1="950.61" y1="275.20" x2="950.61" y2="254.92" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="947.61" y1="275.20" x2="953.61" y2="275.20" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="947.61" y1="254.92" x2="953.61" y2="254.92" stroke="#ea580c" stroke-width="1.4"/>
+<circle cx="950.61" cy="267.08" r="3.7" fill="#ea580c" stroke="white" stroke-width="0.8"/>
+<line x1="950.61" y1="267.08" x2="1093.00" y2="332.82" stroke="#ea580c" stroke-width="2"/>
+<line x1="1093.00" y1="333.00" x2="1093.00" y2="331.97" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="1090.00" y1="333.00" x2="1096.00" y2="333.00" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="1090.00" y1="331.97" x2="1096.00" y2="331.97" stroke="#ea580c" stroke-width="1.4"/>
+<circle cx="1093.00" cy="332.82" r="3.7" fill="#ea580c" stroke="white" stroke-width="0.8"/>
+<text x="770.67" y="396.00" font-size="10" text-anchor="start" fill="#526075" font-weight="400">At 64: OpenAsync 0.0092</text>
+<text x="24.00" y="415.00" font-size="15" text-anchor="start" fill="#172033" font-weight="700">E4 · Cold pooled ramp</text>
+<text x="24.00" y="434.00" font-size="10" text-anchor="start" fill="#526075" font-weight="400">Median pending-return p95 (ms)</text>
+<line x1="66.00" y1="635.00" x2="346.33" y2="635.00" stroke="#dbe2ea" stroke-width="1"/>
+<text x="59.00" y="639.00" font-size="10" text-anchor="end" fill="#526075" font-weight="400">0</text>
+<line x1="66.00" y1="587.50" x2="346.33" y2="587.50" stroke="#dbe2ea" stroke-width="1"/>
+<text x="59.00" y="591.50" font-size="10" text-anchor="end" fill="#526075" font-weight="400">0.0125</text>
+<line x1="66.00" y1="540.00" x2="346.33" y2="540.00" stroke="#dbe2ea" stroke-width="1"/>
+<text x="59.00" y="544.00" font-size="10" text-anchor="end" fill="#526075" font-weight="400">0.025</text>
+<line x1="66.00" y1="492.50" x2="346.33" y2="492.50" stroke="#dbe2ea" stroke-width="1"/>
+<text x="59.00" y="496.50" font-size="10" text-anchor="end" fill="#526075" font-weight="400">0.0375</text>
+<line x1="66.00" y1="445.00" x2="346.33" y2="445.00" stroke="#dbe2ea" stroke-width="1"/>
+<text x="59.00" y="449.00" font-size="10" text-anchor="end" fill="#526075" font-weight="400">0.05</text>
+<text x="66.00" y="655.00" font-size="11" text-anchor="middle" fill="#172033" font-weight="400">1</text>
+<text x="97.15" y="655.00" font-size="11" text-anchor="middle" fill="#172033" font-weight="400">8</text>
+<text x="203.94" y="655.00" font-size="11" text-anchor="middle" fill="#172033" font-weight="400">32</text>
+<text x="346.33" y="655.00" font-size="11" text-anchor="middle" fill="#172033" font-weight="400">64</text>
+<text x="206.17" y="675.00" font-size="11" text-anchor="middle" fill="#172033" font-weight="400">Configured workers</text>
+<line x1="66.00" y1="536.96" x2="66.00" y2="466.28" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="63.00" y1="536.96" x2="69.00" y2="536.96" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="63.00" y1="466.28" x2="69.00" y2="466.28" stroke="#ea580c" stroke-width="1.4"/>
+<circle cx="66.00" cy="509.98" r="3.7" fill="#ea580c" stroke="white" stroke-width="0.8"/>
+<line x1="66.00" y1="509.98" x2="97.15" y2="529.80" stroke="#ea580c" stroke-width="2"/>
+<line x1="97.15" y1="540.04" x2="97.15" y2="510.36" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="94.15" y1="540.04" x2="100.15" y2="540.04" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="94.15" y1="510.36" x2="100.15" y2="510.36" stroke="#ea580c" stroke-width="1.4"/>
+<circle cx="97.15" cy="529.80" r="3.7" fill="#ea580c" stroke="white" stroke-width="0.8"/>
+<line x1="97.15" y1="529.80" x2="203.94" y2="560.60" stroke="#ea580c" stroke-width="2"/>
+<line x1="203.94" y1="572.83" x2="203.94" y2="528.33" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="200.94" y1="572.83" x2="206.94" y2="572.83" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="200.94" y1="528.33" x2="206.94" y2="528.33" stroke="#ea580c" stroke-width="1.4"/>
+<circle cx="203.94" cy="560.60" r="3.7" fill="#ea580c" stroke="white" stroke-width="0.8"/>
+<line x1="203.94" y1="560.60" x2="346.33" y2="574.45" stroke="#ea580c" stroke-width="2"/>
+<line x1="346.33" y1="583.43" x2="346.33" y2="552.20" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="343.33" y1="583.43" x2="349.33" y2="583.43" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="343.33" y1="552.20" x2="349.33" y2="552.20" stroke="#ea580c" stroke-width="1.4"/>
+<circle cx="346.33" cy="574.45" r="3.7" fill="#ea580c" stroke="white" stroke-width="0.8"/>
+<text x="24.00" y="696.00" font-size="10" text-anchor="start" fill="#526075" font-weight="400">At 64: OpenAsync 0.01593</text>
+<text x="397.33" y="415.00" font-size="15" text-anchor="start" fill="#172033" font-weight="700">E5 · Matched async query</text>
+<text x="397.33" y="434.00" font-size="10" text-anchor="start" fill="#526075" font-weight="400">Median pending-return p95 (ms)</text>
+<rect x="439.3333333333333" y="445" width="280.3333333333333" height="190" fill="#f3f5f8"/>
+<text x="579.50" y="530.00" font-size="13" text-anchor="middle" fill="#526075" font-weight="400">No usable observations</text>
+<text x="579.50" y="552.00" font-size="12" text-anchor="middle" fill="#526075" font-weight="400">(not a zero result)</text>
+<text x="770.67" y="415.00" font-size="15" text-anchor="start" fill="#172033" font-weight="700">E6 · Overload / recovery</text>
+<text x="770.67" y="434.00" font-size="10" text-anchor="start" fill="#526075" font-weight="400">Median pending-return p95 (ms)</text>
+<line x1="812.67" y1="635.00" x2="1093.00" y2="635.00" stroke="#dbe2ea" stroke-width="1"/>
+<text x="805.67" y="639.00" font-size="10" text-anchor="end" fill="#526075" font-weight="400">0</text>
+<line x1="812.67" y1="587.50" x2="1093.00" y2="587.50" stroke="#dbe2ea" stroke-width="1"/>
+<text x="805.67" y="591.50" font-size="10" text-anchor="end" fill="#526075" font-weight="400">0.00225</text>
+<line x1="812.67" y1="540.00" x2="1093.00" y2="540.00" stroke="#dbe2ea" stroke-width="1"/>
+<text x="805.67" y="544.00" font-size="10" text-anchor="end" fill="#526075" font-weight="400">0.0045</text>
+<line x1="812.67" y1="492.50" x2="1093.00" y2="492.50" stroke="#dbe2ea" stroke-width="1"/>
+<text x="805.67" y="496.50" font-size="10" text-anchor="end" fill="#526075" font-weight="400">0.00675</text>
+<line x1="812.67" y1="445.00" x2="1093.00" y2="445.00" stroke="#dbe2ea" stroke-width="1"/>
+<text x="805.67" y="449.00" font-size="10" text-anchor="end" fill="#526075" font-weight="400">0.009</text>
+<text x="812.67" y="655.00" font-size="11" text-anchor="middle" fill="#172033" font-weight="400">1</text>
+<text x="843.81" y="655.00" font-size="11" text-anchor="middle" fill="#172033" font-weight="400">8</text>
+<text x="950.61" y="655.00" font-size="11" text-anchor="middle" fill="#172033" font-weight="400">32</text>
+<text x="1093.00" y="655.00" font-size="11" text-anchor="middle" fill="#172033" font-weight="400">64</text>
+<text x="952.83" y="675.00" font-size="11" text-anchor="middle" fill="#172033" font-weight="400">Configured workers</text>
+<line x1="843.81" y1="550.56" x2="843.81" y2="487.43" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="840.81" y1="550.56" x2="846.81" y2="550.56" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="840.81" y1="487.43" x2="846.81" y2="487.43" stroke="#ea580c" stroke-width="1.4"/>
+<circle cx="843.81" cy="491.44" r="3.7" fill="#ea580c" stroke="white" stroke-width="0.8"/>
+<line x1="843.81" y1="491.44" x2="950.61" y2="485.11" stroke="#ea580c" stroke-width="2"/>
+<line x1="950.61" y1="524.27" x2="950.61" y2="453.66" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="947.61" y1="524.27" x2="953.61" y2="524.27" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="947.61" y1="453.66" x2="953.61" y2="453.66" stroke="#ea580c" stroke-width="1.4"/>
+<circle cx="950.61" cy="485.11" r="3.7" fill="#ea580c" stroke="white" stroke-width="0.8"/>
+<line x1="950.61" y1="485.11" x2="1093.00" y2="491.44" stroke="#ea580c" stroke-width="2"/>
+<line x1="1093.00" y1="508.33" x2="1093.00" y2="464.11" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="1090.00" y1="508.33" x2="1096.00" y2="508.33" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="1090.00" y1="464.11" x2="1096.00" y2="464.11" stroke="#ea580c" stroke-width="1.4"/>
+<circle cx="1093.00" cy="491.44" r="3.7" fill="#ea580c" stroke="white" stroke-width="0.8"/>
+<text x="770.67" y="696.00" font-size="10" text-anchor="start" fill="#526075" font-weight="400">At 64: OpenAsync 0.0068</text>
+<text x="24.00" y="744.00" font-size="11" text-anchor="start" fill="#526075" font-weight="400">Each panel has its own zero-based linear y-scale. Missing observations are not zero. Ranges are not confidence intervals.</text>
+</g></svg>

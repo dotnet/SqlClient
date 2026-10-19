@@ -1,0 +1,5 @@
+# Preserve evidence bytes and SHA-256 checksums across checkout platforms.
+* -text whitespace=cr-at-eol,-blank-at-eol
+*.svg linguist-generated=true
+*.json linguist-generated=true
+*.jsonl linguist-generated=true

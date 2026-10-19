@@ -1,0 +1,6 @@
+[
+  {
+    "code": "ProvisioningState/succeeded",
+    "message": "Enable succeeded: \n[stdout]\n{\"path\": \"/home/perfadmin/compact-summary-validation-1bddc36b64bb/analysis-183246-20261019.json\", \"bytes\": 94531, \"sha256\": \"73ea135abd463529f21296fd4d856e694c56906b08f18d68db97d4ff5712f0c8\", \"transport\": \"/home/perfadmin/compact-summary-validation-1bddc36b64bb/analysis-183246-20261019.b64\", \"chars\": 21232, \"chunks\": 8, \"analysisPeakRssKiB\": 42880}\n\n[stderr]\n"
+  }
+]

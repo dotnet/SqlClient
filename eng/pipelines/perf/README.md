@@ -163,17 +163,35 @@ Confirmation is fixed to one pass with no regression-triggered best-of-N reruns.
 compatible baseline and same-source switch comparisons still use the existing entrypoints.
 The `default` profile's workload selection and regression policies are unchanged.
 
-### Full OpenAsync scoreboard (schema v2)
+### Full OpenAsync scoreboard (raw schema v2, summary schema v3)
+
+The [retained OpenAsync results](../../../doc/performance/openasync-results/README.md)
+include the October 2026 graph atlas, analysis, earlier controls and preliminary
+reports, and checksummed supporting data. The index distinguishes complete,
+partial, and synthetic results and documents raw evidence not included in Git.
 
 After successful full-profile validation and summary generation, raw per-open,
 warmup and external-diagnostic files are streamed into `raw-measurements-repN.zip`
 archives. Every member is CRC-verified before its original file is removed.
 Top-level summaries and BenchmarkDotNet reports remain directly accessible for
-existing reporting/ingestion. This prevents multi-gigabyte uncompressed diagnostic
-trees from exhausting the pipeline artifact publisher. Extract the archives into
+existing reporting/ingestion. This reduces publication volume; it does not guarantee
+that the pipeline artifact publisher stays within its memory limit. Extract the archives into
 the downloaded results directory before rerunning raw-data validation or analysis;
 their entries preserve the complete `repetitions/repN/<variant>/<case>/` paths.
 Packaging failures fail the run and preserve the unarchived evidence.
+
+The full-profile summary has `SchemaVersion: 3` and `RawSchemaVersion: 2`; raw
+measurement files and the preliminary-profile contract are unchanged. It is
+aggregate-only: raw `Diagnostics`, external snapshots, per-worker admission
+values and per-probe/per-GC stage lists are not copied into the summary.
+Each invocation's `RawEvidence.Invocation` identifies its `Archive` (relative to
+the results root), complete `Member` path, uncompressed `Bytes` and `Sha256`.
+Diagnostic actual invocations also reference `RawEvidence.ExternalObservations`;
+that index retains capture identities, intervals and raw stack/SQL filenames,
+resolved relative to the index member's directory. Warmups have no external
+capture reference. References are generated from the validated files before
+packaging; they resolve in the archives after successful packaging, or at the
+same member paths in the extracted tree. Preserve the archives with the summary.
 
 Select `benchmarkProfile: openasync-scoreboard`, `scoreboardRepetitions: 3`,
 `platform: linux`, `failOnRegression: false` (experiment: `failIfSwitchSlower: false`).
@@ -225,6 +243,8 @@ not an expected sample count.
 Repetition variability lists the independent throughput values and their standard deviation,
 matching invocation positions; it **does not pool percentile samples**. Warmups are labeled
 separately. Process-wide resource counters are not per-operation attribution.
+`AdmissionCounts` records total, available and unavailable worker admissions;
+`AdmissionDistributionMilliseconds` retains the available-value quantiles.
 
 Comparisons require matching workload version, shape, instrumentation, connection settings,
 and load options—not equal driver or runtime versions. Requested switches are retained, but
@@ -250,8 +270,13 @@ only nonnegative in-window observations, or null if none are available.
 `ManagedHeapEstimateSamples` reports total, available, unavailable, and negative counts
 for all snapshots and separately within the workload, including warmup summary rows.
 Other snapshot metrics are retained, and exact counters still reject negative values.
-Probes that finish after the workload are retained and labeled `PostWorkload`; their distribution
+Probes that finish after the workload are retained in raw evidence; their distribution
 is separate from probes completed within the measurement window.
+`DiagnosticSummary.ProbeCompletionStageCounts` and `GcObservationStageCounts`
+replace per-observation label arrays with counts (including zero counts).
+`ProbeAccounting` retains scheduled/posted/executed/dropped/capacity/outstanding
+counts, and `ProbeDrainMilliseconds` preserves the drainage duration. Missing
+latency observations still yield null distributions, not zero timings.
 
 The existing Python launcher additionally observes the atomic `diagnostic-invocation.json`
 marker, collecting only when the matching PID/case is active in `WorkloadActual`:
@@ -273,6 +298,16 @@ it does **not** mean complete temporal coverage or that every blocked thread was
   and are not attributed exclusively to the benchmark.
 
 Raw files and structured start/end timestamps are preserved in `external-diagnostics/`.
+`ExternalDiagnosticSummary` retains capture counts and count/min/quantile/max
+distributions of observed/blocking-open thread counts and scalar SQL metrics,
+not the snapshot arrays or thread headers. Unavailable SQL CPU observations are
+excluded from that metric's distribution; its `Count` can be smaller than
+`ServerCaptureCount`, and all-unavailable CPU yields null.
+`SameInvocationWaitDeltaTotals` sums tasks and milliseconds over wait types only
+for contained captures whose deltas have `SameActualInvocation` scope; it records
+the contributing capture count and is null if there are no eligible deltas.
+These totals are sampled instance-wide wait counters, not elapsed workload time
+or complete coverage. Per-type counters and intervals remain in raw evidence.
 Snapshots crossing an invocation boundary are explicitly `AmbiguousBoundary`, not proof of
 what happened inside that invocation. Completely out-of-window captures are `OutsideActual`;
 neither becomes a cohort stack/server metric. A marker-only observer can miss a very short invocation:

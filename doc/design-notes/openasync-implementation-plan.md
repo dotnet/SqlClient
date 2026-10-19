@@ -47,7 +47,11 @@ reset between that case's iterations.
 The supplementary schema records per-open/task-return observations, admission
 delay, actual peak outstanding/owned counts, failures and process-wide resource
 deltas. It separates actual and warmup samples through workload-stage signals;
-schema v2 retains warmup files in a separate directory. Export and pool
+schema v2 retains warmup files in a separate directory. Full-profile summary schema
+v3 retains aggregates and SHA-256-identified archive/member references rather than
+copying raw timelines, probes or external snapshots. Per-probe and per-GC stage
+lists become counts; detailed evidence remains in the raw schema-v2 archives.
+Export and pool
 setup/cleanup occur outside the timed benchmark.
 Infrastructure, acquisition or accounting failures invalidate the run.
 Source/package baseline selection remains the existing pipeline's responsibility.

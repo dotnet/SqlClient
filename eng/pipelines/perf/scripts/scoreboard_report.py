@@ -5,6 +5,7 @@
 """Schema-v2 scoreboard accounting. V1 validation intentionally stays in openasync_report."""
 
 import json
+import hashlib
 import math
 import os
 from datetime import datetime
@@ -28,11 +29,31 @@ EQUIVALENCE_FIELDS = (
     "PoolSize", "HoldMilliseconds", "ConnectTimeoutSeconds", "ConnectRetryCount", "Enlist",
     "ConnectionSettings",
 ) + LOAD_FIELDS
+SQL_METRICS = ("ActiveUserRequests", "RunnableTasks", "RunningTasks", "SchedulerRunnableQueue",
+               "SchedulerCurrentTasks", "UserSessions", "Connections", "LoginsCounter",
+               "SqlProcessCpuPercent")
 
 
 def need(condition, message):
     if not condition:
         raise ValueError(message)
+
+
+def evidence_reference(path, results_dir, repetition):
+    """Identify an immutable raw member relative to the published results root."""
+    path = Path(path)
+    need(not path.is_symlink(), "Cannot reference symlinked evidence")
+    member = path.resolve().relative_to(Path(results_dir).resolve())
+    need(member.parts[:2] == ("repetitions", f"rep{repetition}"),
+         "Evidence is outside its process repetition")
+    digest = hashlib.sha256()
+    size = 0
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            size += len(chunk)
+            digest.update(chunk)
+    return dict(Archive=f"raw-measurements-rep{repetition}.zip", Member=member.as_posix(),
+                Bytes=size, Sha256=digest.hexdigest())
 
 
 def package_raw_measurements(results_dir):
@@ -253,9 +274,15 @@ def summarize(data, case, repetition, stage="WorkloadActual", preliminary=False)
     if scenario == "E5":
         need(query_ids == {sample["RequestId"] for sample in samples if sample["Outcome"] == "Success"},
              "Every successful E5 open must have one query")
-    row = {key: value for key, value in data.items() if key not in ("Samples", "QuerySamples", "Load")}
+    excluded = ("Samples", "QuerySamples", "Load", "Diagnostics", "AdmissionMilliseconds")
+    row = {key: value for key, value in data.items() if key not in excluded}
     row["RunId"] = data.get("RunId")
-    row["AdmissionMilliseconds"] = [None if value == -1 else value for value in admission]
+    available_admission = [value for value in admission if value != -1]
+    row["AdmissionCounts"] = dict(Total=len(admission), Available=len(available_admission),
+                                 Unavailable=len(admission) - len(available_admission))
+    if preliminary:
+        row["AdmissionMilliseconds"] = admission
+        row["Diagnostics"] = diagnostics
     row.update(Outcomes=outcomes, SampleCount=len(samples),
                LifecycleOutcomes=lifecycle_outcomes if any(lifecycle_outcomes.values()) else None,
                DiagnosticSummary=diagnostic_summary,
@@ -271,7 +298,7 @@ def summarize(data, case, repetition, stage="WorkloadActual", preliminary=False)
                    [sample["CompletionMilliseconds"] for sample in samples]) if scenario == "E4" else None)
     # Retain the existing preliminary Markdown contract for newer emitters.
     row["AdmissionDistributionMilliseconds"] = legacy.distribution(
-        [value for value in row["AdmissionMilliseconds"] if value is not None])
+        available_admission)
     if scenario == "E6":
         row["LoadSummary"] = summarize_load(data.get("Load"), samples, elapsed)
         row.update(LoadPhaseMilliseconds=data["Load"]["PhaseMilliseconds"],
@@ -318,7 +345,7 @@ def summarize_diagnostics(data, elapsed=None):
     samples = probe.get("Samples")
     need(isinstance(samples, list) and len(samples) == probe["Executed"], "Missing executed probe samples")
     dispatch, overall, lateness = [], [], []
-    probe_stages, in_window_dispatch, post_window_dispatch = [], [], []
+    in_window_dispatch, post_window_dispatch = [], []
     observation_end = max(diagnostic_end, previous)
     for sample in samples:
         dispatch.append(duration(sample, "PostedMilliseconds", "ExecutedMilliseconds", observation_end))
@@ -326,7 +353,6 @@ def summarize_diagnostics(data, elapsed=None):
         lateness.append(duration(sample, "ScheduledMilliseconds", "PostedMilliseconds", observation_end))
         within = sample["ExecutedMilliseconds"] <= window
         (in_window_dispatch if within else post_window_dispatch).append(dispatch[-1])
-        probe_stages.append("WithinWorkload" if within else "PostWorkload")
     need(isinstance(data.get("GcObservations"), list), "Missing GC observations")
     for observation in data["GcObservations"]:
         legacy.number(observation.get("Index"), "GC index", integer=True)
@@ -356,15 +382,22 @@ def summarize_diagnostics(data, elapsed=None):
     return dict(UnrelatedDispatchMilliseconds=legacy.distribution(dispatch),
                 UnrelatedScheduledToExecutedMilliseconds=legacy.distribution(overall),
                 ProbeOfferLatenessMilliseconds=legacy.distribution(lateness),
-                ProbeCompletionStages=probe_stages,
+                ProbeCompletionStageCounts=dict(WithinWorkload=len(in_window_dispatch),
+                                                PostWorkload=len(post_window_dispatch)),
+                ProbeAccounting={field: probe[field] for field in
+                                 ("Capacity", "Scheduled", "Posted", "Executed", "Dropped", "OutstandingAtStop")},
+                ProbeDrainMilliseconds=probe["DrainMilliseconds"],
                 UnrelatedDispatchWithinWorkloadMilliseconds=legacy.distribution(in_window_dispatch),
                 UnrelatedDispatchPostWorkloadMilliseconds=legacy.distribution(post_window_dispatch),
                 DroppedProbes=probe["Dropped"], UnobservedProbes=probe["Posted"] - probe["Executed"],
                 OutstandingAtWorkloadStop=probe["OutstandingAtStop"],
                 UnobservedGcCount=data["UnobservedGcCount"],
                 GcObservationMethod=data.get("GcObservationMethod"),
-                GcObservationStages=["ObservedWithinWorkload" if item["ObservedMilliseconds"] <= window
-                                     else "ObservedAfterWorkload" for item in data["GcObservations"]],
+                GcObservationStageCounts={
+                    "ObservedWithinWorkload": sum(item["ObservedMilliseconds"] <= window
+                                                 for item in data["GcObservations"]),
+                    "ObservedAfterWorkload": sum(item["ObservedMilliseconds"] > window
+                                                for item in data["GcObservations"])},
                 GcTraceComplete=False, WorkloadTimelineSampleCount=len(in_window),
                 WorkloadWindowEndMilliseconds=window,
                 DiagnosticWindowEndMilliseconds=diagnostic_end,
@@ -488,7 +521,38 @@ def summarize_load(load, samples, elapsed):
         DrainCompletedMilliseconds=drain, DrainMilliseconds=drain - generation)
 
 
-def load_case(directory, case, repetition):
+def summarize_external(stacks, server):
+    """Aggregate contained captures; missing observations remain null, not invented zeroes."""
+    def metrics(items, field, names):
+        if not items:
+            return None
+        result = {}
+        for name in names:
+            values = []
+            for item in items:
+                value = item[field][name]
+                if name == "SqlProcessCpuPercent" and value is None:
+                    continue
+                values.append(legacy.number(value, name))
+            result[name] = legacy.distribution(values)
+        return result
+
+    intervals = [item for item in server if item["CounterDeltaScope"] == "SameActualInvocation"]
+    totals = None
+    if intervals:
+        totals = dict(CaptureCount=len(intervals), Tasks=0, Milliseconds=0)
+        for item in intervals:
+            need(isinstance(item["WaitDeltas"], list), "Missing same-invocation wait deltas")
+            for wait in item["WaitDeltas"]:
+                for field in ("Tasks", "Milliseconds"):
+                    totals[field] += legacy.number(wait[field], f"Wait delta {field}")
+    return dict(StackCaptureCount=len(stacks), ServerCaptureCount=len(server),
+                StackMetrics=metrics(stacks, "Counts", ("ObservedThreads", "OpenWithBlockingPrimitiveThreads")),
+                ServerMetrics=metrics(server, "Metrics", SQL_METRICS),
+                SameInvocationWaitDeltaTotals=totals)
+
+
+def load_case(directory, case, repetition, results_dir=None):
     rows = []
     for stage, count, subdir in (("WorkloadActual", 3, ""), ("WorkloadWarmup", 2, "warmup")):
         paths = sorted((Path(directory) / subdir).glob("openasync-*.json"))
@@ -496,7 +560,10 @@ def load_case(directory, case, repetition):
         stage_rows = []
         for path in paths:
             with path.open(encoding="utf-8-sig") as handle:
-                stage_rows.append(summarize(json.load(handle), case, repetition, stage))
+                row = summarize(json.load(handle), case, repetition, stage)
+            if results_dir is not None:
+                row["RawEvidence"] = {"Invocation": evidence_reference(path, results_dir, repetition)}
+            stage_rows.append(row)
         need(len({row["Invocation"] for row in stage_rows}) == count, "Duplicate invocation")
         rows.extend(stage_rows)
     first = rows[0]
@@ -510,11 +577,21 @@ def load_case(directory, case, repetition):
         need(path.is_file(), "Missing external Diagnostic observations")
         with path.open(encoding="utf-8") as handle:
             external = json.load(handle)
+        reference = evidence_reference(path, results_dir, repetition) if results_dir is not None else None
         need(not external.get("Error") and external.get("CollectorsPrepared") is True
              and external.get("Coverage") in ("Covered", "InsufficientWindowSamples"),
              "External Diagnostic collection failed")
         captures = external.get("Snapshots")
         need(isinstance(captures, list), "Missing external capture accounting")
+        for capture in captures:
+            for field in ("StackFile", "SqlFile"):
+                filename = capture.get(field)
+                if filename is not None:
+                    need(isinstance(filename, str) and filename not in ("", ".", "..")
+                         and "/" not in filename and "\\" not in filename,
+                         "Invalid external evidence filename")
+                    raw_path = path.parent / filename
+                    need(raw_path.is_file() and not raw_path.is_symlink(), "Missing external evidence file")
         coverage_rows = external.get("InvocationCoverage")
         need(isinstance(coverage_rows, list) and len(coverage_rows) == 3,
              "Missing actual-invocation diagnostic coverage accounting")
@@ -538,8 +615,9 @@ def load_case(directory, case, repetition):
                 expected = "Covered" if stacks and server else "InsufficientWindowSamples"
                 need(coverage[0].get("Coverage") == expected, "Incorrect external coverage verdict")
                 row["ExternalDiagnosticCoverage"] = coverage[0]
-                row["ExternalDiagnostics"] = {"StackSnapshots": stacks or None, "ServerSnapshots": server or None}
-                row["ExternalRawObservationsFile"] = "external-diagnostics/observations.json"
+                row["ExternalDiagnosticSummary"] = summarize_external(stacks, server)
+                if reference is not None:
+                    row["RawEvidence"]["ExternalObservations"] = reference
     return rows
 
 
@@ -558,7 +636,7 @@ def write_summary(results_dir, units, has_baseline, repetitions):
             variants = {}
             for variant in (("baseline", "current") if has_baseline else ("current",)):
                 directory = Path(results_dir) / "repetitions" / f"rep{repetition}" / variant / case
-                variants[variant] = load_case(directory, case, repetition)
+                variants[variant] = load_case(directory, case, repetition, results_dir)
                 rows.extend(dict(row, Variant=variant) for row in variants[variant])
             if has_baseline:
                 validate_equivalence(variants["baseline"][0], variants["current"][0])
@@ -604,12 +682,13 @@ def write_summary(results_dir, units, has_baseline, repetitions):
                                 ProcessRepetitions=[row["ProcessRepetition"] for row in group],
                                 ThroughputValues=values, Min=min(values), Max=max(values),
                                 StandardDeviation=statistics.stdev(values) if len(values) > 1 else None))
-    output = dict(SchemaVersion=2, BenchmarkProfile=legacy.FULL_PROFILE, Notice=NOTICE,
+    output = dict(SchemaVersion=3, RawSchemaVersion=2, BenchmarkProfile=legacy.FULL_PROFILE, Notice=NOTICE,
                   Invocations=rows, Comparisons=comparisons, RepetitionVariability=variability)
     with open(os.path.join(results_dir, "openasync-summary.json"), "w", encoding="utf-8") as handle:
         json.dump(output, handle, indent=2, allow_nan=False)
     lines = ["# OpenAsync scoreboard", "", NOTICE, "",
-             "Full distributions, E6 phase accounting, diagnostics and repetition variability are in JSON.",
+             "Distribution summaries, E6 phase accounting, diagnostic aggregates and repetition variability are in JSON.",
+             "Raw observations are retained separately; JSON RawEvidence references identify archive members by SHA-256.",
              "Supplemental elapsed excludes setup/export and initial/final process snapshots; BDN includes "
              "observer bookkeeping. Allocation/CPU/GC metrics are process-wide.", "",
              "| Variant | Case | Rep / PID / run | Stage / invocation | Success/s | Open p95 ms | "

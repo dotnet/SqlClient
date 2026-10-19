@@ -1,0 +1,128 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="445" viewBox="0 0 1120 445" role="img">
+<title>1 · Async protects unrelated work — except in the cold ramp</title>
+<desc>Diagnostic mode only · median of invocation probe p95s; whiskers show observed min–max, not confidence intervals</desc>
+<rect width="1120" height="445" fill="#ffffff"/>
+<g font-family="Segoe UI,Arial,sans-serif" fill="#172033">
+<text x="28.00" y="33.00" font-size="24" fill="#172033" text-anchor="start" font-weight="700">1 · Async protects unrelated work — except in the cold ramp</text>
+<text x="28.00" y="59.00" font-size="13" fill="#526075" text-anchor="start" font-weight="400">Diagnostic mode only · median of invocation probe p95s; whiskers show observed min–max, not confidence intervals</text>
+<line x1="835.00" y1="86.00" x2="855.00" y2="86.00" stroke="#2563eb" stroke-width="3"/>
+<text x="862.00" y="91.00" font-size="13" fill="#172033" text-anchor="start" font-weight="400">Open</text>
+<line x1="972.00" y1="86.00" x2="992.00" y2="86.00" stroke="#ea580c" stroke-width="3"/>
+<text x="999.00" y="91.00" font-size="13" fill="#172033" text-anchor="start" font-weight="400">OpenAsync</text>
+<text x="80.00" y="110.00" font-size="17" fill="#172033" text-anchor="start" font-weight="600">E3 · Repeated nonpooled opens</text>
+<text x="80.00" y="129.00" font-size="12" fill="#526075" text-anchor="start" font-weight="400">Unrelated-work dispatch p95 (ms) · logarithmic y-axis</text>
+<line x1="80.00" y1="360.00" x2="515.00" y2="360.00" stroke="#dce2ea" stroke-width="1"/>
+<text x="72.00" y="364.00" font-size="11" fill="#526075" text-anchor="end" font-weight="400">0.001</text>
+<line x1="80.00" y1="315.00" x2="515.00" y2="315.00" stroke="#dce2ea" stroke-width="1"/>
+<text x="72.00" y="319.00" font-size="11" fill="#526075" text-anchor="end" font-weight="400">0.01</text>
+<line x1="80.00" y1="270.00" x2="515.00" y2="270.00" stroke="#dce2ea" stroke-width="1"/>
+<text x="72.00" y="274.00" font-size="11" fill="#526075" text-anchor="end" font-weight="400">0.1</text>
+<line x1="80.00" y1="225.00" x2="515.00" y2="225.00" stroke="#dce2ea" stroke-width="1"/>
+<text x="72.00" y="229.00" font-size="11" fill="#526075" text-anchor="end" font-weight="400">1</text>
+<line x1="80.00" y1="180.00" x2="515.00" y2="180.00" stroke="#dce2ea" stroke-width="1"/>
+<text x="72.00" y="184.00" font-size="11" fill="#526075" text-anchor="end" font-weight="400">10</text>
+<line x1="80.00" y1="135.00" x2="515.00" y2="135.00" stroke="#dce2ea" stroke-width="1"/>
+<text x="72.00" y="139.00" font-size="11" fill="#526075" text-anchor="end" font-weight="400">100</text>
+<text x="80.00" y="380.00" font-size="12" fill="#172033" text-anchor="middle" font-weight="400">1</text>
+<text x="128.33" y="380.00" font-size="12" fill="#172033" text-anchor="middle" font-weight="400">8</text>
+<text x="294.05" y="380.00" font-size="12" fill="#172033" text-anchor="middle" font-weight="400">32</text>
+<text x="515.00" y="380.00" font-size="12" fill="#172033" text-anchor="middle" font-weight="400">64</text>
+<text x="297.50" y="400.00" font-size="12" fill="#172033" text-anchor="middle" font-weight="400">Configured workers</text>
+<line x1="80.00" y1="268.08" x2="128.33" y2="287.50" stroke="#2563eb" stroke-width="2.5"/>
+<line x1="128.33" y1="287.50" x2="294.05" y2="171.12" stroke="#2563eb" stroke-width="2.5"/>
+<line x1="294.05" y1="171.12" x2="515.00" y2="152.26" stroke="#2563eb" stroke-width="2.5"/>
+<line x1="80.00" y1="269.40" x2="80.00" y2="266.54" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="76.00" y1="269.40" x2="84.00" y2="269.40" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="76.00" y1="266.54" x2="84.00" y2="266.54" stroke="#2563eb" stroke-width="1.5"/>
+<circle cx="80.00" cy="268.08" r="4.5" fill="#2563eb" stroke="white" stroke-width="1"/>
+<line x1="128.33" y1="290.29" x2="128.33" y2="283.33" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="124.33" y1="290.29" x2="132.33" y2="290.29" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="124.33" y1="283.33" x2="132.33" y2="283.33" stroke="#2563eb" stroke-width="1.5"/>
+<circle cx="128.33" cy="287.50" r="4.5" fill="#2563eb" stroke="white" stroke-width="1"/>
+<line x1="294.05" y1="171.70" x2="294.05" y2="170.42" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="290.05" y1="171.70" x2="298.05" y2="171.70" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="290.05" y1="170.42" x2="298.05" y2="170.42" stroke="#2563eb" stroke-width="1.5"/>
+<circle cx="294.05" cy="171.12" r="4.5" fill="#2563eb" stroke="white" stroke-width="1"/>
+<line x1="515.00" y1="153.32" x2="515.00" y2="150.48" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="511.00" y1="153.32" x2="519.00" y2="153.32" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="511.00" y1="150.48" x2="519.00" y2="150.48" stroke="#2563eb" stroke-width="1.5"/>
+<circle cx="515.00" cy="152.26" r="4.5" fill="#2563eb" stroke="white" stroke-width="1"/>
+<line x1="80.00" y1="270.32" x2="128.33" y2="287.05" stroke="#ea580c" stroke-width="2.5"/>
+<line x1="128.33" y1="287.05" x2="294.05" y2="278.73" stroke="#ea580c" stroke-width="2.5"/>
+<line x1="294.05" y1="278.73" x2="515.00" y2="285.02" stroke="#ea580c" stroke-width="2.5"/>
+<line x1="80.00" y1="283.72" x2="80.00" y2="267.35" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="76.00" y1="283.72" x2="84.00" y2="283.72" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="76.00" y1="267.35" x2="84.00" y2="267.35" stroke="#ea580c" stroke-width="1.5"/>
+<circle cx="80.00" cy="270.32" r="4.5" fill="#ea580c" stroke="white" stroke-width="1"/>
+<line x1="128.33" y1="290.29" x2="128.33" y2="277.25" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="124.33" y1="290.29" x2="132.33" y2="290.29" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="124.33" y1="277.25" x2="132.33" y2="277.25" stroke="#ea580c" stroke-width="1.5"/>
+<circle cx="128.33" cy="287.05" r="4.5" fill="#ea580c" stroke="white" stroke-width="1"/>
+<line x1="294.05" y1="287.01" x2="294.05" y2="245.00" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="290.05" y1="287.01" x2="298.05" y2="287.01" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="290.05" y1="245.00" x2="298.05" y2="245.00" stroke="#ea580c" stroke-width="1.5"/>
+<circle cx="294.05" cy="278.73" r="4.5" fill="#ea580c" stroke="white" stroke-width="1"/>
+<line x1="515.00" y1="286.61" x2="515.00" y2="282.10" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="511.00" y1="286.61" x2="519.00" y2="286.61" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="511.00" y1="282.10" x2="519.00" y2="282.10" stroke="#ea580c" stroke-width="1.5"/>
+<circle cx="515.00" cy="285.02" r="4.5" fill="#ea580c" stroke="white" stroke-width="1"/>
+<text x="640.00" y="110.00" font-size="17" fill="#172033" text-anchor="start" font-weight="600">E4 · Retained cold pooled ramp</text>
+<text x="640.00" y="129.00" font-size="12" fill="#526075" text-anchor="start" font-weight="400">Unrelated-work dispatch p95 (ms) · logarithmic y-axis</text>
+<line x1="640.00" y1="360.00" x2="1075.00" y2="360.00" stroke="#dce2ea" stroke-width="1"/>
+<text x="632.00" y="364.00" font-size="11" fill="#526075" text-anchor="end" font-weight="400">0.001</text>
+<line x1="640.00" y1="315.00" x2="1075.00" y2="315.00" stroke="#dce2ea" stroke-width="1"/>
+<text x="632.00" y="319.00" font-size="11" fill="#526075" text-anchor="end" font-weight="400">0.01</text>
+<line x1="640.00" y1="270.00" x2="1075.00" y2="270.00" stroke="#dce2ea" stroke-width="1"/>
+<text x="632.00" y="274.00" font-size="11" fill="#526075" text-anchor="end" font-weight="400">0.1</text>
+<line x1="640.00" y1="225.00" x2="1075.00" y2="225.00" stroke="#dce2ea" stroke-width="1"/>
+<text x="632.00" y="229.00" font-size="11" fill="#526075" text-anchor="end" font-weight="400">1</text>
+<line x1="640.00" y1="180.00" x2="1075.00" y2="180.00" stroke="#dce2ea" stroke-width="1"/>
+<text x="632.00" y="184.00" font-size="11" fill="#526075" text-anchor="end" font-weight="400">10</text>
+<line x1="640.00" y1="135.00" x2="1075.00" y2="135.00" stroke="#dce2ea" stroke-width="1"/>
+<text x="632.00" y="139.00" font-size="11" fill="#526075" text-anchor="end" font-weight="400">100</text>
+<text x="640.00" y="380.00" font-size="12" fill="#172033" text-anchor="middle" font-weight="400">1</text>
+<text x="688.33" y="380.00" font-size="12" fill="#172033" text-anchor="middle" font-weight="400">8</text>
+<text x="854.05" y="380.00" font-size="12" fill="#172033" text-anchor="middle" font-weight="400">32</text>
+<text x="1075.00" y="380.00" font-size="12" fill="#172033" text-anchor="middle" font-weight="400">64</text>
+<text x="857.50" y="400.00" font-size="12" fill="#172033" text-anchor="middle" font-weight="400">Configured workers</text>
+<line x1="640.00" y1="294.33" x2="688.33" y2="288.82" stroke="#2563eb" stroke-width="2.5"/>
+<line x1="688.33" y1="288.82" x2="854.05" y2="170.57" stroke="#2563eb" stroke-width="2.5"/>
+<line x1="854.05" y1="170.57" x2="1075.00" y2="152.45" stroke="#2563eb" stroke-width="2.5"/>
+<line x1="640.00" y1="331.95" x2="640.00" y2="277.28" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="636.00" y1="331.95" x2="644.00" y2="331.95" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="636.00" y1="277.28" x2="644.00" y2="277.28" stroke="#2563eb" stroke-width="1.5"/>
+<circle cx="640.00" cy="294.33" r="4.5" fill="#2563eb" stroke="white" stroke-width="1"/>
+<line x1="688.33" y1="294.46" x2="688.33" y2="227.04" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="684.33" y1="294.46" x2="692.33" y2="294.46" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="684.33" y1="227.04" x2="692.33" y2="227.04" stroke="#2563eb" stroke-width="1.5"/>
+<circle cx="688.33" cy="288.82" r="4.5" fill="#2563eb" stroke="white" stroke-width="1"/>
+<line x1="854.05" y1="172.53" x2="854.05" y2="167.96" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="850.05" y1="172.53" x2="858.05" y2="172.53" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="850.05" y1="167.96" x2="858.05" y2="167.96" stroke="#2563eb" stroke-width="1.5"/>
+<circle cx="854.05" cy="170.57" r="4.5" fill="#2563eb" stroke="white" stroke-width="1"/>
+<line x1="1075.00" y1="153.49" x2="1075.00" y2="149.93" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="1071.00" y1="153.49" x2="1079.00" y2="153.49" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="1071.00" y1="149.93" x2="1079.00" y2="149.93" stroke="#2563eb" stroke-width="1.5"/>
+<circle cx="1075.00" cy="152.45" r="4.5" fill="#2563eb" stroke="white" stroke-width="1"/>
+<line x1="640.00" y1="312.27" x2="688.33" y2="294.32" stroke="#ea580c" stroke-width="2.5"/>
+<line x1="688.33" y1="294.32" x2="854.05" y2="168.75" stroke="#ea580c" stroke-width="2.5"/>
+<line x1="854.05" y1="168.75" x2="1075.00" y2="152.45" stroke="#ea580c" stroke-width="2.5"/>
+<line x1="640.00" y1="335.52" x2="640.00" y2="283.43" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="636.00" y1="335.52" x2="644.00" y2="335.52" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="636.00" y1="283.43" x2="644.00" y2="283.43" stroke="#ea580c" stroke-width="1.5"/>
+<circle cx="640.00" cy="312.27" r="4.5" fill="#ea580c" stroke="white" stroke-width="1"/>
+<line x1="688.33" y1="308.74" x2="688.33" y2="217.35" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="684.33" y1="308.74" x2="692.33" y2="308.74" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="684.33" y1="217.35" x2="692.33" y2="217.35" stroke="#ea580c" stroke-width="1.5"/>
+<circle cx="688.33" cy="294.32" r="4.5" fill="#ea580c" stroke="white" stroke-width="1"/>
+<line x1="854.05" y1="171.94" x2="854.05" y2="167.19" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="850.05" y1="171.94" x2="858.05" y2="171.94" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="850.05" y1="167.19" x2="858.05" y2="167.19" stroke="#ea580c" stroke-width="1.5"/>
+<circle cx="854.05" cy="168.75" r="4.5" fill="#ea580c" stroke="white" stroke-width="1"/>
+<line x1="1075.00" y1="153.89" x2="1075.00" y2="149.31" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="1071.00" y1="153.89" x2="1079.00" y2="153.89" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="1071.00" y1="149.31" x2="1079.00" y2="149.31" stroke="#ea580c" stroke-width="1.5"/>
+<circle cx="1075.00" cy="152.45" r="4.5" fill="#ea580c" stroke="white" stroke-width="1"/>
+<text x="28.00" y="430.00" font-size="14" fill="#172033" text-anchor="start" font-weight="600">At 64 workers: E3 = 41.34 ms Open vs 0.046 ms OpenAsync. E4 = about 40.95 ms for both.</text>
+</g>
+</svg>

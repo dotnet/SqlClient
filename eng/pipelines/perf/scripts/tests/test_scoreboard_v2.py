@@ -6,6 +6,7 @@
 
 import contextlib
 import copy
+import hashlib
 import io
 import json
 import os
@@ -104,7 +105,66 @@ def invocation(case, repetition=1, index=1, stage="WorkloadActual"):
 
 
 class SchemaTests(unittest.TestCase):
-    def test_negative_managed_heap_estimate_is_retained_in_warmup_summary(self):
+    def test_compact_summary_aggregates_diagnostics_without_mutating_evidence(self):
+        """Keep raw observations unchanged while emitting only counts and distributions."""
+        case = "OpenAsyncScoreboard-E1-Async-1-Diagnostic"
+        data = invocation(case)
+        before = copy.deepcopy(data)
+        row = report.summarize(data, case, 1)
+        for field in ("Diagnostics", "Samples", "QuerySamples", "Load", "AdmissionMilliseconds"):
+            self.assertNotIn(field, row)
+        self.assertEqual(row["AdmissionCounts"], {"Total": 1, "Available": 1, "Unavailable": 0})
+        summary = row["DiagnosticSummary"]
+        self.assertEqual(summary["ProbeCompletionStageCounts"], {"WithinWorkload": 0, "PostWorkload": 1})
+        self.assertEqual(summary["GcObservationStageCounts"],
+                         {"ObservedWithinWorkload": 0, "ObservedAfterWorkload": 0})
+        self.assertEqual(summary["ProbeAccounting"]["Scheduled"], 2)
+        self.assertEqual(summary["ProbeDrainMilliseconds"], 2)
+        self.assertEqual(data, before)
+
+    def test_external_summary_aggregates_only_contained_measurements(self):
+        """Preserve nullable coverage and exclude ambiguous/cross-invocation wait deltas."""
+        stack = dict(Counts=dict(ObservedThreads=4, OpenWithBlockingPrimitiveThreads=2,
+                                 ThreadHeaders=["thread one", "thread two"]))
+        metrics = {key: 3 for key in report.SQL_METRICS}
+        metrics.update(SqlProcessCpuPercent=None, Waits=[dict(WaitType="raw", Tasks=100)])
+        server = dict(Metrics=metrics, CounterDeltaScope="SameActualInvocation",
+                      WaitDeltas=[dict(WaitType="one", Tasks=2, Milliseconds=5)])
+        second = dict(server, Metrics=dict(metrics, Connections=7, SqlProcessCpuPercent=8),
+                      CounterDeltaScope="CrossInvocationOrAmbiguous", WaitDeltas=None)
+        result = report.summarize_external([stack], [server, second])
+        self.assertEqual(result["StackMetrics"]["OpenWithBlockingPrimitiveThreads"]["P50"], 2)
+        self.assertEqual(result["ServerMetrics"]["Connections"]["P50"], 5)
+        self.assertEqual(result["ServerMetrics"]["SqlProcessCpuPercent"]["Count"], 1)
+        self.assertEqual(result["SameInvocationWaitDeltaTotals"],
+                         {"CaptureCount": 1, "Tasks": 2, "Milliseconds": 5})
+        self.assertNotIn("raw", json.dumps(result))
+        missing = report.summarize_external([], [])
+        self.assertEqual(missing["StackCaptureCount"], 0)
+        self.assertIsNone(missing["StackMetrics"])
+        self.assertIsNone(missing["ServerMetrics"])
+        self.assertIsNone(missing["SameInvocationWaitDeltaTotals"])
+
+    def test_summary_size_does_not_scale_with_probe_and_gc_record_counts(self):
+        """Repeated diagnostic evidence changes counts, not the summary's array sizes."""
+        case = "OpenAsyncScoreboard-E1-Async-1-Diagnostic"
+        data = invocation(case)
+        before = len(json.dumps(report.summarize(data, case, 1)))
+        diagnostics = data["Diagnostics"]
+        diagnostics["Timeline"] = [diagnostics["Timeline"][0]] * 1000 + diagnostics["Timeline"][1:]
+        probes = diagnostics["UnrelatedWork"]
+        probes["Samples"] *= 1000
+        probes.update(Scheduled=1001, Posted=1000, Executed=1000)
+        diagnostics["GcObservations"] = [
+            dict(Index=index, Generation=0, ObservedMilliseconds=stamp, PauseMilliseconds=[1])
+            for index, stamp in enumerate([1, 12] * 500)]
+        row = report.summarize(data, case, 1)
+        self.assertLess(len(json.dumps(row)), before + 100)
+        self.assertEqual(row["DiagnosticSummary"]["ProbeCompletionStageCounts"]["PostWorkload"], 1000)
+        self.assertEqual(row["DiagnosticSummary"]["GcObservationStageCounts"],
+                         {"ObservedWithinWorkload": 500, "ObservedAfterWorkload": 500})
+
+    def test_negative_managed_heap_estimate_is_preserved_raw_and_counted_in_warmup_summary(self):
         case = "OpenAsyncScoreboard-E3-Sync-32-Diagnostic"
         data = invocation(case, stage="WorkloadWarmup")
         diagnostics = data["Diagnostics"]
@@ -116,7 +176,8 @@ class SchemaTests(unittest.TestCase):
         diagnostics["Timeline"] = [initial, negative, final]
         row = report.summarize(data, case, 1, "WorkloadWarmup")
         summary = row["DiagnosticSummary"]
-        self.assertEqual(row["Diagnostics"]["Timeline"][1]["ManagedHeapBytes"], -586072)
+        self.assertNotIn("Diagnostics", row)
+        self.assertEqual(data["Diagnostics"]["Timeline"][1]["ManagedHeapBytes"], -586072)
         self.assertEqual(row["MeasurementStage"], "WorkloadWarmup")
         self.assertEqual(summary["PeakManagedHeapBytes"], 128)
         self.assertEqual(summary["PeakWorkingSetBytes"], 1)
@@ -169,7 +230,9 @@ class SchemaTests(unittest.TestCase):
         case = "OpenAsyncScoreboard-E6-Async-8"
         data = invocation(case)
         data["AdmissionMilliseconds"] = [1] + [-1] * 7
-        self.assertEqual(report.summarize(data, case, 1)["AdmissionMilliseconds"], [1] + [None] * 7)
+        row = report.summarize(data, case, 1)
+        self.assertEqual(row["AdmissionCounts"], {"Total": 8, "Available": 1, "Unavailable": 7})
+        self.assertEqual(row["AdmissionDistributionMilliseconds"]["Count"], 1)
         for admission in ([1], [1] + [None] * 7, [1] + [-2] * 7):
             with self.subTest(admission=admission), self.assertRaises(ValueError):
                 report.summarize(dict(data, AdmissionMilliseconds=admission), case, 1)
@@ -312,7 +375,7 @@ class SchemaTests(unittest.TestCase):
         self.assertEqual(summary["UnrelatedDispatchMilliseconds"]["P50"], 10)
         self.assertEqual(summary["OutstandingAtWorkloadStop"], 1)
         self.assertEqual(summary["DroppedProbes"], 1)
-        self.assertEqual(summary["ProbeCompletionStages"], ["PostWorkload"])
+        self.assertEqual(summary["ProbeCompletionStageCounts"], {"WithinWorkload": 0, "PostWorkload": 1})
         self.assertIsNone(summary["UnrelatedDispatchWithinWorkloadMilliseconds"])
         self.assertEqual(summary["UnrelatedDispatchPostWorkloadMilliseconds"]["P50"], 10)
         broken = diagnostic()
@@ -340,7 +403,7 @@ class SchemaTests(unittest.TestCase):
         self.assertEqual(result["WorkloadTimelineSampleCount"], 1)
         self.assertEqual(result["PeakBusyWorkerProxy"], 1)
         self.assertIsNone(result["InWindowCumulativeDeltas"]["CpuMilliseconds"])
-        self.assertEqual(result["ProbeCompletionStages"], ["PostWorkload"])
+        self.assertEqual(result["ProbeCompletionStageCounts"], {"WithinWorkload": 0, "PostWorkload": 1})
         data["Timeline"] = [final]
         result = report.summarize_diagnostics(data)
         self.assertIsNone(result["PeakBusyWorkerProxy"])
@@ -369,6 +432,87 @@ class CollectionTests(unittest.TestCase):
         self.root.mkdir()
         self.addCleanup(shutil.rmtree, self.root)
         self.case = "OpenAsyncScoreboard-E4-Async-1"
+
+    def test_compact_summary_references_resolve_after_packaging(self):
+        """Archive/member identities and hashes resolve across repetitions and warmups."""
+        for repetition in (1, 2):
+            for variant in ("baseline", "current"):
+                self.write_case(self.root / "repetitions" / f"rep{repetition}" / variant / self.case,
+                                self.case, repetition)
+        report.write_summary(str(self.root), [self.case], True, 2)
+        output = json.loads((self.root / "openasync-summary.json").read_text())
+        self.assertEqual(output["SchemaVersion"], 3)
+        self.assertEqual(output["RawSchemaVersion"], 2)
+        self.assertEqual(len(output["Invocations"]), 20)
+        self.assertEqual(len(output["Comparisons"]), 2)
+        report.package_raw_measurements(self.root)
+        members = set()
+        for row in output["Invocations"]:
+            reference = row["RawEvidence"]["Invocation"]
+            with zipfile.ZipFile(self.root / reference["Archive"]) as archive:
+                raw = archive.read(reference["Member"])
+            self.assertEqual(reference["Bytes"], len(raw))
+            self.assertEqual(reference["Sha256"], hashlib.sha256(raw).hexdigest())
+            data = json.loads(raw)
+            for key in ("CaseId", "InvocationId", "MeasurementStage", "ProcessId", "ProcessRepetition"):
+                self.assertEqual(row[key], data[key])
+            self.assertIn("/" + row["Variant"] + "/", reference["Member"])
+            members.add((reference["Archive"], reference["Member"]))
+        self.assertEqual(len(members), 20)
+
+    def test_external_references_cover_raw_files_without_embedding_snapshots(self):
+        """Preserve capture counts, aggregate metrics and resolvable raw-file indexes."""
+        case = self.case + "-Diagnostic"
+        directory = self.root / "repetitions" / "rep1" / "current" / case
+        self.write_case(directory, case, 1)
+        external = directory / "external-diagnostics"
+        external.mkdir()
+        sql = {key: 1 for key in report.SQL_METRICS}
+        sql.update(Waits=[dict(WaitType="test", Tasks=1, Milliseconds=1)])
+        capture = dict(CaseId=case, ProcessId=1001, Stage="WorkloadActual",
+                       InvocationId="WorkloadActual-1", StackOverlap="ContainedInActual",
+                       SqlOverlap="ContainedInActual", StackCapture={}, SqlCapture={},
+                       StackCounts=dict(ObservedThreads=1, OpenWithBlockingPrimitiveThreads=0,
+                                        ThreadHeaders=[]),
+                       Sql=sql, SqlCounterDeltaScope="CrossInvocationOrAmbiguous",
+                       SqlWaitDeltas=None, StackFile="stack-1.txt", SqlFile="sql-1.json")
+        (external / "stack-1.txt").write_text("stack")
+        (external / "sql-1.json").write_text(json.dumps(sql))
+        coverage = [dict(CaseId=case, ProcessId=1001, InvocationId=f"WorkloadActual-{index}",
+                         Coverage="Covered" if index == 1 else "InsufficientWindowSamples",
+                         InWindowStackCaptures=int(index == 1), InWindowSqlCaptures=int(index == 1))
+                    for index in range(1, 4)]
+        (external / "observations.json").write_text(json.dumps(dict(
+            Error=None, CollectorsPrepared=True, Coverage="InsufficientWindowSamples",
+            Snapshots=[capture], InvocationCoverage=coverage)))
+        report.write_summary(str(self.root), [case], False, 1)
+        output = json.loads((self.root / "openasync-summary.json").read_text())
+        actual = output["Invocations"][:3]
+        self.assertEqual(actual[0]["ExternalDiagnosticSummary"]["StackCaptureCount"], 1)
+        self.assertIsNone(actual[1]["ExternalDiagnosticSummary"]["StackMetrics"])
+        report.package_raw_measurements(self.root)
+        for row in actual:
+            reference = row["RawEvidence"]["ExternalObservations"]
+            with zipfile.ZipFile(self.root / reference["Archive"]) as archive:
+                content = archive.read(reference["Member"])
+                index = json.loads(content)
+                for item in index["Snapshots"]:
+                    for field in ("StackFile", "SqlFile"):
+                        self.assertIn(str(Path(reference["Member"]).parent / item[field]).replace("\\", "/"),
+                                      archive.namelist())
+            self.assertEqual(reference["Sha256"], hashlib.sha256(content).hexdigest())
+        self.assertTrue(all("ExternalObservations" not in row["RawEvidence"]
+                            for row in output["Invocations"][3:]))
+
+    def test_evidence_reference_rejects_other_repetition_and_outside_root(self):
+        """Do not emit references that point outside the archive implied by a row."""
+        path = self.root / "repetitions" / "rep2" / "raw.json"
+        path.parent.mkdir(parents=True)
+        path.write_text("{}")
+        with self.assertRaisesRegex(ValueError, "repetition"):
+            report.evidence_reference(path, self.root, 1)
+        with self.assertRaises(ValueError):
+            report.evidence_reference(path, self.root / "other", 2)
 
     def test_raw_archive_round_trip_preserves_evidence_and_visible_reports(self):
         directory = self.root / "repetitions" / "rep1" / "current" / self.case
@@ -622,8 +766,8 @@ class CollectionTests(unittest.TestCase):
         rows = report.load_case(self.root / "dest" / case, case, 1)
         actual = [row for row in rows if row["MeasurementStage"] == "WorkloadActual"]
         self.assertEqual(actual[0]["ExternalDiagnosticCoverage"]["Coverage"], "InsufficientWindowSamples")
-        self.assertIsNone(actual[0]["ExternalDiagnostics"]["StackSnapshots"])
-        self.assertIsNone(actual[0]["ExternalDiagnostics"]["ServerSnapshots"])
+        self.assertIsNone(actual[0]["ExternalDiagnosticSummary"]["StackMetrics"])
+        self.assertIsNone(actual[0]["ExternalDiagnosticSummary"]["ServerMetrics"])
 
     def test_exported_windows_reconcile_partial_markers_and_capture_intervals(self):
         case = self.case + "-Diagnostic"

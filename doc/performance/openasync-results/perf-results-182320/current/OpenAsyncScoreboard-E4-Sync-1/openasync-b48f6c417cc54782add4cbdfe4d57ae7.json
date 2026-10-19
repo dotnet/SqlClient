@@ -1,0 +1,60 @@
+{
+  "SchemaVersion": 1,
+  "WorkloadVersion": 1,
+  "CaseId": "OpenAsyncScoreboard-E4-Sync-1",
+  "Scenario": "E4",
+  "Api": "Sync",
+  "Concurrency": 1,
+  "OperationsPerWorker": 1,
+  "PoolSize": 1,
+  "HoldMilliseconds": 0,
+  "UseConnectionPoolV2": false,
+  "UseOptimizedAsyncBehaviour": true,
+  "UseManagedSniOnWindows": false,
+  "ConnectTimeoutSeconds": 30,
+  "ConnectRetryCount": 0,
+  "Enlist": false,
+  "Runtime": ".NET 10.0.12",
+  "OS": "Ubuntu 22.04.5 LTS",
+  "DriverVersion": "8.0.0-preview1-dev\u002B381732827bee74f17101499831d234eabb6704ac",
+  "DriverAssemblyVersion": "8.0.0.0",
+  "ProcessorCount": 16,
+  "Invocation": 3,
+  "MeasurementStage": "WorkloadActual",
+  "IsInstrumented": true,
+  "UnavailableDiagnostics": [
+    "BlockedThreadStacks",
+    "UnrelatedWorkLatency",
+    "ServerSaturation",
+    "DependencyPhaseEvidence",
+    "UninstrumentedThroughput"
+  ],
+  "ElapsedMilliseconds": 7.9892,
+  "CpuMilliseconds": 3.406,
+  "AllocatedBytes": 56648,
+  "Gen0Collections": 0,
+  "Gen1Collections": 0,
+  "Gen2Collections": 0,
+  "ProcessThreadsBefore": 19,
+  "ProcessThreadsAfter": 19,
+  "ThreadPoolThreadsBefore": 7,
+  "ThreadPoolThreadsAfter": 7,
+  "PeakOutstandingOpens": 1,
+  "PeakOpenConnections": 1,
+  "AdmissionMilliseconds": [
+    0.052
+  ],
+  "Samples": [
+    {
+      "Worker": 0,
+      "Operation": 0,
+      "StartMilliseconds": 0.052,
+      "TaskReturnMilliseconds": null,
+      "CompletionMilliseconds": 7.9607,
+      "CompletedAtReturn": null,
+      "Outcome": "Success",
+      "ErrorType": null,
+      "SqlErrorNumber": null
+    }
+  ]
+}

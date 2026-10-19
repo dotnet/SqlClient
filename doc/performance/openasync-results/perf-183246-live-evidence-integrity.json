@@ -1,0 +1,6 @@
+[
+  {
+    "code": "ProvisioningState/succeeded",
+    "message": "Enable succeeded: \n[stdout]\n 32716389 raw-measurements-rep1.zip\n 32917279 raw-measurements-rep2.zip\n 32909595 raw-measurements-rep3.zip\n374515424 openasync-summary.json\n   275843 openasync-summary.md\n473334530 total\nfcb5483f75deaf3db428433c8efcaf7033109358c32cd059020842c398915875  raw-measurements-rep1.zip\n7440b327b645460bbc8f15b739aee8f28bfc131303ce4767c8a6a31912719e8a  raw-measurements-rep2.zip\n0c56f1190e106f9781222923751f3fce4a775ea9af0515d4f6edc3a8655bbe0e  raw-measurements-rep3.zip\nd919f5ed3bbebfb3c7e47547074533092e22ba6c491b5413ec0eed019b1de354  openasync-summary.json\nraw-measurements-rep1.zip: CRC OK, 978 members\nraw-measurements-rep2.zip: CRC OK, 987 members\nraw-measurements-rep3.zip: CRC OK, 984 members\n\n[stderr]\n"
+  }
+]

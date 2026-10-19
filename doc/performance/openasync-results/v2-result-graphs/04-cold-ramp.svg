@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="495" viewBox="0 0 1120 495" role="img">
+<title>4 · Cold-ramp task return is not the same as cohort progress</title>
+<desc>E4 at 64 workers · median [observed min–max] of nine invocation aggregates · milliseconds</desc>
+<rect width="1120" height="495" fill="#ffffff"/>
+<g font-family="Segoe UI,Arial,sans-serif" fill="#172033">
+<text x="28.00" y="33.00" font-size="24" fill="#172033" text-anchor="start" font-weight="700">4 · Cold-ramp task return is not the same as cohort progress</text>
+<text x="28.00" y="59.00" font-size="13" fill="#526075" text-anchor="start" font-weight="400">E4 at 64 workers · median [observed min–max] of nine invocation aggregates · milliseconds</text>
+<line x1="835.00" y1="86.00" x2="855.00" y2="86.00" stroke="#2563eb" stroke-width="3"/>
+<text x="862.00" y="91.00" font-size="13" fill="#172033" text-anchor="start" font-weight="400">Open</text>
+<line x1="972.00" y1="86.00" x2="992.00" y2="86.00" stroke="#ea580c" stroke-width="3"/>
+<text x="999.00" y="91.00" font-size="13" fill="#172033" text-anchor="start" font-weight="400">OpenAsync</text>
+<line x1="375.00" y1="117.00" x2="375.00" y2="408.00" stroke="#dce2ea" stroke-width="1"/>
+<text x="375.00" y="428.00" font-size="12" fill="#172033" text-anchor="middle" font-weight="400">0</text>
+<line x1="471.92" y1="117.00" x2="471.92" y2="408.00" stroke="#dce2ea" stroke-width="1"/>
+<text x="471.92" y="428.00" font-size="12" fill="#172033" text-anchor="middle" font-weight="400">10</text>
+<line x1="568.85" y1="117.00" x2="568.85" y2="408.00" stroke="#dce2ea" stroke-width="1"/>
+<text x="568.85" y="428.00" font-size="12" fill="#172033" text-anchor="middle" font-weight="400">20</text>
+<line x1="665.77" y1="117.00" x2="665.77" y2="408.00" stroke="#dce2ea" stroke-width="1"/>
+<text x="665.77" y="428.00" font-size="12" fill="#172033" text-anchor="middle" font-weight="400">30</text>
+<line x1="762.69" y1="117.00" x2="762.69" y2="408.00" stroke="#dce2ea" stroke-width="1"/>
+<text x="762.69" y="428.00" font-size="12" fill="#172033" text-anchor="middle" font-weight="400">40</text>
+<line x1="859.62" y1="117.00" x2="859.62" y2="408.00" stroke="#dce2ea" stroke-width="1"/>
+<text x="859.62" y="428.00" font-size="12" fill="#172033" text-anchor="middle" font-weight="400">50</text>
+<line x1="956.54" y1="117.00" x2="956.54" y2="408.00" stroke="#dce2ea" stroke-width="1"/>
+<text x="956.54" y="428.00" font-size="12" fill="#172033" text-anchor="middle" font-weight="400">60</text>
+<text x="28.00" y="156.00" font-size="13" fill="#172033" text-anchor="start" font-weight="600">Initial worker admission p95 · Sampled</text>
+<rect x="375.00" y="135.00" width="392.06" height="17.00" fill="#2563eb"/>
+<line x1="713.23" y1="143.00" x2="823.39" y2="143.00" stroke="#172033" stroke-width="1"/>
+<line x1="713.23" y1="139.00" x2="713.23" y2="147.00" stroke="#172033" stroke-width="1"/>
+<line x1="823.39" y1="139.00" x2="823.39" y2="147.00" stroke="#172033" stroke-width="1"/>
+<text x="831.39" y="148.00" font-size="12" fill="#2563eb" text-anchor="start" font-weight="600">40.45</text>
+<rect x="375.00" y="159.00" width="362.95" height="17.00" fill="#ea580c"/>
+<line x1="704.96" y1="167.00" x2="825.04" y2="167.00" stroke="#172033" stroke-width="1"/>
+<line x1="704.96" y1="163.00" x2="704.96" y2="171.00" stroke="#172033" stroke-width="1"/>
+<line x1="825.04" y1="163.00" x2="825.04" y2="171.00" stroke="#172033" stroke-width="1"/>
+<text x="833.04" y="172.00" font-size="12" fill="#ea580c" text-anchor="start" font-weight="600">37.45</text>
+<text x="28.00" y="228.00" font-size="13" fill="#172033" text-anchor="start" font-weight="600">Open duration p95 · Sampled</text>
+<rect x="375.00" y="207.00" width="171.99" height="17.00" fill="#2563eb"/>
+<line x1="532.98" y1="215.00" x2="598.22" y2="215.00" stroke="#172033" stroke-width="1"/>
+<line x1="532.98" y1="211.00" x2="532.98" y2="219.00" stroke="#172033" stroke-width="1"/>
+<line x1="598.22" y1="211.00" x2="598.22" y2="219.00" stroke="#172033" stroke-width="1"/>
+<text x="606.22" y="220.00" font-size="12" fill="#2563eb" text-anchor="start" font-weight="600">17.75</text>
+<rect x="375.00" y="231.00" width="174.95" height="17.00" fill="#ea580c"/>
+<line x1="525.90" y1="239.00" x2="565.53" y2="239.00" stroke="#172033" stroke-width="1"/>
+<line x1="525.90" y1="235.00" x2="525.90" y2="243.00" stroke="#172033" stroke-width="1"/>
+<line x1="565.53" y1="235.00" x2="565.53" y2="243.00" stroke="#172033" stroke-width="1"/>
+<text x="573.53" y="244.00" font-size="12" fill="#ea580c" text-anchor="start" font-weight="600">18.05</text>
+<text x="28.00" y="300.00" font-size="13" fill="#172033" text-anchor="start" font-weight="600">Common-epoch completion p95 · Sampled</text>
+<rect x="375.00" y="279.00" width="481.80" height="17.00" fill="#2563eb"/>
+<line x1="810.44" y1="287.00" x2="933.01" y2="287.00" stroke="#172033" stroke-width="1"/>
+<line x1="810.44" y1="283.00" x2="810.44" y2="291.00" stroke="#172033" stroke-width="1"/>
+<line x1="933.01" y1="283.00" x2="933.01" y2="291.00" stroke="#172033" stroke-width="1"/>
+<text x="941.01" y="292.00" font-size="12" fill="#2563eb" text-anchor="start" font-weight="600">49.71</text>
+<rect x="375.00" y="303.00" width="491.46" height="17.00" fill="#ea580c"/>
+<line x1="821.61" y1="311.00" x2="943.86" y2="311.00" stroke="#172033" stroke-width="1"/>
+<line x1="821.61" y1="307.00" x2="821.61" y2="315.00" stroke="#172033" stroke-width="1"/>
+<line x1="943.86" y1="307.00" x2="943.86" y2="315.00" stroke="#172033" stroke-width="1"/>
+<text x="951.86" y="316.00" font-size="12" fill="#ea580c" text-anchor="start" font-weight="600">50.71</text>
+<text x="28.00" y="372.00" font-size="13" fill="#172033" text-anchor="start" font-weight="600">Unrelated-work dispatch p95 · Diagnostic</text>
+<rect x="375.00" y="351.00" width="396.97" height="17.00" fill="#2563eb"/>
+<line x1="751.21" y1="359.00" x2="826.47" y2="359.00" stroke="#172033" stroke-width="1"/>
+<line x1="751.21" y1="355.00" x2="751.21" y2="363.00" stroke="#172033" stroke-width="1"/>
+<line x1="826.47" y1="355.00" x2="826.47" y2="363.00" stroke="#172033" stroke-width="1"/>
+<text x="834.47" y="364.00" font-size="12" fill="#2563eb" text-anchor="start" font-weight="600">40.96</text>
+<rect x="375.00" y="375.00" width="396.89" height="17.00" fill="#ea580c"/>
+<line x1="743.74" y1="383.00" x2="840.93" y2="383.00" stroke="#172033" stroke-width="1"/>
+<line x1="743.74" y1="379.00" x2="743.74" y2="387.00" stroke="#172033" stroke-width="1"/>
+<line x1="840.93" y1="379.00" x2="840.93" y2="387.00" stroke="#172033" stroke-width="1"/>
+<text x="848.93" y="388.00" font-size="12" fill="#ea580c" text-anchor="start" font-weight="600">40.95</text>
+<text x="690.00" y="452.00" font-size="12" fill="#172033" text-anchor="middle" font-weight="400">Milliseconds (zero-based linear axis)</text>
+<text x="28.00" y="480.00" font-size="13" fill="#172033" text-anchor="start" font-weight="600">Async pending task-return p95 is only 0.0159 ms. No contained E4 stacks were captured; the cause is not isolated.</text>
+</g>
+</svg>

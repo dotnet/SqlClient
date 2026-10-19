@@ -654,6 +654,9 @@ $ RUNNER_CONFIG=~/.configs/runnerconfig.jsonc dotnet run -c Release -f net10.0
 
 ### Open/OpenAsync scoreboard
 
+See the [retained results and graph atlas](doc/performance/openasync-results/README.md)
+for the October 2026 observations, measurement caveats, and evidence inventory.
+
 The opt-in `openasync-preliminary` profile uses this same PerformanceTests project
 and the [existing perf pipeline](eng/pipelines/perf/README.md). It measures E1 warm
 pooled reuse, E2 fixed-capacity pool contention with matched asynchronous holds,
@@ -713,5 +716,12 @@ These are **instrumented, report-only results**, not proof of full async
 compliance or uninstrumented maximum throughput. Controlled D-fixtures,
 phase-specific cancellation/failure/recovery and transactional profiles are not
 covered by this scoreboard. Missing diagnostics are not zero values.
+Full-profile reporting uses aggregate-only summary schema v3 with unchanged raw
+schema v2. `RawEvidence` references identify per-invocation and external-observation
+archive members, byte lengths and SHA-256 hashes. Keep `raw-measurements-repN.zip`
+alongside the compact summary for detailed timelines, probes, stacks and SQL
+observations; these are no longer duplicated in summary JSON. See the
+[perf reporting guide](eng/pipelines/perf/README.md#full-openasync-scoreboard-raw-schema-v2-summary-schema-v3)
+for schema changes and interpretation.
 Failed opens, invalid accounting, missing artifacts and watchdog expiry fail
 the run; slow but valid measurements do not.

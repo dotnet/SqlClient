@@ -1,0 +1,178 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="768" viewBox="0 0 1120 768" role="img">
+<title>12. Blocking-open evidence in contained stacks</title><desc>Diagnostic · co-observed Open + blocking frames; only contained snapshots; NOT duration or complete thread coverage</desc>
+<rect width="1120" height="768" fill="#fff"/>
+<g font-family="Segoe UI,Arial,sans-serif" fill="#172033">
+<text x="24.00" y="30.00" font-size="22" text-anchor="start" fill="#172033" font-weight="700">12. Blocking-open evidence in contained stacks</text>
+<text x="24.00" y="54.00" font-size="12" text-anchor="start" fill="#526075" font-weight="400">Diagnostic · co-observed Open + blocking frames; only contained snapshots; NOT duration or complete thread coverage</text>
+<line x1="24.00" y1="79.00" x2="46.00" y2="79.00" stroke="#2563eb" stroke-width="3"/>
+<text x="52.00" y="83.00" font-size="12" text-anchor="start" fill="#172033" font-weight="400">Open</text>
+<line x1="199.00" y1="79.00" x2="221.00" y2="79.00" stroke="#ea580c" stroke-width="3"/>
+<text x="227.00" y="83.00" font-size="12" text-anchor="start" fill="#172033" font-weight="400">OpenAsync</text>
+<text x="1090.00" y="83.00" font-size="11" text-anchor="end" fill="#526075" font-weight="400">Point = median; whisker = observed min–max</text>
+<text x="24.00" y="115.00" font-size="15" text-anchor="start" fill="#172033" font-weight="700">E1 · Warm pooled reuse</text>
+<text x="24.00" y="134.00" font-size="10" text-anchor="start" fill="#526075" font-weight="400">Median invocation max observed threads</text>
+<rect x="66.0" y="145" width="280.3333333333333" height="190" fill="#f3f5f8"/>
+<text x="206.17" y="230.00" font-size="13" text-anchor="middle" fill="#526075" font-weight="400">No usable observations</text>
+<text x="206.17" y="252.00" font-size="12" text-anchor="middle" fill="#526075" font-weight="400">(not a zero result)</text>
+<text x="397.33" y="115.00" font-size="15" text-anchor="start" fill="#172033" font-weight="700">E2 · Pool contention</text>
+<text x="397.33" y="134.00" font-size="10" text-anchor="start" fill="#526075" font-weight="400">Median invocation max observed threads</text>
+<line x1="439.33" y1="335.00" x2="719.67" y2="335.00" stroke="#dbe2ea" stroke-width="1"/>
+<text x="432.33" y="339.00" font-size="10" text-anchor="end" fill="#526075" font-weight="400">0</text>
+<line x1="439.33" y1="287.50" x2="719.67" y2="287.50" stroke="#dbe2ea" stroke-width="1"/>
+<text x="432.33" y="291.50" font-size="10" text-anchor="end" fill="#526075" font-weight="400">17.5</text>
+<line x1="439.33" y1="240.00" x2="719.67" y2="240.00" stroke="#dbe2ea" stroke-width="1"/>
+<text x="432.33" y="244.00" font-size="10" text-anchor="end" fill="#526075" font-weight="400">35</text>
+<line x1="439.33" y1="192.50" x2="719.67" y2="192.50" stroke="#dbe2ea" stroke-width="1"/>
+<text x="432.33" y="196.50" font-size="10" text-anchor="end" fill="#526075" font-weight="400">52.5</text>
+<line x1="439.33" y1="145.00" x2="719.67" y2="145.00" stroke="#dbe2ea" stroke-width="1"/>
+<text x="432.33" y="149.00" font-size="10" text-anchor="end" fill="#526075" font-weight="400">70</text>
+<text x="439.33" y="355.00" font-size="11" text-anchor="middle" fill="#172033" font-weight="400">1</text>
+<text x="470.48" y="355.00" font-size="11" text-anchor="middle" fill="#172033" font-weight="400">8</text>
+<text x="577.28" y="355.00" font-size="11" text-anchor="middle" fill="#172033" font-weight="400">32</text>
+<text x="719.67" y="355.00" font-size="11" text-anchor="middle" fill="#172033" font-weight="400">64</text>
+<text x="579.50" y="375.00" font-size="11" text-anchor="middle" fill="#172033" font-weight="400">Configured workers</text>
+<line x1="439.33" y1="335.00" x2="439.33" y2="335.00" stroke="#2563eb" stroke-width="1.4"/>
+<line x1="436.33" y1="335.00" x2="442.33" y2="335.00" stroke="#2563eb" stroke-width="1.4"/>
+<line x1="436.33" y1="335.00" x2="442.33" y2="335.00" stroke="#2563eb" stroke-width="1.4"/>
+<circle cx="439.33" cy="335.00" r="3.7" fill="#2563eb" stroke="white" stroke-width="0.8"/>
+<text x="443.33" y="328.00" font-size="9" text-anchor="start" fill="#2563eb" font-weight="400">n=7</text>
+<line x1="439.33" y1="335.00" x2="470.48" y2="324.14" stroke="#2563eb" stroke-width="2"/>
+<line x1="470.48" y1="324.14" x2="470.48" y2="324.14" stroke="#2563eb" stroke-width="1.4"/>
+<line x1="467.48" y1="324.14" x2="473.48" y2="324.14" stroke="#2563eb" stroke-width="1.4"/>
+<line x1="467.48" y1="324.14" x2="473.48" y2="324.14" stroke="#2563eb" stroke-width="1.4"/>
+<circle cx="470.48" cy="324.14" r="3.7" fill="#2563eb" stroke="white" stroke-width="0.8"/>
+<line x1="470.48" y1="324.14" x2="577.28" y2="259.00" stroke="#2563eb" stroke-width="2"/>
+<line x1="577.28" y1="259.00" x2="577.28" y2="259.00" stroke="#2563eb" stroke-width="1.4"/>
+<line x1="574.28" y1="259.00" x2="580.28" y2="259.00" stroke="#2563eb" stroke-width="1.4"/>
+<line x1="574.28" y1="259.00" x2="580.28" y2="259.00" stroke="#2563eb" stroke-width="1.4"/>
+<circle cx="577.28" cy="259.00" r="3.7" fill="#2563eb" stroke="white" stroke-width="0.8"/>
+<line x1="577.28" y1="259.00" x2="719.67" y2="172.14" stroke="#2563eb" stroke-width="2"/>
+<line x1="719.67" y1="172.14" x2="719.67" y2="169.43" stroke="#2563eb" stroke-width="1.4"/>
+<line x1="716.67" y1="172.14" x2="722.67" y2="172.14" stroke="#2563eb" stroke-width="1.4"/>
+<line x1="716.67" y1="169.43" x2="722.67" y2="169.43" stroke="#2563eb" stroke-width="1.4"/>
+<circle cx="719.67" cy="172.14" r="3.7" fill="#2563eb" stroke="white" stroke-width="0.8"/>
+<line x1="439.33" y1="335.00" x2="439.33" y2="335.00" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="436.33" y1="335.00" x2="442.33" y2="335.00" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="436.33" y1="335.00" x2="442.33" y2="335.00" stroke="#ea580c" stroke-width="1.4"/>
+<circle cx="439.33" cy="335.00" r="3.7" fill="#ea580c" stroke="white" stroke-width="0.8"/>
+<text x="443.33" y="328.00" font-size="9" text-anchor="start" fill="#ea580c" font-weight="400">n=8</text>
+<line x1="439.33" y1="335.00" x2="470.48" y2="335.00" stroke="#ea580c" stroke-width="2"/>
+<line x1="470.48" y1="335.00" x2="470.48" y2="335.00" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="467.48" y1="335.00" x2="473.48" y2="335.00" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="467.48" y1="335.00" x2="473.48" y2="335.00" stroke="#ea580c" stroke-width="1.4"/>
+<circle cx="470.48" cy="335.00" r="3.7" fill="#ea580c" stroke="white" stroke-width="0.8"/>
+<line x1="470.48" y1="335.00" x2="577.28" y2="335.00" stroke="#ea580c" stroke-width="2"/>
+<line x1="577.28" y1="335.00" x2="577.28" y2="335.00" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="574.28" y1="335.00" x2="580.28" y2="335.00" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="574.28" y1="335.00" x2="580.28" y2="335.00" stroke="#ea580c" stroke-width="1.4"/>
+<circle cx="577.28" cy="335.00" r="3.7" fill="#ea580c" stroke="white" stroke-width="0.8"/>
+<line x1="577.28" y1="335.00" x2="719.67" y2="335.00" stroke="#ea580c" stroke-width="2"/>
+<line x1="719.67" y1="335.00" x2="719.67" y2="335.00" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="716.67" y1="335.00" x2="722.67" y2="335.00" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="716.67" y1="335.00" x2="722.67" y2="335.00" stroke="#ea580c" stroke-width="1.4"/>
+<circle cx="719.67" cy="335.00" r="3.7" fill="#ea580c" stroke="white" stroke-width="0.8"/>
+<text x="397.33" y="396.00" font-size="10" text-anchor="start" fill="#526075" font-weight="400">At 64: Open 60.00; OpenAsync 0</text>
+<text x="770.67" y="115.00" font-size="15" text-anchor="start" fill="#172033" font-weight="700">E3 · Nonpooled opens</text>
+<text x="770.67" y="134.00" font-size="10" text-anchor="start" fill="#526075" font-weight="400">Median invocation max observed threads</text>
+<line x1="812.67" y1="335.00" x2="1093.00" y2="335.00" stroke="#dbe2ea" stroke-width="1"/>
+<text x="805.67" y="339.00" font-size="10" text-anchor="end" fill="#526075" font-weight="400">0</text>
+<line x1="812.67" y1="287.50" x2="1093.00" y2="287.50" stroke="#dbe2ea" stroke-width="1"/>
+<text x="805.67" y="291.50" font-size="10" text-anchor="end" fill="#526075" font-weight="400">7.5</text>
+<line x1="812.67" y1="240.00" x2="1093.00" y2="240.00" stroke="#dbe2ea" stroke-width="1"/>
+<text x="805.67" y="244.00" font-size="10" text-anchor="end" fill="#526075" font-weight="400">15</text>
+<line x1="812.67" y1="192.50" x2="1093.00" y2="192.50" stroke="#dbe2ea" stroke-width="1"/>
+<text x="805.67" y="196.50" font-size="10" text-anchor="end" fill="#526075" font-weight="400">22.5</text>
+<line x1="812.67" y1="145.00" x2="1093.00" y2="145.00" stroke="#dbe2ea" stroke-width="1"/>
+<text x="805.67" y="149.00" font-size="10" text-anchor="end" fill="#526075" font-weight="400">30</text>
+<text x="812.67" y="355.00" font-size="11" text-anchor="middle" fill="#172033" font-weight="400">1</text>
+<text x="843.81" y="355.00" font-size="11" text-anchor="middle" fill="#172033" font-weight="400">8</text>
+<text x="950.61" y="355.00" font-size="11" text-anchor="middle" fill="#172033" font-weight="400">32</text>
+<text x="1093.00" y="355.00" font-size="11" text-anchor="middle" fill="#172033" font-weight="400">64</text>
+<text x="952.83" y="375.00" font-size="11" text-anchor="middle" fill="#172033" font-weight="400">Configured workers</text>
+<line x1="950.61" y1="259.00" x2="950.61" y2="170.33" stroke="#2563eb" stroke-width="1.4"/>
+<line x1="947.61" y1="259.00" x2="953.61" y2="259.00" stroke="#2563eb" stroke-width="1.4"/>
+<line x1="947.61" y1="170.33" x2="953.61" y2="170.33" stroke="#2563eb" stroke-width="1.4"/>
+<circle cx="950.61" cy="202.00" r="3.7" fill="#2563eb" stroke="white" stroke-width="0.8"/>
+<line x1="950.61" y1="202.00" x2="1093.00" y2="208.33" stroke="#2563eb" stroke-width="2"/>
+<line x1="1093.00" y1="259.00" x2="1093.00" y2="170.33" stroke="#2563eb" stroke-width="1.4"/>
+<line x1="1090.00" y1="259.00" x2="1096.00" y2="259.00" stroke="#2563eb" stroke-width="1.4"/>
+<line x1="1090.00" y1="170.33" x2="1096.00" y2="170.33" stroke="#2563eb" stroke-width="1.4"/>
+<circle cx="1093.00" cy="208.33" r="3.7" fill="#2563eb" stroke="white" stroke-width="0.8"/>
+<line x1="950.61" y1="335.00" x2="950.61" y2="335.00" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="947.61" y1="335.00" x2="953.61" y2="335.00" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="947.61" y1="335.00" x2="953.61" y2="335.00" stroke="#ea580c" stroke-width="1.4"/>
+<circle cx="950.61" cy="335.00" r="3.7" fill="#ea580c" stroke="white" stroke-width="0.8"/>
+<line x1="950.61" y1="335.00" x2="1093.00" y2="335.00" stroke="#ea580c" stroke-width="2"/>
+<line x1="1093.00" y1="335.00" x2="1093.00" y2="335.00" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="1090.00" y1="335.00" x2="1096.00" y2="335.00" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="1090.00" y1="335.00" x2="1096.00" y2="335.00" stroke="#ea580c" stroke-width="1.4"/>
+<circle cx="1093.00" cy="335.00" r="3.7" fill="#ea580c" stroke="white" stroke-width="0.8"/>
+<text x="770.67" y="396.00" font-size="10" text-anchor="start" fill="#526075" font-weight="400">At 64: Open 20.00; OpenAsync 0</text>
+<text x="24.00" y="415.00" font-size="15" text-anchor="start" fill="#172033" font-weight="700">E4 · Cold pooled ramp</text>
+<text x="24.00" y="434.00" font-size="10" text-anchor="start" fill="#526075" font-weight="400">Median invocation max observed threads</text>
+<rect x="66.0" y="445" width="280.3333333333333" height="190" fill="#f3f5f8"/>
+<text x="206.17" y="530.00" font-size="13" text-anchor="middle" fill="#526075" font-weight="400">No usable observations</text>
+<text x="206.17" y="552.00" font-size="12" text-anchor="middle" fill="#526075" font-weight="400">(not a zero result)</text>
+<text x="397.33" y="415.00" font-size="15" text-anchor="start" fill="#172033" font-weight="700">E5 · Matched async query</text>
+<text x="397.33" y="434.00" font-size="10" text-anchor="start" fill="#526075" font-weight="400">Median invocation max observed threads</text>
+<rect x="439.3333333333333" y="445" width="280.3333333333333" height="190" fill="#f3f5f8"/>
+<text x="579.50" y="530.00" font-size="13" text-anchor="middle" fill="#526075" font-weight="400">No usable observations</text>
+<text x="579.50" y="552.00" font-size="12" text-anchor="middle" fill="#526075" font-weight="400">(not a zero result)</text>
+<text x="770.67" y="415.00" font-size="15" text-anchor="start" fill="#172033" font-weight="700">E6 · Overload / recovery</text>
+<text x="770.67" y="434.00" font-size="10" text-anchor="start" fill="#526075" font-weight="400">Median invocation max observed threads</text>
+<line x1="812.67" y1="635.00" x2="1093.00" y2="635.00" stroke="#dbe2ea" stroke-width="1"/>
+<text x="805.67" y="639.00" font-size="10" text-anchor="end" fill="#526075" font-weight="400">0</text>
+<line x1="812.67" y1="587.50" x2="1093.00" y2="587.50" stroke="#dbe2ea" stroke-width="1"/>
+<text x="805.67" y="591.50" font-size="10" text-anchor="end" fill="#526075" font-weight="400">17.5</text>
+<line x1="812.67" y1="540.00" x2="1093.00" y2="540.00" stroke="#dbe2ea" stroke-width="1"/>
+<text x="805.67" y="544.00" font-size="10" text-anchor="end" fill="#526075" font-weight="400">35</text>
+<line x1="812.67" y1="492.50" x2="1093.00" y2="492.50" stroke="#dbe2ea" stroke-width="1"/>
+<text x="805.67" y="496.50" font-size="10" text-anchor="end" fill="#526075" font-weight="400">52.5</text>
+<line x1="812.67" y1="445.00" x2="1093.00" y2="445.00" stroke="#dbe2ea" stroke-width="1"/>
+<text x="805.67" y="449.00" font-size="10" text-anchor="end" fill="#526075" font-weight="400">70</text>
+<text x="812.67" y="655.00" font-size="11" text-anchor="middle" fill="#172033" font-weight="400">1</text>
+<text x="843.81" y="655.00" font-size="11" text-anchor="middle" fill="#172033" font-weight="400">8</text>
+<text x="950.61" y="655.00" font-size="11" text-anchor="middle" fill="#172033" font-weight="400">32</text>
+<text x="1093.00" y="655.00" font-size="11" text-anchor="middle" fill="#172033" font-weight="400">64</text>
+<text x="952.83" y="675.00" font-size="11" text-anchor="middle" fill="#172033" font-weight="400">Configured workers</text>
+<line x1="812.67" y1="635.00" x2="812.67" y2="635.00" stroke="#2563eb" stroke-width="1.4"/>
+<line x1="809.67" y1="635.00" x2="815.67" y2="635.00" stroke="#2563eb" stroke-width="1.4"/>
+<line x1="809.67" y1="635.00" x2="815.67" y2="635.00" stroke="#2563eb" stroke-width="1.4"/>
+<circle cx="812.67" cy="635.00" r="3.7" fill="#2563eb" stroke="white" stroke-width="0.8"/>
+<line x1="812.67" y1="635.00" x2="843.81" y2="624.14" stroke="#2563eb" stroke-width="2"/>
+<line x1="843.81" y1="624.14" x2="843.81" y2="624.14" stroke="#2563eb" stroke-width="1.4"/>
+<line x1="840.81" y1="624.14" x2="846.81" y2="624.14" stroke="#2563eb" stroke-width="1.4"/>
+<line x1="840.81" y1="624.14" x2="846.81" y2="624.14" stroke="#2563eb" stroke-width="1.4"/>
+<circle cx="843.81" cy="624.14" r="3.7" fill="#2563eb" stroke="white" stroke-width="0.8"/>
+<line x1="843.81" y1="624.14" x2="950.61" y2="559.00" stroke="#2563eb" stroke-width="2"/>
+<line x1="950.61" y1="559.00" x2="950.61" y2="559.00" stroke="#2563eb" stroke-width="1.4"/>
+<line x1="947.61" y1="559.00" x2="953.61" y2="559.00" stroke="#2563eb" stroke-width="1.4"/>
+<line x1="947.61" y1="559.00" x2="953.61" y2="559.00" stroke="#2563eb" stroke-width="1.4"/>
+<circle cx="950.61" cy="559.00" r="3.7" fill="#2563eb" stroke="white" stroke-width="0.8"/>
+<line x1="950.61" y1="559.00" x2="1093.00" y2="472.14" stroke="#2563eb" stroke-width="2"/>
+<line x1="1093.00" y1="472.14" x2="1093.00" y2="472.14" stroke="#2563eb" stroke-width="1.4"/>
+<line x1="1090.00" y1="472.14" x2="1096.00" y2="472.14" stroke="#2563eb" stroke-width="1.4"/>
+<line x1="1090.00" y1="472.14" x2="1096.00" y2="472.14" stroke="#2563eb" stroke-width="1.4"/>
+<circle cx="1093.00" cy="472.14" r="3.7" fill="#2563eb" stroke="white" stroke-width="0.8"/>
+<line x1="812.67" y1="635.00" x2="812.67" y2="635.00" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="809.67" y1="635.00" x2="815.67" y2="635.00" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="809.67" y1="635.00" x2="815.67" y2="635.00" stroke="#ea580c" stroke-width="1.4"/>
+<circle cx="812.67" cy="635.00" r="3.7" fill="#ea580c" stroke="white" stroke-width="0.8"/>
+<line x1="812.67" y1="635.00" x2="843.81" y2="635.00" stroke="#ea580c" stroke-width="2"/>
+<line x1="843.81" y1="635.00" x2="843.81" y2="635.00" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="840.81" y1="635.00" x2="846.81" y2="635.00" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="840.81" y1="635.00" x2="846.81" y2="635.00" stroke="#ea580c" stroke-width="1.4"/>
+<circle cx="843.81" cy="635.00" r="3.7" fill="#ea580c" stroke="white" stroke-width="0.8"/>
+<line x1="843.81" y1="635.00" x2="950.61" y2="635.00" stroke="#ea580c" stroke-width="2"/>
+<line x1="950.61" y1="635.00" x2="950.61" y2="635.00" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="947.61" y1="635.00" x2="953.61" y2="635.00" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="947.61" y1="635.00" x2="953.61" y2="635.00" stroke="#ea580c" stroke-width="1.4"/>
+<circle cx="950.61" cy="635.00" r="3.7" fill="#ea580c" stroke="white" stroke-width="0.8"/>
+<line x1="950.61" y1="635.00" x2="1093.00" y2="635.00" stroke="#ea580c" stroke-width="2"/>
+<line x1="1093.00" y1="635.00" x2="1093.00" y2="635.00" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="1090.00" y1="635.00" x2="1096.00" y2="635.00" stroke="#ea580c" stroke-width="1.4"/>
+<line x1="1090.00" y1="635.00" x2="1096.00" y2="635.00" stroke="#ea580c" stroke-width="1.4"/>
+<circle cx="1093.00" cy="635.00" r="3.7" fill="#ea580c" stroke="white" stroke-width="0.8"/>
+<text x="770.67" y="696.00" font-size="10" text-anchor="start" fill="#526075" font-weight="400">At 64: Open 60.00; OpenAsync 0</text>
+<text x="24.00" y="744.00" font-size="11" text-anchor="start" fill="#526075" font-weight="400">Each panel has its own zero-based linear y-scale. Missing observations are not zero. Ranges are not confidence intervals.</text>
+</g></svg>

@@ -1,0 +1,6 @@
+[
+  {
+    "code": "ProvisioningState/succeeded",
+    "message": "Enable succeeded: \n[stdout]\nDERIVED_VALIDATION=/home/perfadmin/compact-summary-validation-1bddc36b64bb\nPreserved 978 raw evidence files in raw-measurements-rep1.zip (32716389 bytes); extract into the results directory to reanalyze.\nPreserved 987 raw evidence files in raw-measurements-rep2.zip (32917279 bytes); extract into the results directory to reanalyze.\nPreserved 984 raw evidence files in raw-measurements-rep3.zip (32909595 bytes); extract into the results directory to reanalyze.\n{\"Status\": \"Passed\", \"OriginalBytes\": 374515424, \"CompactBytes\": 11842902, \"ReductionPercent\": 96.8378066052628, \"InvocationRows\": 1440, \"DistinctCases\": 96, \"VerifiedReferences\": 1584, \"RepetitionVariabilityRows\": 288, \"OriginalArtifactsUnchanged\": true, \"ArchiveMembersUnchanged\": true, \"MarkdownTableUnchanged\": true, \"AggregateEquivalence\": true, \"AddressSpaceLimitMiB\": 512, \"ValidationPeakRssKiB\": 51976, \"Generation\": {\"ElapsedSeconds\": 60.67519174500194, \"PeakRssKiB\": 77700, \"Python\": \"3.10.12\", \"ReporterSha256\": \"6ba0cb8beceb8a35e5a51e45b7494454cb04fcccddd32743485db78c83993ee1\"}}\n\n[stderr]\n"
+  }
+]

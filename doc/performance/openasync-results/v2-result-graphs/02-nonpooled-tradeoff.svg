@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="445" viewBox="0 0 1120 445" role="img">
+<title>2 · Nonpooled async trades throughput and allocations for responsiveness</title>
+<desc>Sampled mode only · medians across nine invocations in three processes; whiskers are observed min–max</desc>
+<rect width="1120" height="445" fill="#ffffff"/>
+<g font-family="Segoe UI,Arial,sans-serif" fill="#172033">
+<text x="28.00" y="33.00" font-size="24" fill="#172033" text-anchor="start" font-weight="700">2 · Nonpooled async trades throughput and allocations for responsiveness</text>
+<text x="28.00" y="59.00" font-size="13" fill="#526075" text-anchor="start" font-weight="400">Sampled mode only · medians across nine invocations in three processes; whiskers are observed min–max</text>
+<line x1="835.00" y1="86.00" x2="855.00" y2="86.00" stroke="#2563eb" stroke-width="3"/>
+<text x="862.00" y="91.00" font-size="13" fill="#172033" text-anchor="start" font-weight="400">Open</text>
+<line x1="972.00" y1="86.00" x2="992.00" y2="86.00" stroke="#ea580c" stroke-width="3"/>
+<text x="999.00" y="91.00" font-size="13" fill="#172033" text-anchor="start" font-weight="400">OpenAsync</text>
+<text x="80.00" y="110.00" font-size="17" fill="#172033" text-anchor="start" font-weight="600">E3 · Successful opens per second</text>
+<text x="80.00" y="129.00" font-size="12" fill="#526075" text-anchor="start" font-weight="400">Throughput (/s)</text>
+<line x1="80.00" y1="360.00" x2="515.00" y2="360.00" stroke="#dce2ea" stroke-width="1"/>
+<text x="72.00" y="364.00" font-size="11" fill="#526075" text-anchor="end" font-weight="400">0</text>
+<line x1="80.00" y1="303.75" x2="515.00" y2="303.75" stroke="#dce2ea" stroke-width="1"/>
+<text x="72.00" y="307.75" font-size="11" fill="#526075" text-anchor="end" font-weight="400">400</text>
+<line x1="80.00" y1="247.50" x2="515.00" y2="247.50" stroke="#dce2ea" stroke-width="1"/>
+<text x="72.00" y="251.50" font-size="11" fill="#526075" text-anchor="end" font-weight="400">800</text>
+<line x1="80.00" y1="191.25" x2="515.00" y2="191.25" stroke="#dce2ea" stroke-width="1"/>
+<text x="72.00" y="195.25" font-size="11" fill="#526075" text-anchor="end" font-weight="400">1.2k</text>
+<line x1="80.00" y1="135.00" x2="515.00" y2="135.00" stroke="#dce2ea" stroke-width="1"/>
+<text x="72.00" y="139.00" font-size="11" fill="#526075" text-anchor="end" font-weight="400">1.6k</text>
+<text x="80.00" y="380.00" font-size="12" fill="#172033" text-anchor="middle" font-weight="400">1</text>
+<text x="128.33" y="380.00" font-size="12" fill="#172033" text-anchor="middle" font-weight="400">8</text>
+<text x="294.05" y="380.00" font-size="12" fill="#172033" text-anchor="middle" font-weight="400">32</text>
+<text x="515.00" y="380.00" font-size="12" fill="#172033" text-anchor="middle" font-weight="400">64</text>
+<text x="297.50" y="400.00" font-size="12" fill="#172033" text-anchor="middle" font-weight="400">Configured workers</text>
+<line x1="80.00" y1="339.32" x2="128.33" y2="229.38" stroke="#2563eb" stroke-width="2.5"/>
+<line x1="128.33" y1="229.38" x2="294.05" y2="162.51" stroke="#2563eb" stroke-width="2.5"/>
+<line x1="294.05" y1="162.51" x2="515.00" y2="165.26" stroke="#2563eb" stroke-width="2.5"/>
+<line x1="80.00" y1="339.95" x2="80.00" y2="338.71" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="76.00" y1="339.95" x2="84.00" y2="339.95" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="76.00" y1="338.71" x2="84.00" y2="338.71" stroke="#2563eb" stroke-width="1.5"/>
+<circle cx="80.00" cy="339.32" r="4.5" fill="#2563eb" stroke="white" stroke-width="1"/>
+<line x1="128.33" y1="233.67" x2="128.33" y2="225.39" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="124.33" y1="233.67" x2="132.33" y2="233.67" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="124.33" y1="225.39" x2="132.33" y2="225.39" stroke="#2563eb" stroke-width="1.5"/>
+<circle cx="128.33" cy="229.38" r="4.5" fill="#2563eb" stroke="white" stroke-width="1"/>
+<line x1="294.05" y1="175.91" x2="294.05" y2="152.84" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="290.05" y1="175.91" x2="298.05" y2="175.91" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="290.05" y1="152.84" x2="298.05" y2="152.84" stroke="#2563eb" stroke-width="1.5"/>
+<circle cx="294.05" cy="162.51" r="4.5" fill="#2563eb" stroke="white" stroke-width="1"/>
+<line x1="515.00" y1="177.55" x2="515.00" y2="157.54" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="511.00" y1="177.55" x2="519.00" y2="177.55" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="511.00" y1="157.54" x2="519.00" y2="157.54" stroke="#2563eb" stroke-width="1.5"/>
+<circle cx="515.00" cy="165.26" r="4.5" fill="#2563eb" stroke="white" stroke-width="1"/>
+<line x1="80.00" y1="340.21" x2="128.33" y2="236.22" stroke="#ea580c" stroke-width="2.5"/>
+<line x1="128.33" y1="236.22" x2="294.05" y2="177.60" stroke="#ea580c" stroke-width="2.5"/>
+<line x1="294.05" y1="177.60" x2="515.00" y2="174.62" stroke="#ea580c" stroke-width="2.5"/>
+<line x1="80.00" y1="340.50" x2="80.00" y2="339.77" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="76.00" y1="340.50" x2="84.00" y2="340.50" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="76.00" y1="339.77" x2="84.00" y2="339.77" stroke="#ea580c" stroke-width="1.5"/>
+<circle cx="80.00" cy="340.21" r="4.5" fill="#ea580c" stroke="white" stroke-width="1"/>
+<line x1="128.33" y1="243.65" x2="128.33" y2="228.62" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="124.33" y1="243.65" x2="132.33" y2="243.65" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="124.33" y1="228.62" x2="132.33" y2="228.62" stroke="#ea580c" stroke-width="1.5"/>
+<circle cx="128.33" cy="236.22" r="4.5" fill="#ea580c" stroke="white" stroke-width="1"/>
+<line x1="294.05" y1="190.93" x2="294.05" y2="171.90" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="290.05" y1="190.93" x2="298.05" y2="190.93" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="290.05" y1="171.90" x2="298.05" y2="171.90" stroke="#ea580c" stroke-width="1.5"/>
+<circle cx="294.05" cy="177.60" r="4.5" fill="#ea580c" stroke="white" stroke-width="1"/>
+<line x1="515.00" y1="186.09" x2="515.00" y2="170.14" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="511.00" y1="186.09" x2="519.00" y2="186.09" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="511.00" y1="170.14" x2="519.00" y2="170.14" stroke="#ea580c" stroke-width="1.5"/>
+<circle cx="515.00" cy="174.62" r="4.5" fill="#ea580c" stroke="white" stroke-width="1"/>
+<text x="640.00" y="110.00" font-size="17" fill="#172033" text-anchor="start" font-weight="600">E3 · Allocation normalized by successful opens</text>
+<text x="640.00" y="129.00" font-size="12" fill="#526075" text-anchor="start" font-weight="400">Process-wide allocated bytes / successful open</text>
+<line x1="640.00" y1="360.00" x2="1075.00" y2="360.00" stroke="#dce2ea" stroke-width="1"/>
+<text x="632.00" y="364.00" font-size="11" fill="#526075" text-anchor="end" font-weight="400">0</text>
+<line x1="640.00" y1="303.75" x2="1075.00" y2="303.75" stroke="#dce2ea" stroke-width="1"/>
+<text x="632.00" y="307.75" font-size="11" fill="#526075" text-anchor="end" font-weight="400">20k</text>
+<line x1="640.00" y1="247.50" x2="1075.00" y2="247.50" stroke="#dce2ea" stroke-width="1"/>
+<text x="632.00" y="251.50" font-size="11" fill="#526075" text-anchor="end" font-weight="400">40k</text>
+<line x1="640.00" y1="191.25" x2="1075.00" y2="191.25" stroke="#dce2ea" stroke-width="1"/>
+<text x="632.00" y="195.25" font-size="11" fill="#526075" text-anchor="end" font-weight="400">60k</text>
+<line x1="640.00" y1="135.00" x2="1075.00" y2="135.00" stroke="#dce2ea" stroke-width="1"/>
+<text x="632.00" y="139.00" font-size="11" fill="#526075" text-anchor="end" font-weight="400">80k</text>
+<text x="640.00" y="380.00" font-size="12" fill="#172033" text-anchor="middle" font-weight="400">1</text>
+<text x="688.33" y="380.00" font-size="12" fill="#172033" text-anchor="middle" font-weight="400">8</text>
+<text x="854.05" y="380.00" font-size="12" fill="#172033" text-anchor="middle" font-weight="400">32</text>
+<text x="1075.00" y="380.00" font-size="12" fill="#172033" text-anchor="middle" font-weight="400">64</text>
+<text x="857.50" y="400.00" font-size="12" fill="#172033" text-anchor="middle" font-weight="400">Configured workers</text>
+<line x1="640.00" y1="229.13" x2="688.33" y2="229.29" stroke="#2563eb" stroke-width="2.5"/>
+<line x1="688.33" y1="229.29" x2="854.05" y2="229.83" stroke="#2563eb" stroke-width="2.5"/>
+<line x1="854.05" y1="229.83" x2="1075.00" y2="229.85" stroke="#2563eb" stroke-width="2.5"/>
+<line x1="640.00" y1="229.24" x2="640.00" y2="229.09" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="636.00" y1="229.24" x2="644.00" y2="229.24" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="636.00" y1="229.09" x2="644.00" y2="229.09" stroke="#2563eb" stroke-width="1.5"/>
+<circle cx="640.00" cy="229.13" r="4.5" fill="#2563eb" stroke="white" stroke-width="1"/>
+<line x1="688.33" y1="229.42" x2="688.33" y2="229.22" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="684.33" y1="229.42" x2="692.33" y2="229.42" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="684.33" y1="229.22" x2="692.33" y2="229.22" stroke="#2563eb" stroke-width="1.5"/>
+<circle cx="688.33" cy="229.29" r="4.5" fill="#2563eb" stroke="white" stroke-width="1"/>
+<line x1="854.05" y1="229.85" x2="854.05" y2="229.42" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="850.05" y1="229.85" x2="858.05" y2="229.85" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="850.05" y1="229.42" x2="858.05" y2="229.42" stroke="#2563eb" stroke-width="1.5"/>
+<circle cx="854.05" cy="229.83" r="4.5" fill="#2563eb" stroke="white" stroke-width="1"/>
+<line x1="1075.00" y1="229.85" x2="1075.00" y2="229.85" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="1071.00" y1="229.85" x2="1079.00" y2="229.85" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="1071.00" y1="229.85" x2="1079.00" y2="229.85" stroke="#2563eb" stroke-width="1.5"/>
+<circle cx="1075.00" cy="229.85" r="4.5" fill="#2563eb" stroke="white" stroke-width="1"/>
+<line x1="640.00" y1="170.45" x2="688.33" y2="170.64" stroke="#ea580c" stroke-width="2.5"/>
+<line x1="688.33" y1="170.64" x2="854.05" y2="170.96" stroke="#ea580c" stroke-width="2.5"/>
+<line x1="854.05" y1="170.96" x2="1075.00" y2="170.97" stroke="#ea580c" stroke-width="2.5"/>
+<line x1="640.00" y1="170.48" x2="640.00" y2="170.37" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="636.00" y1="170.48" x2="644.00" y2="170.48" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="636.00" y1="170.37" x2="644.00" y2="170.37" stroke="#ea580c" stroke-width="1.5"/>
+<circle cx="640.00" cy="170.45" r="4.5" fill="#ea580c" stroke="white" stroke-width="1"/>
+<line x1="688.33" y1="170.72" x2="688.33" y2="170.62" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="684.33" y1="170.72" x2="692.33" y2="170.72" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="684.33" y1="170.62" x2="692.33" y2="170.62" stroke="#ea580c" stroke-width="1.5"/>
+<circle cx="688.33" cy="170.64" r="4.5" fill="#ea580c" stroke="white" stroke-width="1"/>
+<line x1="854.05" y1="170.98" x2="854.05" y2="170.62" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="850.05" y1="170.98" x2="858.05" y2="170.98" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="850.05" y1="170.62" x2="858.05" y2="170.62" stroke="#ea580c" stroke-width="1.5"/>
+<circle cx="854.05" cy="170.96" r="4.5" fill="#ea580c" stroke="white" stroke-width="1"/>
+<line x1="1075.00" y1="170.98" x2="1075.00" y2="170.97" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="1071.00" y1="170.98" x2="1079.00" y2="170.98" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="1071.00" y1="170.97" x2="1079.00" y2="170.97" stroke="#ea580c" stroke-width="1.5"/>
+<circle cx="1075.00" cy="170.97" r="4.5" fill="#ea580c" stroke="white" stroke-width="1"/>
+<text x="28.00" y="430.00" font-size="13" fill="#172033" text-anchor="start" font-weight="600">At 64 workers: OpenAsync throughput is ~4.8% lower; allocation is ~45.2% higher. Not a historical-version comparison.</text>
+</g>
+</svg>

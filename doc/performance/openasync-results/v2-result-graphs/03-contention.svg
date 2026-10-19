@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="445" viewBox="0 0 1120 445" role="img">
+<title>3 · Pool contention: similar throughput, very different worker occupancy</title>
+<desc>Left: Sampled throughput. Right: separate Diagnostic runs. Do not combine their timings.</desc>
+<rect width="1120" height="445" fill="#ffffff"/>
+<g font-family="Segoe UI,Arial,sans-serif" fill="#172033">
+<text x="28.00" y="33.00" font-size="24" fill="#172033" text-anchor="start" font-weight="700">3 · Pool contention: similar throughput, very different worker occupancy</text>
+<text x="28.00" y="59.00" font-size="13" fill="#526075" text-anchor="start" font-weight="400">Left: Sampled throughput. Right: separate Diagnostic runs. Do not combine their timings.</text>
+<line x1="835.00" y1="86.00" x2="855.00" y2="86.00" stroke="#2563eb" stroke-width="3"/>
+<text x="862.00" y="91.00" font-size="13" fill="#172033" text-anchor="start" font-weight="400">Open</text>
+<line x1="972.00" y1="86.00" x2="992.00" y2="86.00" stroke="#ea580c" stroke-width="3"/>
+<text x="999.00" y="91.00" font-size="13" fill="#172033" text-anchor="start" font-weight="400">OpenAsync</text>
+<text x="80.00" y="110.00" font-size="17" fill="#172033" text-anchor="start" font-weight="600">E2 · Four connections, matched 10 ms holds</text>
+<text x="80.00" y="129.00" font-size="12" fill="#526075" text-anchor="start" font-weight="400">Successful opens/s</text>
+<line x1="80.00" y1="360.00" x2="515.00" y2="360.00" stroke="#dce2ea" stroke-width="1"/>
+<text x="72.00" y="364.00" font-size="11" fill="#526075" text-anchor="end" font-weight="400">0</text>
+<line x1="80.00" y1="303.75" x2="515.00" y2="303.75" stroke="#dce2ea" stroke-width="1"/>
+<text x="72.00" y="307.75" font-size="11" fill="#526075" text-anchor="end" font-weight="400">112.5</text>
+<line x1="80.00" y1="247.50" x2="515.00" y2="247.50" stroke="#dce2ea" stroke-width="1"/>
+<text x="72.00" y="251.50" font-size="11" fill="#526075" text-anchor="end" font-weight="400">225</text>
+<line x1="80.00" y1="191.25" x2="515.00" y2="191.25" stroke="#dce2ea" stroke-width="1"/>
+<text x="72.00" y="195.25" font-size="11" fill="#526075" text-anchor="end" font-weight="400">337.5</text>
+<line x1="80.00" y1="135.00" x2="515.00" y2="135.00" stroke="#dce2ea" stroke-width="1"/>
+<text x="72.00" y="139.00" font-size="11" fill="#526075" text-anchor="end" font-weight="400">450</text>
+<text x="80.00" y="380.00" font-size="12" fill="#172033" text-anchor="middle" font-weight="400">1</text>
+<text x="128.33" y="380.00" font-size="12" fill="#172033" text-anchor="middle" font-weight="400">8</text>
+<text x="294.05" y="380.00" font-size="12" fill="#172033" text-anchor="middle" font-weight="400">32</text>
+<text x="515.00" y="380.00" font-size="12" fill="#172033" text-anchor="middle" font-weight="400">64</text>
+<text x="297.50" y="400.00" font-size="12" fill="#172033" text-anchor="middle" font-weight="400">Configured workers</text>
+<line x1="80.00" y1="311.47" x2="128.33" y2="169.23" stroke="#2563eb" stroke-width="2.5"/>
+<line x1="128.33" y1="169.23" x2="294.05" y2="169.30" stroke="#2563eb" stroke-width="2.5"/>
+<line x1="294.05" y1="169.30" x2="515.00" y2="169.06" stroke="#2563eb" stroke-width="2.5"/>
+<line x1="80.00" y1="311.73" x2="80.00" y2="311.24" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="76.00" y1="311.73" x2="84.00" y2="311.73" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="76.00" y1="311.24" x2="84.00" y2="311.24" stroke="#2563eb" stroke-width="1.5"/>
+<circle cx="80.00" cy="311.47" r="4.5" fill="#2563eb" stroke="white" stroke-width="1"/>
+<line x1="128.33" y1="171.26" x2="128.33" y2="168.41" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="124.33" y1="171.26" x2="132.33" y2="171.26" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="124.33" y1="168.41" x2="132.33" y2="168.41" stroke="#2563eb" stroke-width="1.5"/>
+<circle cx="128.33" cy="169.23" r="4.5" fill="#2563eb" stroke="white" stroke-width="1"/>
+<line x1="294.05" y1="170.62" x2="294.05" y2="168.43" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="290.05" y1="170.62" x2="298.05" y2="170.62" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="290.05" y1="168.43" x2="298.05" y2="168.43" stroke="#2563eb" stroke-width="1.5"/>
+<circle cx="294.05" cy="169.30" r="4.5" fill="#2563eb" stroke="white" stroke-width="1"/>
+<line x1="515.00" y1="170.59" x2="515.00" y2="167.11" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="511.00" y1="170.59" x2="519.00" y2="170.59" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="511.00" y1="167.11" x2="519.00" y2="167.11" stroke="#2563eb" stroke-width="1.5"/>
+<circle cx="515.00" cy="169.06" r="4.5" fill="#2563eb" stroke="white" stroke-width="1"/>
+<line x1="80.00" y1="311.51" x2="128.33" y2="167.93" stroke="#ea580c" stroke-width="2.5"/>
+<line x1="128.33" y1="167.93" x2="294.05" y2="167.26" stroke="#ea580c" stroke-width="2.5"/>
+<line x1="294.05" y1="167.26" x2="515.00" y2="168.01" stroke="#ea580c" stroke-width="2.5"/>
+<line x1="80.00" y1="312.27" x2="80.00" y2="311.41" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="76.00" y1="312.27" x2="84.00" y2="312.27" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="76.00" y1="311.41" x2="84.00" y2="311.41" stroke="#ea580c" stroke-width="1.5"/>
+<circle cx="80.00" cy="311.51" r="4.5" fill="#ea580c" stroke="white" stroke-width="1"/>
+<line x1="128.33" y1="169.84" x2="128.33" y2="166.08" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="124.33" y1="169.84" x2="132.33" y2="169.84" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="124.33" y1="166.08" x2="132.33" y2="166.08" stroke="#ea580c" stroke-width="1.5"/>
+<circle cx="128.33" cy="167.93" r="4.5" fill="#ea580c" stroke="white" stroke-width="1"/>
+<line x1="294.05" y1="168.95" x2="294.05" y2="166.40" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="290.05" y1="168.95" x2="298.05" y2="168.95" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="290.05" y1="166.40" x2="298.05" y2="166.40" stroke="#ea580c" stroke-width="1.5"/>
+<circle cx="294.05" cy="167.26" r="4.5" fill="#ea580c" stroke="white" stroke-width="1"/>
+<line x1="515.00" y1="169.29" x2="515.00" y2="166.89" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="511.00" y1="169.29" x2="519.00" y2="169.29" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="511.00" y1="166.89" x2="519.00" y2="166.89" stroke="#ea580c" stroke-width="1.5"/>
+<circle cx="515.00" cy="168.01" r="4.5" fill="#ea580c" stroke="white" stroke-width="1"/>
+<text x="640.00" y="110.00" font-size="17" fill="#172033" text-anchor="start" font-weight="600">E2 · Busy-worker proxy</text>
+<text x="640.00" y="129.00" font-size="12" fill="#526075" text-anchor="start" font-weight="400">Median per-invocation peak busy workers (proxy)</text>
+<line x1="640.00" y1="360.00" x2="1075.00" y2="360.00" stroke="#dce2ea" stroke-width="1"/>
+<text x="632.00" y="364.00" font-size="11" fill="#526075" text-anchor="end" font-weight="400">0</text>
+<line x1="640.00" y1="303.75" x2="1075.00" y2="303.75" stroke="#dce2ea" stroke-width="1"/>
+<text x="632.00" y="307.75" font-size="11" fill="#526075" text-anchor="end" font-weight="400">20</text>
+<line x1="640.00" y1="247.50" x2="1075.00" y2="247.50" stroke="#dce2ea" stroke-width="1"/>
+<text x="632.00" y="251.50" font-size="11" fill="#526075" text-anchor="end" font-weight="400">40</text>
+<line x1="640.00" y1="191.25" x2="1075.00" y2="191.25" stroke="#dce2ea" stroke-width="1"/>
+<text x="632.00" y="195.25" font-size="11" fill="#526075" text-anchor="end" font-weight="400">60</text>
+<line x1="640.00" y1="135.00" x2="1075.00" y2="135.00" stroke="#dce2ea" stroke-width="1"/>
+<text x="632.00" y="139.00" font-size="11" fill="#526075" text-anchor="end" font-weight="400">80</text>
+<text x="640.00" y="380.00" font-size="12" fill="#172033" text-anchor="middle" font-weight="400">1</text>
+<text x="688.33" y="380.00" font-size="12" fill="#172033" text-anchor="middle" font-weight="400">8</text>
+<text x="854.05" y="380.00" font-size="12" fill="#172033" text-anchor="middle" font-weight="400">32</text>
+<text x="1075.00" y="380.00" font-size="12" fill="#172033" text-anchor="middle" font-weight="400">64</text>
+<text x="857.50" y="400.00" font-size="12" fill="#172033" text-anchor="middle" font-weight="400">Configured workers</text>
+<line x1="640.00" y1="357.19" x2="688.33" y2="340.31" stroke="#2563eb" stroke-width="2.5"/>
+<line x1="688.33" y1="340.31" x2="854.05" y2="270.00" stroke="#2563eb" stroke-width="2.5"/>
+<line x1="854.05" y1="270.00" x2="1075.00" y2="177.19" stroke="#2563eb" stroke-width="2.5"/>
+<line x1="640.00" y1="360.00" x2="640.00" y2="354.38" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="636.00" y1="360.00" x2="644.00" y2="360.00" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="636.00" y1="354.38" x2="644.00" y2="354.38" stroke="#2563eb" stroke-width="1.5"/>
+<circle cx="640.00" cy="357.19" r="4.5" fill="#2563eb" stroke="white" stroke-width="1"/>
+<line x1="688.33" y1="345.94" x2="688.33" y2="331.88" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="684.33" y1="345.94" x2="692.33" y2="345.94" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="684.33" y1="331.88" x2="692.33" y2="331.88" stroke="#2563eb" stroke-width="1.5"/>
+<circle cx="688.33" cy="340.31" r="4.5" fill="#2563eb" stroke="white" stroke-width="1"/>
+<line x1="854.05" y1="272.81" x2="854.05" y2="267.19" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="850.05" y1="272.81" x2="858.05" y2="272.81" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="850.05" y1="267.19" x2="858.05" y2="267.19" stroke="#2563eb" stroke-width="1.5"/>
+<circle cx="854.05" cy="270.00" r="4.5" fill="#2563eb" stroke="white" stroke-width="1"/>
+<line x1="1075.00" y1="180.00" x2="1075.00" y2="177.19" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="1071.00" y1="180.00" x2="1079.00" y2="180.00" stroke="#2563eb" stroke-width="1.5"/>
+<line x1="1071.00" y1="177.19" x2="1079.00" y2="177.19" stroke="#2563eb" stroke-width="1.5"/>
+<circle cx="1075.00" cy="177.19" r="4.5" fill="#2563eb" stroke="white" stroke-width="1"/>
+<line x1="640.00" y1="357.19" x2="688.33" y2="354.38" stroke="#ea580c" stroke-width="2.5"/>
+<line x1="688.33" y1="354.38" x2="854.05" y2="351.56" stroke="#ea580c" stroke-width="2.5"/>
+<line x1="854.05" y1="351.56" x2="1075.00" y2="351.56" stroke="#ea580c" stroke-width="2.5"/>
+<line x1="640.00" y1="360.00" x2="640.00" y2="354.38" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="636.00" y1="360.00" x2="644.00" y2="360.00" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="636.00" y1="354.38" x2="644.00" y2="354.38" stroke="#ea580c" stroke-width="1.5"/>
+<circle cx="640.00" cy="357.19" r="4.5" fill="#ea580c" stroke="white" stroke-width="1"/>
+<line x1="688.33" y1="357.19" x2="688.33" y2="348.75" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="684.33" y1="357.19" x2="692.33" y2="357.19" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="684.33" y1="348.75" x2="692.33" y2="348.75" stroke="#ea580c" stroke-width="1.5"/>
+<circle cx="688.33" cy="354.38" r="4.5" fill="#ea580c" stroke="white" stroke-width="1"/>
+<line x1="854.05" y1="354.38" x2="854.05" y2="348.75" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="850.05" y1="354.38" x2="858.05" y2="354.38" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="850.05" y1="348.75" x2="858.05" y2="348.75" stroke="#ea580c" stroke-width="1.5"/>
+<circle cx="854.05" cy="351.56" r="4.5" fill="#ea580c" stroke="white" stroke-width="1"/>
+<line x1="1075.00" y1="354.38" x2="1075.00" y2="348.75" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="1071.00" y1="354.38" x2="1079.00" y2="354.38" stroke="#ea580c" stroke-width="1.5"/>
+<line x1="1071.00" y1="348.75" x2="1079.00" y2="348.75" stroke="#ea580c" stroke-width="1.5"/>
+<circle cx="1075.00" cy="351.56" r="4.5" fill="#ea580c" stroke="white" stroke-width="1"/>
+<text x="28.00" y="430.00" font-size="14" fill="#172033" text-anchor="start" font-weight="600">At 64 workers: ~382/s Open vs ~384/s OpenAsync, but median peak busy-worker proxy is 65 vs 3.</text>
+</g>
+</svg>
