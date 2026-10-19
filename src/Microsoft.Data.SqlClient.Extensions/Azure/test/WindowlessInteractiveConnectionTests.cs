@@ -35,6 +35,11 @@ public class WindowlessInteractiveConnectionTests
             SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive);
         Assert.NotNull(original);
 
+        // Cached MSAL clients capture the window callback of the provider that created them,
+        // and their cache key does not include the provider. Clear the cache so this test uses
+        // its zero-window callback and does not leave that callback behind for later tests.
+        ActiveDirectoryAuthenticationProvider.ClearUserTokenCache();
+
         try
         {
             SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive, provider);
@@ -54,6 +59,7 @@ public class WindowlessInteractiveConnectionTests
         finally
         {
             SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive, original!);
+            ActiveDirectoryAuthenticationProvider.ClearUserTokenCache();
         }
     }
 }

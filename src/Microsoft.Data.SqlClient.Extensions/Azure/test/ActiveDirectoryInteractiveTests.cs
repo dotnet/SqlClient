@@ -6,6 +6,7 @@ using Xunit.Abstractions;
 
 namespace Microsoft.Data.SqlClient.Extensions.Azure.Test;
 
+[Collection("SqlAuthenticationProvider")]
 public class ActiveDirectoryInteractiveTests
 {
     private readonly ITestOutputHelper _output;
