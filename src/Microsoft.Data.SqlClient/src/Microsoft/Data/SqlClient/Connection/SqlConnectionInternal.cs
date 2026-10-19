@@ -622,8 +622,6 @@ namespace Microsoft.Data.SqlClient.Connection
             get => _instanceName;
         }
 
-        internal bool Is2008OrNewer => true;
-
         /// <summary>
         /// Validates if federated authentication is used, Access Token used by this connection is
         /// active for the value of 'accessTokenExpirationBufferTime'.
