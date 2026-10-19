@@ -89,7 +89,10 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// is written immediately before this method returns or throws its validation exception, so
         /// it is observable by the caller in both cases. If validation is aborted for any other
         /// reason (for example the <c>ServerCertificate</c> file cannot be loaded), the validation
-        /// errors are left unavailable because no comparison was completed.
+        /// errors are left unavailable because no comparison was completed. If the host name check
+        /// throws (for example for the "." named-pipe target), the errors already established before
+        /// it (such as <see cref="SqlServerCertificateValidationErrors.ChainError"/>) and the chain
+        /// status remain recorded; the exception itself is not caught or changed.
         /// <para>
         /// <see cref="ServerCertificateVerdict.ChainStatus"/> is the bitwise OR of the status flags of
         /// the original <paramref name="callbackChain"/> supplied to the TLS validation callback. It is only
@@ -198,8 +201,22 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                     messageBuilder.AppendLine();
                 }
 
+                if (serverCert is null)
+                {
+                    validationErrors |= SqlServerCertificateValidationErrors.ServerCertificateMissing;
+                }
+
                 if (policyErrors.HasFlag(SslPolicyErrors.RemoteCertificateNameMismatch))
                 {
+                    // The host name check can throw before the final verdict is recorded (for
+                    // example MatchesHostname rejects the "." target used by named pipes). Record
+                    // the errors already established so they survive that exception. A provisional
+                    // None is not recorded because it would report a validation that never passed.
+                    if (validationErrors != SqlServerCertificateValidationErrors.None)
+                    {
+                        verdict = new ServerCertificateVerdict(validationErrors, callbackChainStatus);
+                    }
+
                     X509Certificate2 cert2 = serverCert as X509Certificate2;
                     if (!cert2.MatchesHostname(serverNameToValidate))
                     {
@@ -207,11 +224,6 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                         messageBuilder.AppendLine(Strings.SQL_RemoteCertificateNameMismatch);
                         validationErrors |= SqlServerCertificateValidationErrors.HostNameMismatch;
                     }
-                }
-
-                if (serverCert is null)
-                {
-                    validationErrors |= SqlServerCertificateValidationErrors.ServerCertificateMissing;
                 }
 
                 verdict = new ServerCertificateVerdict(validationErrors, callbackChainStatus);
