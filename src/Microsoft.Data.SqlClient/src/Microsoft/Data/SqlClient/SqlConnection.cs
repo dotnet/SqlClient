@@ -2495,8 +2495,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal bool Is2008OrNewer => true;
-
         internal TdsParser Parser
         {
             get

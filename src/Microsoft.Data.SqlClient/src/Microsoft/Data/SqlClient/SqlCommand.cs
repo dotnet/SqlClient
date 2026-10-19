@@ -1361,26 +1361,11 @@ namespace Microsoft.Data.SqlClient
             SqlCommandSet.BuildStoredProcedureName(cmdText, parsedSProc[1]);
             cmdText.Append(".");
 
-            // Schema - only if 2005, and then only pass sys.  Also - pass managed version of sproc
-            // for 2005, else older sproc.
-            string[] colNames;
-            bool useManagedDataType;
-            if (Connection.Is2008OrNewer)
-            {
-                // Procedure - [sp_procedure_params_managed]
-                cmdText.Append("[sys].[").Append(TdsEnums.SP_PARAMS_MGD10).Append("]");
+            // Procedure - [sp_procedure_params_managed]
+            cmdText.Append("[sys].[").Append(TdsEnums.SP_PARAMS_MGD10).Append("]");
 
-                colNames = Sql2008ProcParamsNames;
-                useManagedDataType = true;
-            }
-            else
-            {
-                // Procedure - [sp_procedure_params_managed]
-                cmdText.Append("[sys].[").Append(TdsEnums.SP_PARAMS_MANAGED).Append("]");
-
-                colNames = PreSql2008ProcParamsNames;
-                useManagedDataType = false;
-            }
+            string[] colNames = Sql2008ProcParamsNames;
+            bool useManagedDataType = true;
 
             using SqlCommand paramsCmd = new SqlCommand(cmdText.ToString(), Connection, Transaction)
             {
@@ -1503,9 +1488,6 @@ namespace Microsoft.Data.SqlClient
                     // instead of p.UdtTypeName)
                     if (p.SqlDbType is SqlDbType.Structured)
                     {
-                        Debug.Assert(_activeConnection.Is2008OrNewer,
-                            "Invalid datatype token received from pre-2008 server");
-
                         //read the type name
                         p.TypeName = r[colNames[(int)ProcParamsColIndex.TypeCatalogName]] + "." +
                                      r[colNames[(int)ProcParamsColIndex.TypeSchemaName]] + "." +

@@ -448,15 +448,7 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.BulkLoadInvalidDestinationTable(DestinationTableName, null);
             }
 
-            string TableCollationsStoredProc;
-            if (_connection.Is2008OrNewer)
-            {
-                TableCollationsStoredProc = "sp_tablecollations_100";
-            }
-            else
-            {
-                TableCollationsStoredProc = "sp_tablecollations_90";
-            }
+            string TableCollationsStoredProc = "sp_tablecollations_100";
 
             string TableName = parts[MultipartIdentifier.TableIndex];
             bool isTempTable = TableName.Length > 0 && '#' == TableName[0];
@@ -2530,7 +2522,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 // Target type shouldn't be encrypted
                 Debug.Assert(!metadata.isEncrypted, "Can't encrypt SQL Variant type");
                 SqlBuffer.StorageType variantInternalType = SqlBuffer.StorageType.Empty;
-                if ((_sqlDataReaderRowSource != null) && (_connection.Is2008OrNewer))
+                if (_sqlDataReaderRowSource != null)
                 {
                     variantInternalType = _sqlDataReaderRowSource.GetVariantInternalStorageType(_sortedColumnMappings[col]._sourceColumnOrdinal);
                 }
