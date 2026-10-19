@@ -156,10 +156,10 @@ namespace Microsoft.Data.SqlClient.UnitTests
         }
 
         [Fact]
-        public void Map_SchannelAutomaticFailureWithoutAvailability_LeavesValidationFieldsNull()
+        public void Map_ValidationFieldsWithoutAvailability_LeaveValidationFieldsNull()
         {
-            // Known native gap: SchannelAutomatic failures report no VALIDATION_ERRORS/CHAIN_STATUS
-            // availability. Stale or garbage bitmask values must not leak through.
+            // An older sni.dll may report a SchannelAutomatic attempt without VALIDATION_ERRORS or
+            // CHAIN_STATUS availability. Stale or garbage bitmask values must not leak through.
             byte[] hash = Hash(0x33);
             SniCertValidationInfo info = Build(
                 available: 0x1 | 0x2 | 0x4,
@@ -174,6 +174,31 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
             Assert.Null(capture.ValidationErrors);
             Assert.Null(capture.ChainStatus);
+            Assert.Equal(hash, capture.Hash256);
+            Assert.Equal(SslProtocols.Tls12, capture.Protocol);
+        }
+
+        [Theory]
+        [InlineData((uint)SniCertValidationMode.SchannelAutomatic, 0x4u)]
+        [InlineData((uint)SniCertValidationMode.ChainPolicy, 0x2u | 0x4u)]
+        public void Map_DeferredValidationFailure_ReportsVerdictChainStatusAndHash(uint mode, uint errors)
+        {
+            // SNI with deferred validation reports the verdict, chain status, and hash in every
+            // mode, and reports HostNameMismatch together with ChainError, matching Managed SNI.
+            byte[] hash = Hash(0x44);
+            SniCertValidationInfo info = Build(
+                available: 0x1 | 0x2 | 0x4 | 0x8 | 0x10,
+                mode: mode,
+                protocol: TlsClient12,
+                errors: errors,
+                chain: (uint)X509ChainStatusFlags.UntrustedRoot,
+                cbHash: 32,
+                hash: hash);
+
+            ServerCertificateCapture capture = SniNativeCertificateCapture.Map(info)!;
+
+            Assert.Equal((SqlServerCertificateValidationErrors)errors, capture.ValidationErrors);
+            Assert.Equal(X509ChainStatusFlags.UntrustedRoot, capture.ChainStatus);
             Assert.Equal(hash, capture.Hash256);
             Assert.Equal(SslProtocols.Tls12, capture.Protocol);
         }
