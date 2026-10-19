@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Threading.Tasks;
 using Microsoft.SqlServer.TDS;
 using Microsoft.SqlServer.TDS.ColMetadata;
@@ -21,7 +22,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests;
 /// <em>where</em> they sit in the TDS token stream: before the result set's DONE token, after it,
 /// or behind a later result set's COLMETADATA token.
 ///
-/// The motivating defect is https://github.com/dotnet/SqlClient/issues/4321. A T-SQL error
+/// The motivating report is https://github.com/dotnet/SqlClient/issues/4321. A T-SQL error
 /// re-raised from a CATCH block (<c>BEGIN TRY ... END TRY BEGIN CATCH THROW END CATCH</c>) arrives
 /// on the wire <em>after</em> the DONE token that terminates the current result set:
 ///
@@ -34,19 +35,17 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests;
 /// </code>
 ///
 /// whereas a bare <c>SELECT 1/0</c> sends the ERROR token <em>before</em> any DONE token.
-/// <c>SqlDataReader.TryHasMoreRows</c> used to stop consuming ERROR/INFO tokens once any DONE
-/// token had been seen, so the trailing ERROR was never surfaced and the caller saw an empty
-/// result set instead of a <see cref="SqlException"/>.
+/// Read ends the current result set; NextResult processes errors that follow its DONE token.
+/// Closing instead discards pending nonfatal errors. This preserves the result boundary observed
+/// with Microsoft ODBC and in the Microsoft JDBC direct, forward-only result implementation.
 ///
-/// Because the fix widens which trailing tokens are consumed, this class deliberately covers more
-/// than the trailing-error repro alone. It also pins the behavior the fix must <em>not</em>
-/// disturb: leading errors, legitimately empty result sets, informational messages keeping their
-/// severity, multi-result-set iteration, and the COLMETADATA barrier that stops a later result
-/// set's ERROR or INFO token from being pulled forward into the current one.
+/// Guards cover leading errors, empty results, message severity and ordering, explicit result
+/// advancement, and cleanup. SingleResult's existing discard behavior is tested separately;
+/// it must not be used when the caller needs to observe errors across the entire response.
 ///
 /// Every test replays an exact token sequence against the in-process simulated TDS server, so the
-/// regressions are caught in CI without a live SQL Server. Each test runs twice, once for the sync
-/// read path and once for the async one, because they drain the token stream through different
+/// regressions are caught in CI without a live SQL Server. Tests cover both sync and async
+/// read paths, because they drain the token stream through different
 /// internal machinery.
 /// </summary>
 // Serializes execution with the other SimulatedServerTests classes.
@@ -125,15 +124,17 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
     /// <see langword="true"/> to call <see cref="SqlCommand.ExecuteReaderAsync()"/>;
     /// <see langword="false"/> to call <see cref="SqlCommand.ExecuteReader()"/>.
     /// </param>
+    /// <param name="behavior">The result-consumption behavior for the command.</param>
     /// <returns>The reader, which the caller owns and must dispose.</returns>
-    private static async Task<SqlDataReader> ExecuteReader(SqlCommand command, bool async)
+    private static async Task<SqlDataReader> ExecuteReader(
+        SqlCommand command, bool async, CommandBehavior behavior = CommandBehavior.Default)
     {
         if (async)
         {
-            return await command.ExecuteReaderAsync();
+            return await command.ExecuteReaderAsync(behavior);
         }
 
-        return command.ExecuteReader();
+        return command.ExecuteReader(behavior);
     }
 
     /// <summary>
@@ -283,7 +284,7 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
 
     /// <summary>
     /// Emits an empty result set whose DONE token is followed by nothing at all - a legitimately
-    /// empty query, used to prove the fix does not manufacture errors where none were sent.
+    /// empty query, used to prove advancement does not manufacture errors where none were sent.
     /// </summary>
     private void RespondWithEmptyResultSet()
     {
@@ -315,7 +316,7 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
     /// <summary>
     /// Emits one row followed by the result set's DONE token and then an INFO token - the
     /// severity counterpart of <see cref="RespondWithRowsThenTrailingError"/>, travelling the same
-    /// trailing-token path the fix now consumes.
+    /// result boundary.
     /// </summary>
     /// <param name="value">The integer carried by the single row that precedes the message.</param>
     /// <param name="message">The informational text the INFO token carries.</param>
@@ -416,22 +417,18 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
         new("SELECT 1", connection);
 
     // --------------------------------------------------------------------------
-    // Test 1: the issue repro - a trailing ERROR must surface
+    // Test 1: the issue repro - a trailing ERROR belongs to result advancement
     // --------------------------------------------------------------------------
 
     /// <summary>
-    /// The core regression for issue #4321: when the ERROR token follows the DONE token that
-    /// closed the result set, the reader must still raise it. Before the fix the token was dropped
-    /// and the caller saw an empty result set instead.
-    ///
-    /// The result set is empty, so no row can be returned and the <em>first</em> read is the one
-    /// that reaches the trailing ERROR token - the caller makes no "extra" call to observe it.
+    /// The empty result in issue #4321 ends before the ERROR token. Read reports no rows;
+    /// explicitly advancing reports the error, even though no second result set exists.
     /// </summary>
     /// <param name="async"><see langword="true"/> to exercise the async read path.</param>
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task Read_ErrorAfterResultSetDone_ThrowsSqlException(bool async)
+    public async Task NextResult_AfterEmptyResult_ThrowsTrailingError(bool async)
     {
         using SqlConnection connection = new(_connectionString);
         await Open(connection, async);
@@ -440,8 +437,9 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
         using SqlCommand command = CreateCommand(connection);
         using SqlDataReader reader = await ExecuteReader(command, async);
 
-        // Only the read is expected to throw; execution must have succeeded.
-        SqlException ex = await Assert.ThrowsAnyAsync<SqlException>(() => Read(reader, async));
+        Assert.False(await Read(reader, async));
+        SqlException ex = await Assert.ThrowsAnyAsync<SqlException>(
+            () => NextResult(reader, async));
 
         Assert.Equal((int)DivideByZeroErrorNumber, ex.Number);
         Assert.Contains(DivideByZeroMessage, ex.Message);
@@ -449,14 +447,14 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
 
     /// <summary>
     /// A trailing class-16 ERROR must reach InfoMessage instead of throwing when
-    /// FireInfoMessageEventOnUserErrors is enabled. Checks delivery during Read, before
-    /// NextResult or disposal can drain the stream and hide a missed event.
+    /// FireInfoMessageEventOnUserErrors is enabled. Checks that delivery is deferred until
+    /// NextResult, rather than pulled forward into Read or lost during disposal.
     /// </summary>
     /// <param name="async"><see langword="true"/> to exercise the async read path.</param>
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task Read_TrailingError_WithInfoMessageEnabled_RaisesEvent(bool async)
+    public async Task NextResult_TrailingError_WithInfoMessageEnabled_RaisesEvent(bool async)
     {
         using SqlConnection connection = new(_connectionString)
         {
@@ -472,8 +470,9 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
         using SqlDataReader reader = await ExecuteReader(command, async);
         Assert.Empty(messages);
 
-        // The empty result's first read must deliver the ERROR as an event, not throw.
         Assert.False(await Read(reader, async));
+        Assert.Empty(messages);
+        Assert.False(await NextResult(reader, async));
         SqlInfoMessageEventArgs message = Assert.Single(messages);
         Assert.Single(message.Errors);
         SqlError error = message.Errors[0];
@@ -490,9 +489,8 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
     // --------------------------------------------------------------------------
 
     /// <summary>
-    /// Guards the shape that always worked - the ERROR token ahead of every DONE token, as a bare
-    /// failing statement sends it - so the fix for issue #4321 is proven additive rather than a
-    /// relocation of error handling onto the trailing-token path.
+    /// An ERROR before the result's DONE still throws during Read. Deferring trailing errors
+    /// must not defer errors encountered inside the current result set.
     /// </summary>
     /// <param name="async"><see langword="true"/> to exercise the async read path.</param>
     [Theory]
@@ -539,19 +537,18 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
     }
 
     // --------------------------------------------------------------------------
-    // Test 4: rows are still delivered before a trailing error is raised
+    // Test 4: rows end normally before result advancement reports a trailing error
     // --------------------------------------------------------------------------
 
     /// <summary>
-    /// Ensures the fix for issue #4321 does not discard data already sent: the row preceding a
-    /// trailing ERROR token must be handed to the caller first, and the exception raised only by
-    /// the next read - which is the same read that would have reported the end of the result set.
+    /// A completed result's row is returned normally. Read then reports the end of that result,
+    /// and NextResult reports the ERROR following its DONE token.
     /// </summary>
     /// <param name="async"><see langword="true"/> to exercise the async read path.</param>
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task Read_RowsThenTrailingError_DeliversRowsThenThrows(bool async)
+    public async Task NextResult_AfterRows_ThrowsTrailingError(bool async)
     {
         using SqlConnection connection = new(_connectionString);
         await Open(connection, async);
@@ -564,8 +561,9 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
         Assert.True(await Read(reader, async));
         Assert.Equal(42, reader.GetInt32(0));
 
-        // The read that would otherwise have returned false raises the error instead.
-        SqlException ex = await Assert.ThrowsAnyAsync<SqlException>(() => Read(reader, async));
+        Assert.False(await Read(reader, async));
+        SqlException ex = await Assert.ThrowsAnyAsync<SqlException>(
+            () => NextResult(reader, async));
         Assert.Equal((int)DivideByZeroErrorNumber, ex.Number);
     }
 
@@ -574,15 +572,14 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
     // --------------------------------------------------------------------------
 
     /// <summary>
-    /// Severity guard for issue #4321: an INFO token trailing the result set travels the same
-    /// path the fix now consumes, so it must still be delivered through
-    /// <see cref="SqlConnection.InfoMessage"/> and must not be promoted into an exception.
+    /// An INFO following DONE is deferred until NextResult and remains informational.
+    /// Assertions before disposal distinguish explicit advancement from cleanup delivery.
     /// </summary>
     /// <param name="async"><see langword="true"/> to exercise the async read path.</param>
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task Read_TrailingInfoMessage_IsRaisedAsInfoNotError(bool async)
+    public async Task NextResult_TrailingInfoMessage_IsDeferredAndRaisedAsInfo(bool async)
     {
         const string InfoText = "informational only";
 
@@ -608,6 +605,9 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
             Assert.True(await Read(reader, async));
             Assert.Equal(7, reader.GetInt32(0));
             Assert.False(await Read(reader, async));
+            Assert.Empty(infoMessages);
+            Assert.False(await NextResult(reader, async));
+            Assert.Equal(InfoText, Assert.Single(infoMessages));
         }
 
         Assert.Contains(InfoText, infoMessages);
@@ -618,7 +618,7 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
     // --------------------------------------------------------------------------
 
     /// <summary>
-    /// Ensures ordinary multi-result-set iteration is untouched by the fix for issue #4321: each
+    /// Ensures ordinary multi-result-set iteration retains its boundaries: each
     /// set yields exactly its own row, and the reader reports the end of the batch afterwards.
     /// </summary>
     /// <param name="async"><see langword="true"/> to exercise the async read path.</param>
@@ -649,8 +649,46 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
         Assert.False(await NextResult(reader, async));
     }
 
+    /// <summary>
+    /// An empty result is not the end of the response. Advancing must still expose a later
+    /// result's row and report that result's trailing error on a subsequent NextResult call.
+    /// </summary>
+    /// <param name="async"><see langword="true"/> to exercise async result advancement.</param>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task NextResult_EmptyFirstResult_ThenRowsAndTrailingError(bool async)
+    {
+        using SqlConnection connection = new(_connectionString);
+        await Open(connection, async);
+        TDSColMetadataToken second = SingleIntColumnMetadata();
+        RespondWith(
+            SingleIntColumnMetadata(),
+            new TDSDoneToken(
+                TDSDoneTokenStatusType.More | TDSDoneTokenStatusType.Count,
+                TDSDoneTokenCommandType.Select, 0),
+            second,
+            IntRow(second, 2),
+            new TDSDoneToken(
+                TDSDoneTokenStatusType.More | TDSDoneTokenStatusType.Count,
+                TDSDoneTokenCommandType.Select, 1),
+            DivideByZeroError(),
+            new TDSDoneToken(TDSDoneTokenStatusType.Error, TDSDoneTokenCommandType.Done, 0));
+
+        using SqlCommand command = CreateCommand(connection);
+        using SqlDataReader reader = await ExecuteReader(command, async);
+        Assert.False(await Read(reader, async));
+        Assert.True(await NextResult(reader, async));
+        Assert.True(await Read(reader, async));
+        Assert.Equal(2, reader.GetInt32(0));
+        Assert.False(await Read(reader, async));
+        SqlException ex = await Assert.ThrowsAnyAsync<SqlException>(
+            () => NextResult(reader, async));
+        Assert.Equal((int)DivideByZeroErrorNumber, ex.Number);
+    }
+
     // --------------------------------------------------------------------------
-    // Test 7: the error also surfaces when the caller drains via NextResult()
+    // Test 7: advancing directly also reports trailing errors
     // --------------------------------------------------------------------------
 
     /// <summary>
@@ -675,6 +713,68 @@ public class DataReaderErrorAndInfoTokenTests : IDisposable
             () => NextResult(reader, async));
 
         Assert.Equal((int)DivideByZeroErrorNumber, ex.Number);
+    }
+
+    /// <summary>
+    /// Closing early discards pending class-16 errors rather than introducing cleanup
+    /// exceptions. Tests both Close and Dispose without first advancing or exhausting rows.
+    /// </summary>
+    /// <param name="async"><see langword="true"/> to exercise async execution and reading.</param>
+    /// <param name="dispose">
+    /// <see langword="true"/> to dispose instead of explicitly closing.
+    /// </param>
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public async Task CloseOrDispose_AfterOneRow_DiscardsTrailingError(bool async, bool dispose)
+    {
+        using SqlConnection connection = new(_connectionString);
+        await Open(connection, async);
+        RespondWithRowsThenTrailingError(42);
+
+        using SqlCommand command = CreateCommand(connection);
+        using SqlDataReader reader = await ExecuteReader(command, async);
+        Assert.True(await Read(reader, async));
+        Assert.Equal(42, reader.GetInt32(0));
+
+        if (dispose)
+        {
+            reader.Dispose();
+        }
+        else
+        {
+            reader.Close();
+        }
+
+        Assert.True(reader.IsClosed);
+        RespondWithEmptyResultSet();
+        using SqlDataReader nextReader = await ExecuteReader(command, async);
+        Assert.False(await Read(nextReader, async));
+        Assert.False(await NextResult(nextReader, async));
+    }
+
+    /// <summary>
+    /// SingleResult retains its existing clean-drain behavior. It is not a replacement for
+    /// default result advancement when the application must observe trailing errors.
+    /// </summary>
+    /// <param name="async"><see langword="true"/> to exercise async result advancement.</param>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task NextResult_SingleResult_DiscardsTrailingError(bool async)
+    {
+        using SqlConnection connection = new(_connectionString);
+        await Open(connection, async);
+        RespondWithTrailingError();
+
+        using SqlCommand command = CreateCommand(connection);
+        using SqlDataReader reader = await ExecuteReader(
+            command, async, CommandBehavior.SingleResult);
+
+        Assert.False(await Read(reader, async));
+        Assert.False(await NextResult(reader, async));
     }
 
     // --------------------------------------------------------------------------

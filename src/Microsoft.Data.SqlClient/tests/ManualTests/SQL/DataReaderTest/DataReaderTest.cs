@@ -1152,7 +1152,7 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
 
         // A T-SQL error rethrown from a CATCH block arrives on the wire *after* the DONE token
         // that terminates the (empty) result set produced inside the TRY block. The reader must
-        // still surface it instead of reporting that the query simply returned no rows.
+        // report the end of that result from Read and surface the error from NextResult.
         private const string RethrowFromCatchBatch =
             @"BEGIN TRY
                   SELECT 1/0;
@@ -1240,47 +1240,38 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
         }
 
         /// <summary>
-        /// Regression guard for issue #4321: an error rethrown by THROW inside a CATCH block
-        /// reaches the client after the DONE token that closed the TRY block's result set, and
-        /// must still be raised as a <see cref="SqlException"/>
-        /// from <see cref="SqlDataReader.Read"/>
-        /// rather than being silently dropped so the batch looks like it returned no rows.
-        ///
-        /// The TRY block's result set is empty, so no row can be returned and the first
-        /// read is the one that reaches the trailing error - the caller makes no "extra" call to
-        /// observe it.
+        /// Preserves the result boundary from issue #4321: Read reports an empty result,
+        /// while NextResult reports the rethrown error that follows its DONE token.
         /// </summary>
         /// <param name="async"><see langword="true"/> to exercise the async read path.</param>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [InlineData(false)]
         [InlineData(true)]
-        public static async Task ErrorRethrownFromCatchBlock_IsSurfacedByRead(bool async)
+        public static async Task ErrorRethrownFromCatchBlock_IsSurfacedByNextResult(bool async)
         {
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
             await Open(connection, async);
             using SqlCommand command = connection.CreateCommand();
             command.CommandText = RethrowFromCatchBatch;
 
-            // Executing the batch succeeds; only the read is expected to throw, so it is the
-            // single statement under assertion.
             using SqlDataReader reader = await ExecuteReader(command, async);
-
-            SqlException ex = await Assert.ThrowsAsync<SqlException>(() => Read(reader, async));
+            Assert.False(await Read(reader, async));
+            SqlException ex = await Assert.ThrowsAsync<SqlException>(
+                () => NextResult(reader, async));
 
             Assert.Equal(8134, ex.Number);
         }
 
         /// <summary>
         /// Covers the motivating scenario from issue #4321: a failing INSERT ... OUTPUT wrapped in
-        /// TRY/CATCH. Because the OUTPUT clause makes the statement return a result set, swallowing
-        /// the rethrown error would leave the caller unable to distinguish "the insert failed" from
-        /// "the insert succeeded and output no rows", so the error must be raised.
+        /// TRY/CATCH. An empty OUTPUT result alone does not prove the insert succeeded;
+        /// the caller must advance to observe a rethrown error.
         /// </summary>
         /// <param name="async"><see langword="true"/> to exercise the async read path.</param>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [InlineData(false)]
         [InlineData(true)]
-        public static async Task ErrorRethrownFromCatchBlock_AfterOutputClause_IsSurfacedByRead(
+        public static async Task ErrorRethrownFromCatchBlock_AfterOutput_ThrowsOnNextResult(
             bool async)
         {
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
@@ -1299,16 +1290,17 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
                    END CATCH";
 
             // The OUTPUT clause yields an (empty) result set, so execution succeeds and the
-            // first read is what surfaces the rethrown error.
+            // first read ends the result; advancement surfaces the rethrown error.
             using SqlDataReader reader = await ExecuteReader(command, async);
-
-            SqlException ex = await Assert.ThrowsAsync<SqlException>(() => Read(reader, async));
+            Assert.False(await Read(reader, async));
+            SqlException ex = await Assert.ThrowsAsync<SqlException>(
+                () => NextResult(reader, async));
 
             Assert.Equal(8134, ex.Number);
         }
 
         /// <summary>
-        /// Guards the pre-existing behavior that the fix for issue #4321 must not disturb: a bare
+        /// Guards the pre-existing behavior that result-boundary handling must not disturb: a bare
         /// failing statement puts its error token ahead of any DONE token, and that shape was
         /// always surfaced correctly. Ensures the change did not shift error handling onto the
         /// trailing-token path only.
@@ -1332,7 +1324,7 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
         }
 
         /// <summary>
-        /// Ensures the fix for issue #4321 does not over-report: a query that legitimately matches
+        /// Ensures result advancement does not over-report: a query that legitimately matches
         /// no rows must still complete with zero rows and no exception.
         /// </summary>
         /// <param name="async"><see langword="true"/> to exercise the async read path.</param>
@@ -1355,16 +1347,14 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
         }
 
         /// <summary>
-        /// Ensures the fix for issue #4321 does not promote severity to exceptions: a PRINT emitted
-        /// after the result set travels as an INFO token on the same trailing-token path the fix
-        /// now consumes, and must continue to be delivered through
-        /// <see cref="SqlConnection.InfoMessage"/> instead of being thrown.
+        /// A PRINT after the result set is deferred until NextResult and delivered through
+        /// InfoMessage, not as an exception or during the final Read.
         /// </summary>
         /// <param name="async"><see langword="true"/> to exercise the async read path.</param>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [InlineData(false)]
         [InlineData(true)]
-        public static async Task TrailingInfoMessage_IsRaisedAsInfoNotError(bool async)
+        public static async Task TrailingInfoMessage_IsDeferredUntilNextResult(bool async)
         {
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
             List<string> messages = new();
@@ -1381,15 +1371,18 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
                 Assert.True(await Read(reader, async));
                 Assert.Equal(1, reader.GetInt32(0));
                 Assert.False(await Read(reader, async));
+                Assert.Empty(messages);
+                Assert.False(await NextResult(reader, async));
+                Assert.Equal("trailing-info", Assert.Single(messages));
             }
 
             Assert.Contains("trailing-info", messages);
         }
 
         /// <summary>
-        /// Ensures multi-result-set iteration is unchanged by the fix for issue #4321. Each result
+        /// Ensures multi-result-set iteration preserves result boundaries. Each result
         /// set is delimited by its own COLMETADATA token, which bounds how far the trailing-token
-        /// loop may scan, so rows must not bleed between sets and NextResult must still report the
+        /// loop may scan, so rows must not bleed between sets and NextResult must report the
         /// end of the batch.
         /// </summary>
         /// <param name="async"><see langword="true"/> to exercise the async read path.</param>
@@ -1422,16 +1415,14 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
         }
 
         /// <summary>
-        /// Ensures rows already produced before a failure are not lost by the fix for issue #4321:
-        /// when an error token follows a completed set of rows, the reader must hand those rows to
-        /// the caller first and only then raise the <see cref="SqlException"/>. The throwing read
-        /// is the same one that would otherwise have reported the end of the result set.
+        /// Rows before a trailing error are returned normally and Read reports end-of-rows.
+        /// NextResult must report the error even when no further result set exists.
         /// </summary>
         /// <param name="async"><see langword="true"/> to exercise the async read path.</param>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [InlineData(false)]
         [InlineData(true)]
-        public static async Task RowsThenTrailingError_DeliversRowsThenThrows(bool async)
+        public static async Task RowsThenTrailingError_ThrowsFromNextResult(bool async)
         {
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
             await Open(connection, async);
@@ -1444,9 +1435,99 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
             Assert.True(await Read(reader, async));
             Assert.Equal(1, reader.GetInt32(0));
 
-            // The read that would otherwise have returned false raises the error instead.
-            SqlException ex = await Assert.ThrowsAsync<SqlException>(() => Read(reader, async));
+            Assert.False(await Read(reader, async));
+            SqlException ex = await Assert.ThrowsAsync<SqlException>(
+                () => NextResult(reader, async));
             Assert.Equal(50000, ex.Number);
+        }
+
+        private const string RollbackThenThrowBatch =
+            @"BEGIN TRANSACTION
+              BEGIN TRY
+                  SELECT 7;
+                  DECLARE @value INT;
+                  SET @value = 'A';
+                  COMMIT TRANSACTION;
+              END TRY
+              BEGIN CATCH
+                  ROLLBACK TRANSACTION;
+                  THROW 50000, 'ERROR in Transaction', 1;
+              END CATCH";
+
+        /// <summary>
+        /// Rollback introduces ENVCHANGE between DONE and ERROR. Explicit result advancement
+        /// must report that error and leave no transaction active on the connection.
+        /// </summary>
+        /// <param name="async"><see langword="true"/> to exercise async result advancement.</param>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [InlineData(false)]
+        [InlineData(true)]
+        public static async Task RollbackThenTrailingError_ThrowsFromNextResult(bool async)
+        {
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            await Open(connection, async);
+            using SqlCommand command = connection.CreateCommand();
+            command.CommandText = RollbackThenThrowBatch;
+            using (SqlDataReader reader = await ExecuteReader(command, async))
+            {
+                Assert.True(await Read(reader, async));
+                Assert.Equal(7, reader.GetInt32(0));
+                Assert.False(await Read(reader, async));
+                SqlException ex = await Assert.ThrowsAsync<SqlException>(
+                    () => NextResult(reader, async));
+                Assert.Equal(50000, ex.Number);
+            }
+
+            command.CommandText = "SELECT @@TRANCOUNT;";
+            using SqlDataReader checkReader = await ExecuteReader(command, async);
+            Assert.True(await Read(checkReader, async));
+            Assert.Equal(0, checkReader.GetInt32(0));
+            Assert.False(await Read(checkReader, async));
+            Assert.False(await NextResult(checkReader, async));
+        }
+
+        /// <summary>
+        /// Closing or disposing after one row discards a pending nonfatal rollback error.
+        /// Cleanup still applies the transaction state change and leaves the connection usable.
+        /// </summary>
+        /// <param name="async">
+        /// <see langword="true"/> to exercise async execution and reading.
+        /// </param>
+        /// <param name="dispose"><see langword="true"/> to dispose instead of closing.</param>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [InlineData(false, false)]
+        [InlineData(false, true)]
+        [InlineData(true, false)]
+        [InlineData(true, true)]
+        public static async Task RollbackThenTrailingError_CloseOrDisposeDiscardsError(
+            bool async, bool dispose)
+        {
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            await Open(connection, async);
+            using SqlCommand command = connection.CreateCommand();
+            command.CommandText = RollbackThenThrowBatch;
+            using (SqlDataReader reader = await ExecuteReader(command, async))
+            {
+                Assert.True(await Read(reader, async));
+                Assert.Equal(7, reader.GetInt32(0));
+                if (dispose)
+                {
+                    reader.Dispose();
+                }
+                else
+                {
+                    reader.Close();
+                }
+
+                Assert.True(reader.IsClosed);
+            }
+
+            command.CommandText = "SELECT @@TRANCOUNT;";
+            using SqlDataReader checkReader = await ExecuteReader(command, async);
+            Assert.True(await Read(checkReader, async));
+            Assert.Equal(0, checkReader.GetInt32(0));
+            Assert.False(await Read(checkReader, async));
+            Assert.False(await NextResult(checkReader, async));
         }
 
         #endregion
