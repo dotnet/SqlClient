@@ -1840,6 +1840,79 @@ namespace Microsoft.Data.SqlClient.Internal
         public void Trace(string message) =>
             WriteEvent(TraceEventId, message);
 
+        /// <summary>Writes a non-PII authentication diagnostic when its level and Trace keyword are enabled.</summary>
+        /// <param name="level">The diagnostic severity.</param>
+        /// <param name="message">The non-PII diagnostic message.</param>
+        /// <param name="source">The authentication diagnostic origin.</param>
+        /// <param name="connectionId">The connection correlation identifier.</param>
+        [NonEvent]
+        public void TryAuthenticationTrace(EventLevel level, string message, string source, string connectionId)
+        {
+            if (!IsEnabled(level, Keywords.Trace))
+            {
+                return;
+            }
+
+            switch (level)
+            {
+                case EventLevel.LogAlways: AuthenticationAlways(message, source, connectionId); break;
+                case EventLevel.Critical: AuthenticationCritical(message, source, connectionId); break;
+                case EventLevel.Error: AuthenticationError(message, source, connectionId); break;
+                case EventLevel.Warning: AuthenticationWarning(message, source, connectionId); break;
+                case EventLevel.Informational: AuthenticationInformational(message, source, connectionId); break;
+                case EventLevel.Verbose: AuthenticationVerbose(message, source, connectionId); break;
+                default: throw new ArgumentOutOfRangeException(nameof(level));
+            }
+        }
+
+        /// <summary>Writes an always-included non-PII authentication diagnostic.</summary>
+        /// <param name="message">The diagnostic message.</param>
+        /// <param name="source">The diagnostic origin.</param>
+        /// <param name="connectionId">The connection identifier.</param>
+        [Event(22, Level = EventLevel.LogAlways, Keywords = Keywords.Trace)]
+        public void AuthenticationAlways(string message, string source, string connectionId) =>
+            WriteEvent(22, message, source, connectionId);
+
+        /// <summary>Writes a critical non-PII authentication diagnostic.</summary>
+        /// <param name="message">The diagnostic message.</param>
+        /// <param name="source">The diagnostic origin.</param>
+        /// <param name="connectionId">The connection identifier.</param>
+        [Event(23, Level = EventLevel.Critical, Keywords = Keywords.Trace)]
+        public void AuthenticationCritical(string message, string source, string connectionId) =>
+            WriteEvent(23, message, source, connectionId);
+
+        /// <summary>Writes a non-PII authentication error.</summary>
+        /// <param name="message">The diagnostic message.</param>
+        /// <param name="source">The diagnostic origin.</param>
+        /// <param name="connectionId">The connection identifier.</param>
+        [Event(24, Level = EventLevel.Error, Keywords = Keywords.Trace)]
+        public void AuthenticationError(string message, string source, string connectionId) =>
+            WriteEvent(24, message, source, connectionId);
+
+        /// <summary>Writes a non-PII authentication warning.</summary>
+        /// <param name="message">The diagnostic message.</param>
+        /// <param name="source">The diagnostic origin.</param>
+        /// <param name="connectionId">The connection identifier.</param>
+        [Event(25, Level = EventLevel.Warning, Keywords = Keywords.Trace)]
+        public void AuthenticationWarning(string message, string source, string connectionId) =>
+            WriteEvent(25, message, source, connectionId);
+
+        /// <summary>Writes an informational non-PII authentication diagnostic.</summary>
+        /// <param name="message">The diagnostic message.</param>
+        /// <param name="source">The diagnostic origin.</param>
+        /// <param name="connectionId">The connection identifier.</param>
+        [Event(26, Level = EventLevel.Informational, Keywords = Keywords.Trace)]
+        public void AuthenticationInformational(string message, string source, string connectionId) =>
+            WriteEvent(26, message, source, connectionId);
+
+        /// <summary>Writes a verbose non-PII authentication diagnostic.</summary>
+        /// <param name="message">The diagnostic message.</param>
+        /// <param name="source">The diagnostic origin.</param>
+        /// <param name="connectionId">The connection identifier.</param>
+        [Event(27, Level = EventLevel.Verbose, Keywords = Keywords.Trace)]
+        public void AuthenticationVerbose(string message, string source, string connectionId) =>
+            WriteEvent(27, message, source, connectionId);
+
         /// <summary>
         /// Enters a scope.
         /// </summary>

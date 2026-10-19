@@ -146,6 +146,82 @@ await connection.OpenAsync();
 | Azure CLI | `AzureCliCredential` | Local development |
 | Visual Studio | `VisualStudioCredential` | Development in Visual Studio |
 
+## Authentication Logging
+
+The built-in Entra ID provider automatically forwards non-PII authentication diagnostics to
+`Microsoft.Data.SqlClient.EventSource` when its **Trace keyword (2)** is enabled. No custom provider
+registration is needed for this collection, including Verbose diagnostics when requested by the collector.
+
+To receive callbacks, configure the provider before
+opening connections:
+
+```csharp
+using Microsoft.Data.SqlClient;
+
+var provider = new ActiveDirectoryAuthenticationProvider(
+    new ActiveDirectoryAuthenticationProviderOptions
+    {
+        EnableMsalPiiLogging = false,
+        AuthenticationLoggingCallback = entry =>
+        {
+            if (!entry.ContainsPii && entry.Level <= SqlAuthenticationLogLevel.Informational)
+            {
+                Console.WriteLine(
+                    $"[{entry.Level}] [{entry.Source}] [{entry.ConnectionId}] {entry.Message}");
+            }
+        }
+    });
+
+SqlAuthenticationProvider.SetProvider(
+    SqlAuthenticationMethod.ActiveDirectoryDefault, provider);
+```
+
+`AuthenticationLoggingCallback` receives direct MSAL messages, a reviewed non-PII subset of
+Azure Identity diagnostics, and SqlClient authentication lifecycle diagnostics. It does not receive
+every existing provider trace or diagnostics from application-created credentials.
+
+Register the provider for each authentication method that needs these settings. Callbacks and
+EventSource are independent: either or both can be used. A configured callback receives every eligible
+severity, including Verbose. Consumers control filtering using `entry.Level`, as the example does.
+Consumer filtering does not avoid upstream SDK message formatting or callback entry allocation.
+EventSource collectors independently control tracing through their keyword and level settings.
+`SqlAuthenticationLogEntry` and `SqlAuthenticationLogLevel` are owned by SqlClient, so consuming
+the new logging API does not require MSAL types.
+
+Leave `AuthenticationLoggingCallback` null to disable callback delivery.
+Authentication EventSource collection remains controlled by the collector.
+
+Callbacks must execute synchronously, be thread-safe, return promptly, and not throw exceptions.
+Do not use async lambdas (`async void`):
+exceptions after an await cannot be isolated. For asynchronous sinks, synchronously enqueue into an
+application-owned bounded buffer and observe processing failures in its consumer. Do not start
+authentication synchronously from a logging callback.
+
+As a defensive safeguard, the provider catches nonfatal synchronous callback exceptions, reports a
+sanitized EventSource diagnostic, and allows authentication to continue.
+Callback-induced logging is not forwarded recursively. Settings are copied when the
+provider is constructed. To change the callback or PII option, construct a new provider and register it
+using `SqlAuthenticationProvider.SetProvider` for each affected authentication method. Replacing the provider
+preserves the same identity's signed-in token state. PII-capable and non-PII clients coordinate their caches without broadening
+sharing across identities. Cached clients route logs to the current
+acquisition and do not retain application logging callbacks.
+
+PII logging is disabled by default. `EnableMsalPiiLogging = true` permits PII-bearing messages **only
+in the callback for direct MSAL flows** (Integrated, Password, Interactive, and Device Code Flow).
+The authentication bridge never forwards PII-marked messages to SqlClient EventSource. Obtain
+appropriate consent and protect sensitive callback output when opting in.
+
+For Default, Managed Identity/MSI, Service Principal, and Workload Identity, the provider forwards
+only a supported, scoped subset of `Azure-Identity` diagnostics, including MSAL messages where
+the credential uses MSAL, credential selection, and sanitized failures. Unsafe support logging,
+account-identifier logging, and HTTP content logging remain disabled, even with PII opt-in.
+Unknown SDK events and raw SDK exception payloads are not forwarded. Application-created
+credentials used in `AccessTokenCallback` are outside this bridge and require their own logging.
+
+See the [logging sample](https://github.com/dotnet/SqlClient/blob/main/doc/samples/SqlAuthenticationLogging_Example.cs)
+for automatic EventSource collection and optional callback registration. This addresses
+[issue #1846](https://github.com/dotnet/SqlClient/issues/1846).
+
 ## Documentation
 
 - [Entra ID Authentication](https://learn.microsoft.com/azure/azure-sql/database/authentication-aad-overview)

@@ -1,0 +1,20 @@
+<!--
+Licensed to the .NET Foundation under one or more agreements.
+The .NET Foundation licenses this file to you under the MIT license.
+See the LICENSE file in the project root for more information.
+-->
+<docs>
+    <members name="SqlAuthenticationLogEntry">
+        <SqlAuthenticationLogEntry>
+            <summary>Contains an immutable diagnostic produced by the Azure authentication provider.</summary>
+            <remarks>
+                Entries are delivered through <see cref="P:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions.AuthenticationLoggingCallback" />.
+                Callbacks may run concurrently on authentication threads. They must execute synchronously,
+                be thread-safe, return promptly, and not throw exceptions.
+                Retaining an entry does not change its values. Messages marked <see cref="P:Microsoft.Data.SqlClient.SqlAuthenticationLogEntry.ContainsPii" /> must be
+                handled as sensitive data and are never forwarded to SqlClient EventSource.
+                Message wording and Source values are diagnostic text, not stable machine-readable contracts.
+            </remarks>
+        </SqlAuthenticationLogEntry>
+    </members>
+</docs>

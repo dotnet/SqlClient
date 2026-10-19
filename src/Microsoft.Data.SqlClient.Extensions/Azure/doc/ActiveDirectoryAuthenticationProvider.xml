@@ -9,6 +9,11 @@ See the LICENSE file in the project root for more information.
       <summary>
         This class implements <see cref="T:Microsoft.Data.SqlClient.SqlAuthenticationProvider" /> and is used for active directory federated authentication mechanisms.
       </summary>
+      <remarks>
+        Non-PII authentication diagnostics are included when SqlClient EventSource tracing is enabled.
+        Use <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions" />
+        to configure an independent authentication callback and optionally include direct MSAL PII messages in that callback.
+      </remarks>
     </ActiveDirectoryAuthenticationProvider>
     <ctor>
       <summary>
@@ -85,6 +90,14 @@ See the LICENSE file in the project root for more information.
       <exception cref="T:System.ArgumentNullException">
         Thrown when <paramref name="options" /> is <see langword="null" />.
       </exception>
+      <remarks>
+        Logging settings are copied at construction. Subsequent changes to the options have no effect.
+        To change the callback or PII option, construct and register a replacement provider.
+        Replacing the registered provider preserves the same identity's signed-in token state.
+        PII-capable and non-PII clients coordinate their caches without sharing state across different identities. Cached clients route logs through the active acquisition and
+        do not retain application logging callbacks. Register the provider for each required
+        authentication method before opening connections.
+      </remarks>
     </ctorOptions>
     <AcquireTokenAsync>
       <param name="parameters">

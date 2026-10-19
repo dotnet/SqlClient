@@ -29,9 +29,10 @@ public sealed partial class ActiveDirectoryAuthenticationProvider
 {
     /// <summary>
     /// Resolves the parent window handle used to parent MSAL UI (WAM broker dialog on Windows,
-    /// or the embedded WebView on .NET Framework). The boxed return type matches the signature
-    /// MSAL's <c>WithParentActivityOrWindow</c> overload expects.
+    /// or the embedded WebView on .NET Framework). The caller boxes the handle for
+    /// MSAL's <c>WithParentActivityOrWindow</c> overload.
     /// </summary>
+    /// <param name="parentActivityOrWindowFunc">The current caller-supplied UI callback, if any.</param>
     /// <returns>
     /// The parent window handle, or <see cref="IntPtr.Zero"/> when we are not on Windows or
     /// when neither a caller-supplied callback nor a discoverable console window is available.
@@ -55,7 +56,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider
     /// </list>
     /// </para>
     /// </remarks>
-    private IntPtr GetParentWindow()
+    private static IntPtr GetParentWindow(Func<object>? parentActivityOrWindowFunc)
     {
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
@@ -64,9 +65,9 @@ public sealed partial class ActiveDirectoryAuthenticationProvider
 
         // If the user has provided a custom parent activity/window function, use it. Exceptions
         // from the user-supplied callback escape to MSAL by design — see method remarks above.
-        if (_parentActivityOrWindowFunc is not null)
+        if (parentActivityOrWindowFunc is not null)
         {
-            object parentWindow = _parentActivityOrWindowFunc();
+            object parentWindow = parentActivityOrWindowFunc();
             if (parentWindow is IntPtr hwnd)
             {
                 return hwnd;
@@ -104,5 +105,16 @@ public sealed partial class ActiveDirectoryAuthenticationProvider
         }
 
         return IntPtr.Zero;
+    }
+
+    /// <summary>Holds live Windows UI callback state independently of provider-owned logging state.</summary>
+    private sealed class ParentWindowProvider
+    {
+        /// <summary>Gets or sets the caller's current UI callback, including explicit clearing.</summary>
+        internal Func<object>? Callback { get; set; }
+
+        /// <summary>Resolves and boxes the parent handle without capturing the authentication provider.</summary>
+        /// <returns>The current parent handle or the console-window fallback.</returns>
+        internal object GetParentWindow() => ActiveDirectoryAuthenticationProvider.GetParentWindow(Callback);
     }
 }

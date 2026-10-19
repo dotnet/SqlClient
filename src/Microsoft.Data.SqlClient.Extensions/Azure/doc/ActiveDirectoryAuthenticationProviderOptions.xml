@@ -30,5 +30,37 @@
                 Otherwise, WAM broker mode is used automatically on Windows.
             </summary>
         </UseWamBroker>
+        <AuthenticationLoggingCallback>
+            <summary>Gets or sets an optional callback for authentication diagnostics.</summary>
+            <remarks>
+                Defaults to <see langword="null" />. Receives immutable
+                <see cref="T:Microsoft.Data.SqlClient.SqlAuthenticationLogEntry" /> values independently of SqlClient EventSource collection.
+                Includes direct MSAL messages, a reviewed non-PII subset of Azure Identity diagnostics,
+                and SqlClient authentication lifecycle diagnostics. It does not receive every existing
+                trace emitted by the provider or diagnostics from application-created credentials.
+                A configured callback receives every eligible severity, including Verbose. Consumers control
+                filtering using <see cref="P:Microsoft.Data.SqlClient.SqlAuthenticationLogEntry.Level" />.
+                A null callback disables callback delivery without restricting EventSource collection.
+                It may be invoked concurrently on authentication threads and must execute synchronously,
+                be thread-safe, return promptly, and not throw exceptions.
+                Do not use async lambdas (<c>async void</c>): exceptions after an await cannot be isolated by the provider.
+                For asynchronous sinks, synchronously enqueue into an application-owned bounded buffer and observe
+                processing failures in the consumer. Do not start authentication synchronously from the callback.
+                As a defensive safeguard, the provider catches nonfatal synchronous callback exceptions,
+                reports a sanitized EventSource diagnostic, and allows authentication to continue.
+                Logging triggered by the callback is not forwarded recursively.
+                Options are copied when the provider is constructed; subsequent changes have no effect.
+            </remarks>
+        </AuthenticationLoggingCallback>
+        <EnableMsalPiiLogging>
+            <summary>Gets or sets whether direct MSAL flows may send PII-bearing messages to the callback. Defaults to false.</summary>
+            <remarks>
+                Requires a non-null <see cref="P:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions.AuthenticationLoggingCallback" />.
+                PII-marked authentication messages are never forwarded to SqlClient EventSource. This setting has no effect on Azure credential
+                diagnostics: unsafe support logging, account-identifier logging, and HTTP content logging
+                remain disabled. It does not enable PII logging for other provider operations.
+                Obtain appropriate consent and protect sensitive logs when opting in.
+            </remarks>
+        </EnableMsalPiiLogging>
     </members>
 </docs>
