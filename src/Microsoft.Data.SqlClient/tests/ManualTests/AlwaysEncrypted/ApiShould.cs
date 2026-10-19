@@ -2553,6 +2553,83 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
+        /// <summary>
+        /// An enclave session established under one attestation protocol must not be reused by a
+        /// connection that requests a different attestation protocol, even when the server, database
+        /// and attestation URL are identical. The HGS connection must perform its own attestation.
+        /// </summary>
+        [ConditionalTheory(typeof(ApiShould), nameof(IsHgsAndNoneVbsEnclaveSetup))]
+        [InlineData(false, false)]
+        [InlineData(false, true)]
+        [InlineData(true, false)]
+        [InlineData(true, true)]
+        public async Task TestEnclaveSessionIsNotSharedAcrossAttestationProtocols(bool noneFirst, bool isAsync)
+        {
+            string hgsConnectionString = DataTestUtility.TCPConnectionStringHGSVBS;
+            SqlConnectionStringBuilder noneBuilder = new(DataTestUtility.TCPConnectionStringNoneVBS)
+            {
+                EnclaveAttestationUrl = new SqlConnectionStringBuilder(hgsConnectionString).EnclaveAttestationUrl
+            };
+            string noneConnectionString = noneBuilder.ConnectionString;
+
+            const int customerId = 51;
+            CleanUpTable(hgsConnectionString, _tableName);
+            InsertRows(_tableName, 1, GetValues(dataHint: customerId), hgsConnectionString);
+
+            // Start from an empty cache for both protocols.
+            await ExecuteEnclaveQueryAsync(noneConnectionString, customerId, isAsync, invalidateSession: true);
+            await ExecuteEnclaveQueryAsync(hgsConnectionString, customerId, isAsync, invalidateSession: true);
+            await ExecuteEnclaveQueryAsync(noneConnectionString, customerId, isAsync, invalidateSession: true);
+
+            string firstConnectionString = noneFirst ? noneConnectionString : hgsConnectionString;
+            string secondConnectionString = noneFirst ? hgsConnectionString : noneConnectionString;
+
+            object firstSession = await ExecuteEnclaveQueryAsync(firstConnectionString, customerId, isAsync);
+            object secondSession = await ExecuteEnclaveQueryAsync(secondConnectionString, customerId, isAsync);
+
+            Assert.NotSame(firstSession, secondSession);
+
+            // Each protocol continues to reuse its own session.
+            Assert.Same(firstSession, await ExecuteEnclaveQueryAsync(firstConnectionString, customerId, isAsync));
+            Assert.Same(secondSession, await ExecuteEnclaveQueryAsync(secondConnectionString, customerId, isAsync));
+        }
+
+        public static bool IsHgsAndNoneVbsEnclaveSetup() =>
+            DataTestUtility.IsTargetReadyForAeWithKeyStore() &&
+            DataTestUtility.EnclaveEnabled &&
+            !string.IsNullOrEmpty(DataTestUtility.TCPConnectionStringHGSVBS) &&
+            !string.IsNullOrEmpty(DataTestUtility.TCPConnectionStringNoneVBS);
+
+        private async Task<object> ExecuteEnclaveQueryAsync(string connectionString, int expectedCustomerId, bool isAsync, bool invalidateSession = false)
+        {
+            using SqlConnection connection = new(connectionString);
+            if (isAsync)
+            {
+                await connection.OpenAsync();
+            }
+            else
+            {
+                connection.Open();
+            }
+
+            using SqlCommand command = new(
+                $"SELECT CustomerId FROM [{_tableName}] WHERE CustomerId > @CustomerId",
+                connection, null, SqlCommandColumnEncryptionSetting.Enabled);
+            command.Parameters.Add("@CustomerId", SqlDbType.Int).Value = 0;
+            using SqlDataReader reader = isAsync ? await command.ExecuteReaderAsync() : command.ExecuteReader();
+            object session = CommandHelper.GetEnclaveSession(command);
+
+            Assert.True(isAsync ? await reader.ReadAsync() : reader.Read());
+            Assert.Equal(expectedCustomerId, reader.GetInt32(0));
+            Assert.False(isAsync ? await reader.ReadAsync() : reader.Read());
+
+            if (invalidateSession)
+            {
+                CommandHelper.InvalidateEnclaveSession(command);
+            }
+            return session;
+        }
+
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.EnclaveEnabled))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestRetryWhenAEEnclaveCacheIsStale(string connectionString)
