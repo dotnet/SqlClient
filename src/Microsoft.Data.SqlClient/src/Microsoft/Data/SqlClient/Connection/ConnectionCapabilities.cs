@@ -73,12 +73,6 @@ internal sealed class ConnectionCapabilities
     public bool IsAzureSql { get; set; }
 
     /// <summary>
-    /// Indicates support for the <c>xml</c> data type. This was introduced
-    /// in SQL Server 2005.
-    /// </summary>
-    public bool XmlDataType => true;
-
-    /// <summary>
     /// Indicates support for the <c>date</c>, <c>time</c>, <c>datetime2</c>
     /// and <c>datetimeoffset</c> data types. These were introduced in SQL
     /// Server 2008.
