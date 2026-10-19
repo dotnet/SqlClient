@@ -16,6 +16,7 @@ public class AuthenticationConfigurationFailureTest
     [InlineData(" ")]
     public void InvalidBrokerValueAbortsConfiguration(string value)
     {
+        // A fatal provider acts as a sentinel: broker validation must fail before activation.
         var section = new SqlClientAuthenticationProviderConfigurationSection();
         section.ElementInformation.Properties["useWamBroker"].Value = value;
         section.Providers.Add(new ProviderSettings(
@@ -37,6 +38,7 @@ public class AuthenticationConfigurationFailureTest
     [InlineData(typeof(EmptySection), "applicationClientId")]
     public void InvalidSchemaAbortsConfiguration(Type type, string propertyName)
     {
+        // Deliberately incompatible handlers must not be mistaken for empty optional settings.
         var section = Assert.IsAssignableFrom<ConfigurationSection>(
             Activator.CreateInstance(type, nonPublic: true));
 
@@ -50,15 +52,17 @@ public class AuthenticationConfigurationFailureTest
     [InlineData("SqlClientAuthenticationConfigurationFailureTest_Missing", true)]
     public void SectionHandlerMismatchIsNotTreatedAsAbsent(string name, bool missing)
     {
+        // Compare a genuinely missing section with an existing handler for another schema.
         string expectedType = typeof(SqlClientAuthenticationProviderConfigurationSection).FullName!;
         if (missing)
         {
-            Assert.Null(SqlAuthenticationProviderRegistry.FetchConfigurationSection(name, expectedType));
+            Assert.Null(SqlAuthenticationConfiguration.FetchConfigurationSection(
+                name, expectedType));
             return;
         }
 
         var failure = Assert.Throws<ConfigurationErrorsException>(() =>
-            SqlAuthenticationProviderRegistry.FetchConfigurationSection(name, expectedType));
+            SqlAuthenticationConfiguration.FetchConfigurationSection(name, expectedType));
         Assert.Contains(name, failure.Message);
         Assert.Contains(expectedType, failure.Message);
     }
@@ -69,6 +73,7 @@ public class AuthenticationConfigurationFailureTest
     [InlineData(typeof(FailingProvider))]
     public void FatalConfigurationFailuresAreNotWrapped(Type type)
     {
+        // Fail through either reflective construction or the initializer callback.
         var section = new SqlClientAuthenticationProviderConfigurationSection();
         if (typeof(SqlAuthenticationInitializer).IsAssignableFrom(type))
         {
@@ -80,6 +85,7 @@ public class AuthenticationConfigurationFailureTest
                 "Active Directory Integrated", type.AssemblyQualifiedName));
         }
 
+        // Fatal errors may retain reflection wrappers, but must not gain a configuration wrapper.
         Exception failure = ApplyInvalidConfiguration(section);
         Assert.IsNotType<ArgumentException>(failure);
         Assert.IsType<OutOfMemoryException>(failure.GetBaseException());
@@ -93,6 +99,7 @@ public class AuthenticationConfigurationFailureTest
     [InlineData(typeof(object), false)]
     public void InvalidActivationAbortsBeforeLaterProviders(Type type, bool initializer)
     {
+        // Nullable activation produces null; object activation produces an incompatible instance.
         var section = new SqlClientAuthenticationProviderConfigurationSection();
         if (initializer)
         {
@@ -119,7 +126,8 @@ public class AuthenticationConfigurationFailureTest
     private static Exception ApplyInvalidConfiguration(ConfigurationSection section)
     {
         return Assert.ThrowsAny<Exception>(() =>
-            new SqlAuthenticationProviderRegistry().ApplyConfiguration(section));
+            new SqlAuthenticationProviderRegistry().ApplyConfiguration(
+                new SqlAuthenticationConfiguration(section)));
     }
 
     /// <summary>Simulates a handler missing the expected authentication schema.</summary>

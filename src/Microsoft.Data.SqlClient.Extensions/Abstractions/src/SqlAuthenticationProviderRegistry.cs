@@ -80,19 +80,8 @@ internal sealed class SqlAuthenticationProviderRegistry
     /// <summary>The precedence assigned to each registered authentication method.</summary>
     private readonly Dictionary<SqlAuthenticationMethod, RegistrationTier> _tiers = new();
 
-    /// <summary>
-    /// The optional application client ID read from authentication configuration.
-    /// </summary>
-    private string? _applicationClientId;
-
-    /// <summary>
-    /// The optional Web Account Manager (WAM) broker override read from app.config.
-    /// </summary>
-    /// <remarks>
-    /// Null preserves the Azure provider's default broker behavior rather than explicitly enabling
-    /// or disabling it.
-    /// </remarks>
-    private bool? _useWamBroker;
+    /// <summary>Validated authentication settings owned by this registry instance.</summary>
+    private SqlAuthenticationConfiguration _configuration = SqlAuthenticationConfiguration.Empty;
 
     #endregion
 
@@ -245,8 +234,8 @@ internal sealed class SqlAuthenticationProviderRegistry
             SqlAuthenticationProvider? instance = CreateAzureAuthenticationProvider(
                 type,
                 optionsType,
-                _applicationClientId,
-                _useWamBroker);
+                _configuration.ApplicationClientId,
+                _configuration.UseWamBroker);
 
             if (instance is null)
             {
@@ -382,7 +371,7 @@ internal sealed class SqlAuthenticationProviderRegistry
                 // Load configuration first so Azure discovery receives its option overrides.
                 if (AuthenticationFeatureSwitches.IsAppConfigSupported)
                 {
-                    LoadConfiguration(getSection);
+                    ApplyConfiguration(SqlAuthenticationConfiguration.Load(getSection));
                 }
                 if (AuthenticationFeatureSwitches.IsAzureExtensionDiscoverySupported)
                 {
@@ -403,52 +392,6 @@ internal sealed class SqlAuthenticationProviderRegistry
                 _bootstrapInProgress = false;
             }
         }
-    }
-
-    /// <summary>
-    /// Loads authentication settings from the current app.config section, falling back to the
-    /// legacy section.
-    /// </summary>
-    /// <param name="getSection">
-    /// The section reader, or null to use the process-wide ConfigurationManager.
-    /// </param>
-    /// <remarks>
-    /// Configuration retrieval and application errors propagate to bootstrap failure handling.
-    /// Only an absent current section permits fallback to the legacy section.
-    /// </remarks>
-    [RequiresUnreferencedCode("Authentication configuration loads provider types by name.")]
-    [RequiresDynamicCode("Authentication configuration constructs providers dynamically.")]
-    internal void LoadConfiguration(Func<string, object?>? getSection = null)
-    {
-        ConfigurationSection? configurationSection = null;
-
-        try
-        {
-            // Prefer the SqlClient-specific section so it can coexist with the legacy provider.
-            configurationSection = FetchConfigurationSection("SqlClientAuthenticationProviders",
-                "Microsoft.Data.SqlClient.SqlClientAuthenticationProviderConfigurationSection",
-                getSection);
-            if (configurationSection == null)
-            {
-                // A malformed current section must not be hidden by falling back to the legacy one.
-                configurationSection = FetchConfigurationSection("SqlAuthenticationProviders",
-                    "Microsoft.Data.SqlClient.SqlAuthenticationProviderConfigurationSection",
-                    getSection);
-            }
-        }
-        catch (ConfigurationErrorsException e) when (ExceptionHelpers.IsRecoverableException(e))
-        {
-            // Preserve actionable retrieval diagnostics, but do not continue with missing settings.
-            SqlClientEventSource.Log.TryTraceEvent(
-                "static SqlAuthenticationProviderRegistry: Unable to load custom " +
-                "SqlAuthenticationProviders or SqlClientAuthenticationProviders. Correct " +
-                "app.config syntax and section handler declarations. ConfigurationManager failed " +
-                "to load due to configuration errors: {0}",
-                e);
-            throw;
-        }
-
-        ApplyConfiguration(configurationSection);
     }
 
     /// <summary>Loads the Azure extension, validating its identity in signed builds.</summary>
@@ -498,8 +441,8 @@ internal sealed class SqlAuthenticationProviderRegistry
     /// <summary>
     /// Applies Azure options, invokes a configured initializer and registers configured providers.
     /// </summary>
-    /// <param name="configSection">
-    /// The authentication configuration section, or null if none was found.
+    /// <param name="configuration">
+    /// The validated settings to retain for Azure discovery and provider activation.
     /// </param>
     /// <remarks>
     /// Initializer and provider registrations receive configuration precedence. An invalid
@@ -515,67 +458,14 @@ internal sealed class SqlAuthenticationProviderRegistry
     /// <exception cref="InvalidOperationException">
     /// A configured provider registration was refused.
     /// </exception>
-    /// <exception cref="ConfigurationErrorsException">
-    /// The authentication schema or an explicitly configured broker value is invalid.
-    /// </exception>
     [RequiresUnreferencedCode("Configured initializer and provider types are loaded by name.")]
     [RequiresDynamicCode("Configured initializer and providers are constructed dynamically.")]
-    internal void ApplyConfiguration(ConfigurationSection? configSection)
+    internal void ApplyConfiguration(SqlAuthenticationConfiguration configuration)
     {
-        if (configSection == null)
-        {
-            SqlClientEventSource.Log.TryTraceEvent(
-                "SqlAuthenticationProviderRegistry | Neither SqlClientAuthenticationProviders " +
-                "nor SqlAuthenticationProviders configuration section found.");
-            return;
-        }
-
-        // Read through metadata to support both authentication configuration section handlers.
-        string applicationClientId = ReadString(configSection, "applicationClientId");
-        string useWamBrokerValue = ReadString(configSection, "useWamBroker");
-        string initializerTypeName = ReadString(configSection, "initializerType");
-        if (configSection.ElementInformation.Properties["providers"]?.Value
-            is not ProviderSettingsCollection providers)
-        {
-            throw new ConfigurationErrorsException(
-                "The authentication configuration property 'providers' must be a " +
-                "ProviderSettingsCollection.");
-        }
-
-        // Leave missing overrides unset so discovery preserves the Azure provider's defaults.
-        if (!string.IsNullOrEmpty(applicationClientId))
-        {
-            _applicationClientId = applicationClientId;
-            SqlClientEventSource.Log.TryTraceEvent(
-                "SqlAuthenticationProviderRegistry | Received user-defined Application Client Id");
-        }
-        else
-        {
-            SqlClientEventSource.Log.TryTraceEvent(
-                "SqlAuthenticationProviderRegistry | No user-defined Application Client Id found.");
-        }
-
-        if (!string.IsNullOrEmpty(useWamBrokerValue))
-        {
-            if (bool.TryParse(useWamBrokerValue, out bool useWamBroker))
-            {
-                _useWamBroker = useWamBroker;
-                SqlClientEventSource.Log.TryTraceEvent(
-                    "SqlAuthenticationProviderRegistry | Received user-defined UseWamBroker={0}.",
-                    useWamBroker);
-            }
-            else
-            {
-                throw new ConfigurationErrorsException(
-                    $"Invalid authentication configuration value '{useWamBrokerValue}' for " +
-                    "'useWamBroker'; expected 'true' or 'false'.");
-            }
-        }
-        else
-        {
-            SqlClientEventSource.Log.TryTraceEvent(
-                "SqlAuthenticationProviderRegistry | No user-defined UseWamBroker found.");
-        }
+        // Retain the settings before callbacks run so reentrant discovery sees their overrides.
+        _configuration = configuration;
+        string initializerTypeName = configuration.InitializerType;
+        IReadOnlyList<ProviderSettings> providers = configuration.Providers;
 
         // Run the initializer first so explicit configured provider entries take final precedence.
         if (!string.IsNullOrEmpty(initializerTypeName))
@@ -622,7 +512,9 @@ internal sealed class SqlAuthenticationProviderRegistry
         {
             foreach (ProviderSettings providerSettings in providers)
             {
-                SqlAuthenticationMethod authentication = AuthenticationEnumFromString(providerSettings.Name);
+                SqlAuthenticationMethod authentication =
+                    SqlAuthenticationConfiguration.AuthenticationEnumFromString(
+                        providerSettings.Name);
                 SqlAuthenticationProvider provider;
                 try
                 {
@@ -662,29 +554,6 @@ internal sealed class SqlAuthenticationProviderRegistry
             SqlClientEventSource.Log.TryTraceEvent(
                 "SqlAuthenticationProviderRegistry | No user-defined auth providers.");
         }
-    }
-
-    /// <summary>Reads a string-valued property from a configuration section.</summary>
-    /// <param name="section">The section containing the property.</param>
-    /// <param name="name">The configuration property name.</param>
-    /// <returns>
-    /// The string value, or an empty string if the property's value is null.
-    /// </returns>
-    /// <exception cref="ConfigurationErrorsException">
-    /// The property is missing from the section schema or has a non-string value.
-    /// </exception>
-    internal static string ReadString(ConfigurationSection section, string name)
-    {
-        PropertyInformation property = section.ElementInformation.Properties[name]
-            ?? throw new ConfigurationErrorsException(
-                $"The authentication configuration is missing property '{name}'.");
-        object? value = property.Value;
-        if (property.Type != typeof(string) || (value is not null && value is not string))
-        {
-            throw new ConfigurationErrorsException(
-                $"Authentication configuration property '{name}' must be a string.");
-        }
-        return value as string ?? string.Empty;
     }
 
     /// <summary>
@@ -756,86 +625,6 @@ internal sealed class SqlAuthenticationProviderRegistry
                 "Authentication provider registered for {0}: provider {1}, tier {2}.",
                 authenticationMethod, provider.GetType().FullName, tier);
             return true;
-        }
-    }
-
-    /// <summary>
-    /// Fetches an app.config section only if its handler has the expected full type name.
-    /// </summary>
-    /// <param name="name">The configuration section name.</param>
-    /// <param name="typeName">The expected section handler's full type name.</param>
-    /// <param name="getSection">
-    /// The section reader, or null to use the process-wide ConfigurationManager.
-    /// </param>
-    /// <returns>
-    /// The matching section, or null if it is absent.
-    /// </returns>
-    /// <remarks>
-    /// Does not read appsettings.json. An unexpected handler fails configuration.
-    /// </remarks>
-    /// <exception cref="ConfigurationErrorsException">
-    /// The configuration system cannot load the section, or its handler is incompatible.
-    /// </exception>
-    [RequiresUnreferencedCode("Configuration section handlers are resolved by name.")]
-    [RequiresDynamicCode("Configuration section handlers are constructed dynamically.")]
-    internal static ConfigurationSection? FetchConfigurationSection(
-        string name, string typeName, Func<string, object?>? getSection = null)
-    {
-        // TODO: Support reading configuration from appsettings.json for .NET runtime applications.
-        object? section = (getSection ?? ConfigurationManager.GetSection)(name);
-        if (section != null)
-        {
-            // Match the handler contract by full type name, independent of its defining assembly.
-            if (section is ConfigurationSection configSection && configSection.GetType().FullName == typeName)
-            {
-                return configSection;
-            }
-            else
-            {
-                throw new ConfigurationErrorsException(
-                    $"Authentication configuration section '{name}' must use handler " +
-                    $"'{typeName}'; found '{section.GetType().FullName}'.");
-            }
-        }
-        return default;
-    }
-
-    /// <summary>
-    /// Maps a configured authentication method name to its enum value, ignoring case.
-    /// </summary>
-    /// <param name="authentication">
-    /// The authentication method name from a configured provider entry.
-    /// </param>
-    /// <returns>The corresponding supported Active Directory authentication method.</returns>
-    /// <exception cref="NotSupportedException">The configured name is not recognized.</exception>
-    internal static SqlAuthenticationMethod AuthenticationEnumFromString(string authentication)
-    {
-        // Keep an explicit allowlist; numeric values and unrelated enum members are not valid here.
-        switch (authentication.ToLowerInvariant())
-        {
-            case "active directory integrated":
-                return SqlAuthenticationMethod.ActiveDirectoryIntegrated;
-            case "active directory password":
-                #pragma warning disable 0618 // Type or member is obsolete
-                return SqlAuthenticationMethod.ActiveDirectoryPassword;
-                #pragma warning restore 0618 // Type or member is obsolete
-            case "active directory interactive":
-                return SqlAuthenticationMethod.ActiveDirectoryInteractive;
-            case "active directory service principal":
-                return SqlAuthenticationMethod.ActiveDirectoryServicePrincipal;
-            case "active directory device code flow":
-                return SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow;
-            case "active directory managed identity":
-                return SqlAuthenticationMethod.ActiveDirectoryManagedIdentity;
-            case "active directory msi":
-                return SqlAuthenticationMethod.ActiveDirectoryMSI;
-            case "active directory default":
-                return SqlAuthenticationMethod.ActiveDirectoryDefault;
-            case "active directory workload identity":
-                return SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity;
-            default:
-                throw new NotSupportedException(
-                    $"Configured authentication method '{authentication}' is not supported.");
         }
     }
 

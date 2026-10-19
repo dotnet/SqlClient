@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Reflection;
-using System.Threading;
 
 namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test
 {
@@ -20,6 +19,7 @@ namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test
         [InlineData(typeof(ThreadAbortException), false)]
         public void ProviderConstructorFailureHonorsRecoverability(Type exceptionType, bool recoverable)
         {
+            // Throw a known exception from the simulated Azure provider's reflective constructor.
             Exception failure = (Exception)Activator.CreateInstance(exceptionType, nonPublic: true)!;
             ThrowingProvider.ConstructorFailure = failure;
             try
@@ -41,6 +41,7 @@ namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test
             }
             finally
             {
+                // Keep constructor failure injection from affecting subsequent discovery tests.
                 ThrowingProvider.ConstructorFailure = null;
             }
         }
@@ -51,6 +52,7 @@ namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test
         [InlineData(false)]
         public void AssemblyLoaderFailureHonorsRecoverability(bool recoverable)
         {
+            // Missing optional assemblies are recoverable; reflection-wrapped fatal errors are not.
             Exception failure = recoverable
                 ? new FileNotFoundException("Test Azure assembly is absent.")
                 : new TargetInvocationException(new OutOfMemoryException());
@@ -73,6 +75,7 @@ namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test
         [InlineData(typeof(UnauthorizedAccessException))]
         public void RecoverableAssemblyLoaderFailureIsHandled(Type exceptionType)
         {
+            // Optional discovery must tolerate ordinary loader errors beyond binding exceptions.
             Exception failure = (Exception)Activator.CreateInstance(exceptionType)!;
             var registry = new SqlAuthenticationProviderRegistry();
 

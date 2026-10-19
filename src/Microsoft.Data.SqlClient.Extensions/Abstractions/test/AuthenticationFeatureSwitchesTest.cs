@@ -19,6 +19,7 @@ public class AuthenticationFeatureSwitchesTest
     [Fact]
     public void AppContextSwitchesAreUnset()
     {
+        // Other tests may override caches, but must never leave global AppContext values behind.
         Assert.False(AppContext.TryGetSwitch("Switch.Microsoft.Data.SqlClient.EnableAppConfig", out _));
         Assert.False(AppContext.TryGetSwitch("Switch.Microsoft.Data.SqlClient.EnableAzureExtensionDiscovery", out _));
     }
@@ -27,6 +28,7 @@ public class AuthenticationFeatureSwitchesTest
     [Fact]
     public void UnsetSwitchesDefaultToEnabled()
     {
+        // Clear both caches to exercise first-read defaults rather than a previous test's values.
         using var switches = new AuthenticationFeatureSwitchesHelper();
         switches.EnableAppConfig = null;
         switches.EnableAzureExtensionDiscovery = null;
@@ -45,6 +47,7 @@ public class AuthenticationFeatureSwitchesTest
     [InlineData(false)]
     public void EnableAppConfigAndGuardHonorCachedValue(bool cachedValue)
     {
+        // The guard must follow the cached feature switch without publishing an AppContext value.
         using var switches = new AuthenticationFeatureSwitchesHelper();
         const string switchName = "Switch.Microsoft.Data.SqlClient.EnableAppConfig";
         Assert.False(AppContext.TryGetSwitch(switchName, out _));
@@ -62,6 +65,7 @@ public class AuthenticationFeatureSwitchesTest
     [InlineData(false)]
     public void EnableAzureExtensionDiscoveryAndGuardHonorCachedValue(bool cachedValue)
     {
+        // Keep discovery's capability guard and runtime switch consistent for either override.
         using var switches = new AuthenticationFeatureSwitchesHelper();
         const string switchName = "Switch.Microsoft.Data.SqlClient.EnableAzureExtensionDiscovery";
         Assert.False(AppContext.TryGetSwitch(switchName, out _));
@@ -77,6 +81,7 @@ public class AuthenticationFeatureSwitchesTest
     [Fact]
     public void HelperRestoresCachedValues()
     {
+        // Nest helpers to verify disposal restores uninitialized caches, not just Boolean values.
         using var original = new AuthenticationFeatureSwitchesHelper();
         original.EnableAppConfig = null;
         original.EnableAzureExtensionDiscovery = false;
@@ -88,6 +93,7 @@ public class AuthenticationFeatureSwitchesTest
             Assert.True(AuthenticationFeatureSwitches.EnableAzureExtensionDiscovery);
         }
 
+        // Restoring an uninitialized cache must restore default-enabled evaluation.
         Assert.True(AuthenticationFeatureSwitches.EnableAppConfig);
         Assert.False(AuthenticationFeatureSwitches.EnableAzureExtensionDiscovery);
     }

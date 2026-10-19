@@ -11,14 +11,23 @@ namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
 /// Verifies configured activation, precedence and fail-fast application on isolated registries.
 /// </summary>
 [Collection(AuthenticationFeatureSwitchTestCollection.Name)]
-public class AuthenticationConfigurationApplicationTest : IDisposable
+public class AuthenticationConfigurationApplyTest : IDisposable
 {
+    /// <summary>
+    /// Exposes the current test's context to reflectively activated fixtures whose parameterless
+    /// constructors cannot receive it. References the same object as <see cref="_context"/>.
+    /// Activation must remain synchronous on the test thread; disposal clears this reference.
+    /// </summary>
     [ThreadStatic]
     private static Context? s_context;
 
+    /// <summary>
+    /// Owns fresh state for each xUnit test instance. The constructor publishes this same object
+    /// through <see cref="s_context"/> so activated fixtures can access it without the test instance.
+    /// </summary>
     private readonly Context _context = new();
 
-    public AuthenticationConfigurationApplicationTest() => s_context = _context;
+    public AuthenticationConfigurationApplyTest() => s_context = _context;
 
     public void Dispose() => s_context = null;
 
@@ -31,7 +40,8 @@ public class AuthenticationConfigurationApplicationTest : IDisposable
     [Fact]
     public void ApplyConfigurationAllowsMissingSection()
     {
-        _context.Registry.ApplyConfiguration(null);
+        // Empty parsed settings must not activate anything or reserve a configuration-owned slot.
+        Apply(null);
 
         Assert.Empty(_context.Events);
         Assert.True(_context.Registry.Register(
@@ -46,13 +56,15 @@ public class AuthenticationConfigurationApplicationTest : IDisposable
     [InlineData(false)]
     public void ApplyConfigurationOrdersInitializerAndProviders(bool modern)
     {
+        // The explicit provider must replace the provider registered by Initialize, not vice versa.
         var section = CreateSection(modern);
         section.ElementInformation.Properties["initializerType"].Value =
             typeof(Initializer).AssemblyQualifiedName;
         AddProvider(section, "Active Directory Integrated", typeof(SecondProvider));
 
-        _context.Registry.ApplyConfiguration(section);
+        Apply(section);
 
+        // Callback order proves which provider won; lower tiers must not replace that result.
         Assert.Equal(new[]
         {
             "construct:initializer", "initialize", "construct:first",
@@ -72,12 +84,14 @@ public class AuthenticationConfigurationApplicationTest : IDisposable
     [Fact]
     public void ApplyConfigurationPromotesInitializerRegistrations()
     {
+        // No explicit entry exists, so only the callback-context promotion can confer Config tier.
         var section = CreateSection();
         section.ElementInformation.Properties["initializerType"].Value =
             typeof(Initializer).AssemblyQualifiedName;
 
-        _context.Registry.ApplyConfiguration(section);
+        Apply(section);
 
+        // Both application registrations and Azure defaults must preserve the initializer's choice.
         Assert.False(_context.Registry.Register(
             SqlAuthenticationMethod.ActiveDirectoryIntegrated, new SecondProvider()));
         Assert.False(_context.Registry.Register(
@@ -90,11 +104,12 @@ public class AuthenticationConfigurationApplicationTest : IDisposable
     [Fact]
     public void ApplyConfigurationDoesNotPromoteInitializerConstructorRegistrations()
     {
+        // Construction precedes the Initialize callback and must not inherit its precedence.
         var section = CreateSection();
         section.ElementInformation.Properties["initializerType"].Value =
             typeof(ConstructorRegisteringInitializer).AssemblyQualifiedName;
 
-        _context.Registry.ApplyConfiguration(section);
+        Apply(section);
 
         Assert.True(_context.Registry.Register(
             SqlAuthenticationMethod.ActiveDirectoryIntegrated, new SecondProvider()));
@@ -110,9 +125,10 @@ public class AuthenticationConfigurationApplicationTest : IDisposable
     [InlineData("initialize")]
     public void ApplyConfigurationStopsAfterInitializerFailure(string failureAt)
     {
+        // Seed a Config registration to detect a callback-context flag left set after failure.
         var existing = CreateSection();
         AddProvider(existing, "Active Directory Integrated", typeof(FirstProvider));
-        _context.Registry.ApplyConfiguration(existing);
+        Apply(existing);
         _context.Events.Clear();
         _context.FailureAt = failureAt;
         var section = CreateSection();
@@ -121,8 +137,9 @@ public class AuthenticationConfigurationApplicationTest : IDisposable
         AddProvider(section, "Active Directory Interactive", typeof(SecondProvider));
 
         var failure = Assert.Throws<ArgumentException>(() =>
-            _context.Registry.ApplyConfiguration(section));
+            Apply(section));
 
+        // Later providers stay unconstructed and subsequent callers retain Application tier.
         Assert.Same(_context.Failure, failure.GetBaseException());
         Assert.Contains(typeof(Initializer).AssemblyQualifiedName!, failure.Message);
         Assert.DoesNotContain("construct:second", _context.Events);
@@ -136,8 +153,9 @@ public class AuthenticationConfigurationApplicationTest : IDisposable
     [Theory]
     [InlineData("construct:second")]
     [InlineData("support:second")]
-    public void ApplyConfigurationPreservesPartialApplication(string failureAt)
+    public void ApplyConfigurationPreservesPartialState(string failureAt)
     {
+        // A failing middle entry exposes both retained earlier state and skipped later work.
         _context.FailureAt = failureAt;
         var section = CreateSection();
         AddProvider(section, "Active Directory Integrated", typeof(FirstProvider));
@@ -145,8 +163,9 @@ public class AuthenticationConfigurationApplicationTest : IDisposable
         AddProvider(section, "Active Directory Default", typeof(ThirdProvider));
 
         Exception failure = Assert.ThrowsAny<Exception>(() =>
-            _context.Registry.ApplyConfiguration(section));
+            Apply(section));
 
+        // Construction failures are wrapped; support failures preserve their own exception.
         Assert.Same(_context.Failure, failure.GetBaseException());
         if (failureAt == "construct:second")
         {
@@ -159,6 +178,7 @@ public class AuthenticationConfigurationApplicationTest : IDisposable
             Assert.Same(_context.Failure, failure);
         }
         Assert.Equal(new[] { "construct:first", "construct:second" }, _context.Events);
+        // Only the first method should have acquired configuration precedence.
         Assert.False(_context.Registry.Register(
             SqlAuthenticationMethod.ActiveDirectoryIntegrated, new ThirdProvider()));
         Assert.True(_context.Registry.Register(
@@ -176,12 +196,13 @@ public class AuthenticationConfigurationApplicationTest : IDisposable
     [InlineData("1")]
     public void ApplyConfigurationRejectsUnknownMethodsBeforeActivation(string method)
     {
+        // Put the invalid name first to distinguish validation from provider-constructor failure.
         var section = CreateSection();
         AddProvider(section, method, typeof(FirstProvider));
         AddProvider(section, "Active Directory Default", typeof(SecondProvider));
 
         var failure = Assert.Throws<NotSupportedException>(() =>
-            _context.Registry.ApplyConfiguration(section));
+            Apply(section));
 
         Assert.Contains(method, failure.Message);
         Assert.Empty(_context.Events);
@@ -193,13 +214,15 @@ public class AuthenticationConfigurationApplicationTest : IDisposable
     [Fact]
     public void ApplyConfigurationRejectsUnsupportedProvider()
     {
+        // A recognized method still requires the activated provider to explicitly support it.
         var section = CreateSection();
         AddProvider(section, "Active Directory Integrated", typeof(UnsupportedProvider));
         AddProvider(section, "Active Directory Default", typeof(SecondProvider));
 
         var failure = Assert.Throws<NotSupportedException>(() =>
-            _context.Registry.ApplyConfiguration(section));
+            Apply(section));
 
+        // The rejected entry must not reserve its method or allow later provider construction.
         Assert.Contains(typeof(UnsupportedProvider).AssemblyQualifiedName!, failure.Message);
         Assert.Contains("Active Directory Integrated", failure.Message);
         Assert.Equal(new[] { "construct:unsupported" }, _context.Events);
@@ -215,9 +238,10 @@ public class AuthenticationConfigurationApplicationTest : IDisposable
     [InlineData("load:second")]
     public void ApplyConfigurationStopsAfterCallbackFailure(string failureAt)
     {
+        // Replacing an existing configured provider reaches both unload and load failure paths.
         var existing = CreateSection();
         AddProvider(existing, "Active Directory Integrated", typeof(FirstProvider));
-        _context.Registry.ApplyConfiguration(existing);
+        Apply(existing);
         _context.Events.Clear();
         _context.FailureAt = failureAt;
         var section = CreateSection();
@@ -225,12 +249,13 @@ public class AuthenticationConfigurationApplicationTest : IDisposable
         AddProvider(section, "Active Directory Default", typeof(ThirdProvider));
 
         Assert.Same(_context.Failure, Assert.Throws<InvalidOperationException>(() =>
-            _context.Registry.ApplyConfiguration(section)));
+            Apply(section)));
 
         Assert.Equal(failureAt == "unload:first"
             ? new[] { "construct:second", "unload:first" }
             : new[] { "construct:second", "unload:first", "load:second" }, _context.Events);
         _context.FailureAt = null;
+        // A successful replacement must still unload the original, proving failed publication.
         Assert.True(_context.Registry.Register(
             SqlAuthenticationMethod.ActiveDirectoryIntegrated, new ThirdProvider(), Tier.Config));
         Assert.Equal(new[] { "unload:first", "load:third" },
@@ -250,6 +275,7 @@ public class AuthenticationConfigurationApplicationTest : IDisposable
     public void ApplyConfigurationReportsTypeAndConstructorFailures(
         bool initializer, bool missingType)
     {
+        // Keep resolution errors distinct from activation errors for each configured role.
         string typeName = missingType ? "Missing.AuthenticationType"
             : (initializer ? typeof(ParameterizedInitializer) : typeof(ParameterizedProvider))
                 .AssemblyQualifiedName!;
@@ -265,8 +291,9 @@ public class AuthenticationConfigurationApplicationTest : IDisposable
         AddProvider(section, "Active Directory Default", typeof(ThirdProvider));
 
         var failure = Assert.Throws<ArgumentException>(() =>
-            _context.Registry.ApplyConfiguration(section));
+            Apply(section));
 
+        // Diagnostics must retain the configured name and the specific reflection failure.
         Assert.Contains(typeName, failure.Message);
         if (missingType)
         {
@@ -294,6 +321,7 @@ public class AuthenticationConfigurationApplicationTest : IDisposable
     [InlineData("configured-client", " TRUE ")]
     public void ApplyConfigurationPassesOptionsToAzureDiscovery(string? clientId, string? broker)
     {
+        // Exercise absent overrides separately from explicit false and mixed-case true values.
         var section = CreateSection();
         if (clientId is not null)
         {
@@ -307,9 +335,10 @@ public class AuthenticationConfigurationApplicationTest : IDisposable
         ThrowingProvider.OnConstructed = options => actual = options;
         try
         {
-            _context.Registry.ApplyConfiguration(section);
+            Apply(section);
             _context.Registry.LoadAzureExtension(() => typeof(ThrowingProvider).Assembly);
 
+            // Discovery must use this registry's settings, not the shared singleton's values.
             Assert.NotNull(actual);
             Assert.Equal(string.IsNullOrEmpty(clientId) ? null : clientId,
                 actual.ApplicationClientId);
@@ -317,9 +346,17 @@ public class AuthenticationConfigurationApplicationTest : IDisposable
         }
         finally
         {
+            // The simulated Azure provider is shared with other serialized discovery tests.
             ThrowingProvider.OnConstructed = null;
         }
     }
+
+    /// <summary>
+    /// Parses the section before asking the isolated registry to activate its entries.
+    /// </summary>
+    /// <param name="section">The handler under test, or null for absent configuration.</param>
+    private void Apply(ConfigurationSection? section) =>
+        _context.Registry.ApplyConfiguration(new SqlAuthenticationConfiguration(section));
 
     /// <summary>
     /// Creates a fresh handler without accessing the process-wide configuration system.

@@ -4,7 +4,6 @@
 
 using System.Configuration;
 using System.Reflection;
-using System.Threading;
 
 namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
 
@@ -17,6 +16,7 @@ public class ExceptionHelpersTest
     [InlineData(true)]
     public void ConfigurationErrorHonorsInnerFailure(bool fatal)
     {
+        // ConfigurationManager can wrap fatal errors; classify the cause, not just its wrapper.
         Exception failure = fatal
             ? new OutOfMemoryException("Test fatal configuration failure")
             : new InvalidOperationException("Ordinary configuration failure");
@@ -37,6 +37,7 @@ public class ExceptionHelpersTest
     [InlineData(typeof(ThreadAbortException), true)]
     public void FatalExceptionIsNotRecoverable(Type exceptionType, bool wrapped)
     {
+        // Construct exception objects without triggering the actual fatal runtime conditions.
         var exception = (Exception)Activator.CreateInstance(exceptionType, nonPublic: true)!;
         if (wrapped)
         {
@@ -50,6 +51,7 @@ public class ExceptionHelpersTest
     [Fact]
     public void OrdinaryExceptionChainIsRecoverable()
     {
+        // Ordinary wrappers must not turn an otherwise recoverable failure into fatal state.
         var exception = new ArgumentException("Wrapper",
             new InvalidOperationException("Wrapper", new FormatException("Invalid format")));
 
@@ -69,6 +71,7 @@ public class ExceptionHelpersTest
     [InlineData(typeof(ThreadAbortException), true)]
     public void AggregateWithFatalExceptionIsNotRecoverable(Type exceptionType, bool nested)
     {
+        // A fatal entry last, optionally behind another aggregate, must be found in a later branch.
         Exception failure = (Exception)Activator.CreateInstance(exceptionType, nonPublic: true)!;
         if (nested)
         {
@@ -81,10 +84,31 @@ public class ExceptionHelpersTest
         Assert.False(ExceptionHelpers.IsRecoverableException(exception));
     }
 
+    /// <summary>Fatal failures are found after the walk drains an ordinary subtree in another branch.</summary>
+    [Theory]
+    [InlineData(typeof(OutOfMemoryException))]
+    [InlineData(typeof(StackOverflowException))]
+    [InlineData(typeof(AccessViolationException))]
+    [InlineData(typeof(ThreadAbortException))]
+    public void FatalExceptionAfterOrdinarySubtreeIsNotRecoverable(Type exceptionType)
+    {
+        // The walk examines later aggregate entries first, so placing the fatal entry first forces
+        // it to finish the ordinary subtree before reaching the fatal exception.
+        Exception failure = (Exception)Activator.CreateInstance(exceptionType, nonPublic: true)!;
+        var exception = new AggregateException(
+            failure,
+            new InvalidOperationException("Wrapper", new AggregateException(
+                new FormatException("Ordinary failure"),
+                new ArgumentException("Ordinary failure", new InvalidOperationException("Ordinary failure")))));
+
+        Assert.False(ExceptionHelpers.IsRecoverableException(exception));
+    }
+
     /// <summary>Empty aggregates and nested aggregates containing only ordinary failures remain recoverable.</summary>
     [Fact]
     public void OrdinaryAggregateIsRecoverable()
     {
+        // Nested and empty aggregates are recoverable when none of their branches is fatal.
         var exception = new AggregateException(
             new InvalidOperationException("Ordinary failure"),
             new TargetInvocationException(new AggregateException(

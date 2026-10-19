@@ -26,6 +26,7 @@ public class AuthenticationConfigurationBootstrapTest : IDisposable
     [Fact]
     public void EnsureBootstrappedLoadsConfigurationOnce()
     {
+        // A reader that fails on reuse distinguishes cached success from repeated bootstrap.
         var registry = new SqlAuthenticationProviderRegistry();
         int reads = 0;
 
@@ -48,6 +49,7 @@ public class AuthenticationConfigurationBootstrapTest : IDisposable
     [InlineData(false)]
     public void EnsureBootstrappedCachesConfigurationFailure(bool retrieval)
     {
+        // Fail either section retrieval or parsed-value validation, before optional discovery.
         var registry = new SqlAuthenticationProviderRegistry();
         int reads = 0;
         var section = new SqlClientAuthenticationProviderConfigurationSection();
@@ -64,6 +66,7 @@ public class AuthenticationConfigurationBootstrapTest : IDisposable
                 }
                 return section;
             }));
+        // Changing readers cannot repair a cached failure; callers must see the original exception.
         var second = Assert.Throws<ConfigurationErrorsException>(() =>
             registry.EnsureBootstrapped(_ =>
                 throw new InvalidOperationException("Failed bootstrap must not retry.")));
@@ -86,11 +89,13 @@ public class AuthenticationConfigurationBootstrapTest : IDisposable
     [Fact]
     public void EnsureBootstrappedDoesNotCacheFatalFailure()
     {
+        // Simulate a fatal runtime failure without exhausting memory in the test process.
         var registry = new SqlAuthenticationProviderRegistry();
         var expected = new OutOfMemoryException("Test fatal configuration failure");
 
         Assert.Same(expected, Assert.Throws<OutOfMemoryException>(() =>
             registry.EnsureBootstrapped(_ => throw expected)));
+        // A second attempt must actually read, proving the in-progress flag was released.
         int reads = 0;
         registry.EnsureBootstrapped(_ =>
         {
@@ -107,6 +112,7 @@ public class AuthenticationConfigurationBootstrapTest : IDisposable
     [Fact]
     public void EnsureBootstrappedAllowsReentrantAccess()
     {
+        // Reenter while the outer reader holds the bootstrap lock on this same thread.
         var registry = new SqlAuthenticationProviderRegistry();
         int reads = 0;
 
@@ -127,6 +133,7 @@ public class AuthenticationConfigurationBootstrapTest : IDisposable
     [Fact]
     public void EnsureBootstrappedHonorsConfigurationSwitch()
     {
+        // Override only the cached switch so process-wide AppContext state remains untouched.
         _switches.EnableAppConfig = false;
 
         new SqlAuthenticationProviderRegistry().EnsureBootstrapped(_ =>

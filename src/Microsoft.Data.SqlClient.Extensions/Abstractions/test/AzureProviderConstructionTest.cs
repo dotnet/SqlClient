@@ -2,10 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
-using System.Threading.Tasks;
-using Xunit;
-
 namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
 
 /// <summary>Verifies Azure discovery constructs providers using the supported options contract.</summary>
@@ -39,12 +35,14 @@ public class AzureProviderConstructionTest
     [InlineData("app-123", true)]
     public void CreateAzureAuthenticationProvider_UsesOptionsCtor(string? applicationClientId, bool? useWamBroker)
     {
+        // The Options constructor is the sole discovery contract, including with no overrides.
         var instance = SqlAuthenticationProviderRegistry.CreateAzureAuthenticationProvider(
             typeof(StubProvider),
             typeof(StubOptions),
             applicationClientId,
             useWamBroker);
 
+        // Unspecified values must retain option defaults rather than being forcibly overwritten.
         var stub = Assert.IsType<StubProvider>(instance);
         Assert.Equal(applicationClientId, stub.Options.ApplicationClientId);
         Assert.Equal(useWamBroker ?? false, stub.Options.UseWamBroker);

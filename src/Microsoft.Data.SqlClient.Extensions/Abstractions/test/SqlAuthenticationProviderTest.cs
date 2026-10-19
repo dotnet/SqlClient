@@ -42,8 +42,10 @@ public class SqlAuthenticationProviderTest
     [InlineData(SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity)]
     public void GetAndSetProvider_NoMdsAssembly(SqlAuthenticationMethod method)
     {
+        // Abstractions must bootstrap and own registrations without loading the driver assembly.
         Assert.Null(SqlAuthenticationProvider.GetProvider(method));
 
+        // A successful direct registration must be returned unchanged for the selected method.
         var provider = new Provider();
         Assert.True(SqlAuthenticationProvider.SetProvider(method, provider));
         Assert.Same(provider, SqlAuthenticationProvider.GetProvider(method));

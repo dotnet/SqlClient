@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Collections.Concurrent;
-using System.Configuration;
 using System.Diagnostics.Tracing;
 using System.Reflection;
 
@@ -17,6 +16,7 @@ public class AuthenticationRegistryTest
     [Fact]
     public void AzureDiscoveryTraceDoesNotClaimRejectedRegistrationsSucceeded()
     {
+        // Populate every default slot, then observe a second discovery where all attempts lose.
         var registry = new SqlAuthenticationProviderRegistry();
         using (var firstListener = new AuthenticationTraceListener())
         {
@@ -30,6 +30,7 @@ public class AuthenticationRegistryTest
         using var listener = new AuthenticationTraceListener();
         registry.LoadAzureExtension(() => typeof(ThrowingProvider).Assembly);
 
+        // Rejections may be traced, but none may be reported as successful installation.
         Assert.Contains(listener.Messages, message =>
             message.Contains("existing tier Default takes precedence over Default"));
         Assert.DoesNotContain(listener.Messages, message =>
@@ -53,11 +54,13 @@ public class AuthenticationRegistryTest
         section.ElementInformation.Properties["useWamBroker"].Value = brokerValue;
 
         // Avoid changing process-wide configuration or registering providers in the shared registry.
-        new SqlAuthenticationProviderRegistry().ApplyConfiguration(section);
+        new SqlAuthenticationProviderRegistry().ApplyConfiguration(
+            new SqlAuthenticationConfiguration(section));
 
-        Assert.Contains("SqlAuthenticationProviderRegistry | " + brokerMessage, listener.Messages);
+        // Values are traced during parsing; activation diagnostics remain the registry's concern.
+        Assert.Contains("SqlAuthenticationConfiguration | " + brokerMessage, listener.Messages);
         Assert.Contains(
-            "SqlAuthenticationProviderRegistry | No user-defined Application Client Id found.",
+            "SqlAuthenticationConfiguration | No user-defined Application Client Id found.",
             listener.Messages);
         Assert.Contains(
             "SqlAuthenticationProviderRegistry | No user-defined SqlAuthenticationInitializer found.",
@@ -73,6 +76,7 @@ public class AuthenticationRegistryTest
     [InlineData(false)]
     public void InitializerRegistrationFailuresAreNotSwallowed(bool nullProvider)
     {
+        // Complete shared bootstrap before simulating the narrower configured-initializer context.
         SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.NotSpecified);
         var registry = Assert.IsType<SqlAuthenticationProviderRegistry>(
             typeof(SqlAuthenticationProviderRegistry).GetField(
@@ -106,6 +110,7 @@ public class AuthenticationRegistryTest
     [Fact]
     public void UnsupportedProviderReturnsFalseAndLogs()
     {
+        // Outside initialization, a support rejection must return false and emit a trace.
         using var listener = new AuthenticationTraceListener();
         Assert.False(SqlAuthenticationProvider.SetProvider(
             SqlAuthenticationMethod.NotSpecified, new Provider(false)));
@@ -118,6 +123,7 @@ public class AuthenticationRegistryTest
     [Fact]
     public void NullProviderReturnsFalseAndLogs()
     {
+        // Null is a caller error, but outside initialization registration remains non-throwing.
         using var listener = new AuthenticationTraceListener();
         Assert.False(SqlAuthenticationProvider.SetProvider(
             SqlAuthenticationMethod.NotSpecified, null!));
@@ -133,11 +139,13 @@ public class AuthenticationRegistryTest
     [InlineData("BeforeUnload")]
     public void CallbackFailureReturnsFalseAndPreservesProvider(string callback)
     {
+        // Place the failure on the old or replacement provider according to callback ownership.
         using var listener = new AuthenticationTraceListener();
         var first = new ThrowingProvider(callback == "BeforeUnload" ? callback : null);
         var replacement = new ThrowingProvider(callback == "BeforeUnload" ? null : callback);
         Assert.True(SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.NotSpecified, first));
 
+        // Publication must wait until support validation and both replacement callbacks succeed.
         Assert.False(SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.NotSpecified, replacement));
 
         Assert.Same(first, SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.NotSpecified));
@@ -145,6 +153,7 @@ public class AuthenticationRegistryTest
             message.Contains("SetProvider") && message.Contains(callback) &&
             message.Contains("returning false") && message.Contains("callbacks"));
         first.Throw = false;
+        // A later valid replacement must succeed; the failed attempt must not claim registration.
         Assert.Single(listener.Messages, message =>
             message.StartsWith(
                 "Authentication provider registered for NotSpecified:", StringComparison.Ordinal));
@@ -157,6 +166,7 @@ public class AuthenticationRegistryTest
     [Fact]
     public void ReplacementInvokesCallbacks()
     {
+        // First insertion has no replacement callbacks; replacing it unloads old and loads new.
         using var listener = new AuthenticationTraceListener();
         var first = new Provider(true);
         var second = new Provider(true);
@@ -178,6 +188,7 @@ public class AuthenticationRegistryTest
     [InlineData("BeforeUnload")]
     public void AggregateCallbackFailurePropagatesAndPreservesProvider(string callback)
     {
+        // Put a fatal error after an ordinary aggregate entry to defeat first-inner-only checks.
         var failure = new AggregateException(
             new InvalidOperationException("Ordinary failure"), new OutOfMemoryException("Test fatal failure"));
         var first = new ThrowingProvider(callback == "BeforeUnload" ? callback : null, failure);
@@ -192,6 +203,7 @@ public class AuthenticationRegistryTest
         }
         finally
         {
+            // Restore a harmless shared provider even when an assertion fails.
             first.Throw = false;
             Assert.True(SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.NotSpecified, new Provider(true)));
         }
@@ -201,12 +213,14 @@ public class AuthenticationRegistryTest
     [Fact]
     public void SupportValidationAllowsCrossThreadLookup()
     {
+        // IsSupported waits for another thread's lookup, exposing any lock held around validation.
         var first = new Provider(true);
         Assert.True(SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.SqlPassword, first));
         var replacement = new LookupProvider();
 
         bool registered = SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.SqlPassword, replacement);
 
+        // The worker must see the old provider before the replacement is published.
         Assert.NotNull(replacement.Lookup);
         Assert.True(replacement.Lookup.Wait(TimeSpan.FromSeconds(10)), "Cross-thread lookup did not complete.");
         Assert.True(registered, "Support validation blocked a cross-thread registry lookup.");
