@@ -18,6 +18,43 @@ This package supports:
 
 - .NET Standard 2.0 (compatible with .NET Framework 4.6.1+, .NET Core 2.0+, and .NET 5+)
 
+## Authentication configuration
+
+The public `SqlAuthenticationProviderConfigurationSection` (legacy
+`SqlAuthenticationProviders`) and `SqlClientAuthenticationProviderConfigurationSection`
+(`SqlClientAuthenticationProviders`) handlers are defined in this package and forwarded
+from SqlClient. These are infrastructure types, public to support use across SqlClient
+assemblies and configuration section activation, not APIs for direct use by application
+code. Applications should not instantiate, derive from, or access them directly.
+Referencing the handlers in app.config section declarations is supported, and existing
+declarations naming `Microsoft.Data.SqlClient` remain valid.
+Section names, properties (`providers`, `initializerType`,
+`applicationClientId`, `useWamBroker`) and empty defaults are unchanged.
+
+`System.Configuration.ConfigurationManager` is a transitive compile dependency required
+by the handlers' configuration base types. Authentication initialization and provider
+loading remain in the driver.
+
+Merge the following example into the application's app.config, replacing
+`ExampleAuthenticationProvider, ExampleApp` with the assembly-qualified name of an
+application-defined `SqlAuthenticationProvider`. The handler declaration continues to
+name `Microsoft.Data.SqlClient`; the type forward resolves it to Abstractions.
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <configSections>
+    <section name="SqlClientAuthenticationProviders"
+             type="Microsoft.Data.SqlClient.SqlClientAuthenticationProviderConfigurationSection, Microsoft.Data.SqlClient" />
+  </configSections>
+  <SqlClientAuthenticationProviders>
+    <providers>
+      <add name="active directory default" type="ExampleAuthenticationProvider, ExampleApp" />
+    </providers>
+  </SqlClientAuthenticationProviders>
+</configuration>
+```
+
 ## Installation
 
 Install the package via NuGet:
