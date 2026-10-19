@@ -303,6 +303,13 @@ TLS protocol agreed for the handshake (see **Failure path** above).
 | `ServerCertificateValidationErrors` | Effective SqlClient verdict: `ServerCertificateMissing`, `ChainError`, `HostNameMismatch` (after `HostNameInCertificate`), `PinnedCertificateMismatch` (`ServerCertificate`); `None` when validation passed | Validation was bypassed, or the configured `ServerCertificate` file could not be read. |
 | `ServerCertificateChainStatus` | Bitwise OR of the original callback chain's `ChainStatus` flags (no chain rebuild); `NoError` when the chain was evaluated cleanly | Validation was bypassed, `ServerCertificate` pinning is used (the chain isn't consulted), no certificate was presented, or the platform reported a chain error without flags. |
 
+The host name check can throw before the final verdict is recorded. For example, Managed SNI
+named pipes validate against the target `.`, which `X509Certificate2.MatchesHostname` rejects
+with an `ArgumentException`. Errors established before that check, such as `ChainError` and the
+callback chain status, are recorded first so they survive the exception. The exception itself is
+unchanged. When no error was established before the check, the fields stay `null` rather than
+reporting `None`.
+
 Native SNI does not yet report certificate details; those fields remain `null` there.
 
 ## 5. Scope
