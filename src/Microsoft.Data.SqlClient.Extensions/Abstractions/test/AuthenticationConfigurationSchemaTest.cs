@@ -5,6 +5,10 @@
 using System.ComponentModel;
 using System.Configuration;
 
+// The section class names are long and confusingly similar, so we alias them for clarity.
+using LegacySection = Microsoft.Data.SqlClient.SqlAuthenticationProviderConfigurationSection;
+using ModernSection = Microsoft.Data.SqlClient.SqlClientAuthenticationProviderConfigurationSection;
+
 namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
 
 /// <summary>Pins authentication section names, configuration properties and defaults in Abstractions.</summary>
@@ -12,8 +16,8 @@ public class AuthenticationConfigurationSchemaTest
 {
     /// <summary>Both infrastructure-only handlers preserve their schema and remain hidden from IntelliSense.</summary>
     [Theory]
-    [InlineData(typeof(SqlAuthenticationProviderConfigurationSection), "SqlAuthenticationProviders")]
-    [InlineData(typeof(SqlClientAuthenticationProviderConfigurationSection), "SqlClientAuthenticationProviders")]
+    [InlineData(typeof(LegacySection), "SqlAuthenticationProviders")]
+    [InlineData(typeof(ModernSection), "SqlClientAuthenticationProviders")]
     public void HandlerContractIsPreserved(Type type, string sectionName)
     {
         var editorBrowsable = Assert.IsType<EditorBrowsableAttribute>(
