@@ -651,9 +651,6 @@ namespace Microsoft.Data.SqlClient
             // initialize or unset null bitmap information for the current row
             if (isNullCompressed)
             {
-                // assert that NBCROW is not in use by 2005 or before
-                Debug.Assert(_parser.Is2008OrNewer, "NBCROW is sent by pre-2008 server");
-
                 TdsOperationStatus result = _nullBitmapInfo.TryInitialize(this, nullBitmapColumnsCount);
                 if (result != TdsOperationStatus.Done)
                 {

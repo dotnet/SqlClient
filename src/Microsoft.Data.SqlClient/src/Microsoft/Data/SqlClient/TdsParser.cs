@@ -271,8 +271,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal bool Is2008OrNewer => true;
-
         internal bool MARSOn
         {
             get
@@ -10260,11 +10258,6 @@ namespace Microsoft.Data.SqlClient
                                 continue;
                             }
 
-                            if (!Is2008OrNewer && !mt.Is90Supported)
-                            {
-                                throw ADP.VersionDoesNotSupportDataType(mt.TypeName);
-                            }
-
                             Task writeParamTask = TDSExecuteRPCAddParameter(stateObj, param, mt, options, cmd, enableOptimizedParameterBinding);
 
                             if (!sync)
@@ -11013,12 +11006,6 @@ namespace Microsoft.Data.SqlClient
             //
             ParameterPeekAheadValue peekAhead;
             SmiParameterMetaData metaData = param.MetaDataForSmi(out peekAhead);
-
-            if (!Is2008OrNewer)
-            {
-                MetaType mt = MetaType.GetMetaTypeFromSqlDbType(metaData.SqlDbType, metaData.IsMultiValued);
-                throw ADP.VersionDoesNotSupportDataType(mt.TypeName);
-            }
 
             //
             //  Determine value to send
