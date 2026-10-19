@@ -281,21 +281,20 @@ is used only when its `dwAvailable` flag is set; structures with `cbSize < 64` o
 cached; the certificate fields then remain `null`. If only the hash export exists, the
 hash is still captured.
 
-**Known gaps:**
+**Deferred validation:** native SNI always defers server certificate validation until after
+Schannel has the presented certificate. There is no opt-in or opt-out switch. Deferral
+records the hash, validation errors, and chain status in every validation mode, including
+Schannel automatic validation (`Encrypt` without `HostNameInCertificate`), on both success
+and failure. A certificate that fails the chain and doesn't match the host name reports
+`HostNameMismatch | ChainError`, the same as Managed SNI. Deferral doesn't change whether a
+certificate is accepted or rejected, or the resulting error codes. Fields are never derived
+from HRESULTs or messages; a field whose availability flag isn't set stays `null`.
 
-- In Schannel automatic validation (`Encrypt` without `HostNameInCertificate`), native SNI
-  doesn't report validation errors or chain status on failure. Those fields remain `null`;
-  they are never derived from HRESULTs or messages. The certificate hash is also
-  unavailable on failure in this mode: Schannel invalidates the security context when its
-  automatic validation rejects the certificate, so SNI can't query the presented
-  certificate.
-- In chain-policy validation (`HostNameInCertificate` set), a certificate that both fails
-  the chain and doesn't match the host name reports only `ChainError`, while Managed SNI
-  reports `HostNameMismatch | ChainError`. `CertVerifyCertificateChainPolicy` with
-  `CERT_CHAIN_POLICY_SSL` returns a single error, and chain errors take precedence.
-
-These exports are introduced by an upcoming native SNI package; until it ships, Native SNI
-reports no certificate details.
+**SNI dependency:** this behavior requires a `sni.dll` built with the certificate capture
+exports, deferred validation (SNI commit `b9d842c`), and the host-name verdict fix (SNI
+commit `55d318d`). These are introduced by an upcoming native SNI package. Until it ships,
+or with any older `sni.dll`, Native SNI reports no certificate details and the fields
+remain `null`, as described for older `sni.dll` versions above.
 
 **Cipher suite (Managed SNI).** Managed SNI reads `(int)SslStream.NegotiatedCipherSuite` at the
 same two points as the protocol, on both the TCP and named-pipe handles (MARS passes through to
