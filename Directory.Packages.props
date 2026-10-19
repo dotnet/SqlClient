@@ -70,7 +70,7 @@
   </ItemGroup>
 
   <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">
-    <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="9.0.13" />
+    <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="9.0.21" />
   </ItemGroup>
 
   <ItemGroup Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">
@@ -119,15 +119,15 @@
   </ItemGroup>
 
   <ItemGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">
-    <PackageVersion Include="Microsoft.Bcl.Cryptography" Version="9.0.13" />
-    <PackageVersion Include="System.Configuration.ConfigurationManager" Version="9.0.13" />
-    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="9.0.13" />
+    <PackageVersion Include="Microsoft.Bcl.Cryptography" Version="9.0.21" />
+    <PackageVersion Include="System.Configuration.ConfigurationManager" Version="9.0.21" />
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="9.0.21" />
   </ItemGroup>
 
   <ItemGroup Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">
     <PackageVersion Include="Microsoft.Bcl.Cryptography" Version="8.0.0" />
     <PackageVersion Include="System.Configuration.ConfigurationManager" Version="8.0.1" />
-    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="8.0.1" />
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="8.0.2" />
   </ItemGroup>
 
   <!-- ===================================================================== -->
