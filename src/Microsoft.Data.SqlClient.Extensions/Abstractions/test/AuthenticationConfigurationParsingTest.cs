@@ -12,6 +12,20 @@ namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
 public class AuthenticationConfigurationParsingTest
 {
     /// <summary>
+    /// A caller-owned default configuration preserves provider defaults without loading app.config.
+    /// </summary>
+    [Fact]
+    public void DefaultConstructorCreatesEmptyConfiguration()
+    {
+        var configuration = new SqlAuthenticationConfiguration();
+
+        Assert.Null(configuration.ApplicationClientId);
+        Assert.Null(configuration.UseWamBroker);
+        Assert.Equal(string.Empty, configuration.InitializerType);
+        Assert.Empty(configuration.Providers);
+    }
+
+    /// <summary>
     /// Both handlers expose their optional strings without normalization or substitution.
     /// </summary>
     [Theory]

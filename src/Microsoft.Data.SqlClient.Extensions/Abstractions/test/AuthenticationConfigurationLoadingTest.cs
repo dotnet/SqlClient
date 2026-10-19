@@ -3,6 +3,8 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Configuration;
+using System.Diagnostics.Tracing;
+using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
 
@@ -13,6 +15,50 @@ public class AuthenticationConfigurationLoadingTest
 {
     private const string Modern = SqlClientAuthenticationProviderConfigurationSection.Name;
     private const string Legacy = SqlAuthenticationProviderConfigurationSection.Name;
+
+    /// <summary>
+    /// Only a lookup that finds neither section reports missing configuration.
+    /// </summary>
+    [Fact]
+    public void MissingSectionTraceRequiresLoadingAbsentSections()
+    {
+        using var listener = new MissingSectionTraceListener();
+
+        _ = new SqlAuthenticationConfiguration();
+        Assert.Equal(0, listener.Count);
+
+        _ = SqlAuthenticationConfiguration.Load(_ => new SqlClientAuthenticationProviderConfigurationSection());
+        Assert.Equal(0, listener.Count);
+
+        _ = SqlAuthenticationConfiguration.Load(_ => null);
+        Assert.Equal(1, listener.Count);
+    }
+
+    /// <summary>Counts missing-section traces on the current test thread to isolate concurrent tests.</summary>
+    private sealed class MissingSectionTraceListener : EventListener
+    {
+        private readonly int _threadId = Environment.CurrentManagedThreadId;
+
+        internal int Count { get; private set; }
+
+        internal MissingSectionTraceListener()
+        {
+            EnableEvents(SqlClientEventSource.Log, EventLevel.Verbose, EventKeywords.All);
+        }
+
+        /// <summary>Records only the missing-section diagnostic from this test's synchronous calls.</summary>
+        /// <param name="eventData">The emitted event and its payload.</param>
+        protected override void OnEventWritten(EventWrittenEventArgs eventData)
+        {
+            if (Environment.CurrentManagedThreadId == _threadId &&
+                eventData.Payload?.Contains(
+                    "SqlAuthenticationConfiguration | Neither SqlClientAuthenticationProviders " +
+                    "nor SqlAuthenticationProviders configuration section found.") == true)
+            {
+                Count++;
+            }
+        }
+    }
 
     /// <summary>
     /// The preferred handler is loaded, with legacy read only when modern is absent.

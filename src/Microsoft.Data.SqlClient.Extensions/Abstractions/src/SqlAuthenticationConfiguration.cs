@@ -15,9 +15,6 @@ internal sealed class SqlAuthenticationConfiguration
 {
     // TODO: Localize exception messages in a later PR.
 
-    /// <summary>The empty configuration used before registry bootstrap.</summary>
-    internal static SqlAuthenticationConfiguration Empty { get; } = new();
-
     /// <summary>The client ID override, or null to preserve the Azure provider's default.</summary>
     internal string? ApplicationClientId { get; }
 
@@ -32,22 +29,17 @@ internal sealed class SqlAuthenticationConfiguration
     /// </summary>
     internal IReadOnlyList<ProviderSettings> Providers { get; } = Array.Empty<ProviderSettings>();
 
-    private SqlAuthenticationConfiguration() { }
-
     /// <summary>
-    /// Reads either supported handler's metadata before registry activation begins.
+    /// Reads either supported handler's metadata, or creates empty settings when no section is supplied.
     /// </summary>
-    /// <param name="section">The selected section, or null if neither section was found.</param>
+    /// <param name="section">The selected section, or null for no authentication overrides.</param>
     /// <exception cref="ConfigurationErrorsException">
     /// The schema or an explicitly configured broker value is invalid.
     /// </exception>
-    internal SqlAuthenticationConfiguration(ConfigurationSection? section)
+    internal SqlAuthenticationConfiguration(ConfigurationSection? section = null)
     {
         if (section is null)
         {
-            SqlClientEventSource.Log.TryTraceEvent(
-                "SqlAuthenticationConfiguration | Neither SqlClientAuthenticationProviders " +
-                "nor SqlAuthenticationProviders configuration section found.");
             return;
         }
 
@@ -131,6 +123,13 @@ internal sealed class SqlAuthenticationConfiguration
                 "app.config syntax and section handler declarations. ConfigurationManager failed " +
                 "to load due to configuration errors: {0}", e);
             throw;
+        }
+
+        if (section is null)
+        {
+            SqlClientEventSource.Log.TryTraceEvent(
+                "SqlAuthenticationConfiguration | Neither SqlClientAuthenticationProviders " +
+                "nor SqlAuthenticationProviders configuration section found.");
         }
 
         return new SqlAuthenticationConfiguration(section);
