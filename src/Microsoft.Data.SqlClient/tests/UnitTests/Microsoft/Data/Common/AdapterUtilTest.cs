@@ -19,15 +19,13 @@ public class AdapterUtilTest
     /// </summary>
     /// <see cref="ValidTdsVersion_ReturnsSuccessfully"/>
     public static TheoryData<uint> ValidTdsVersions => [
-        // SQL Server 2005
-        TdsEnums.SQL2005_VERSION,
         // SQL Server 2008 R2
         TdsEnums.SQL2008_VERSION,
         // SQL Server 2012+ (TDS 7.x)
         TdsEnums.TDS7X_VERSION,
         // SQL Server 2022+ (TDS 8.0)
         TdsEnums.TDS80_VERSION
-        ];
+    ];
 
     /// <summary>
     /// Gets a collection of test data representing the list of known server TDS versions
@@ -43,9 +41,11 @@ public class AdapterUtilTest
         0x07010000,
         // SQL Server 2000 SP1
         0x71000001,
+        // SQL Server 2005
+        0x730B0002,
         // SQL Server 2008
         0x730A0003
-        ];
+    ];
 
     /// <summary>
     /// Combines the test data sets in <see cref="ValidTdsVersions"/> and <see cref="InvalidTdsVersions"/>.

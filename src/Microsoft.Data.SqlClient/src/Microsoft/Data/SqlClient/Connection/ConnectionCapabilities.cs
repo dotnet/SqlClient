@@ -21,7 +21,6 @@ internal sealed class ConnectionCapabilities
     /// from the server.
     /// </summary>
     /// <remarks>
-    /// <see cref="TdsEnums.SQL2005_VERSION"/> is negotiated for SQL Server 2005.
     /// <see cref="TdsEnums.SQL2008_VERSION"/> is negotiated for SQL Server 2008.
     /// <see cref="TdsEnums.TDS7X_VERSION"/> is negotiated for SQL Server 2012 and upwards using TDS 7.x.
     /// <see cref="TdsEnums.TDS80_VERSION"/> is negotiated for the TDS 8.0 flow in SQL Server 2022 and upwards.
