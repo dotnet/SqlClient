@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Configuration;
-using System.Reflection;
 
 namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
 
@@ -34,6 +33,7 @@ public class AuthenticationConfigurationFailureTest
     [InlineData(typeof(InvalidStringSection), "applicationClientId")]
     [InlineData(typeof(InvalidNullableStringSection), "applicationClientId")]
     [InlineData(typeof(InvalidProvidersSection), "providers")]
+    [InlineData(typeof(MissingProvidersSection), "providers")]
     [InlineData(typeof(EmptySection), "applicationClientId")]
     public void InvalidSchemaAbortsConfiguration(Type type, string propertyName)
     {
@@ -51,17 +51,14 @@ public class AuthenticationConfigurationFailureTest
     public void SectionHandlerMismatchIsNotTreatedAsAbsent(string name, bool missing)
     {
         string expectedType = typeof(SqlClientAuthenticationProviderConfigurationSection).FullName!;
-        MethodInfo fetch = typeof(SqlAuthenticationProviderRegistry).GetMethod(
-            "FetchConfigurationSection", BindingFlags.Static | BindingFlags.NonPublic)!;
         if (missing)
         {
-            Assert.Null(fetch.Invoke(null, [name, expectedType]));
+            Assert.Null(SqlAuthenticationProviderRegistry.FetchConfigurationSection(name, expectedType));
             return;
         }
 
-        var invocation = Assert.Throws<TargetInvocationException>(() =>
-            fetch.Invoke(null, [name, expectedType]));
-        var failure = Assert.IsType<ConfigurationErrorsException>(invocation.InnerException);
+        var failure = Assert.Throws<ConfigurationErrorsException>(() =>
+            SqlAuthenticationProviderRegistry.FetchConfigurationSection(name, expectedType));
         Assert.Contains(name, failure.Message);
         Assert.Contains(expectedType, failure.Message);
     }
@@ -116,16 +113,13 @@ public class AuthenticationConfigurationFailureTest
         Assert.True(ExceptionHelpers.IsRecoverableException(failure));
     }
 
-    /// <summary>Applies to an isolated registry and unwraps only the test's reflection call.</summary>
+    /// <summary>Applies invalid configuration to an isolated registry and captures its failure.</summary>
     /// <param name="section">The invalid section, without modifying process-wide configuration.</param>
     /// <returns>The failure escaping configuration application.</returns>
     private static Exception ApplyInvalidConfiguration(ConfigurationSection section)
     {
-        MethodInfo apply = typeof(SqlAuthenticationProviderRegistry).GetMethod(
-            "ApplyConfiguration", BindingFlags.Instance | BindingFlags.NonPublic)!;
-        var failure = Assert.Throws<TargetInvocationException>(() =>
-            apply.Invoke(new SqlAuthenticationProviderRegistry(), [section]));
-        return Assert.IsAssignableFrom<Exception>(failure.InnerException);
+        return Assert.ThrowsAny<Exception>(() =>
+            new SqlAuthenticationProviderRegistry().ApplyConfiguration(section));
     }
 
     /// <summary>Simulates a handler missing the expected authentication schema.</summary>
@@ -159,6 +153,19 @@ public class AuthenticationConfigurationFailureTest
 
         [ConfigurationProperty("providers", DefaultValue = 1)]
         public int Providers => (int)this["providers"];
+    }
+
+    /// <summary>Simulates a handler that omits the provider collection entirely.</summary>
+    private sealed class MissingProvidersSection : ConfigurationSection
+    {
+        [ConfigurationProperty("applicationClientId")]
+        public string ApplicationClientId => (string)this["applicationClientId"];
+
+        [ConfigurationProperty("useWamBroker")]
+        public string UseWamBroker => (string)this["useWamBroker"];
+
+        [ConfigurationProperty("initializerType")]
+        public string InitializerType => (string)this["initializerType"];
     }
 
     /// <summary>Simulates a fatal initializer callback without actually exhausting memory.</summary>

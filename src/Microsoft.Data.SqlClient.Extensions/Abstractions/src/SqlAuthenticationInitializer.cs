@@ -4,12 +4,15 @@
 
 namespace Microsoft.Data.SqlClient;
 
-/// <summary>Initializes authentication providers configured in app.config.</summary>
+/// <include file='../doc/SqlAuthenticationInitializer.xml'
+///     path='docs/members[@name="SqlAuthenticationInitializer"]/SqlAuthenticationInitializer/*'/>
 public abstract class SqlAuthenticationInitializer
 {
-    /// <summary>Creates an authentication initializer.</summary>
+    /// <include file='../doc/SqlAuthenticationInitializer.xml'
+    ///     path='docs/members[@name="SqlAuthenticationInitializer"]/ctor/*'/>
     protected SqlAuthenticationInitializer() { }
 
-    /// <summary>Registers application-configured authentication providers.</summary>
+    /// <include file='../doc/SqlAuthenticationInitializer.xml'
+    ///     path='docs/members[@name="SqlAuthenticationInitializer"]/Initialize/*'/>
     public abstract void Initialize();
 }

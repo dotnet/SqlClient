@@ -53,9 +53,7 @@ public class AuthenticationRegistryTest
         section.ElementInformation.Properties["useWamBroker"].Value = brokerValue;
 
         // Avoid changing process-wide configuration or registering providers in the shared registry.
-        MethodInfo apply = typeof(SqlAuthenticationProviderRegistry).GetMethod(
-            "ApplyConfiguration", BindingFlags.Instance | BindingFlags.NonPublic)!;
-        apply.Invoke(new SqlAuthenticationProviderRegistry(), [section]);
+        new SqlAuthenticationProviderRegistry().ApplyConfiguration(section);
 
         Assert.Contains("SqlAuthenticationProviderRegistry | " + brokerMessage, listener.Messages);
         Assert.Contains(

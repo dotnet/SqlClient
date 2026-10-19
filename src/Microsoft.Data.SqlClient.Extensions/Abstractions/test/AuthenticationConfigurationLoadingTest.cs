@@ -61,14 +61,14 @@ public class AuthenticationConfigurationLoadingTest
     }
 
     /// <summary>
-    /// The preferred handler is loaded, with legacy read only when modern is absent.
+    /// The preferred handler is applied, with legacy read only when modern is absent.
     /// </summary>
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public void LoadSelectsExpectedSectionWithoutActivation(bool modern)
+    public void LoadConfigurationAppliesSelectedSection(bool modern)
     {
-        // Use a provider that throws on construction to keep loading separate from activation.
+        var registry = new SqlAuthenticationProviderRegistry();
         SqlAuthenticationProviderConfigurationSection section = modern
             ? new SqlClientAuthenticationProviderConfigurationSection()
             : new SqlAuthenticationProviderConfigurationSection();
@@ -76,7 +76,7 @@ public class AuthenticationConfigurationLoadingTest
             "Active Directory Integrated", typeof(Provider).AssemblyQualifiedName));
         var reads = new List<string>();
 
-        var configuration = SqlAuthenticationConfiguration.Load(name =>
+        registry.LoadConfiguration(name =>
         {
             reads.Add(name);
             if (name == (modern ? Modern : Legacy))
@@ -87,32 +87,27 @@ public class AuthenticationConfigurationLoadingTest
             return null;
         });
 
-        // Selection must preserve the entry without ever constructing its provider.
         Assert.Equal(modern ? new[] { Modern } : new[] { Modern, Legacy }, reads);
-        ProviderSettings provider = Assert.Single(configuration.Providers);
-        Assert.Equal("Active Directory Integrated", provider.Name);
-        Assert.Equal(typeof(Provider).AssemblyQualifiedName, provider.Type);
+        Assert.False(registry.Register(SqlAuthenticationMethod.ActiveDirectoryIntegrated,
+            new Provider()));
     }
 
-    /// <summary>Absent sections produce empty settings without explicit option overrides.</summary>
+    /// <summary>Absent sections are optional and do not prevent application registration.</summary>
     [Fact]
     public void LoadConfigurationAllowsBothSectionsToBeAbsent()
     {
-        // A missing modern section is the only reason to consult legacy configuration.
+        var registry = new SqlAuthenticationProviderRegistry();
         var reads = new List<string>();
 
-        var configuration = SqlAuthenticationConfiguration.Load(name =>
+        registry.LoadConfiguration(name =>
         {
             reads.Add(name);
             return null;
         });
 
-        // No section means no overrides, not an explicit false broker setting.
         Assert.Equal(new[] { Modern, Legacy }, reads);
-        Assert.Null(configuration.ApplicationClientId);
-        Assert.Null(configuration.UseWamBroker);
-        Assert.Empty(configuration.InitializerType);
-        Assert.Empty(configuration.Providers);
+        Assert.True(registry.Register(SqlAuthenticationMethod.ActiveDirectoryIntegrated,
+            new Provider()));
     }
 
     /// <summary>
@@ -124,18 +119,16 @@ public class AuthenticationConfigurationLoadingTest
     [InlineData(typeof(SqlAuthenticationProviderConfigurationSection))]
     public void LoadConfigurationDoesNotFallBackAfterHandlerMismatch(Type type)
     {
-        // Return a present but incompatible modern handler; legacy must not mask the mistake.
         var reads = new List<string>();
         object section = Activator.CreateInstance(type)!;
 
         var failure = Assert.Throws<ConfigurationErrorsException>(() =>
-            SqlAuthenticationConfiguration.Load(name =>
+            new SqlAuthenticationProviderRegistry().LoadConfiguration(name =>
             {
                 reads.Add(name);
                 return section;
             }));
 
-        // Report the incompatible handler and stop before the fallback reader is called.
         Assert.Equal(new[] { Modern }, reads);
         Assert.Contains(type.FullName!, failure.Message);
         Assert.Contains(typeof(SqlClientAuthenticationProviderConfigurationSection).FullName!,
@@ -150,13 +143,12 @@ public class AuthenticationConfigurationLoadingTest
     [InlineData(false, true)]
     public void LoadConfigurationPropagatesRetrievalFailure(bool modern, bool fatal)
     {
-        // Exercise both reader positions, including a configuration wrapper around a fatal error.
         var reads = new List<string>();
         var expected = new ConfigurationErrorsException("Invalid section",
             fatal ? new OutOfMemoryException("Test fatal failure") : null);
 
         var actual = Assert.Throws<ConfigurationErrorsException>(() =>
-            SqlAuthenticationConfiguration.Load(name =>
+            new SqlAuthenticationProviderRegistry().LoadConfiguration(name =>
             {
                 reads.Add(name);
                 if (name == (modern ? Modern : Legacy))
@@ -166,29 +158,26 @@ public class AuthenticationConfigurationLoadingTest
                 return null;
             }));
 
-        // Loading must preserve the original exception and never read beyond the failed section.
         Assert.Same(expected, actual);
         Assert.Equal(modern ? new[] { Modern } : new[] { Modern, Legacy }, reads);
     }
 
     /// <summary>A malformed modern section must not be hidden by a valid legacy section.</summary>
     [Fact]
-    public void LoadConfigurationDoesNotFallBackAfterValidationFailure()
+    public void LoadConfigurationDoesNotFallBackAfterApplicationFailure()
     {
-        // An invalid modern value must fail even if a valid legacy handler is available.
         var section = new SqlClientAuthenticationProviderConfigurationSection();
         section.ElementInformation.Properties["useWamBroker"].Value = "invalid";
         var reads = new List<string>();
 
         var failure = Assert.Throws<ConfigurationErrorsException>(() =>
-            SqlAuthenticationConfiguration.Load(name =>
+            new SqlAuthenticationProviderRegistry().LoadConfiguration(name =>
             {
                 reads.Add(name);
                 return name == Modern
                     ? section : new SqlAuthenticationProviderConfigurationSection();
             }));
 
-        // Validation happens after section selection, without reopening the fallback path.
         Assert.Contains("useWamBroker", failure.Message);
         Assert.Equal(new[] { Modern }, reads);
     }
@@ -201,20 +190,18 @@ public class AuthenticationConfigurationLoadingTest
     [InlineData(false)]
     public void FetchConfigurationSectionAcceptsExpectedHandler(bool modern)
     {
-        // Keep handler identity checks independent of process-wide ConfigurationManager state.
         ConfigurationSection expected = modern
             ? new SqlClientAuthenticationProviderConfigurationSection()
             : new SqlAuthenticationProviderConfigurationSection();
         string name = modern ? Modern : Legacy;
 
-        var actual = SqlAuthenticationConfiguration.FetchConfigurationSection(
+        var actual = SqlAuthenticationProviderRegistry.FetchConfigurationSection(
             name, expected.GetType().FullName!, requested =>
             {
                 Assert.Equal(name, requested);
                 return expected;
             });
 
-        // Fetching validates the handler, but must not replace or deserialize the supplied object.
         Assert.Same(expected, actual);
     }
 
@@ -224,24 +211,19 @@ public class AuthenticationConfigurationLoadingTest
     [Fact]
     public void FetchConfigurationSectionPropagatesReaderFailure()
     {
-        // Non-configuration reader failures must escape just as they do during production loading.
         var expected = new InvalidOperationException("Test section reader failure");
 
         Assert.Same(expected, Assert.Throws<InvalidOperationException>(() =>
-            SqlAuthenticationConfiguration.FetchConfigurationSection(
+            SqlAuthenticationProviderRegistry.FetchConfigurationSection(
                 Modern, typeof(SqlClientAuthenticationProviderConfigurationSection).FullName!,
                 _ => throw expected)));
     }
 
     /// <summary>
-    /// Fails if configuration loading incorrectly activates a configured provider.
+    /// Supplies a constructible configured provider without a SqlClient dependency.
     /// </summary>
     public sealed class Provider : SqlAuthenticationProvider
     {
-        public Provider() =>
-            throw new InvalidOperationException(
-                "Loading configuration must not activate providers.");
-
         public override bool IsSupported(SqlAuthenticationMethod method) => true;
 
         public override Task<SqlAuthenticationToken> AcquireTokenAsync(

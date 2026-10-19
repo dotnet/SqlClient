@@ -63,7 +63,7 @@ internal sealed class SqlAuthenticationProviderRegistry
     private readonly Dictionary<SqlAuthenticationMethod, SqlAuthenticationProvider> _providers = new();
 
     /// <summary>Registration precedence, ordered from lowest to highest.</summary>
-    private enum RegistrationTier
+    internal enum RegistrationTier
     {
         /// <summary>
         /// A discovered Azure provider that cannot replace an existing registration.
@@ -170,8 +170,9 @@ internal sealed class SqlAuthenticationProviderRegistry
             // Outside bootstrap, support validation must allow cross-thread registry lookups.
             return Instance.Register(authenticationMethod, provider);
         }
-        catch (Exception e) when (!Instance._invokingConfiguredInitializer &&
-            ExceptionHelpers.IsRecoverableException(e))
+        catch (Exception e)
+        when (!Instance._invokingConfiguredInitializer &&
+              ExceptionHelpers.IsRecoverableException(e))
         {
             SqlClientEventSource.Log.TryTraceEvent(
                 "SqlAuthenticationProvider.SetProvider failed for {0}; returning false. Pass a " +
@@ -244,8 +245,8 @@ internal sealed class SqlAuthenticationProviderRegistry
             SqlAuthenticationProvider? instance = CreateAzureAuthenticationProvider(
                 type,
                 optionsType,
-                Instance._applicationClientId,
-                Instance._useWamBroker);
+                _applicationClientId,
+                _useWamBroker);
 
             if (instance is null)
             {
@@ -350,17 +351,20 @@ internal sealed class SqlAuthenticationProviderRegistry
 
     #endregion
 
-    #region Private Methods
+    #region Bootstrap, Configuration and Registration Methods
 
     /// <summary>
     /// Runs the enabled configuration and Azure discovery steps on first access.
     /// </summary>
+    /// <param name="getSection">
+    /// The section reader, or null to use the process-wide ConfigurationManager.
+    /// </param>
     /// <remarks>
     /// Reentrant initializer registrations can use the registry while bootstrap is in progress.
     /// A recoverable failure is cached and rethrown internally; GetProvider and SetProvider log it
     /// and return null or false instead of exposing it through the public API.
     /// </remarks>
-    private void EnsureBootstrapped()
+    internal void EnsureBootstrapped(Func<string, object?>? getSection = null)
     {
         lock (_sync)
         {
@@ -378,7 +382,7 @@ internal sealed class SqlAuthenticationProviderRegistry
                 // Load configuration first so Azure discovery receives its option overrides.
                 if (AuthenticationFeatureSwitches.IsAppConfigSupported)
                 {
-                    LoadConfiguration();
+                    LoadConfiguration(getSection);
                 }
                 if (AuthenticationFeatureSwitches.IsAzureExtensionDiscoverySupported)
                 {
@@ -405,13 +409,16 @@ internal sealed class SqlAuthenticationProviderRegistry
     /// Loads authentication settings from the current app.config section, falling back to the
     /// legacy section.
     /// </summary>
+    /// <param name="getSection">
+    /// The section reader, or null to use the process-wide ConfigurationManager.
+    /// </param>
     /// <remarks>
     /// Configuration retrieval and application errors propagate to bootstrap failure handling.
     /// Only an absent current section permits fallback to the legacy section.
     /// </remarks>
     [RequiresUnreferencedCode("Authentication configuration loads provider types by name.")]
     [RequiresDynamicCode("Authentication configuration constructs providers dynamically.")]
-    private void LoadConfiguration()
+    internal void LoadConfiguration(Func<string, object?>? getSection = null)
     {
         ConfigurationSection? configurationSection = null;
 
@@ -419,12 +426,14 @@ internal sealed class SqlAuthenticationProviderRegistry
         {
             // Prefer the SqlClient-specific section so it can coexist with the legacy provider.
             configurationSection = FetchConfigurationSection("SqlClientAuthenticationProviders",
-                "Microsoft.Data.SqlClient.SqlClientAuthenticationProviderConfigurationSection");
+                "Microsoft.Data.SqlClient.SqlClientAuthenticationProviderConfigurationSection",
+                getSection);
             if (configurationSection == null)
             {
                 // A malformed current section must not be hidden by falling back to the legacy one.
                 configurationSection = FetchConfigurationSection("SqlAuthenticationProviders",
-                    "Microsoft.Data.SqlClient.SqlAuthenticationProviderConfigurationSection");
+                    "Microsoft.Data.SqlClient.SqlAuthenticationProviderConfigurationSection",
+                    getSection);
             }
         }
         catch (ConfigurationErrorsException e) when (ExceptionHelpers.IsRecoverableException(e))
@@ -511,7 +520,7 @@ internal sealed class SqlAuthenticationProviderRegistry
     /// </exception>
     [RequiresUnreferencedCode("Configured initializer and provider types are loaded by name.")]
     [RequiresDynamicCode("Configured initializer and providers are constructed dynamically.")]
-    private void ApplyConfiguration(ConfigurationSection? configSection)
+    internal void ApplyConfiguration(ConfigurationSection? configSection)
     {
         if (configSection == null)
         {
@@ -664,7 +673,7 @@ internal sealed class SqlAuthenticationProviderRegistry
     /// <exception cref="ConfigurationErrorsException">
     /// The property is missing from the section schema or has a non-string value.
     /// </exception>
-    private static string ReadString(ConfigurationSection section, string name)
+    internal static string ReadString(ConfigurationSection section, string name)
     {
         PropertyInformation property = section.ElementInformation.Properties[name]
             ?? throw new ConfigurationErrorsException(
@@ -700,7 +709,7 @@ internal sealed class SqlAuthenticationProviderRegistry
     /// <exception cref="NotSupportedException">
     /// The provider does not support the authentication method.
     /// </exception>
-    private bool Register(
+    internal bool Register(
         SqlAuthenticationMethod authenticationMethod,
         SqlAuthenticationProvider provider,
         RegistrationTier tier = RegistrationTier.Application)
@@ -755,6 +764,9 @@ internal sealed class SqlAuthenticationProviderRegistry
     /// </summary>
     /// <param name="name">The configuration section name.</param>
     /// <param name="typeName">The expected section handler's full type name.</param>
+    /// <param name="getSection">
+    /// The section reader, or null to use the process-wide ConfigurationManager.
+    /// </param>
     /// <returns>
     /// The matching section, or null if it is absent.
     /// </returns>
@@ -766,10 +778,11 @@ internal sealed class SqlAuthenticationProviderRegistry
     /// </exception>
     [RequiresUnreferencedCode("Configuration section handlers are resolved by name.")]
     [RequiresDynamicCode("Configuration section handlers are constructed dynamically.")]
-    private static ConfigurationSection? FetchConfigurationSection(string name, string typeName)
+    internal static ConfigurationSection? FetchConfigurationSection(
+        string name, string typeName, Func<string, object?>? getSection = null)
     {
         // TODO: Support reading configuration from appsettings.json for .NET runtime applications.
-        object section = ConfigurationManager.GetSection(name);
+        object? section = (getSection ?? ConfigurationManager.GetSection)(name);
         if (section != null)
         {
             // Match the handler contract by full type name, independent of its defining assembly.
@@ -795,7 +808,7 @@ internal sealed class SqlAuthenticationProviderRegistry
     /// </param>
     /// <returns>The corresponding supported Active Directory authentication method.</returns>
     /// <exception cref="NotSupportedException">The configured name is not recognized.</exception>
-    private static SqlAuthenticationMethod AuthenticationEnumFromString(string authentication)
+    internal static SqlAuthenticationMethod AuthenticationEnumFromString(string authentication)
     {
         // Keep an explicit allowlist; numeric values and unrelated enum members are not valid here.
         switch (authentication.ToLowerInvariant())

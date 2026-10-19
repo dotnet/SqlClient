@@ -18,6 +18,26 @@ See the LICENSE file in the project root for more information.
           this type directly.
         </para>
         <para>Referencing this handler in an app.config section declaration is supported.</para>
+        <para>
+          The legacy section is used only when <c>SqlClientAuthenticationProviders</c> is absent.
+          An invalid current section fails bootstrap rather than falling back to this section.
+        </para>
+        <para>
+          Malformed configuration, incompatible handlers or schema, invalid non-empty
+          <c>useWamBroker</c> values, and initializer/provider activation or registration
+          failures abort registry bootstrap. Missing sections and empty optional attributes
+          remain valid.
+        </para>
+        <para>
+          Recoverable bootstrap failures are cached and traced. Subsequent calls to
+          <see cref="SqlAuthenticationProvider.GetProvider"/> return <see langword="null"/>;
+          <see cref="SqlAuthenticationProvider.SetProvider"/> returns <see langword="false"/>.
+          Correct the configuration and restart the application.
+        </para>
+        <para>
+          Application stops at the first failure; earlier registrations and initializer/provider
+          callback side effects are not rolled back.
+        </para>
       </remarks>
     </SqlAuthenticationProviderConfigurationSection>
     <Name>
@@ -43,6 +63,10 @@ See the LICENSE file in the project root for more information.
         runtime parses it with <see cref="M:System.Boolean.TryParse(System.String,System.Boolean@)"/>.
       </summary>
       <value>The Web Account Manager broker preference, or an empty string when unset.</value>
+      <remarks>
+        An unset or empty value preserves the Azure provider's default broker behavior.
+        Non-empty values must parse as a Boolean; invalid values fail registry bootstrap.
+      </remarks>
     </UseWamBroker>
   </members>
   <members name="SqlClientAuthenticationProviderConfigurationSection">
@@ -59,6 +83,26 @@ See the LICENSE file in the project root for more information.
           this type directly.
         </para>
         <para>Referencing this handler in an app.config section declaration is supported.</para>
+        <para>
+          This section takes precedence over <c>SqlAuthenticationProviders</c>. The legacy section
+          is used only when this section is absent, not when this section is invalid.
+        </para>
+        <para>
+          Malformed configuration, incompatible handlers or schema, invalid non-empty
+          <c>useWamBroker</c> values, and initializer/provider activation or registration
+          failures abort registry bootstrap. Missing sections and empty optional attributes
+          remain valid.
+        </para>
+        <para>
+          Recoverable bootstrap failures are cached and traced. Subsequent calls to
+          <see cref="SqlAuthenticationProvider.GetProvider"/> return <see langword="null"/>;
+          <see cref="SqlAuthenticationProvider.SetProvider"/> returns <see langword="false"/>.
+          Correct the configuration and restart the application.
+        </para>
+        <para>
+          Application stops at the first failure; earlier registrations and initializer/provider
+          callback side effects are not rolled back.
+        </para>
       </remarks>
     </SqlClientAuthenticationProviderConfigurationSection>
     <Name>

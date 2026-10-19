@@ -84,6 +84,7 @@ namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test
     public class ThrowingProvider : SqlAuthenticationProvider
     {
         internal static Exception? ConstructorFailure { get; set; }
+        internal static Action<ActiveDirectoryAuthenticationProviderOptions>? OnConstructed { get; set; }
 
         public ThrowingProvider(ActiveDirectoryAuthenticationProviderOptions options)
         {
@@ -91,6 +92,7 @@ namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test
             {
                 throw failure;
             }
+            OnConstructed?.Invoke(options);
         }
 
         public override bool IsSupported(SqlAuthenticationMethod authenticationMethod) => true;

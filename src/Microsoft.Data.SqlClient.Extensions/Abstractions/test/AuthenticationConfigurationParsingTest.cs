@@ -34,17 +34,16 @@ public class AuthenticationConfigurationParsingTest
     [InlineData("initializerType")]
     public void ReadStringPreservesConfiguredValue(string name)
     {
-        // Both forwarded handlers must expose the same string contract without trimming values.
         foreach (var section in new SqlAuthenticationProviderConfigurationSection[]
         {
             new SqlAuthenticationProviderConfigurationSection(),
             new SqlClientAuthenticationProviderConfigurationSection()
         })
         {
-            Assert.Equal(string.Empty, SqlAuthenticationConfiguration.ReadString(section, name));
+            Assert.Equal(string.Empty, SqlAuthenticationProviderRegistry.ReadString(section, name));
             section.ElementInformation.Properties[name].Value = " configured value ";
             Assert.Equal(" configured value ",
-                SqlAuthenticationConfiguration.ReadString(section, name));
+                SqlAuthenticationProviderRegistry.ReadString(section, name));
         }
     }
 
@@ -54,11 +53,10 @@ public class AuthenticationConfigurationParsingTest
     [Fact]
     public void ReadStringNormalizesNull()
     {
-        // ConfigurationManager can normalize a null optional string before ReadString sees it.
         var section = new NullableStringSection();
         section.ElementInformation.Properties["value"].Value = null;
 
-        Assert.Equal(string.Empty, SqlAuthenticationConfiguration.ReadString(section, "value"));
+        Assert.Equal(string.Empty, SqlAuthenticationProviderRegistry.ReadString(section, "value"));
     }
 
     /// <summary>
@@ -70,9 +68,8 @@ public class AuthenticationConfigurationParsingTest
     [InlineData("nullableNumber")]
     public void ReadStringRejectsInvalidSchema(string name)
     {
-        // A missing or mistyped property is a schema error, not an absent optional override.
         var failure = Assert.Throws<ConfigurationErrorsException>(() =>
-            SqlAuthenticationConfiguration.ReadString(new NullableStringSection(), name));
+            SqlAuthenticationProviderRegistry.ReadString(new NullableStringSection(), name));
 
         Assert.Contains(name, failure.Message);
     }
@@ -99,10 +96,9 @@ public class AuthenticationConfigurationParsingTest
     public void AuthenticationEnumFromStringRecognizesAllowedNames(
         string name, SqlAuthenticationMethod expected)
     {
-        // Check every allowlisted spelling in both cases rather than relying on enum parsing.
         Assert.Equal(expected,
-            SqlAuthenticationConfiguration.AuthenticationEnumFromString(name));
-        Assert.Equal(expected, SqlAuthenticationConfiguration.AuthenticationEnumFromString(
+            SqlAuthenticationProviderRegistry.AuthenticationEnumFromString(name));
+        Assert.Equal(expected, SqlAuthenticationProviderRegistry.AuthenticationEnumFromString(
             name.ToUpperInvariant()));
     }
 
@@ -120,57 +116,10 @@ public class AuthenticationConfigurationParsingTest
     [InlineData("unknown")]
     public void AuthenticationEnumFromStringRejectsOtherNames(string name)
     {
-        // Reject numeric and CLR enum spellings even when they could identify a valid enum value.
         var failure = Assert.Throws<NotSupportedException>(() =>
-            SqlAuthenticationConfiguration.AuthenticationEnumFromString(name));
+            SqlAuthenticationProviderRegistry.AuthenticationEnumFromString(name));
 
         Assert.Contains(name, failure.Message);
-    }
-
-    /// <summary>
-    /// Settings are captured before mutable ConfigurationSection objects can change.
-    /// </summary>
-    [Fact]
-    public void ParsedValuesAreIndependentOfSectionChanges()
-    {
-        // Take a snapshot of all four settings before simulating later configuration edits.
-        var section = new SqlClientAuthenticationProviderConfigurationSection();
-        section.ElementInformation.Properties["applicationClientId"].Value = "original-client";
-        section.ElementInformation.Properties["useWamBroker"].Value = "true";
-        section.ElementInformation.Properties["initializerType"].Value = "Original.Initializer";
-        var provider = new ProviderSettings("Active Directory Integrated", "Original.Provider");
-        section.Providers.Add(provider);
-        var configuration = new SqlAuthenticationConfiguration(section);
-
-        // Provider entries must be copied as well as the collection that contains them.
-        section.ElementInformation.Properties["applicationClientId"].Value = "changed-client";
-        section.ElementInformation.Properties["useWamBroker"].Value = "false";
-        section.ElementInformation.Properties["initializerType"].Value = "Changed.Initializer";
-        provider.Type = "Changed.Provider";
-        section.Providers.Clear();
-
-        Assert.Equal("original-client", configuration.ApplicationClientId);
-        Assert.True(configuration.UseWamBroker);
-        Assert.Equal("Original.Initializer", configuration.InitializerType);
-        ProviderSettings captured = Assert.Single(configuration.Providers);
-        Assert.Equal("Active Directory Integrated", captured.Name);
-        Assert.Equal("Original.Provider", captured.Type);
-    }
-
-    /// <summary>
-    /// Reading settings must not eagerly validate methods ahead of initializer execution.
-    /// </summary>
-    [Fact]
-    public void ParsingDefersProviderMethodValidation()
-    {
-        // The registry validates entries in order, after running the configured initializer.
-        var section = new SqlClientAuthenticationProviderConfigurationSection();
-        section.Providers.Add(new ProviderSettings("unknown", "Missing.Provider"));
-
-        var configuration = new SqlAuthenticationConfiguration(section);
-
-        // Neither an unknown method nor an unresolved type should trigger activation while parsing.
-        Assert.Equal("unknown", Assert.Single(configuration.Providers).Name);
     }
 
     /// <summary>

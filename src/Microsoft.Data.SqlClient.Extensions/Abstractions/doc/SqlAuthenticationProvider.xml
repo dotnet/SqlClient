@@ -138,6 +138,13 @@ See the LICENSE file in the project root for more information.
         Failures are cached and logged on subsequent accesses, including when tracing is enabled
         after the first failure. Correct the reported configuration or package version problem
         and restart the application.
+        <para>
+          Registry bootstrap and provider replacement callbacks execute while a registry lock is
+          held. Same-thread calls to <see cref="GetProvider"/> and <see cref="SetProvider"/> are
+          supported. Code executing under that lock must not synchronously wait for another thread
+          that calls either method. The other thread blocks on the lock, causing a deadlock.
+          During bootstrap, a reentrant lookup sees only the providers registered so far.
+        </para>
       </remarks>
     </GetProvider>
     <SetProvider>
@@ -158,6 +165,12 @@ See the LICENSE file in the project root for more information.
         cannot succeed after a failed configuration-owned registration.
         Failed registrations do not replace the existing provider. Registry initialization
         failures are cached; correct the reported cause and restart the application.
+        <para>
+          Registry bootstrap and provider replacement callbacks execute while a registry lock is
+          held. Same-thread calls to <see cref="GetProvider"/> and <see cref="SetProvider"/> are
+          supported. Code executing under that lock must not synchronously wait for another thread
+          that calls either method. The other thread blocks on the lock, causing a deadlock.
+        </para>
       </remarks>
     </SetProvider>
   </members>
