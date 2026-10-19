@@ -2,6 +2,9 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+// TODO: Remove this guard once a published Microsoft.Data.SqlClient.Extensions.Azure package
+// includes the authentication logging API. The samples project builds against published packages.
+#if false
 // <Snippet_AuthenticationLogging>
 using System;
 using System.Diagnostics.Tracing;
@@ -75,3 +78,4 @@ namespace SqlAuthenticationLoggingExample
     }
 }
 // </Snippet_AuthenticationLogging>
+#endif
