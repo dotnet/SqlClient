@@ -1509,6 +1509,15 @@ public class AuthenticationLoggingTests
         /// <summary>Detaches collection while preserving captured events for assertions.</summary>
         internal void Disable() => DisableEvents(_source!);
 
+        /// <summary>Disables events before disposing so later tests do not inherit enabled state.</summary>
+        /// <remarks>On .NET Framework, Dispose only detaches the listener and leaves the source enabled.</remarks>
+        public override void Dispose()
+        {
+            if (_source is not null)
+                DisableEvents(_source);
+            base.Dispose();
+        }
+
         /// <summary>Enables the shared SqlClient source when it becomes available.</summary>
         protected override void OnEventSourceCreated(EventSource eventSource)
         {
