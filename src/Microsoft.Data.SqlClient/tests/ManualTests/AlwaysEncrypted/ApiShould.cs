@@ -2558,7 +2558,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         /// connection that requests a different attestation protocol, even when the server, database
         /// and attestation URL are identical. The HGS connection must perform its own attestation.
         /// </summary>
-        [ConditionalTheory(typeof(ApiShould), nameof(IsHgsAndNoneVbsEnclaveSetup))]
+        [ConditionalTheory(typeof(ApiShould), nameof(IsHgsVbsEnclaveSetup))]
         [InlineData(false, false)]
         [InlineData(false, true)]
         [InlineData(true, false)]
@@ -2566,9 +2566,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public async Task TestEnclaveSessionIsNotSharedAcrossAttestationProtocols(bool noneFirst, bool isAsync)
         {
             string hgsConnectionString = DataTestUtility.TCPConnectionStringHGSVBS;
-            SqlConnectionStringBuilder noneBuilder = new(DataTestUtility.TCPConnectionStringNoneVBS)
+
+            // Derive the None connection from the HGS one so the attestation protocol is the only
+            // difference; server, database and attestation URL stay identical.
+            SqlConnectionStringBuilder noneBuilder = new(hgsConnectionString)
             {
-                EnclaveAttestationUrl = new SqlConnectionStringBuilder(hgsConnectionString).EnclaveAttestationUrl
+                AttestationProtocol = SqlConnectionAttestationProtocol.None
             };
             string noneConnectionString = noneBuilder.ConnectionString;
 
@@ -2594,11 +2597,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.Same(secondSession, await ExecuteEnclaveQueryAsync(secondConnectionString, customerId, isAsync));
         }
 
-        public static bool IsHgsAndNoneVbsEnclaveSetup() =>
+        public static bool IsHgsVbsEnclaveSetup() =>
             DataTestUtility.IsTargetReadyForAeWithKeyStore() &&
             DataTestUtility.EnclaveEnabled &&
-            !string.IsNullOrEmpty(DataTestUtility.TCPConnectionStringHGSVBS) &&
-            !string.IsNullOrEmpty(DataTestUtility.TCPConnectionStringNoneVBS);
+            !string.IsNullOrEmpty(DataTestUtility.TCPConnectionStringHGSVBS);
 
         private async Task<object> ExecuteEnclaveQueryAsync(string connectionString, int expectedCustomerId, bool isAsync, bool invalidateSession = false)
         {
