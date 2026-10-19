@@ -1268,7 +1268,8 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
         /// the caller must advance to observe a rethrown error.
         /// </summary>
         /// <param name="async"><see langword="true"/> to exercise the async read path.</param>
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup),
+            nameof(DataTestUtility.IsNotAzureSynapse))]
         [InlineData(false)]
         [InlineData(true)]
         public static async Task ErrorRethrownFromCatchBlock_AfterOutput_ThrowsOnNextResult(
