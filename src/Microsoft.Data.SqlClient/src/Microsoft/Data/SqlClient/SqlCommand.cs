@@ -54,51 +54,25 @@ namespace Microsoft.Data.SqlClient
         private static readonly object s_cachedInvalidPrepareHandle = (object)-1;
 
         /// <summary>
-        /// 2005- column ordinals (this array indexed by ProcParamsColIndex
+        /// Provides compile-time constants for the names of the columns for use by
+        /// DeriveParameters.
         /// </summary>
-        // @TODO: There's gotta be a better way to define these than with 3x static structures
-        // @TODO: Rename to ProcParamNamesPreSql2008
-        private static readonly string[] PreSql2008ProcParamsNames = new string[]
+        private static class ProcParamsColumns
         {
-            "PARAMETER_NAME",           // ParameterName,
-            "PARAMETER_TYPE",           // ParameterType,
-            "DATA_TYPE",                // DataType
-            null,                       // ManagedDataType, introduced in 2008
-            "CHARACTER_MAXIMUM_LENGTH", // CharacterMaximumLength,
-            "NUMERIC_PRECISION",        // NumericPrecision,
-            "NUMERIC_SCALE",            // NumericScale,
-            "UDT_CATALOG",              // TypeCatalogName,
-            "UDT_SCHEMA",               // TypeSchemaName,
-            "TYPE_NAME",                // TypeName,
-            "XML_CATALOGNAME",          // XmlSchemaCollectionCatalogName,
-            "XML_SCHEMANAME",           // XmlSchemaCollectionSchemaName,
-            "XML_SCHEMACOLLECTIONNAME", // XmlSchemaCollectionName
-            "UDT_NAME",                 // UdtTypeName
-            null,                       // Scale for datetime types with scale, introduced in 2008
-        };
-
-        /// <summary>
-        /// 2008+ column ordinals (this array indexed by ProcParamsColIndex.
-        /// </summary>
-        // @TODO: There's gotta be a better way to define these than with 3x static structures
-        // @TODO: Rename to ProcParamNamesPostSql2008
-        internal static readonly string[] Sql2008ProcParamsNames = new[] {
-            "PARAMETER_NAME",           // ParameterName,
-            "PARAMETER_TYPE",           // ParameterType,
-            null,                       // DataType, removed from 2008+
-            "MANAGED_DATA_TYPE",        // ManagedDataType,
-            "CHARACTER_MAXIMUM_LENGTH", // CharacterMaximumLength,
-            "NUMERIC_PRECISION",        // NumericPrecision,
-            "NUMERIC_SCALE",            // NumericScale,
-            "TYPE_CATALOG_NAME",        // TypeCatalogName,
-            "TYPE_SCHEMA_NAME",         // TypeSchemaName,
-            "TYPE_NAME",                // TypeName,
-            "XML_CATALOGNAME",          // XmlSchemaCollectionCatalogName,
-            "XML_SCHEMANAME",           // XmlSchemaCollectionSchemaName,
-            "XML_SCHEMACOLLECTIONNAME", // XmlSchemaCollectionName
-            null,                       // UdtTypeName, removed from 2008+
-            "SS_DATETIME_PRECISION",    // Scale for datetime types with scale
-        };
+            public const string ParameterName = "PARAMETER_NAME";
+            public const string ParameterType = "PARAMETER_TYPE";
+            public const string ManagedDataType = "MANAGED_DATA_TYPE";
+            public const string CharacterMaximumLength = "CHARACTER_MAXIMUM_LENGTH";
+            public const string NumericPrecision = "NUMERIC_PRECISION";
+            public const string NumericScale = "NUMERIC_SCALE";
+            public const string TypeCatalogName = "TYPE_CATALOG_NAME";
+            public const string TypeSchemaName = "TYPE_SCHEMA_NAME";
+            public const string TypeName = "TYPE_NAME";
+            public const string XmlSchemaCollectionCatalogName = "XML_CATALOGNAME";
+            public const string XmlSchemaCollectionSchemaName = "XML_SCHEMANAME";
+            public const string XmlSchemaCollectionName = "XML_SCHEMACOLLECTIONNAME";
+            public const string DateTimeScale = "SS_DATETIME_PRECISION";
+        }
 
         #endregion
 
@@ -498,26 +472,6 @@ namespace Microsoft.Data.SqlClient
             /// execute prepared commands, all server versions   (results in sp_exec call)
             /// </summary>
             PREPARED,
-        }
-
-        // Index into indirection arrays for columns of interest to DeriveParameters
-        private enum ProcParamsColIndex
-        {
-            ParameterName = 0,
-            ParameterType,
-            DataType,        // Obsolete in 2008, use ManagedDataType instead
-            ManagedDataType, // New in 2008
-            CharacterMaximumLength,
-            NumericPrecision,
-            NumericScale,
-            TypeCatalogName,
-            TypeSchemaName,
-            TypeName,
-            XmlSchemaCollectionCatalogName,
-            XmlSchemaCollectionSchemaName,
-            XmlSchemaCollectionName,
-            UdtTypeName,  // Obsolete in 2008.  Holds the actual typename if UDT, since TypeName didn't back then.
-            DateTimeScale // New in 2008
         }
 
         #endregion
@@ -1364,9 +1318,6 @@ namespace Microsoft.Data.SqlClient
             // Procedure - [sp_procedure_params_managed]
             cmdText.Append("[sys].[").Append(TdsEnums.SP_PARAMS_MGD10).Append("]");
 
-            string[] colNames = Sql2008ProcParamsNames;
-            bool useManagedDataType = true;
-
             using SqlCommand paramsCmd = new SqlCommand(cmdText.ToString(), Connection, Transaction)
             {
                 CommandType = CommandType.StoredProcedure
@@ -1408,46 +1359,35 @@ namespace Microsoft.Data.SqlClient
                     // each row corresponds to a parameter of the stored proc.  Fill in all the info
                     SqlParameter p = new SqlParameter
                     {
-                        ParameterName = (string)r[colNames[(int)ProcParamsColIndex.ParameterName]]
+                        ParameterName = (string)r[ProcParamsColumns.ParameterName]
                     };
 
                     // type
-                    if (useManagedDataType)
+                    p.SqlDbType = (SqlDbType)(short)r[ProcParamsColumns.ManagedDataType];
+
+                    // 2005 didn't have as accurate of information as we're getting for 2008, so re-map a couple of
+                    //  types for backward compatability.
+                    switch (p.SqlDbType)
                     {
-                        p.SqlDbType = (SqlDbType)(short)r[colNames[(int)ProcParamsColIndex.ManagedDataType]];
+                        case SqlDbType.Image:
+                        case SqlDbType.Timestamp:
+                            p.SqlDbType = SqlDbType.VarBinary;
+                            break;
 
-                        // 2005 didn't have as accurate of information as we're getting for 2008, so re-map a couple of
-                        //  types for backward compatability.
-                        switch (p.SqlDbType)
-                        {
-                            case SqlDbType.Image:
-                            case SqlDbType.Timestamp:
-                                p.SqlDbType = SqlDbType.VarBinary;
-                                break;
+                        case SqlDbType.NText:
+                            p.SqlDbType = SqlDbType.NVarChar;
+                            break;
 
-                            case SqlDbType.NText:
-                                p.SqlDbType = SqlDbType.NVarChar;
-                                break;
+                        case SqlDbType.Text:
+                            p.SqlDbType = SqlDbType.VarChar;
+                            break;
 
-                            case SqlDbType.Text:
-                                p.SqlDbType = SqlDbType.VarChar;
-                                break;
-
-                            default:
-                                break;
-                        }
-                    }
-                    else
-                    {
-                        short dbType = (short)r[colNames[(int)ProcParamsColIndex.DataType]];
-                        string typeName = ADP.IsNull(r[colNames[(int)ProcParamsColIndex.TypeName]])
-                            ? string.Empty
-                            : (string)r[colNames[(int)ProcParamsColIndex.TypeName]];
-                        p.SqlDbType = MetaType.GetSqlDbTypeFromOleDbType(dbType, typeName);
+                        default:
+                            break;
                     }
 
                     // size
-                    object a = r[colNames[(int)ProcParamsColIndex.CharacterMaximumLength]];
+                    object a = r[ProcParamsColumns.CharacterMaximumLength];
                     if (a is int size)
                     {
                         // Map MAX sizes correctly. The 2008 server-side proc sends 0 for these
@@ -1462,25 +1402,22 @@ namespace Microsoft.Data.SqlClient
                     }
 
                     // direction
-                    p.Direction = GetParameterDirectionFromOleDbDirection(
-                        (short)r[colNames[(int)ProcParamsColIndex.ParameterType]]);
+                    p.Direction = GetParameterDirectionFromOleDbDirection((short)r[ProcParamsColumns.ParameterType]);
 
                     if (p.SqlDbType is SqlDbType.Decimal)
                     {
-                        p.ScaleInternal = (byte)((short)r[colNames[(int)ProcParamsColIndex.NumericScale]] & 0xff);
-                        p.PrecisionInternal = (byte)((short)r[colNames[(int)ProcParamsColIndex.NumericPrecision]] & 0xff);
+                        p.ScaleInternal = (byte)((short)r[ProcParamsColumns.NumericScale] & 0xff);
+                        p.PrecisionInternal = (byte)((short)r[ProcParamsColumns.NumericPrecision] & 0xff);
                     }
 
                     // Type name for Udt
                     if (p.SqlDbType is SqlDbType.Udt)
                     {
-                        string udtTypeName = useManagedDataType
-                            ? (string)r[colNames[(int)ProcParamsColIndex.TypeName]]
-                            : (string)r[colNames[(int)ProcParamsColIndex.UdtTypeName]];
+                        string udtTypeName = (string)r[ProcParamsColumns.TypeName];
 
                         // Read the type name
-                        p.UdtTypeName = r[colNames[(int)ProcParamsColIndex.TypeCatalogName]] + "." +
-                                        r[colNames[(int)ProcParamsColIndex.TypeSchemaName]] + "." +
+                        p.UdtTypeName = r[ProcParamsColumns.TypeCatalogName] + "." +
+                                        r[ProcParamsColumns.TypeSchemaName] + "." +
                                         udtTypeName;
                     }
 
@@ -1489,9 +1426,9 @@ namespace Microsoft.Data.SqlClient
                     if (p.SqlDbType is SqlDbType.Structured)
                     {
                         //read the type name
-                        p.TypeName = r[colNames[(int)ProcParamsColIndex.TypeCatalogName]] + "." +
-                                     r[colNames[(int)ProcParamsColIndex.TypeSchemaName]] + "." +
-                                     r[colNames[(int)ProcParamsColIndex.TypeName]];
+                        p.TypeName = r[ProcParamsColumns.TypeCatalogName] + "." +
+                                     r[ProcParamsColumns.TypeSchemaName] + "." +
+                                     r[ProcParamsColumns.TypeName];
 
                         // the constructed type name above is incorrectly formatted, it should be a
                         // 2 part name not 3 for compatibility we can't change this because the bug
@@ -1506,19 +1443,19 @@ namespace Microsoft.Data.SqlClient
                     {
                         object value;
 
-                        value = r[colNames[(int)ProcParamsColIndex.XmlSchemaCollectionCatalogName]];
+                        value = r[ProcParamsColumns.XmlSchemaCollectionCatalogName];
                         p.XmlSchemaCollectionDatabase = ADP.IsNull(value) ? string.Empty : (string)value;
 
-                        value = r[colNames[(int)ProcParamsColIndex.XmlSchemaCollectionSchemaName]];
+                        value = r[ProcParamsColumns.XmlSchemaCollectionSchemaName];
                         p.XmlSchemaCollectionOwningSchema = ADP.IsNull(value) ? string.Empty : (string)value;
 
-                        value = r[colNames[(int)ProcParamsColIndex.XmlSchemaCollectionName]];
+                        value = r[ProcParamsColumns.XmlSchemaCollectionName];
                         p.XmlSchemaCollectionName = ADP.IsNull(value) ? string.Empty : (string)value;
                     }
 
                     if (MetaType._IsVarTime(p.SqlDbType))
                     {
-                        object value = r[colNames[(int)ProcParamsColIndex.DateTimeScale]];
+                        object value = r[ProcParamsColumns.DateTimeScale];
                         if (value is int intValue)
                         {
                             p.ScaleInternal = (byte)(intValue & 0xff);
