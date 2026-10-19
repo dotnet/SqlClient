@@ -577,7 +577,6 @@ namespace Microsoft.Data.SqlClient
 
                 if (col.type == SqlDbType.Udt)
                 { // Additional metadata for UDTs.
-                    Debug.Assert(Connection.Parser.Capabilities.UserDefinedTypes, "Invalid Column type received from the server");
                     schemaRow[udtAssemblyQualifiedName] = col.udt?.AssemblyQualifiedName;
                 }
                 else if (col.type == SqlDbType.Xml)

@@ -73,12 +73,6 @@ internal sealed class ConnectionCapabilities
     public bool IsAzureSql { get; set; }
 
     /// <summary>
-    /// Indicates support for user-defined CLR types (up to a length of 8000
-    /// bytes.) This was introduced in SQL Server 2005.
-    /// </summary>
-    public bool UserDefinedTypes => true;
-
-    /// <summary>
     /// Indicates support for the <c>xml</c> data type. This was introduced
     /// in SQL Server 2005.
     /// </summary>
