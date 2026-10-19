@@ -8,8 +8,13 @@ namespace ApplicationClientIdAzureAuthenticationProvider
     {
         public static void Main()
         {
-            // Supported for all authentication modes supported by ActiveDirectoryAuthenticationProvider
-            ActiveDirectoryAuthenticationProvider provider = new ActiveDirectoryAuthenticationProvider("<application_client_id>");
+            // Disabling WAM requires your own app registration, not SqlClient's first-party app ID.
+            ActiveDirectoryAuthenticationProvider provider = new ActiveDirectoryAuthenticationProvider(
+                new ActiveDirectoryAuthenticationProviderOptions
+                {
+                    ApplicationClientId = "<application_client_id>",
+                    UseWamBroker = false
+                });
             if (provider.IsSupported(SqlAuthenticationMethod.ActiveDirectoryInteractive))
             {
                 SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive, provider);
