@@ -93,6 +93,48 @@ public class SqlCommandZombiedTransactionTest
     }
 
     /// <summary>
+    /// Assigning <see cref="SqlCommand.Connection"/>, including the same connection, keeps the aborted
+    /// transaction so the next execute is rejected.
+    /// </summary>
+    [Fact]
+    public void Execute_AfterAssigningSameConnection_Throws()
+    {
+        SqlTransaction transaction = CreateLiveTransaction();
+        SqlConnection connection = transaction.Connection;
+        using SqlCommand command = new SqlCommand("INSERT INTO T DEFAULT VALUES", connection, transaction);
+
+        transaction.InternalTransaction.Completed(TransactionState.Aborted);
+        command.Connection = connection;
+
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => command.ExecuteNonQuery());
+
+        Assert.Contains("no longer usable", exception.Message);
+    }
+
+    /// <summary>
+    /// Reading <see cref="SqlTransaction.IsolationLevel"/> clears the internal transaction and throws.
+    /// The next execute is still rejected.
+    /// </summary>
+    [Fact]
+    public void Execute_AfterReadingIsolationLevel_Throws()
+    {
+        SqlTransaction transaction = CreateLiveTransaction();
+        using SqlCommand command = new SqlCommand("INSERT INTO T DEFAULT VALUES")
+        {
+            Transaction = transaction
+        };
+
+        transaction.InternalTransaction.Completed(TransactionState.Aborted);
+        Assert.Throws<InvalidOperationException>(() => transaction.IsolationLevel);
+        Assert.Null(transaction.InternalTransaction);
+        Assert.Null(command.Transaction);
+
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => command.ExecuteNonQuery());
+
+        Assert.Contains("no longer usable", exception.Message);
+    }
+
+    /// <summary>
     /// After the caller rolls back the aborted transaction, a later command is no longer rejected as unusable.
     /// </summary>
     [Fact]

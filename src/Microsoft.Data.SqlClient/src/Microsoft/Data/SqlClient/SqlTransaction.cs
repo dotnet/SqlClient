@@ -29,6 +29,11 @@ namespace Microsoft.Data.SqlClient
         private readonly IsolationLevel _isolationLevel;
         private bool _isFromApi;
 
+        // The server ended this transaction. Commit does not set or clear this.
+        // Rollback of the aborted transaction clears it. ZombieCheck may clear
+        // InternalTransaction without clearing this, and the command still rejects the next execute.
+        private bool _completedByServer;
+
         internal SqlTransaction(
             SqlConnectionInternal internalConnection,
             SqlConnection con,
@@ -73,6 +78,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         internal SqlInternalTransaction InternalTransaction { get; private set; }
+
+        internal bool CompletedByServer => _completedByServer;
 
         internal bool IsZombied => InternalTransaction == null || InternalTransaction.IsCompleted;
 
@@ -174,6 +181,7 @@ namespace Microsoft.Data.SqlClient
                     ObjectId);
 
                 InternalTransaction = null; // 2005 zombification
+                _completedByServer = false;
             }
             else
             {
@@ -297,6 +305,10 @@ namespace Microsoft.Data.SqlClient
             // if the connection is already closed, then we're free to zombify...
             if (_connection.InnerConnection is SqlConnectionInternal && !_isFromApi)
             {
+                // Remember the server abort. A later ZombieCheck can clear InternalTransaction
+                // while throwing, and the command still has to reject its next execute.
+                _completedByServer = true;
+
                 SqlClientEventSource.Log.TryAdvancedTraceEvent(
                     "SqlTransaction.Zombie | ADV | Object Id {0} yukon deferred zombie",
                     ObjectId);

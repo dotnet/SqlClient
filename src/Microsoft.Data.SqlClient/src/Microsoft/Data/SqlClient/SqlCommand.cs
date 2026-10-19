@@ -649,9 +649,10 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
 
-                // Check to see if the currently set transaction has completed. If so, null out
-                // our local reference.
-                if (_transaction?.Connection is null)
+                // Rollback of a transaction the server already aborted clears the mark, so drop
+                // that reference. Until then it stays attached, and the next execute is rejected
+                // instead of auto-committing.
+                if (_transaction is not null && _transaction.Connection is null && !_transaction.CompletedByServer)
                 {
                     _transaction = null;
                 }
@@ -781,12 +782,12 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                // Commit and Rollback clear the internal transaction, so drop that reference.
-                // A transaction the server already completed stays attached: the getter still
-                // returns null, and the next execute is rejected instead of auto-committing.
+                // Rollback of a transaction the server already aborted clears the mark, so drop
+                // that reference. Until then it stays attached: the getter still returns null,
+                // and the next execute is rejected instead of auto-committing.
                 if (_transaction is not null && _transaction.Connection is null)
                 {
-                    if (_transaction.InternalTransaction is null)
+                    if (!_transaction.CompletedByServer)
                     {
                         _transaction = null;
                     }
@@ -2992,8 +2993,8 @@ namespace Microsoft.Data.SqlClient
         {
             // A transaction aborted by the server stays attached, and its connection reports null.
             // Reject it before the command can run outside that transaction and auto-commit.
-            // Commit and Rollback clear the internal transaction; that case is handled below.
-            if (_transaction is not null && _transaction.Connection is null && _transaction.InternalTransaction is not null)
+            // Rollback of that transaction clears the mark; that case is handled below.
+            if (_transaction is not null && _transaction.Connection is null && _transaction.CompletedByServer)
             {
                 throw ADP.TransactionZombied(_transaction);
             }
