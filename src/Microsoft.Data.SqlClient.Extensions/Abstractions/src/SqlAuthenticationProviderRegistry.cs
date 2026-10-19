@@ -81,7 +81,7 @@ internal sealed class SqlAuthenticationProviderRegistry
     private readonly Dictionary<SqlAuthenticationMethod, RegistrationTier> _tiers = new();
 
     /// <summary>Validated authentication settings owned by this registry instance.</summary>
-    private SqlAuthenticationConfiguration _configuration = SqlAuthenticationConfiguration.Empty;
+    private SqlAuthenticationConfiguration _configuration = new();
 
     #endregion
 
