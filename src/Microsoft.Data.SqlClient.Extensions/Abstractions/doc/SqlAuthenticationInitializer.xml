@@ -1,0 +1,34 @@
+<!--
+Licensed to the .NET Foundation under one or more agreements.
+The .NET Foundation licenses this file to you under the MIT license.
+See the LICENSE file in the project root for more information.
+-->
+<docs>
+  <members name="SqlAuthenticationInitializer">
+    <SqlAuthenticationInitializer>
+      <summary>Initializes authentication providers configured in app.config.</summary>
+      <remarks>
+        Configured initializers run synchronously during registry bootstrap while the registry lock
+        is held. Calls to <see cref="SqlAuthenticationProvider.GetProvider"/> and
+        <see cref="SqlAuthenticationProvider.SetProvider"/> on the current thread are supported.
+        Do not synchronously wait for another thread that calls either method: that thread blocks
+        on the registry lock, causing a deadlock.
+        Exceptions from initialization or registration abort registry bootstrap. Earlier
+        registrations and initializer side effects are not rolled back.
+      </remarks>
+    </SqlAuthenticationInitializer>
+    <ctor>
+      <summary>Creates an authentication initializer.</summary>
+    </ctor>
+    <Initialize>
+      <summary>Registers application-configured authentication providers.</summary>
+      <remarks>
+        When invoked by registry bootstrap, this method executes while the registry lock is held.
+        Calls to <see cref="SqlAuthenticationProvider.GetProvider"/> and
+        <see cref="SqlAuthenticationProvider.SetProvider"/> on the current thread are supported.
+        Do not synchronously wait for another thread that calls either method. The other thread
+        blocks on the registry lock, causing a deadlock.
+      </remarks>
+    </Initialize>
+  </members>
+</docs>
