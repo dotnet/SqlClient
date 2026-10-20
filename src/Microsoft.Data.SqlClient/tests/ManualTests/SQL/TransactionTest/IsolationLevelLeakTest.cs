@@ -4,10 +4,14 @@
 
 using System;
 using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 using System.Transactions;
+using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
+using Xunit.Abstractions;
 using IsolationLevel = System.Data.IsolationLevel;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -40,8 +44,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     /// </para>
     /// </remarks>
     [Trait("Set", "3")]
-    public static class IsolationLevelLeakTest
+    public class IsolationLevelLeakTest
     {
+        private readonly ITestOutputHelper _output;
+
+        public IsolationLevelLeakTest(ITestOutputHelper output)
+        {
+            _output = output;
+        }
+
         private const string GetIsoSql = @"
 SELECT CASE transaction_isolation_level
             WHEN 0 THEN 'Unspecified'
@@ -266,6 +277,8 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
         /// Exercises real transacted-pool reassertion starting with an untracked session, then
         /// verifies post-completion scrubbing obeys the switch. Clearing the flag models the
         /// cookie-enlistment starting state; this does not force distributed promotion.
+        /// On failure, reports pool retirement and transaction ownership across each checkout
+        /// without issuing diagnostic SQL or changing pool state.
         /// </summary>
         /// <param name="async">Whether to open and query asynchronously.</param>
         /// <param name="poolV2">Whether to use the channel pool.</param>
@@ -280,7 +293,7 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
         [InlineData(false, true, true)]
         [InlineData(true, true, false)]
         [InlineData(true, true, true)]
-        public static async Task TransactionScope_ReassertionTracksPreviouslyUntrackedSession(
+        public async Task TransactionScope_ReassertionTracksPreviouslyUntrackedSession(
             bool async, bool poolV2, bool resetEnabled)
         {
             using LocalAppContextSwitchesHelper switches = new();
@@ -288,6 +301,47 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
             switches.UseConnectionPoolV2 = poolV2;
             string cs = BuildPooledConnString($"IsoLeakTest-ReassertTrack-{async}-{poolV2}-{resetEnabled}");
             using SqlConnection connection = new(cs);
+            SqlConnectionInternal originalInner = null;
+            var diagnostics = new StringBuilder(
+                $"async={async}, poolV2={poolV2}, resetEnabled={resetEnabled}, OS={Environment.OSVersion}{Environment.NewLine}");
+
+            // Keep the original inner connection so retirement/stasis remains visible after Close.
+            void CaptureDiagnostics(string stage)
+            {
+                diagnostics.AppendLine($"{DateTime.UtcNow:O} {stage}: connectionState={connection.State}, clientConnectionId={connection.ClientConnectionId}");
+                try
+                {
+                    Transaction ambient = Transaction.Current;
+                    diagnostics.AppendLine(ambient == null ? "ambient=none" :
+                        $"ambient={ambient.TransactionInformation.LocalIdentifier}, status={ambient.TransactionInformation.Status}, distributedId={ambient.TransactionInformation.DistributedIdentifier}");
+                    DbConnectionInternal currentInner = connection.InnerConnection;
+                    DescribeInner("current", currentInner);
+                    if (originalInner != null && !ReferenceEquals(originalInner, currentInner))
+                    {
+                        DescribeInner("original", originalInner);
+                    }
+                }
+                catch (Exception diagnosticError)
+                {
+                    diagnostics.AppendLine($"Diagnostic capture failed: {diagnosticError.GetType().FullName}: {diagnosticError.Message}");
+                }
+            }
+
+            void DescribeInner(string label, DbConnectionInternal inner)
+            {
+                var pool = inner.Pool;
+                diagnostics.AppendLine(
+                    $"{label}: type={inner.GetType().Name}, id={inner.ObjectID}, " +
+                    $"root={inner.IsTransactionRoot}, stasis={inner.IsTxRootWaitingForTxEnd}, " +
+                    $"doomed={inner.IsConnectionDoomed}, dirty={(inner as SqlConnectionInternal)?.IsolationLevelDirty}");
+                diagnostics.AppendLine(pool == null ? $"{label}: pool=none" :
+                    $"{label}: poolType={pool.GetType().Name}, poolId={pool.Id}, " +
+                    $"state={pool.State}, count={pool.Count}, idle={pool.IdleCount}");
+                Transaction enlisted = inner.EnlistedTransaction;
+                diagnostics.AppendLine(enlisted == null ? $"{label}: enlisted=none" :
+                    $"{label}: enlisted={enlisted.TransactionInformation.LocalIdentifier}, status={enlisted.TransactionInformation.Status}");
+            }
+
             try
             {
                 int spid;
@@ -296,26 +350,39 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
                     new TransactionOptions { IsolationLevel = System.Transactions.IsolationLevel.Serializable },
                     TransactionScopeAsyncFlowOption.Enabled))
                 {
+                    CaptureDiagnostics("Before first open");
                     await OpenConnection(connection, async);
+                    originalInner = (SqlConnectionInternal)connection.InnerConnection;
+                    CaptureDiagnostics("After first open");
                     spid = await GetSpid(connection, async);
                     Assert.Equal("Serializable", await GetIso(connection, async));
-                    const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
-                    object inner = typeof(SqlConnection).GetProperty("InnerConnection", flags).GetValue(connection);
-                    FieldInfo dirty = inner.GetType().GetField("_isolationLevelDirty", flags);
-                    dirty.SetValue(inner, false);
+                    diagnostics.AppendLine($"Original SPID={spid}");
+                    originalInner.IsolationLevelDirty = false;
+                    CaptureDiagnostics("Before close inside scope");
                     connection.Close();
+                    CaptureDiagnostics("After close / before second open inside scope");
 
                     await OpenConnection(connection, async);
+                    CaptureDiagnostics("After second open inside scope");
                     Assert.Equal(spid, await GetSpid(connection, async));
                     Assert.Equal("Serializable", await GetIso(connection, async));
-                    Assert.True((bool)dirty.GetValue(inner));
+                    Assert.True(originalInner.IsolationLevelDirty);
                     scope.Complete();
                 }
+                CaptureDiagnostics("After scope disposal");
                 connection.Close();
+                CaptureDiagnostics("After close / before post-scope open");
 
                 await OpenConnection(connection, async);
+                CaptureDiagnostics("After post-scope open");
                 Assert.Equal(spid, await GetSpid(connection, async));
                 Assert.Equal(resetEnabled ? "ReadCommitted" : "Serializable", await GetIso(connection, async));
+            }
+            catch (Exception)
+            {
+                CaptureDiagnostics("Failure before pool cleanup");
+                _output.WriteLine(diagnostics.ToString());
+                throw;
             }
             finally
             {

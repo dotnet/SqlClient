@@ -28,7 +28,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         }
 
         /// <summary>
-        /// Ensures only UnitTests receives internal access, with its public key for signed builds.
+        /// Ensures only UnitTests and ManualTests receive internal access, with the test key for signed builds.
         /// </summary>
         [Fact]
         public void FriendAssembliesMatchExpectedList()
@@ -38,16 +38,20 @@ namespace Microsoft.Data.SqlClient.UnitTests
                 .GetCustomAttributes<InternalsVisibleToAttribute>()
                 .Select(attribute => attribute.AssemblyName);
 
-            string expectedFriend = "UnitTests";
+            string[] expectedFriends = { "UnitTests", "ManualTests" };
+            string publicKeySuffix = string.Empty;
             if (driverAssembly.GetName().GetPublicKey() is { Length: > 0 })
             {
                 byte[]? testPublicKey = typeof(InternalsVisibleToTest).Assembly.GetName().GetPublicKey();
                 Assert.NotNull(testPublicKey);
                 Assert.NotEmpty(testPublicKey);
-                expectedFriend += ", PublicKey=" + BitConverter.ToString(testPublicKey).Replace("-", "");
+                publicKeySuffix = ", PublicKey=" + BitConverter.ToString(testPublicKey).Replace("-", "");
             }
 
-            Assert.Equal(expectedFriend, Assert.Single(friends), ignoreCase: true);
+            Assert.Equal(
+                expectedFriends.Select(name => name + publicKeySuffix).OrderBy(name => name),
+                friends.OrderBy(name => name),
+                StringComparer.OrdinalIgnoreCase);
         }
     }
 }
