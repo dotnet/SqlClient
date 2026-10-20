@@ -81,7 +81,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/DbConnection/*' />
         protected override DbConnection DbConnection => Connection;
 
-        private bool Is2005PartialZombie => InternalTransaction?.IsCompleted == true;
+        private bool IsPartialZombie => InternalTransaction?.IsCompleted == true;
 
         private SqlStatistics Statistics => _connection?.StatisticsEnabled == true ? _connection.Statistics : null;
 
@@ -147,7 +147,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (disposing)
             {
-                if (!IsZombied && !Is2005PartialZombie)
+                if (!IsZombied && !IsPartialZombie)
                 {
                     InternalTransaction.Dispose();
                 }
@@ -166,7 +166,7 @@ namespace Microsoft.Data.SqlClient
                 InternalTransaction,
                 transactionName: null);
 
-            if (Is2005PartialZombie)
+            if (IsPartialZombie)
             {
                 // Put something in the trace in case a customer has an issue
                 SqlClientEventSource.Log.TryAdvancedTraceEvent(
@@ -313,7 +313,7 @@ namespace Microsoft.Data.SqlClient
             // If this transaction has been completed, throw exception since it is unusable.
             if (IsZombied)
             {
-                if (Is2005PartialZombie)
+                if (IsPartialZombie)
                 {
                     // SQL 2005 zombification
                     InternalTransaction = null;
