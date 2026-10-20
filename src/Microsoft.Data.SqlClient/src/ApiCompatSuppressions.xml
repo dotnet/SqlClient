@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- These suppressions are used to ignore differences in type forwarding between the ref and the
+     implementation assemblies. The ref assemblies deliberately omit them - they are runtime concerns. -->
+<Suppressions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Suppression>
+    <DiagnosticId>CP0001</DiagnosticId>
+    <Target>T:Microsoft.Data.SqlClient.SqlAuthenticationMethod</Target>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0001</DiagnosticId>
+    <Target>T:Microsoft.Data.SqlClient.SqlAuthenticationParameters</Target>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0001</DiagnosticId>
+    <Target>T:Microsoft.Data.SqlClient.SqlAuthenticationProvider</Target>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0001</DiagnosticId>
+    <Target>T:Microsoft.Data.SqlClient.SqlAuthenticationProviderException</Target>
+  </Suppression>
+  <Suppression>
+    <DiagnosticId>CP0001</DiagnosticId>
+    <Target>T:Microsoft.Data.SqlClient.SqlAuthenticationToken</Target>
+  </Suppression>
+</Suppressions>

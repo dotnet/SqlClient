@@ -68,6 +68,22 @@
     <OutputPath>$(ArtifactPath)$(AssemblyName)/$(ReferenceType)-$(Configuration)/</OutputPath>
   </PropertyGroup>
 
+  <!-- API compatibility / ApiCompat checking. -->
+  <PropertyGroup>
+    <ApiCompatValidateAssemblies>true</ApiCompatValidateAssemblies>
+    <ApiCompatStrictMode>true</ApiCompatStrictMode>
+    <!-- @TODO: Ensure that the ref projects have identical attributes to the implementation project and enable this rule. -->
+    <ApiCompatEnableRuleAttributesMustMatch>false</ApiCompatEnableRuleAttributesMustMatch>
+    <ApiCompatEnableRuleCannotChangeParameterName>true</ApiCompatEnableRuleCannotChangeParameterName>
+    <ApiCompatContractAssembly>$(ArtifactPath)$(AssemblyName).ref/$(ReferenceType)-$(Configuration)/$(TargetFramework)/$(AssemblyName).dll</ApiCompatContractAssembly>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(ApiCompatValidateAssemblies)' == 'true'">
+    <ApiCompatSuppressionFile Include="ApiCompatSuppressions.xml" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(ApiCompatValidateAssemblies)' == 'true' AND '$(TargetFramework)' != 'net462'">
+    <ApiCompatSuppressionFile Include="ApiCompatSuppressions.netcore.xml" />
+  </ItemGroup>
+
   <!-- NuGet Package Config ============================================ -->
   <PropertyGroup>
 
@@ -237,6 +253,19 @@
   </ItemGroup>
 
   <!-- References ====================================================== -->
+  <!-- Build-time tooling -->
+  <ItemGroup Condition="'$(ApiCompatValidateAssemblies)' == 'true'">
+    <!-- ApiCompat tooling. -->
+    <PackageReference Include="Microsoft.DotNet.ApiCompat.Task"
+                      PrivateAssets="all" />
+
+    <!-- Reference to the SqlClient ref assemblies. This reference is excluded from the resultant
+         assembly - it's used to ensure that the ref assemblies build first when ApiCompat is enabled,
+         so that public API signatures are available at the point of ApiCompat. -->
+    <ProjectReference Include="$(SqlClientRefProjectPath)"
+                      ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
   <!-- Reference to Abstractions -->
   <ItemGroup>
     <ProjectReference Include="$(AbstractionsProjectPath)"

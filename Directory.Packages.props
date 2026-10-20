@@ -161,6 +161,7 @@
     <PackageVersion Include="System.Text.Json" Version="10.0.13" />
     <PackageVersion Include="System.ValueTuple" Version="4.6.2" />
     <PackageVersion Include="System.Threading.Channels" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.DotNet.ApiCompat.Task" Version="10.0.204" />
   </ItemGroup>
 
   <ItemGroup>
