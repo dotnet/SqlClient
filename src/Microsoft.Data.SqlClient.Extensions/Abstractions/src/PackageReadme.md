@@ -32,6 +32,10 @@ the existing provider. These failures are traced through `Microsoft.Data.SqlClie
 Bootstrap failures are cached and logged on subsequent accesses; correct the cause and restart
 the application.
 
+Authentication configuration, activation and registration exception messages use this package's
+resources. Messages without a satellite translation fall back to neutral English. Standard
+framework exceptions retain their framework-provided messages.
+
 Recoverable resource lookup or formatting failures fall back to the resource key and
 culture-formatted argument values, identifying unformattable arguments by type and preserving
 the original exception cause. Fatal runtime errors propagate instead of being masked.

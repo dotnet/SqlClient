@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.Configuration;
 using System.Globalization;
 using System.Resources;
 using System.Text;
@@ -142,4 +143,54 @@ internal static class AuthenticationStrings
     /// <returns>An exception explaining that the Azure extension must be upgraded.</returns>
     internal static Exception UseWamBrokerRequiresAzureExtensionUpgrade() =>
         new InvalidOperationException(Format("SQL_UseWamBrokerRequiresAzureExtensionUpgrade"));
+
+    /// <summary>Creates an error for an incompatible authentication provider collection.</summary>
+    /// <returns>A localized configuration error.</returns>
+    internal static Exception InvalidAuthenticationProviderCollection() =>
+        new ConfigurationErrorsException(Format("SQL_InvalidAuthenticationProviderCollection"));
+
+    /// <summary>Creates an error for a configured broker value that is not a Boolean.</summary>
+    /// <param name="value">The invalid configured value.</param>
+    /// <returns>A localized configuration error identifying the invalid value.</returns>
+    internal static Exception InvalidAuthenticationBrokerValue(string value) =>
+        new ConfigurationErrorsException(Format("SQL_InvalidAuthenticationBrokerValue", value));
+
+    /// <summary>Creates an error for a missing authentication configuration property.</summary>
+    /// <param name="name">The missing property name.</param>
+    /// <returns>A localized configuration error identifying the missing property.</returns>
+    internal static Exception MissingAuthenticationConfigurationProperty(string name) =>
+        new ConfigurationErrorsException(Format("SQL_MissingAuthenticationConfigurationProperty", name));
+
+    /// <summary>Creates an error for an authentication property that is not a string.</summary>
+    /// <param name="name">The incompatible property name.</param>
+    /// <returns>A localized configuration error identifying the incompatible property.</returns>
+    internal static Exception InvalidAuthenticationConfigurationPropertyType(string name) =>
+        new ConfigurationErrorsException(Format("SQL_InvalidAuthenticationConfigurationPropertyType", name));
+
+    /// <summary>Creates an error for an incompatible authentication section handler.</summary>
+    /// <param name="name">The configuration section name.</param>
+    /// <param name="expectedType">The expected handler type name.</param>
+    /// <param name="actualType">The actual handler type name.</param>
+    /// <returns>A localized configuration error identifying both handler types.</returns>
+    internal static Exception InvalidAuthenticationConfigurationHandler(
+        string name, string expectedType, string actualType) =>
+        new ConfigurationErrorsException(Format(
+            "SQL_InvalidAuthenticationConfigurationHandler", name, expectedType, actualType));
+
+    /// <summary>Creates an error for a null or incompatible configured initializer instance.</summary>
+    /// <returns>A localized activation error.</returns>
+    internal static Exception InvalidAuthenticationInitializerInstance() =>
+        new InvalidOperationException(Format("SQL_InvalidAuthenticationInitializerInstance"));
+
+    /// <summary>Creates an error for a null or incompatible configured provider instance.</summary>
+    /// <returns>A localized activation error.</returns>
+    internal static Exception InvalidAuthenticationProviderInstance() =>
+        new InvalidOperationException(Format("SQL_InvalidAuthenticationProviderInstance"));
+
+    /// <summary>Creates an error when a configured provider registration is refused.</summary>
+    /// <param name="authentication">The configured authentication method.</param>
+    /// <param name="type">The configured provider type name.</param>
+    /// <returns>A localized registration error identifying the provider and method.</returns>
+    internal static Exception CannotRegisterAuthProvider(string authentication, string type) =>
+        new InvalidOperationException(Format("SQL_CannotRegisterAuthProvider", authentication, type));
 }

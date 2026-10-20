@@ -3,30 +3,83 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Collections.Concurrent;
+using System.Configuration;
 using System.Diagnostics.Tracing;
 using System.Globalization;
 
 namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
 
-/// <summary>Verifies message-generation failures do not mask authentication errors.</summary>
+/// <summary>Verifies authentication exception factories and safe message-formatting behavior.</summary>
 public class AuthenticationStringsTest
 {
-    /// <summary>Available resources retain their localized formatting.</summary>
+    /// <summary>
+    /// Exception factories preserve their types and causes and forward arguments to the formatter
+    /// without depending on resource availability or translated wording.
+    /// </summary>
     [Theory]
-    [InlineData("", "The authentication 'unsupported' is not supported.")]
-    [InlineData("fr-FR", "L'authentification 'unsupported' n'est pas prise en charge.")]
-    public void ExistingResourceUsesLocalizedMessage(string cultureName, string expected)
+    [InlineData("SQL_InvalidAuthenticationProviderCollection",
+        typeof(ConfigurationErrorsException))]
+    [InlineData("SQL_InvalidAuthenticationBrokerValue",
+        typeof(ConfigurationErrorsException), "invalid-value")]
+    [InlineData("SQL_MissingAuthenticationConfigurationProperty",
+        typeof(ConfigurationErrorsException), "property-name")]
+    [InlineData("SQL_InvalidAuthenticationConfigurationPropertyType",
+        typeof(ConfigurationErrorsException), "property-name")]
+    [InlineData("SQL_InvalidAuthenticationConfigurationHandler",
+        typeof(ConfigurationErrorsException), "section-name", "expected-type", "actual-type")]
+    [InlineData("SQL_InvalidAuthenticationInitializerInstance",
+        typeof(InvalidOperationException))]
+    [InlineData("SQL_InvalidAuthenticationProviderInstance",
+        typeof(InvalidOperationException))]
+    [InlineData("SQL_CannotRegisterAuthProvider",
+        typeof(InvalidOperationException), "authentication", "provider-type")]
+    [InlineData("SQL_CannotCreateAuthProvider",
+        typeof(ArgumentException), "authentication", "provider-type")]
+    [InlineData("SQL_CannotCreateAuthInitializer",
+        typeof(ArgumentException), "initializer-type")]
+    [InlineData("SQL_UnsupportedAuthenticationByProvider",
+        typeof(NotSupportedException), "provider-type", "authentication")]
+    [InlineData("SQL_UnsupportedAuthentication", typeof(NotSupportedException), "authentication")]
+    [InlineData("SQL_UseWamBrokerRequiresAzureExtensionUpgrade", typeof(InvalidOperationException))]
+    public void ExceptionFactoriesPreserveTypeArgumentsAndCause(
+        string key, Type expectedType, params string[] args)
     {
-        CultureInfo originalCulture = CultureInfo.CurrentUICulture;
-        try
+        var cause = new InvalidOperationException("Construction failed.");
+        Exception error = key switch
         {
-            CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo(cultureName);
-            Assert.Equal(expected, AuthenticationStrings.Format("SQL_UnsupportedAuthentication", "unsupported"));
-        }
-        finally
-        {
-            CultureInfo.CurrentUICulture = originalCulture;
-        }
+            "SQL_InvalidAuthenticationProviderCollection" =>
+                AuthenticationStrings.InvalidAuthenticationProviderCollection(),
+            "SQL_InvalidAuthenticationBrokerValue" =>
+                AuthenticationStrings.InvalidAuthenticationBrokerValue(args[0]),
+            "SQL_MissingAuthenticationConfigurationProperty" =>
+                AuthenticationStrings.MissingAuthenticationConfigurationProperty(args[0]),
+            "SQL_InvalidAuthenticationConfigurationPropertyType" =>
+                AuthenticationStrings.InvalidAuthenticationConfigurationPropertyType(args[0]),
+            "SQL_InvalidAuthenticationConfigurationHandler" =>
+                AuthenticationStrings.InvalidAuthenticationConfigurationHandler(args[0], args[1], args[2]),
+            "SQL_InvalidAuthenticationInitializerInstance" =>
+                AuthenticationStrings.InvalidAuthenticationInitializerInstance(),
+            "SQL_InvalidAuthenticationProviderInstance" =>
+                AuthenticationStrings.InvalidAuthenticationProviderInstance(),
+            "SQL_CannotRegisterAuthProvider" =>
+                AuthenticationStrings.CannotRegisterAuthProvider(args[0], args[1]),
+            "SQL_CannotCreateAuthProvider" =>
+                AuthenticationStrings.CannotCreateAuthProvider(args[0], args[1], cause),
+            "SQL_CannotCreateAuthInitializer" =>
+                AuthenticationStrings.CannotCreateSqlAuthInitializer(args[0], cause),
+            "SQL_UnsupportedAuthenticationByProvider" =>
+                AuthenticationStrings.UnsupportedAuthenticationByProvider(args[1], args[0]),
+            "SQL_UnsupportedAuthentication" =>
+                AuthenticationStrings.UnsupportedAuthentication(args[0]),
+            "SQL_UseWamBrokerRequiresAzureExtensionUpgrade" =>
+                AuthenticationStrings.UseWamBrokerRequiresAzureExtensionUpgrade(),
+            _ => throw new ArgumentOutOfRangeException(nameof(key))
+        };
+
+        Assert.Equal(expectedType, error.GetType());
+        Assert.Equal(AuthenticationStrings.Format(key, args), error.Message);
+        Assert.Same(key is "SQL_CannotCreateAuthProvider" or "SQL_CannotCreateAuthInitializer"
+            ? cause : null, error.InnerException);
     }
 
     /// <summary>Missing keys produce a diagnostic message with culture-formatted arguments.</summary>
@@ -93,17 +146,6 @@ public class AuthenticationStringsTest
         Assert.Contains(listener.Messages, trace =>
             trace.Contains("AuthenticationStrings.Format") &&
             trace.Contains(nameof(InvalidOperationException)));
-    }
-
-    /// <summary>Provider and initializer exception factories preserve the original construction cause.</summary>
-    [Fact]
-    public void ExceptionFactoriesPreserveCause()
-    {
-        var cause = new InvalidOperationException("Construction failed.");
-        Assert.Same(cause, AuthenticationStrings.CannotCreateAuthProvider(
-            "authentication", "provider-type", cause).InnerException);
-        Assert.Same(cause, AuthenticationStrings.CannotCreateSqlAuthInitializer(
-            "initializer-type", cause).InnerException);
     }
 
     /// <summary>Null and string arguments retain their defined representations without resource lookup.</summary>
