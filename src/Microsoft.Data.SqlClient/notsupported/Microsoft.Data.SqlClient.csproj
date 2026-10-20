@@ -191,6 +191,12 @@
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
   </ItemGroup>
 
+  <!-- Additional source files for GenAPI ============================== -->
+  <ItemGroup>
+    <!-- GenAPI does not reproduce forwards from the reference assembly. -->
+    <Compile Include="../src/TypeForwards.Abstractions.cs" Link="TypeForwards.Abstractions.cs" />
+  </ItemGroup>
+
   <!-- Generate "Not Supported" Source ================================= -->
   <PropertyGroup>
     <NotSupportedSourceFile>$(AssemblyName).$(TargetFramework).notsupported.cs</NotSupportedSourceFile>
