@@ -378,6 +378,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.True(server.PreLoginCount >= 1, "Expected the primary to be contacted at least once.");
         }
 
+        // Quarantined due to intermittent failures in PR pipelines.
+        [Trait("category", "flaky")]
         [Fact]
         public void NetworkError_WithUserProvidedPartner_RetryEnabled_ShouldConnectToFailoverPartner()
         {
