@@ -6,6 +6,10 @@ using System.Configuration;
 using System.Diagnostics.Tracing;
 using Microsoft.Data.SqlClient.Internal;
 
+// The section class names are long and confusingly similar, so we alias them for clarity.
+using LegacySection = Microsoft.Data.SqlClient.SqlAuthenticationProviderConfigurationSection;
+using ModernSection = Microsoft.Data.SqlClient.SqlClientAuthenticationProviderConfigurationSection;
+
 namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
 
 /// <summary>
@@ -13,8 +17,8 @@ namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
 /// </summary>
 public class AuthenticationConfigurationLoadingTest
 {
-    private const string Modern = SqlClientAuthenticationProviderConfigurationSection.Name;
-    private const string Legacy = SqlAuthenticationProviderConfigurationSection.Name;
+    private const string Modern = ModernSection.Name;
+    private const string Legacy = LegacySection.Name;
 
     /// <summary>
     /// Only a lookup that finds neither section reports missing configuration.
@@ -27,7 +31,7 @@ public class AuthenticationConfigurationLoadingTest
         _ = new SqlAuthenticationConfiguration();
         Assert.Equal(0, listener.Count);
 
-        _ = SqlAuthenticationConfiguration.Load(_ => new SqlClientAuthenticationProviderConfigurationSection());
+        _ = SqlAuthenticationConfiguration.Load(_ => new ModernSection());
         Assert.Equal(0, listener.Count);
 
         _ = SqlAuthenticationConfiguration.Load(_ => null);
@@ -69,9 +73,9 @@ public class AuthenticationConfigurationLoadingTest
     public void LoadSelectsExpectedSectionWithoutActivation(bool modern)
     {
         // Use a provider that throws on construction to keep loading separate from activation.
-        SqlAuthenticationProviderConfigurationSection section = modern
-            ? new SqlClientAuthenticationProviderConfigurationSection()
-            : new SqlAuthenticationProviderConfigurationSection();
+        LegacySection section = modern
+            ? new ModernSection()
+            : new LegacySection();
         section.Providers.Add(new ProviderSettings(
             "Active Directory Integrated", typeof(Provider).AssemblyQualifiedName));
         var reads = new List<string>();
@@ -121,7 +125,7 @@ public class AuthenticationConfigurationLoadingTest
     [Theory]
     [InlineData(typeof(object))]
     [InlineData(typeof(AppSettingsSection))]
-    [InlineData(typeof(SqlAuthenticationProviderConfigurationSection))]
+    [InlineData(typeof(LegacySection))]
     public void LoadConfigurationDoesNotFallBackAfterHandlerMismatch(Type type)
     {
         // Return a present but incompatible modern handler; legacy must not mask the mistake.
@@ -131,14 +135,19 @@ public class AuthenticationConfigurationLoadingTest
         var failure = Assert.Throws<ConfigurationErrorsException>(() =>
             SqlAuthenticationConfiguration.Load(name =>
             {
+                // Record the section name being read, which should be modern in this test
+                // because that is the first choice.
                 reads.Add(name);
+
+                // Return a section instance whose type isn't the modern one,
+                // simulating an incompatible handler.
                 return section;
             }));
 
         // Report the incompatible handler and stop before the fallback reader is called.
         Assert.Equal(new[] { Modern }, reads);
         Assert.Contains(type.FullName!, failure.Message);
-        Assert.Contains(typeof(SqlClientAuthenticationProviderConfigurationSection).FullName!,
+        Assert.Contains(typeof(ModernSection).FullName!,
             failure.Message);
     }
 
@@ -176,7 +185,7 @@ public class AuthenticationConfigurationLoadingTest
     public void LoadConfigurationDoesNotFallBackAfterValidationFailure()
     {
         // An invalid modern value must fail even if a valid legacy handler is available.
-        var section = new SqlClientAuthenticationProviderConfigurationSection();
+        var section = new ModernSection();
         section.ElementInformation.Properties["useWamBroker"].Value = "invalid";
         var reads = new List<string>();
 
@@ -185,7 +194,7 @@ public class AuthenticationConfigurationLoadingTest
             {
                 reads.Add(name);
                 return name == Modern
-                    ? section : new SqlAuthenticationProviderConfigurationSection();
+                    ? section : new LegacySection();
             }));
 
         // Validation happens after section selection, without reopening the fallback path.
@@ -203,8 +212,8 @@ public class AuthenticationConfigurationLoadingTest
     {
         // Keep handler identity checks independent of process-wide ConfigurationManager state.
         ConfigurationSection expected = modern
-            ? new SqlClientAuthenticationProviderConfigurationSection()
-            : new SqlAuthenticationProviderConfigurationSection();
+            ? new ModernSection()
+            : new LegacySection();
         string name = modern ? Modern : Legacy;
 
         var actual = SqlAuthenticationConfiguration.FetchConfigurationSection(
@@ -229,7 +238,7 @@ public class AuthenticationConfigurationLoadingTest
 
         Assert.Same(expected, Assert.Throws<InvalidOperationException>(() =>
             SqlAuthenticationConfiguration.FetchConfigurationSection(
-                Modern, typeof(SqlClientAuthenticationProviderConfigurationSection).FullName!,
+                Modern, typeof(ModernSection).FullName!,
                 _ => throw expected)));
     }
 

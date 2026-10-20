@@ -4,6 +4,10 @@
 
 using System.Configuration;
 
+// The section class names are long and confusingly similar, so we alias them for clarity.
+using LegacySection = Microsoft.Data.SqlClient.SqlAuthenticationProviderConfigurationSection;
+using ModernSection = Microsoft.Data.SqlClient.SqlClientAuthenticationProviderConfigurationSection;
+
 namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
 
 /// <summary>
@@ -35,10 +39,10 @@ public class AuthenticationConfigurationParsingTest
     public void ReadStringPreservesConfiguredValue(string name)
     {
         // Both forwarded handlers must expose the same string contract without trimming values.
-        foreach (var section in new SqlAuthenticationProviderConfigurationSection[]
+        foreach (var section in new LegacySection[]
         {
-            new SqlAuthenticationProviderConfigurationSection(),
-            new SqlClientAuthenticationProviderConfigurationSection()
+            new LegacySection(),
+            new ModernSection()
         })
         {
             Assert.Equal(string.Empty, SqlAuthenticationConfiguration.ReadString(section, name));
@@ -134,7 +138,7 @@ public class AuthenticationConfigurationParsingTest
     public void ParsedValuesAreIndependentOfSectionChanges()
     {
         // Take a snapshot of all four settings before simulating later configuration edits.
-        var section = new SqlClientAuthenticationProviderConfigurationSection();
+        var section = new ModernSection();
         section.ElementInformation.Properties["applicationClientId"].Value = "original-client";
         section.ElementInformation.Properties["useWamBroker"].Value = "true";
         section.ElementInformation.Properties["initializerType"].Value = "Original.Initializer";
@@ -164,7 +168,7 @@ public class AuthenticationConfigurationParsingTest
     public void ParsingDefersProviderMethodValidation()
     {
         // The registry validates entries in order, after running the configured initializer.
-        var section = new SqlClientAuthenticationProviderConfigurationSection();
+        var section = new ModernSection();
         section.Providers.Add(new ProviderSettings("unknown", "Missing.Provider"));
 
         var configuration = new SqlAuthenticationConfiguration(section);
