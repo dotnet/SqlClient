@@ -176,6 +176,28 @@ public class AuthenticationConfigurationFileTest
             });
     }
 
+    /// <summary>A real mismatched modern declaration falls back despite having a matching schema.</summary>
+    [Fact]
+    public void WrongModernHandlerFallsBackToLegacy()
+    {
+        WithConfiguration(
+            """
+            <section name="SqlClientAuthenticationProviders"
+                     type="Microsoft.Data.SqlClient.SqlAuthenticationProviderConfigurationSection, Microsoft.Data.SqlClient.Extensions.Abstractions" />
+            <section name="SqlAuthenticationProviders"
+                     type="Microsoft.Data.SqlClient.SqlAuthenticationProviderConfigurationSection, Microsoft.Data.SqlClient.Extensions.Abstractions" />
+            """,
+            $"""
+            <{Modern} applicationClientId="wrong-handler" />
+            <{Legacy} applicationClientId="legacy-client" />
+            """,
+            configuration =>
+            {
+                var settings = SqlAuthenticationConfiguration.Load(configuration.GetSection);
+                Assert.Equal("legacy-client", settings.ApplicationClientId);
+            });
+    }
+
     /// <summary>Creates and deletes an isolated configuration file without changing process configuration.</summary>
     /// <param name="declarations">Handler declarations in configSections.</param>
     /// <param name="sections">Configuration section elements.</param>

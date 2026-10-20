@@ -344,7 +344,7 @@
 
     <!--
       SigningKeyPath
-      Applies to:     Build*, Pack* (driver targets only)
+      Applies to:     Build*, Pack*, TestAbstractions
       Description:    Path to the key to use to strong name sign binaries. If omitted, binaries
                       will not be strong name signed.
                       For Pack* targets, this only applies to a build - ie, if PackBuild is set to
@@ -359,10 +359,11 @@
 
     <!--
       TestSigningKeyPath
-      Applies to:     TestSqlClientUnit
+      Applies to:     TestSqlClientUnit, TestAbstractions
       Description:    Path to the key used to sign test assemblies. Required in Package mode when
                       SigningKeyPath is set so that InternalsVisibleTo grants from signed driver
-                      assemblies can be fulfilled.
+                      assemblies can be fulfilled. Also used by signed Abstractions tests to match
+                      the friend assembly's public key.
       Default value:  [blank]
       Example:        C:\path\to\sqlclient-test-key.snk
     -->
@@ -1106,6 +1107,8 @@
       <DotnetCommand>
         "$(DotnetPath)dotnet" test "$(AbstractionsTestProjectPath)"
         -p:Configuration=$(Configuration)
+        $(SigningKeyPathArgument)
+        $(TestSigningKeyPathArgument)
         $(TestBlameArgument)
         $(TestCodeCoverageArgument)
         $(TestFiltersArgument)

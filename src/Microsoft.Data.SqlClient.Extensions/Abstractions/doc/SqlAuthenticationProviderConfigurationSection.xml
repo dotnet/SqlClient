@@ -19,6 +19,27 @@ See the LICENSE file in the project root for more information.
         </para>
         <para>This sealed handler derives directly from <see cref="T:System.Configuration.ConfigurationSection"/>.</para>
         <para>Referencing this handler in an app.config section declaration is supported.</para>
+        <para>
+          The current <c>SqlClientAuthenticationProviders</c> section takes precedence.
+          An incompatible current handler is traced and ignored, allowing this legacy section
+          to be used. Configuration-reading errors produce empty settings without fallback.
+        </para>
+        <para>
+          Configuration reading uses a relaxed policy that traces and ignores configuration-reading,
+          handler, schema and broker-value errors. Ignoring these errors may select unintended
+          providers or provider settings. Explicit initializer/provider activation or registration
+          failures abort bootstrap. Missing sections and empty optional attributes remain valid.
+        </para>
+        <para>
+          Recoverable bootstrap failures are cached and traced. Subsequent calls to
+          <see cref="SqlAuthenticationProvider.GetProvider"/> return <see langword="null"/>;
+          <see cref="SqlAuthenticationProvider.SetProvider"/> returns <see langword="false"/>.
+          Correct the configuration and restart the application.
+        </para>
+        <para>
+          Application stops at the first failure; earlier registrations and initializer/provider
+          callback side effects are not rolled back.
+        </para>
       </remarks>
     </SqlAuthenticationProviderConfigurationSection>
     <Name>
@@ -44,6 +65,11 @@ See the LICENSE file in the project root for more information.
         runtime parses it with <see cref="M:System.Boolean.TryParse(System.String,System.Boolean@)"/>.
       </summary>
       <value>The Web Account Manager broker preference, or an empty string when unset.</value>
+      <remarks>
+        An unset or empty value preserves the Azure provider's default broker behavior.
+        Non-empty values must parse as a Boolean. Invalid values are traced and ignored,
+        preserving the provider's default broker behavior and other valid settings.
+      </remarks>
     </UseWamBroker>
   </members>
 </docs>

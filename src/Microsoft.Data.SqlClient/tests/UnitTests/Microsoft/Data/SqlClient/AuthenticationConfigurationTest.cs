@@ -3,14 +3,13 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests;
 
-/// <summary>Verifies real configuration files activate forwarded handlers and preserve reader behavior.</summary>
+/// <summary>Verifies real configuration files activate driver-forwarded handlers and preserve metadata.</summary>
 public class AuthenticationConfigurationTest
 {
     /// <summary>Both driver-qualified declarations load the sealed handler and retain every configured value.</summary>
@@ -28,16 +27,17 @@ public class AuthenticationConfigurationTest
               </{sectionName}>",
             configuration =>
             {
-                object section = configuration.GetSection(sectionName);
+                var section = Assert.IsAssignableFrom<ConfigurationSection>(
+                    configuration.GetSection(sectionName));
                 Assert.Equal(handlerType, section.GetType());
                 Assert.Equal("Microsoft.Data.SqlClient.Extensions.Abstractions", section.GetType().Assembly.GetName().Name);
 
-                var settings = SqlAuthenticationProviderManager.ReadConfigurationSection(configuration.GetSection);
-                Assert.NotNull(settings);
-                Assert.Equal("configured-client", settings.ApplicationClientId);
-                Assert.Equal("Example.Initializer, Example", settings.InitializerType);
-                Assert.Equal("false", settings.UseWamBroker);
-                var provider = Assert.Single(settings.Providers);
+                Assert.Equal("configured-client", section.ElementInformation.Properties["applicationClientId"].Value);
+                Assert.Equal("Example.Initializer, Example", section.ElementInformation.Properties["initializerType"].Value);
+                Assert.Equal("false", section.ElementInformation.Properties["useWamBroker"].Value);
+                var providers = Assert.IsType<ProviderSettingsCollection>(
+                    section.ElementInformation.Properties["providers"].Value);
+                var provider = Assert.Single(providers);
                 var providerSettings = Assert.IsType<ProviderSettings>(provider);
                 Assert.Equal("active directory default", providerSettings.Name);
                 Assert.Equal("Example.Provider, Example", providerSettings.Type);
@@ -56,83 +56,14 @@ public class AuthenticationConfigurationTest
             $"<{sectionName} />",
             configuration =>
             {
-                var settings = SqlAuthenticationProviderManager.ReadConfigurationSection(configuration.GetSection);
-                Assert.NotNull(settings);
-                Assert.Equal(string.Empty, settings.ApplicationClientId);
-                Assert.Equal(string.Empty, settings.InitializerType);
-                Assert.Equal(string.Empty, settings.UseWamBroker);
-                Assert.Empty(settings.Providers);
+                var section = Assert.IsAssignableFrom<ConfigurationSection>(
+                    configuration.GetSection(sectionName));
+                Assert.Equal(string.Empty, section.ElementInformation.Properties["applicationClientId"].Value);
+                Assert.Equal(string.Empty, section.ElementInformation.Properties["initializerType"].Value);
+                Assert.Equal(string.Empty, section.ElementInformation.Properties["useWamBroker"].Value);
+                Assert.Empty(Assert.IsType<ProviderSettingsCollection>(
+                    section.ElementInformation.Properties["providers"].Value));
             });
-    }
-
-    /// <summary>The modern section takes precedence without reading the legacy section.</summary>
-    [Fact]
-    public void ModernSectionTakesPrecedence()
-    {
-        WithConfiguration(
-            @"<section name='SqlAuthenticationProviders' type='Microsoft.Data.SqlClient.SqlAuthenticationProviderConfigurationSection, Microsoft.Data.SqlClient' />
-              <section name='SqlClientAuthenticationProviders' type='Microsoft.Data.SqlClient.SqlClientAuthenticationProviderConfigurationSection, Microsoft.Data.SqlClient' />",
-            @"<SqlAuthenticationProviders applicationClientId='legacy-client' />
-              <SqlClientAuthenticationProviders applicationClientId='modern-client' />",
-            configuration =>
-            {
-                List<string> reads = new();
-                var settings = SqlAuthenticationProviderManager.ReadConfigurationSection(name =>
-                {
-                    reads.Add(name);
-                    return configuration.GetSection(name);
-                });
-                Assert.NotNull(settings);
-                Assert.Equal("modern-client", settings.ApplicationClientId);
-                Assert.Equal(new[] { "SqlClientAuthenticationProviders" }, reads);
-            });
-    }
-
-    /// <summary>When neither section exists, the reader checks both names and returns no settings.</summary>
-    [Fact]
-    public void MissingSectionsReturnNull()
-    {
-        WithConfiguration(string.Empty, string.Empty, configuration =>
-        {
-            List<string> reads = new();
-            var settings = SqlAuthenticationProviderManager.ReadConfigurationSection(name =>
-            {
-                reads.Add(name);
-                return configuration.GetSection(name);
-            });
-            Assert.Null(settings);
-            Assert.Equal(new[] { "SqlClientAuthenticationProviders", "SqlAuthenticationProviders" }, reads);
-        });
-    }
-
-    /// <summary>A mismatched modern handler is ignored rather than accepted solely because its schema matches.</summary>
-    [Fact]
-    public void WrongModernHandlerFallsBackToLegacy()
-    {
-        WithConfiguration(
-            @"<section name='SqlAuthenticationProviders' type='Microsoft.Data.SqlClient.SqlAuthenticationProviderConfigurationSection, Microsoft.Data.SqlClient' />
-              <section name='SqlClientAuthenticationProviders' type='Microsoft.Data.SqlClient.SqlAuthenticationProviderConfigurationSection, Microsoft.Data.SqlClient' />",
-            @"<SqlAuthenticationProviders applicationClientId='legacy-client' />
-              <SqlClientAuthenticationProviders applicationClientId='wrong-handler' />",
-            configuration =>
-            {
-                var settings = SqlAuthenticationProviderManager.ReadConfigurationSection(configuration.GetSection);
-                Assert.NotNull(settings);
-                Assert.Equal("legacy-client", settings.ApplicationClientId);
-            });
-    }
-
-    /// <summary>A malformed modern section still fails parsing instead of silently falling back.</summary>
-    [Fact]
-    public void MalformedModernSectionDoesNotFallBack()
-    {
-        WithConfiguration(
-            @"<section name='SqlAuthenticationProviders' type='Microsoft.Data.SqlClient.SqlAuthenticationProviderConfigurationSection, Microsoft.Data.SqlClient' />
-              <section name='SqlClientAuthenticationProviders' type='Microsoft.Data.SqlClient.SqlClientAuthenticationProviderConfigurationSection, Microsoft.Data.SqlClient' />",
-            @"<SqlAuthenticationProviders applicationClientId='legacy-client' />
-              <SqlClientAuthenticationProviders unknownAttribute='invalid' />",
-            configuration => Assert.Throws<ConfigurationErrorsException>(() =>
-                SqlAuthenticationProviderManager.ReadConfigurationSection(configuration.GetSection)));
     }
 
     /// <summary>Loads an isolated configuration file and removes it even when an assertion fails.</summary>
