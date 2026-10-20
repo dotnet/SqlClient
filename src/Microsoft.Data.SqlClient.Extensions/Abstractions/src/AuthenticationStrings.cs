@@ -33,6 +33,7 @@ internal static class AuthenticationStrings
     {
         try
         {
+            // UI culture selects the translation; current culture formats any argument values.
             string? format = s_resources.GetString(key, CultureInfo.CurrentUICulture);
             if (format is not null)
             {
@@ -50,6 +51,8 @@ internal static class AuthenticationStrings
                 key, e.GetType().FullName);
         }
 
+        // Keep resource or argument failures from hiding the authentication error being reported.
+        // Include the key and safely formatted values so the fallback still identifies the failure.
         args ??= Array.Empty<object>();
         var builder = new StringBuilder();
         builder.Append(key ?? "<null>").Append(": [");

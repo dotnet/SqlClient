@@ -1,14 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
-  <resheader name="resmimetype">text/microsoft-resx</resheader>
-      <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
-      <resheader name="resmimetype">
+  <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
   </resheader>
-    <resheader name="reader">
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
     <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-    <data name="SQL_CannotCreateAuthProvider" xml:space="preserve">
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="SQL_CannotCreateAuthProvider" xml:space="preserve">
     <value>未能实例化“{0}”的类型为“{1}”的身份验证提供程序。</value>
   </data>
   <data name="SQL_CannotCreateAuthInitializer" xml:space="preserve">
