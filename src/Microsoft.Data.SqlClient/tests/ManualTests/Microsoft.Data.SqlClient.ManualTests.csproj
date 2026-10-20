@@ -55,7 +55,7 @@
   </ItemGroup>
 
   <!-- Strong name signing ============================================= -->
-  <!-- Match the test-key friend grant when compiling against signed SqlClient packages. -->
+  <!-- Signed packages grant ManualTests access using the committed TransactionTest.snk fixture. -->
   <PropertyGroup Condition="'$(TestSigningKeyPath)' != ''">
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>$(TestSigningKeyPath)</AssemblyOriginatorKeyFile>
@@ -88,8 +88,10 @@
                Condition="'$(ReferenceType)' == 'Package'"
                HintPath="$(PkgMicrosoft_Data_SqlClient)/lib/$(TargetFramework)/Microsoft.Data.SqlClient.dll" />
 
-    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
-    <!-- @TODO: Should there be a package mode test for AKV? -->
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj"
+                      Condition="'$(ReferenceType)' == 'Project'" />
+    <PackageReference Include="Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider"
+                      Condition="'$(ReferenceType)' == 'Package'" />
   </ItemGroup>
 
   <!-- References for netfx -->

@@ -37,9 +37,15 @@ In `Package` mode, tests that use internals must compile against the implementat
 the implementation assembly explicitly.
 
 Signed drivers grant internal access only in `Package` mode, to test assemblies signed with the
-matching test key. Signed `Project` builds do not grant test access. The friend grant alone does
-not configure signing of the test assembly or its dependencies; unsigned-build verification does
-not establish signed-package build support.
+matching test key. Signed `Project` builds do not grant test access. ManualTests uses the existing
+`src/Microsoft.Data.SqlClient/tests/ManualTests/SQL/TransactionTest/TransactionTest.snk` fixture;
+UnitTests retains its separate test key. This is test-only signing, not the production signing key.
+
+For signed packages, pass `-p:TestSigningKeyPath=<absolute-path-to-TransactionTest.snk>` to
+`TestSqlClientManual` or `BuildSqlClientTestsManual` in `build.proj`. The property is forwarded to
+the test project and signs its test-helper dependencies too. Package-mode ManualTests consumes
+the packaged AKV provider, so prepare that package alongside the driver. The internal Managed
+Instance and Kerberos package-test jobs supply the fixture path explicitly.
 
 FunctionalTests is not a friend assembly. Its linked internal source files are compiled into the
 test assembly; they do not demonstrate access to the driver's internals through `InternalsVisibleTo`.
