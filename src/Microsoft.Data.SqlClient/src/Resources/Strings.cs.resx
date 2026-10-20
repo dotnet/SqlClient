@@ -2565,6 +2565,9 @@
   <data name="SQL_UnsupportedAuthentication" xml:space="preserve">
     <value>Ověřování {0} není podporované.</value>
   </data>
+  <data name="SQL_InvalidAuthority" xml:space="preserve">
+    <value>The authority '{0}' is not a valid Entra ID authority. Expected an absolute HTTPS URL containing a tenant, e.g. 'https://login.microsoftonline.com/&lt;tenant&gt;'.</value>
+  </data>
   <data name="SQL_UnsupportedSqlAuthenticationMethod" xml:space="preserve">
     <value>Metoda ověřování SQL {0} není podporována.</value>
   </data>
