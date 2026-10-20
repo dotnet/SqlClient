@@ -173,7 +173,7 @@ namespace Microsoft.Data.SqlClient
                     "SqlTransaction.Rollback | ADV | Object Id {0}, partial zombie no rollback required",
                     ObjectId);
 
-                InternalTransaction = null; // 2005 zombification
+                InternalTransaction = null; // Complete the deferred zombification.
             }
             else
             {
@@ -292,9 +292,9 @@ namespace Microsoft.Data.SqlClient
 
         internal void Zombie()
         {
-            // For Yukon, we have to defer "zombification" until we get past the users' next
-            // rollback, else we'll throw an exception there that is a breaking change. Of course,
-            // if the connection is already closed, then we're free to zombify...
+            // When completion occurs outside the transaction API, retain the completed internal
+            // transaction so the next parameterless Rollback can succeed without another request.
+            // API-initiated completion or a closed connection can clear the reference immediately.
             if (_connection.InnerConnection is SqlConnectionInternal && !_isFromApi)
             {
                 SqlClientEventSource.Log.TryAdvancedTraceEvent(
@@ -303,7 +303,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                // pre SQL 2005 zombification
+                // Complete zombification immediately.
                 InternalTransaction = null;
             }
         }
@@ -315,7 +315,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (IsPartialZombie)
                 {
-                    // SQL 2005 zombification
+                    // Clear the completed transaction before reporting that it is unusable.
                     InternalTransaction = null;
                 }
 

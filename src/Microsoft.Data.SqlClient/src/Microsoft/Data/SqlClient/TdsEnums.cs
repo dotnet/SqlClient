@@ -182,7 +182,7 @@ namespace Microsoft.Data.SqlClient
         public const byte ENV_LOCALEID = 5;  // Unicode data sorting locale id
         public const byte ENV_COMPFLAGS = 6;  // Unicode data sorting comparison flags
         public const byte ENV_COLLATION = 7;  // SQL Collation
-        // The following are environment change tokens valid for 2005 or later.
+        // Transaction and routing environment-change tokens.
         public const byte ENV_BEGINTRAN = 8;  // Transaction began
         public const byte ENV_COMMITTRAN = 9;  // Transaction committed
         public const byte ENV_ROLLBACKTRAN = 10; // Transaction rolled back
@@ -299,7 +299,7 @@ namespace Microsoft.Data.SqlClient
         public const int TEXT_TIME_STAMP_LEN = 8;
         public const int COLLATION_INFO_LEN = 4;
 
-        // Versions to be used on login for SQL Server 2005, SQL Server 2008 R2, TDS 7.x and TDS 8.0
+        // Protocol version identifiers used during login negotiation.
         public const uint SQL2008_VERSION = 0x73_0B_0003;
         public const uint TDS7X_VERSION = 0x74_00_0004;
         public const uint TDS80_VERSION = 0x08_00_0000;
@@ -407,14 +407,14 @@ namespace Microsoft.Data.SqlClient
         public const int MAX_NUMERIC_PRECISION = 0x26; // 38 is max numeric precision;
         public const byte UNKNOWN_PRECISION_SCALE = 0xff; // -1 is value for unknown precision or scale
 
-        // The following datatypes are specific to 2005 (version 9) or later
+        // Additional scalar type tokens and XML byte-order markers.
         public const int SQLINT8 = 0x7f;
         public const int SQLVARIANT = 0x62;
         public const int SQLXMLTYPE = 0xf1;
         public const int XMLUNICODEBOM = 0xfeff;
         public static readonly byte[] XMLUNICODEBOMBYTES = { 0xff, 0xfe };
 
-        // The following datatypes are specific to 2008 (version 10) or later
+        // Table and date/time type tokens introduced in SQL Server 2008 (version 10).
         public const int SQLTABLE = 0xf3;
         public const int SQLDATE = 0x28;
         public const int SQLTIME = 0x29;
@@ -427,7 +427,7 @@ namespace Microsoft.Data.SqlClient
         public const int DEFAULT_VARTIME_SCALE = 7;
 
         //Partially length prefixed datatypes constants. These apply to XMLTYPE, BIGVARCHRTYPE,
-        // NVARCHARTYPE, and BIGVARBINTYPE. Valid for 2005 or later
+        // NVARCHARTYPE, and BIGVARBINTYPE.
 
         public const ulong SQL_PLP_NULL = 0xffffffffffffffff;        // Represents null value
         public const ulong SQL_PLP_UNKNOWNLEN = 0xfffffffffffffffe;  // Data coming in chunks, total length unknown

@@ -96,7 +96,7 @@ namespace Microsoft.Data.SqlClient
         private EncryptionOptions _encryptionOption = s_sniSupportedEncryptionOption;
 
         private SqlInternalTransaction _currentTransaction;
-        private SqlInternalTransaction _pendingTransaction;    // pending transaction for 2005 and beyond.
+        private SqlInternalTransaction _pendingTransaction;    // Transaction awaiting server confirmation.
         // SQLHOT 483
         //  need to hold on to the transaction id if distributed transaction merely rolls back without defecting.
         private long _retainedTransactionId = SqlInternalTransaction.NullTransactionId;
@@ -211,7 +211,7 @@ namespace Microsoft.Data.SqlClient
 
         internal TdsParser(bool MARS, bool fAsynchronous)
         {
-            _fMARS = MARS; // may change during Connect to pre 2005 servers
+            _fMARS = MARS;
 
             Capabilities = new();
 
@@ -1941,8 +1941,8 @@ namespace Microsoft.Data.SqlClient
                     {
                         Debug.Assert(!stateObj._fResetConnectionSent, "Unexpected state on WritePacket ResetConnection");
 
-                        // Otherwise if 2005 and we grabbed the event, free it.  Another execute grabbed the event and
-                        // took care of sending the reset.
+                        // Another execution already sent the reset; release the event acquired
+                        // by this execution.
                         stateObj._fResetEventOwned = !_resetConnectionEvent.Set();
                         Debug.Assert(!stateObj._fResetEventOwned, "Invalid AutoResetEvent state!");
                     }
@@ -1951,7 +1951,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (_fMARS && stateObj._fResetEventOwned)
                     {
-                        // If exception thrown, and we are on 2005 and own the event, release it!
+                        // Release the MARS reset event if this execution owns it.
                         stateObj._fResetConnectionSent = false;
                         stateObj._fResetEventOwned = !_resetConnectionEvent.Set();
                         Debug.Assert(!stateObj._fResetEventOwned, "Invalid AutoResetEvent state!");
@@ -4622,7 +4622,7 @@ namespace Microsoft.Data.SqlClient
         {
             returnValue = null;
             SqlReturnValue rec = new SqlReturnValue();
-            rec.length = length;        // In 2005 this length is -1
+            rec.length = length;        // RETURNVALUE has no token length; the sentinel is -1.
             TdsOperationStatus result = stateObj.TryReadUInt16(out _);
             if (result != TdsOperationStatus.Done)
             {
@@ -4655,7 +4655,7 @@ namespace Microsoft.Data.SqlClient
 
             uint userType;
 
-            // read user type - 4 bytes 2005, 2 backwards
+            // Read the four-byte user type identifier.
             result = stateObj.TryReadUInt32(out userType);
             if (result != TdsOperationStatus.Done)
             {
@@ -4719,8 +4719,7 @@ namespace Microsoft.Data.SqlClient
             rec.metaType = MetaType.GetSqlDataType(tdsType, userType, tdsLen);
             rec.type = rec.metaType.SqlDbType;
 
-            // always use the nullable type for parameters if 2005 or later
-            // older servers sometimes send fixed length return values
+            // Use the nullable wire type for return parameters.
             rec.tdsType = rec.metaType.NullableType;
             rec.IsNullable = true;
             if (tdsLen == TdsEnums.SQL_USHORTVARMAXLEN)
@@ -5682,7 +5681,7 @@ namespace Microsoft.Data.SqlClient
             byte byteLen;
             uint userType;
 
-            // read user type - 4 bytes 2005, 2 backwards
+            // Read the four-byte user type identifier.
             TdsOperationStatus result = stateObj.TryReadUInt32(out userType);
             if (result != TdsOperationStatus.Done)
             {
@@ -8662,7 +8661,7 @@ namespace Microsoft.Data.SqlClient
         //
         internal TdsOperationStatus TryGetDataLength(SqlMetaDataPriv colmeta, TdsParserStateObject stateObj, out ulong length)
         {
-            // Handle 2005 specific tokens
+            // Read the total length for partially length-prefixed values.
             if (colmeta.metaType.IsPlp)
             {
                 Debug.Assert(colmeta.tdsType == TdsEnums.SQLXMLTYPE ||
@@ -8717,7 +8716,7 @@ namespace Microsoft.Data.SqlClient
             }
             else if (token == TdsEnums.SQLRETURNVALUE)
             {
-                tokenLength = -1; // In 2005, the RETURNVALUE token stream no longer has length
+                tokenLength = -1; // RETURNVALUE has no token length field.
                 return TdsOperationStatus.Done;
             }
             else if (token == TdsEnums.SQLXMLTYPE)
@@ -10177,7 +10176,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             if (rpcext.ProcID != 0)
                             {
-                                // Perf optimization for 2005 and later,
+                                // Encode the procedure ID instead of sending its name.
                                 Debug.Assert(rpcext.ProcID < 255, "rpcExec:ProcID can't be larger than 255");
                                 WriteShort(0xffff, stateObj);
                                 WriteShort((short)(rpcext.ProcID), stateObj);
@@ -10603,7 +10602,7 @@ namespace Microsoft.Data.SqlClient
                     maxsize = (size > codePageByteSize) ? size : codePageByteSize;
                     if (maxsize == 0)
                     {
-                        // 2005 doesn't like 0 as MaxSize. Change it to 2 for unicode types (SQL9 - 682322)
+                        // Avoid zero maximum lengths; Unicode types need at least two bytes (SQL9 - 682322).
                         if (mt.IsNCharType)
                         {
                             maxsize = 2;
@@ -10727,7 +10726,7 @@ namespace Microsoft.Data.SqlClient
                     maxsize = (size > actualSize) ? size : actualSize;
                     if (maxsize == 0)
                     {
-                        // 2005 doesn't like 0 as MaxSize. Change it to 2 for unicode types (SQL9 - 682322)
+                        // Avoid zero maximum lengths; Unicode types need at least two bytes (SQL9 - 682322).
                         if (mt.IsNCharType)
                         {
                             maxsize = 2;
@@ -11592,7 +11591,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     _SqlMetaData md = metadataCollection[i];
 
-                    // read user type - 4 bytes 2005, 2 backwards
+                    // Write the four-byte user type identifier.
                         WriteInt(0x0, stateObj);
 
                     // Write the flags

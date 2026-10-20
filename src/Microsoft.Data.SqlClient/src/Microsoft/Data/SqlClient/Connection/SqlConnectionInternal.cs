@@ -1055,9 +1055,9 @@ namespace Microsoft.Data.SqlClient.Connection
                 "unenlisted.",
                 ObjectID);
 
-            // The EnlistTransaction above will return an TransactionEnded event, which causes the
-            // TdsParser to clear the current transaction. In either case, when we're working with
-            // a 2005 or newer server we better not have a current transaction at this point.
+            // The EnlistTransaction above will return a TransactionEnded event, which causes the
+            // TdsParser to clear the current transaction. There must be no current transaction
+            // after unenlisting.
             Debug.Assert(CurrentTransaction == null, "unenlisted transaction with non-null current transaction?");
         }
 
@@ -1248,7 +1248,7 @@ namespace Microsoft.Data.SqlClient.Connection
                     break;
 
                 case TdsEnums.ENV_TRANSACTIONMANAGERADDRESS:
-                    // For now, we skip these 2005 only env change notifications
+                    // Ignore transaction manager address notifications.
                     break;
 
                 case TdsEnums.ENV_SPRESETCONNECTIONACK:
@@ -2884,9 +2884,8 @@ namespace Microsoft.Data.SqlClient.Connection
                         requestType = TdsEnums.TransactionManagerRequestType.Commit;
                         break;
                     case TransactionRequest.IfRollback:
-                        // Map IfRollback to Rollback since with 2005 and beyond we should never
-                        // need the "if" since the server will inform us when transactions have
-                        // completed as a result of an error on the server.
+                        // Map IfRollback to Rollback: the server notifies us when a transaction
+                        // completes after an error, so no conditional rollback is needed.
                     case TransactionRequest.Rollback:
                         requestType = TdsEnums.TransactionManagerRequestType.Rollback;
                         break;

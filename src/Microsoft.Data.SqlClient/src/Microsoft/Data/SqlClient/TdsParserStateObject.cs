@@ -2991,10 +2991,8 @@ namespace Microsoft.Data.SqlClient
             }
 
             if (
-                // This appears to be an optimization to avoid writing empty packets in 2005
-                // However, since we don't know the version prior to login Is2005OrNewer was always false prior to login
-                // So removing the Is2005OrNewer check causes issues since the login packet happens to meet the rest of the conditions below
-                // So we need to avoid this check prior to login completing
+                // Suppress requests containing only headers after login. Before login completes,
+                // these bytes belong to the login payload and must not be treated as ALL_HEADERS.
                 state == TdsParserState.OpenLoggedIn
                     && !_bulkCopyOpperationInProgress // ignore the condition checking for bulk copy
                     && _outBytesUsed == (_outputHeaderLen +

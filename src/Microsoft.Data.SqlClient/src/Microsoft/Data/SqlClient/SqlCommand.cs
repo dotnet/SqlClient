@@ -1295,9 +1295,9 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(parsedSProc.Length == 4,
                 "Invalid array length result from SqlCommandBuilder.ParseProcedureName");
 
-            // Build call for sp_procedure_params_rowset built of unquoted values from user:
+            // Build the parameter metadata procedure call from unquoted user values:
             // [user server, if provided].[user catalog, else current database].
-            // [sys if 2005, else blank].[sp_procedure_params_rowset]
+            // [sys].[sp_procedure_params_100_managed]
             StringBuilder cmdText = new StringBuilder();
 
             // Server - pass only if user provided.
@@ -1315,7 +1315,7 @@ namespace Microsoft.Data.SqlClient
             SqlCommandSet.BuildStoredProcedureName(cmdText, parsedSProc[1]);
             cmdText.Append(".");
 
-            // Procedure - [sp_procedure_params_managed]
+            // Procedure - [sys].[sp_procedure_params_100_managed]
             cmdText.Append("[sys].[").Append(TdsEnums.SP_PARAMS_MGD10).Append("]");
 
             using SqlCommand paramsCmd = new SqlCommand(cmdText.ToString(), Connection, Transaction)
@@ -1323,7 +1323,7 @@ namespace Microsoft.Data.SqlClient
                 CommandType = CommandType.StoredProcedure
             };
 
-            // Prepare parameters for sp_procedure_params_rowset:
+            // Prepare parameters for sp_procedure_params_100_managed:
             // 1) procedure name - unquote user value
             // 2) group number - parsed at the time we unquoted procedure name
             // 3) procedure schema - unquote user value
@@ -1365,8 +1365,8 @@ namespace Microsoft.Data.SqlClient
                     // type
                     p.SqlDbType = (SqlDbType)(short)r[ProcParamsColumns.ManagedDataType];
 
-                    // 2005 didn't have as accurate of information as we're getting for 2008, so re-map a couple of
-                    //  types for backward compatability.
+                    // Preserve the derived parameter types expected by existing applications
+                    // when metadata reports legacy LOB types or timestamp.
                     switch (p.SqlDbType)
                     {
                         case SqlDbType.Image:
@@ -1390,10 +1390,8 @@ namespace Microsoft.Data.SqlClient
                     object a = r[ProcParamsColumns.CharacterMaximumLength];
                     if (a is int size)
                     {
-                        // Map MAX sizes correctly. The 2008 server-side proc sends 0 for these
-                        // instead of -1. Should be fixed on the 2008 side, but would likely hold
-                        // up the RI, and is safer to fix here. If we can get the server-side fixed
-                        // before shipping 2008, we can remove this mapping.
+                        // Normalize MAX lengths reported as 0 by the metadata procedure to
+                        // the -1 indicator expected by SqlParameter.Size.
                         if (size == 0 && p.SqlDbType is SqlDbType.NVarChar or SqlDbType.VarBinary or SqlDbType.VarChar)
                         {
                             size = -1;

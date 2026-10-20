@@ -686,7 +686,7 @@ namespace Microsoft.Data.SqlClient
         internal string parameter;
         internal readonly SqlBuffer value;
 #if NETFRAMEWORK
-        internal ushort parmIndex;      //2005 or later only
+        internal ushort parmIndex;      // Parameter ordinal from the RETURNVALUE token.
 #endif
 
         internal SqlReturnValue() : base()

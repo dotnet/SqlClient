@@ -2496,7 +2496,7 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(!data.IsEmpty || data.IsNull || metaData.type == SqlDbType.Timestamp, "Data has been read, but the buffer is empty");
 
-            // Convert 2008 types to string
+            // Materialize UDT values using their CLR type information.
             if (metaData.type == SqlDbType.Udt)
             {
                 SqlConnection connection = _connection;
