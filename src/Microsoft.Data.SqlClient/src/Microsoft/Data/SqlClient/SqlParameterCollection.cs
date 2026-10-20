@@ -246,7 +246,16 @@ namespace Microsoft.Data.SqlClient
         public override void RemoveAt(int index)
         {
             IsDirty = true;
-            RangeCheck(index);
+
+            // IList.RemoveAt documents ArgumentOutOfRangeException when "index is not a valid index in the IList";
+            // the indexer keeps the IndexOutOfRangeException that SqlParameterCollection.Item[Int32] documents.
+            if ((index < 0) || (Count <= index))
+            {
+                throw ADP.ArgumentOutOfRange(
+                    StringsHelper.GetString(Strings.ADP_CollectionIndexInt32, index.ToString(CultureInfo.InvariantCulture), GetType().Name, Count.ToString(CultureInfo.InvariantCulture)),
+                    nameof(index));
+            }
+
             RemoveIndex(index);
         }
 
