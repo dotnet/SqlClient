@@ -293,14 +293,6 @@ namespace Microsoft.Data.SqlClient
             flags = value ? flags | flag : flags & ~flag;
         }
 
-        internal bool Is2008DateTimeType
-        {
-            get
-            {
-                return SqlDbType.Date == type || SqlDbType.Time == type || SqlDbType.DateTime2 == type || SqlDbType.DateTimeOffset == type;
-            }
-        }
-
         internal bool IsLargeUdt
         {
             get
