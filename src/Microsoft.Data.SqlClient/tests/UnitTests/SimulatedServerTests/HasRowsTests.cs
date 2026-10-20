@@ -32,6 +32,7 @@ public sealed class HasRowsTests
     {
         BeforeMetadata,
         AfterMetadata,
+        BeforeOrder,
         AfterOrder,
         AfterRows,
         InfoOnly
@@ -51,6 +52,7 @@ public sealed class HasRowsTests
             {
                 InfoPlacement.BeforeMetadata,
                 InfoPlacement.AfterMetadata,
+                InfoPlacement.BeforeOrder,
                 InfoPlacement.AfterOrder,
                 InfoPlacement.AfterRows
             })
@@ -638,6 +640,10 @@ public sealed class HasRowsTests
                         break;
                     case InfoPlacement.AfterMetadata:
                         insertAt = _useAlternateMetadata ? 2 : 1;
+                        break;
+                    case InfoPlacement.BeforeOrder:
+                        insertAt = _useAlternateMetadata ? 2 : 1;
+                        response[0].Insert(insertAt, new TDSOrderToken(1));
                         break;
                     case InfoPlacement.AfterOrder:
                         insertAt = _useAlternateMetadata ? 2 : 1;

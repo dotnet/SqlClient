@@ -4200,20 +4200,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     return result;
                 }
-                if (TdsEnums.SQLORDER == b)
-                {
-                    result = _parser.TryRun(RunBehavior.ReturnImmediately, _command, this, null, _stateObj, out _);
-                    if (result != TdsOperationStatus.Done)
-                    {
-                        return result;
-                    }
-                    result = _stateObj.TryPeekByte(out b);
-                    if (result != TdsOperationStatus.Done)
-                    {
-                        return result;
-                    }
-                }
-                result = TryConsumeInfoTokens(_command, ref b);
+                result = TryConsumeOrderAndInfoTokens(_command, orderDataStream: this, ref b);
                 if (result != TdsOperationStatus.Done)
                 {
                     return result;
@@ -4280,22 +4267,7 @@ namespace Microsoft.Data.SqlClient
                             return result;
                         }
 
-                        // simply rip the order token off the wire
-                        if (b == TdsEnums.SQLORDER)
-                        {
-                            // same logic as SetAltMetaDataSet
-                            result = _parser.TryRun(RunBehavior.ReturnImmediately, null, null, null, _stateObj, out _);
-                            if (result != TdsOperationStatus.Done)
-                            {
-                                return result;
-                            }
-                            result = _stateObj.TryPeekByte(out b);
-                            if (result != TdsOperationStatus.Done)
-                            {
-                                return result;
-                            }
-                        }
-                        result = TryConsumeInfoTokens(command: null, ref b);
+                        result = TryConsumeOrderAndInfoTokens(command: null, orderDataStream: null, ref b);
                         if (result != TdsOperationStatus.Done)
                         {
                             return result;
@@ -5790,39 +5762,52 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private TdsOperationStatus TryConsumeInfoTokens(SqlCommand command, ref byte token)
+        // Skips ORDER and INFO tokens after metadata, in any order, so the next token can be checked for a row.
+        private TdsOperationStatus TryConsumeOrderAndInfoTokens(SqlCommand command, SqlDataReader orderDataStream, ref byte token)
         {
-            while (token == TdsEnums.SQLINFO)
+            // VSTFDEVDIV713926: defer informational events until the next parser run
+            // to preserve existing message-delivery timing. This also covers ORDER runs
+            // so INFO buffered before ORDER is not fired early.
+            try
             {
-                // TryRun cannot consume INFO tokens when the parser is closed or broken.
-                // Leave the token unchanged to preserve the existing HasRows=false behavior.
-                if (_parser.State == TdsParserState.Broken || _parser.State == TdsParserState.Closed)
+                _stateObj._accumulateInfoEvents = true;
+                while (true)
                 {
-                    break;
-                }
+                    TdsOperationStatus result;
+                    if (token == TdsEnums.SQLORDER)
+                    {
+                        result = _parser.TryRun(RunBehavior.ReturnImmediately, command, orderDataStream, bulkCopyHandler: null, _stateObj, out _);
+                    }
+                    else if (token == TdsEnums.SQLINFO)
+                    {
+                        // TryRun cannot consume INFO tokens when the parser is closed or broken.
+                        // Leave the token unchanged to preserve the existing HasRows=false behavior.
+                        if (_parser.State == TdsParserState.Broken || _parser.State == TdsParserState.Closed)
+                        {
+                            break;
+                        }
+                        result = _parser.TryRun(RunBehavior.ReturnImmediately, command, dataStream: null, bulkCopyHandler: null, _stateObj, out _);
+                    }
+                    else
+                    {
+                        break;
+                    }
 
-                // VSTFDEVDIV713926: defer informational events until the next parser run
-                // to preserve existing message-delivery timing.
-                TdsOperationStatus result;
-                try
-                {
-                    _stateObj._accumulateInfoEvents = true;
-                    result = _parser.TryRun(RunBehavior.ReturnImmediately, command, dataStream: null, bulkCopyHandler: null, _stateObj, out _);
+                    if (result != TdsOperationStatus.Done)
+                    {
+                        return result;
+                    }
+
+                    result = _stateObj.TryPeekByte(out token);
                     if (result != TdsOperationStatus.Done)
                     {
                         return result;
                     }
                 }
-                finally
-                {
-                    _stateObj._accumulateInfoEvents = false;
-                }
-
-                result = _stateObj.TryPeekByte(out token);
-                if (result != TdsOperationStatus.Done)
-                {
-                    return result;
-                }
+            }
+            finally
+            {
+                _stateObj._accumulateInfoEvents = false;
             }
             return TdsOperationStatus.Done;
         }
