@@ -13,8 +13,6 @@ namespace Microsoft.Data.SqlClient;
 /// </summary>
 internal sealed class SqlAuthenticationConfiguration
 {
-    // TODO: Localize exception messages in a later PR.
-
     /// <summary>The client ID override, or null to preserve the Azure provider's default.</summary>
     internal string? ApplicationClientId { get; }
 
@@ -50,9 +48,7 @@ internal sealed class SqlAuthenticationConfiguration
         if (section.ElementInformation.Properties["providers"]?.Value
             is not ProviderSettingsCollection providers)
         {
-            throw new ConfigurationErrorsException(
-                "The authentication configuration property 'providers' must be a " +
-                "ProviderSettingsCollection.");
+            throw AuthenticationStrings.InvalidAuthenticationProviderCollection();
         }
 
         // Missing overrides must remain distinct from explicitly configured false or empty values.
@@ -72,9 +68,7 @@ internal sealed class SqlAuthenticationConfiguration
         {
             if (!bool.TryParse(useWamBrokerValue, out bool useWamBroker))
             {
-                throw new ConfigurationErrorsException(
-                    $"Invalid authentication configuration value '{useWamBrokerValue}' for " +
-                    "'useWamBroker'; expected 'true' or 'false'.");
+                throw AuthenticationStrings.InvalidAuthenticationBrokerValue(useWamBrokerValue);
             }
             UseWamBroker = useWamBroker;
             SqlClientEventSource.Log.TryTraceEvent(
@@ -147,13 +141,11 @@ internal sealed class SqlAuthenticationConfiguration
     internal static string ReadString(ConfigurationSection section, string name)
     {
         PropertyInformation property = section.ElementInformation.Properties[name]
-            ?? throw new ConfigurationErrorsException(
-                $"The authentication configuration is missing property '{name}'.");
+            ?? throw AuthenticationStrings.MissingAuthenticationConfigurationProperty(name);
         object? value = property.Value;
         if (property.Type != typeof(string) || (value is not null && value is not string))
         {
-            throw new ConfigurationErrorsException(
-                $"Authentication configuration property '{name}' must be a string.");
+            throw AuthenticationStrings.InvalidAuthenticationConfigurationPropertyType(name);
         }
         return value as string ?? string.Empty;
     }
@@ -185,9 +177,8 @@ internal sealed class SqlAuthenticationConfiguration
         {
             return configSection;
         }
-        throw new ConfigurationErrorsException(
-            $"Authentication configuration section '{name}' must use handler " +
-            $"'{typeName}'; found '{section.GetType().FullName}'.");
+        throw AuthenticationStrings.InvalidAuthenticationConfigurationHandler(
+            name, typeName, section.GetType().FullName!);
     }
 
     /// <summary>Maps only supported authentication method names, ignoring case.</summary>
@@ -220,8 +211,7 @@ internal sealed class SqlAuthenticationConfiguration
             case "active directory workload identity":
                 return SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity;
             default:
-                throw new NotSupportedException(
-                    $"Configured authentication method '{authentication}' is not supported.");
+                throw AuthenticationStrings.UnsupportedAuthentication(authentication);
         }
     }
 }
