@@ -52,6 +52,13 @@ namespace Microsoft.Data.SqlClient
             set => SetParameter(parameterName, value);
         }
 
+        #if NETFRAMEWORK
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/AddParameterNameValue/*'/>
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        [Obsolete("Add(String parameterName, Object value) has been deprecated.  Use AddWithValue(String parameterName, Object value).  http://go.microsoft.com/fwlink/?linkid=14202", false)]
+        public SqlParameter Add(string parameterName, object value) => AddWithValue(parameterName, value);
+        #endif
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/AddValue1/*' />
         public SqlParameter Add(SqlParameter value)
         {
