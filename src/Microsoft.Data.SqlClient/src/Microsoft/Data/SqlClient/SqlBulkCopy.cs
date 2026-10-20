@@ -3105,12 +3105,13 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                     {
                         await reconnectTask.WaitAsync(timeoutCts.Token).ConfigureAwait(false);
                     }
-                    catch (OperationCanceledException) when (!cts.IsCancellationRequested)
-                    {
-                        throw SQL.BulkLoadInvalidDestinationTable(_destinationTableName, SQL.CR_ReconnectTimeout());
-                    }
                     catch (OperationCanceledException)
                     {
+                        if (!cts.IsCancellationRequested)
+                        {
+                            throw SQL.BulkLoadInvalidDestinationTable(_destinationTableName, SQL.CR_ReconnectTimeout());
+                        }
+
                         throw;
                     }
                     catch (Exception ex) when (ADP.IsCatchableExceptionType(ex))
