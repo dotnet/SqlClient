@@ -38,15 +38,6 @@ public enum SortOrder
     Descending = 1
 }
 
-/// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationInitializer.xml' path='docs/members[@name="SqlAuthenticationInitializer"]/SqlAuthenticationInitializer/*'/>
-public abstract class SqlAuthenticationInitializer
-{
-    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationInitializer.xml' path='docs/members[@name="SqlAuthenticationInitializer"]/ctor/*'/>
-    protected SqlAuthenticationInitializer() { }
-    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationInitializer.xml' path='docs/members[@name="SqlAuthenticationInitializer"]/Initialize/*'/>
-    public abstract void Initialize();
-}
-
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatch.xml' path='docs/members[@name="SqlBatch"]/SqlBatch/*'/>
 #if NET
 public class SqlBatch : System.Data.Common.DbBatch

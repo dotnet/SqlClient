@@ -6,6 +6,10 @@
 
 namespace System.Diagnostics.CodeAnalysis;
 
+// The C# compiler emits these uses as ordinary custom-attribute metadata in the netstandard2.0
+// assembly. It does not implement feature switching, trimming or AOT behavior for them; capable
+// analysis and publishing tools interpret the metadata. The .NET Framework runtime does not.
+
 /// <summary>
 /// Provides the trimming annotation missing from .NET Standard 2.0 so shared code can mark
 /// members that may fail when unreferenced code is removed.

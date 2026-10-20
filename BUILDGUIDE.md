@@ -91,7 +91,8 @@ extend the driver's runtime support below .NET Framework 4.6.2 or .NET 10.
 | Driver reference and unsupported-platform assemblies | `net462;net10.0;netstandard2.0` |
 | Existing dual-target tests, stress projects, and their shared helpers | `net462;net10.0` |
 | Modern-only projects, including performance tests | `net10.0` |
-| AKV Provider, Abstractions, Logging, and standard-only test utilities | `netstandard2.0` only |
+| Abstractions | `netstandard2.0;net10.0` |
+| AKV Provider, Logging, and standard-only test utilities | `netstandard2.0` only |
 | Azure extensions | `net462;netstandard2.0` |
 | Microsoft.SqlServer.Server (independently versioned; unchanged here) | `net46;netstandard2.0` |
 | PackageCompatibility tool and tests (xUnit v3) | `net481;net10.0` |
@@ -195,6 +196,21 @@ The `Test` aggregate does not include the tool tests, performance benchmarks, st
 PowerShell script tests. The tool test targets use their own runner options rather than the driver
 test parameters below; see the [PackageCompatibility](tools/PackageCompatibility/README.md) and
 [PackageValidator](tools/PackageValidator/README.md) guides.
+
+Authentication registry, callback, switch, formatter and exception tests are ordinary xUnit tests
+under `src/Microsoft.Data.SqlClient.Extensions/Abstractions/test`. Run this focused target on Linux:
+
+```bash
+dotnet build build.proj -t:TestAbstractions -p:TestFramework=net10.0 -p:ReferenceType=Project
+```
+
+Signed Abstractions builds use the repository test public key for their `InternalsVisibleTo`
+grant. The cache helper and discovery tests access internal members in both signed and unsigned builds.
+
+The executable current/legacy app.config compatibility harness is deferred to
+[#4817](https://github.com/dotnet/SqlClient/pull/4817); its scenario project and test target are
+not available in this layer. Executing `net462` tests requires Windows; a Linux cross-build is
+not runtime validation.
 
 > [!TIP]
 > In project-reference mode, test targets automatically build their dependencies. In package mode,

@@ -214,10 +214,13 @@ Describe 'supported target frameworks' {
                 Projects = @('src\Microsoft.SqlServer.Server\Microsoft.SqlServer.Server.csproj')
             }
             @{
+                Frameworks = 'netstandard2.0;net10.0'
+                Projects = @('src\Microsoft.Data.SqlClient.Extensions\Abstractions\src\Abstractions.csproj')
+            }
+            @{
                 Frameworks = 'netstandard2.0'
                 Projects = @(
                     'src\Microsoft.Data.SqlClient.Internal\Logging\src\Logging.csproj'
-                    'src\Microsoft.Data.SqlClient.Extensions\Abstractions\src\Abstractions.csproj'
                     'src\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider\src\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj'
                     'src\Microsoft.Data.SqlClient\tests\tools\Microsoft.Data.SqlClient.TestUtilities\Microsoft.Data.SqlClient.TestUtilities.csproj'
                     'src\Microsoft.Data.SqlClient\tests\tools\TDS\TDS\TDS.csproj'
