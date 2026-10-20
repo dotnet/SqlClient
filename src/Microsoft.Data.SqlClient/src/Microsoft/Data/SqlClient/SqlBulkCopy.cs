@@ -2248,7 +2248,6 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
         private async Task WriteRowSourceToServerAsync(int columnCount, CancellationToken ctoken)
         {
-            // If user's token is canceled, return a canceled task
             ctoken.ThrowIfCancellationRequested();
 
             Task reconnectTask = _connection._currentReconnectionTask;
