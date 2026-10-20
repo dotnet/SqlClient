@@ -9,7 +9,7 @@ using System.Globalization;
 
 namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
 
-/// <summary>Verifies authentication exception factories and safe message-formatting behavior.</summary>
+/// <summary>Verifies authentication exception factories, resource lookup and safe formatting.</summary>
 public class AuthenticationStringsTest
 {
     /// <summary>
@@ -80,6 +80,58 @@ public class AuthenticationStringsTest
         Assert.Equal(AuthenticationStrings.Format(key, args), error.Message);
         Assert.Same(key is "SQL_CannotCreateAuthProvider" or "SQL_CannotCreateAuthInitializer"
             ? cause : null, error.InnerException);
+    }
+
+    /// <summary>
+    /// French is the stable satellite used to verify direct lookup, parent-culture lookup and
+    /// neutral-English fallback for an untranslated culture.
+    /// </summary>
+    [Theory]
+    // Expect the French translation for both "fr" and "fr-FR" cultures.
+    [InlineData("fr", "L'authentification 'unsupported' n'est pas prise en charge.")]
+    [InlineData("fr-FR", "L'authentification 'unsupported' n'est pas prise en charge.")]
+    // Expect the English fallback for the Swedish culture, which we don't localize.
+    [InlineData("sv-SE", "The authentication 'unsupported' is not supported.")]
+    public void FormatSelectsResourceUsingUICulture(string cultureName, string expected)
+    {
+        CultureInfo originalCulture = CultureInfo.CurrentUICulture;
+        try
+        {
+            CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo(cultureName);
+
+            Assert.Equal(expected,
+                AuthenticationStrings.Format("SQL_UnsupportedAuthentication", "unsupported"));
+        }
+        finally
+        {
+            CultureInfo.CurrentUICulture = originalCulture;
+        }
+    }
+
+    /// <summary>
+    /// Resource selection follows the French UI culture while numeric formatting follows the
+    /// distinct current culture, with both cultures restored after the assertion.
+    /// </summary>
+    [Fact]
+    public void FormatUsesSeparateUICultureAndFormattingCulture()
+    {
+        CultureInfo originalUICulture = CultureInfo.CurrentUICulture;
+        CultureInfo originalCulture = CultureInfo.CurrentCulture;
+        try
+        {
+            CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("fr-FR");
+            CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("en-US");
+
+            // French uses a comma as the decimal separator, but the formatting culture is "en-US"
+            // which uses a period.
+            Assert.Equal("L'authentification '1234.5' n'est pas prise en charge.",
+                AuthenticationStrings.Format("SQL_UnsupportedAuthentication", 1234.5m));
+        }
+        finally
+        {
+            CultureInfo.CurrentUICulture = originalUICulture;
+            CultureInfo.CurrentCulture = originalCulture;
+        }
     }
 
     /// <summary>Missing keys produce a diagnostic message with culture-formatted arguments.</summary>
