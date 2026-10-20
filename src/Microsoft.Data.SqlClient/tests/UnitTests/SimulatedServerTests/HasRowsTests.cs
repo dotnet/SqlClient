@@ -486,15 +486,19 @@ public sealed class HasRowsTests
     }
 
     /// <summary>
-    /// Buffered INFO tokens retain HasRows=false for closed or broken parsers,
+    /// Buffered INFO and ORDER tokens retain HasRows=false for closed or broken parsers,
     /// without introducing an exception or looping on an unconsumed token.
     /// </summary>
     [Theory]
-    [InlineData(false, false)]
-    [InlineData(false, true)]
-    [InlineData(true, false)]
-    [InlineData(true, true)]
-    public void Metadata_WithBufferedInfoAndUnavailableParser_ReturnsNoRows(bool broken, bool useAlternateMetadata)
+    [InlineData(false, false, TdsEnums.SQLINFO)]
+    [InlineData(false, true, TdsEnums.SQLINFO)]
+    [InlineData(true, false, TdsEnums.SQLINFO)]
+    [InlineData(true, true, TdsEnums.SQLINFO)]
+    [InlineData(false, false, TdsEnums.SQLORDER)]
+    [InlineData(false, true, TdsEnums.SQLORDER)]
+    [InlineData(true, false, TdsEnums.SQLORDER)]
+    [InlineData(true, true, TdsEnums.SQLORDER)]
+    public void Metadata_WithBufferedTokenAndUnavailableParser_ReturnsNoRows(bool broken, bool useAlternateMetadata, byte token)
     {
         // Arrange
         using SqlCommand command = new();
@@ -506,7 +510,7 @@ public sealed class HasRowsTests
         TdsParserStateObject state = parser._physicalStateObj;
         reader.Bind(state);
         state.SniContext = SniContext.Snix_Read;
-        state.SetBuffer(new[] { TdsEnums.SQLINFO }, 0, 1);
+        state.SetBuffer(new[] { token }, 0, 1);
         state._inBytesPacket = 1;
         _SqlMetaDataSet metadata = new(1, null);
 

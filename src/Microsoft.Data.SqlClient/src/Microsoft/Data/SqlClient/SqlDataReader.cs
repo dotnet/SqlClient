@@ -5773,6 +5773,13 @@ namespace Microsoft.Data.SqlClient
                 _stateObj._accumulateInfoEvents = true;
                 while (true)
                 {
+                    // TryRun cannot advance buffered tokens when the parser is unavailable.
+                    // Preserve the existing HasRows=false behavior without consuming input.
+                    if (_parser.State == TdsParserState.Broken || _parser.State == TdsParserState.Closed)
+                    {
+                        break;
+                    }
+
                     TdsOperationStatus result;
                     if (token == TdsEnums.SQLORDER)
                     {
@@ -5780,12 +5787,6 @@ namespace Microsoft.Data.SqlClient
                     }
                     else if (token == TdsEnums.SQLINFO)
                     {
-                        // TryRun cannot consume INFO tokens when the parser is closed or broken.
-                        // Leave the token unchanged to preserve the existing HasRows=false behavior.
-                        if (_parser.State == TdsParserState.Broken || _parser.State == TdsParserState.Closed)
-                        {
-                            break;
-                        }
                         result = _parser.TryRun(RunBehavior.ReturnImmediately, command, dataStream: null, bulkCopyHandler: null, _stateObj, out _);
                     }
                     else
