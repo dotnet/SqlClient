@@ -15,12 +15,20 @@ $expected = @{
     'TransientFault_RetryEnabled_ShouldSucceed_Async' = 3
     'TransientFault_RetryDisabled_ShouldFail' = 3
     'NetworkError_RetryEnabled_ShouldSucceed_Async' = 2
-    'TransientFault_NoFailover_DoesNotClearPool' = 3
-    'NetworkError_TriggersFailover_ClearsPool' = 1
-    'NetworkError_WithUserProvidedPartner_RetryDisabled_ShouldConnectToFailoverPartner' = 1
-    'NetworkError_WithUserProvidedPartner_RetryEnabled_ShouldConnectToFailoverPartner' = 1
+    'TransientFault_NoFailover_DoesNotClearPool' = 6
+    'NetworkError_TriggersFailover_ClearsPool' = 2
+    'NetworkError_WithUserProvidedPartner_RetryDisabled_ShouldConnectToFailoverPartner' = 2
+    'NetworkError_WithUserProvidedPartner_RetryEnabled_ShouldConnectToFailoverPartner' = 2
     'TransientFault_WithUserProvidedPartner_Async_ShouldConnectToPrimary_NotFailover' = 3
-    'TransientFault_WithUserProvidedPartner_Pooling_ShouldNotClearPool_NotFailover' = 3
+    'TransientFault_WithUserProvidedPartner_Pooling_ShouldNotClearPool_NotFailover' = 6
+    'ConnectionHandler_DoesNotBlockThreadPool' = 1
+    'TransientError_ConcurrentRequests_ConsumeFaultOnce' = 1
+    'TransientError_Reconfigure_StartsNewFaultBudget' = 1
+    'TransientDelay_ConcurrentRequests_ReserveDelayBeforeWaiting' = 1
+    'Dispose_DrainsConnectionsAcrossRepeatedServerLifetimes' = 1
+    'Dispose_ReportsUnexpectedWorkerFailure' = 2
+    'MissingEncryptionOption_DoesNotNegotiateTls' = 3
+    'NetworkingModeMatchesPipeline' = 1
 }
 
 dotnet build $project -f $Framework -c Debug -v:q
@@ -51,7 +59,7 @@ for ($iteration = 1; $iteration -le $Repetitions; $iteration++) {
     }
     foreach ($method in $expected.Keys) {
         $matches = @($results | Where-Object { $_.testName -match "\.$method(\(|$)" })
-        if ($matches.Count -lt $expected[$method]) {
+        if (@($matches.testName | Sort-Object -Unique).Count -lt $expected[$method]) {
             throw "Missing cases for $method in iteration $iteration"
         }
     }
