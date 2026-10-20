@@ -379,6 +379,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         // Quarantined due to intermittent failures in PR pipelines.
+        //
+        //     Microsoft.Data.SqlClient.SqlException : Connection Timeout Expired. The timeout period elapsed while attempting to consume the pre-login handshake acknowledgement. This could be because the pre-login handshake failed or the server was unable to respond back in time. This failure occurred while attempting to connect to the Failover server. The duration spent while attempting to connect to this server was - [Pre-Login] initialization=5; handshake=3985;
+        //       ---- System.ComponentModel.Win32Exception : The wait operation timed out
         [Trait("category", "flaky")]
         [Fact]
         public void NetworkError_WithUserProvidedPartner_RetryEnabled_ShouldConnectToFailoverPartner()
