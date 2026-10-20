@@ -4,11 +4,13 @@
 
 using System;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Connection;
+using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 using Xunit.Abstractions;
@@ -52,6 +54,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             _output = output;
         }
+
+        /// <summary>
+        /// Formats pool state with a stable reference hash instead of the legacy pool's incrementing Id.
+        /// </summary>
+        /// <param name="pool">The pool whose diagnostic state is captured.</param>
+        /// <returns>The pool identity and current state.</returns>
+        internal static string DescribePool(IDbConnectionPool pool) =>
+            $"poolType={pool.GetType().Name}, poolIdentityHash={RuntimeHelpers.GetHashCode(pool)}, " +
+            $"state={pool.State}, count={pool.Count}, idle={pool.IdleCount}";
 
         private const string GetIsoSql = @"
 SELECT CASE transaction_isolation_level
@@ -335,8 +346,7 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
                     $"root={inner.IsTransactionRoot}, stasis={inner.IsTxRootWaitingForTxEnd}, " +
                     $"doomed={inner.IsConnectionDoomed}, dirty={(inner as SqlConnectionInternal)?.IsolationLevelDirty}");
                 diagnostics.AppendLine(pool == null ? $"{label}: pool=none" :
-                    $"{label}: poolType={pool.GetType().Name}, poolId={pool.Id}, " +
-                    $"state={pool.State}, count={pool.Count}, idle={pool.IdleCount}");
+                    $"{label}: {DescribePool(pool)}");
                 Transaction enlisted = inner.EnlistedTransaction;
                 diagnostics.AppendLine(enlisted == null ? $"{label}: enlisted=none" :
                     $"{label}: enlisted={enlisted.TransactionInformation.LocalIdentifier}, status={enlisted.TransactionInformation.Status}");
