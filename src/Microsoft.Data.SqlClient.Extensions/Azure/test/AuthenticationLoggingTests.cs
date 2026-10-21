@@ -32,7 +32,10 @@ public class AuthenticationLoggingTests
     [Fact]
     public void Options_DefaultsUseOwnedNonPiiContract()
     {
+        // Act
         var options = new ActiveDirectoryAuthenticationProviderOptions();
+
+        // Assert
         Assert.Null(options.AuthenticationLoggingCallback);
         Assert.False(options.EnableMsalPiiLogging);
         Assert.Equal(typeof(Action<SqlAuthenticationLogEntry>),
@@ -53,15 +56,20 @@ public class AuthenticationLoggingTests
     [InlineData(99)]
     public void MsalCallback_UndefinedSeverityIsIgnored(int value)
     {
+        // Arrange
         using var listener = new AuthenticationListener();
         var entries = new List<SqlAuthenticationLogEntry>();
         var logger = new AuthenticationLogger(new ActiveDirectoryAuthenticationProviderOptions { AuthenticationLoggingCallback = entries.Add });
+
+        // Act
         using (logger.Begin(listener.ConnectionId))
         {
             logger.LogMsal((LogLevel)value, "unknown severity", false);
             AuthenticationLogger.MsalLogger.Log(new LogEntry { EventLogLevel = (EventLogLevel)value, Message = "unknown severity" });
             Assert.False(AuthenticationLogger.MsalLogger.IsEnabled((EventLogLevel)value));
         }
+
+        // Assert
         Assert.Empty(entries);
         Assert.Empty(listener.Events);
     }
@@ -77,17 +85,21 @@ public class AuthenticationLoggingTests
     [InlineData(LogLevel.Verbose, SqlAuthenticationLogLevel.Verbose)]
     public void MsalCallback_MapsSeverityAndCorrelation(LogLevel level, SqlAuthenticationLogLevel expected)
     {
+        // Arrange
         var entries = new List<SqlAuthenticationLogEntry>();
         var logger = new AuthenticationLogger(new ActiveDirectoryAuthenticationProviderOptions
         {
             AuthenticationLoggingCallback = entries.Add
         });
         Guid connectionId = Guid.NewGuid();
+
+        // Act
         using (logger.Begin(connectionId))
         {
             logger.LogMsal(level, "diagnostic", false);
         }
 
+        // Assert
         SqlAuthenticationLogEntry entry = Assert.Single(entries);
         Assert.Equal(expected, entry.Level);
         Assert.Equal(connectionId, entry.ConnectionId);
@@ -104,6 +116,7 @@ public class AuthenticationLoggingTests
     [InlineData(true)]
     public void MsalCallback_PiiNeverReachesEventSource(bool enablePii)
     {
+        // Arrange
         using var listener = new AuthenticationListener();
         var entries = new List<SqlAuthenticationLogEntry>();
         var logger = new AuthenticationLogger(new ActiveDirectoryAuthenticationProviderOptions
@@ -111,12 +124,15 @@ public class AuthenticationLoggingTests
             AuthenticationLoggingCallback = entries.Add,
             EnableMsalPiiLogging = enablePii
         });
+
+        // Act
         using (logger.Begin(listener.ConnectionId))
         {
             logger.LogMsal(LogLevel.Info, "non-PII diagnostic", false);
             logger.LogMsal(LogLevel.Info, "PII diagnostic", true);
         }
 
+        // Assert
         Assert.Equal(enablePii ? 2 : 1, entries.Count);
         EventWrittenEventArgs written = Assert.Single(listener.Events);
         Assert.Contains("non-PII diagnostic", written.Payload!.OfType<string>());
@@ -131,6 +147,7 @@ public class AuthenticationLoggingTests
     [InlineData(true)]
     public void CallbackFailure_ReportsSanitizedDiagnostic(bool cancellationException)
     {
+        // Arrange
         using var listener = new AuthenticationListener();
         int calls = 0;
         var logger = new AuthenticationLogger(new ActiveDirectoryAuthenticationProviderOptions
@@ -143,12 +160,15 @@ public class AuthenticationLoggingTests
                     : new InvalidOperationException("private callback data");
             }
         });
+
+        // Act
         using (logger.Begin(listener.ConnectionId))
         {
             logger.LogMsal(LogLevel.Warning, "authentication diagnostic", false);
             logger.LogMsal(LogLevel.Warning, "subsequent diagnostic", false);
         }
 
+        // Assert
         Assert.Equal(2, calls);
         Assert.Equal(2, listener.Events.Count(e => e.Level == EventLevel.Warning));
         Assert.Equal(2, listener.Events.Count(e => e.Level == EventLevel.Error));
@@ -164,9 +184,13 @@ public class AuthenticationLoggingTests
     [InlineData(true)]
     public void Callback_IsSnapshottedAndReceivesAllSeverities(bool collectTrace)
     {
+        // Arrange
         using var listener = new AuthenticationListener();
         if (!collectTrace)
+        {
             listener.Disable();
+        }
+
         var entries = new List<SqlAuthenticationLogEntry>();
         var options = new ActiveDirectoryAuthenticationProviderOptions
         {
@@ -175,6 +199,7 @@ public class AuthenticationLoggingTests
         var logger = new AuthenticationLogger(options);
         options.AuthenticationLoggingCallback = _ => throw new InvalidOperationException("changed options");
 
+        // Act
         using (logger.Begin(listener.ConnectionId))
         {
             foreach (EventLogLevel level in new[] { EventLogLevel.LogAlways, EventLogLevel.Critical,
@@ -184,6 +209,8 @@ public class AuthenticationLoggingTests
                 AuthenticationLogger.MsalLogger.Log(new LogEntry { EventLogLevel = level, Message = "diagnostic" });
             }
         }
+
+        // Assert
         Assert.Equal(Enum.GetValues(typeof(SqlAuthenticationLogLevel)).Cast<SqlAuthenticationLogLevel>(),
             entries.Select(entry => entry.Level));
         Assert.Equal(collectTrace ? 6 : 0, listener.Events.Count);
@@ -195,6 +222,7 @@ public class AuthenticationLoggingTests
     [InlineData(true)]
     public void ProviderConstruction_SnapshotsCallbackAndPiiOptions(bool enablePii)
     {
+        // Arrange
         var first = new List<SqlAuthenticationLogEntry>();
         var second = new List<SqlAuthenticationLogEntry>();
         var options = new ActiveDirectoryAuthenticationProviderOptions
@@ -209,6 +237,7 @@ public class AuthenticationLoggingTests
         options.AuthenticationLoggingCallback = null;
         options.EnableMsalPiiLogging = false;
 
+        // Act
         using (original.Logger.Begin(Guid.NewGuid()))
         {
             AuthenticationLogger.LogMsalForCurrentScope(LogLevel.Verbose, "original provider", false);
@@ -220,6 +249,7 @@ public class AuthenticationLoggingTests
             AuthenticationLogger.LogMsalForCurrentScope(LogLevel.Info, "replacement PII", true);
         }
 
+        // Assert
         Assert.Equal(enablePii ? 2 : 1, first.Count);
         Assert.Equal(enablePii ? 1 : 2, second.Count);
         Assert.All(first, entry => Assert.StartsWith("original", entry.Message));
@@ -234,10 +264,12 @@ public class AuthenticationLoggingTests
     [Fact]
     public void EventSource_RespectsKeywordsSeverityAndDetach()
     {
+        // Arrange
         using var listener = new AuthenticationListener();
         var logger = new AuthenticationLogger(new ActiveDirectoryAuthenticationProviderOptions());
         using (logger.Begin(listener.ConnectionId))
         {
+            // Act & Assert
             listener.Enable(EventLevel.Verbose, SqlClientEventSource.Keywords.ExecutionTrace);
             logger.LogMsal(LogLevel.Error, "wrong keyword", false);
             Assert.Empty(listener.Events);
@@ -259,7 +291,10 @@ public class AuthenticationLoggingTests
     [Fact]
     public void EventSource_AuthenticationSchemaIsValid()
     {
+        // Arrange
         Type sourceType = typeof(SqlClientEventSource);
+
+        // Act & Assert
         Assert.False(string.IsNullOrEmpty(EventSource.GenerateManifest(sourceType, sourceType.Assembly.Location)));
         foreach ((string name, int id, EventLevel level) in new[]
         {
@@ -286,6 +321,7 @@ public class AuthenticationLoggingTests
     [Fact]
     public void Callback_ReentrantLoggingIsSuppressed()
     {
+        // Arrange
         int calls = 0;
         AuthenticationLogger? logger = null;
         logger = new AuthenticationLogger(new ActiveDirectoryAuthenticationProviderOptions
@@ -296,10 +332,14 @@ public class AuthenticationLoggingTests
                 logger!.LogMsal(LogLevel.Error, "recursive", false);
             }
         });
+
+        // Act
         using (logger.Begin(Guid.NewGuid()))
         {
             logger.LogMsal(LogLevel.Info, "initial", false);
         }
+
+        // Assert
         Assert.Equal(1, calls);
     }
 
@@ -309,12 +349,15 @@ public class AuthenticationLoggingTests
     [Fact]
     public void NestedScopes_RestoreOuterLogger()
     {
+        // Arrange
         var outerEntries = new List<SqlAuthenticationLogEntry>();
         var innerEntries = new List<SqlAuthenticationLogEntry>();
         var outer = new AuthenticationLogger(new ActiveDirectoryAuthenticationProviderOptions { AuthenticationLoggingCallback = outerEntries.Add });
         var inner = new AuthenticationLogger(new ActiveDirectoryAuthenticationProviderOptions { AuthenticationLoggingCallback = innerEntries.Add });
         Guid outerId = Guid.NewGuid();
         Guid innerId = Guid.NewGuid();
+
+        // Act
         using (outer.Begin(outerId, captureAzure: true))
         {
             using (inner.Begin(innerId, captureAzure: true))
@@ -324,6 +367,8 @@ public class AuthenticationLoggingTests
             }
             outer.LogMsal(LogLevel.Info, "outer acquisition", false);
         }
+
+        // Assert
         Assert.Equal(innerId, Assert.Single(innerEntries).ConnectionId);
         Assert.Equal(outerId, Assert.Single(outerEntries).ConnectionId);
         Assert.Null(AuthenticationLogger.CurrentScope);
@@ -335,6 +380,7 @@ public class AuthenticationLoggingTests
     [Fact]
     public async Task CachedClients_IsolateLoggingPoliciesAndUseRealMsalCallback()
     {
+        // Arrange
         string clientId = Guid.NewGuid().ToString();
         var first = new ActiveDirectoryAuthenticationProvider(new ActiveDirectoryAuthenticationProviderOptions { ApplicationClientId = clientId });
         var equivalent = new ActiveDirectoryAuthenticationProvider(new ActiveDirectoryAuthenticationProviderOptions { ApplicationClientId = clientId });
@@ -350,6 +396,7 @@ public class AuthenticationLoggingTests
         options.AuthenticationLoggingCallback = null;
         var withoutCallback = new ActiveDirectoryAuthenticationProvider(options);
 
+        // Act & Assert
         IPublicClientApplication firstApp = await GetClient(first);
         Assert.Same(firstApp, await GetClient(equivalent));
         Assert.Equal(CreateKey(first).GetHashCode(), CreateKey(equivalent).GetHashCode());
@@ -365,20 +412,26 @@ public class AuthenticationLoggingTests
         Assert.Null(piiApp.AppConfig.LoggingCallback.Target);
         Assert.False(piiApp.AppConfig.IsDefaultPlatformLoggingEnabled);
 
+        // Act
         using (withCallback.Logger.Begin(Guid.NewGuid()))
         {
             AuthenticationLogger.LogMsalForCurrentScope(LogLevel.Info, "configured callback", false);
             await callbackApp.GetAccountsAsync();
         }
+
+        // Assert
         Assert.Contains(entries, entry => entry.Message == "configured callback");
         Assert.Contains(entries, entry => entry.Message != "configured callback" && entry.Source == "MSAL");
 
+        // Act
         entries.Clear();
         using var listener = new AuthenticationListener();
         using (first.Logger.Begin(listener.ConnectionId))
         {
             AuthenticationLogger.LogMsalForCurrentScope(LogLevel.Info, "late attachment", false);
         }
+
+        // Assert
         Assert.Single(listener.Events);
         Assert.Empty(entries);
     }
@@ -387,10 +440,13 @@ public class AuthenticationLoggingTests
     [Fact]
     public async Task RegisteredProviders_PreserveSignedInCacheAcrossReplacement()
     {
+        // Arrange
         const SqlAuthenticationMethod method = SqlAuthenticationMethod.ActiveDirectoryIntegrated;
         SqlAuthenticationProvider original = Assert.IsAssignableFrom<SqlAuthenticationProvider>(SqlAuthenticationProvider.GetProvider(method));
         string clientId = Guid.NewGuid().ToString();
         var first = new ActiveDirectoryAuthenticationProvider(new ActiveDirectoryAuthenticationProviderOptions { ApplicationClientId = clientId });
+
+        // Act & Assert
         try
         {
             Assert.True(SqlAuthenticationProvider.SetProvider(method, first));
@@ -428,7 +484,10 @@ public class AuthenticationLoggingTests
                     JsonProperty refreshToken = Assert.Single(snapshot.RootElement.GetProperty("RefreshToken").EnumerateObject());
                     Assert.Equal("<refresh-token>", refreshToken.Value.GetProperty("secret").GetString());
                     if (!pii || !callback)
+                    {
                         Assert.Same(primary, client);
+                    }
+
                     using (registered.Logger.Begin(Guid.NewGuid()))
                     {
                         AuthenticationLogger.LogMsalForCurrentScope(LogLevel.Verbose, "replacement diagnostic", false);
@@ -467,6 +526,7 @@ public class AuthenticationLoggingTests
     [InlineData(true)]
     public async Task CachedClients_CanceledBeforeAccessDoesNotReleaseAnotherLease(bool cancelPii)
     {
+        // Arrange
         var primary = PublicClientApplicationBuilder.Create(Guid.NewGuid().ToString()).Build();
         var secondary = PublicClientApplicationBuilder.Create(primary.AppConfig.ClientId).Build();
         var cached = new ActiveDirectoryAuthenticationProvider.CachedPublicClientApplications(primary);
@@ -475,6 +535,8 @@ public class AuthenticationLoggingTests
         var secondaryCache = Assert.IsAssignableFrom<ITokenCacheSerializer>(secondary.UserTokenCache);
         TokenCacheNotificationArgs Notification(bool pii, CancellationToken token, bool changed = false) =>
             new(pii ? secondaryCache : primaryCache, primary.AppConfig.ClientId, null, changed, false, null, false, null, token);
+
+        // Act & Assert
         TokenCacheNotificationArgs owner = Notification(!cancelPii, CancellationToken.None);
         await cached.BeforeAccessAsync(owner, pii: !cancelPii);
         using var cancellation = new CancellationTokenSource();
@@ -504,16 +566,21 @@ public class AuthenticationLoggingTests
     [InlineData(EventLogLevel.Verbose, SqlAuthenticationLogLevel.Verbose)]
     public void MsalLogger_MapsInterfaceSeverity(EventLogLevel sdk, SqlAuthenticationLogLevel expected)
     {
+        // Arrange
         var entries = new List<SqlAuthenticationLogEntry>();
         var logger = new AuthenticationLogger(new ActiveDirectoryAuthenticationProviderOptions
         {
             AuthenticationLoggingCallback = entries.Add
         });
+
+        // Act
         using (logger.Begin(Guid.NewGuid()))
         {
             Assert.True(AuthenticationLogger.MsalLogger.IsEnabled(sdk));
             AuthenticationLogger.MsalLogger.Log(new LogEntry { EventLogLevel = sdk, Message = "interface diagnostic" });
         }
+
+        // Assert
         SqlAuthenticationLogEntry entry = Assert.Single(entries);
         Assert.Equal(expected, entry.Level);
         Assert.Equal("interface diagnostic", entry.Message);
@@ -524,9 +591,15 @@ public class AuthenticationLoggingTests
     [Fact]
     public void MsalLogger_GatesFormattingOnCurrentOutputDemand()
     {
+        // Arrange
         var logger = new AuthenticationLogger(new ActiveDirectoryAuthenticationProviderOptions());
+
+        // Act & Assert
         using (logger.Begin(Guid.NewGuid()))
+        {
             Assert.False(AuthenticationLogger.MsalLogger.IsEnabled(EventLogLevel.Informational));
+        }
+
         using var listener = new AuthenticationListener();
         using (logger.Begin(listener.ConnectionId))
         {
@@ -541,10 +614,13 @@ public class AuthenticationLoggingTests
     [Fact]
     public void CachedClients_DoNotRetainReleasedCallbackTargets()
     {
+        // Act
         WeakReference callback = CacheReleasedCallback();
         GC.Collect();
         GC.WaitForPendingFinalizers();
         GC.Collect();
+
+        // Assert
         Assert.False(callback.IsAlive);
     }
 
@@ -566,6 +642,7 @@ public class AuthenticationLoggingTests
     [Fact]
     public async Task CachedClients_DispatchToCurrentProviderOnly()
     {
+        // Arrange
         string clientId = Guid.NewGuid().ToString();
         var first = new List<SqlAuthenticationLogEntry>();
         var second = new List<SqlAuthenticationLogEntry>();
@@ -579,8 +656,12 @@ public class AuthenticationLoggingTests
             ApplicationClientId = clientId,
             AuthenticationLoggingCallback = second.Add
         });
+
+        // Act & Assert
         IPublicClientApplication app = await GetClient(firstProvider);
         Assert.Same(app, await GetClient(secondProvider));
+
+        // Act
         Guid firstId = Guid.NewGuid();
         Guid secondId = Guid.NewGuid();
         using (firstProvider.Logger.Begin(firstId))
@@ -594,6 +675,8 @@ public class AuthenticationLoggingTests
             AuthenticationLogger.LogMsalForCurrentScope(LogLevel.Info, "restored provider", false);
         }
         AuthenticationLogger.LogMsalForCurrentScope(LogLevel.Info, "no provider", false);
+
+        // Assert
         Assert.Equal(new[] { "first provider", "restored provider" }, first.Select(entry => entry.Message));
         Assert.All(first, entry => Assert.Equal(firstId, entry.ConnectionId));
         Assert.Equal("second provider", Assert.Single(second).Message);
@@ -606,6 +689,7 @@ public class AuthenticationLoggingTests
     [Fact]
     public void AzureCredentialOptions_DisableSensitiveLogging()
     {
+        // Arrange
         TokenCredentialOptions[] options =
         [
             new DefaultAzureCredentialOptions(),
@@ -613,6 +697,8 @@ public class AuthenticationLoggingTests
             new TokenCredentialOptions(),
             new WorkloadIdentityCredentialOptions()
         ];
+
+        // Act & Assert
         foreach (TokenCredentialOptions option in options)
         {
             option.IsUnsafeSupportLoggingEnabled = true;
@@ -631,6 +717,7 @@ public class AuthenticationLoggingTests
     [Fact]
     public async Task AzureSdkEvents_AreScopedAndNonPii()
     {
+        // Arrange
         var entries = new ConcurrentQueue<SqlAuthenticationLogEntry>();
         var logger = new AuthenticationLogger(new ActiveDirectoryAuthenticationProviderOptions
         {
@@ -641,8 +728,11 @@ public class AuthenticationLoggingTests
         using var httpClient = new HttpClient(handler);
         ClientSecretCredential credential = CreateCredential(httpClient);
 
+        // Act & Assert
         await Assert.ThrowsAsync<AuthenticationFailedException>(() => RequestToken(credential));
         Assert.Empty(entries);
+
+        // Act
         Guid connectionId = Guid.NewGuid();
         using (AuthenticationLogger.Scope scope = logger.Begin(connectionId, captureAzure: true))
         {
@@ -650,6 +740,7 @@ public class AuthenticationLoggingTests
             await Assert.ThrowsAsync<AuthenticationFailedException>(() => RequestToken(credential));
         }
 
+        // Assert
         Assert.Contains(entries, entry => entry.Source == "Azure-Identity" && entry.Message.Contains("MSAL"));
         Assert.All(entries, entry =>
         {
@@ -659,8 +750,12 @@ public class AuthenticationLoggingTests
         });
         Assert.True(handler.RequestCount > 0);
         Assert.Contains(entries, entry => entry.Level == SqlAuthenticationLogLevel.Verbose);
+
+        // Act
         int count = entries.Count;
         await Assert.ThrowsAsync<AuthenticationFailedException>(() => RequestToken(credential));
+
+        // Assert
         Assert.Equal(count, entries.Count);
     }
 
@@ -670,12 +765,15 @@ public class AuthenticationLoggingTests
     [Fact]
     public async Task AzureSdkEvents_FollowEventSourceEnablement()
     {
+        // Arrange
         using var handler = new TokenFailureHandler();
         using var httpClient = new HttpClient(handler);
         ClientSecretCredential credential = CreateCredential(httpClient);
         var logger = new AuthenticationLogger(new ActiveDirectoryAuthenticationProviderOptions());
         using var listener = new AuthenticationListener();
         listener.Disable();
+
+        // Act & Assert
         using (AuthenticationLogger.Scope scope = logger.Begin(listener.ConnectionId, captureAzure: true))
         {
             await scope.WaitForReadyAsync(CancellationToken.None);
@@ -697,6 +795,7 @@ public class AuthenticationLoggingTests
     [Fact]
     public async Task AzureSdkEvents_ConcurrentProvidersRemainIsolated()
     {
+        // Arrange
         var first = new ConcurrentQueue<SqlAuthenticationLogEntry>();
         var second = new ConcurrentQueue<SqlAuthenticationLogEntry>();
         Guid firstId = Guid.NewGuid();
@@ -711,7 +810,11 @@ public class AuthenticationLoggingTests
         ClientSecretCredential credential = CreateCredential(httpClient);
         var ready = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         int started = 0;
+
+        // Act
         await Task.WhenAll(Invoke(firstLogger, firstId), Invoke(secondLogger, secondId));
+
+        // Assert
         Assert.NotEmpty(first);
         Assert.NotEmpty(second);
         Assert.All(first, entry => Assert.Equal(firstId, entry.ConnectionId));
@@ -738,6 +841,7 @@ public class AuthenticationLoggingTests
     [Fact]
     public async Task AzureSdkEvents_FirstSubscriptionOwnerHonorsTimeout()
     {
+        // Arrange
         _ = await AzureAuthenticationEventListener.GetInstanceAsync();
         using var source = new ControlledIdentitySource();
         using var entered = new ManualResetEventSlim();
@@ -749,15 +853,20 @@ public class AuthenticationLoggingTests
             {
                 entered.Set();
                 if (!release.Wait(TimeSpan.FromSeconds(10)))
+                {
                     throw new TimeoutException("Subscription timeout test was not released.");
+                }
             }
         };
         var provider = new ActiveDirectoryAuthenticationProvider(new ActiveDirectoryAuthenticationProviderOptions { AuthenticationLoggingCallback = _ => { } });
         var parameters = new SqlAuthenticationParameters(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal,
             "test-server", "test-db", "https://database.windows.net/", "not-an-authority", "", "", Guid.NewGuid(), 1);
+
+        // Act
         Task acquisition = Task.Run(() => provider.AcquireTokenAsync(parameters));
         try
         {
+            // Assert
             Assert.True(entered.Wait(TimeSpan.FromSeconds(5)));
             Assert.Same(acquisition, await Task.WhenAny(acquisition, Task.Delay(TimeSpan.FromSeconds(3))));
             AuthenticationException failure = await Assert.ThrowsAsync<AuthenticationException>(() => acquisition);
@@ -775,6 +884,7 @@ public class AuthenticationLoggingTests
     [Fact]
     public async Task AzureSdkEvents_LateCollectorRetainsFirstDiagnostic()
     {
+        // Arrange
         using var source = new ControlledIdentitySource();
         using var listener = new AuthenticationListener();
         listener.Disable();
@@ -794,6 +904,8 @@ public class AuthenticationLoggingTests
                 }, null);
             }
         };
+
+        // Act
         try
         {
             var other = new AuthenticationLogger(new ActiveDirectoryAuthenticationProviderOptions { AuthenticationLoggingCallback = _ => { } });
@@ -804,6 +916,8 @@ public class AuthenticationLoggingTests
         {
             source.Enabling = null;
         }
+
+        // Assert
         Assert.Contains(listener.Events, e => Equals(e.Payload![0], "first diagnostic after attachment"));
     }
 
@@ -811,14 +925,19 @@ public class AuthenticationLoggingTests
     [Fact]
     public async Task AzureSdkEvents_DoNotRetainDisposedSources()
     {
+        // Arrange
         _ = await AzureAuthenticationEventListener.GetInstanceAsync();
         WeakReference source = CreateDisposedSource();
+
+        // Act
         for (int i = 0; i < 5 && source.IsAlive; i++)
         {
             GC.Collect();
             GC.WaitForPendingFinalizers();
             GC.Collect();
         }
+
+        // Assert
         Assert.False(source.IsAlive);
     }
 
@@ -835,12 +954,15 @@ public class AuthenticationLoggingTests
     [Fact]
     public void NullCallback_PreservesEventSourceAndDisablesPii()
     {
+        // Arrange
         using var listener = new AuthenticationListener();
         var logger = new AuthenticationLogger(new ActiveDirectoryAuthenticationProviderOptions
         {
             EnableMsalPiiLogging = true
         });
         int tracesBefore = listener.TraceEvents;
+
+        // Act
         using (logger.Begin(listener.ConnectionId, captureAzure: true))
         {
             SqlClientEventSource.Log.TryTraceEvent("Other SqlClient tracing remains enabled.");
@@ -848,6 +970,8 @@ public class AuthenticationLoggingTests
             logger.LogMsal(LogLevel.Info, "trace retained", false);
             logger.LogMsal(LogLevel.Info, "disabled PII", true);
         }
+
+        // Assert
         Assert.Equal(2, listener.Events.Count);
         Assert.DoesNotContain(listener.Events, e => e.Payload!.OfType<string>().Contains("disabled PII"));
         Assert.False(logger.EnableMsalPiiLogging);
@@ -858,6 +982,7 @@ public class AuthenticationLoggingTests
     [Fact]
     public async Task AzureSdkEvents_CriticalCollectorIncludesAlways()
     {
+        // Arrange
         using var listener = new AuthenticationListener();
         listener.Disable();
         listener.Enable(EventLevel.Critical, SqlClientEventSource.Keywords.Trace);
@@ -865,6 +990,8 @@ public class AuthenticationLoggingTests
         using var source = new ControlledIdentitySource();
         using AuthenticationLogger.Scope scope = logger.Begin(listener.ConnectionId, captureAzure: true);
         await scope.WaitForReadyAsync(CancellationToken.None);
+
+        // Act & Assert
         Assert.False(source.IsEnabled(EventLevel.Verbose, EventKeywords.None));
         source.LogMsalAlways("always diagnostic");
         Assert.Equal(EventLevel.LogAlways, Assert.Single(listener.Events).Level);
@@ -876,6 +1003,7 @@ public class AuthenticationLoggingTests
     [InlineData(true)]
     public async Task AzureSdkEvents_CollectorFilteringIsIndependentOfCallback(bool hasCallback)
     {
+        // Arrange
         var entries = new List<SqlAuthenticationLogEntry>();
         var logger = new AuthenticationLogger(new ActiveDirectoryAuthenticationProviderOptions
         {
@@ -885,6 +1013,8 @@ public class AuthenticationLoggingTests
         using var source = new ControlledIdentitySource();
         using AuthenticationLogger.Scope scope = logger.Begin(listener.ConnectionId, captureAzure: true);
         await scope.WaitForReadyAsync(CancellationToken.None);
+
+        // Act & Assert
         Assert.True(source.IsEnabled(EventLevel.Verbose, EventKeywords.None));
         source.LogMsalVerbose("trace detail");
         source.LogMsalInformational("information");
@@ -907,6 +1037,7 @@ public class AuthenticationLoggingTests
     [Fact]
     public void MsalCallback_ConsumerFilteringPreservesPiiBoundary()
     {
+        // Arrange
         var entries = new List<SqlAuthenticationLogEntry>();
         int calls = 0;
         using var listener = new AuthenticationListener();
@@ -917,15 +1048,21 @@ public class AuthenticationLoggingTests
             {
                 calls++;
                 if (entry.Level <= SqlAuthenticationLogLevel.Error)
+                {
                     entries.Add(entry);
+                }
             }
         });
+
+        // Act
         using (logger.Begin(listener.ConnectionId))
         {
             logger.LogMsal(LogLevel.Error, "callback PII", true);
             logger.LogMsal(LogLevel.Info, "filtered PII", true);
             logger.LogMsal(LogLevel.Verbose, "trace detail", false);
         }
+
+        // Assert
         Assert.Equal(3, calls);
         Assert.Equal("callback PII", Assert.Single(entries).Message);
         Assert.Equal("trace detail", Assert.Single(listener.Events).Payload![0]);
@@ -937,6 +1074,7 @@ public class AuthenticationLoggingTests
     [InlineData(true)]
     public async Task AzureSdkEvents_ConcurrentSubscriptionReadiness(bool cancel)
     {
+        // Arrange
         _ = await AzureAuthenticationEventListener.GetInstanceAsync();
         using var source = new ControlledIdentitySource();
         Assert.Null(source.ConstructionException);
@@ -971,6 +1109,8 @@ public class AuthenticationLoggingTests
             await scope.WaitForReadyAsync(CancellationToken.None);
             await finished.Task;
         });
+
+        // Act & Assert
         try
         {
             await CompleteWithinTimeout(started.Task);
@@ -1010,6 +1150,8 @@ public class AuthenticationLoggingTests
             finished.TrySetResult(true);
             await CompleteWithinTimeout(initial);
         }
+
+        // Act & Assert
         await CompleteWithinTimeout((await AzureAuthenticationEventListener.GetInstanceAsync()).WaitForRefreshAsync());
         Assert.False(source.IsEnabled());
         using (AuthenticationLogger.Scope scope = firstLogger.Begin(Guid.NewGuid(), captureAzure: true))
@@ -1026,6 +1168,7 @@ public class AuthenticationLoggingTests
     [Fact]
     public async Task AzureSdkEvents_ReentrantCommandsAndNewSourcesRemainReady()
     {
+        // Arrange
         var logger = new AuthenticationLogger(new ActiveDirectoryAuthenticationProviderOptions());
         using var source = new ControlledIdentitySource();
         using var listener = new AuthenticationListener();
@@ -1038,7 +1181,10 @@ public class AuthenticationLoggingTests
         source.Enabling = () =>
         {
             if (Interlocked.Exchange(ref once, 0) != 1)
+            {
                 return;
+            }
+
             ExecutionContext.Run(context, _ =>
             {
                 listener.Enable(EventLevel.Informational, SqlClientEventSource.Keywords.Trace);
@@ -1050,11 +1196,15 @@ public class AuthenticationLoggingTests
         {
             AuthenticationLoggingCallback = _ => { }
         });
+
+        // Act
         using (AuthenticationLogger.Scope inner = withCallback.Begin(Guid.NewGuid(), captureAzure: true))
         {
             await inner.WaitForReadyAsync(CancellationToken.None);
             source.Enabling = null;
         }
+
+        // Assert
         Assert.Contains(listener.Events, entry => Equals(entry.Payload![0], "created during refresh") &&
             Equals(entry.Payload[2], outer.ConnectionId.ToString()));
     }
@@ -1110,10 +1260,13 @@ public class AuthenticationLoggingTests
     [Fact]
     public async Task DisposedScope_DoesNotCaptureInheritedBackgroundWork()
     {
+        // Arrange
         var entries = new List<SqlAuthenticationLogEntry>();
         var logger = new AuthenticationLogger(new ActiveDirectoryAuthenticationProviderOptions { AuthenticationLoggingCallback = entries.Add });
         var gate = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         Task background;
+
+        // Act
         using (AuthenticationLogger.Scope scope = logger.Begin(Guid.NewGuid(), captureAzure: true))
         {
             await scope.WaitForReadyAsync(CancellationToken.None);
@@ -1125,6 +1278,8 @@ public class AuthenticationLoggingTests
         }
         gate.SetResult(true);
         await background;
+
+        // Assert
         Assert.Empty(entries);
     }
 
@@ -1182,6 +1337,7 @@ public class AuthenticationLoggingTests
     [Fact]
     public async Task AzureListener_RejectsUnknownPayloadsAndSanitizesFailures()
     {
+        // Arrange
         using var listener = new AuthenticationListener();
         using var source = new InvalidSchemaIdentitySource();
         var entries = new List<SqlAuthenticationLogEntry>();
@@ -1189,6 +1345,8 @@ public class AuthenticationLoggingTests
         {
             AuthenticationLoggingCallback = entries.Add
         });
+
+        // Act & Assert
         using (AuthenticationLogger.Scope scope = logger.Begin(listener.ConnectionId, captureAzure: true))
         {
             await scope.WaitForReadyAsync(CancellationToken.None);
@@ -1208,6 +1366,8 @@ public class AuthenticationLoggingTests
             Assert.Equal(SqlAuthenticationLogLevel.Informational, selected.Level);
             source.GetTokenFailed("private SDK exception data");
         }
+
+        // Assert
         Assert.Equal(2, entries.Count);
         Assert.Equal("Azure credential token request failed.", entries[1].Message);
         Assert.Equal(SqlAuthenticationLogLevel.Error, entries[1].Level);
@@ -1271,6 +1431,7 @@ public class AuthenticationLoggingTests
     [Fact]
     public async Task AcquireTokenSuccess_ThrowingCallbackDoesNotChangeToken()
     {
+        // Arrange
         using var listener = new AuthenticationListener();
         var handler = new TokenSuccessHandler();
         using var client = new HttpClient(handler);
@@ -1300,7 +1461,11 @@ public class AuthenticationLoggingTests
                 "test-server", "test-db", "https://database.windows.net/.default",
                 "https://login.microsoftonline.com/11111111-2222-3333-4444-555555555555",
                 clientId, "<secret>", listener.ConnectionId, 30);
+
+            // Act
             SqlAuthenticationToken token = await provider.AcquireTokenAsync(parameters);
+
+            // Assert
             Assert.Equal(1, handler.RequestCount);
             Assert.Equal("<access-token>", token.AccessToken);
             Assert.True(token.ExpiresOn > DateTime.UtcNow);
@@ -1364,19 +1529,25 @@ public class AuthenticationLoggingTests
     [InlineData(0, null, null)]
     public void AzureSdkSeverity_MapsOnlyKnownEvents(int id, string? name, SqlAuthenticationLogLevel? expected)
     {
+        // Act & Assert
         Assert.Equal(expected, AzureAuthenticationEventListener.GetMsalLevel(id, name));
         if (expected.HasValue)
         {
+            // Arrange
             using var listener = new AuthenticationListener();
             var entries = new List<SqlAuthenticationLogEntry>();
             var logger = new AuthenticationLogger(new ActiveDirectoryAuthenticationProviderOptions
             {
                 AuthenticationLoggingCallback = entries.Add
             });
+
+            // Act
             using (logger.Begin(listener.ConnectionId))
             {
                 logger.Write(expected.Value, "SDK diagnostic", false, "Azure-Identity");
             }
+
+            // Assert
             Assert.Equal(AuthenticationLogger.ToEventLevel(expected.Value), Assert.Single(listener.Events).Level);
             Assert.Equal(expected.Value, Assert.Single(entries).Level);
         }
@@ -1390,6 +1561,7 @@ public class AuthenticationLoggingTests
     [InlineData(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal)]
     public async Task AcquireTokenFailure_LogsWithoutExposingExceptionOrChangingFailure(SqlAuthenticationMethod method)
     {
+        // Arrange
         using var listener = new AuthenticationListener();
         var entries = new List<SqlAuthenticationLogEntry>();
         var provider = new ActiveDirectoryAuthenticationProvider(new ActiveDirectoryAuthenticationProviderOptions
@@ -1403,6 +1575,8 @@ public class AuthenticationLoggingTests
         var parameters = new SqlAuthenticationParameters(method, "test-server", "test-db",
             "https://database.windows.net/", "https://login.microsoftonline.com/", "", "",
             listener.ConnectionId, 30);
+
+        // Act & Assert
         await Assert.ThrowsAsync<AuthenticationException>(() => provider.AcquireTokenAsync(parameters));
         Assert.Contains(entries, entry => entry.Message == "Token acquisition failed.");
         Assert.All(entries, entry => Assert.Equal(listener.ConnectionId, entry.ConnectionId));
@@ -1417,6 +1591,7 @@ public class AuthenticationLoggingTests
     [InlineData(true)]
     public async Task DefaultProvider_ServicePrincipalLogsBothOpenPaths(bool async)
     {
+        // Arrange
         var builder = new SqlConnectionStringBuilder(Config.TCPConnectionString)
         {
             Authentication = SqlAuthenticationMethod.ActiveDirectoryServicePrincipal,
@@ -1428,6 +1603,8 @@ public class AuthenticationLoggingTests
         };
         using var listener = new AuthenticationListener(captureAll: true);
         using var connection = new SqlConnection(builder.ConnectionString);
+
+        // Act
         if (async)
         {
             await connection.OpenAsync();
@@ -1436,6 +1613,8 @@ public class AuthenticationLoggingTests
         {
             connection.Open();
         }
+
+        // Assert
         Assert.Contains(listener.Events,
             entry => Equals(entry.Payload![2], connection.ClientConnectionId.ToString()));
     }
@@ -1448,6 +1627,7 @@ public class AuthenticationLoggingTests
     [InlineData(true)]
     public async Task IntegratedProvider_LogsBothOpenPaths(bool async)
     {
+        // Arrange
         SqlAuthenticationProvider original = Assert.IsAssignableFrom<SqlAuthenticationProvider>(
             SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryIntegrated));
         var entries = new ConcurrentQueue<SqlAuthenticationLogEntry>();
@@ -1468,6 +1648,8 @@ public class AuthenticationLoggingTests
             builder.Remove("User ID");
             builder.Remove("Password");
             using var connection = new SqlConnection(builder.ConnectionString);
+
+            // Act
             if (async)
             {
                 await connection.OpenAsync();
@@ -1476,6 +1658,8 @@ public class AuthenticationLoggingTests
             {
                 connection.Open();
             }
+
+            // Assert
             Assert.Contains(entries, entry => entry.Source == "MSAL" && entry.ConnectionId == connection.ClientConnectionId);
             Assert.All(entries, entry => Assert.False(entry.ContainsPii));
         }
@@ -1514,7 +1698,10 @@ public class AuthenticationLoggingTests
         public override void Dispose()
         {
             if (_source is not null)
+            {
                 DisableEvents(_source);
+            }
+
             base.Dispose();
         }
 
@@ -1532,7 +1719,10 @@ public class AuthenticationLoggingTests
         protected override void OnEventWritten(EventWrittenEventArgs eventData)
         {
             if (eventData.EventName == "Trace")
+            {
                 Interlocked.Increment(ref TraceEvents);
+            }
+
             if (eventData.EventName?.StartsWith("Authentication", StringComparison.Ordinal) == true &&
                 eventData.Payload?.Count == 3 && (_captureAll || Equals(eventData.Payload[2], ConnectionId.ToString())))
             {

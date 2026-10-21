@@ -150,7 +150,9 @@ internal sealed class AuthenticationLogger
         public void Log(LogEntry entry)
         {
             if (Map(entry.EventLogLevel) is { } level)
+            {
                 CurrentScope?.Logger.Write(level, entry.Message ?? "MSAL emitted a diagnostic without message text.", false, "MSAL");
+            }
         }
 
         /// <summary>Maps the independent identity-logger severity contract explicitly.</summary>
@@ -195,13 +197,19 @@ internal sealed class AuthenticationLogger
         {
             cancellationToken.ThrowIfCancellationRequested();
             if (!CaptureAzure)
+            {
                 return;
+            }
+
             Task<AzureAuthenticationEventListener> initialization = AzureAuthenticationEventListener.GetInstanceAsync();
             await WaitWithCancellationAsync(initialization, cancellationToken).ConfigureAwait(false);
             lock (_gate)
             {
                 if (!IsActive)
+                {
                     throw new ObjectDisposedException(nameof(Scope));
+                }
+
                 if (_listener is null)
                 {
                     _listener = initialization.GetAwaiter().GetResult();
@@ -249,7 +257,9 @@ internal sealed class AuthenticationLogger
             }
             s_scope.Value = _previous;
             lock (_gate)
+            {
                 _listener?.Leave(Logger);
+            }
         }
     }
 }

@@ -9,11 +9,11 @@ using System.Security.Cryptography;
 using System.Text;
 using Azure.Core;
 using Azure.Identity;
+using Microsoft.Data.SqlClient.Internal;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Identity.Client;
 using Microsoft.Identity.Client.Broker;
 using Microsoft.Identity.Client.Extensibility;
-using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient;
 
@@ -63,7 +63,6 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
     private readonly bool _useWamBroker = false;
 
     private readonly string _type = typeof(ActiveDirectoryAuthenticationProvider).Name;
-    private readonly AuthenticationLogger _logger;
     private Func<DeviceCodeResult, Task> _deviceCodeFlowCallback;
     private ICustomWebUi? _customWebUI = null;
 
@@ -102,7 +101,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             throw new ArgumentNullException(nameof(options));
         }
 
-        _logger = new AuthenticationLogger(options);
+        Logger = new AuthenticationLogger(options);
         _deviceCodeFlowCallback = options.DeviceCodeFlowCallback ?? DefaultDeviceFlowCallback;
         if (options.ApplicationClientId is not null)
         {
@@ -128,7 +127,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
     internal string ApplicationClientId => _applicationClientId;
 
     /// <summary>Gets this provider's immutable, acquisition-scoped logging policy.</summary>
-    internal AuthenticationLogger Logger => _logger;
+    internal AuthenticationLogger Logger { get; }
 
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ClearUserTokenCache/*'/>
     public static void ClearUserTokenCache()
@@ -194,29 +193,26 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
 
     private readonly ParentWindowProvider _parentWindowProvider = new();
 
-    /// <summary>Gets or updates UI callback state without making cached clients retain this provider.</summary>
-    private Func<object>? ParentActivityOrWindowFunc
-    {
-        get => _parentWindowProvider.Callback;
-        set => _parentWindowProvider.Callback = value;
-    }
 
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/SetParentActivityOrWindowFunc/*'/>
     public void SetParentActivityOrWindowFunc(Func<object>? parentActivityOrWindowFunc)
     {
         // Passing null clears a previously-installed callback (and reverts the provider to its
         // automatic console-window fallback on Windows).
-        ParentActivityOrWindowFunc = parentActivityOrWindowFunc;
+        _parentWindowProvider.Callback = parentActivityOrWindowFunc;
     }
 
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/AcquireTokenAsync/*'/>
     public override async Task<SqlAuthenticationToken> AcquireTokenAsync(SqlAuthenticationParameters parameters)
     {
-        bool captureAzure = parameters.AuthenticationMethod is SqlAuthenticationMethod.ActiveDirectoryDefault
-            or SqlAuthenticationMethod.ActiveDirectoryManagedIdentity or SqlAuthenticationMethod.ActiveDirectoryMSI
-            or SqlAuthenticationMethod.ActiveDirectoryServicePrincipal or SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity;
+        bool captureAzure = parameters.AuthenticationMethod
+            is SqlAuthenticationMethod.ActiveDirectoryDefault
+            or SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
+            or SqlAuthenticationMethod.ActiveDirectoryMSI
+            or SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
+            or SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity;
         // The scope attributes async SDK events and is disposed on every return and exception path.
-        using AuthenticationLogger.Scope loggingScope = _logger.Begin(parameters.ConnectionId, captureAzure);
+        using AuthenticationLogger.Scope loggingScope = Logger.Begin(parameters.ConnectionId, captureAzure);
         try
         {
             using CancellationTokenSource cts = new();
@@ -236,7 +232,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             }
 
             await loggingScope.WaitForReadyAsync(cts.Token).ConfigureAwait(false);
-            _logger.Write(SqlAuthenticationLogLevel.Informational, "Token acquisition started.", false, "SqlClient");
+            Logger.Write(SqlAuthenticationLogLevel.Informational, "Token acquisition started.", containsPii: false, source: "SqlClient");
 
             string scope = parameters.Resource.EndsWith(s_defaultScopeSuffix, StringComparison.Ordinal) ? parameters.Resource : parameters.Resource + s_defaultScopeSuffix;
             string[] scopes = [scope];
@@ -466,13 +462,13 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
         }
         catch (Extensions.Azure.AuthenticationException)
         {
-            _logger.Write(SqlAuthenticationLogLevel.Error, "Token acquisition failed.", false, "SqlClient");
+            Logger.Write(SqlAuthenticationLogLevel.Error, "Token acquisition failed.", containsPii: false, source: "SqlClient");
             // Already shaped for the caller; don't re-wrap it below.
             throw;
         }
         catch (MsalException ex)
         {
-            _logger.Write(SqlAuthenticationLogLevel.Error, "Token acquisition failed.", false, "SqlClient");
+            Logger.Write(SqlAuthenticationLogLevel.Error, "Token acquisition failed.", containsPii: false, source: "SqlClient");
             // Check for an explicitly retryable error.
             if (ex is MsalServiceException svcEx &&
                 svcEx.StatusCode == MsalRetryStatusCode)
@@ -547,7 +543,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
                  or AuthenticationRequiredException
                  or CredentialUnavailableException)
         {
-            _logger.Write(SqlAuthenticationLogLevel.Error, "Token acquisition failed.", false, "SqlClient");
+            Logger.Write(SqlAuthenticationLogLevel.Error, "Token acquisition failed.", containsPii: false, source: "SqlClient");
             // These errors aren't retryable.
             throw new Extensions.Azure.AuthenticationException(
                 parameters.AuthenticationMethod,
@@ -559,7 +555,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
         }
         catch (Exception ex)
         {
-            _logger.Write(SqlAuthenticationLogLevel.Error, "Token acquisition failed.", false, "SqlClient");
+            Logger.Write(SqlAuthenticationLogLevel.Error, "Token acquisition failed.", containsPii: false, source: "SqlClient");
             // These errors aren't retryable.
             throw new Extensions.Azure.AuthenticationException(
                 parameters.AuthenticationMethod,
@@ -800,10 +796,12 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
     /// <remarks>Replacement providers reuse identity-local token state, not the previous provider's logging policy.</remarks>
     internal async Task<IPublicClientApplication> GetPublicClientAppInstanceAsync(PublicClientAppKey publicClientAppKey, CancellationToken cancellationToken)
     {
-        bool pii = _logger.EnableMsalPiiLogging;
+        bool pii = Logger.EnableMsalPiiLogging;
         if (s_pcaMap.TryGetValue(publicClientAppKey, out CachedPublicClientApplications? cached) &&
             (!pii || cached.PiiClient is not null))
+        {
             return pii ? cached.PiiClient! : cached.DefaultClient;
+        }
 
         await s_pcaMapModifierSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
@@ -814,7 +812,10 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
                 s_pcaMap.TryAdd(publicClientAppKey, cached);
             }
             if (pii && cached.PiiClient is null)
+            {
                 cached.AddPiiClient(CreateClientAppInstance(publicClientAppKey, enablePiiLogging: true));
+            }
+
             return pii ? cached.PiiClient! : cached.DefaultClient;
         }
         finally
@@ -870,20 +871,17 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             try
             {
                 if (pii && _cacheData is null)
+                {
                     _cacheData = _primaryCache.SerializeMsalV3();
+                }
+
                 if (_cacheData is not null && (pii ? _piiVersion : _primaryVersion) != _cacheVersion)
                 {
                     // Restore only the notifying client's cache while MSAL holds that client's cache lock.
                     args.TokenCache.DeserializeMsalV3(_cacheData, shouldClearExistingCache: true);
-                    if (pii)
-                        _piiVersion = _cacheVersion;
-                    else
-                        _primaryVersion = _cacheVersion;
+                    (pii ? ref _piiVersion : ref _primaryVersion) = _cacheVersion;
                 }
-                if (pii)
-                    _piiEntered = true;
-                else
-                    _primaryEntered = true;
+                (pii ? ref _piiEntered : ref _primaryEntered) = true;
             }
             catch
             {
@@ -898,22 +896,23 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
         internal Task AfterAccessAsync(TokenCacheNotificationArgs args, bool pii)
         {
             if (pii ? !_piiEntered : !_primaryEntered)
+            {
                 return Task.CompletedTask;
-            if (pii)
-                _piiEntered = false;
-            else
-                _primaryEntered = false;
+            }
+
+            (pii ? ref _piiEntered : ref _primaryEntered) = false;
+
             try
             {
                 if (args.HasStateChanged)
                 {
                     if (_cacheData is not null)
+                    {
                         _cacheData = args.TokenCache.SerializeMsalV3();
+                    }
+
                     _cacheVersion++;
-                    if (pii)
-                        _piiVersion = _cacheVersion;
-                    else
-                        _primaryVersion = _cacheVersion;
+                    (pii ? ref _piiVersion : ref _primaryVersion) = _cacheVersion;
                 }
             }
             finally
@@ -1083,7 +1082,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             // UIViewController. WAM broker remains Windows-only and is intentionally skipped.
             // The callback is snapshotted at PCA build time; callers who update the callback
             // after the PCA is cached must invoke ClearUserTokenCache() to pick up the change.
-            Func<object>? parentActivityOrWindowFunc = ParentActivityOrWindowFunc;
+            Func<object>? parentActivityOrWindowFunc = _parentWindowProvider.Callback;
             if (parentActivityOrWindowFunc is not null)
             {
                 builder.WithParentActivityOrWindow(parentActivityOrWindowFunc);

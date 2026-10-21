@@ -17,15 +17,21 @@ public class WamBrokerTests
     // that this value differs from the SqlClient first-party id.
     private const string TestCustomAppId = "11111111-2222-3333-4444-555555555555";
 
-    // Reads the private parent-window callback property. Used to assert downstream effects
+    // Reads the private parent-window callback holder. Used to assert downstream effects
     // of SetParentActivityOrWindowFunc without triggering a live MSAL flow.
     private static Func<object>? GetParentActivityOrWindowFunc(ActiveDirectoryAuthenticationProvider provider)
     {
-        PropertyInfo? property = typeof(ActiveDirectoryAuthenticationProvider).GetProperty(
-            "ParentActivityOrWindowFunc",
+        FieldInfo? field = typeof(ActiveDirectoryAuthenticationProvider).GetField(
+            "_parentWindowProvider",
             BindingFlags.Instance | BindingFlags.NonPublic);
-        Assert.NotNull(property);
-        return (Func<object>?)property!.GetValue(provider);
+        Assert.NotNull(field);
+        object? holder = field!.GetValue(provider);
+        Assert.NotNull(holder);
+        PropertyInfo? callback = holder!.GetType().GetProperty(
+            "Callback",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(callback);
+        return (Func<object>?)callback!.GetValue(holder);
     }
 
     /// <summary>

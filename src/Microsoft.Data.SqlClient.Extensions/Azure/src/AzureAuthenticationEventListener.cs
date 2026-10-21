@@ -32,7 +32,9 @@ internal sealed class AzureAuthenticationEventListener : EventListener
         foreach (EventSource source in EventSource.GetSources())
         {
             if (source.Name == "Azure-Identity")
+            {
                 RegisterSource(source);
+            }
         }
     }
 
@@ -40,9 +42,14 @@ internal sealed class AzureAuthenticationEventListener : EventListener
     private static Task<AzureAuthenticationEventListener> CreateAsync()
     {
         if (ExecutionContext.IsFlowSuppressed())
+        {
             return Task.Run(() => new AzureAuthenticationEventListener());
+        }
+
         using (ExecutionContext.SuppressFlow())
+        {
             return Task.Run(() => new AzureAuthenticationEventListener());
+        }
     }
 
     /// <summary>Gets the shared initialization task; individual acquisitions can cancel their wait.</summary>
@@ -56,7 +63,9 @@ internal sealed class AzureAuthenticationEventListener : EventListener
         {
             _activeScopes++;
             if (logger.HasCallback)
+            {
                 _callbackScopes++;
+            }
         }
         return WaitForRefreshAsync();
     }
@@ -69,7 +78,10 @@ internal sealed class AzureAuthenticationEventListener : EventListener
         {
             _activeScopes--;
             if (logger.HasCallback)
+            {
                 _callbackScopes--;
+            }
+
             _version++;
         }
         RequestRefresh();
@@ -96,7 +108,10 @@ internal sealed class AzureAuthenticationEventListener : EventListener
         {
             SourceState? existing = _sources.Find(state => state.Source.TryGetTarget(out EventSource? target) && ReferenceEquals(target, source));
             if (existing is not null)
+            {
                 return existing;
+            }
+
             var state = new SourceState(source);
             _sources.Add(state);
             _version++;
@@ -109,11 +124,17 @@ internal sealed class AzureAuthenticationEventListener : EventListener
     protected override void OnEventSourceCreated(EventSource eventSource)
     {
         if (!Volatile.Read(ref _ready) || eventSource.Name != "Azure-Identity")
+        {
             return;
+        }
+
         SourceState state = RegisterSource(eventSource);
         EventLevel? desired;
         lock (_gate)
+        {
             desired = GetDesiredLevel();
+        }
+
         ApplySource(state, eventSource, desired);
     }
 
@@ -123,9 +144,15 @@ internal sealed class AzureAuthenticationEventListener : EventListener
     private void OnSqlClientCommand(object? sender, EventCommandEventArgs args)
     {
         if (args.Command != RefreshCommand && args.Command != EventCommand.Enable && args.Command != EventCommand.Disable)
+        {
             return;
+        }
+
         lock (_gate)
+        {
             _version++;
+        }
+
         ApplySubscriptions();
     }
 
@@ -134,13 +161,20 @@ internal sealed class AzureAuthenticationEventListener : EventListener
     {
         Interlocked.Exchange(ref _refreshRequested, 1);
         if (Interlocked.CompareExchange(ref _refreshing, 1, 0) != 0)
+        {
             return;
+        }
+
         if (ExecutionContext.IsFlowSuppressed())
+        {
             _ = Task.Run(Refresh);
+        }
         else
         {
             using (ExecutionContext.SuppressFlow())
+            {
                 _ = Task.Run(Refresh);
+            }
         }
     }
 
@@ -160,7 +194,9 @@ internal sealed class AzureAuthenticationEventListener : EventListener
         {
             Volatile.Write(ref _refreshing, 0);
             if (Volatile.Read(ref _refreshRequested) != 0)
+            {
                 RequestRefresh();
+            }
         }
     }
 
@@ -188,15 +224,23 @@ internal sealed class AzureAuthenticationEventListener : EventListener
                 foreach (SourceState state in sources)
                 {
                     if (version != Volatile.Read(ref _version))
+                    {
                         break;
+                    }
+
                     if (state.Source.TryGetTarget(out EventSource? source))
+                    {
                         ApplySource(state, source, desired);
+                    }
                 }
             }
             catch (Exception ex)
             {
                 foreach (TaskCompletionSource<bool> ready in pending)
+                {
                     ready.TrySetException(ex);
+                }
+
                 throw;
             }
             lock (_gate)
@@ -208,7 +252,10 @@ internal sealed class AzureAuthenticationEventListener : EventListener
                 }
             }
             foreach (TaskCompletionSource<bool> ready in pending)
+            {
                 ready.TrySetResult(true);
+            }
+
             return;
         }
     }
@@ -217,16 +264,22 @@ internal sealed class AzureAuthenticationEventListener : EventListener
     private void ApplySource(SourceState state, EventSource source, EventLevel? desired)
     {
         if (state.Level == desired)
+        {
             return;
+        }
         // Publish before calling SDK hooks so nested collector commands see and can supersede this update.
         EventLevel? previous = state.Level;
         state.Level = desired;
         try
         {
             if (desired.HasValue)
+            {
                 EnableEvents(source, desired.Value);
+            }
             else
+            {
                 DisableEvents(source);
+            }
         }
         catch
         {
@@ -252,17 +305,23 @@ internal sealed class AzureAuthenticationEventListener : EventListener
     private EventLevel? GetDesiredLevel()
     {
         if (_activeScopes == 0)
+        {
             return null;
+        }
 
         if (_callbackScopes > 0)
+        {
             return EventLevel.Verbose;
+        }
 
         EventLevel? desired = null;
         for (int level = 0; level <= (int)SqlAuthenticationLogLevel.Verbose; level++)
         {
             EventLevel eventLevel = AuthenticationLogger.ToEventLevel((SqlAuthenticationLogLevel)level);
             if (SqlClientEventSource.Log.IsEnabled(eventLevel, SqlClientEventSource.Keywords.Trace))
+            {
                 desired = eventLevel;
+            }
         }
         // A LogAlways subscription means all levels to EventListener, not Always-only.
         // Critical is the narrowest subscription that includes Always; dispatch still honors collector settings.
