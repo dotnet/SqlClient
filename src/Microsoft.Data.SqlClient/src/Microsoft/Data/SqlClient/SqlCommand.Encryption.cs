@@ -544,6 +544,12 @@ namespace Microsoft.Data.SqlClient
                     isAsync, timeout, out returnTask, asyncWrite, isRetry,
                     serializedAttestationParameters: null, cancellationToken);
             }
+
+            // Completed preparation must not queue otherwise unreserved TDS setup.
+            if (returnTask?.Status == TaskStatus.RanToCompletion)
+            {
+                returnTask = null;
+            }
         }
 
         private void PrepareForTransparentEncryptionCore(

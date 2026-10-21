@@ -25,6 +25,32 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
     [Collection(SimulatedServerTestCollection.Name)]
     public sealed class SqlCommandEnclaveAsyncTests
     {
+        /// <summary>A warm, parameterless enclave batch must not defer otherwise synchronous TDS setup.</summary>
+        [Fact]
+        public void Prepare_ParameterlessEnclaveBatch_WarmSessionCompletesInline()
+        {
+            using Fixture fixture = new Fixture();
+            using SqlCommand command = fixture.CreateCommand();
+            fixture.Provider.CacheHit = true;
+            command.SetBatchRPCMode(true, 2);
+            command.AddBatchCommand(new SqlBatchCommand("SELECT 1",
+                columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled));
+            command.AddBatchCommand(new SqlBatchCommand("SELECT 2",
+                columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled));
+            command.SetBatchRPCModeReadyToExecute();
+            object[] arguments =
+            {
+                true, 30, new TaskCompletionSource<object>(), null, true, false, false, CancellationToken.None
+            };
+            typeof(SqlCommand).GetMethod("PrepareForTransparentEncryption", BindingFlags.NonPublic | BindingFlags.Instance)
+                .Invoke(command, arguments);
+            Assert.Null(arguments[3]);
+            Assert.Equal(false, arguments[5]);
+            Assert.Equal(0, GetAsyncCount((SqlConnectionInternal)fixture.Connection.InnerConnection));
+            Assert.Equal(1, fixture.Provider.AsyncCalls);
+            Assert.Equal(0, fixture.Provider.SyncCalls);
+        }
+
         /// <summary>Independent fixtures must not share mutated options even when their server endpoint matches.</summary>
         [Fact]
         public void Fixture_SharedEndpoint_IsolatesConnectionOptions()
