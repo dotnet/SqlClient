@@ -32,7 +32,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             byte[] customData = { 1, 2 };
             var lookup = new TaskCompletionSource<(SqlEnclaveSession, long, byte[], int)>(
                 TaskCreationOptions.RunContinuationsAsynchronously);
-            provider.Lookup = (parameters, generate, retry, ct) =>
+            provider.Lookup = (
+                parameters,
+                generate,
+                retry,
+                ct) =>
             {
                 Assert.Same(registration.Parameters, parameters);
                 Assert.True(generate);
@@ -42,7 +46,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             };
 
             var lookupTask = EnclaveDelegate.Instance.GetEnclaveSessionAsync(
-                registration.Protocol, "VBS", registration.Parameters, true, true, token);
+                registration.Protocol,
+                "VBS",
+                registration.Parameters,
+                true,
+                true,
+                token);
             Assert.False(lookupTask.IsCompleted);
             lookup.SetResult((provider.Session, 42, customData, customData.Length));
             var result = await lookupTask;
@@ -53,7 +62,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
 
             var attestation = new TaskCompletionSource<SqlEnclaveAttestationParameters>(
                 TaskCreationOptions.RunContinuationsAsynchronously);
-            provider.Attest = (url, data, length, ct) =>
+            provider.Attest = (
+                url,
+                data,
+                length,
+                ct) =>
             {
                 Assert.Equal(registration.Parameters.AttestationUrl, url);
                 Assert.Same(customData, data);
@@ -63,17 +76,26 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             };
             Task<SqlEnclaveAttestationParameters> attestationTask =
                 EnclaveDelegate.Instance.GetAttestationParametersAsync(
-                    registration.Protocol, "VBS", registration.Parameters.AttestationUrl,
-                    customData, customData.Length, token);
+                    registration.Protocol,
+                    "VBS",
+                    registration.Parameters.AttestationUrl,
+                    customData,
+                    customData.Length,
+                    token);
             Assert.False(attestationTask.IsCompleted);
             SqlEnclaveAttestationParameters expected = new SqlEnclaveAttestationParameters(
-                1, Array.Empty<byte>(), provider.Key);
+                1,
+                Array.Empty<byte>(),
+                provider.Key);
             attestation.SetResult(expected);
             Assert.Same(expected, await attestationTask);
 
             var invalidation = new TaskCompletionSource<bool>(
                 TaskCreationOptions.RunContinuationsAsynchronously);
-            provider.Invalidate = (parameters, session, ct) =>
+            provider.Invalidate = (
+                parameters,
+                session,
+                ct) =>
             {
                 Assert.Same(registration.Parameters, parameters);
                 Assert.Same(provider.Session, session);
@@ -81,7 +103,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
                 return invalidation.Task;
             };
             Task invalidationTask = EnclaveDelegate.Instance.InvalidateEnclaveSessionAsync(
-                registration.Protocol, "VBS", registration.Parameters, provider.Session, token);
+                registration.Protocol,
+                "VBS",
+                registration.Parameters,
+                provider.Session,
+                token);
             Assert.False(invalidationTask.IsCompleted);
             invalidation.SetResult(true);
             await invalidationTask;
@@ -100,14 +126,21 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             byte[] info = { 3 };
             byte[] data = { 4, 5 };
             using ECDiffieHellman key = ECDiffieHellman.Create();
-            SqlEnclaveAttestationParameters attestation = new SqlEnclaveAttestationParameters(1, data, key);
+            SqlEnclaveAttestationParameters attestation = new SqlEnclaveAttestationParameters(
+                1,
+                data,
+                key);
             var lookup = new TaskCompletionSource<(SqlEnclaveSession, long, byte[], int)>(
                 TaskCreationOptions.RunContinuationsAsynchronously);
             var creation = new TaskCompletionSource<(SqlEnclaveSession, long)>(
                 TaskCreationOptions.RunContinuationsAsynchronously);
             var creationEntered = new TaskCompletionSource<bool>(
                 TaskCreationOptions.RunContinuationsAsynchronously);
-            provider.Lookup = (parameters, generate, retry, token) =>
+            provider.Lookup = (
+                parameters,
+                generate,
+                retry,
+                token) =>
             {
                 Assert.Same(registration.Parameters, parameters);
                 Assert.False(generate);
@@ -115,7 +148,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
                 Assert.Equal(cancellation.Token, token);
                 return lookup.Task;
             };
-            provider.Create = (bytes, dh, parameters, custom, length, token) =>
+            provider.Create = (
+                bytes,
+                dh,
+                parameters,
+                custom,
+                length,
+                token) =>
             {
                 Assert.Same(info, bytes);
                 Assert.Same(key, dh);
@@ -128,18 +167,35 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             };
 
             Task task = EnclaveDelegate.Instance.CreateEnclaveSessionAsync(
-                registration.Protocol, "VBS", registration.Parameters, info, attestation,
-                data, data.Length, true, cancellation.Token);
+                registration.Protocol,
+                "VBS",
+                registration.Parameters,
+                info,
+                attestation,
+                data,
+                data.Length,
+                true,
+                cancellation.Token);
             Assert.False(task.IsCompleted);
             Assert.Equal(0, provider.CreateCalls);
             lookup.SetResult((null, 0, null, 0));
             await await Task.WhenAny(creationEntered.Task, task);
             Assert.False(task.IsCompleted);
-            provider.Lookup = (parameters, generate, retry, token) =>
+            provider.Lookup = (
+                parameters,
+                generate,
+                retry,
+                token) =>
                 Task.FromResult((provider.Session, 2L, (byte[])null, 0));
             Task warmTask = EnclaveDelegate.Instance.CreateEnclaveSessionAsync(
-                registration.Protocol, "VBS", registration.Parameters, info, null,
-                data, data.Length, false);
+                registration.Protocol,
+                "VBS",
+                registration.Parameters,
+                info,
+                null,
+                data,
+                data.Length,
+                false);
             Assert.True(warmTask.IsCompleted);
             await warmTask;
             Assert.Equal(1, provider.CreateCalls);
@@ -147,8 +203,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             await task;
 
             await EnclaveDelegate.Instance.CreateEnclaveSessionAsync(
-                registration.Protocol, "VBS", registration.Parameters, info, null,
-                data, data.Length, false);
+                registration.Protocol,
+                "VBS",
+                registration.Parameters,
+                info,
+                null,
+                data,
+                data.Length,
+                false);
             Assert.Equal(1, provider.CreateCalls);
             Assert.Equal(0, provider.SyncCalls);
         }
@@ -163,14 +225,29 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             TestProvider provider = registration.Provider;
             provider.Session = null;
             SqlEnclaveAttestationParameters attestation =
-                new SqlEnclaveAttestationParameters(1, Array.Empty<byte>(), provider.Key);
+                new SqlEnclaveAttestationParameters(
+                    1,
+                    Array.Empty<byte>(),
+                    provider.Key);
             Exception sync = Record.Exception(() => EnclaveDelegate.Instance.CreateEnclaveSession(
-                registration.Protocol, "VBS", registration.Parameters, Array.Empty<byte>(),
-                attestation, null, 0, false));
+                registration.Protocol,
+                "VBS",
+                registration.Parameters,
+                Array.Empty<byte>(),
+                attestation,
+                null,
+                0,
+                false));
             Exception asyncError = await Record.ExceptionAsync(() =>
                 EnclaveDelegate.Instance.CreateEnclaveSessionAsync(
-                    registration.Protocol, "VBS", registration.Parameters, Array.Empty<byte>(),
-                    attestation, null, 0, false));
+                    registration.Protocol,
+                    "VBS",
+                    registration.Parameters,
+                    Array.Empty<byte>(),
+                    attestation,
+                    null,
+                    0,
+                    false));
             Assert.NotNull(sync);
             Assert.NotNull(asyncError);
             Assert.Equal(sync.GetType(), asyncError.GetType());
@@ -190,7 +267,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             using ProviderRegistration registration = new ProviderRegistration();
             CancellationToken token = new CancellationToken(true);
             OperationCanceledException error = await Assert.ThrowsAnyAsync<OperationCanceledException>(
-                () => InvokeAsync(registration, operation, token));
+                () => InvokeAsync(
+                    registration,
+                    operation,
+                    token));
             Assert.Equal(token, error.CancellationToken);
             Assert.Equal(0, registration.Provider.AsyncCalls);
             Assert.Equal(0, registration.Provider.SyncCalls);
@@ -219,24 +299,44 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             TestProvider provider = registration.Provider;
             if (operation == 0 || operation == 4)
             {
-                provider.Lookup = async (parameters, generate, retry, token) =>
+                provider.Lookup = async (
+                    parameters,
+                    generate,
+                    retry,
+                    token) =>
                 {
                     await completion.Task;
                     return (null, 0, null, 0);
                 };
             }
-            provider.Attest = async (url, data, length, token) =>
+            provider.Attest = async (
+                url,
+                data,
+                length,
+                token) =>
             {
                 await completion.Task;
                 return null;
             };
-            provider.Create = async (info, key, parameters, data, length, token) =>
+            provider.Create = async (
+                info,
+                key,
+                parameters,
+                data,
+                length,
+                token) =>
             {
                 await completion.Task;
                 return (null, 0);
             };
-            provider.Invalidate = (parameters, session, token) => completion.Task;
-            Task task = InvokeAsync(registration, operation, cancellation.Token);
+            provider.Invalidate = (
+                parameters,
+                session,
+                token) => completion.Task;
+            Task task = InvokeAsync(
+                registration,
+                operation,
+                cancellation.Token);
             Assert.False(task.IsCompleted);
             Exception expected;
             if (cancel)
@@ -266,16 +366,35 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             using ProviderRegistration registration = new ProviderRegistration();
             TestProvider provider = registration.Provider;
             EnclaveDelegate.Instance.GetEnclaveSession(
-                registration.Protocol, "VBS", registration.Parameters, false, false,
-                out SqlEnclaveSession session, out _, out _);
+                registration.Protocol,
+                "VBS",
+                registration.Parameters,
+                false,
+                false,
+                out SqlEnclaveSession session,
+                out _,
+                out _);
             Assert.Null(session);
             SqlEnclaveAttestationParameters attestation = EnclaveDelegate.Instance.GetAttestationParameters(
-                registration.Protocol, "VBS", registration.Parameters.AttestationUrl, null, 0);
+                registration.Protocol,
+                "VBS",
+                registration.Parameters.AttestationUrl,
+                null,
+                0);
             EnclaveDelegate.Instance.CreateEnclaveSession(
-                registration.Protocol, "VBS", registration.Parameters, Array.Empty<byte>(),
-                attestation, null, 0, false);
+                registration.Protocol,
+                "VBS",
+                registration.Parameters,
+                Array.Empty<byte>(),
+                attestation,
+                null,
+                0,
+                false);
             EnclaveDelegate.Instance.InvalidateEnclaveSession(
-                registration.Protocol, "VBS", registration.Parameters, provider.Session);
+                registration.Protocol,
+                "VBS",
+                registration.Parameters,
+                provider.Session);
             Assert.Equal(5, provider.SyncCalls);
             Assert.Equal(0, provider.AsyncCalls);
         }
@@ -293,10 +412,19 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             using ProviderRegistration registration = new ProviderRegistration();
             registration.Unregister();
             Exception sync = Record.Exception(() => EnclaveDelegate.Instance.GetEnclaveSession(
-                registration.Protocol, "VBS", registration.Parameters, false, false,
-                out _, out _, out _));
+                registration.Protocol,
+                "VBS",
+                registration.Parameters,
+                false,
+                false,
+                out _,
+                out _,
+                out _));
             Exception asyncError = await Record.ExceptionAsync(() =>
-                InvokeAsync(registration, operation, CancellationToken.None));
+                InvokeAsync(
+                    registration,
+                    operation,
+                    CancellationToken.None));
             Assert.NotNull(sync);
             Assert.NotNull(asyncError);
             Assert.Equal(sync.GetType(), asyncError.GetType());
@@ -306,25 +434,51 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
         /// <summary>
         /// Dispatches one delegate operation; operation four fails the creation cache recheck.
         /// </summary>
-        private static Task InvokeAsync(ProviderRegistration registration, int operation, CancellationToken token)
+        private static Task InvokeAsync(
+            ProviderRegistration registration,
+            int operation,
+            CancellationToken token)
         {
             switch (operation)
             {
                 case 0:
                     return EnclaveDelegate.Instance.GetEnclaveSessionAsync(
-                        registration.Protocol, "VBS", registration.Parameters, true, false, token);
+                        registration.Protocol,
+                        "VBS",
+                        registration.Parameters,
+                        true,
+                        false,
+                        token);
                 case 1:
                     return EnclaveDelegate.Instance.GetAttestationParametersAsync(
-                        registration.Protocol, "VBS", registration.Parameters.AttestationUrl, null, 0, token);
+                        registration.Protocol,
+                        "VBS",
+                        registration.Parameters.AttestationUrl,
+                        null,
+                        0,
+                        token);
                 case 2:
                 case 4:
                     return EnclaveDelegate.Instance.CreateEnclaveSessionAsync(
-                        registration.Protocol, "VBS", registration.Parameters, Array.Empty<byte>(),
-                        new SqlEnclaveAttestationParameters(1, Array.Empty<byte>(), registration.Provider.Key),
-                        null, 0, false, token);
+                        registration.Protocol,
+                        "VBS",
+                        registration.Parameters,
+                        Array.Empty<byte>(),
+                        new SqlEnclaveAttestationParameters(
+                            1,
+                            Array.Empty<byte>(),
+                            registration.Provider.Key),
+                        null,
+                        0,
+                        false,
+                        token);
                 default:
                     return EnclaveDelegate.Instance.InvalidateEnclaveSessionAsync(
-                        registration.Protocol, "VBS", registration.Parameters, registration.Provider.Session, token);
+                        registration.Protocol,
+                        "VBS",
+                        registration.Parameters,
+                        registration.Provider.Session,
+                        token);
             }
         }
 
@@ -344,7 +498,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
                 (SqlConnectionAttestationProtocol)Interlocked.Decrement(ref s_protocol);
             internal readonly TestProvider Provider = new TestProvider();
             internal readonly EnclaveSessionParameters Parameters = new EnclaveSessionParameters(
-                "unit.test.invalid", "https://unit.test.invalid", "database", SqlConnectionAttestationProtocol.HGS);
+                "unit.test.invalid",
+                "https://unit.test.invalid",
+                "database",
+                SqlConnectionAttestationProtocol.HGS);
 
             internal ProviderRegistration()
             {
@@ -383,47 +540,85 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             internal int CreateCalls;
             internal Func<EnclaveSessionParameters, bool, bool, CancellationToken,
                 Task<(SqlEnclaveSession, long, byte[], int)>> Lookup =
-                (parameters, generate, retry, token) => Task.FromResult(((SqlEnclaveSession)null, 0L, (byte[])null, 0));
+                (
+                    parameters,
+                    generate,
+                    retry,
+                    token) => Task.FromResult(((SqlEnclaveSession)null, 0L, (byte[])null, 0));
             internal Func<string, byte[], int, CancellationToken, Task<SqlEnclaveAttestationParameters>> Attest;
             internal Func<byte[], ECDiffieHellman, EnclaveSessionParameters, byte[], int, CancellationToken,
                 Task<(SqlEnclaveSession, long)>> Create;
             internal Func<EnclaveSessionParameters, SqlEnclaveSession, CancellationToken, Task> Invalidate;
 
             internal override Task<(SqlEnclaveSession SqlEnclaveSession, long Counter, byte[] CustomData, int CustomDataLength)>
-                GetEnclaveSessionAsync(EnclaveSessionParameters parameters, bool generateCustomData,
-                    bool isRetry, CancellationToken cancellationToken = default)
+                GetEnclaveSessionAsync(
+                    EnclaveSessionParameters parameters,
+                    bool generateCustomData,
+                    bool isRetry,
+                    CancellationToken cancellationToken = default)
             {
                 AsyncCalls++;
-                return Lookup(parameters, generateCustomData, isRetry, cancellationToken);
+                return Lookup(
+                    parameters,
+                    generateCustomData,
+                    isRetry,
+                    cancellationToken);
             }
 
             internal override Task<SqlEnclaveAttestationParameters> GetAttestationParametersAsync(
-                string url, byte[] customData, int customDataLength, CancellationToken cancellationToken = default)
+                string url,
+                byte[] customData,
+                int customDataLength,
+                CancellationToken cancellationToken = default)
             {
                 AsyncCalls++;
-                return Attest(url, customData, customDataLength, cancellationToken);
+                return Attest(
+                    url,
+                    customData,
+                    customDataLength,
+                    cancellationToken);
             }
 
             internal override Task<(SqlEnclaveSession SqlEnclaveSession, long Counter)> CreateEnclaveSessionAsync(
-                byte[] info, ECDiffieHellman key, EnclaveSessionParameters parameters,
-                byte[] customData, int customDataLength, CancellationToken cancellationToken = default)
+                byte[] info,
+                ECDiffieHellman key,
+                EnclaveSessionParameters parameters,
+                byte[] customData,
+                int customDataLength,
+                CancellationToken cancellationToken = default)
             {
                 AsyncCalls++;
                 CreateCalls++;
                 return Create == null ? Task.FromResult((Session, 1L)) :
-                    Create(info, key, parameters, customData, customDataLength, cancellationToken);
+                    Create(
+                        info,
+                        key,
+                        parameters,
+                        customData,
+                        customDataLength,
+                        cancellationToken);
             }
 
             internal override Task InvalidateEnclaveSessionAsync(
-                EnclaveSessionParameters parameters, SqlEnclaveSession session, CancellationToken cancellationToken = default)
+                EnclaveSessionParameters parameters,
+                SqlEnclaveSession session,
+                CancellationToken cancellationToken = default)
             {
                 AsyncCalls++;
-                return Invalidate(parameters, session, cancellationToken);
+                return Invalidate(
+                    parameters,
+                    session,
+                    cancellationToken);
             }
 
             internal override void GetEnclaveSession(
-                EnclaveSessionParameters parameters, bool generateCustomData, bool isRetry,
-                out SqlEnclaveSession session, out long counter, out byte[] customData, out int customDataLength)
+                EnclaveSessionParameters parameters,
+                bool generateCustomData,
+                bool isRetry,
+                out SqlEnclaveSession session,
+                out long counter,
+                out byte[] customData,
+                out int customDataLength)
             {
                 SyncCalls++;
                 session = null;
@@ -433,15 +628,25 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             }
 
             internal override SqlEnclaveAttestationParameters GetAttestationParameters(
-                string url, byte[] customData, int customDataLength)
+                string url,
+                byte[] customData,
+                int customDataLength)
             {
                 SyncCalls++;
-                return new SqlEnclaveAttestationParameters(1, Array.Empty<byte>(), Key);
+                return new SqlEnclaveAttestationParameters(
+                    1,
+                    Array.Empty<byte>(),
+                    Key);
             }
 
             internal override void CreateEnclaveSession(
-                byte[] info, ECDiffieHellman key, EnclaveSessionParameters parameters,
-                byte[] customData, int customDataLength, out SqlEnclaveSession session, out long counter)
+                byte[] info,
+                ECDiffieHellman key,
+                EnclaveSessionParameters parameters,
+                byte[] customData,
+                int customDataLength,
+                out SqlEnclaveSession session,
+                out long counter)
             {
                 SyncCalls++;
                 session = Session;
