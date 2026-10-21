@@ -818,6 +818,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             using SimulatedServerPoolScope pool = new(builder);
             using SqlConnection warmup = new(builder.ConnectionString);
             await OpenConnection(warmup, useAsync);
+            Guid originalConnectionId = warmup.ClientConnectionId;
 
             // Enable the transient error for the next login attempt.
             server.SetErrorBehavior(true, errorCode);
@@ -828,10 +829,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.Equal($"127.0.0.1,{server.EndPoint.Port}", connection.DataSource);
 
-            Guid originalConnectionId = connection.ClientConnectionId;
-            connection.Close();
+            warmup.Close();
 
-            // If the pool is not cleared, this open should reuse a pooled connection without a new login.
+            // Keep the post-fault connection checked out so only the pre-fault connection can be reused.
             using SqlConnection pooledConnection = new(builder.ConnectionString);
             await OpenConnection(pooledConnection, useAsync);
 

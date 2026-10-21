@@ -152,6 +152,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 EncryptionCertificate = GetEncryptionCertificate(s_fullPathToPfx, "nopassword", X509KeyStorageFlags.UserKeySet),
                 EncryptionProtocols = connectionTestParameters.EncryptionProtocols,
                 Encryption = connectionTestParameters.TdsEncryptionType,
+                ExpectTlsHandshakeFailure = !connectionTestParameters.TestResult,
             });
 
             server.Start();
@@ -177,14 +178,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             using SqlConnection connection = DataTestUtility.CreateConnection(builder.ConnectionString);
-            try
+            if (connectionTestParameters.TestResult)
             {
                 connection.Open();
-                Assert.Equal(connectionTestParameters.TestResult, (connection.State == ConnectionState.Open));
+                Assert.Equal(ConnectionState.Open, connection.State);
             }
-            catch (Exception)
+            else
             {
-                Assert.False(connectionTestParameters.TestResult);
+                Assert.Throws<SqlException>(() => connection.Open());
             }
         }
 

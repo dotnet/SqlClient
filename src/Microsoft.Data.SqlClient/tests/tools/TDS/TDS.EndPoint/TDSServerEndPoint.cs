@@ -16,6 +16,11 @@ namespace Microsoft.SqlServer.TDS.EndPoint
     /// </summary>
     public class TDSServerEndPoint : ServerEndPointHandler<TDSServerEndPointConnection>
     {
+        /// <summary>
+        /// Indicates that the scenario expects authentication to fail during TLS negotiation.
+        /// </summary>
+        public bool ExpectTlsHandshakeFailure { get; set; }
+
         public TDSServerEndPoint(ITDSServer server)
             : base(server)
         {
@@ -23,7 +28,10 @@ namespace Microsoft.SqlServer.TDS.EndPoint
 
         public override TDSServerEndPointConnection CreateConnection(TcpClient newConnection)
         {
-            return new TDSServerEndPointConnection(TDSServer, newConnection);
+            return new TDSServerEndPointConnection(TDSServer, newConnection)
+            {
+                ExpectTlsHandshakeFailure = ExpectTlsHandshakeFailure
+            };
         }
     }
 

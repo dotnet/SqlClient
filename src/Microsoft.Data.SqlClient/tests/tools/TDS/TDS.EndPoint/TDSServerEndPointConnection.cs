@@ -24,6 +24,8 @@ namespace Microsoft.SqlServer.TDS.EndPoint
     {
         private TDSServerParser _parser;
 
+        internal bool ExpectTlsHandshakeFailure { get; set; }
+
         public TDSServerEndPointConnection(ITDSServer server, TcpClient connection)
             : base(server, connection)
         {
@@ -33,7 +35,10 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         {
             // Create a server TDS parser
             Debug.Assert(_parser == null, "PrepareForProcessingData should not be called twice");
-            _parser = new TDSServerParser(Server, Session, rawStream);
+            _parser = new TDSServerParser(Server, Session, rawStream)
+            {
+                ExpectTlsHandshakeFailure = ExpectTlsHandshakeFailure
+            };
         }
 
         public override void ProcessData(Stream rawStream)

@@ -43,6 +43,10 @@ Keep retry/error/partner assertions explicit; transport attempt counts are not p
 
 The simulator runs blocking handlers on dedicated workers. Fault budgets are reserved before
 response processing, and disposal must finish owned workers and report unexpected handler failures.
+Negative TLS scenarios can set `TdsServerArguments.ExpectTlsHandshakeFailure` to explicitly expect
+authentication failure during TLS negotiation. Missing certificates/private keys and exceptions from
+protocol handlers still fail disposal; the default remains strict. Assert the expected client failure
+as well, and keep success controls so simulator setup errors cannot masquerade as certificate rejection.
 `ServerLifecycleTests` covers these contracts. Validate changes on both supported frameworks and
 on native and managed SNI, including broader simulator consumers before removing a flaky trait.
 

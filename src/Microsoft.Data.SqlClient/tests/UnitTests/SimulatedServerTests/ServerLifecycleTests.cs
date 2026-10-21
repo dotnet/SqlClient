@@ -6,6 +6,9 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
+using System.Security.Authentication;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -25,6 +28,183 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests;
 [Collection(SimulatedServerTestCollection.Name)]
 public class ServerLifecycleTests
 {
+#if NET
+    /// <summary>
+    /// Client certificate rejection is a transport outcome, not a simulator teardown failure.
+    /// </summary>
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public async Task TlsHandshake_CertificateValidation_DoesNotFailDisposal(bool trustServerCertificate, bool useAsync)
+    {
+        using X509Certificate2 certificate = CreateServerCertificate();
+        using WorkerTrackingServer server = new(new TdsServerArguments
+        {
+            Encryption = TDSPreLoginTokenEncryptionType.On,
+            EncryptionCertificate = certificate,
+            ExpectTlsHandshakeFailure = !trustServerCertificate
+        });
+        server.Start();
+        using SqlConnection connection = new(new SqlConnectionStringBuilder
+        {
+            DataSource = $"127.0.0.1,{server.EndPoint.Port}",
+            HostNameInCertificate = "localhost",
+            Encrypt = SqlConnectionEncryptOption.Mandatory,
+            TrustServerCertificate = trustServerCertificate,
+            Pooling = false,
+            ConnectRetryCount = 0
+        }.ConnectionString);
+
+        if (trustServerCertificate)
+        {
+            if (useAsync)
+            {
+                await connection.OpenAsync();
+            }
+            else
+            {
+                connection.Open();
+            }
+            Assert.Equal(1, server.Login7Count);
+        }
+        else
+        {
+            SqlException error = useAsync
+                ? await Assert.ThrowsAsync<SqlException>(() => connection.OpenAsync())
+                : Assert.Throws<SqlException>(() => connection.Open());
+            Assert.Contains("certificate", error.ToString(), StringComparison.OrdinalIgnoreCase);
+            Assert.Equal(0, server.Login7Count);
+        }
+
+        connection.Close();
+        Assert.True(SpinWait.SpinUntil(() => server.ActiveSessions == 0, TimeSpan.FromSeconds(30)),
+            "The server did not finish processing the TLS connection.");
+        server.Dispose();
+    }
+
+    /// <summary>
+    /// A peer TLS alert is tolerated only when the scenario explicitly expects handshake failure.
+    /// Keeping the peer socket open ensures the alert is processed before server teardown.
+    /// </summary>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void TlsHandshake_PeerAlert_RequiresExplicitExpectation(bool expectedFailure)
+    {
+        using X509Certificate2 certificate = CreateServerCertificate();
+        using WorkerTrackingServer server = new(new TdsServerArguments
+        {
+            Encryption = TDSPreLoginTokenEncryptionType.On,
+            EncryptionCertificate = certificate,
+            ExpectTlsHandshakeFailure = expectedFailure
+        });
+        server.Start();
+        using TcpClient peer = new();
+        peer.Connect("127.0.0.1", server.EndPoint.Port);
+        using TDSStream transport = new(peer.GetStream(), false) { PacketSize = 4096 };
+        new TDSMessage(TDSMessageType.PreLogin,
+            new TDSPreLoginToken(new Version(11, 0, 0, 0), TDSPreLoginTokenEncryptionType.On)).Deflate(transport);
+        using AutoTDSStream tls = new(transport, false) { OutgoingMessageType = TDSMessageType.PreLogin };
+        byte[] alert = { 0x15, 0x03, 0x03, 0x00, 0x02, 0x02, 0x2A }; // TLS 1.2 fatal bad_certificate alert.
+        tls.Write(alert, 0, alert.Length);
+        tls.Flush();
+
+        Assert.True(server.SessionClosed.Wait(TimeSpan.FromSeconds(30)), "The peer TLS alert was not processed.");
+        Assert.Equal(0, server.Login7Count);
+        if (expectedFailure)
+        {
+            server.Dispose();
+        }
+        else
+        {
+            AggregateException error = Assert.Throws<AggregateException>(() => server.Dispose());
+            Assert.Contains(error.Flatten().InnerExceptions,
+                exception => exception is AuthenticationException);
+        }
+    }
+
+    /// <summary>
+    /// A certificate without its private key is a server setup error, not a peer rejection.
+    /// </summary>
+    [Fact]
+    public void TlsHandshake_MissingPrivateKey_ReportsSetupFailure()
+    {
+        using X509Certificate2 certificate = CreateServerCertificate();
+        using X509Certificate2 publicCertificate = X509CertificateLoader.LoadCertificate(certificate.RawData);
+        using TdsServer server = new(new TdsServerArguments
+        {
+            Encryption = TDSPreLoginTokenEncryptionType.On,
+            EncryptionCertificate = publicCertificate,
+            ExpectTlsHandshakeFailure = true
+        });
+        server.Start();
+        using SqlConnection connection = new(new SqlConnectionStringBuilder
+        {
+            DataSource = $"127.0.0.1,{server.EndPoint.Port}",
+            Encrypt = SqlConnectionEncryptOption.Mandatory,
+            TrustServerCertificate = true,
+            Pooling = false,
+            ConnectRetryCount = 0
+        }.ConnectionString);
+
+        Assert.Throws<SqlException>(() => connection.Open());
+        AggregateException error = Assert.Throws<AggregateException>(() => server.Dispose());
+        Assert.Contains(error.Flatten().InnerExceptions,
+            exception => exception is AuthenticationException);
+    }
+
+    /// <summary>
+    /// Creates a short-lived certificate without installing it in a machine or user trust store.
+    /// </summary>
+    private static X509Certificate2 CreateServerCertificate()
+    {
+        using RSA key = RSA.Create(2048);
+        CertificateRequest request = new("CN=localhost", key, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+        using X509Certificate2 certificate = request.CreateSelfSigned(
+            DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(1));
+        // Schannel requires an imported key rather than the ephemeral key returned above.
+        return X509CertificateLoader.LoadPkcs12(certificate.Export(X509ContentType.Pfx), null);
+    }
+#endif
+
+    /// <summary>
+    /// Negotiating TLS without a configured certificate must still fail simulator teardown.
+    /// </summary>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task TlsHandshake_MissingCertificate_ReportsSetupFailure(bool useAsync)
+    {
+        using TdsServer server = new(new TdsServerArguments
+        {
+            Encryption = TDSPreLoginTokenEncryptionType.On,
+            ExpectTlsHandshakeFailure = true
+        });
+        server.Start();
+        using SqlConnection connection = new(new SqlConnectionStringBuilder
+        {
+            DataSource = $"127.0.0.1,{server.EndPoint.Port}",
+            Encrypt = SqlConnectionEncryptOption.Mandatory,
+            TrustServerCertificate = true,
+            Pooling = false,
+            ConnectRetryCount = 0
+        }.ConnectionString);
+
+        if (useAsync)
+        {
+            await Assert.ThrowsAsync<SqlException>(() => connection.OpenAsync());
+        }
+        else
+        {
+            Assert.Throws<SqlException>(() => connection.Open());
+        }
+        AggregateException error = Assert.Throws<AggregateException>(() => server.Dispose());
+        Assert.Contains(error.Flatten().InnerExceptions,
+            exception => exception is AuthenticationException);
+    }
+
     /// <summary>
     /// Omitting encryption metadata must not start TLS after the client rejects the pre-login response.
     /// </summary>
@@ -206,11 +386,13 @@ public class ServerLifecycleTests
     /// Unexpected protocol-handler failures must fail the test even when no log writer is configured.
     /// </summary>
     [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void Dispose_ReportsUnexpectedWorkerFailure(bool failOnClose)
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public void Dispose_ReportsUnexpectedWorkerFailure(bool failOnClose, bool authenticationFailure)
     {
-        using ThrowingServer server = new(failOnClose);
+        using ThrowingServer server = new(failOnClose, authenticationFailure);
         server.Start();
         using SqlConnection connection = new(new SqlConnectionStringBuilder
         {
@@ -222,7 +404,8 @@ public class ServerLifecycleTests
         Assert.Throws<SqlException>(() => connection.Open());
         AggregateException error = Assert.Throws<AggregateException>(() => server.Dispose());
         Assert.Contains(error.Flatten().InnerExceptions,
-            exception => exception.Message == "Intentional protocol failure.");
+            exception => exception.Message == "Intentional protocol failure." &&
+                (authenticationFailure ? exception is AuthenticationException : exception is InvalidOperationException));
         if (failOnClose)
         {
             Assert.Contains(error.Flatten().InnerExceptions,
@@ -238,8 +421,18 @@ public class ServerLifecycleTests
     private sealed class WorkerTrackingServer : TdsServer
     {
         private int _activeSessions;
+        private readonly TaskCompletionSource<bool> _sessionClosed = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public int ActiveSessions => Volatile.Read(ref _activeSessions);
+        public Task SessionClosed => _sessionClosed.Task;
         public bool IsThreadPoolWorker { get; private set; }
+
+        public WorkerTrackingServer()
+        {
+        }
+
+        public WorkerTrackingServer(TdsServerArguments arguments) : base(arguments)
+        {
+        }
 
         public override ITDSServerSession OpenSession()
         {
@@ -251,6 +444,7 @@ public class ServerLifecycleTests
         {
             Interlocked.Decrement(ref _activeSessions);
             base.CloseSession(session);
+            _sessionClosed.TrySetResult(true);
         }
 
         public override TDSMessageCollection OnPreLoginRequest(ITDSServerSession session, TDSMessage request)
@@ -263,11 +457,19 @@ public class ServerLifecycleTests
     private sealed class ThrowingServer : TdsServer
     {
         private readonly bool _failOnClose;
+        private readonly bool _authenticationFailure;
 
-        public ThrowingServer(bool failOnClose) => _failOnClose = failOnClose;
+        public ThrowingServer(bool failOnClose, bool authenticationFailure)
+            : base(new TdsServerArguments { ExpectTlsHandshakeFailure = true })
+        {
+            _failOnClose = failOnClose;
+            _authenticationFailure = authenticationFailure;
+        }
 
         public override TDSMessageCollection OnPreLoginRequest(ITDSServerSession session, TDSMessage request)
-            => throw new InvalidOperationException("Intentional protocol failure.");
+            => throw (_authenticationFailure
+                ? new AuthenticationException("Intentional protocol failure.")
+                : new InvalidOperationException("Intentional protocol failure."));
 
         public override void CloseSession(ITDSServerSession session)
         {
