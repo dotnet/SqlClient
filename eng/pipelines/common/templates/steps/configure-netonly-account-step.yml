@@ -34,8 +34,7 @@ steps:
     inputs:
       targetType: filePath
       filePath: '$(Build.SourcesDirectory)\eng\scripts\Configure-NetOnlyAccount.ps1'
-      # Use .NET Framework's in-box System.Data.SqlClient for local shared-memory SQL setup.
-      pwsh: false
+      pwsh: true
       # Single quotes preserve undefined ADO macros as literals for cleanup's absent-value checks.
       arguments: >-
         -Mode '${{ parameters.mode }}'

@@ -2,17 +2,19 @@
 # The .NET Foundation licenses this file to you under the MIT license.
 # See the LICENSE file in the project root for more information.
 
-#requires -PSEdition Desktop
-#requires -Version 5.1
+#requires -PSEdition Core
+#requires -Version 7.4
 
 <#
 .SYNOPSIS
 Creates or removes a temporary local Windows account and its local SQL Windows login.
 .DESCRIPTION
-Run setup and cleanup on the same Windows agent using Windows PowerShell 5.1,
+Run setup and cleanup on the same Windows agent using PowerShell 7.4 or later,
 as a local administrator with permission to create and drop SQL logins.
-The script targets .NET Framework's in-box System.Data.SqlClient for shared-memory
-SQL connections, not PowerShell Core's separately shipped SQL client/runtime.
+Setup installs the pinned SqlServer module from PSGallery for the current user
+if needed. Setup and cleanup use its Invoke-Sqlcmd cmdlet, backed by
+Microsoft.Data.SqlClient, with Windows authentication over the configured TCP port.
+The local CI server's certificate is trusted explicitly for these encrypted connections.
 Setup publishes the account identity before provisioning and registers the
 generated password only as a secret Azure DevOps variable. It publishes a
 dedicated TCP/master integrated connection string as netOnlyConnectionString;
@@ -52,35 +54,17 @@ function Set-PipelineVariable {
 
 function Invoke-NetOnlySql {
     param([string] $Query, [string] $LoginName, [string] $SidHex)
-    $builder = New-Object System.Data.SqlClient.SqlConnectionStringBuilder
-    # Shared memory forces a local connection without SQL Browser/TCP configuration.
-    $builder['Data Source'] = 'lpc:.'
-    if ($InstanceName -ne 'MSSQLSERVER') {
-        $builder['Data Source'] = "lpc:.\$InstanceName"
-    }
-    $builder['Initial Catalog'] = 'master'
-    $builder['Integrated Security'] = $true
-    $builder['Connect Timeout'] = 15
-    $connection = New-Object System.Data.SqlClient.SqlConnection $builder.ConnectionString
-    try {
-        $connection.Open()
-        $command = $connection.CreateCommand()
-        try {
-            $command.CommandTimeout = 30
-            $command.CommandText = $Query
-            [void] $command.Parameters.Add('@login', [System.Data.SqlDbType]::NVarChar, 128)
-            $command.Parameters['@login'].Value = $LoginName
-            [void] $command.Parameters.Add('@sid', [System.Data.SqlDbType]::VarChar, 184)
-            $command.Parameters['@sid'].Value = $SidHex
-            [void] $command.ExecuteNonQuery()
-        }
-        finally {
-            $command.Dispose()
-        }
-    }
-    finally {
-        $connection.Dispose()
-    }
+    # Invoke-Sqlcmd has no SQL parameter binding; escape literals and disable SQLCMD expansion.
+    $loginLiteral = $LoginName.Replace("'", "''")
+    $sidLiteral = $SidHex.Replace("'", "''")
+    $batch = @"
+DECLARE @login nvarchar(128) = N'$loginLiteral';
+DECLARE @sid varchar(184) = '$sidLiteral';
+$Query
+"@
+    Invoke-Sqlcmd -ServerInstance "tcp:localhost,$Port" -Database master -Query $batch `
+        -Encrypt Mandatory -TrustServerCertificate -ConnectionTimeout 15 -QueryTimeout 30 `
+        -AbortOnError -DisableVariables -DisableCommands -IgnoreProviderContext -ErrorAction Stop
 }
 
 function Get-AccountSidHex {
@@ -99,10 +83,17 @@ if ($Mode -eq 'cleanup' -and
 $operation = 'validate prerequisites'
 try {
     if ($env:OS -ne 'Windows_NT' -or -not [Environment]::Is64BitProcess) {
-        throw 'A 64-bit Windows PowerShell process on Windows is required.'
+        throw 'A 64-bit PowerShell process on Windows is required.'
     }
     Import-Module Microsoft.PowerShell.LocalAccounts -ErrorAction Stop
-    Add-Type -AssemblyName System.Data
+    $sqlServerModule = @{ ModuleName = 'SqlServer'; RequiredVersion = '22.4.5.1' }
+    if ($Mode -eq 'setup' -and -not (Get-Module -ListAvailable -FullyQualifiedName $sqlServerModule)) {
+        $operation = 'install the SqlServer module'
+        Install-Module -Name $sqlServerModule.ModuleName -RequiredVersion $sqlServerModule.RequiredVersion `
+            -Repository PSGallery -Scope CurrentUser -AllowClobber -Force -ErrorAction Stop
+    }
+    $operation = 'import the SqlServer module'
+    Import-Module -FullyQualifiedName $sqlServerModule -ErrorAction Stop
 
     if ($Mode -eq 'setup') {
         $operation = 'select a unique local account name'
