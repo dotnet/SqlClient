@@ -3057,6 +3057,9 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 }
                 catch (Exception cleanupEx)
                 {
+                    SqlClientEventSource.Log.TryTraceEvent($"{nameof(SqlBulkCopy)}.{nameof(WriteToServerInternalRestContinuedAsync)} " +
+                        $"| ERR | Unexpected exception during {nameof(CleanUpStateObject)} (ignored): {{0}}", cleanupEx);
+
                     Debug.Fail($"Unexpected exception during {nameof(CleanUpStateObject)} (ignored)", cleanupEx.ToString());
                 }
             }
