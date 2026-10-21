@@ -363,8 +363,8 @@
                       BuildSqlClientTestsManual
       Description:    Path to the key used to sign test assemblies. Required in Package mode when
                       consuming signed driver assemblies so their InternalsVisibleTo grants can
-                      be fulfilled. ManualTests uses the committed TransactionTest.snk fixture;
-                      UnitTests requires its separately configured test key.
+                      be fulfilled. UnitTests, ManualTests, and their helpers use the shared
+                      sqlclient-test-key.snk secure file.
       Default value:  [blank]
       Example:        C:\path\to\sqlclient-test-key.snk
     -->

@@ -120,6 +120,12 @@ jobs:
       - task: NuGetAuthenticate@1
         displayName: Authenticate NuGet feeds
 
+      - task: DownloadSecureFile@1
+        displayName: Download Test Signing Key
+        name: testKeyFile
+        inputs:
+          secureFile: sqlclient-test-key.snk
+
       # Write the config.jsonc file pointing the tests at the Managed Instance.  Integrated security
       # and managed identity are not supported against the Managed Instance, and IsManagedInstance
       # opts the test suite into Managed-Instance-specific behavior.
@@ -164,7 +170,7 @@ jobs:
             -p:TestFramework=${{ parameters.runtime }}
             -p:TestSet=123
             -p:ReferenceType=Package
-            -p:TestSigningKeyPath="$(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient/tests/ManualTests/SQL/TransactionTest/TransactionTest.snk"
+            -p:TestSigningKeyPath="$(testKeyFile.secureFilePath)"
             -p:Configuration=${{ parameters.buildConfiguration }}
             -p:PackageVersionSqlClient=$(sqlClientPackageVersion)
             -p:PackageVersionSqlServer=$(sqlServerPackageVersion)

@@ -55,7 +55,7 @@
   </ItemGroup>
 
   <!-- Strong name signing ============================================= -->
-  <!-- Signed packages grant ManualTests access using the committed TransactionTest.snk fixture. -->
+  <!-- Signed packages grant ManualTests access using the shared sqlclient-test-key.snk test key. -->
   <PropertyGroup Condition="'$(TestSigningKeyPath)' != ''">
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>$(TestSigningKeyPath)</AssemblyOriginatorKeyFile>

@@ -27,8 +27,9 @@ The historical `tools/SniCloseLegacyRepro` test matrix is unchanged.
 
 ## Accessing Driver Internals
 
-The driver grants `InternalsVisibleTo` access to `UnitTests` and `ManualTests` (the assembly names,
-not the project file names). Unsigned driver builds grant access in both `Project` and `Package`
+The driver grants `InternalsVisibleTo` access to `UnitTests`, `ManualTests`, and
+`Microsoft.Data.SqlClient.TestCommon` (the assembly names, not the project file names).
+Unsigned driver builds grant access in both `Project` and `Package`
 reference modes. Manual tests can use internal types and members directly, without reflection.
 The manual-test `InternalsVisibleToTest` verifies this access without SQL Server configuration.
 
@@ -37,15 +38,15 @@ In `Package` mode, tests that use internals must compile against the implementat
 the implementation assembly explicitly.
 
 Signed drivers grant internal access only in `Package` mode, to test assemblies signed with the
-matching test key. Signed `Project` builds do not grant test access. ManualTests uses the existing
-`src/Microsoft.Data.SqlClient/tests/ManualTests/SQL/TransactionTest/TransactionTest.snk` fixture;
-UnitTests retains its separate test key. This is test-only signing, not the production signing key.
+shared test key. Signed `Project` builds do not grant test access. UnitTests, ManualTests, and
+their helpers use the `sqlclient-test-key.snk` secure file. This key is provisioned outside the
+repository and is not the production signing key.
 
-For signed packages, pass `-p:TestSigningKeyPath=<absolute-path-to-TransactionTest.snk>` to
+For signed packages, pass `-p:TestSigningKeyPath=<absolute-path-to-sqlclient-test-key.snk>` to
 `TestSqlClientManual` or `BuildSqlClientTestsManual` in `build.proj`. The property is forwarded to
 the test project and signs its test-helper dependencies too. Package-mode ManualTests consumes
 the packaged AKV provider, so prepare that package alongside the driver. The internal Managed
-Instance and Kerberos package-test jobs supply the fixture path explicitly.
+Instance and Kerberos package-test jobs download the secure file and pass its path explicitly.
 
 FunctionalTests is not a friend assembly. Its linked internal source files are compiled into the
 test assembly; they do not demonstrate access to the driver's internals through `InternalsVisibleTo`.

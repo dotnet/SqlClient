@@ -578,25 +578,18 @@ Describe 'signed manual-test package builds' {
         @($result.Items.ProjectReference | Where-Object Identity -Like "*$provider.csproj").Count | Should -Be 0
     }
 
-    It 'matches the ManualTests friend grant to the committed test fixture key' {
-        $keyPath = Join-Path $repoRoot 'src\Microsoft.Data.SqlClient\tests\ManualTests\SQL\TransactionTest\TransactionTest.snk'
-        $rsa = [System.Security.Cryptography.RSACryptoServiceProvider]::new()
-        try {
-            $rsa.ImportCspBlob([System.IO.File]::ReadAllBytes($keyPath))
-            $publicBlob = $rsa.ExportCspBlob($false)
-            # Normalize the CAPI algorithm to RSA signing, as the compiler does.
-            [BitConverter]::GetBytes(0x2400).CopyTo($publicBlob, 4)
-            [byte[]]$publicKey = [BitConverter]::GetBytes(0x2400) +
-                [BitConverter]::GetBytes(0x8004) + [BitConverter]::GetBytes($publicBlob.Length) + $publicBlob
-        }
-        finally {
-            $rsa.Dispose()
-        }
+    It 'uses the same test public key for all signed friend grants' {
         [xml]$driver = Get-Content (Join-Path $repoRoot 'src\Microsoft.Data.SqlClient\src\Microsoft.Data.SqlClient.csproj') -Raw
-        $friend = @($driver.SelectNodes('//AssemblyAttribute/_Parameter1') |
-            Where-Object InnerText -Like 'ManualTests, PublicKey=*')
-        $friend.Count | Should -Be 1
-        $friend[0].InnerText | Should -Be "ManualTests, PublicKey=$([Convert]::ToHexString($publicKey))"
+        $friends = @($driver.SelectNodes('//AssemblyAttribute/_Parameter1') |
+            Where-Object InnerText -Like '*, PublicKey=*' |
+            ForEach-Object InnerText)
+        $unitFriend = @($friends | Where-Object { $_ -like 'UnitTests, PublicKey=*' })
+        $unitFriend.Count | Should -Be 1
+        $publicKey = ($unitFriend[0] -split ', PublicKey=', 2)[1]
+        $friends.Count | Should -Be 3
+        foreach ($name in @('UnitTests', 'ManualTests', 'Microsoft.Data.SqlClient.TestCommon')) {
+            $friends | Should -Contain "$name, PublicKey=$publicKey"
+        }
     }
 }
 
