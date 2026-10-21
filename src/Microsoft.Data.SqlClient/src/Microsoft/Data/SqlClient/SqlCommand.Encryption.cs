@@ -532,14 +532,14 @@ namespace Microsoft.Data.SqlClient
                 return;
             }
 
-            if (isAsync)
+            if (isAsync && ShouldUseEnclaveBasedWorkflow)
             {
                 returnTask = PrepareForTransparentEncryptionAsync(timeout, asyncWrite, isRetry, cancellationToken);
             }
             else
             {
                 PrepareForTransparentEncryptionCore(
-                    isAsync: false, timeout, out returnTask, asyncWrite, isRetry,
+                    isAsync, timeout, out returnTask, asyncWrite, isRetry,
                     serializedAttestationParameters: null, cancellationToken);
             }
         }

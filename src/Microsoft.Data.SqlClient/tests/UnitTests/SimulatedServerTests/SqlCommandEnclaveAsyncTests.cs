@@ -25,6 +25,46 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
     [Collection(SimulatedServerTestCollection.Name)]
     public sealed class SqlCommandEnclaveAsyncTests
     {
+        /// <summary>Independent fixtures must not share mutated options even when their server endpoint matches.</summary>
+        [Fact]
+        public void Fixture_SharedEndpoint_IsolatesConnectionOptions()
+        {
+            using TdsServer server = new TdsServer();
+            server.Start();
+            using Fixture first = new Fixture(server);
+            using Fixture second = new Fixture(server);
+            Assert.NotSame(first.Connection.ConnectionOptions, second.Connection.ConnectionOptions);
+            Assert.Equal(ConnectionState.Open, second.Connection.State);
+        }
+
+        /// <summary>No-work preparation stays inline and immediately reserves the connection for its reader.</summary>
+        [Fact]
+        public async Task ExecuteReaderAsync_NonEnclaveWithoutParameters_RejectsImmediateSecondCommand()
+        {
+            using Fixture fixture = new Fixture();
+            using SqlCommand command = fixture.CreateCommand();
+            command.CommandText = "/* no result metadata */";
+            typeof(SqlConnectionOptions).GetField("_enclaveAttestationUrl", BindingFlags.Instance | BindingFlags.NonPublic)
+                .SetValue(fixture.Connection.ConnectionOptions, null);
+            typeof(SqlConnectionOptions).GetField("_attestationProtocol", BindingFlags.Instance | BindingFlags.NonPublic)
+                .SetValue(fixture.Connection.ConnectionOptions, SqlConnectionAttestationProtocol.NotSpecified);
+            object[] preparationArguments =
+            {
+                true, 30, new TaskCompletionSource<object>(), null, true, false, false, CancellationToken.None
+            };
+            typeof(SqlCommand).GetMethod("PrepareForTransparentEncryption", BindingFlags.NonPublic | BindingFlags.Instance)
+                .Invoke(command, preparationArguments);
+            Assert.Null(preparationArguments[3]);
+            Assert.Equal(false, preparationArguments[5]);
+            Task<SqlDataReader> operation = command.ExecuteReaderAsync();
+            using SqlCommand other = new SqlCommand("/* competing command */", fixture.Connection);
+            Exception overlapFailure = Record.Exception(() => other.ExecuteNonQuery());
+            using SqlDataReader reader = await operation;
+            Assert.IsType<InvalidOperationException>(overlapFailure);
+            Assert.Equal(0, fixture.Provider.AsyncCalls);
+            Assert.Equal(0, fixture.Provider.SyncCalls);
+        }
+
         /// <summary>Write and pre-write reconnect failures release only a reservation they actually acquired.</summary>
         [Theory]
         [InlineData(false, false, false)]
@@ -491,7 +531,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         private sealed class Fixture : IDisposable
         {
             private static int s_protocol = int.MinValue;
-            private readonly TdsServer _server = new TdsServer(new TdsServerArguments());
+            private readonly TdsServer _server;
+            private readonly bool _ownsServer;
             private readonly ConcurrentDictionary<SqlConnectionAttestationProtocol, SqlColumnEncryptionEnclaveProvider> _providers =
                 (ConcurrentDictionary<SqlConnectionAttestationProtocol, SqlColumnEncryptionEnclaveProvider>)
                 typeof(EnclaveDelegate).GetField("s_enclaveProviders", BindingFlags.NonPublic | BindingFlags.Static).GetValue(null);
@@ -501,12 +542,18 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             internal readonly PendingProvider Provider = new PendingProvider();
             internal SqlConnection Connection => _connection;
 
-            internal Fixture()
+            internal Fixture(TdsServer server = null)
             {
-                _server.Start();
+                _ownsServer = server is null;
+                _server = server ?? new TdsServer(new TdsServerArguments());
+                if (_ownsServer)
+                {
+                    _server.Start();
+                }
                 _connection = new SqlConnection(new SqlConnectionStringBuilder
                 {
                     DataSource = $"localhost,{_server.EndPoint.Port}",
+                    ApplicationName = $"{nameof(SqlCommandEnclaveAsyncTests)}:{(int)_protocol}",
                     Encrypt = SqlConnectionEncryptOption.Optional,
                     Pooling = false
                 }.ConnectionString);
@@ -530,7 +577,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             public void Dispose()
             {
                 _connection.Dispose();
-                _server.Dispose();
+                if (_ownsServer)
+                {
+                    _server.Dispose();
+                }
                 Assert.True(_providers.TryRemove(_protocol, out _));
             }
         }
