@@ -75,7 +75,6 @@ and their packaging dependencies.
 
 The [shared CI template](eng/pipelines/dotnet-sqlclient-ci-core.yml) defaults `runMacOSTests` to `true`,
 so scheduled and push-triggered CI retains macOS coverage. Local macOS testing remains supported.
-See [Pipeline Script Tests](eng/pipelines/scripts/tests/README.md) for platform-selection regression checks.
 
 ## MSBuild Reference
 
