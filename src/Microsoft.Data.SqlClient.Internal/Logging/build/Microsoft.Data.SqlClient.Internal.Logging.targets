@@ -34,9 +34,9 @@
            versions. Missing package metadata is not assigned a guessed version. -->
       <_SqlClientExpectedFamilyVersion>@(_SqlClientLoggingVersion->'%(FamilyVersion)'->Distinct())</_SqlClientExpectedFamilyVersion>
     </PropertyGroup>
-    <Error Code="SQLCLIENT001"
-           Condition="'%(_SqlClientFamilyAsset.FamilyVersion)' != '' And '$(_SqlClientExpectedFamilyVersion)' != '' And '%(_SqlClientFamilyAsset.FamilyVersion)' != '$(_SqlClientExpectedFamilyVersion)'"
-           Text="SqlClient family version mismatch: %(_SqlClientFamilyAsset.FamilyId) is %(_SqlClientFamilyAsset.FamilyVersion), but Logging is $(_SqlClientExpectedFamilyVersion). Upgrade all installed family packages together, including prerelease labels. Emergency opt-out: SqlClientEnforceFamilyVersions=false." />
+    <Warning Code="SQLCLIENT001"
+             Condition="'%(_SqlClientFamilyAsset.FamilyVersion)' != '' And '$(_SqlClientExpectedFamilyVersion)' != '' And '%(_SqlClientFamilyAsset.FamilyVersion)' != '$(_SqlClientExpectedFamilyVersion)'"
+             Text="SqlClient family version mismatch: %(_SqlClientFamilyAsset.FamilyId) is %(_SqlClientFamilyAsset.FamilyVersion), but Logging is $(_SqlClientExpectedFamilyVersion). Upgrade all installed family packages together, including prerelease labels. Suppress warning: SqlClientEnforceFamilyVersions=false." />
 
     <!-- Legacy packages.config consumers import build/ explicitly through NuGet installation.
          Read installed versions from the manifest, independently of assembly reference metadata. -->
@@ -58,8 +58,8 @@
              Condition="'$(_SqlClientConfigExpectedVersion)' != ''">
       <Output TaskParameter="Result" ItemName="_SqlClientConfigMismatch" />
     </XmlPeek>
-    <Error Code="SQLCLIENT001"
-           Condition="'@(_SqlClientConfigMismatch)' != ''"
-           Text="SqlClient family version mismatch in $(_SqlClientConfigPath): %(_SqlClientConfigMismatch.Identity), but Logging is $(_SqlClientConfigExpectedVersion). Upgrade all installed family packages together, including prerelease labels. Emergency opt-out: SqlClientEnforceFamilyVersions=false." />
+    <Warning Code="SQLCLIENT001"
+             Condition="'@(_SqlClientConfigMismatch)' != ''"
+             Text="SqlClient family version mismatch in $(_SqlClientConfigPath): %(_SqlClientConfigMismatch.Identity), but Logging is $(_SqlClientConfigExpectedVersion). Upgrade all installed family packages together, including prerelease labels. Suppress warning: SqlClientEnforceFamilyVersions=false." />
   </Target>
 </Project>

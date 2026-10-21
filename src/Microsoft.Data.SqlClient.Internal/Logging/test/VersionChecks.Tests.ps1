@@ -109,13 +109,14 @@ BeforeAll {
         $exitCode = $LASTEXITCODE
         $text = $output -join "`n"
         if ($Mismatch) {
-            # A restore/compiler failure must not masquerade as the expected version diagnostic.
-            if ($exitCode -eq 0 -or $text -notmatch 'SQLCLIENT001' -or
+            # A mismatch is a warning now; reject build failures and unrelated MSBuild errors.
+            if ($exitCode -ne 0 -or $text -notmatch '(?im)\bwarning\s+SQLCLIENT001\b' -or
                 ($Evidence -and -not $text.Contains($Evidence)) -or
-                $text -match 'MSB4096|error (?!SQLCLIENT001)[A-Z]+\d+') {
-                throw "Expected only SQLCLIENT001: dotnet $($Arguments -join ' ')`n$text"
+                $text -match '(?im)\berror\s+[A-Z]+\d+\b') {
+                throw "Expected a successful build with a SQLCLIENT001 warning: dotnet $($Arguments -join ' ')`n$text"
             }
-        } elseif ($exitCode -ne 0 -or ($Evidence -and -not $text.Contains($Evidence))) {
+        } elseif ($exitCode -ne 0 -or ($Evidence -and -not $text.Contains($Evidence)) -or
+            $text -match '(?im)\b(?:warning|error)\s+SQLCLIENT001\b') {
             throw "Command failed or evidence missing: dotnet $($Arguments -join ' ')`n$text"
         }
         # Keep warnings visible even when a command succeeds.

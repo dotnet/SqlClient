@@ -267,9 +267,9 @@ resolved compile/runtime package metadata or the active legacy `packages.config`
 assembly versions or declared version ranges, and skips design-time builds.
 Missing version metadata or a missing Logging anchor is not guessed.
 
-**SQLCLIENT001** means installed family versions differ. Upgrade them together;
-historical extension `1.0.0` versions are not automatically mapped to driver
-`7.0.0`/`7.0.1`. The emergency escape hatch is
+**SQLCLIENT001** warns when installed family versions differ; by default, the check
+does not fail the build. Upgrade them together; historical extension `1.0.0` versions
+are not automatically mapped to driver `7.0.0`/`7.0.1`. To suppress the warning, set
 `-p:SqlClientEnforceFamilyVersions=false` (or that property in the consumer
 project). It suppresses this check only, not incompatibilities.
 NuGet buildTransitive assets can propagate through project-reference chains when a

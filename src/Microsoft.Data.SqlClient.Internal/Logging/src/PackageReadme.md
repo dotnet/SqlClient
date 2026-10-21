@@ -33,8 +33,9 @@ consumers. After package/reference resolution it compares installed
 against the **resolved Logging package version**. Optional packages are not required.
 `Microsoft.SqlServer.Server` and native SNI packages are excluded.
 
-Versions must match exactly, including prerelease labels; a mismatch fails the
-build with **SQLCLIENT001**. Upgrade all installed family packages together.
+Versions must match exactly, including prerelease labels; a mismatch emits the
+**SQLCLIENT001** warning rather than failing the build by default. Upgrade all installed
+family packages together.
 Historical extensions numbered `1.0.0` are not mapped to driver `7.0.0`/`7.0.1`.
 The check uses resolved compile/runtime asset metadata for PackageReference and
 installed versions in the active `packages.config` for legacy consumers. A
@@ -45,7 +46,7 @@ assembly versions, restore ranges, or API compatibility. Assets missing version
 metadata and builds without a Logging version anchor are skipped. Design-time
 builds are skipped.
 
-For emergency recovery, set `SqlClientEnforceFamilyVersions=false` in the
+To suppress the warning, set `SqlClientEnforceFamilyVersions=false` in the
 consumer project or pass `-p:SqlClientEnforceFamilyVersions=false`. This disables
 only this build check; it does not make mixed versions compatible. Excluding the
 package's build assets also prevents target import. NuGet buildTransitive targets
