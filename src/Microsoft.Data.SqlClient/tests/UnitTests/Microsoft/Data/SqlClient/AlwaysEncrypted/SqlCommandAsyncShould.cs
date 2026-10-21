@@ -16,6 +16,29 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
     public class SqlCommandAsyncShould
     {
         /// <summary>
+        /// Key-store cancellation after the describe phase releases the parser state must not be
+        /// replaced by a null-lock exception in the asynchronous End methods.
+        /// </summary>
+        [Theory]
+        [InlineData("EndExecuteReaderAsync")]
+        [InlineData("EndExecuteNonQueryAsync")]
+        [InlineData("EndExecuteXmlReaderAsync")]
+        public void CanceledKeyStoreOperationDoesNotLockReleasedState(string endMethod)
+        {
+            using SqlConnection connection = new("Data Source=async-ae-unit-test;Column Encryption Setting=Enabled");
+            using SqlCommand command = new("SELECT 1", connection);
+            TaskCompletionSource<object> completion = new();
+            completion.SetCanceled();
+
+            MethodInfo method = typeof(SqlCommand).GetMethod(endMethod, BindingFlags.Instance | BindingFlags.NonPublic)
+                ?? throw new InvalidOperationException("Async End method not found.");
+            TargetInvocationException exception = Assert.Throws<TargetInvocationException>(
+                () => method.Invoke(command, new object[] { completion.Task }));
+
+            Assert.IsAssignableFrom<OperationCanceledException>(exception.InnerException);
+        }
+
+        /// <summary>
         /// Missing or closed connections must fault execution without retaining the caller's token,
         /// including when setup fails before the normal cleanup continuation is registered.
         /// </summary>

@@ -78,6 +78,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         /// <summary>
+        /// Non-query execution must preserve provider cancellation after releasing describe-phase state.
+        /// </summary>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public async Task ExecuteNonQueryAsyncHonoursCancellationToken(string connectionString)
+        {
+            await AssertCancellationTokenForwarded(connectionString, (command, token) => command.ExecuteNonQueryAsync(token));
+        }
+
+        /// <summary>
         /// XML execution has separate token capture and must forward the exact caller token to the provider.
         /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
@@ -113,6 +123,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.True(provider.AsyncCalls > 0, "Expected the asynchronous provider API to be used.");
             Assert.Equal(0, provider.SyncCalls);
             Assert.Equal(cts.Token, provider.LastCancellationToken);
+
+            command.Parameters.Clear();
+            command.CommandText = "SELECT 1";
+            Assert.Equal(1, await command.ExecuteScalarAsync());
         }
 
         /// <summary>

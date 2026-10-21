@@ -415,6 +415,11 @@ namespace Microsoft.Data.SqlClient
 
             ThrowIfReconnectionHasBeenCanceled();
 
+            if (((Task)asyncResult).IsCanceled && _stateObj is null)
+            {
+                throw new TaskCanceledException((Task)asyncResult);
+            }
+
             // Locking _stateObj prevents races with close/cancel.
             // If we have already initiated the End call internally, we have already done that, so
             // no point doing it again.

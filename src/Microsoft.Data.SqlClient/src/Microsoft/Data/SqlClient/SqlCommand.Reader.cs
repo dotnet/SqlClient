@@ -693,6 +693,11 @@ namespace Microsoft.Data.SqlClient
 
             ThrowIfReconnectionHasBeenCanceled();
 
+            if (((Task)asyncResult).IsCanceled && _stateObj is null)
+            {
+                throw new TaskCanceledException((Task)asyncResult);
+            }
+
             // Lock on _stateObj prevents race with close/cancel
             if (!_internalEndExecuteInitiated)
             {
