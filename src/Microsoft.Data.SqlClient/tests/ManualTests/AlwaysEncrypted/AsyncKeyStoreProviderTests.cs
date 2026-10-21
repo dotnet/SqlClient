@@ -57,9 +57,42 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             await AssertAsyncApiUsed(connectionString, command => command.ExecuteNonQueryAsync());
         }
 
+        /// <summary>
+        /// XML execution must use the asynchronous provider API just like reader and non-query execution.
+        /// </summary>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public async Task ExecuteXmlReaderAsyncUsesAsyncKeyStoreProviderApi(string connectionString)
+        {
+            await AssertAsyncApiUsed(connectionString, command => command.ExecuteXmlReaderAsync(), forXml: true);
+        }
+
+        /// <summary>
+        /// Reader execution must forward the caller's token through parameter encryption to the provider.
+        /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public async Task AsyncExecutionHonoursCancellationToken(string connectionString)
+        {
+            await AssertCancellationTokenForwarded(connectionString, (command, token) => command.ExecuteReaderAsync(token));
+        }
+
+        /// <summary>
+        /// XML execution has separate token capture and must forward the exact caller token to the provider.
+        /// </summary>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public async Task ExecuteXmlReaderAsyncHonoursCancellationToken(string connectionString)
+        {
+            await AssertCancellationTokenForwarded(
+                connectionString, (command, token) => command.ExecuteXmlReaderAsync(token), forXml: true);
+        }
+
+        /// <summary>
+        /// Cancels from inside the provider to check both token identity and cancellation propagation.
+        /// </summary>
+        private async Task AssertCancellationTokenForwarded(
+            string connectionString, Func<SqlCommand, CancellationToken, Task> execute, bool forXml = false)
         {
             RecordingKeyStoreProvider provider = new();
 
@@ -68,19 +101,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(Wrap(provider));
 
             using CancellationTokenSource cts = new();
-            using SqlCommand command = CreateEncryptedParameterCommand(connection);
+            using SqlCommand command = CreateEncryptedParameterCommand(connection, forXml);
 
             // The provider cancels the token from inside the async decrypt call, which proves the
             // caller's token was threaded all the way down into the key store operation.
             provider.OnAsyncCall = () => cts.Cancel();
 
             await Assert.ThrowsAnyAsync<OperationCanceledException>(
-                () => command.ExecuteReaderAsync(cts.Token));
+                () => execute(command, cts.Token));
 
             Assert.True(provider.AsyncCalls > 0, "Expected the asynchronous provider API to be used.");
+            Assert.Equal(0, provider.SyncCalls);
+            Assert.Equal(cts.Token, provider.LastCancellationToken);
         }
 
-        private async Task AssertAsyncApiUsed(string connectionString, Func<SqlCommand, Task> execute)
+        /// <summary>
+        /// Checks provider dispatch without depending on plaintext key material.
+        /// </summary>
+        private async Task AssertAsyncApiUsed(string connectionString, Func<SqlCommand, Task> execute, bool forXml = false)
         {
             RecordingKeyStoreProvider provider = new();
 
@@ -88,7 +126,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             await connection.OpenAsync();
             connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(Wrap(provider));
 
-            using SqlCommand command = CreateEncryptedParameterCommand(connection);
+            using SqlCommand command = CreateEncryptedParameterCommand(connection, forXml);
             await Assert.ThrowsAsync<SqlException>(() => execute(command));
 
             Assert.True(provider.AsyncCalls > 0, "Expected the asynchronous provider API to be used.");
@@ -99,10 +137,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             RecordingKeyStoreProvider provider) =>
             new() { { DummyKeyStoreProvider.Name, provider } };
 
-        private SqlCommand CreateEncryptedParameterCommand(SqlConnection connection)
+        /// <summary>
+        /// Builds an encrypted predicate; XML queries project only a constant because SQL Server
+        /// does not support FOR XML over encrypted result columns.
+        /// </summary>
+        private SqlCommand CreateEncryptedParameterCommand(SqlConnection connection, bool forXml = false)
         {
+            string projection = forXml ? "1 AS Value" : "*";
+            string xmlClause = forXml ? " FOR XML PATH('row')" : string.Empty;
             SqlCommand command = new(
-                $"SELECT * FROM [{_fixture.CustomKeyStoreProviderTestTable.Name}] WHERE CustomerID = @id",
+                $"SELECT {projection} FROM [{_fixture.CustomKeyStoreProviderTestTable.Name}] WHERE CustomerID = @id{xmlClause}",
                 connection,
                 transaction: null,
                 SqlCommandColumnEncryptionSetting.Enabled);
@@ -125,6 +169,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             public Action OnAsyncCall { get; set; }
 
+            public CancellationToken LastCancellationToken { get; private set; }
+
             public override byte[] DecryptColumnEncryptionKey(
                 string masterKeyPath,
                 string encryptionAlgorithm,
@@ -141,6 +187,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 CancellationToken cancellationToken = default)
             {
                 Interlocked.Increment(ref _asyncCalls);
+                LastCancellationToken = cancellationToken;
                 OnAsyncCall?.Invoke();
                 cancellationToken.ThrowIfCancellationRequested();
                 throw new NotImplementedException();
