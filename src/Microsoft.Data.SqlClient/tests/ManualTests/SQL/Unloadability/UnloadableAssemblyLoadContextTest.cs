@@ -31,7 +31,14 @@ public class UnloadableAssemblyLoadContextTest
     /// AssemblyLoadContext from being unloaded after use.
     /// </summary>
     /// <returns>A task representing the asynchronous operation.</returns>
-    [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup))]
+    /// <remarks>
+    /// This test is not executed when Entra authentication is used. This is a product of the test
+    /// harness: the authentication provider required for Entra authentication to work in CI is
+    /// coupled to (and configured by) the ManualTesting assembly, so running this test would need
+    /// the secondary ALC to load that assembly (and a list of dependencies.) Doing so would result
+    /// in the ManualTesting assembly becoming part of the system under test.
+    /// </remarks>
+    [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup), nameof(DataTestUtility.TcpConnectionStringDoesNotUseAadAuth))]
     public async Task SecondaryAssemblyLoadContext_Unloads()
     {
         string connStr = DataTestUtility.TCPConnectionString;
