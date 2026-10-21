@@ -93,6 +93,7 @@
 
     <AbstractionsProjectPath>$(RepoRoot)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj</AbstractionsProjectPath>
     <LoggingProjectPath>$(RepoRoot)/src/Microsoft.Data.SqlClient.Internal/Logging/src/Logging.csproj</LoggingProjectPath>
+    <SqlClientRefProjectPath>$(RepoRoot)src/Microsoft.Data.SqlClient/ref/Microsoft.Data.SqlClient.csproj</SqlClientRefProjectPath>
     <SqlServerVersionsPropsPath>$(RepoRoot)/src/Microsoft.SqlServer.Server/Versions.props</SqlServerVersionsPropsPath>
 
     <!-- Properties consumed by the SDK NuGet pack task (NuGet.Build.Tasks.Pack.targets). -->
@@ -263,7 +264,9 @@
          assembly - it's used to ensure that the ref assemblies build first when ApiCompat is enabled,
          so that public API signatures are available at the point of ApiCompat. -->
     <ProjectReference Include="$(SqlClientRefProjectPath)"
-                      ReferenceOutputAssembly="false" />
+                      ReferenceOutputAssembly="false"
+                      Private="false"
+                      OutputItemType="None" />
   </ItemGroup>
 
   <!-- Reference to Abstractions -->
