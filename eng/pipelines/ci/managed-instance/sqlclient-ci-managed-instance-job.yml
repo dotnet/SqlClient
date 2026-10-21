@@ -164,6 +164,7 @@ jobs:
             -p:TestFramework=${{ parameters.runtime }}
             -p:TestSet=123
             -p:ReferenceType=Package
+            -p:TestSigningKeyPath="$(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient/tests/ManualTests/SQL/TransactionTest/TransactionTest.snk"
             -p:Configuration=${{ parameters.buildConfiguration }}
             -p:PackageVersionSqlClient=$(sqlClientPackageVersion)
             -p:PackageVersionSqlServer=$(sqlServerPackageVersion)

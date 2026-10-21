@@ -115,6 +115,7 @@ jobs:
             -p:TestSet=3
             -p:TestFilters="category!=failing&category!=flaky&category!=interactive&(FullyQualifiedName~KerberosTests|FullyQualifiedName~IntegratedAuthenticationTest|FullyQualifiedName~InstanceNameTest)"
             -p:ReferenceType=Package
+            -p:TestSigningKeyPath="$(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient/tests/ManualTests/SQL/TransactionTest/TransactionTest.snk"
             -p:Configuration=${{ parameters.buildConfiguration }}
             -p:PackageVersionSqlClient=$(sqlClientPackageVersion)
             -p:PackageVersionSqlServer=$(sqlServerPackageVersion)

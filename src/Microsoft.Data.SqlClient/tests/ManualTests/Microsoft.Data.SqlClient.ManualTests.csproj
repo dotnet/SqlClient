@@ -54,6 +54,13 @@
     </None>
   </ItemGroup>
 
+  <!-- Strong name signing ============================================= -->
+  <!-- Signed packages grant ManualTests access using the committed TransactionTest.snk fixture. -->
+  <PropertyGroup Condition="'$(TestSigningKeyPath)' != ''">
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(TestSigningKeyPath)</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+
   <!-- References ====================================================== -->
   <!-- Test target references -->
   <ItemGroup>
@@ -72,11 +79,19 @@
     <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\src\Microsoft.Data.SqlClient.csproj"
                       Condition="'$(ReferenceType)' == 'Project'"
                       Private="true" />
+    <!-- Internal diagnostics require the implementation assembly, not the public ref asset. -->
     <PackageReference Include="Microsoft.Data.SqlClient"
-                      Condition="'$(ReferenceType)' == 'Package'" />
+                      Condition="'$(ReferenceType)' == 'Package'"
+                      GeneratePathProperty="true"
+                      ExcludeAssets="compile" />
+    <Reference Include="Microsoft.Data.SqlClient"
+               Condition="'$(ReferenceType)' == 'Package'"
+               HintPath="$(PkgMicrosoft_Data_SqlClient)/lib/$(TargetFramework)/Microsoft.Data.SqlClient.dll" />
 
-    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
-    <!-- @TODO: Should there be a package mode test for AKV? -->
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj"
+                      Condition="'$(ReferenceType)' == 'Project'" />
+    <PackageReference Include="Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider"
+                      Condition="'$(ReferenceType)' == 'Package'" />
   </ItemGroup>
 
   <!-- References for netfx -->

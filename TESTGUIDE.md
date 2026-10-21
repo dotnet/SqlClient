@@ -25,6 +25,31 @@ tests, use only `net10.0`. Stress projects use `net462;net10.0`. PackageCompatib
 `net481;net10.0` with xUnit v3, and their Framework target requires Windows and .NET Framework 4.8.1.
 The historical `tools/SniCloseLegacyRepro` test matrix is unchanged.
 
+## Accessing Driver Internals
+
+The driver grants `InternalsVisibleTo` access to `UnitTests` and `ManualTests` (the assembly names,
+not the project file names). Unsigned driver builds grant access in both `Project` and `Package`
+reference modes. Manual tests can use internal types and members directly, without reflection.
+The manual-test `InternalsVisibleToTest` verifies this access without SQL Server configuration.
+
+In `Package` mode, tests that use internals must compile against the implementation assembly in
+`lib/<tfm>/`, not the public reference assembly in `ref/<tfm>/`. The manual-test project selects
+the implementation assembly explicitly.
+
+Signed drivers grant internal access only in `Package` mode, to test assemblies signed with the
+matching test key. Signed `Project` builds do not grant test access. ManualTests uses the existing
+`src/Microsoft.Data.SqlClient/tests/ManualTests/SQL/TransactionTest/TransactionTest.snk` fixture;
+UnitTests retains its separate test key. This is test-only signing, not the production signing key.
+
+For signed packages, pass `-p:TestSigningKeyPath=<absolute-path-to-TransactionTest.snk>` to
+`TestSqlClientManual` or `BuildSqlClientTestsManual` in `build.proj`. The property is forwarded to
+the test project and signs its test-helper dependencies too. Package-mode ManualTests consumes
+the packaged AKV provider, so prepare that package alongside the driver. The internal Managed
+Instance and Kerberos package-test jobs supply the fixture path explicitly.
+
+FunctionalTests is not a friend assembly. Its linked internal source files are compiled into the
+test assembly; they do not demonstrate access to the driver's internals through `InternalsVisibleTo`.
+
 ## CI Platform Coverage
 
 PR validation runs tests on Windows and Linux only. The

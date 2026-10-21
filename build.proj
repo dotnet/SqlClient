@@ -359,10 +359,12 @@
 
     <!--
       TestSigningKeyPath
-      Applies to:     TestSqlClientUnit
+      Applies to:     TestSqlClientUnit, TestSqlClientManual, BuildSqlClientTestsUnit,
+                      BuildSqlClientTestsManual
       Description:    Path to the key used to sign test assemblies. Required in Package mode when
-                      SigningKeyPath is set so that InternalsVisibleTo grants from signed driver
-                      assemblies can be fulfilled.
+                      consuming signed driver assemblies so their InternalsVisibleTo grants can
+                      be fulfilled. ManualTests uses the committed TransactionTest.snk fixture;
+                      UnitTests requires its separately configured test key.
       Default value:  [blank]
       Example:        C:\path\to\sqlclient-test-key.snk
     -->
@@ -857,6 +859,7 @@
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
+        $(TestSigningKeyPathArgument)
         $(PackageVersionSqlClientArgument)
         $(PackageVersionSqlServerArgument)
       </DotnetCommand>
@@ -1457,6 +1460,7 @@
 
         <!-- Reference Type Arguments -->
         $(ReferenceTypeArgument)
+        $(TestSigningKeyPathArgument)
         $(PackageVersionSqlClientArgument)
         $(PackageVersionSqlServerArgument)
       </DotnetCommand>
