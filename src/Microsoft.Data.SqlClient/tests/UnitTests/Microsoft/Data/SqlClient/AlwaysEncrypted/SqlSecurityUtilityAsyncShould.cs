@@ -297,6 +297,50 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             Assert.True(verifyTask.IsCanceled);
         }
 
+        /// <summary>
+        /// Cached positive and negative signature results must not override caller cancellation.
+        /// </summary>
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task VerifyColumnMasterKeySignatureAsync_WithCachedResult_ObservesCancellation(bool cachedResult)
+        {
+            string providerName = SqlColumnEncryptionCertificateStoreProvider.ProviderName;
+            string keyPath = "cached-signature-" + Guid.NewGuid();
+            byte[] signature = Guid.NewGuid().ToByteArray();
+            using SqlConnection connection = new SqlConnection("Data Source=async-ae-unit-test;Column Encryption Setting=Enabled");
+            ColumnMasterKeyMetadataSignatureVerificationCache.Instance.AddSignatureVerificationResult(
+                providerName, keyPath, allowEnclaveComputations: true, signature, cachedResult);
+
+            using CancellationTokenSource cts = new CancellationTokenSource();
+            cts.Cancel();
+
+            Task verification = SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
+                providerName, keyPath, isEnclaveEnabled: true, signature, connection, command: null, cts.Token);
+
+            OperationCanceledException exception = await Assert.ThrowsAnyAsync<OperationCanceledException>(() => verification);
+            Assert.Equal(cts.Token, exception.CancellationToken);
+            Assert.True(verification.IsCanceled);
+
+            if (cachedResult)
+            {
+                SqlSecurityUtility.VerifyColumnMasterKeySignature(
+                    providerName, keyPath, isEnclaveEnabled: true, signature, connection, command: null);
+                await SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
+                    providerName, keyPath, isEnclaveEnabled: true, signature, connection, command: null, CancellationToken.None);
+            }
+            else
+            {
+                InvalidOperationException syncException = Assert.Throws<InvalidOperationException>(() =>
+                    SqlSecurityUtility.VerifyColumnMasterKeySignature(
+                        providerName, keyPath, isEnclaveEnabled: true, signature, connection, command: null));
+                InvalidOperationException asyncException = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                    SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
+                        providerName, keyPath, isEnclaveEnabled: true, signature, connection, command: null, CancellationToken.None));
+                Assert.Equal(syncException.Message, asyncException.Message);
+            }
+        }
+
         #endregion
 
         #region SqlSymmetricKeyCache.GetKeyAsync

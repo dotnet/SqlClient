@@ -553,6 +553,8 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
+
                     SignatureVerificationResult cachedResult = ColumnMasterKeyMetadataSignatureVerificationCache.Instance
                         .GetSignatureVerificationResult(keyStoreName, keyPath, isEnclaveEnabled, CMKSignature);
 
