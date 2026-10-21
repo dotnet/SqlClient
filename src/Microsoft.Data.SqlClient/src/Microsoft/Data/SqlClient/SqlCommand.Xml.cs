@@ -194,7 +194,7 @@ namespace Microsoft.Data.SqlClient
             return xmlReader;
         }
 
-        private IAsyncResult BeginExecuteXmlReaderAsync(AsyncCallback callback, object stateObject)
+        private IAsyncResult BeginExecuteXmlReaderAsync(AsyncCallback callback, object stateObject, CancellationToken cancellationToken)
         {
             SqlClientEventSource.Log.TryCorrelationTraceEvent(
                 "SqlCommand.BeginExecuteXmlReaderAsync | API | Correlation | " +
@@ -213,7 +213,8 @@ namespace Microsoft.Data.SqlClient
                 stateObject,
                 CommandTimeout,
                 isRetry: false,
-                asyncWrite: true);
+                asyncWrite: true,
+                cancellationToken);
         }
 
         private IAsyncResult BeginExecuteXmlReaderInternal(
@@ -222,7 +223,8 @@ namespace Microsoft.Data.SqlClient
             object stateObject,
             int timeout,
             bool isRetry,
-            bool asyncWrite)
+            bool asyncWrite,
+            CancellationToken cancellationToken = default)
         {
             TaskCompletionSource<object> globalCompletion = new TaskCompletionSource<object>(stateObject);
             TaskCompletionSource<object> localCompletion = new TaskCompletionSource<object>(stateObject);
@@ -262,7 +264,8 @@ namespace Microsoft.Data.SqlClient
                         out writeTask,
                         out usedCache,
                         asyncWrite,
-                        isRetry);
+                        isRetry,
+                        cancellationToken: cancellationToken);
 
                     // @TODO: NonQuery pathway has the continueTaskWithState block inside this try. One or the other seems wrong
                 }
@@ -309,11 +312,12 @@ namespace Microsoft.Data.SqlClient
                         {
                             return command.InternalEndExecuteReader(asyncResult, isInternal, endMethod);
                         },
-                        retryFunc: static (SqlCommand command, CommandBehavior behavior, AsyncCallback callback, object stateObject, int timeout, bool isRetry, bool asyncWrite) =>
+                        retryFunc: (SqlCommand command, CommandBehavior behavior, AsyncCallback callback, object stateObject, int timeout, bool isRetry, bool asyncWrite) =>
                         {
-                            return command.BeginExecuteXmlReaderInternal(behavior, callback, stateObject, timeout, isRetry, asyncWrite);
+                            return command.BeginExecuteXmlReaderInternal(behavior, callback, stateObject, timeout, isRetry, asyncWrite, cancellationToken);
                         },
-                        endMethod: nameof(EndExecuteXmlReader)))
+                        endMethod: nameof(EndExecuteXmlReader),
+                        cancellationToken))
                 {
                     // @TODO: globalCompletion isn't being used past here! Why are we doing this??
                     globalCompletion = localCompletion;
@@ -413,6 +417,11 @@ namespace Microsoft.Data.SqlClient
 
             ThrowIfReconnectionHasBeenCanceled();
 
+            if (((Task)asyncResult).IsCanceled && _stateObj is null)
+            {
+                throw new TaskCanceledException((Task)asyncResult);
+            }
+
             // Locking _stateObj prevents races with close/cancel.
             // If we have already initiated the End call internally, we have already done that, so
             // no point doing it again.
@@ -510,6 +519,7 @@ namespace Microsoft.Data.SqlClient
 
             context ??= new ExecuteXmlReaderAsyncCallContext();
             context.Set(this, source, registration, operationId);
+            context.CancellationToken = cancellationToken;
 
             Task<XmlReader> returnedTask = source.Task;
             try
@@ -523,7 +533,8 @@ namespace Microsoft.Data.SqlClient
                         // @TODO: With C# 10/net6 add [StackTraceHidden]
                         return ((ExecuteXmlReaderAsyncCallContext)stateObject).Command.BeginExecuteXmlReaderAsync(
                             callback,
-                            stateObject);
+                            stateObject,
+                            ((ExecuteXmlReaderAsyncCallContext)stateObject).CancellationToken);
                     },
                     endMethod: static asyncResult =>
                     {
@@ -550,6 +561,7 @@ namespace Microsoft.Data.SqlClient
             {
                 s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
 
+                context.Dispose();
                 source.SetException(e);
             }
 
@@ -567,6 +579,8 @@ namespace Microsoft.Data.SqlClient
         internal sealed class ExecuteXmlReaderAsyncCallContext
             : AAsyncCallContext<SqlCommand, XmlReader, CancellationTokenRegistration>
         {
+            public CancellationToken CancellationToken { get; set; }
+
             public SqlCommand Command => _owner;
 
             public Guid OperationId { get; set; }
@@ -595,6 +609,7 @@ namespace Microsoft.Data.SqlClient
             protected override void Clear()
             {
                 OperationId = Guid.Empty;
+                CancellationToken = default;
             }
         }
     }
