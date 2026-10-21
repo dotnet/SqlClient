@@ -258,10 +258,10 @@ dotnet build -t:TestSqlClientFunctional -p:TestFramework=net10.0
 The Microsoft.Data.SqlClient package owns `ValidateSqlClientFamilyPackageVersions` and
 ships it as `Microsoft.Data.SqlClient.targets` in both `build/` and `buildTransitive/`.
 NuGet imports it into direct consumers and transitive PackageReference consumers (unless
-build assets are excluded). Because SqlClient depends on every other family package, the
-driver package is always present to import the target. Installed Logging, Abstractions,
-Extensions.Azure, and AKV packages must match the resolved SqlClient version exactly,
-including prerelease labels. Optional family packages are not required; independently
+build assets are excluded). When Microsoft.Data.SqlClient is present in the consuming
+package graph, it anchors comparisons against installed family members. Installed Logging,
+Abstractions, Extensions.Azure, and AKV packages must match the resolved SqlClient version
+exactly, including prerelease labels. Optional family packages are not required; independently
 versioned Microsoft.SqlServer.Server and native SNI packages are excluded. The target uses
 resolved compile/runtime package metadata or the active legacy `packages.config`
 (including `packages.<project-name>.config`), not

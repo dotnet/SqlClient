@@ -4,10 +4,9 @@
 -->
 <Project>
   <!-- Microsoft.Data.SqlClient owns the consumer check and ships it in build/ and buildTransitive/.
-       Every other family package is a dependency of SqlClient, so the driver package is always
-       present to import this target and to anchor the comparison. Only installed members of the
-       lockstep family are checked. SqlServer.Server and native SNI are independently versioned.
-       Project references are not package-version evidence. -->
+       When SqlClient is present in the consuming package graph, it anchors comparisons against
+       installed members of the lockstep family. SqlServer.Server and native SNI are independently
+       versioned. Project references are not package-version evidence. -->
   <PropertyGroup>
     <SqlClientEnforceFamilyVersions Condition="'$(SqlClientEnforceFamilyVersions)' == ''">true</SqlClientEnforceFamilyVersions>
   </PropertyGroup>
