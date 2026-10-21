@@ -109,6 +109,10 @@
     <file src="..\tools\icons\dotnet.png" target="" />
     <file src="..\src\Microsoft.Data.SqlClient\src\PackageReadme.md" target="README.md" />
 
+    <!-- Consumer family version check; NuGet imports targets named after the package ID. -->
+    <file src="..\src\Microsoft.Data.SqlClient\build\Microsoft.Data.SqlClient.targets" target="build\" />
+    <file src="..\src\Microsoft.Data.SqlClient\build\Microsoft.Data.SqlClient.targets" target="buildTransitive\" />
+
     <!--
       All file paths are relative to the artifacts directory created by the build, so
       the pack flow sets NuspecBasePath to that artifacts directory.

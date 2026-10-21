@@ -4,17 +4,18 @@
 
 <#
 .SYNOPSIS
-Checks exact family versions and automatic NuGet imports using the real Logging package.
+Checks exact family versions and automatic NuGet imports of the Microsoft.Data.SqlClient target.
 .DESCRIPTION
 Synthetic projects cover every asset group and packages.config without a database.
 Isolated SDK consumers restore from a private fixture feed/cache, never manually import
-the target, and prove direct and transitive package imports. Other family packages are
-small test fixtures, not production builds. No ordinary project-reference propagation
+the target, and prove direct and transitive package imports. Every family package is a
+small test fixture; the SqlClient fixture carries the real shipped target, and a separate
+check proves the real nuspec packs that same file. No ordinary project-reference propagation
 is asserted. All scratch files stay under this test directory and are removed.
 #>
 BeforeDiscovery {
     # Expand the matrix during discovery so each contract has a named Pester result.
-    $family = @('Microsoft.Data.SqlClient.Extensions.Abstractions', 'Microsoft.Data.SqlClient',
+    $family = @('Microsoft.Data.SqlClient.Extensions.Abstractions', 'Microsoft.Data.SqlClient.Internal.Logging',
         'Microsoft.Data.SqlClient.Extensions.Azure', 'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider')
     $syntheticCases = @(
         foreach ($kind in @('ResolvedCompileFileDefinitions', 'ReferencePath', 'RuntimeCopyLocalItems',
@@ -49,16 +50,16 @@ BeforeDiscovery {
     $legacyCaseCases = @(
         foreach ($kind in @('packages.config', 'packages.VersionTest.config')) {
             foreach ($id in $family) {
-                foreach ($casing in @('lowercase Logging', 'uppercase family', 'mixed casing')) {
+                foreach ($casing in @('lowercase anchor', 'uppercase family', 'mixed casing')) {
                     foreach ($scenario in @('matching', 'mismatching', 'opt-out')) {
                         @{
                             Kind = $kind; Casing = $casing; Scenario = $scenario
-                            LoggingId = if ($casing -eq 'uppercase family') {
-                                'Microsoft.Data.SqlClient.Internal.Logging'
+                            AnchorId = if ($casing -eq 'uppercase family') {
+                                'Microsoft.Data.SqlClient'
                             } else {
-                                'microsoft.data.sqlclient.internal.logging'
+                                'microsoft.data.sqlclient'
                             }
-                            Id = if ($casing -eq 'lowercase Logging') { $id } else { $id.ToUpperInvariant() }
+                            Id = if ($casing -eq 'lowercase anchor') { $id } else { $id.ToUpperInvariant() }
                             Version = if ($scenario -eq 'matching') { '8.0.0' } else { '8.0.1' }
                             Mismatch = $scenario -eq 'mismatching'
                             OptOut = $scenario -eq 'opt-out'
@@ -68,7 +69,7 @@ BeforeDiscovery {
             }
         }
     )
-    # Exercise the same contracts with Logging referenced directly and through a wrapper package.
+    # Exercise the same contracts with SqlClient referenced directly and through a wrapper package.
     $consumerCases = @(
         foreach ($transitive in @($false, $true)) {
             $mode = if ($transitive) { 'transitive' } else { 'direct' }
@@ -85,15 +86,15 @@ BeforeDiscovery {
 
 BeforeAll {
     $ErrorActionPreference = 'Stop'
-    $targets = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../build/Microsoft.Data.SqlClient.Internal.Logging.targets'))
-    $loggingProject = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../src/Logging.csproj'))
-    # Stay inside the repo for the real pack's imports; isolate each run from existing fixtures.
+    $targets = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../../build/Microsoft.Data.SqlClient.targets'))
+    $nuspec = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../../src/Microsoft.Data.SqlClient.nuspec'))
+    # Isolate each run from existing fixtures in a unique scratch directory.
     $work = Join-Path $PSScriptRoot ("version-checks-" + [guid]::NewGuid())
     $previousTmp = $env:TMPDIR
     $previousPackages = $env:NUGET_PACKAGES
-    $family = @('Microsoft.Data.SqlClient.Extensions.Abstractions', 'Microsoft.Data.SqlClient',
+    $family = @('Microsoft.Data.SqlClient.Extensions.Abstractions', 'Microsoft.Data.SqlClient.Internal.Logging',
         'Microsoft.Data.SqlClient.Extensions.Azure', 'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider')
-    $logging = 'Microsoft.Data.SqlClient.Internal.Logging'
+    $sqlClient = 'Microsoft.Data.SqlClient'
     $excluded = @('Microsoft.SqlServer.Server', 'Microsoft.Data.SqlClient.SNI', 'Microsoft.Data.SqlClient.SNI.runtime')
 
     # Execute one command, checking both the exit code and the expected diagnostic.
@@ -156,13 +157,17 @@ BeforeAll {
         Invoke-CheckedDotnet (@('msbuild', $project, '-t:ValidateSqlClientFamilyPackageVersions', '-v:quiet', '-nologo') + $Properties) $Mismatch $Evidence
     }
 
-    # Pack a minimal SDK library, optionally depending on Logging, into the private feed.
+    # Pack a minimal SDK library into the private feed. The wrapper depends on SqlClient, and the
+    # SqlClient fixture ships the real target exactly where the nuspec places it.
     function New-FixturePackage {
         param([string] $Id, [string] $Version, [bool] $Wrapper = $false)
         $directory = Join-Path $work "$Id-$Version"
         New-Item -ItemType Directory $directory | Out-Null
         # Exact ranges prevent restore from choosing another fixture version to repair a mismatch.
-        $dependency = if ($Wrapper) { "<PackageReference Include='$logging' Version='[$anchor]' />" } else { '' }
+        $dependency = if ($Wrapper) { "<PackageReference Include='$sqlClient' Version='[$anchor]' />" } else { '' }
+        if ($Id -eq $sqlClient) {
+            $dependency += "<None Include='$targets' Pack='true' PackagePath='build/;buildTransitive/' />"
+        }
         Set-Content (Join-Path $directory 'Fixture.csproj') @"
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
@@ -185,8 +190,8 @@ BeforeAll {
             [bool] $NeighboringLegacyManifest = $false)
         $directory = Join-Path $work $Name
         New-Item -ItemType Directory $directory | Out-Null
-        # Arrange: the wrapper makes Logging transitive without importing the target by hand.
-        $rootId = if ($Transitive) { 'SqlClient.VersionChecks.Wrapper' } else { $logging }
+        # Arrange: the wrapper makes SqlClient transitive without importing the target by hand.
+        $rootId = if ($Transitive) { 'SqlClient.VersionChecks.Wrapper' } else { $sqlClient }
         $rootVersion = if ($Transitive) { '1.0.0' } else { $anchor }
         $exclude = if ($ExcludeBuild) { "ExcludeAssets='build;buildTransitive'" } else { '' }
         $references = "<PackageReference Include='$rootId' Version='[$rootVersion]' $exclude />"
@@ -201,7 +206,7 @@ BeforeAll {
         }
         $project = Join-Path $directory 'Consumer.csproj'
         if ($NeighboringLegacyManifest) {
-            $manifest = "<packages><package id='$logging' version='$anchor' /><package id='$($family[0])' version='8.0.0-preview2' /></packages>"
+            $manifest = "<packages><package id='$sqlClient' version='$anchor' /><package id='$($family[0])' version='8.0.0-preview2' /></packages>"
             Set-Content (Join-Path $directory 'packages.config') $manifest
         }
         Set-Content $project @"
@@ -218,22 +223,22 @@ BeforeAll {
         Invoke-CheckedDotnet @('restore', $project, '--configfile', $configFile, '-v:quiet', '-nologo')
         $import = (Get-Content (Join-Path $directory 'obj/Consumer.csproj.nuget.g.targets') -Raw) -replace '\\', '/'
         if ($ExcludeBuild) {
-            if ($import.Contains('Microsoft.Data.SqlClient.Internal.Logging.targets')) {
+            if ($import.Contains('Microsoft.Data.SqlClient.targets')) {
                 throw 'Excluded build assets unexpectedly imported the target.'
             }
         } else {
-            if (-not $import.Contains('buildTransitive/Microsoft.Data.SqlClient.Internal.Logging.targets') -and
-                -not $import.Contains('build/Microsoft.Data.SqlClient.Internal.Logging.targets')) {
-                throw "NuGet did not import Logging's packaged target for $Name."
+            if (-not $import.Contains('buildTransitive/Microsoft.Data.SqlClient.targets') -and
+                -not $import.Contains('build/Microsoft.Data.SqlClient.targets')) {
+                throw "NuGet did not import SqlClient's packaged target for $Name."
             }
-            if ($Transitive -and -not $import.Contains('buildTransitive/Microsoft.Data.SqlClient.Internal.Logging.targets')) {
+            if ($Transitive -and -not $import.Contains('buildTransitive/Microsoft.Data.SqlClient.targets')) {
                 throw 'Transitive consumer did not import buildTransitive.'
             }
             if ($Transitive) {
                 # Prove the transitive case was not accidentally turned into a direct reference.
                 $assets = Get-Content (Join-Path $directory 'obj/project.assets.json') -Raw | ConvertFrom-Json -AsHashtable
-                if ($assets.project.frameworks['net10.0'].dependencies.ContainsKey($logging)) {
-                    throw 'Transitive test accidentally references Logging directly.'
+                if ($assets.project.frameworks['net10.0'].dependencies.ContainsKey($sqlClient)) {
+                    throw 'Transitive test accidentally references SqlClient directly.'
                 }
             }
         }
@@ -267,9 +272,9 @@ AfterAll {
 }
 
 Describe 'Synthetic family-version validation' -Tag 'Synthetic' {
-    It '<Kind>: <Id> <Version> against Logging <AnchorVersion> (opt-out: <OptOut>)' -ForEach $syntheticCases {
+    It '<Kind>: <Id> <Version> against SqlClient <AnchorVersion> (opt-out: <OptOut>)' -ForEach $syntheticCases {
         # Arrange matching/mixed family metadata alongside independently versioned packages.
-        $items = @(@{ Id = $logging; Version = $AnchorVersion }, @{ Id = $Id; Version = $Version })
+        $items = @(@{ Id = $sqlClient; Version = $AnchorVersion }, @{ Id = $Id; Version = $Version })
         $items += $excluded | ForEach-Object { @{ Id = $_; Version = '1.0.0' } }
         $mismatch = $Version -ne $AnchorVersion -and -not $OptOut
         $properties = if ($OptOut) { @('-p:SqlClientEnforceFamilyVersions=false') } else { @() }
@@ -279,16 +284,16 @@ Describe 'Synthetic family-version validation' -Tag 'Synthetic' {
     }
 
     It '<Kind>: does not require optional family packages' -ForEach $assetKinds {
-        Test-Synthetic $synthetic $Kind @(@{ Id = $logging; Version = '8.0.0' })
+        Test-Synthetic $synthetic $Kind @(@{ Id = $sqlClient; Version = '8.0.0' })
     }
 
-    It '<Kind>: does not guess a missing Logging anchor' -ForEach $assetKinds {
+    It '<Kind>: does not guess a missing SqlClient anchor' -ForEach $assetKinds {
         Test-Synthetic $synthetic $Kind @(@{ Id = $family[0]; Version = '1.0.0' })
     }
 
     It '<Kind>: skips design-time builds' -ForEach $assetKinds {
         Test-Synthetic $synthetic $Kind @(
-            @{ Id = $logging; Version = '8.0.0' }, @{ Id = $family[0]; Version = '1.0.0' }
+            @{ Id = $sqlClient; Version = '8.0.0' }, @{ Id = $family[0]; Version = '1.0.0' }
         ) $false @('-p:DesignTimeBuild=true')
     }
 
@@ -299,13 +304,13 @@ Describe 'Synthetic family-version validation' -Tag 'Synthetic' {
         @{ Kind = 'RuntimeTargetsCopyLocalItems' }
     ) {
         Test-Synthetic $synthetic $Kind @(
-            @{ Id = $logging; Version = '8.0.0' }, @{ Id = $family[0]; Version = '' })
+            @{ Id = $sqlClient; Version = '8.0.0' }, @{ Id = $family[0]; Version = '' })
     }
 
-    # Duplicate Logging assets from compile and runtime resolution must not create a false mismatch.
-    It 'accepts duplicate matching Logging assets' {
+    # Duplicate SqlClient assets from compile and runtime resolution must not create a false mismatch.
+    It 'accepts duplicate matching SqlClient assets' {
         Test-Synthetic $synthetic 'ResolvedCompileFileDefinitions' @(
-            @{ Id = $logging; Version = '8.0.0' }, @{ Id = $logging; Version = '8.0.0' },
+            @{ Id = $sqlClient; Version = '8.0.0' }, @{ Id = $sqlClient; Version = '8.0.0' },
             @{ Id = $family[0]; Version = '8.0.0' })
     }
 
@@ -317,49 +322,49 @@ Describe 'Synthetic family-version validation' -Tag 'Synthetic' {
 Describe 'Project-specific legacy manifests' -Tag 'Synthetic', 'LegacyManifest' {
     It 'detects mismatches in packages.config when RestoreProjectStyle is unset' {
         Test-Synthetic $synthetic 'packages.config' @(
-            @{ Id = $logging; Version = '8.0.0' }, @{ Id = $family[0]; Version = '8.0.1' }
+            @{ Id = $sqlClient; Version = '8.0.0' }, @{ Id = $family[0]; Version = '8.0.1' }
         ) $true @() $family[0]
     }
 
     # Conflicting manifests expose incorrect selection; matching files alone cannot prove precedence.
     It 'detects mismatches without a fallback packages.config' {
         Test-Synthetic $synthetic 'packages.VersionTest.config' @(
-            @{ Id = $logging; Version = '8.0.0' }, @{ Id = $family[0]; Version = '8.0.1' }
+            @{ Id = $sqlClient; Version = '8.0.0' }, @{ Id = $family[0]; Version = '8.0.1' }
         ) $true @() $family[0]
     }
 
     It 'prefers a mismatching project manifest over a matching fallback' {
         Test-Synthetic $synthetic 'packages.VersionTest.config' @(
-            @{ Id = $logging; Version = '8.0.0' }, @{ Id = $family[0]; Version = '8.0.1' }
+            @{ Id = $sqlClient; Version = '8.0.0' }, @{ Id = $family[0]; Version = '8.0.1' }
         ) $true @() $family[0] -FallbackItems @(
-            @{ Id = $logging; Version = '8.0.0' }, @{ Id = $family[0]; Version = '8.0.0' })
+            @{ Id = $sqlClient; Version = '8.0.0' }, @{ Id = $family[0]; Version = '8.0.0' })
     }
 
     It 'ignores a mismatching fallback when the project manifest matches' {
         Test-Synthetic $synthetic 'packages.VersionTest.config' @(
-            @{ Id = $logging; Version = '8.0.0' }, @{ Id = $family[0]; Version = '8.0.0' }
+            @{ Id = $sqlClient; Version = '8.0.0' }, @{ Id = $family[0]; Version = '8.0.0' }
         ) -FallbackItems @(
-            @{ Id = $logging; Version = '8.0.0' }, @{ Id = $family[0]; Version = '8.0.1' })
+            @{ Id = $sqlClient; Version = '8.0.0' }, @{ Id = $family[0]; Version = '8.0.1' })
     }
 
-    It 'does not take a Logging anchor from an inactive fallback' {
+    It 'does not take a SqlClient anchor from an inactive fallback' {
         # Selection applies to the anchor as well as mismatches; never merge the two manifests.
         Test-Synthetic $synthetic 'packages.VersionTest.config' @(
             @{ Id = $family[0]; Version = '8.0.1' }
         ) -FallbackItems @(
-            @{ Id = $logging; Version = '8.0.0' }, @{ Id = $family[0]; Version = '8.0.1' })
+            @{ Id = $sqlClient; Version = '8.0.0' }, @{ Id = $family[0]; Version = '8.0.1' })
     }
 
     It 'normalizes spaces in the project name to underscores' {
         Test-Synthetic $synthetic 'packages.Version_Test.config' @(
-            @{ Id = $logging; Version = '8.0.0' }, @{ Id = $family[0]; Version = '8.0.1' }
+            @{ Id = $sqlClient; Version = '8.0.0' }, @{ Id = $family[0]; Version = '8.0.1' }
         ) $true @() $family[0] -ProjectName 'Version Test'
     }
 }
 
 Describe 'Case-insensitive legacy package IDs' -Tag 'Synthetic', 'LegacyCase' {
     It '<Kind>: <Casing>, <Id> (<Scenario>)' -ForEach $legacyCaseCases {
-        $items = @(@{ Id = $LoggingId; Version = '8.0.0' }, @{ Id = $Id; Version = $Version })
+        $items = @(@{ Id = $AnchorId; Version = '8.0.0' }, @{ Id = $Id; Version = $Version })
         $properties = if ($OptOut) { @('-p:SqlClientEnforceFamilyVersions=false') } else { @() }
         $evidence = if ($Mismatch) { $Id } else { '' }
         Test-Synthetic $synthetic $Kind $items $Mismatch $properties $evidence
@@ -368,16 +373,11 @@ Describe 'Case-insensitive legacy package IDs' -Tag 'Synthetic', 'LegacyCase' {
 
 Describe 'Packaged direct and transitive consumers' -Tag 'Consumer' {
     BeforeAll {
-        # Arrange once: package the real Logging project, not a substitute targets fixture.
+        # Arrange once: fixture packages only, so no driver build is needed.
         $feed = Join-Path $work 'feed'
         New-Item -ItemType Directory $feed | Out-Null
         $anchor = '8.0.0-preview1'
-        # Use the real packaging project, preserving its repository props/targets and versioning.
-        Invoke-CheckedDotnet @('pack', $loggingProject, '-c', 'Release', '-o', $feed,
-            "-p:SqlClientPackageVersion=$anchor", '-v:minimal', '-nologo')
-        $packageFile = Join-Path $feed "$logging.$anchor.nupkg"
-        # Install isolation boundaries only after the real pack has consumed repository settings.
-        # Stop ancestor props/targets/CPM and user package caches/feeds from affecting fixture consumers.
+        # Stop ancestor props/targets/CPM and user package caches/feeds from affecting fixtures.
         Set-Content (Join-Path $work 'Directory.Build.props') '<Project />'
         Set-Content (Join-Path $work 'Directory.Build.targets') '<Project />'
         Set-Content (Join-Path $work 'Directory.Packages.props') '<Project />'
@@ -385,6 +385,7 @@ Describe 'Packaged direct and transitive consumers' -Tag 'Consumer' {
         $configFile = Join-Path $work 'NuGet.Config'
         $escapedFeed = [Security.SecurityElement]::Escape($feed)
         Set-Content $configFile "<configuration><packageSources><clear /><add key='fixtures' value='$escapedFeed' /></packageSources></configuration>"
+        New-FixturePackage $sqlClient $anchor
         foreach ($id in $family) {
             New-FixturePackage $id $anchor
             New-FixturePackage $id '8.0.0-preview2'
@@ -393,20 +394,19 @@ Describe 'Packaged direct and transitive consumers' -Tag 'Consumer' {
         New-FixturePackage 'SqlClient.VersionChecks.Wrapper' '1.0.0' $true
     }
 
-    It 'ships the current targets unchanged in <Folder>' -ForEach @(
+    It 'packs the current target into <Folder> of the real nuspec' -ForEach @(
         @{ Folder = 'build' }
         @{ Folder = 'buildTransitive' }
     ) {
-        # Assert the archive contents, so a stale or omitted target cannot pass consumer checks.
-        $archive = [IO.Compression.ZipFile]::OpenRead($packageFile)
-        try {
-            $folder = $Folder
-            $entry = $archive.GetEntry("$folder/$logging.targets")
-            if (-not $entry) { throw "Missing $folder target in the real Logging package." }
-            $reader = [IO.StreamReader]::new($entry.Open())
-            try { $packed = $reader.ReadToEnd() } finally { $reader.Dispose() }
-            if ($packed -ne (Get-Content $targets -Raw)) { throw "Stale $folder target packaged." }
-        } finally { $archive.Dispose() }
+        # The fixture SqlClient package proves NuGet imports the target; this proves the real
+        # package ships that same file. Nuspec paths are relative to the artifacts directory.
+        $repoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../../../..'))
+        $folder = $Folder
+        $entries = ([xml](Get-Content $nuspec -Raw)).package.files.file | Where-Object {
+            $_.target.Trim('\', '/') -eq $folder -and
+            [IO.Path]::GetFullPath((Join-Path $repoRoot 'artifacts' ($_.src -replace '\\', '/'))) -eq $targets
+        }
+        if (@($entries).Count -ne 1) { throw "Real nuspec does not pack $targets into $folder/." }
     }
 
     It 'validates <Name>' -ForEach $consumerCases {

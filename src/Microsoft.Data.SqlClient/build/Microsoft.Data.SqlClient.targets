@@ -3,9 +3,11 @@
   file to you under the MIT license.
 -->
 <Project>
-  <!-- Logging owns the consumer check and ships it in build/ and buildTransitive/.
-       Only installed members of the lockstep family are checked. SqlServer.Server and native
-       SNI are independently versioned. Project references are not package-version evidence. -->
+  <!-- Microsoft.Data.SqlClient owns the consumer check and ships it in build/ and buildTransitive/.
+       Every other family package is a dependency of SqlClient, so the driver package is always
+       present to import this target and to anchor the comparison. Only installed members of the
+       lockstep family are checked. SqlServer.Server and native SNI are independently versioned.
+       Project references are not package-version evidence. -->
   <PropertyGroup>
     <SqlClientEnforceFamilyVersions Condition="'$(SqlClientEnforceFamilyVersions)' == ''">true</SqlClientEnforceFamilyVersions>
   </PropertyGroup>
@@ -26,17 +28,17 @@
         <FamilyVersion>%(_SqlClientResolvedAsset.NuGetPackageVersion)</FamilyVersion>
         <FamilyId>%(_SqlClientResolvedAsset.NuGetPackageId)</FamilyId>
       </_SqlClientFamilyAsset>
-      <_SqlClientLoggingVersion Include="@(_SqlClientFamilyAsset)"
-          Condition="'%(_SqlClientFamilyAsset.FamilyId)' == 'Microsoft.Data.SqlClient.Internal.Logging' And '%(_SqlClientFamilyAsset.FamilyVersion)' != ''" />
+      <_SqlClientAnchorVersion Include="@(_SqlClientFamilyAsset)"
+          Condition="'%(_SqlClientFamilyAsset.FamilyId)' == 'Microsoft.Data.SqlClient' And '%(_SqlClientFamilyAsset.FamilyVersion)' != ''" />
     </ItemGroup>
     <PropertyGroup>
       <!-- Compare resolved version strings, including prerelease labels, not ranges or assembly
            versions. Missing package metadata is not assigned a guessed version. -->
-      <_SqlClientExpectedFamilyVersion>@(_SqlClientLoggingVersion->'%(FamilyVersion)'->Distinct())</_SqlClientExpectedFamilyVersion>
+      <_SqlClientExpectedFamilyVersion>@(_SqlClientAnchorVersion->'%(FamilyVersion)'->Distinct())</_SqlClientExpectedFamilyVersion>
     </PropertyGroup>
     <Warning Code="SQLCLIENT001"
              Condition="'%(_SqlClientFamilyAsset.FamilyVersion)' != '' And '$(_SqlClientExpectedFamilyVersion)' != '' And '%(_SqlClientFamilyAsset.FamilyVersion)' != '$(_SqlClientExpectedFamilyVersion)'"
-             Text="SqlClient family version mismatch: %(_SqlClientFamilyAsset.FamilyId) is %(_SqlClientFamilyAsset.FamilyVersion), but Logging is $(_SqlClientExpectedFamilyVersion). Upgrade all installed family packages together, including prerelease labels. Suppress warning: SqlClientEnforceFamilyVersions=false." />
+             Text="SqlClient family version mismatch: %(_SqlClientFamilyAsset.FamilyId) is %(_SqlClientFamilyAsset.FamilyVersion), but Microsoft.Data.SqlClient is $(_SqlClientExpectedFamilyVersion). Upgrade all installed family packages together, including prerelease labels. Suppress warning: SqlClientEnforceFamilyVersions=false." />
 
     <!-- Legacy packages.config consumers import build/ explicitly through NuGet installation.
          Read installed versions from the manifest, independently of assembly reference metadata. -->
@@ -49,7 +51,7 @@
                                        !Exists('$(_SqlClientConfigPath)')">$(MSBuildProjectDirectory)/packages.config</_SqlClientConfigPath>
     </PropertyGroup>
     <XmlPeek XmlInputPath="$(_SqlClientConfigPath)"
-             Query="/packages/package[translate(@id, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='microsoft.data.sqlclient.internal.logging']/@version"
+             Query="/packages/package[translate(@id, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='microsoft.data.sqlclient']/@version"
              Condition="Exists('$(_SqlClientConfigPath)')">
       <Output TaskParameter="Result" PropertyName="_SqlClientConfigExpectedVersion" />
     </XmlPeek>
@@ -60,6 +62,6 @@
     </XmlPeek>
     <Warning Code="SQLCLIENT001"
              Condition="'@(_SqlClientConfigMismatch)' != ''"
-             Text="SqlClient family version mismatch in $(_SqlClientConfigPath): %(_SqlClientConfigMismatch.Identity), but Logging is $(_SqlClientConfigExpectedVersion). Upgrade all installed family packages together, including prerelease labels. Suppress warning: SqlClientEnforceFamilyVersions=false." />
+             Text="SqlClient family version mismatch in $(_SqlClientConfigPath): %(_SqlClientConfigMismatch.Identity), but Microsoft.Data.SqlClient is $(_SqlClientConfigExpectedVersion). Upgrade all installed family packages together, including prerelease labels. Suppress warning: SqlClientEnforceFamilyVersions=false." />
   </Target>
 </Project>
