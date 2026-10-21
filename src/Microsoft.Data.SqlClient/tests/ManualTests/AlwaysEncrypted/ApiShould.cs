@@ -2684,6 +2684,48 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
+        /// <summary>A warm parameterless batch keeps a non-MARS connection busy until its reader is closed.</summary>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore), nameof(DataTestUtility.EnclaveEnabled))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public async Task TestParameterlessEnclaveBatchKeepsConnectionBusy(string connectionString)
+        {
+            connectionString = new SqlConnectionStringBuilder(connectionString)
+            {
+                MultipleActiveResultSets = false
+            }.ConnectionString;
+            const int customerId = 53;
+            CleanUpTable(connectionString, _tableName);
+            InsertRows(_tableName, 1, GetValues(dataHint: customerId), connectionString);
+            Assert.NotNull(await ExecuteEnclaveQueryAsync(connectionString, customerId, isAsync: true));
+            using SqlConnection connection = new(connectionString);
+            await connection.OpenAsync();
+            using SqlBatch batch = new() { Connection = connection };
+            batch.BatchCommands.Add(new SqlBatchCommand("SELECT 1",
+                columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled));
+            batch.BatchCommands.Add(new SqlBatchCommand("SELECT 2",
+                columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled));
+            using CancellationTokenSource cancellation = new(TimeSpan.FromSeconds(90));
+            Task<SqlDataReader> pendingReader = batch.ExecuteReaderAsync(cancellation.Token);
+            using SqlCommand other = new("SELECT 3", connection, null, SqlCommandColumnEncryptionSetting.Disabled);
+            Exception overlapFailure = Record.Exception(() =>
+            {
+                using SqlDataReader competingReader = other.ExecuteReader();
+            });
+            using (SqlDataReader reader = await pendingReader)
+            {
+                Assert.IsType<InvalidOperationException>(overlapFailure);
+                Assert.True(await reader.ReadAsync(cancellation.Token));
+                Assert.Equal(1, reader.GetInt32(0));
+                Assert.False(await reader.ReadAsync(cancellation.Token));
+                Assert.True(await reader.NextResultAsync(cancellation.Token));
+                Assert.True(await reader.ReadAsync(cancellation.Token));
+                Assert.Equal(2, reader.GetInt32(0));
+                Assert.False(await reader.ReadAsync(cancellation.Token));
+                Assert.False(await reader.NextResultAsync(cancellation.Token));
+            }
+            Assert.Equal(3, await other.ExecuteScalarAsync(cancellation.Token));
+        }
+
         public static bool IsHgsVbsEnclaveSetup() =>
             DataTestUtility.IsTargetReadyForAeWithKeyStore() &&
             DataTestUtility.EnclaveEnabled &&
