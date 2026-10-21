@@ -251,67 +251,60 @@ namespace Microsoft.Data.SqlClient
             bool describeParameterEncryptionNeeded,
             bool isRetry,
             CancellationToken cancellationToken)
-                {
-                    bool processFinallyBlockAsync = true;
-                    bool decrementAsyncCountInFinallyBlockAsync = true;
-                    try
-                    {
+        {
+            bool processFinallyBlock = true;
+            try
+            {
                 if (fetchInputParameterEncryptionInfoTask is not null)
-                    {
+                {
                     await fetchInputParameterEncryptionInfoTask.ConfigureAwait(false);
-                    }
+                }
 
-                    // Check for any exception on network write before reading.
-                    CheckThrowSNIException();
+                CheckThrowSNIException();
 
-                    // If it is async, then TryFetchInputParameterEncryptionInfo ->
-                    // RunExecuteReaderTds would have incremented the async count. Decrement it
-                    // when we are about to complete async execute reader.
-                    SqlConnectionInternal internalConnectionTds = _activeConnection.GetOpenTdsConnection();
-                    if (internalConnectionTds is not null)
-                    {
-                        internalConnectionTds.DecrementAsyncCount();
-                        decrementAsyncCountInFinallyBlockAsync = false;
-                    }
-
-                    // Legacy TDS completion is synchronous; provider I/O is awaited separately below.
+                // Keep the connection reserved until the worker registers the reader.
+                // Legacy TDS completion is synchronous; provider I/O is awaited separately below.
                 describeParameterEncryptionDataReader = await Task.Run(() => CompleteAsyncExecuteReader(
-                        isInternal: false,
+                    isInternal: false,
                     forDescribeParameterEncryption: true)).ConfigureAwait(false);
-                    Debug.Assert(_stateObj is null, "non-null state object in PrepareForTransparentEncryption.");
+                ReleaseDescribeParameterEncryptionConnection();
+                Debug.Assert(_stateObj is null, "non-null state object in PrepareForTransparentEncryption.");
 
-                    // Read the results of describe parameter encryption.
                 await ReadDescribeEncryptionParameterResultsAsync(
-                        describeParameterEncryptionDataReader,
-                        describeParameterEncryptionRpcOriginalRpcMap,
+                    describeParameterEncryptionDataReader,
+                    describeParameterEncryptionRpcOriginalRpcMap,
                     isRetry,
                     cancellationToken).ConfigureAwait(false);
 
-                    #if DEBUG
-                    // Failpoint to force the thread to halt to simulate cancellation of SqlCommand.
-                    if (_sleepAfterReadDescribeEncryptionParameterResults)
-                    {
-                        Thread.Sleep(TimeSpan.FromSeconds(10));
-                    }
-                    #endif
-                }
-                catch (Exception e)
+                #if DEBUG
+                // Failpoint to force the thread to halt to simulate cancellation of SqlCommand.
+                if (_sleepAfterReadDescribeEncryptionParameterResults)
                 {
-                    processFinallyBlockAsync = ADP.IsCatchableExceptionType(e);
+                    Thread.Sleep(TimeSpan.FromSeconds(10));
+                }
+                #endif
+            }
+            catch (Exception e)
+            {
+                processFinallyBlock = ADP.IsCatchableExceptionType(e);
                 CachedAsyncState?.ResetAsyncState();
-                    throw;
-                }
-                finally
-                {
-                    PrepareTransparentEncryptionFinallyBlock(
-                        closeDataReader: processFinallyBlockAsync,
-                        decrementAsyncCount: decrementAsyncCountInFinallyBlockAsync,
-                        clearDataStructures: processFinallyBlockAsync,
-                        wasDescribeParameterEncryptionNeeded: describeParameterEncryptionNeeded,
-                        describeParameterEncryptionRpcOriginalRpcMap: describeParameterEncryptionRpcOriginalRpcMap,
-                        describeParameterEncryptionDataReader: describeParameterEncryptionDataReader);
-                }
+                throw;
+            }
+            finally
+            {
+                ReleaseDescribeParameterEncryptionConnection();
+                PrepareTransparentEncryptionFinallyBlock(
+                    closeDataReader: processFinallyBlock,
+                    decrementAsyncCount: false,
+                    clearDataStructures: processFinallyBlock,
+                    wasDescribeParameterEncryptionNeeded: describeParameterEncryptionNeeded,
+                    describeParameterEncryptionRpcOriginalRpcMap: describeParameterEncryptionRpcOriginalRpcMap,
+                    describeParameterEncryptionDataReader: describeParameterEncryptionDataReader);
+            }
         }
+
+        private void ReleaseDescribeParameterEncryptionConnection() =>
+            Interlocked.Exchange(ref _describeParameterEncryptionConnection, null)?.DecrementAsyncCount();
 
         private void InvalidateEnclaveSession()
         {

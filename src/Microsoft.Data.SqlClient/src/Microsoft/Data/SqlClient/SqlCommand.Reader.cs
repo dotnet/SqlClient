@@ -1361,7 +1361,8 @@ namespace Microsoft.Data.SqlClient
                         ds,
                         reconnectTask,
                         reconnectionStart,
-                        completion);
+                        completion,
+                        describeParameterEncryptionRequest);
 
                     task = completion.Task;
                     return ds;
@@ -1391,7 +1392,12 @@ namespace Microsoft.Data.SqlClient
 
             if (isAsync)
             {
-                _activeConnection.GetOpenTdsConnection().IncrementAsyncCount();
+                SqlConnectionInternal innerConnection = _activeConnection.GetOpenTdsConnection();
+                innerConnection.IncrementAsyncCount();
+                if (describeParameterEncryptionRequest)
+                {
+                    _describeParameterEncryptionConnection = innerConnection;
+                }
                 decrementAsyncCountOnFailure = true;
             }
 
@@ -1642,7 +1648,8 @@ namespace Microsoft.Data.SqlClient
                     decrementAsyncCountOnFailure = false;
                     if (writeTask is not null)
                     {
-                        task = RunExecuteReaderTdsSetupContinuation(runBehavior, ds, optionSettings, writeTask);
+                        task = RunExecuteReaderTdsSetupContinuation(
+                            runBehavior, ds, optionSettings, writeTask, describeParameterEncryptionRequest);
                     }
                     else
                     {
@@ -1667,7 +1674,11 @@ namespace Microsoft.Data.SqlClient
 
                 if (decrementAsyncCountOnFailure)
                 {
-                    if (_activeConnection.InnerConnection is SqlConnectionInternal innerConnectionTds)
+                    if (describeParameterEncryptionRequest)
+                    {
+                        ReleaseDescribeParameterEncryptionConnection();
+                    }
+                    else if (_activeConnection.InnerConnection is SqlConnectionInternal innerConnectionTds)
                     {
                         // It may be closed
                         innerConnectionTds.DecrementAsyncCount();
@@ -1693,7 +1704,8 @@ namespace Microsoft.Data.SqlClient
             RunBehavior runBehavior,
             SqlDataReader ds,
             string optionSettings,
-            Task writeTask)
+            Task writeTask,
+            bool describeParameterEncryptionRequest = false)
         {
             // @TODO: Why use the state version if we can't make this a static helper?
             return AsyncHelper.CreateContinuationTaskWithState(
@@ -1706,9 +1718,13 @@ namespace Microsoft.Data.SqlClient
                     sqlConnection.GetOpenTdsConnection();
                     CachedAsyncState.SetAsyncReaderState(ds, runBehavior, optionSettings);
                 },
-                onFailure: static (sqlConnection, _) =>
+                onFailure: (sqlConnection, _) =>
                 {
-                    sqlConnection.GetOpenTdsConnection().DecrementAsyncCount();
+                    // Describe completion owns its reservation across both write and read phases.
+                    if (!describeParameterEncryptionRequest)
+                    {
+                        sqlConnection.GetOpenTdsConnection().DecrementAsyncCount();
+                    }
                 });
         }
 
@@ -1724,7 +1740,8 @@ namespace Microsoft.Data.SqlClient
             SqlDataReader ds,
             Task reconnectTask,
             long reconnectionStart,
-            TaskCompletionSource<object> completion) // @TODO: I think this can be an untyped TCS.
+            TaskCompletionSource<object> completion, // @TODO: I think this can be an untyped TCS.
+            bool describeParameterEncryptionRequest)
         {
             CancellationTokenSource timeoutCts = new CancellationTokenSource();
             AsyncHelper.SetTimeoutException(
@@ -1759,7 +1776,8 @@ namespace Microsoft.Data.SqlClient
                         out Task subTask,
                         asyncWrite,
                         isRetry,
-                        ds);
+                        ds,
+                        describeParameterEncryptionRequest);
 
                     if (subTask is null)
                     {
