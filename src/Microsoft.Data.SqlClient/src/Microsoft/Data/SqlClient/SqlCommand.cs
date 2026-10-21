@@ -247,6 +247,9 @@ namespace Microsoft.Data.SqlClient
         // @TODO: Rename to match naming conventions _enclaveAttestationParameters
         private SqlEnclaveAttestationParameters enclaveAttestationParameters = null;
 
+        // Provider awaits can precede both parser-state acquisition and a cached async result.
+        private bool _enclaveAttestationInProgress;
+
         /// <summary>
         /// On 8.0 and above the Prepared state cannot be left. Once a command is prepared it will
         /// always be prepared. A change in parameters, command text, etc (IsDirty) automatically
@@ -642,7 +645,7 @@ namespace Microsoft.Data.SqlClient
                 if (_activeConnection != value && _activeConnection != null)
                 {
                     // If new value...
-                    if (CachedAsyncState != null && CachedAsyncState.PendingAsyncOperation)
+                    if (_enclaveAttestationInProgress || (CachedAsyncState != null && CachedAsyncState.PendingAsyncOperation))
                     {
                         // If in pending async state, throw.
                         throw SQL.CannotModifyPropertyAsyncOperationInProgress();
@@ -795,7 +798,7 @@ namespace Microsoft.Data.SqlClient
                 if (_transaction != value && _activeConnection is not null)
                 {
                     // If new value...
-                    if (CachedAsyncState != null && CachedAsyncState.PendingAsyncOperation)
+                    if (_enclaveAttestationInProgress || (CachedAsyncState != null && CachedAsyncState.PendingAsyncOperation))
                     {
                         // If in pending async state, throw.
                         throw SQL.CannotModifyPropertyAsyncOperationInProgress();
@@ -2464,10 +2467,11 @@ namespace Microsoft.Data.SqlClient
             Func<SqlCommand, IAsyncResult, bool, string, object> endFunc,
             Func<SqlCommand, CommandBehavior, AsyncCallback, object, int, bool, bool, IAsyncResult> retryFunc,
             string endMethod,
-            long firstAttemptStart)
+            long firstAttemptStart,
+            CancellationToken cancellationToken)
         {
             localCompletion.Task.ContinueWith(
-                task =>
+                async task =>
                 {
                     if (task.IsFaulted)
                     {
@@ -2547,11 +2551,12 @@ namespace Microsoft.Data.SqlClient
 
                         // Remove the entry from the cache since it was inconsistent
                         SqlQueryMetadataCache.GetInstance().InvalidateCacheEntry(this);
-                        InvalidateEnclaveSession();
-
                         // Kick off the retry
+                        bool invalidationCompleted = false;
                         try
                         {
+                            await InvalidateEnclaveSessionAsync(cancellationToken).ConfigureAwait(false);
+                            invalidationCompleted = true;
                             _internalEndExecuteInitiated = false;
                             Task<object> retryTask = (Task<object>)retryFunc(
                                 this,
@@ -2562,7 +2567,7 @@ namespace Microsoft.Data.SqlClient
                                 /*isRetry:*/ true,
                                 asyncWrite);
 
-                            retryTask.ContinueWith(
+                            await retryTask.ContinueWith(
                                 static (retryTask, state) =>
                                 {
                                     TaskCompletionSource<object> completionSource = (TaskCompletionSource<object>)state;
@@ -2580,11 +2585,28 @@ namespace Microsoft.Data.SqlClient
                                     }
                                 },
                                 state: globalCompletion,
-                                TaskScheduler.Default);
+                                TaskScheduler.Default).ConfigureAwait(false);
                         }
                         catch (Exception e2)
                         {
-                            globalCompletion.TrySetException(e2);
+                            if (!invalidationCompleted)
+                            {
+                                CachedAsyncState?.ResetAsyncState();
+                                if (_activeConnection.InnerConnection is SqlConnectionInternal innerConnection)
+                                {
+                                    innerConnection.DecrementAsyncCount();
+                                }
+                                _internalEndExecuteInitiated = false;
+                            }
+
+                            if (e2 is OperationCanceledException && cancellationToken.IsCancellationRequested)
+                            {
+                                globalCompletion.TrySetCanceled();
+                            }
+                            else
+                            {
+                                globalCompletion.TrySetException(e2);
+                            }
                         }
                     }
                 },
@@ -2896,7 +2918,8 @@ namespace Microsoft.Data.SqlClient
             TaskCompletionSource<object> localCompletion,
             Func<SqlCommand, IAsyncResult, bool, string, object> endFunc,
             Func<SqlCommand, CommandBehavior, AsyncCallback, object, int, bool, bool, IAsyncResult> retryFunc,
-            string endMethod)
+            string endMethod,
+            CancellationToken cancellationToken = default)
         {
             // We shouldn't be using the cache if we are in retry.
             Debug.Assert(!usedCache || !isRetry);
@@ -2924,7 +2947,8 @@ namespace Microsoft.Data.SqlClient
                     endFunc,
                     retryFunc,
                     endMethod,
-                    firstAttemptStart);
+                    firstAttemptStart,
+                    cancellationToken);
 
                 return true;
             }
@@ -2966,6 +2990,11 @@ namespace Microsoft.Data.SqlClient
 
         private void ValidateAsyncCommand()
         {
+            if (_enclaveAttestationInProgress)
+            {
+                throw SQL.PendingBeginXXXExists();
+            }
+
             if (CachedAsyncState is not null && CachedAsyncState.PendingAsyncOperation)
             {
                 // Enforce only one pending async execute at a time.
@@ -2983,6 +3012,11 @@ namespace Microsoft.Data.SqlClient
         // @TODO: isAsync isn't used.
         private void ValidateCommand(bool isAsync, [CallerMemberName] string method = "")
         {
+            if (_enclaveAttestationInProgress)
+            {
+                throw SQL.PendingBeginXXXExists();
+            }
+
             if (_activeConnection is null)
             {
                 throw ADP.ConnectionRequired(method);

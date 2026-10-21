@@ -260,7 +260,8 @@ namespace Microsoft.Data.SqlClient
             object stateObject,
             int timeout,
             bool isRetry,
-            bool asyncWrite = false)
+            bool asyncWrite = false,
+            CancellationToken cancellationToken = default)
         {
             TaskCompletionSource<object> globalCompletion = new TaskCompletionSource<object>(stateObject);
             TaskCompletionSource<object> localCompletion = new TaskCompletionSource<object>(stateObject);
@@ -301,7 +302,8 @@ namespace Microsoft.Data.SqlClient
                         out usedCache,
                         asyncWrite,
                         isRetry,
-                        nameof(BeginExecuteReader));
+                        nameof(BeginExecuteReader),
+                        cancellationToken);
                 }
                 catch (Exception e) when (ADP.IsCatchableOrSecurityExceptionType(e))
                 {
@@ -349,11 +351,12 @@ namespace Microsoft.Data.SqlClient
                         {
                             return command.InternalEndExecuteReader(asyncResult, isInternal, endMethod);
                         },
-                        retryFunc: static (SqlCommand command, CommandBehavior behavior, AsyncCallback callback, object stateObject, int timeout, bool isRetry, bool asyncWrite) =>
+                        retryFunc: (SqlCommand command, CommandBehavior behavior, AsyncCallback callback, object stateObject, int timeout, bool isRetry, bool asyncWrite) =>
                         {
-                            return command.BeginExecuteReaderInternal(behavior, callback, stateObject, timeout, isRetry, asyncWrite);
+                            return command.BeginExecuteReaderInternal(behavior, callback, stateObject, timeout, isRetry, asyncWrite, cancellationToken);
                         },
-                        nameof(EndExecuteReader)))
+                        nameof(EndExecuteReader),
+                        cancellationToken))
                 {
                     globalCompletion = localCompletion;
                 }
@@ -692,6 +695,11 @@ namespace Microsoft.Data.SqlClient
 
             ThrowIfReconnectionHasBeenCanceled();
 
+            if (((Task)asyncResult).IsCanceled && _stateObj is null)
+            {
+                throw new TaskCanceledException((Task)asyncResult);
+            }
+
             // Lock on _stateObj prevents race with close/cancel
             if (!_internalEndExecuteInitiated)
             {
@@ -1012,6 +1020,7 @@ namespace Microsoft.Data.SqlClient
 
                 context ??= new ExecuteReaderAsyncCallContext();
                 context.Set(this, source, registration, commandBehavior, operationId);
+                context.CancellationToken = cancellationToken;
 
                 Task<SqlDataReader>.Factory.FromAsync(
                     beginMethod: static (callback, state) =>
@@ -1023,7 +1032,8 @@ namespace Microsoft.Data.SqlClient
                             state,
                             args.Command.CommandTimeout,
                             isRetry: false, // @TODO: Wait, this *is* a retry if the we're on the retry part of the reliability helper!
-                            asyncWrite: true);
+                            asyncWrite: true,
+                            args.CancellationToken);
                     },
                     endMethod: static asyncResult =>
                     {
@@ -1051,8 +1061,9 @@ namespace Microsoft.Data.SqlClient
                     s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
                 }
 
-                source.SetException(e);
+                registration.Dispose();
                 context?.Dispose();
+                source.SetException(e);
             }
 
             return returnedTask;
@@ -1111,7 +1122,8 @@ namespace Microsoft.Data.SqlClient
             out bool usedCache, // @TODO: This can be eliminated if we do not retry via recursion
             bool asyncWrite = false,
             bool isRetry = false,
-            [CallerMemberName] string method = "")
+            [CallerMemberName] string method = "",
+            CancellationToken cancellationToken = default)
         {
             bool isAsync = completion is not null;
 
@@ -1164,7 +1176,8 @@ namespace Microsoft.Data.SqlClient
                     out Task prepareEncryptionTask,
                     asyncWrite: asyncWrite && isAsync,
                     out usedCache,
-                    isRetry);
+                    isRetry,
+                    cancellationToken);
 
                 long firstAttemptStart = ADP.TimerCurrent();
                 try
@@ -1194,6 +1207,14 @@ namespace Microsoft.Data.SqlClient
                     // First invalidate the entry from the cache, so that we refresh our encryption
                     // metadata.
                     SqlQueryMetadataCache.GetInstance().InvalidateCacheEntry(this);
+                    if (isAsync)
+                    {
+                        executeTask = RetryEnclaveCommandAsync(
+                            cmdBehavior, runBehavior, returnStream, completion,
+                            timeout, firstAttemptStart, asyncWrite, method, cancellationToken);
+                        return null;
+                    }
+
                     InvalidateEnclaveSession();
 
                     return RunExecuteReader(
@@ -1238,6 +1259,14 @@ namespace Microsoft.Data.SqlClient
                     // First invalidate the entry from the cache, so that we refresh our encryption
                     // metadata.
                     SqlQueryMetadataCache.GetInstance().InvalidateCacheEntry(this);
+                    if (isAsync)
+                    {
+                        executeTask = RetryEnclaveCommandAsync(
+                            cmdBehavior, runBehavior, returnStream, completion,
+                            timeout, firstAttemptStart, asyncWrite, method, cancellationToken);
+                        return null;
+                    }
+
                     InvalidateEnclaveSession();
 
                     return RunExecuteReader(
@@ -1267,6 +1296,28 @@ namespace Microsoft.Data.SqlClient
                     isRetry);
             }
             // @TODO: CER Exception Handling was removed here (see GH#3581)
+        }
+
+        private async Task RetryEnclaveCommandAsync(
+            CommandBehavior behavior,
+            RunBehavior runBehavior,
+            bool returnStream,
+            TaskCompletionSource<object> completion,
+            int timeout,
+            long firstAttemptStart,
+            bool asyncWrite,
+            string method,
+            CancellationToken cancellationToken)
+        {
+            await InvalidateEnclaveSessionAsync(cancellationToken).ConfigureAwait(false);
+            RunExecuteReader(
+                behavior, runBehavior, returnStream, completion,
+                TdsParserStaticMethods.GetRemainingTimeout(timeout, firstAttemptStart),
+                out Task task, out _, asyncWrite, isRetry: true, method, cancellationToken);
+            if (task is not null)
+            {
+                await task.ConfigureAwait(false);
+            }
         }
 
         // @TODO: This method *needs* to be broken up into separate ones for each type of execution
@@ -1848,6 +1899,8 @@ namespace Microsoft.Data.SqlClient
 
             public Guid OperationId { get; set; }
 
+            public CancellationToken CancellationToken { get; set; }
+
             public TaskCompletionSource<SqlDataReader> TaskCompletionSource => _source;
 
             public void Set(
@@ -1875,6 +1928,7 @@ namespace Microsoft.Data.SqlClient
             {
                 OperationId = Guid.Empty;
                 CommandBehavior = CommandBehavior.Default;
+                CancellationToken = default;
             }
         }
     }
