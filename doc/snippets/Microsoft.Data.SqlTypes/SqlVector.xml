@@ -19,7 +19,7 @@
           server converts.
         </para>
         <para>
-          A <c>float16</c> column is only exchanged in its binary form when the connection asks
+          A <c>float16</c> column is returned in its binary form when the connection asks
           for it through the <c>Vector Type Support</c> keyword, which defaults to <c>v1</c>.
           Otherwise such a column is returned as a <c>varchar(max)</c> containing a JSON array.
         </para>
@@ -40,13 +40,26 @@
           cannot represent exactly, in the same way as inserting a JSON literal does.
         </para>
         <para>
-          A bulk copy is different, because the <c>INSERT BULK</c> statement states the
-          destination column's base type and the server then requires a binary payload of
-          exactly that width. A textual source is therefore parsed into the destination's base
-          type by the driver, which throws an
-          <see cref="T:System.OverflowException" /> for a value outside that range. A payload
-          read from another vector column keeps its own base type, so copying between columns
-          of different base types is reported by the server.
+          Bulk copy preserves the base type of native vector sources in its incoming
+          declaration and payload. SQL Server converts the value to the destination column's
+          base type. JSON text copied into a <c>float16</c> column is sent as
+          <c>varchar(max)</c>, so SQL Server performs its parsing and rounding too.
+          The existing JSON-to-<c>float32</c> bulk-copy conversion is unchanged.
+        </para>
+        <para>
+          <c>GetColumnSchema()</c> exposes <c>VectorBaseType</c> (a string) and
+          <c>VectorDimensions</c> (an integer) through the column indexer. Both are
+          <see langword="null"/> when the result is not reported as a vector, including a
+          <c>float16</c> column returned as <c>varchar(max)</c> under <c>v1</c>.
+          For table or view columns, the
+          <see href="https://learn.microsoft.com/sql/relational-databases/system-catalog-views/sys-columns-transact-sql">sys.columns catalog view</see>
+          exposes <c>vector_dimensions</c>, <c>vector_base_type</c>, and
+          <c>vector_base_type_desc</c>. Catalog visibility depends on the caller's permissions.
+        </para>
+        <para>
+          JSON returned by the server under <c>v1</c> and JSON rendered by the driver under
+          <c>v2</c> can use different numeric notation. Compare the represented values rather
+          than expecting identical text.
         </para>
       </remarks>
     </SqlVector>
@@ -83,8 +96,8 @@
         Constructs a null vector of the given length. SQL Server requires vector arguments to specify their length even when null.
       </summary>
       <exception cref="T:System.ArgumentOutOfRangeException">
-        Vector length must be non-negative, and must not exceed the number of elements which fit
-        within a single TDS packet: 1998 for <c>float32</c>, or 3996 for <c>float16</c>.
+        Vector length must be non-negative, and must not exceed the vector type's maximum
+        element count: 1998 for <c>float32</c>, or 3996 for <c>float16</c>.
       </exception>
     </CreateNull>
   </members>

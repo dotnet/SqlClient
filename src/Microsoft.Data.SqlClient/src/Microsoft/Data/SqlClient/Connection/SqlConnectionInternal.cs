@@ -1761,7 +1761,7 @@ namespace Microsoft.Data.SqlClient.Connection
                     }
 
                     // Record the negotiated version rather than a simple flag: it determines
-                    // which vector base types the server will send and accept natively.
+                    // which vector base types the server returns natively.
                     Capabilities.VectorVersion = vectorSupportVersion;
 
                     break;

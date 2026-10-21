@@ -13,7 +13,7 @@ namespace SqlVectorFloat16Example;
 //
 // Requirements:
 // - SQL Server 2025 and above, with PREVIEW_FEATURES enabled for the database
-// - Microsoft.Data.SqlClient (7.1.0 and above)
+// - Microsoft.Data.SqlClient (8.0.0-preview1 and above)
 //<Snippet1>
 using Microsoft.Data;
 using Microsoft.Data.SqlClient;

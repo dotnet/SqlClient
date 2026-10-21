@@ -1265,7 +1265,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// connection asked for, even when it is one the client could otherwise interpret.
         /// The keyword is an opt-in, so honouring a v2 acknowledgement on a v1 connection
         /// would return float16 columns in their binary form to an application which never
-        /// asked for that — the precise back-compat change the keyword exists to prevent.
+        /// asked for that - the precise back-compat change the keyword exists to prevent.
         /// </summary>
         /// <param name="setting">The version the connection asks for, or null to leave it at the default.</param>
         [Theory]

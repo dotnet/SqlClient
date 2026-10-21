@@ -661,9 +661,9 @@ namespace Microsoft.Data.SqlClient
         // Vector Support constants
         //
         // The version negotiated via the VECTORSUPPORT feature extension determines which
-        // vector base types the server will send and accept in their native binary form:
+        // vector base types the server returns in their native binary form:
         //
-        //   0 - The server does not support the vector type. Vector columns are returned
+        //   0 - Native vector support was not negotiated. Vector columns are returned
         //       as varchar(max) containing a JSON array.
         //   1 - The server supports vector columns with a float32 base type. Columns with
         //       any other base type are returned as varchar(max) containing a JSON array.

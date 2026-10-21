@@ -2412,7 +2412,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         try
                         {
-                            value = ((ISqlVector)SqlVector<float>.CreateForConversion(
+                            value = ((ISqlVector)new SqlVector<float>(
                                 JsonSerializer.Deserialize((string)value, SqlClientJsonSerializerContext.Default.SingleArray))).VectorPayload;
                         }
                         catch (Exception ex) when (ex is ArgumentNullException || ex is JsonException)

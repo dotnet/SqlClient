@@ -62,7 +62,7 @@ public sealed class VectorFloat16TestData : NativeVectorTestDataBase<Half>
 
     public override string SqlServerTypeName => "float16";
 
-    // float16 is only exchanged in its binary form when the connection asks for the
+    // float16 is returned in its binary form when the connection asks for the
     // feature extension version which covers it.
     public override string ConnectionString => DataTestUtility.VectorFloat16ConnectionString;
 }

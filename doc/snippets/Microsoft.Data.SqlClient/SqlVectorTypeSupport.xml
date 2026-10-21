@@ -8,7 +8,7 @@
       </summary>
       <remarks>
         <para>
-          A vector column is only exchanged in its binary form when the server acknowledges
+          A vector column is returned in its binary form when the server acknowledges
           a version of the vector feature extension which covers the column's base type. A
           column whose base type is not covered is returned as a <c>varchar(max)</c>
           containing a JSON array.
@@ -28,14 +28,14 @@
     </Off>
     <V1>
       <summary>
-        Vectors with a <c>float32</c> base type are exchanged in their binary form and are
+        Vectors with a <c>float32</c> base type are returned in their binary form and are
         surfaced as <c>SqlVector&lt;float&gt;</c>. Columns with any other base type are
         returned as a <c>varchar(max)</c> containing a JSON array. This is the default.
       </summary>
     </V1>
     <V2>
       <summary>
-        Adds <c>float16</c> to the base types exchanged in their binary form. On .NET such a
+        Adds <c>float16</c> to the base types returned in their binary form. On .NET such a
         column is surfaced as <c>SqlVector&lt;System.Half&gt;</c>; on .NET Framework, where
         <c>System.Half</c> is unavailable, it is surfaced as a JSON array string and can be
         read as a <c>SqlVector&lt;float&gt;</c> on request.

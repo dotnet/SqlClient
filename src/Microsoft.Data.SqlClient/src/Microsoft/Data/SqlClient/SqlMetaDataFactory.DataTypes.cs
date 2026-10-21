@@ -371,7 +371,7 @@ internal sealed partial class SqlMetaDataFactory
             typeRow[DbMetaDataColumnNames.TypeName] = metaType.TypeName;
             typeRow[DbMetaDataColumnNames.ProviderDbType] = (int)metaType.SqlDbType;
             // A vector is transported as an 8 byte header followed by its elements, and
-            // the whole value must fit within a single TDS packet.
+            // the whole value must fit within the maximum vector size.
             typeRow[DbMetaDataColumnNames.ColumnSize] = TdsEnums.MAXSIZE;
             // A vector column declares its number of dimensions, and optionally its base
             // type. The base type is omitted here because it defaults to float32.

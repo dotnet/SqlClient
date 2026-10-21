@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest;
 public sealed class VectorFloat16AsSingleTestData : NativeVectorTestDataBase<float>
 {
     // Every value is exactly representable in binary16, so it survives narrowing on the
-    // way to the server and widening on the way back.
+    // server and widening on the way back.
     public override float[] SampleScalarData => [1.5f, 2.25f, -3.75f, 65504f, 0.125f, -0.0f];
 
     public override float[,] SampleDataSet
@@ -53,7 +53,7 @@ public sealed class VectorFloat16AsSingleTestData : NativeVectorTestDataBase<flo
     // which the caller has to ask for rather than the driver's default.
     public override bool IsDefaultRepresentation => false;
 
-    // float16 is only exchanged in its binary form when the connection asks for the
+    // float16 is returned in its binary form when the connection asks for the
     // feature extension version which covers it.
     public override string ConnectionString => DataTestUtility.VectorFloat16ConnectionString;
 }
@@ -61,7 +61,7 @@ public sealed class VectorFloat16AsSingleTestData : NativeVectorTestDataBase<flo
 /// <summary>
 /// Runs the full native vector matrix against a <c>float16</c> column using the single
 /// precision representation. This is the only representation available on .NET Framework,
-/// which has no <c>System.Half</c>, and is also where the hand written binary16 codec is
+/// which has no <c>System.Half</c>, and is also where the hand written binary16 decoder is
 /// the production path rather than a test double.
 /// </summary>
 [Trait("Set", "3")]

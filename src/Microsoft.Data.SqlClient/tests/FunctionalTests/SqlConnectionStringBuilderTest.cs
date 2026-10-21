@@ -1018,9 +1018,7 @@ namespace Microsoft.Data.SqlClient.Tests
         /// <summary>
         /// Verifies that every accepted spelling of the vector type support keyword resolves
         /// to the same value: the canonical spaced form, the unspaced synonym, and both in
-        /// arbitrary casing. The unspaced form is the one the JDBC driver uses, so it is what
-        /// a ported application is likely to be written with, and keyword lookup is
-        /// case-insensitive throughout.
+        /// arbitrary casing. Keyword lookup is case-insensitive throughout.
         /// </summary>
         /// <remarks>
         /// A connection parses its keywords through a separate table from the builder, so

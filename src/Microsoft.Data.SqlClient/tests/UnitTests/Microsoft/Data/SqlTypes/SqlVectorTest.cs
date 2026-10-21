@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
 using Xunit;
 
@@ -365,7 +364,7 @@ public class SqlVectorTest
     public void FromTdsPayload_WidensFloat16ToFloat32()
     {
         // This is how a float16 column is read on frameworks without System.Half.
-        byte[] payload = MakeFloat16Payload(new[] { 1.5f, 2.5f, 3.5f });
+        byte[] payload = MakeFloat16Payload(new ushort[] { 0x3E00, 0x4100, 0x4300 });
 
         var vec = SqlVector<float>.FromTdsPayload(payload);
 
@@ -423,7 +422,7 @@ public class SqlVectorTest
     [InlineData(3996)]
     public void FromTdsPayload_WidensBeyondTheFloat32ElementLimit(int elementCount)
     {
-        byte[] payload = MakeFloat16Payload(new float[elementCount]);
+        byte[] payload = MakeFloat16Payload(new ushort[elementCount]);
 
         var vec = SqlVector<float>.FromTdsPayload(payload);
 
@@ -450,6 +449,34 @@ public class SqlVectorTest
     }
 
     #endregion
+
+    /// <summary>
+    /// Keeps JSON coercion within the established float32 payload limit; float16 text
+    /// writes must not bypass that limit by sharing an unchecked intermediate constructor.
+    /// </summary>
+    [Theory]
+    [InlineData(1998)]
+    [InlineData(1999)]
+    public void JsonCoercionHonorsFloat32DimensionLimit(int dimensions)
+    {
+        string json = "[" + string.Join(",", new int[dimensions]) + "]";
+        MetaType type = MetaType.GetMetaTypeFromSqlDbType(SqlDbTypeExtensions.Vector, false);
+        if (dimensions > 1998)
+        {
+            ArgumentException error = Assert.Throws<ArgumentException>(() =>
+                SqlParameter.CoerceValue(json, type, out _, out _, false));
+            Assert.IsType<ArgumentOutOfRangeException>(error.InnerException);
+        }
+        else
+        {
+            byte[] payload = Assert.IsType<byte[]>(
+                SqlParameter.CoerceValue(json, type, out bool dataFeed, out bool changed, false));
+            Assert.False(dataFeed);
+            Assert.True(changed);
+            Assert.Equal(8000, payload.Length);
+            Assert.Equal((byte)MetaType.SqlVectorElementType.Float32, payload[4]);
+        }
+    }
 
     #region Helpers
 
@@ -485,9 +512,9 @@ public class SqlVectorTest
     /// Builds a float16 vector payload without using <c>System.Half</c>, so that tests
     /// which need one can also run on .NET Framework.
     /// </summary>
-    /// <param name="values">The elements, narrowed to binary16 as they are written.</param>
+    /// <param name="values">The known binary16 element encodings.</param>
     /// <returns>The assembled float16 payload.</returns>
-    private static byte[] MakeFloat16Payload(float[] values)
+    private static byte[] MakeFloat16Payload(ushort[] values)
     {
         byte[] payload = new byte[TdsEnums.VECTOR_HEADER_SIZE + (values.Length * 2)];
 
@@ -498,7 +525,7 @@ public class SqlVectorTest
 
         for (int i = 0; i < values.Length; i++)
         {
-            BitConverter.GetBytes(Float16Converter.FromSingle(values[i]))
+            BitConverter.GetBytes(values[i])
                 .CopyTo(payload, TdsEnums.VECTOR_HEADER_SIZE + (i * 2));
         }
 

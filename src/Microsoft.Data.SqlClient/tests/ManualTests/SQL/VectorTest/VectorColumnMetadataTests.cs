@@ -26,8 +26,8 @@ public sealed class VectorColumnMetadataTests
 
     /// <summary>
     /// Verifies that a vector column reports its base type and dimension count under their
-    /// own property names. Both are encoded indirectly on the wire — the base type as the
-    /// numeric scale and the dimension count derived from the column size — so this is the
+    /// own property names. Both are encoded indirectly on the wire: the base type as the
+    /// numeric scale and the dimension count derived from the column size, so this is the
     /// contract that spares callers from knowing that encoding.
     /// </summary>
     [ConditionalTheory(nameof(IsSupported))]

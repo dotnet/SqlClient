@@ -136,24 +136,23 @@ transported. The base type is selected by the type parameter of `SqlVector<T>`.
 
 Notes:
 
-- The `float16` base type is only exchanged in its binary form when the connection asks for
-  it through the `Vector Type Support` keyword. See below.
+- A `float16` column is returned in binary form when the connection negotiates `v2`
+  through the `Vector Type Support` keyword. See below.
 - `System.Half` does not exist on .NET Framework, so `SqlVector<Half>` cannot be used there.
   A `float16` column is instead reported as a string, and can be read either as a JSON array
   through `GetString`/`GetSqlString`/`GetFieldValue<string>`, or as a `SqlVector<float>` via
   `GetSqlVector<float>`, which widens the elements. Widening from `float16` is exact.
 - `float16` requires `ALTER DATABASE SCOPED CONFIGURATION SET PREVIEW_FEATURES = ON` while
   it is in preview.
-- SQL Server converts between base types for a parameter. A bulk copy is different: the
-  `INSERT BULK` statement states the destination's base type, and the server then requires a
-  binary payload of exactly that width, so it performs no conversion within the data stream.
-  A textual source is therefore parsed into the destination's base type by the driver, and
-  narrowing to `float16` throws an `OverflowException` for a value outside its range. A
-  payload read from another vector column keeps its own base type, so copying between
-  columns of different base types is reported by the server.
+- SQL Server converts between base types for parameters and native vector bulk-copy sources.
+  Bulk copy describes the source vector's base type in both its `INSERT BULK` declaration
+  and binary payload, so the server can convert it to the destination column. JSON text
+  copied into a `float16` column is sent as `varchar(max)`, without client-side narrowing.
+  The existing JSON-to-`float32` bulk-copy path retains its native float32 conversion.
 - A column's base type and number of dimensions are available from the column schema:
   `reader.GetColumnSchema()[i]["VectorBaseType"]` and `["VectorDimensions"]`. Both are `null`
-  for columns which are not vectors. This is the only way to tell the two base types apart
+  for columns which are not reported as vectors, including float16 under `v1`. These
+  properties distinguish the base types
   when a `float16` column is surfaced as a JSON string, because `GetFieldType` reports
   `string` for such a column just as it does for a `varchar` one:
 
@@ -174,6 +173,11 @@ Notes:
   }
   ```
 
+  For table or view columns, the public
+  [sys.columns catalog view](https://learn.microsoft.com/sql/relational-databases/system-catalog-views/sys-columns-transact-sql)
+  provides `vector_dimensions`, `vector_base_type`, and `vector_base_type_desc`, subject to
+  metadata visibility permissions. It is not a substitute for arbitrary query result metadata.
+
 > [!NOTE]
 > On .NET Framework, `float16` workloads do more work per value than they do on .NET.
 > Because `System.Half` isn't available, the driver widens each element to single
@@ -181,7 +185,7 @@ Notes:
 > the string read paths. On .NET, a `SqlVector<Half>` wraps the payload the server sent,
 > so no per-element conversion takes place. Writes differ in the same way: .NET can send a
 > `SqlVector<Half>` unchanged, while .NET Framework sends a JSON string or a
-> `SqlVector<float>`, which the driver converts to the column's base type.
+> `SqlVector<float>`, which SQL Server converts to the column's base type.
 >
 > If you read `float16` columns in bulk on .NET Framework, prefer
 > `GetSqlVector<float>` over the string read paths. Both widen the elements, but only the
@@ -194,7 +198,7 @@ feature extension (`0x0E`):
 
 | Version | Meaning |
 |---------|---------|
-| `0` | The server does not support vectors. Vector columns are returned as `varchar(max)`. |
+| `0` | Native vector support was not negotiated. Vector columns are returned as `varchar(max)`. |
 | `1` | `float32` is supported. Columns with any other base type are returned as `varchar(max)`. |
 | `2` | `float16` is supported in addition to `float32`. |
 

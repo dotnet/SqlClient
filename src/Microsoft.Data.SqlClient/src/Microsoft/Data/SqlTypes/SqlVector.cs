@@ -21,12 +21,12 @@ where T : unmanaged
 {
     #region Constants
 
-    private const byte VecHeaderMagicNo = SqlVectorPayload.HeaderMagicNumber;
-    private const byte VecVersionNo = SqlVectorPayload.HeaderVersion;
+    private const byte VecHeaderMagicNo = 0xA9;
+    private const byte VecVersionNo = 0x01;
 
     // Offsets of the fields within the vector header. Refer to TDS section 2.2.5.5.7.
-    private const int VecHeaderLengthOffset = SqlVectorPayload.LengthOffset;
-    private const int VecHeaderElementTypeOffset = SqlVectorPayload.ElementTypeOffset;
+    private const int VecHeaderLengthOffset = 2;
+    private const int VecHeaderElementTypeOffset = 4;
 
     #endregion
 
@@ -67,7 +67,7 @@ where T : unmanaged
     /// </summary>
     /// <remarks>
     /// The limit is the number of elements of <typeparamref name="T"/> whose payload fits
-    /// in a TDS packet, so it is a property of the type a value is sent as. A column read
+    /// in the maximum vector size, so it is a property of the type a value is sent as. A column read
     /// as a wider type than its own base type can exceed it: a <c>float16</c> column may
     /// declare up to 3996 dimensions, while 1998 is the most that can be sent as
     /// <c>float32</c>. Rejecting those here would make such a column unreadable, which on
@@ -75,19 +75,6 @@ where T : unmanaged
     /// widens to <c>float32</c>.
     /// </remarks>
     internal static SqlVector<T> CreateNullFromServer(int length) => new(length, validateLength: false);
-
-    /// <summary>
-    /// Creates a vector to be converted to a destination's base type, without applying the
-    /// element count limit which governs a value sent as <typeparamref name="T"/>.
-    /// </summary>
-    /// <remarks>
-    /// A JSON array is parsed into single precision before the payload is rewritten for the
-    /// destination's base type. The limit applies to what is finally sent, not to that
-    /// intermediate: a <c>vector(2000, float16)</c> destination accepts the value, while
-    /// 2000 elements exceed what can be sent as <c>float32</c>.
-    /// </remarks>
-    internal static SqlVector<T> CreateForConversion(ReadOnlyMemory<T> memory) =>
-        new(memory, validateLength: false);
 
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/ctor1/*' />
     public SqlVector(ReadOnlyMemory<T> memory) : this(memory, validateLength: true)
@@ -221,8 +208,15 @@ where T : unmanaged
     /// <summary>
     /// Validates the fields of a vector header which do not depend on the base type.
     /// </summary>
-    private static void ThrowIfHeaderInvalid(byte[] tdsBytes) =>
-        SqlVectorPayload.ThrowIfHeaderInvalid(tdsBytes);
+    private static void ThrowIfHeaderInvalid(byte[] tdsBytes)
+    {
+        if (tdsBytes.Length < TdsEnums.VECTOR_HEADER_SIZE ||
+            tdsBytes[0] != VecHeaderMagicNo ||
+            tdsBytes[1] != VecVersionNo)
+        {
+            throw ADP.InvalidVectorHeader();
+        }
+    }
 
     /// <summary>
     /// Returns the vector base type which corresponds to <typeparamref name="T"/>.
@@ -312,7 +306,7 @@ where T : unmanaged
         {
             throw SQL.VectorTypeNotSupported(typeof(T).FullName);
         }
-        // The size of a vector (including its header) must not exceed the maximum size of a TDS packet.
+        // The vector payload, including its header, must fit within the maximum vector size.
         // Calculate the maximum number of elements to simplify the validation of input sizes in constructors.
         maxSize = (TdsEnums.MAXSIZE - TdsEnums.VECTOR_HEADER_SIZE) / elementSize;
 

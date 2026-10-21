@@ -10,8 +10,7 @@ using Microsoft.Data.SqlClient;
 namespace Microsoft.Data.Common
 {
     /// <summary>
-    /// Converts between IEEE 754 binary16 (half precision) and binary32 (single
-    /// precision) values.
+    /// Widens IEEE 754 binary16 (half precision) values to binary32 (single precision).
     /// </summary>
     /// <remarks>
     /// <para>
@@ -20,8 +19,8 @@ namespace Microsoft.Data.Common
     /// implemented manually for .NET Framework.
     /// </para>
     /// <para>
-    /// The manual implementations are compiled for every target framework, rather
-    /// than only for .NET Framework, so that they can be validated exhaustively
+    /// The manual implementation is compiled for every target framework, rather
+    /// than only for .NET Framework, so that it can be validated exhaustively
     /// against <c>System.Half</c> in unit tests.
     /// </para>
     /// </remarks>
@@ -43,7 +42,7 @@ namespace Microsoft.Data.Common
         private const int Binary32ExponentBias = 127;
         private const int Binary32MaxExponent = 0xFF;
 
-        // The number of mantissa bits discarded when narrowing binary32 to binary16.
+        // The difference in mantissa widths when widening binary16 to binary32.
         private const int MantissaShift = Binary32MantissaBits - Binary16MantissaBits;
 
         /// <summary>
@@ -62,20 +61,6 @@ namespace Microsoft.Data.Common
             return (float)BitConverter.UInt16BitsToHalf(bits);
             #else
             return ManualToSingle(bits);
-            #endif
-        }
-
-        /// <summary>
-        /// Converts a single precision value to the raw bits of the nearest IEEE 754
-        /// binary16 value, using the round-to-nearest-even rounding mode. Values whose
-        /// magnitude exceeds the binary16 range are converted to an infinity.
-        /// </summary>
-        internal static ushort FromSingle(float value)
-        {
-            #if NET
-            return BitConverter.HalfToUInt16Bits((Half)value);
-            #else
-            return ManualFromSingle(value);
             #endif
         }
 
@@ -135,119 +120,12 @@ namespace Microsoft.Data.Common
                 (mantissa << MantissaShift));
         }
 
-        /// <summary>
-        /// Framework independent implementation of <see cref="FromSingle"/>. Exposed
-        /// separately so that it can be validated against <c>System.Half</c>.
-        /// </summary>
-        internal static ushort ManualFromSingle(float value)
-        {
-            int bits = SingleToInt32Bits(value);
-            int sign = (bits >> 31) & 0x1;
-            int exponent = (bits >> Binary32MantissaBits) & Binary32MaxExponent;
-            int mantissa = bits & 0x7FFFFF;
-
-            if (exponent == Binary32MaxExponent)
-            {
-                // Infinity or NaN. A NaN keeps its sign and the high bits of its payload,
-                // with the quiet bit forced, which is what a System.Half conversion produces.
-                int payload = mantissa == 0
-                    ? 0x7C00
-                    : 0x7C00 | 0x0200 | ((mantissa >> MantissaShift) & 0x1FF);
-
-                return (ushort)((sign << 15) | payload);
-            }
-
-            if ((bits & 0x7FFFFFFF) == 0)
-            {
-                // Positive or negative zero.
-                return (ushort)(sign << 15);
-            }
-
-            int targetExponent = exponent - Binary32ExponentBias + Binary16ExponentBias;
-
-            if (targetExponent >= Binary16MaxExponent)
-            {
-                // Too large to represent, so saturate to an infinity.
-                return (ushort)((sign << 15) | 0x7C00);
-            }
-
-            if (targetExponent <= 0)
-            {
-                // Too small to represent as a normal value. Values below half of the
-                // smallest subnormal cannot round up to it, so they are flushed to zero
-                // rather than shifted by more than the mantissa width.
-                if (targetExponent < -Binary16MantissaBits)
-                {
-                    return (ushort)(sign << 15);
-                }
-
-                // Restore the implicit leading bit and shift the mantissa into the
-                // subnormal range, rounding to nearest even.
-                mantissa |= 1 << Binary32MantissaBits;
-                int shift = MantissaShift + 1 - targetExponent;
-                int subnormal = RoundShiftRight(mantissa, shift);
-
-                // Rounding may have carried into the exponent, producing the smallest
-                // normal value. That is representable and needs no special handling,
-                // because the carry lands in the exponent field naturally.
-                return (ushort)((sign << 15) | subnormal);
-            }
-
-            int roundedMantissa = RoundShiftRight(mantissa, MantissaShift);
-
-            if (roundedMantissa == 0x400)
-            {
-                // Rounding overflowed the mantissa, so carry into the exponent.
-                roundedMantissa = 0;
-                targetExponent++;
-
-                if (targetExponent >= Binary16MaxExponent)
-                {
-                    return (ushort)((sign << 15) | 0x7C00);
-                }
-            }
-
-            return (ushort)((sign << 15) | (targetExponent << Binary16MantissaBits) | roundedMantissa);
-        }
-
-        /// <summary>
-        /// Shifts <paramref name="value"/> right by <paramref name="shift"/> bits,
-        /// rounding the discarded bits to nearest and ties to even.
-        /// </summary>
-        private static int RoundShiftRight(int value, int shift)
-        {
-            int result = value >> shift;
-            int roundBit = (value >> (shift - 1)) & 1;
-
-            if (roundBit == 0)
-            {
-                // The discarded portion is below the halfway point, so round down.
-                return result;
-            }
-
-            // Round up when the discarded portion is above the halfway point, or when
-            // it is exactly halfway and rounding up produces an even result.
-            int stickyMask = (1 << (shift - 1)) - 1;
-            bool isTie = (value & stickyMask) == 0;
-
-            return isTie && (result & 1) == 0 ? result : result + 1;
-        }
-
         private static float Int32BitsToSingle(int value)
         {
             #if NET
             return BitConverter.Int32BitsToSingle(value);
             #else
             return BitConverterCompatible.Int32BitsToSingle(value);
-            #endif
-        }
-
-        private static int SingleToInt32Bits(float value)
-        {
-            #if NET
-            return BitConverter.SingleToInt32Bits(value);
-            #else
-            return BitConverterCompatible.SingleToInt32Bits(value);
             #endif
         }
     }

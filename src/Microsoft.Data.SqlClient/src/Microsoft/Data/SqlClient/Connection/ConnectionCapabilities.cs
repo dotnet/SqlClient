@@ -162,11 +162,11 @@ internal sealed class ConnectionCapabilities
     /// <summary>
     /// The version negotiated via the <c>VECTORSUPPORT</c> feature extension
     /// (FEATUREEXTACK token value <c>0x0E</c>), which determines the vector base
-    /// types the server will send and accept in their native binary form.
+    /// types the server returns in their native binary form.
     /// </summary>
     /// <remarks>
-    /// <see cref="TdsEnums.VECTOR_VERSION_NOT_SUPPORTED"/> indicates the server does not
-    /// support the vector type; vector columns are returned as <c>varchar(max)</c>.
+    /// <see cref="TdsEnums.VECTOR_VERSION_NOT_SUPPORTED"/> indicates native vector support
+    /// was not negotiated; vector columns are returned as <c>varchar(max)</c>.
     /// <see cref="TdsEnums.VECTOR_VERSION_FLOAT32"/> indicates support for a <c>float32</c>
     /// base type; columns with any other base type are returned as <c>varchar(max)</c>.
     /// <see cref="TdsEnums.VECTOR_VERSION_FLOAT16"/> additionally indicates support for a
