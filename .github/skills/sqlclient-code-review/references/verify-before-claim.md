@@ -12,10 +12,12 @@ New entries come from drift reports with evidence, not from guesses.
 - **"This is a breaking change."** Check whether the member is in
   `src/Microsoft.Data.SqlClient/ref/` and whether it shipped in a released
   package. An API added and changed between releases breaks nobody. A `public`
-  member on an `internal` type is not public API. When shell is authorized,
-  compare against the last release:
-  `dotnet build build.proj /t:CompareMdsRefAssemblies /p:BaselinePackageVersion=<last>`.
-  Behavioral breaks still count; signature parity alone does not clear them.
+  member on an `internal` type is not public API. Compare the affected reference
+  assemblies with those in the last shipped package for each relevant target
+  framework. Before invoking compatibility tooling, confirm that the reviewed
+  revision's build entry point actually imports its target; a standalone target
+  file does not establish an available command. Behavioral breaks still count;
+  signature parity alone does not clear them.
 - **"Add an AppContext switch."** `policy/review-process.md` asks for an opt-out
   only for non-security breaking changes that affect customers. Confirm the
   change is breaking first. Check `LocalAppContextSwitches.cs` and
