@@ -1,0 +1,18 @@
+# Added by Roslyn for async/iterator state machines and compiler-generated code.
+T:System.Diagnostics.DebuggerStepThroughAttribute
+T:System.Runtime.CompilerServices.AsyncStateMachineAttribute
+T:System.Runtime.CompilerServices.CompilerGeneratedAttribute
+T:System.Runtime.CompilerServices.IteratorStateMachineAttribute
+
+# @TODO: Remove these attributes when nullability is fully implemented.
+# Without them, the APICompat tool will report errors for nullability mismatches between the
+# nullable-oblivious ref project and the partially nullable ref project.
+T:System.Runtime.CompilerServices.NullableAttribute
+T:System.Runtime.CompilerServices.NullableContextAttribute
+
+# @TODO: Remove this when NativeAOT support is fully implemented (dotnet/SqlClient#1947).
+T:System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembersAttribute
+
+# Runtime compatibility metadata. TypeForwardedFrom identifies the original assembly identity and is
+# intentionally not required to match between the reference and implementation assemblies.
+T:System.Runtime.CompilerServices.TypeForwardedFromAttribute

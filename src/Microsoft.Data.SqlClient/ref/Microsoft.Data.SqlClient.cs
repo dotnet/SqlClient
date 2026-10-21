@@ -784,6 +784,7 @@ public enum SqlCommandColumnEncryptionSetting
 
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/SqlCommand/*'/>
 [System.ComponentModel.DefaultEventAttribute("RecordsAffected")]
+[System.ComponentModel.DesignerCategoryAttribute("")]
 [System.ComponentModel.ToolboxItemAttribute(true)]
 public sealed class SqlCommand : System.Data.Common.DbCommand, System.ICloneable
 {
@@ -809,7 +810,7 @@ public sealed class SqlCommand : System.Data.Common.DbCommand, System.ICloneable
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandTimeout/*'/>
     public override int CommandTimeout { get { throw null; } set { } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandType/*'/>
-    [System.ComponentModel.DefaultValueAttribute(1)]
+    [System.ComponentModel.DefaultValueAttribute(System.Data.CommandType.Text)]
     [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
     public override System.Data.CommandType CommandType { get { throw null; } set { } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Connection/*'/>
@@ -830,13 +831,14 @@ public sealed class SqlCommand : System.Data.Common.DbCommand, System.ICloneable
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/EnableOptimizedParameterBinding/*'/>
     public bool EnableOptimizedParameterBinding { get { throw null; } set { } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Parameters/*'/>
+    [System.ComponentModel.DesignerSerializationVisibilityAttribute(System.ComponentModel.DesignerSerializationVisibility.Content)]
     public new Microsoft.Data.SqlClient.SqlParameterCollection Parameters { get { throw null; } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Transaction/*'/>
     [System.ComponentModel.BrowsableAttribute(false)]
     [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
     public new Microsoft.Data.SqlClient.SqlTransaction Transaction { get { throw null; } set { } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/UpdatedRowSource/*'/>
-    [System.ComponentModel.DefaultValueAttribute(3)]
+    [System.ComponentModel.DefaultValueAttribute(System.Data.UpdateRowSource.Both)]
     public override System.Data.UpdateRowSource UpdatedRowSource { get { throw null; } set { } }
 
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/StatementCompleted/*'/>
@@ -937,9 +939,10 @@ public sealed class SqlCommand : System.Data.Common.DbCommand, System.ICloneable
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/RegisterColumnEncryptionKeyStoreProvidersOnCommand/*' />
     public void RegisterColumnEncryptionKeyStoreProvidersOnCommand(System.Collections.Generic.IDictionary<string, Microsoft.Data.SqlClient.SqlColumnEncryptionKeyStoreProvider> customProviders) { }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ResetCommandTimeout/*'/>
-    [System.ComponentModel.DesignerSerializationVisibilityAttribute(System.ComponentModel.DesignerSerializationVisibility.Content)]
     public void ResetCommandTimeout() { }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/RetryLogicProvider/*' />
+    [System.ComponentModel.BrowsableAttribute(false)]
+    [System.ComponentModel.DesignerSerializationVisibilityAttribute(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
     public SqlRetryLogicBaseProvider RetryLogicProvider { get { throw null; } set { } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Dispose/*'/>
     protected override void Dispose(bool disposing) { }
@@ -952,6 +955,7 @@ public sealed class SqlCommand : System.Data.Common.DbCommand, System.ICloneable
 }
 
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/SqlCommandBuilder/*'/>
+[System.ComponentModel.DesignerCategoryAttribute("")]
 public sealed class SqlCommandBuilder : System.Data.Common.DbCommandBuilder
 {
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/ctor1/*'/>
@@ -1037,6 +1041,7 @@ public sealed class SqlConfigurableRetryFactory
 
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/SqlConnection/*'/>
 [System.ComponentModel.DefaultEventAttribute("InfoMessage")]
+[System.ComponentModel.DesignerCategoryAttribute("")]
 public sealed class SqlConnection : System.Data.Common.DbConnection, System.ICloneable
 {
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctor2/*'/>
@@ -1061,19 +1066,13 @@ public sealed class SqlConnection : System.Data.Common.DbConnection, System.IClo
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/System.ICloneable.Clone/*' />
     object System.ICloneable.Clone() { throw null; }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionKeyCacheTtl/*'/>
-    #if NETFRAMEWORK
     [System.ComponentModel.DefaultValueAttribute(null)]
-    #endif
     public static System.TimeSpan ColumnEncryptionKeyCacheTtl { get { throw null; } set { } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionQueryMetadataCacheEnabled/*'/>
-    #if NETFRAMEWORK
     [System.ComponentModel.DefaultValueAttribute(null)]
-    #endif
     public static bool ColumnEncryptionQueryMetadataCacheEnabled { get { throw null; } set { } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionTrustedMasterKeyPaths/*'/>
-    #if NETFRAMEWORK
     [System.ComponentModel.DefaultValueAttribute(null)]
-    #endif
     public static System.Collections.Generic.IDictionary<string, System.Collections.Generic.IList<string>> ColumnEncryptionTrustedMasterKeyPaths { get { throw null; } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CommandTimeout/*' />
     [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
@@ -1112,6 +1111,8 @@ public sealed class SqlConnection : System.Data.Common.DbConnection, System.IClo
     [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
     public override string ServerVersion { get { throw null; } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ServerProcessId/*'/>
+    [System.ComponentModel.BrowsableAttribute(false)]
+    [System.ComponentModel.DesignerSerializationVisibilityAttribute(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
     public int ServerProcessId { get { throw null; } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/State/*'/>
     [System.ComponentModel.BrowsableAttribute(false)]
@@ -1191,6 +1192,8 @@ public sealed class SqlConnection : System.Data.Common.DbConnection, System.IClo
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RetrieveInternalInfo/*'/>
     public System.Collections.Generic.IDictionary<string, object> RetrieveInternalInfo() { throw null; }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RetryLogicProvider/*' />
+    [System.ComponentModel.BrowsableAttribute(false)]
+    [System.ComponentModel.DesignerSerializationVisibilityAttribute(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
     public SqlRetryLogicBaseProvider RetryLogicProvider { get { throw null; } set { } }
 
     #if NETFRAMEWORK
@@ -1261,6 +1264,7 @@ public enum SqlConnectionColumnEncryptionSetting
 }
 
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/SqlConnectionEncryptOption/*'/>
+[System.ComponentModel.TypeConverterAttribute(typeof(Microsoft.Data.SqlClient.SqlConnectionEncryptOptionConverter))]
 public sealed class SqlConnectionEncryptOption
 {
     private SqlConnectionEncryptOption(string value) { }
@@ -1295,6 +1299,10 @@ public sealed class SqlConnectionEncryptOption
     public override int GetHashCode() { throw null; }
 }
 
+internal class SqlConnectionEncryptOptionConverter : System.ComponentModel.TypeConverter
+{
+}
+
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionIPAddressPreference.xml' path='docs/members[@name="SqlConnectionIPAddressPreference"]/SqlConnectionIPAddressPreferenceNetfx/*' />
 public enum SqlConnectionIPAddressPreference
 {
@@ -1309,6 +1317,7 @@ public enum SqlConnectionIPAddressPreference
 }
 
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionOverrides.xml' path='docs/members[@name="SqlConnectionOverrides"]/SqlConnectionOverrides/*' />
+[System.FlagsAttribute]
 public enum SqlConnectionOverrides
 {
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionOverrides.xml' path='docs/members[@name="SqlConnectionOverrides"]/None/*' />
@@ -1318,9 +1327,22 @@ public enum SqlConnectionOverrides
 }
 
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/SqlConnectionStringBuilder/*'/>
-[System.ComponentModel.DefaultPropertyAttribute("DataSource")]
+[System.ComponentModel.DefaultPropertyAttribute("Data Source")]
+[System.ComponentModel.TypeConverterAttribute(typeof(Microsoft.Data.SqlClient.SqlConnectionStringBuilder.SqlConnectionStringBuilderConverter))]
 public sealed class SqlConnectionStringBuilder : System.Data.Common.DbConnectionStringBuilder
 {
+    private sealed class SqlInitialCatalogConverter : System.ComponentModel.StringConverter
+    {
+    }
+
+    private sealed class NetworkLibraryConverter : System.ComponentModel.TypeConverter
+    {
+    }
+
+    internal sealed class SqlConnectionStringBuilderConverter : System.ComponentModel.ExpandableObjectConverter
+    {
+    }
+
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ctor2/*'/>
     public SqlConnectionStringBuilder() { }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ctorConnectionString/*'/>
@@ -1412,6 +1434,7 @@ public sealed class SqlConnectionStringBuilder : System.Data.Common.DbConnection
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/InitialCatalog/*'/>
     [System.ComponentModel.DisplayNameAttribute("Initial Catalog")]
     [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
+    [System.ComponentModel.TypeConverterAttribute(typeof(Microsoft.Data.SqlClient.SqlConnectionStringBuilder.SqlInitialCatalogConverter))]
     public string InitialCatalog { get { throw null; } set { } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/IntegratedSecurity/*'/>
     [System.ComponentModel.DisplayNameAttribute("Integrated Security")]
@@ -1518,7 +1541,7 @@ public sealed class SqlConnectionStringBuilder : System.Data.Common.DbConnection
     [System.ComponentModel.BrowsableAttribute(false)]
     [System.ComponentModel.DisplayNameAttribute("Connection Reset")]
     [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
-    [System.ObsoleteAttribute("ConnectionReset has been deprecated.  SqlConnection will ignore the 'connection reset' keyword and always reset the connection.")]
+    [System.ObsoleteAttribute("ConnectionReset has been deprecated. SqlConnection will ignore the 'connection reset' keyword and always reset the connection.")]
     public bool ConnectionReset { get { throw null; } set { } }
     #endif
 
@@ -1526,6 +1549,7 @@ public sealed class SqlConnectionStringBuilder : System.Data.Common.DbConnection
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/NetworkLibrary/*'/>
     [System.ComponentModel.DisplayNameAttribute("Network Library")]
     [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
+    [System.ComponentModel.TypeConverterAttribute(typeof(Microsoft.Data.SqlClient.SqlConnectionStringBuilder.NetworkLibraryConverter))]
     public string NetworkLibrary { get { throw null; } set { } }
     #endif
 
@@ -1551,6 +1575,7 @@ public sealed class SqlCredential
 
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/SqlDataAdapter/*'/>
 [System.ComponentModel.DefaultEventAttribute("RowUpdated")]
+[System.ComponentModel.DesignerCategoryAttribute("")]
 // TODO: Add designer and toolbox attribute when Microsoft.VSDesigner.Data.VS.SqlDataAdapterDesigner uses Microsoft.Data.SqlClient
 public sealed class SqlDataAdapter : System.Data.Common.DbDataAdapter, System.Data.IDataAdapter, System.Data.IDbDataAdapter, System.ICloneable
 {
@@ -2036,11 +2061,13 @@ public enum SqlNotificationType
 }
 
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SqlParameter/*'/>
-#if !NETFRAMEWORK
-[System.ComponentModel.TypeConverter(typeof(SqlParameterConverter))]
-#endif
+[System.ComponentModel.TypeConverterAttribute(typeof(Microsoft.Data.SqlClient.SqlParameter.SqlParameterConverter))]
 public sealed class SqlParameter : System.Data.Common.DbParameter, System.Data.IDataParameter, System.Data.IDbDataParameter, System.ICloneable
 {
+    internal sealed class SqlParameterConverter : System.ComponentModel.ExpandableObjectConverter
+    {
+    }
+
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctor2/*'/>
     public SqlParameter() { }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameDbType/*'/>
@@ -2067,6 +2094,7 @@ public sealed class SqlParameter : System.Data.Common.DbParameter, System.Data.I
     [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
     public override System.Data.ParameterDirection Direction { get { throw null; } set { } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ForceColumnEncryption/*'/>
+    [System.ComponentModel.DefaultValueAttribute(false)]
     public bool ForceColumnEncryption { [System.Runtime.CompilerServices.CompilerGeneratedAttribute] get { throw null; } [System.Runtime.CompilerServices.CompilerGeneratedAttribute] set { } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/IsNullable/*'/>
     [System.ComponentModel.DefaultValueAttribute(false)]
@@ -2126,10 +2154,6 @@ public sealed class SqlParameter : System.Data.Common.DbParameter, System.Data.I
     public void ResetSqlDbType() { }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ToString/*'/>
     public override string ToString() { throw null; }
-
-    #if !NETFRAMEWORK
-    internal class SqlParameterConverter { }
-    #endif
 }
 
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/SqlParameterCollection/*'/>

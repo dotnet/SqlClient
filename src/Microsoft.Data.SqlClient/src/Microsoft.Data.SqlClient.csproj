@@ -72,12 +72,12 @@
   <PropertyGroup>
     <ApiCompatValidateAssemblies>true</ApiCompatValidateAssemblies>
     <ApiCompatStrictMode>true</ApiCompatStrictMode>
-    <!-- @TODO: Ensure that the ref projects have identical attributes to the implementation project and enable this rule. -->
-    <ApiCompatEnableRuleAttributesMustMatch>false</ApiCompatEnableRuleAttributesMustMatch>
+    <ApiCompatEnableRuleAttributesMustMatch>true</ApiCompatEnableRuleAttributesMustMatch>
     <ApiCompatEnableRuleCannotChangeParameterName>true</ApiCompatEnableRuleCannotChangeParameterName>
     <ApiCompatContractAssembly>$(ArtifactPath)$(AssemblyName).ref/$(ReferenceType)-$(Configuration)/$(TargetFramework)/$(AssemblyName).dll</ApiCompatContractAssembly>
   </PropertyGroup>
   <ItemGroup Condition="'$(ApiCompatValidateAssemblies)' == 'true'">
+    <ApiCompatExcludeAttributesFile Include="ApiCompatExcludeAttributes.txt" />
     <ApiCompatSuppressionFile Include="ApiCompatSuppressions.xml" />
   </ItemGroup>
   <ItemGroup Condition="'$(ApiCompatValidateAssemblies)' == 'true' AND '$(TargetFramework)' != 'net462'">

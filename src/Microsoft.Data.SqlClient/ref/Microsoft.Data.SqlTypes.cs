@@ -20,6 +20,9 @@ public sealed class SqlFileStream : System.IO.Stream
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/CanSeek/*' />
     public override bool CanSeek { get { throw null; } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/CanTimeout/*' />
+    #if NETFRAMEWORK
+    [System.Runtime.InteropServices.ComVisibleAttribute(false)]
+    #endif
     public override bool CanTimeout { get { throw null; } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/CanWrite/*' />
     public override bool CanWrite { get { throw null; } }
@@ -28,8 +31,14 @@ public sealed class SqlFileStream : System.IO.Stream
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Position/*' />
     public override long Position { get { throw null; } set { throw null; } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/ReadTimeout/*' />
+    #if NETFRAMEWORK
+    [System.Runtime.InteropServices.ComVisibleAttribute(false)]
+    #endif
     public override int ReadTimeout { get { throw null; } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/WriteTimeout/*' />
+    #if NETFRAMEWORK
+    [System.Runtime.InteropServices.ComVisibleAttribute(false)]
+    #endif
     public override int WriteTimeout { get { throw null; } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Flush/*' />
     public override void Flush() { }
@@ -61,7 +70,11 @@ public class SqlJson : System.Data.SqlTypes.INullable
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/ctor1/*' />
     public SqlJson() { }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/ctor2/*' />
+    #if NET
+    public SqlJson([System.Diagnostics.CodeAnalysis.StringSyntaxAttribute(System.Diagnostics.CodeAnalysis.StringSyntaxAttribute.Json)] string jsonString) { }
+    #else
     public SqlJson(string jsonString) { }
+    #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/ctor3/*' />
     public SqlJson(System.Text.Json.JsonDocument jsonDoc) { }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlTypes/SqlJson.xml' path='docs/members[@name="SqlJson"]/IsNull/*' />
