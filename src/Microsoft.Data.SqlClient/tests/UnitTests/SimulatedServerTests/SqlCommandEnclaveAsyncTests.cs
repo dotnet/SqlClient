@@ -12,6 +12,7 @@ using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
+using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
@@ -24,6 +25,107 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
     [Collection(SimulatedServerTestCollection.Name)]
     public sealed class SqlCommandEnclaveAsyncTests
     {
+        /// <summary>Write and pre-write reconnect failures release only a reservation they actually acquired.</summary>
+        [Theory]
+        [InlineData(false, false, false)]
+        [InlineData(false, true, false)]
+        [InlineData(true, false, false)]
+        [InlineData(true, true, false)]
+        [InlineData(false, false, true)]
+        [InlineData(false, true, true)]
+        [InlineData(true, false, true)]
+        [InlineData(true, true, true)]
+        public async Task DescribeSetup_Failure_ReleasesReservation(bool cancel, bool closeConnection, bool writeStarted)
+        {
+            using Fixture fixture = new Fixture();
+            using SqlCommand command = fixture.CreateCommand();
+            SqlConnectionInternal inner = (SqlConnectionInternal)fixture.Connection.InnerConnection;
+            if (writeStarted)
+            {
+                inner.IncrementAsyncCount();
+                SetField(command, "_describeParameterEncryptionConnection", inner);
+            }
+            var write = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
+            Task setup = writeStarted
+                ? Invoke(command, "RunExecuteReaderTdsSetupContinuation",
+                    RunBehavior.ReturnImmediately, null, null, write.Task, true)
+                : write.Task;
+            Task completion = Invoke(command, "CompleteParameterEncryptionAsync",
+                setup, null, null, true, false, CancellationToken.None);
+            Assert.Equal(writeStarted ? 1 : 0, GetAsyncCount(inner));
+            if (closeConnection)
+            {
+                fixture.Connection.Close();
+            }
+            if (cancel)
+            {
+                write.SetCanceled();
+                await Assert.ThrowsAnyAsync<OperationCanceledException>(() => completion);
+                Assert.True(completion.IsCanceled);
+            }
+            else
+            {
+                write.SetException(fixture.Provider.Error);
+                Assert.Same(fixture.Provider.Error,
+                    await Assert.ThrowsAsync<InvalidOperationException>(() => completion));
+            }
+            Assert.Equal(0, GetAsyncCount(inner));
+        }
+
+        /// <summary>A delayed reader registration must not expose the connection to another command.</summary>
+        [Fact]
+        public async Task DescribeCompletion_DelayedRegistration_KeepsConnectionReserved()
+        {
+            using Fixture fixture = new Fixture();
+            using SqlCommand command = new SqlCommand("/* empty describe response */", fixture.Connection);
+            SqlConnectionInternal inner = (SqlConnectionInternal)fixture.Connection.InnerConnection;
+            object[] arguments =
+            {
+                CommandBehavior.Default, RunBehavior.ReturnImmediately, true, true, 30, null,
+                true, false, null, false
+            };
+            SqlDataReader reader = (SqlDataReader)typeof(SqlCommand)
+                .GetMethod("RunExecuteReaderTds", BindingFlags.NonPublic | BindingFlags.Instance)
+                .Invoke(command, arguments);
+            if (arguments[5] is Task write)
+            {
+                await write;
+            }
+            SetField(command, "_describeParameterEncryptionConnection", inner);
+            SetField(command, "_rpcArrayOf1", new[] { new _SqlRPC() });
+            Assert.NotNull(GetField(command, "_stateObj"));
+            object gate = typeof(DbReferenceCollection)
+                .GetField("_itemLock", BindingFlags.NonPublic | BindingFlags.Instance)
+                .GetValue(inner.ReferenceCollection);
+            Task completion;
+            Exception reservationFailure;
+            lock (gate)
+            {
+                completion = Invoke(command, "CompleteParameterEncryptionAsync",
+                    null, reader, null, true, false, CancellationToken.None);
+                reservationFailure = Record.Exception(() =>
+                {
+                    Assert.True(SpinWait.SpinUntil(
+                        () => GetField(command, "_stateObj") is null || completion.IsCompleted,
+                        TimeSpan.FromSeconds(10)), "The completion worker did not reach reader registration.");
+                    Assert.False(completion.IsCompleted);
+                    Assert.Equal(1, GetAsyncCount(inner));
+                    using SqlCommand other = new SqlCommand("SELECT 1", fixture.Connection);
+                    Assert.Throws<InvalidOperationException>(() => other.ExecuteNonQuery());
+                });
+            }
+            await completion;
+            Assert.Null(reservationFailure);
+            Assert.Equal(0, GetAsyncCount(inner));
+            using SqlCommand reusable = new SqlCommand("/* reuse empty batch */", fixture.Connection);
+            Assert.Equal(-1, await reusable.ExecuteNonQueryAsync());
+        }
+
+        /// <summary>Reads the connection reservation count without affecting production ownership.</summary>
+        private static int GetAsyncCount(SqlConnectionInternal inner) =>
+            (int)typeof(SqlConnectionInternal).GetField("_asyncCommandCount",
+                BindingFlags.NonPublic | BindingFlags.Instance).GetValue(inner);
+
         /// <summary>
         /// Every task-based execution API forwards cancellation and provider failures without blocking.
         /// </summary>

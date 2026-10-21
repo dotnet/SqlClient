@@ -250,6 +250,8 @@ namespace Microsoft.Data.SqlClient
         // Provider awaits can precede both parser-state acquisition and a cached async result.
         private bool _enclaveAttestationInProgress;
 
+        private SqlConnectionInternal _describeParameterEncryptionConnection;
+
         /// <summary>
         /// On 8.0 and above the Prepared state cannot be left. Once a command is prepared it will
         /// always be prepared. A change in parameters, command text, etc (IsDirty) automatically
