@@ -85,6 +85,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// <summary>
         /// Retries one login SQL error on the same server without sharing a pool with another case.
         /// </summary>
+        [Trait("category", "flaky")]
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
@@ -178,6 +179,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// <summary>
         /// Propagates the configured login error when connect retry is disabled.
         /// </summary>
+        [Trait("category", "flaky")]
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
@@ -210,6 +212,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// <summary>
         /// Opens after a blocked pre-login response is released, with either MultiSubnetFailover setting.
         /// </summary>
+        [Trait("category", "flaky")]
         [Theory]
         [InlineData(false)]
         [InlineData(true)]

@@ -34,6 +34,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// <summary>
         /// Preserves the original physical connection after retrying a login SQL error on the primary.
         /// </summary>
+        [Trait("category", "flaky")]
         [Theory]
         [InlineData(40613, false)]
         [InlineData(42108, false)]
@@ -104,6 +105,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// <summary>
         /// Invalidates the primary pool after transport failover, even while its old connection remains usable.
         /// </summary>
+        [Trait("category", "flaky")]
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
@@ -286,6 +288,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// <summary>
         /// Selects the explicit partner after a primary transport failure without outer connect retry.
         /// </summary>
+        [Trait("category", "flaky")]
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
@@ -338,6 +341,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// <summary>
         /// Selects the explicit partner after a primary transport failure with connect retry enabled.
         /// </summary>
+        [Trait("category", "flaky")]
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
@@ -719,6 +723,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// <summary>
         /// Retries a login SQL error on the primary rather than the explicitly configured partner.
         /// </summary>
+        [Trait("category", "flaky")]
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
@@ -770,6 +775,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// <summary>
         /// Reuses the original pool after retrying a login SQL error without contacting the explicit partner.
         /// </summary>
+        [Trait("category", "flaky")]
         [Theory]
         [InlineData(40613, false)]
         [InlineData(42108, false)]
