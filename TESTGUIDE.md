@@ -50,6 +50,11 @@ as well, and keep success controls so simulator setup errors cannot masquerade a
 `ServerLifecycleTests` covers these contracts. Validate changes on both supported frameworks and
 on native and managed SNI, including broader simulator consumers before removing a flaky trait.
 
+The manual `CertificateTestWithTdsServer` matrix requires an untrusted self-signed certificate.
+Its setup and cleanup scripts use `-SkipTrust` to leave root trust stores unchanged, and the test
+asserts `UntrustedRoot` before connecting. Installing that certificate as trusted invalidates
+the negative cases; explicit certificate pinning and `TrustServerCertificate` provide the success controls.
+
 ## CI Platform Coverage
 
 PR validation runs tests on Windows and Linux only. The
