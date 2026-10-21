@@ -1097,7 +1097,9 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         {
             if (disposing)
             {
-                // Dispose dependent objects
+                // Clear references to dependent objects (except the parser lock - if this runs in
+                // parallel with an async bulk copy, we want to make certain that the bulk copy's
+                // cleanup is able to release it in an orderly manner.)
                 _columnMappings = null;
                 _parser = null;
                 CachedMetadata = null;
@@ -2291,7 +2293,11 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             }
             finally
             {
-                _columnMappings.ReadOnly = false;
+                // Null checks here and elsewhere in the finally block are designed to handle cases
+                // where Dispose or Close has been called part-way through the operation. Ensure
+                // that the connection-level resources (typically the transaction and the parser
+                // lock) are released for use by the next operation no matter what.
+                _columnMappings?.ReadOnly = false;
                 try
                 {
                     // If there is one, on success transactions will be committed.
@@ -2300,15 +2306,10 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 finally
                 {
                     _isBulkCopyingInProgress = false;
-                    if (_parser != null)
-                    {
-                        _parser._asyncWrite = false;
-                    }
-                    if (_parserLock != null)
-                    {
-                        _parserLock.Release();
-                        _parserLock = null;
-                    }
+
+                    _parser?._asyncWrite = false;
+                    _parserLock?.Release();
+                    _parserLock = null;
                 }
             }
         }
