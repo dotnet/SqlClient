@@ -2,12 +2,17 @@
 # The .NET Foundation licenses this file to you under the MIT license.
 # See the LICENSE file in the project root for more information.
 
+#requires -PSEdition Desktop
+#requires -Version 5.1
+
 <#
 .SYNOPSIS
 Creates or removes a temporary local Windows account and its local SQL Windows login.
 .DESCRIPTION
 Run setup and cleanup on the same Windows agent using Windows PowerShell 5.1,
 as a local administrator with permission to create and drop SQL logins.
+The script targets .NET Framework's in-box System.Data.SqlClient for shared-memory
+SQL connections, not PowerShell Core's separately shipped SQL client/runtime.
 Setup publishes the account identity before provisioning and registers the
 generated password only as a secret Azure DevOps variable. It publishes a
 dedicated TCP/master integrated connection string as netOnlyConnectionString;

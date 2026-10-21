@@ -309,6 +309,23 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Throws<System.ComponentModel.Win32Exception>(() => Advapi32.GetIsTokenRestricted(token));
         }
 
+        /// <summary>
+        /// An unrestricted token must not be mistaken for a query failure when native last error
+        /// is stale, including on .NET Framework where the marshaller does not clear it.
+        /// </summary>
+        [ConditionalFact(nameof(IsWindows))]
+        public void GetIsTokenRestricted_UnrestrictedTokenWithStaleLastError_ReturnsFalse()
+        {
+            using WindowsIdentity identity = WindowsIdentity.GetCurrent();
+            SafeAccessTokenHandle token = identity.AccessToken;
+
+            const uint ErrorAccessDenied = 5;
+            Interop.Windows.Kernel32.Kernel32.SetLastError(ErrorAccessDenied);
+            bool restricted = Advapi32.GetIsTokenRestricted(token);
+
+            Assert.False(restricted);
+        }
+
         /// <summary>Records the identity under which a stub physical connection is created.</summary>
         private sealed class IdentityRecordingFactory : ChannelDbConnectionPoolTest.SuccessfulSqlConnectionFactory
         {

@@ -13,7 +13,9 @@ namespace Microsoft.Data.SqlClient.Tests.Common;
 /// </summary>
 public static class WindowsImpersonationHelper
 {
+    // Winbase.h LOGON32_LOGON_NEW_CREDENTIALS: preserve local identity, replace outbound credentials.
     private const int Logon32LogonNewCredentials = 9;
+    // Winbase.h LOGON32_PROVIDER_WINNT50: Negotiate provider required for NEW_CREDENTIALS.
     private const int Logon32ProviderWinnt50 = 3;
 
     /// <summary>

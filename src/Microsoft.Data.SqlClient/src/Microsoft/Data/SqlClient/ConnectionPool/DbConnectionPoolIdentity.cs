@@ -41,8 +41,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         public bool Equals(DbConnectionPoolIdentity value)
         {
-            bool result = this == value;
-            if (!result && value != null)
+            bool result = ReferenceEquals(this, value);
+            if (!result && value is not null)
             {
                 result = Equals(value._sidString, value._isRestricted, value._isNetwork, value._authenticationId);
             }
