@@ -13,6 +13,8 @@ namespace Microsoft.Data.Common.UnitTests;
 /// </summary>
 public class AdapterUtilTest
 {
+    private const uint SqlServer2005TdsVersion = 0x72090002;
+
     /// <summary>
     /// Gets a collection of test data representing the list of server TDS versions
     /// which are expected by the client.
@@ -42,7 +44,7 @@ public class AdapterUtilTest
         // SQL Server 2000 SP1
         0x71000001,
         // SQL Server 2005
-        0x730B0002,
+        SqlServer2005TdsVersion,
         // SQL Server 2008
         0x730A0003
     ];
@@ -193,7 +195,8 @@ public class AdapterUtilTest
 
     /// <summary>
     /// Verifies that the SqlClient v7.1+ TDS version validation logic implemented in ADP.ValidateTdsVersion
-    /// is consistent with the legacy validation logic.
+    /// is consistent with the legacy validation logic except for the intentional rejection of
+    /// SQL Server 2005.
     /// </summary>
     /// <param name="tdsVersion">
     /// The TDS protocol version to validate. Represents a version value to be checked against the legacy
@@ -205,7 +208,8 @@ public class AdapterUtilTest
     {
         Action validation = () => ADP.ValidateTdsVersion(tdsVersion);
 
-        if (LegacyVersionValidation(tdsVersion))
+        // Keep the legacy helper unchanged to document the version we intentionally stopped accepting.
+        if (tdsVersion != SqlServer2005TdsVersion && LegacyVersionValidation(tdsVersion))
         {
             validation();
         }

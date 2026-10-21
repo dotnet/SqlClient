@@ -1025,7 +1025,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         [Theory]
-        [InlineData(9, 0, 2047)] // SQL Server 2005
         [InlineData(10, 0, 2531)] // SQL Server 2008
         [InlineData(10, 50, 2500)] // SQL Server 2008 R2
         [InlineData(11, 0, 3000)] // SQL Server 2012-2022
@@ -1056,15 +1055,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         // Verifies that the client refuses to connect to a SQL Server whose TDS
-        // protocol version predates the minimum supported version (2005). This is
+        // protocol version predates the minimum accepted version (TDS 7.3B). This is
         // genuine client-side coverage: the simulated server emits a real legacy
-        // LOGINACK (TDS 7.0 for SQL Server 7.0, TDS 7.1 for SQL Server 2000), and
-        // the driver rejects the negotiated version in TryProcessLoginAck via
-        // SQL.InvalidTDSVersion(), which surfaces as an InvalidOperationException.
+        // LOGINACK (TDS 7.0 for SQL Server 7.0, TDS 7.1 for SQL Server 2000, or
+        // TDS 7.2 for SQL Server 2005). The driver rejects the negotiated version in
+        // TryProcessLoginAck via SQL.InvalidTDSVersion(), which surfaces as an InvalidOperationException.
         [Theory]
         [InlineData(7, 0, 623)] // SQL Server 7.0
         [InlineData(8, 0, 194)] // SQL Server 2000 RTM
         [InlineData(8, 0, 384)] // SQL Server 2000 SP1
+        [InlineData(9, 0, 2047)] // SQL Server 2005
         public void ConnectionRefusesUnsupportedServerTdsVersion(int major, int minor, int build)
         {
             Version simulatedServerVersion = new(major, minor, build);
@@ -1082,7 +1082,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }.ConnectionString;
             using SqlConnection conn = new(connStr);
 
-            // The driver receives a LOGINACK advertising a pre-2005 TDS version and
+            // The driver receives a LOGINACK advertising a pre-2008 TDS version and
             // refuses it, throwing InvalidOperationException (SQL.InvalidTDSVersion).
             Assert.Throws<InvalidOperationException>(() => conn.Open());
         }
