@@ -4,6 +4,7 @@
 
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Diagnostics.Tracing;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
@@ -232,7 +233,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             }
 
             await loggingScope.WaitForReadyAsync(cts.Token).ConfigureAwait(false);
-            Logger.Write(SqlAuthenticationLogLevel.Informational, "Token acquisition started.", containsPii: false, source: "SqlClient");
+            Logger.Write(EventLevel.Informational, "Token acquisition started.", containsPii: false, source: "SqlClient");
 
             string scope = parameters.Resource.EndsWith(s_defaultScopeSuffix, StringComparison.Ordinal) ? parameters.Resource : parameters.Resource + s_defaultScopeSuffix;
             string[] scopes = [scope];
@@ -462,13 +463,13 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
         }
         catch (Extensions.Azure.AuthenticationException)
         {
-            Logger.Write(SqlAuthenticationLogLevel.Error, "Token acquisition failed.", containsPii: false, source: "SqlClient");
+            Logger.Write(EventLevel.Error, "Token acquisition failed.", containsPii: false, source: "SqlClient");
             // Already shaped for the caller; don't re-wrap it below.
             throw;
         }
         catch (MsalException ex)
         {
-            Logger.Write(SqlAuthenticationLogLevel.Error, "Token acquisition failed.", containsPii: false, source: "SqlClient");
+            Logger.Write(EventLevel.Error, "Token acquisition failed.", containsPii: false, source: "SqlClient");
             // Check for an explicitly retryable error.
             if (ex is MsalServiceException svcEx &&
                 svcEx.StatusCode == MsalRetryStatusCode)
@@ -543,7 +544,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
                  or AuthenticationRequiredException
                  or CredentialUnavailableException)
         {
-            Logger.Write(SqlAuthenticationLogLevel.Error, "Token acquisition failed.", containsPii: false, source: "SqlClient");
+            Logger.Write(EventLevel.Error, "Token acquisition failed.", containsPii: false, source: "SqlClient");
             // These errors aren't retryable.
             throw new Extensions.Azure.AuthenticationException(
                 parameters.AuthenticationMethod,
@@ -555,7 +556,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
         }
         catch (Exception ex)
         {
-            Logger.Write(SqlAuthenticationLogLevel.Error, "Token acquisition failed.", containsPii: false, source: "SqlClient");
+            Logger.Write(EventLevel.Error, "Token acquisition failed.", containsPii: false, source: "SqlClient");
             // These errors aren't retryable.
             throw new Extensions.Azure.AuthenticationException(
                 parameters.AuthenticationMethod,

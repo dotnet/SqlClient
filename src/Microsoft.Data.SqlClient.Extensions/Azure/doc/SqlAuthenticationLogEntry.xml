@@ -13,6 +13,9 @@ See the LICENSE file in the project root for more information.
                 be thread-safe, return promptly, and not throw exceptions.
                 Retaining an entry does not change its values. Messages marked <see cref="P:Microsoft.Data.SqlClient.SqlAuthenticationLogEntry.ContainsPii" /> must be
                 handled as sensitive data and are never forwarded to SqlClient EventSource.
+                Severity uses <see cref="T:System.Diagnostics.Tracing.EventLevel" />, matching SqlClient EventSource.
+                <see cref="F:System.Diagnostics.Tracing.EventLevel.LogAlways" /> is distinct from
+                <see cref="F:System.Diagnostics.Tracing.EventLevel.Critical" /> and is included when filtering by a severity threshold.
                 Message wording and Source values are diagnostic text, not stable machine-readable contracts.
             </remarks>
         </SqlAuthenticationLogEntry>

@@ -315,12 +315,11 @@ internal sealed class AzureAuthenticationEventListener : EventListener
         }
 
         EventLevel? desired = null;
-        for (int level = 0; level <= (int)SqlAuthenticationLogLevel.Verbose; level++)
+        for (EventLevel level = EventLevel.LogAlways; level <= EventLevel.Verbose; level++)
         {
-            EventLevel eventLevel = AuthenticationLogger.ToEventLevel((SqlAuthenticationLogLevel)level);
-            if (SqlClientEventSource.Log.IsEnabled(eventLevel, SqlClientEventSource.Keywords.Trace))
+            if (SqlClientEventSource.Log.IsEnabled(level, SqlClientEventSource.Keywords.Trace))
             {
-                desired = eventLevel;
+                desired = level;
             }
         }
         // A LogAlways subscription means all levels to EventListener, not Always-only.
@@ -338,7 +337,7 @@ internal sealed class AzureAuthenticationEventListener : EventListener
             return;
         }
 
-        SqlAuthenticationLogLevel? level = GetMsalLevel(eventData.EventId, eventData.EventName);
+        EventLevel? level = GetMsalLevel(eventData.EventId, eventData.EventName);
 
         // Only extension-owned credentials with unsafe/account/content logging disabled enter this scope.
         // Azure's MSAL event schema does not retain the original PII flag.
@@ -349,13 +348,13 @@ internal sealed class AzureAuthenticationEventListener : EventListener
         else if (eventData.EventId == 13 && eventData.EventName == "DefaultAzureCredentialCredentialSelected" &&
             eventData.Payload?.Count == 1 && eventData.Payload[0] is string credentialType)
         {
-            scope.Logger.Write(SqlAuthenticationLogLevel.Informational,
+            scope.Logger.Write(EventLevel.Informational,
                 $"DefaultAzureCredential selected {credentialType}.", false, "Azure-Identity");
         }
         else if (eventData.EventId == 3 && eventData.EventName == "GetTokenFailed")
         {
             // The SDK's raw exception payload can contain personal information.
-            scope.Logger.Write(SqlAuthenticationLogLevel.Error,
+            scope.Logger.Write(EventLevel.Error,
                 "Azure credential token request failed.", false, "Azure-Identity");
         }
     }
@@ -363,15 +362,15 @@ internal sealed class AzureAuthenticationEventListener : EventListener
     /// <summary>Recognizes the reviewed Azure SDK MSAL event IDs and names together.</summary>
     /// <param name="eventId">The SDK event identifier.</param>
     /// <param name="eventName">The SDK event name.</param>
-    /// <returns>The owned severity, or null for an unsupported schema.</returns>
-    internal static SqlAuthenticationLogLevel? GetMsalLevel(int eventId, string? eventName) => (eventId, eventName) switch
+    /// <returns>The framework event severity, or null for an unsupported schema.</returns>
+    internal static EventLevel? GetMsalLevel(int eventId, string? eventName) => (eventId, eventName) switch
     {
-        (7, "LogMsalVerbose") => SqlAuthenticationLogLevel.Verbose,
-        (8, "LogMsalInformational") => SqlAuthenticationLogLevel.Informational,
-        (9, "LogMsalWarning") => SqlAuthenticationLogLevel.Warning,
-        (10, "LogMsalError") => SqlAuthenticationLogLevel.Error,
-        (23, "LogMsalCritical") => SqlAuthenticationLogLevel.Critical,
-        (24, "LogMsalAlways") => SqlAuthenticationLogLevel.Always,
+        (7, "LogMsalVerbose") => EventLevel.Verbose,
+        (8, "LogMsalInformational") => EventLevel.Informational,
+        (9, "LogMsalWarning") => EventLevel.Warning,
+        (10, "LogMsalError") => EventLevel.Error,
+        (23, "LogMsalCritical") => EventLevel.Critical,
+        (24, "LogMsalAlways") => EventLevel.LogAlways,
         _ => null
     };
 }

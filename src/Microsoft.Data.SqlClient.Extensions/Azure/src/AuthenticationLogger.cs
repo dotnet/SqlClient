@@ -9,7 +9,7 @@ using Microsoft.IdentityModel.Abstractions;
 
 namespace Microsoft.Data.SqlClient;
 
-/// <summary>Snapshots a provider's logging policy and dispatches diagnostics within its active acquisition.</summary>
+/// <summary>Adapts SDK diagnostics to the provider callback and shared SqlClient EventSource.</summary>
 internal sealed class AuthenticationLogger
 {
     private static readonly AsyncLocal<Scope?> s_scope = new();
@@ -35,8 +35,8 @@ internal sealed class AuthenticationLogger
 
     /// <summary>Checks output demand before MSAL formats a diagnostic or the dispatcher allocates payloads.</summary>
     /// <param name="level">The mapped SDK severity.</param>
-    internal bool IsEnabled(SqlAuthenticationLogLevel level) => HasCallback ||
-        SqlClientEventSource.Log.IsEnabled(ToEventLevel(level), SqlClientEventSource.Keywords.Trace);
+    internal bool IsEnabled(EventLevel level) => HasCallback ||
+        SqlClientEventSource.Log.IsEnabled(level, SqlClientEventSource.Keywords.Trace);
 
     /// <summary>Starts a nested, async-flow-local acquisition and registers any Azure SDK logging demand.</summary>
     /// <param name="connectionId">The connection identifier supplied to the authentication provider.</param>
@@ -51,13 +51,13 @@ internal sealed class AuthenticationLogger
     /// <param name="containsPii">The privacy marker supplied by MSAL.</param>
     internal void LogMsal(LogLevel level, string message, bool containsPii)
     {
-        SqlAuthenticationLogLevel? mapped = level switch
+        EventLevel? mapped = level switch
         {
-            LogLevel.Always => SqlAuthenticationLogLevel.Always,
-            LogLevel.Error => SqlAuthenticationLogLevel.Error,
-            LogLevel.Warning => SqlAuthenticationLogLevel.Warning,
-            LogLevel.Info => SqlAuthenticationLogLevel.Informational,
-            LogLevel.Verbose => SqlAuthenticationLogLevel.Verbose,
+            LogLevel.Always => EventLevel.LogAlways,
+            LogLevel.Error => EventLevel.Error,
+            LogLevel.Warning => EventLevel.Warning,
+            LogLevel.Info => EventLevel.Informational,
+            LogLevel.Verbose => EventLevel.Verbose,
             _ => null
         };
         if (mapped.HasValue)
@@ -66,23 +66,8 @@ internal sealed class AuthenticationLogger
         }
     }
 
-    /// <summary>Maps an owned severity to its framework EventSource level.</summary>
-    /// <param name="level">A defined SqlClient authentication severity.</param>
-    /// <returns>The matching framework level, including the distinct Critical and LogAlways levels.</returns>
-    /// <exception cref="ArgumentOutOfRangeException">The severity is not defined.</exception>
-    internal static EventLevel ToEventLevel(SqlAuthenticationLogLevel level) => level switch
-    {
-        SqlAuthenticationLogLevel.Always => EventLevel.LogAlways,
-        SqlAuthenticationLogLevel.Critical => EventLevel.Critical,
-        SqlAuthenticationLogLevel.Error => EventLevel.Error,
-        SqlAuthenticationLogLevel.Warning => EventLevel.Warning,
-        SqlAuthenticationLogLevel.Informational => EventLevel.Informational,
-        SqlAuthenticationLogLevel.Verbose => EventLevel.Verbose,
-        _ => throw new ArgumentOutOfRangeException(nameof(level))
-    };
-
     /// <summary>Filters and independently delivers a diagnostic belonging to the active logging policy.</summary>
-    /// <param name="level">The owned severity.</param>
+    /// <param name="level">The framework event severity.</param>
     /// <param name="message">The formatted diagnostic, not an unclassified exception payload.</param>
     /// <param name="containsPii">Whether the message requires callback-only PII opt-in.</param>
     /// <param name="source">The diagnostic origin, such as MSAL, Azure-Identity, or SqlClient.</param>
@@ -90,7 +75,7 @@ internal sealed class AuthenticationLogger
     /// Callbacks must not throw; nonfatal synchronous failures are defensively isolated and reported
     /// without forwarding exception text. This cannot isolate exceptions from async-void callbacks.
     /// </remarks>
-    internal void Write(SqlAuthenticationLogLevel level, string message, bool containsPii, string source)
+    internal void Write(EventLevel level, string message, bool containsPii, string source)
     {
         Scope? scope = CurrentScope;
         if (!IsEnabled(level) || scope is null || !ReferenceEquals(this, scope.Logger) || (containsPii && !EnableMsalPiiLogging))
@@ -102,10 +87,10 @@ internal sealed class AuthenticationLogger
         s_dispatching.Value = true;
         try
         {
-            if (!containsPii && SqlClientEventSource.Log.IsEnabled(ToEventLevel(level), SqlClientEventSource.Keywords.Trace))
+            if (!containsPii && SqlClientEventSource.Log.IsEnabled(level, SqlClientEventSource.Keywords.Trace))
             {
                 // Deliver tracing first so a callback failure cannot suppress this independent sink.
-                SqlClientEventSource.Log.TryAuthenticationTrace(ToEventLevel(level), message, source, scope.ConnectionId.ToString());
+                SqlClientEventSource.Log.TryAuthenticationTrace(level, message, source, scope.ConnectionId.ToString());
             }
 
             if (_callback is not null)
@@ -156,14 +141,14 @@ internal sealed class AuthenticationLogger
         }
 
         /// <summary>Maps the independent identity-logger severity contract explicitly.</summary>
-        private static SqlAuthenticationLogLevel? Map(EventLogLevel level) => level switch
+        private static EventLevel? Map(EventLogLevel level) => level switch
         {
-            EventLogLevel.LogAlways => SqlAuthenticationLogLevel.Always,
-            EventLogLevel.Critical => SqlAuthenticationLogLevel.Critical,
-            EventLogLevel.Error => SqlAuthenticationLogLevel.Error,
-            EventLogLevel.Warning => SqlAuthenticationLogLevel.Warning,
-            EventLogLevel.Informational => SqlAuthenticationLogLevel.Informational,
-            EventLogLevel.Verbose => SqlAuthenticationLogLevel.Verbose,
+            EventLogLevel.LogAlways => EventLevel.LogAlways,
+            EventLogLevel.Critical => EventLevel.Critical,
+            EventLogLevel.Error => EventLevel.Error,
+            EventLogLevel.Warning => EventLevel.Warning,
+            EventLogLevel.Informational => EventLevel.Informational,
+            EventLogLevel.Verbose => EventLevel.Verbose,
             _ => null
         };
     }

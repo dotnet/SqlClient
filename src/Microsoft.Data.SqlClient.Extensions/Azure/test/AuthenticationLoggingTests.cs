@@ -27,10 +27,10 @@ namespace Microsoft.Data.SqlClient.Extensions.Azure.Test;
 public class AuthenticationLoggingTests
 {
     /// <summary>
-    /// New options must retain safe defaults and expose only SqlClient-owned logging contracts.
+    /// New options retain safe defaults and use framework severity without exposing SDK contracts.
     /// </summary>
     [Fact]
-    public void Options_DefaultsUseOwnedNonPiiContract()
+    public void Options_DefaultsUseFrameworkSeverityAndNonPiiContract()
     {
         // Act
         var options = new ActiveDirectoryAuthenticationProviderOptions();
@@ -43,8 +43,9 @@ public class AuthenticationLoggingTests
         Assert.Null(typeof(ActiveDirectoryAuthenticationProviderOptions).GetProperty("LogLevel"));
         Assert.Null(typeof(ActiveDirectoryAuthenticationProviderOptions).GetProperty("LoggingCallback"));
         Assert.Null(typeof(ActiveDirectoryAuthenticationProviderOptions).GetProperty("EnablePiiLogging"));
-        Assert.Equal(new[] { "Always", "Critical", "Error", "Warning", "Informational", "Verbose" },
-            Enum.GetNames(typeof(SqlAuthenticationLogLevel)));
+        Assert.Equal(typeof(EventLevel),
+            typeof(SqlAuthenticationLogEntry).GetProperty(nameof(SqlAuthenticationLogEntry.Level))!.PropertyType);
+        Assert.Null(typeof(SqlAuthenticationLogEntry).Assembly.GetType("Microsoft.Data.SqlClient.SqlAuthenticationLogLevel"));
         Assert.All(typeof(SqlAuthenticationLogEntry).GetProperties(), property => Assert.Null(property.SetMethod));
     }
 
@@ -75,15 +76,15 @@ public class AuthenticationLoggingTests
     }
 
     /// <summary>
-    /// Every supported MSAL severity is translated explicitly into the owned contract.
+    /// Every supported MSAL severity is translated explicitly into the framework event severity.
     /// </summary>
     [Theory]
-    [InlineData(LogLevel.Always, SqlAuthenticationLogLevel.Always)]
-    [InlineData(LogLevel.Error, SqlAuthenticationLogLevel.Error)]
-    [InlineData(LogLevel.Warning, SqlAuthenticationLogLevel.Warning)]
-    [InlineData(LogLevel.Info, SqlAuthenticationLogLevel.Informational)]
-    [InlineData(LogLevel.Verbose, SqlAuthenticationLogLevel.Verbose)]
-    public void MsalCallback_MapsSeverityAndCorrelation(LogLevel level, SqlAuthenticationLogLevel expected)
+    [InlineData(LogLevel.Always, EventLevel.LogAlways)]
+    [InlineData(LogLevel.Error, EventLevel.Error)]
+    [InlineData(LogLevel.Warning, EventLevel.Warning)]
+    [InlineData(LogLevel.Info, EventLevel.Informational)]
+    [InlineData(LogLevel.Verbose, EventLevel.Verbose)]
+    public void MsalCallback_MapsSeverityAndCorrelation(LogLevel level, EventLevel expected)
     {
         // Arrange
         var entries = new List<SqlAuthenticationLogEntry>();
@@ -211,7 +212,7 @@ public class AuthenticationLoggingTests
         }
 
         // Assert
-        Assert.Equal(Enum.GetValues(typeof(SqlAuthenticationLogLevel)).Cast<SqlAuthenticationLogLevel>(),
+        Assert.Equal(Enum.GetValues(typeof(EventLevel)).Cast<EventLevel>(),
             entries.Select(entry => entry.Level));
         Assert.Equal(collectTrace ? 6 : 0, listener.Events.Count);
     }
@@ -558,13 +559,13 @@ public class AuthenticationLoggingTests
 
     /// <summary>The non-PII interface logger maps SDK severities without exposing SDK contracts publicly.</summary>
     [Theory]
-    [InlineData(EventLogLevel.LogAlways, SqlAuthenticationLogLevel.Always)]
-    [InlineData(EventLogLevel.Critical, SqlAuthenticationLogLevel.Critical)]
-    [InlineData(EventLogLevel.Error, SqlAuthenticationLogLevel.Error)]
-    [InlineData(EventLogLevel.Warning, SqlAuthenticationLogLevel.Warning)]
-    [InlineData(EventLogLevel.Informational, SqlAuthenticationLogLevel.Informational)]
-    [InlineData(EventLogLevel.Verbose, SqlAuthenticationLogLevel.Verbose)]
-    public void MsalLogger_MapsInterfaceSeverity(EventLogLevel sdk, SqlAuthenticationLogLevel expected)
+    [InlineData(EventLogLevel.LogAlways, EventLevel.LogAlways)]
+    [InlineData(EventLogLevel.Critical, EventLevel.Critical)]
+    [InlineData(EventLogLevel.Error, EventLevel.Error)]
+    [InlineData(EventLogLevel.Warning, EventLevel.Warning)]
+    [InlineData(EventLogLevel.Informational, EventLevel.Informational)]
+    [InlineData(EventLogLevel.Verbose, EventLevel.Verbose)]
+    public void MsalLogger_MapsInterfaceSeverity(EventLogLevel sdk, EventLevel expected)
     {
         // Arrange
         var entries = new List<SqlAuthenticationLogEntry>();
@@ -749,7 +750,7 @@ public class AuthenticationLoggingTests
             Assert.DoesNotContain("private SDK exception data", entry.Message);
         });
         Assert.True(handler.RequestCount > 0);
-        Assert.Contains(entries, entry => entry.Level == SqlAuthenticationLogLevel.Verbose);
+        Assert.Contains(entries, entry => entry.Level == EventLevel.Verbose);
 
         // Act
         int count = entries.Count;
@@ -819,8 +820,8 @@ public class AuthenticationLoggingTests
         Assert.NotEmpty(second);
         Assert.All(first, entry => Assert.Equal(firstId, entry.ConnectionId));
         Assert.All(second, entry => Assert.Equal(secondId, entry.ConnectionId));
-        Assert.Contains(first, entry => entry.Level == SqlAuthenticationLogLevel.Verbose);
-        Assert.Contains(second, entry => entry.Level == SqlAuthenticationLogLevel.Verbose);
+        Assert.Contains(first, entry => entry.Level == EventLevel.Verbose);
+        Assert.Contains(second, entry => entry.Level == EventLevel.Verbose);
 
         async Task Invoke(AuthenticationLogger logger, Guid id)
         {
@@ -1047,7 +1048,7 @@ public class AuthenticationLoggingTests
             AuthenticationLoggingCallback = entry =>
             {
                 calls++;
-                if (entry.Level <= SqlAuthenticationLogLevel.Error)
+                if (entry.Level <= EventLevel.Error)
                 {
                     entries.Add(entry);
                 }
@@ -1363,14 +1364,14 @@ public class AuthenticationLoggingTests
             source.DefaultAzureCredentialCredentialSelected("ClientSecretCredential");
             SqlAuthenticationLogEntry selected = Assert.Single(entries);
             Assert.Equal("DefaultAzureCredential selected ClientSecretCredential.", selected.Message);
-            Assert.Equal(SqlAuthenticationLogLevel.Informational, selected.Level);
+            Assert.Equal(EventLevel.Informational, selected.Level);
             source.GetTokenFailed("private SDK exception data");
         }
 
         // Assert
         Assert.Equal(2, entries.Count);
         Assert.Equal("Azure credential token request failed.", entries[1].Message);
-        Assert.Equal(SqlAuthenticationLogLevel.Error, entries[1].Level);
+        Assert.Equal(EventLevel.Error, entries[1].Level);
         Assert.All(entries, entry =>
         {
             Assert.False(entry.ContainsPii);
@@ -1518,16 +1519,16 @@ public class AuthenticationLoggingTests
     /// SDK severity mapping must reject unknown schemas rather than misclassifying their privacy or level.
     /// </summary>
     [Theory]
-    [InlineData(7, "LogMsalVerbose", SqlAuthenticationLogLevel.Verbose)]
-    [InlineData(8, "LogMsalInformational", SqlAuthenticationLogLevel.Informational)]
-    [InlineData(9, "LogMsalWarning", SqlAuthenticationLogLevel.Warning)]
-    [InlineData(10, "LogMsalError", SqlAuthenticationLogLevel.Error)]
-    [InlineData(23, "LogMsalCritical", SqlAuthenticationLogLevel.Critical)]
-    [InlineData(24, "LogMsalAlways", SqlAuthenticationLogLevel.Always)]
+    [InlineData(7, "LogMsalVerbose", EventLevel.Verbose)]
+    [InlineData(8, "LogMsalInformational", EventLevel.Informational)]
+    [InlineData(9, "LogMsalWarning", EventLevel.Warning)]
+    [InlineData(10, "LogMsalError", EventLevel.Error)]
+    [InlineData(23, "LogMsalCritical", EventLevel.Critical)]
+    [InlineData(24, "LogMsalAlways", EventLevel.LogAlways)]
     [InlineData(8, "UnknownSchema", null)]
     [InlineData(19, "AuthenticatedAccountDetails", null)]
     [InlineData(0, null, null)]
-    public void AzureSdkSeverity_MapsOnlyKnownEvents(int id, string? name, SqlAuthenticationLogLevel? expected)
+    public void AzureSdkSeverity_MapsOnlyKnownEvents(int id, string? name, EventLevel? expected)
     {
         // Act & Assert
         Assert.Equal(expected, AzureAuthenticationEventListener.GetMsalLevel(id, name));
@@ -1548,7 +1549,7 @@ public class AuthenticationLoggingTests
             }
 
             // Assert
-            Assert.Equal(AuthenticationLogger.ToEventLevel(expected.Value), Assert.Single(listener.Events).Level);
+            Assert.Equal(expected.Value, Assert.Single(listener.Events).Level);
             Assert.Equal(expected.Value, Assert.Single(entries).Level);
         }
     }

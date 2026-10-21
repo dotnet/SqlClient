@@ -156,6 +156,7 @@ To receive callbacks, configure the provider before
 opening connections:
 
 ```csharp
+using System.Diagnostics.Tracing;
 using Microsoft.Data.SqlClient;
 
 var provider = new ActiveDirectoryAuthenticationProvider(
@@ -164,7 +165,7 @@ var provider = new ActiveDirectoryAuthenticationProvider(
         EnableMsalPiiLogging = false,
         AuthenticationLoggingCallback = entry =>
         {
-            if (!entry.ContainsPii && entry.Level <= SqlAuthenticationLogLevel.Informational)
+            if (!entry.ContainsPii && entry.Level <= EventLevel.Informational)
             {
                 Console.WriteLine(
                     $"[{entry.Level}] [{entry.Source}] [{entry.ConnectionId}] {entry.Message}");
@@ -185,8 +186,8 @@ EventSource are independent: either or both can be used. A configured callback r
 severity, including Verbose. Consumers control filtering using `entry.Level`, as the example does.
 Consumer filtering does not avoid upstream SDK message formatting or callback entry allocation.
 EventSource collectors independently control tracing through their keyword and level settings.
-`SqlAuthenticationLogEntry` and `SqlAuthenticationLogLevel` are owned by SqlClient, so consuming
-the new logging API does not require MSAL types.
+`SqlAuthenticationLogEntry` is owned by SqlClient and its `Level` uses the framework
+`System.Diagnostics.Tracing.EventLevel` enum. Consuming the logging API does not require MSAL types.
 
 Leave `AuthenticationLoggingCallback` null to disable callback delivery.
 Authentication EventSource collection remains controlled by the collector.

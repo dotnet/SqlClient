@@ -48,7 +48,7 @@ namespace SqlAuthenticationLoggingExample
         /// <summary>Runs synchronously; async sinks should use an application-owned bounded queue instead of async void.</summary>
         private static void WriteAuthenticationLog(SqlAuthenticationLogEntry entry)
         {
-            if (!entry.ContainsPii && entry.Level <= SqlAuthenticationLogLevel.Informational)
+            if (!entry.ContainsPii && entry.Level <= EventLevel.Informational)
             {
                 Console.WriteLine(
                     $"[{entry.Level}] [{entry.Source}] [{entry.ConnectionId}] {entry.Message}");

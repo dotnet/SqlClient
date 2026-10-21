@@ -2,18 +2,20 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.Diagnostics.Tracing;
+
 namespace Microsoft.Data.SqlClient;
 
 /// <include file='../doc/SqlAuthenticationLogEntry.xml' path='docs/members[@name="SqlAuthenticationLogEntry"]/SqlAuthenticationLogEntry/*'/>
 public sealed class SqlAuthenticationLogEntry
 {
     /// <summary>Creates a stable snapshot before invoking an application's logging callback.</summary>
-    /// <param name="level">The SqlClient-owned diagnostic severity.</param>
+    /// <param name="level">The framework event severity.</param>
     /// <param name="message">The formatted diagnostic text.</param>
     /// <param name="containsPii">Whether the message requires sensitive-data handling.</param>
     /// <param name="source">The diagnostic origin.</param>
     /// <param name="connectionId">The connection identifier, when correlation is available.</param>
-    internal SqlAuthenticationLogEntry(SqlAuthenticationLogLevel level, string message, bool containsPii,
+    internal SqlAuthenticationLogEntry(EventLevel level, string message, bool containsPii,
         string source, Guid? connectionId)
     {
         Level = level;
@@ -23,8 +25,8 @@ public sealed class SqlAuthenticationLogEntry
         ConnectionId = connectionId;
     }
 
-    /// <summary>Gets the severity of this diagnostic.</summary>
-    public SqlAuthenticationLogLevel Level { get; }
+    /// <summary>Gets the framework event severity of this diagnostic.</summary>
+    public EventLevel Level { get; }
 
     /// <summary>Gets the formatted diagnostic message.</summary>
     public string Message { get; }
