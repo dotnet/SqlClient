@@ -1143,13 +1143,21 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception e)
             {
+                _asyncExecutionCancellationToken = default;
                 if (!_parentOperationStarted)
                 {
                     s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
                 }
 
+                if (context is not null)
+                {
+                    context.Dispose();
+                }
+                else
+                {
+                    registration.Dispose();
+                }
                 source.SetException(e);
-                context?.Dispose();
             }
 
             return returnedTask;

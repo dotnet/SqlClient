@@ -507,17 +507,17 @@ namespace Microsoft.Data.SqlClient
 
             // @TODO: This can be cleaned up to lines if InnerConnection is always SqlInternalConnection
             ExecuteXmlReaderAsyncCallContext context = null;
-            if (_activeConnection?.InnerConnection is SqlConnectionInternal sqlInternalConnection)
-            {
-                context = sqlInternalConnection.CachedContexts.TakeCommandExecuteXmlReaderAsyncContext();
-            }
-
-            context ??= new ExecuteXmlReaderAsyncCallContext();
-            context.Set(this, source, registration, operationId);
-
             Task<XmlReader> returnedTask = source.Task;
             try
             {
+                if (_activeConnection?.InnerConnection is SqlConnectionInternal sqlInternalConnection)
+                {
+                    context = sqlInternalConnection.CachedContexts.TakeCommandExecuteXmlReaderAsyncContext();
+                }
+
+                context ??= new ExecuteXmlReaderAsyncCallContext();
+                context.Set(this, source, registration, operationId);
+
                 returnedTask = RegisterForConnectionCloseNotification(returnedTask);
 
                 // @TODO: Replace with native async implementation, make Begin/End implementation rely on async implementation
@@ -552,8 +552,17 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception e)
             {
+                _asyncExecutionCancellationToken = default;
                 s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
 
+                if (context is not null)
+                {
+                    context.Dispose();
+                }
+                else
+                {
+                    registration.Dispose();
+                }
                 source.SetException(e);
             }
 

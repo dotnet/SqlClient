@@ -702,12 +702,13 @@ namespace Microsoft.Data.SqlClient
             _asyncExecutionCancellationToken = cancellationToken;
 
             Task<int> returnedTask = source.Task;
-            returnedTask = RegisterForConnectionCloseNotification(returnedTask);
-
-            ExecuteNonQueryAsyncCallContext context = new ExecuteNonQueryAsyncCallContext();
-            context.Set(this, source, registration, operationId);
+            ExecuteNonQueryAsyncCallContext context = null;
             try
             {
+                returnedTask = RegisterForConnectionCloseNotification(returnedTask);
+                context = new ExecuteNonQueryAsyncCallContext();
+                context.Set(this, source, registration, operationId);
+
                 // @TODO: Replace with native async implementation, make Begin/End implementation rely on async implementation
                 Task<int>.Factory.FromAsync(
                     beginMethod: static (callback, stateObject) =>
@@ -741,10 +742,18 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception e)
             {
+                _asyncExecutionCancellationToken = default;
                 s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
 
+                if (context is not null)
+                {
+                    context.Dispose();
+                }
+                else
+                {
+                    registration.Dispose();
+                }
                 source.SetException(e);
-                context.Dispose();
             }
 
             return returnedTask;

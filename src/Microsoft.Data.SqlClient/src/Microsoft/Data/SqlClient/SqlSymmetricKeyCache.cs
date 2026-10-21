@@ -150,8 +150,7 @@ namespace Microsoft.Data.SqlClient
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            // Decrypt the CEK
-            // We will simply bubble up the exception from the DecryptColumnEncryptionKeyAsync function.
+            // Wrap provider failures, but preserve cancellation requested by the caller.
             byte[] plaintextKey;
             try
             {

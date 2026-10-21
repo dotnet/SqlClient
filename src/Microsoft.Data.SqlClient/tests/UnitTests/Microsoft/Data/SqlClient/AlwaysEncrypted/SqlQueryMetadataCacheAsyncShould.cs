@@ -82,11 +82,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             return command;
         }
 
+        /// <summary>
+        /// A cache hit must defer key-store I/O until the asynchronous completion step.
+        /// </summary>
         [Fact]
         public async Task CompleteCachedQueryMetadataAsync_UsesAsyncKeyStoreProviderApi()
         {
             TestKeyStoreProvider provider = new TestKeyStoreProvider { PlaintextKey = NewPlaintextKey(seed: 41) };
-            SqlCommand command = NewCachedCommand(provider);
+            using SqlCommand command = NewCachedCommand(provider);
+            using SqlConnection connection = command.Connection;
 
             Assert.True(SqlQueryMetadataCache.GetInstance()
                 .TryGetCachedQueryMetadata(command, out SqlQueryMetadataCache.CachedQueryMetadata metadata));
@@ -104,6 +108,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             Assert.True(command.Parameters[0].CipherMetadata.IsAlgorithmInitialized());
         }
 
+        /// <summary>
+        /// Failed key loading must invalidate stale metadata so execution can describe parameters again.
+        /// </summary>
         [Fact]
         public async Task CompleteCachedQueryMetadataAsync_WhenKeyIsStale_ReportsMissAndClearsMetadata()
         {
@@ -111,7 +118,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             {
                 DecryptAsyncCallback = _ => throw new ArgumentException("stale key"),
             };
-            SqlCommand command = NewCachedCommand(provider);
+            using SqlCommand command = NewCachedCommand(provider);
+            using SqlConnection connection = command.Connection;
 
             Assert.True(SqlQueryMetadataCache.GetInstance()
                 .TryGetCachedQueryMetadata(command, out SqlQueryMetadataCache.CachedQueryMetadata metadata));
@@ -135,7 +143,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
         public void GetQueryMetadataIfExists_StillUsesSyncKeyStoreProviderApi()
         {
             TestKeyStoreProvider provider = new TestKeyStoreProvider { PlaintextKey = NewPlaintextKey(seed: 47) };
-            SqlCommand command = NewCachedCommand(provider);
+            using SqlCommand command = NewCachedCommand(provider);
+            using SqlConnection connection = command.Connection;
 
             Assert.True(SqlQueryMetadataCache.GetInstance().GetQueryMetadataIfExists(command));
 
@@ -153,7 +162,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
         public async Task CompleteCachedQueryMetadataAsync_WhenCancelled_DoesNotReportHitOrEvictTheEntry()
         {
             TestKeyStoreProvider provider = new TestKeyStoreProvider { PlaintextKey = NewPlaintextKey(seed: 43) };
-            SqlCommand command = NewCachedCommand(provider);
+            using SqlCommand command = NewCachedCommand(provider);
+            using SqlConnection connection = command.Connection;
 
             Assert.True(SqlQueryMetadataCache.GetInstance()
                 .TryGetCachedQueryMetadata(command, out SqlQueryMetadataCache.CachedQueryMetadata metadata));
