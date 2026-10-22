@@ -604,7 +604,9 @@ public class AuthenticationLoggingTests
         {
             listener.Enable(EventLevel.Verbose, SqlClientEventSource.Keywords.AuthenticationTrace);
             Assert.Contains(listener.Events, entry => Equals(entry.Payload![0], "created during refresh"));
-            Assert.False(source.IsEnabled(EventLevel.Verbose, EventKeywords.None));
+            // Check this listener's subscription; source-wide IsEnabled keeps the highest level on .NET Framework.
+            AzureAuthenticationEventListener shared = await AzureAuthenticationEventListener.GetInstanceAsync();
+            Assert.Equal(EventLevel.Informational, shared.GetAppliedLevel(source));
         }
         finally
         {

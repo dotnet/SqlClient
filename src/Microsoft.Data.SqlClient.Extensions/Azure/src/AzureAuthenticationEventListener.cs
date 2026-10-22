@@ -277,6 +277,21 @@ internal sealed class AzureAuthenticationEventListener : EventListener
         }
     }
 
+    /// <summary>Gets the level this listener last applied to a source.</summary>
+    /// <remarks>
+    /// <see cref="EventSource.IsEnabled(EventLevel, EventKeywords)"/> merges all listeners, and on .NET Framework
+    /// it does not drop to a lower level on a later enable. This reports only this listener's subscription.
+    /// </remarks>
+    /// <param name="source">The SDK source.</param>
+    /// <returns>The applied level, or null when not subscribed or not tracked.</returns>
+    internal EventLevel? GetAppliedLevel(EventSource source)
+    {
+        lock (_gate)
+        {
+            return _sources.Find(state => state.Source.TryGetTarget(out EventSource? target) && ReferenceEquals(target, source))?.Level;
+        }
+    }
+
     /// <summary>Tracks this listener's subscription without owning the SDK source.</summary>
     private sealed class SourceState
     {
