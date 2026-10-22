@@ -9,14 +9,13 @@ namespace Microsoft.Data.SqlClient;
 /// <include file='../doc/SqlAuthenticationLogEntry.xml' path='docs/members[@name="SqlAuthenticationLogEntry"]/SqlAuthenticationLogEntry/*'/>
 public sealed class SqlAuthenticationLogEntry
 {
-    /// <summary>Creates a stable snapshot before invoking an application's logging callback.</summary>
-    /// <param name="level">The framework event severity.</param>
-    /// <param name="message">The formatted diagnostic text.</param>
-    /// <param name="containsPii">Whether the message requires sensitive-data handling.</param>
-    /// <param name="source">The diagnostic origin.</param>
-    /// <param name="connectionId">The connection identifier, when correlation is available.</param>
-    internal SqlAuthenticationLogEntry(EventLevel level, string message, bool containsPii,
-        string source, Guid? connectionId)
+    /// <include file='../doc/SqlAuthenticationLogEntry.xml' path='docs/members[@name="SqlAuthenticationLogEntry"]/ctor/*'/>
+    internal SqlAuthenticationLogEntry(
+        EventLevel level,
+        string message,
+        bool containsPii,
+        string source,
+        Guid? connectionId)
     {
         Level = level;
         Message = message;
@@ -25,18 +24,18 @@ public sealed class SqlAuthenticationLogEntry
         ConnectionId = connectionId;
     }
 
-    /// <summary>Gets the framework event severity of this diagnostic.</summary>
+    /// <include file='../doc/SqlAuthenticationLogEntry.xml' path='docs/members[@name="SqlAuthenticationLogEntry"]/Level/*'/>
     public EventLevel Level { get; }
 
-    /// <summary>Gets the formatted diagnostic message.</summary>
+    /// <include file='../doc/SqlAuthenticationLogEntry.xml' path='docs/members[@name="SqlAuthenticationLogEntry"]/Message/*'/>
     public string Message { get; }
 
-    /// <summary>Gets whether the message may contain personal or organizational information.</summary>
+    /// <include file='../doc/SqlAuthenticationLogEntry.xml' path='docs/members[@name="SqlAuthenticationLogEntry"]/ContainsPii/*'/>
     public bool ContainsPii { get; }
 
-    /// <summary>Gets the diagnostic origin, such as MSAL, Azure-Identity, or SqlClient.</summary>
+    /// <include file='../doc/SqlAuthenticationLogEntry.xml' path='docs/members[@name="SqlAuthenticationLogEntry"]/Source/*'/>
     public string Source { get; }
 
-    /// <summary>Gets the connection identifier, or null when the diagnostic cannot be correlated.</summary>
+    /// <include file='../doc/SqlAuthenticationLogEntry.xml' path='docs/members[@name="SqlAuthenticationLogEntry"]/ConnectionId/*'/>
     public Guid? ConnectionId { get; }
 }

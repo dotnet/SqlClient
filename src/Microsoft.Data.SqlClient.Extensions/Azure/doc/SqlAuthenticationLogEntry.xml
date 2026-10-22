@@ -19,5 +19,28 @@ See the LICENSE file in the project root for more information.
                 Message wording and Source values are diagnostic text, not stable machine-readable contracts.
             </remarks>
         </SqlAuthenticationLogEntry>
+        <ctor>
+            <summary>Creates a stable snapshot before invoking an application's logging callback.</summary>
+            <param name="level">The framework event severity.</param>
+            <param name="message">The formatted diagnostic text.</param>
+            <param name="containsPii">Whether the message requires sensitive-data handling.</param>
+            <param name="source">The diagnostic origin.</param>
+            <param name="connectionId">The connection identifier, when correlation is available.</param>
+        </ctor>
+        <Level>
+            <summary>Gets the framework event severity of this diagnostic.</summary>
+        </Level>
+        <Message>
+            <summary>Gets the formatted diagnostic message.</summary>
+        </Message>
+        <ContainsPii>
+            <summary>Gets whether the message may contain personal or organizational information.</summary>
+        </ContainsPii>
+        <Source>
+            <summary>Gets the diagnostic origin, such as MSAL, Azure-Identity, or SqlClient.</summary>
+        </Source>
+        <ConnectionId>
+            <summary>Gets the connection identifier, or null when the diagnostic cannot be correlated.</summary>
+        </ConnectionId>
     </members>
 </docs>
