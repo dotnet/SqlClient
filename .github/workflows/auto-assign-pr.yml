@@ -12,8 +12,7 @@ jobs:
   load-balance-assignees:
     # Only run for assignment-eligible PRs in the upstream repository. Use
     # pull_request_target so the workflow only runs once per PR event.
-    # Exclude PRs from forks as GitHub Actions does not have permissions to assign users on PRs from forks.
-    if: github.repository == 'dotnet/SqlClient' && github.event.pull_request.state == 'open'  && github.event.pull_request.draft == false && github.event.pull_request.milestone != null && github.event.pull_request.head.repo.fork == false
+    if: github.repository == 'dotnet/SqlClient' && github.event.pull_request.state == 'open'  && github.event.pull_request.draft == false && github.event.pull_request.milestone != null
     runs-on: ubuntu-latest
     permissions:
       contents: read
