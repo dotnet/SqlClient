@@ -1024,7 +1024,10 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/EncryptionInfo/*' />
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public SqlConnectionEncryptionInfo EncryptionInfo => SqlConnectionEncryptionInfo.Empty;
+        public SqlConnectionEncryptionInfo EncryptionInfo =>
+            InnerConnection is SqlConnectionInternal innerConnection
+                ? innerConnection.EncryptionInfo
+                : SqlConnectionEncryptionInfo.Empty;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ServerVersion/*' />
         [Browsable(false)]
