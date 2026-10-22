@@ -4200,40 +4200,10 @@ namespace Microsoft.Data.SqlClient
                 {
                     return result;
                 }
-                if (TdsEnums.SQLORDER == b)
+                result = TryConsumeOrderAndInfoTokens(_command, orderDataStream: this, ref b);
+                if (result != TdsOperationStatus.Done)
                 {
-                    result = _parser.TryRun(RunBehavior.ReturnImmediately, _command, this, null, _stateObj, out _);
-                    if (result != TdsOperationStatus.Done)
-                    {
-                        return result;
-                    }
-                    result = _stateObj.TryPeekByte(out b);
-                    if (result != TdsOperationStatus.Done)
-                    {
-                        return result;
-                    }
-                }
-                if (b == TdsEnums.SQLINFO)
-                {
-                    try
-                    {
-                        _stateObj._accumulateInfoEvents = true;
-                        result = _parser.TryRun(RunBehavior.ReturnImmediately, _command, null, null, _stateObj, out _);
-                        if (result != TdsOperationStatus.Done)
-                        {
-                            return result;
-                        }
-                    }
-                    finally
-                    {
-                        _stateObj._accumulateInfoEvents = false;
-                    }
-
-                    result = _stateObj.TryPeekByte(out b);
-                    if (result != TdsOperationStatus.Done)
-                    {
-                        return result;
-                    }
+                    return result;
                 }
                 _hasRows = IsRowToken(b);
             }
@@ -4297,45 +4267,10 @@ namespace Microsoft.Data.SqlClient
                             return result;
                         }
 
-                        // simply rip the order token off the wire
-                        if (b == TdsEnums.SQLORDER)
+                        result = TryConsumeOrderAndInfoTokens(command: null, orderDataStream: null, ref b);
+                        if (result != TdsOperationStatus.Done)
                         {
-                            // same logic as SetAltMetaDataSet
-                            result = _parser.TryRun(RunBehavior.ReturnImmediately, null, null, null, _stateObj, out _);
-                            if (result != TdsOperationStatus.Done)
-                            {
-                                return result;
-                            }
-                            result = _stateObj.TryPeekByte(out b);
-                            if (result != TdsOperationStatus.Done)
-                            {
-                                return result;
-                            }
-                        }
-                        if (b == TdsEnums.SQLINFO)
-                        {
-                            // VSTFDEVDIV713926
-                            // We are accumulating informational events and fire them at next
-                            // TdsParser.Run purely to avoid breaking change
-                            try
-                            {
-                                _stateObj._accumulateInfoEvents = true;
-                                result = _parser.TryRun(RunBehavior.ReturnImmediately, null, null, null, _stateObj, out _);
-                                if (result != TdsOperationStatus.Done)
-                                {
-                                    return result;
-                                }
-                            }
-                            finally
-                            {
-                                _stateObj._accumulateInfoEvents = false;
-                            }
-
-                            result = _stateObj.TryPeekByte(out b);
-                            if (result != TdsOperationStatus.Done)
-                            {
-                                return result;
-                            }
+                            return result;
                         }
                         _hasRows = IsRowToken(b);
                         if (TdsEnums.SQLALTMETADATA == b)
@@ -5825,6 +5760,57 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlStatistics.StopTimer(statistics);
             }
+        }
+
+        // Skips ORDER and INFO tokens after metadata, in any order, so the next token can be checked for a row.
+        private TdsOperationStatus TryConsumeOrderAndInfoTokens(SqlCommand command, SqlDataReader orderDataStream, ref byte token)
+        {
+            // VSTFDEVDIV713926: defer informational events until the next parser run
+            // to preserve existing message-delivery timing. This also covers ORDER runs
+            // so INFO buffered before ORDER is not fired early.
+            try
+            {
+                _stateObj._accumulateInfoEvents = true;
+                while (true)
+                {
+                    // TryRun cannot advance buffered tokens when the parser is unavailable.
+                    // Preserve the existing HasRows=false behavior without consuming input.
+                    if (_parser.State == TdsParserState.Broken || _parser.State == TdsParserState.Closed)
+                    {
+                        break;
+                    }
+
+                    TdsOperationStatus result;
+                    if (token == TdsEnums.SQLORDER)
+                    {
+                        result = _parser.TryRun(RunBehavior.ReturnImmediately, command, orderDataStream, bulkCopyHandler: null, _stateObj, out _);
+                    }
+                    else if (token == TdsEnums.SQLINFO)
+                    {
+                        result = _parser.TryRun(RunBehavior.ReturnImmediately, command, dataStream: null, bulkCopyHandler: null, _stateObj, out _);
+                    }
+                    else
+                    {
+                        break;
+                    }
+
+                    if (result != TdsOperationStatus.Done)
+                    {
+                        return result;
+                    }
+
+                    result = _stateObj.TryPeekByte(out token);
+                    if (result != TdsOperationStatus.Done)
+                    {
+                        return result;
+                    }
+                }
+            }
+            finally
+            {
+                _stateObj._accumulateInfoEvents = false;
+            }
+            return TdsOperationStatus.Done;
         }
 
         private ReadOnlyCollection<DbColumn> BuildColumnSchema()
