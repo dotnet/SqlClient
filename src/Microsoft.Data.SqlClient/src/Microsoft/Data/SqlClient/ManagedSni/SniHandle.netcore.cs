@@ -125,6 +125,12 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         public virtual SslProtocols ProtocolVersion { get; } = 0;
 
         /// <summary>
+        /// Gets the IANA identifier of the TLS cipher suite negotiated for this connection, or
+        /// <see langword="null"/> if none is available.
+        /// </summary>
+        public virtual int? NegotiatedCipherSuite => null;
+
+        /// <summary>
         /// Gets the server certificate details captured during the most recent TLS handshake on
         /// this handle, or <see langword="null"/> if the certificate validation callback has not
         /// run since TLS was last enabled.

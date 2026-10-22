@@ -257,6 +257,23 @@ reporting `None`.
 
 Native SNI does not yet report certificate details; those fields remain `null` there.
 
+**Cipher suite (Managed SNI).** Managed SNI reads `(int)SslStream.NegotiatedCipherSuite` at the
+same two points as the protocol, on both the TCP and named-pipe handles (MARS passes through to
+the physical handle):
+
+- **After the handshake completes,** `TdsParser.EnableSsl` records the value from the session
+  handle through `RecordCipherSuite`. This read is authoritative for a successful attempt.
+- **Inside the validation callback,** the value is stored with the certificate capture.
+  `SslStream` processes the ServerHello, which selects the suite, before it raises the callback,
+  so the value is real there. The tests confirm it matches the suite a trusted handshake with the
+  same server negotiates. It is adopted only when no suite was recorded for the attempt, so a
+  certificate-validation failure still reports the observed suite.
+
+Both reads are wrapped in `try`/`catch` so that capture never affects the handshake. A suite of
+`0` (`TLS_NULL_WITH_NULL_NULL`, nothing agreed yet) is treated as unavailable. Without TLS, the
+property is `null`. Managed SNI runs only on `net10.0`; on `net462` this capture is not compiled
+and the property stays `null` until native SNI support (Slice D).
+
 ## 5. Scope
 
 The API reports negotiated encryption, TLS protocol, the server-selected cipher suite, the server-presented certificate's

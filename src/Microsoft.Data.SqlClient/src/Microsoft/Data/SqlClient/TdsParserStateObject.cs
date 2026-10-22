@@ -579,6 +579,12 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal virtual Connection.ServerCertificateCapture GetServerCertificateCapture() => null;
 
+        /// <summary>
+        /// Gets the IANA identifier of the TLS cipher suite negotiated on this session, or
+        /// <see langword="null"/> if the transport does not report one.
+        /// </summary>
+        internal virtual int? GetNegotiatedCipherSuite() => null;
+
         internal abstract uint CheckConnection();
 
         internal abstract PacketHandle GetResetWritePacket(int dataSize);

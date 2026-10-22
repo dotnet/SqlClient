@@ -310,6 +310,30 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
             ServerCertificateCapture capture = SniCommon.CreateServerCertificateCapture(serverCert, default, new object());
 
             Assert.Null(capture.Protocol);
+            Assert.Null(capture.CipherSuite);
+        }
+
+        [Fact]
+        public void GetNegotiatedCipherSuite_NoStreamOrNoHandshake_Unavailable()
+        {
+            Assert.Null(SniCommon.GetNegotiatedCipherSuite(null!));
+
+            // Reading before any handshake must neither throw nor report the null cipher suite (0).
+            using SslStream sslStream = new(new MemoryStream());
+            Assert.Null(SniCommon.GetNegotiatedCipherSuite(sslStream));
+        }
+
+        [Fact]
+        public void RecordServerCertificate_CipherSuite_AdoptedOnlyWhenNotAlreadyRecorded()
+        {
+            EncryptionInfoCapture capture = new();
+            capture.RecordServerCertificate(new ServerCertificateCapture(null, null, null, cipherSuite: 0xC030));
+            Assert.Equal(0xC030, capture.CipherSuite);
+
+            EncryptionInfoCapture alreadyKnown = new();
+            alreadyKnown.RecordCipherSuite(0x1301);
+            alreadyKnown.RecordServerCertificate(new ServerCertificateCapture(null, null, null, cipherSuite: 0xC030));
+            Assert.Equal(0x1301, alreadyKnown.CipherSuite);
         }
 
         [Fact]

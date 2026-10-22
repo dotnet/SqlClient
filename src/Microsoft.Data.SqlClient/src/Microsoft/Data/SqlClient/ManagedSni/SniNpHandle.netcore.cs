@@ -141,6 +141,8 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             }
         }
 
+        public override int? NegotiatedCipherSuite => SniCommon.GetNegotiatedCipherSuite(_sslStream);
+
         public override uint CheckConnection()
         {
             using (SqlClientSNIEventScope.Create(nameof(SniNpHandle)))

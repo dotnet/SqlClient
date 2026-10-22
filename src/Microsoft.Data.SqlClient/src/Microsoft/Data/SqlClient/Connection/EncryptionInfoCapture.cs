@@ -127,6 +127,11 @@ namespace Microsoft.Data.SqlClient.Connection
             {
                 Protocol = protocol;
             }
+
+            if (CipherSuite is null && capture.CipherSuite is int cipherSuite)
+            {
+                RecordCipherSuite(cipherSuite);
+            }
         }
 
         /// <summary>

@@ -1002,6 +1002,12 @@ namespace Microsoft.Data.SqlClient
 
             RecordNegotiatedEncryption(encrypt, protocol);
 
+            // The cipher suite read after the handshake completes is authoritative for the attempt.
+            if (_physicalStateObj.GetNegotiatedCipherSuite() is int cipherSuite)
+            {
+                _connHandler?.EncryptionInfoCapture?.RecordCipherSuite(cipherSuite);
+            }
+
             // create a new packet encryption changes the internal packet size Bug# 228403
             _physicalStateObj.ClearAllWritePackets();
         }
