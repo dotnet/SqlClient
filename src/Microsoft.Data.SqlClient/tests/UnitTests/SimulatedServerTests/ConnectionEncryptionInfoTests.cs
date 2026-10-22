@@ -478,6 +478,17 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }
             Assert.Null(info.ValidationErrors);
             Assert.Null(info.ChainStatus);
+
+            if (serverEncryption == ServerEncryption.NotSupported)
+            {
+                // No TLS handshake took place, so no cipher suite was negotiated.
+                Assert.Null(info.NegotiatedCipherSuite);
+            }
+            else if (LocalAppContextSwitches.UseManagedNetworking)
+            {
+                Assert.NotNull(info.NegotiatedCipherSuite);
+                Assert.InRange(info.NegotiatedCipherSuite.Value, 1, 0xFFFF);
+            }
         }
 
         private static int GetUnusedPort()
