@@ -249,6 +249,7 @@ namespace Microsoft.Data.SqlClient
         private bool _enclaveAttestationInProgress;
 
         private SqlConnectionInternal _describeParameterEncryptionConnection;
+        private SqlConnectionInternal _enclaveRetryConnection;
 
         /// <summary>
         /// On 8.0 and above the Prepared state cannot be left. Once a command is prepared it will
@@ -2558,14 +2559,23 @@ namespace Microsoft.Data.SqlClient
                             await InvalidateEnclaveSessionAsync(cancellationToken).ConfigureAwait(false);
                             invalidationCompleted = true;
                             _internalEndExecuteInitiated = false;
-                            Task<object> retryTask = (Task<object>)retryFunc(
-                                this,
-                                behavior,
-                                /*asyncCallback:*/ null, // @TODO: Is this ever not null?
-                                stateObject,
-                                TdsParserStaticMethods.GetRemainingTimeout(timeout, firstAttemptStart),
-                                /*isRetry:*/ true,
-                                asyncWrite);
+                            Task<object> retryTask;
+                            _enclaveRetryConnection = _activeConnection.InnerConnection as SqlConnectionInternal;
+                            try
+                            {
+                                retryTask = (Task<object>)retryFunc(
+                                    this,
+                                    behavior,
+                                    /*asyncCallback:*/ null, // @TODO: Is this ever not null?
+                                    stateObject,
+                                    TdsParserStaticMethods.GetRemainingTimeout(timeout, firstAttemptStart),
+                                    /*isRetry:*/ true,
+                                    asyncWrite);
+                            }
+                            finally
+                            {
+                                _enclaveRetryConnection = null;
+                            }
 
                             await retryTask.ContinueWith(
                                 static (retryTask, state) =>
