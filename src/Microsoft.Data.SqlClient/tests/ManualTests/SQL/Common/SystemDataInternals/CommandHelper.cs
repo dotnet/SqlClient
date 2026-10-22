@@ -13,6 +13,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
         private static MethodInfo s_completePendingReadWithSuccess = s_sqlCommand.GetMethod("CompletePendingReadWithSuccess", BindingFlags.NonPublic | BindingFlags.Instance);
         private static MethodInfo s_completePendingReadWithFailure = s_sqlCommand.GetMethod("CompletePendingReadWithFailure", BindingFlags.NonPublic | BindingFlags.Instance);
         private static MethodInfo s_invalidateEnclaveSession = s_sqlCommand.GetMethod("InvalidateEnclaveSession", BindingFlags.NonPublic | BindingFlags.Instance);
+        private static readonly FieldInfo s_enclavePackage = s_sqlCommand.GetField("enclavePackage", BindingFlags.NonPublic | BindingFlags.Instance);
 #if DEBUG
         private static FieldInfo s_forceRetryableEnclaveQueryExecutionExceptionDuringGenerateEnclavePackage =
             s_sqlCommand.GetField(@"_forceRetryableEnclaveQueryExecutionExceptionDuringGenerateEnclavePackage", BindingFlags.NonPublic | BindingFlags.Static);
@@ -39,6 +40,23 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
         internal static void InvalidateEnclaveSession(SqlCommand command)
         {
             s_invalidateEnclaveSession.Invoke(command, null);
+        }
+
+        /// <summary>
+        /// Gets the session used for a command's enclave package without exposing its key material.
+        /// Call while the command still retains its encryption state.
+        /// </summary>
+        /// <param name="command">An executed command requiring enclave computations.</param>
+        /// <returns>The session object, for reference-identity assertions.</returns>
+        internal static object GetEnclaveSession(SqlCommand command)
+        {
+            object package = s_enclavePackage.GetValue(command)
+                ?? throw new InvalidOperationException("The command did not generate an enclave package.");
+            PropertyInfo sessionProperty = package.GetType().GetProperty(
+                "EnclaveSession", BindingFlags.NonPublic | BindingFlags.Instance)
+                ?? throw new MissingMemberException(package.GetType().FullName, "EnclaveSession");
+            return sessionProperty.GetValue(package)
+                ?? throw new InvalidOperationException("The enclave package has no session.");
         }
 
 #if DEBUG

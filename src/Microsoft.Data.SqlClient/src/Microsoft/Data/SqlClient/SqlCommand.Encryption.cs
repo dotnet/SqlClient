@@ -239,7 +239,8 @@ namespace Microsoft.Data.SqlClient
             new EnclaveSessionParameters(
                 _activeConnection.DataSource,
                 _activeConnection.EnclaveAttestationUrl,
-                _activeConnection.Database);
+                _activeConnection.Database,
+                _activeConnection.AttestationProtocol);
 
         // @TODO: Isn't this doing things asynchronously? We should just have a purely asynchronous and a purely synchronous pathway instead of this mix of check this check that and flags.
         private SqlDataReader GetParameterEncryptionDataReader(
