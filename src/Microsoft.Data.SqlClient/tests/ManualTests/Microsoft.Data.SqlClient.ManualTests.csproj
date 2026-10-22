@@ -75,6 +75,12 @@
     <PackageReference Include="Microsoft.Data.SqlClient"
                       Condition="'$(ReferenceType)' == 'Package'" />
 
+    <!-- The Azure extension validates Azure Attestation tokens for the AAS enclave tests. -->
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient.Extensions/Azure/src/Azure.csproj"
+                      Condition="'$(ReferenceType)' == 'Project'" />
+    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Azure"
+                      Condition="'$(ReferenceType)' == 'Package'" />
+
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
     <!-- @TODO: Should there be a package mode test for AKV? -->
   </ItemGroup>
