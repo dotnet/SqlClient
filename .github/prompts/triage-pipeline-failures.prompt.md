@@ -22,6 +22,8 @@ Every data-retrieval step below is described as an **operation**, not a command.
 Perform each operation with whatever Azure DevOps access is available, in this order
 of preference:
 
+0. A **previously established preference** — if the user has already chosen a mechanism in
+   this conversation, in memory/instructions, or by explicit request, keep using it.
 1. An **Azure DevOps MCP server**, if one is connected (preferred — no shell needed).
 2. The **`az` CLI** (`az rest --resource <ADO resource ID> ...`,
    `az pipelines ...`, `az boards ...`).
@@ -150,7 +152,7 @@ immediately-preceding in-scope build (the parent commit). A failure present befo
 
 ## Step 7 — Check quarantine status before acting
 
-A test is already quarantined if it carries `[Trait("Category", "flaky")]`; those run
+A test is already quarantined if it carries `[Trait("category", "flaky")]`; those run
 in a separate, non-blocking quarantine step (`TestFilters="category=flaky"`) while the
 regular step excludes `category!=failing&category!=flaky&category!=interactive`.
 
@@ -175,7 +177,7 @@ the user which items to act on.
 For each item the user approves:
 
 1. Prefer a **deterministic fix** that removes the race/isolation/timing dependency.
-2. Otherwise **quarantine**: add `[Trait("Category", "flaky")]` plus a comment holding
+2. Otherwise **quarantine**: add `[Trait("category", "flaky")]` plus a comment holding
    the observed failure signature (test name, assertion, key stack frames) and the
    root-cause reasoning. Mirror the style of existing quarantine comments in the test suite.
 3. Cover both sync and async variants when the API has both.

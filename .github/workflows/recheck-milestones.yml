@@ -1,0 +1,65 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+#
+# Recheck Milestones
+#
+# Reconciles open pull requests when a release branch is cut.
+#
+# check-milestone.yml decides where a milestone belongs by asking whether
+# release/<major>.<minor> exists and which milestone series is active on the
+# default branch. Creating a release branch can invalidate X.Y.* pull requests
+# and make the next series eligible, but emits no pull request activity, so
+# already open pull requests would otherwise keep their previous verdicts.
+#
+# This lives in its own workflow so that check-milestone.yml stays purely pull
+# request scoped, and so the elevated 'actions: write' permission needed to
+# re-run checks is isolated from the PR gate.
+#
+# A re-run replays the original run's commit, so a pull request whose last
+# milestone check predates a change to the check itself replays the older
+# version and keeps its stale result. See the LIMITATION section in
+# .github/scripts/recheck-milestones-for-release-branch.sh.
+#
+# See .github/scripts/recheck-milestones-for-release-branch.sh for the details.
+#
+#################################################################################
+
+name: Recheck Milestones
+
+# 'create' has no branch filter, so every branch creation starts a run of this
+# workflow. The guard below skips the job for anything but release/*, which is
+# why this is kept out of check-milestone.yml.
+on: [create]
+
+jobs:
+  recheck-open-prs:
+    name: Re-check open PRs after a release branch is cut
+    if: github.event.ref_type == 'branch' && startsWith(github.event.ref, 'release/')
+    runs-on: ubuntu-latest
+    permissions:
+      # 'actions: write' is needed to re-run the affected milestone checks.
+      actions: write
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Checkout scripts
+        uses: actions/checkout@v6
+        with:
+          # A 'create' run defaults to the new branch; pin the default branch so
+          # the script is read from a known-good copy.
+          ref: ${{ github.event.repository.default_branch }}
+          # Only the scripts directory is needed; skip full history.
+          sparse-checkout: .github/scripts
+          sparse-checkout-cone-mode: false
+
+      - name: Re-check affected pull requests
+        env:
+          # Pass the ref via env to avoid script injection from branch names.
+          RELEASE_BRANCH: ${{ github.event.ref }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          WORKFLOW_FILE: check-milestone.yml
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash "${GITHUB_WORKSPACE}/.github/scripts/recheck-milestones-for-release-branch.sh"

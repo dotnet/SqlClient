@@ -138,6 +138,9 @@ node_modules/
 **/config.json
 **/config.jsonc
 
+# Performance test runner config
+/src/Microsoft.Data.SqlClient/tests/PerformanceTests/runnerconfig.jsonc
+
 # Generated Milestone PR metadata files
 .milestone-prs/
 

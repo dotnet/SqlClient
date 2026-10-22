@@ -4,36 +4,17 @@
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
   </PropertyGroup>
 
-  <!-- OS Constants ==================================================== -->
-  <PropertyGroup>
-    <!-- If the TargetOs was not specified (as is the case during IDE development), the build     -->
-    <!-- should target the host OS.                                                               -->
-    <TargetOs Condition="'$(TargetOs)' == ''">$(OS)</TargetOs>
-
-    <!-- The following lines are provided for developer convenience. Many IDEs will automatically -->
-    <!-- hide code that is excluded via pre-compiler directives, making it difficult to edit in   -->
-    <!-- the IDE when on the wrong OS. To ease this, uncomment one of the following lines to      -->
-    <!-- force one OS or another. This is only for development usage. Do not commit these lines   -->
-    <!-- uncommented. -->
-    <!--<TargetOs>Unix</TargetOs>-->
-    <!--<TargetOs>Windows_NT</TargetOs>-->
-
-    <NormalizedTargetOs>$(TargetOs.ToLower())</NormalizedTargetOs>
-  </PropertyGroup>
-
   <!-- Target Frameworks =============================================== -->
   <PropertyGroup>
-    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
-
-    <!-- We cannot build netfx unless we are building for Windows. Thus, we will only add netfx if -->
-    <!-- we are building for Windows.                                                              -->
-    <TargetFrameworks Condition="'$(NormalizedTargetOs)' == 'windows_nt'">$(TargetFrameworks);net462</TargetFrameworks>
+    <TargetFrameworks>net462;net10.0</TargetFrameworks>
   </PropertyGroup>
 
   <!-- Compiler Options ================================================ -->
   <PropertyGroup>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- Opt into the documentation snippet compile inputs declared in src/Directory.Build.targets. -->
+    <IncludesDocumentationSnippets>true</IncludesDocumentationSnippets>
     <RootNamespace />
   </PropertyGroup>
 
@@ -58,15 +39,18 @@
   <!-- Strong name signing ============================================= -->
   <!-- Strong naming is being done in Directory.Build.props -->
 
-  <!-- Unsigned: expose internals to UnitTests in any reference mode. -->
+  <!-- Unsigned: expose internals to test assemblies in any reference mode. -->
   <ItemGroup Condition="'$(SigningKeyPath)' == ''">
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
       <_Parameter1>UnitTests</_Parameter1>
     </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>Microsoft.Data.SqlClient.TestCommon</_Parameter1>
+    </AssemblyAttribute>
   </ItemGroup>
 
   <!--
-    Signed + Package mode: expose internals to UnitTests signed with the test key.
+    Signed + Package mode: expose internals to test assemblies signed with the test key.
     Signed + Project mode is intentionally omitted: production-signed assemblies should not
     grant internal access to test assemblies during local development. Tests that need internals
     in Project mode run unsigned; only the CI package-validation pipeline uses signed packages.
@@ -74,6 +58,9 @@
   <ItemGroup Condition="'$(SigningKeyPath)' != '' AND '$(ReferenceType)' == 'Package'">
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
       <_Parameter1>UnitTests, PublicKey=00240000048000001401000006020000002400005253413100080000010001003D19684676DA365F331D00CE7BD4B8EF03E74102F39A5681B40622703D68F0298ECACECC723D3FFC1EA9365AF4958578550EA1EBEEC084B0B3757F3762449F5365E872802A4B548056760764FAD062BFEE81ED26183109AD46810E7E6E965419D0A10473680144D20C1BFE1027A5F586CA987523C06F5C126C44EA7D4F51EB023867A9F294315F95775ACEFD2D678186919458DFCCB4DE2E9F53AEFC766C7CBCEC474ED21C1616E5A9414D366D91D121C39F5FE6641295ADC058EF3FB10593BCDE2E82D9F217C2634909EEF496CD53AE78ABBEA572B871D72EBFC5378205950ABA97C7CCC2B9635D96933D5F9C9624D71FF53EE2094CF3A6BD38534D66E414B7</_Parameter1>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>Microsoft.Data.SqlClient.TestCommon, PublicKey=00240000048000001401000006020000002400005253413100080000010001003D19684676DA365F331D00CE7BD4B8EF03E74102F39A5681B40622703D68F0298ECACECC723D3FFC1EA9365AF4958578550EA1EBEEC084B0B3757F3762449F5365E872802A4B548056760764FAD062BFEE81ED26183109AD46810E7E6E965419D0A10473680144D20C1BFE1027A5F586CA987523C06F5C126C44EA7D4F51EB023867A9F294315F95775ACEFD2D678186919458DFCCB4DE2E9F53AEFC766C7CBCEC474ED21C1616E5A9414D366D91D121C39F5FE6641295ADC058EF3FB10593BCDE2E82D9F217C2634909EEF496CD53AE78ABBEA572B871D72EBFC5378205950ABA97C7CCC2B9635D96933D5F9C9624D71FF53EE2094CF3A6BD38534D66E414B7</_Parameter1>
     </AssemblyAttribute>
   </ItemGroup>
 
@@ -84,7 +71,7 @@
     <!-- MSBuild will add the target framework to the end of this path by default. Telling it not -->
     <!-- to is possible but requires also specifying the IntermediateOutputPath. So while it      -->
     <!-- would be nice to have a flat directory structure, it's more hassle than its worth.       -->
-    <OutputPath>$(ArtifactPath)$(AssemblyName)/$(ReferenceType)-$(Configuration)/$(NormalizedTargetOs)/</OutputPath>
+    <OutputPath>$(ArtifactPath)$(AssemblyName)/$(ReferenceType)-$(Configuration)/</OutputPath>
   </PropertyGroup>
 
   <!-- NuGet Package Config ============================================ -->
@@ -259,7 +246,7 @@
   <!-- Reference to Abstractions -->
   <ItemGroup>
     <ProjectReference Include="$(AbstractionsProjectPath)"
-                      Condition="'$(ReferenceType)' != 'Package'" />
+                      Condition="'$(ReferenceType)' == 'Project'" />
     <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Abstractions"
                       Condition="'$(ReferenceType)' == 'Package'" />
   </ItemGroup>
@@ -267,7 +254,7 @@
   <!-- Reference to Logging -->
   <ItemGroup>
     <ProjectReference Include="$(LoggingProjectPath)"
-                      Condition="'$(ReferenceType)' != 'Package'" />
+                      Condition="'$(ReferenceType)' == 'Project'" />
     <PackageReference Include="Microsoft.Data.SqlClient.Internal.Logging"
                       Condition="'$(ReferenceType)' == 'Package'" />
   </ItemGroup>
@@ -275,7 +262,7 @@
   <!-- Reference to SqlServer -->
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)/src/Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj"
-                      Condition="'$(ReferenceType)' != 'Package'" />
+                      Condition="'$(ReferenceType)' == 'Project'" />
     <PackageReference Include="Microsoft.SqlServer.Server"
                       Condition="'$(ReferenceType)' == 'Package'" />
   </ItemGroup>

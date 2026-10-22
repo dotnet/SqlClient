@@ -1,0 +1,83 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Ensures the SQL Server command line tools are available on a Linux agent.
+#
+# The SQL Server images in our 1ES pool (for example ADO-UB24-SQL25) ship the SQL Server engine but
+# do not always ship the command line tools, so install them when they are missing.
+#
+# Sets two variables for the remaining steps in the job:
+#
+#   SqlCmdBin      - absolute path to the sqlcmd executable.
+#   SqlCmdTrustArg - '-C' when sqlcmd needs to be told to trust the server's self-signed
+#                    certificate, otherwise empty.
+
+steps:
+
+  - bash: |
+      set -u
+
+      if ! command -v sudo >/dev/null 2>&1; then
+        echo "ERROR: 'sudo' is required to install the SQL Server command line tools."
+        exit 1
+      fi
+
+      find_sqlcmd() {
+        if command -v sqlcmd >/dev/null 2>&1; then
+          command -v sqlcmd
+          return 0
+        fi
+        # mssql-tools default install locations.
+        local candidate
+        for candidate in /opt/mssql-tools18/bin/sqlcmd /opt/mssql-tools/bin/sqlcmd; do
+          if [ -x "$candidate" ]; then
+            echo "$candidate"
+            return 0
+          fi
+        done
+        return 1
+      }
+
+      if SQLCMD_BIN="$(find_sqlcmd)"; then
+        echo "Found existing sqlcmd at '$SQLCMD_BIN'."
+      else
+        echo "sqlcmd was not found; installing mssql-tools18..."
+
+        # The Microsoft package repository is usually already configured on these images (that is
+        # where the engine came from), so try a plain install first and only register the repository
+        # if that fails.
+        sudo apt-get update
+        if ! sudo env ACCEPT_EULA=Y apt-get install -y mssql-tools18 unixodbc-dev; then
+          # shellcheck disable=SC1091
+          . /etc/os-release
+          echo "Registering the Microsoft package repository for Ubuntu $VERSION_ID..."
+          curl -sSL -o /tmp/packages-microsoft-prod.deb \
+            "https://packages.microsoft.com/config/ubuntu/$VERSION_ID/packages-microsoft-prod.deb"
+          sudo dpkg -i /tmp/packages-microsoft-prod.deb
+          sudo apt-get update
+          sudo env ACCEPT_EULA=Y apt-get install -y mssql-tools18 unixodbc-dev
+        fi
+
+        if ! SQLCMD_BIN="$(find_sqlcmd)"; then
+          echo "ERROR: 'sqlcmd' was not found on PATH or in the standard mssql-tools locations,"
+          echo "       and installing mssql-tools18 did not provide it."
+          exit 1
+        fi
+      fi
+
+      # sqlcmd from mssql-tools18 (and go-sqlcmd) encrypts by default, so it needs -C to trust the
+      # local server's self-signed certificate. The older mssql-tools build does not support -C.
+      case "$SQLCMD_BIN" in
+        */mssql-tools/bin/sqlcmd) SQLCMD_TRUST_ARG="" ;;
+        *)                        SQLCMD_TRUST_ARG="-C" ;;
+      esac
+
+      echo "Using sqlcmd '$SQLCMD_BIN' with trust argument '$SQLCMD_TRUST_ARG'."
+
+      # Publish for the remaining steps in this job.
+      echo "##vso[task.setvariable variable=SqlCmdBin]$SQLCMD_BIN"
+      echo "##vso[task.setvariable variable=SqlCmdTrustArg]$SQLCMD_TRUST_ARG"
+    displayName: 'Install sqlcmd [Linux]'

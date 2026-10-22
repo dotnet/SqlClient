@@ -1,7 +1,8 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.Linq;
 using static Microsoft.Data.SqlClient.PerformanceTests.Constants;
 
 namespace Microsoft.Data.SqlClient.PerformanceTests
@@ -48,10 +49,16 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
     public class DataType
     {
         /// <summary>
+        /// Always Encrypted scenarios do not support types with one of these names.
+        /// </summary>
+        private static readonly string[] s_unsupportedEncryptionTypes = ["xml"];
+
+        /// <summary>
         /// Default value of all datatypes
         /// </summary>
         public object DefaultValue;
         public string Name;
+        public bool EncryptionSupported => !s_unsupportedEncryptionTypes.Contains(Name, System.StringComparer.OrdinalIgnoreCase);
 
         public override string ToString() => Name;
     }
@@ -121,6 +128,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
     public class MaxLengthValueType : DataType
     {
         public int MaxLength;
+        public bool CharacterType => Name?.Contains("char", System.StringComparison.OrdinalIgnoreCase) ?? false;
     }
 
     public class MaxLengthBinaryType : MaxLengthValueType

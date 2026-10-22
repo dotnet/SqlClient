@@ -110,11 +110,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
             _connectionString = DataTestUtility.TCPConnectionString;
             _managementConnection = new SqlConnection(_connectionString);
-            _vectorTable = new Table(_managementConnection, "VectorTestTable", tableDefinition);
-            _bulkCopySourceTable = new Table(_managementConnection, "VectorBulkCopyTestTable", tableDefinition);
-            _vectorProcedure = new StoredProcedure(_managementConnection,
-                prefix: "VectorsAsVarcharSp",
-                definition: $@"
+
+            // NOTE: If this constructor throws, xUnit never calls Dispose, so any object already created
+            //   (each of which has a GUID-based name) would be left in the database permanently.
+            try
+            {
+                _vectorTable = new Table(_managementConnection, "VectorTestTable", tableDefinition);
+                _bulkCopySourceTable = new Table(_managementConnection, "VectorBulkCopyTestTable", tableDefinition);
+                _vectorProcedure = new StoredProcedure(_managementConnection,
+                    prefix: "VectorsAsVarcharSp",
+                    definition: $@"
                 {VectorParameterName} vector({vectorDimensions}, {TestDataInstance.SqlServerTypeName}),   -- Input: Serialized TElement[] as JSON string
                 {VectorOutputParameterName} vector({vectorDimensions}, {TestDataInstance.SqlServerTypeName}) OUTPUT  -- Output: Echoed back from latest inserted row
                 AS
@@ -130,6 +135,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
                 FROM {_vectorTable.Name}
                 ORDER BY Id DESC;
                 END;");
+            }
+            catch
+            {
+                Dispose();
+                throw;
+            }
 
             _selectCommand = $"SELECT {VectorColumnName} FROM {_vectorTable.Name} ORDER BY Id DESC";
             _insertCommand = $"INSERT INTO {_vectorTable.Name} ({VectorColumnName}) VALUES ({VectorParameterName})";
@@ -150,13 +161,26 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
             if (disposing)
             {
-                _vectorProcedure?.Dispose();
-                _bulkCopySourceTable?.Dispose();
-                _vectorTable?.Dispose();
+                // Each drop is best-effort: failing to drop one object must not leak the others.
+                DisposeSafely(_vectorProcedure);
+                DisposeSafely(_bulkCopySourceTable);
+                DisposeSafely(_vectorTable);
                 _managementConnection?.Dispose();
             }
 
             _disposed = true;
+        }
+
+        private static void DisposeSafely(IDisposable? disposable)
+        {
+            try
+            {
+                disposable?.Dispose();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"{nameof(NativeVectorTestsBase<TElement, TTestData>)}: cleanup failed: {ex.Message}");
+            }
         }
 
         ~NativeVectorTestsBase() =>

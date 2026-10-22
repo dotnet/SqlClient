@@ -20,6 +20,12 @@
 
 parameters:
 
+  # The name of the pool to use for jobs that require customized VM images.
+  #
+  # Supplied by the caller so that the pool name flows down from the pipeline root.
+  - name: poolName
+    type: string
+
   # The type of build to produce (Debug or Release)
   - name: buildConfiguration
     type: string
@@ -51,11 +57,10 @@ parameters:
     type: object
     default: [net462]
 
-  # The list of .NET runtimes to test against.  These should include the TFMs that SqlClient ships
-  # as well as any upcoming runtimes being validated (e.g. net10.0 is tested but not yet shipped).
+  # The list of .NET runtimes to test against, matching the TFMs that SqlClient ships.
   - name: netTestRuntimes
     type: object
-    default: [net8.0, net9.0, net10.0]
+    default: [net10.0]
 
 stages:
   - stage: stress_tests_stage
@@ -89,7 +94,8 @@ stages:
           template: /eng/pipelines/common/templates/steps/configure-sql-server-linux-step.yml@self
           parameters:
             saPassword: $(saPassword)
-        vmImage: ADO-UB22-SQL22
+        poolName: ${{ parameters.poolName }}
+        poolImage: ADO-UB24-SQL25
 
     # ----------------------------------------------------------------------------------------------
     # Build and test on Windows
@@ -112,7 +118,8 @@ stages:
             saPassword: $(saPassword)
         # The Windows images include a suitable .NET Framework runtime, so we don't have to install
         # one explicitly.
-        vmImage: ADO-MMS22-SQL22
+        poolName: ${{ parameters.poolName }}
+        poolImage: ADO-MMS25-SQL25
 
     # ----------------------------------------------------------------------------------------------
     # Build and test on macOS.
@@ -133,5 +140,7 @@ stages:
           template: /eng/pipelines/common/templates/steps/configure-sql-server-macos-step.yml@self
           parameters:
             saPassword: $(saPassword)
-        # A macOS vmImage name routes this job to the Microsoft-hosted 'Azure Pipelines' pool.
-        vmImage: macos-latest
+        # Our 1ES pools do not offer macOS images, so this job runs on the Microsoft-hosted
+        # 'Azure Pipelines' pool.
+        poolName: Azure Pipelines
+        poolImage: macos-latest

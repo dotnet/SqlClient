@@ -14,7 +14,10 @@ This library grew from a union of the two `System.Data.SqlClient` components whi
 This package supports:
 
 - .NET Framework 4.6.2+
-- .NET 8.0+
+- .NET 10.0+
+
+The implementation targets `net462;net10.0`. Reference and unsupported-platform assemblies also
+retain `netstandard2.0`; that target does not extend supported driver runtimes.
 
 ## Installation
 
@@ -58,7 +61,7 @@ Or via the Package Manager Console:
 Install-Package Microsoft.Data.SqlClient.Extensions.Azure
 ```
 
-This package provides the `ActiveDirectoryAuthenticationProvider`, which integrates with [Azure.Identity](https://www.nuget.org/packages/Azure.Identity) to handle token acquisition, caching, and credential management.
+This package provides the `ActiveDirectoryAuthenticationProvider`, which uses `Azure.Identity` credential types supplied by [Azure.Core](https://www.nuget.org/packages/Azure.Core) to handle token acquisition, caching, and credential management.
 
 With this package reference, you can continue to use Entra ID authentication modes directly in your connection string:
 
@@ -219,7 +222,7 @@ This package is licensed under the [MIT License](https://licenses.nuget.org/MIT)
 
 ## Related Packages
 
-- [Microsoft.Data.SqlClient.Extensions.Azure](https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure) - Entra ID authentication provider with Azure.Identity integration
+- [Microsoft.Data.SqlClient.Extensions.Azure](https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure) - Entra ID authentication provider using Azure.Core credentials
 - [Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider](https://www.nuget.org/packages/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider) - Azure Key Vault integration for Always Encrypted
 - [Microsoft.SqlServer.Server](https://www.nuget.org/packages/Microsoft.SqlServer.Server) - SQL CLR UDT support
 - [Microsoft.Data.SqlClient.SNI](https://www.nuget.org/packages/Microsoft.Data.SqlClient.SNI) - Native SNI for .NET Framework

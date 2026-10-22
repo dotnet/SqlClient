@@ -25,6 +25,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 {
+    [Collection(SimulatedServerTestCollection.Name)]
     public class ConnectionTests
     {
         [Fact]
@@ -92,11 +93,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         //     at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.OnError(...)
         //     at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.CompleteLogin(Boolean enlistOK)
         //     at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.LoginNoFailover(...)
-        [Trait("Category", "flaky")]
+        [Trait("category", "flaky")]
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
+        // Quarantine tracked in https://github.com/dotnet/SqlClient/pull/4344.
+        // The original intermittent async retry failure did not retain assertion/exception details.
         public async Task TransientFault_RetryEnabled_ShouldSucceed_Async(uint errorCode)
         {
             using TransientTdsErrorTdsServer server = new(
@@ -111,7 +114,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 DataSource = "localhost," + server.EndPoint.Port,
                 Encrypt = SqlConnectionEncryptOption.Optional,
 #if NETFRAMEWORK
+                #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
                 TransparentNetworkIPResolution = false
+                #pragma warning restore 618
 #endif
             };
 
@@ -180,6 +185,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
+        // Quarantined due to intermittent failure:
+        //   Assert.Equal() Failure: Values differ
+        //   Expected: 40613
+        //   Actual:   42108
+        [Trait("Category", "flaky")]
         public void TransientFault_RetryDisabled_ShouldFail(uint errorCode)
         {
             using TransientTdsErrorTdsServer server = new(
@@ -231,7 +241,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         //        at Microsoft.Data.SqlClient.SqlConnectionFactory.CreateNonPooledConnection(DbConnection owningConnection, DbConnectionPoolGroup poolGroup, TimeoutTimer timeout)
         //        at Microsoft.Data.SqlClient.SqlConnectionFactory.<>c__DisplayClass41_0.<CreateReplaceConnectionContinuation>b__0(Task`1 _)
         //        at Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionTests.NetworkError_RetryEnabled_ShouldSucceed_Async(Boolean multiSubnetFailoverEnabled)
-        [Trait("Category", "flaky")]
+        [Trait("category", "flaky")]
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
@@ -252,7 +262,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 Pooling = false, // Disable pooling to ensure a fresh connection attempt is made
                 MultiSubnetFailover = multiSubnetFailoverEnabled,
 #if NETFRAMEWORK
+                #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
                 TransparentNetworkIPResolution = multiSubnetFailoverEnabled
+                #pragma warning restore 618
 #endif
             };
 
@@ -290,7 +302,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 Encrypt = SqlConnectionEncryptOption.Optional,
                 MultiSubnetFailover = multiSubnetFailoverEnabled,
 #if NETFRAMEWORK
+                #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
                 TransparentNetworkIPResolution = multiSubnetFailoverEnabled,
+                #pragma warning restore 618
 #endif
             };
 
@@ -338,7 +352,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 ConnectTimeout = 5,
                 MultiSubnetFailover = multiSubnetFailoverEnabled,
 #if NETFRAMEWORK
+                #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
                 TransparentNetworkIPResolution = multiSubnetFailoverEnabled,
+                #pragma warning restore 618
 #endif
             };
 
@@ -894,33 +910,41 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         {
             Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> callback =
                 (ctx, token) => Task.FromResult(new SqlAuthenticationToken("invalid", DateTimeOffset.MaxValue));
+            string expectedMessage = global::Microsoft.Data.StringsHelper.GetString(
+                global::System.Strings.ADP_InvalidMixedUsageOfAccessTokenProperties);
 
             // Token first, then provider.
             using (SqlConnection conn = new("Data Source=localhost"))
             {
                 conn.AccessToken = "token";
-                Assert.Throws<InvalidOperationException>(
+                InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
                     () => conn.SspiContextProvider = new TestSspiContextProvider());
+                Assert.Equal(expectedMessage, exception.Message);
             }
 
             using (SqlConnection conn = new("Data Source=localhost"))
             {
                 conn.AccessTokenCallback = callback;
-                Assert.Throws<InvalidOperationException>(
+                InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
                     () => conn.SspiContextProvider = new TestSspiContextProvider());
+                Assert.Equal(expectedMessage, exception.Message);
             }
 
             // Provider first, then token.
             using (SqlConnection conn = new("Data Source=localhost"))
             {
                 conn.SspiContextProvider = new TestSspiContextProvider();
-                Assert.Throws<InvalidOperationException>(() => conn.AccessToken = "token");
+                InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
+                    () => conn.AccessToken = "token");
+                Assert.Equal(expectedMessage, exception.Message);
             }
 
             using (SqlConnection conn = new("Data Source=localhost"))
             {
                 conn.SspiContextProvider = new TestSspiContextProvider();
-                Assert.Throws<InvalidOperationException>(() => conn.AccessTokenCallback = callback);
+                InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
+                    () => conn.AccessTokenCallback = callback);
+                Assert.Equal(expectedMessage, exception.Message);
             }
         }
 
@@ -1162,15 +1186,20 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }
         }
 
-        // Test that the driver sends the UserAgent feature extension when
-        // the context switch is enabled, and that the presence or absence of
-        // an ack from the server has no effect.
+        /// <summary>
+        /// Verifies that LOGIN7 sends the USERAGENT payload carrying the connection's application
+        /// identity, regardless of whether the server acknowledges the extension.
+        /// </summary>
+        /// <param name="sendAck">Whether the server acknowledges the USERAGENT extension.</param>
+        /// <param name="useAsync">Whether the connection opens asynchronously.</param>
         [Theory]
         // Allow the server to ack.
-        [InlineData(true)]
+        [InlineData(true, false)]
+        [InlineData(true, true)]
         // Don't allow the server to send an ack.
-        [InlineData(false)]
-        public void TestConnWithUserAgentFeatureExtension(bool sendAck)
+        [InlineData(false, false)]
+        [InlineData(false, true)]
+        public async Task TestConnWithUserAgentFeatureExtension(bool sendAck, bool useAsync)
         {
             // Start the test server.
             using TdsServer server = new();
@@ -1219,7 +1248,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }.ConnectionString;
 
             using var connection = new SqlConnection(connStr);
-            connection.Open();
+            connection.RegisteredApplication = RegisteredApplication.EntityFrameworkCore;
+            if (useAsync)
+            {
+                await connection.OpenAsync();
+            }
+            else
+            {
+                connection.Open();
+            }
 
             // Verify the connection itself succeeded
             Assert.Equal(ConnectionState.Open, connection.State);
@@ -1229,9 +1266,38 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.True(firstFeatureIsUserAgent);
             Assert.True(tokenWasNotNull);
             Assert.True(dataLengthAtLeast1);
-            Assert.Equal(UserAgent.Ucs2Bytes.ToArray(), observedPayload);
+            Assert.Equal(UserAgent.GetUcs2Bytes(RegisteredApplication.EntityFrameworkCore).ToArray(), observedPayload);
 
             // TODO: Confirm the server sent an Ack by reading log message from SqlInternalConnectionTds
+        }
+
+        /// <summary>
+        /// Verifies the application identity cannot be changed once the connection is open, since
+        /// it is only reported during login and the getter would otherwise report a value that was
+        /// never sent.
+        /// </summary>
+        [Fact]
+        public void RegisteredApplication_CannotBeSet_WhenConnectionIsOpen()
+        {
+            using TdsServer server = new();
+            server.Start();
+
+            var connStr = new SqlConnectionStringBuilder
+            {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                Pooling = false,
+            }.ConnectionString;
+
+            using var connection = new SqlConnection(connStr);
+            connection.RegisteredApplication = RegisteredApplication.EntityFrameworkCore;
+            connection.Open();
+
+            Assert.Throws<InvalidOperationException>(
+                () => connection.RegisteredApplication = RegisteredApplication.SemanticKernel);
+
+            // The connection still reports the identity it logged in with.
+            Assert.Equal(RegisteredApplication.EntityFrameworkCore, connection.RegisteredApplication);
         }
     }
 }

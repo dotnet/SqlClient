@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public SQLSetupStrategyCertStoreProvider() : base()
         {
             CertStoreProvider = new SqlColumnEncryptionCertificateStoreProvider();
-            SetupDatabase();
+            SetupOrCleanUp(SetupDatabase);
         }
 
         internal override void SetupDatabase()

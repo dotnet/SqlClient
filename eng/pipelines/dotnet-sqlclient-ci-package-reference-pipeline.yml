@@ -59,7 +59,9 @@ trigger:
   branches:
     include:
       # GitHub main and release branches.
-      - main
+      #
+      # GOTCHA: Currently disabled on main due to limited resources.
+      #- main
       - release/*
 
       # ADO main and release branches.
@@ -112,27 +114,19 @@ parameters:
   #
   # These are _not_ the target frameworks to build the driver packages for.
   #
-  # Note: We are excluding .NET 10.0 here to avoid consuming too many resources
-  # during PR pipeline runs, and until we update our 1ES images to include
-  # Visual Studio 2026 (18.0) whose MSBuild SDK supports .NET 10.
-  #
   - name: targetFrameworks
     displayName: Target Frameworks on Windows
     type: object
-    default: [net462, net8.0, net9.0]
+    default: [net462, net10.0]
 
   # The target frameworks to build and run tests for on Unix.
   #
   # These are _not_ the target frameworks to build the driver packages for.
   #
-  # Note: We are excluding .NET 10.0 here to avoid consuming too many resources
-  # during PR pipeline runs, and until we update our 1ES images to include
-  # Visual Studio 2026 (18.0) whose MSBuild SDK supports .NET 10.
-  #
   - name: targetFrameworksUnix
     displayName: Target Frameworks on Unix
     type: object
-    default: [net8.0, net9.0]
+    default: [net10.0]
 
   # The timeout, in minutes, for each test job.
   - name: testJobTimeout
@@ -175,6 +169,10 @@ extends:
     dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
     targetFrameworks: ${{ parameters.targetFrameworks }}
     targetFrameworksUnix: ${{ parameters.targetFrameworksUnix }}
+    # Keep the primary (SQL 2025 / Azure SQL) configurations on the same set of
+    # target frameworks as everything else.
+    primaryTargetFrameworks: ${{ parameters.targetFrameworks }}
+    primaryTargetFrameworksUnix: ${{ parameters.targetFrameworksUnix }}
     testJobTimeout: ${{ parameters.testJobTimeout }}
     testSets: ${{ parameters.testSets }}
     useManagedSNI: ${{ parameters.useManagedSNI }}

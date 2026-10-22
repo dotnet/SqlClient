@@ -74,6 +74,11 @@ jobs:
       - name: ob_outputDirectory
         value: $(JOB_OUTPUT)
 
+      # This job republishes an already-built package, whose SBOM came from its build job. It sets
+      # no sbomPackage* values, so leaving SBOM enabled would emit one with unresolved macros.
+      - name: ob_sdl_sbom_enabled
+        value: false
+
       - name: artifactPath
         value: $(Pipeline.Workspace)/${{ parameters.artifactName }}
 

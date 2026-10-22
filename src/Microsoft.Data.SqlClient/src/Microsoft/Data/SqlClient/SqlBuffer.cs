@@ -117,6 +117,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         private bool _isNull;
+        private bool _isSmallMoney;
         private StorageType _type;
         private Storage _value;
         private object _object;    // String, SqlBinary, SqlCachedBuffer, SqlGuid, SqlString, SqlXml
@@ -129,6 +130,7 @@ namespace Microsoft.Data.SqlClient
         { // Clone
             // value types
             _isNull = value._isNull;
+            _isSmallMoney = value._isSmallMoney;
             _type = value._type;
             // ref types - should also be read only unless at some point we allow this data
             // to be mutable, then we will need to copy
@@ -139,6 +141,8 @@ namespace Microsoft.Data.SqlClient
         internal bool IsEmpty => _type == StorageType.Empty;
 
         internal bool IsNull => _isNull;
+
+        internal bool IsSmallMoney => _type == StorageType.Money && _isSmallMoney;
 
         internal StorageType VariantInternalStorageType => _type;
 
@@ -1307,6 +1311,7 @@ namespace Microsoft.Data.SqlClient
         internal void Clear()
         {
             _isNull = false;
+            _isSmallMoney = false;
             _type = StorageType.Empty;
             _object = null;
         }
@@ -1366,12 +1371,13 @@ namespace Microsoft.Data.SqlClient
             _isNull = false;
         }
 
-        internal void SetToMoney(long value)
+        internal void SetToMoney(long value, bool isSmallMoney = false)
         {
             Debug.Assert(IsEmpty, "setting value a second time?");
             _value._int64 = value;
             _type = StorageType.Money;
             _isNull = false;
+            _isSmallMoney = isSmallMoney;
         }
 
         internal void SetToNullOfType(StorageType storageType)

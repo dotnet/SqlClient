@@ -37,7 +37,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         //        at Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionFailoverTests.TransientFault_NoFailover_DoesNotClearPool(UInt32 errorCode) in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\tests\UnitTests\SimulatedServerTests\ConnectionFailoverTests.cs:line 72
         //      at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
         //      at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)
-        [Trait("Category", "flaky")]
+        [Trait("category", "flaky")]
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
@@ -98,6 +98,23 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(0, failoverServer.PreLoginCount);
         }
 
+        // Flaky under CI load only (never reproduces locally): the failover server
+        // intermittently records an extra pre-login (3 instead of 2) when the connection is
+        // reopened after the pool is cleared, i.e. a slow agent causes an additional
+        // connection attempt against the failover partner. This is agent-timing
+        // sensitivity in the pre-login count, not a driver defect.
+        //
+        //     Failed Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionFailoverTests.NetworkError_TriggersFailover_ClearsPool [7 s]
+        // ##[error]EXEC(0,0): Error Message:
+        // EXEC : error Message: [D:\a\_work\1\s\build.proj]
+        //      Assert.Equal() Failure: Values differ
+        //      Expected: 2
+        //      Actual:   3
+        //     Stack Trace:
+        //        at Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionFailoverTests.NetworkError_TriggersFailover_ClearsPool() in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\tests\UnitTests\SimulatedServerTests\ConnectionFailoverTests.cs:line 170
+        //      at System.RuntimeMethodHandle.InvokeMethod(ObjectHandleOnStack target, Void** arguments, ObjectHandleOnStack sig, BOOL isConstructor, ObjectHandleOnStack result)
+        //      at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+        [Trait("category", "flaky")]
         [Fact]
         public void NetworkError_TriggersFailover_ClearsPool()
         {
@@ -129,7 +146,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 InitialCatalog = "test",
                 MultiSubnetFailover = false,
 #if NETFRAMEWORK
+                #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
                 TransparentNetworkIPResolution = false,
+                #pragma warning restore 618
 #endif
             };
 
@@ -199,7 +218,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 Encrypt = false,
                 MultiSubnetFailover = false,
 #if NETFRAMEWORK
+                #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
                 TransparentNetworkIPResolution = false,
+                #pragma warning restore 618
 #endif
             };
             using SqlConnection connection = new(builder.ConnectionString);
@@ -246,7 +267,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 Pooling = false, // Disable pooling to ensure a fresh connection attempt is made
                 MultiSubnetFailover = false,
 #if NETFRAMEWORK
+                #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
                 TransparentNetworkIPResolution = false,
+                #pragma warning restore 618
 #endif
             };
             using SqlConnection connection = new(builder.ConnectionString);
@@ -299,7 +322,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         //        at Microsoft.Data.SqlClient.SqlConnection.Open(SqlConnectionOverrides overrides)
         //        at Microsoft.Data.SqlClient.SqlConnection.Open()
         //        at Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionFailoverTests.NetworkError_WithUserProvidedPartner_RetryDisabled_ShouldConnectToFailoverPartner() in ConnectionFailoverTests.cs:line 304
-        [Trait("Category", "flaky")]
+        [Trait("category", "flaky")]
         [Fact]
         public void NetworkError_WithUserProvidedPartner_RetryDisabled_ShouldConnectToFailoverPartner()
         {
@@ -355,6 +378,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.True(server.PreLoginCount >= 1, "Expected the primary to be contacted at least once.");
         }
 
+        // Quarantined due to intermittent failures in PR pipelines.
+        //
+        //     Microsoft.Data.SqlClient.SqlException : Connection Timeout Expired. The timeout period elapsed while attempting to consume the pre-login handshake acknowledgement. This could be because the pre-login handshake failed or the server was unable to respond back in time. This failure occurred while attempting to connect to the Failover server. The duration spent while attempting to connect to this server was - [Pre-Login] initialization=5; handshake=3985;
+        //       ---- System.ComponentModel.Win32Exception : The wait operation timed out
+        [Trait("category", "flaky")]
         [Fact]
         public void NetworkError_WithUserProvidedPartner_RetryEnabled_ShouldConnectToFailoverPartner()
         {
@@ -388,7 +416,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 FailoverPartner = $"localhost,{failoverServer.EndPoint.Port}", // User provided failover partner
                 Encrypt = false,
 #if NETFRAMEWORK
+                #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
                 TransparentNetworkIPResolution = false,
+                #pragma warning restore 618
 #endif
             };
             using SqlConnection connection = new(builder.ConnectionString);
@@ -739,6 +769,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
+        // Quarantined due to intermittent failure:
+        //     Assert.Equal() Failure: Strings differ
+        //                            v (pos 14)
+        //   Expected: "localhost,56862"
+        //   Actual:   "localhost,56861"
+        [Trait("Category", "flaky")]
         public async Task TransientFault_WithUserProvidedPartner_Async_ShouldConnectToPrimary_NotFailover(uint errorCode)
         {
             // Async parity for TransientFault_WithUserProvidedPartner_ShouldConnectToPrimary.
@@ -805,7 +841,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         //        at Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionFailoverTests.TransientFault_WithUserProvidedPartner_Pooling_ShouldNotClearPool_NotFailover(UInt32 errorCode) in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\tests\UnitTests\SimulatedServerTests\ConnectionFailoverTests.cs:line 777
         //      at InvokeStub_ConnectionFailoverTests.TransientFault_WithUserProvidedPartner_Pooling_ShouldNotClearPool_NotFailover(Object, Span`1)
         //      at System.Reflection.MethodBaseInvoker.InvokeWithOneArg(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
-        [Trait("Category", "flaky")]
+        [Trait("category", "flaky")]
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]

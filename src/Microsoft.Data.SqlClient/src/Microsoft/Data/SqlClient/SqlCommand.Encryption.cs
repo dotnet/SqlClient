@@ -240,7 +240,8 @@ namespace Microsoft.Data.SqlClient
             new EnclaveSessionParameters(
                 _activeConnection.DataSource,
                 _activeConnection.EnclaveAttestationUrl,
-                _activeConnection.Database);
+                _activeConnection.Database,
+                _activeConnection.AttestationProtocol);
 
         /// <summary>
         /// Schedules asynchronous consumption of the sp_describe_parameter_encryption results.

@@ -1,10 +1,14 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using BenchmarkDotNet.ConsoleArguments;
+using BenchmarkDotNet.ConsoleArguments.ListBenchmarks;
+using BenchmarkDotNet.Loggers;
+using BenchmarkDotNet.Reports;
 using BenchmarkDotNet.Running;
 
 namespace Microsoft.Data.SqlClient.PerformanceTests
@@ -42,25 +46,29 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             new BenchmarkUnit("SqlConnection", b => b.SqlConnectionRunnerConfig, typeof(SqlConnectionRunner)),
             new BenchmarkUnit("SqlCommand", b => b.SqlCommandRunnerConfig, typeof(SqlCommandRunner)),
             new BenchmarkUnit("SqlBulkCopy", b => b.SqlBulkCopyRunnerConfig, typeof(SqlBulkCopyRunner)),
-            new BenchmarkUnit("DataTypeReader", b => b.DataTypeReaderRunnerConfig, typeof(DataTypeReaderRunner)),
-            new BenchmarkUnit("DataTypeReaderAsync", b => b.DataTypeReaderAsyncRunnerConfig, typeof(DataTypeReaderAsyncRunner)),
-            new BenchmarkUnit("AsyncLargeDataRead", b => b.AsyncLargeDataReadRunnerConfig, typeof(AsyncLargeDataReadRunner)),
+            new BenchmarkUnit("DataTypeReader", b => b.DataTypeReaderRunnerConfig, typeof(BenchmarkRunners.DataTypeReaderRunner.Plaintext)),
+            new BenchmarkUnit("AlwaysEncryptedDataTypeReader", b => b.AlwaysEncryptedDataTypeReaderRunnerConfig, typeof(BenchmarkRunners.DataTypeReaderRunner.AlwaysEncrypted)),
+            new BenchmarkUnit("LargeDataRead", b => b.LargeDataReadRunnerConfig, typeof(BenchmarkRunners.LargeDataReadRunner.Plaintext)),
+            new BenchmarkUnit("AlwaysEncryptedLargeDataRead", b => b.AlwaysEncryptedLargeDataReadRunnerConfig, typeof(BenchmarkRunners.LargeDataReadRunner.AlwaysEncrypted)),
             new BenchmarkUnit("MarsOverhead", b => b.MarsOverheadRunnerConfig, typeof(MarsOverheadRunner)),
             new BenchmarkUnit("ParallelAsyncConnection", b => b.ParallelAsyncConnectionRunnerConfig, typeof(ParallelAsyncConnectionRunner)),
             new BenchmarkUnit("CancellationTokenReadAsync", b => b.CancellationTokenReadAsyncRunnerConfig, typeof(CancellationTokenReadAsyncRunner)),
             new BenchmarkUnit("SequentialXmlRead", b => b.SequentialXmlReadRunnerConfig, typeof(SequentialXmlReadRunner)),
             new BenchmarkUnit("JsonVsVarcharRead", b => b.JsonVsVarcharReadRunnerConfig, typeof(JsonVsVarcharReadRunner)),
             new BenchmarkUnit("BeginTransaction", b => b.BeginTransactionRunnerConfig, typeof(BeginTransactionRunner)),
+            new BenchmarkUnit("TransactionScopeIsolation", b => b.TransactionScopeIsolationRunnerConfig, typeof(TransactionScopeIsolationRunner)),
             new BenchmarkUnit("ConnectionPoolStress", b => b.ConnectionPoolStressRunnerConfig, typeof(ConnectionPoolStressRunner)),
             new BenchmarkUnit("ConnectionPoolContention", b => b.ConnectionPoolContentionRunnerConfig, typeof(ConnectionPoolContentionRunner)),
             new BenchmarkUnit("ConnectionPoolChurn", b => b.ConnectionPoolChurnRunnerConfig, typeof(ConnectionPoolChurnRunner)),
+            new BenchmarkUnit("ConnectionPoolRamp", b => b.ConnectionPoolRampRunnerConfig, typeof(ConnectionPoolRampRunner)),
+            new BenchmarkUnit("ConnectionPoolThreadPoolPressure", b => b.ConnectionPoolThreadPoolPressureRunnerConfig, typeof(ConnectionPoolThreadPoolPressureRunner)),
         };
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Program"/> class,
         /// which loads the benchmark configuration and runs the benchmarks.
         /// </summary>
-        public Program()
+        public Program(string[] args = null)
         {
             _config = Config.Load();
             SetupConfigurations();
@@ -100,13 +108,58 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 }
             }
 
+            args ??= Array.Empty<string>();
+            var (parsed, argumentConfig, options) = ConfigParser.Parse(args, ConsoleLogger.Default);
+            if (!parsed)
+            {
+                Environment.ExitCode = args.Contains("--help") || args.Contains("-h") ? 0 : 1;
+                return;
+            }
+            if (options.PrintInformation || options.ListBenchmarkCaseMode != ListBenchmarkCaseMode.Disabled)
+            {
+                BenchmarkSwitcher.FromTypes(toRun.Select(unit => unit.RunnerType).ToArray()).Run(args);
+                return;
+            }
+
+            bool matched = false;
             foreach (BenchmarkUnit unit in toRun)
             {
-                BenchmarkRunner.Run(unit.RunnerType, BenchmarkConfig.s_instance(unit.Selector(_config.Benchmarks)));
+                RunnerJob job = unit.Selector(_config.Benchmarks);
+                var config = BenchmarkConfig.s_instance(job);
+                // Match across all enabled units before treating an empty selection as a failure.
+                // Keep the unit's job settings when executing the selected benchmarks.
+                using BenchmarkRunInfo benchmarks = BenchmarkConverter.TypeToBenchmarks(unit.RunnerType, config);
+                var selectedCases = benchmarks.BenchmarksCases.Where(benchmark =>
+                    argumentConfig.GetFilters().All(filter => filter.Predicate(benchmark))).ToArray();
+                if (selectedCases.Length == 0)
+                {
+                    continue;
+                }
+                matched = true;
+                if (job is CommandRunnerJob commandJob)
+                {
+                    commandJob.Validate();
+                }
+                // Execute the selected cases with the validated unit job. Passing args here
+                // would parse them again and allow CLI job settings to override that job.
+                var selectedBenchmarks = new BenchmarkRunInfo(selectedCases, benchmarks.Type, benchmarks.Config);
+                Summary summary = BenchmarkRunner.Run(selectedBenchmarks);
+                if (summary.HasCriticalValidationErrors || !summary.Reports.Any() ||
+                    summary.Reports.Any(report => !report.Success))
+                {
+                    Console.Error.WriteLine($"Benchmark unit '{unit.Name}' failed; results are incomplete.");
+                    Environment.ExitCode = 1;
+                    // Retain the failing exit code while allowing later units to report results.
+                }
+            }
+            if (!matched)
+            {
+                Console.Error.WriteLine("No benchmarks matched the selection across enabled units.");
+                Environment.ExitCode = 1;
             }
 
             // TODOs:
-            // Prepared/Regular Parameterized queries
+            // Explicitly prepared commands
             // Always Encrypted
         }
 
@@ -130,7 +183,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
 
         private void SetupConfigurations()
         {
-            // If the config file specifies to use managed SNI on Windows, 
+            // If the config file specifies to use managed SNI on Windows,
             // enable the appropriate AppContext switch to use the managed SNI implementation.
             if (_config.UseManagedSniOnWindows)
             {
@@ -145,8 +198,8 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 "Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2",
                 _config.UseConnectionPoolV2);
 
-            // If the config file specifies to use optimized async behavior, 
-            // enable packet multiplexing feature and other optimizations in SqlClient 
+            // If the config file specifies to use optimized async behavior,
+            // enable packet multiplexing feature and other optimizations in SqlClient
             // by setting the appropriate AppContext switches.
             if(_config.UseOptimizedAsyncBehaviour)
             {
@@ -159,7 +212,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             // diagnosers when building each benchmark's ManualConfig.
             BenchmarkConfig.UseNativeMemoryAndEtwProfiler = _config.UseNativeMemoryAndETWProfiler;
 
-            // If the config file specifies to wait for a profiler, 
+            // If the config file specifies to wait for a profiler,
             // display the process ID and wait for user input before starting the benchmarks.
             // Skipped under harness-controlled execution (PERF_LIST_BENCHMARKS / PERF_BENCHMARK):
             // those modes run unattended, so blocking on Console.ReadKey() would hang automation.
@@ -184,6 +237,6 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         /// <summary>
         /// The main entry point for the performance tests program.
         /// </summary>
-        public static void Main() => _ = new Program();
+        public static void Main(string[] args) => _ = new Program(args);
     }
 }

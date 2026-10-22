@@ -484,20 +484,11 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Cannot set the AccessToken or AccessTokenCallback property if the SspiContextProvider property has been set..
+        ///   Looks up a localized string similar to Cannot set more than one of the properties AccessToken, AccessTokenCallback, or SspiContextProvider..
         /// </summary>
-        internal static string ADP_InvalidMixedUsageOfAccessTokenAndSspiContextProvider {
+        internal static string ADP_InvalidMixedUsageOfAccessTokenProperties {
             get {
-                return ResourceManager.GetString("ADP_InvalidMixedUsageOfAccessTokenAndSspiContextProvider", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Cannot set the SspiContextProvider property if the AccessToken or AccessTokenCallback property has been set..
-        /// </summary>
-        internal static string ADP_InvalidMixedUsageOfSspiContextProviderAndAccessToken {
-            get {
-                return ResourceManager.GetString("ADP_InvalidMixedUsageOfSspiContextProviderAndAccessToken", resourceCulture);
+                return ResourceManager.GetString("ADP_InvalidMixedUsageOfAccessTokenProperties", resourceCulture);
             }
         }
         
@@ -633,6 +624,15 @@ namespace System {
         internal static string ADP_InvalidXMLBadVersion {
             get {
                 return ResourceManager.GetString("ADP_InvalidXMLBadVersion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Timeout expired.  The connection timeout period elapsed before the transaction isolation level of the pooled connection could be reset..
+        /// </summary>
+        internal static string ADP_IsolationLevelResetTimeout {
+            get {
+                return ResourceManager.GetString("ADP_IsolationLevelResetTimeout", resourceCulture);
             }
         }
         
@@ -3850,6 +3850,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Prepare is not supported when EnableOptimizedParameterBinding is enabled. Create a new SqlCommand and either set EnableOptimizedParameterBinding to false before its first execution or execute it without calling Prepare..
+        /// </summary>
+        internal static string SQL_PrepareNotSupportedForOptimizedBinding {
+            get {
+                return ResourceManager.GetString("SQL_PrepareNotSupportedForOptimizedBinding", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Certificate failed chain validation. Error(s): &apos;{0}&apos;..
         /// </summary>
         internal static string SQL_RemoteCertificateChainErrors {
@@ -3891,6 +3900,24 @@ namespace System {
         internal static string SQL_ScaleValueOutOfRange {
             get {
                 return ResourceManager.GetString("SQL_ScaleValueOutOfRange", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The certificate file specified by the &apos;ServerCertificate&apos; option could not be loaded or parsed: &apos;{0}&apos;..
+        /// </summary>
+        internal static string SQL_ServerCertificateFileLoadFailed {
+            get {
+                return ResourceManager.GetString("SQL_ServerCertificateFileLoadFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The &apos;ServerCertificate&apos; option was specified, but the server did not present a certificate that could be compared against it..
+        /// </summary>
+        internal static string SQL_ServerCertificateNotAvailable {
+            get {
+                return ResourceManager.GetString("SQL_ServerCertificateNotAvailable", resourceCulture);
             }
         }
         
