@@ -266,9 +266,13 @@ no validation or network work, never changes `SNIGetLastError`, and never throws
 error leaves the fields `null` without changing the connection outcome or the thrown
 exception.
 
-`SNI_CERT_VALIDATION_INFO` is a 64-byte, blittable structure of `DWORD` fields. A field
-is used only when its `dwAvailable` flag is set; structures with `cbSize < 64` or
-`dwVersion < 1` are ignored, and trailing data from newer versions is ignored.
+`SNI_CERT_VALIDATION_INFO` is a blittable structure of `DWORD` fields. Version 1 is 64
+bytes; version 2 appends `dwCipherSuite` at offset 64 for a total of 68 bytes. SqlClient
+passes `cbSize = 68` to request version 2. On output, `cbSize` is the number of bytes
+written (64 or 68) and `dwVersion` is 1 or 2; an older SNI writes only the 64-byte version 1
+structure and leaves the trailing bytes untouched. A field is used only when its
+`dwAvailable` flag is set; structures with `cbSize < 64` or `dwVersion < 1` are ignored,
+and trailing data from newer versions is ignored.
 
 | Field | Native source (`dwAvailable` flag) | Mapping |
 | --- | --- | --- |
@@ -276,10 +280,17 @@ is used only when its `dwAvailable` flag is set; structures with `cbSize < 64` o
 | `ServerCertificateValidationErrors` | `dwValidationErrors` (`VALIDATION_ERRORS`) | Same bit values; unknown bits preserved |
 | `ServerCertificateChainStatus` | `dwChainStatus` (`CHAIN_STATUS`) | Raw `CERT_TRUST_*` error status equals `X509ChainStatusFlags`; unknown bits preserved |
 | `NegotiatedProtocol` | `dwProtocol` (`PROTOCOL`) | `SP_PROT_*` client bits mapped as for the handshake result; used only when the protocol was not already recorded (for example, after a failed handshake) |
+| `NegotiatedCipherSuite` | `dwCipherSuite` (`CIPHER_SUITE` 0x80) | Used only when `dwVersion >= 2` and `cbSize >= 68`; values of 0 or above 0xFFFF are ignored. Adopted through the certificate capture when no suite was recorded for the attempt |
+
+The cipher suite is captured at the same points as the hash and protocol: after a successful
+handshake, after a deferred-validation failure, and best effort after an
+`InitializeSecurityContext` failure. Native SNI resets it at every handshake, and an observed
+value is kept on failure like the protocol.
 
 **Older `sni.dll`:** a missing export is detected once (`EntryPointNotFoundException`) and
-cached; the certificate fields then remain `null`. If only the hash export exists, the
-hash is still captured.
+cached; the certificate fields and the cipher suite then remain `null`. If only the hash
+export exists, the hash is still captured. A library that returns only version 1 reports the
+certificate fields but no cipher suite.
 
 **Deferred validation:** native SNI always defers server certificate validation until after
 Schannel has the presented certificate. There is no opt-in or opt-out switch. Deferral
@@ -292,7 +303,8 @@ from HRESULTs or messages; a field whose availability flag isn't set stays `null
 
 **SNI dependency:** this behavior requires a `sni.dll` built with the certificate capture
 exports, deferred validation (SNI commit `b9d842c`), and the host-name verdict fix (SNI
-commit `55d318d`). These are introduced by an upcoming native SNI package. Until it ships,
+commit `55d318d`); the cipher suite also requires version 2 of the structure (SNI commit
+`4e8d29b3`). These are introduced by an upcoming native SNI package. Until it ships,
 or with any older `sni.dll`, Native SNI reports no certificate details and the fields
 remain `null`, as described for older `sni.dll` versions above.
 
@@ -310,8 +322,8 @@ the physical handle):
 
 Both reads are wrapped in `try`/`catch` so that capture never affects the handshake. A suite of
 `0` (`TLS_NULL_WITH_NULL_NULL`, nothing agreed yet) is treated as unavailable. Without TLS, the
-property is `null`. Managed SNI runs only on `net10.0`; on `net462` this capture is not compiled
-and the property stays `null` until native SNI support (Slice D).
+property is `null`. Managed SNI runs only on `net10.0`; on `net462` the cipher suite comes from
+native SNI (see **Native SNI certificate capture**).
 
 ## 5. Scope
 
