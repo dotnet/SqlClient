@@ -87,38 +87,6 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Compares two byte arrays and returns true if all bytes are equal
-        /// </summary>
-        /// <param name="buffer1">input buffer</param>
-        /// <param name="buffer2">another buffer to be compared against</param>
-        /// <param name="buffer2Index"></param>
-        /// <param name="lengthToCompare"></param>
-        /// <returns>returns true if both the arrays have the same byte values else returns false</returns>
-        internal static bool CompareBytes(byte[] buffer1, byte[] buffer2, int buffer2Index, int lengthToCompare)
-        {
-            if (buffer1 == null || buffer2 == null)
-            {
-                return false;
-            }
-
-            Debug.Assert(buffer2Index > -1 && buffer2Index < buffer2.Length, "invalid index");// bounds on buffer2Index
-            if ((buffer2.Length - buffer2Index) < lengthToCompare)
-            {
-                return false;
-            }
-
-            for (int index = 0; index < buffer1.Length && index < lengthToCompare; ++index)
-            {
-                if (buffer1[index] != buffer2[buffer2Index + index])
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        /// <summary>
         /// Return the algorithm name mapped to an Id.
         /// </summary>
         /// <param name="cipherAlgorithmId"></param>
