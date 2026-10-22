@@ -87,7 +87,8 @@ namespace Microsoft.Data.SqlClient.Diagnostics
                     sqlCommand.Connection?.ClientConnectionId,
                     transaction?.InternalTransaction?.TransactionId,
                     sqlCommand,
-                    sqlCommand.Statistics?.GetDictionary()
+                    sqlCommand.Statistics?.GetDictionary(),
+                    sqlCommand.BatchCommands
                 )
             );
         }
@@ -113,7 +114,8 @@ namespace Microsoft.Data.SqlClient.Diagnostics
                     Stopwatch.GetTimestamp(),
                     sqlCommand.Connection?.ClientConnectionId,
                     transaction?.InternalTransaction?.TransactionId,
-                    sqlCommand
+                    sqlCommand,
+                    sqlCommand.BatchCommands
                 )
             );
 
@@ -143,7 +145,8 @@ namespace Microsoft.Data.SqlClient.Diagnostics
                     sqlCommand.Connection?.ClientConnectionId,
                     transaction?.InternalTransaction?.TransactionId,
                     sqlCommand,
-                    ex
+                    ex,
+                    sqlCommand.BatchCommands
                 )
             );
         }
