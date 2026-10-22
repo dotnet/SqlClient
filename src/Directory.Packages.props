@@ -21,7 +21,7 @@
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="7.7.1" />
     <PackageVersion Include="System.Memory" Version="4.6.3" />
     <PackageVersion Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
-    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="8.0.1" />
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="8.0.2" />
     <PackageVersion Include="System.Text.Json" Version="8.0.6" />
     <PackageVersion Include="System.Text.RegularExpressions" Version="4.3.1" />
   </ItemGroup>
@@ -41,7 +41,7 @@
     <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="8.0.1" />
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="7.7.1" />
     <PackageVersion Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
-    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="8.0.1" />
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="8.0.2" />
     <PackageVersion Include="System.Text.Json" Version="8.0.6" />
   </ItemGroup>
 
@@ -61,7 +61,7 @@
     <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="8.0.1" />
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="7.7.1" />
     <PackageVersion Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
-    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="8.0.1" />
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="8.0.2" />
   </ItemGroup>
 
   <!-- Driver .NET 9.0 Dependencies -->
@@ -70,16 +70,16 @@
     <PackageVersion Include="Azure.Identity" Version="1.17.1" />
     <PackageVersion Include="Azure.Security.KeyVault.Keys" Version="4.8.0" />
     <PackageVersion Include="Microsoft.Data.SqlClient.SNI.runtime" Version="6.0.3" />
-    <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="9.0.11" /> 
+    <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="9.0.21" />
     <PackageVersion Include="Microsoft.Identity.Client" Version="4.84.2" />
     <PackageVersion Include="Microsoft.Identity.Client.Broker" Version="4.84.2" />
     <PackageVersion Include="Microsoft.IdentityModel.JsonWebTokens" Version="7.7.1" />
     <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="7.7.1" />
     <PackageVersion Include="Microsoft.SqlServer.Server" Version="1.0.0" />
-    <PackageVersion Include="System.Configuration.ConfigurationManager" Version="9.0.11" />
+    <PackageVersion Include="System.Configuration.ConfigurationManager" Version="9.0.21" />
     <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="9.0.11" />
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="7.7.1" />
     <PackageVersion Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
-    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="9.0.11" />
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="9.0.21" />
   </ItemGroup>
 </Project>
