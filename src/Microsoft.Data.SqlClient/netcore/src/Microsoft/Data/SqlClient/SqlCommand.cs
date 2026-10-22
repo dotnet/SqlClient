@@ -2525,7 +2525,8 @@ namespace Microsoft.Data.SqlClient
             return new EnclaveSessionParameters(
                 this._activeConnection.DataSource,
                 this._activeConnection.EnclaveAttestationUrl,
-                this._activeConnection.Database);
+                this._activeConnection.Database,
+                this._activeConnection.AttestationProtocol);
         }
 
         private void BeginExecuteReaderInternalReadStage(TaskCompletionSource<object> completion)
