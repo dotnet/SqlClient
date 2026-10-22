@@ -46,6 +46,7 @@ applicable.
 | --- | --- | --- |
 | `NegotiatedEncryptionMode` | `SqlConnectionEncryptionMode?` | Actual encryption outcome, not the requested `Encrypt` setting. |
 | `NegotiatedEncryptionProtocol` | `SslProtocols?` | Negotiated TLS version, such as TLS 1.2 or TLS 1.3. |
+| `NegotiatedCipherSuite` | `int?` | IANA TLS cipher suite identifier selected by the server, such as `0x1302` (`TLS_AES_256_GCM_SHA384`). *Needs API review.* |
 | `PresentedServerCertificateHash256` | `ReadOnlyMemory<byte>?` | SHA-256 of the complete DER-encoded server-presented leaf certificate: 32 bytes when available. Not a public-key-only hash, and not the caller's configured certificate. |
 | `ValidationErrors` | `SqlServerCertificateValidationErrors?` | Effective certificate-validation result under the connection's configured rules. |
 | `ChainStatus` | `X509ChainStatusFlags?` | Applicable chain-validation flags, such as `UntrustedRoot`, `NotTimeValid`, or `Revoked`. |
@@ -75,6 +76,7 @@ namespace Microsoft.Data.SqlClient
     {
         public SqlConnectionEncryptionMode? NegotiatedEncryptionMode { get; }
         public SslProtocols? NegotiatedEncryptionProtocol { get; }
+        public int? NegotiatedCipherSuite { get; }
         public ReadOnlyMemory<byte>? PresentedServerCertificateHash256 { get; }
         public SqlServerCertificateValidationErrors? ValidationErrors { get; }
         public X509ChainStatusFlags? ChainStatus { get; }
@@ -102,6 +104,30 @@ namespace Microsoft.Data.SqlClient
 
 Applications cannot construct `SqlConnectionEncryptionInfo`; the driver creates the
 snapshots.
+
+### Negotiated cipher suite
+
+> **Needs API review.** This property is a proposal and has not yet been reviewed by the team.
+
+`NegotiatedCipherSuite` is the 16-bit identifier from the IANA TLS Cipher Suites registry
+for the suite the server selected in its ServerHello, for example `0x1302` for
+`TLS_AES_256_GCM_SHA384`. It is not a Windows `ALG_ID`. On .NET, it can be cast to
+`System.Net.Security.TlsCipherSuite`.
+
+- **Why `int?`:** `TlsCipherSuite` does not exist on .NET Framework or .NET Standard 2.0,
+  and its `ushort` backing type is not CLS-compliant (the assembly is
+  `[CLSCompliant(true)]`). `int` matches the integral types used elsewhere in the
+  public API, and the driver only stores values from 0 to 0xFFFF.
+- **`null` means unavailable:** no TLS, the value was not captured on the current code
+  path, the network layer (for example, an older native SNI) does not report it, or the
+  attempt failed before the value was known. It does not mean the server selected no
+  suite.
+- **Failures keep observed values:** a ServerHello can select a suite and the handshake
+  can still fail afterward, for example during certificate validation. As with
+  `NegotiatedEncryptionProtocol`, a value that was observed is kept in the snapshot
+  attached to `SqlException`.
+- **Out of scope:** the client's offered suite list, CAPI2-level chain detail, and
+  key-exchange group or post-quantum information.
 
 ### Certificate hash
 
@@ -158,7 +184,7 @@ comparison and is not reported as a mismatch.
 
 ## 5. Scope
 
-The API reports negotiated encryption, TLS protocol, the server-presented certificate's
+The API reports negotiated encryption, TLS protocol, the server-selected cipher suite, the server-presented certificate's
 SHA-256 hash, and certificate-validation results for successful and failed connection
 attempts.
 
@@ -172,6 +198,6 @@ The feature is delivered as a stack of pull requests:
 | Slice | Content |
 | --- | --- |
 | **A** | Public API surface only. Both getters return an empty snapshot. |
-| **B** | Capture the negotiated mode and TLS protocol, and attach the snapshot to `SqlException` when opening fails. |
+| **B** | Capture the negotiated mode, TLS protocol and cipher suite, and attach the snapshot to `SqlException` when opening fails. |
 | **C** | Capture certificate details (hash, validation errors, and chain status) in Managed SNI, on both successful and failed attempts. |
-| **D** | Native SNI interop for the certificate details. |
+| **D** | Native SNI interop for the certificate details and cipher suite. |
