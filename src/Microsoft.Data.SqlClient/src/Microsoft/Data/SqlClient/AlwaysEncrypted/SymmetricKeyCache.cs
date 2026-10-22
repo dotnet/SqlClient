@@ -22,6 +22,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
         private static readonly SemaphoreSlim s_cacheLock = new(1, 1);
 
         private readonly MemoryCache _cache;
+        private readonly object _publicationLock = new();
 
         private SymmetricKeyCache()
         {
@@ -92,7 +93,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
                         {
                             // In case multiple threads reach here at the same time, the first one wins.
                             // The allocated memory will be reclaimed by Garbage Collector.
-                            _cache.Set(cacheLookupKey, encryptionKey, absoluteExpirationRelativeToNow: SqlConnection.ColumnEncryptionKeyCacheTtl);
+                            encryptionKey = PublishKey(cacheLookupKey, encryptionKey, SqlConnection.ColumnEncryptionKeyCacheTtl);
                         }
                     }
                 }
@@ -170,23 +171,24 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
             }
 
             // Publish completed decryption even if cancellation arrived after the provider returned.
-            await s_cacheLock.WaitAsync().ConfigureAwait(false);
-            try
+            return PublishKey(cacheLookupKey, decryptedKey, cacheTtl);
+        }
+
+        /// <summary>
+        /// Publishes one shared key instance under a short lock that never covers provider I/O.
+        /// </summary>
+        private SymmetricKey PublishKey(string cacheLookupKey, SymmetricKey decryptedKey, TimeSpan cacheTtl)
+        {
+            lock (_publicationLock)
             {
-                if (_cache.TryGetValue(cacheLookupKey, out SymmetricKey? concurrentlyCachedKey)
-                    && concurrentlyCachedKey is not null)
+                if (_cache.TryGetValue(cacheLookupKey, out SymmetricKey? cachedKey) && cachedKey is not null)
                 {
-                    return concurrentlyCachedKey;
+                    return cachedKey;
                 }
 
                 _cache.Set(cacheLookupKey, decryptedKey, absoluteExpirationRelativeToNow: cacheTtl);
+                return decryptedKey;
             }
-            finally
-            {
-                s_cacheLock.Release();
-            }
-
-            return decryptedKey;
         }
 
         /// <summary>

@@ -540,6 +540,61 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
         }
 
         /// <summary>
+        /// Completed async decryption must not wait for unrelated synchronous provider I/O to publish its key.
+        /// </summary>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task GetKeyAsync_PublishesWhileSynchronousProviderIsBlocked(bool sameKey)
+        {
+            SymmetricKeyCache cache = SymmetricKeyCache.Instance;
+            TaskCompletionSource<byte[]> asyncResult = new(TaskCreationOptions.RunContinuationsAsynchronously);
+            TaskCompletionSource<bool> syncEntered = new(TaskCreationOptions.RunContinuationsAsynchronously);
+            using ManualResetEventSlim releaseSync = new();
+            byte[] expectedKey = NewPlaintextKey(seed: 43);
+            TestKeyStoreProvider provider = new()
+            {
+                DecryptAsyncCallback = _ => asyncResult.Task,
+                DecryptCallback = () =>
+                {
+                    syncEntered.TrySetResult(true);
+                    if (!releaseSync.Wait(TimeSpan.FromSeconds(10)))
+                    {
+                        throw new TimeoutException("Synchronous provider was not released.");
+                    }
+                    return NewPlaintextKey(seed: 44);
+                }
+            };
+            using SqlConnection connection = NewConnection((ProviderName, provider));
+            SqlEncryptionKeyInfo asyncKeyInfo = NewKeyInfo();
+            SqlEncryptionKeyInfo syncKeyInfo = sameKey ? asyncKeyInfo : NewKeyInfo();
+            Task<SymmetricKey> asyncKey = cache.GetKeyAsync(asyncKeyInfo, connection, command: null, CancellationToken.None);
+            Task<SymmetricKey> syncKey = Task.Run(() => cache.GetKey(syncKeyInfo, connection, command: null));
+
+            try
+            {
+                Assert.Same(syncEntered.Task, await Task.WhenAny(syncEntered.Task, Task.Delay(TimeSpan.FromSeconds(5))));
+                asyncResult.TrySetResult(expectedKey);
+                Assert.Same(asyncKey, await Task.WhenAny(asyncKey, Task.Delay(TimeSpan.FromSeconds(5))));
+                Assert.Equal(expectedKey, (await asyncKey).RootKey);
+                Assert.False(syncKey.IsCompleted);
+                Assert.Same(await asyncKey, cache.GetKey(asyncKeyInfo, connection, command: null));
+            }
+            finally
+            {
+                asyncResult.TrySetResult(expectedKey);
+                releaseSync.Set();
+                await syncKey;
+                await asyncKey;
+            }
+
+            if (sameKey)
+            {
+                Assert.Same(await asyncKey, await syncKey);
+            }
+        }
+
+        /// <summary>
         /// A decryption that has already succeeded must not be thrown away just because the caller
         /// cancelled while the result was being published. The remote work is done at that point, so
         /// discarding it would only force the next caller to repeat it.
@@ -636,6 +691,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
 
             internal Func<CancellationToken, Task<byte[]>> DecryptAsyncCallback { get; set; }
 
+            internal Func<byte[]> DecryptCallback { get; set; }
+
             internal Func<CancellationToken, Task<bool>> VerifyAsyncCallback { get; set; }
 
             internal int DecryptCallCount => _decryptCallCount;
@@ -647,7 +704,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             public override byte[] DecryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] encryptedColumnEncryptionKey)
             {
                 Interlocked.Increment(ref _decryptCallCount);
-                return PlaintextKey;
+                return DecryptCallback is not null ? DecryptCallback() : PlaintextKey;
             }
 
             public override Task<byte[]> DecryptColumnEncryptionKeyAsync(string masterKeyPath, string encryptionAlgorithm, byte[] encryptedColumnEncryptionKey, CancellationToken cancellationToken = default)
