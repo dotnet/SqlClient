@@ -15,10 +15,12 @@ building the current version, see [global.json](global.json). Downloads for .NET
 
 The .NET SDK contains support for building for previous versions of .NET, including support for building .NET Framework
 on operating systems that do not support .NET Framework. As such, it is not necessary to install an older
-.NET SDK to compile the projects. Running tests requires their target runtimes: install
-.NET 8 and .NET 9 alongside the .NET 10 SDK. Running .NET Framework tests requires Windows and a compatible
-.NET Framework runtime. On Linux and macOS, select a supported .NET test framework with `-p:TestFramework=net8.0`,
-`net9.0`, or `net10.0` rather than running every declared test framework.
+.NET SDK to compile the projects. Running modern tests requires the .NET 10 runtime.
+Running `net462` tests requires Windows and .NET Framework 4.6.2 or a compatible later runtime.
+The PackageCompatibility tool and its tests retain `net481` and require .NET Framework 4.8.1 for that target;
+AzureSqlConnector retains `net481;net10.0-windows` and requires Windows with the corresponding
+.NET Framework 4.8.1 or .NET 10 Windows Desktop runtime. On Linux and macOS, select
+`-p:TestFramework=net10.0` rather than running every declared test framework.
 
 ### Miscellaneous
 
@@ -58,14 +60,14 @@ package the project. The `build.proj` file provides convenient targets to accomp
 
 From the root of your repository, run `dotnet build` against `build.proj` with a build target, following this pattern:
 
-```text
+```bash
 dotnet build build.proj -t:<build_target> [optional_parameters]
 ```
 
 Since `build.proj` is the only project file in the repo root, it can be omitted when building from
 the root:
 
-```text
+```bash
 dotnet build -t:<build_target> [optional_parameters]
 ```
 
@@ -77,9 +79,25 @@ driver projects, tests, samples, and tools for their declared target frameworks.
 projects, specify `-t:BuildDriver` explicitly.
 
 The implementation is built from `src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj`,
-which targets `net462`, `net8.0`, and `net9.0`. The modern .NET implementation is shared across Windows,
+which targets `net462` and `net10.0`. The modern .NET implementation is shared across Windows,
 Linux, and macOS; there are no separate Windows and Unix build targets. Reference assemblies are built
 from `src/Microsoft.Data.SqlClient/ref/Microsoft.Data.SqlClient.csproj`.
+The reference and unsupported-platform projects additionally retain `netstandard2.0`; this does not
+extend the driver's runtime support below .NET Framework 4.6.2 or .NET 10.
+
+| Project group | Target frameworks |
+|---------------|-------------------|
+| Driver implementation | `net462;net10.0` |
+| Driver reference and unsupported-platform assemblies | `net462;net10.0;netstandard2.0` |
+| Existing dual-target tests, stress projects, and their shared helpers | `net462;net10.0` |
+| Modern-only projects, including performance tests | `net10.0` |
+| AKV Provider, Abstractions, Logging, and standard-only test utilities | `netstandard2.0` only |
+| Azure extensions | `net462;netstandard2.0` |
+| Microsoft.SqlServer.Server (independently versioned; unchanged here) | `net46;netstandard2.0` |
+| PackageCompatibility tool and tests (xUnit v3) | `net481;net10.0` |
+| AzureSqlConnector | `net481;net10.0-windows` |
+
+`tools/SniCloseLegacyRepro` retains its historical framework matrix unchanged.
 
 The following build targets can be used to build the following projects. All targets will implicitly build any other
 projects they depend on.
@@ -156,7 +174,7 @@ information about test procedures, including config file setup, see [TESTGUIDE.m
 
 From the root of your repository, run `dotnet build` against `build.proj` with a test target, following this pattern:
 
-```text
+```bash
 dotnet build -t:<test_target> [optional_parameters]
 ```
 
@@ -206,31 +224,31 @@ metacharacters such as `&`, `|`, or parentheses.
 Run Microsoft.Data.SqlClient unit tests:
 
 ```bash
-dotnet build -t:TestSqlClientUnit -p:TestFramework=net8.0
+dotnet build -t:TestSqlClientUnit
 ```
 
 Run Microsoft.Data.SqlClient manual test set 2:
 
 ```bash
-dotnet build -t:TestSqlClientManual -p:TestFramework=net8.0 -p:TestSet=2
+dotnet build -t:TestSqlClientManual -p:TestSet=2
 ```
 
 Run Microsoft.Data.SqlClient functional tests against x86 dotnet:
 
-```powershell
-dotnet build -t:TestSqlClientFunctional -p:TestFramework=net8.0 -p:DotnetPath='C:\path\to\dotnet\x86\'
+```bash
+dotnet build -t:TestSqlClientFunctional -p:DotnetPath='C:\path\to\dotnet\x86\'
 ```
 
 Run all Microsoft.Data.SqlClient.Extensions.Azure unit tests, including interactive, but excluding failing tests:
 
 ```bash
-dotnet build -t:TestAzure -p:TestFramework=net8.0 -p:TestFilters="category!=failing"
+dotnet build -t:TestAzure -p:TestFilters=category!=failing
 ```
 
-Run Microsoft.Data.SqlClient functional tests against net8.0 runtime:
+Run Microsoft.Data.SqlClient functional tests against the .NET 10 runtime:
 
 ```bash
-dotnet build -t:TestSqlClientFunctional -p:TestFramework=net8.0
+dotnet build -t:TestSqlClientFunctional -p:TestFramework=net10.0
 ```
 
 ### Packaging Projects
@@ -239,7 +257,7 @@ Just like building and testing the various projects in this repository, packagin
 also handled by `build.proj`. From the root of your repository, run `dotnet build` against `build.proj` with a pack target,
 following this pattern:
 
-```text
+```bash
 dotnet build -t:<pack_target> [optional_parameters]
 ```
 
@@ -336,6 +354,19 @@ while Source Link only maps `/_/`. NuGet Package Explorer reports this as
 **Contains untracked sources (obj)** for both Source Link and Deterministic, even when all `obj`
 sources are embedded and the compiler's deterministic flag is enabled.
 
+## OneBranch Validation
+
+The non-official OneBranch pipeline defaults **Fail on validation errors**
+(`failOnValidationError`) to `true`. Localization, XML documentation, and package
+validation findings fail the build by default. Select `false` at queue time to
+report findings as warnings so pending translations do not block the rest of a
+development build. Official builds always use `true`.
+
+This flag is independent of **Fail on SDL errors** (`failOnSdlError`). Neither flag
+turns missing or malformed validation inputs into success. Localization report-only
+mode marks findings as `SucceededWithIssues`; it does not claim that translations
+passed validation.
+
 ## Versioning
 
 Versioning can be accomplished by using a mix of different parameters to the `build.proj` targets:
@@ -372,6 +403,9 @@ The above documentation is the default mode of operation, and is the recommended
 `build.proj` supports "package mode" builds. In this mode, instead of projects depending on other projects, they
 depend on NuGet packages. This mode is useful for verifying that packages work with each other, especially in automated
 build scenarios. For completeness, and debugging of automated builds, this section documents behavior of "package mode".
+
+`ReferenceType` accepts only `Project` and `Package`. Any other value fails the build with an
+explicit error, whether a project is built directly or through `build.proj`.
 
 To switch to "package mode", set the `ReferenceType` parameter in `build.proj` to `Package`. And, optionally, include
 one or both of the following parameters:
@@ -430,7 +464,7 @@ dotnet build -t:TestSqlClientFunctional `
   -p:ReferenceType=Package `
   -p:PackageVersionSqlClient=$sqlClientVersion `
   -p:PackageVersionSqlServer=$sqlServerVersion `
-  -p:TestFramework=net8.0
+  -p:TestFramework=net10.0
 ```
 
 The same version arguments apply to `PackAbstractions`, `PackAzure`, and `PackAkvProvider`.
@@ -474,7 +508,7 @@ Select a test project and a target framework with an installed runtime:
 
 ```bash
 dotnet test src/Microsoft.Data.SqlClient/tests/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj \
-  -f net8.0 --collect:"Code Coverage"
+  -f net10.0 --collect:"Code Coverage"
 ```
 
 ### Using Coverlet Collector
@@ -484,7 +518,7 @@ This optional collector is not configured in the repository. The test project mu
 
 ```bash
 dotnet test src/Microsoft.Data.SqlClient/tests/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj \
-  -f net8.0 --collect:"XPlat Code Coverage"
+  -f net10.0 --collect:"XPlat Code Coverage"
 ```
 
 ## Run Performance Tests
@@ -525,16 +559,19 @@ $ sqlcmd -S localhost -U "<user>"
 
 Omit `-P` so `sqlcmd` prompts for the password instead of placing it in shell history.
 
-The default `runnerconfig.jsonc` expects a database named `sqlclient-perf-db`,
-but you may change the config to use any existing database.  The benchmarks
+The default `runnerconfig.default.jsonc` expects a database named
+`sqlclient-perf-db`, but you may change the generated `runnerconfig.jsonc`
+to use any existing database.  The benchmarks
 create and drop their own tables (typically prefixed with `perf_`) in this
 database; other existing tables are left untouched.
 
 ### Configure Runner
 
-Configure the benchmarks by editing the `runnerconfig.jsonc` file directly in the
+Configure the benchmarks by editing the `runnerconfig.jsonc` file in the
 `PerformanceTests` directory with an appropriate connection string and benchmark
-settings:
+settings. If the file does not exist, the build creates it from
+`runnerconfig.default.jsonc`; `runnerconfig.jsonc` is ignored by git so local
+connection strings and benchmark settings can stay local.
 
 ```jsonc
 {
@@ -581,11 +618,10 @@ the current working directory. Run the commands below from the `PerformanceTests
 directory, or set the configuration environment variables to absolute file paths.
 Configuration-only edits do not require rebuilding the benchmark binaries.
 
-Optionally, to keep local configuration out of your git workspace,
-copy `runnerconfig.jsonc` to a new file, make your edits
-there, and then specify the new file with the RUNNER_CONFIG environment
-variable. The same approach works for `datatypes.json` via the
-`DATATYPES_CONFIG` environment variable.
+Optionally, to avoid requiring a build after each config change, copy
+`runnerconfig.jsonc` to a new file, make your edits there, and then specify the
+new file with the RUNNER_CONFIG environment variable. The same approach works
+for `datatypes.json` via the `DATATYPES_CONFIG` environment variable.
 
 PowerShell:
 
@@ -618,7 +654,7 @@ All benchmarks must be compiled and run in **Release** configuration.
 PowerShell:
 
 ```pwsh
-> dotnet run -c Release -f net9.0
+> dotnet run -c Release -f net10.0
 ```
 
 Bash:
@@ -626,7 +662,7 @@ Bash:
 ```bash
 # Omit RUNNER_CONFIG if you exported it earlier, or if you're using the
 # configuration in the current PerformanceTests directory.
-$ dotnet run -c Release -f net9.0
+$ dotnet run -c Release -f net10.0
 
-$ RUNNER_CONFIG=~/.configs/runnerconfig.jsonc dotnet run -c Release -f net9.0
+$ RUNNER_CONFIG=~/.configs/runnerconfig.jsonc dotnet run -c Release -f net10.0
 ```

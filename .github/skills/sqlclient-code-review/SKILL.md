@@ -48,6 +48,8 @@ Report missing evidence rather than bypassing restrictions through another tool.
    Never expose secrets or send private source/logs to external documentation searches.
 
 Prefer `gh` for GitHub reads only when shell execution is explicitly authorized.
+Read commands (all three feedback endpoints, paginated thread state, checks, and
+an isolated worktree) are in [posting](references/posting.md#read-pr-evidence).
 Do not change checkouts or discard local work to obtain the diff.
 
 ## Existing feedback before code review
@@ -113,7 +115,9 @@ A publishable defect needs all of the following:
 Actively look for disconfirming evidence: caller validation, ownership transfer,
 locking, bounds checks, feature negotiation, platform exclusions, or intentional
 legacy behavior. Do not infer a missing safeguard just because it is outside the
-diff. If evidence remains incomplete, record a verification gap, not an inline
+diff. Before raising a class listed in [verify before you claim](references/verify-before-claim.md),
+do the check it names. Search saved feedback for the affected symbol first.
+If evidence remains incomplete, record a verification gap, not an inline
 defect. Do not attach invented numeric confidence scores.
 
 When evaluating another reviewer's finding, verify its proposed remedy as well
@@ -156,10 +160,23 @@ establish wire correctness, and one OS run does not establish all variants.
 
 ### 6. Report or publish
 
-Follow [reporting and publication](references/reporting.md) for severity, comment
-examples, head-SHA freshness, deduplication, and permission gates. An automated
+Follow [reporting and publication](references/reporting.md) for comment format,
+priority, summary template, head-SHA freshness, deduplication, and permission
+gates, and [posting](references/posting.md) for API mechanics. An automated
 review request can authorize publication through the configured review channel;
 the skill itself grants no write permission and creates no automation.
+
+### 7. Record skill drift
+
+End every review's chat output with a **Skill drift** line: one line per
+observation, or `none`. Report retracted findings, misses, stale facts, and
+wasted steps per [skill drift](references/skill-drift.md). This is a note for
+maintainers, never part of the PR review. Suspected vulnerabilities get only
+`Private MSRC reporting required`.
+
+Every path, check name, and filter in this skill is a dated observation. When
+the repository disagrees, trust the repository and report the drift; do not
+raise it against the PR author.
 
 ## Dynamic documentation lookup
 

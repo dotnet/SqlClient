@@ -16,6 +16,7 @@ using System.Threading.Tasks;
 using System.Transactions;
 using Interop.Common.Sni;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.AlwaysEncrypted;
 using Microsoft.Data.SqlClient.Connection;
 
 #if NET
@@ -297,6 +298,11 @@ namespace Microsoft.Data.SqlClient
         internal static Exception ParameterDirectionInvalidForOptimizedBinding(string paramName)
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ParameterDirectionInvalidForOptimizedBinding, paramName));
+        }
+
+        internal static Exception PrepareNotSupportedForOptimizedBinding()
+        {
+            return ADP.InvalidOperation(Strings.SQL_PrepareNotSupportedForOptimizedBinding);
         }
 
         internal static Exception ActiveDirectoryTokenRetrievingTimeout(string authenticaton, string errorCode, Exception exception)
@@ -1454,7 +1460,7 @@ namespace Microsoft.Data.SqlClient
                                 expectedLength), TdsEnums.TCE_PARAM_ENCRYPTIONKEY);
         }
 
-        internal static Exception InvalidEncryptionType(string algorithmName, SqlClientEncryptionType encryptionType, params SqlClientEncryptionType[] validEncryptionTypes)
+        internal static Exception InvalidEncryptionType(string algorithmName, EncryptionType encryptionType, params EncryptionType[] validEncryptionTypes)
         {
             const string valueSeparator = @", ";
             return ADP.Argument(

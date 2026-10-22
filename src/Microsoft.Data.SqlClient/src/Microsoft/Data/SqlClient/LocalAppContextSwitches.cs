@@ -29,6 +29,15 @@ internal static class LocalAppContextSwitches
         "Switch.Microsoft.Data.SqlClient.DisableTNIRByDefaultInConnectionString";
     #endif
 
+    #if NET
+    /// <summary>
+    /// The name of the app context switch that controls whether SqlClient
+    /// reads app.config.
+    /// </summary>
+    private const string EnableAppConfigString =
+        "Switch.Microsoft.Data.SqlClient.EnableAppConfig";
+    #endif
+
     /// <summary>
     /// The name of the app context switch that controls whether
     /// MultiSubnetFailover is enabled by default in the connection string.
@@ -64,6 +73,13 @@ internal static class LocalAppContextSwitches
     /// </summary>
     private const string UseLegacyFailoverAlternationOnLoginSqlErrorsString =
         "Switch.Microsoft.Data.SqlClient.UseLegacyFailoverAlternationOnLoginSqlErrors";
+
+    /// <summary>
+    /// The name of the app context switch that controls whether pooled connections
+    /// reset a changed SQL Server session transaction isolation level before reuse.
+    /// </summary>
+    private const string EnableTransactionIsolationLevelResetString =
+        "Switch.Microsoft.Data.SqlClient.EnableTransactionIsolationLevelReset";
 
     /// <summary>
     /// The name of the app context switch that controls whether to preserve
@@ -168,107 +184,119 @@ internal static class LocalAppContextSwitches
     /// properties can get out of sync if one thread is writing while another is
     /// reading).
     /// </summary>
-    private enum SwitchValue : byte
+    internal enum SwitchValue : byte
     {
         None = 0,
         True = 1,
         False = 2
     }
 
-    // GOTCHA: These fields are accessed via reflection by the
-    // LocalAppContextSwitchesHelper test helper class.  If you rename them, be
+    // GOTCHA: These fields are internal so that the LocalAppContextSwitchesHelper
+    // test helper class can capture and restore them.  If you rename them, be
     // sure to update the test helper as well.
-    
+
     #if NETFRAMEWORK
     /// <summary>
     /// The cached value of the DisableTnirByDefault switch.
     /// </summary>
-    private static SwitchValue s_disableTnirByDefault = SwitchValue.None;
+    internal static SwitchValue s_disableTnirByDefault = SwitchValue.None;
+    #endif
+
+    #if NET
+    /// <summary>
+    /// The cached value of the EnableAppConfig switch.
+    /// </summary>
+    internal static SwitchValue s_enableAppConfig = SwitchValue.None;
     #endif
 
     /// <summary>
     /// The cached value of the EnableMultiSubnetFailoverByDefault switch.
     /// </summary>
-    private static SwitchValue s_enableMultiSubnetFailoverByDefault = SwitchValue.None;
+    internal static SwitchValue s_enableMultiSubnetFailoverByDefault = SwitchValue.None;
 
     #if NET
     /// <summary>
     /// The cached value of the GlobalizationInvariantMode switch.
     /// </summary>
-    private static SwitchValue s_globalizationInvariantMode = SwitchValue.None;
+    internal static SwitchValue s_globalizationInvariantMode = SwitchValue.None;
     #endif
 
     /// <summary>
     /// The cached value of the IgnoreServerProvidedFailoverPartner switch.
     /// </summary>
-    private static SwitchValue s_ignoreServerProvidedFailoverPartner = SwitchValue.None;
+    internal static SwitchValue s_ignoreServerProvidedFailoverPartner = SwitchValue.None;
 
     /// <summary>
     /// The cached value of the UseLegacyFailoverAlternationOnLoginSqlErrors switch.
     /// </summary>
-    private static SwitchValue s_useLegacyFailoverAlternationOnLoginSqlErrors = SwitchValue.None;
+    internal static SwitchValue s_useLegacyFailoverAlternationOnLoginSqlErrors = SwitchValue.None;
+
+    /// <summary>
+    /// The cached value of the EnableTransactionIsolationLevelReset switch.
+    /// </summary>
+    internal static SwitchValue s_enableTransactionIsolationLevelReset = SwitchValue.None;
 
     /// <summary>
     /// The cached value of the LegacyRowVersionNullBehavior switch.
     /// </summary>
-    private static SwitchValue s_legacyRowVersionNullBehavior = SwitchValue.None;
+    internal static SwitchValue s_legacyRowVersionNullBehavior = SwitchValue.None;
 
     /// <summary>
     /// The cached value of the LegacyVarTimeZeroScaleBehaviour switch.
     /// </summary>
-    private static SwitchValue s_legacyVarTimeZeroScaleBehaviour = SwitchValue.None;
+    internal static SwitchValue s_legacyVarTimeZeroScaleBehaviour = SwitchValue.None;
 
     /// <summary>
     /// The cached value of the MakeReadAsyncBlocking switch.
     /// </summary>
-    private static SwitchValue s_makeReadAsyncBlocking = SwitchValue.None;
+    internal static SwitchValue s_makeReadAsyncBlocking = SwitchValue.None;
 
     /// <summary>
     /// The cached value of the SuppressInsecureTlsWarning switch.
     /// </summary>
-    private static SwitchValue s_suppressInsecureTlsWarning = SwitchValue.None;
+    internal static SwitchValue s_suppressInsecureTlsWarning = SwitchValue.None;
 
     /// <summary>
     /// The cached value of the TruncateScaledDecimal switch.
     /// </summary>
-    private static SwitchValue s_truncateScaledDecimal = SwitchValue.None;
+    internal static SwitchValue s_truncateScaledDecimal = SwitchValue.None;
 
     /// <summary>
     /// The cached value of the UseCompatibilityAsyncBehaviour switch.
     /// </summary>
-    private static SwitchValue s_useCompatibilityAsyncBehaviour = SwitchValue.None;
+    internal static SwitchValue s_useCompatibilityAsyncBehaviour = SwitchValue.None;
 
     /// <summary>
     /// The cached value of the UseCompatibilityProcessSni switch.
     /// </summary>
-    private static SwitchValue s_useCompatibilityProcessSni = SwitchValue.None;
+    internal static SwitchValue s_useCompatibilityProcessSni = SwitchValue.None;
 
     /// <summary>
     /// The cached value of the UseConnectionPoolV2 switch.
     /// </summary>
-    private static SwitchValue s_useConnectionPoolV2 = SwitchValue.None;
+    internal static SwitchValue s_useConnectionPoolV2 = SwitchValue.None;
 
     /// <summary>
     /// The cached value of the UseLegacyIdleTimeoutBehavior switch.
     /// </summary>
-    private static SwitchValue s_useLegacyIdleTimeoutBehavior = SwitchValue.None;
+    internal static SwitchValue s_useLegacyIdleTimeoutBehavior = SwitchValue.None;
 
     /// <summary>
     /// The cached value of the UseOverallConnectTimeoutForPoolWait switch.
     /// </summary>
-    private static SwitchValue s_useOverallConnectTimeoutForPoolWait = SwitchValue.None;
+    internal static SwitchValue s_useOverallConnectTimeoutForPoolWait = SwitchValue.None;
 
     #if NET
     /// <summary>
     /// The cached value of the UseManagedNetworking switch.
     /// </summary>
-    private static SwitchValue s_useManagedNetworking = SwitchValue.None;
+    internal static SwitchValue s_useManagedNetworking = SwitchValue.None;
     #endif
 
     /// <summary>
     /// The cached value of the UseMinimumLoginTimeout switch.
     /// </summary>
-    private static SwitchValue s_useMinimumLoginTimeout = SwitchValue.None;
+    internal static SwitchValue s_useMinimumLoginTimeout = SwitchValue.None;
 
     #endregion
 
@@ -283,6 +311,30 @@ internal static class LocalAppContextSwitches
     /// </summary>
     static LocalAppContextSwitches()
     {
+        ApplyAppConfigSwitchOverrides();
+    }
+
+    /// <summary>
+    /// Applies the switch values found in the AppContextSwitchOverridesSection of
+    /// the default app config file, unless app.config reading is disabled.
+    /// </summary>
+    /// <returns>
+    /// True when app.config was read, false when the EnableAppConfig switch is
+    /// disabled and it was not.
+    /// </returns>
+    /// <remarks>
+    /// Separated from the static constructor so that it can be tested: the
+    /// constructor runs once per process, before any test can observe it.
+    /// </remarks>
+    internal static bool ApplyAppConfigSwitchOverrides()
+    {
+        // Read before any override is applied, so this switch itself cannot be
+        // set from the config file it gates.
+        if (!EnableAppConfig)
+        {
+            return false;
+        }
+
         IAppContextSwitchOverridesSection appContextSwitch = AppConfigManager.FetchConfigurationSection<AppContextSwitchOverridesSection>(AppContextSwitchOverridesSection.Name);
 
         try
@@ -295,6 +347,8 @@ internal static class LocalAppContextSwitches
             // Don't throw an exception for an invalid config file
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.ctor|INFO>: {1}", nameof(LocalAppContextSwitches), e);
         }
+
+        return true;
     }
     #endif
 
@@ -327,6 +381,32 @@ internal static class LocalAppContextSwitches
             DisableTnirByDefaultString,
             defaultValue: false,
             ref s_disableTnirByDefault);
+    #endif
+
+    #if NET
+    /// <summary>
+    /// When set to false, SqlClient does not read app.config.  Configurable
+    /// retry logic, authentication providers and switch overrides are then not
+    /// taken from the configuration file.
+    ///
+    /// ILLink.Substitutions.xml allows the configuration reading, and the type
+    /// resolution it drives, to be trimmed away when the corresponding
+    /// AppContext switch is set at compile time. In such cases, this property
+    /// will return a constant value, even if the AppContext switch is set or
+    /// reset at runtime.
+    ///
+    /// The default value of this switch is true.
+    /// </summary>
+    public static bool EnableAppConfig =>
+        AcquireAndReturn(
+            EnableAppConfigString,
+            defaultValue: true,
+            ref s_enableAppConfig);
+    #else
+    /// <summary>
+    /// Trimming does not apply to .NET Framework, so app.config is always read.
+    /// </summary>
+    public static bool EnableAppConfig => true;
     #endif
 
     /// <summary>
@@ -457,6 +537,19 @@ internal static class LocalAppContextSwitches
             UseLegacyFailoverAlternationOnLoginSqlErrorsString,
             defaultValue: false,
             ref s_useLegacyFailoverAlternationOnLoginSqlErrors);
+
+    /// <summary>
+    /// When set to true, a pooled connection whose session transaction isolation
+    /// level was changed by a transaction is reset to READ COMMITTED before the
+    /// connection is handed to a later caller.
+    ///
+    /// The default value of this switch is false.
+    /// </summary>
+    public static bool EnableTransactionIsolationLevelReset =>
+        AcquireAndReturn(
+            EnableTransactionIsolationLevelResetString,
+            defaultValue: false,
+            ref s_enableTransactionIsolationLevelReset);
 
     /// <summary>
     /// In System.Data.SqlClient and Microsoft.Data.SqlClient prior to 3.0.0 a

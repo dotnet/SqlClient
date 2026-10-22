@@ -53,7 +53,7 @@ or inaccessible, report the blocker rather than loading review guidance from the
 
 ## Core Principles
 
-1. **Cross-Platform Compatibility**: Code must work on .NET Framework 4.6.2+ and .NET 8.0+
+1. **Cross-Platform Compatibility**: Code must work on .NET Framework 4.6.2+ and .NET 10.0+
 2. **Backward Compatibility**: No breaking changes without proper deprecation
 3. **Test-First Development**: All changes require tests
 4. **Security by Default**: Secure defaults, no credential logging
@@ -74,12 +74,9 @@ When using shell/terminal tools, follow these rules strictly:
 
 ## Branch Naming
 
-All branches created by AI agents **must** live under the `dev/automation/` prefix. Use a descriptive suffix, for example:
-
-- `dev/automation/fix-connection-timeout`
-- `dev/automation/add-json-type-tests`
-
-Do **not** create branches directly under `main`, `dev/`, or any other top-level prefix.
+- **Interactive agents**, working under direct human guidance, may create and use branches under `dev/<name>/` when the human specifies or approves the namespace and branch name (e.g., `dev/paul/aot/phase-1.1`).
+- **Autonomous agents**, working without interactive human direction, **must** create branches under `dev/automation/` (e.g., `dev/automation/fix-connection-timeout`).
+- Do **not** create branches outside these namespaces or directly under `dev/`.
 
 ## Common Tasks
 

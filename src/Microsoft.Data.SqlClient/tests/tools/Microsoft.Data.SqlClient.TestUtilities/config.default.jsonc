@@ -1,5 +1,6 @@
 {
-    // Typical Windows SQL Server on the local host via TCP.
+    // Typical Windows SQL Server on the local host via TCP
+    // or an Azure SQL Database connection string without any authentication or credential properties.
     "TCPConnectionString": "Data Source=tcp:localhost;Database=Northwind;Integrated Security=true;Encrypt=false;",
 
     // Typical Linux SQL Server on the local host, WSL, or a container, via TCP.
@@ -13,8 +14,6 @@
     "TCPConnectionStringAASSGX": "",
     "EnclaveEnabled": false,
     "TracingEnabled": false,
-    "AADAuthorityURL": "",
-    "AADPasswordConnectionString": "",
     "AADServicePrincipalId": "",
     "AADServicePrincipalSecret": "",
     "AzureKeyVaultURL": "",
@@ -37,6 +36,7 @@
     "EnclaveAzureDatabaseConnString": "",
     // TODO: Default values should be empty/false.
     "ManagedIdentitySupported": true,
+    "SupportsSystemAssignedManagedIdentity": false,
     "UserManagedIdentityClientId": "",
     "PowerShellPath": "",
     "AliasName": "",

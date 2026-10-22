@@ -395,7 +395,7 @@
         The <paramref name="name" /> is <see langword="null" />.
       </exception>
       <exception cref="T:System.ArgumentException">
-        A <see cref="T:System.Data.SqlDbType" /> that is not allowed was passed to the constructor as <paramref name="dbType" />, or <paramref name="userDefinedType" /> points to a type that does not have <see cref="T:Microsoft.Data.SqlClient.Server.SqlUserDefinedTypeAttribute" /> declared.
+        A <see cref="T:System.Data.SqlDbType" /> that is not allowed was passed to the constructor as <paramref name="dbType" />, or <paramref name="userDefinedType" /> points to a type that does not have <see cref="T:Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute" /> declared.
       </exception>
     </ctorNameDbTypeUserDefinedType>
     <ctorNameDbTypePrecisionScale>

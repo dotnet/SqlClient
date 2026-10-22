@@ -11,9 +11,29 @@ Use this guide whenever creating or updating Azure DevOps work items that includ
 - Preserve newline characters and list structure
 - Verify work items after every batch update
 
+## Tool Access
+
+Use whatever Azure DevOps access is available, in this order of preference:
+
+1. A **previously established preference** — if the user has already chosen a mechanism in this
+   conversation, in memory/instructions, or by explicit request, keep using it.
+2. An **Azure DevOps MCP server**, if one is connected (activate its work item tools if the host
+   requires activation first).
+3. The **`az` CLI** (`az rest`, `az boards`).
+4. **Direct ADO REST** calls over HTTPS with a bearer token.
+
+Probe availability rather than assuming, fall back to the next option when one is unavailable or
+errors, and keep using whichever works for the rest of the run.
+
+The rules below are about *request shape*, not about which client sends it. They apply equally to
+an MCP tool call and to `az rest`. If the MCP tool in use cannot set
+`multilineFieldsFormat.System.Description`, fall back to `az rest` for that update — the format
+field is what makes the description render as Markdown.
+
 ## Required Behavior
 
-1. Always use `az rest` for description content-type changes.
+1. Set the description content type through any supported client, provided the request can set
+   `multilineFieldsFormat.System.Description`.
 2. Use `application/json-patch+json` for PATCH requests.
 3. Set `multilineFieldsFormat.System.Description` to `markdown`.
 4. Preserve exact newlines in the Markdown body.
@@ -21,7 +41,8 @@ Use this guide whenever creating or updating Azure DevOps work items that includ
 
 ## Authentication and Resource
 
-Use Azure DevOps resource audience when calling `az rest`:
+When using the `az` CLI or direct REST, use the Azure DevOps resource audience. An MCP server
+handles its own authentication, so skip this step in that case.
 
 - Resource: `499b84ac-1321-427f-aa17-267ca6975798`
 
@@ -87,7 +108,9 @@ az rest \
 
 ## Newline Integrity Checks
 
-After updates, confirm newline characters are still present and structure was not flattened.
+After updates, confirm newline characters are still present and structure was not flattened. The
+commands below use the `az` CLI; an equivalent MCP work item read that exposes
+`multilineFieldsFormat` and the raw description works just as well.
 
 ### Check format and description sample
 

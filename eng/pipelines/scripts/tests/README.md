@@ -31,6 +31,7 @@ Add `-Output Detailed` to see per-test results.
 | `Open-LocalizationPr.Tests.ps1` | `Open-LocalizationPr.ps1` — de-duplication of the scheduled localization pull request. |
 | `Install-DockerCli.macos.Tests.ps1` | `Install-DockerCli.macos.ps1` — Homebrew bottle selection for the macOS docker CLI. |
 | `Pipeline-Arguments.Tests.ps1` | PR build/pack/test argument quoting and the repository's CI variable naming convention. |
+| `Pipeline-Platforms.Tests.ps1` | Windows/Linux-only PR validation, macOS job/dependency exclusion, and unchanged CI macOS defaults. |
 | `Build-Orchestration.Tests.ps1` | MSBuild test filters, dependency-pack ordering/version forwarding, local restore freshness, and generated command-line argument quoting. |
 
 The localization and Docker helper tests mock `git`, `tar`, `Invoke-RestMethod`,
@@ -44,13 +45,16 @@ One restore test creates a synthetic package and consumer inside Pester's tempor
 using a private local feed and package cache. It reproduces same-version package reuse and verifies
 that changing the version restores the updated contents without clearing caches.
 
-The pipeline-argument checks only read the checked-in YAML templates and require
+The pipeline-argument and platform checks only read the checked-in YAML templates and require
 neither a .NET SDK nor a YAML parsing module. Run them alone without a test
 directory:
 
 ```powershell
 $configuration = New-PesterConfiguration
-$configuration.Run.Path = './eng/pipelines/scripts/tests/Pipeline-Arguments.Tests.ps1'
+$configuration.Run.Path = @(
+    './eng/pipelines/scripts/tests/Pipeline-Arguments.Tests.ps1'
+    './eng/pipelines/scripts/tests/Pipeline-Platforms.Tests.ps1'
+)
 $configuration.TestDrive.Enabled = $false
 $configuration.Run.Exit = $true
 Invoke-Pester -Configuration $configuration

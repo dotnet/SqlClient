@@ -59,7 +59,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [InlineData(";IPAddressPreference=UsePlatformDefault")]
         public void ConfigurableIpPreference(string ipPreference)
         {
-            using (SqlConnection connection = new SqlConnection(TCPConnectionString + ipPreference
+            using (SqlConnection connection = CreateConnection(TCPConnectionString + ipPreference
 #if NETFRAMEWORK
                 + ";TransparentNetworkIPResolution=false"   // doesn't support in .NET Core
 #endif

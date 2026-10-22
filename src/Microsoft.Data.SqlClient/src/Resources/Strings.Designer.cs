@@ -628,6 +628,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Timeout expired.  The connection timeout period elapsed before the transaction isolation level of the pooled connection could be reset..
+        /// </summary>
+        internal static string ADP_IsolationLevelResetTimeout {
+            get {
+                return ResourceManager.GetString("ADP_IsolationLevelResetTimeout", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Keyword not supported: &apos;{0}&apos;..
         /// </summary>
         internal static string ADP_KeywordNotSupported {
@@ -3849,6 +3858,15 @@ namespace System {
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized string similar to Prepare is not supported when EnableOptimizedParameterBinding is enabled. Create a new SqlCommand and either set EnableOptimizedParameterBinding to false before its first execution or execute it without calling Prepare..
+        /// </summary>
+        internal static string SQL_PrepareNotSupportedForOptimizedBinding {
+            get {
+                return ResourceManager.GetString("SQL_PrepareNotSupportedForOptimizedBinding", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Certificate failed chain validation. Error(s): &apos;{0}&apos;..
         /// </summary>

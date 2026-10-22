@@ -98,6 +98,23 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(0, failoverServer.PreLoginCount);
         }
 
+        // Flaky under CI load only (never reproduces locally): the failover server
+        // intermittently records an extra pre-login (3 instead of 2) when the connection is
+        // reopened after the pool is cleared, i.e. a slow agent causes an additional
+        // connection attempt against the failover partner. This is agent-timing
+        // sensitivity in the pre-login count, not a driver defect.
+        //
+        //     Failed Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionFailoverTests.NetworkError_TriggersFailover_ClearsPool [7 s]
+        // ##[error]EXEC(0,0): Error Message:
+        // EXEC : error Message: [D:\a\_work\1\s\build.proj]
+        //      Assert.Equal() Failure: Values differ
+        //      Expected: 2
+        //      Actual:   3
+        //     Stack Trace:
+        //        at Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionFailoverTests.NetworkError_TriggersFailover_ClearsPool() in D:\a\_work\1\s\src\Microsoft.Data.SqlClient\tests\UnitTests\SimulatedServerTests\ConnectionFailoverTests.cs:line 170
+        //      at System.RuntimeMethodHandle.InvokeMethod(ObjectHandleOnStack target, Void** arguments, ObjectHandleOnStack sig, BOOL isConstructor, ObjectHandleOnStack result)
+        //      at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+        [Trait("category", "flaky")]
         [Fact]
         public void NetworkError_TriggersFailover_ClearsPool()
         {
@@ -361,6 +378,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.True(server.PreLoginCount >= 1, "Expected the primary to be contacted at least once.");
         }
 
+        // Quarantined due to intermittent failures in PR pipelines.
+        //
+        //     Microsoft.Data.SqlClient.SqlException : Connection Timeout Expired. The timeout period elapsed while attempting to consume the pre-login handshake acknowledgement. This could be because the pre-login handshake failed or the server was unable to respond back in time. This failure occurred while attempting to connect to the Failover server. The duration spent while attempting to connect to this server was - [Pre-Login] initialization=5; handshake=3985;
+        //       ---- System.ComponentModel.Win32Exception : The wait operation timed out
+        [Trait("category", "flaky")]
         [Fact]
         public void NetworkError_WithUserProvidedPartner_RetryEnabled_ShouldConnectToFailoverPartner()
         {
@@ -747,6 +769,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
+        // Quarantined due to intermittent failure:
+        //     Assert.Equal() Failure: Strings differ
+        //                            v (pos 14)
+        //   Expected: "localhost,56862"
+        //   Actual:   "localhost,56861"
+        [Trait("Category", "flaky")]
         public async Task TransientFault_WithUserProvidedPartner_Async_ShouldConnectToPrimary_NotFailover(uint errorCode)
         {
             // Async parity for TransientFault_WithUserProvidedPartner_ShouldConnectToPrimary.

@@ -849,7 +849,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             {
             }
 
-            protected override void Activate(Transaction transaction)
+            protected override void Activate(Transaction transaction, TimeoutTimer timeout)
                 => throw new TestConnectionCreateException();
         }
 

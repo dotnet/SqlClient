@@ -11,10 +11,11 @@ Always Encrypted allows clients to encrypt sensitive data inside client applicat
 
 ## Supportability
 
-This package supports:
+This package targets `netstandard2.0`. When used with the current Microsoft.Data.SqlClient driver,
+it supports:
 
 - .NET Framework 4.6.2+
-- .NET 8.0+
+- .NET 10.0+
 
 ## Installation
 

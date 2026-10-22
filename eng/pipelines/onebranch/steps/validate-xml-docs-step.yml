@@ -1,0 +1,143 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Runs eng/pipelines/onebranch/scripts/validate-xml-docs.ps1 over XML documentation cross-references.
+#
+# Open Publishing resolves every cref in our XML documentation against the Learn xref map when the
+# API docs are ingested into dotnet/sqlclient-api-docs.  A malformed documentation ID cannot
+# resolve, and the resulting xref-not-found warnings only appear after an API Docs pull request has
+# been opened -- a slow round trip through another repository.  This step moves that feedback into
+# our own build.
+#
+# Three kinds of input may be validated, in any combination, so one template can serve more than
+# one gate.  Each is selected by a non-empty value and skipped by an empty one:
+#
+#   snippetsDirectory   documentation snippet sources
+#   documentationPath   generated XML documentation
+#   packagesPath        XML documentation inside .nupkg files
+#
+# Validation requires no network access: the defects it detects are documentation-ID syntax errors
+# and namespace typos, which are decidable without consulting the Learn xref service.  The
+# published Learn .NET xref map is roughly 338 MB, so avoiding it also keeps the step fast.
+
+parameters:
+  # Step name shown in the pipeline log.  Several gates use this template in one run, so each
+  # supplies a name describing what it covers.
+  - name: displayName
+    type: string
+
+  # Directory of documentation snippet sources, scanned recursively.  Pass '' to skip source mode.
+  - name: snippetsDirectory
+    type: string
+
+  # Generated XML documentation file or directory, scanned recursively.  Non-documentation XML in a
+  # scanned directory is ignored, so a whole build output tree may be passed.  Pass '' to skip.
+  - name: documentationPath
+    type: string
+
+  # Directory scanned recursively for .nupkg files whose XML documentation is validated.  Requires
+  # extractPath.  Pass '' to skip package mode.
+  - name: packagesPath
+    type: string
+
+  # Directory that packagesPath expands into.  Pass '' when packagesPath is ''.
+  - name: extractPath
+    type: string
+
+  # XML documentation supplied only so that references resolve against it; it is never itself
+  # validated.  A package carries only its own documentation, so a cref from one package into a
+  # sibling package resolves against nothing when that sibling was not built this run.  Pass the
+  # documentation of the dependency version the packages under validation declare.  Pass '' when
+  # every referenced package was built in the same run.
+  - name: dependencyDocumentationPath
+    type: string
+    default: ''
+
+  # Path of the JSON report to write.  Written before gating, so it survives a failing run.
+  - name: reportPath
+    type: string
+
+  # Finding severities and/or categories that fail the build.
+  #
+  # Severity follows the visibility of the member that holds a finding, because only a public
+  # member's page is published, where an unresolvable reference renders as xref-not-found.  Each
+  # resolution rule therefore has a public form that is an error and a non-public form that is not:
+  # missing-public-uid against missing-local-uid, and mismatched-public-docid-prefix against
+  # mismatched-docid-prefix.  A finding takes the lower form when no reference documentation
+  # identified the surface, so an unknown surface is never escalated on a guess.
+  #
+  # The error severity covers malformed-xml, unresolved-cref, invalid-docid,
+  # bare-parameterized-method-xref, unknown-namespace-root, stale-allowlist-entry,
+  # missing-documentation, the two public resolution categories above, and the three package
+  # layout categories (lib-documentation-trimmed, ref-documentation-untrimmed,
+  # lib-ref-documentation-identical). It also covers documentation content that the compiler or
+  # Learn would silently discard: enum-field-remarks, unresolved-include and
+  # unexpected-documentation-element.
+  #
+  # The warning severity covers mismatched-docid-prefix, unexpected-documentation and
+  # missing-external-uid.  missing-local-uid, documentation-not-expected and unprefixed-cref are
+  # informational and never mark the step.  Name any category explicitly to gate on it regardless
+  # of its severity.
+  - name: failOn
+    type: object
+
+  # When true, findings fail this step.  When false, they are reported as warnings and the step
+  # succeeds.
+  - name: failOnValidationError
+    type: boolean
+
+  # Project file whose GenerateDocumentationFile setting determines whether XML documentation must
+  # exist, and whose sources determine which documentation snippets are validated.  Pass '' when
+  # the inputs span more than one project.
+  - name: projectPath
+    type: string
+
+  # Directory scanned for project files, used with packagesPath to check that every assembly whose
+  # project generates XML documentation ships it.  Pass '' when not validating packages.
+  - name: projectSearchRoot
+    type: string
+
+steps:
+  # Compose the argument line first so the optional switch can be appended without repeating the
+  # whole list.  The variable is set immediately before the task that reads it, so repeated uses of
+  # this template within one job each read their own value.
+  #
+  # Unused inputs are passed empty rather than omitted, keeping one argument list for every mode.
+  # The switch is appended as a bare token because the PowerShell task dot-sources the script under
+  # -Command, where a -Switch:Value form binds the value as a string and is rejected.
+  #
+  # Report-only is enabled only by the value False (the comparison is case-insensitive).  Any value
+  # other than True or False is rejected rather than assumed, so an unrecognised value cannot
+  # silently downgrade validation to warnings.
+  - pwsh: |
+      $arguments = '-ReportPath "${{ parameters.reportPath }}"' +
+                   ' -FailOn "${{ join(',', parameters.failOn) }}"' +
+                   ' -SnippetsDirectory "${{ parameters.snippetsDirectory }}"' +
+                   ' -DocumentationPath "${{ parameters.documentationPath }}"' +
+                   ' -PackagesPath "${{ parameters.packagesPath }}"' +
+                   ' -ExtractPath "${{ parameters.extractPath }}"' +
+                   ' -DependencyDocumentationPath "${{ parameters.dependencyDocumentationPath }}"' +
+                   ' -ProjectPath "${{ parameters.projectPath }}"' +
+                   ' -ProjectSearchRoot "${{ parameters.projectSearchRoot }}"'
+
+      $failOnValidationError = '${{ parameters.failOnValidationError }}'
+      if ($failOnValidationError -eq 'False') {
+          $arguments += ' -ReportOnly'
+      }
+      elseif ($failOnValidationError -ne 'True') {
+          throw "Unexpected failOnValidationError value '$failOnValidationError'."
+      }
+
+      Write-Host "##vso[task.setvariable variable=validateXmlDocsArguments]$arguments"
+    displayName: 'Compose arguments - ${{ parameters.displayName }}'
+
+  - task: PowerShell@2
+    displayName: '${{ parameters.displayName }}'
+    inputs:
+      targetType: filePath
+      pwsh: true
+      filePath: $(REPO_ROOT)/eng/pipelines/onebranch/scripts/validate-xml-docs.ps1
+      arguments: $(validateXmlDocsArguments)

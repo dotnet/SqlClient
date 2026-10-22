@@ -1401,7 +1401,7 @@ For more information on working with events, see [Connection Events](https://lea
         The cancellation token.
       </param>
       <summary>
-        An asynchronous version of <see cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema()" />, which returns schema information for the data source of this <see cref="T:Microsoft.Data.SqlClient.SqlConnection" />. For more information about schemas, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql-server-schema-collections">SQL Server Schema Collections</see>.
+        An asynchronous version of <see cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema" />, which returns schema information for the data source of this <see cref="T:Microsoft.Data.SqlClient.SqlConnection" />. For more information about schemas, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql-server-schema-collections">SQL Server Schema Collections</see>.
       </summary>
       <returns>
         A task representing the asynchronous operation.
@@ -1705,7 +1705,7 @@ For more information on working with events, see [Connection Events](https://lea
         The cancellation token.
       </param>
       <summary>
-        An asynchronous version of <see cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema(string)" />, which returns schema information for the data source of this <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> using the specified string for the schema name.
+        An asynchronous version of <see cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema(System.String)" />, which returns schema information for the data source of this <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> using the specified string for the schema name.
       </summary>
       <returns>
         A task representing the asynchronous operation.
@@ -1759,7 +1759,7 @@ For more information on working with events, see [Connection Events](https://lea
         The cancellation token.
       </param>
       <summary>
-        An asynchronous version of <see cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema(string, string[])" />, which returns schema information for the data source of this <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> using the specified string for the schema name and the specified string array for the restriction values.
+        An asynchronous version of <see cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema(System.String,System.String[])" />, which returns schema information for the data source of this <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> using the specified string for the schema name and the specified string array for the restriction values.
       </summary>
       <returns>
         A task representing the asynchronous operation.
@@ -1784,6 +1784,9 @@ For more information on working with events, see [Connection Events](https://lea
       <remarks>
         <para>
           Clients that want to process warnings or informational messages sent by the server should create an <see cref="T:Microsoft.Data.SqlClient.SqlInfoMessageEventHandler" /> delegate to listen to this event.
+        </para>
+        <para>
+          When using <see cref="M:Microsoft.Data.SqlClient.SqlCommand.ExecuteReader" />, informational messages can be received while reading rows or advancing to the next result, including messages after the last row, such as execution statistics. Read each result to completion and call <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.NextResult" /> until it returns <see langword="false" />, even when only one row-returning result is expected. Do not use <see cref="F:System.Data.CommandBehavior.SingleResult" /> when trailing <see cref="E:Microsoft.Data.SqlClient.SqlConnection.InfoMessage" /> events are needed: in this mode, <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.NextResult" /> drains unread results as cleanup and discards informational messages encountered during that cleanup. Informational messages encountered while <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.Close" /> or <see cref="M:System.IDisposable.Dispose" /> drains unread results are discarded rather than raised as <see cref="E:Microsoft.Data.SqlClient.SqlConnection.InfoMessage" /> events. Closing or disposing the reader is therefore not a substitute for explicitly processing all results when these messages are needed. See the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> example for a loop that processes the first result before advancing.
         </para>
         <para>
           The <see cref="E:Microsoft.Data.SqlClient.SqlConnection.InfoMessage" /> event occurs when a message with a severity of 10 or less is returned by SQL Server. Messages that have a severity between 11 and 20 raise an error and messages that have a severity over 20 causes the connection to close. For more information on SQL Server error levels, see <see href="https://learn.microsoft.com/sql/relational-databases/errors-events/database-engine-error-severities">Database Engine Error Severities</see>.
