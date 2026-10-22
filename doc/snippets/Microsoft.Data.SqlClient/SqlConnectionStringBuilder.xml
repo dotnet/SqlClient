@@ -261,6 +261,9 @@ The following example supplies a simple SQL Server connection string in the <xre
       </value>
       <remarks>
         When no value is specified, secure enclaves are disabled on the connection.
+        Enclave sessions are cached separately for each attestation protocol. A session
+        established with <see cref="F:Microsoft.Data.SqlClient.SqlConnectionAttestationProtocol.None" />
+        cannot satisfy a connection configured to require HGS or AAS attestation.
       </remarks>
     </AttestationProtocol>
     <Authentication>

@@ -23,7 +23,7 @@ Perform the following steps to address the work item. Think step-by-step.
 - Locate the relevant code in `src/` or `tests/`.
 
 ### 2. Planning and Branching
-- Propose a descriptive branch name following the repository rule `dev/automation/<branch-name>` (e.g., `dev/automation/fix-connection-pool`).
+- Propose a descriptive branch name following the [repository branch naming rules](../../AGENTS.md#branch-naming): interactive, human-directed agents may use an approved `dev/<name>/` branch; autonomous agents must use `dev/automation/`.
 - Identify any dependencies or potential breaking changes.
 
 ### 3. Implementation

@@ -47,7 +47,7 @@ param(
     [ValidateRange(1, [int]::MaxValue)]
     [int]$ConfirmationRuns = 3,
     # Optional SqlClient behaviour flags (true/false, or empty to leave the checked-in
-    # runnerconfig.jsonc default untouched).  Written into the runner config the benchmarks run
+    # runnerconfig.default.jsonc default untouched).  Written into the runner config the benchmarks run
     # against and, via the pipeline's Kusto translation, recorded in PerfRun.Config.
     [ValidateSet("", "true", "false")]
     [string]$UseManagedSniOnWindows = "",
@@ -274,6 +274,67 @@ if ($sqlcmd) {
     throw "sqlcmd was not found on the VM; cannot create the perf database [$DbName]."
 }
 
+# SQL Server 2025 verifies SQL-authentication passwords with 100,000 PBKDF2 iterations. That work
+# costs about 150 ms per physical login and overwhelms connection benchmarks that intentionally
+# disable or clear pooling. Use the supported Windows-authentication path over local TCP loopback.
+function Test-IsLocalSqlServer {
+    param([string] $Server)
+
+    try {
+        $serverAddresses = [System.Net.Dns]::GetHostAddresses($Server)
+    } catch [System.Net.Sockets.SocketException] {
+        Write-Warning "Could not resolve SQL Server [$Server] while checking whether it is local."
+        return $false
+    }
+
+    $localAddresses = [System.Net.NetworkInformation.NetworkInterface]::GetAllNetworkInterfaces() |
+        ForEach-Object { $_.GetIPProperties().UnicastAddresses } |
+        ForEach-Object { $_.Address }
+    return $null -ne ($serverAddresses | Where-Object { $localAddresses -contains $_ } |
+        Select-Object -First 1)
+}
+
+if (Test-IsLocalSqlServer $SqlServer) {
+    $BenchmarkSqlServer = "localhost"
+    $benchmarkIdentity = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+    $identityLiteral = $benchmarkIdentity.Replace("'", "''")
+    $configureBenchmarkIdentity = @"
+DECLARE @ddl nvarchar(max);
+IF SUSER_ID(N'$identityLiteral') IS NULL
+BEGIN
+    SET @ddl = N'CREATE LOGIN ' + QUOTENAME(N'$identityLiteral') + N' FROM WINDOWS';
+    EXEC sys.sp_executesql @ddl;
+END
+USE [$DbName];
+IF USER_ID(N'$identityLiteral') IS NULL
+BEGIN
+    SET @ddl = N'CREATE USER ' + QUOTENAME(N'$identityLiteral') +
+        N' FOR LOGIN ' + QUOTENAME(N'$identityLiteral');
+    EXEC sys.sp_executesql @ddl;
+END;
+IF IS_ROLEMEMBER(N'db_owner', N'$identityLiteral') <> 1
+BEGIN
+    SET @ddl = N'ALTER ROLE [db_owner] ADD MEMBER ' + QUOTENAME(N'$identityLiteral');
+    EXEC sys.sp_executesql @ddl;
+END;
+"@
+    Invoke-Native {
+        & $sqlcmd.Source -S $SqlServer -U sa -P $SqlPassword -C -b -l 30 -Q $configureBenchmarkIdentity
+    } "sqlcmd failed to configure Windows benchmark identity [$benchmarkIdentity]"
+    Invoke-Native {
+        & $sqlcmd.Source -S "tcp:$BenchmarkSqlServer,1433" -E -d $DbName -C -b -l 15 `
+            -Q "SET NOCOUNT ON; SELECT SUSER_SNAME(), USER_NAME();"
+    } "Loopback integrated-authentication preflight failed for benchmark identity [$benchmarkIdentity]"
+    $BenchmarkConnectionString = "Server=tcp:$BenchmarkSqlServer,1433;Integrated Security=True;Initial Catalog=$DbName;TrustServerCertificate=True;Encrypt=True;"
+    Write-Host "Verified Windows integrated authentication over local TCP loopback."
+} else {
+    # Preserve the injected endpoint and SQL authentication for external SQL Server deployments.
+    $BenchmarkSqlServer = $SqlServer
+    $escapedPassword = '"' + ($SqlPassword -replace '"', '""') + '"'
+    $BenchmarkConnectionString = "Server=tcp:$BenchmarkSqlServer,1433;User ID=sa;Password=$escapedPassword;Initial Catalog=$DbName;TrustServerCertificate=True;Encrypt=True;"
+    Write-Host "Using SQL authentication for external SQL Server [$BenchmarkSqlServer]."
+}
+
 ####################################################################################################
 # Noise-reduction controls (InternalDriverTools wiki 339, "Reducing Noise in Performance Tests").
 #
@@ -330,17 +391,14 @@ Write-Host "Preflight: SQL Server $SqlServer (db $DbName) is reachable and warme
 
 $RunnerConfig = Join-Path $RepoRoot "perf-runnerconfig.json"
 $env:RUNNER_CONFIG = $RunnerConfig
+$ResultsRunnerConfig = Join-Path $ResultsDir "runnerconfig.json"
+$SourceRunnerConfig = Join-Path $PerfDir "runnerconfig.jsonc"
 
 # The perf app also loads datatypes.json via the DATATYPES_CONFIG env var, falling back to
 # "datatypes.json" in the working directory.  Each pass runs from an otherwise-empty
 # perf-run-<label> dir, so without this the app throws FileNotFoundException for datatypes.json.
 # It needs no per-run modification, so point the env var at the checked-in file directly.
 $env:DATATYPES_CONFIG = Join-Path $PerfDir "datatypes.json"
-
-# SqlClient connection-string values may be wrapped in double quotes; doubling any embedded double
-# quote lets a password containing ';', '=', spaces or single quotes be parsed as a single literal
-# value instead of corrupting the connection string.
-$escapedPassword = '"' + ($SqlPassword -replace '"', '""') + '"'
 
 function Set-CfgBool {
     param($Config, [string]$Name, [string]$Value)
@@ -351,21 +409,21 @@ function Set-CfgBool {
     }
 }
 
-# Write-RunnerConfig <dst> [switchName] [switchValue]
-# Writes one runner config (checked-in runnerconfig.jsonc + injected connection string + behaviour
+# Write-RunnerConfig <dst> <resultsDst> [switchName] [switchValue]
+# Writes one runner config (build-created runnerconfig.jsonc + injected connection string + behaviour
 # overrides) to <dst>. When <switchName> is given, that config key is forced to <switchValue>
 # ("true"/"false") regardless of the corresponding -Use* parameter -- used by -SwitchUnderTest, which
 # needs a different value for the same switch in each pass. With no switch name the config is built
 # purely from the -Use* parameters, exactly as before.
 function Write-RunnerConfig {
-    param([string]$Dst, [string]$SwitchName = "", [string]$SwitchValue = "")
-    $srcConfig = Join-Path $PerfDir "runnerconfig.jsonc"
+    param([string]$Dst, [string]$ResultsDst, [string]$SwitchName = "", [string]$SwitchValue = "")
+    $srcConfig = $SourceRunnerConfig
     $rawConfig = Get-Content $srcConfig -Raw
     # Strip // line comments so ConvertFrom-Json accepts the .jsonc content.
     $rawConfig = ($rawConfig -split "`n" | ForEach-Object { $_ -replace '(?m)^\s*//.*$', '' }) -join "`n"
     $cfg = ConvertFrom-Json $rawConfig
 
-    $cfg.ConnectionString = "Server=tcp:$SqlServer,1433;User ID=sa;Password=$escapedPassword;Initial Catalog=$DbName;TrustServerCertificate=True;Encrypt=False;"
+    $cfg.ConnectionString = $BenchmarkConnectionString
     # Apply the optional SqlClient behaviour overrides supplied by the pipeline.  An empty value
     # leaves the checked-in default untouched; otherwise the flag is forced to the requested boolean
     # so the benchmarks run with (and PerfRun.Config records) exactly the requested behaviour. The
@@ -379,21 +437,26 @@ function Write-RunnerConfig {
     Set-CfgBool $cfg "UseOptimizedAsyncBehaviour" $asyncValue
     Set-CfgBool $cfg "UseConnectionPoolV2" $poolValue
     $cfg | ConvertTo-Json -Depth 10 | Set-Content -Path $Dst -Encoding UTF8
-    Write-Host "Wrote runner config to $Dst (Server=tcp:$SqlServer,1433; Initial Catalog=$DbName)"
+    $cfg.ConnectionString = "<redacted>"
+    $cfg | ConvertTo-Json -Depth 10 | Set-Content -Path $ResultsDst -Encoding UTF8
+    Write-Host "Wrote runner config to $Dst (Server=tcp:$BenchmarkSqlServer,1433; Initial Catalog=$DbName)"
 }
 
-Write-RunnerConfig -Dst $RunnerConfig
+$RunnerConfigReady = $false
+$BaselineRunnerConfig = Join-Path $RepoRoot "perf-runnerconfig-baseline.json"
+$CurrentRunnerConfig = Join-Path $RepoRoot "perf-runnerconfig-current.json"
+function Prepare-RunnerConfig {
+    if ($script:RunnerConfigReady) { return }
+    if (-not (Test-Path $SourceRunnerConfig)) {
+        throw "Runner config was not created at $SourceRunnerConfig"
+    }
 
-# -SwitchUnderTest needs two DIFFERENT runner configs (baseline runs the switch off, current runs it
-# on), so stamp out two more copies here alongside the shared one above.  Everything else in them is
-# identical, so any measured delta is attributable to the switch alone.
-$BaselineRunnerConfig = ""
-$CurrentRunnerConfig = ""
-if (-not [string]::IsNullOrEmpty($SwitchUnderTest)) {
-    $BaselineRunnerConfig = Join-Path $RepoRoot "perf-runnerconfig-baseline.json"
-    $CurrentRunnerConfig = Join-Path $RepoRoot "perf-runnerconfig-current.json"
-    Write-RunnerConfig -Dst $BaselineRunnerConfig -SwitchName $SwitchUnderTest -SwitchValue "false"
-    Write-RunnerConfig -Dst $CurrentRunnerConfig -SwitchName $SwitchUnderTest -SwitchValue "true"
+    Write-RunnerConfig -Dst $RunnerConfig -ResultsDst $ResultsRunnerConfig
+    if (-not [string]::IsNullOrEmpty($SwitchUnderTest)) {
+        Write-RunnerConfig -Dst $BaselineRunnerConfig -ResultsDst (Join-Path $ResultsDir "runnerconfig-baseline.json") -SwitchName $SwitchUnderTest -SwitchValue "false"
+        Write-RunnerConfig -Dst $CurrentRunnerConfig -ResultsDst (Join-Path $ResultsDir "runnerconfig-current.json") -SwitchName $SwitchUnderTest -SwitchValue "true"
+    }
+    $script:RunnerConfigReady = $true
 }
 
 ####################################################################################################
@@ -635,6 +698,18 @@ print(total)
     return [int]($out.Trim())
 }
 
+$CurrentDefaultOutputBuilt = $false
+function Build-CurrentDefaultOutput {
+    if ($script:CurrentDefaultOutputBuilt) {
+        Write-Host "Using already-built current performance tests ($Configuration, $Framework)."
+        return
+    }
+
+    Write-Host "Building current performance tests ($Configuration, $Framework) ..."
+    Invoke-Native { dotnet build $PerfProject -c $Configuration -f $Framework --nologo -v minimal } "Build failed for current performance tests"
+    $script:CurrentDefaultOutputBuilt = $true
+}
+
 # Runs one benchmark pass (build + run pinned to PERF_CLIENT_CPUS) from $Project and collects its
 # artifacts into results\<label>. $ExtraArgs are appended to both the build and run invocations.
 # $Project is the candidate's perf project for every pass except a source-baseline pass, which
@@ -650,8 +725,17 @@ function Invoke-PerfPass([string]$Label, [string]$Project, [string[]]$ExtraArgs)
     Write-Host "   Extra args: $($ExtraArgs -join ' ')"
     Write-Host "------------------------------------------------------------------"
 
-    Write-Host "Building performance tests ($Configuration, $Framework) for '$Label' ..."
-    Invoke-Native { dotnet build $Project -c $Configuration -f $Framework --nologo -v minimal @ExtraArgs } "Build failed for '$Label'"
+    if (($Label -eq "current") -and ($Project -eq $PerfProject) -and ($ExtraArgs.Count -eq 0) -and $script:CurrentDefaultOutputBuilt) {
+        Write-Host "Using already-built performance tests ($Configuration, $Framework) for '$Label'."
+    } else {
+        Write-Host "Building performance tests ($Configuration, $Framework) for '$Label' ..."
+        Invoke-Native { dotnet build $Project -c $Configuration -f $Framework --nologo -v minimal @ExtraArgs } "Build failed for '$Label'"
+        if (($Label -eq "current") -and ($Project -eq $PerfProject) -and ($ExtraArgs.Count -eq 0)) {
+            $script:CurrentDefaultOutputBuilt = $true
+        }
+    }
+
+    Prepare-RunnerConfig
 
     Push-Location $runDir
     try {
@@ -746,7 +830,8 @@ if (-not [string]::IsNullOrEmpty($BaselineVersion)) {
     $BaselineBuildArgs = @(
         "-p:ReferenceType=Package",
         "-p:MdsPackageVersion=$BaselineVersion",
-        "-p:RestoreConfigFile=$BaselineNuGetConfig"
+        "-p:RestoreConfigFile=$BaselineNuGetConfig",
+        "-p:WarningsNotAsErrors=NU1901%3BNU1902%3BNU1903%3BNU1904" # Allow dependencies with vulnerabilities on baseline tests
     )
 } elseif (-not [string]::IsNullOrEmpty($BaselineSourceRef)) {
     # Source baseline: build the baseline ref's OWN perf project so the driver under measurement is
@@ -787,6 +872,8 @@ if ((-not [string]::IsNullOrEmpty($BaselineLabel)) -and ($RunMode -eq "interleav
         $currentExeDir = Build-Variant "current" $PerfProject @()
     }
 
+    Prepare-RunnerConfig
+
     $interleaveArgs = @(
         "--baseline-exe-dir", $baselineExeDir,
         "--current-exe-dir", $currentExeDir,
@@ -812,6 +899,10 @@ if ((-not [string]::IsNullOrEmpty($BaselineLabel)) -and ($RunMode -eq "interleav
 
 } elseif (-not [string]::IsNullOrEmpty($BaselineLabel)) {
     # --- Legacy sequential path: full baseline pass, then full candidate pass, then compare -------
+    if ((-not [string]::IsNullOrEmpty($BaselineSourceRef)) -or (-not [string]::IsNullOrEmpty($SwitchUnderTest))) {
+        Build-CurrentDefaultOutput
+        Prepare-RunnerConfig
+    }
     # -SwitchUnderTest needs a different RUNNER_CONFIG per pass; every other baseline flavour
     # keeps using the single ambient RUNNER_CONFIG set above (unchanged behaviour).
     if (-not [string]::IsNullOrEmpty($SwitchUnderTest)) { $env:RUNNER_CONFIG = $BaselineRunnerConfig }
