@@ -302,7 +302,42 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 }
             }
 
-            return new ServerCertificateCapture(hash, verdict.ValidationErrors, verdict.ChainStatus, GetHandshakeProtocol(sender));
+            return new ServerCertificateCapture(
+                hash,
+                verdict.ValidationErrors,
+                verdict.ChainStatus,
+                GetHandshakeProtocol(sender),
+                GetNegotiatedCipherSuite(sender as SslStream));
+        }
+
+        /// <summary>
+        /// Reads the IANA identifier of the cipher suite agreed for the handshake on
+        /// <paramref name="sslStream"/>. Like the protocol version, the cipher suite is agreed
+        /// before SslStream raises the certificate validation callback, so this can be read from
+        /// within the callback as well as after the handshake completes.
+        /// </summary>
+        /// <returns>
+        /// The cipher suite, or <see langword="null"/> when it is not available. The null cipher
+        /// suite (TLS_NULL_WITH_NULL_NULL, 0) means none has been agreed and is reported as
+        /// <see langword="null"/>.
+        /// </returns>
+        internal static int? GetNegotiatedCipherSuite(SslStream sslStream)
+        {
+            if (sslStream is null)
+            {
+                return null;
+            }
+
+            try
+            {
+                int cipherSuite = (int)sslStream.NegotiatedCipherSuite;
+                return cipherSuite == 0 ? null : cipherSuite;
+            }
+            catch (Exception)
+            {
+                // Capture must never affect the handshake outcome.
+                return null;
+            }
         }
 
         /// <summary>

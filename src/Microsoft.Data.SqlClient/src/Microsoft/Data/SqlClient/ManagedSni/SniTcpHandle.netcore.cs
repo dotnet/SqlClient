@@ -117,6 +117,8 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             }
         }
 
+        public override int? NegotiatedCipherSuite => SniCommon.GetNegotiatedCipherSuite(_sslStream);
+
         /// <summary>
         /// Constructor
         /// </summary>

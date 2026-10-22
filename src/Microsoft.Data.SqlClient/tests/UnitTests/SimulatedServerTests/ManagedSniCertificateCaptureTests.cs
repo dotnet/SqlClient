@@ -6,6 +6,8 @@
 
 using System;
 using System.IO;
+using System.Net.Security;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.Authentication;
 using System.Security.Cryptography;
@@ -71,6 +73,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             // The certificate was presented but SqlClient did not evaluate it.
             Assert.Null(info.ValidationErrors);
             Assert.Null(info.ChainStatus);
+            // The published cipher suite is the one the client SslStream negotiated.
+            Assert.NotNull(info.NegotiatedCipherSuite);
+            Assert.Equal(GetClientSslStreamCipherSuite(connection), info.NegotiatedCipherSuite);
         }
 
         [Theory]
@@ -114,6 +119,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             AssertObservedNegotiation(info);
             Assert.True(connection.EncryptionInfo.IsEmpty);
             AssertNoLeak(ex, info);
+
+            // The suite read inside the validation callback is the real one: a trusted handshake with the
+            // same server and protocol negotiates the same suite.
+            using SqlConnection trusted = new(BuildConnectionString(server.EndPoint.Port, trustServerCertificate: true));
+            await OpenAsync(trusted, async);
+            Assert.Equal(GetClientSslStreamCipherSuite(trusted), info.NegotiatedCipherSuite);
         }
 
         [Theory]
@@ -198,13 +209,30 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         #region Helpers
 
         /// <summary>
-        /// Managed SNI records the protocol agreed for the handshake inside the validation callback, so a
-        /// certificate-validation failure still reports that protocol and the mode being negotiated.
+        /// Managed SNI records the protocol and cipher suite agreed for the handshake inside the validation
+        /// callback, so a certificate-validation failure still reports them and the mode being negotiated.
         /// </summary>
         private static void AssertObservedNegotiation(SqlConnectionEncryptionInfo info)
         {
             Assert.Equal(SqlConnectionEncryptionMode.Full, info.NegotiatedEncryptionMode);
             Assert.Equal(SslProtocols.Tls12, info.NegotiatedEncryptionProtocol);
+            Assert.NotNull(info.NegotiatedCipherSuite);
+            Assert.InRange(info.NegotiatedCipherSuite.Value, 1, 0xFFFF);
+        }
+
+        /// <summary>
+        /// Reads the cipher suite directly from the client SslStream of an open managed SNI connection,
+        /// independently of the encryption info capture.
+        /// </summary>
+        private static int GetClientSslStreamCipherSuite(SqlConnection connection)
+        {
+            global::Microsoft.Data.SqlClient.ManagedSni.SniHandle handle = connection.Parser._physicalStateObj.SessionHandle.ManagedHandle;
+            Assert.NotNull(handle);
+            FieldInfo? field = handle.GetType().GetField("_sslStream", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.NotNull(field);
+            SslStream? sslStream = field.GetValue(handle) as SslStream;
+            Assert.NotNull(sslStream);
+            return (int)sslStream.NegotiatedCipherSuite;
         }
 
         private static LocalAppContextSwitchesHelper? ForceManagedSni()
