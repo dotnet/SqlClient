@@ -154,7 +154,7 @@ namespace Microsoft.Data.SqlClient
         /// </returns>
         internal static unsafe ServerCertificateCapture? Map(SniCertValidationInfo info)
         {
-            if (info.cbSize < SniCertValidationInfo.Size || info.dwVersion < SniCertValidationInfo.MinimumVersion)
+            if (info.cbSize < SniCertValidationInfo.SizeV1 || info.dwVersion < SniCertValidationInfo.MinimumVersion)
             {
                 return null;
             }
@@ -186,12 +186,24 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            if (hash is null && validationErrors is null && chainStatus is null && protocol is null)
+            // The cipher suite exists only in version 2 responses; a version 1 library leaves those
+            // bytes untouched, so they are ignored unless the library reports writing them.
+            int? cipherSuite = null;
+            if (info.dwVersion >= SniCertValidationInfo.CipherSuiteVersion &&
+                info.cbSize >= SniCertValidationInfo.Size &&
+                (available & SniCertInfoAvailability.CipherSuite) != 0 &&
+                info.dwCipherSuite != 0 &&
+                info.dwCipherSuite <= ushort.MaxValue)
+            {
+                cipherSuite = (int)info.dwCipherSuite;
+            }
+
+            if (hash is null && validationErrors is null && chainStatus is null && protocol is null && cipherSuite is null)
             {
                 return null;
             }
 
-            return new ServerCertificateCapture(hash, validationErrors, chainStatus, protocol);
+            return new ServerCertificateCapture(hash, validationErrors, chainStatus, protocol, cipherSuite);
         }
     }
 }
