@@ -31,24 +31,28 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
         public const byte CurrentVersion = 0x01;
 
         /// <summary>
-        /// Key size in bytes
+        /// Authentication tag size in bytes
         /// </summary>
-        private const int _KeySizeInBytes = AeadAes256CbcHmac256EncryptionKey.KeySizeInBits / 8;
+        #if NET
+        private const int AuthenticationTagSizeInBytes = HMACSHA256.HashSizeInBytes;
+        #else
+        private const int AuthenticationTagSizeInBytes = 32;
+        #endif
+
+        /// <summary>
+        /// IV size in bytes. This algorithm uses an IV size of 16 bytes.
+        /// </summary>
+        private const int IvSizeInBytes = 16;
 
         /// <summary>
         /// Block size in bytes. AES uses 16 byte blocks.
         /// </summary>
-        private const int _BlockSizeInBytes = 16;
-
-        /// <summary>
-        /// Minimum Length of cipherText without authentication tag. This value is 1 (version byte) + 16 (IV) + 16 (minimum of 1 block of cipher Text)
-        /// </summary>
-        private const int _MinimumCipherTextLengthInBytesNoAuthenticationTag = sizeof(byte) + _BlockSizeInBytes + _BlockSizeInBytes;
+        private const int BlockSizeInBytes = 16;
 
         /// <summary>
         /// Minimum Length of cipherText. This value is 1 (version byte) + 32 (authentication tag) + 16 (IV) + 16 (minimum of 1 block of cipher Text)
         /// </summary>
-        private const int _MinimumCipherTextLengthInBytesWithAuthenticationTag = _MinimumCipherTextLengthInBytesNoAuthenticationTag + _KeySizeInBytes;
+        private const int MinimumCipherTextLengthInBytes = sizeof(byte) + AuthenticationTagSizeInBytes + IvSizeInBytes + BlockSizeInBytes;
 
         /// <summary>
         /// Cipher Mode. For this algorithm, we only use CBC mode.
@@ -131,7 +135,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
             // Empty values get encrypted and decrypted properly for both Deterministic and Randomized encryptions.
             Debug.Assert(plainText != null);
 
-            byte[] iv = new byte[_BlockSizeInBytes];
+            byte[] iv = new byte[IvSizeInBytes];
 
             // Prepare IV
             // Should be 1 single block (16 bytes)
@@ -144,16 +148,16 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
                 SqlSecurityUtility.GenerateRandomBytes(iv);
             }
 
-            int numBlocks = plainText.Length / _BlockSizeInBytes + 1;
+            int numBlocks = plainText.Length / BlockSizeInBytes + 1;
 
             // Final blob we return = version + HMAC + iv + cipherText
             const int hmacStartIndex = 1;
-            int authenticationTagLen = _KeySizeInBytes;
+            int authenticationTagLen = AuthenticationTagSizeInBytes;
             int ivStartIndex = hmacStartIndex + authenticationTagLen;
-            int cipherStartIndex = ivStartIndex + _BlockSizeInBytes; // this is where hmac starts.
+            int cipherStartIndex = ivStartIndex + IvSizeInBytes; // this is where hmac starts.
 
             // Output buffer size = size of VersionByte + Authentication Tag + IV + cipher Text blocks.
-            int outputBufSize = sizeof(byte) + authenticationTagLen + iv.Length + (numBlocks * _BlockSizeInBytes);
+            int outputBufSize = sizeof(byte) + authenticationTagLen + iv.Length + (numBlocks * BlockSizeInBytes);
             byte[] outBuffer = new byte[outputBufSize];
 
             // Store the version and IV rightaway
@@ -198,7 +202,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
                     int cipherIndex = cipherStartIndex; // this is where cipherText starts
                     if (numBlocks > 1)
                     {
-                        count = (numBlocks - 1) * _BlockSizeInBytes;
+                        count = (numBlocks - 1) * BlockSizeInBytes;
                         cipherIndex += encryptor.TransformBlock(plainText, 0, count, outBuffer, cipherIndex);
                     }
 
@@ -214,7 +218,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
                     hmac.TransformBlock(iv, 0, iv.Length, iv, 0);
 
                     // Compute HMAC on final block
-                    hmac.TransformBlock(outBuffer, cipherStartIndex, numBlocks * _BlockSizeInBytes, outBuffer, cipherStartIndex);
+                    hmac.TransformBlock(outBuffer, cipherStartIndex, numBlocks * BlockSizeInBytes, outBuffer, cipherStartIndex);
                     hmac.TransformFinalBlock(_versionSize, 0, _versionSize.Length);
                     byte[] hash = hmac.Hash;
                     Debug.Assert(hash.Length >= authenticationTagLen, "Unexpected hash size");
@@ -242,9 +246,9 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
         {
             Debug.Assert(cipherText != null);
 
-            byte[] iv = new byte[_BlockSizeInBytes];
+            byte[] iv = new byte[IvSizeInBytes];
 
-            int minimumCipherTextLength = _MinimumCipherTextLengthInBytesWithAuthenticationTag;
+            int minimumCipherTextLength = MinimumCipherTextLengthInBytes;
             if (cipherText.Length < minimumCipherTextLength)
             {
                 throw SQL.InvalidCipherTextSize(cipherText.Length, minimumCipherTextLength);
@@ -263,7 +267,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
 
             // Read authentication tag
             authenticationTagOffset = startIndex;
-            startIndex += _KeySizeInBytes; // authentication tag size is _KeySizeInBytes
+            startIndex += AuthenticationTagSizeInBytes; // authentication tag size is _KeySizeInBytes
 
             // Read cell IV
             Buffer.BlockCopy(cipherText, startIndex, iv, 0, iv.Length);
@@ -369,7 +373,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
             Debug.Assert(cipherText != null);
 
             byte[] computedHash;
-            byte[] authenticationTag = new byte[_KeySizeInBytes];
+            byte[] authenticationTag = new byte[AuthenticationTagSizeInBytes];
 
             // Raw Tag Length:
             //              1 for the version byte
