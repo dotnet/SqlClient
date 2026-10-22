@@ -68,11 +68,6 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
         private readonly bool _isDeterministic;
 
         /// <summary>
-        /// Algorithm Version.
-        /// </summary>
-        private readonly byte _algorithmVersion;
-
-        /// <summary>
         /// Column Encryption Key. This has a root key and three derived keys.
         /// </summary>
         private readonly AeadAes256CbcHmac256EncryptionKey _columnEncryptionKey;
@@ -105,7 +100,6 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
         internal AeadAes256CbcHmac256Algorithm(AeadAes256CbcHmac256EncryptionKey encryptionKey, EncryptionType encryptionType)
         {
             _columnEncryptionKey = encryptionKey;
-            _algorithmVersion = CurrentVersion;
 
             Debug.Assert(encryptionKey != null, "Null encryption key detected in AeadAes256CbcHmac256 algorithm");
 
@@ -163,7 +157,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
             byte[] outBuffer = new byte[outputBufSize];
 
             // Store the version and IV rightaway
-            outBuffer[0] = _algorithmVersion;
+            outBuffer[0] = CurrentVersion;
             Buffer.BlockCopy(iv, 0, outBuffer, ivStartIndex, iv.Length);
 
 
@@ -258,10 +252,10 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
 
             // Validate the version byte
             int startIndex = 0;
-            if (cipherText[startIndex] != _algorithmVersion)
+            if (cipherText[startIndex] != CurrentVersion)
             {
                 // Cipher text was computed with a different algorithm version than this.
-                throw SQL.InvalidAlgorithmVersion(cipherText[startIndex], _algorithmVersion);
+                throw SQL.InvalidAlgorithmVersion(cipherText[startIndex], CurrentVersion);
             }
 
             startIndex += 1;
