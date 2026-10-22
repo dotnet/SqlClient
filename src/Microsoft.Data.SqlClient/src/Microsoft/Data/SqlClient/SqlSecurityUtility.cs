@@ -74,19 +74,6 @@ namespace Microsoft.Data.SqlClient
         #nullable restore
 
         /// <summary>
-        /// Generates cryptographically random bytes
-        /// </summary>
-        /// <param name="randomBytes">No of cryptographically random bytes to be generated</param>
-        /// <returns>A byte array containing cryptographically generated random bytes</returns>
-        internal static void GenerateRandomBytes(byte[] randomBytes)
-        {
-            using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
-            {
-                rng.GetBytes(randomBytes);
-            }
-        }
-
-        /// <summary>
         /// Return the algorithm name mapped to an Id.
         /// </summary>
         /// <param name="cipherAlgorithmId"></param>

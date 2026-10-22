@@ -30,33 +30,21 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
         public const byte CurrentVersion = 0x01;
 
         /// <summary>
-        /// Authentication tag size in bytes
-        /// </summary>
-        #if NET
-        private const int AuthenticationTagSizeInBytes = HMACSHA256.HashSizeInBytes;
-        #else
-        private const int AuthenticationTagSizeInBytes = 32;
-        #endif
-
-        /// <summary>
-        /// IV size in bytes. This algorithm uses an IV size of 16 bytes.
-        /// </summary>
-        private const int IvSizeInBytes = 16;
-
-        /// <summary>
         /// Block size in bytes. AES uses 16 byte blocks.
         /// </summary>
         private const int BlockSizeInBytes = 16;
 
+        #if NETFRAMEWORK
         /// <summary>
         /// Cipher Mode. For this algorithm, we only use CBC mode.
         /// </summary>
-        private const CipherMode _cipherMode = CipherMode.CBC;
+        private const CipherMode CipherMode = CipherMode.CBC;
+        #endif
 
         /// <summary>
         /// Padding mode. This algorithm uses PKCS7.
         /// </summary>
-        private const PaddingMode _paddingMode = PaddingMode.PKCS7;
+        private const PaddingMode PaddingMode = PaddingMode.PKCS7;
 
         /// <summary>
         /// Variable indicating whether this algorithm should work in Deterministic mode or Randomized mode.
@@ -74,16 +62,6 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
         /// The pool of crypto providers to use for encrypt/decrypt operations.
         /// </summary>
         private readonly ConcurrentQueue<Aes> _cryptoProviderPool;
-
-        /// <summary>
-        /// Byte array with algorithm version used for authentication tag computation.
-        /// </summary>
-        private static readonly byte[] _version = [ CurrentVersion ];
-
-        /// <summary>
-        /// Byte array with algorithm version size used for authentication tag computation.
-        /// </summary>
-        private static readonly byte[] _versionSize = new byte[] { sizeof(byte) };
 
         /// <summary>
         /// Initializes a new instance of AeadAes256CbcHmac256Algorithm algorithm with a given key and encryption type
@@ -129,35 +107,21 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
             // Empty values get encrypted and decrypted properly for both Deterministic and Randomized encryptions.
             Debug.Assert(plainText != null);
 
-            byte[] iv = new byte[IvSizeInBytes];
+            int valueBufferSize = EncryptedValue.GetEncryptedValueLength(plainText.Length);
+            byte[] valueBuffer = new byte[valueBufferSize];
 
-            // Prepare IV
-            // Should be 1 single block (16 bytes)
-            if (_isDeterministic)
-            {
-                SqlSecurityUtility.GetHMACWithSHA256(plainText, _columnEncryptionKey.IvKey, iv);
-            }
-            else
-            {
-                SqlSecurityUtility.GenerateRandomBytes(iv);
-            }
+            EncryptedValue value;
+            bool initializedValueWrapper = _isDeterministic
+                ? EncryptedValue.TryInitializeDeterministic(
+                    valueBuffer,
+                    plainText,
+                    _columnEncryptionKey.IvKey,
+                    out value)
+                : EncryptedValue.TryInitializeRandomized(
+                    valueBuffer,
+                    out value);
 
-            int numBlocks = plainText.Length / BlockSizeInBytes + 1;
-
-            // Final blob we return = version + HMAC + iv + cipherText
-            const int hmacStartIndex = 1;
-            int authenticationTagLen = AuthenticationTagSizeInBytes;
-            int ivStartIndex = hmacStartIndex + authenticationTagLen;
-            int cipherStartIndex = ivStartIndex + IvSizeInBytes; // this is where hmac starts.
-
-            // Output buffer size = size of VersionByte + Authentication Tag + IV + cipher Text blocks.
-            int outputBufSize = sizeof(byte) + authenticationTagLen + iv.Length + (numBlocks * BlockSizeInBytes);
-            byte[] outBuffer = new byte[outputBufSize];
-
-            // Store the version and IV rightaway
-            outBuffer[0] = CurrentVersion;
-            Buffer.BlockCopy(iv, 0, outBuffer, ivStartIndex, iv.Length);
-
+            Debug.Assert(initializedValueWrapper);
 
             // Try to get a provider from the pool.
             // If no provider is available, create a new one.
@@ -169,15 +133,14 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
                 {
                     // Set various algorithm properties
                     aesAlg.Key = _columnEncryptionKey.EncryptionKey;
-                    aesAlg.Mode = _cipherMode;
-                    aesAlg.Padding = _paddingMode;
+                    #if NETFRAMEWORK
+                    aesAlg.Mode = CipherMode;
+                    aesAlg.Padding = PaddingMode;
+                    #endif
                 }
                 catch (Exception)
                 {
-                    if (aesAlg != null)
-                    {
-                        aesAlg.Dispose();
-                    }
+                    aesAlg?.Dispose();
 
                     throw;
                 }
@@ -185,47 +148,54 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
 
             try
             {
+                #if NET
+                int bytesWritten = aesAlg.EncryptCbc(plainText, value.IvSpan, value.CiphertextSpan, PaddingMode);
+
+                Debug.Assert(bytesWritten == value.CiphertextSpan.Length);
+                #else
                 // Always set the IV since it changes from cell to cell.
-                aesAlg.IV = iv;
+                aesAlg.IV = value.IvSpan.ToArray();
 
-                // Compute CipherText and authentication tag in a single pass
-                using (ICryptoTransform encryptor = aesAlg.CreateEncryptor())
+                value.GetCiphertext(out byte[] cipherTextBuffer, out int start, out int length);
+
+                // Create an encryptor to perform the transformation.
+                using ICryptoTransform encryptor = aesAlg.CreateEncryptor();
+
+                Debug.Assert(encryptor.CanTransformMultipleBlocks, "AES Encryptor can transform multiple blocks");
+                // There will always be at least one block, even when encrypting <BlockSizeInBytes of plaintext
+                int numBlocks = plainText.Length / BlockSizeInBytes + 1;
+                int plainTextCount = 0;
+                int finalBlockStart = start;
+
+                // If dealing with multiple blocks, use TransformBlock to write each block except for
+                // the last one directly to the destination array.
+                if (numBlocks > 1)
                 {
-                    Debug.Assert(encryptor.CanTransformMultipleBlocks, "AES Encryptor can transform multiple blocks");
-                    int count = 0;
-                    int cipherIndex = cipherStartIndex; // this is where cipherText starts
-                    if (numBlocks > 1)
-                    {
-                        count = (numBlocks - 1) * BlockSizeInBytes;
-                        cipherIndex += encryptor.TransformBlock(plainText, 0, count, outBuffer, cipherIndex);
-                    }
+                    plainTextCount = (numBlocks - 1) * BlockSizeInBytes;
 
-                    byte[] buffTmp = encryptor.TransformFinalBlock(plainText, count, plainText.Length - count); // done encrypting
-                    Buffer.BlockCopy(buffTmp, 0, outBuffer, cipherIndex, buffTmp.Length);
-                    cipherIndex += buffTmp.Length;
+                    int bytesWritten = encryptor.TransformBlock(plainText, 0, plainTextCount, cipherTextBuffer, start);
+
+                    Debug.Assert(bytesWritten == plainTextCount);
+                    Debug.Assert(bytesWritten < length);
+                    finalBlockStart += bytesWritten;
                 }
 
-                using (HMACSHA256 hmac = new HMACSHA256(_columnEncryptionKey.MacKey))
-                {
-                    Debug.Assert(hmac.CanTransformMultipleBlocks, "HMAC can't transform multiple blocks");
-                    hmac.TransformBlock(_version, 0, _version.Length, _version, 0);
-                    hmac.TransformBlock(iv, 0, iv.Length, iv, 0);
+                // The final (or only) block may include padding. It can't be written directly, so
+                // write to a staging array and copy to its final destination.
+                byte[] finalBlock = encryptor.TransformFinalBlock(plainText, plainTextCount, plainText.Length - plainTextCount);
 
-                    // Compute HMAC on final block
-                    hmac.TransformBlock(outBuffer, cipherStartIndex, numBlocks * BlockSizeInBytes, outBuffer, cipherStartIndex);
-                    hmac.TransformFinalBlock(_versionSize, 0, _versionSize.Length);
-                    byte[] hash = hmac.Hash;
-                    Debug.Assert(hash.Length >= authenticationTagLen, "Unexpected hash size");
-                    Buffer.BlockCopy(hash, 0, outBuffer, hmacStartIndex, authenticationTagLen);
-                }
+                Debug.Assert(finalBlock.Length == BlockSizeInBytes);
+                Debug.Assert(finalBlockStart + finalBlock.Length == start + length);
+                finalBlock.AsSpan().CopyTo(cipherTextBuffer.AsSpan(finalBlockStart, finalBlock.Length));
+                #endif
+
+                return value.Seal(_columnEncryptionKey.MacKey);
             }
             finally
             {
                 // Return the provider to the pool.
                 _cryptoProviderPool.Enqueue(aesAlg);
             }
-
-            return outBuffer;
         }
 
         /// <summary>
@@ -253,8 +223,8 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
                     // Set various algorithm properties
                     aesAlg.Key = _columnEncryptionKey.EncryptionKey;
                     #if NETFRAMEWORK
-                    aesAlg.Mode = _cipherMode;
-                    aesAlg.Padding = _paddingMode;
+                    aesAlg.Mode = CipherMode;
+                    aesAlg.Padding = PaddingMode;
                     #endif
                 }
                 catch (Exception)
@@ -272,7 +242,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
                 //        ensure that the returned array is the correct size. If the TdsParser write
                 //        path supports ReadOnlyMemory<byte> in the future, we can eliminate this
                 //        copy and return the decryption output directly.
-                return aesAlg.DecryptCbc(value.CiphertextSpan, value.IvSpan, _paddingMode);
+                return aesAlg.DecryptCbc(value.CiphertextSpan, value.IvSpan, PaddingMode);
                 #else
                 // Always set the IV since it changes from cell to cell.
                 aesAlg.IV = value.IvSpan.ToArray();
