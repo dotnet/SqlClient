@@ -130,7 +130,7 @@ namespace Microsoft.Data.SqlClient
             }
             else if (TdsEnums.AEAD_AES_256_CBC_HMAC_SHA256 == cipherAlgorithmId)
             {
-                return SqlAeadAes256CbcHmac256Algorithm.AlgorithmName;
+                return AeadAes256CbcHmac256Algorithm.AlgorithmName;
             }
             else
             {
@@ -216,7 +216,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <summary>
         /// <para> Decrypts the symmetric key and saves it in metadata. In addition, initializes
-        /// the SqlClientEncryptionAlgorithm for rapid decryption.</para>
+        /// the EncryptionAlgorithm for rapid decryption.</para>
         /// </summary>
         internal static void DecryptSymmetricKey(SqlCipherMetadata md, SqlConnection connection, SqlCommand command)
         {
@@ -227,9 +227,9 @@ namespace Microsoft.Data.SqlClient
 
             DecryptSymmetricKey(md.EncryptionInfo, out symKey, out encryptionkeyInfoChosen, connection, command);
 
-            // Given the symmetric key instantiate a SqlClientEncryptionAlgorithm object and cache it in metadata
+            // Given the symmetric key instantiate a EncryptionAlgorithm object and cache it in metadata
             md.CipherAlgorithm = null;
-            SqlClientEncryptionAlgorithm cipherAlgorithm = null;
+            EncryptionAlgorithm cipherAlgorithm = null;
             string algorithmName = ValidateAndGetEncryptionAlgorithmName(md.CipherAlgorithmId, md.CipherAlgorithmName); // may throw
             EncryptionAlgorithmFactoryList.GetAlgorithm(symKey, md.EncryptionType, algorithmName, out cipherAlgorithm); // will validate algorithm name and type
             Debug.Assert(cipherAlgorithm is not null);

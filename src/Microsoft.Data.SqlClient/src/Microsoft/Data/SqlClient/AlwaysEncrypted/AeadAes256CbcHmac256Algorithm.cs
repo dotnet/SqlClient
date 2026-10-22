@@ -2,21 +2,20 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using Microsoft.Data.SqlClient.AlwaysEncrypted;
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
 using System.Security.Cryptography;
 
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.AlwaysEncrypted
 {
     /// <summary>
     /// This class implements authenticated encryption algorithm with associated data as described in 
     /// http://tools.ietf.org/html/draft-mcgrew-aead-aes-cbc-hmac-sha2-05. More specifically this implements
     /// AEAD_AES_256_CBC_HMAC_SHA256 algorithm.
     /// </summary>
-    internal class SqlAeadAes256CbcHmac256Algorithm : SqlClientEncryptionAlgorithm
+    internal class AeadAes256CbcHmac256Algorithm : EncryptionAlgorithm
     {
         /// <summary>
         /// Algorithm Name
@@ -94,7 +93,7 @@ namespace Microsoft.Data.SqlClient
         private static readonly byte[] _versionSize = new byte[] { sizeof(byte) };
 
         /// <summary>
-        /// Initializes a new instance of SqlAeadAes256CbcHmac256Algorithm algorithm with a given key and encryption type
+        /// Initializes a new instance of AeadAes256CbcHmac256Algorithm algorithm with a given key and encryption type
         /// </summary>
         /// <param name="encryptionKey">
         /// Root encryption key from which three other keys will be derived
@@ -106,7 +105,7 @@ namespace Microsoft.Data.SqlClient
         /// <param name="algorithmVersion">
         /// Algorithm version
         /// </param>
-        internal SqlAeadAes256CbcHmac256Algorithm(AeadAes256CbcHmac256EncryptionKey encryptionKey, EncryptionType encryptionType, byte algorithmVersion)
+        internal AeadAes256CbcHmac256Algorithm(AeadAes256CbcHmac256EncryptionKey encryptionKey, EncryptionType encryptionType, byte algorithmVersion)
         {
             _columnEncryptionKey = encryptionKey;
             _algorithmVersion = algorithmVersion;
@@ -123,7 +122,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                Debug.Assert(EncryptionType.Randomized == encryptionType, "Invalid Encryption Type detected in SqlAeadAes256CbcHmac256Algorithm, this should've been caught in factory class");
+                Debug.Assert(EncryptionType.Randomized == encryptionType, "Invalid Encryption Type detected in AeadAes256CbcHmac256Algorithm, this should've been caught in factory class");
             }
 
             _cryptoProviderPool = new ConcurrentQueue<Aes>();
