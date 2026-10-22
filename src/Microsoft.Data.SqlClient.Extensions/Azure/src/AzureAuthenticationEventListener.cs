@@ -325,7 +325,8 @@ internal sealed class AzureAuthenticationEventListener : EventListener
         EventLevel? level = GetMsalLevel(eventData.EventId, eventData.EventName);
 
         // Only extension-owned credentials with unsafe/account/content logging disabled enter this scope.
-        // Azure's MSAL event schema does not retain the original PII flag.
+        // Azure's MSAL event schema does not retain the original PII flag or the request ID, so MSAL text
+        // run synchronously by an app's own SDK listener inside this scope cannot be told apart.
         if (level.HasValue && eventData.Payload?.Count == 1 && eventData.Payload[0] is string message)
         {
             AuthenticationLogger.Write(level.Value, message, "Azure-Identity");
@@ -336,12 +337,27 @@ internal sealed class AzureAuthenticationEventListener : EventListener
             AuthenticationLogger.Write(EventLevel.Informational,
                 $"DefaultAzureCredential selected {credentialType}.", "Azure-Identity");
         }
-        else if (eventData.EventId == 3 && eventData.EventName == "GetTokenFailed")
+        else if (eventData.EventId == 3 && eventData.EventName == "GetTokenFailed" && IsOwnRequest(eventData, scope))
         {
             // The SDK's raw exception payload can contain personal information.
             AuthenticationLogger.Write(EventLevel.Error,
                 "Azure credential token request failed.", "Azure-Identity");
         }
+    }
+
+    /// <summary>Checks that a GetToken event carries this acquisition's request ID.</summary>
+    /// <remarks>
+    /// Rejects credential work run synchronously by app listeners inside SDK event dispatch.
+    /// MSAL log events carry no request ID, so they rely on the scope alone.
+    /// </remarks>
+    /// <param name="eventData">The SDK event.</param>
+    /// <param name="scope">The active acquisition.</param>
+    private static bool IsOwnRequest(EventWrittenEventArgs eventData, AuthenticationLogger.Scope scope)
+    {
+        int index = eventData.PayloadNames?.IndexOf("parentRequestId") ?? -1;
+        return index >= 0 && eventData.Payload is { } payload && index < payload.Count &&
+            payload[index] is string requestId &&
+            string.Equals(requestId, scope.RequestId, StringComparison.Ordinal);
     }
 
     /// <summary>Recognizes the SDK's provider name, including numeric suffixes used to avoid duplicate names.</summary>

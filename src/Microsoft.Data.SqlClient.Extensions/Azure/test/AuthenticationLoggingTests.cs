@@ -638,7 +638,8 @@ public class AuthenticationLoggingTests
         source.LogMsalVerbose(42);
         source.LogMsalError("wrong event id");
         source.AuthenticatedAccountDetails("private account");
-        source.GetTokenFailed("private exception");
+        source.GetTokenFailed("ClientSecretCredential.GetToken", "[ scope ]", "other-request", "app failure");
+        source.GetTokenFailed("ClientSecretCredential.GetToken", "[ scope ]", scope.RequestId, "private exception");
         EventWrittenEventArgs entry = Assert.Single(listener.Events);
         Assert.Equal("Azure credential token request failed.", entry.Payload![0]);
         source.DefaultAzureCredentialCredentialSelected("ClientSecretCredential");
@@ -656,7 +657,7 @@ public class AuthenticationLoggingTests
         using AuthenticationLogger.Scope scope = AuthenticationLogger.Begin(listener.ConnectionId, captureAzure: true);
         await scope.WaitForReadyAsync(CancellationToken.None);
         source.DefaultAzureCredentialCredentialSelected("ClientSecretCredential");
-        source.GetTokenFailed("private exception");
+        source.GetTokenFailed("ClientSecretCredential.GetToken", "[ scope ]", scope.RequestId, "private exception");
         EventWrittenEventArgs entry = Assert.Single(listener.Events);
         Assert.Equal(EventLevel.Error, entry.Level);
         Assert.Equal("Azure credential token request failed.", entry.Payload![0]);
@@ -715,6 +716,27 @@ public class AuthenticationLoggingTests
         Assert.Equal("acquisition work", Assert.Single(listener.Events).Payload![0]);
         Assert.Null(AuthenticationLogger.CurrentScope);
         await CompleteWithinTimeout((await AzureAuthenticationEventListener.GetInstanceAsync()).WaitForRefreshAsync());
+    }
+
+    /// <summary>App credential work run inside an app's SDK listener does not produce failures for the acquisition.</summary>
+    [Fact]
+    public async Task AzureSdkEvents_AppCredentialWorkInSdkListenerIsNotAttributed()
+    {
+        using var handler = new TokenFailureHandler();
+        using var httpClient = new HttpClient(handler);
+        ClientSecretCredential credential = CreateCredential(httpClient);
+        ClientSecretCredential appCredential = CreateCredential(httpClient, "99999999-2222-3333-4444-555555555555");
+        using var listener = new AuthenticationListener();
+        using var appListener = new AppIdentityListener(appCredential);
+        using (AuthenticationLogger.Scope scope = AuthenticationLogger.Begin(listener.ConnectionId, captureAzure: true))
+        {
+            await scope.WaitForReadyAsync(CancellationToken.None);
+            appListener.RequestId = scope.RequestId;
+            await Assert.ThrowsAsync<AuthenticationFailedException>(() => RequestToken(credential, scope.RequestId));
+        }
+
+        Assert.Equal(1, appListener.Runs);
+        Assert.Single(listener.Events, entry => Equals(entry.Payload![0], "Azure credential token request failed."));
     }
 
     /// <summary>The SDK allowlist requires a reviewed event ID and name together.</summary>
@@ -880,8 +902,8 @@ public class AuthenticationLoggingTests
     }
 
     /// <summary>Requests an SDK token through a local test transport.</summary>
-    private static async Task RequestToken(ClientSecretCredential credential) =>
-        await credential.GetTokenAsync(new TokenRequestContext(["https://database.windows.net/.default"]));
+    private static async Task RequestToken(ClientSecretCredential credential, string? requestId = null) =>
+        await credential.GetTokenAsync(new TokenRequestContext(["https://database.windows.net/.default"], parentRequestId: requestId));
 
     /// <summary>Returns a local OAuth failure containing text that must not enter the trace.</summary>
     private sealed class TokenFailureHandler : HttpMessageHandler
@@ -956,9 +978,50 @@ public class AuthenticationLoggingTests
         /// <summary>Emits credential selection with the reviewed SDK schema.</summary>
         [Event(13, Level = EventLevel.Informational)]
         public void DefaultAzureCredentialCredentialSelected(string credentialType) => WriteEvent(13, credentialType);
-        /// <summary>Emits raw exception text that must be replaced.</summary>
+        /// <summary>Emits the SDK failure schema with raw exception text that must be replaced.</summary>
         [Event(3, Level = EventLevel.Informational)]
-        public void GetTokenFailed(string message) => WriteEvent(3, message);
+        public void GetTokenFailed(string fullyQualifiedMethodName, string scopes, string parentRequestId, string exception) =>
+            WriteEvent(3, fullyQualifiedMethodName, scopes, parentRequestId, exception);
+    }
+
+    /// <summary>Simulates an app listener that runs its own credential while handling an SDK event.</summary>
+    private sealed class AppIdentityListener : EventListener
+    {
+        private readonly ClientSecretCredential _credential;
+        private int _running;
+        /// <summary>Counts nested app credential requests.</summary>
+        internal int Runs;
+        /// <summary>Gets or sets the acquisition request that triggers app work.</summary>
+        internal volatile string? RequestId;
+
+        /// <summary>Creates a listener that uses an app-owned credential.</summary>
+        internal AppIdentityListener(ClientSecretCredential credential) => _credential = credential;
+
+        /// <inheritdoc />
+        protected override void OnEventSourceCreated(EventSource eventSource)
+        {
+            if (eventSource.Name == "Azure-Identity")
+            {
+                EnableEvents(eventSource, EventLevel.Informational);
+            }
+        }
+
+        /// <inheritdoc />
+        protected override void OnEventWritten(EventWrittenEventArgs eventData)
+        {
+            if (eventData.EventName == "GetToken" && RequestId is { } id && eventData.Payload?.Contains(id) == true &&
+                Interlocked.Exchange(ref _running, 1) == 0)
+            {
+                Interlocked.Increment(ref Runs);
+                try
+                {
+                    _credential.GetToken(new TokenRequestContext(["https://database.windows.net/.default"]));
+                }
+                catch (AuthenticationFailedException)
+                {
+                }
+            }
+        }
     }
 
     /// <summary>Collects authentication events without affecting unrelated diagnostic consumers.</summary>

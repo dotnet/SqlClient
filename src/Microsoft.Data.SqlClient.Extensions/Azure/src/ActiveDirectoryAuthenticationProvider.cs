@@ -232,7 +232,8 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
 
             string scope = parameters.Resource.EndsWith(s_defaultScopeSuffix, StringComparison.Ordinal) ? parameters.Resource : parameters.Resource + s_defaultScopeSuffix;
             string[] scopes = [scope];
-            TokenRequestContext tokenRequestContext = new(scopes);
+            // The request ID lets the event listener match Azure-Identity summary events to this acquisition.
+            TokenRequestContext tokenRequestContext = new(scopes, parentRequestId: loggingScope.RequestId);
 
             // We split the tenant from the Authority URL here. The tenant can be one of
             // the following:

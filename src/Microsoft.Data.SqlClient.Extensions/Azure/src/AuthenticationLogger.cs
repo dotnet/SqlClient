@@ -214,6 +214,9 @@ internal static class AuthenticationLogger
         /// <summary>Gets the connection identifier carried by trace events.</summary>
         internal Guid ConnectionId { get; }
 
+        /// <summary>Gets the unique ID passed to Azure credentials as the token request's parent request ID.</summary>
+        internal string RequestId { get; } = Guid.NewGuid().ToString();
+
         /// <summary>Gets whether this scope may attribute supported Azure-Identity events.</summary>
         internal bool CaptureAzure { get; }
 
