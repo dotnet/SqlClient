@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Diagnostics.Tracing;
+using System.Globalization;
 using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient;
@@ -31,7 +32,7 @@ internal sealed class AzureAuthenticationEventListener : EventListener
         SqlClientEventSource.Log.EventCommandExecuted += OnSqlClientCommand;
         foreach (EventSource source in EventSource.GetSources())
         {
-            if (source.Name == "Azure-Identity")
+            if (IsSupportedSourceName(source.Name))
             {
                 RegisterSource(source);
             }
@@ -123,7 +124,7 @@ internal sealed class AzureAuthenticationEventListener : EventListener
     /// <param name="eventSource">A source discovered by the framework under its subscription lock.</param>
     protected override void OnEventSourceCreated(EventSource eventSource)
     {
-        if (!Volatile.Read(ref _ready) || eventSource.Name != "Azure-Identity")
+        if (!Volatile.Read(ref _ready) || !IsSupportedSourceName(eventSource.Name))
         {
             return;
         }
@@ -332,7 +333,7 @@ internal sealed class AzureAuthenticationEventListener : EventListener
     protected override void OnEventWritten(EventWrittenEventArgs eventData)
     {
         AuthenticationLogger.Scope? scope = AuthenticationLogger.CurrentScope;
-        if (scope is not { CaptureAzure: true } || eventData.EventSource.Name != "Azure-Identity")
+        if (scope is not { CaptureAzure: true } || !IsSupportedSourceName(eventData.EventSource.Name))
         {
             return;
         }
@@ -357,6 +358,16 @@ internal sealed class AzureAuthenticationEventListener : EventListener
             scope.Logger.Write(EventLevel.Error,
                 "Azure credential token request failed.", false, "Azure-Identity");
         }
+    }
+
+    /// <summary>Recognizes the SDK's provider name, including numeric suffixes used to avoid duplicate names.</summary>
+    /// <param name="name">The name assigned by Azure.Core to an identity event source.</param>
+    private static bool IsSupportedSourceName(string name)
+    {
+        const string prefix = "Azure-Identity-";
+        return name == "Azure-Identity" ||
+            (name.StartsWith(prefix, StringComparison.Ordinal) &&
+            int.TryParse(name.Substring(prefix.Length), NumberStyles.None, CultureInfo.InvariantCulture, out int suffix) && suffix > 0);
     }
 
     /// <summary>Recognizes the reviewed Azure SDK MSAL event IDs and names together.</summary>

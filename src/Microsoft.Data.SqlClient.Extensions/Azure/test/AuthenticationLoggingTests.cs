@@ -791,6 +791,76 @@ public class AuthenticationLoggingTests
     }
 
     /// <summary>
+    /// SDK-generated provider suffixes retain late tracing attachment and detachment.
+    /// </summary>
+    [Fact]
+    public async Task AzureSdkEvents_RenamedSourceFollowsEventSourceEnablement()
+    {
+        // Arrange
+        Type sourceType = typeof(ClientSecretCredential).Assembly.GetType("Azure.Identity.AzureIdentityEventSource", throwOnError: true)!;
+        const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic;
+        _ = sourceType.GetProperty("Singleton", flags | BindingFlags.Static)!.GetValue(null);
+        using var source = (EventSource)Activator.CreateInstance(sourceType, nonPublic: true)!;
+        Assert.Null(source.ConstructionException);
+        Assert.StartsWith("Azure-Identity-", source.Name);
+        MethodInfo write = sourceType.GetMethod("LogMsalVerbose", flags | BindingFlags.Instance)!;
+        var logger = new AuthenticationLogger(new ActiveDirectoryAuthenticationProviderOptions());
+        using var listener = new AuthenticationListener();
+        listener.Disable();
+
+        // Act & Assert
+        using (AuthenticationLogger.Scope scope = logger.Begin(listener.ConnectionId, captureAzure: true))
+        {
+            await scope.WaitForReadyAsync(CancellationToken.None);
+            write.Invoke(source, new object[] { "before tracing" });
+            Assert.Empty(listener.Events);
+            listener.Enable(EventLevel.Verbose, SqlClientEventSource.Keywords.Trace);
+            write.Invoke(source, new object[] { "renamed SDK source" });
+            EventWrittenEventArgs entry = Assert.Single(listener.Events);
+            Assert.Equal(EventLevel.Verbose, entry.Level);
+            Assert.Equal("renamed SDK source", entry.Payload![0]);
+            Assert.Equal("Azure-Identity", entry.Payload[1]);
+            Assert.Equal(listener.ConnectionId.ToString(), entry.Payload[2]);
+            listener.Disable();
+            write.Invoke(source, new object[] { "after tracing" });
+            Assert.Single(listener.Events);
+        }
+    }
+
+    /// <summary>
+    /// Unrelated names and non-SDK suffixes cannot forward events with an otherwise matching schema.
+    /// </summary>
+    [Theory]
+    [InlineData("Other-Identity")]
+    [InlineData("Azure-Identity-")]
+    [InlineData("Azure-Identity-other")]
+    [InlineData("Azure-Identity-0")]
+    [InlineData("Azure-Identity--1")]
+    [InlineData("Azure-Identity-+1")]
+    [InlineData("Azure-Identity-1-extra")]
+    [InlineData("Azure-Identity-2147483648")]
+    public async Task AzureSdkEvents_IgnoreUnsupportedSourceNames(string sourceName)
+    {
+        // Arrange
+        using var source = new ControlledIdentitySource(sourceName);
+        Assert.Null(source.ConstructionException);
+        var entries = new List<SqlAuthenticationLogEntry>();
+        var logger = new AuthenticationLogger(new ActiveDirectoryAuthenticationProviderOptions { AuthenticationLoggingCallback = entries.Add });
+        using var listener = new AuthenticationListener();
+
+        // Act
+        using (AuthenticationLogger.Scope scope = logger.Begin(listener.ConnectionId, captureAzure: true))
+        {
+            await scope.WaitForReadyAsync(CancellationToken.None);
+            source.LogMsalVerbose("unrecognized provider");
+        }
+
+        // Assert
+        Assert.Empty(entries);
+        Assert.Empty(listener.Events);
+    }
+
+    /// <summary>
     /// Overlapping SDK operations must keep per-provider callbacks and connection IDs isolated across awaits.
     /// </summary>
     [Fact]
@@ -1221,6 +1291,16 @@ public class AuthenticationLoggingTests
     [EventSource(Name = "Azure-Identity", Guid = "A02D753B-4CBB-4D93-A496-6B613D3E1080")]
     private sealed class ControlledIdentitySource : EventSource
     {
+        /// <summary>Creates a source with the fixture's distinct provider GUID.</summary>
+        internal ControlledIdentitySource()
+        {
+        }
+
+        /// <summary>Creates a named source to verify provider-name filtering.</summary>
+        internal ControlledIdentitySource(string name) : base(name)
+        {
+        }
+
         /// <summary>Runs a test hook while an SDK enable command is in progress.</summary>
         internal Action? Enabling;
 

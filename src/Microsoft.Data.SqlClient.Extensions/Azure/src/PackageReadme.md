@@ -216,6 +216,8 @@ For Default, Managed Identity/MSI, Service Principal, and Workload Identity, the
 only a supported, scoped subset of `Azure-Identity` diagnostics, including MSAL messages where
 the credential uses MSAL, credential selection, and sanitized failures. Unsafe support logging,
 account-identifier logging, and HTTP content logging remain disabled, even with PII opt-in.
+SDK-generated numeric provider suffixes (such as `Azure-Identity-1`) are recognized;
+forwarded entries retain `Azure-Identity` as their source.
 Unknown SDK events and raw SDK exception payloads are not forwarded. Application-created
 credentials used in `AccessTokenCallback` are outside this bridge and require their own logging.
 
