@@ -355,6 +355,19 @@ Describe 'Project-specific legacy manifests' -Tag 'Synthetic', 'LegacyManifest' 
             @{ Id = $sqlClient; Version = '8.0.0' }, @{ Id = $family[0]; Version = '8.0.1' })
     }
 
+    It 'does not fail the build for a malformed <Name>' -ForEach @(
+        @{ Name = 'packages.config' }
+        @{ Name = 'packages.VersionTest.config' }
+    ) {
+        # The check is best-effort; unreadable manifests must not turn into consumer build failures.
+        $directory = Join-Path $work "malformed-$Name"
+        New-Item -ItemType Directory $directory | Out-Null
+        Set-Content (Join-Path $directory $Name) "<packages><package id='$sqlClient' version='8.0.0'>"
+        $project = Join-Path $directory 'VersionTest.proj'
+        Set-Content $project "<Project><Import Project='$targets' /></Project>"
+        Invoke-CheckedDotnet @('msbuild', $project, '-t:ValidateSqlClientFamilyPackageVersions', '-v:quiet', '-nologo') $false 'warning MSB3733'
+    }
+
     It 'normalizes spaces in the project name to underscores' {
         Test-Synthetic $synthetic 'packages.Version_Test.config' @(
             @{ Id = $sqlClient; Version = '8.0.0' }, @{ Id = $family[0]; Version = '8.0.1' }
