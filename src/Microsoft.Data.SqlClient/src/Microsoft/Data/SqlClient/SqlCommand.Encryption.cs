@@ -13,6 +13,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.AlwaysEncrypted;
 using Microsoft.Data.SqlClient.Connection;
 
 namespace Microsoft.Data.SqlClient
@@ -953,7 +954,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Decrypted sequentially rather than with Task.WhenAll. Distinct SqlCipherMetadata entries
-            // frequently share a column encryption key, and SqlSymmetricKeyCache.GetKeyAsync deliberately
+            // frequently share a column encryption key, and SymmetricKeyCache.GetKeyAsync deliberately
             // does not hold its gate across provider I/O, so concurrent misses for the same key would each
             // issue their own key store call. Sequential decryption lets the first result populate the cache
             // for the rest, which matters more than overlapping the few distinct keys a query uses.
@@ -1398,7 +1399,7 @@ namespace Microsoft.Data.SqlClient
 
                         // Found the param, set up the encryption info.
                         byte columnEncryptionType = ds.GetByte((int)DescribeParameterEncryptionResultSet2.ColumnEncryptionType);
-                        if (columnEncryptionType != (byte)SqlClientEncryptionType.PlainText)
+                        if (columnEncryptionType != (byte)EncryptionType.PlainText)
                         {
                             byte cipherAlgorithmId = ds.GetByte(
                                 (int)DescribeParameterEncryptionResultSet2.ColumnEncryptionAlgorithm);

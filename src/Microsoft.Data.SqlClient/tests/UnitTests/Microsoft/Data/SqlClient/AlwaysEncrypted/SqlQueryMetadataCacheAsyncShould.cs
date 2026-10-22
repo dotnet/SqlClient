@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.AlwaysEncrypted;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
@@ -74,7 +75,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
                 ordinal: 0,
                 cipherAlgorithmId: TdsEnums.AEAD_AES_256_CBC_HMAC_SHA256,
                 cipherAlgorithmName: null,
-                encryptionType: (byte)SqlClientEncryptionType.Deterministic,
+                encryptionType: (byte)EncryptionType.Deterministic,
                 normalizationRuleVersion: 1);
 
             return command;

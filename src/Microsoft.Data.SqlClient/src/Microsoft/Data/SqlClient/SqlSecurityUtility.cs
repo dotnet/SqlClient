@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -21,6 +21,8 @@ namespace Microsoft.Data.SqlClient
 
         static readonly ColumnMasterKeyMetadataSignatureVerificationCache ColumnMasterKeyMetadataSignatureVerificationCache = ColumnMasterKeyMetadataSignatureVerificationCache.Instance;
 
+        #nullable enable
+
         /// <summary>
         /// Computes a keyed hash of a given text and returns. It fills the buffer "hash" with computed hash value.
         /// </summary>
@@ -28,21 +30,43 @@ namespace Microsoft.Data.SqlClient
         /// <param name="key">key used for the HMAC</param>
         /// <param name="hash">Output buffer where the computed hash value is stored. If its less that 64 bytes, the hash is truncated</param>
         /// <returns>HMAC value</returns>
-        internal static void GetHMACWithSHA256(byte[] plainText, byte[] key, byte[] hash)
+        #if NET
+        public static void GetHMACWithSHA256(ReadOnlySpan<byte> plainText, ReadOnlySpan<byte> key, Span<byte> hash)
+        {
+            Debug.Assert(hash.Length != 0 && hash.Length <= HMACSHA256.HashSizeInBytes);
+
+            // We can't guarantee that the destination buffer will be large enough to hold the entire hash.
+            // If it is large enough though, we can write directly into it to avoid an extra copy. In both
+            // circumstances, we've guaranteed that the destination buffer is large enough to hold the hash.
+            if (hash.Length == HMACSHA256.HashSizeInBytes)
+            {
+                _ = HMACSHA256.TryHashData(key, plainText, hash, out _);
+            }
+            else
+            {
+                Span<byte> hashBuffer = stackalloc byte[HMACSHA256.HashSizeInBytes];
+
+                _ = HMACSHA256.TryHashData(key, plainText, hashBuffer, out _);
+                hashBuffer.Slice(0, hash.Length).CopyTo(hash);
+            }
+        }
+        #else
+        public static void GetHMACWithSHA256(byte[] plainText, byte[] key, byte[] hash)
         {
             const int MaxSHA256HashBytes = 32;
 
             Debug.Assert(key != null && plainText != null);
             Debug.Assert(hash.Length != 0 && hash.Length <= MaxSHA256HashBytes);
 
-            using (HMACSHA256 hmac = new HMACSHA256(key))
-            {
-                byte[] computedHash = hmac.ComputeHash(plainText);
+            using HMACSHA256 hmac = new(key);
+            byte[] computedHash = hmac.ComputeHash(plainText);
 
-                // Truncate the hash if needed
-                Buffer.BlockCopy(computedHash, 0, hash, 0, hash.Length);
-            }
+            // Truncate the hash if needed
+            Buffer.BlockCopy(computedHash, 0, hash, 0, hash.Length);
         }
+        #endif
+
+        #nullable restore
 
         /// <summary>
         /// Generates cryptographically random bytes
@@ -200,7 +224,7 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(md is not null, "md should not be null in DecryptSymmetricKey.");
 
-            SqlClientSymmetricKey symKey = null;
+            SymmetricKey symKey = null;
             SqlEncryptionKeyInfo encryptionkeyInfoChosen = null;
 
             DecryptSymmetricKey(md.EncryptionInfo, out symKey, out encryptionkeyInfoChosen, connection, command);
@@ -228,7 +252,7 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(md is not null, "md should not be null in DecryptSymmetricKeyAsync.");
 
-            (SqlClientSymmetricKey symKey, SqlEncryptionKeyInfo encryptionkeyInfoChosen) =
+            (SymmetricKey symKey, SqlEncryptionKeyInfo encryptionkeyInfoChosen) =
                 await DecryptSymmetricKeyAsync(md.EncryptionInfo, connection, command, cancellationToken).ConfigureAwait(false);
 
             // Given the symmetric key instantiate a SqlClientEncryptionAlgorithm object and cache it in metadata
@@ -247,7 +271,7 @@ namespace Microsoft.Data.SqlClient
         /// <remarks>
         /// <para>
         /// Async methods cannot declare <c>out</c> parameters, so the two values reported by
-        /// <see cref="DecryptSymmetricKey(SqlTceCipherInfoEntry, out SqlClientSymmetricKey, out SqlEncryptionKeyInfo, SqlConnection, SqlCommand)"/>
+        /// <see cref="DecryptSymmetricKey(SqlTceCipherInfoEntry, out SymmetricKey, out SqlEncryptionKeyInfo, SqlConnection, SqlCommand)"/>
         /// are returned as a tuple instead (spec Design Decision 4).
         /// </para>
         /// <para>
@@ -257,7 +281,7 @@ namespace Microsoft.Data.SqlClient
         /// causing the remaining candidates to be attempted.
         /// </para>
         /// </remarks>
-        internal static async Task<(SqlClientSymmetricKey Key, SqlEncryptionKeyInfo KeyInfoChosen)> DecryptSymmetricKeyAsync(
+        internal static async Task<(SymmetricKey Key, SqlEncryptionKeyInfo KeyInfoChosen)> DecryptSymmetricKeyAsync(
             SqlTceCipherInfoEntry sqlTceCipherInfoEntry,
             SqlConnection connection,
             SqlCommand command,
@@ -268,10 +292,10 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(sqlTceCipherInfoEntry.ColumnEncryptionKeyValues is not null,
                     "sqlTceCipherInfoEntry.ColumnEncryptionKeyValues should not be null in DecryptSymmetricKeyAsync.");
 
-            SqlClientSymmetricKey sqlClientSymmetricKey = null;
+            SymmetricKey sqlClientSymmetricKey = null;
             SqlEncryptionKeyInfo encryptionkeyInfoChosen = null;
             Exception lastException = null;
-            SqlSymmetricKeyCache globalCekCache = SqlSymmetricKeyCache.GetInstance();
+            SymmetricKeyCache globalCekCache = SymmetricKeyCache.Instance;
 
             foreach (SqlEncryptionKeyInfo keyInfo in sqlTceCipherInfoEntry.ColumnEncryptionKeyValues)
             {
@@ -309,7 +333,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Decrypts the symmetric key and saves it in metadata.
         /// </summary>
-        internal static void DecryptSymmetricKey(SqlTceCipherInfoEntry sqlTceCipherInfoEntry, out SqlClientSymmetricKey sqlClientSymmetricKey, out SqlEncryptionKeyInfo encryptionkeyInfoChosen, SqlConnection connection, SqlCommand command)
+        internal static void DecryptSymmetricKey(SqlTceCipherInfoEntry sqlTceCipherInfoEntry, out SymmetricKey sqlClientSymmetricKey, out SqlEncryptionKeyInfo encryptionkeyInfoChosen, SqlConnection connection, SqlCommand command)
         {
             Debug.Assert(connection is not null, "Connection should not be null.");
             Debug.Assert(sqlTceCipherInfoEntry is not null, "sqlTceCipherInfoEntry should not be null in DecryptSymmetricKey.");
@@ -319,7 +343,7 @@ namespace Microsoft.Data.SqlClient
             sqlClientSymmetricKey = null;
             encryptionkeyInfoChosen = null;
             Exception lastException = null;
-            SqlSymmetricKeyCache globalCekCache = SqlSymmetricKeyCache.GetInstance();
+            SymmetricKeyCache globalCekCache = SymmetricKeyCache.Instance;
 
             foreach (SqlEncryptionKeyInfo keyInfo in sqlTceCipherInfoEntry.ColumnEncryptionKeyValues)
             {
@@ -346,7 +370,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(encryptionkeyInfoChosen is not null, "encryptionkeyInfoChosen must have a value.");
         }
 
-        private static SqlClientSymmetricKey GetKeyFromLocalProviders(SqlEncryptionKeyInfo keyInfo, SqlConnection connection, SqlCommand command)
+        private static SymmetricKey GetKeyFromLocalProviders(SqlEncryptionKeyInfo keyInfo, SqlConnection connection, SqlCommand command)
         {
             string serverName = connection.DataSource;
             Debug.Assert(serverName is not null, @"serverName should not be null.");
@@ -375,7 +399,7 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.KeyDecryptionFailed(keyInfo.keyStoreName, keyHex, e);
             }
 
-            return new SqlClientSymmetricKey(plaintextKey);
+            return new SymmetricKey(plaintextKey);
         }
 
         /// <summary>
@@ -386,7 +410,7 @@ namespace Microsoft.Data.SqlClient
         /// provider call directly. A cancellation of <paramref name="cancellationToken"/> is propagated
         /// unwrapped rather than being reported as <c>SQL.KeyDecryptionFailed</c>.
         /// </remarks>
-        private static async Task<SqlClientSymmetricKey> GetKeyFromLocalProvidersAsync(
+        private static async Task<SymmetricKey> GetKeyFromLocalProvidersAsync(
             SqlEncryptionKeyInfo keyInfo,
             SqlConnection connection,
             SqlCommand command,
@@ -426,7 +450,7 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.KeyDecryptionFailed(keyInfo.keyStoreName, keyHex, e);
             }
 
-            return new SqlClientSymmetricKey(plaintextKey);
+            return new SymmetricKey(plaintextKey);
         }
 
         /// <summary>

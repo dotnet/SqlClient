@@ -57,7 +57,7 @@ namespace Microsoft.Data.SqlClient
 
             foreach (SqlTceCipherInfoEntry cipherInfo in keysTobeSentToEnclave.Values)
             {
-                SqlSecurityUtility.DecryptSymmetricKey(cipherInfo, out SqlClientSymmetricKey sqlClientSymmetricKey, out SqlEncryptionKeyInfo encryptionkeyInfoChosen, connection, command);
+                SqlSecurityUtility.DecryptSymmetricKey(cipherInfo, out SymmetricKey sqlClientSymmetricKey, out SqlEncryptionKeyInfo encryptionkeyInfoChosen, connection, command);
 
                 decryptedKeysToBeSentToEnclave.Add(CreateColumnEncryptionKeyInfo(cipherInfo, sqlClientSymmetricKey));
             }
@@ -87,7 +87,7 @@ namespace Microsoft.Data.SqlClient
 
             foreach (SqlTceCipherInfoEntry cipherInfo in keysTobeSentToEnclave.Values)
             {
-                (SqlClientSymmetricKey sqlClientSymmetricKey, SqlEncryptionKeyInfo _) =
+                (SymmetricKey sqlClientSymmetricKey, SqlEncryptionKeyInfo _) =
                     await SqlSecurityUtility.DecryptSymmetricKeyAsync(cipherInfo, connection, command, cancellationToken)
                         .ConfigureAwait(false);
 
@@ -106,7 +106,7 @@ namespace Microsoft.Data.SqlClient
         /// </remarks>
         private static ColumnEncryptionKeyInfo CreateColumnEncryptionKeyInfo(
             SqlTceCipherInfoEntry cipherInfo,
-            SqlClientSymmetricKey sqlClientSymmetricKey)
+            SymmetricKey sqlClientSymmetricKey)
         {
             if (sqlClientSymmetricKey == null)
             {
@@ -197,10 +197,10 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-                SqlClientSymmetricKey symmetricKey = new SqlClientSymmetricKey(sessionKey);
+                SymmetricKey symmetricKey = new SymmetricKey(sessionKey);
                 SqlClientEncryptionAlgorithm sqlClientEncryptionAlgorithm = AeadAes256CbcHmac256Factory.Instance.Create(
                     symmetricKey,
-                    SqlClientEncryptionType.Randomized,
+                    EncryptionType.Randomized,
                     SqlAeadAes256CbcHmac256Algorithm.AlgorithmName
                 );
                 return sqlClientEncryptionAlgorithm.EncryptData(bytePackage);
