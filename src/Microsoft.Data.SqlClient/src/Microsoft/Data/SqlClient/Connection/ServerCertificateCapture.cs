@@ -25,12 +25,14 @@ namespace Microsoft.Data.SqlClient.Connection
             byte[]? hash256,
             SqlServerCertificateValidationErrors? validationErrors,
             X509ChainStatusFlags? chainStatus,
-            SslProtocols? protocol = null)
+            SslProtocols? protocol = null,
+            int? cipherSuite = null)
         {
             Hash256 = hash256;
             ValidationErrors = validationErrors;
             ChainStatus = chainStatus;
             Protocol = protocol;
+            CipherSuite = cipherSuite;
         }
 
         /// <summary>
@@ -57,5 +59,13 @@ namespace Microsoft.Data.SqlClient.Connection
         /// determined for the attempt (for example, when the handshake failed).
         /// </summary>
         public SslProtocols? Protocol { get; }
+
+        /// <summary>
+        /// Gets the IANA identifier of the cipher suite the transport reported for this handshake,
+        /// or <see langword="null"/> if the transport did not report one. Used only when the cipher
+        /// suite was not otherwise determined for the attempt (for example, when the handshake
+        /// failed).
+        /// </summary>
+        public int? CipherSuite { get; }
     }
 }

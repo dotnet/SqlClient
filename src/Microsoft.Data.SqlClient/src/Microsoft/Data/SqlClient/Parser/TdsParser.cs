@@ -966,9 +966,18 @@ namespace Microsoft.Data.SqlClient.Parser
                 accumulator.ValidationErrors = certificateCapture.ValidationErrors;
                 accumulator.ChainStatus = certificateCapture.ChainStatus;
 
-                // A protocol already determined for this attempt takes precedence over one reported
-                // alongside the certificate details.
+                // A protocol or cipher suite already determined for this attempt takes precedence over
+                // one reported alongside the certificate details.
                 accumulator.Protocol ??= certificateCapture.Protocol;
+
+                if (accumulator.CipherSuite is null && certificateCapture.CipherSuite is int capturedCipherSuite)
+                {
+#if NET
+                    accumulator.CipherSuite = (System.Net.Security.TlsCipherSuite)capturedCipherSuite;
+#else
+                    accumulator.CipherSuite = capturedCipherSuite;
+#endif
+                }
             }
 
             if (error != TdsEnums.SNI_SUCCESS)
@@ -1011,6 +1020,17 @@ namespace Microsoft.Data.SqlClient.Parser
             }
 
             RecordNegotiatedProtocol(protocol);
+
+            // The cipher suite read after the handshake completes is authoritative for the attempt.
+            if (_physicalStateObj.GetNegotiatedCipherSuite() is int cipherSuite &&
+                _connHandler?.EncryptionInfoAccumulator is EncryptionInfoAccumulator negotiated)
+            {
+#if NET
+                negotiated.CipherSuite = (System.Net.Security.TlsCipherSuite)cipherSuite;
+#else
+                negotiated.CipherSuite = cipherSuite;
+#endif
+            }
 
             // create a new packet encryption changes the internal packet size Bug# 228403
             _physicalStateObj.ClearAllWritePackets();

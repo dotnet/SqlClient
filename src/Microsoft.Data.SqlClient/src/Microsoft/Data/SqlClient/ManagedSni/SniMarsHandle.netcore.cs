@@ -54,6 +54,8 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         public override SslProtocols ProtocolVersion => _connection.ProtocolVersion;
 
+        public override int? NegotiatedCipherSuite => _connection.NegotiatedCipherSuite;
+
         public override Connection.ServerCertificateCapture ServerCertificateCapture => _connection.ServerCertificateCapture;
 
         /// <summary>
