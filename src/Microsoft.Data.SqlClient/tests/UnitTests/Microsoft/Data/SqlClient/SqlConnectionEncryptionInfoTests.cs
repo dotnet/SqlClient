@@ -21,6 +21,9 @@ namespace Microsoft.Data.SqlClient
         private const string ServerVersion = "16.00.1000";
         private const string SampleHashHex = "000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F";
 
+        // IANA identifier for TLS_AES_256_GCM_SHA384.
+        private const int SampleCipherSuite = 0x1302;
+
         private static byte[] CreateSampleHash()
         {
             byte[] hash = new byte[SqlConnectionEncryptionInfo.CertificateHash256Length];
@@ -324,6 +327,7 @@ namespace Microsoft.Data.SqlClient
 
             Assert.Equal(SqlConnectionEncryptionMode.Strict, info.NegotiatedEncryptionMode);
             Assert.Equal(SslProtocols.Tls12, info.NegotiatedEncryptionProtocol);
+            Assert.Equal(SampleCipherSuite, info.NegotiatedCipherSuite);
             Assert.NotNull(info.PresentedServerCertificateHash256);
             Assert.Equal(SampleHashHex, ToHex(info.PresentedServerCertificateHash256!.Value));
             Assert.Equal(SqlServerCertificateValidationErrors.HostNameMismatch, info.ValidationErrors);
@@ -340,6 +344,7 @@ namespace Microsoft.Data.SqlClient
         [InlineData(2)]
         [InlineData(3)]
         [InlineData(4)]
+        [InlineData(5)]
         public void Constructor_SingleFieldSet_IsNotEmpty(int fieldIndex)
         {
             SqlConnectionEncryptionInfo info = new(
@@ -347,7 +352,8 @@ namespace Microsoft.Data.SqlClient
                 fieldIndex == 1 ? SslProtocols.None : null,
                 fieldIndex == 2 ? new byte[SqlConnectionEncryptionInfo.CertificateHash256Length] : null,
                 fieldIndex == 3 ? SqlServerCertificateValidationErrors.None : null,
-                fieldIndex == 4 ? X509ChainStatusFlags.NoError : null);
+                fieldIndex == 4 ? X509ChainStatusFlags.NoError : null,
+                fieldIndex == 5 ? 0 : null);
 
             Assert.False(info.IsEmpty);
         }
@@ -412,6 +418,81 @@ namespace Microsoft.Data.SqlClient
             SqlConnectionEncryptionInfo info = new(SqlConnectionEncryptionMode.Strict, tls13, null, null, null);
 
             Assert.Equal(0x3000, (int)info.NegotiatedEncryptionProtocol!.Value);
+        }
+
+        /// <summary>
+        /// Verifies that the negotiated cipher suite defaults to null (not available) when it is not
+        /// supplied, even if other fields are populated.
+        /// </summary>
+        [Fact]
+        public void NegotiatedCipherSuite_NotSupplied_IsNull()
+        {
+            SqlConnectionEncryptionInfo info = new(SqlConnectionEncryptionMode.Full, SslProtocols.Tls12, null, null, null);
+
+            Assert.Null(info.NegotiatedCipherSuite);
+            Assert.False(info.IsEmpty);
+        }
+
+        /// <summary>
+        /// Verifies that IANA cipher suite identifiers, including the boundary values, round-trip unchanged.
+        /// A value of zero (TLS_NULL_WITH_NULL_NULL) is distinct from null.
+        /// </summary>
+        [Theory]
+        [InlineData(0x0000)]
+        [InlineData(0x1301)]
+        [InlineData(0x1302)]
+        [InlineData(0xC030)]
+        [InlineData(0xFFFF)]
+        public void NegotiatedCipherSuite_Value_RoundTrips(int cipherSuite)
+        {
+            SqlConnectionEncryptionInfo info = new(null, null, null, null, null, cipherSuite);
+
+            Assert.True(info.NegotiatedCipherSuite.HasValue);
+            Assert.Equal(cipherSuite, info.NegotiatedCipherSuite);
+            Assert.False(info.IsEmpty);
+        }
+
+        /// <summary>
+        /// Verifies that a value outside the 16-bit IANA identifier range is rejected.
+        /// </summary>
+        [Theory]
+        [InlineData(-1)]
+        [InlineData(0x10000)]
+        [InlineData(int.MaxValue)]
+        public void Constructor_InvalidCipherSuite_Throws(int cipherSuite)
+        {
+            ArgumentOutOfRangeException ex = Assert.Throws<ArgumentOutOfRangeException>(
+                () => new SqlConnectionEncryptionInfo(null, null, null, null, null, cipherSuite));
+
+            Assert.Equal("negotiatedCipherSuite", ex.ParamName);
+        }
+
+        /// <summary>
+        /// Verifies the public property is a nullable <see cref="int"/> (CLS-compliant, available on every target).
+        /// </summary>
+        [Fact]
+        public void NegotiatedCipherSuite_PropertyType_IsNullableInt()
+        {
+            Assert.Equal(
+                typeof(int?),
+                typeof(SqlConnectionEncryptionInfo).GetProperty(nameof(SqlConnectionEncryptionInfo.NegotiatedCipherSuite))!.PropertyType);
+        }
+
+        /// <summary>
+        /// Verifies that a snapshot with a cipher suite is preserved by <see cref="SqlException"/> clone
+        /// and that the value does not leak into the exception message.
+        /// </summary>
+        [Fact]
+        public void NegotiatedCipherSuite_SqlException_ClonedAndNotInMessage()
+        {
+            SqlException ex = SqlException.CreateException(CreateErrorCollection(), ServerVersion);
+            ex.EncryptionInfo = CreatePopulated();
+
+            SqlException clone = ex.InternalClone();
+
+            Assert.Equal(SampleCipherSuite, clone.EncryptionInfo.NegotiatedCipherSuite);
+            Assert.DoesNotContain(nameof(SqlConnectionEncryptionInfo.NegotiatedCipherSuite), ex.ToString());
+            Assert.DoesNotContain("TLS_AES_256_GCM_SHA384", ex.ToString());
         }
 
         /// <summary>
@@ -533,6 +614,7 @@ namespace Microsoft.Data.SqlClient
             Assert.NotNull(info);
             Assert.Null(info.NegotiatedEncryptionMode);
             Assert.Null(info.NegotiatedEncryptionProtocol);
+            Assert.Null(info.NegotiatedCipherSuite);
             Assert.Null(info.PresentedServerCertificateHash256);
             Assert.Null(info.ValidationErrors);
             Assert.Null(info.ChainStatus);
@@ -544,7 +626,8 @@ namespace Microsoft.Data.SqlClient
                 SslProtocols.Tls12,
                 CreateSampleHash(),
                 SqlServerCertificateValidationErrors.HostNameMismatch,
-                X509ChainStatusFlags.UntrustedRoot);
+                X509ChainStatusFlags.UntrustedRoot,
+                SampleCipherSuite);
 
         private static SqlError CreateError() =>
             new(
