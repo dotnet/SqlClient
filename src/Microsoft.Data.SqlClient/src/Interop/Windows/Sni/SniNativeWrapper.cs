@@ -378,7 +378,39 @@ namespace Microsoft.Data.SqlClient
             out System.Security.Authentication.SslProtocols pProtocolVersion)
         {
             uint returnValue = s_nativeMethods.SniWaitForSslHandshakeToComplete(pConn, dwMilliseconds, out SniSslProtocols nativeProtocolVersion);
+            pProtocolVersion = ToSslProtocols(nativeProtocolVersion);
+            return returnValue;
+        }
 
+        /// <summary>
+        /// Queries native SNI for the certificate validation details of the most recent client TLS
+        /// handshake on <paramref name="pConn"/>. <paramref name="pInfo"/> must have its
+        /// <see cref="SniCertValidationInfo.cbSize"/> initialized.
+        /// </summary>
+        /// <exception cref="EntryPointNotFoundException">The loaded SNI library does not export the function.</exception>
+        internal static uint SniGetCertValidationInfo(SNIHandle pConn, ref SniCertValidationInfo pInfo) =>
+            s_nativeMethods.SniGetCertValidationInfo(pConn, ref pInfo);
+
+        /// <summary>
+        /// Queries native SNI for the SHA-256 hash of the server certificate presented during the most
+        /// recent client TLS handshake on <paramref name="pConn"/>.
+        /// </summary>
+        /// <exception cref="EntryPointNotFoundException">The loaded SNI library does not export the function.</exception>
+        internal static unsafe uint SniGetServerCertificateHash(SNIHandle pConn, Span<byte> hash, out uint bytesWritten)
+        {
+            fixed (byte* pHash = hash)
+            {
+                return s_nativeMethods.SniGetServerCertificateHash(pConn, pHash, (uint)hash.Length, out bytesWritten);
+            }
+        }
+
+        /// <summary>
+        /// Maps native SNI <c>SP_PROT_*</c> protocol bits to <see cref="System.Security.Authentication.SslProtocols"/>.
+        /// On .NET Framework, TLS 1.3 is reported as the numeric value <c>0x3000</c>.
+        /// </summary>
+        internal static System.Security.Authentication.SslProtocols ToSslProtocols(SniSslProtocols nativeProtocolVersion)
+        {
+            System.Security.Authentication.SslProtocols pProtocolVersion;
 #pragma warning disable CA5398 // Avoid hardcoded SslProtocols values
             if ((nativeProtocolVersion & SniSslProtocols.SP_PROT_TLS1_2) != 0)
             {
@@ -423,7 +455,7 @@ namespace Microsoft.Data.SqlClient
                 pProtocolVersion = System.Security.Authentication.SslProtocols.None;
             }
 #pragma warning restore CA5398 // Avoid hardcoded SslProtocols values
-            return returnValue;
+            return pProtocolVersion;
         }
 
         internal static uint SniWritePacket(SNIHandle pConn, SNIPacket packet, bool sync) =>
