@@ -3105,6 +3105,9 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                         timeoutCts.CancelAfter(TimeSpan.FromSeconds(BulkCopyTimeout));
                     }
 
+                    // @TODO: A failure to reconnect to the server throws an exception indicating
+                    //        that the destination table is invalid. Replace this message with a
+                    //        more meaningful one.
                     try
                     {
                         await reconnectTask.WaitAsync(timeoutCts.Token).ConfigureAwait(false);
