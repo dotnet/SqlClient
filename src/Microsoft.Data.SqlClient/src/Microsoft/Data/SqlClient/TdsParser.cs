@@ -954,6 +954,11 @@ namespace Microsoft.Data.SqlClient
 #endif
             error = _physicalStateObj.EnableSsl(ref info, encrypt == SqlConnectionEncryptOption.Strict, serverCertificateFilename);
 
+            // The certificate validation callback runs synchronously within EnableSsl, so whatever the
+            // transport observed is complete here; record it before any failure is reported so that
+            // the login exception carries it.
+            _connHandler?.EncryptionInfoCapture?.RecordServerCertificate(_physicalStateObj.GetServerCertificateCapture());
+
             if (error != TdsEnums.SNI_SUCCESS)
             {
                 RecordFailedTlsAttempt(encrypt);
@@ -996,6 +1001,12 @@ namespace Microsoft.Data.SqlClient
             }
 
             RecordNegotiatedEncryption(encrypt, protocol);
+
+            // The cipher suite read after the handshake completes is authoritative for the attempt.
+            if (_physicalStateObj.GetNegotiatedCipherSuite() is int cipherSuite)
+            {
+                _connHandler?.EncryptionInfoCapture?.RecordCipherSuite(cipherSuite);
+            }
 
             // create a new packet encryption changes the internal packet size Bug# 228403
             _physicalStateObj.ClearAllWritePackets();
