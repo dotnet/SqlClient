@@ -7,7 +7,7 @@ namespace Microsoft.Data.SqlClient.Extensions.Azure.Test;
 /// <summary>
 /// Exercises the windowless WAM diagnostic through real Azure SQL login handshakes.
 /// </summary>
-[Collection("SqlAuthenticationProvider")]
+[Collection(SqlAuthenticationProviderCollection.Name)]
 public class WindowlessInteractiveConnectionTests
 {
     /// <summary>

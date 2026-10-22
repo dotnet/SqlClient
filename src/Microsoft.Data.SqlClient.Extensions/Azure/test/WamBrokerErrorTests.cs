@@ -2,8 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System.Collections.Concurrent;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using Microsoft.Identity.Client;
 
@@ -12,7 +10,7 @@ namespace Microsoft.Data.SqlClient.Extensions.Azure.Test;
 /// <summary>
 /// Verifies missing-window diagnostics without opening UI or contacting Entra ID.
 /// </summary>
-[Collection("SqlAuthenticationProvider")]
+[Collection(SqlAuthenticationProviderCollection.Name)]
 public class WamBrokerErrorTests
 {
     /// <summary>
@@ -123,11 +121,7 @@ public class WamBrokerErrorTests
             .Build();
         app.UserTokenCache.SetBeforeAccess(_ => throw cause);
 
-        FieldInfo? field = typeof(ActiveDirectoryAuthenticationProvider).GetField(
-            "s_pcaMap", BindingFlags.Static | BindingFlags.NonPublic);
-        Assert.NotNull(field);
-        var cache = Assert.IsType<ConcurrentDictionary<ActiveDirectoryAuthenticationProvider.PublicClientAppKey, IPublicClientApplication>>(
-            field!.GetValue(null));
+        var cache = ActiveDirectoryAuthenticationProvider.s_pcaMap;
         Assert.True(cache.TryAdd(key, app));
         try
         {

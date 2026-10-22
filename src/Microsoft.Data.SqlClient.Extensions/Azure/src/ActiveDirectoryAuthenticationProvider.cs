@@ -25,7 +25,8 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
     /// The purpose of this cache is to allow re-use of Access Tokens fetched for a user interactively or with any other mode
     /// to avoid interactive authentication request every-time, within application scope making use of MSAL's userTokenCache.
     /// </summary>
-    private static readonly ConcurrentDictionary<PublicClientAppKey, IPublicClientApplication> s_pcaMap = new();
+    // Internal for test access.
+    internal static readonly ConcurrentDictionary<PublicClientAppKey, IPublicClientApplication> s_pcaMap = new();
     private static readonly ConcurrentDictionary<TokenCredentialKey, TokenCredentialData> s_tokenCredentialMap = new();
     private static readonly SemaphoreSlim s_pcaMapModifierSemaphore = new(1, 1);
     private static readonly SemaphoreSlim s_tokenCredentialMapModifierSemaphore = new(1, 1);
@@ -449,6 +450,8 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             // Already shaped for the caller; don't re-wrap it below.
             throw;
         }
+        // MSAL raises window_handle_required only on Windows, where WAM needs a parent window.
+        // If WAM support is added for other platforms, revisit this filter and message.
         catch (MsalClientException ex) when (
             parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryInteractive &&
             RuntimeInformation.IsOSPlatform(OSPlatform.Windows) &&
@@ -457,6 +460,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
         {
             SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | WAM interactive authentication requires a valid parent window handle.");
 
+            // TODO: Localize this message: https://github.com/dotnet/SqlClient/issues/4904
             throw new Extensions.Azure.AuthenticationException(
                 parameters.AuthenticationMethod,
                 ex.ErrorCode,
