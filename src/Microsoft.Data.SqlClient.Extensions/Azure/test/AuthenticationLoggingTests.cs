@@ -695,6 +695,28 @@ public class AuthenticationLoggingTests
         Assert.Null(AuthenticationLogger.CurrentScope);
     }
 
+    /// <summary>Azure SDK work done by an ordinary Trace handler is not attributed to the acquisition.</summary>
+    [Fact]
+    public async Task AzureSdkEvents_OrdinaryTraceCollectorWorkIsNotAttributed()
+    {
+        using var listener = new AuthenticationListener();
+        listener.Enable(EventLevel.Verbose, SqlClientEventSource.Keywords.AuthenticationTrace | SqlClientEventSource.Keywords.Trace);
+        using var source = new ControlledIdentitySource();
+        // Simulates a collector that calls an app-owned Azure credential while handling Trace.
+        listener.OnTrace = () => source.LogMsalVerbose("collector trace work");
+        using (AuthenticationLogger.Scope scope = AuthenticationLogger.Begin(listener.ConnectionId, captureAzure: true))
+        {
+            await scope.WaitForReadyAsync(CancellationToken.None);
+            AuthenticationLogger.Trace("ordinary {0}", "diagnostic");
+            source.LogMsalVerbose("acquisition work");
+        }
+
+        Assert.Equal(1, listener.TraceEvents);
+        Assert.Equal("acquisition work", Assert.Single(listener.Events).Payload![0]);
+        Assert.Null(AuthenticationLogger.CurrentScope);
+        await CompleteWithinTimeout((await AzureAuthenticationEventListener.GetInstanceAsync()).WaitForRefreshAsync());
+    }
+
     /// <summary>The SDK allowlist requires a reviewed event ID and name together.</summary>
     [Theory]
     [InlineData(7, "LogMsalVerbose", EventLevel.Verbose)]
@@ -952,6 +974,8 @@ public class AuthenticationLoggingTests
         internal int TraceEvents;
         /// <summary>Gets or sets a hook used to verify reentrant collector behavior.</summary>
         internal Action? OnAuthentication { get; set; }
+        /// <summary>Gets or sets a hook run while an ordinary Trace event is dispatched.</summary>
+        internal Action? OnTrace { get; set; }
 
         /// <summary>Creates a correlated collector or captures every connection for integration tests.</summary>
         internal AuthenticationListener(bool captureAll = false, EventLevel level = EventLevel.Verbose)
@@ -979,6 +1003,7 @@ public class AuthenticationLoggingTests
             if (eventData.EventName == "Trace")
             {
                 Interlocked.Increment(ref TraceEvents);
+                OnTrace?.Invoke();
             }
             if (eventData.EventName?.StartsWith("Authentication", StringComparison.Ordinal) == true &&
                 eventData.Payload?.Count == 3 && (_captureAll || Equals(eventData.Payload[2], ConnectionId.ToString())))

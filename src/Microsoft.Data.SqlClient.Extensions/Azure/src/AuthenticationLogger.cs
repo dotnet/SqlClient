@@ -63,6 +63,57 @@ internal static class AuthenticationLogger
         }
     }
 
+    /// <summary>Writes an ordinary Trace event without attributing collector work to the active acquisition.</summary>
+    /// <param name="message">The trace message.</param>
+    internal static void Trace(string message)
+    {
+        if (SqlClientEventSource.Log.IsTraceEnabled())
+        {
+            Dispatch(message);
+        }
+    }
+
+    /// <summary>Writes a formatted ordinary Trace event without attributing collector work to the active acquisition.</summary>
+    /// <typeparam name="T0">The type of the first argument.</typeparam>
+    /// <param name="message">A composite format string.</param>
+    /// <param name="arg0">The first format argument.</param>
+    internal static void Trace<T0>(string message, T0 arg0)
+    {
+        if (SqlClientEventSource.Log.IsTraceEnabled())
+        {
+            Dispatch(string.Format(message, arg0?.ToString() ?? "null"));
+        }
+    }
+
+    /// <summary>Writes a formatted ordinary Trace event without attributing collector work to the active acquisition.</summary>
+    /// <typeparam name="T0">The type of the first argument.</typeparam>
+    /// <typeparam name="T1">The type of the second argument.</typeparam>
+    /// <param name="message">A composite format string.</param>
+    /// <param name="arg0">The first format argument.</param>
+    /// <param name="arg1">The second format argument.</param>
+    internal static void Trace<T0, T1>(string message, T0 arg0, T1 arg1)
+    {
+        if (SqlClientEventSource.Log.IsTraceEnabled())
+        {
+            Dispatch(string.Format(message, arg0?.ToString() ?? "null", arg1?.ToString() ?? "null"));
+        }
+    }
+
+    /// <summary>Runs collector dispatch with SDK attribution suppressed, restoring the prior guard state.</summary>
+    private static void Dispatch(string message)
+    {
+        bool previous = s_dispatching.Value;
+        s_dispatching.Value = true;
+        try
+        {
+            SqlClientEventSource.Log.TryTraceEvent(message);
+        }
+        finally
+        {
+            s_dispatching.Value = previous;
+        }
+    }
+
     /// <summary>Gets the stateless non-PII logger shared by cached clients; IsEnabled gates SDK formatting.</summary>
     internal static IIdentityLogger MsalLogger { get; } = new ScopedMsalLogger();
 
