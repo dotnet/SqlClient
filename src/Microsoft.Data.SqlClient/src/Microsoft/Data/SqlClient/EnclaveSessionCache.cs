@@ -24,7 +24,8 @@ namespace Microsoft.Data.SqlClient
         // Retrieves a SqlEnclaveSession from the cache
         internal SqlEnclaveSession GetEnclaveSession(EnclaveSessionParameters enclaveSessionParameters, out long counter)
         {
-            string cacheKey = GenerateCacheKey(enclaveSessionParameters);
+            Tuple<SqlConnectionAttestationProtocol, string, string, string> cacheKey =
+                GenerateCacheKey(enclaveSessionParameters);
             SqlEnclaveSession enclaveSession = enclaveMemoryCache.Get<SqlEnclaveSession>(cacheKey);
             counter = Interlocked.Increment(ref _counter);
             return enclaveSession;
@@ -33,7 +34,8 @@ namespace Microsoft.Data.SqlClient
         // Invalidates a SqlEnclaveSession entry in the cache
         internal void InvalidateSession(EnclaveSessionParameters enclaveSessionParameters, SqlEnclaveSession enclaveSessionToInvalidate)
         {
-            string cacheKey = GenerateCacheKey(enclaveSessionParameters);
+            Tuple<SqlConnectionAttestationProtocol, string, string, string> cacheKey =
+                GenerateCacheKey(enclaveSessionParameters);
 
             lock (enclaveCacheLock)
             {
@@ -57,7 +59,8 @@ namespace Microsoft.Data.SqlClient
         // Creates a new SqlEnclaveSession and adds it to the cache
         internal SqlEnclaveSession CreateSession(EnclaveSessionParameters enclaveSessionParameters, byte[] sharedSecret, long sessionId, out long counter)
         {
-            string cacheKey = GenerateCacheKey(enclaveSessionParameters);
+            Tuple<SqlConnectionAttestationProtocol, string, string, string> cacheKey =
+                GenerateCacheKey(enclaveSessionParameters);
             SqlEnclaveSession enclaveSession = null;
             lock (enclaveCacheLock)
             {
@@ -70,10 +73,16 @@ namespace Microsoft.Data.SqlClient
             return enclaveSession;
         }
 
-        // Generates the cache key for the enclave session cache
-        private string GenerateCacheKey(EnclaveSessionParameters enclaveSessionParameters)
+        // Keep the attestation policy and field boundaries in the identity while preserving
+        // the existing case-insensitive, null/empty-equivalent string matching.
+        private static Tuple<SqlConnectionAttestationProtocol, string, string, string> GenerateCacheKey(
+            EnclaveSessionParameters enclaveSessionParameters)
         {
-            return (enclaveSessionParameters.ServerName + '+' + enclaveSessionParameters.Database + enclaveSessionParameters.AttestationUrl).ToLowerInvariant();
+            return Tuple.Create(
+                enclaveSessionParameters.AttestationProtocol,
+                (enclaveSessionParameters.ServerName ?? string.Empty).ToLowerInvariant(),
+                (enclaveSessionParameters.Database ?? string.Empty).ToLowerInvariant(),
+                (enclaveSessionParameters.AttestationUrl ?? string.Empty).ToLowerInvariant());
         }
     }
 }

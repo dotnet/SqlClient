@@ -28,11 +28,15 @@ namespace SqlCommandCS
                 connection.Open();
                 using (SqlDataReader reader = command.ExecuteReader())
                 {
-                    while (reader.Read())
+                    // Process the first result before advancing to subsequent results.
+                    do
                     {
-                        Console.WriteLine(String.Format("{0}, {1}",
-                            reader[0], reader[1]));
-                    }
+                        while (reader.Read())
+                        {
+                            Console.WriteLine(String.Format("{0}, {1}",
+                                reader[0], reader[1]));
+                        }
+                    } while (reader.NextResult());
                 }
             }
         }
