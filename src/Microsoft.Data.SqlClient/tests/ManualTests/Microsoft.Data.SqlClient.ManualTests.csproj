@@ -88,6 +88,12 @@
                Condition="'$(ReferenceType)' == 'Package'"
                HintPath="$(PkgMicrosoft_Data_SqlClient)/lib/$(TargetFramework)/Microsoft.Data.SqlClient.dll" />
 
+    <!-- The Azure extension validates Azure Attestation tokens for the AAS enclave tests. -->
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient.Extensions/Azure/src/Azure.csproj"
+                      Condition="'$(ReferenceType)' == 'Project'" />
+    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Azure"
+                      Condition="'$(ReferenceType)' == 'Package'" />
+
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj"
                       Condition="'$(ReferenceType)' == 'Project'" />
     <PackageReference Include="Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider"
