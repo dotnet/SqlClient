@@ -76,7 +76,7 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         /// <summary>
         /// Gets/Sets the flag whether the stop is requested
         /// </summary>
-        internal volatile bool StopRequested;
+        internal volatile bool _stopRequested;
 
 
         /// <summary>
@@ -102,7 +102,7 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         /// </summary>
         public void Start()
         {
-            StopRequested = false;
+            _stopRequested = false;
 
             // Start the server synchronously to ensure that instantiation exception is thrown (if any)
             ListenerSocket = new TcpListener(ServerEndPoint);
@@ -145,7 +145,7 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         public void Stop()
         {
             // Request the listener thread to stop
-            StopRequested = true;
+            _stopRequested = true;
 
             // Stop the listener socket first so the blocking AcceptTcpClient call
             // in the listener thread is interrupted and the thread can exit.
@@ -218,7 +218,7 @@ namespace Microsoft.SqlServer.TDS.EndPoint
             try
             {
                 // Accept connections as long as a stop request is not posted
-                while (!StopRequested)
+                while (!_stopRequested)
                 {
                     TcpClient newConnection;
 
@@ -232,7 +232,7 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                     {
                         // AcceptTcpClient throws when the listener is stopped during
                         // shutdown; exit the loop in that case.
-                        if (StopRequested)
+                        if (_stopRequested)
                         {
                             break;
                         }
