@@ -49,7 +49,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
         #else
-        public static void GetHMACWithSHA256(byte[] plainText, byte[] key, byte[] hash)
+        public static void GetHMACWithSHA256(byte[] plainText, byte[] key, Span<byte> hash)
         {
             const int MaxSHA256HashBytes = 32;
 
@@ -60,7 +60,14 @@ namespace Microsoft.Data.SqlClient
             byte[] computedHash = hmac.ComputeHash(plainText);
 
             // Truncate the hash if needed
-            Buffer.BlockCopy(computedHash, 0, hash, 0, hash.Length);
+            if (hash.Length >= computedHash.Length)
+            {
+                computedHash.CopyTo(hash);
+            }
+            else
+            {
+                computedHash.AsSpan(0, hash.Length).CopyTo(hash);
+            }
         }
         #endif
 

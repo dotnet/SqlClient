@@ -15,7 +15,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
     /// http://tools.ietf.org/html/draft-mcgrew-aead-aes-cbc-hmac-sha2-05. More specifically this implements
     /// AEAD_AES_256_CBC_HMAC_SHA256 algorithm.
     /// </summary>
-    internal class AeadAes256CbcHmac256Algorithm : EncryptionAlgorithm
+    internal partial class AeadAes256CbcHmac256Algorithm : EncryptionAlgorithm
     {
         /// <summary>
         /// Algorithm Name
