@@ -28,7 +28,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
         private const string SecondKeyPath = "test-key-path-2";
         private const string EncryptionAlgorithm = "RSA_OAEP";
 
-        // The AEAD_AES_256_CBC_HMAC_SHA256 algorithm requires a 256 bit root key.
+        /// <summary>Creates a deterministic 256-bit root key for encryption tests.</summary>
+        /// <param name="seed">Starting value for the key bytes.</param>
+        /// <returns>Key material of the length required by AEAD_AES_256_CBC_HMAC_SHA256.</returns>
         private static byte[] NewPlaintextKey(byte seed)
         {
             byte[] key = new byte[32];
@@ -43,6 +45,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
         /// Produces key material whose cache lookup key cannot collide with any other test. The CEK
         /// cache is a process-wide singleton shared by every test in this assembly.
         /// </summary>
+        /// <param name="providerName">Name of the provider that can decrypt this key.</param>
+        /// <param name="keyPath">Master key path supplied to that provider.</param>
+        /// <returns>Key information with unique encrypted bytes for cache isolation.</returns>
         private static SqlEncryptionKeyInfo NewKeyInfo(string providerName = ProviderName, string keyPath = KeyPath)
             => new SqlEncryptionKeyInfo
             {
@@ -56,6 +61,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
                 algorithmName = EncryptionAlgorithm,
             };
 
+        /// <summary>Registers test providers on an unopened connection without changing global registrations.</summary>
+        /// <param name="providers">Provider names and instances used by this connection.</param>
+        /// <returns>An unopened connection that the caller must dispose.</returns>
         private static SqlConnection NewConnection(params (string Name, SqlColumnEncryptionKeyStoreProvider Provider)[] providers)
         {
             SqlConnection connection = new SqlConnection("Data Source=async-ae-unit-test;Column Encryption Setting=Enabled");
@@ -68,6 +76,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             return connection;
         }
 
+        /// <summary>Combines candidate keys so decryption can exercise provider fallback in order.</summary>
+        /// <param name="keyInfos">Ordered candidates for the same plaintext encryption key.</param>
+        /// <returns>A cipher info entry containing all candidate keys.</returns>
         private static SqlTceCipherInfoEntry NewCipherInfoEntry(params SqlEncryptionKeyInfo[] keyInfos)
         {
             SqlTceCipherInfoEntry entry = new SqlTceCipherInfoEntry(ordinal: 0);

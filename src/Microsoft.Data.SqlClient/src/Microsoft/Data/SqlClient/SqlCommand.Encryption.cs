@@ -599,15 +599,16 @@ namespace Microsoft.Data.SqlClient
                 {
                     // The cached metadata matched, but the column encryption keys still have to be
                     // loaded, which may require key store network I/O. Hand the rest of the work to a
-                    // task so that the caller's thread is not blocked on it.
+                    // worker so even synchronously completed key loads cannot run the blocking
+                    // stale-cache describe fallback on the caller's thread.
                     usedCache = true;
-                    returnTask = CompleteCachedQueryMetadataAsync(
+                    returnTask = Task.Run(() => CompleteCachedQueryMetadataAsync(
                         metadata,
                         timeout,
                         completion,
                         asyncWrite,
                         isRetry,
-                        cancellationToken);
+                        cancellationToken));
                     return;
                 }
             }

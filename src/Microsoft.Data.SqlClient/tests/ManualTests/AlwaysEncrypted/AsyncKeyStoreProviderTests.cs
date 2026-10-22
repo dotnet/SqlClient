@@ -110,6 +110,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         /// <summary>
         /// Cancels from inside the provider to check both token identity and cancellation propagation.
         /// </summary>
+        /// <param name="connectionString">Configured Always Encrypted test connection.</param>
+        /// <param name="execute">Command API whose token forwarding is being tested.</param>
+        /// <param name="forXml">Whether the query needs an XML-compatible projection.</param>
+        /// <returns>A task completing after cancellation and command reuse have been checked.</returns>
         private async Task AssertCancellationTokenForwarded(
             string connectionString, Func<SqlCommand, CancellationToken, Task> execute, bool forXml = false)
         {
@@ -141,6 +145,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         /// <summary>
         /// Checks provider dispatch without depending on plaintext key material.
         /// </summary>
+        /// <param name="connectionString">Configured Always Encrypted test connection.</param>
+        /// <param name="execute">Command API whose provider dispatch is being tested.</param>
+        /// <param name="forXml">Whether the query needs an XML-compatible projection.</param>
+        /// <returns>A task completing after the provider counters have been checked.</returns>
         private async Task AssertAsyncApiUsed(string connectionString, Func<SqlCommand, Task> execute, bool forXml = false)
         {
             RecordingKeyStoreProvider provider = new();
@@ -156,6 +164,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.Equal(0, provider.SyncCalls);
         }
 
+        /// <summary>Maps the fixture's dummy provider name to the recording instance.</summary>
+        /// <param name="provider">Provider whose decrypt calls the test observes.</param>
+        /// <returns>A provider map for registration on a single connection.</returns>
         private static Dictionary<string, SqlColumnEncryptionKeyStoreProvider> Wrap(
             RecordingKeyStoreProvider provider) =>
             new() { { DummyKeyStoreProvider.Name, provider } };
@@ -164,6 +175,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         /// Builds an encrypted predicate; XML queries project only a constant because SQL Server
         /// does not support FOR XML over encrypted result columns.
         /// </summary>
+        /// <param name="connection">Open connection with the recording provider registered.</param>
+        /// <param name="forXml">Whether to request XML instead of the fixture's encrypted columns.</param>
+        /// <returns>A disposable command with a deterministic encrypted equality predicate.</returns>
         private SqlCommand CreateEncryptedParameterCommand(SqlConnection connection, bool forXml = false)
         {
             string projection = forXml ? "1 AS Value" : "*";
@@ -180,6 +194,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         /// <summary>
         /// Records which key store provider overload the driver invoked. Both overloads throw so
         /// that the test never depends on real key material; the assertions are made on the counters.
+        /// The deterministic equality predicate does not request enclave computations or CMK verification.
         /// </summary>
         private sealed class RecordingKeyStoreProvider : SqlColumnEncryptionKeyStoreProvider
         {

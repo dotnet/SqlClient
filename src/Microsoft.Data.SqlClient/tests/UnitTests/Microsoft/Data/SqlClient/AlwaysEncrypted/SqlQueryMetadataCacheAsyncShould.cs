@@ -9,6 +9,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -27,7 +28,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
         private const string KeyPath = "metadata-cache-key-path";
         private const string EncryptionAlgorithm = "RSA_OAEP";
 
-        // The AEAD_AES_256_CBC_HMAC_SHA256 algorithm requires a 256 bit root key.
+        /// <summary>Creates a deterministic 256-bit root key for encryption tests.</summary>
+        /// <param name="seed">Starting value for the key bytes.</param>
+        /// <returns>Key material of the length required by AEAD_AES_256_CBC_HMAC_SHA256.</returns>
         private static byte[] NewPlaintextKey(byte seed)
         {
             byte[] key = new byte[32];
@@ -43,6 +46,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
         /// material, so that neither the process-wide query metadata cache nor the process-wide
         /// column encryption key cache can collide with another test.
         /// </summary>
+        /// <param name="provider">Connection-scoped provider that will load the parameter's key.</param>
+        /// <returns>A command with uncached cipher metadata and an unopened connection; dispose both.</returns>
         private static SqlCommand NewCommandWithCipherMetadata(SqlColumnEncryptionKeyStoreProvider provider)
         {
             SqlConnection connection = new SqlConnection(
@@ -75,11 +80,71 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             return command;
         }
 
+        /// <summary>Primes the query metadata cache without loading the parameter's encryption key.</summary>
+        /// <param name="provider">Connection-scoped provider for the subsequent cache completion.</param>
+        /// <returns>A command with cached metadata and an unopened connection; dispose both.</returns>
         private static SqlCommand NewCachedCommand(SqlColumnEncryptionKeyStoreProvider provider)
         {
             SqlCommand command = NewCommandWithCipherMetadata(provider);
             SqlQueryMetadataCache.GetInstance().AddQueryMetadata(command, ignoreQueriesWithReturnValueParams: true);
             return command;
+        }
+
+        /// <summary>
+        /// Synchronously completed key loads must not run cache completion or its stale-key describe
+        /// fallback inline on the asynchronous command caller's thread.
+        /// </summary>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task PrepareCachedMetadataAsync_DispatchesSynchronouslyCompletedProvider(bool staleKey)
+        {
+            int callerThreadId = Environment.CurrentManagedThreadId;
+            bool invokingPrepare = true;
+            bool providerRanInline = false;
+            TestKeyStoreProvider provider = new()
+            {
+                DecryptAsyncCallback = _ =>
+                {
+                    providerRanInline = invokingPrepare && Environment.CurrentManagedThreadId == callerThreadId;
+                    return staleKey
+                        ? Task.FromException<byte[]>(new ArgumentException("stale key"))
+                        : Task.FromResult(NewPlaintextKey(seed: 53));
+                },
+            };
+            using SqlCommand command = NewCachedCommand(provider);
+            using SqlConnection connection = command.Connection;
+            MethodInfo prepare = typeof(SqlCommand).GetMethod(
+                "PrepareForTransparentEncryption", BindingFlags.Instance | BindingFlags.NonPublic)
+                ?? throw new InvalidOperationException("Encryption preparation method not found.");
+            object[] arguments = { true, 30, new TaskCompletionSource<object>(), null, true, false, false };
+            try
+            {
+                prepare.Invoke(command, arguments);
+            }
+            finally
+            {
+                invokingPrepare = false;
+            }
+
+            Assert.Equal(true, arguments[5]);
+            Task completion = Assert.IsAssignableFrom<Task>(arguments[3]);
+            if (staleKey)
+            {
+                // The closed connection stops the describe fallback before any network I/O.
+                await Assert.ThrowsAsync<InvalidOperationException>(() => completion);
+                Assert.Null(command.Parameters[0].CipherMetadata);
+                Assert.False(SqlQueryMetadataCache.GetInstance().TryGetCachedQueryMetadata(command, out _));
+            }
+            else
+            {
+                await completion;
+                Assert.True(command.Parameters[0].CipherMetadata.IsAlgorithmInitialized());
+            }
+
+            Assert.False(providerRanInline);
+            Assert.Equal(1, provider.DecryptAsyncCallCount);
+            Assert.Equal(0, provider.DecryptCallCount);
         }
 
         /// <summary>

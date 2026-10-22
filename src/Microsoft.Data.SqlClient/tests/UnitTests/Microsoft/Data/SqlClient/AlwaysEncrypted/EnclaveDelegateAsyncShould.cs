@@ -33,7 +33,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
         private const int CekId = 7;
         private const ulong CekMdVersion = 3;
 
-        // The AEAD_AES_256_CBC_HMAC_SHA256 algorithm requires a 256 bit root key.
+        /// <summary>Creates a deterministic 256-bit root key for encryption tests.</summary>
+        /// <param name="seed">Starting value for the key bytes.</param>
+        /// <returns>Key material of the length required by AEAD_AES_256_CBC_HMAC_SHA256.</returns>
         private static byte[] NewPlaintextKey(byte seed)
         {
             byte[] key = new byte[32];
@@ -44,6 +46,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             return key;
         }
 
+        /// <summary>Registers a provider on an unopened connection without changing global registrations.</summary>
+        /// <param name="provider">Provider used to resolve this test's enclave keys.</param>
+        /// <returns>An unopened connection that the caller must dispose.</returns>
         private static SqlConnection NewConnection(SqlColumnEncryptionKeyStoreProvider provider)
         {
             SqlConnection connection = new SqlConnection("Data Source=async-ae-enclave-unit-test;Column Encryption Setting=Enabled");
@@ -56,6 +61,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
         /// Produces a cipher info entry whose cache lookup key cannot collide with any other test. The CEK
         /// cache is a process-wide singleton shared by every test in this assembly.
         /// </summary>
+        /// <param name="ordinal">Ordinal assigned to the cipher info entry.</param>
+        /// <returns>A cipher info entry containing one uniquely encrypted key.</returns>
         private static SqlTceCipherInfoEntry NewCipherInfoEntry(int ordinal = 0)
         {
             SqlTceCipherInfoEntry entry = new SqlTceCipherInfoEntry(ordinal);
@@ -71,6 +78,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             return entry;
         }
 
+        /// <summary>Builds an enclave key table with sequential ordinals for the requested entries.</summary>
+        /// <param name="entries">Cipher metadata for the keys the enclave needs.</param>
+        /// <returns>A key table suitable for sync or async enclave key resolution.</returns>
         private static ConcurrentDictionary<int, SqlTceCipherInfoEntry> NewKeyTable(params SqlTceCipherInfoEntry[] entries)
         {
             ConcurrentDictionary<int, SqlTceCipherInfoEntry> table = new();
