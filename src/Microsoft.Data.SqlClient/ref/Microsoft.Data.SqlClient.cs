@@ -1307,6 +1307,8 @@ public sealed class SqlConnectionEncryptionInfo
     public Microsoft.Data.SqlClient.SqlConnectionEncryptionMode? NegotiatedEncryptionMode { get { throw null; } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/NegotiatedEncryptionProtocol/*'/>
     public System.Security.Authentication.SslProtocols? NegotiatedEncryptionProtocol { get { throw null; } }
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/NegotiatedCipherSuite/*'/>
+    public int? NegotiatedCipherSuite { get { throw null; } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/PresentedServerCertificateHash256/*'/>
     public System.ReadOnlyMemory<byte>? PresentedServerCertificateHash256 { get { throw null; } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/ValidationErrors/*'/>
