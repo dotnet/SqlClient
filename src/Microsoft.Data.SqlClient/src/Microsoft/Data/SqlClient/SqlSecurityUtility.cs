@@ -299,6 +299,8 @@ namespace Microsoft.Data.SqlClient
 
             foreach (SqlEncryptionKeyInfo keyInfo in sqlTceCipherInfoEntry.ColumnEncryptionKeyValues)
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 try
                 {
                     sqlClientSymmetricKey = ShouldUseInstanceLevelProviderFlow(keyInfo.keyStoreName, connection, command) ?
@@ -416,6 +418,8 @@ namespace Microsoft.Data.SqlClient
             SqlCommand command,
             CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             string serverName = connection.DataSource;
             Debug.Assert(serverName is not null, @"serverName should not be null.");
 

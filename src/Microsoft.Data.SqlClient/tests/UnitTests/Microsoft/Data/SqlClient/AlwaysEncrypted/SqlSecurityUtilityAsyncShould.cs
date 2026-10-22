@@ -222,6 +222,51 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             Assert.Equal(1, provider.DecryptAsyncCallCount);
         }
 
+        /// <summary>
+        /// Cancellation must win over fallback-provider errors when an earlier key fails normally.
+        /// </summary>
+        [Fact]
+        public async Task DecryptSymmetricKeyAsync_WhenCancelledAfterKeyFailure_DoesNotValidateNextProvider()
+        {
+            using CancellationTokenSource cts = new CancellationTokenSource();
+            TestKeyStoreProvider provider = new TestKeyStoreProvider
+            {
+                DecryptAsyncCallback = _ =>
+                {
+                    cts.Cancel();
+                    throw new InvalidOperationException("first key unavailable");
+                }
+            };
+            using SqlConnection connection = NewConnection((ProviderName, provider));
+            SqlTceCipherInfoEntry entry = NewCipherInfoEntry(
+                NewKeyInfo(ProviderName), NewKeyInfo(SecondProviderName));
+
+            Task decryptTask = SqlSecurityUtility.DecryptSymmetricKeyAsync(entry, connection, command: null, cts.Token);
+
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => decryptTask);
+            Assert.True(decryptTask.IsCanceled);
+            Assert.Equal(1, provider.DecryptAsyncCallCount);
+        }
+
+        /// <summary>
+        /// A pre-cancelled operation must not be replaced by validation errors from an unregistered provider.
+        /// </summary>
+        [Fact]
+        public async Task DecryptSymmetricKeyAsync_WithCancelledToken_DoesNotValidateProvider()
+        {
+            TestKeyStoreProvider provider = new TestKeyStoreProvider();
+            using SqlConnection connection = NewConnection((ProviderName, provider));
+            SqlTceCipherInfoEntry entry = NewCipherInfoEntry(NewKeyInfo(SecondProviderName));
+            using CancellationTokenSource cts = new CancellationTokenSource();
+            cts.Cancel();
+
+            Task decryptTask = SqlSecurityUtility.DecryptSymmetricKeyAsync(entry, connection, command: null, cts.Token);
+
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => decryptTask);
+            Assert.True(decryptTask.IsCanceled);
+            Assert.Equal(0, provider.DecryptAsyncCallCount);
+        }
+
         #endregion
 
         #region VerifyColumnMasterKeySignatureAsync
