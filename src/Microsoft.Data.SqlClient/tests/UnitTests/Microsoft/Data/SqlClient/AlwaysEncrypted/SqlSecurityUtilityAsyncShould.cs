@@ -314,6 +314,35 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
         }
 
         /// <summary>
+        /// Pre-cancellation takes precedence over missing-signature and unregistered-provider errors.
+        /// </summary>
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task VerifyColumnMasterKeySignatureAsync_WithCancelledToken_DoesNotValidateSignatureOrProvider(bool missingSignature)
+        {
+            TestKeyStoreProvider provider = new TestKeyStoreProvider { VerifyResult = true };
+            using SqlConnection connection = NewConnection((ProviderName, provider));
+            using CancellationTokenSource cts = new CancellationTokenSource();
+            cts.Cancel();
+
+            string providerName = missingSignature ? ProviderName : SecondProviderName;
+            byte[] signature = missingSignature ? Array.Empty<byte>() : new byte[] { 1, 2, 3 };
+            Task verifyTask = SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
+                providerName, KeyPath, isEnclaveEnabled: false, CMKSignature: signature,
+                connection, command: null, cts.Token);
+
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => verifyTask);
+            Assert.True(verifyTask.IsCanceled);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
+                    providerName, KeyPath, isEnclaveEnabled: false, CMKSignature: signature,
+                    connection, command: null, CancellationToken.None));
+            Assert.Equal(0, provider.VerifyAsyncCallCount);
+        }
+
+        /// <summary>
         /// Verifies that cancellation surfaces as a cancelled Task rather than being wrapped in
         /// SQL.UnableToVerifyColumnMasterKeySignature, both before and during the provider call.
         /// </summary>

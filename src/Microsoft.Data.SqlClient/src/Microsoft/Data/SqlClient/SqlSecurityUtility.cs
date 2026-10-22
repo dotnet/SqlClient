@@ -539,6 +539,7 @@ namespace Microsoft.Data.SqlClient
         /// <c>SQL.UnableToVerifyColumnMasterKeySignature</c>. The single exception is a cancellation of
         /// <paramref name="cancellationToken"/>, which is propagated unwrapped so the returned Task is
         /// cancelled rather than faulted with an <see cref="InvalidOperationException"/>.
+        /// Pre-cancellation is observed before signature validation or provider lookup.
         /// </remarks>
         internal static async Task VerifyColumnMasterKeySignatureAsync(
             string keyStoreName,
@@ -549,6 +550,8 @@ namespace Microsoft.Data.SqlClient
             SqlCommand command,
             CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             bool isValidSignature = false;
 
             try
