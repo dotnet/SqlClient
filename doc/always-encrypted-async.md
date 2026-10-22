@@ -13,6 +13,10 @@ describe-encryption state. Cancellation or failure during retry-time invalidatio
 prevents the retry and releases the original asynchronous operation's state.
 Synchronous execution continues to use synchronous provider methods.
 
+Applications must serialize operations on a non-MARS connection. Execution
+revalidates the connection after provider I/O and before queued TDS setup, so
+another active command or reader prevents sharing its physical session.
+
 Metadata parsing, session cache policy, replay counters, and the existing
 single-retry policy are unchanged. Cryptography and serialization can still run
 synchronously. This change does not make key-store operations or enclave-package

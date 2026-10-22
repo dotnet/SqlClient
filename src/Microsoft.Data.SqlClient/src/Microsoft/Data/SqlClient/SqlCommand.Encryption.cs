@@ -685,12 +685,14 @@ namespace Microsoft.Data.SqlClient
             bool isRetry,
             CancellationToken cancellationToken)
         {
+            SqlConnectionInternal retryConnection = _enclaveRetryConnection;
             _enclaveAttestationInProgress = true;
             try
             {
                 byte[] serializedAttestationParameters = await PrepareEnclaveAttestationAsync(isRetry, cancellationToken)
                     .ConfigureAwait(false);
                 cancellationToken.ThrowIfCancellationRequested();
+                ValidateConnectionForEnclaveExecution(retryConnection);
                 PrepareForTransparentEncryptionCore(
                     isAsync: true, timeout, out Task task, asyncWrite, isRetry,
                     serializedAttestationParameters, cancellationToken);
@@ -708,6 +710,16 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 _enclaveAttestationInProgress = false;
+            }
+        }
+
+        private void ValidateConnectionForEnclaveExecution(SqlConnectionInternal retryConnection)
+        {
+            // Internal End retries already hold their original connection reservation.
+            if (retryConnection is null ||
+                !ReferenceEquals(retryConnection, _activeConnection.InnerConnection))
+            {
+                _activeConnection.ValidateConnectionForExecute(nameof(ExecuteReader), this);
             }
         }
 

@@ -1832,12 +1832,14 @@ namespace Microsoft.Data.SqlClient
                 // @TODO: This can totally be a non-generic TCS
                 // @TODO: This is a prime candidate for proper async-await execution
                 TaskCompletionSource<object> completion = new TaskCompletionSource<object>();
+                SqlConnectionInternal retryConnection = _enclaveRetryConnection;
                 AsyncHelper.ContinueTaskWithState(
                     taskToContinue: describeParameterEncryptionTask,
                     taskCompletionSource: completion,
                     state: this,
                     onSuccess: sqlCommand =>
                     {
+                        sqlCommand.ValidateConnectionForEnclaveExecution(retryConnection);
                         sqlCommand.GenerateEnclavePackage();
                         sqlCommand.RunExecuteReaderTds(
                             cmdBehavior,

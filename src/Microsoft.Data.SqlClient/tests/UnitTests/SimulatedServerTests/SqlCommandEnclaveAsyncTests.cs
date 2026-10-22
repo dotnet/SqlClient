@@ -25,6 +25,110 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
     [Collection(SimulatedServerTestCollection.Name)]
     public sealed class SqlCommandEnclaveAsyncTests
     {
+        /// <summary>A reader opened during provider I/O prevents resumed preparation from sharing its session.</summary>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task Prepare_PendingProvider_RevalidatesConnection(bool attestation)
+        {
+            using Fixture fixture = new Fixture();
+            using SqlCommand command = fixture.CreateCommand();
+            fixture.Provider.Attestation = attestation;
+            command.SetBatchRPCMode(true, 1);
+            command.AddBatchCommand(new SqlBatchCommand("SELECT 1",
+                columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled));
+            command.SetBatchRPCModeReadyToExecute();
+            using ECDiffieHellman key = ECDiffieHellman.Create();
+            key.KeySize = 384;
+            var parameters = new SqlEnclaveAttestationParameters(1, Array.Empty<byte>(), key);
+            Task preparation = Invoke(command, "PrepareForTransparentEncryptionAsync",
+                30, true, false, CancellationToken.None);
+            Assert.False(preparation.IsCompleted);
+            using SqlCommand other = new SqlCommand("/* competing reader */", fixture.Connection);
+            using (SqlDataReader reader = other.ExecuteReader())
+            {
+                fixture.Provider.CompleteParameters(parameters);
+                await Assert.ThrowsAsync<InvalidOperationException>(() => preparation);
+                Assert.False(reader.IsClosed);
+            }
+            Assert.Equal(0, GetAsyncCount((SqlConnectionInternal)fixture.Connection.InnerConnection));
+            Assert.False((bool)GetField(command, "_enclaveAttestationInProgress"));
+            fixture.Provider.CacheHit = true;
+            await Invoke(command, "PrepareForTransparentEncryptionAsync",
+                30, true, false, CancellationToken.None);
+            Assert.Equal(-1, await other.ExecuteNonQueryAsync());
+        }
+
+        /// <summary>Queued execution rechecks readers opened after encryption preparation completed.</summary>
+        [Fact]
+        public async Task Execute_QueuedPreparation_RevalidatesConnection()
+        {
+            using Fixture fixture = new Fixture();
+            using SqlCommand command = new SqlCommand("/* queued execution */", fixture.Connection);
+            var preparation = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
+            object[] arguments =
+            {
+                CommandBehavior.Default, RunBehavior.ReturnImmediately, true, true, 30, null,
+                true, false, null, preparation.Task
+            };
+            using SqlDataReader pendingReader = (SqlDataReader)typeof(SqlCommand)
+                .GetMethod("RunExecuteReaderTdsWithTransparentParameterEncryption", BindingFlags.NonPublic | BindingFlags.Instance)
+                .Invoke(command, arguments);
+            Task execution = (Task)arguments[5];
+            using SqlCommand other = new SqlCommand("/* competing reader */", fixture.Connection);
+            using (SqlDataReader reader = other.ExecuteReader())
+            {
+                preparation.SetResult(null);
+                await Assert.ThrowsAsync<InvalidOperationException>(() => execution);
+                Assert.False(reader.IsClosed);
+            }
+            Assert.Equal(0, GetAsyncCount((SqlConnectionInternal)fixture.Connection.InnerConnection));
+            Assert.Equal(-1, await other.ExecuteNonQueryAsync());
+        }
+
+        /// <summary>Revalidation must not mistake an internal retry's own reservation for a competing command.</summary>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task Prepare_InternalRetry_PreservesOriginalReservation(bool pending)
+        {
+            using Fixture fixture = new Fixture();
+            using SqlCommand command = fixture.CreateCommand();
+            fixture.Provider.CacheHit = !pending;
+            fixture.Provider.Attestation = pending;
+            command.SetBatchRPCMode(true, 1);
+            command.AddBatchCommand(new SqlBatchCommand("SELECT 1",
+                columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled));
+            command.SetBatchRPCModeReadyToExecute();
+            SqlConnectionInternal inner = (SqlConnectionInternal)fixture.Connection.InnerConnection;
+            inner.IncrementAsyncCount();
+            SetField(command, "_enclaveRetryConnection", inner);
+            try
+            {
+                Task preparation = Invoke(command, "PrepareForTransparentEncryptionAsync",
+                    30, true, true, CancellationToken.None);
+                SetField(command, "_enclaveRetryConnection", null);
+                if (pending)
+                {
+                    Assert.False(preparation.IsCompleted);
+                    using ECDiffieHellman key = ECDiffieHellman.Create();
+                    key.KeySize = 384;
+                    fixture.Provider.CompleteParameters(new SqlEnclaveAttestationParameters(1, Array.Empty<byte>(), key));
+                    await preparation;
+                }
+                else
+                {
+                    await preparation;
+                }
+                Assert.Equal(1, GetAsyncCount(inner));
+            }
+            finally
+            {
+                SetField(command, "_enclaveRetryConnection", null);
+                inner.DecrementAsyncCount();
+            }
+        }
+
         /// <summary>A warm, parameterless enclave batch must not defer otherwise synchronous TDS setup.</summary>
         [Fact]
         public void Prepare_ParameterlessEnclaveBatch_WarmSessionCompletesInline()
