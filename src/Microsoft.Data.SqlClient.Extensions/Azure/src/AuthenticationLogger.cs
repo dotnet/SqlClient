@@ -4,122 +4,60 @@
 
 using System.Diagnostics.Tracing;
 using Microsoft.Data.SqlClient.Internal;
-using Microsoft.Identity.Client;
 using Microsoft.IdentityModel.Abstractions;
 
 namespace Microsoft.Data.SqlClient;
 
-/// <summary>Adapts SDK diagnostics to the provider callback and shared SqlClient EventSource.</summary>
-internal sealed class AuthenticationLogger
+/// <summary>
+/// Routes non-PII MSAL and Azure.Identity diagnostics to <see cref="SqlClientEventSource.Log"/>.
+/// SDK callbacks do not carry a connection ID, so an async-local scope supplies it.
+/// </summary>
+internal static class AuthenticationLogger
 {
     private static readonly AsyncLocal<Scope?> s_scope = new();
     private static readonly AsyncLocal<bool> s_dispatching = new();
-    private readonly Action<SqlAuthenticationLogEntry>? _callback;
 
-    /// <summary>Copies the provider-owned logging settings.</summary>
-    /// <param name="options">The provider options, already checked for null by the provider constructor.</param>
-    internal AuthenticationLogger(ActiveDirectoryAuthenticationProviderOptions options)
-    {
-        _callback = options.AuthenticationLoggingCallback;
-        EnableMsalPiiLogging = options.EnableMsalPiiLogging && HasCallback;
-    }
-
-    /// <summary>Gets whether direct MSAL may produce PII-bearing entries for an opted-in callback.</summary>
-    internal bool EnableMsalPiiLogging { get; }
-
-    /// <summary>Gets whether active acquisitions require SDK diagnostics independently of tracing.</summary>
-    internal bool HasCallback => _callback is not null;
-
-    /// <summary>Gets the active acquisition, excluding disposed scopes and callback-induced logging.</summary>
+    /// <summary>Gets the active acquisition, excluding disposed scopes and reentrant logging.</summary>
     internal static Scope? CurrentScope => !s_dispatching.Value && s_scope.Value is { IsActive: true } scope ? scope : null;
 
-    /// <summary>Checks output demand before MSAL formats a diagnostic or the dispatcher allocates payloads.</summary>
+    /// <summary>Checks collector demand before an SDK formats a diagnostic.</summary>
     /// <param name="level">The mapped SDK severity.</param>
-    internal bool IsEnabled(EventLevel level) => HasCallback ||
-        SqlClientEventSource.Log.IsEnabled(level, SqlClientEventSource.Keywords.Trace);
+    internal static bool IsEnabled(EventLevel level) =>
+        SqlClientEventSource.Log.IsEnabled(level, SqlClientEventSource.Keywords.AuthenticationTrace);
 
-    /// <summary>Starts a nested, async-flow-local acquisition and registers any Azure SDK logging demand.</summary>
+    /// <summary>Starts a nested, async-flow-local acquisition scope.</summary>
     /// <param name="connectionId">The connection identifier supplied to the authentication provider.</param>
     /// <param name="captureAzure">Whether this acquisition uses extension-owned Azure credentials.</param>
     /// <returns>A scope that must be disposed to restore its predecessor and release listener demand.</returns>
     /// <remarks>Await <see cref="Scope.WaitForReadyAsync"/> before calling Azure credential APIs.</remarks>
-    internal Scope Begin(Guid connectionId, bool captureAzure = false) => new(this, connectionId, captureAzure);
+    internal static Scope Begin(Guid connectionId, bool captureAzure = false) => new(connectionId, captureAzure);
 
-    /// <summary>Adapts the supported MSAL callback without exposing SDK severity values to consumers.</summary>
-    /// <param name="level">The severity supplied by MSAL.</param>
-    /// <param name="message">The original formatted diagnostic.</param>
-    /// <param name="containsPii">The privacy marker supplied by MSAL.</param>
-    internal void LogMsal(LogLevel level, string message, bool containsPii)
-    {
-        EventLevel? mapped = level switch
-        {
-            LogLevel.Always => EventLevel.LogAlways,
-            LogLevel.Error => EventLevel.Error,
-            LogLevel.Warning => EventLevel.Warning,
-            LogLevel.Info => EventLevel.Informational,
-            LogLevel.Verbose => EventLevel.Verbose,
-            _ => null
-        };
-        if (mapped.HasValue)
-        {
-            Write(mapped.Value, message, containsPii, "MSAL");
-        }
-    }
-
-    /// <summary>Filters and independently delivers a diagnostic belonging to the active logging policy.</summary>
+    /// <summary>Writes an SDK diagnostic for the active acquisition.</summary>
     /// <param name="level">The framework event severity.</param>
-    /// <param name="message">The formatted diagnostic, not an unclassified exception payload.</param>
-    /// <param name="containsPii">Whether the message requires callback-only PII opt-in.</param>
-    /// <param name="source">The diagnostic origin, such as MSAL, Azure-Identity, or SqlClient.</param>
-    /// <remarks>
-    /// Callbacks must not throw; nonfatal synchronous failures are defensively isolated and reported
-    /// without forwarding exception text. This cannot isolate exceptions from async-void callbacks.
-    /// </remarks>
-    internal void Write(EventLevel level, string message, bool containsPii, string source)
+    /// <param name="message">
+    /// The non-PII diagnostic. Callers pass fixed text or SDK output from clients with PII logging disabled,
+    /// never raw exception payloads.
+    /// </param>
+    /// <param name="source">The diagnostic origin, such as MSAL or Azure-Identity.</param>
+    internal static void Write(EventLevel level, string message, string source)
     {
         Scope? scope = CurrentScope;
-        if (!IsEnabled(level) || scope is null || !ReferenceEquals(this, scope.Logger) || (containsPii && !EnableMsalPiiLogging))
+        if (scope is null || !IsEnabled(level))
         {
             return;
         }
 
-        // The guard flows into SDK work started by a callback, preventing indirect logging loops.
+        // In-process collectors can synchronously trigger more SDK work.
         s_dispatching.Value = true;
         try
         {
-            if (!containsPii && SqlClientEventSource.Log.IsEnabled(level, SqlClientEventSource.Keywords.Trace))
-            {
-                // Deliver tracing first so a callback failure cannot suppress this independent sink.
-                SqlClientEventSource.Log.TryAuthenticationTrace(level, message, source, scope.ConnectionId.ToString());
-            }
-
-            if (_callback is not null)
-            {
-                try
-                {
-                    _callback(new SqlAuthenticationLogEntry(level, message, containsPii, source, scope.ConnectionId));
-                }
-                catch (Exception ex) when (ex is not OutOfMemoryException
-                    and not StackOverflowException and not AccessViolationException and not ThreadAbortException)
-                {
-                    // Callback content and exception messages can themselves contain PII.
-                    SqlClientEventSource.Log.TryAuthenticationTrace(EventLevel.Error,
-                        "Authentication logging callback failed.", "SqlClient", scope.ConnectionId.ToString());
-                }
-            }
+            SqlClientEventSource.Log.TryAuthTraceEvent(level, message, source, scope.ConnectionId);
         }
         finally
         {
             s_dispatching.Value = false;
         }
     }
-
-    /// <summary>Routes cached SDK clients through the current acquisition without retaining a provider.</summary>
-    /// <param name="level">The severity supplied by MSAL.</param>
-    /// <param name="message">The formatted SDK diagnostic.</param>
-    /// <param name="containsPii">The original SDK privacy marker.</param>
-    internal static void LogMsalForCurrentScope(LogLevel level, string message, bool containsPii) =>
-        CurrentScope?.Logger.LogMsal(level, message, containsPii);
 
     /// <summary>Gets the stateless non-PII logger shared by cached clients; IsEnabled gates SDK formatting.</summary>
     internal static IIdentityLogger MsalLogger { get; } = new ScopedMsalLogger();
@@ -129,14 +67,14 @@ internal sealed class AuthenticationLogger
     {
         /// <inheritdoc />
         public bool IsEnabled(EventLogLevel eventLogLevel) => Map(eventLogLevel) is { } level &&
-            CurrentScope?.Logger.IsEnabled(level) == true;
+            CurrentScope is not null && AuthenticationLogger.IsEnabled(level);
 
         /// <inheritdoc />
         public void Log(LogEntry entry)
         {
             if (Map(entry.EventLogLevel) is { } level)
             {
-                CurrentScope?.Logger.Write(level, entry.Message ?? "MSAL emitted a diagnostic without message text.", false, "MSAL");
+                Write(level, entry.Message ?? "MSAL emitted a diagnostic without message text.", "MSAL");
             }
         }
 
@@ -163,19 +101,17 @@ internal sealed class AuthenticationLogger
         private int _active = 1;
 
         /// <summary>Saves the predecessor and establishes this acquisition's correlation and SDK demand.</summary>
-        /// <param name="logger">The immutable logging policy for this acquisition.</param>
         /// <param name="connectionId">The connection correlation identifier.</param>
         /// <param name="captureAzure">Whether to capture supported Azure credential diagnostics.</param>
-        internal Scope(AuthenticationLogger logger, Guid connectionId, bool captureAzure)
+        internal Scope(Guid connectionId, bool captureAzure)
         {
-            Logger = logger;
             ConnectionId = connectionId;
             CaptureAzure = captureAzure;
             _previous = s_scope.Value;
             s_scope.Value = this;
         }
 
-        /// <summary>Waits for SDK capture to meet active callback and collector demand.</summary>
+        /// <summary>Waits for SDK capture to meet collector demand.</summary>
         /// <param name="cancellationToken">Cancels waiting without blocking EventSource command callbacks.</param>
         /// <returns>A task that completes when capture is ready.</returns>
         internal async Task WaitForReadyAsync(CancellationToken cancellationToken)
@@ -198,7 +134,7 @@ internal sealed class AuthenticationLogger
                 if (_listener is null)
                 {
                     _listener = initialization.GetAwaiter().GetResult();
-                    _ready = _listener.Enter(Logger);
+                    _ready = _listener.Enter();
                 }
             }
             await WaitWithCancellationAsync(_ready, cancellationToken).ConfigureAwait(false);
@@ -220,10 +156,7 @@ internal sealed class AuthenticationLogger
             cancellationToken.ThrowIfCancellationRequested();
         }
 
-        /// <summary>Gets the policy that owns diagnostics in this scope.</summary>
-        internal AuthenticationLogger Logger { get; }
-
-        /// <summary>Gets the connection identifier carried by callback entries and trace events.</summary>
+        /// <summary>Gets the connection identifier carried by trace events.</summary>
         internal Guid ConnectionId { get; }
 
         /// <summary>Gets whether this scope may attribute supported Azure-Identity events.</summary>
@@ -243,7 +176,7 @@ internal sealed class AuthenticationLogger
             s_scope.Value = _previous;
             lock (_gate)
             {
-                _listener?.Leave(Logger);
+                _listener?.Leave();
             }
         }
     }

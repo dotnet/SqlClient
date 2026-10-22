@@ -10,11 +10,11 @@ using System.Security.Cryptography;
 using System.Text;
 using Azure.Core;
 using Azure.Identity;
-using Microsoft.Data.SqlClient.Internal;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Identity.Client;
 using Microsoft.Identity.Client.Broker;
 using Microsoft.Identity.Client.Extensibility;
+using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient;
 
@@ -26,7 +26,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
     /// The purpose of this cache is to allow re-use of Access Tokens fetched for a user interactively or with any other mode
     /// to avoid interactive authentication request every-time, within application scope making use of MSAL's userTokenCache.
     /// </summary>
-    private static readonly ConcurrentDictionary<PublicClientAppKey, CachedPublicClientApplications> s_pcaMap = new();
+    private static readonly ConcurrentDictionary<PublicClientAppKey, IPublicClientApplication> s_pcaMap = new();
     private static readonly ConcurrentDictionary<TokenCredentialKey, TokenCredentialData> s_tokenCredentialMap = new();
     private static readonly SemaphoreSlim s_pcaMapModifierSemaphore = new(1, 1);
     private static readonly SemaphoreSlim s_tokenCredentialMapModifierSemaphore = new(1, 1);
@@ -102,7 +102,6 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             throw new ArgumentNullException(nameof(options));
         }
 
-        Logger = new AuthenticationLogger(options);
         _deviceCodeFlowCallback = options.DeviceCodeFlowCallback ?? DefaultDeviceFlowCallback;
         if (options.ApplicationClientId is not null)
         {
@@ -126,9 +125,6 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
     /// in the app registration for the Entra ID application to successfully broker with WAM on Windows.
     /// </summary>
     internal string ApplicationClientId => _applicationClientId;
-
-    /// <summary>Gets this provider's immutable, acquisition-scoped logging policy.</summary>
-    internal AuthenticationLogger Logger { get; }
 
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ClearUserTokenCache/*'/>
     public static void ClearUserTokenCache()
@@ -192,15 +188,14 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
     public void SetIWin32WindowFunc(Func<System.Windows.Forms.IWin32Window> iWin32WindowFunc) => _iWin32WindowFunc = iWin32WindowFunc;
     #endif
 
-    private readonly ParentWindowProvider _parentWindowProvider = new();
-
+    private Func<object>? _parentActivityOrWindowFunc = null;
 
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/SetParentActivityOrWindowFunc/*'/>
     public void SetParentActivityOrWindowFunc(Func<object>? parentActivityOrWindowFunc)
     {
         // Passing null clears a previously-installed callback (and reverts the provider to its
         // automatic console-window fallback on Windows).
-        _parentWindowProvider.Callback = parentActivityOrWindowFunc;
+        _parentActivityOrWindowFunc = parentActivityOrWindowFunc;
     }
 
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/AcquireTokenAsync/*'/>
@@ -213,7 +208,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             or SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
             or SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity;
         // The scope attributes async SDK events and is disposed on every return and exception path.
-        using AuthenticationLogger.Scope loggingScope = Logger.Begin(parameters.ConnectionId, captureAzure);
+        using AuthenticationLogger.Scope loggingScope = AuthenticationLogger.Begin(parameters.ConnectionId, captureAzure);
         try
         {
             using CancellationTokenSource cts = new();
@@ -233,7 +228,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             }
 
             await loggingScope.WaitForReadyAsync(cts.Token).ConfigureAwait(false);
-            Logger.Write(EventLevel.Informational, "Token acquisition started.", containsPii: false, source: "SqlClient");
+            SqlClientEventSource.Log.TryAuthTraceEvent(EventLevel.Informational, "Token acquisition started.", "SqlClient", parameters.ConnectionId);
 
             string scope = parameters.Resource.EndsWith(s_defaultScopeSuffix, StringComparison.Ordinal) ? parameters.Resource : parameters.Resource + s_defaultScopeSuffix;
             string[] scopes = [scope];
@@ -286,6 +281,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
                 TokenCredentialKey tokenCredentialKey = new(typeof(DefaultAzureCredential), authorityUrl, scope, tenant, clientId);
                 AccessToken accessToken = await GetTokenAsync(tokenCredentialKey, string.Empty, tokenRequestContext, cts.Token).ConfigureAwait(false);
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Default auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
+                SqlClientEventSource.Log.TryAuthTraceEvent(EventLevel.Informational, "Token acquisition succeeded.", "SqlClient", parameters.ConnectionId);
                 return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
             }
 
@@ -295,6 +291,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
                 TokenCredentialKey tokenCredentialKey = new(typeof(ManagedIdentityCredential), authorityUrl, scope, string.Empty, clientId);
                 AccessToken accessToken = await GetTokenAsync(tokenCredentialKey, string.Empty, tokenRequestContext, cts.Token).ConfigureAwait(false);
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Managed Identity auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
+                SqlClientEventSource.Log.TryAuthTraceEvent(EventLevel.Informational, "Token acquisition succeeded.", "SqlClient", parameters.ConnectionId);
                 return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
             }
 
@@ -305,6 +302,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
                 string password = parameters.Password is null ? string.Empty : parameters.Password;
                 AccessToken accessToken = await GetTokenAsync(tokenCredentialKey, password, tokenRequestContext, cts.Token).ConfigureAwait(false);
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Service Principal auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
+                SqlClientEventSource.Log.TryAuthTraceEvent(EventLevel.Informational, "Token acquisition succeeded.", "SqlClient", parameters.ConnectionId);
                 return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
             }
 
@@ -316,6 +314,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
                 // a CredentialUnavailableException will be thrown instead
                 AccessToken accessToken = await GetTokenAsync(tokenCredentialKey, string.Empty, tokenRequestContext, cts.Token).ConfigureAwait(false);
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Workload Identity auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
+                SqlClientEventSource.Log.TryAuthTraceEvent(EventLevel.Informational, "Token acquisition succeeded.", "SqlClient", parameters.ConnectionId);
                 return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
             }
 
@@ -459,17 +458,18 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
                     "Internal error - authentication result is null");
             }
 
+            SqlClientEventSource.Log.TryAuthTraceEvent(EventLevel.Informational, "Token acquisition succeeded.", "SqlClient", parameters.ConnectionId);
             return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
         }
         catch (Extensions.Azure.AuthenticationException)
         {
-            Logger.Write(EventLevel.Error, "Token acquisition failed.", containsPii: false, source: "SqlClient");
+            SqlClientEventSource.Log.TryAuthTraceEvent(EventLevel.Error, "Token acquisition failed.", "SqlClient", parameters.ConnectionId);
             // Already shaped for the caller; don't re-wrap it below.
             throw;
         }
         catch (MsalException ex)
         {
-            Logger.Write(EventLevel.Error, "Token acquisition failed.", containsPii: false, source: "SqlClient");
+            SqlClientEventSource.Log.TryAuthTraceEvent(EventLevel.Error, "Token acquisition failed.", "SqlClient", parameters.ConnectionId);
             // Check for an explicitly retryable error.
             if (ex is MsalServiceException svcEx &&
                 svcEx.StatusCode == MsalRetryStatusCode)
@@ -544,7 +544,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
                  or AuthenticationRequiredException
                  or CredentialUnavailableException)
         {
-            Logger.Write(EventLevel.Error, "Token acquisition failed.", containsPii: false, source: "SqlClient");
+            SqlClientEventSource.Log.TryAuthTraceEvent(EventLevel.Error, "Token acquisition failed.", "SqlClient", parameters.ConnectionId);
             // These errors aren't retryable.
             throw new Extensions.Azure.AuthenticationException(
                 parameters.AuthenticationMethod,
@@ -556,7 +556,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
         }
         catch (Exception ex)
         {
-            Logger.Write(EventLevel.Error, "Token acquisition failed.", containsPii: false, source: "SqlClient");
+            SqlClientEventSource.Log.TryAuthTraceEvent(EventLevel.Error, "Token acquisition failed.", "SqlClient", parameters.ConnectionId);
             // These errors aren't retryable.
             throw new Extensions.Azure.AuthenticationException(
                 parameters.AuthenticationMethod,
@@ -790,138 +790,31 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             => _acquireAuthorizationCodeAsyncCallback.Invoke(authorizationUri, redirectUri, cancellationToken);
     }
 
-    /// <summary>Finds a client without making diagnostic policy part of signed-in cache identity.</summary>
-    /// <param name="publicClientAppKey">The authority, application, and existing UI cache identity.</param>
+    /// <summary>Gets or creates the cached MSAL public client for the given key.</summary>
+    /// <param name="publicClientAppKey">The authority, application, and UI cache identity.</param>
     /// <param name="cancellationToken">Cancels waiting for serialized cache creation.</param>
-    /// <returns>A cached authentication SDK client whose diagnostics use the current acquisition.</returns>
-    /// <remarks>Replacement providers reuse identity-local token state, not the previous provider's logging policy.</remarks>
+    /// <returns>The cached client. Its non-PII logs are routed to the current acquisition.</returns>
     internal async Task<IPublicClientApplication> GetPublicClientAppInstanceAsync(PublicClientAppKey publicClientAppKey, CancellationToken cancellationToken)
     {
-        bool pii = Logger.EnableMsalPiiLogging;
-        if (s_pcaMap.TryGetValue(publicClientAppKey, out CachedPublicClientApplications? cached) &&
-            (!pii || cached.PiiClient is not null))
+        if (!s_pcaMap.TryGetValue(publicClientAppKey, out IPublicClientApplication? clientApplicationInstance))
         {
-            return pii ? cached.PiiClient! : cached.DefaultClient;
-        }
-
-        await s_pcaMapModifierSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
-        try
-        {
-            if (!s_pcaMap.TryGetValue(publicClientAppKey, out cached))
-            {
-                cached = new CachedPublicClientApplications(CreateClientAppInstance(publicClientAppKey, enablePiiLogging: false));
-                s_pcaMap.TryAdd(publicClientAppKey, cached);
-            }
-            if (pii && cached.PiiClient is null)
-            {
-                cached.AddPiiClient(CreateClientAppInstance(publicClientAppKey, enablePiiLogging: true));
-            }
-
-            return pii ? cached.PiiClient! : cached.DefaultClient;
-        }
-        finally
-        {
-            s_pcaMapModifierSemaphore.Release();
-        }
-    }
-
-    /// <summary>Shares one identity's token state between privacy-safe and PII-capable SDK clients.</summary>
-    /// <remarks>Serialization starts only when a PII client uses the cache; unchanged snapshots are not deserialized again.</remarks>
-    internal sealed class CachedPublicClientApplications
-    {
-        private readonly SemaphoreSlim _cacheGate = new(1, 1);
-        private readonly ITokenCacheSerializer _primaryCache;
-        private byte[]? _cacheData;
-        private int _cacheVersion;
-        private int _primaryVersion;
-        private int _piiVersion = -1;
-        // MSAL serializes notifications per client, including AfterAccess when BeforeAccess fails.
-        private bool _primaryEntered;
-        private bool _piiEntered;
-
-        /// <summary>Gets the non-PII client whose logging demand follows active callbacks and collectors.</summary>
-        internal IPublicClientApplication DefaultClient { get; }
-
-        /// <summary>The optional callback-based client preserves SDK PII markers absent from IIdentityLogger.</summary>
-        internal volatile IPublicClientApplication? PiiClient;
-
-        /// <summary>Coordinates complete SDK cache transactions before either client is published.</summary>
-        internal CachedPublicClientApplications(IPublicClientApplication client)
-        {
-            DefaultClient = client;
-            _primaryCache = client.UserTokenCache as ITokenCacheSerializer ??
-                throw new InvalidOperationException("MSAL user token cache does not support serialization.");
-            client.UserTokenCache.SetBeforeAccessAsync(args => BeforeAccessAsync(args, pii: false));
-            client.UserTokenCache.SetAfterAccessAsync(args => AfterAccessAsync(args, pii: false));
-        }
-
-        /// <summary>Connects the PII client to the primary cache without widening sharing across identities.</summary>
-        internal void AddPiiClient(IPublicClientApplication client)
-        {
-            client.UserTokenCache.SetBeforeAccessAsync(args => BeforeAccessAsync(args, pii: true));
-            client.UserTokenCache.SetAfterAccessAsync(args => AfterAccessAsync(args, pii: true));
-            PiiClient = client;
-        }
-
-        /// <summary>Acquires a transaction lease and refreshes the notifying client from the latest shared snapshot.</summary>
-        /// <param name="args">The SDK's before-access notification, including cancellation.</param>
-        /// <param name="pii">Whether the notification belongs to the secondary client.</param>
-        internal async Task BeforeAccessAsync(TokenCacheNotificationArgs args, bool pii)
-        {
-            await _cacheGate.WaitAsync(args.CancellationToken).ConfigureAwait(false);
+            await s_pcaMapModifierSemaphore.WaitAsync(cancellationToken);
             try
             {
-                if (pii && _cacheData is null)
+                // Double-check in case another thread added it while we waited for the semaphore
+                if (!s_pcaMap.TryGetValue(publicClientAppKey, out clientApplicationInstance))
                 {
-                    _cacheData = _primaryCache.SerializeMsalV3();
-                }
-
-                if (_cacheData is not null && (pii ? _piiVersion : _primaryVersion) != _cacheVersion)
-                {
-                    // Restore only the notifying client's cache while MSAL holds that client's cache lock.
-                    args.TokenCache.DeserializeMsalV3(_cacheData, shouldClearExistingCache: true);
-                    (pii ? ref _piiVersion : ref _primaryVersion) = _cacheVersion;
-                }
-                (pii ? ref _piiEntered : ref _primaryEntered) = true;
-            }
-            catch
-            {
-                _cacheGate.Release();
-                throw;
-            }
-        }
-
-        /// <summary>Publishes cache mutations and releases only a successfully acquired transaction lease.</summary>
-        /// <param name="args">The SDK's after-access notification, which may follow a failed before-access callback.</param>
-        /// <param name="pii">Whether the notification belongs to the secondary client.</param>
-        internal Task AfterAccessAsync(TokenCacheNotificationArgs args, bool pii)
-        {
-            if (pii ? !_piiEntered : !_primaryEntered)
-            {
-                return Task.CompletedTask;
-            }
-
-            (pii ? ref _piiEntered : ref _primaryEntered) = false;
-
-            try
-            {
-                if (args.HasStateChanged)
-                {
-                    if (_cacheData is not null)
-                    {
-                        _cacheData = args.TokenCache.SerializeMsalV3();
-                    }
-
-                    _cacheVersion++;
-                    (pii ? ref _piiVersion : ref _primaryVersion) = _cacheVersion;
+                    clientApplicationInstance = CreateClientAppInstance(publicClientAppKey);
+                    s_pcaMap.TryAdd(publicClientAppKey, clientApplicationInstance);
                 }
             }
             finally
             {
-                _cacheGate.Release();
+                s_pcaMapModifierSemaphore.Release();
             }
-            return Task.CompletedTask;
         }
+
+        return clientApplicationInstance;
     }
 
     /// <summary>Reuses an extension-owned Azure credential for compatible authentication requests.</summary>
@@ -1011,11 +904,10 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
         return a1.AsSpan().SequenceEqual(a2.AsSpan());
     }
 
-    /// <summary>Builds a cached client whose diagnostics use the active acquisition rather than retaining this provider.</summary>
+    /// <summary>Builds a cached client with stateless diagnostics routed through the active acquisition.</summary>
     /// <param name="publicClientAppKey">The authority, redirect URI, application, and UI identity.</param>
-    /// <param name="enablePiiLogging">Whether this client preserves direct MSAL PII markers for opted-in callbacks.</param>
-    /// <returns>A client with immutable SDK logging settings and shared identity-local token state.</returns>
-    private IPublicClientApplication CreateClientAppInstance(PublicClientAppKey publicClientAppKey, bool enablePiiLogging)
+    /// <returns>A client with PII disabled and logging controlled by EventSource collectors.</returns>
+    private IPublicClientApplication CreateClientAppInstance(PublicClientAppKey publicClientAppKey)
     {
         PublicClientApplicationBuilder builder = PublicClientApplicationBuilder
             .CreateWithApplicationOptions(new PublicClientApplicationOptions
@@ -1040,16 +932,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             //      tenant.
             .WithAuthority(publicClientAppKey.Authority);
 
-        if (enablePiiLogging)
-        {
-            // The interface logger omits PII markers; retain the marked callback for this opt-in variant.
-            builder.WithLogging(AuthenticationLogger.LogMsalForCurrentScope, LogLevel.Verbose,
-                enablePiiLogging: true, enableDefaultPlatformLogging: false);
-        }
-        else
-        {
-            builder.WithLogging(AuthenticationLogger.MsalLogger, enablePiiLogging: false);
-        }
+        builder.WithLogging(AuthenticationLogger.MsalLogger, enablePiiLogging: false);
 
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
@@ -1070,10 +953,10 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             }
             else
             {
-                builder.WithParentActivityOrWindow(_parentWindowProvider.GetParentWindow);
+                builder.WithParentActivityOrWindow(() => (object)GetParentWindow());
             }
             #else
-            builder.WithParentActivityOrWindow(_parentWindowProvider.GetParentWindow);
+            builder.WithParentActivityOrWindow(() => (object)GetParentWindow());
             #endif
         }
         else
@@ -1083,7 +966,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             // UIViewController. WAM broker remains Windows-only and is intentionally skipped.
             // The callback is snapshotted at PCA build time; callers who update the callback
             // after the PCA is cached must invoke ClearUserTokenCache() to pick up the change.
-            Func<object>? parentActivityOrWindowFunc = _parentWindowProvider.Callback;
+            Func<object>? parentActivityOrWindowFunc = _parentActivityOrWindowFunc;
             if (parentActivityOrWindowFunc is not null)
             {
                 builder.WithParentActivityOrWindow(parentActivityOrWindowFunc);
@@ -1188,24 +1071,15 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
         options.Diagnostics.IsLoggingContentEnabled = false;
     }
 
-    /// <summary>Identifies cached direct MSAL clients, including settings bound at client construction.</summary>
     internal class PublicClientAppKey
     {
-        /// <summary>Gets the tenant-specific authority used to build the client.</summary>
         public string Authority { get; }
-
-        /// <summary>Gets the redirect URI selected for the runtime and broker configuration.</summary>
         public string RedirectUri { get; }
-
-        /// <summary>Gets the Entra application identifier.</summary>
         public string ApplicationClientId { get; }
-
         #if NETFRAMEWORK
-        /// <summary>Gets the caller's optional parent-window callback, which is captured by MSAL.</summary>
         public Func<System.Windows.Forms.IWin32Window>? IWin32WindowFunc { get; }
         #endif
 
-        /// <summary>Captures client-bound configuration for equality and cache lookup.</summary>
         public PublicClientAppKey(
             string authority,
             string redirectUri,
@@ -1223,7 +1097,6 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             #endif
         }
 
-        /// <inheritdoc />
         public override bool Equals(object? obj)
         {
             if (obj != null && obj is PublicClientAppKey pcaKey)
@@ -1239,7 +1112,6 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             return false;
         }
 
-        /// <inheritdoc />
         public override int GetHashCode() => Tuple.Create(
             Authority,
             RedirectUri,

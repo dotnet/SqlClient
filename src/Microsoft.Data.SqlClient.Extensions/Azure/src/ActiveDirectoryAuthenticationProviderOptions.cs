@@ -17,11 +17,5 @@ namespace Microsoft.Data.SqlClient
         
         /// <include file='../doc/ActiveDirectoryAuthenticationProviderOptions.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProviderOptions"]/UseWamBroker/*'/>
         public bool UseWamBroker { get; set; }
-
-        /// <include file='../doc/ActiveDirectoryAuthenticationProviderOptions.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProviderOptions"]/AuthenticationLoggingCallback/*'/>
-        public Action<SqlAuthenticationLogEntry>? AuthenticationLoggingCallback { get; set; }
-
-        /// <include file='../doc/ActiveDirectoryAuthenticationProviderOptions.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProviderOptions"]/EnableMsalPiiLogging/*'/>
-        public bool EnableMsalPiiLogging { get; set; }
     }
 }

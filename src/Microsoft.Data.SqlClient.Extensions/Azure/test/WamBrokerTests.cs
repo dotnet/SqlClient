@@ -17,28 +17,22 @@ public class WamBrokerTests
     // that this value differs from the SqlClient first-party id.
     private const string TestCustomAppId = "11111111-2222-3333-4444-555555555555";
 
-    // Reads the private parent-window callback holder. Used to assert downstream effects
+    // Reads the private _parentActivityOrWindowFunc field. Used to assert downstream effects
     // of SetParentActivityOrWindowFunc without triggering a live MSAL flow.
     private static Func<object>? GetParentActivityOrWindowFunc(ActiveDirectoryAuthenticationProvider provider)
     {
         FieldInfo? field = typeof(ActiveDirectoryAuthenticationProvider).GetField(
-            "_parentWindowProvider",
+            "_parentActivityOrWindowFunc",
             BindingFlags.Instance | BindingFlags.NonPublic);
         Assert.NotNull(field);
-        object? holder = field!.GetValue(provider);
-        Assert.NotNull(holder);
-        PropertyInfo? callback = holder!.GetType().GetProperty(
-            "Callback",
-            BindingFlags.Instance | BindingFlags.NonPublic);
-        Assert.NotNull(callback);
-        return (Func<object>?)callback!.GetValue(holder);
+        return (Func<object>?)field!.GetValue(provider);
     }
 
     /// <summary>
     /// A <see langword="null"/> callback is treated as "clear any previously installed callback"
     /// and must not throw. This is a deliberate API contract change from the original
     /// <see cref="ArgumentNullException"/> behavior so callers can opt out without recreating
-    /// the provider. Asserts the underlying callback is reset to <see langword="null"/> so the
+    /// the provider. Asserts the underlying field is reset to <see langword="null"/> so the
     /// provider's downstream consumer (MSAL parameters builder) sees the cleared state.
     /// </summary>
     [Fact]

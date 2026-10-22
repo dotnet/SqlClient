@@ -18,7 +18,6 @@ internal sealed class AzureAuthenticationEventListener : EventListener
     private readonly object _gate = new();
     private readonly List<SourceState> _sources = new();
     private int _activeScopes;
-    private int _callbackScopes;
     private readonly List<TaskCompletionSource<bool>> _pending = new();
     private bool _ready;
     private int _version;
@@ -39,7 +38,7 @@ internal sealed class AzureAuthenticationEventListener : EventListener
         }
     }
 
-    /// <summary>Creates the listener off the acquisition thread without inheriting application callbacks.</summary>
+    /// <summary>Creates the listener off the acquisition thread without inheriting acquisition context.</summary>
     private static Task<AzureAuthenticationEventListener> CreateAsync()
     {
         if (ExecutionContext.IsFlowSuppressed())
@@ -57,32 +56,21 @@ internal sealed class AzureAuthenticationEventListener : EventListener
     internal static Task<AzureAuthenticationEventListener> GetInstanceAsync() => s_instance.Value;
 
     /// <summary>Registers an acquisition and completes only after its SDK demand is applied.</summary>
-    /// <param name="logger">The acquisition's immutable policy.</param>
-    internal Task Enter(AuthenticationLogger logger)
+    internal Task Enter()
     {
         lock (_gate)
         {
             _activeScopes++;
-            if (logger.HasCallback)
-            {
-                _callbackScopes++;
-            }
         }
         return WaitForRefreshAsync();
     }
 
     /// <summary>Releases acquisition demand without waiting on an SDK command or the global EventSource lock.</summary>
-    /// <param name="logger">The policy supplied when the acquisition entered.</param>
-    internal void Leave(AuthenticationLogger logger)
+    internal void Leave()
     {
         lock (_gate)
         {
             _activeScopes--;
-            if (logger.HasCallback)
-            {
-                _callbackScopes--;
-            }
-
             _version++;
         }
         RequestRefresh();
@@ -300,7 +288,7 @@ internal sealed class AzureAuthenticationEventListener : EventListener
         internal EventLevel? Level { get; set; }
     }
 
-    /// <summary>Calculates SDK capture demand from active callbacks and current SqlClient collectors.</summary>
+    /// <summary>Calculates SDK capture demand from active acquisitions and current SqlClient collectors.</summary>
     /// <returns>The most detailed required SDK level, or null when no sink needs capture.</returns>
     /// <remarks>The caller holds the demand lock; this method never takes EventListener's global lock.</remarks>
     private EventLevel? GetDesiredLevel()
@@ -310,15 +298,10 @@ internal sealed class AzureAuthenticationEventListener : EventListener
             return null;
         }
 
-        if (_callbackScopes > 0)
-        {
-            return EventLevel.Verbose;
-        }
-
         EventLevel? desired = null;
         for (EventLevel level = EventLevel.LogAlways; level <= EventLevel.Verbose; level++)
         {
-            if (SqlClientEventSource.Log.IsEnabled(level, SqlClientEventSource.Keywords.Trace))
+            if (SqlClientEventSource.Log.IsEnabled(level, SqlClientEventSource.Keywords.AuthenticationTrace))
             {
                 desired = level;
             }
@@ -344,19 +327,19 @@ internal sealed class AzureAuthenticationEventListener : EventListener
         // Azure's MSAL event schema does not retain the original PII flag.
         if (level.HasValue && eventData.Payload?.Count == 1 && eventData.Payload[0] is string message)
         {
-            scope.Logger.Write(level.Value, message, false, "Azure-Identity");
+            AuthenticationLogger.Write(level.Value, message, "Azure-Identity");
         }
         else if (eventData.EventId == 13 && eventData.EventName == "DefaultAzureCredentialCredentialSelected" &&
             eventData.Payload?.Count == 1 && eventData.Payload[0] is string credentialType)
         {
-            scope.Logger.Write(EventLevel.Informational,
-                $"DefaultAzureCredential selected {credentialType}.", false, "Azure-Identity");
+            AuthenticationLogger.Write(EventLevel.Informational,
+                $"DefaultAzureCredential selected {credentialType}.", "Azure-Identity");
         }
         else if (eventData.EventId == 3 && eventData.EventName == "GetTokenFailed")
         {
             // The SDK's raw exception payload can contain personal information.
-            scope.Logger.Write(EventLevel.Error,
-                "Azure credential token request failed.", false, "Azure-Identity");
+            AuthenticationLogger.Write(EventLevel.Error,
+                "Azure credential token request failed.", "Azure-Identity");
         }
     }
 
