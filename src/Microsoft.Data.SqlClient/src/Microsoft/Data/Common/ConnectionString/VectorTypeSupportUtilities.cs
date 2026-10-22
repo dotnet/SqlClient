@@ -90,10 +90,10 @@ namespace Microsoft.Data.Common.ConnectionString
                     // Quick path for the most common case.
                     eValue = support;
                 }
-                else if (value.GetType().IsEnum)
+                else if (value.GetType().IsEnum || value is float || value is double)
                 {
-                    // Block the use of an unrelated enum type, which would otherwise be
-                    // converted through its underlying integral value.
+                    // Reject unrelated enums and floating-point values. On .NET 8, Enum.ToObject
+                    // reinterprets floating-point bits as integers instead of rejecting the input.
                     throw ADP.ConvertFailed(value.GetType(), typeof(SqlVectorTypeSupport), null);
                 }
                 else
