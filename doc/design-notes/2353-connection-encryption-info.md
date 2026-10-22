@@ -220,6 +220,17 @@ These rules only touch mode and protocol; certificate fields are never affected.
 completes the capture is released, so SSL errors on an open connection never alter a published
 snapshot.
 
+**Cipher suite.** `EncryptionInfoCapture.RecordCipherSuite(int cipherSuite)` is the single
+recording point for `NegotiatedCipherSuite`. Slice B adds only the plumbing: the value is reset
+with the other fields at the start of every physical login attempt, flows into the snapshot
+published on `SqlConnection` and attached to `SqlException`, and values outside 0–0xFFFF are
+ignored instead of failing the login. No transport calls it in this slice, so the property stays
+`null`; Slice C records it from `SslStream.NegotiatedCipherSuite` (Managed SNI) and Slice D from
+native SNI, which needs a new SNI contract. On failure an observed cipher suite is kept, like the
+protocol; `DiscardUnobservedNegotiation` neither clears nor infers it. A cipher suite is only
+reported once a ServerHello selected it, which is itself evidence of the observed negotiation, so
+it is not dropped when the protocol is unavailable.
+
 ## 5. Scope
 
 The API reports negotiated encryption, TLS protocol, the server-selected cipher suite, the server-presented certificate's

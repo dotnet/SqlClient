@@ -39,9 +39,15 @@ namespace Microsoft.Data.SqlClient.Connection
         public SslProtocols? Protocol { get; private set; }
 
         /// <summary>
+        /// Gets the IANA TLS cipher suite identifier negotiated for the current attempt, or
+        /// <see langword="null"/> if the transport did not report one.
+        /// </summary>
+        public int? CipherSuite { get; private set; }
+
+        /// <summary>
         /// Gets a value indicating whether any value has been captured for the current attempt.
         /// </summary>
-        public bool HasValues => Mode is not null || Protocol is not null;
+        public bool HasValues => Mode is not null || Protocol is not null || CipherSuite is not null;
 
         /// <summary>
         /// Clears all captured values. Called at the start of each physical login attempt.
@@ -50,14 +56,32 @@ namespace Microsoft.Data.SqlClient.Connection
         {
             Mode = null;
             Protocol = null;
+            CipherSuite = null;
+        }
+
+        /// <summary>
+        /// Records the TLS cipher suite the transport reported for the current attempt. Called by the
+        /// managed (SslStream) and native SNI transports once the value is observed; it is kept on a
+        /// failed attempt like the negotiated protocol.
+        /// </summary>
+        /// <param name="cipherSuite">
+        /// The IANA TLS cipher suite identifier. Values outside <c>0</c>..<c>0xFFFF</c> are not valid
+        /// identifiers and are ignored rather than failing the login.
+        /// </param>
+        public void RecordCipherSuite(int cipherSuite)
+        {
+            if (cipherSuite is >= 0 and <= ushort.MaxValue)
+            {
+                CipherSuite = cipherSuite;
+            }
         }
 
         /// <summary>
         /// Applies the failure-path rule for a TLS failure on the current attempt: the negotiated
         /// mode and protocol are published only when they were actually observed. A TLS protocol
         /// version agreed for this attempt is the evidence of that; without it the mode is cleared,
-        /// since requested settings and server pre-login responses are not substitutes. Certificate
-        /// fields are never affected.
+        /// since requested settings and server pre-login responses are not substitutes. An observed
+        /// cipher suite is kept and none is inferred. Certificate fields are never affected.
         /// </summary>
         public void DiscardUnobservedNegotiation()
         {
@@ -109,7 +133,8 @@ namespace Microsoft.Data.SqlClient.Connection
                     negotiatedEncryptionProtocol: Protocol,
                     presentedServerCertificateHash256: null,
                     validationErrors: null,
-                    chainStatus: null)
+                    chainStatus: null,
+                    negotiatedCipherSuite: CipherSuite)
                 : SqlConnectionEncryptionInfo.Empty;
     }
 }
