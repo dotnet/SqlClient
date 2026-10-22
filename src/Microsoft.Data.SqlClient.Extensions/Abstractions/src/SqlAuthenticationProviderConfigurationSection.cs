@@ -9,7 +9,7 @@ namespace Microsoft.Data.SqlClient
 {
     /// <include file='../doc/SqlAuthenticationProviderConfigurationSection.xml' path='docs/members[@name="SqlAuthenticationProviderConfigurationSection"]/SqlAuthenticationProviderConfigurationSection/*'/>
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public class SqlAuthenticationProviderConfigurationSection : ConfigurationSection
+    public sealed class SqlAuthenticationProviderConfigurationSection : ConfigurationSection
     {
         /// <include file='../doc/SqlAuthenticationProviderConfigurationSection.xml' path='docs/members[@name="SqlAuthenticationProviderConfigurationSection"]/Name/*'/>
         public const string Name = "SqlAuthenticationProviders";
@@ -31,11 +31,4 @@ namespace Microsoft.Data.SqlClient
         public string UseWamBroker => this["useWamBroker"] as string ?? string.Empty;
     }
 
-    /// <include file='../doc/SqlAuthenticationProviderConfigurationSection.xml' path='docs/members[@name="SqlClientAuthenticationProviderConfigurationSection"]/SqlClientAuthenticationProviderConfigurationSection/*'/>
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public class SqlClientAuthenticationProviderConfigurationSection : SqlAuthenticationProviderConfigurationSection
-    {
-        /// <include file='../doc/SqlAuthenticationProviderConfigurationSection.xml' path='docs/members[@name="SqlClientAuthenticationProviderConfigurationSection"]/Name/*'/>
-        public new const string Name = "SqlClientAuthenticationProviders";
-    }
 }

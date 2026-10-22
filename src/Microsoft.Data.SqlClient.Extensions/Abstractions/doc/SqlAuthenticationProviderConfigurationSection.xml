@@ -17,6 +17,7 @@ See the LICENSE file in the project root for more information.
           section activation. Applications should not instantiate, derive from, or access
           this type directly.
         </para>
+        <para>This sealed handler derives directly from <see cref="T:System.Configuration.ConfigurationSection"/>.</para>
         <para>Referencing this handler in an app.config section declaration is supported.</para>
       </remarks>
     </SqlAuthenticationProviderConfigurationSection>
@@ -44,25 +45,5 @@ See the LICENSE file in the project root for more information.
       </summary>
       <value>The Web Account Manager broker preference, or an empty string when unset.</value>
     </UseWamBroker>
-  </members>
-  <members name="SqlClientAuthenticationProviderConfigurationSection">
-    <SqlClientAuthenticationProviderConfigurationSection>
-      <summary>
-        The configuration section definition for reading app.config.
-        This infrastructure type is not intended for direct use by application code.
-      </summary>
-      <remarks>
-        <para>Defines the current <c>SqlClientAuthenticationProviders</c> section for authentication configuration.</para>
-        <para>
-          This type is public to support use across SqlClient assemblies and configuration
-          section activation. Applications should not instantiate, derive from, or access
-          this type directly.
-        </para>
-        <para>Referencing this handler in an app.config section declaration is supported.</para>
-      </remarks>
-    </SqlClientAuthenticationProviderConfigurationSection>
-    <Name>
-      <summary>The name of the current authentication configuration section.</summary>
-    </Name>
   </members>
 </docs>

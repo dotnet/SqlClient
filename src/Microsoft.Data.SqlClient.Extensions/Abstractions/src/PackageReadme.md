@@ -16,6 +16,7 @@ The abstractions package allows for:
 
 This package supports:
 
+- .NET Framework 4.6.2 (uses the framework's `System.Configuration` assembly)
 - .NET Standard 2.0 (compatible with .NET Framework 4.6.1+, .NET Core 2.0+, and .NET 5+)
 
 ## Authentication configuration
@@ -23,7 +24,9 @@ This package supports:
 The public `SqlAuthenticationProviderConfigurationSection` (legacy
 `SqlAuthenticationProviders`) and `SqlClientAuthenticationProviderConfigurationSection`
 (`SqlClientAuthenticationProviders`) handlers are defined in this package and forwarded
-from SqlClient. These are infrastructure types, public to support use across SqlClient
+from SqlClient. Both are sealed and derive directly from `ConfigurationSection`, with
+the same configuration schema and no inheritance relationship between the handlers.
+These are infrastructure types, public to support use across SqlClient
 assemblies and configuration section activation, not APIs for direct use by application
 code. Applications should not instantiate, derive from, or access them directly.
 Referencing the handlers in app.config section declarations is supported, and existing
@@ -31,9 +34,11 @@ declarations naming `Microsoft.Data.SqlClient` remain valid.
 Section names, properties (`providers`, `initializerType`,
 `applicationClientId`, `useWamBroker`) and empty defaults are unchanged.
 
-`System.Configuration.ConfigurationManager` is a transitive compile dependency required
-by the handlers' configuration base types. Authentication initialization and provider
-loading remain in the driver.
+For the .NET Standard target, `System.Configuration.ConfigurationManager` is a transitive
+compile dependency required by the handlers' configuration base types. The .NET Framework
+target uses the framework's `System.Configuration` instead, without introducing a
+ConfigurationManager package dependency. Authentication initialization and provider loading
+remain in the driver, and the modern section continues to take precedence over the legacy one.
 
 Merge the following example into the application's app.config, replacing
 `ExampleAuthenticationProvider, ExampleApp` with the assembly-qualified name of an

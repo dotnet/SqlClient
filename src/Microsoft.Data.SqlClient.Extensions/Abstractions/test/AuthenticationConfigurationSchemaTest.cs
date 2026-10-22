@@ -16,6 +16,8 @@ public class AuthenticationConfigurationSchemaTest
     [InlineData(typeof(SqlClientAuthenticationProviderConfigurationSection), "SqlClientAuthenticationProviders")]
     public void HandlerContractIsPreserved(Type type, string sectionName)
     {
+        Assert.True(type.IsSealed);
+        Assert.Equal(typeof(ConfigurationSection), type.BaseType);
         var editorBrowsable = Assert.IsType<EditorBrowsableAttribute>(
             Assert.Single(type.GetCustomAttributes(typeof(EditorBrowsableAttribute), inherit: false)));
         Assert.Equal(EditorBrowsableState.Never, editorBrowsable.State);
@@ -29,4 +31,16 @@ public class AuthenticationConfigurationSchemaTest
         Assert.Equal(string.Empty, section.ElementInformation.Properties["applicationClientId"].Value);
         Assert.Equal(string.Empty, section.ElementInformation.Properties["useWamBroker"].Value);
     }
+
+#if NETFRAMEWORK
+    /// <summary>The net462 handlers use framework configuration without adding ConfigurationManager.</summary>
+    [Fact]
+    public void HandlersUseFrameworkConfiguration()
+    {
+        Assert.Equal("System.Configuration", typeof(ConfigurationSection).Assembly.GetName().Name);
+        Assert.DoesNotContain(
+            typeof(SqlAuthenticationProviderConfigurationSection).Assembly.GetReferencedAssemblies(),
+            assembly => assembly.Name == "System.Configuration.ConfigurationManager");
+    }
+#endif
 }

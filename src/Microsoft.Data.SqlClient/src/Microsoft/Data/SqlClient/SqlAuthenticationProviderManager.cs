@@ -29,7 +29,7 @@ namespace Microsoft.Data.SqlClient
 
         static SqlAuthenticationProviderManager()
         {
-            TryReadConfigurationSection(out SqlAuthenticationProviderConfigurationSection? configurationSection);
+            TryReadConfigurationSection(out AuthenticationConfiguration? configurationSection);
 
             Instance = new SqlAuthenticationProviderManager(configurationSection);
 
@@ -178,7 +178,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Constructor.
         /// </summary>
-        private SqlAuthenticationProviderManager(SqlAuthenticationProviderConfigurationSection? configSection)
+        private SqlAuthenticationProviderManager(AuthenticationConfiguration? configSection)
         {
             var methodName = "Ctor";
 
@@ -422,7 +422,7 @@ namespace Microsoft.Data.SqlClient
         /// Separated from the static constructor so that it can be tested: the
         /// constructor runs once per process, before any test can observe it.
         /// </remarks>
-        internal static bool TryReadConfigurationSection(out SqlAuthenticationProviderConfigurationSection? configurationSection)
+        internal static bool TryReadConfigurationSection(out AuthenticationConfiguration? configurationSection)
         {
             configurationSection = null;
 
@@ -433,13 +433,7 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-                // New configuration section "SqlClientAuthenticationProviders" for Microsoft.Data.SqlClient accepted to avoid conflicts with older one.
-                configurationSection = FetchConfigurationSection<SqlClientAuthenticationProviderConfigurationSection>(SqlClientAuthenticationProviderConfigurationSection.Name);
-                if (configurationSection == null)
-                {
-                    // If configuration section is not yet found, try with old Configuration Section name for backwards compatibility
-                    configurationSection = FetchConfigurationSection<SqlAuthenticationProviderConfigurationSection>(SqlAuthenticationProviderConfigurationSection.Name);
-                }
+                configurationSection = ReadConfigurationSection(ConfigurationManager.GetSection);
             }
             catch (ConfigurationErrorsException e)
             {
@@ -450,19 +444,38 @@ namespace Microsoft.Data.SqlClient
             return true;
         }
 
+        internal static AuthenticationConfiguration? ReadConfigurationSection(Func<string, object?> getSection)
+        {
+            var current = FetchConfigurationSection<SqlClientAuthenticationProviderConfigurationSection>(
+                SqlClientAuthenticationProviderConfigurationSection.Name, getSection);
+            if (current is not null)
+            {
+                return new AuthenticationConfiguration(
+                    current.ApplicationClientId, current.InitializerType, current.UseWamBroker, current.Providers);
+            }
+
+            var legacy = FetchConfigurationSection<SqlAuthenticationProviderConfigurationSection>(
+                SqlAuthenticationProviderConfigurationSection.Name, getSection);
+            return legacy is null
+                ? null
+                : new AuthenticationConfiguration(
+                    legacy.ApplicationClientId, legacy.InitializerType, legacy.UseWamBroker, legacy.Providers);
+        }
+
         /// <summary>
         /// Fetches provided configuration section from app.config file.
         /// Does not support reading from appsettings.json yet.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="name"></param>
+        /// <param name="getSection">Reads a section from the application or an isolated configuration file.</param>
         /// <returns></returns>
-        private static T? FetchConfigurationSection<T>(string name) where T : class
+        private static T? FetchConfigurationSection<T>(string name, Func<string, object?> getSection) where T : class
         {
             Type t = typeof(T);
 
             // TODO: Support reading configuration from appsettings.json for .NET runtime applications.
-            object section = ConfigurationManager.GetSection(name);
+            object? section = getSection(name);
             if (section != null)
             {
                 if (section is ConfigurationSection configSection && configSection.GetType() == t)
@@ -513,6 +526,28 @@ namespace Microsoft.Data.SqlClient
                 return "null";
             }
             return provider.GetType().FullName ?? "unknown";
+        }
+
+        // Temporary bridge for the current driver reader. Remove with this manager in #4821,
+        // when the Abstractions registry takes over using SqlAuthenticationConfiguration.
+        internal sealed class AuthenticationConfiguration
+        {
+            internal AuthenticationConfiguration(
+                string applicationClientId,
+                string initializerType,
+                string useWamBroker,
+                ProviderSettingsCollection providers)
+            {
+                ApplicationClientId = applicationClientId;
+                InitializerType = initializerType;
+                UseWamBroker = useWamBroker;
+                Providers = providers;
+            }
+
+            internal string ApplicationClientId { get; }
+            internal string InitializerType { get; }
+            internal string UseWamBroker { get; }
+            internal ProviderSettingsCollection Providers { get; }
         }
     }
 
