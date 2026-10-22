@@ -306,9 +306,10 @@ internal sealed class AzureAuthenticationEventListener : EventListener
                 desired = level;
             }
         }
-        // A LogAlways subscription means all levels to EventListener, not Always-only.
-        // Critical is the narrowest subscription that includes Always; dispatch still honors collector settings.
-        return desired == EventLevel.LogAlways ? EventLevel.Critical : desired;
+        // SDK failures (GetTokenFailed) are Informational but forwarded as Error, so subscribe at least at
+        // Informational. This also covers LogAlways, which EventListener treats as all levels.
+        // Write still filters each forwarded event by the collector's level.
+        return desired is null or > EventLevel.Informational ? desired : EventLevel.Informational;
     }
 
     /// <summary>Attributes allowlisted SDK events to the current live extension acquisition.</summary>

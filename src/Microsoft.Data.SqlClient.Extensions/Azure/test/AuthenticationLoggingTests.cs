@@ -645,6 +645,56 @@ public class AuthenticationLoggingTests
         Assert.Contains(listener.Events, e => Equals(e.Payload![0], "DefaultAzureCredential selected ClientSecretCredential."));
     }
 
+    /// <summary>Error and Warning collectors still receive SDK failures that Azure emits at Informational.</summary>
+    [Theory]
+    [InlineData(EventLevel.Error)]
+    [InlineData(EventLevel.Warning)]
+    public async Task AzureSdkEvents_LowVerbosityCollectorsReceiveTokenFailures(EventLevel level)
+    {
+        using var listener = new AuthenticationListener(level: level);
+        using var source = new InvalidSchemaIdentitySource();
+        using AuthenticationLogger.Scope scope = AuthenticationLogger.Begin(listener.ConnectionId, captureAzure: true);
+        await scope.WaitForReadyAsync(CancellationToken.None);
+        source.DefaultAzureCredentialCredentialSelected("ClientSecretCredential");
+        source.GetTokenFailed("private exception");
+        EventWrittenEventArgs entry = Assert.Single(listener.Events);
+        Assert.Equal(EventLevel.Error, entry.Level);
+        Assert.Equal("Azure credential token request failed.", entry.Payload![0]);
+    }
+
+    /// <summary>Collector work during a lifecycle event is not attributed to the acquisition and cannot recurse.</summary>
+    [Fact]
+    public async Task AcquireToken_ReentrantCollectorWorkIsSuppressed()
+    {
+        using var listener = new AuthenticationListener(captureAll: true);
+        using var source = new ControlledIdentitySource();
+        var provider = new ActiveDirectoryAuthenticationProvider();
+        Guid nestedId = Guid.NewGuid();
+        int reentered = 0;
+        listener.OnAuthentication = () =>
+        {
+            if (Interlocked.Exchange(ref reentered, 1) == 0)
+            {
+                // Simulates a collector that uses an Azure credential and opens a SqlClient connection.
+                source.LogMsalAlways("collector work");
+                var nested = new SqlAuthenticationParameters(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal,
+                    "test-server", "test-db", "https://database.windows.net/", "https://login.microsoftonline.com/",
+                    "", "", nestedId, 30);
+                Assert.ThrowsAsync<AuthenticationException>(() => provider.AcquireTokenAsync(nested)).GetAwaiter().GetResult();
+            }
+        };
+        var parameters = new SqlAuthenticationParameters(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal,
+            "test-server", "test-db", "https://database.windows.net/", "https://login.microsoftonline.com/",
+            "", "", listener.ConnectionId, 30);
+        await Assert.ThrowsAsync<AuthenticationException>(() => provider.AcquireTokenAsync(parameters));
+
+        Assert.Equal(1, reentered);
+        Assert.Single(listener.Events, entry => Equals(entry.Payload![0], "Token acquisition started."));
+        Assert.DoesNotContain(listener.Events, entry => Equals(entry.Payload![0], "collector work"));
+        Assert.DoesNotContain(listener.Events, entry => Equals(entry.Payload![2], nestedId.ToString()));
+        Assert.Null(AuthenticationLogger.CurrentScope);
+    }
+
     /// <summary>The SDK allowlist requires a reviewed event ID and name together.</summary>
     [Theory]
     [InlineData(7, "LogMsalVerbose", EventLevel.Verbose)]

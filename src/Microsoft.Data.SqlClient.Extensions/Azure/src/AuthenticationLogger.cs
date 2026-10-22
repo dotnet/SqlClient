@@ -32,13 +32,17 @@ internal static class AuthenticationLogger
     /// <remarks>Await <see cref="Scope.WaitForReadyAsync"/> before calling Azure credential APIs.</remarks>
     internal static Scope Begin(Guid connectionId, bool captureAzure = false) => new(connectionId, captureAzure);
 
-    /// <summary>Writes an SDK diagnostic for the active acquisition.</summary>
+    /// <summary>Writes a diagnostic for the active acquisition.</summary>
+    /// <remarks>
+    /// All authentication events use this path so in-process collectors cannot attribute their own
+    /// credential or SqlClient work to this acquisition.
+    /// </remarks>
     /// <param name="level">The framework event severity.</param>
     /// <param name="message">
     /// The non-PII diagnostic. Callers pass fixed text or SDK output from clients with PII logging disabled,
     /// never raw exception payloads.
     /// </param>
-    /// <param name="source">The diagnostic origin, such as MSAL or Azure-Identity.</param>
+    /// <param name="source">The diagnostic origin: SqlClient, MSAL, or Azure-Identity.</param>
     internal static void Write(EventLevel level, string message, string source)
     {
         Scope? scope = CurrentScope;
