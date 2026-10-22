@@ -102,17 +102,12 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
         /// For Deterministic encryption, a synthetic IV will be generated during encryption
         /// For Randomized encryption, a random IV will be generated during encryption.
         /// </param>
-        /// <param name="algorithmVersion">
-        /// Algorithm version
-        /// </param>
-        internal AeadAes256CbcHmac256Algorithm(AeadAes256CbcHmac256EncryptionKey encryptionKey, EncryptionType encryptionType, byte algorithmVersion)
+        internal AeadAes256CbcHmac256Algorithm(AeadAes256CbcHmac256EncryptionKey encryptionKey, EncryptionType encryptionType)
         {
             _columnEncryptionKey = encryptionKey;
-            _algorithmVersion = algorithmVersion;
-            _version[0] = algorithmVersion;
+            _algorithmVersion = CurrentVersion;
 
             Debug.Assert(encryptionKey != null, "Null encryption key detected in AeadAes256CbcHmac256 algorithm");
-            Debug.Assert(0x01 == algorithmVersion, "Unknown algorithm version passed to AeadAes256CbcHmac256");
 
             // Validate encryption type for this algorithm
             // This algorithm can only provide randomized or deterministic encryption types.

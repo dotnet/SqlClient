@@ -73,7 +73,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
             if (!_encryptionAlgorithms.TryGetValue(algorithmKey, out AeadAes256CbcHmac256Algorithm? aesAlgorithm))
             {
                 AeadAes256CbcHmac256EncryptionKey encryptedKey = new(encryptionKey.RootKey);
-                aesAlgorithm = new AeadAes256CbcHmac256Algorithm(encryptedKey, encryptionType, AeadAes256CbcHmac256Algorithm.CurrentVersion);
+                aesAlgorithm = new AeadAes256CbcHmac256Algorithm(encryptedKey, encryptionType);
 
                 // In case multiple threads reach here at the same time, the first one adds the value
                 // the second one will be a no-op, the allocated memory will be claimed by Garbage Collector.
