@@ -26,6 +26,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             _fixture = fixture;
         }
 
+        /// <summary>
+        /// Synchronous reader execution must use only the synchronous key-store provider API.
+        /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void SyncExecutionUsesSyncKeyStoreProviderApi(string connectionString)
@@ -43,6 +46,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.Equal(0, provider.AsyncCalls);
         }
 
+        /// <summary>
+        /// Asynchronous reader execution must decrypt keys through the asynchronous provider API.
+        /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public async Task ExecuteReaderAsyncUsesAsyncKeyStoreProviderApi(string connectionString)
@@ -50,6 +56,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             await AssertAsyncApiUsed(connectionString, command => command.ExecuteReaderAsync());
         }
 
+        /// <summary>
+        /// Asynchronous non-query execution must decrypt keys through the asynchronous provider API.
+        /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public async Task ExecuteNonQueryAsyncUsesAsyncKeyStoreProviderApi(string connectionString)

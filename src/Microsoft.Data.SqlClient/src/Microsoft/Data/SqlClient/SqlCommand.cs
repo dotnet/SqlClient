@@ -2487,7 +2487,8 @@ namespace Microsoft.Data.SqlClient
             localCompletion.Task.ContinueWith(
                 task =>
                 {
-                    if (task.IsFaulted)
+                    if (task.IsFaulted &&
+                        task.Exception.InnerException is not EnclaveDelegate.RetryableEnclaveQueryExecutionException)
                     {
                         globalCompletion.TrySetException(task.Exception.InnerException);
                         return;
@@ -2501,6 +2502,9 @@ namespace Microsoft.Data.SqlClient
 
                     try
                     {
+                        // Package generation can fail before the read stage; use the same bounded retry.
+                        task.GetAwaiter().GetResult();
+
                         // Mark that we initiated the internal EndExecute. This should always be false
                         // until we set it here.
                         Debug.Assert(!_internalEndExecuteInitiated);
