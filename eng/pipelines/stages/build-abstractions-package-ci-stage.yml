@@ -56,6 +56,11 @@ parameters:
     type: boolean
     default: false
 
+  # Include macOS tests unless the caller disables them for PR validation.
+  - name: runMacOSTests
+    type: boolean
+    default: true
+
   # The verbosity level for the dotnet CLI commands.
   - name: dotnetVerbosity
     type: string
@@ -135,18 +140,18 @@ stages:
 
       # ------------------------------------------------------------------------
       # Build and test on macOS.
-
-      - template: /eng/pipelines/jobs/test-abstractions-package-ci-job.yml@self
-        parameters:
-          buildConfiguration: ${{ parameters.buildConfiguration }}
-          debug: ${{ parameters.debug }}
-          displayNamePrefix: macOS
-          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-          jobNameSuffix: macos
-          netFrameworkRuntimes: []
-          netRuntimes: [net8.0, net9.0, net10.0]
-          poolName: Azure Pipelines
-          vmImage: macos-latest
+      - ${{ if eq(parameters.runMacOSTests, true) }}:
+        - template: /eng/pipelines/jobs/test-abstractions-package-ci-job.yml@self
+          parameters:
+            buildConfiguration: ${{ parameters.buildConfiguration }}
+            debug: ${{ parameters.debug }}
+            displayNamePrefix: macOS
+            dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+            jobNameSuffix: macos
+            netFrameworkRuntimes: []
+            netRuntimes: [net8.0, net9.0, net10.0]
+            poolName: Azure Pipelines
+            vmImage: macos-latest
 
       # ------------------------------------------------------------------------
       # Create and publish the NuGet package.
@@ -163,7 +168,8 @@ stages:
             # producing the NuGet package.
             - test_abstractions_package_job_linux
             - test_abstractions_package_job_windows
-            - test_abstractions_package_job_macos
+            - ${{ if eq(parameters.runMacOSTests, true) }}:
+              - test_abstractions_package_job_macos
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
           loggingPackageVersion: ${{ parameters.loggingPackageVersion }}

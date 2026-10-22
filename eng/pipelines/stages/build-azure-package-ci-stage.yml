@@ -90,6 +90,11 @@ parameters:
     type: boolean
     default: false
 
+  # Include macOS tests unless the caller disables them for PR validation.
+  - name: runMacOSTests
+    type: boolean
+    default: true
+
   # The dotnet CLI verbosity to use.
   - name: dotnetVerbosity
     type: string
@@ -256,22 +261,23 @@ stages:
       # Build and test on macOS.
 
       # Use the Azure Pipelines pool for basic testing.
-      - template: /eng/pipelines/jobs/test-azure-package-ci-job.yml@self
-        parameters:
-          abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
-          abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
-          buildConfiguration: ${{ parameters.buildConfiguration }}
-          debug: ${{ parameters.debug }}
-          displayNamePrefix: macOS
-          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-          jobNameSuffix: macos
-          mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
-          mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
-          netFrameworkRuntimes: []
-          netRuntimes: [net8.0, net9.0, net10.0]
-          poolName: ${{ parameters.azurePoolName }}
-          referenceType: ${{ parameters.referenceType }}
-          vmImage: macos-latest
+      - ${{ if eq(parameters.runMacOSTests, true) }}:
+        - template: /eng/pipelines/jobs/test-azure-package-ci-job.yml@self
+          parameters:
+            abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
+            abstractionsPackageVersion: ${{ parameters.abstractionsPackageVersion }}
+            buildConfiguration: ${{ parameters.buildConfiguration }}
+            debug: ${{ parameters.debug }}
+            displayNamePrefix: macOS
+            dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+            jobNameSuffix: macos
+            mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
+            mdsPackageVersion: ${{ parameters.mdsPackageVersion }}
+            netFrameworkRuntimes: []
+            netRuntimes: [net8.0, net9.0, net10.0]
+            poolName: ${{ parameters.azurePoolName }}
+            referenceType: ${{ parameters.referenceType }}
+            vmImage: macos-latest
 
       # We do not currently have any images in our 1ES ADO pools for macOS.
 
@@ -294,7 +300,8 @@ stages:
             - test_azure_package_job_linux_integration
             - test_azure_package_job_windows
             - test_azure_package_job_windows_integration
-            - test_azure_package_job_macos
+            - ${{ if eq(parameters.runMacOSTests, true) }}:
+              - test_azure_package_job_macos
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
           loggingPackageVersion: ${{ parameters.loggingPackageVersion }}

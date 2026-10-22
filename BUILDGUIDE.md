@@ -65,6 +65,17 @@ Manual Tests require the below setup to run:
   |IsManagedInstance | (Optional) When set to `true` **TVP** related tests will use non-Azure bsl files to compare test results. This is needed when testing against Azure Managed Instances; otherwise TVP Tests will fail on TestSet 3. The default value is `false`. |
   |PowerShellPath | The full path to PowerShell.exe. This is not required if the path is present in the PATH environment variable. | `D:\\escaped\\absolute\\path\\to\\PowerShell.exe` |
 
+## CI Platform Coverage
+
+PR validation runs tests on Windows and Linux only. The
+[project-reference](eng/pipelines/sqlclient-pr-project-ref-pipeline.yml) and
+[package-reference](eng/pipelines/sqlclient-pr-package-ref-pipeline.yml) PR pipelines set
+`runMacOSTests: false`, excluding macOS SqlClient/AKV, Abstractions, and Azure extension tests
+and their packaging dependencies.
+
+The [shared CI template](eng/pipelines/dotnet-sqlclient-ci-core.yml) defaults `runMacOSTests` to `true`,
+so scheduled and push-triggered CI retains macOS coverage. Local macOS testing remains supported.
+
 ## MSBuild Reference
 
 ### Targets
