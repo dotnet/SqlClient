@@ -139,21 +139,6 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
         /// <returns>Returns the ciphertext corresponding to the plaintext.</returns>
         internal override byte[] EncryptData(byte[] plainText)
         {
-            return EncryptData(plainText, hasAuthenticationTag: true);
-        }
-
-        /// <summary>
-        /// Encryption Algorithm
-        /// cell_iv = HMAC_SHA-2-256(iv_key, cell_data) truncated to 128 bits
-        /// cell_ciphertext = AES-CBC-256(enc_key, cell_iv, cell_data) with PKCS7 padding.
-        /// (optional) cell_tag = HMAC_SHA-2-256(mac_key, versionbyte + cell_iv + cell_ciphertext + versionbyte_length)
-        /// cell_blob = versionbyte + [cell_tag] + cell_iv + cell_ciphertext
-        /// </summary>
-        /// <param name="plainText">Plaintext data to be encrypted</param>
-        /// <param name="hasAuthenticationTag">Does the algorithm require authentication tag.</param>
-        /// <returns>Returns the ciphertext corresponding to the plaintext.</returns>
-        protected byte[] EncryptData(byte[] plainText, bool hasAuthenticationTag)
-        {
             // Empty values get encrypted and decrypted properly for both Deterministic and Randomized encryptions.
             Debug.Assert(plainText != null);
 
@@ -174,7 +159,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
 
             // Final blob we return = version + HMAC + iv + cipherText
             const int hmacStartIndex = 1;
-            int authenticationTagLen = hasAuthenticationTag ? _KeySizeInBytes : 0;
+            int authenticationTagLen = _KeySizeInBytes;
             int ivStartIndex = hmacStartIndex + authenticationTagLen;
             int cipherStartIndex = ivStartIndex + _BlockSizeInBytes; // this is where hmac starts.
 
@@ -233,21 +218,18 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
                     cipherIndex += buffTmp.Length;
                 }
 
-                if (hasAuthenticationTag)
+                using (HMACSHA256 hmac = new HMACSHA256(_columnEncryptionKey.MacKey))
                 {
-                    using (HMACSHA256 hmac = new HMACSHA256(_columnEncryptionKey.MacKey))
-                    {
-                        Debug.Assert(hmac.CanTransformMultipleBlocks, "HMAC can't transform multiple blocks");
-                        hmac.TransformBlock(_version, 0, _version.Length, _version, 0);
-                        hmac.TransformBlock(iv, 0, iv.Length, iv, 0);
+                    Debug.Assert(hmac.CanTransformMultipleBlocks, "HMAC can't transform multiple blocks");
+                    hmac.TransformBlock(_version, 0, _version.Length, _version, 0);
+                    hmac.TransformBlock(iv, 0, iv.Length, iv, 0);
 
-                        // Compute HMAC on final block
-                        hmac.TransformBlock(outBuffer, cipherStartIndex, numBlocks * _BlockSizeInBytes, outBuffer, cipherStartIndex);
-                        hmac.TransformFinalBlock(_versionSize, 0, _versionSize.Length);
-                        byte[] hash = hmac.Hash;
-                        Debug.Assert(hash.Length >= authenticationTagLen, "Unexpected hash size");
-                        Buffer.BlockCopy(hash, 0, outBuffer, hmacStartIndex, authenticationTagLen);
-                    }
+                    // Compute HMAC on final block
+                    hmac.TransformBlock(outBuffer, cipherStartIndex, numBlocks * _BlockSizeInBytes, outBuffer, cipherStartIndex);
+                    hmac.TransformFinalBlock(_versionSize, 0, _versionSize.Length);
+                    byte[] hash = hmac.Hash;
+                    Debug.Assert(hash.Length >= authenticationTagLen, "Unexpected hash size");
+                    Buffer.BlockCopy(hash, 0, outBuffer, hmacStartIndex, authenticationTagLen);
                 }
             }
             finally
@@ -269,25 +251,11 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
         /// <returns></returns>
         internal override byte[] DecryptData(byte[] cipherText)
         {
-            return DecryptData(cipherText, hasAuthenticationTag: true);
-        }
-
-        /// <summary>
-        /// Decryption steps
-        /// 1. Validate version byte
-        /// 2. (optional) Validate Authentication tag
-        /// 3. Decrypt the message
-        /// </summary>
-        /// <param name="cipherText"></param>
-        /// <param name="hasAuthenticationTag"></param>
-        /// <returns></returns>
-        protected byte[] DecryptData(byte[] cipherText, bool hasAuthenticationTag)
-        {
             Debug.Assert(cipherText != null);
 
             byte[] iv = new byte[_BlockSizeInBytes];
 
-            int minimumCipherTextLength = hasAuthenticationTag ? _MinimumCipherTextLengthInBytesWithAuthenticationTag : _MinimumCipherTextLengthInBytesNoAuthenticationTag;
+            int minimumCipherTextLength = _MinimumCipherTextLengthInBytesWithAuthenticationTag;
             if (cipherText.Length < minimumCipherTextLength)
             {
                 throw SQL.InvalidCipherTextSize(cipherText.Length, minimumCipherTextLength);
@@ -305,11 +273,8 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
             int authenticationTagOffset = 0;
 
             // Read authentication tag
-            if (hasAuthenticationTag)
-            {
-                authenticationTagOffset = startIndex;
-                startIndex += _KeySizeInBytes; // authentication tag size is _KeySizeInBytes
-            }
+            authenticationTagOffset = startIndex;
+            startIndex += _KeySizeInBytes; // authentication tag size is _KeySizeInBytes
 
             // Read cell IV
             Buffer.BlockCopy(cipherText, startIndex, iv, 0, iv.Length);
@@ -319,15 +284,12 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
             int cipherTextOffset = startIndex;
             int cipherTextCount = cipherText.Length - startIndex;
 
-            if (hasAuthenticationTag)
+            // Compute authentication tag
+            byte[] authenticationTag = PrepareAuthenticationTag(iv, cipherText, cipherTextOffset, cipherTextCount);
+            if (!SqlSecurityUtility.CompareBytes(authenticationTag, cipherText, authenticationTagOffset, authenticationTag.Length))
             {
-                // Compute authentication tag
-                byte[] authenticationTag = PrepareAuthenticationTag(iv, cipherText, cipherTextOffset, cipherTextCount);
-                if (!SqlSecurityUtility.CompareBytes(authenticationTag, cipherText, authenticationTagOffset, authenticationTag.Length))
-                {
-                    // Potentially tampered data, throw an exception
-                    throw SQL.InvalidAuthenticationTag();
-                }
+                // Potentially tampered data, throw an exception
+                throw SQL.InvalidAuthenticationTag();
             }
 
             // Decrypt the text and return
