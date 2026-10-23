@@ -16,6 +16,7 @@ using System.Globalization;
 using System.IO;
 using System.Xml;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlTypes;
 using Microsoft.SqlServer.Server;
 

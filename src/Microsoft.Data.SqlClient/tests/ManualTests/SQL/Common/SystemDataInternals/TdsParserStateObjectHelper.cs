@@ -24,7 +24,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
             Assembly assembly = typeof(Microsoft.Data.SqlClient.SqlConnection).GetTypeInfo().Assembly;
             Assert.True(assembly is not null, nameof(assembly));
 
-            Type tdsParserStateObject = assembly.GetType("Microsoft.Data.SqlClient.TdsParserStateObject");
+            Type tdsParserStateObject = assembly.GetType("Microsoft.Data.SqlClient.Parser.TdsParserStateObject");
             Assert.True(tdsParserStateObject is not null, nameof(tdsParserStateObject));
 
             s_forceAllPends = tdsParserStateObject.GetField("s_forceAllPends", BindingFlags.Static | BindingFlags.NonPublic);

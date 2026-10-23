@@ -73,6 +73,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         /// <summary>
         /// Gets the identity used by the connection pool when establishing connections.
+        /// Returns <see cref="DbConnectionPoolIdentity.NoIdentity"/> when no identity is used, never null.
         /// </summary>
         DbConnectionPoolIdentity Identity { get; }
 

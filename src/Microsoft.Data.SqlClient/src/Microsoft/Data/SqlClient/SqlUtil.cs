@@ -18,6 +18,7 @@ using Interop.Common.Sni;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.AlwaysEncrypted;
 using Microsoft.Data.SqlClient.Connection;
+using Microsoft.Data.SqlClient.Parser;
 
 #if NET
 using System.Net.Sockets;
@@ -204,6 +205,10 @@ namespace Microsoft.Data.SqlClient
         internal static Exception ChangePasswordUseOfUnallowedKey(string key)
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ChangePasswordUseOfUnallowedKey, key));
+        }
+        internal static Exception GlobalizationInvariantModeRequiresLcid()
+        {
+            return ADP.NotSupported(StringsHelper.GetString(Strings.SQL_GlobalizationInvariantModeRequiresLcid));
         }
         internal static Exception GlobalizationInvariantModeNotSupported()
         {
