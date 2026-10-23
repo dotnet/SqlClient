@@ -174,7 +174,6 @@ internal sealed class SqlAuthenticationConfiguration
     internal static ConfigurationSection? FetchConfigurationSection(
         string name, Type type, Func<string, object?>? getSection = null)
     {
-        // TODO: Support reading configuration from appsettings.json for .NET runtime applications.
         object? section = (getSection ?? ConfigurationManager.GetSection)(name);
         if (section is null)
         {
