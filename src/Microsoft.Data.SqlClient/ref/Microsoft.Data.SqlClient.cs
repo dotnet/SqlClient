@@ -211,7 +211,7 @@ public class SqlBatchCommand
     #if NET
     public override bool CanCreateParameter { get { throw null; } }
     #else
-    public bool CanCreateParameter { get { throw null; } set { } }
+    public bool CanCreateParameter { get { throw null; } }
     #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/CommandText/*'/>
     #if NET
@@ -257,6 +257,7 @@ public class SqlBatchCommandCollection : System.Data.Common.DbBatchCommandCollec
 public class SqlBatchCommandCollection : System.Collections.Generic.IList<Microsoft.Data.SqlClient.SqlBatchCommand>
 #endif
 {
+    internal SqlBatchCommandCollection(System.Collections.Generic.List<Microsoft.Data.SqlClient.SqlBatchCommand> batchCommands) { }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/Count/*'/>
     #if NET
     public override int Count => throw null;
@@ -1262,6 +1263,7 @@ public enum SqlConnectionColumnEncryptionSetting
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/SqlConnectionEncryptOption/*'/>
 public sealed class SqlConnectionEncryptOption
 {
+    private SqlConnectionEncryptOption(string value) { }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/Parse/*' />
     public static SqlConnectionEncryptOption Parse(string value) => throw null;
 

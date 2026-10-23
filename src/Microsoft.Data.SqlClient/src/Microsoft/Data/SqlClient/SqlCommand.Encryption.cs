@@ -13,6 +13,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.AlwaysEncrypted;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.Utilities;
 
@@ -241,7 +242,8 @@ namespace Microsoft.Data.SqlClient
             new EnclaveSessionParameters(
                 _activeConnection.DataSource,
                 _activeConnection.EnclaveAttestationUrl,
-                _activeConnection.Database);
+                _activeConnection.Database,
+                _activeConnection.AttestationProtocol);
 
         // @TODO: Isn't this doing things asynchronously? We should just have a purely asynchronous and a purely synchronous pathway instead of this mix of check this check that and flags.
         private SqlDataReader GetParameterEncryptionDataReader(
@@ -1131,7 +1133,7 @@ namespace Microsoft.Data.SqlClient
 
                         // Found the param, set up the encryption info.
                         byte columnEncryptionType = ds.GetByte((int)DescribeParameterEncryptionResultSet2.ColumnEncryptionType);
-                        if (columnEncryptionType != (byte)SqlClientEncryptionType.PlainText)
+                        if (columnEncryptionType != (byte)EncryptionType.PlainText)
                         {
                             byte cipherAlgorithmId = ds.GetByte(
                                 (int)DescribeParameterEncryptionResultSet2.ColumnEncryptionAlgorithm);

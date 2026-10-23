@@ -65,9 +65,9 @@ context variables are available (the VM is behind NAT and lacks the pipeline ide
 | `failOnRegression` | `false` | When `true`, a candidate-slower regression **fails** the run (gate). In interleaved mode only **confirmed** regressions (best-of-N majority) fail. Default off. |
 | `benchmarkRunMode` | `interleaved` | `interleaved` (per-unit baseline↔candidate + best-of-N confirmation) or `sequential` (legacy two full passes). |
 | `confirmationRuns` | `3` | Best-of-N: interleaved passes for a flagged unit before a regression is confirmed. `1` disables confirmation. Interleaved mode only. |
-| `useManagedSniOnWindows` | `false` | SqlClient `UseManagedSniOnWindows` flag. Applied to the runner config for **both** passes on the VM and recorded in `PerfRun.Config`. Default matches the checked-in `runnerconfig.jsonc`. |
-| `useOptimizedAsyncBehaviour` | `true` | SqlClient `UseOptimizedAsyncBehaviour` flag. Applied to both passes and recorded in `PerfRun.Config`. Default matches `runnerconfig.jsonc`. |
-| `useConnectionPoolV2` | `false` | SqlClient `UseConnectionPoolV2` flag. Applied to both passes and recorded in `PerfRun.Config`. Default matches `runnerconfig.jsonc`. |
+| `useManagedSniOnWindows` | `false` | SqlClient `UseManagedSniOnWindows` flag. Applied to the runner config for **both** passes on the VM and recorded in `PerfRun.Config`. Default matches the checked-in `runnerconfig.default.jsonc`. |
+| `useOptimizedAsyncBehaviour` | `true` | SqlClient `UseOptimizedAsyncBehaviour` flag. Applied to both passes and recorded in `PerfRun.Config`. Default matches `runnerconfig.default.jsonc`. |
+| `useConnectionPoolV2` | `false` | SqlClient `UseConnectionPoolV2` flag. Applied to both passes and recorded in `PerfRun.Config`. Default matches `runnerconfig.default.jsonc`. |
 | `enableKustoIngestion` | `true` | **Ingest results into Kusto** — when `false`, the run still benchmarks + compares but skips ingesting into the perf database. When `true`, ingestion additionally requires the `ADX Cluster Variables` group to be populated. |
 
 The following values are **fixed constants** in the pipeline (not parameters or variables), since they
@@ -335,6 +335,23 @@ supplies the isolated dedicated host, the tuned SQL instance, and the disjoint c
 | Regression gate | `failOnRegression` threads `--fail-on-regression`; only a **candidate-slower** delta past the threshold fails, and in interleaved mode only after best-of-N confirmation. Default off. |
 | Interleaving | In `interleaved` mode the harness runs **one benchmark unit at a time, baseline then candidate back-to-back**, so both sides see the same host state (see below). |
 | Best-of-N confirmation | A unit flagged in the first interleaved pass is re-run `confirmationRuns` times; a regression is **confirmed** only on a strict majority. Unconfirmed flags are reported but never fail the gate. |
+
+### Windows physical opens
+
+The Windows connection probe measured raw TCP at about 0.06 ms but a physical
+`SqlConnection.Open()` at about 158 ms when the runner used the `sa` SQL login, with the same result
+from native and managed SNI. Changing TLS and TCP acknowledgment settings did not change that
+latency. The Windows image runs SQL Server 2025, which verifies SQL-login passwords with 100,000
+PBKDF2 iterations; Microsoft documents the resulting login-performance impact.
+
+The benchmark process runs through a public-key SSH token, which cannot delegate Windows credentials
+to the VM's private network address. When the injected SQL endpoint resolves to a local interface,
+the Windows harness connects to the same SQL Server 2025 instance over local TCP loopback with
+integrated authentication. It grants the ephemeral VM identity `db_owner` in the perf database; `sa`
+remains unchanged and is used only for one-time setup. External SQL endpoints continue to use the
+injected address and SQL authentication. This stays on SQL Server 2025's supported authentication
+path while preventing password hashing from dominating local tests that intentionally create
+physical connections.
 
 ### Interleaving + best-of-N (run model)
 

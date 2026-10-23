@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -86,11 +86,10 @@ namespace Microsoft.Data.SqlClient.Tests
 #if NET
         /// <summary>
         /// Regression test: triggering the configurable retry logic loader through its normal
-        /// entry points must not leave a process-wide
-        /// <see cref="System.Runtime.Loader.AssemblyLoadContext.Default"/> resolving handler
-        /// installed. Such a handler participates in resolution of every assembly the host
-        /// application fails to find, and serves them out of this component's probing directory,
-        /// which can load code from an unintended location.
+        /// entry points must not leave a resolving handler subscribed to the current
+        /// <see cref="System.Runtime.Loader.AssemblyLoadContext" />. Such a handler participates
+        /// in resolution of every assembly the host application fails to find, and serves them
+        /// out of this component's probing directory, which can load code from an unintended location.
         /// </summary>
         [Fact]
         public void RetryLogicProviderDoesNotLeaveAssemblyProbingEnabled()

@@ -3,6 +3,8 @@
   file to you under the MIT license.
 -->
 <Project>
+  <Import Project="$(MSBuildThisFileDirectory)../tools/targets/ValidateReferenceType.targets" />
+
   <!--
     Confirm that, when analysis is enabled, the build produced the SARIF file(s) that we expect.
     Each src/ project that is built should produce a SARIF log whose path is specified by the

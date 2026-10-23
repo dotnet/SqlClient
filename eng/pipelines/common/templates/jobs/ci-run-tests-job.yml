@@ -226,8 +226,6 @@ jobs:
           TCPConnectionString: ${{ parameters.configProperties.TCPConnectionString }}
         ${{ if parameters.configProperties.NPConnectionString }}:
           NPConnectionString: ${{ parameters.configProperties.NPConnectionString }}
-        ${{ if parameters.configProperties.AADAuthorityURL }}:
-          AADAuthorityURL: ${{ parameters.configProperties.AADAuthorityURL }}
         ${{ if parameters.configProperties.TCPConnectionStringHGSVBS }}:
           TCPConnectionStringHGSVBS: ${{ parameters.configProperties.TCPConnectionStringHGSVBS }}
         ${{ if parameters.configProperties.TCPConnectionStringNoneVBS }}:
@@ -238,8 +236,6 @@ jobs:
           EnclaveEnabled: ${{ eq(parameters.configProperties.EnclaveEnabled, 'true') }}
         ${{ if parameters.configProperties.TracingEnabled }}:
           TracingEnabled: ${{ eq(parameters.configProperties.TracingEnabled, 'true') }}
-        ${{ if parameters.configProperties.AADPasswordConnectionString }}:
-          AADPasswordConnectionString: ${{ parameters.configProperties.AADPasswordConnectionString }}
         ${{ if parameters.configProperties.AADServicePrincipalId }}:
           AADServicePrincipalId: ${{ parameters.configProperties.AADServicePrincipalId }}
         ${{ if parameters.configProperties.AADServicePrincipalSecret }}:
@@ -341,6 +337,11 @@ jobs:
   - pwsh: New-Item -ItemType Directory -Path TestResults -Force | Out-Null
     displayName: 'Create TestResults Directory'
 
+  - ${{ if and(eq(parameters.operatingSystem, 'Windows'), eq(parameters.configSqlFor, 'local'), eq(parameters.testSet, '3'), eq(coalesce(parameters.configProperties.instanceName, 'MSSQLSERVER'), 'MSSQLSERVER')) }}:
+    - template: /eng/pipelines/common/templates/steps/configure-netonly-account-step.yml@self
+      parameters:
+        mode: setup
+
   # Gate: record that all setup steps (SDK install, build, SQL config, x86 SDK
   # install, etc.) completed successfully.  Test steps condition on this variable
   # so they are skipped when setup fails, yet remain independent of each
@@ -359,6 +360,7 @@ jobs:
         operatingSystem: ${{ parameters.operatingSystem }}
         packageVersion: ${{ parameters.packageVersion }}
         sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
+        enableNetOnlyTests: ${{ and(eq(parameters.operatingSystem, 'Windows'), eq(parameters.configSqlFor, 'local'), eq(parameters.testSet, '3'), eq(coalesce(parameters.configProperties.instanceName, 'MSSQLSERVER'), 'MSSQLSERVER')) }}
 
   - ${{ if and(eq(parameters.enableX86Test, true), eq(parameters.operatingSystem, 'Windows')) }}:
     - template: /eng/pipelines/common/templates/steps/run-all-tests-step.yml@self
@@ -373,6 +375,12 @@ jobs:
         operatingSystem: ${{ parameters.operatingSystem }}
         packageVersion: ${{ parameters.packageVersion }}
         sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
+        enableNetOnlyTests: ${{ and(eq(parameters.operatingSystem, 'Windows'), eq(parameters.configSqlFor, 'local'), eq(parameters.testSet, '3'), eq(coalesce(parameters.configProperties.instanceName, 'MSSQLSERVER'), 'MSSQLSERVER')) }}
+
+  - ${{ if and(eq(parameters.operatingSystem, 'Windows'), eq(parameters.configSqlFor, 'local'), eq(parameters.testSet, '3'), eq(coalesce(parameters.configProperties.instanceName, 'MSSQLSERVER'), 'MSSQLSERVER')) }}:
+    - template: /eng/pipelines/common/templates/steps/configure-netonly-account-step.yml@self
+      parameters:
+        mode: cleanup
 
   - template: /eng/pipelines/common/templates/steps/publish-test-results-step.yml@self
     parameters:

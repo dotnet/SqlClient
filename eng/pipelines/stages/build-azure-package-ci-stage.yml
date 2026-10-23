@@ -70,6 +70,11 @@ parameters:
     type: boolean
     default: false
 
+  # Include macOS tests unless the caller disables them for PR validation.
+  - name: runMacOSTests
+    type: boolean
+    default: true
+
   # The dotnet CLI verbosity to use.
   - name: dotnetVerbosity
     type: string
@@ -203,26 +208,27 @@ stages:
       # Build and test on macOS.
 
       # Use the Azure Pipelines pool for basic testing.
-      - template: /eng/pipelines/jobs/test-azure-package-ci-job.yml@self
-        parameters:
-          abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
-          packageVersion: $(packageVersion)
-          buildConfiguration: ${{ parameters.buildConfiguration }}
-          debug: ${{ parameters.debug }}
-          displayNamePrefix: macOS
-          dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-          jobNameSuffix: macos
-          loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
-          mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
-          sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
-          sqlServerPackageVersion: $(sqlServerPackageVersion)
-          netFrameworkRuntimes: []
-          netRuntimes: [net10.0]
-          # Our 1ES pools do not offer macOS images, so this job runs on the Microsoft-hosted
-          # 'Azure Pipelines' pool.
-          poolName: Azure Pipelines
-          referenceType: ${{ parameters.referenceType }}
-          poolImage: macos-latest
+      - ${{ if eq(parameters.runMacOSTests, true) }}:
+        - template: /eng/pipelines/jobs/test-azure-package-ci-job.yml@self
+          parameters:
+            abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
+            packageVersion: $(packageVersion)
+            buildConfiguration: ${{ parameters.buildConfiguration }}
+            debug: ${{ parameters.debug }}
+            displayNamePrefix: macOS
+            dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+            jobNameSuffix: macos
+            loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
+            mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
+            sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
+            sqlServerPackageVersion: $(sqlServerPackageVersion)
+            netFrameworkRuntimes: []
+            netRuntimes: [net10.0]
+            # Our 1ES pools do not offer macOS images, so this job runs on the Microsoft-hosted
+            # 'Azure Pipelines' pool.
+            poolName: Azure Pipelines
+            referenceType: ${{ parameters.referenceType }}
+            poolImage: macos-latest
 
       # ------------------------------------------------------------------------
       # Create and publish the NuGet package.
@@ -241,7 +247,8 @@ stages:
             # producing the NuGet package.
             - test_azure_package_job_linux_integration
             - test_azure_package_job_windows_integration
-            - test_azure_package_job_macos
+            - ${{ if eq(parameters.runMacOSTests, true) }}:
+              - test_azure_package_job_macos
           dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
           loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
           referenceType: ${{ parameters.referenceType }}

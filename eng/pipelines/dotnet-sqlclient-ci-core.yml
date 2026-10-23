@@ -113,6 +113,11 @@ parameters:
     type: boolean
     default: true
 
+  # Include macOS driver and extension tests in CI; PR pipelines disable them.
+  - name: runMacOSTests
+    type: boolean
+    default: true
+
   # If true, run manual tests against legacy SQL Server versions (2016, 2017).
   # Enabled for CI pipelines; disabled for PR pipelines to keep validation fast.
   - name: runLegacySqlTests
@@ -207,6 +212,7 @@ stages:
   - template: /eng/pipelines/stages/build-abstractions-package-ci-stage.yml@self
     parameters:
       poolName: ${{ parameters.defaultPoolName }}
+      runMacOSTests: ${{ parameters.runMacOSTests }}
       abstractionsArtifactsName: $(abstractionsArtifactsName)
       buildConfiguration: ${{ parameters.buildConfiguration }}
       debug: ${{ parameters.debug }}
@@ -247,6 +253,7 @@ stages:
   - template: /eng/pipelines/stages/build-azure-package-ci-stage.yml@self
     parameters:
       poolName: ${{ parameters.defaultPoolName }}
+      runMacOSTests: ${{ parameters.runMacOSTests }}
       abstractionsArtifactsName: $(abstractionsArtifactsName)
       azureArtifactsName: $(azureArtifactsName)
       buildConfiguration: ${{ parameters.buildConfiguration }}
@@ -539,16 +546,14 @@ stages:
           configSqlFor: azure
           operatingSystem: Windows
           configProperties:
-            TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING)
-            NPConnectionString: $(AZURE_DB_NP_CONN_STRING)
-            AADAuthorityURL: $(AADAuthorityURL)
+            TCPConnectionString: $(AZURE_SQL_CONN_STRING_WestUS2)
+            NPConnectionString: $(AZURE_SQL_CONN_STRING_WestUS2)
             # Pipeline runs against forks of the repo don't have access to Library secrets, so we
             # omit them entirely from the configProperties, which causes the dependent tests to be
             # skipped.
             ${{ if eq(variables['System.PullRequest.IsFork'], 'False') }}:
-              AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR)
               AADServicePrincipalSecret: $(AADServicePrincipalSecret)
-            AADServicePrincipalId: $(AADServicePrincipalId)
+              AADServicePrincipalId: $(AADServicePrincipalId)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
             AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
             SupportsIntegratedSecurity: false
@@ -569,11 +574,9 @@ stages:
           configSqlFor: azure
           operatingSystem: Windows
           configProperties:
-            TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING)
-            NPConnectionString: $(AZURE_DB_NP_CONN_STRING)
-            AADAuthorityURL: $(AADAuthorityURL)
+            TCPConnectionString: $(AZURE_SQL_CONN_STRING_WestUS2)
+            NPConnectionString: $(AZURE_SQL_CONN_STRING_WestUS2)
             ${{ if eq(variables['System.PullRequest.IsFork'], 'False') }}:
-              AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR)
               AADServicePrincipalSecret: $(AADServicePrincipalSecret)
             AADServicePrincipalId: $(AADServicePrincipalId)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
@@ -596,13 +599,11 @@ stages:
           configSqlFor: azure
           operatingSystem: Windows
           configProperties:
-            TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING_eastus)
-            NPConnectionString: $(AZURE_DB_NP_CONN_STRING_eastus)
-            AADAuthorityURL: $(AADAuthorityURL)
+            TCPConnectionString: $(AZURE_SQL_CONN_STRING_EastUS)
+            NPConnectionString: $(AZURE_SQL_CONN_STRING_EastUS)
             ${{ if eq(variables['System.PullRequest.IsFork'], 'False') }}:
-              AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR_eastus)
               AADServicePrincipalSecret: $(AADServicePrincipalSecret)
-            AADServicePrincipalId: $(AADServicePrincipalId)
+              AADServicePrincipalId: $(AADServicePrincipalId)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
             AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
             SupportsIntegratedSecurity: false
@@ -702,13 +703,11 @@ stages:
           configSqlFor: azure
           operatingSystem: Linux
           configProperties:
-            TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING)
-            NPConnectionString: $(AZURE_DB_NP_CONN_STRING)
-            AADAuthorityURL: $(AADAuthorityURL)
+            TCPConnectionString: $(AZURE_SQL_CONN_STRING_WestUS2)
+            NPConnectionString: $(AZURE_SQL_CONN_STRING_WestUS2)
             ${{ if eq(variables['System.PullRequest.IsFork'], 'False') }}:
-              AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR)
               AADServicePrincipalSecret: $(AADServicePrincipalSecret)
-            AADServicePrincipalId: $(AADServicePrincipalId)
+              AADServicePrincipalId: $(AADServicePrincipalId)
             AzureKeyVaultUrl: $(AzureKeyVaultUrl)
             AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
             SupportsIntegratedSecurity: false
@@ -717,24 +716,25 @@ stages:
             LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
 
         # macOS with local SQL Server 2025 (docker), x64 build platform.
-        mac_sql25:
-          pool: Azure Pipelines
-          images:
-            MacOSLatest_Sql25: macos-latest
-          TargetFrameworks: ${{parameters.targetFrameworksUnix }}
-          netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
-          buildPlatforms: [AnyCPU]
-          testSets: ${{parameters.testSets }}
-          useManagedSNI: [true]
-          configSqlFor: local
-          operatingSystem: Mac
-          configProperties:
-            TCPConnectionString: $(SQL_TCP_CONN_STRING)
-            NPConnectionString: $(SQL_NP_CONN_STRING)
-            SupportsIntegratedSecurity: false
-            ManagedIdentitySupported: false
-            LocalDbAppName: $(LocalDbAppName)
-            LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
+        ${{ if eq(parameters.runMacOSTests, true) }}:
+          mac_sql25:
+            pool: Azure Pipelines
+            images:
+              MacOSLatest_Sql25: macos-latest
+            TargetFrameworks: ${{parameters.targetFrameworksUnix }}
+            netcoreVersionTestUtils: ${{parameters.netcoreVersionTestUtils }}
+            buildPlatforms: [AnyCPU]
+            testSets: ${{parameters.testSets }}
+            useManagedSNI: [true]
+            configSqlFor: local
+            operatingSystem: Mac
+            configProperties:
+              TCPConnectionString: $(SQL_TCP_CONN_STRING)
+              NPConnectionString: $(SQL_NP_CONN_STRING)
+              SupportsIntegratedSecurity: false
+              ManagedIdentitySupported: false
+              LocalDbAppName: $(LocalDbAppName)
+              LocalDbSharedInstanceName: $(LocalDbSharedInstanceName)
 
         # Enclave tests
         #
@@ -758,7 +758,6 @@ stages:
               TCPConnectionStringNoneVBS: $(SQL_TCP_CONN_STRING_NoneVBS)
               TCPConnectionStringAASSGX: $(SQL_TCP_CONN_STRING_AASSGX)
               EnclaveEnabled: true
-              AADAuthorityURL: $(AADAuthorityURL)
               AADServicePrincipalId: $(AADServicePrincipalId)
               AADServicePrincipalSecret: $(AADServicePrincipalSecret)
               AzureKeyVaultUrl: $(AzureKeyVaultUrl)

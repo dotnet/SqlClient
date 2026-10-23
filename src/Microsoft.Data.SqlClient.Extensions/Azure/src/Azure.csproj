@@ -75,7 +75,7 @@
   <!-- Reference to Abstractions -->
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj"
-                      Condition="'$(ReferenceType)' != 'Package'" />
+                      Condition="'$(ReferenceType)' == 'Project'" />
     <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Abstractions"
                       Condition="'$(ReferenceType)' == 'Package'" />
   </ItemGroup>
@@ -83,7 +83,7 @@
   <!-- Reference to Logging -->
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Internal/Logging/src/Logging.csproj"
-                      Condition="'$(ReferenceType)' != 'Package'" />
+                      Condition="'$(ReferenceType)' == 'Project'" />
     <PackageReference Include="Microsoft.Data.SqlClient.Internal.Logging"
                       Condition="'$(ReferenceType)' == 'Package'" />
   </ItemGroup>
@@ -95,6 +95,13 @@
     <!-- Explicitly depend on the same version of Microsoft.Identity.Client as SqlClient. -->
     <PackageReference Include="Microsoft.Identity.Client" />
     <PackageReference Include="Microsoft.Identity.Client.Broker" />
+    <!-- Used by AzureAttestationTokenValidator, on behalf of Microsoft.Data.SqlClient's Azure
+         Attestation enclave provider. -->
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
+    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
+    <!-- Pin IdentityModel's Microsoft.Bcl.Cryptography dependency to the version SqlClient uses,
+         rather than the older one IdentityModel asks for. -->
+    <PackageReference Include="Microsoft.Bcl.Cryptography" />
   </ItemGroup>
 
   <!-- CodeGen Targets ================================================= -->

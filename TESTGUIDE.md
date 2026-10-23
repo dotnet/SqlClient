@@ -25,6 +25,49 @@ tests, use only `net10.0`. Stress projects use `net462;net10.0`. PackageCompatib
 `net481;net10.0` with xUnit v3, and their Framework target requires Windows and .NET Framework 4.8.1.
 The historical `tools/SniCloseLegacyRepro` test matrix is unchanged.
 
+## Simulated server tests
+
+The unit project's `SimulatedServerTests` use local TDS endpoints, not an installed SQL Server.
+Run this suite with `TestSqlClientUnit` and a `FullyQualifiedName` filter containing
+`SimulatedServerTests`. Validate discovery and the resulting TRX case counts when narrowing a run;
+the default category filter excludes quarantined tests.
+
+For new scenarios, use explicit protocol gates rather than sleeps to decide which login phase
+fails. `GatedTdsServer` can withhold pre-login responses while keeping its port and existing sessions
+alive. This separates failover from post-login failures and allows pool clearing to be verified
+with physical connection identity. Use a numeric loopback address when DNS is not under test.
+
+Declare `SimulatedServerPoolScope` after the servers and before the connections in pooling scenarios.
+It assigns a unique pool identity and clears that pool before the ephemeral servers are disposed.
+Keep retry/error/partner assertions explicit; transport attempt counts are not proof of pool reuse.
+
+The simulator runs blocking handlers on dedicated workers. Fault budgets are reserved before
+response processing, and disposal must finish owned workers and report unexpected handler failures.
+Negative TLS scenarios can set `TdsServerArguments.ExpectTlsHandshakeFailure` to explicitly expect
+authentication failure during TLS negotiation. Missing certificates/private keys and exceptions from
+protocol handlers still fail disposal; the default remains strict. Assert the expected client failure
+as well, and keep success controls so simulator setup errors cannot masquerade as certificate rejection.
+`ServerLifecycleTests` covers these contracts. Validate changes on both supported frameworks and
+on native and managed SNI, including broader simulator consumers before removing a flaky trait.
+
+The manual `CertificateTestWithTdsServer` matrix requires an untrusted self-signed certificate.
+Its setup and cleanup scripts use `-SkipTrust` to leave root trust stores unchanged, and the test
+asserts `UntrustedRoot` before connecting. Installing that certificate as trusted invalidates
+the negative cases; explicit certificate pinning and `TrustServerCertificate` provide the success controls.
+
+## CI Platform Coverage
+
+PR validation runs tests on Windows and Linux only. The
+[project-reference](eng/pipelines/sqlclient-pr-project-ref-pipeline.yml) and
+[package-reference](eng/pipelines/sqlclient-pr-package-ref-pipeline.yml) PR pipelines set
+`runMacOSTests: false`, excluding macOS SqlClient/AKV, Abstractions, and Azure extension tests
+and their packaging dependencies. The [unified PR pipeline](eng/pipelines/pr/sqlclient-pr-pipeline.yml)
+already has a Windows/Linux-only platform matrix.
+
+The [shared CI template](eng/pipelines/dotnet-sqlclient-ci-core.yml) defaults `runMacOSTests` to `true`,
+so scheduled and push-triggered CI retains macOS coverage. Local macOS testing remains supported.
+See [Pipeline Script Tests](eng/pipelines/scripts/tests/README.md) for platform-selection regression checks.
+
 ## Recommended Entry Point
 
 Use [build.proj](build.proj) from the repository root:
@@ -275,15 +318,13 @@ Microsoft Entra authentication through Azure Arc.
 
 | Property                         | Description                                                                                 | Example or notes                                                                       |
 |----------------------------------|---------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------|
-| `TCPConnectionString`            | Connection string for a TCP-enabled SQL Server or Azure SQL database.                       | `Data Source=tcp:localhost;Database=Northwind;Integrated Security=true;Encrypt=false;` |
+| `TCPConnectionString`            | Connection string for a TCP-enabled SQL Server or Azure SQL database. For Azure SQL, also configure `UserManagedIdentityClientId` or enable `SupportsSystemAssignedManagedIdentity` so tests can acquire an access token. | `Data Source=tcp:localhost;Database=Northwind;Integrated Security=true;Encrypt=false;` or `Data Source=<servername>.database.windows.net;Database=<dbname>;` |
 | `NPConnectionString`             | Connection string for a Named Pipes-enabled SQL Server instance.                            | `Data Source=np:localhost;Database=Northwind;Integrated Security=true;Encrypt=false;`  |
 | `TCPConnectionStringHGSVBS`      | Optional connection string for SQL Server with VBS enclave and HGS attestation.             | Include `Attestation Protocol=HGS` and `Enclave Attestation Url`.                      |
 | `TCPConnectionStringNoneVBS`     | Optional connection string for SQL Server with VBS enclave and no attestation.              | Include `Attestation Protocol=None`.                                                   |
 | `TCPConnectionStringAASSGX`      | Optional connection string for SQL Server with SGX enclave and Microsoft Azure Attestation. | Include `Attestation Protocol=AAS` and `Enclave Attestation Url`.                      |
 | `EnclaveEnabled`                 | Enables tests that require an enclave-configured server.                                    | `true` or `false`.                                                                     |
 | `TracingEnabled`                 | Enables tracing-related tests.                                                              | `true` or `false`.                                                                     |
-| `AADAuthorityURL`                | Optional OAuth authority for `AADPasswordConnectionString`.                                 | `https://login.windows.net/<tenant>`                                                   |
-| `AADPasswordConnectionString`    | Optional connection string for Microsoft Entra ID password authentication tests.            | Uses `Authentication=Active Directory Password`.                                       |
 | `AADServicePrincipalId`          | Optional application ID for service-principal authentication tests.                         | Former docs may refer to this as a secure principal ID.                                |
 | `AADServicePrincipalSecret`      | Optional application secret for service-principal authentication tests.                     | Keep this only in local, ignored config files or secure pipeline variables.            |
 | `AzureKeyVaultURL`               | Optional Azure Key Vault URL for Always Encrypted tests.                                    | `https://<keyvaultname>.vault.azure.net/`                                              |
@@ -300,6 +341,7 @@ Microsoft Entra authentication through Azure Arc.
 | `IsDNSCachingSupportedCR`        | Enables DNS caching control-ring tests.                                                     | `true` or `false`.                                                                     |
 | `IsDNSCachingSupportedTR`        | Enables DNS caching tenant-ring tests.                                                      | `true` or `false`.                                                                     |
 | `EnclaveAzureDatabaseConnString` | Optional Azure SQL database connection string for enclave tests.                            | Feature-specific tests only.                                                           |
+| `SupportsSystemAssignedManagedIdentity` | Whether system-assigned managed identity tests should run.                          | Defaults to `false`. Requires `ManagedIdentitySupported`.                              |
 | `ManagedIdentitySupported`       | Whether managed identity tests should run.                                                  | When omitted, defaults to `true` in manual tests and `false` in Azure extension tests. Set explicitly for the target environment. |
 | `UserManagedIdentityClientId`    | Optional client ID for user-assigned managed identity tests.                                | Feature-specific tests only.                                                           |
 | `KerberosDomainUser`             | Optional Kerberos test domain user.                                                         | Feature-specific tests only.                                                           |

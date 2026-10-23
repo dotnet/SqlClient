@@ -106,7 +106,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (n != 0)
                     {
-                        await Task.Delay(EnclaveRetrySleepInSeconds * 1000, cancellationToken).ConfigureAwait(false);
+                        await Task.Delay(TimeSpan.FromSeconds(EnclaveRetrySleepInSeconds), cancellationToken).ConfigureAwait(false);
                     }
 
 #if NET
@@ -116,7 +116,7 @@ namespace Microsoft.Data.SqlClient
 #endif
                     {
                         List<byte> payload = await JsonSerializer
-                            .DeserializeAsync<List<byte>>(stream, cancellationToken: cancellationToken)
+                            .DeserializeAsync(stream, SqlClientJsonSerializerContext.Default.ListByte, cancellationToken)
                             .ConfigureAwait(false);
 
                         return payload?.ToArray();

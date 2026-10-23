@@ -39,7 +39,7 @@
 
   <!-- References ====================================================== -->
   <!-- Test target reference -->
-  <ItemGroup Condition="'$(ReferenceType)' != 'Package'">
+  <ItemGroup Condition="'$(ReferenceType)' == 'Project'">
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj" />
     <ProjectReference Include="$(RepoRoot)src/Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj" />
   </ItemGroup>
@@ -72,6 +72,11 @@
          above to locate the runtime DLL inside the NuGet package layout. -->
     <Reference Include="Microsoft.Data.SqlClient"
                HintPath="$(PkgMicrosoft_Data_SqlClient)/lib/$(_SqlClientPackageTfm)/Microsoft.Data.SqlClient.dll" />
+    <!-- ExcludeAssets="compile" above also suppresses compile assets across the driver package's
+         dependency subtree, which is where Abstractions would otherwise come from.  Tests here use
+         SqlAuthenticationProvider and friends, which Microsoft.Data.SqlClient only type-forwards to
+         that assembly, so it must be referenced directly for those forwards to resolve. -->
+    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Abstractions" />
     <PackageReference Include="Microsoft.SqlServer.Server" />
   </ItemGroup>
 
