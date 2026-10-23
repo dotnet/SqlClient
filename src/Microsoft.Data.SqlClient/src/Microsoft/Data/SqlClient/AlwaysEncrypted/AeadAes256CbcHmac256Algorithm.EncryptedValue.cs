@@ -267,8 +267,8 @@ internal partial class AeadAes256CbcHmac256Algorithm
             using AeadAes256CbcHmac256EncryptionKey.HmacScope hmac = key.GetHmac();
 
             hmac.AppendData(_valueBuffer, VersionOffset, VersionLength);
-            hmac.AppendData(_valueBuffer, IvOffset, IvLength);
-            hmac.AppendData(_valueBuffer, CiphertextOffset, CiphertextLength);
+            // The IV and the ciphertext are consecutive, so can be appended in a single call
+            hmac.AppendData(_valueBuffer, IvOffset, IvLength + CiphertextLength);
             hmac.AppendData(VersionLengthFieldBuffer);
 
             Debug.Assert(buffer.Length == AuthenticationTagLength);
