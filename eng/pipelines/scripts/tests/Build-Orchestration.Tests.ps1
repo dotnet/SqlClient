@@ -49,8 +49,8 @@ printf 'ARG:%s\n' "$@"
         )
 
         $output = & $dotnet msbuild (Join-Path $repoRoot $Project) -nologo @Properties `
-            -getProperty:TargetFramework,TargetFrameworks,_SqlClientPackageTfm `
-            -getItem:PackageReference,PackageVersion,Reference 2>&1
+            -getProperty:TargetFramework,TargetFrameworks,_SqlClientPackageTfm,SignAssembly,AssemblyOriginatorKeyFile `
+            -getItem:PackageReference,PackageVersion,Reference,ProjectReference 2>&1
         if ($LASTEXITCODE -ne 0) {
             throw "Project evaluation failed for ${Project}:`n$($output -join [Environment]::NewLine)"
         }
@@ -529,6 +529,68 @@ Describe 'build.proj command-line filters' {
         )
         $arguments | Should -Contain 'Set=2'
         $arguments | Should -Not -Contain 'none'
+    }
+}
+
+Describe 'signed manual-test package builds' {
+    It 'forwards the test key, including spaces, through <Target>' -ForEach @(
+        @{ Target = 'TestSqlClientManual' }
+        @{ Target = 'BuildSqlClientTestsManual' }
+    ) {
+        $key = Join-Path $TestDrive 'test signing fixture.snk'
+        $arguments = Get-ChildArguments $Target @(
+            '-p:ReferenceType=Package', "-p:TestSigningKeyPath=$key"
+        )
+        $arguments | Should -Contain "-p:TestSigningKeyPath=$key"
+    }
+
+    It 'signs <Project> when a test key is supplied' -ForEach @(
+        @{ Project = 'src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTests.csproj' }
+        @{ Project = 'src\Microsoft.Data.SqlClient\tests\Common\Microsoft.Data.SqlClient.TestCommon.csproj' }
+        @{ Project = 'src\Microsoft.Data.SqlClient\tests\CustomConfigurableRetryLogic\CustomRetryLogicProvider.csproj' }
+        @{ Project = 'src\Microsoft.Data.SqlClient\tests\UnloadableLibrary\UnloadableLibrary.csproj' }
+        @{ Project = 'src\Microsoft.Data.SqlClient\tests\TestUdts\Address\Address.csproj' }
+        @{ Project = 'src\Microsoft.Data.SqlClient\tests\TestUdts\Circle\Circle.csproj' }
+        @{ Project = 'src\Microsoft.Data.SqlClient\tests\TestUdts\Shapes\Shapes.csproj' }
+        @{ Project = 'src\Microsoft.Data.SqlClient\tests\TestUdts\Utf8String\Utf8String.csproj' }
+        @{ Project = 'src\Microsoft.Data.SqlClient\tests\tools\Microsoft.Data.SqlClient.TestUtilities\Microsoft.Data.SqlClient.TestUtilities.csproj' }
+        @{ Project = 'src\Microsoft.Data.SqlClient\tests\tools\TDS\TDS\TDS.csproj' }
+        @{ Project = 'src\Microsoft.Data.SqlClient\tests\tools\TDS\TDS.EndPoint\TDS.EndPoint.csproj' }
+        @{ Project = 'src\Microsoft.Data.SqlClient\tests\tools\TDS\TDS.Servers\TDS.Servers.csproj' }
+    ) {
+        $key = Join-Path $TestDrive 'test signing fixture.snk'
+        $result = Get-ProjectEvaluation $Project @(
+            '-p:ReferenceType=Package', "-p:TestSigningKeyPath=$key"
+        )
+        $result.Properties.SignAssembly | Should -Be 'true'
+        $result.Properties.AssemblyOriginatorKeyFile | Should -Be $key
+    }
+
+    It 'uses the packaged AKV provider for <Framework> rather than an unsigned project' -ForEach @(
+        @{ Framework = 'net462' }
+        @{ Framework = 'net10.0' }
+    ) {
+        $result = Get-ProjectEvaluation 'src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTests.csproj' @(
+            "-p:TargetFramework=$Framework", '-p:ReferenceType=Package',
+            "-p:TestSigningKeyPath=$TestDrive/test.snk"
+        )
+        $provider = 'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider'
+        @($result.Items.PackageReference | Where-Object Identity -EQ $provider).Count | Should -Be 1
+        @($result.Items.ProjectReference | Where-Object Identity -Like "*$provider.csproj").Count | Should -Be 0
+    }
+
+    It 'uses the same test public key for all signed friend grants' {
+        [xml]$driver = Get-Content (Join-Path $repoRoot 'src\Microsoft.Data.SqlClient\src\Microsoft.Data.SqlClient.csproj') -Raw
+        $friends = @($driver.SelectNodes('//AssemblyAttribute/_Parameter1') |
+            Where-Object InnerText -Like '*, PublicKey=*' |
+            ForEach-Object InnerText)
+        $unitFriend = @($friends | Where-Object { $_ -like 'UnitTests, PublicKey=*' })
+        $unitFriend.Count | Should -Be 1
+        $publicKey = ($unitFriend[0] -split ', PublicKey=', 2)[1]
+        $friends.Count | Should -Be 3
+        foreach ($name in @('UnitTests', 'ManualTests', 'Microsoft.Data.SqlClient.TestCommon')) {
+            $friends | Should -Contain "$name, PublicKey=$publicKey"
+        }
     }
 }
 
