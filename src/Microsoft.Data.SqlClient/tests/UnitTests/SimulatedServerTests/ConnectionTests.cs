@@ -1157,7 +1157,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(9, parts.Length);
             Assert.Equal("2", parts[0]);
             Assert.Equal("0", parts[7]);
-            Assert.Equal(LocalAppContextSwitches.UseConnectionPoolV2 ? 1UL : 0UL,
+            ulong expectedProperties =
+                (LocalAppContextSwitches.UseConnectionPoolV2 ? 1UL : 0UL) |
+                (LocalAppContextSwitches.ConfiguredUseCompatibilityAsyncBehaviour ? 2UL : 0UL) |
+                (LocalAppContextSwitches.UseCompatibilityProcessSni ? 4UL : 0UL);
+            Assert.Equal(expectedProperties,
                 ulong.Parse(parts[8], NumberStyles.HexNumber, CultureInfo.InvariantCulture));
 
             // TODO: Confirm the server sent an Ack by reading log message from SqlInternalConnectionTds

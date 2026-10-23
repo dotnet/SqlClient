@@ -10,6 +10,7 @@ namespace Microsoft.Data.SqlClient.UnitTests;
 /// <summary>
 /// Provides unit tests for verifying the default values of all SqlClient-specific AppContext switches.
 /// </summary>
+[Collection(AppContextSwitchTestCollection.Name)]
 public class LocalAppContextSwitchesTest
 {
     /// <summary>
@@ -55,6 +56,7 @@ public class LocalAppContextSwitchesTest
         Assert.True(LocalAppContextSwitches.LegacyVarTimeZeroScaleBehaviour);
         Assert.True(LocalAppContextSwitches.UseCompatibilityProcessSni);
         Assert.True(LocalAppContextSwitches.UseCompatibilityAsyncBehaviour);
+        Assert.True(LocalAppContextSwitches.ConfiguredUseCompatibilityAsyncBehaviour);
         Assert.False(LocalAppContextSwitches.UseConnectionPoolV2);
         Assert.False(LocalAppContextSwitches.TruncateScaledDecimal);
         Assert.False(LocalAppContextSwitches.IgnoreServerProvidedFailoverPartner);
@@ -68,5 +70,32 @@ public class LocalAppContextSwitchesTest
         #if NETFRAMEWORK
         Assert.False(LocalAppContextSwitches.DisableTnirByDefault);
         #endif
+    }
+
+    /// <summary>
+    /// Keeps the configured async value observable without changing the parser override.
+    /// </summary>
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public void AsyncCompatibility_ReportsConfiguredAndEffectiveValues(
+        bool configuredAsync, bool configuredProcessSni)
+    {
+        using LocalAppContextSwitchesHelper switches = new()
+        {
+            UseCompatibilityAsyncBehaviour = configuredAsync,
+            UseCompatibilityProcessSni = configuredProcessSni
+        };
+
+        Assert.Equal(configuredAsync || configuredProcessSni,
+            LocalAppContextSwitches.UseCompatibilityAsyncBehaviour);
+        Assert.Equal(configuredAsync,
+            LocalAppContextSwitches.ConfiguredUseCompatibilityAsyncBehaviour);
+        Assert.Equal(configuredAsync ? 2UL : 0UL,
+            (ulong)SqlClientDriverPropertiesResolver.Current & 2UL);
+        Assert.Equal(configuredProcessSni ? 4UL : 0UL,
+            (ulong)SqlClientDriverPropertiesResolver.Current & 4UL);
     }
 }

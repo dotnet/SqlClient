@@ -13,16 +13,41 @@ namespace Microsoft.Data.SqlClient;
 internal enum SqlClientDriverProperties : ulong
 {
     None = 0,
-    ConnectionPoolV2 = 0x1
+    ConnectionPoolV2 = 0x1,
+
+    /// <summary>The configured async compatibility value, before the ProcessSni override.</summary>
+    UseCompatibilityAsyncBehaviour = 0x2,
+
+    /// <summary>The configured ProcessSni compatibility value.</summary>
+    UseCompatibilityProcessSni = 0x4
 }
 
 internal static class SqlClientDriverPropertiesResolver
 {
     internal static SqlClientDriverProperties Current =>
-        Resolve(LocalAppContextSwitches.UseConnectionPoolV2);
+        Resolve(
+            LocalAppContextSwitches.UseConnectionPoolV2,
+            LocalAppContextSwitches.ConfiguredUseCompatibilityAsyncBehaviour,
+            LocalAppContextSwitches.UseCompatibilityProcessSni);
 
-    internal static SqlClientDriverProperties Resolve(bool useConnectionPoolV2) =>
-        useConnectionPoolV2
-            ? SqlClientDriverProperties.ConnectionPoolV2
-            : SqlClientDriverProperties.None;
+    internal static SqlClientDriverProperties Resolve(
+        bool useConnectionPoolV2,
+        bool useCompatibilityAsyncBehaviour,
+        bool useCompatibilityProcessSni)
+    {
+        SqlClientDriverProperties properties = SqlClientDriverProperties.None;
+        if (useConnectionPoolV2)
+        {
+            properties |= SqlClientDriverProperties.ConnectionPoolV2;
+        }
+        if (useCompatibilityAsyncBehaviour)
+        {
+            properties |= SqlClientDriverProperties.UseCompatibilityAsyncBehaviour;
+        }
+        if (useCompatibilityProcessSni)
+        {
+            properties |= SqlClientDriverProperties.UseCompatibilityProcessSni;
+        }
+        return properties;
+    }
 }
