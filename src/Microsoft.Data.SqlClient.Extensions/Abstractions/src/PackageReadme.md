@@ -40,6 +40,36 @@ target uses the framework's `System.Configuration` instead, without introducing 
 ConfigurationManager package dependency. Authentication initialization and provider loading
 remain in the driver, and the modern section continues to take precedence over the legacy one.
 
+### Configuration error policy
+
+The Abstractions authentication loader uses the same relaxed error policy as the driver:
+
+- Configuration-reading errors and invalid provider collection schemas are traced and produce empty settings,
+  without trying the legacy section after a reading error.
+- Missing or incompatible string property metadata indicates a handler/reader programming error.
+  It triggers a debug assertion; in release builds the affected property is treated
+  as empty while other valid settings are retained. Omitting an optional XML attribute is not
+  a metadata error and uses the handler's default value normally.
+- Incompatible handlers are traced and ignored. An ignored modern handler allows the loader
+  to check the legacy section, including when another SQL provider owns that section.
+- Invalid `useWamBroker` values are traced and ignored, preserving the provider's default
+  and all other valid settings.
+
+> **Warning:** Relaxed loading and parsing can permit the driver to install and configure
+> unexpected providers or provider settings once this loader is integrated. Ignoring broken
+> authentication configuration can select legacy providers, allow default providers to be
+> installed, or retain default broker settings instead of the application's intended settings.
+> Tracing these errors does not prevent those unintended configurations.
+
+As in the driver, all `ConfigurationErrorsException` failures are traced and ignored, even
+when they wrap fatal failures. Other exception types propagate. Loading does not activate
+initializers or providers.
+
+A declared modern section takes precedence even when its element is absent from app.config.
+These policies apply to the new Abstractions loader; the driver continues using its existing
+reader until the authentication registry migration in
+[dotnet/SqlClient#4821](https://github.com/dotnet/SqlClient/pull/4821).
+
 Merge the following example into the application's app.config, replacing
 `ExampleAuthenticationProvider, ExampleApp` with the assembly-qualified name of an
 application-defined `SqlAuthenticationProvider`. The handler declaration continues to
