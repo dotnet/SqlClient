@@ -185,7 +185,8 @@ namespace Microsoft.SqlServer.TDS.Servers
             {
                 ServerEndPoint = new IPEndPoint(IPAddress.Any, 0),
                 EndpointName = methodName,
-                EventLog = Arguments.Log
+                EventLog = Arguments.Log,
+                ExpectTlsHandshakeFailure = Arguments.ExpectTlsHandshakeFailure
             };
             _endpoint.Start();
         }

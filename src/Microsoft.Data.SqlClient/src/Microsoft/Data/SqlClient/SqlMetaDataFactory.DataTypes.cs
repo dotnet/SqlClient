@@ -6,6 +6,7 @@ using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Parser;
 
 #nullable enable
 

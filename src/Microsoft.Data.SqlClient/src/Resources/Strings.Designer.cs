@@ -3373,6 +3373,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to When Globalization Invariant Mode is enabled, SqlMetaData instances describing character or text types must specify an LCID..
+        /// </summary>
+        internal static string SQL_GlobalizationInvariantModeRequiresLcid {
+            get {
+                return ResourceManager.GetString("SQL_GlobalizationInvariantModeRequiresLcid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Instance failure..
         /// </summary>
         internal static string SQL_InstanceFailure {
@@ -5205,6 +5214,15 @@ namespace System {
         internal static string TCE_AttestationURLNotSupported {
             get {
                 return ResourceManager.GetString("TCE_AttestationURLNotSupported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Attestation protocol &apos;AAS&apos; requires the Microsoft.Data.SqlClient.Extensions.Azure package, at the same version as Microsoft.Data.SqlClient. Add or update the reference to that package, or specify a different attestation protocol in the connection string..
+        /// </summary>
+        internal static string TCE_AzureAttestationExtensionNotFound {
+            get {
+                return ResourceManager.GetString("TCE_AzureAttestationExtensionNotFound", resourceCulture);
             }
         }
         
