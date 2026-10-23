@@ -1260,6 +1260,17 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.True(tokenWasNotNull);
             Assert.True(dataLengthAtLeast1);
             Assert.Equal(UserAgent.GetUcs2Bytes(RegisteredApplication.EntityFrameworkCore).ToArray(), observedPayload);
+            string[] parts = System.Text.Encoding.Unicode.GetString(observedPayload).Split('|');
+            Assert.Equal(9, parts.Length);
+            Assert.Equal("2", parts[0]);
+            Assert.Equal("1", parts[7]);
+            ulong expectedProperties =
+                (LocalAppContextSwitches.UseConnectionPoolV2 ? 1UL : 0UL) |
+                (LocalAppContextSwitches.ConfiguredUseCompatibilityAsyncBehaviour ? 2UL : 0UL) |
+                (LocalAppContextSwitches.UseCompatibilityProcessSni ? 4UL : 0UL);
+            Assert.Equal(expectedProperties, ulong.Parse(parts[8],
+                System.Globalization.NumberStyles.HexNumber,
+                System.Globalization.CultureInfo.InvariantCulture));
 
             // TODO: Confirm the server sent an Ack by reading log message from SqlInternalConnectionTds
         }

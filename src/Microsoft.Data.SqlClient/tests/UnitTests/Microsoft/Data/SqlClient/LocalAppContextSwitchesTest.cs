@@ -62,6 +62,7 @@ public class LocalAppContextSwitchesTest
         Assert.True(switchesHelper.LegacyVarTimeZeroScaleBehaviour);
         Assert.True(switchesHelper.UseCompatibilityProcessSni);
         Assert.True(switchesHelper.UseCompatibilityAsyncBehaviour);
+        Assert.True(LocalAppContextSwitches.ConfiguredUseCompatibilityAsyncBehaviour);
         Assert.True(switchesHelper.UseLegacyIdleTimeoutBehavior);
         Assert.False(switchesHelper.UseConnectionPoolV2);
         Assert.False(switchesHelper.UseOverallConnectTimeoutForPoolWait);
@@ -85,5 +86,33 @@ public class LocalAppContextSwitchesTest
         #if NETFRAMEWORK
         Assert.False(switchesHelper.DisableTnirByDefault);
         #endif
+    }
+
+    /// <summary>
+    /// Keeps the configured async value observable for telemetry while retaining
+    /// the parser's ProcessSni compatibility override.
+    /// </summary>
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public void AsyncCompatibility_ReportsConfiguredAndEffectiveValues(
+        bool configuredAsync, bool configuredProcessSni)
+    {
+        using LocalAppContextSwitchesHelper switches = new()
+        {
+            UseCompatibilityAsyncBehaviour = configuredAsync,
+            UseCompatibilityProcessSni = configuredProcessSni
+        };
+
+        Assert.Equal(configuredAsync || configuredProcessSni,
+            LocalAppContextSwitches.UseCompatibilityAsyncBehaviour);
+        Assert.Equal(configuredAsync,
+            LocalAppContextSwitches.ConfiguredUseCompatibilityAsyncBehaviour);
+        Assert.Equal(configuredAsync ? 2UL : 0UL,
+            (ulong)SqlClientDriverPropertiesResolver.Current & 2UL);
+        Assert.Equal(configuredProcessSni ? 4UL : 0UL,
+            (ulong)SqlClientDriverPropertiesResolver.Current & 4UL);
     }
 }
