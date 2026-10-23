@@ -993,6 +993,36 @@ namespace Microsoft.Data.SqlClient
             _physicalStateObj.ClearAllWritePackets();
         }
 
+        /// <summary>
+        /// Reads a PRELOGIN option header (2-byte offset followed by 2-byte length, both big-endian)
+        /// starting at <paramref name="offset"/>, and validates that both the header and the
+        /// <paramref name="bytesToRead"/> bytes of option data it points to lie within
+        /// <paramref name="payload"/>.
+        /// </summary>
+        /// <returns>The offset of the option data within <paramref name="payload"/>.</returns>
+        private int ReadPreLoginOptionPayloadOffset(byte[] payload, ref int offset, int bytesToRead)
+        {
+            if (offset + 4 > payload.Length)
+            {
+                SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.ConsumePreLoginHandshake|ERR> {0}, " +
+                    "PreLogin option header at offset {1} exceeds response length {2}.", ObjectID, offset, payload.Length);
+                throw SQL.ParsingErrorOffset(ParsingErrorState.CorruptedTdsStream, offset);
+            }
+
+            int payloadOffset = payload[offset++] << 8 | payload[offset++];
+            // The declared option length is not needed; only the bytes actually consumed are validated.
+            offset += 2;
+
+            if (payloadOffset + bytesToRead > payload.Length)
+            {
+                SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.ConsumePreLoginHandshake|ERR> {0}, " +
+                    "PreLogin option data at offset {1} exceeds response length {2}.", ObjectID, payloadOffset, payload.Length);
+                throw SQL.ParsingErrorOffset(ParsingErrorState.CorruptedTdsStream, payloadOffset);
+            }
+
+            return payloadOffset;
+        }
+
         private PreLoginHandshakeStatus ConsumePreLoginHandshake(
             SqlConnectionEncryptOption encrypt,
             bool trustServerCert,
@@ -1047,7 +1077,6 @@ namespace Microsoft.Data.SqlClient
 
             int offset = 0;
             int payloadOffset = 0;
-            int payloadLength = 0;
             int option = payload[offset++];
             bool serverSupportsEncryption = false;
 
@@ -1056,8 +1085,7 @@ namespace Microsoft.Data.SqlClient
                 switch (option)
                 {
                     case (int)PreLoginOptions.VERSION:
-                        payloadOffset = payload[offset++] << 8 | payload[offset++];
-                        payloadLength = payload[offset++] << 8 | payload[offset++];
+                        payloadOffset = ReadPreLoginOptionPayloadOffset(payload, ref offset, bytesToRead: 4);
 
                         byte majorVersion = payload[payloadOffset];
                         byte minorVersion = payload[payloadOffset + 1];
@@ -1073,8 +1101,7 @@ namespace Microsoft.Data.SqlClient
                             break;
                         }
 
-                        payloadOffset = payload[offset++] << 8 | payload[offset++];
-                        payloadLength = payload[offset++] << 8 | payload[offset++];
+                        payloadOffset = ReadPreLoginOptionPayloadOffset(payload, ref offset, bytesToRead: 1);
 
                         EncryptionOptions serverOption = ((EncryptionOptions)payload[payloadOffset]) & EncryptionOptions.OPTIONS_MASK;
 
@@ -1130,8 +1157,7 @@ namespace Microsoft.Data.SqlClient
                         break;
 
                     case (int)PreLoginOptions.INSTANCE:
-                        payloadOffset = payload[offset++] << 8 | payload[offset++];
-                        payloadLength = payload[offset++] << 8 | payload[offset++];
+                        payloadOffset = ReadPreLoginOptionPayloadOffset(payload, ref offset, bytesToRead: 1);
 
                         byte ERROR_INST = 0x1;
                         byte instanceResult = payload[payloadOffset];
@@ -1152,8 +1178,7 @@ namespace Microsoft.Data.SqlClient
                         break;
 
                     case (int)PreLoginOptions.MARS:
-                        payloadOffset = payload[offset++] << 8 | payload[offset++];
-                        payloadLength = payload[offset++] << 8 | payload[offset++];
+                        payloadOffset = ReadPreLoginOptionPayloadOffset(payload, ref offset, bytesToRead: 1);
 
                         marsCapable = (payload[payloadOffset] == 0 ? false : true);
 
@@ -1166,8 +1191,7 @@ namespace Microsoft.Data.SqlClient
                         break;
 
                     case (int)PreLoginOptions.FEDAUTHREQUIRED:
-                        payloadOffset = payload[offset++] << 8 | payload[offset++];
-                        payloadLength = payload[offset++] << 8 | payload[offset++];
+                        payloadOffset = ReadPreLoginOptionPayloadOffset(payload, ref offset, bytesToRead: 1);
 
                         // Only 0x00 and 0x01 are accepted values from the server.
                         if (payload[payloadOffset] != 0x00 && payload[payloadOffset] != 0x01)
