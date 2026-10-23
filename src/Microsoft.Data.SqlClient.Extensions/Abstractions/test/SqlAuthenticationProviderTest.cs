@@ -7,6 +7,7 @@ using System.Reflection;
 namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
 
 /// <summary>Registration no longer depends on reflective access to a SqlClient assembly.</summary>
+[Collection(AuthenticationFeatureSwitchTestCollection.Name)]
 public class SqlAuthenticationProviderTest
 {
     #region Test Setup

@@ -17,7 +17,7 @@ namespace Microsoft.Data.SqlClient;
 /// <remarks>
 /// Serializes registry access and gives configuration registrations precedence over application
 /// registrations and discovered Azure defaults. Recoverable bootstrap failures are cached and
-/// logged while public registry operations preserve their null/false failure results.
+/// logged without preventing explicit application registrations.
 /// </remarks>
 internal sealed class SqlAuthenticationProviderRegistry
 {
@@ -87,7 +87,7 @@ internal sealed class SqlAuthenticationProviderRegistry
     /// </summary>
     /// <param name="authenticationMethod">The authentication method to look up.</param>
     /// <returns>
-    /// The provider, or null if none is registered or bootstrap has a recoverable failure.
+    /// The provider, or null if none is registered, including after a recoverable bootstrap failure.
     /// </returns>
     /// <remarks>
     /// Recoverable failures, including cached bootstrap failures, emit actionable diagnostic
@@ -102,23 +102,22 @@ internal sealed class SqlAuthenticationProviderRegistry
             try
             {
                 Instance.EnsureBootstrapped();
-                return
-                    Instance._providers.TryGetValue(authenticationMethod, out ProviderRegistration? value)
-                    ? value.Provider
-                    : null;
             }
             catch (Exception e) when (ExceptionHelpers.IsRecoverableException(e))
             {
                 SqlClientEventSource.Log.TryTraceEvent(
-                    "SqlAuthenticationProvider.GetProvider failed for {0}; returning null. Check " +
+                    "SqlAuthenticationProvider.GetProvider bootstrap failed for {0}; checking " +
+                    "registered providers. Check " +
                     "app.config provider and initializer type names, public parameterless " +
                     "constructors, initializer implementations and supported authentication " +
                     "methods. Upgrade all SqlClient family packages together to the same " +
-                    "version. Bootstrap failures are cached; correct the cause and restart the " +
-                    "application. Error: {1}",
+                    "version. Bootstrap failures are cached; register an application provider " +
+                    "with SetProvider, or correct the cause and restart the application. Error: {1}",
                     authenticationMethod, e);
-                return null;
             }
+            return Instance._providers.TryGetValue(authenticationMethod, out ProviderRegistration? value)
+                ? value.Provider
+                : null;
         }
     }
 
@@ -128,7 +127,7 @@ internal sealed class SqlAuthenticationProviderRegistry
     /// <param name="authenticationMethod">Authentication method.</param>
     /// <param name="provider">Authentication provider.</param>
     /// <returns>
-    /// True if registration succeeds; false on recoverable initialization, argument or callback
+    /// True if registration succeeds; false on recoverable argument or callback
     /// errors, or if an existing registration has higher precedence.
     /// </returns>
     /// <remarks>
@@ -146,7 +145,20 @@ internal sealed class SqlAuthenticationProviderRegistry
         try
         {
             // Establish configuration precedence before registering an application provider.
-            Instance.EnsureBootstrapped();
+            try
+            {
+                Instance.EnsureBootstrapped();
+            }
+            catch (Exception e)
+            when (!Instance._invokingConfiguredInitializer &&
+                  ExceptionHelpers.IsRecoverableException(e))
+            {
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "SqlAuthenticationProvider.SetProvider bootstrap failed for {0}; continuing " +
+                    "with application registration. Bootstrap will not be retried; existing " +
+                    "configuration registrations retain precedence. Error: {1}",
+                    authenticationMethod, e);
+            }
             if (provider is null)
             {
                 throw new ArgumentNullException(nameof(provider));
@@ -161,11 +173,7 @@ internal sealed class SqlAuthenticationProviderRegistry
             SqlClientEventSource.Log.TryTraceEvent(
                 "SqlAuthenticationProvider.SetProvider failed for {0}; returning false. Pass a " +
                 "non-null provider that supports this method and fix any throwing IsSupported, " +
-                "BeforeLoad or BeforeUnload callbacks. For bootstrap errors, check app.config " +
-                "provider and initializer type names, public parameterless constructors and " +
-                "initializer implementations, and upgrade all SqlClient family packages together " +
-                "to the same version. Bootstrap failures are cached; correct the cause and " +
-                "restart the application. Error: {1}",
+                "BeforeLoad or BeforeUnload callbacks. Error: {1}",
                 authenticationMethod, e);
             return false;
         }
@@ -224,7 +232,12 @@ internal sealed class SqlAuthenticationProviderRegistry
             // Require the modern options contract rather than probing older constructors or types.
             const string optionsTypeName =
                 "Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions";
-            Type optionsType = assembly.GetType(optionsTypeName, throwOnError: true)!;
+            Type optionsType = assembly.GetType(optionsTypeName)
+                ?? throw new TypeLoadException(
+                    $"Azure authentication discovery requires '{optionsTypeName}'. Upgrade the " +
+                    "'Microsoft.Data.SqlClient.Extensions.Azure' package to version 1.1.0 or " +
+                    "later with the options-based provider contract, and keep SqlClient family " +
+                    "package versions compatible.");
 
             SqlAuthenticationProvider? instance = CreateAzureAuthenticationProvider(
                 type,
@@ -268,10 +281,9 @@ internal sealed class SqlAuthenticationProviderRegistry
             SqlClientEventSource.Log.TryTraceEvent(
                 nameof(SqlAuthenticationProviderRegistry) +
                 ": Azure extension assembly={0} not found or not usable; default registration " +
-                "did not complete; {1}: {2}",
+                "did not complete. Error: {1}",
                 AzureExtensionLoader.AssemblyName,
-                ex.GetType().Name,
-                ex.Message);
+                ex);
         }
     }
 
@@ -345,8 +357,8 @@ internal sealed class SqlAuthenticationProviderRegistry
     /// </param>
     /// <remarks>
     /// Reentrant initializer registrations can use the registry while bootstrap is in progress.
-    /// A recoverable failure is cached and rethrown internally; GetProvider and SetProvider log it
-    /// and return null or false instead of exposing it through the public API.
+    /// A recoverable failure is cached and rethrown internally. Public lookups and application
+    /// registrations log it and continue without retrying the failed configuration.
     /// </remarks>
     internal void EnsureBootstrapped(Func<string, object?>? getSection = null)
     {
