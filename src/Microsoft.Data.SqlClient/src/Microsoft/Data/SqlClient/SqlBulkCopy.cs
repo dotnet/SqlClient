@@ -137,7 +137,8 @@ namespace Microsoft.Data.SqlClient
             SqlTypeSqlSingle,
             DataFeedStream,
             DataFeedText,
-            DataFeedXml
+            DataFeedXml,
+            VectorPayload
         }
 
         // Used to hold column metadata for SqlDataReader case
@@ -834,6 +835,12 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                         break;
                     }
 
+                    _SqlMetaData incoming = GetVectorBulkMetadata(
+                        metadata, localColumn._internalSourceColumnOrdinal);
+                    if (!ReferenceEquals(incoming, metadata))
+                    {
+                        metadata.CopyFrom(incoming);
+                    }
                     _sortedColumnMappings.Add(new _ColumnMapping(localColumn._internalSourceColumnOrdinal, metadata));
                     destColumnNames.Add(metadata.column);
 
@@ -901,6 +908,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                                 if (!metadata.metaType.IsFixed && !metadata.metaType.IsLong)
                                 {
                                     int size = metadata.length;
+                                    bool isFloat16Vector = false;
                                     switch (metadata.metaType.NullableType)
                                     {
                                         case TdsEnums.SQLNCHAR:
@@ -909,12 +917,27 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                                             size /= 2;
                                             break;
                                         case TdsEnums.SQLVECTOR:
+                                            // A vector's dimension count is derived from the payload
+                                            // size, and its scale carries the base type.
                                             size = MetaType.GetVectorElementCount(metadata.length, metadata.scale);
+                                            isFloat16Vector = metadata.scale == (byte)MetaType.SqlVectorElementType.Float16;
                                             break;
                                         default:
                                             break;
                                     }
-                                    updateBulkCommandText.AppendFormat((IFormatProvider)null, "({0})", size);
+
+                                    // The base type is only stated for float16, so that the
+                                    // declaration emitted for float32 vectors is unchanged from
+                                    // earlier versions and remains understood by servers which
+                                    // predate float16 support.
+                                    if (isFloat16Vector)
+                                    {
+                                        updateBulkCommandText.AppendFormat((IFormatProvider)null, "({0}, float16)", size);
+                                    }
+                                    else
+                                    {
+                                        updateBulkCommandText.AppendFormat((IFormatProvider)null, "({0})", size);
+                                    }
                                 }
                                 else if (metadata.metaType.IsPlp && !(metadata.metaType.SqlDbType is SqlDbType.Xml or SqlDbTypeExtensions.Json or SqlDbTypeExtensions.Vector))
                                 {
@@ -1238,6 +1261,18 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                             isSqlType = false;
                             isDataFeed = false;
 
+                            if (_currentRowMetadata[destRowIndex].Method == ValueMethod.VectorPayload)
+                            {
+                                // Transfer the vector as its raw payload, so that no value is
+                                // lost to an intermediate representation and no larger textual
+                                // form is sent. The incoming metadata describes this payload;
+                                // SQL Server handles conversion to the destination column.
+                                SqlBinary payload = _sqlDataReaderRowSource.GetSqlBinary(sourceOrdinal);
+                                isNull = payload.IsNull;
+
+                                return isNull ? (object)DBNull.Value : payload.Value;
+                            }
+
                             object value = _sqlDataReaderRowSource.GetValue(sourceOrdinal);
                             isNull = ((value == null) || (value == DBNull.Value));
                             if ((!isNull) && (metadata.type == SqlDbType.Udt))
@@ -1434,11 +1469,130 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             }
         }
 
+        /// <summary>
+        /// The CLR type of a source column, or <see langword="null"/> when the source cannot
+        /// report one.
+        /// </summary>
+        private Type GetSourceColumnType(int sourceOrdinal)
+        {
+            switch (_rowSourceType)
+            {
+                case ValueSourceType.DbDataReader:
+                case ValueSourceType.IDataReader:
+                    // Not _sqlDataReaderRowSource, which is null unless the reader is a
+                    // SqlDataReader. Every reader source implements IDataReader, and
+                    // GetFieldType is declared by IDataRecord.
+                    return (_rowSource as IDataReader)?.GetFieldType(sourceOrdinal);
+
+                case ValueSourceType.DataTable:
+                case ValueSourceType.RowArray:
+                    return _dataTableSource?.Columns[sourceOrdinal].DataType;
+
+                default:
+                    return null;
+            }
+        }
+
+        /// <summary>
+        /// Describes the incoming vector representation without changing cached destination
+        /// metadata. SQL Server converts that representation to the destination column.
+        /// </summary>
+        private _SqlMetaData GetVectorBulkMetadata(_SqlMetaData destination, int sourceOrdinal)
+        {
+            if (destination.isEncrypted ||
+                !(destination.type is SqlDbTypeExtensions.Vector or SqlDbType.VarChar
+                    or SqlDbType.NVarChar or SqlDbTypeExtensions.Json))
+            {
+                return destination;
+            }
+
+            _SqlMetaData source = _sqlDataReaderRowSource?.MetaData?[sourceOrdinal];
+            if (source?.type == SqlDbTypeExtensions.Vector)
+            {
+                _SqlMetaData incoming = (_SqlMetaData)destination.Clone();
+                incoming.type = source.type;
+                incoming.tdsType = source.tdsType;
+                incoming.metaType = source.metaType;
+                incoming.length = source.length;
+                incoming.scale = source.scale;
+                incoming.collation = null;
+                return incoming;
+            }
+
+            if (destination.type != SqlDbTypeExtensions.Vector)
+            {
+                return destination;
+            }
+
+            Type sourceType = GetSourceColumnType(sourceOrdinal);
+            bool isVector = sourceType == typeof(SqlTypes.SqlVector<float>)
+                #if NET
+                || sourceType == typeof(SqlTypes.SqlVector<Half>)
+                #endif
+                ;
+            object value = null;
+            if (isVector || sourceType == typeof(object))
+            {
+                // The first row has already been read. SQL readers use metadata above,
+                // so inspecting a value here does not consume their sequential streams.
+                value = _rowSource is IDataReader reader
+                    ? reader.GetValue(sourceOrdinal)
+                    : _currentRow[sourceOrdinal];
+            }
+
+            if (isVector || value is ISqlVector)
+            {
+                byte elementType = (byte)MetaType.SqlVectorElementType.Float32;
+                #if NET
+                if (sourceType == typeof(SqlTypes.SqlVector<Half>))
+                {
+                    elementType = (byte)MetaType.SqlVectorElementType.Float16;
+                }
+                #endif
+                int dimensions = MetaType.GetVectorElementCount(destination.length, destination.scale);
+                if (value is ISqlVector vector)
+                {
+                    elementType = vector.ElementType;
+                    if (vector.Length != 0)
+                    {
+                        dimensions = vector.Length;
+                    }
+                }
+
+                _SqlMetaData incoming = (_SqlMetaData)destination.Clone();
+                incoming.type = SqlDbTypeExtensions.Vector;
+                incoming.metaType = MetaType.GetMetaTypeFromSqlDbType(incoming.type, false);
+                incoming.tdsType = incoming.metaType.TDSType;
+                incoming.scale = elementType;
+                incoming.length = TdsEnums.VECTOR_HEADER_SIZE +
+                    dimensions * MetaType.GetVectorElementSize(elementType);
+                incoming.collation = null;
+                return incoming;
+            }
+
+            if (destination.scale == (byte)MetaType.SqlVectorElementType.Float16)
+            {
+                // Preserve the established float32 JSON coercion. Float16 text is sent
+                // unchanged so its parsing and rounding are performed by SQL Server.
+                _SqlMetaData incoming = (_SqlMetaData)destination.Clone();
+                incoming.type = SqlDbType.VarChar;
+                incoming.metaType = MetaType.MetaMaxVarChar;
+                incoming.tdsType = incoming.metaType.TDSType;
+                incoming.length = MAX_LENGTH;
+                incoming.scale = incoming.metaType.Scale;
+                incoming.collation = _parser.DefaultCollation;
+                incoming.codePage = _parser.DefaultCodePage;
+                incoming.encoding = System.Text.Encoding.GetEncoding(incoming.codePage);
+                return incoming;
+            }
+
+            return destination;
+        }
+
         private SourceColumnMetadata GetColumnMetadata(int ordinal)
         {
             int sourceOrdinal = _sortedColumnMappings[ordinal]._sourceColumnOrdinal;
             _SqlMetaData metadata = _sortedColumnMappings[ordinal]._metadata;
-
             // Handle special Sql data types for SqlDataReader and DataTables
             ValueMethod method;
             bool isSqlType;
@@ -1547,7 +1701,21 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             {
                 isSqlType = false;
                 isDataFeed = false;
-                method = ValueMethod.GetValue;
+
+                // A vector read from another vector column is transferred as its raw payload,
+                // rather than through the representation the reader would otherwise surface.
+                // That representation is a JSON string on frameworks without System.Half,
+                // which is both larger than the payload and unable to carry a negative zero.
+                if (metadata.type == SqlDbTypeExtensions.Vector &&
+                    _sqlDataReaderRowSource?.MetaData is { } sourceMetaData &&
+                    sourceMetaData[sourceOrdinal].metaType.SqlDbType == SqlDbTypeExtensions.Vector)
+                {
+                    method = ValueMethod.VectorPayload;
+                }
+                else
+                {
+                    method = ValueMethod.GetValue;
+                }
             }
 
             return new SourceColumnMetadata(method, isSqlType, isDataFeed);
