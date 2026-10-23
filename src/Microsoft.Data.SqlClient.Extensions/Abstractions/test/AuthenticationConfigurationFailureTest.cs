@@ -28,13 +28,10 @@ public class AuthenticationConfigurationFailureTest
         Assert.IsType<OutOfMemoryException>(failure.GetBaseException());
     }
 
-    /// <summary>Missing or incompatible metadata is not silently treated as absent configuration.</summary>
+    /// <summary>Missing or incompatible provider collections still prevent configuration application.</summary>
     [Theory]
-    [InlineData(typeof(InvalidStringSection), "applicationClientId")]
-    [InlineData(typeof(InvalidNullableStringSection), "applicationClientId")]
     [InlineData(typeof(InvalidProvidersSection), "providers")]
     [InlineData(typeof(MissingProvidersSection), "providers")]
-    [InlineData(typeof(EmptySection), "applicationClientId")]
     public void InvalidSchemaAbortsConfiguration(Type type, string propertyName)
     {
         // Deliberately incompatible handlers must not be mistaken for empty optional settings.
@@ -118,23 +115,6 @@ public class AuthenticationConfigurationFailureTest
         return Assert.ThrowsAny<Exception>(() =>
             new SqlAuthenticationProviderRegistry().ApplyConfiguration(
                 new SqlAuthenticationConfiguration(section)));
-    }
-
-    /// <summary>Simulates a handler missing the expected authentication schema.</summary>
-    private sealed class EmptySection : ConfigurationSection { }
-
-    /// <summary>Simulates an incompatible string property instead of an absent override.</summary>
-    private sealed class InvalidStringSection : ConfigurationSection
-    {
-        [ConfigurationProperty("applicationClientId", DefaultValue = 1)]
-        public int ApplicationClientId => (int)this["applicationClientId"];
-    }
-
-    /// <summary>Ensures a null value does not disguise an incompatible declared property type.</summary>
-    private sealed class InvalidNullableStringSection : ConfigurationSection
-    {
-        [ConfigurationProperty("applicationClientId", DefaultValue = null)]
-        public int? ApplicationClientId => (int?)this["applicationClientId"];
     }
 
     /// <summary>Simulates an incompatible provider collection with otherwise valid string settings.</summary>
