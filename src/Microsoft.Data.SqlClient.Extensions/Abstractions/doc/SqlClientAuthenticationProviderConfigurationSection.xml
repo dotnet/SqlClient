@@ -32,9 +32,11 @@ See the LICENSE file in the project root for more information.
         </para>
         <para>
           Recoverable bootstrap failures are cached and traced. Subsequent calls to
-          <see cref="SqlAuthenticationProvider.GetProvider"/> return <see langword="null"/>;
-          <see cref="SqlAuthenticationProvider.SetProvider"/> returns <see langword="false"/>.
-          Correct the configuration and restart the application. Earlier registrations and
+          <see cref="SqlAuthenticationProvider.GetProvider"/> can still return successfully
+          registered providers, and <see cref="SqlAuthenticationProvider.SetProvider"/> can
+          register application providers without retrying bootstrap. Configuration registrations
+          retain precedence. Correct the configuration and restart the application to retry
+          bootstrap. Earlier registrations and
           initializer/provider callback side effects are not rolled back.
         </para>
       </remarks>

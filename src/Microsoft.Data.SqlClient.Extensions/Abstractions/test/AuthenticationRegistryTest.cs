@@ -2,9 +2,11 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Diagnostics.Tracing;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 
 namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
 
@@ -12,6 +14,78 @@ namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
 [Collection(AuthenticationFeatureSwitchTestCollection.Name)]
 public class AuthenticationRegistryTest
 {
+    /// <summary>Application registration remains usable after failure without overriding successful configuration registrations.</summary>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void CachedBootstrapFailureAllowsApplicationRegistration(bool configuredProvider)
+    {
+        var registry = Assert.IsType<SqlAuthenticationProviderRegistry>(
+            typeof(SqlAuthenticationProviderRegistry).GetField(
+                "Instance", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null));
+        FieldInfo failureField = typeof(SqlAuthenticationProviderRegistry).GetField(
+            "_bootstrapFailure", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        var providers = Assert.IsAssignableFrom<IDictionary>(
+            typeof(SqlAuthenticationProviderRegistry).GetField(
+                "_providers", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(registry));
+        const SqlAuthenticationMethod method = SqlAuthenticationMethod.ActiveDirectoryDefault;
+        object? originalFailure = failureField.GetValue(registry);
+        object? originalProvider = providers[method];
+        var failure = ExceptionDispatchInfo.Capture(new ArgumentException(
+            "Test configured initializer failure", new InvalidOperationException("Test activation failure")));
+        using var listener = new AuthenticationTraceListener();
+        providers.Remove(method);
+        failureField.SetValue(registry, failure);
+        try
+        {
+            Assert.Null(SqlAuthenticationProvider.GetProvider(method));
+            var provider = new Provider(true);
+            var configured = new Provider(true);
+            if (configuredProvider)
+            {
+                Assert.True(registry.Register(
+                    method, configured, SqlAuthenticationProviderRegistry.RegistrationTier.Config));
+            }
+
+            Assert.Equal(!configuredProvider, SqlAuthenticationProvider.SetProvider(method, provider));
+            SqlAuthenticationProvider expected = configuredProvider ? configured : provider;
+            Assert.Same(expected, SqlAuthenticationProvider.GetProvider(method));
+            Assert.Same(failure, failureField.GetValue(registry));
+            Assert.False(SqlAuthenticationProvider.SetProvider(method, new Provider(false)));
+            Assert.Same(expected, SqlAuthenticationProvider.GetProvider(method));
+            Assert.Contains(listener.Messages, message =>
+                message.Contains("Test configured initializer failure") &&
+                message.Contains("application registration"));
+        }
+        finally
+        {
+            failureField.SetValue(registry, originalFailure);
+            if (originalProvider is null)
+            {
+                providers.Remove(method);
+            }
+            else
+            {
+                providers[method] = originalProvider;
+            }
+        }
+    }
+
+    /// <summary>An installed legacy Azure contract reports the required upgrade rather than a missing package.</summary>
+    [Fact]
+    public void LegacyAzureContractIsTracedWithUpgradeGuidance()
+    {
+        using var listener = new AuthenticationTraceListener();
+        var registry = new SqlAuthenticationProviderRegistry();
+
+        registry.LoadAzureExtension(() => new LegacyAzureAssembly());
+
+        Assert.Contains(listener.Messages, message =>
+            message.Contains("ActiveDirectoryAuthenticationProviderOptions") &&
+            message.Contains("Upgrade") && message.Contains("1.1.0"));
+        Assert.True(registry.Register(SqlAuthenticationMethod.ActiveDirectoryDefault, new Provider(true)));
+    }
+
     /// <summary>Discovery reports attempts, not installation, when existing defaults reject it.</summary>
     [Fact]
     public void AzureDiscoveryTraceDoesNotClaimRejectedRegistrationsSucceeded()
@@ -400,6 +474,17 @@ public class AuthenticationRegistryTest
 
         public override Task<SqlAuthenticationToken> AcquireTokenAsync(SqlAuthenticationParameters parameters) =>
             throw new NotSupportedException();
+    }
+
+    private sealed class LegacyAzureAssembly : Assembly
+    {
+        public override AssemblyName GetName() =>
+            new("Microsoft.Data.SqlClient.Extensions.Azure") { Version = new Version(1, 0, 0, 0) };
+
+        public override Type? GetType(string name) =>
+            name == "Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider"
+                ? typeof(ThrowingProvider)
+                : null;
     }
 
     private sealed class AuthenticationTraceListener : EventListener
