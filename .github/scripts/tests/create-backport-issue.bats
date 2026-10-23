@@ -247,6 +247,22 @@ STUB
   [ -f "${STUB_DIR}/sub_issue_calls.log" ]
 }
 
+@test "reuses an unlinked issue when the CLI formats the Actions bot login without the suffix" {
+  stub_gh "" \
+    "$(printf '7.1.1')" \
+    '{"title":"Parent title","labels":[]}' \
+    "https://github.com/dotnet/SqlClient/issues/4901" \
+    '{"id":123456789}' \
+    '[{"number":4904,"title":"[7.1.1] Parent title","body":"Backport of #4714 for the `7.1.1` hotfix.","author":{"login":"github-actions"}}]'
+
+  run bash "${SCRIPT}"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Found previously created, unlinked backport issue #4904"* ]]
+  [[ "$output" == *"Linked #4904 as a sub-issue of #4714"* ]]
+  [ ! -f "${STUB_DIR}/issue_create_calls.log" ]
+  [ -f "${STUB_DIR}/sub_issue_calls.log" ]
+}
+
 @test "creates a backport issue without a milestone when it does not exist" {
   stub_gh "" \
     "" \

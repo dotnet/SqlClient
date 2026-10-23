@@ -152,7 +152,7 @@ if ! ORPHAN_ISSUE_NUMBER=$(gh issue list --repo "${GITHUB_REPOSITORY}" \
   --json number,title,body,author \
   | jq -r --arg title_prefix "${CHILD_TITLE_PREFIX}" \
        --arg body_prefix "Backport of #${PARENT_ISSUE_NUMBER} for the \`${VERSION}\` hotfix." \
-       '[.[] | select(.title | startswith($title_prefix)) | select(.body | startswith($body_prefix)) | select(.author.login == "github-actions[bot]")] | sort_by(.number) | .[0].number // empty'); then
+       '[.[] | select(.title | startswith($title_prefix)) | select(.body | startswith($body_prefix)) | select(.author.login == "github-actions" or .author.login == "github-actions[bot]")] | sort_by(.number) | .[0].number // empty'); then
   echo "::error::Failed to search for an unlinked backport issue for #${PARENT_ISSUE_NUMBER};" \
        "cannot safely create another issue. Aborting." >&2
   exit 1
