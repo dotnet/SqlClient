@@ -8,7 +8,9 @@ using System.Configuration;
 using System.IO;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
-using Microsoft.Data.SqlClient.Connection;
+using System.Threading.Tasks;
+using Microsoft.SqlServer.TDS.PreLogin;
+using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests;
@@ -17,11 +19,13 @@ namespace Microsoft.Data.SqlClient.UnitTests;
 [Collection(AppContextSwitchTestCollection.Name)]
 public class AuthenticationConfigurationTest
 {
-    /// <summary>The connection's missing-provider error covers failed bootstrap and explicit-registration scenarios.</summary>
+    /// <summary>Open and OpenAsync report missing providers as SqlException, including after cached bootstrap failure.</summary>
     [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void ConnectionErrorDirectsUsersToRegistrationAndTraces(bool cachedFailure)
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public async Task ConnectionErrorDirectsUsersToRegistrationAndTraces(bool cachedFailure, bool openAsync)
     {
         const SqlAuthenticationMethod method = SqlAuthenticationMethod.ActiveDirectoryDefault;
         SqlAuthenticationProvider.GetProvider(method);
@@ -39,25 +43,32 @@ public class AuthenticationConfigurationTest
             : null);
         try
         {
-#if NET
-            var connection = (SqlConnectionInternal)System.Runtime.CompilerServices.RuntimeHelpers.GetUninitializedObject(
-                typeof(SqlConnectionInternal));
-#else
-            var connection = (SqlConnectionInternal)System.Runtime.Serialization.FormatterServices.GetUninitializedObject(
-                typeof(SqlConnectionInternal));
-#endif
-            typeof(SqlConnectionInternal).GetField(
-                "<ConnectionOptions>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(
-                    connection, new SqlConnectionOptions("Server=<server>;Authentication=Active Directory Default"));
-            MethodInfo acquireToken = typeof(SqlConnectionInternal).GetMethod(
-                "GetFedAuthToken", BindingFlags.Instance | BindingFlags.NonPublic)!;
+            using var server = new TdsServer(new TdsServerArguments
+            {
+                FedAuthRequiredPreLoginOption = TdsPreLoginFedAuthRequiredOption.FedAuthRequired,
+            });
+            server.Start();
+            var builder = new SqlConnectionStringBuilder
+            {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                Authentication = method,
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                Pooling = false,
+                ConnectTimeout = 5,
+                ConnectRetryCount = 0,
+            };
+            using var connection = new SqlConnection(builder.ConnectionString);
 
-            var invocation = Assert.Throws<TargetInvocationException>(() => acquireToken.Invoke(connection, new object?[] { null }));
-            var failure = Assert.IsType<ArgumentException>(invocation.InnerException);
+            SqlException failure = openAsync
+                ? await Assert.ThrowsAsync<SqlException>(() => connection.OpenAsync())
+                : Assert.Throws<SqlException>(() => connection.Open());
             Assert.Contains("SetProvider", failure.Message);
             Assert.Contains("Microsoft.Data.SqlClient.EventSource", failure.Message);
             Assert.Contains("compatible", failure.Message);
             Assert.Null(failure.InnerException);
+            var error = Assert.IsType<SqlError>(Assert.Single(failure.Errors));
+            Assert.Equal(builder.DataSource, error.Server);
+            Assert.NotEqual(Guid.Empty, failure.ClientConnectionId);
         }
         finally
         {

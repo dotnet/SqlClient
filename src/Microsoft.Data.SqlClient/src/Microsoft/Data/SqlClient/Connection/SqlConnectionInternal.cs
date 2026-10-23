@@ -3022,7 +3022,7 @@ namespace Microsoft.Data.SqlClient.Connection
             SqlAuthenticationProvider? authProvider = SqlAuthenticationProvider.GetProvider(ConnectionOptions.Authentication);
             if (authProvider == null && _accessTokenCallback == null)
             {
-                throw SQL.CannotFindAuthProvider(ConnectionOptions.Authentication);
+                throw SQL.CannotFindAuthProvider(ConnectionOptions.Authentication, this);
             }
 
             // We will perform retries if the provider indicates an error that

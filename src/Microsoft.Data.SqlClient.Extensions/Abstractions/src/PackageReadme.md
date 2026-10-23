@@ -49,15 +49,21 @@ later with that contract and keep SqlClient family package versions compatible.
 
 ### Authentication compatibility considerations
 
-- `EnableAppConfig=false` now disables authentication configuration on .NET Framework as well as
-  modern .NET. The driver's retry configuration and switch-override readers remain .NET-only.
-- Providers registered by a configured initializer have configuration precedence and cannot be
-  overridden by application registrations. Change the configuration or initializer instead.
-- `GetProvider` takes the registry lock. Replacement `BeforeLoad` and `BeforeUnload` callbacks
-  run under the same lock, so slow callbacks delay other lookups and connection logins. Keep
-  callbacks short and do not wait for another thread that accesses the registry.
-- Detailed bootstrap and Azure loading causes are available in Abstractions' EventSource traces,
-  not through a diagnostic API or the connection exception's inner exception.
+Moving authentication registration from the driver to Abstractions preserves the public method
+signatures, but is not a behavior-neutral change. Compared with the previous driver-owned registry:
+
+| Area | Compatibility difference |
+|---|---|
+| Configured initializer precedence | Providers registered during a configured initializer's `Initialize()` now receive configuration precedence. Application `SetProvider` calls can no longer replace them; explicit configuration entries were already protected. Change the configuration or initializer instead. |
+| Older Azure extensions | Automatic discovery no longer falls back to parameterless or string-based constructors. An older extension without the options-based contract may stop supplying the default provider. Upgrade to a compatible extension with that contract, or explicitly register a provider. This change does not remove those public constructors. |
+| .NET Framework configuration switch | `EnableAppConfig=false` now disables authentication configuration on .NET Framework, where it previously remained enabled. The driver's retry configuration and switch-override readers remain .NET-only. |
+| Lookup synchronization | `GetProvider` now takes the registry lock used by bootstrap and replacement `BeforeLoad`/`BeforeUnload` callbacks. Slow callbacks delay other lookups and connection logins. Keep callbacks short: synchronously waiting for another thread that accesses the registry can deadlock. |
+| Bootstrap failure reporting | Driver access previously could expose the manager's cached type-initialization exception. Now, if no usable provider or access-token callback is available, the driver's `Open` and `OpenAsync` report missing-provider guidance as a `SqlException`, rather than the previous missing-provider `ArgumentException`. Detailed bootstrap and Azure loading causes remain in Abstractions' EventSource traces, not a diagnostic API or the connection exception's inner exception. |
+| Recovery after failed bootstrap | A failed manager static initialization previously prevented recovery through that manager. After a recoverable bootstrap failure, application registration and lookup now remain usable without restarting. The failure stays cached, failed configuration is not retried, and successful configuration registrations retain precedence. Restart after correcting the cause to retry bootstrap. |
+
+Strict configuration parsing is not introduced: configuration reading retains the relaxed policy
+described below. New capabilities include registration without loading SqlClient, explicit
+registration under trimming/NativeAOT, and the independent `EnableAzureExtensionDiscovery` switch.
 
 Set switches before first registry access. On .NET 10 trimmed and NativeAOT publishes, both
 reflective paths are removed automatically. Explicitly construct and register a provider for

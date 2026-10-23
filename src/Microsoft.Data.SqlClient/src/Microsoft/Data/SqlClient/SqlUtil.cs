@@ -250,11 +250,12 @@ namespace Microsoft.Data.SqlClient
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_UnsupportedAuthenticationSpecified, authentication));
         }
 
-        internal static Exception CannotFindAuthProvider(SqlAuthenticationMethod authentication)
+        internal static SqlException CannotFindAuthProvider(
+            SqlAuthenticationMethod authentication, SqlConnectionInternal internalConnection)
         {
             string authName = authentication.ToString();
 
-            return authentication switch
+            string message = authentication switch
             {
 #pragma warning disable 0618
                 SqlAuthenticationMethod.ActiveDirectoryPassword or
@@ -267,9 +268,14 @@ namespace Microsoft.Data.SqlClient
                 SqlAuthenticationMethod.ActiveDirectoryMSI or
                 SqlAuthenticationMethod.ActiveDirectoryDefault or
                 SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity
-                    => ADP.Argument(StringsHelper.GetString(Strings.SQL_CannotFindActiveDirectoryAuthProvider, authName)),
-                _ => ADP.Argument(StringsHelper.GetString(Strings.SQL_CannotFindAuthProvider, authName)),
+                    => StringsHelper.GetString(Strings.SQL_CannotFindActiveDirectoryAuthProvider, authName),
+                _ => StringsHelper.GetString(Strings.SQL_CannotFindAuthProvider, authName),
             };
+            SqlErrorCollection errors = new();
+            errors.Add(new SqlError(0, 0, TdsEnums.MIN_ERROR_CLASS,
+                internalConnection?.ConnectionOptions.DataSource, message, "", 0));
+            return SqlException.CreateException(
+                errors, null, internalConnection, innerException: null, batchCommand: null);
         }
 
         internal static Exception ParameterDirectionInvalidForOptimizedBinding(string paramName)
