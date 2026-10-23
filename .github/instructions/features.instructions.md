@@ -260,24 +260,32 @@ AppContext switches allow runtime behavior changes without modifying connection 
 | `Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows` | `false` | Forces managed SNI on Windows (instead of native SNI) |
 | `Switch.Microsoft.Data.SqlClient.UseOneSecFloorInTimeoutCalculationDuringLogin` | `false` | Sets 1-second minimum in login timeout calculations |
 
-### Relaxed authentication configuration
+### Authentication configuration in app.config
 
-Authentication configuration loading and parsing follow the driver's relaxed error policy.
-Reading/schema errors are traced and return empty settings without trying legacy after a reading error,
-handler mismatches are traced and ignored (allowing modern-to-legacy fallback), and invalid
-`useWamBroker` values leave the override unset while retaining other valid settings.
-All `ConfigurationErrorsException` failures are caught, including those wrapping fatal failures,
-matching main. Other exception types propagate.
+The `SqlClientAuthenticationProviders` (modern) and `SqlAuthenticationProviders`
+(legacy) sections are optional. Applications may provide full, partial, or no
+configuration, and may register providers in code instead.
 
-Relaxed loading and parsing may permit the driver to install or configure providers differently
-from the application's intended configuration: ignored errors can select legacy providers, allow
-default providers to be installed, or retain default broker settings. Tracing does not prevent
-these unexpected configurations.
+- **No config file or section:** this is normal. The driver uses its default providers and settings.
+- **Partial configuration:** the driver applies the valid settings and uses defaults for the rest.
+- **Invalid entries:** an invalid `useWamBroker` value is traced and ignored, keeping the default
+  and other valid settings. Configuration-reading errors (`ConfigurationErrorsException`) are
+  traced and produce empty settings without trying legacy. Other exception types propagate;
+  initializer and provider validation or activation can still fail.
+- **Precedence:** if the modern section is declared, it wins over the legacy section, even when
+  its element is absent. The legacy section is read only when the modern section is missing or
+  its handler type doesn't match.
+- **Code wins over config:** providers registered with `SqlAuthenticationProvider.SetProvider`
+  take precedence over configured providers.
 
-A declared modern section without an element still takes precedence over legacy.
-These policies apply to the new Abstractions loader; the driver continues using its existing
-reader until the registry migration in #4821. Configuration reading in the driver remains gated
-by `EnableAppConfig`.
+To diagnose unexpected provider selection, turn on `SqlClientEventSource` tracing.
+Skipped or invalid settings are reported there.
+
+These loading policies apply to the new Abstractions loader; the driver continues using its
+existing reader until the registry migration in #4821.
+
+On .NET, `Switch.Microsoft.Data.SqlClient.EnableAppConfig` controls whether configuration
+is read at all. See [Trimming](#trimming).
 
 ### Usage Example
 ```csharp

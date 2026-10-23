@@ -22,6 +22,50 @@ public class AuthenticationConfigurationFileTest
                  type="Microsoft.Data.SqlClient.SqlAuthenticationProviderConfigurationSection, Microsoft.Data.SqlClient.Extensions.Abstractions" />
         """;
 
+    /// <summary>Absent section elements require no authentication overrides or provider entries.</summary>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void MissingSectionsUseDefaults(bool declareSections)
+    {
+        WithConfiguration(declareSections ? Declarations : string.Empty, string.Empty,
+            configuration =>
+            {
+                var settings = SqlAuthenticationConfiguration.Load(configuration.GetSection);
+                Assert.Null(settings.ApplicationClientId);
+                Assert.Null(settings.UseWamBroker);
+                Assert.Empty(settings.InitializerType);
+                Assert.Empty(settings.Providers);
+            });
+    }
+
+    /// <summary>Empty and partial sections retain defaults for every omitted optional setting.</summary>
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public void OptionalAttributesUseDefaults(bool modern, bool partial)
+    {
+        string name = modern ? Modern : Legacy;
+        string handler = modern
+            ? nameof(SqlClientAuthenticationProviderConfigurationSection)
+            : nameof(SqlAuthenticationProviderConfigurationSection);
+        string attributes = partial ? "applicationClientId='configured-client'" : string.Empty;
+
+        WithConfiguration(
+            $"<section name='{name}' type='Microsoft.Data.SqlClient.{handler}, Microsoft.Data.SqlClient.Extensions.Abstractions' />",
+            $"<{name} {attributes} />",
+            configuration =>
+            {
+                var settings = SqlAuthenticationConfiguration.Load(configuration.GetSection);
+                Assert.Equal(partial ? "configured-client" : null, settings.ApplicationClientId);
+                Assert.Null(settings.UseWamBroker);
+                Assert.Empty(settings.InitializerType);
+                Assert.Empty(settings.Providers);
+            });
+    }
+
     /// <summary>Both handlers reach the loader without activating configured types or loading the driver.</summary>
     [Theory]
     [InlineData(false)]
