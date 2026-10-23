@@ -275,8 +275,8 @@ configuration, and may register providers in code instead.
 - **Precedence:** if the modern section is declared, it wins over the legacy section, even when
   its element is absent. The legacy section is read only when the modern section is missing or
   its handler type doesn't match.
-- **Code wins over config:** providers registered with `SqlAuthenticationProvider.SetProvider`
-  take precedence over configured providers.
+- **Config providers take precedence:** a provider listed in app.config for an authentication
+  method can't be replaced by `SqlAuthenticationProvider.SetProvider`.
 
 To diagnose unexpected provider selection, turn on `SqlClientEventSource` tracing.
 Skipped or invalid settings are reported there.
