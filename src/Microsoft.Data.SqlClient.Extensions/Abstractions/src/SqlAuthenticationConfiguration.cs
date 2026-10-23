@@ -34,9 +34,6 @@ internal sealed class SqlAuthenticationConfiguration
     /// Reads either supported handler's metadata, or creates empty settings when no section is supplied.
     /// </summary>
     /// <param name="section">The selected section, or null for no authentication overrides.</param>
-    /// <exception cref="ConfigurationErrorsException">
-    /// The providers property is missing or incompatible.
-    /// </exception>
     internal SqlAuthenticationConfiguration(ConfigurationSection? section = null)
     {
         if (section is null)
@@ -48,14 +45,6 @@ internal sealed class SqlAuthenticationConfiguration
         string applicationClientId = ReadString(section, "applicationClientId");
         string useWamBrokerValue = ReadString(section, "useWamBroker");
         InitializerType = ReadString(section, "initializerType");
-        if (section.ElementInformation.Properties["providers"]?.Value
-            is not ProviderSettingsCollection providers)
-        {
-            throw new ConfigurationErrorsException(
-                "The authentication configuration property 'providers' must be a " +
-                "ProviderSettingsCollection.");
-        }
-
         // Missing overrides must remain distinct from explicitly configured false or empty values.
         if (!string.IsNullOrEmpty(applicationClientId))
         {
@@ -91,9 +80,19 @@ internal sealed class SqlAuthenticationConfiguration
                 "SqlAuthenticationConfiguration | No user-defined UseWamBroker found.");
         }
 
-        // Snapshot entries, but defer method validation and activation to preserve fail-fast order.
-        Providers = providers.Cast<ProviderSettings>()
-            .Select(provider => new ProviderSettings(provider.Name, provider.Type)).ToArray();
+        if (section.ElementInformation.Properties["providers"]?.Value
+            is ProviderSettingsCollection providers)
+        {
+            // Snapshot entries, but defer method validation and activation to preserve fail-fast order.
+            Providers = providers.Cast<ProviderSettings>()
+                .Select(provider => new ProviderSettings(provider.Name, provider.Type)).ToArray();
+        }
+        else
+        {
+            Debug.Assert(false,
+                "The authentication configuration property 'providers' must be a " +
+                "ProviderSettingsCollection.");
+        }
     }
 
     /// <summary>Loads the modern section, falling back when it is absent or has an incompatible handler.</summary>

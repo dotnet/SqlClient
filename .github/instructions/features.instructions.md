@@ -272,6 +272,9 @@ configuration, and may register providers in code instead.
   and other valid settings. Configuration-reading errors (`ConfigurationErrorsException`) are
   traced and produce empty settings without trying legacy. Other exception types propagate;
   initializer and provider validation or activation can still fail.
+- **Internal handler metadata mismatches:** assert in Debug. In Release, treat the affected
+  string setting or provider list as empty while retaining other valid settings.
+  Omitting an optional XML attribute uses the handler's default and is not a metadata mismatch.
 - **Precedence:** if the modern section is declared, it wins over the legacy section, even when
   its element is absent. The legacy section is read only when the modern section is missing or
   its handler type doesn't match.

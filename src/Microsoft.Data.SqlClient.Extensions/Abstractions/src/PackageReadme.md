@@ -59,6 +59,10 @@ Loading traces configuration errors and continues with defaults:
 
 A declared modern section takes precedence over legacy, even if its element is absent.
 
+Internal handler metadata mismatches trigger a Debug assertion. In Release, the affected
+string setting or provider list is treated as empty while other valid settings are retained.
+Omitting optional XML attributes does not cause a metadata mismatch.
+
 Loading only reads settings. It doesn't create or activate initializers or providers.
 Other exception types propagate, and initializer or provider validation and activation
 can still fail later.

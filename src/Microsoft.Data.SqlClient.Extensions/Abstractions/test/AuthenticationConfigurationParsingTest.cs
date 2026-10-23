@@ -122,6 +122,34 @@ public class AuthenticationConfigurationParsingTest
         Assert.Equal("Example.Provider", Assert.Single(configuration.Providers).Type);
     }
 
+    /// <summary>Missing or incompatible provider metadata does not discard valid scalar settings.</summary>
+#if DEBUG
+    [Theory(Skip = "Invalid schemas intentionally trigger Debug.Assert; verify recovery in Release.")]
+#else
+    [Theory]
+#endif
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public void ProviderSchemaMismatchesPreserveOtherSettings(
+        bool incompatibleProviders, bool useWamBroker)
+    {
+        ConfigurationSection section = incompatibleProviders
+            ? new IncompatibleProvidersSection()
+            : new MissingProvidersSection();
+        section.ElementInformation.Properties["applicationClientId"].Value = "configured-client";
+        section.ElementInformation.Properties["initializerType"].Value = "Example.Initializer";
+        section.ElementInformation.Properties["useWamBroker"].Value = useWamBroker.ToString();
+
+        var configuration = new SqlAuthenticationConfiguration(section);
+
+        Assert.Equal("configured-client", configuration.ApplicationClientId);
+        Assert.Equal("Example.Initializer", configuration.InitializerType);
+        Assert.Equal(useWamBroker, configuration.UseWamBroker);
+        Assert.Empty(configuration.Providers);
+    }
+
     /// <summary>
     /// All supported configuration names map case-insensitively to their exact enum value.
     /// </summary>
@@ -244,5 +272,25 @@ public class AuthenticationConfigurationParsingTest
 
         [ConfigurationProperty("providers")]
         public ProviderSettingsCollection Providers => (ProviderSettingsCollection)this["providers"];
+    }
+
+    /// <summary>Supplies valid scalar metadata without a providers property.</summary>
+    private class MissingProvidersSection : ConfigurationSection
+    {
+        [ConfigurationProperty("applicationClientId")]
+        public string ApplicationClientId => (string)this["applicationClientId"];
+
+        [ConfigurationProperty("initializerType")]
+        public string InitializerType => (string)this["initializerType"];
+
+        [ConfigurationProperty("useWamBroker")]
+        public string UseWamBroker => (string)this["useWamBroker"];
+    }
+
+    /// <summary>Supplies valid scalar metadata with an incompatible providers property.</summary>
+    private sealed class IncompatibleProvidersSection : MissingProvidersSection
+    {
+        [ConfigurationProperty("providers", DefaultValue = 1)]
+        public int Providers => (int)this["providers"];
     }
 }
