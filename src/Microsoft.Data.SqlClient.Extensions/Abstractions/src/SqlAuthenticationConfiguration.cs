@@ -34,14 +34,9 @@ internal sealed class SqlAuthenticationConfiguration
     /// </summary>
     /// <param name="section">The selected section, or null for no authentication overrides.</param>
     /// <exception cref="ConfigurationErrorsException">
-    /// The schema is invalid, or strict mode is enabled and a configured broker value is invalid.
+    /// The schema is invalid.
     /// </exception>
     internal SqlAuthenticationConfiguration(ConfigurationSection? section = null)
-        : this(section, AuthenticationFeatureSwitches.UseStrictAuthenticationConfiguration)
-    {
-    }
-
-    private SqlAuthenticationConfiguration(ConfigurationSection? section, bool strict)
     {
         if (section is null)
         {
@@ -77,12 +72,6 @@ internal sealed class SqlAuthenticationConfiguration
         {
             if (!bool.TryParse(useWamBrokerValue, out bool useWamBroker))
             {
-                if (strict)
-                {
-                    throw new ConfigurationErrorsException(
-                        $"Invalid authentication configuration value '{useWamBrokerValue}' for " +
-                        "'useWamBroker'; expected 'true' or 'false'.");
-                }
                 SqlClientEventSource.Log.TryTraceEvent(
                     "SqlAuthenticationConfiguration | Ignoring invalid UseWamBroker; " +
                     "expected 'true' or 'false'.");
@@ -106,29 +95,24 @@ internal sealed class SqlAuthenticationConfiguration
             .Select(provider => new ProviderSettings(provider.Name, provider.Type)).ToArray();
     }
 
-    /// <summary>Loads the modern section, falling back when it is absent or ignored in compatibility mode.</summary>
+    /// <summary>Loads the modern section, falling back when it is absent or has an incompatible handler.</summary>
     /// <param name="getSection">
     /// The section reader, or null to use the process-wide ConfigurationManager.
     /// </param>
     /// <returns>Validated settings, including empty settings when neither section exists.</returns>
-    /// <exception cref="ConfigurationErrorsException">
-    /// Configuration is invalid and strict mode is enabled, or the failure contains a fatal exception.
-    /// </exception>
+    /// <remarks>Configuration errors are traced and produce empty settings, matching the driver.</remarks>
     [RequiresUnreferencedCode("Authentication configuration resolves section handlers by name.")]
     [RequiresDynamicCode("Authentication configuration constructs section handlers dynamically.")]
     internal static SqlAuthenticationConfiguration Load(Func<string, object?>? getSection = null)
     {
-        bool strict = AuthenticationFeatureSwitches.UseStrictAuthenticationConfiguration;
         try
         {
             ConfigurationSection? section = FetchConfigurationSection("SqlClientAuthenticationProviders",
-                "Microsoft.Data.SqlClient.SqlClientAuthenticationProviderConfigurationSection",
-                getSection, strict);
+                typeof(SqlClientAuthenticationProviderConfigurationSection), getSection);
             if (section is null)
             {
                 section = FetchConfigurationSection("SqlAuthenticationProviders",
-                    "Microsoft.Data.SqlClient.SqlAuthenticationProviderConfigurationSection",
-                    getSection, strict);
+                    typeof(SqlAuthenticationProviderConfigurationSection), getSection);
             }
 
             if (section is null)
@@ -138,20 +122,16 @@ internal sealed class SqlAuthenticationConfiguration
                     "nor SqlAuthenticationProviders configuration section found.");
             }
 
-            return new SqlAuthenticationConfiguration(section, strict);
+            return new SqlAuthenticationConfiguration(section);
         }
-        catch (ConfigurationErrorsException e) when (ExceptionHelpers.IsRecoverableException(e))
+        catch (ConfigurationErrorsException e)
         {
             SqlClientEventSource.Log.TryTraceEvent(
                 "SqlAuthenticationConfiguration: Unable to load custom " +
                 "SqlAuthenticationProviders or SqlClientAuthenticationProviders. Correct " +
                 "app.config syntax and section handler declarations. ConfigurationManager failed " +
                 "to load due to configuration errors: {0}", e);
-            if (strict)
-            {
-                throw;
-            }
-            return new SqlAuthenticationConfiguration(null, strict);
+            return new SqlAuthenticationConfiguration();
         }
     }
 
@@ -178,27 +158,20 @@ internal sealed class SqlAuthenticationConfiguration
         return value as string ?? string.Empty;
     }
 
-    /// <summary>Fetches a section only when its handler has the expected full type name.</summary>
+    /// <summary>Fetches a section only when its handler has the expected type.</summary>
     /// <param name="name">The configuration section name.</param>
-    /// <param name="typeName">The expected handler's full type name.</param>
+    /// <param name="type">The expected handler type.</param>
     /// <param name="getSection">
     /// The section reader, or null to use the process-wide ConfigurationManager.
     /// </param>
-    /// <returns>The matching section, or null if absent or ignored in compatibility mode.</returns>
+    /// <returns>The matching section, or null if absent or incompatible.</returns>
     /// <exception cref="ConfigurationErrorsException">
-    /// The section cannot be loaded, or strict mode is enabled and its handler is incompatible.
+    /// The section cannot be loaded.
     /// </exception>
     [RequiresUnreferencedCode("Configuration section handlers are resolved by name.")]
     [RequiresDynamicCode("Configuration section handlers are constructed dynamically.")]
     internal static ConfigurationSection? FetchConfigurationSection(
-        string name, string typeName, Func<string, object?>? getSection = null)
-        => FetchConfigurationSection(name, typeName, getSection,
-            AuthenticationFeatureSwitches.UseStrictAuthenticationConfiguration);
-
-    [RequiresUnreferencedCode("Configuration section handlers are resolved by name.")]
-    [RequiresDynamicCode("Configuration section handlers are constructed dynamically.")]
-    private static ConfigurationSection? FetchConfigurationSection(
-        string name, string typeName, Func<string, object?>? getSection, bool strict)
+        string name, Type type, Func<string, object?>? getSection = null)
     {
         // TODO: Support reading configuration from appsettings.json for .NET runtime applications.
         object? section = (getSection ?? ConfigurationManager.GetSection)(name);
@@ -206,21 +179,14 @@ internal sealed class SqlAuthenticationConfiguration
         {
             return null;
         }
-        // Full-name matching supports handlers forwarded from another SqlClient assembly.
         if (section is ConfigurationSection configSection &&
-            configSection.GetType().FullName == typeName)
+            configSection.GetType() == type)
         {
             return configSection;
         }
-        if (strict)
-        {
-            throw new ConfigurationErrorsException(
-                $"Authentication configuration section '{name}' must use handler " +
-                $"'{typeName}'; found '{section.GetType().FullName}'.");
-        }
         SqlClientEventSource.Log.TryTraceEvent(
             "SqlAuthenticationConfiguration | Ignoring section '{0}': expected handler " +
-            "'{1}'; found '{2}'.", name, typeName, section.GetType().FullName);
+            "'{1}'; found '{2}'.", name, type.FullName, section.GetType().FullName);
         return null;
     }
 
