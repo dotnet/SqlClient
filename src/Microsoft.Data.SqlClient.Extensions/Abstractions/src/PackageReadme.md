@@ -51,6 +51,14 @@ The Abstractions authentication loader defaults to compatibility mode:
 - Invalid `useWamBroker` values are traced and ignored, preserving the provider's default
   and all other valid settings.
 
+> **Warning:** Non-strict loading and parsing can permit the driver to install and configure
+> unexpected providers or provider settings once this loader is integrated. Ignoring broken
+> authentication configuration can select legacy providers, allow default providers to be
+> installed, or retain default broker settings instead of the application's intended settings.
+> Tracing these errors does not prevent those unintended configurations. Strict mode closes
+> this gap by rejecting configuration-reading, schema and broker-value errors rather than
+> accepting broken authentication configuration and continuing with fallbacks or defaults.
+
 Strict reading and parsing can be enabled before authentication initialization:
 
 ```csharp

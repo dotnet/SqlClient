@@ -11,7 +11,13 @@ namespace Microsoft.Data.SqlClient;
 internal static class AuthenticationFeatureSwitches
 {
     /// <summary>Gets whether authentication configuration reading and parsing reject invalid settings.</summary>
-    /// <remarks>Defaults to false when the AppContext switch is unset.</remarks>
+    /// <remarks>
+    /// Defaults to false when the AppContext switch is unset. Compatibility mode ignores selected
+    /// configuration errors, which may cause the driver to install or configure providers differently
+    /// from the application's intended configuration when the loader is integrated. Strict mode
+    /// closes this gap by rejecting configuration-reading, schema and broker-value errors instead
+    /// of continuing with fallback providers or default settings.
+    /// </remarks>
     [FeatureSwitchDefinition("Switch.Microsoft.Data.SqlClient.UseStrictAuthenticationConfiguration")]
     internal static bool UseStrictAuthenticationConfiguration =>
         AcquireAndReturn(
