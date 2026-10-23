@@ -113,12 +113,23 @@ successfully registered providers. Register a provider as a workaround, or corre
 restart the application to retry bootstrap. Detailed causes remain in Abstractions traces rather
 than the connection exception.
 
-On .NET Framework, `EnableAppConfig=false` now disables authentication configuration too; the
-driver's retry configuration and switch-override readers remain .NET-only. Providers registered
-by a configured initializer have configuration precedence and cannot be overridden by application
-code. Registry lookups take the same lock as replacement `BeforeLoad`/`BeforeUnload` callbacks,
-so slow callbacks delay other lookups and connection logins. Keep callbacks short and do not wait
-for another thread that accesses the registry.
+#### Authentication compatibility considerations
+
+Public registration method signatures are unchanged, but moving the registry to Abstractions
+introduces these observable differences from the previous driver-owned registry:
+
+| Area | Compatibility difference |
+|---|---|
+| Configured initializer precedence | Providers registered during a configured initializer's `Initialize()` now have configuration precedence and cannot be replaced by application `SetProvider` calls. Explicit configuration entries were already protected. Change the configuration or initializer instead. |
+| Older Azure extensions | Automatic discovery now requires the options-based provider contract and no longer falls back to parameterless or string-based constructors. An older extension may stop supplying a default provider. Upgrade to a compatible extension with the options contract, or explicitly register a provider. The older public constructors are not removed by this change. |
+| .NET Framework configuration switch | `EnableAppConfig=false` now disables authentication configuration on .NET Framework too, where it previously remained enabled. The driver's retry configuration and switch-override readers remain .NET-only. |
+| Lookup synchronization | Registry lookups now take the same lock as bootstrap and replacement `BeforeLoad`/`BeforeUnload` callbacks. Slow callbacks delay other lookups and connection logins. Keep callbacks short: waiting synchronously for another thread that accesses the registry can deadlock. |
+| Bootstrap failure reporting | Driver access previously could expose the manager's cached type-initialization exception. Now, if no usable provider or access-token callback is available, `Open` and `OpenAsync` report missing-provider guidance as a `SqlException`, rather than the previous missing-provider `ArgumentException`. Detailed causes remain in Abstractions EventSource traces, not a diagnostic API or the connection exception's inner exception. |
+| Recovery after failed bootstrap | Unlike a failed manager static initialization, a recoverable cached bootstrap failure no longer prevents explicit application registration or lookup of successfully registered providers. Failed configuration is not retried, and successful configuration registrations retain precedence. Restart after correcting the cause to retry bootstrap. |
+
+Strict configuration parsing is not introduced: configuration reading retains its relaxed error
+policy. Registration without loading the driver, explicit registration under trimming/NativeAOT,
+and the independent `EnableAzureExtensionDiscovery` switch are new capabilities.
 
 With this package reference, you can continue to use Entra ID authentication modes directly in your connection string:
 

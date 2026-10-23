@@ -23,9 +23,11 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [InlineData(SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity)]
         public void CannotFindAuthProvider_ActiveDirectoryMethod_ContainsPackageGuidance(SqlAuthenticationMethod authMethod)
         {
-            Exception exception = SQL.CannotFindAuthProvider(authMethod);
+            Exception exception = SQL.CannotFindAuthProvider(authMethod, internalConnection: null);
 
-            Assert.IsType<ArgumentException>(exception);
+            var sqlException = Assert.IsType<SqlException>(exception);
+            Assert.Single(sqlException.Errors);
+            Assert.Null(sqlException.InnerException);
             Assert.Contains(authMethod.ToString(), exception.Message);
             Assert.Contains("Microsoft.Data.SqlClient.Extensions.Azure", exception.Message);
         }
@@ -35,9 +37,11 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [InlineData(SqlAuthenticationMethod.SqlPassword)]
         public void CannotFindAuthProvider_NonActiveDirectoryMethod_DoesNotContainPackageGuidance(SqlAuthenticationMethod authMethod)
         {
-            Exception exception = SQL.CannotFindAuthProvider(authMethod);
+            Exception exception = SQL.CannotFindAuthProvider(authMethod, internalConnection: null);
 
-            Assert.IsType<ArgumentException>(exception);
+            var sqlException = Assert.IsType<SqlException>(exception);
+            Assert.Single(sqlException.Errors);
+            Assert.Null(sqlException.InnerException);
             Assert.Contains(authMethod.ToString(), exception.Message);
             Assert.DoesNotContain("Microsoft.Data.SqlClient.Extensions.Azure", exception.Message);
         }
