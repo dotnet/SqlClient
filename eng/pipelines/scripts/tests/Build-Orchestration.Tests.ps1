@@ -548,6 +548,7 @@ Describe 'signed manual-test package builds' {
         @{ Project = 'src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTests.csproj' }
         @{ Project = 'src\Microsoft.Data.SqlClient\tests\Common\Microsoft.Data.SqlClient.TestCommon.csproj' }
         @{ Project = 'src\Microsoft.Data.SqlClient\tests\CustomConfigurableRetryLogic\CustomRetryLogicProvider.csproj' }
+        @{ Project = 'src\Microsoft.Data.SqlClient\tests\UnloadableLibrary\UnloadableLibrary.csproj' }
         @{ Project = 'src\Microsoft.Data.SqlClient\tests\TestUdts\Address\Address.csproj' }
         @{ Project = 'src\Microsoft.Data.SqlClient\tests\TestUdts\Circle\Circle.csproj' }
         @{ Project = 'src\Microsoft.Data.SqlClient\tests\TestUdts\Shapes\Shapes.csproj' }
