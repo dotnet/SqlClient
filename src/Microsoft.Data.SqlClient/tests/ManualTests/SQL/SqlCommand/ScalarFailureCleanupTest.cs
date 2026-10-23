@@ -485,6 +485,67 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        /// <summary>
+        /// Fatal closure owns the interrupted physical connection, not a replacement opened by
+        /// a reentrant pre-close subscriber, whether that subscriber returns or throws.
+        /// </summary>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [InlineData(false, false)]
+        [InlineData(false, true)]
+        [InlineData(true, false)]
+        [InlineData(true, true)]
+        public void FatalClose_PreservesReentrantReplacement(bool mars, bool subscriberThrows)
+        {
+            var builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+            {
+                Pooling = false,
+                MultipleActiveResultSets = mars,
+                Enlist = false
+            };
+            using SqlConnection connection = new(builder.ConnectionString);
+            connection.Open();
+            var original = new InternalConnectionWrapper(connection);
+            using SqlCommand command = new("SELECT 1", connection);
+            using SqlDataReader reader = command.ExecuteReader(CommandBehavior.CloseConnection);
+            bool reopened = false;
+            Guid replacementId = Guid.Empty;
+            var observer = new FakeDiagnosticListenerObserver(value =>
+            {
+                if (!reopened && value.Key == "Microsoft.Data.SqlClient.WriteConnectionCloseBefore" &&
+                    ReferenceEquals(connection, value.Value.GetType().GetProperty("Connection").GetValue(value.Value)))
+                {
+                    reopened = true;
+                    connection.Close();
+                    connection.Open();
+                    replacementId = connection.ClientConnectionId;
+                    if (subscriberThrows)
+                    {
+                        throw new InvalidOperationException("Secondary subscriber failure");
+                    }
+                }
+            });
+            observer.Enable();
+            try
+            {
+                using var subscription = DiagnosticListener.AllListeners.Subscribe(observer);
+                var failure = new OutOfMemoryException("Fatal replacement sentinel");
+                Exception actual = Record.Exception(() => typeof(SqlDataReader)
+                    .GetMethod("CloseOnError", BindingFlags.Instance | BindingFlags.NonPublic)
+                    .Invoke(reader, new object[] { failure }));
+                Assert.Same(failure, Assert.IsType<TargetInvocationException>(actual).InnerException);
+                Assert.True(reopened);
+                Assert.Equal(ConnectionState.Open, connection.State);
+                Assert.Equal(replacementId, connection.ClientConnectionId);
+                Assert.False(original.IsInternalConnectionOf(connection));
+                using SqlCommand probe = new("SELECT 42", connection);
+                Assert.Equal(42, probe.ExecuteScalar());
+            }
+            finally
+            {
+                observer.Disable();
+            }
+        }
+
         /// <summary>Opens a connection using the API variant under test.</summary>
         /// <param name="connection">Connection to open.</param>
         /// <param name="async">Whether to exercise asynchronous opening.</param>

@@ -1457,7 +1457,7 @@ namespace Microsoft.Data.SqlClient
             DbConnectionInternal originalConnection = InnerConnection;
             try
             {
-                Close();
+                Close(originalConnection);
             }
             finally
             {
@@ -1482,7 +1482,9 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Close/*' />
-        public override void Close()
+        public override void Close() => Close(expectedConnection: null);
+
+        private void Close(DbConnectionInternal expectedConnection)
         {
             using (SqlClientEventScope.Create("SqlConnection.Close | API | Object Id {0}", ObjectID))
             {
@@ -1500,6 +1502,11 @@ namespace Microsoft.Data.SqlClient
                 if (previousState != ConnectionState.Closed)
                 {
                     operationId = s_diagnosticListener.WriteConnectionCloseBefore(this);
+                    if (expectedConnection != null && !ReferenceEquals(InnerConnection, expectedConnection))
+                    {
+                        // Fatal cleanup must not close a replacement opened by the subscriber.
+                        return;
+                    }
                     // we want to cache the ClientConnectionId for After/Error logging, as when the connection
                     // is closed then we will lose this identifier
                     //
