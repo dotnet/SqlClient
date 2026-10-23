@@ -273,6 +273,13 @@ handler mismatches are traced and ignored (allowing modern-to-legacy fallback), 
 With `true`, these conditions throw `ConfigurationErrorsException`; a mismatched or malformed
 modern section does not fall back. Fatal exceptions propagate in both modes.
 
+Non-strict loading and parsing may permit the driver to install or configure providers differently
+from the application's intended configuration: ignored errors can select legacy providers, allow
+default providers to be installed, or retain default broker settings. Tracing does not prevent
+these unexpected configurations. Strict mode closes this gap by refusing configuration-reading,
+schema and broker-value errors rather than accepting broken authentication configuration and
+continuing with fallbacks or defaults.
+
 A declared modern section without an element still takes precedence over legacy in both modes.
 This switch does not enable app.config reading when `EnableAppConfig` disables it, and does not
 change the existing driver reader before the registry migration in #4821.
