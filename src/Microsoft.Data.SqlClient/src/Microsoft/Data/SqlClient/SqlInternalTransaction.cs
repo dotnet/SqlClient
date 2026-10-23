@@ -421,12 +421,9 @@ namespace Microsoft.Data.SqlClient
             // transaction object has been zombied and the parser has broken
             // it's reference to us.
 
-            // NOTE: we'll be called from the TdsParser when it gets appropriate
-            // ENVCHANGE events that indicate the transaction has completed, however
-            // we cannot rely upon those events occurring in the case of pre-2005
-            // servers (and when we don't go to the wire because the connection
-            // is broken) so we can also be called from the Commit/Rollback/Save
-            // methods to handle that case as well.
+            // TdsParser calls this when an ENVCHANGE event indicates transaction completion.
+            // Commit/Rollback/Save also call this when cleanup is needed without a server
+            // notification, such as when the connection is broken.
 
             // There are two parts to a full zombie:
             // 1) Zombie parent and disconnect outer transaction from internal transaction

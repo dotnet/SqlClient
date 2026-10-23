@@ -211,7 +211,8 @@ namespace Microsoft.Data.SqlClient.Parser
         // TDS stream processing variables
         internal ulong _longlen;                                     // plp data length indicator
         internal ulong _longlenleft;                                 // Length of data left to read (64 bit lengths)
-        internal byte[] _bTmp = new byte[TdsEnums.SQL2005_HEADER_LEN];  // Scratch buffer for misc use
+        // Scratch buffer for primitive reads; variable-length operations grow it as needed.
+        internal byte[] _bTmp = new byte[sizeof(long)];
         internal int _bTmpRead;                   // Counter for number of temporary bytes read
         internal Decoder _plpdecoder;             // Decoder object to process plp character data
         internal bool _accumulateInfoEvents;               // TRUE - accumulate info messages during TdsParser.Run, FALSE - fire them
@@ -641,9 +642,6 @@ namespace Microsoft.Data.SqlClient.Parser
             // initialize or unset null bitmap information for the current row
             if (isNullCompressed)
             {
-                // assert that NBCROW is not in use by 2005 or before
-                Debug.Assert(_parser.Is2008OrNewer, "NBCROW is sent by pre-2008 server");
-
                 TdsOperationStatus result = _nullBitmapInfo.TryInitialize(this, nullBitmapColumnsCount);
                 if (result != TdsOperationStatus.Done)
                 {
@@ -2983,10 +2981,8 @@ namespace Microsoft.Data.SqlClient.Parser
             }
 
             if (
-                // This appears to be an optimization to avoid writing empty packets in 2005
-                // However, since we don't know the version prior to login Is2005OrNewer was always false prior to login
-                // So removing the Is2005OrNewer check causes issues since the login packet happens to meet the rest of the conditions below
-                // So we need to avoid this check prior to login completing
+                // Suppress requests containing only headers after login. Before login completes,
+                // these bytes belong to the login payload and must not be treated as ALL_HEADERS.
                 state == TdsParserState.OpenLoggedIn
                     && !_bulkCopyOpperationInProgress // ignore the condition checking for bulk copy
                     && _outBytesUsed == (_outputHeaderLen +
