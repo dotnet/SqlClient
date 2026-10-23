@@ -332,6 +332,8 @@ namespace Microsoft.Data.SqlClient
 
         private void CleanupAfterExecuteNonQueryAsync(Task<int> task, TaskCompletionSource<int> source, Guid operationId)
         {
+            _asyncExecutionCancellationToken = default;
+
             if (task.IsFaulted)
             {
                 Exception e = task.Exception?.InnerException;
@@ -381,6 +383,12 @@ namespace Microsoft.Data.SqlClient
             }
 
             ThrowIfReconnectionHasBeenCanceled();
+
+            if (((Task)asyncResult).IsCanceled && _stateObj is null)
+            {
+                throw new TaskCanceledException((Task)asyncResult);
+            }
+
             // lock on _stateObj prevents races with close/cancel.
             // If we have already initiated the End call internally, we have already done that, so
             // no point doing it again.
@@ -698,13 +706,16 @@ namespace Microsoft.Data.SqlClient
                 registration = cancellationToken.Register(callback: s_cancelIgnoreFailure, state: this);
             }
 
-            Task<int> returnedTask = source.Task;
-            returnedTask = RegisterForConnectionCloseNotification(returnedTask);
+            _asyncExecutionCancellationToken = cancellationToken;
 
-            ExecuteNonQueryAsyncCallContext context = new ExecuteNonQueryAsyncCallContext();
-            context.Set(this, source, registration, operationId);
+            Task<int> returnedTask = source.Task;
+            ExecuteNonQueryAsyncCallContext context = null;
             try
             {
+                returnedTask = RegisterForConnectionCloseNotification(returnedTask);
+                context = new ExecuteNonQueryAsyncCallContext();
+                context.Set(this, source, registration, operationId);
+
                 // @TODO: Replace with native async implementation, make Begin/End implementation rely on async implementation
                 Task<int>.Factory.FromAsync(
                     beginMethod: static (callback, stateObject) =>
@@ -738,10 +749,18 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception e)
             {
+                _asyncExecutionCancellationToken = default;
                 s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
 
+                if (context is not null)
+                {
+                    context.Dispose();
+                }
+                else
+                {
+                    registration.Dispose();
+                }
                 source.SetException(e);
-                context.Dispose();
             }
 
             return returnedTask;
