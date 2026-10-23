@@ -118,9 +118,9 @@ internal partial class AeadAes256CbcHmac256Algorithm
         /// instance, validating its size and structure.
         /// </summary>
         /// <param name="encryptedBuffer">The unparsed encrypted value.</param>
-        /// <param name="macKey">MAC key to be used to verify the authentication tag.</param>
+        /// <param name="key">The key containing the HMAC used to verify the authentication tag.</param>
         /// <returns>A valid <see cref="EncryptedValue"/>.</returns>
-        public static EncryptedValue Parse(byte[] encryptedBuffer, byte[] macKey)
+        public static EncryptedValue Parse(byte[] encryptedBuffer, AeadAes256CbcHmac256EncryptionKey key)
         {
             EncryptedValue ev = new(encryptedBuffer);
 
@@ -134,7 +134,7 @@ internal partial class AeadAes256CbcHmac256Algorithm
                 throw SQL.InvalidAlgorithmVersion(ev.Version, CurrentVersion);
             }
 
-            if (!ev.IsAuthenticationTagValid(macKey))
+            if (!ev.IsAuthenticationTagValid(key))
             {
                 throw SQL.InvalidAuthenticationTag();
             }
@@ -215,16 +215,16 @@ internal partial class AeadAes256CbcHmac256Algorithm
         /// Finalises the initialization of the backing buffer by writing its authentication tag,
         /// then returns the buffer.
         /// </summary>
-        /// <param name="macKey">The MAC key to use when calculating the authentication tag.</param>
+        /// <param name="key">The key containing the HMAC used to calculate the authentication tag.</param>
         /// <returns>The completed <see cref="EncryptedValue"/>'s backing buffer.</returns>
         /// <remarks>
         /// This is intended to be the last operation on the <see cref="EncryptedValue"/> instance.
         /// The ciphertext must be fully populated before this method is called, and data in this
         /// instance's backing buffer must not be changed following this operation.
         /// </remarks>
-        public byte[] Seal(byte[] macKey)
+        public byte[] Seal(AeadAes256CbcHmac256EncryptionKey key)
         {
-            WriteAuthenticationTag(macKey, _valueBuffer.AsSpan(AuthenticationTagOffset, AuthenticationTagLength));
+            WriteAuthenticationTag(key, _valueBuffer.AsSpan(AuthenticationTagOffset, AuthenticationTagLength));
 
             return _valueBuffer;
         }
@@ -249,22 +249,22 @@ internal partial class AeadAes256CbcHmac256Algorithm
         }
         #endif
 
-        private bool IsAuthenticationTagValid(byte[] macKey)
+        private bool IsAuthenticationTagValid(AeadAes256CbcHmac256EncryptionKey key)
         {
             Debug.Assert(IsBufferSizeValid);
 
             ReadOnlySpan<byte> actualAuthTag = _valueBuffer.AsSpan(AuthenticationTagOffset, AuthenticationTagLength);
             Span<byte> expectedAuthTag = stackalloc byte[AuthenticationTagLength];
 
-            WriteAuthenticationTag(macKey, expectedAuthTag);
+            WriteAuthenticationTag(key, expectedAuthTag);
             return actualAuthTag.SequenceEqual(expectedAuthTag);
         }
 
-        private void WriteAuthenticationTag(byte[] macKey, Span<byte> buffer)
+        private void WriteAuthenticationTag(AeadAes256CbcHmac256EncryptionKey key, Span<byte> buffer)
         {
             Debug.Assert(IsBufferSizeValid);
 
-            using IncrementalHash hmac = IncrementalHash.CreateHMAC(HashAlgorithmName.SHA256, macKey);
+            using AeadAes256CbcHmac256EncryptionKey.HmacScope hmac = key.GetHmac();
 
             hmac.AppendData(_valueBuffer, VersionOffset, VersionLength);
             hmac.AppendData(_valueBuffer, IvOffset, IvLength);
@@ -275,7 +275,7 @@ internal partial class AeadAes256CbcHmac256Algorithm
             #if NET
             Debug.Assert(hmac.HashLengthInBytes == AuthenticationTagLength);
 
-            hmac.GetCurrentHash(buffer);
+            hmac.GetHashAndReset(buffer);
             #else
             byte[] copiedHash = hmac.GetHashAndReset();
 

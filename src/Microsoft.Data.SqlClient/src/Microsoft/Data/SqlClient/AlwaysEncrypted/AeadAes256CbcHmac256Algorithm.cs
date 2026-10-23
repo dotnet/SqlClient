@@ -189,7 +189,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
                 finalBlock.AsSpan().CopyTo(cipherTextBuffer.AsSpan(finalBlockStart, finalBlock.Length));
                 #endif
 
-                return value.Seal(_columnEncryptionKey.MacKey);
+                return value.Seal(_columnEncryptionKey);
             }
             finally
             {
@@ -210,7 +210,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
         {
             Debug.Assert(cipherText != null);
 
-            EncryptedValue value = EncryptedValue.Parse(cipherText, _columnEncryptionKey.MacKey);
+            EncryptedValue value = EncryptedValue.Parse(cipherText, _columnEncryptionKey);
 
             // Try to get a provider from the pool.
             // If no provider is available, create a new one.
