@@ -612,7 +612,7 @@
 
   <!-- Build SqlClient Targets =============================================== -->
   <!-- BuildSqlClient: Builds all binaries for SqlClient -->
-  <Target Name="BuildSqlClient" DependsOnTargets="BuildSqlClientImpl;BuildSqlClientRef;BuildSqlClientNotSupported" />
+  <Target Name="BuildSqlClient" DependsOnTargets="BuildSqlClientRef;BuildSqlClientNotSupported;BuildSqlClientImpl" />
 
   <!--
     BuildSqlClientNotSupported: Builds a version of the SqlClient assemblies that always throws
