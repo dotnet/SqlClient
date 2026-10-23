@@ -2248,7 +2248,7 @@ namespace Microsoft.Data.SqlClient
                     // Func will change type to that with a 4 byte length if the type has a two
                     // byte length and a parameter length > that expressible in 2 bytes.
                     // @TODO: what func?
-                    mt = sqlParam.ValidateTypeLengths();
+                    mt = sqlParam.ValidateTypeLengths(parser);
                     if (!mt.IsPlp && sqlParam.Direction is not ParameterDirection.Output)
                     {
                         sqlParam.FixStreamDataForNonPLP();
@@ -2294,35 +2294,10 @@ namespace Microsoft.Data.SqlClient
                     // parser, with it's associated code page.
                     if (mt.IsAnsiType)
                     {
-                        object val = sqlParam.GetCoercedValue();
-                        string s = null;
-
-                        // Deal with the sql types
-                        if (val is not null && val != DBNull.Value)
+                        int actualBytes = sqlParam.GetActualSizeInBytes(parser);
+                        if (actualBytes > size)
                         {
-                            // @TODO: I swear this can be one line in the if statement...
-                            s = val as string;
-                            if (s is null)
-                            {
-                                SqlString sval = val is SqlString sqlVal ? sqlVal : SqlString.Null;
-                                if (!sval.IsNull)
-                                {
-                                    s = sval.Value;
-                                }
-                            }
-                        }
-
-                        if (s is not null)
-                        {
-                            int actualBytes = parser.GetEncodingCharLength(
-                                value: s,
-                                numChars: sqlParam.GetActualSize(),
-                                charOffset: sqlParam.Offset,
-                                encoding: null);
-                            if (actualBytes > size)
-                            {
-                                size = actualBytes;
-                            }
+                            size = actualBytes;
                         }
                     }
 
@@ -2805,7 +2780,7 @@ namespace Microsoft.Data.SqlClient
 
                 // Func will change type to that with a 4 byte length if the type has a 2 byte
                 // length and a parameter length > than that expressible in 2 bytes.
-                if (!parameter.ValidateTypeLengths().IsPlp && parameter.Direction is not ParameterDirection.Output)
+                if (!parameter.ValidateTypeLengths(_stateObj.Parser).IsPlp && parameter.Direction is not ParameterDirection.Output)
                 {
                     parameter.FixStreamDataForNonPLP();
                 }
