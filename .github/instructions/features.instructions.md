@@ -236,7 +236,7 @@ cmd.Parameters.Add("@id", SqlDbType.Int).Value = userId;
 
 ## AppContext Switches
 
-AppContext switches allow runtime behavior changes without modifying connection strings. Driver switches are defined in `LocalAppContextSwitches.cs` and can be set via `AppContext.SetSwitch()` or `runtimeconfig.json`. Abstractions owns `UseStrictAuthenticationConfiguration` in `AuthenticationFeatureSwitches.cs`, avoiding a dependency back on the driver.
+AppContext switches allow runtime behavior changes without modifying connection strings. Driver switches are defined in `LocalAppContextSwitches.cs` and can be set via `AppContext.SetSwitch()` or `runtimeconfig.json`.
 
 ### Available Switches
 
@@ -258,31 +258,26 @@ AppContext switches allow runtime behavior changes without modifying connection 
 | `Switch.Microsoft.Data.SqlClient.UseCompatibilityProcessSni` | `false` | Uses legacy SNI processing path |
 | `Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2` | `false` | Enables the new `ChannelDbConnectionPool` implementation |
 | `Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows` | `false` | Forces managed SNI on Windows (instead of native SNI) |
-| `Switch.Microsoft.Data.SqlClient.UseStrictAuthenticationConfiguration` | `false` | Abstractions authentication loader only. Throws for recoverable configuration errors, mismatched handlers and invalid `useWamBroker` values instead of tracing and continuing. Driver integration is deferred to #4821 |
 | `Switch.Microsoft.Data.SqlClient.UseOneSecFloorInTimeoutCalculationDuringLogin` | `false` | Sets 1-second minimum in login timeout calculations |
 
-### Strict authentication configuration
+### Relaxed authentication configuration
 
-Set `Switch.Microsoft.Data.SqlClient.UseStrictAuthenticationConfiguration` before authentication
-initialization to opt into strict configuration reading and parsing. `AuthenticationFeatureSwitches`
-caches the value on first access for the lifetime of the process. The Abstractions loader
-snapshots that cached value once per load.
-With the default `false`, recoverable reading/schema errors are traced and return empty settings,
+Authentication configuration loading and parsing follow the driver's relaxed error policy.
+Reading/schema errors are traced and return empty settings without trying legacy after a reading error,
 handler mismatches are traced and ignored (allowing modern-to-legacy fallback), and invalid
 `useWamBroker` values leave the override unset while retaining other valid settings.
-With `true`, these conditions throw `ConfigurationErrorsException`; a mismatched or malformed
-modern section does not fall back. Fatal exceptions propagate in both modes.
+All `ConfigurationErrorsException` failures are caught, including those wrapping fatal failures,
+matching main. Other exception types propagate.
 
-Non-strict loading and parsing may permit the driver to install or configure providers differently
+Relaxed loading and parsing may permit the driver to install or configure providers differently
 from the application's intended configuration: ignored errors can select legacy providers, allow
 default providers to be installed, or retain default broker settings. Tracing does not prevent
-these unexpected configurations. Strict mode closes this gap by refusing configuration-reading,
-schema and broker-value errors rather than accepting broken authentication configuration and
-continuing with fallbacks or defaults.
+these unexpected configurations.
 
-A declared modern section without an element still takes precedence over legacy in both modes.
-This switch does not enable app.config reading when `EnableAppConfig` disables it, and does not
-change the existing driver reader before the registry migration in #4821.
+A declared modern section without an element still takes precedence over legacy.
+These policies apply to the new Abstractions loader; the driver continues using its existing
+reader until the registry migration in #4821. Configuration reading in the driver remains gated
+by `EnableAppConfig`.
 
 ### Usage Example
 ```csharp

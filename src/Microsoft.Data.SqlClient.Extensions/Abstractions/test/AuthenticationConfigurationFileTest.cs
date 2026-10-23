@@ -11,7 +11,6 @@ using Xunit;
 namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
 
 /// <summary>Exercises the loader with real files declaring the Abstractions-owned handlers.</summary>
-[Collection(AuthenticationFeatureSwitchTestCollection.Name)]
 public class AuthenticationConfigurationFileTest
 {
     private const string Modern = SqlClientAuthenticationProviderConfigurationSection.Name;
@@ -25,16 +24,10 @@ public class AuthenticationConfigurationFileTest
 
     /// <summary>Both handlers reach the loader without activating configured types or loading the driver.</summary>
     [Theory]
-    [InlineData(false, false)]
-    [InlineData(false, true)]
-    [InlineData(true, false)]
-    [InlineData(true, true)]
-    public void HandlerLoadsSettings(bool modern, bool strict)
+    [InlineData(false)]
+    [InlineData(true)]
+    public void HandlerLoadsSettings(bool modern)
     {
-        using var switches = new AuthenticationFeatureSwitchesHelper
-        {
-            UseStrictAuthenticationConfiguration = strict
-        };
         string name = modern ? Modern : Legacy;
         // Declare only the selected handler: a declared but absent modern section still takes precedence.
         string handler = modern
@@ -57,16 +50,37 @@ public class AuthenticationConfigurationFileTest
             });
     }
 
-    /// <summary>A declared modern section without an element prevents reading populated legacy settings.</summary>
+    /// <summary>Invalid broker values retain other settings from either real handler, as on main.</summary>
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public void DeclaredModernSectionWithoutElementTakesPrecedence(bool strict)
+    public void InvalidBrokerValuePreservesConfiguredSettings(bool modern)
     {
-        using var switches = new AuthenticationFeatureSwitchesHelper
-        {
-            UseStrictAuthenticationConfiguration = strict
-        };
+        string name = modern ? Modern : Legacy;
+        string handler = modern
+            ? nameof(SqlClientAuthenticationProviderConfigurationSection)
+            : nameof(SqlAuthenticationProviderConfigurationSection);
+        WithConfiguration(
+            $"<section name='{name}' type='Microsoft.Data.SqlClient.{handler}, Microsoft.Data.SqlClient.Extensions.Abstractions' />",
+            $"""
+            <{name} applicationClientId="configured-client" initializerType="Missing.Initializer" useWamBroker="invalid">
+              <providers><add name="active directory default" type="Missing.Provider" /></providers>
+            </{name}>
+            """,
+            configuration =>
+            {
+                var settings = SqlAuthenticationConfiguration.Load(configuration.GetSection);
+                Assert.Equal("configured-client", settings.ApplicationClientId);
+                Assert.Null(settings.UseWamBroker);
+                Assert.Equal("Missing.Initializer", settings.InitializerType);
+                Assert.Equal("Missing.Provider", Assert.Single(settings.Providers).Type);
+            });
+    }
+
+    /// <summary>A declared modern section without an element prevents reading populated legacy settings.</summary>
+    [Fact]
+    public void DeclaredModernSectionWithoutElementTakesPrecedence()
+    {
         WithConfiguration(Declarations,
             $"""<{Legacy} applicationClientId="legacy-client" />""",
             configuration =>
@@ -86,16 +100,10 @@ public class AuthenticationConfigurationFileTest
             });
     }
 
-    /// <summary>Malformed real configuration is tolerated only in compatibility mode, without fallback.</summary>
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void MalformedModernSectionUsesSelectedPolicy(bool strict)
+    /// <summary>Malformed real configuration yields empty settings without fallback, as on main.</summary>
+    [Fact]
+    public void MalformedModernSectionReturnsEmptySettings()
     {
-        using var switches = new AuthenticationFeatureSwitchesHelper
-        {
-            UseStrictAuthenticationConfiguration = strict
-        };
         WithConfiguration(Declarations,
             $"""
             <{Modern} unknownAttribute="invalid" />
@@ -110,18 +118,11 @@ public class AuthenticationConfigurationFileTest
                     return configuration.GetSection(name);
                 });
 
-                if (strict)
-                {
-                    Assert.Throws<ConfigurationErrorsException>(() => Load());
-                }
-                else
-                {
-                    var settings = Load();
-                    Assert.Null(settings.ApplicationClientId);
-                    Assert.Null(settings.UseWamBroker);
-                    Assert.Empty(settings.InitializerType);
-                    Assert.Empty(settings.Providers);
-                }
+                var settings = Load();
+                Assert.Null(settings.ApplicationClientId);
+                Assert.Null(settings.UseWamBroker);
+                Assert.Empty(settings.InitializerType);
+                Assert.Empty(settings.Providers);
                 Assert.Equal(new[] { Modern }, reads);
             });
     }

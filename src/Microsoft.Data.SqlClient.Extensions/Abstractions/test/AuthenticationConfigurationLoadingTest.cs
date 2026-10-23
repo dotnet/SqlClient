@@ -15,19 +15,10 @@ namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
 /// <summary>
 /// Verifies section selection and loading failures without changing process configuration.
 /// </summary>
-[Collection(AuthenticationFeatureSwitchTestCollection.Name)]
-public class AuthenticationConfigurationLoadingTest : IDisposable
+public class AuthenticationConfigurationLoadingTest
 {
     private const string Modern = ModernSection.Name;
     private const string Legacy = LegacySection.Name;
-    private readonly AuthenticationFeatureSwitchesHelper _switches = new()
-    {
-        UseStrictAuthenticationConfiguration = true
-    };
-
-    /// <summary>Restores the strict-configuration policy after each test.</summary>
-    public void Dispose() => _switches.Dispose();
-
     /// <summary>
     /// Only a lookup that finds neither section reports missing configuration.
     /// </summary>
@@ -112,7 +103,7 @@ public class AuthenticationConfigurationLoadingTest : IDisposable
     [Fact]
     public void LoadConfigurationAllowsBothSectionsToBeAbsent()
     {
-        // A missing modern section is the only reason to consult legacy configuration.
+        // With neither section present, both names must be consulted.
         var reads = new List<string>();
 
         var configuration = SqlAuthenticationConfiguration.Load(name =>
@@ -129,49 +120,13 @@ public class AuthenticationConfigurationLoadingTest : IDisposable
         Assert.Empty(configuration.Providers);
     }
 
-    /// <summary>
-    /// An incompatible modern handler is an error rather than a reason to try legacy.
-    /// </summary>
+    /// <summary>Mismatched modern handlers are ignored so legacy settings can be read, as on main.</summary>
     [Theory]
     [InlineData(typeof(object))]
     [InlineData(typeof(AppSettingsSection))]
     [InlineData(typeof(LegacySection))]
-    public void LoadConfigurationDoesNotFallBackAfterHandlerMismatch(Type type)
+    public void LoadFallsBackAfterHandlerMismatch(Type type)
     {
-        // Return a present but incompatible modern handler; legacy must not mask the mistake.
-        var reads = new List<string>();
-        object section = Activator.CreateInstance(type)!;
-
-        var failure = Assert.Throws<ConfigurationErrorsException>(() =>
-            SqlAuthenticationConfiguration.Load(name =>
-            {
-                // Record the section name being read, which should be modern in this test
-                // because that is the first choice.
-                reads.Add(name);
-
-                // Return a section instance whose type isn't the modern one,
-                // simulating an incompatible handler.
-                return section;
-            }));
-
-        // Report the incompatible handler and stop before the fallback reader is called.
-        Assert.Equal(new[] { Modern }, reads);
-        Assert.Contains(type.FullName!, failure.Message);
-        Assert.Contains(typeof(ModernSection).FullName!,
-            failure.Message);
-    }
-
-    /// <summary>Compatibility mode ignores mismatched modern handlers and reads legacy settings.</summary>
-    [Theory]
-    [InlineData(typeof(object))]
-    [InlineData(typeof(AppSettingsSection))]
-    [InlineData(typeof(LegacySection))]
-    public void CompatibilityModeFallsBackAfterHandlerMismatch(Type type)
-    {
-        using var switches = new AuthenticationFeatureSwitchesHelper
-        {
-            UseStrictAuthenticationConfiguration = false
-        };
         var legacy = new LegacySection();
         legacy.ElementInformation.Properties["applicationClientId"].Value = "legacy-client";
         var reads = new List<string>();
@@ -186,14 +141,10 @@ public class AuthenticationConfigurationLoadingTest : IDisposable
         Assert.Equal("legacy-client", configuration.ApplicationClientId);
     }
 
-    /// <summary>Compatibility mode also ignores a legacy handler owned by another provider.</summary>
+    /// <summary>A legacy handler owned by another provider is ignored, as on main.</summary>
     [Fact]
-    public void CompatibilityModeIgnoresMismatchedLegacyHandler()
+    public void LoadIgnoresMismatchedLegacyHandler()
     {
-        using var switches = new AuthenticationFeatureSwitchesHelper
-        {
-            UseStrictAuthenticationConfiguration = false
-        };
         var configuration = SqlAuthenticationConfiguration.Load(
             name => name == Modern ? null : new AppSettingsSection());
 
@@ -203,22 +154,14 @@ public class AuthenticationConfigurationLoadingTest : IDisposable
         Assert.Empty(configuration.Providers);
     }
 
-    /// <summary>Strict and fatal retrieval failures escape; compatibility failures yield empty settings.</summary>
+    /// <summary>All configuration-reading errors yield empty settings without fallback, as on main.</summary>
     [Theory]
-    [InlineData(true, false, false)]
-    [InlineData(false, false, false)]
-    [InlineData(true, true, false)]
-    [InlineData(false, true, false)]
-    [InlineData(true, false, true)]
-    [InlineData(false, false, true)]
-    [InlineData(true, true, true)]
-    [InlineData(false, true, true)]
-    public void LoadConfigurationHandlesRetrievalFailure(bool modern, bool fatal, bool strict)
+    [InlineData(true, false)]
+    [InlineData(false, false)]
+    [InlineData(true, true)]
+    [InlineData(false, true)]
+    public void LoadConfigurationHandlesRetrievalFailure(bool modern, bool fatal)
     {
-        using var switches = new AuthenticationFeatureSwitchesHelper
-        {
-            UseStrictAuthenticationConfiguration = strict
-        };
         // Exercise both reader positions, including a configuration wrapper around a fatal error.
         var reads = new List<string>();
         var expected = new ConfigurationErrorsException("Invalid section",
@@ -235,74 +178,62 @@ public class AuthenticationConfigurationLoadingTest : IDisposable
                 return null;
             });
 
-        if (strict || fatal)
-        {
-            Assert.Same(expected, Assert.Throws<ConfigurationErrorsException>(() => Load()));
-        }
-        else
-        {
-            var configuration = Load();
-            Assert.Null(configuration.ApplicationClientId);
-            Assert.Null(configuration.UseWamBroker);
-            Assert.Empty(configuration.InitializerType);
-            Assert.Empty(configuration.Providers);
-        }
+        var configuration = Load();
+        Assert.Null(configuration.ApplicationClientId);
+        Assert.Null(configuration.UseWamBroker);
+        Assert.Empty(configuration.InitializerType);
+        Assert.Empty(configuration.Providers);
         Assert.Equal(modern ? new[] { Modern } : new[] { Modern, Legacy }, reads);
     }
 
-    /// <summary>A load snapshots strictness before a section reader can change the cached switch.</summary>
+    /// <summary>Non-configuration failures propagate unchanged from either reader position, as on main.</summary>
     [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void LoadUsesOnePolicyForSelectionAndParsing(bool strict)
+    [InlineData(true, typeof(InvalidOperationException))]
+    [InlineData(false, typeof(InvalidOperationException))]
+    [InlineData(true, typeof(OutOfMemoryException))]
+    [InlineData(false, typeof(OutOfMemoryException))]
+    public void LoadPropagatesNonConfigurationFailure(bool modern, Type exceptionType)
     {
-        using var switches = new AuthenticationFeatureSwitchesHelper
-        {
-            UseStrictAuthenticationConfiguration = strict
-        };
-        var section = new ModernSection();
-        section.ElementInformation.Properties["useWamBroker"].Value = "invalid";
+        var expected = (Exception)Activator.CreateInstance(exceptionType)!;
+        var reads = new List<string>();
 
-        SqlAuthenticationConfiguration Load() => SqlAuthenticationConfiguration.Load(_ =>
+        var actual = Record.Exception(() => SqlAuthenticationConfiguration.Load(name =>
         {
-            switches.UseStrictAuthenticationConfiguration = !strict;
-            return section;
-        });
+            reads.Add(name);
+            if (name == (modern ? Modern : Legacy))
+            {
+                throw expected;
+            }
+            return null;
+        }));
 
-        if (strict)
-        {
-            Assert.Throws<ConfigurationErrorsException>(() => Load());
-        }
-        else
-        {
-            Assert.Null(Load().UseWamBroker);
-        }
+        Assert.Same(expected, actual);
+        Assert.Equal(modern ? new[] { Modern } : new[] { Modern, Legacy }, reads);
     }
 
-    /// <summary>A malformed modern section must not be hidden by a valid legacy section.</summary>
+    /// <summary>An invalid modern broker value is ignored without selecting legacy settings.</summary>
     [Fact]
-    public void LoadConfigurationDoesNotFallBackAfterValidationFailure()
+    public void LoadConfigurationDoesNotFallBackAfterInvalidBrokerValue()
     {
-        // An invalid modern value must fail even if a valid legacy handler is available.
+        // An invalid broker value does not invalidate the selected modern section.
         var section = new ModernSection();
         section.ElementInformation.Properties["useWamBroker"].Value = "invalid";
         var reads = new List<string>();
 
-        var failure = Assert.Throws<ConfigurationErrorsException>(() =>
-            SqlAuthenticationConfiguration.Load(name =>
+        var configuration = SqlAuthenticationConfiguration.Load(name =>
             {
                 reads.Add(name);
                 return name == Modern
                     ? section : new LegacySection();
-            }));
+            });
 
         // Validation happens after section selection, without reopening the fallback path.
-        Assert.Contains("useWamBroker", failure.Message);
+        Assert.Null(configuration.UseWamBroker);
         Assert.Equal(new[] { Modern }, reads);
     }
 
     /// <summary>
-    /// Fetching accepts the expected full handler name and preserves the section instance.
+    /// Fetching accepts the expected handler type and preserves the section instance.
     /// </summary>
     [Theory]
     [InlineData(true)]
@@ -316,7 +247,7 @@ public class AuthenticationConfigurationLoadingTest : IDisposable
         string name = modern ? Modern : Legacy;
 
         var actual = SqlAuthenticationConfiguration.FetchConfigurationSection(
-            name, expected.GetType().FullName!, requested =>
+            name, expected.GetType(), requested =>
             {
                 Assert.Equal(name, requested);
                 return expected;
@@ -337,7 +268,7 @@ public class AuthenticationConfigurationLoadingTest : IDisposable
 
         Assert.Same(expected, Assert.Throws<InvalidOperationException>(() =>
             SqlAuthenticationConfiguration.FetchConfigurationSection(
-                Modern, typeof(ModernSection).FullName!,
+                Modern, typeof(ModernSection),
                 _ => throw expected)));
     }
 
