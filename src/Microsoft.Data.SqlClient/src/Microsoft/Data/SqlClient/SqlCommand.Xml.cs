@@ -13,6 +13,7 @@ using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.Server;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlClient.Utilities;
 
 #if NETFRAMEWORK

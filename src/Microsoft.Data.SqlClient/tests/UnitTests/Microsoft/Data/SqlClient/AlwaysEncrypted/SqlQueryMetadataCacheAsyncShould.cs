@@ -13,6 +13,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.AlwaysEncrypted;
+using Microsoft.Data.SqlClient.Parser;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted

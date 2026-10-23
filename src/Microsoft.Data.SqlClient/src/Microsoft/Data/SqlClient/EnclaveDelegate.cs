@@ -122,7 +122,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             //cipherInfo.CekId is always 0, hence used cipherInfo.ColumnEncryptionKeyValues[0].cekId. Even when cek has multiple ColumnEncryptionKeyValues
-            //the cekid and the plaintext value will remain the same, what varies is the encrypted cek value, since the cek can be encrypted by 
+            //the cekid and the plaintext value will remain the same, what varies is the encrypted cek value, since the cek can be encrypted by
             //multiple CMKs
             return new ColumnEncryptionKeyInfo(
                 sqlClientSymmetricKey.RootKey,

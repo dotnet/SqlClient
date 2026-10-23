@@ -12,6 +12,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.AlwaysEncrypted;
+using Microsoft.Data.SqlClient.Parser;
 
 namespace Microsoft.Data.SqlClient
 {
