@@ -2,12 +2,12 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#if NETSTANDARD2_0
+#if NETSTANDARD2_0 || NETFRAMEWORK
 
 namespace System.Diagnostics.CodeAnalysis;
 
 /// <summary>
-/// Provides the trimming annotation missing from .NET Standard 2.0 so shared code can mark
+/// Provides the trimming annotation missing from .NET Standard 2.0 and .NET Framework so shared code can mark
 /// members that may fail when unreferenced code is removed.
 /// </summary>
 /// <remarks>
@@ -23,7 +23,7 @@ internal sealed class RequiresUnreferencedCodeAttribute(string message) : Attrib
 }
 
 /// <summary>
-/// Provides the Native AOT annotation missing from .NET Standard 2.0 so shared code can mark
+/// Provides the Native AOT annotation missing from .NET Standard 2.0 and .NET Framework so shared code can mark
 /// members that require runtime code generation.
 /// </summary>
 /// <remarks>
@@ -39,7 +39,7 @@ internal sealed class RequiresDynamicCodeAttribute(string message) : Attribute
 }
 
 /// <summary>
-/// Provides the feature-switch annotation missing from .NET Standard 2.0, associating a
+/// Provides the feature-switch annotation missing from .NET Standard 2.0 and .NET Framework, associating a
 /// Boolean property with a named switch that trimming tools can substitute at publish time.
 /// </summary>
 /// <remarks>
@@ -53,7 +53,7 @@ internal sealed class FeatureSwitchDefinitionAttribute(string switchName) : Attr
 }
 
 /// <summary>
-/// Provides the feature-guard annotation missing from .NET Standard 2.0, identifying a
+/// Provides the feature-guard annotation missing from .NET Standard 2.0 and .NET Framework, identifying a
 /// Boolean property whose true value indicates that an annotated capability is available.
 /// </summary>
 /// <remarks>
@@ -67,7 +67,7 @@ internal sealed class FeatureGuardAttribute(Type featureType) : Attribute
 }
 
 /// <summary>
-/// Provides the diagnostic-suppression annotation missing from .NET Standard 2.0 so shared
+/// Provides the diagnostic-suppression annotation missing from .NET Standard 2.0 and .NET Framework so shared
 /// code can record suppressions that remain in assembly metadata for trimming and AOT tools.
 /// </summary>
 /// <remarks>
