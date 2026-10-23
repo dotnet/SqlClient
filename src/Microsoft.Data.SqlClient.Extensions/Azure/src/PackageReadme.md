@@ -186,10 +186,13 @@ Known limitations:
   credential it tries and skips, even when a later credential succeeds. Use the
   `DefaultAzureCredential selected ...` event and the final SqlClient result to read the outcome.
 - MSAL error messages can include exception text and stack details produced by MSAL.
-- Azure.Identity token failures are matched to SqlClient's request by its request ID. MSAL log text
-  has no such ID, so it is matched by async context only. If an app `EventListener` for
-  `Azure-Identity` runs its own credential while handling an event, that credential's MSAL text can
-  appear under the SQL connection.
+- Correlation is best effort. SqlClient and MSAL events for the built-in MSAL flows carry the
+  connection ID. Azure.Identity token failures carry it only when SqlClient made the request.
+  Other Azure.Identity events (MSAL text from Azure credentials and `DefaultAzureCredential selected ...`)
+  have no request ID and use an empty connection ID (`00000000-0000-0000-0000-000000000000`).
+- Uncorrelated Azure.Identity events can come from Azure credentials the application uses in the
+  same process. If the application enables `IsUnsafeSupportLoggingEnabled` on its own credentials,
+  that output can appear in these traces.
 - Credentials created by the application for `AccessTokenCallback` are not covered.
   Use Azure.Identity logging for those credentials.
 - Cached tokens and pooled connections can skip authentication, so an open does not always

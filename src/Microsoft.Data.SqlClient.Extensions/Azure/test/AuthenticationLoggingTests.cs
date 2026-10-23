@@ -67,11 +67,8 @@ public class AuthenticationLoggingTests
     {
         using var listener = new AuthenticationListener();
         listener.Enable(EventLevel.Verbose, (EventKeywords)keywords);
-        using (AuthenticationLogger.Begin(listener.ConnectionId))
-        {
-            AuthenticationLogger.Write(EventLevel.Informational, "authentication diagnostic", "MSAL");
-            SqlClientEventSource.Log.TryTraceEvent("ordinary diagnostic");
-        }
+        AuthenticationLogger.Write(EventLevel.Informational, "authentication diagnostic", "MSAL", listener.ConnectionId);
+        SqlClientEventSource.Log.TryTraceEvent("ordinary diagnostic");
 
         Assert.Equal(authentication ? 1 : 0, listener.Events.Count);
         Assert.Equal(ordinary ? 1 : 0, listener.TraceEvents);
@@ -84,20 +81,17 @@ public class AuthenticationLoggingTests
         Assert.False(AuthenticationLogger.MsalLogger.IsEnabled(EventLogLevel.Informational));
         using var listener = new AuthenticationListener();
         listener.Disable();
-        using (AuthenticationLogger.Begin(listener.ConnectionId))
-        {
-            Assert.False(AuthenticationLogger.MsalLogger.IsEnabled(EventLogLevel.Informational));
-            listener.Enable(EventLevel.Warning, SqlClientEventSource.Keywords.AuthenticationTrace);
-            Assert.False(AuthenticationLogger.MsalLogger.IsEnabled(EventLogLevel.Informational));
-            Assert.True(AuthenticationLogger.MsalLogger.IsEnabled(EventLogLevel.Warning));
-            AuthenticationLogger.MsalLogger.Log(new LogEntry { EventLogLevel = EventLogLevel.Informational, Message = "filtered" });
-            AuthenticationLogger.MsalLogger.Log(new LogEntry { EventLogLevel = EventLogLevel.Warning, Message = "visible" });
-            Assert.Equal("visible", Assert.Single(listener.Events).Payload![0]);
-            listener.Disable();
-            Assert.False(AuthenticationLogger.MsalLogger.IsEnabled(EventLogLevel.Warning));
-            AuthenticationLogger.MsalLogger.Log(new LogEntry { EventLogLevel = EventLogLevel.Error, Message = "detached" });
-            Assert.Single(listener.Events);
-        }
+        Assert.False(AuthenticationLogger.MsalLogger.IsEnabled(EventLogLevel.Informational));
+        listener.Enable(EventLevel.Warning, SqlClientEventSource.Keywords.AuthenticationTrace);
+        Assert.False(AuthenticationLogger.MsalLogger.IsEnabled(EventLogLevel.Informational));
+        Assert.True(AuthenticationLogger.MsalLogger.IsEnabled(EventLogLevel.Warning));
+        AuthenticationLogger.MsalLogger.Log(listener.Entry(EventLogLevel.Informational, "filtered"));
+        AuthenticationLogger.MsalLogger.Log(listener.Entry(EventLogLevel.Warning, "visible"));
+        Assert.Equal("visible", Assert.Single(listener.Events).Payload![0]);
+        listener.Disable();
+        Assert.False(AuthenticationLogger.MsalLogger.IsEnabled(EventLogLevel.Warning));
+        AuthenticationLogger.MsalLogger.Log(listener.Entry(EventLogLevel.Error, "detached"));
+        Assert.Single(listener.Events);
     }
 
     /// <summary>The SDK interface maps every supported severity and retains source and connection correlation.</summary>
@@ -111,15 +105,27 @@ public class AuthenticationLoggingTests
     public void MsalLogger_MapsInterfaceSeverity(EventLogLevel sdk, EventLevel expected)
     {
         using var listener = new AuthenticationListener();
-        using (AuthenticationLogger.Begin(listener.ConnectionId))
-        {
-            Assert.True(AuthenticationLogger.MsalLogger.IsEnabled(sdk));
-            AuthenticationLogger.MsalLogger.Log(new LogEntry { EventLogLevel = sdk, Message = "interface diagnostic" });
-        }
+        Assert.True(AuthenticationLogger.MsalLogger.IsEnabled(sdk));
+        AuthenticationLogger.MsalLogger.Log(listener.Entry(sdk, "interface diagnostic"));
 
         EventWrittenEventArgs entry = Assert.Single(listener.Events);
         Assert.Equal(expected, entry.Level);
         Assert.Equal(new object[] { "interface diagnostic", "MSAL", listener.ConnectionId.ToString() }, entry.Payload!);
+    }
+
+    /// <summary>MSAL entries without a GUID correlation ID are written with an empty connection ID.</summary>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("not-a-guid")]
+    public void MsalLogger_UncorrelatedEntriesUseEmptyConnectionId(string? correlationId)
+    {
+        using var listener = new AuthenticationListener();
+        string message = $"uncorrelated {Guid.NewGuid()}";
+        AuthenticationLogger.MsalLogger.Log(new LogEntry { EventLogLevel = EventLogLevel.Informational, Message = message, CorrelationId = correlationId });
+
+        EventWrittenEventArgs entry = Assert.Single(listener.Events, e => Equals(e.Payload![0], message));
+        Assert.Equal(Guid.Empty.ToString(), entry.Payload![2]);
     }
 
     /// <summary>Unknown MSAL severities are never forwarded.</summary>
@@ -127,68 +133,25 @@ public class AuthenticationLoggingTests
     public void MsalLogger_RejectsUndefinedSeverity()
     {
         using var listener = new AuthenticationListener();
-        using (AuthenticationLogger.Begin(listener.ConnectionId))
-        {
-            Assert.False(AuthenticationLogger.MsalLogger.IsEnabled((EventLogLevel)99));
-            AuthenticationLogger.MsalLogger.Log(new LogEntry { EventLogLevel = (EventLogLevel)99, Message = "unknown" });
-        }
+        Assert.False(AuthenticationLogger.MsalLogger.IsEnabled((EventLogLevel)99));
+        AuthenticationLogger.MsalLogger.Log(listener.Entry((EventLogLevel)99, "unknown"));
 
         Assert.Empty(listener.Events);
     }
 
-    /// <summary>Reentrant collector work cannot recursively emit authentication diagnostics.</summary>
+    /// <summary>Only parent request IDs created by SqlClient map back to a connection ID.</summary>
     [Fact]
-    public void EventSource_ReentrantLoggingIsSuppressed()
+    public void ParentRequestId_RoundTripsOnlySqlClientRequests()
     {
-        using var listener = new AuthenticationListener();
-        listener.OnAuthentication = () => AuthenticationLogger.MsalLogger.Log(
-            new LogEntry { EventLogLevel = EventLogLevel.Error, Message = "recursive" });
-        using (AuthenticationLogger.Begin(listener.ConnectionId))
+        Guid connectionId = Guid.NewGuid();
+        string requestId = AuthenticationLogger.GetParentRequestId(connectionId);
+        Assert.True(AuthenticationLogger.TryGetConnectionId(requestId, out Guid parsed));
+        Assert.Equal(connectionId, parsed);
+        foreach (string? other in new[] { null, "", connectionId.ToString(), "SqlClient-", "SqlClient-not-a-guid", "other-" + connectionId })
         {
-            AuthenticationLogger.Write(EventLevel.Informational, "outer", "MSAL");
+            Assert.False(AuthenticationLogger.TryGetConnectionId(other, out Guid empty));
+            Assert.Equal(Guid.Empty, empty);
         }
-
-        Assert.Equal("outer", Assert.Single(listener.Events).Payload![0]);
-    }
-
-    /// <summary>Nested scopes use the innermost connection ID and restore the outer one.</summary>
-    [Fact]
-    public void NestedScopes_RestoreOuterScope()
-    {
-        using var listener = new AuthenticationListener(captureAll: true);
-        Guid outerId = Guid.NewGuid();
-        Guid innerId = Guid.NewGuid();
-        using (AuthenticationLogger.Begin(outerId))
-        {
-            using (AuthenticationLogger.Begin(innerId))
-            {
-                AuthenticationLogger.MsalLogger.Log(new LogEntry { EventLogLevel = EventLogLevel.Informational, Message = "inner" });
-            }
-            AuthenticationLogger.MsalLogger.Log(new LogEntry { EventLogLevel = EventLogLevel.Informational, Message = "outer" });
-        }
-
-        Assert.Equal(new[] { innerId.ToString(), outerId.ToString() }, listener.Events.Select(entry => entry.Payload![2]));
-        Assert.Null(AuthenticationLogger.CurrentScope);
-    }
-
-    /// <summary>A disposed scope invalidates background work that inherited its execution context.</summary>
-    [Fact]
-    public async Task DisposedScope_DoesNotCaptureInheritedBackgroundWork()
-    {
-        using var listener = new AuthenticationListener();
-        var gate = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-        Task background;
-        using (AuthenticationLogger.Begin(listener.ConnectionId))
-        {
-            background = Task.Run(async () =>
-            {
-                await gate.Task;
-                AuthenticationLogger.MsalLogger.Log(new LogEntry { EventLogLevel = EventLogLevel.Informational, Message = "after disposal" });
-            });
-        }
-        gate.SetResult(true);
-        await background;
-        Assert.Empty(listener.Events);
     }
 
     /// <summary>Collector changes preserve one SDK client and its token cache across provider instances.</summary>
@@ -200,16 +163,10 @@ public class AuthenticationLoggingTests
         IPublicClientApplication client = await GetClient(first);
         using var listener = new AuthenticationListener();
         Assert.Same(client, await GetClient(second));
-        using (AuthenticationLogger.Begin(listener.ConnectionId))
-        {
-            AuthenticationLogger.MsalLogger.Log(new LogEntry { EventLogLevel = EventLogLevel.Informational, Message = "first" });
-        }
+        AuthenticationLogger.MsalLogger.Log(listener.Entry(EventLogLevel.Informational, "first"));
         listener.Disable();
         Assert.Same(client, await GetClient(first));
-        using (AuthenticationLogger.Begin(listener.ConnectionId))
-        {
-            Assert.False(AuthenticationLogger.MsalLogger.IsEnabled(EventLogLevel.Informational));
-        }
+        Assert.False(AuthenticationLogger.MsalLogger.IsEnabled(EventLogLevel.Informational));
         Assert.Equal("first", Assert.Single(listener.Events).Payload![0]);
     }
 
@@ -230,7 +187,7 @@ public class AuthenticationLoggingTests
         SqlAuthenticationProvider original = Assert.IsAssignableFrom<SqlAuthenticationProvider>(SqlAuthenticationProvider.GetProvider(method));
         string clientId = Guid.NewGuid().ToString();
         var first = new ActiveDirectoryAuthenticationProvider(new ActiveDirectoryAuthenticationProviderOptions { ApplicationClientId = clientId });
-        using var listener = new AuthenticationListener();
+        using var listener = new AuthenticationListener(captureAll: true);
         try
         {
             Assert.True(SqlAuthenticationProvider.SetProvider(method, first));
@@ -255,10 +212,7 @@ public class AuthenticationLoggingTests
             listener.Disable();
             Assert.Single(await reused.GetAccountsAsync());
             listener.Enable(EventLevel.Verbose, SqlClientEventSource.Keywords.AuthenticationTrace);
-            using (AuthenticationLogger.Begin(listener.ConnectionId))
-            {
-                Assert.Single(await reused.GetAccountsAsync());
-            }
+            Assert.Single(await reused.GetAccountsAsync());
             Assert.Contains(listener.Events, entry => Equals(entry.Payload![1], "MSAL"));
             Assert.All(listener.Events, entry =>
             {
@@ -276,46 +230,6 @@ public class AuthenticationLoggingTests
         }
     }
 
-    /// <summary>Canceling the first acquisition wait leaves shared subscription work available to later acquisitions.</summary>
-    [Fact]
-    public async Task AzureSdkEvents_FirstSubscriptionOwnerHonorsCancellation()
-    {
-        _ = await AzureAuthenticationEventListener.GetInstanceAsync();
-        using var listener = new AuthenticationListener();
-        using var source = new ControlledIdentitySource();
-        using var entered = new ManualResetEventSlim();
-        using var release = new ManualResetEventSlim();
-        source.Enabling = () =>
-        {
-            entered.Set();
-            if (!release.Wait(TimeSpan.FromSeconds(15)))
-            {
-                throw new TimeoutException("Subscription owner test was not released.");
-            }
-        };
-        using var cancellation = new CancellationTokenSource();
-        Task initial = Task.Run(async () =>
-        {
-            using AuthenticationLogger.Scope scope = AuthenticationLogger.Begin(Guid.NewGuid(), captureAzure: true);
-            await scope.WaitForReadyAsync(cancellation.Token);
-        });
-        try
-        {
-            Assert.True(entered.Wait(TimeSpan.FromSeconds(10)));
-            cancellation.Cancel();
-            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => CompleteWithinTimeout(initial));
-        }
-        finally
-        {
-            source.Enabling = null;
-            release.Set();
-        }
-        using AuthenticationLogger.Scope next = AuthenticationLogger.Begin(listener.ConnectionId, captureAzure: true);
-        await CompleteWithinTimeout(next.WaitForReadyAsync(CancellationToken.None));
-        source.LogMsalVerbose("next acquisition");
-        Assert.Equal("next acquisition", Assert.Single(listener.Events).Payload![0]);
-    }
-
     /// <summary>Azure SDK options never enable account identifiers, unsafe support logging, or HTTP content.</summary>
     [Fact]
     public void AzureCredentialOptions_DisableSensitiveLogging()
@@ -328,48 +242,64 @@ public class AuthenticationLoggingTests
         Assert.True(options.Diagnostics.IsLoggingEnabled);
     }
 
-    /// <summary>Real Azure SDK diagnostics are scoped and do not forward raw credential exception text.</summary>
+    /// <summary>Real Azure SDK failures are correlated by parent request ID and do not forward raw exception text.</summary>
     [Fact]
-    public async Task AzureSdkEvents_AreScopedAndNonPii()
+    public async Task AzureSdkEvents_CorrelateFailuresAndAreNonPii()
     {
+        _ = AzureAuthenticationEventListener.Instance;
         using var handler = new TokenFailureHandler();
         using var httpClient = new HttpClient(handler);
         ClientSecretCredential credential = CreateCredential(httpClient);
         using var listener = new AuthenticationListener();
-        using (AuthenticationLogger.Scope scope = AuthenticationLogger.Begin(listener.ConnectionId, captureAzure: true))
-        {
-            await scope.WaitForReadyAsync(CancellationToken.None);
-            await Assert.ThrowsAsync<AuthenticationFailedException>(() => RequestToken(credential));
-        }
-        Assert.Contains(listener.Events, entry => Equals(entry.Payload![1], "Azure-Identity"));
+        await Assert.ThrowsAsync<AuthenticationFailedException>(() =>
+            RequestToken(credential, AuthenticationLogger.GetParentRequestId(listener.ConnectionId)));
+
+        EventWrittenEventArgs failure = Assert.Single(listener.Events, entry => Equals(entry.Payload![0], "Azure credential token request failed."));
+        Assert.Equal(listener.ConnectionId.ToString(), failure.Payload![2]);
+        Assert.Contains(listener.Events, entry => Equals(entry.Payload![1], "Azure-Identity") && Equals(entry.Payload[2], Guid.Empty.ToString()));
         Assert.All(listener.Events, entry => Assert.DoesNotContain("private SDK exception data", string.Join(" ", entry.Payload!)));
-        int count = listener.Events.Count;
-        await Assert.ThrowsAsync<AuthenticationFailedException>(() => RequestToken(credential));
-        Assert.Equal(count, listener.Events.Count);
+    }
+
+    /// <summary>Concurrent Azure SDK failures keep their own connection correlation.</summary>
+    [Fact]
+    public async Task AzureSdkEvents_ConcurrentFailuresRemainIsolated()
+    {
+        _ = AzureAuthenticationEventListener.Instance;
+        using var listener = new AuthenticationListener(captureAll: true);
+        Guid firstId = Guid.NewGuid();
+        Guid secondId = Guid.NewGuid();
+        async Task Acquire(Guid connectionId)
+        {
+            using var handler = new TokenFailureHandler();
+            using var client = new HttpClient(handler);
+            ClientSecretCredential credential = CreateCredential(client, Guid.NewGuid().ToString());
+            await Assert.ThrowsAsync<AuthenticationFailedException>(() =>
+                RequestToken(credential, AuthenticationLogger.GetParentRequestId(connectionId)));
+        }
+        await Task.WhenAll(Acquire(firstId), Acquire(secondId));
+        Assert.Single(listener.Events, entry => Equals(entry.Payload![2], firstId.ToString()));
+        Assert.Single(listener.Events, entry => Equals(entry.Payload![2], secondId.ToString()));
     }
 
     /// <summary>Real SDK capture follows late attachment and detachment without rebuilding credentials.</summary>
     [Fact]
     public async Task AzureSdkEvents_FollowEventSourceEnablement()
     {
+        _ = AzureAuthenticationEventListener.Instance;
         using var handler = new TokenFailureHandler();
         using var httpClient = new HttpClient(handler);
         ClientSecretCredential credential = CreateCredential(httpClient);
         using var listener = new AuthenticationListener();
         listener.Disable();
-        using (AuthenticationLogger.Scope scope = AuthenticationLogger.Begin(listener.ConnectionId, captureAzure: true))
-        {
-            await scope.WaitForReadyAsync(CancellationToken.None);
-            await Assert.ThrowsAsync<AuthenticationFailedException>(() => RequestToken(credential));
-            Assert.Empty(listener.Events);
-            listener.Enable(EventLevel.Verbose, SqlClientEventSource.Keywords.AuthenticationTrace);
-            await Assert.ThrowsAsync<AuthenticationFailedException>(() => RequestToken(credential));
-            Assert.Contains(listener.Events, entry => entry.Level == EventLevel.Verbose);
-            int count = listener.Events.Count;
-            listener.Disable();
-            await Assert.ThrowsAsync<AuthenticationFailedException>(() => RequestToken(credential));
-            Assert.Equal(count, listener.Events.Count);
-        }
+        await Assert.ThrowsAsync<AuthenticationFailedException>(() => RequestToken(credential));
+        Assert.Empty(listener.Events);
+        listener.Enable(EventLevel.Verbose, SqlClientEventSource.Keywords.AuthenticationTrace);
+        await Assert.ThrowsAsync<AuthenticationFailedException>(() => RequestToken(credential));
+        Assert.Contains(listener.Events, entry => entry.Level == EventLevel.Verbose);
+        int count = listener.Events.Count;
+        listener.Disable();
+        await Assert.ThrowsAsync<AuthenticationFailedException>(() => RequestToken(credential));
+        Assert.Equal(count, listener.Events.Count);
     }
 
     /// <summary>Ordinary Trace demand alone must not subscribe to or forward Azure SDK diagnostics.</summary>
@@ -377,23 +307,24 @@ public class AuthenticationLoggingTests
     [InlineData(0x2, false)]
     [InlineData(0x2000, true)]
     [InlineData(0x2002, true)]
-    public async Task AzureSdkEvents_RequireAuthenticationKeyword(long keywords, bool expected)
+    public void AzureSdkEvents_RequireAuthenticationKeyword(long keywords, bool expected)
     {
+        AzureAuthenticationEventListener shared = AzureAuthenticationEventListener.Instance;
         using var listener = new AuthenticationListener();
         listener.Disable();
         listener.Enable(EventLevel.Verbose, (EventKeywords)keywords);
         using var source = new ControlledIdentitySource();
-        using AuthenticationLogger.Scope scope = AuthenticationLogger.Begin(listener.ConnectionId, captureAzure: true);
-        await scope.WaitForReadyAsync(CancellationToken.None);
-        Assert.Equal(expected, source.IsEnabled());
-        source.LogMsalVerbose("keyword diagnostic");
-        Assert.Equal(expected ? 1 : 0, listener.Events.Count);
+        Assert.Equal(expected, shared.GetAppliedLevel(source).HasValue);
+        string message = $"keyword diagnostic {Guid.NewGuid()}";
+        source.LogMsalVerbose(message);
+        Assert.Equal(expected ? 1 : 0, listener.Count(message));
     }
 
     /// <summary>SDK-generated provider suffixes retain late tracing attachment and detachment.</summary>
     [Fact]
-    public async Task AzureSdkEvents_RenamedSourceFollowsEventSourceEnablement()
+    public void AzureSdkEvents_RenamedSourceFollowsEventSourceEnablement()
     {
+        _ = AzureAuthenticationEventListener.Instance;
         Type sourceType = typeof(ClientSecretCredential).Assembly.GetType("Azure.Identity.AzureIdentityEventSource", throwOnError: true)!;
         const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic;
         _ = sourceType.GetProperty("Singleton", flags | BindingFlags.Static)!.GetValue(null);
@@ -403,20 +334,16 @@ public class AuthenticationLoggingTests
         MethodInfo write = sourceType.GetMethod("LogMsalVerbose", flags | BindingFlags.Instance)!;
         using var listener = new AuthenticationListener();
         listener.Disable();
-        using (AuthenticationLogger.Scope scope = AuthenticationLogger.Begin(listener.ConnectionId, captureAzure: true))
-        {
-            await scope.WaitForReadyAsync(CancellationToken.None);
-            write.Invoke(source, new object[] { "before tracing" });
-            Assert.Empty(listener.Events);
-            listener.Enable(EventLevel.Verbose, SqlClientEventSource.Keywords.AuthenticationTrace);
-            write.Invoke(source, new object[] { "renamed SDK source" });
-            EventWrittenEventArgs entry = Assert.Single(listener.Events);
-            Assert.Equal(EventLevel.Verbose, entry.Level);
-            Assert.Equal(new object[] { "renamed SDK source", "Azure-Identity", listener.ConnectionId.ToString() }, entry.Payload!);
-            listener.Disable();
-            write.Invoke(source, new object[] { "after tracing" });
-            Assert.Single(listener.Events);
-        }
+        write.Invoke(source, new object[] { "before tracing" });
+        Assert.Equal(0, listener.Count("before tracing"));
+        listener.Enable(EventLevel.Verbose, SqlClientEventSource.Keywords.AuthenticationTrace);
+        write.Invoke(source, new object[] { "renamed SDK source" });
+        EventWrittenEventArgs entry = Assert.Single(listener.Events, e => Equals(e.Payload![0], "renamed SDK source"));
+        Assert.Equal(EventLevel.Verbose, entry.Level);
+        Assert.Equal(new object[] { "renamed SDK source", "Azure-Identity", Guid.Empty.ToString() }, entry.Payload!);
+        listener.Disable();
+        write.Invoke(source, new object[] { "after tracing" });
+        Assert.Equal(0, listener.Count("after tracing"));
     }
 
     /// <summary>Unrelated providers and invalid suffixes cannot supply authentication diagnostics.</summary>
@@ -429,183 +356,83 @@ public class AuthenticationLoggingTests
     [InlineData("Azure-Identity-+1")]
     [InlineData("Azure-Identity-1-extra")]
     [InlineData("Azure-Identity-2147483648")]
-    public async Task AzureSdkEvents_IgnoreUnsupportedSourceNames(string sourceName)
+    public void AzureSdkEvents_IgnoreUnsupportedSourceNames(string sourceName)
     {
+        _ = AzureAuthenticationEventListener.Instance;
         using var source = new ControlledIdentitySource(sourceName);
         Assert.Null(source.ConstructionException);
         using var listener = new AuthenticationListener();
-        using (AuthenticationLogger.Scope scope = AuthenticationLogger.Begin(listener.ConnectionId, captureAzure: true))
-        {
-            await scope.WaitForReadyAsync(CancellationToken.None);
-            source.LogMsalVerbose("unrecognized provider");
-        }
-        Assert.Empty(listener.Events);
-    }
-
-    /// <summary>Concurrent Azure SDK requests retain their own connection correlation across awaits.</summary>
-    [Fact]
-    public async Task AzureSdkEvents_ConcurrentProvidersRemainIsolated()
-    {
-        using var listener = new AuthenticationListener(captureAll: true);
-        Guid firstId = Guid.NewGuid();
-        Guid secondId = Guid.NewGuid();
-        var gate = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-        int arrived = 0;
-        async Task Acquire(Guid connectionId)
-        {
-            using var handler = new TokenFailureHandler();
-            using var client = new HttpClient(handler);
-            ClientSecretCredential credential = CreateCredential(client, Guid.NewGuid().ToString());
-            using AuthenticationLogger.Scope scope = AuthenticationLogger.Begin(connectionId, captureAzure: true);
-            await scope.WaitForReadyAsync(CancellationToken.None);
-            if (Interlocked.Increment(ref arrived) == 2)
-            {
-                gate.SetResult(true);
-            }
-            await gate.Task;
-            await Assert.ThrowsAsync<AuthenticationFailedException>(() => RequestToken(credential));
-        }
-        await Task.WhenAll(Acquire(firstId), Acquire(secondId));
-        Assert.Contains(listener.Events, entry => Equals(entry.Payload![2], firstId.ToString()));
-        Assert.Contains(listener.Events, entry => Equals(entry.Payload![2], secondId.ToString()));
-        Assert.All(listener.Events, entry => Assert.Contains(entry.Payload![2], new object[] { firstId.ToString(), secondId.ToString() }));
+        source.LogMsalVerbose("unrecognized provider");
+        Assert.Equal(0, listener.Count("unrecognized provider"));
     }
 
     /// <summary>A Critical collector includes Always diagnostics without enabling Verbose SDK logging.</summary>
     [Fact]
-    public async Task AzureSdkEvents_CriticalCollectorIncludesAlways()
+    public void AzureSdkEvents_CriticalCollectorIncludesAlways()
     {
+        AzureAuthenticationEventListener shared = AzureAuthenticationEventListener.Instance;
         using var listener = new AuthenticationListener(level: EventLevel.Critical);
         using var source = new ControlledIdentitySource();
-        using (AuthenticationLogger.Scope scope = AuthenticationLogger.Begin(listener.ConnectionId, captureAzure: true))
-        {
-            await scope.WaitForReadyAsync(CancellationToken.None);
-            source.LogMsalVerbose("filtered");
-            source.LogMsalAlways("always");
-            Assert.False(source.IsEnabled(EventLevel.Verbose, EventKeywords.None));
-        }
-        Assert.Equal("always", Assert.Single(listener.Events).Payload![0]);
+        source.LogMsalVerbose("filtered");
+        source.LogMsalAlways("always");
+        Assert.Equal(EventLevel.Informational, shared.GetAppliedLevel(source));
+        Assert.Equal(0, listener.Count("filtered"));
+        Assert.Equal(1, listener.Count("always"));
     }
 
     /// <summary>Independent collectors receive only their own requested authentication levels.</summary>
     [Fact]
-    public async Task AzureSdkEvents_CollectorsFilterIndependently()
+    public void AzureSdkEvents_CollectorsFilterIndependently()
     {
-        using var warning = new AuthenticationListener(captureAll: true, level: EventLevel.Warning);
+        _ = AzureAuthenticationEventListener.Instance;
+        using var warning = new AuthenticationListener(level: EventLevel.Warning);
         using var verbose = new AuthenticationListener();
         using var source = new ControlledIdentitySource();
-        using (AuthenticationLogger.Scope scope = AuthenticationLogger.Begin(verbose.ConnectionId, captureAzure: true))
-        {
-            await scope.WaitForReadyAsync(CancellationToken.None);
-            source.LogMsalVerbose("verbose");
-            Assert.Single(verbose.Events);
-            Assert.Empty(warning.Events);
-            verbose.Disable();
-            source.LogMsalVerbose("after verbose collector detached");
-            Assert.Single(verbose.Events);
-            Assert.Empty(warning.Events);
-        }
+        source.LogMsalVerbose("verbose");
+        Assert.Equal(1, verbose.Count("verbose"));
+        Assert.Equal(0, warning.Count("verbose"));
+        verbose.Disable();
+        source.LogMsalVerbose("after verbose collector detached");
+        Assert.Equal(0, verbose.Count("after verbose collector detached"));
+        Assert.Equal(0, warning.Count("after verbose collector detached"));
     }
 
-    /// <summary>Every acquisition waits for an in-progress subscription and can cancel its own wait.</summary>
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public async Task AzureSdkEvents_ConcurrentSubscriptionReadiness(bool cancel)
+    /// <summary>Removing all collector demand unsubscribes from SDK sources.</summary>
+    [Fact]
+    public void AzureSdkEvents_UnsubscribeWithoutCollectors()
     {
-        _ = await AzureAuthenticationEventListener.GetInstanceAsync();
-        using var listener = new AuthenticationListener();
+        AzureAuthenticationEventListener shared = AzureAuthenticationEventListener.Instance;
         using var source = new ControlledIdentitySource();
-        using var entered = new ManualResetEventSlim();
-        using var release = new ManualResetEventSlim();
-        var finished = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-        int once = 1;
-        source.Enabling = () =>
+        using (var listener = new AuthenticationListener())
         {
-            if (Interlocked.Exchange(ref once, 0) == 1)
-            {
-                entered.Set();
-                if (!release.Wait(TimeSpan.FromSeconds(15)))
-                {
-                    throw new TimeoutException("Subscription readiness test was not released.");
-                }
-            }
-        };
-        Task initial = Task.Run(async () =>
-        {
-            using AuthenticationLogger.Scope scope = AuthenticationLogger.Begin(Guid.NewGuid(), captureAzure: true);
-            await scope.WaitForReadyAsync(CancellationToken.None);
-            await finished.Task;
-        });
-        try
-        {
-            Assert.True(entered.Wait(TimeSpan.FromSeconds(10)));
-            using AuthenticationLogger.Scope scope = AuthenticationLogger.Begin(listener.ConnectionId, captureAzure: true);
-            using var cancellation = new CancellationTokenSource();
-            Task ready = scope.WaitForReadyAsync(cancellation.Token);
-            Assert.False(ready.IsCompleted);
-            var provider = new ActiveDirectoryAuthenticationProvider();
-            var parameters = new SqlAuthenticationParameters(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal,
-                "test-server", "test-db", "https://database.windows.net/", "https://login.microsoftonline.com/",
-                "", "", Guid.NewGuid(), cancel ? 1 : 30);
-            Task acquisition = provider.AcquireTokenAsync(parameters);
-            Assert.False(acquisition.IsCompleted);
-            if (cancel)
-            {
-                cancellation.Cancel();
-                await Assert.ThrowsAnyAsync<OperationCanceledException>(() => ready);
-                AuthenticationException failure = await Assert.ThrowsAsync<AuthenticationException>(() => CompleteWithinTimeout(acquisition));
-                Assert.IsAssignableFrom<OperationCanceledException>(failure.InnerException);
-            }
-            else
-            {
-                release.Set();
-                await CompleteWithinTimeout(ready);
-                source.LogMsalVerbose("first diagnostic");
-                Assert.Equal("first diagnostic", Assert.Single(listener.Events).Payload![0]);
-                await Assert.ThrowsAsync<AuthenticationException>(() => CompleteWithinTimeout(acquisition));
-            }
+            Assert.Equal(EventLevel.Verbose, shared.GetAppliedLevel(source));
         }
-        finally
-        {
-            source.Enabling = null;
-            release.Set();
-            finished.TrySetResult(true);
-            await CompleteWithinTimeout(initial);
-        }
-        await CompleteWithinTimeout((await AzureAuthenticationEventListener.GetInstanceAsync()).WaitForRefreshAsync());
-        Assert.False(source.IsEnabled());
+        Assert.Null(shared.GetAppliedLevel(source));
     }
 
     /// <summary>Reentrant collector commands and newly constructed SDK sources cannot lose first events.</summary>
     [Fact]
-    public async Task AzureSdkEvents_ReentrantCommandsAndNewSourcesRemainReady()
+    public void AzureSdkEvents_ReentrantCommandsAndNewSourcesRemainReady()
     {
+        AzureAuthenticationEventListener shared = AzureAuthenticationEventListener.Instance;
         using var listener = new AuthenticationListener(level: EventLevel.Informational);
         using var source = new ControlledIdentitySource();
-        using AuthenticationLogger.Scope scope = AuthenticationLogger.Begin(listener.ConnectionId, captureAzure: true);
-        await scope.WaitForReadyAsync(CancellationToken.None);
-        ExecutionContext context = ExecutionContext.Capture()!;
         int once = 1;
         source.Enabling = () =>
         {
             if (Interlocked.Exchange(ref once, 0) == 1)
             {
-                ExecutionContext.Run(context, _ =>
-                {
-                    listener.Disable();
-                    listener.Enable(EventLevel.Informational, SqlClientEventSource.Keywords.AuthenticationTrace);
-                    using var lateSource = new LateIdentitySource();
-                    lateSource.LogMsalInformational("created during refresh");
-                }, null);
+                listener.Disable();
+                listener.Enable(EventLevel.Informational, SqlClientEventSource.Keywords.AuthenticationTrace);
+                using var lateSource = new LateIdentitySource();
+                lateSource.LogMsalInformational("created during refresh");
             }
         };
         try
         {
             listener.Enable(EventLevel.Verbose, SqlClientEventSource.Keywords.AuthenticationTrace);
-            Assert.Contains(listener.Events, entry => Equals(entry.Payload![0], "created during refresh"));
+            Assert.Equal(1, listener.Count("created during refresh"));
             // Check this listener's subscription; source-wide IsEnabled keeps the highest level on .NET Framework.
-            AzureAuthenticationEventListener shared = await AzureAuthenticationEventListener.GetInstanceAsync();
             Assert.Equal(EventLevel.Informational, shared.GetAppliedLevel(source));
         }
         finally
@@ -616,9 +443,9 @@ public class AuthenticationLoggingTests
 
     /// <summary>Disposed SDK sources are not kept alive by the shared listener.</summary>
     [Fact]
-    public async Task AzureSdkEvents_DoNotRetainDisposedSources()
+    public void AzureSdkEvents_DoNotRetainDisposedSources()
     {
-        _ = await AzureAuthenticationEventListener.GetInstanceAsync();
+        _ = AzureAuthenticationEventListener.Instance;
         WeakReference source = CreateDisposedSource();
         for (int i = 0; i < 5 && source.IsAlive; i++)
         {
@@ -631,114 +458,42 @@ public class AuthenticationLoggingTests
 
     /// <summary>Unsupported events are excluded and raw SDK exceptions are replaced by fixed text.</summary>
     [Fact]
-    public async Task AzureListener_RejectsUnknownPayloadsAndSanitizesFailures()
+    public void AzureListener_RejectsUnknownPayloadsAndSanitizesFailures()
     {
-        using var listener = new AuthenticationListener();
+        _ = AzureAuthenticationEventListener.Instance;
+        using var listener = new AuthenticationListener(captureAll: true);
         using var source = new InvalidSchemaIdentitySource();
-        using AuthenticationLogger.Scope scope = AuthenticationLogger.Begin(listener.ConnectionId, captureAzure: true);
-        await scope.WaitForReadyAsync(CancellationToken.None);
+        Guid connectionId = Guid.NewGuid();
         source.LogMsalVerbose(42);
         source.LogMsalError("wrong event id");
         source.AuthenticatedAccountDetails("private account");
         source.GetTokenFailed("ClientSecretCredential.GetToken", "[ scope ]", "other-request", "app failure");
-        source.GetTokenFailed("ClientSecretCredential.GetToken", "[ scope ]", scope.RequestId, "private exception");
-        EventWrittenEventArgs entry = Assert.Single(listener.Events);
+        source.GetTokenFailed("ClientSecretCredential.GetToken", "[ scope ]", connectionId.ToString(), "app failure");
+        source.GetTokenFailed("ClientSecretCredential.GetToken", "[ scope ]", AuthenticationLogger.GetParentRequestId(connectionId), "private exception");
+        Assert.Equal(0, listener.Count("wrong event id"));
+        Assert.Equal(0, listener.Count("private account"));
+        Assert.DoesNotContain(listener.Events, e => string.Join(" ", e.Payload!).Contains("failure") || string.Join(" ", e.Payload!).Contains("exception"));
+        EventWrittenEventArgs entry = Assert.Single(listener.Events, e => Equals(e.Payload![2], connectionId.ToString()));
         Assert.Equal("Azure credential token request failed.", entry.Payload![0]);
         source.DefaultAzureCredentialCredentialSelected("ClientSecretCredential");
-        Assert.Contains(listener.Events, e => Equals(e.Payload![0], "DefaultAzureCredential selected ClientSecretCredential."));
+        Assert.Equal(1, listener.Count("DefaultAzureCredential selected ClientSecretCredential."));
     }
 
     /// <summary>Error and Warning collectors still receive SDK failures that Azure emits at Informational.</summary>
     [Theory]
     [InlineData(EventLevel.Error)]
     [InlineData(EventLevel.Warning)]
-    public async Task AzureSdkEvents_LowVerbosityCollectorsReceiveTokenFailures(EventLevel level)
+    public void AzureSdkEvents_LowVerbosityCollectorsReceiveTokenFailures(EventLevel level)
     {
+        _ = AzureAuthenticationEventListener.Instance;
         using var listener = new AuthenticationListener(level: level);
         using var source = new InvalidSchemaIdentitySource();
-        using AuthenticationLogger.Scope scope = AuthenticationLogger.Begin(listener.ConnectionId, captureAzure: true);
-        await scope.WaitForReadyAsync(CancellationToken.None);
         source.DefaultAzureCredentialCredentialSelected("ClientSecretCredential");
-        source.GetTokenFailed("ClientSecretCredential.GetToken", "[ scope ]", scope.RequestId, "private exception");
-        EventWrittenEventArgs entry = Assert.Single(listener.Events);
+        source.GetTokenFailed("ClientSecretCredential.GetToken", "[ scope ]", AuthenticationLogger.GetParentRequestId(listener.ConnectionId), "private exception");
+        Assert.Equal(0, listener.Count("DefaultAzureCredential selected ClientSecretCredential."));
+        EventWrittenEventArgs entry = Assert.Single(listener.Events, e => Equals(e.Payload![2], listener.ConnectionId.ToString()));
         Assert.Equal(EventLevel.Error, entry.Level);
         Assert.Equal("Azure credential token request failed.", entry.Payload![0]);
-    }
-
-    /// <summary>Collector work during a lifecycle event is not attributed to the acquisition and cannot recurse.</summary>
-    [Fact]
-    public async Task AcquireToken_ReentrantCollectorWorkIsSuppressed()
-    {
-        using var listener = new AuthenticationListener(captureAll: true);
-        using var source = new ControlledIdentitySource();
-        var provider = new ActiveDirectoryAuthenticationProvider();
-        Guid nestedId = Guid.NewGuid();
-        int reentered = 0;
-        listener.OnAuthentication = () =>
-        {
-            if (Interlocked.Exchange(ref reentered, 1) == 0)
-            {
-                // Simulates a collector that uses an Azure credential and opens a SqlClient connection.
-                source.LogMsalAlways("collector work");
-                var nested = new SqlAuthenticationParameters(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal,
-                    "test-server", "test-db", "https://database.windows.net/", "https://login.microsoftonline.com/",
-                    "", "", nestedId, 30);
-                Assert.ThrowsAsync<AuthenticationException>(() => provider.AcquireTokenAsync(nested)).GetAwaiter().GetResult();
-            }
-        };
-        var parameters = new SqlAuthenticationParameters(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal,
-            "test-server", "test-db", "https://database.windows.net/", "https://login.microsoftonline.com/",
-            "", "", listener.ConnectionId, 30);
-        await Assert.ThrowsAsync<AuthenticationException>(() => provider.AcquireTokenAsync(parameters));
-
-        Assert.Equal(1, reentered);
-        Assert.Single(listener.Events, entry => Equals(entry.Payload![0], "Token acquisition started."));
-        Assert.DoesNotContain(listener.Events, entry => Equals(entry.Payload![0], "collector work"));
-        Assert.DoesNotContain(listener.Events, entry => Equals(entry.Payload![2], nestedId.ToString()));
-        Assert.Null(AuthenticationLogger.CurrentScope);
-    }
-
-    /// <summary>Azure SDK work done by an ordinary Trace handler is not attributed to the acquisition.</summary>
-    [Fact]
-    public async Task AzureSdkEvents_OrdinaryTraceCollectorWorkIsNotAttributed()
-    {
-        using var listener = new AuthenticationListener();
-        listener.Enable(EventLevel.Verbose, SqlClientEventSource.Keywords.AuthenticationTrace | SqlClientEventSource.Keywords.Trace);
-        using var source = new ControlledIdentitySource();
-        // Simulates a collector that calls an app-owned Azure credential while handling Trace.
-        listener.OnTrace = () => source.LogMsalVerbose("collector trace work");
-        using (AuthenticationLogger.Scope scope = AuthenticationLogger.Begin(listener.ConnectionId, captureAzure: true))
-        {
-            await scope.WaitForReadyAsync(CancellationToken.None);
-            AuthenticationLogger.Trace("ordinary {0}", "diagnostic");
-            source.LogMsalVerbose("acquisition work");
-        }
-
-        Assert.Equal(1, listener.TraceEvents);
-        Assert.Equal("acquisition work", Assert.Single(listener.Events).Payload![0]);
-        Assert.Null(AuthenticationLogger.CurrentScope);
-        await CompleteWithinTimeout((await AzureAuthenticationEventListener.GetInstanceAsync()).WaitForRefreshAsync());
-    }
-
-    /// <summary>App credential work run inside an app's SDK listener does not produce failures for the acquisition.</summary>
-    [Fact]
-    public async Task AzureSdkEvents_AppCredentialWorkInSdkListenerIsNotAttributed()
-    {
-        using var handler = new TokenFailureHandler();
-        using var httpClient = new HttpClient(handler);
-        ClientSecretCredential credential = CreateCredential(httpClient);
-        ClientSecretCredential appCredential = CreateCredential(httpClient, "99999999-2222-3333-4444-555555555555");
-        using var listener = new AuthenticationListener();
-        using var appListener = new AppIdentityListener(appCredential);
-        using (AuthenticationLogger.Scope scope = AuthenticationLogger.Begin(listener.ConnectionId, captureAzure: true))
-        {
-            await scope.WaitForReadyAsync(CancellationToken.None);
-            appListener.RequestId = scope.RequestId;
-            await Assert.ThrowsAsync<AuthenticationFailedException>(() => RequestToken(credential, scope.RequestId));
-        }
-
-        Assert.Equal(1, appListener.Runs);
-        Assert.Single(listener.Events, entry => Equals(entry.Payload![0], "Azure credential token request failed."));
     }
 
     /// <summary>The SDK allowlist requires a reviewed event ID and name together.</summary>
@@ -766,9 +521,8 @@ public class AuthenticationLoggingTests
         var parameters = new SqlAuthenticationParameters(method, "test-server", "test-db",
             "https://database.windows.net/", "https://login.microsoftonline.com/", "", "", listener.ConnectionId, 30);
         await Assert.ThrowsAsync<AuthenticationException>(() => provider.AcquireTokenAsync(parameters));
-        Assert.Contains(listener.Events, entry => Equals(entry.Payload![0], "Token acquisition started."));
-        Assert.Contains(listener.Events, entry => Equals(entry.Payload![0], "Token acquisition failed."));
-        Assert.Null(AuthenticationLogger.CurrentScope);
+        Assert.Contains(listener.Events, entry => Equals(entry.Payload![0], "Token acquisition started.") && Equals(entry.Payload[2], listener.ConnectionId.ToString()));
+        Assert.Contains(listener.Events, entry => Equals(entry.Payload![0], "Token acquisition failed.") && Equals(entry.Payload[2], listener.ConnectionId.ToString()));
     }
 
     /// <summary>Real SDK success preserves the token while emitting sanitized provider and Azure events.</summary>
@@ -833,7 +587,8 @@ public class AuthenticationLoggingTests
         {
             connection.Open();
         }
-        Assert.Contains(listener.Events, entry => Equals(entry.Payload![1], "Azure-Identity") &&
+        Assert.Contains(listener.Events, entry => Equals(entry.Payload![1], "Azure-Identity"));
+        Assert.Contains(listener.Events, entry => Equals(entry.Payload![0], "Token acquisition succeeded.") &&
             Equals(entry.Payload[2], connection.ClientConnectionId.ToString()));
     }
 
@@ -864,13 +619,6 @@ public class AuthenticationLoggingTests
         }
         Assert.Contains(listener.Events, entry => Equals(entry.Payload![1], "MSAL") &&
             Equals(entry.Payload[2], connection.ClientConnectionId.ToString()));
-    }
-
-    /// <summary>Bounds concurrency regressions without using delays to order operations.</summary>
-    private static async Task CompleteWithinTimeout(Task task)
-    {
-        Assert.Same(task, await Task.WhenAny(task, Task.Delay(TimeSpan.FromSeconds(10))));
-        await task;
     }
 
     /// <summary>Obtains a cached MSAL client without contacting an authentication service.</summary>
@@ -986,46 +734,6 @@ public class AuthenticationLoggingTests
             WriteEvent(3, fullyQualifiedMethodName, scopes, parentRequestId, exception);
     }
 
-    /// <summary>Simulates an app listener that runs its own credential while handling an SDK event.</summary>
-    private sealed class AppIdentityListener : EventListener
-    {
-        private readonly ClientSecretCredential _credential;
-        private int _running;
-        /// <summary>Counts nested app credential requests.</summary>
-        internal int Runs;
-        /// <summary>Gets or sets the acquisition request that triggers app work.</summary>
-        internal volatile string? RequestId;
-
-        /// <summary>Creates a listener that uses an app-owned credential.</summary>
-        internal AppIdentityListener(ClientSecretCredential credential) => _credential = credential;
-
-        /// <inheritdoc />
-        protected override void OnEventSourceCreated(EventSource eventSource)
-        {
-            if (eventSource.Name == "Azure-Identity")
-            {
-                EnableEvents(eventSource, EventLevel.Informational);
-            }
-        }
-
-        /// <inheritdoc />
-        protected override void OnEventWritten(EventWrittenEventArgs eventData)
-        {
-            if (eventData.EventName == "GetToken" && RequestId is { } id && eventData.Payload?.Contains(id) == true &&
-                Interlocked.Exchange(ref _running, 1) == 0)
-            {
-                Interlocked.Increment(ref Runs);
-                try
-                {
-                    _credential.GetToken(new TokenRequestContext(["https://database.windows.net/.default"]));
-                }
-                catch (AuthenticationFailedException)
-                {
-                }
-            }
-        }
-    }
-
     /// <summary>Collects authentication events without affecting unrelated diagnostic consumers.</summary>
     private sealed class AuthenticationListener : EventListener
     {
@@ -1037,12 +745,8 @@ public class AuthenticationLoggingTests
         internal Guid ConnectionId { get; } = Guid.NewGuid();
         /// <summary>Counts ordinary Trace events independently of authentication events.</summary>
         internal int TraceEvents;
-        /// <summary>Gets or sets a hook used to verify reentrant collector behavior.</summary>
-        internal Action? OnAuthentication { get; set; }
-        /// <summary>Gets or sets a hook run while an ordinary Trace event is dispatched.</summary>
-        internal Action? OnTrace { get; set; }
 
-        /// <summary>Creates a correlated collector or captures every connection for integration tests.</summary>
+        /// <summary>Creates a collector for this connection and uncorrelated events, or for every connection.</summary>
         internal AuthenticationListener(bool captureAll = false, EventLevel level = EventLevel.Verbose)
         {
             _captureAll = captureAll;
@@ -1053,6 +757,11 @@ public class AuthenticationLoggingTests
         internal void Enable(EventLevel level, EventKeywords keywords) => EnableEvents(_source!, level, keywords);
         /// <summary>Stops collection without discarding previously captured events.</summary>
         internal void Disable() => DisableEvents(_source!);
+        /// <summary>Creates an MSAL entry correlated to this collector's connection.</summary>
+        internal LogEntry Entry(EventLogLevel level, string message) =>
+            new() { EventLogLevel = level, Message = message, CorrelationId = ConnectionId.ToString() };
+        /// <summary>Counts captured events with the given message.</summary>
+        internal int Count(string message) => Events.Count(entry => Equals(entry.Payload![0], message));
         /// <summary>Disables the subscription explicitly, including on .NET Framework.</summary>
         public override void Dispose()
         {
@@ -1068,13 +777,12 @@ public class AuthenticationLoggingTests
             if (eventData.EventName == "Trace")
             {
                 Interlocked.Increment(ref TraceEvents);
-                OnTrace?.Invoke();
             }
             if (eventData.EventName?.StartsWith("Authentication", StringComparison.Ordinal) == true &&
-                eventData.Payload?.Count == 3 && (_captureAll || Equals(eventData.Payload[2], ConnectionId.ToString())))
+                eventData.Payload?.Count == 3 && (_captureAll || Equals(eventData.Payload[2], ConnectionId.ToString()) ||
+                Equals(eventData.Payload[2], Guid.Empty.ToString())))
             {
                 Events.Enqueue(eventData);
-                OnAuthentication?.Invoke();
             }
         }
     }

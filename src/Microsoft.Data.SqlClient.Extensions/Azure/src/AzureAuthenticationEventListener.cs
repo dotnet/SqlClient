@@ -8,26 +8,23 @@ using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient;
 
-/// <summary>Bridges a supported subset of process-wide Azure-Identity events into active provider scopes.</summary>
-/// <remarks>One listener serves all providers; acquisition scopes supply ownership instead of cached credentials.</remarks>
+/// <summary>Bridges a supported, non-PII subset of process-wide Azure-Identity events into SqlClient's EventSource.</summary>
+/// <remarks>
+/// Subscriptions follow collector demand for the SqlClient AuthenticationTrace keyword. Token failure events are
+/// correlated through their parent request ID; other events are written with an empty connection ID.
+/// </remarks>
 internal sealed class AzureAuthenticationEventListener : EventListener
 {
-    // Provider-specific commands run subscription updates inside EventSource's serialized command path.
-    private const EventCommand RefreshCommand = (EventCommand)1;
-    private static readonly Lazy<Task<AzureAuthenticationEventListener>> s_instance = new(CreateAsync);
+    private static readonly Lazy<AzureAuthenticationEventListener> s_instance = new(() => new AzureAuthenticationEventListener());
     private readonly object _gate = new();
     private readonly List<SourceState> _sources = new();
-    private int _activeScopes;
-    private readonly List<TaskCompletionSource<bool>> _pending = new();
-    private bool _ready;
+    private readonly bool _ready;
     private int _version;
-    private int _refreshRequested;
-    private int _refreshing;
 
     /// <summary>Observes current and future SDK sources without retaining their defining assemblies.</summary>
     private AzureAuthenticationEventListener()
     {
-        Volatile.Write(ref _ready, true);
+        _ready = true;
         SqlClientEventSource.Log.EventCommandExecuted += OnSqlClientCommand;
         foreach (EventSource source in EventSource.GetSources())
         {
@@ -36,58 +33,12 @@ internal sealed class AzureAuthenticationEventListener : EventListener
                 RegisterSource(source);
             }
         }
+
+        ApplySubscriptions();
     }
 
-    /// <summary>Creates the listener off the acquisition thread without inheriting acquisition context.</summary>
-    private static Task<AzureAuthenticationEventListener> CreateAsync()
-    {
-        if (ExecutionContext.IsFlowSuppressed())
-        {
-            return Task.Run(() => new AzureAuthenticationEventListener());
-        }
-
-        using (ExecutionContext.SuppressFlow())
-        {
-            return Task.Run(() => new AzureAuthenticationEventListener());
-        }
-    }
-
-    /// <summary>Gets the shared initialization task; individual acquisitions can cancel their wait.</summary>
-    internal static Task<AzureAuthenticationEventListener> GetInstanceAsync() => s_instance.Value;
-
-    /// <summary>Registers an acquisition and completes only after its SDK demand is applied.</summary>
-    internal Task Enter()
-    {
-        lock (_gate)
-        {
-            _activeScopes++;
-        }
-        return WaitForRefreshAsync();
-    }
-
-    /// <summary>Releases acquisition demand without waiting on an SDK command or the global EventSource lock.</summary>
-    internal void Leave()
-    {
-        lock (_gate)
-        {
-            _activeScopes--;
-            _version++;
-        }
-        RequestRefresh();
-    }
-
-    /// <summary>Waits for a subscription refresh, including previously released demand.</summary>
-    internal Task WaitForRefreshAsync()
-    {
-        var ready = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-        lock (_gate)
-        {
-            _pending.Add(ready);
-            _version++;
-        }
-        RequestRefresh();
-        return ready.Task;
-    }
+    /// <summary>Gets the shared listener, creating it on first use.</summary>
+    internal static AzureAuthenticationEventListener Instance => s_instance.Value;
 
     /// <summary>Registers a source weakly so disposing it can release a collectible load context.</summary>
     /// <param name="source">The supported SDK source.</param>
@@ -95,7 +46,7 @@ internal sealed class AzureAuthenticationEventListener : EventListener
     {
         lock (_gate)
         {
-            SourceState? existing = _sources.Find(state => state.Source.TryGetTarget(out EventSource? target) && ReferenceEquals(target, source));
+            SourceState? existing = Find(source);
             if (existing is not null)
             {
                 return existing;
@@ -108,31 +59,25 @@ internal sealed class AzureAuthenticationEventListener : EventListener
         }
     }
 
-    /// <summary>Configures new sources synchronously before their constructor can emit its first event.</summary>
+    /// <summary>Configures new sources before their constructor can emit its first event.</summary>
     /// <param name="eventSource">A source discovered by the framework under its subscription lock.</param>
     protected override void OnEventSourceCreated(EventSource eventSource)
     {
-        if (!Volatile.Read(ref _ready) || !IsSupportedSourceName(eventSource.Name))
+        // The base constructor reports existing sources before this instance's fields are initialized.
+        if (!_ready || !IsSupportedSourceName(eventSource.Name))
         {
             return;
         }
 
-        SourceState state = RegisterSource(eventSource);
-        EventLevel? desired;
-        lock (_gate)
-        {
-            desired = GetDesiredLevel();
-        }
-
-        ApplySource(state, eventSource, desired);
+        ApplySource(RegisterSource(eventSource), eventSource, GetDesiredLevel());
     }
 
-    /// <summary>Applies current demand before a collector's enable command returns.</summary>
+    /// <summary>Applies current demand before a collector's enable or disable command returns.</summary>
     /// <param name="sender">The SqlClient source.</param>
-    /// <param name="args">A collector command or the extension's internal refresh command.</param>
+    /// <param name="args">The collector command.</param>
     private void OnSqlClientCommand(object? sender, EventCommandEventArgs args)
     {
-        if (args.Command != RefreshCommand && args.Command != EventCommand.Enable && args.Command != EventCommand.Disable)
+        if (args.Command is not (EventCommand.Enable or EventCommand.Disable))
         {
             return;
         }
@@ -145,117 +90,50 @@ internal sealed class AzureAuthenticationEventListener : EventListener
         ApplySubscriptions();
     }
 
-    /// <summary>Coalesces background command requests without capturing an acquisition's execution context.</summary>
-    private void RequestRefresh()
-    {
-        Interlocked.Exchange(ref _refreshRequested, 1);
-        if (Interlocked.CompareExchange(ref _refreshing, 1, 0) != 0)
-        {
-            return;
-        }
-
-        if (ExecutionContext.IsFlowSuppressed())
-        {
-            _ = Task.Run(Refresh);
-        }
-        else
-        {
-            using (ExecutionContext.SuppressFlow())
-            {
-                _ = Task.Run(Refresh);
-            }
-        }
-    }
-
-    /// <summary>Requests serialized updates without blocking acquisition startup or disposal.</summary>
-    private void Refresh()
-    {
-        try
-        {
-            do
-            {
-                Interlocked.Exchange(ref _refreshRequested, 0);
-                EventSource.SendCommand(SqlClientEventSource.Log, RefreshCommand, null);
-            }
-            while (Volatile.Read(ref _refreshRequested) != 0);
-        }
-        finally
-        {
-            Volatile.Write(ref _refreshing, 0);
-            if (Volatile.Read(ref _refreshRequested) != 0)
-            {
-                RequestRefresh();
-            }
-        }
-    }
-
-    /// <summary>Applies subscriptions within EventSource command serialization, never under the demand lock.</summary>
-    /// <remarks>Reentrant collector commands take effect immediately; a stale outer snapshot cannot undo them.</remarks>
+    /// <summary>Applies subscriptions outside the source lock.</summary>
+    /// <remarks>Restarts when a nested collector command changes demand, so a stale snapshot cannot undo it.</remarks>
     private void ApplySubscriptions()
     {
         while (true)
         {
-            EventLevel? desired;
             SourceState[] sources;
-            TaskCompletionSource<bool>[] pending;
             int version;
             lock (_gate)
             {
                 version = _version;
-                desired = GetDesiredLevel();
                 _sources.RemoveAll(state => !state.Source.TryGetTarget(out _));
                 sources = _sources.ToArray();
-                pending = _pending.ToArray();
-                _pending.Clear();
-            }
-            try
-            {
-                foreach (SourceState state in sources)
-                {
-                    if (version != Volatile.Read(ref _version))
-                    {
-                        break;
-                    }
-
-                    if (state.Source.TryGetTarget(out EventSource? source))
-                    {
-                        ApplySource(state, source, desired);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                foreach (TaskCompletionSource<bool> ready in pending)
-                {
-                    ready.TrySetException(ex);
-                }
-
-                throw;
-            }
-            lock (_gate)
-            {
-                if (version != _version)
-                {
-                    _pending.AddRange(pending);
-                    continue;
-                }
-            }
-            foreach (TaskCompletionSource<bool> ready in pending)
-            {
-                ready.TrySetResult(true);
             }
 
-            return;
+            EventLevel? desired = GetDesiredLevel();
+            foreach (SourceState state in sources)
+            {
+                if (version != Volatile.Read(ref _version))
+                {
+                    break;
+                }
+
+                if (state.Source.TryGetTarget(out EventSource? source))
+                {
+                    ApplySource(state, source, desired);
+                }
+            }
+
+            if (version == Volatile.Read(ref _version))
+            {
+                return;
+            }
         }
     }
 
-    /// <summary>Updates one SDK source; callers are already inside framework subscription serialization.</summary>
+    /// <summary>Updates one SDK source; callers are inside framework subscription serialization.</summary>
     private void ApplySource(SourceState state, EventSource source, EventLevel? desired)
     {
         if (state.Level == desired)
         {
             return;
         }
+
         // Publish before calling SDK hooks so nested collector commands see and can supersede this update.
         EventLevel? previous = state.Level;
         state.Level = desired;
@@ -288,31 +166,31 @@ internal sealed class AzureAuthenticationEventListener : EventListener
     {
         lock (_gate)
         {
-            return _sources.Find(state => state.Source.TryGetTarget(out EventSource? target) && ReferenceEquals(target, source))?.Level;
+            return Find(source)?.Level;
         }
     }
+
+    /// <summary>Finds a tracked source; the caller holds the lock.</summary>
+    private SourceState? Find(EventSource source) =>
+        _sources.Find(state => state.Source.TryGetTarget(out EventSource? target) && ReferenceEquals(target, source));
 
     /// <summary>Tracks this listener's subscription without owning the SDK source.</summary>
     private sealed class SourceState
     {
         /// <summary>Observes a source without extending its lifetime.</summary>
         internal SourceState(EventSource source) => Source = new(source);
+
         /// <summary>Gets the weakly held SDK source.</summary>
         internal WeakReference<EventSource> Source { get; }
-        /// <summary>Gets or sets the level last applied by this listener under framework serialization.</summary>
+
+        /// <summary>Gets or sets the level last applied by this listener.</summary>
         internal EventLevel? Level { get; set; }
     }
 
-    /// <summary>Calculates SDK capture demand from active acquisitions and current SqlClient collectors.</summary>
-    /// <returns>The most detailed required SDK level, or null when no sink needs capture.</returns>
-    /// <remarks>The caller holds the demand lock; this method never takes EventListener's global lock.</remarks>
-    private EventLevel? GetDesiredLevel()
+    /// <summary>Calculates SDK capture demand from current SqlClient collectors.</summary>
+    /// <returns>The most detailed required SDK level, or null when no collector needs capture.</returns>
+    private static EventLevel? GetDesiredLevel()
     {
-        if (_activeScopes == 0)
-        {
-            return null;
-        }
-
         EventLevel? desired = null;
         for (EventLevel level = EventLevel.LogAlways; level <= EventLevel.Verbose; level++)
         {
@@ -321,58 +199,50 @@ internal sealed class AzureAuthenticationEventListener : EventListener
                 desired = level;
             }
         }
+
         // SDK failures (GetTokenFailed) are Informational but forwarded as Error, so subscribe at least at
         // Informational. This also covers LogAlways, which EventListener treats as all levels.
         // Write still filters each forwarded event by the collector's level.
         return desired is null or > EventLevel.Informational ? desired : EventLevel.Informational;
     }
 
-    /// <summary>Attributes allowlisted SDK events to the current live extension acquisition.</summary>
+    /// <summary>Forwards allowlisted SDK events.</summary>
     /// <param name="eventData">The SDK event; unrecognized or unsafe payloads are not copied.</param>
     protected override void OnEventWritten(EventWrittenEventArgs eventData)
     {
-        AuthenticationLogger.Scope? scope = AuthenticationLogger.CurrentScope;
-        if (scope is not { CaptureAzure: true } || !IsSupportedSourceName(eventData.EventSource.Name))
+        if (!IsSupportedSourceName(eventData.EventSource.Name))
         {
             return;
         }
 
         EventLevel? level = GetMsalLevel(eventData.EventId, eventData.EventName);
 
-        // Only extension-owned credentials with unsafe/account/content logging disabled enter this scope.
-        // Azure's MSAL event schema does not retain the original PII flag or the request ID, so MSAL text
-        // run synchronously by an app's own SDK listener inside this scope cannot be told apart.
+        // Azure credential MSAL events carry no request ID, so they cannot be correlated.
+        // Extension-owned credentials keep unsafe and account logging disabled.
         if (level.HasValue && eventData.Payload?.Count == 1 && eventData.Payload[0] is string message)
         {
-            AuthenticationLogger.Write(level.Value, message, "Azure-Identity");
+            AuthenticationLogger.Write(level.Value, message, "Azure-Identity", Guid.Empty);
         }
         else if (eventData.EventId == 13 && eventData.EventName == "DefaultAzureCredentialCredentialSelected" &&
             eventData.Payload?.Count == 1 && eventData.Payload[0] is string credentialType)
         {
             AuthenticationLogger.Write(EventLevel.Informational,
-                $"DefaultAzureCredential selected {credentialType}.", "Azure-Identity");
+                $"DefaultAzureCredential selected {credentialType}.", "Azure-Identity", Guid.Empty);
         }
-        else if (eventData.EventId == 3 && eventData.EventName == "GetTokenFailed" && IsOwnRequest(eventData, scope))
+        else if (eventData.EventId == 3 && eventData.EventName == "GetTokenFailed" &&
+            AuthenticationLogger.TryGetConnectionId(GetPayload(eventData, "parentRequestId"), out Guid connectionId))
         {
             // The SDK's raw exception payload can contain personal information.
             AuthenticationLogger.Write(EventLevel.Error,
-                "Azure credential token request failed.", "Azure-Identity");
+                "Azure credential token request failed.", "Azure-Identity", connectionId);
         }
     }
 
-    /// <summary>Checks that a GetToken event carries this acquisition's request ID.</summary>
-    /// <remarks>
-    /// Rejects credential work run synchronously by app listeners inside SDK event dispatch.
-    /// MSAL log events carry no request ID, so they rely on the scope alone.
-    /// </remarks>
-    /// <param name="eventData">The SDK event.</param>
-    /// <param name="scope">The active acquisition.</param>
-    private static bool IsOwnRequest(EventWrittenEventArgs eventData, AuthenticationLogger.Scope scope)
+    /// <summary>Reads a named string payload value.</summary>
+    private static string? GetPayload(EventWrittenEventArgs eventData, string name)
     {
-        int index = eventData.PayloadNames?.IndexOf("parentRequestId") ?? -1;
-        return index >= 0 && eventData.Payload is { } payload && index < payload.Count &&
-            payload[index] is string requestId &&
-            string.Equals(requestId, scope.RequestId, StringComparison.Ordinal);
+        int index = eventData.PayloadNames?.IndexOf(name) ?? -1;
+        return index >= 0 && eventData.Payload is { } payload && index < payload.Count ? payload[index] as string : null;
     }
 
     /// <summary>Recognizes the SDK's provider name, including numeric suffixes used to avoid duplicate names.</summary>
