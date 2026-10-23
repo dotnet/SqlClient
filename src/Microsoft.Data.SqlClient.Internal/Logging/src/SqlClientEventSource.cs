@@ -275,7 +275,7 @@ namespace Microsoft.Data.SqlClient.Internal
             public const EventKeywords SNIScope = (EventKeywords)4096;
 
             /// <summary>Non-PII authentication diagnostics from SqlClient, MSAL, and Azure.Identity.</summary>
-            public const EventKeywords AuthenticationTrace = (EventKeywords)8192;
+            public const EventKeywords AuthenticationTrace = (EventKeywords)0x2000;
         }
         #endregion
 
