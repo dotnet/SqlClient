@@ -2,10 +2,49 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.Globalization;
+using System.Resources;
+
 namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
 
+/// <summary>
+/// Verifies token properties and resource-backed validation of missing access tokens.
+/// </summary>
 public class SqlAuthenticationTokenTest
 {
+    /// <summary>
+    /// Missing tokens use the embedded resource, including neutral fallback for other cultures.
+    /// </summary>
+    [Theory]
+    [InlineData("en-US", null)]
+    [InlineData("en-US", "")]
+    [InlineData("fr-FR", null)]
+    [InlineData("fr-FR", "")]
+    public void Constructor_InvalidToken_UsesResource(string cultureName, string? token)
+    {
+        CultureInfo previousCulture = CultureInfo.CurrentUICulture;
+        try
+        {
+            CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo(cultureName);
+            ResourceManager resources = new(
+                "Microsoft.Data.SqlClient.Resources.Strings",
+                typeof(SqlAuthenticationToken).Assembly);
+            string? message = resources.GetString("EmptyAccessToken");
+            Assert.Equal("AccessToken must not be null or empty.",
+                resources.GetString("EmptyAccessToken", CultureInfo.InvariantCulture));
+            Assert.NotNull(message);
+
+            SqlAuthenticationProviderException exception =
+                Assert.ThrowsAny<SqlAuthenticationProviderException>(
+                    () => new SqlAuthenticationToken(token!, DateTimeOffset.UtcNow));
+            Assert.Equal(message, exception.Message);
+        }
+        finally
+        {
+            CultureInfo.CurrentUICulture = previousCulture;
+        }
+    }
+
     /// <summary>
     /// Verify that the properties are set correctly.
     /// </summary>

@@ -76,12 +76,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         {
             if (fixedCapacity > int.MaxValue)
             {
-                throw new ArgumentOutOfRangeException(nameof(fixedCapacity), "Capacity must be less than or equal to Int32.MaxValue.");
+                throw new ArgumentOutOfRangeException(nameof(fixedCapacity), Strings.SQL_PoolCapacityTooLarge);
             }
 
             if (fixedCapacity == 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(fixedCapacity), "Capacity must be greater than zero.");
+                throw new ArgumentOutOfRangeException(nameof(fixedCapacity), Strings.SQL_PoolCapacityZero);
             }
 
             _capacity = fixedCapacity;

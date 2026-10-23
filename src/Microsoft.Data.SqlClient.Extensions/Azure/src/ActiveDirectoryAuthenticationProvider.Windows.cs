@@ -2,7 +2,9 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.Globalization;
 using System.Runtime.InteropServices;
+using AzureStrings = Microsoft.Data.SqlClient.Extensions.Azure.Resources.Strings;
 
 namespace Microsoft.Data.SqlClient;
 
@@ -80,12 +82,13 @@ public sealed partial class ActiveDirectoryAuthenticationProvider
             if (parentWindow is not null)
             {
                 throw new InvalidOperationException(
-                    $"{nameof(SetParentActivityOrWindowFunc)} expects the callback to return an " +
-                    "IntPtr window handle" +
+                    string.Format(CultureInfo.CurrentCulture,
 #if NETFRAMEWORK
-                    " (or an IWin32Window on .NET Framework)" +
+                        AzureStrings.InvalidParentWindowNetFramework,
+#else
+                        AzureStrings.InvalidParentWindow,
 #endif
-                    $"; got {parentWindow.GetType().FullName}.");
+                        nameof(SetParentActivityOrWindowFunc), parentWindow.GetType().FullName));
             }
         }
 

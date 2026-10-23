@@ -4,6 +4,7 @@
 
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
@@ -14,6 +15,7 @@ using Microsoft.Identity.Client;
 using Microsoft.Identity.Client.Broker;
 using Microsoft.Identity.Client.Extensibility;
 using Microsoft.Data.SqlClient.Internal;
+using AzureStrings = Microsoft.Data.SqlClient.Extensions.Azure.Resources.Strings;
 
 namespace Microsoft.Data.SqlClient;
 
@@ -256,9 +258,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             {
                 throw new Extensions.Azure.AuthenticationException(
                     parameters.AuthenticationMethod,
-                    $"The authority '{parameters.Authority}' is not a valid Entra ID authority. " +
-                    "Expected an absolute HTTPS URL containing a tenant, " +
-                    "e.g. 'https://login.microsoftonline.com/<tenant>'.");
+                    string.Format(CultureInfo.CurrentCulture, AzureStrings.InvalidAuthority, parameters.Authority));
             }
 
             string? clientId = string.IsNullOrWhiteSpace(parameters.UserId) ? null : parameters.UserId;
@@ -431,7 +431,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
 
                 throw new Extensions.Azure.AuthenticationException(
                     parameters.AuthenticationMethod,
-                    $"Authentication method {parameters.AuthenticationMethod} not supported.");
+                    string.Format(CultureInfo.CurrentCulture, AzureStrings.UnsupportedAuthenticationMethod, parameters.AuthenticationMethod));
             }
 
             // TODO: Existing bug?  result may be null here.
@@ -439,7 +439,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             {
                 throw new Extensions.Azure.AuthenticationException(
                     parameters.AuthenticationMethod,
-                    "Internal error - authentication result is null");
+                    AzureStrings.NullAuthenticationResult);
             }
 
             return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
@@ -531,7 +531,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
                 failureCode: "Unknown",
                 shouldRetry: false,
                 retryPeriod: 0,
-                $"Azure.Identity error: {ex.Message}",
+                string.Format(CultureInfo.CurrentCulture, AzureStrings.AzureIdentityError, ex.Message),
                 ex);
         }
         catch (Exception ex)
@@ -542,7 +542,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
                 failureCode: "Unknown",
                 shouldRetry: false,
                 retryPeriod: 0,
-                $"Unexpected error: {ex.Message}",
+                string.Format(CultureInfo.CurrentCulture, AzureStrings.UnexpectedError, ex.Message),
                 ex);
         }
     }
