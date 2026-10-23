@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -31,9 +32,9 @@ internal static class UserAgent
     ///     never larger than 256 characters.
     ///   </para>
     ///   <para> 
-    ///     The format is pipe ('|') delimited into 7 parts:
+    ///     The format is pipe ('|') delimited into 9 parts:
     ///
-    ///     <code>1|MS-MDS|{Driver Version}|{Arch}|{OS Type}|{OS Info}|{Runtime Info}</code>
+    ///     <code>2|MS-MDS|{Driver Version}|{Arch}|{OS Type}|{OS Info}|{Runtime Info}|{App Id}|{Driver Properties}</code>
     ///   </para>
     ///   <para>
     ///     The <c>{Driver Version}</c> part is the version of the driver,
@@ -74,6 +75,13 @@ internal static class UserAgent
     ///    </see>
     ///     value, or "Unknown" if that value is empty or all whitespace.
     ///     Maximum length is 44 characters.
+    ///   </para>
+    ///   <para>
+    ///     App Id is always <c>0</c> on this servicing branch. Driver Properties
+    ///     is an unpadded uppercase hexadecimal 64-bit driver-owned flag value.
+    ///     Bit 0 reports connection pool V2; bits 1 and 2 report the configured
+    ///     UseCompatibilityAsyncBehaviour and UseCompatibilityProcessSni values,
+    ///     respectively, before any compatibility override is applied.
     ///   </para>
     ///   <para>
     ///     Any characters from the sourced values that are not one of the
@@ -149,7 +157,8 @@ internal static class UserAgent
             RuntimeInformation.ProcessArchitecture,
             osType,
             RuntimeInformation.OSDescription,
-            RuntimeInformation.FrameworkDescription);
+            RuntimeInformation.FrameworkDescription,
+            (ulong)SqlClientDriverPropertiesResolver.Current);
         
         // Convert it to UCS-2 bytes.
         //
@@ -190,6 +199,9 @@ internal static class UserAgent
     /// <param name="runtimeInfo">
     ///   The value of the Runtime Info part. 
     /// </param>
+    /// <param name="driverProperties">
+    ///   The driver-owned flags, serialized as uppercase hexadecimal.
+    /// </param>
     /// <returns>
     ///   The payload string value, never null, never empty, and never longer
     ///   than <paramref name="maxLen"/>.
@@ -202,7 +214,8 @@ internal static class UserAgent
         Architecture arch,
         string osType,
         string osInfo,
-        string runtimeInfo)
+        string runtimeInfo,
+        ulong driverProperties = 0)
     {
         string result;
 
@@ -245,6 +258,8 @@ internal static class UserAgent
             
             // Add the Runtime Info, truncating to its max length.
             name.Append(Truncate(Clean(runtimeInfo), MaxLenRuntimeInfo));
+            name.Append("|0|");
+            name.Append(driverProperties.ToString("X", CultureInfo.InvariantCulture));
 
             // Remember the name we've built up.
             result = name.ToString();
@@ -255,7 +270,8 @@ internal static class UserAgent
             // value.
             result =
                 $"{payloadVersion}|{driverName}|{Unknown}|{Unknown}|" +
-                $"{Unknown}|{Unknown}|{Unknown}";
+                $"{Unknown}|{Unknown}|{Unknown}|0|" +
+                driverProperties.ToString("X", CultureInfo.InvariantCulture);
         }
 
         // Truncate to our max length if necessary.
@@ -399,7 +415,7 @@ internal static class UserAgent
     #region Private Fields
 
     // Our payload format version.
-    private const string PayloadVersion = "1";
+    private const string PayloadVersion = "2";
 
     // Our well-known .NET driver name.
     private const string DriverName = "MS-MDS";
