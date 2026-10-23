@@ -1,8 +1,11 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
 using Microsoft.Data.SqlClient.Tests.Common;
+#if NET && _WINDOWS
+using System.Reflection;
+#endif
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests;
@@ -10,6 +13,7 @@ namespace Microsoft.Data.SqlClient.UnitTests;
 /// <summary>
 /// Provides unit tests for verifying the default values of all SqlClient-specific AppContext switches.
 /// </summary>
+[Collection(AppContextSwitchTestCollection.Name)]
 public class LocalAppContextSwitchesTest
 {
     /// <summary>
@@ -69,4 +73,82 @@ public class LocalAppContextSwitchesTest
         Assert.False(LocalAppContextSwitches.DisableTnirByDefault);
         #endif
     }
+
+    /// <summary>
+    /// Keeps the configured async value observable without changing the parser override.
+    /// </summary>
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public void AsyncCompatibility_ReportsConfiguredAndEffectiveValues(
+        bool configuredAsync, bool configuredProcessSni)
+    {
+        // Arrange
+        using LocalAppContextSwitchesHelper switches = new()
+        {
+            UseCompatibilityAsyncBehaviour = configuredAsync,
+            UseCompatibilityProcessSni = configuredProcessSni
+        };
+        bool expectedEffectiveAsync = configuredAsync || configuredProcessSni;
+
+        // Act
+        bool effectiveAsync = LocalAppContextSwitches.UseCompatibilityAsyncBehaviour;
+        bool actualConfiguredAsync = LocalAppContextSwitches.UseCompatibilityAsyncBehaviourConfigured;
+        ulong properties = (ulong)SqlClientDriverPropertiesResolver.Current;
+
+        // Assert
+        Assert.Equal(expectedEffectiveAsync, effectiveAsync);
+        Assert.Equal(configuredAsync, actualConfiguredAsync);
+        Assert.Equal(configuredAsync ? 2UL : 0UL, properties & 2UL);
+        Assert.Equal(configuredProcessSni ? 4UL : 0UL, properties & 4UL);
+    }
+
+    [Fact]
+    public void DriverProperties_Report_Default_Compatibility()
+    {
+        // Arrange
+        using LocalAppContextSwitchesHelper switches = new()
+        {
+            UseConnectionPoolV2 = null,
+            UseCompatibilityAsyncBehaviour = null,
+            UseCompatibilityProcessSni = null
+        };
+
+        // Act
+        bool configuredAsync = LocalAppContextSwitches.UseCompatibilityAsyncBehaviourConfigured;
+        SqlClientDriverProperties properties = SqlClientDriverPropertiesResolver.Current;
+
+        // Assert
+        Assert.True(configuredAsync);
+        Assert.Equal((SqlClientDriverProperties)6, properties);
+    }
+
+    #if NET && _WINDOWS
+    [Fact]
+    public void UseManagedNetworkingSetter_MutatesCacheAndRestoresOriginalValue()
+    {
+        // Arrange
+        var cacheField = typeof(LocalAppContextSwitches).GetField(
+            "s_useManagedNetworking", BindingFlags.Static | BindingFlags.NonPublic)!;
+        // The private SwitchValue enum uses None = 0, True = 1, False = 2.
+        byte original = (byte)cacheField.GetValue(null)!;
+        bool newValue = original != 1;
+        byte expected = (byte)(newValue ? 1 : 2);
+        byte actual;
+
+        // Act
+        using (LocalAppContextSwitchesHelper switches = new())
+        {
+            switches.UseManagedNetworking = newValue;
+            actual = (byte)cacheField.GetValue(null)!;
+        }
+        byte restored = (byte)cacheField.GetValue(null)!;
+
+        // Assert
+        Assert.Equal(expected, actual);
+        Assert.Equal(original, restored);
+    }
+    #endif
 }

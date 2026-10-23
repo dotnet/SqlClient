@@ -503,12 +503,19 @@ internal static class LocalAppContextSwitches
                 return true;
             }
 
-            return AcquireAndReturn(
-                UseCompatibilityAsyncBehaviourString,
-                defaultValue: true,
-                ref s_useCompatibilityAsyncBehaviour);
+            return UseCompatibilityAsyncBehaviourConfigured;
         }
     }
+
+    /// <summary>
+    /// The cached configured async compatibility value, before the ProcessSni
+    /// override. An unset switch defaults to true.
+    /// </summary>
+    internal static bool UseCompatibilityAsyncBehaviourConfigured =>
+        AcquireAndReturn(
+            UseCompatibilityAsyncBehaviourString,
+            defaultValue: true,
+            ref s_useCompatibilityAsyncBehaviour);
 
     /// <summary>
     /// In TdsParser, the ProcessSni function changed significantly when the
