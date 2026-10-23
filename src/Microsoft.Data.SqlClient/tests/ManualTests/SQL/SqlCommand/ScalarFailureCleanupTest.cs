@@ -417,7 +417,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     .GetMethod("CloseOnError", BindingFlags.Instance | BindingFlags.NonPublic)
                     .Invoke(failingReader, new object[] { failure }));
                 Assert.Same(failure, Assert.IsType<TargetInvocationException>(actual).InnerException);
-                Assert.True(beforeCloseEvents > 0, "Expected a pre-close diagnostic callback.");
+                Assert.Equal(1, beforeCloseEvents);
                 peerCommand.Cancel();
                 Assert.Same(pending, await Task.WhenAny(pending, Task.Delay(TimeSpan.FromSeconds(5))));
                 Assert.NotNull(await Record.ExceptionAsync(async () => await pending));
@@ -427,7 +427,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 observer.Disable();
                 connection.Close();
-                // Observe the peer even on a failed assertion; do not leave pending work behind.
+                // A broken completion path must fail the test, not hang its failure cleanup.
+                Assert.Same(pending, await Task.WhenAny(pending, Task.Delay(TimeSpan.FromSeconds(5))));
                 await Record.ExceptionAsync(async () => await pending);
                 if (pending.Status == TaskStatus.RanToCompletion)
                 {
