@@ -60,9 +60,8 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     private readonly bool? _useLegacyIdleTimeoutBehaviorOriginal;
     private readonly bool? _useOverallConnectTimeoutForPoolWaitOriginal;
     #if NET
-    // The s_useManagedNetworking field only exists in the SqlClient assembly
-    // when it is built for .NET on Windows, so it is captured/restored at
-    // runtime only when running on Windows. See UseManagedNetworking below.
+    // On non-Windows platforms, UseManagedNetworking always returns true and
+    // does not consult its cache. Capture/restore the cache only on Windows.
     private readonly bool? _useManagedNetworkingOriginal;
     #endif
     private readonly bool? _useMinimumLoginTimeoutOriginal;
@@ -375,19 +374,20 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     /// Get or set the UseManagedNetworking switch value.
     /// </summary>
     /// <remarks>
-    /// The underlying s_useManagedNetworking field only exists in the SqlClient
-    /// assembly when it is built for .NET on Windows. The getter reads the
-    /// public LocalAppContextSwitches.UseManagedNetworking property, which
-    /// exists on all platforms and is safe to read anywhere. Only the setter
-    /// relies on the s_useManagedNetworking field, so callers must set this
-    /// property only when running on Windows (see
-    /// RuntimeInformation.IsOSPlatform(OSPlatform.Windows)); otherwise the
-    /// reflection lookup of the field will fail.
+    /// The getter reads LocalAppContextSwitches.UseManagedNetworking on all platforms.
+    /// The setter mutates the cache only on Windows; on other platforms the
+    /// property is always true and its cache is left unchanged.
     /// </remarks>
     public bool? UseManagedNetworking
     {
         get => GetSwitchPropertyValue(nameof(UseManagedNetworking));
-        set => SetSwitchValue("s_useManagedNetworking", value);
+        set
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                SetSwitchValue("s_useManagedNetworking", value);
+            }
+        }
     }
     #endif
 
