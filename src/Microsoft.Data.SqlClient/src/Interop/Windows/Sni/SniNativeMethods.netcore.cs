@@ -8,6 +8,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Text;
 using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient.NativeSni;
 
 namespace Interop.Windows.Sni
 {
@@ -56,9 +57,6 @@ namespace Interop.Windows.Sni
 
         public uint SniInitialize(IntPtr pmo) =>
             SNIInitialize(pmo);
-
-        public uint SniIsTokenRestricted(IntPtr token, out bool isRestricted) =>
-            UnmanagedIsTokenRestricted(token, out isRestricted);
 
         public uint SniOpenSyncExWrapper(ref SniClientConsumerInfo pClientConsumerInfo, out IntPtr ppConn) =>
             SNIOpenSyncExWrapper(ref pClientConsumerInfo, out ppConn);
@@ -306,11 +304,6 @@ namespace Interop.Windows.Sni
 
         [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
         private static extern uint SNIWriteSyncOverAsync(SNIHandle pConn, [In] SNIPacket pPacket);
-
-        [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-        private static extern uint UnmanagedIsTokenRestricted(
-            [In] IntPtr token,
-            [MarshalAs(UnmanagedType.Bool)] out bool isRestricted);
 
         #endregion
     }

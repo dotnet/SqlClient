@@ -19,7 +19,12 @@ PASSWORD = 'test;="quoted" and \'single\''
 
 
 class RunnerConfigTests(unittest.TestCase):
-    def check_config(self, shell, switch):
+    """Exercise authentication and per-pass configs without real SQL commands or builds."""
+
+    def check_config(self, shell, switch, local=False, sql_failure=""):
+        """Run isolated runner sections with captured SQL calls and temporary config files."""
+        if local and os.name != "nt":
+            self.skipTest("Local Windows authentication requires Windows")
         executable = os.environ.get(shell.upper()) or shutil.which(shell)
         if not executable:
             self.skipTest(f"{shell} is unavailable")
@@ -33,24 +38,39 @@ class RunnerConfigTests(unittest.TestCase):
             (root / "template.jsonc").write_text(
                 "// local settings\n" + json.dumps(config), encoding="utf-8")
             env = dict(os.environ, TEST_ROOT=root.as_posix(), SQL_PASSWORD=PASSWORD,
-                       TEST_SWITCH=switch, TEST_PYTHON=Path(sys.executable).as_posix())
+                       TEST_SWITCH=switch, TEST_PYTHON=Path(sys.executable).as_posix(),
+                       TEST_SQL_SERVER="127.0.0.1" if local else "192.0.2.1",
+                       TEST_SQL_FAILURE=sql_failure)
             ext = "ps1" if shell == "pwsh" else "sh"
             text = (SCRIPTS / f"run-perf-tests.{ext}").read_text(encoding="utf-8-sig")
             start = "$RunnerConfig =" if shell == "pwsh" else 'RUNNER_CONFIG="'
             section = text[text.index(start):text.index("# 4 & 5.")]
             if shell == "pwsh":
+                native = text[text.index("function Invoke-Native {"):text.index("# Resolve paths")]
+                authentication = text[text.index("function Test-IsLocalSqlServer {"):
+                                      text.index("# Noise-reduction controls")]
                 script = '''$ErrorActionPreference = "Stop"
+Set-StrictMode -Version Latest
 $RepoRoot = $env:TEST_ROOT
 $PerfDir = $RepoRoot
 $ResultsDir = Join-Path $RepoRoot "results"
 $SqlPassword = $env:SQL_PASSWORD
-$SqlServer = "localhost"
+$SqlServer = $env:TEST_SQL_SERVER
 $DbName = "perf"
 $SwitchUnderTest = $env:TEST_SWITCH
 $UseManagedSniOnWindows = "true"
 $UseOptimizedAsyncBehaviour = ""
 $UseConnectionPoolV2 = "false"
-''' + section + '''
+$script:SqlCalls = @()
+function Invoke-TestSqlcmd {
+    $script:SqlCalls += ,@($args)
+    ConvertTo-Json -InputObject $script:SqlCalls -Depth 5 |
+        Set-Content (Join-Path $RepoRoot "sql-calls.json")
+    $phase = if ($args -contains "-E") { "preflight" } else { "setup" }
+    $global:LASTEXITCODE = if ($env:TEST_SQL_FAILURE -eq $phase) { 42 } else { 0 }
+}
+$sqlcmd = @{ Source = "Invoke-TestSqlcmd" }
+''' + native + authentication + section + '''
 if (Test-Path $RunnerConfig) { throw "Config generated before build" }
 Copy-Item (Join-Path $RepoRoot "template.jsonc") $SourceRunnerConfig
 Prepare-RunnerConfig
@@ -81,8 +101,34 @@ prepare_runner_config || exit 6
             harness.write_text(script, encoding="utf-8", newline="\n")
             result = subprocess.run(args + [harness.as_posix()], env=env,
                                     capture_output=True, text=True)
-            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertNotIn(PASSWORD, result.stdout + result.stderr)
+            calls_path = root / "sql-calls.json"
+            if shell == "pwsh" and local:
+                self.assertTrue(calls_path.exists(), result.stdout + result.stderr)
+                calls = json.loads(calls_path.read_text(encoding="utf-8-sig"))
+                self.assertEqual(len(calls), 1 if sql_failure == "setup" else 2)
+                setup = calls[0]
+                self.assertEqual(setup[setup.index("-S") + 1], "127.0.0.1")
+                self.assertEqual(setup[setup.index("-P") + 1], PASSWORD)
+                ddl = setup[setup.index("-Q") + 1]
+                self.assertIn("CREATE LOGIN ", ddl)
+                self.assertIn(" FROM WINDOWS", ddl)
+                self.assertIn("ALTER ROLE [db_owner] ADD MEMBER ", ddl)
+                if len(calls) == 2:
+                    preflight = calls[1]
+                    self.assertEqual(preflight[preflight.index("-S") + 1], "tcp:localhost,1433")
+                    self.assertIn("-E", preflight)
+                    self.assertNotIn("-P", preflight)
+            else:
+                self.assertFalse(calls_path.exists())
+            if sql_failure:
+                self.assertNotEqual(result.returncode, 0)
+                message = ("sqlcmd failed to configure Windows benchmark identity" if
+                           sql_failure == "setup" else "Loopback integrated-authentication preflight failed")
+                self.assertIn(message, result.stdout + result.stderr)
+                self.assertFalse((root / "perf-runnerconfig.json").exists())
+                return
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertFalse(source.exists())  # Preparation is idempotent even without its source.
             variants = ("", "-baseline", "-current") if switch else ("",)
             for variant in variants:
@@ -93,7 +139,18 @@ prepare_runner_config || exit 6
                     expected[switch] = variant == "-current"
                 self.assertEqual(redacted, {**expected, "ConnectionString": "<redacted>"})
                 self.assertEqual({**runtime, "ConnectionString": "<redacted>"}, redacted)
-                self.assertIn('Password="' + PASSWORD.replace('"', '""') + '";', runtime["ConnectionString"])
+                connection = runtime["ConnectionString"]
+                if shell == "pwsh":
+                    server = "localhost" if local else "192.0.2.1"
+                    self.assertIn(f"Server=tcp:{server},1433;", connection)
+                    self.assertIn("Encrypt=True;", connection)
+                if local:
+                    self.assertIn("Integrated Security=True;", connection)
+                    self.assertNotIn("Password=", connection)
+                    self.assertNotIn("User ID=", connection)
+                else:
+                    self.assertIn('Password="' + PASSWORD.replace('"', '""') + '";', connection)
+                    self.assertNotIn("Integrated Security=", connection)
 
     def test_bash(self):
         for switch in ("", *SWITCHES):
@@ -101,9 +158,37 @@ prepare_runner_config || exit 6
                 self.check_config("bash", switch)
 
     def test_powershell(self):
+        """Both authentication modes retain per-pass switches, quoting, and redaction."""
         for switch in ("", *SWITCHES):
-            with self.subTest(switch=switch):
-                self.check_config("pwsh", switch)
+            for local in (False, True):
+                with self.subTest(switch=switch, local=local):
+                    self.check_config("pwsh", switch, local=local)
+
+    def test_powershell_authentication_failure_stops_config_generation(self):
+        """A failed identity setup or integrated preflight must stop the benchmark run."""
+        for phase in ("setup", "preflight"):
+            with self.subTest(phase=phase):
+                self.check_config("pwsh", "", local=True, sql_failure=phase)
+
+    def test_powershell_local_endpoint_classification(self):
+        """Only loopback or local-interface addresses qualify for Windows authentication."""
+        executable = os.environ.get("PWSH") or shutil.which("pwsh")
+        if not executable:
+            self.skipTest("pwsh is unavailable")
+        text = (SCRIPTS / "run-perf-tests.ps1").read_text(encoding="utf-8-sig")
+        function = text[text.index("function Test-IsLocalSqlServer {"):
+                        text.index("if (Test-IsLocalSqlServer $SqlServer)")]
+        script = function + '''
+foreach ($server in @("localhost", "127.0.0.1", "::1")) {
+    if (-not (Test-IsLocalSqlServer $server)) { throw "Local endpoint not recognized: $server" }
+}
+foreach ($server in @("192.0.2.1", "2001:db8::1")) {
+    if (Test-IsLocalSqlServer $server) { throw "External endpoint classified as local: $server" }
+}
+'''
+        result = subprocess.run([executable, "-NoProfile", "-Command", script],
+                                capture_output=True, text=True, timeout=30)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_translation_selects_each_pass_config(self):
         executable = os.environ.get("BASH") or shutil.which("bash")
