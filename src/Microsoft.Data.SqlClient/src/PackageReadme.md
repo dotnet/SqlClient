@@ -106,9 +106,19 @@ each required method before opening connections: reflective Azure discovery and 
 app.config loading are removed. Untrimmed applications retain both paths. The switches
 `Switch.Microsoft.Data.SqlClient.EnableAppConfig` and
 `Switch.Microsoft.Data.SqlClient.EnableAzureExtensionDiscovery` default to `true` and are cached
-on first access. Failed initialization or registration returns `null`/`false` and emits
-diagnostic guidance through `Microsoft.Data.SqlClient.EventSource` (Informational level,
-Trace keyword `0x2`). Bootstrap failures are cached; correct the cause and restart the application.
+on first access. Recoverable initialization failures emit diagnostic guidance through
+`Microsoft.Data.SqlClient.EventSource` (Informational level, Trace keyword `0x2`).
+Bootstrap failures are cached without blocking explicit application registration or lookup of
+successfully registered providers. Register a provider as a workaround, or correct the cause and
+restart the application to retry bootstrap. Detailed causes remain in Abstractions traces rather
+than the connection exception.
+
+On .NET Framework, `EnableAppConfig=false` now disables authentication configuration too; the
+driver's retry configuration and switch-override readers remain .NET-only. Providers registered
+by a configured initializer have configuration precedence and cannot be overridden by application
+code. Registry lookups take the same lock as replacement `BeforeLoad`/`BeforeUnload` callbacks,
+so slow callbacks delay other lookups and connection logins. Keep callbacks short and do not wait
+for another thread that accesses the registry.
 
 With this package reference, you can continue to use Entra ID authentication modes directly in your connection string:
 
