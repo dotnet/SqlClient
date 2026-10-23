@@ -36,7 +36,7 @@ public class AuthenticationConfigurationParsingTest
     }
 
     /// <summary>
-    /// A caller-owned default configuration preserves provider defaults without loading app.config.
+    /// Empty bootstrap settings preserve provider defaults without rooting section parsing.
     /// </summary>
     [Fact]
     public void DefaultConstructorCreatesEmptyConfiguration()
