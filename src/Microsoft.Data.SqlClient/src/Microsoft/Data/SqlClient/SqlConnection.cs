@@ -1448,6 +1448,28 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <summary>
+        /// Closes an already-quarantined connection even if pre-close diagnostics throw.
+        /// The fatal reader cleanup caller remains responsible for preserving its initiating exception.
+        /// </summary>
+        internal void CloseOnError()
+        {
+            DbConnectionInternal originalConnection = InnerConnection;
+            try
+            {
+                Close(originalConnection);
+            }
+            finally
+            {
+                // A pre-close subscriber can throw before Close reaches teardown. Only release
+                // the captured connection, never a replacement opened by a reentrant subscriber.
+                if (ReferenceEquals(InnerConnection, originalConnection))
+                {
+                    CloseInnerConnection();
+                }
+            }
+        }
+
         private void CloseInnerConnection()
         {
             // CloseConnection() now handles the lock
@@ -1460,7 +1482,9 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Close/*' />
-        public override void Close()
+        public override void Close() => Close(expectedConnection: null);
+
+        private void Close(DbConnectionInternal expectedConnection)
         {
             using (SqlClientEventScope.Create("SqlConnection.Close | API | Object Id {0}", ObjectID))
             {
@@ -1478,6 +1502,11 @@ namespace Microsoft.Data.SqlClient
                 if (previousState != ConnectionState.Closed)
                 {
                     operationId = s_diagnosticListener.WriteConnectionCloseBefore(this);
+                    if (expectedConnection != null && !ReferenceEquals(InnerConnection, expectedConnection))
+                    {
+                        // Fatal cleanup must not close a replacement opened by the subscriber.
+                        return;
+                    }
                     // we want to cache the ClientConnectionId for After/Error logging, as when the connection
                     // is closed then we will lose this identifier
                     //

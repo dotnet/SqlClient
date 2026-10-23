@@ -4,6 +4,8 @@
 
 using System;
 using System.Data;
+using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
@@ -124,17 +126,11 @@ namespace Microsoft.Data.SqlClient
                             }
                             else if (readTask.IsFaulted)
                             {
-                                reader.Dispose();
-                                s_diagnosticListener.WriteCommandError(
-                                    operationId,
-                                    this,
-                                    _transaction,
-                                    readTask.Exception.InnerException);
+                                CloseScalarReaderOnError(reader, readTask.Exception.InnerException, operationId);
                                 source.SetException(readTask.Exception.InnerException);
                             }
                             else
                             {
-                                Exception exception = null;
                                 object result = null;
                                 try
                                 {
@@ -145,16 +141,8 @@ namespace Microsoft.Data.SqlClient
                                     reader.Dispose();
                                 }
 
-                                if (exception is not null)
-                                {
-                                    s_diagnosticListener.WriteCommandError(operationId, this, _transaction, exception);
-                                    source.SetException(exception);
-                                }
-                                else
-                                {
-                                    s_diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
-                                    source.SetResult(result);
-                                }
+                                s_diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
+                                source.SetResult(result);
                             }
                         }
                         catch (Exception e)
@@ -176,9 +164,41 @@ namespace Microsoft.Data.SqlClient
 
         #region Private Methods
 
+        private void CloseScalarReaderOnError(SqlDataReader reader, Exception exception, Guid operationId,
+            [CallerMemberName] string operation = "")
+        {
+            bool unrecoverable = ADP.IsUnrecoverableException(exception);
+            bool cleanupCompleted = false;
+            try
+            {
+                // Quarantine before subscribers can close or reuse the connection.
+                reader.CloseOnError(exception);
+                cleanupCompleted = true;
+            }
+            finally
+            {
+                if (unrecoverable || cleanupCompleted)
+                {
+                    try
+                    {
+                        s_diagnosticListener.WriteCommandError(operationId, this, _transaction, exception, operation);
+                    }
+                    finally
+                    {
+                        if (unrecoverable)
+                        {
+                            // Neither cleanup nor a subscriber may replace the fatal error.
+                            ExceptionDispatchInfo.Capture(exception).Throw();
+                        }
+                    }
+                }
+            }
+        }
+
         private static object CompleteExecuteScalar(SqlDataReader reader, bool returnLastResult)
         {
             object result = null;
+            Exception failure = null;
             try
             {
                 do
@@ -194,10 +214,22 @@ namespace Microsoft.Data.SqlClient
                 while (reader.NextResult())
                 { }
             }
+            catch (Exception e) when (ADP.IsUnrecoverableException(e))
+            {
+                failure = e;
+                throw;
+            }
             finally
             {
-                // Clean off the wire
-                reader.Close();
+                if (failure != null)
+                {
+                    reader.CloseOnError(failure);
+                }
+                else
+                {
+                    // Ordinary completion and recoverable failures retain normal draining.
+                    reader.Close();
+                }
             }
 
             return result;
@@ -285,19 +317,13 @@ namespace Microsoft.Data.SqlClient
                             }
                             else if (readTask.IsFaulted)
                             {
-                                reader.Dispose();
-
-                                s_diagnosticListener.WriteCommandError(
-                                    operationId,
-                                    this,
-                                    _transaction,
-                                    readTask.Exception.InnerException);
-
+                                CloseScalarReaderOnError(reader, readTask.Exception.InnerException, operationId);
                                 source.SetException(readTask.Exception.InnerException);
                             }
                             else
                             {
                                 Exception exception = null;
+                                Exception failure = null;
                                 object result = null;
                                 try
                                 {
@@ -310,6 +336,10 @@ namespace Microsoft.Data.SqlClient
                                         }
                                         catch (Exception e)
                                         {
+                                            if (ADP.IsUnrecoverableException(e))
+                                            {
+                                                throw;
+                                            }
                                             // @TODO: Yeah, this code doesn't understand how finally blocks work.
                                             exception = e;
                                         }
@@ -320,9 +350,21 @@ namespace Microsoft.Data.SqlClient
                                     while (await reader.NextResultAsync(cancellationToken).ConfigureAwait(false))
                                     { }
                                 }
+                                catch (Exception e) when (ADP.IsUnrecoverableException(e))
+                                {
+                                    failure = e;
+                                    throw;
+                                }
                                 finally
                                 {
-                                    reader.Dispose();
+                                    if (failure != null)
+                                    {
+                                        CloseScalarReaderOnError(reader, failure, operationId);
+                                    }
+                                    else
+                                    {
+                                        reader.Dispose();
+                                    }
                                 }
 
                                 if (exception is not null)

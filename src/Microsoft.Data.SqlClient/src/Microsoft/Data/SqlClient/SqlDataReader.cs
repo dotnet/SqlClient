@@ -17,6 +17,7 @@ using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -952,12 +953,76 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <summary>
+        /// Uses normal disposal for recoverable errors. For an unrecoverable error, abandons
+        /// protocol cleanup and rethrows the original failure even if session teardown fails.
+        /// </summary>
+        internal void CloseOnError(Exception exception)
+        {
+            if (!ADP.IsUnrecoverableException(exception))
+            {
+                Dispose();
+                return;
+            }
+
+            ExceptionDispatchInfo failure = ExceptionDispatchInfo.Capture(exception);
+            TdsParser parser = _parser;
+            TdsParserStateObject stateObj = _stateObj;
+            // Breaking a MARS parser disables cancellation on every session; close the connection
+            // to notify pending peers rather than leaving them waiting on the shared transport.
+            SqlConnection connectionToClose =
+                IsCommandBehavior(CommandBehavior.CloseConnection) || parser?.MARSOn == true ? _connection : null;
+
+            // Do not attempt normal draining or server-setting restoration on this reader.
+            _isClosed = true;
+            _parser = null;
+            _stateObj = null;
+            _command = null;
+            _connection = null;
+            _statistics = null;
+            _data = null;
+            _snapshot = null;
+
+            if (parser != null)
+            {
+                parser.State = TdsParserState.Broken;
+            }
+
+            try
+            {
+                parser?.Connection?.DoomThisConnection();
+                if (parser != null && stateObj != null)
+                {
+                    // Wait for in-flight cancellation before retiring its transport resources.
+                    lock (stateObj)
+                    {
+                        // Returning to a broken parser retires the session without protocol I/O.
+                        parser.PutSession(stateObj);
+                    }
+                }
+            }
+            finally
+            {
+                try
+                {
+                    // Preserve reader ownership even when retiring the session fails.
+                    connectionToClose?.CloseOnError();
+                }
+                finally
+                {
+                    // Neither session teardown nor connection closure may replace the fatal error.
+                    failure.Throw();
+                }
+            }
+        }
+
         private TdsOperationStatus TryCloseInternal(bool closeReader)
         {
             TdsParser parser = _parser;
             TdsParserStateObject stateObj = _stateObj;
             bool closeConnection = (IsCommandBehavior(CommandBehavior.CloseConnection));
             bool cleanDataFailed = false;
+            Exception closeFailure = null;
             TdsOperationStatus result;
 
             try
@@ -1017,10 +1082,18 @@ namespace Microsoft.Data.SqlClient
                 RestoreServerSettings(parser, stateObj);
                 return TdsOperationStatus.Done;
             }
-            // @TODO: CER Exception Handling was removed here (see GH#3581)
+            catch (Exception e) when (ADP.IsUnrecoverableException(e))
+            {
+                closeFailure = e;
+                throw;
+            }
             finally
             {
-                if (closeReader)
+                if (closeFailure != null)
+                {
+                    CloseOnError(closeFailure);
+                }
+                else if (closeReader)
                 {
                     bool wasClosed = _isClosed;
                     _isClosed = true;

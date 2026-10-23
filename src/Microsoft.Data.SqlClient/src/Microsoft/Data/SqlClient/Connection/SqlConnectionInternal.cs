@@ -934,7 +934,13 @@ namespace Microsoft.Data.SqlClient.Connection
                 ObjectID);
 
             DoomThisConnection();   // Mark connection as unusable, so it will be destroyed
-            Connection?.Close();
+            SqlConnection connection = Connection;
+            // Close notifications can reenter here after the outer connection is OpenBusy.
+            // Do not invoke diagnostic subscribers again and interrupt the pending notifications.
+            if (connection != null && ReferenceEquals(connection.InnerConnection, this))
+            {
+                connection.Close();
+            }
         }
 
         /// <summary>
