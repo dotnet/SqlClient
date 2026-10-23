@@ -407,7 +407,11 @@ public class AuthenticationLoggingTests
         {
             Assert.Equal(EventLevel.Verbose, shared.GetAppliedLevel(source));
         }
+#if NET
+        // .NET Framework keeps SqlClientEventSource.IsEnabled raised while any other listener is attached,
+        // so the subscription stays on there; Write still filters each event by collector demand.
         Assert.Null(shared.GetAppliedLevel(source));
+#endif
     }
 
     /// <summary>Reentrant collector commands and newly constructed SDK sources cannot lose first events.</summary>
