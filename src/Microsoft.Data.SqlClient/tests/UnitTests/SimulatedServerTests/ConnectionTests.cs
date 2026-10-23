@@ -1075,15 +1075,18 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }
         }
 
-        // Test that the driver sends the UserAgent feature extension when
-        // the context switch is enabled, and that the presence or absence of
-        // an ack from the server has no effect.
+        /// <summary>
+        /// Verifies the v2 payload is sent on sync and async login, whether or
+        /// not the server acknowledges UserAgent support.
+        /// </summary>
         [Theory]
         // Allow the server to ack.
-        [InlineData(true)]
+        [InlineData(true, false)]
+        [InlineData(true, true)]
         // Don't allow the server to send an ack.
-        [InlineData(false)]
-        public void TestConnWithUserAgentFeatureExtension(bool sendAck)
+        [InlineData(false, false)]
+        [InlineData(false, true)]
+        public async Task TestConnWithUserAgentFeatureExtension(bool sendAck, bool useAsync)
         {
             // Start the test server.
             using TdsServer server = new();
@@ -1128,10 +1131,18 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             {
                 DataSource = $"localhost,{server.EndPoint.Port}",
                 Encrypt = SqlConnectionEncryptOption.Optional,
+                Pooling = false,
             }.ConnectionString;
 
             using var connection = new SqlConnection(connStr);
-            connection.Open();
+            if (useAsync)
+            {
+                await connection.OpenAsync();
+            }
+            else
+            {
+                connection.Open();
+            }
 
             // Verify the connection itself succeeded
             Assert.Equal(ConnectionState.Open, connection.State);
@@ -1142,6 +1153,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.True(tokenWasNotNull);
             Assert.True(dataLengthAtLeast1);
             Assert.Equal(UserAgent.Ucs2Bytes.ToArray(), observedPayload);
+            string[] parts = System.Text.Encoding.Unicode.GetString(observedPayload).Split('|');
+            Assert.Equal(9, parts.Length);
+            Assert.Equal("2", parts[0]);
+            Assert.Equal("0", parts[7]);
+            Assert.Equal(LocalAppContextSwitches.UseConnectionPoolV2 ? 1UL : 0UL,
+                ulong.Parse(parts[8], NumberStyles.HexNumber, CultureInfo.InvariantCulture));
 
             // TODO: Confirm the server sent an Ack by reading log message from SqlInternalConnectionTds
         }
