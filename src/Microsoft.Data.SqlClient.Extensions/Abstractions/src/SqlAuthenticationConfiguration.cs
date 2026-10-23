@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Configuration;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.Data.SqlClient.Internal;
 
@@ -34,7 +35,7 @@ internal sealed class SqlAuthenticationConfiguration
     /// </summary>
     /// <param name="section">The selected section, or null for no authentication overrides.</param>
     /// <exception cref="ConfigurationErrorsException">
-    /// The schema is invalid.
+    /// The providers property is missing or incompatible.
     /// </exception>
     internal SqlAuthenticationConfiguration(ConfigurationSection? section = null)
     {
@@ -136,24 +137,25 @@ internal sealed class SqlAuthenticationConfiguration
     }
 
     /// <summary>
-    /// Reads a string property without treating an incompatible schema as absent.
+    /// Reads a string property, asserting schema mismatches before returning empty.
     /// </summary>
     /// <param name="section">The section containing the property.</param>
     /// <param name="name">The configuration property name.</param>
-    /// <returns>The value, or empty if the string property's value is null.</returns>
-    /// <exception cref="ConfigurationErrorsException">
-    /// The property is missing or incompatible.
-    /// </exception>
+    /// <returns>The value, or empty if the property is missing, incompatible or null.</returns>
     internal static string ReadString(ConfigurationSection section, string name)
     {
-        PropertyInformation property = section.ElementInformation.Properties[name]
-            ?? throw new ConfigurationErrorsException(
-                $"The authentication configuration is missing property '{name}'.");
+        PropertyInformation? property = section.ElementInformation.Properties[name];
+        if (property is null)
+        {
+            Debug.Assert(false, $"The authentication configuration is missing property '{name}'.");
+            return string.Empty;
+        }
+
         object? value = property.Value;
         if (property.Type != typeof(string) || (value is not null && value is not string))
         {
-            throw new ConfigurationErrorsException(
-                $"Authentication configuration property '{name}' must be a string.");
+            Debug.Assert(false, $"Authentication configuration property '{name}' must be a string.");
+            return string.Empty;
         }
         return value as string ?? string.Empty;
     }

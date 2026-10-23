@@ -44,8 +44,12 @@ remain in the driver, and the modern section continues to take precedence over t
 
 The Abstractions authentication loader uses the same relaxed error policy as the driver:
 
-- Configuration-reading or schema errors are traced and produce empty settings,
+- Configuration-reading errors and invalid provider collection schemas are traced and produce empty settings,
   without trying the legacy section after a reading error.
+- Missing or incompatible string property metadata indicates a handler/reader programming error.
+  It triggers a debug assertion; in release builds the affected property is treated
+  as empty while other valid settings are retained. Omitting an optional XML attribute is not
+  a metadata error and uses the handler's default value normally.
 - Incompatible handlers are traced and ignored. An ignored modern handler allows the loader
   to check the legacy section, including when another SQL provider owns that section.
 - Invalid `useWamBroker` values are traced and ignored, preserving the provider's default

@@ -86,19 +86,40 @@ public class AuthenticationConfigurationParsingTest
     }
 
     /// <summary>
-    /// Missing properties and non-string metadata produce actionable schema failures.
+    /// Missing properties and non-string metadata return empty strings in release builds.
     /// </summary>
+#if DEBUG
+    [Theory(Skip = "Invalid schemas intentionally trigger Debug.Assert; verify recovery in Release.")]
+#else
     [Theory]
+#endif
     [InlineData("missing")]
     [InlineData("number")]
     [InlineData("nullableNumber")]
-    public void ReadStringRejectsInvalidSchema(string name)
+    public void ReadStringReturnsEmptyForInvalidSchema(string name)
     {
-        // A missing or mistyped property is a schema error, not an absent optional override.
-        var failure = Assert.Throws<ConfigurationErrorsException>(() =>
+        Assert.Equal(string.Empty,
             SqlAuthenticationConfiguration.ReadString(new NullableStringSection(), name));
+    }
 
-        Assert.Contains(name, failure.Message);
+    /// <summary>String schema mismatches do not discard valid client and provider settings.</summary>
+#if DEBUG
+    [Fact(Skip = "Invalid schemas intentionally trigger Debug.Assert; verify recovery in Release.")]
+#else
+    [Fact]
+#endif
+    public void StringSchemaMismatchesPreserveOtherSettings()
+    {
+        var section = new IncompatibleAuthenticationSection();
+        section.ElementInformation.Properties["applicationClientId"].Value = "configured-client";
+        section.Providers.Add(new ProviderSettings("active directory default", "Example.Provider"));
+
+        var configuration = new SqlAuthenticationConfiguration(section);
+
+        Assert.Equal("configured-client", configuration.ApplicationClientId);
+        Assert.Null(configuration.UseWamBroker);
+        Assert.Empty(configuration.InitializerType);
+        Assert.Equal("Example.Provider", Assert.Single(configuration.Providers).Type);
     }
 
     /// <summary>
@@ -210,5 +231,18 @@ public class AuthenticationConfigurationParsingTest
 
         [ConfigurationProperty("nullableNumber", DefaultValue = null)]
         public int? NullableNumber => (int?)this["nullableNumber"];
+    }
+
+    /// <summary>Omits broker metadata and gives initializer metadata an incompatible type.</summary>
+    private sealed class IncompatibleAuthenticationSection : ConfigurationSection
+    {
+        [ConfigurationProperty("applicationClientId")]
+        public string ApplicationClientId => (string)this["applicationClientId"];
+
+        [ConfigurationProperty("initializerType", DefaultValue = 1)]
+        public int InitializerType => (int)this["initializerType"];
+
+        [ConfigurationProperty("providers")]
+        public ProviderSettingsCollection Providers => (ProviderSettingsCollection)this["providers"];
     }
 }
