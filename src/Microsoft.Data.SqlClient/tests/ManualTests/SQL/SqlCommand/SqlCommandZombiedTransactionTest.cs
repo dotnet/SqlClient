@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -36,6 +37,60 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             using SqlCommand count = new SqlCommand("SELECT COUNT(*) FROM #ZombiedTransaction", connection);
             Assert.Equal(0, (int)count.ExecuteScalar());
+        }
+
+        /// <summary>
+        /// Disposing a live transaction rolls it back. The command that was bound to it must still run.
+        /// </summary>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public void Execute_AfterDisposingLiveTransaction_Runs()
+        {
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            connection.Open();
+
+            using SqlCommand setup = connection.CreateCommand();
+            setup.CommandText = "CREATE TABLE #DisposedTransaction (Id int NOT NULL);";
+            setup.ExecuteNonQuery();
+
+            using SqlCommand command = new SqlCommand("INSERT INTO #DisposedTransaction (Id) VALUES (1)", connection);
+            using (SqlTransaction transaction = connection.BeginTransaction())
+            {
+                command.Transaction = transaction;
+            }
+
+            Assert.Null(command.Transaction);
+            command.Connection = connection;
+            command.ExecuteNonQuery();
+
+            using SqlCommand count = new SqlCommand("SELECT COUNT(*) FROM #DisposedTransaction", connection);
+            Assert.Equal(1, (int)count.ExecuteScalar());
+        }
+
+        /// <summary>
+        /// Disposing a live transaction rolls it back. An async execute of the bound command must still run.
+        /// </summary>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public async Task Execute_AfterDisposingLiveTransaction_RunsAsync()
+        {
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            await connection.OpenAsync();
+
+            using SqlCommand setup = connection.CreateCommand();
+            setup.CommandText = "CREATE TABLE #DisposedTransaction (Id int NOT NULL);";
+            await setup.ExecuteNonQueryAsync();
+
+            using SqlCommand command = new SqlCommand("INSERT INTO #DisposedTransaction (Id) VALUES (1)", connection);
+            using (SqlTransaction transaction = connection.BeginTransaction())
+            {
+                command.Transaction = transaction;
+            }
+
+            Assert.Null(command.Transaction);
+            command.Connection = connection;
+            await command.ExecuteNonQueryAsync();
+
+            using SqlCommand count = new SqlCommand("SELECT COUNT(*) FROM #DisposedTransaction", connection);
+            Assert.Equal(1, (int)await count.ExecuteScalarAsync());
         }
     }
 }
