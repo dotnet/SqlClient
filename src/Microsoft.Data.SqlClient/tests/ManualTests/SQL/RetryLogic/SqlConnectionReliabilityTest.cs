@@ -105,7 +105,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             }
                         };
 
-                        using (var cnn2 = new SqlConnection(builder.ConnectionString))
+                        using (var cnn2 = DataTestUtility.CreateConnection(builder.ConnectionString))
                         {
                             cnn2.RetryLogicProvider = provider;
                             cnn2.Open();
@@ -249,10 +249,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 InitialCatalog = InvalidInitialCatalog
             };
 
-            SqlConnection cnn = new(builder.ConnectionString)
-            {
-                RetryLogicProvider = provider
-            };
+            SqlConnection cnn = DataTestUtility.CreateConnection(builder.ConnectionString);
+            cnn.RetryLogicProvider = provider;
             cnn.RetryLogicProvider.Retrying += (s, e) =>
             {
                 Assert.Equal(e.RetryCount, e.Exceptions.Count);

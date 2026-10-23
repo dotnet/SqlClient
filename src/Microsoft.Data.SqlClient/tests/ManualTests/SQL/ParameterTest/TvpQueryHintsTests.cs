@@ -47,7 +47,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 CommandTimeout = CommandTimeoutSeconds
             };
 
-            Connection = new SqlConnection(builder.ConnectionString);
+            Connection = DataTestUtility.CreateConnection(builder.ConnectionString);
 
             // Partial construction must not leak the objects created so far, otherwise a transient
             // failure here would orphan a type in the shared database.

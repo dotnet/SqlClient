@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
+using Microsoft.Data.SqlClient.Parser.Login;
 using Microsoft.Data.SqlClient.Tests.Common;
 using Microsoft.SqlServer.TDS.PreLogin;
 using Microsoft.SqlServer.TDS.Servers;
@@ -467,10 +468,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             }
 
             /// <inheritdoc />
-            protected override void Activate(Transaction transaction)
+            protected override void Activate(Transaction transaction, TimeoutTimer timeout)
             {
                 Activations++;
-                base.Activate(transaction);
+                base.Activate(transaction, timeout);
             }
 
             /// <inheritdoc />

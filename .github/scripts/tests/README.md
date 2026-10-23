@@ -1,5 +1,37 @@
 # GitHub Actions Script Tests
 
+## Agentic triage output tests
+
+`validate-triage-output.test.cjs` uses the built-in Node.js test runner (Node.js
+20 or newer). No npm dependencies are needed. Run it from the repository root:
+
+```bash
+node --test .github/scripts/tests/validate-triage-output.test.cjs
+```
+
+These tests also run in `verify-aw-lock.yml`. They cover the validation gate
+before triage comments and labels are published: complete summaries, explicit
+no-op/failure results, placeholder comments, unfinished templates, quoted/fenced
+examples, duplicate comments, and mixed success/incomplete outcomes.
+They also reject partial safe-output batches with recorded errors while
+allowing C# generic type syntax in completed summaries. Draft prefixes such as
+`TODO:` and `TBD:` are rejected in required fields and list items; ordinary
+mentions of those markers within completed prose remain valid.
+Coverage also includes multiline template placeholders, label operations queued
+before the summary, and contradictory no-op/incomplete results.
+Comparison operators in completed prose remain valid; angle-bracket detection
+targets known template fields and instructions rather than arbitrary bracketed text.
+Generic arguments such as `Task<Result>` and `List<Item>`, including nested
+types, and XML documentation tags are covered by acceptance regressions.
+The summary heading must start at the beginning of the body; leading indentation
+cannot turn a code-block heading into an accepted Markdown heading.
+Initial and follow-up summaries must queue exactly one Waiting for Author label
+operation matching the Environment row; on-demand summaries must leave labels
+unchanged. Tests also reject diagnostic placeholders within required fields,
+duplicate required rows/sections, and unfinished content in additional prose.
+
+## Shell script tests
+
 This directory contains tests for the shell scripts used by the
 [cherry-pick-hotfix](./../../../.github/workflows/cherry-pick-hotfix.yml),
 [check-milestone](./../../../.github/workflows/check-milestone.yml) and
@@ -88,6 +120,7 @@ bats .github/scripts/tests/
 bats .github/scripts/tests/extract-hotfix-versions.bats
 bats .github/scripts/tests/cherry-pick-to-release.bats
 bats .github/scripts/tests/check-milestone-branch.bats
+bats .github/scripts/tests/check-milestone-version.bats
 bats .github/scripts/tests/recheck-milestones-for-release-branch.bats
 ```
 
@@ -112,30 +145,30 @@ bats --formatter pretty .github/scripts/tests/
 
 ## Test Files
 
-| File | Tests | Covers |
-| ---- | ----- | ------ |
-| `extract-hotfix-versions.bats` | 18 | Label parsing, version extraction, matrix JSON output, edge cases (malformed labels, duplicates, `labeled` vs `closed` events) |
-| `cherry-pick-to-release.bats` | 15 | Branch derivation, already-applied detection, clean cherry-pick, conflict handling, milestone lookup, PR creation, duplicate skip logic |
-| `check-milestone-branch.bats` | 26 | Milestone version parsing, state-independent active development-line selection, rejection of earlier and later series on the default branch, fail-closed handling when no series is active, release-branch derivation, default-branch vs release-branch validation, integration-branch and non-semver skips, API invocation assertions, API failure handling |
-| `recheck-milestones-for-release-branch.bats` | 17 | Release-branch name parsing, matching open PRs by milestone, run lookup by head SHA and PR association, fork fallback, re-run invocation, and failure reporting |
+| File | Purpose |
+| ---- | ------- |
+| `extract-hotfix-versions.bats` | Tests hotfix label parsing and version matrix generation. |
+| `cherry-pick-to-release.bats` | Tests hotfix cherry-pick and pull request automation. |
+| `check-milestone-branch.bats` | Tests milestone validation against the pull request target branch. |
+| `check-milestone-version.bats` | Tests milestone validation against the canonical SqlClient version. |
+| `recheck-milestones-for-release-branch.bats` | Tests milestone rechecks when a release branch is created. |
 
 ## How the Tests Work
 
-All test files use the same general approach:
+The test files use temporary fixtures and, when a script invokes external commands, command mocks:
 
-1. **`setup()`** creates a temporary directory and populates it with mock `git` and `gh` executables
-   — simple shell scripts that echo predetermined responses. Environment variables (`VERSION`,
-   `MERGE_COMMIT_SHA`, etc.) are set to known values.
+1. **`setup()`** creates a temporary directory and sets environment variables to known values.
+   Tests write fixture files there or place mock executables earlier on `$PATH` when the script
+   invokes commands such as `git` or `gh`.
 
 2. **`@test` blocks** call `run bash "$SCRIPT"` to execute the script under test in a subshell. The
-   mocks intercept all `git` and `gh` invocations, so no real repository or GitHub API access is
-   needed.
+   fixtures and command mocks keep tests isolated from the repository and GitHub API.
 
 3. **Assertions** check `$status` (exit code) and `$output` (combined stdout/stderr) for expected
    values, error messages, GitHub Actions output file writes via `$GITHUB_OUTPUT`, or other
    workflow commands such as `::error::` and `::notice::`.
 
-4. **`teardown()`** removes the temporary directory and mock binaries.
+4. **`teardown()`** removes the temporary directory and its fixtures or mock binaries.
 
 ### Example mock
 

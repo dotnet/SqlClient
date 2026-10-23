@@ -261,6 +261,9 @@ The following example supplies a simple SQL Server connection string in the <xre
       </value>
       <remarks>
         When no value is specified, secure enclaves are disabled on the connection.
+        Enclave sessions are cached separately for each attestation protocol. A session
+        established with <see cref="F:Microsoft.Data.SqlClient.SqlConnectionAttestationProtocol.None" />
+        cannot satisfy a connection configured to require HGS or AAS attestation.
       </remarks>
     </AttestationProtocol>
     <Authentication>
@@ -728,6 +731,10 @@ This property corresponds to the "FailoverPartnerSPN" and "Failover Partner SPN"
         <format type="text/markdown">
           <![CDATA[  
 This property corresponds to the "HostNameInCertificate" and "Host Name in Certificate" keys within the connection string. 
+
+When certificate hostname validation is performed, an explicitly supplied value is the only
+expected hostname. It replaces the hostname from `Data Source` for that validation without
+changing the connection destination.
 
 > [!NOTE]
 > This property only applies when using `Encrypt` in <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory%2A> or <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Strict%2A> mode, otherwise it is ignored.

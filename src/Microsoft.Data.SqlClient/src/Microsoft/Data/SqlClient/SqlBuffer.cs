@@ -7,6 +7,7 @@ using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
+using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlTypes;
 
 namespace Microsoft.Data.SqlClient
@@ -117,6 +118,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         private bool _isNull;
+        private bool _isSmallMoney;
         private StorageType _type;
         private Storage _value;
         private object _object;    // String, SqlBinary, SqlCachedBuffer, SqlGuid, SqlString, SqlXml
@@ -129,6 +131,7 @@ namespace Microsoft.Data.SqlClient
         { // Clone
             // value types
             _isNull = value._isNull;
+            _isSmallMoney = value._isSmallMoney;
             _type = value._type;
             // ref types - should also be read only unless at some point we allow this data
             // to be mutable, then we will need to copy
@@ -139,6 +142,8 @@ namespace Microsoft.Data.SqlClient
         internal bool IsEmpty => _type == StorageType.Empty;
 
         internal bool IsNull => _isNull;
+
+        internal bool IsSmallMoney => _type == StorageType.Money && _isSmallMoney;
 
         internal StorageType VariantInternalStorageType => _type;
 
@@ -918,7 +923,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         return SqlMoney.Null;
                     }
-                    
+
                     #if NET
                     return SqlMoney.FromTdsValue(_value._int64);
                     #else
@@ -1270,7 +1275,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            return null; // need to return the value as an object of some CLS type            
+            return null; // need to return the value as an object of some CLS type
         }
 
         internal static SqlBuffer[] CreateBufferArray(int length)
@@ -1307,6 +1312,7 @@ namespace Microsoft.Data.SqlClient
         internal void Clear()
         {
             _isNull = false;
+            _isSmallMoney = false;
             _type = StorageType.Empty;
             _object = null;
         }
@@ -1366,12 +1372,13 @@ namespace Microsoft.Data.SqlClient
             _isNull = false;
         }
 
-        internal void SetToMoney(long value)
+        internal void SetToMoney(long value, bool isSmallMoney = false)
         {
             Debug.Assert(IsEmpty, "setting value a second time?");
             _value._int64 = value;
             _type = StorageType.Money;
             _isNull = false;
+            _isSmallMoney = isSmallMoney;
         }
 
         internal void SetToNullOfType(StorageType storageType)
@@ -1478,7 +1485,7 @@ namespace Microsoft.Data.SqlClient
             }
             timeInfo._ticks = tickUnits * TdsEnums.TICKS_FROM_SCALE[scale];
 
-            // Once the deserialization has been completed using the value scale, we need to set the actual denormalized scale, 
+            // Once the deserialization has been completed using the value scale, we need to set the actual denormalized scale,
             // coming from the data type, on the original result, so that it has the proper scale setting.
             // This only applies for values that got serialized/deserialized for encryption. Otherwise, both scales should be equal.
             timeInfo._scale = denormalizedScale;
@@ -1499,16 +1506,16 @@ namespace Microsoft.Data.SqlClient
         }
         // [Field]As<T> method explanation:
         // these methods are used to bridge generic to non-generic access to value type fields on the storage struct
-        // where typeof(T) == typeof(field) 
-        //   1) RyuJIT will recognize the pattern of (T)(object)T as being redundant and eliminate 
-        //   the T and object casts leaving T, so while this looks like it will put every value type instance in a box the 
+        // where typeof(T) == typeof(field)
+        //   1) RyuJIT will recognize the pattern of (T)(object)T as being redundant and eliminate
+        //   the T and object casts leaving T, so while this looks like it will put every value type instance in a box the
         //   generated assembly will be short and direct
         //   2) another jit may not recognize the pattern and should emit the code as seen. this will box and then unbox the
         //   value type which is no worse than the mechanism that this code replaces
         // where typeof(T) != typeof(field)
         //   the jit will emit all the cast operations as written. this will put the value into a box and then attempt to
-        //   cast it, because it is an object no conversions are used and this will generate the desired InvalidCastException       
-        //   for example users cannot widen a short to an int preserving external expectations 
+        //   cast it, because it is an object no conversions are used and this will generate the desired InvalidCastException
+        //   for example users cannot widen a short to an int preserving external expectations
 
         internal T ByteAs<T>()
         {

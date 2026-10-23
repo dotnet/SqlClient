@@ -3,25 +3,25 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
+using System.Data;
+using System.Linq;
 
 namespace Microsoft.Data.SqlClient.PerformanceTests.BenchmarkRunners.DataTypeReaderRunner;
 
+/// <summary>Exercises plaintext individual types and mixed small-row shapes.</summary>
 public class Plaintext : DataTypeReaderRunnerBase
 {
     public override IEnumerable<DataType> ExecutedTypes => AvailableTypes;
 
-    protected override RunnerJob Configuration => s_config.Benchmarks.DataTypeReaderRunnerConfig;
+    public override IEnumerable<ReaderCase> ExecutedCases =>
+        base.ExecutedCases.Concat([new ReaderCase(1), new ReaderCase(4)]);
 
-    protected override SqlConnection OpenConnection()
-    {
-        SqlConnection conn = new(s_config.ConnectionString);
+    public override IEnumerable<CommandBehavior> ExecutedCommandBehaviors =>
+        [CommandBehavior.Default, CommandBehavior.SequentialAccess];
 
-        conn.Open();
-        return conn;
-    }
+    protected override CommandRunnerJob Configuration => s_config.Benchmarks.DataTypeReaderRunnerConfig;
 
     protected override Table CreateTable() =>
         Table.Build(Type.Name)
-            .AddColumn(new Column(Type))
-            .CreateTable(_connection);
+            .AddColumn(new Column(Type));
 }

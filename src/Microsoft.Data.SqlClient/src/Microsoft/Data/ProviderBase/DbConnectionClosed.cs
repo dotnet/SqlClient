@@ -24,7 +24,7 @@ namespace Microsoft.Data.ProviderBase
 
         public override ConnectionCapabilities Capabilities => throw ADP.ClosedConnectionError();
 
-        protected override void Activate(System.Transactions.Transaction transaction) => throw ADP.ClosedConnectionError();
+        protected override void Activate(System.Transactions.Transaction transaction, TimeoutTimer timeout) => throw ADP.ClosedConnectionError();
 
         public override DbTransaction BeginTransaction(IsolationLevel il) => throw ADP.ClosedConnectionError();
 

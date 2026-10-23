@@ -27,6 +27,11 @@ parameters:
   - name: publishSymbols
     type: boolean
 
+  # True to enable diagnostic output.  Forwarded to each publish-symbols-job.yml below.
+  - name: debug
+    type: boolean
+    default: false
+
   # ── Build parameters (used to conditionally include per-package jobs) ───
 
   # Whether Microsoft.SqlServer.Server was built this run (its symbols are only published when it
@@ -111,6 +116,7 @@ stages:
         - template: /eng/pipelines/onebranch/jobs/publish-symbols-job.yml@self
           parameters:
             artifactName: '${{ parameters.loggingArtifactsName }}'
+            debug: ${{ parameters.debug }}
             packageFullName: Microsoft.Data.SqlClient.Internal.Logging
             packageShortName: Logging
             packageVersion: '${{ parameters.sqlClientPackageVersion }}'
@@ -125,6 +131,7 @@ stages:
           - template: /eng/pipelines/onebranch/jobs/publish-symbols-job.yml@self
             parameters:
               artifactName: '${{ parameters.sqlServerArtifactsName }}'
+              debug: ${{ parameters.debug }}
               packageFullName: Microsoft.SqlServer.Server
               packageShortName: SqlServer
               packageVersion: '${{ parameters.sqlServerPackageVersion }}'
@@ -138,6 +145,7 @@ stages:
         - template: /eng/pipelines/onebranch/jobs/publish-symbols-job.yml@self
           parameters:
             artifactName: '${{ parameters.abstractionsArtifactsName }}'
+            debug: ${{ parameters.debug }}
             packageFullName: Microsoft.Data.SqlClient.Extensions.Abstractions
             packageShortName: Abstractions
             packageVersion: '${{ parameters.sqlClientPackageVersion }}'
@@ -151,6 +159,7 @@ stages:
         - template: /eng/pipelines/onebranch/jobs/publish-symbols-job.yml@self
           parameters:
             artifactName: '${{ parameters.sqlClientArtifactsName }}'
+            debug: ${{ parameters.debug }}
             packageFullName: Microsoft.Data.SqlClient
             packageShortName: SqlClient
             packageVersion: '${{ parameters.sqlClientPackageVersion }}'
@@ -164,6 +173,7 @@ stages:
         - template: /eng/pipelines/onebranch/jobs/publish-symbols-job.yml@self
           parameters:
             artifactName: '${{ parameters.azureArtifactsName }}'
+            debug: ${{ parameters.debug }}
             packageFullName: Microsoft.Data.SqlClient.Extensions.Azure
             packageShortName: Azure
             packageVersion: '${{ parameters.sqlClientPackageVersion }}'
@@ -177,6 +187,7 @@ stages:
         - template: /eng/pipelines/onebranch/jobs/publish-symbols-job.yml@self
           parameters:
             artifactName: '${{ parameters.akvProviderArtifactsName }}'
+            debug: ${{ parameters.debug }}
             packageFullName: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             packageShortName: AkvProvider
             packageVersion: '${{ parameters.sqlClientPackageVersion }}'
@@ -185,3 +196,4 @@ stages:
             symbolsPublishServer: '${{ parameters.symbolsPublishServer }}'
             symbolsPublishTokenUri: '${{ parameters.symbolsPublishTokenUri }}'
             symbolsUploadAccount: '${{ parameters.symbolsUploadAccount }}'
+

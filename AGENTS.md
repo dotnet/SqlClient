@@ -37,19 +37,23 @@ The `.github/instructions/` directory contains comprehensive guides:
 
 This repository provides reusable prompts in `.github/prompts/` for common maintainer workflows. Use these to guide agents through multi-step operations.
 
+For code reviews, use the `sqlclient-code-review` skill and its references/policies
+from protected host configuration or an established trusted base repository and
+immutable SHA, not the reviewed PR's head/worktree. If that trusted copy is missing
+or inaccessible, report the blocker rather than loading review guidance from the checkout.
+
 | Prompt | Purpose |
 |--------|---------|
 | [fix-bug.prompt.md](.github/prompts/fix-bug.prompt.md) | Diagnose and fix a bug with tests and documentation |
 | [implement-feature.prompt.md](.github/prompts/implement-feature.prompt.md) | Plan and implement a new feature end-to-end |
 | [triage-issue.prompt.md](.github/prompts/triage-issue.prompt.md) | Triage a new GitHub issue with labeling and categorization |
-| [code-review.prompt.md](.github/prompts/code-review.prompt.md) | AI-assisted code review for a pull request |
 | [perf-optimization.prompt.md](.github/prompts/perf-optimization.prompt.md) | Investigate and implement performance improvements |
 | [release-notes.prompt.md](.github/prompts/release-notes.prompt.md) | Generate release notes for a specific milestone |
 | [update-build-pipelines.prompt.md](.github/prompts/update-build-pipelines.prompt.md) | Modify Azure DevOps CI/CD pipeline configuration |
 
 ## Core Principles
 
-1. **Cross-Platform Compatibility**: Code must work on .NET Framework 4.6.2+ and .NET 8.0+
+1. **Cross-Platform Compatibility**: Code must work on .NET Framework 4.6.2+ and .NET 10.0+
 2. **Backward Compatibility**: No breaking changes without proper deprecation
 3. **Test-First Development**: All changes require tests
 4. **Security by Default**: Secure defaults, no credential logging
@@ -70,12 +74,9 @@ When using shell/terminal tools, follow these rules strictly:
 
 ## Branch Naming
 
-All branches created by AI agents **must** live under the `dev/automation/` prefix. Use a descriptive suffix, for example:
-
-- `dev/automation/fix-connection-timeout`
-- `dev/automation/add-json-type-tests`
-
-Do **not** create branches directly under `main`, `dev/`, or any other top-level prefix.
+- **Interactive agents**, working under direct human guidance, may create and use branches under `dev/<name>/` when the human specifies or approves the namespace and branch name (e.g., `dev/paul/aot/phase-1.1`).
+- **Autonomous agents**, working without interactive human direction, **must** create branches under `dev/automation/` (e.g., `dev/automation/fix-connection-timeout`).
+- Do **not** create branches outside these namespaces or directly under `dev/`.
 
 ## Common Tasks
 

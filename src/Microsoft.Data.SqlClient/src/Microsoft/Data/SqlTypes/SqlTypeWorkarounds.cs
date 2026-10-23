@@ -7,6 +7,7 @@ using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Xml;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.Internal;
@@ -32,6 +33,13 @@ namespace Microsoft.Data.SqlTypes
         private static readonly XmlReaderSettings s_defaultXmlReaderSettingsCloseInput = new() { ConformanceLevel = ConformanceLevel.Fragment, CloseInput = true };
         private static readonly XmlReaderSettings s_defaultXmlReaderSettingsAsyncCloseInput = new() { Async = true, ConformanceLevel = ConformanceLevel.Fragment, CloseInput = true };
 
+        private static readonly XmlParserContext s_defaultXmlParserContext = new(
+            nt: null, nsMgr: null, xmlLang: string.Empty, xmlSpace: XmlSpace.None,
+            // Do not use SqlUnicodeEncoding here. It assumes no BOM, but some streams backing
+            // XmlReader (specifically, SqlStream) can have artificial BOMs. Consider removing
+            // artificial BOM behavior from SqlStream as a future optimization.
+            Encoding.Unicode);
+
         internal const SqlCompareOptions SqlStringValidSqlCompareOptionMask =
             SqlCompareOptions.BinarySort |
             SqlCompareOptions.BinarySort2 |
@@ -50,7 +58,7 @@ namespace Microsoft.Data.SqlTypes
                     : s_defaultXmlReaderSettingsCloseInput
                 : s_defaultXmlReaderSettings;
 
-            return XmlReader.Create(stream, settingsToUse);
+            return XmlReader.Create(stream, settingsToUse, s_defaultXmlParserContext);
         }
 
         #endregion
