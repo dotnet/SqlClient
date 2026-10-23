@@ -1,0 +1,68 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+#
+# Create Backport Issue for Hotfix Label
+#
+# Companion to cherry-pick-hotfix.yml, but for issues instead of PRs. Works
+# together with sync-hotfix-label-to-pr.yml, cherry-pick-hotfix.yml, and
+# close-backport-issue.yml to automate backporting a fix from an issue
+# through to a merged cherry-pick PR.
+#
+# When an issue is labeled "Hotfix <version>", this workflow creates a child
+# issue targeting the <version> milestone and links it as a native GitHub
+# sub-issue of the parent. That child issue is the "backport issue":
+#
+#   1. Label a bug issue "Hotfix 7.1.1".
+#   2. This workflow creates "[7.1.1] <original title>", milestoned 7.1.1, as
+#      a sub-issue of the original.
+#   3. sync-hotfix-label-to-pr.yml copies the "Hotfix 7.1.1" label onto any PR
+#      that closes the original issue.
+#   4. cherry-pick-hotfix.yml auto-cherry-picks that merged PR to release/7.1
+#      and links the resulting PR to the backport issue created here.
+#   5. close-backport-issue.yml explicitly closes the backport issue once
+#      that cherry-pick PR merges into release/7.1, since GitHub's closing
+#      keywords only auto-close issues for merges into the default branch.
+#
+#################################################################################
+
+name: Create Backport Issue for Hotfix Label
+
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  create-backport-issue:
+    # Only run for a label that looks like "Hotfix X.Y.Z" — the script itself
+    # re-validates this, but the guard avoids spinning up a job for every
+    # unrelated label (bug, enhancement, etc.).
+    if: startsWith(github.event.label.name, 'Hotfix ')
+    runs-on: ubuntu-latest
+    # Duplicate detection (Step 2 of create-backport-issue.sh) is a
+    # check-then-create sequence with no atomic guard of its own. Serialize
+    # runs per issue+label so a second delivery/re-run for the same pair
+    # always re-checks after the first has finished creating and linking its
+    # child, instead of racing past the still-empty duplicate check.
+    concurrency:
+      group: hotfix-label-issue-${{ github.event.issue.number }}-${{ github.event.label.name }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          # Only the scripts directory is needed; skip full history.
+          sparse-checkout: .github/scripts
+          sparse-checkout-cone-mode: false
+
+      - name: Create backport issue
+        env:
+          EVENT_LABEL: ${{ github.event.label.name }}
+          PARENT_ISSUE_NUMBER: ${{ github.event.issue.number }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash "${GITHUB_WORKSPACE}/.github/scripts/create-backport-issue.sh"
