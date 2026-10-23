@@ -17,6 +17,8 @@ namespace Microsoft.SqlServer.TDS.Servers
     public class TransientTdsErrorTdsServer : GenericTdsServer<TransientTdsErrorTdsServerArguments>, IDisposable
     {
         private int RequestCounter = 0;
+        private readonly CancellationTokenSource _disposeCts = new();
+        private bool _disposed;
         private readonly object _errorLock = new object();
 
         public void SetErrorBehavior(bool isEnabledTransientError, uint errorNumber, int repeatCount = 1, string message = null)
@@ -68,6 +70,12 @@ namespace Microsoft.SqlServer.TDS.Servers
                 // Increment Login7 count since we won't call base.OnLogin7Request
                 Interlocked.Increment(ref _login7Count);
                 return GenerateErrorMessage(request, error);
+            }
+
+            if (Arguments.DelayAfterTransientErrors > TimeSpan.Zero)
+            {
+                _disposeCts.Token.WaitHandle.WaitOne(
+                    Arguments.DelayAfterTransientErrors);
             }
 
             // Return login response from the base class
@@ -125,5 +133,24 @@ namespace Microsoft.SqlServer.TDS.Servers
             return new TDSMessageCollection(responseMessage);
         }
 
+        public override void Dispose()
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            _disposed = true;
+            try
+            {
+                _disposeCts.Cancel();
+                base.Dispose();
+                RequestCounter = 0;
+            }
+            finally
+            {
+                _disposeCts.Dispose();
+            }
+        }
     }
 }
