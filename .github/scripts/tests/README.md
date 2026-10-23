@@ -1,5 +1,22 @@
 # GitHub Actions Script Tests
 
+## PR auto-assignment tests
+
+`auto-assign-pr.test.cjs` uses the built-in Node.js test runner (Node.js 20 or newer)
+with no npm dependencies. Run it from the repository root when changing the
+auto-assignment workflow or script:
+
+```powershell
+node --test .github\scripts\tests\auto-assign-pr.test.cjs
+```
+
+The tests exercise the workflow's eligibility condition for fork and same-repository
+PRs, retain the upstream/open/non-draft/milestone gates and trusted-base checkout,
+and mock GitHub calls to check that fork PRs preserve existing assignees and fill
+only vacancies with the lowest-workload candidates. They do not make live API calls.
+Fork PRs become eligible after this workflow change lands; existing PRs still need
+a supported event (`opened`, `reopened`, `ready_for_review`, or `milestoned`).
+
 ## Agentic triage output tests
 
 `validate-triage-output.test.cjs` uses the built-in Node.js test runner (Node.js
