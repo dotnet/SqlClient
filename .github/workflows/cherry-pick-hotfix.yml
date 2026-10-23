@@ -118,18 +118,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ inputs.pr_number }}
         run: |
-          gh pr view "${PR_NUMBER}" --repo "${GITHUB_REPOSITORY}" \
-            --json number,state,mergedAt,baseRefName,labels,mergeCommit,title \
-            --jq '
-              "pr_number=\(.number)",
-              "event_action=reconcile",
-              "event_label=",
-              "merged=\(.state == "CLOSED" and .mergedAt != null)",
-              "base_ref=\(.baseRefName)",
-              "labels=\([.labels[].name] | join(","))",
-              "merge_commit_sha=\(.mergeCommit.oid // "")",
-              "pr_title=\(.title)"
-            ' >> "${GITHUB_OUTPUT}"
+          bash "${GITHUB_WORKSPACE}/.github/scripts/resolve-hotfix-dispatch-context.sh"
 
       - name: Merge resolved outputs
         id: resolve
