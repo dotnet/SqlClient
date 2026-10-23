@@ -168,12 +168,12 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Asynchronously encrypts the byte package containing keys with the session key.
+        /// Generates an enclave package with asynchronous column encryption key decryption.
         /// </summary>
         /// <remarks>
-        /// Async counterpart of <see cref="GenerateEnclavePackage"/>. Only the column encryption key decryption
-        /// step performs I/O, so only that step is awaited; the remaining work is local cryptography and is
-        /// performed inline.
+        /// Async counterpart of <see cref="GenerateEnclavePackage"/>. Column encryption key decryption is
+        /// awaited. Enclave session lookup remains synchronous and may perform blocking attestation I/O;
+        /// async attestation is separate work. Package cryptography is performed inline.
         /// </remarks>
         /// <param name="attestationProtocol">attestation protocol</param>
         /// <param name="keysToBeSentToEnclave">Keys to be sent to enclave</param>
@@ -198,11 +198,7 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-                // @TODO: GetEnclaveSession is still synchronous. On a session cache hit it is pure in-memory
-                // work, but on a miss it performs blocking attestation HTTP. Making it awaitable requires the
-                // async enclave provider hierarchy (Phase 3 of the async Always Encrypted spec), which adds
-                // public virtual API and therefore ships separately. Until then this is the one remaining
-                // blocking call on the asynchronous Always Encrypted path.
+                // Session lookup may perform synchronous attestation I/O; async attestation is separate work.
                 GetEnclaveSession(
                     attestationProtocol,
                     enclaveType,

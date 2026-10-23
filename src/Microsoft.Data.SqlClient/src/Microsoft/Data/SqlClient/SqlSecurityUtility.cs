@@ -541,6 +541,7 @@ namespace Microsoft.Data.SqlClient
         /// <paramref name="cancellationToken"/>, which is propagated unwrapped so the returned Task is
         /// cancelled rather than faulted with an <see cref="InvalidOperationException"/>.
         /// Pre-cancellation is observed before signature validation or provider lookup.
+        /// Cancellation is also observed before accepting provider or cache results.
         /// </remarks>
         internal static async Task VerifyColumnMasterKeySignatureAsync(
             string keyStoreName,
@@ -599,6 +600,7 @@ namespace Microsoft.Data.SqlClient
                         isValidSignature = await provider
                             .VerifyColumnMasterKeyMetadataAsync(keyPath, isEnclaveEnabled, CMKSignature, cancellationToken)
                             .ConfigureAwait(false);
+                        cancellationToken.ThrowIfCancellationRequested();
                         ColumnMasterKeyMetadataSignatureVerificationCache.Instance
                             .AddSignatureVerificationResult(keyStoreName, keyPath, isEnclaveEnabled, CMKSignature, isValidSignature);
                     }
@@ -616,6 +618,8 @@ namespace Microsoft.Data.SqlClient
             {
                 throw SQL.UnableToVerifyColumnMasterKeySignature(e);
             }
+
+            cancellationToken.ThrowIfCancellationRequested();
 
             if (!isValidSignature)
             {

@@ -295,6 +295,66 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
         }
 
         /// <summary>
+        /// Cancellation during verification wins over either provider result, including synchronous completion.
+        /// </summary>
+        [Theory]
+        [InlineData(false, false)]
+        [InlineData(false, true)]
+        [InlineData(true, false)]
+        [InlineData(true, true)]
+        public async Task VerifyColumnMasterKeySignatureAsync_WhenProviderReturnsAfterCancellation_ProducesCancelledTask(
+            bool verificationResult, bool completeAsynchronously)
+        {
+            using CancellationTokenSource cts = new CancellationTokenSource();
+            TaskCompletionSource<bool> completion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            TestKeyStoreProvider provider = new TestKeyStoreProvider
+            {
+                VerifyResult = verificationResult,
+                VerifyAsyncCallback = _ =>
+                {
+                    if (completeAsynchronously)
+                    {
+                        return completion.Task;
+                    }
+
+                    cts.Cancel();
+                    return Task.FromResult(verificationResult);
+                }
+            };
+            using SqlConnection connection = NewConnection((ProviderName, provider));
+
+            Task verification = SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
+                ProviderName, KeyPath, isEnclaveEnabled: false, CMKSignature: new byte[] { 1, 2, 3 },
+                connection, command: null, cts.Token);
+
+            if (completeAsynchronously)
+            {
+                cts.Cancel();
+                completion.SetResult(verificationResult);
+            }
+
+            OperationCanceledException exception = await Assert.ThrowsAnyAsync<OperationCanceledException>(() => verification);
+            Assert.Equal(cts.Token, exception.CancellationToken);
+            Assert.True(verification.IsCanceled);
+
+            provider.VerifyAsyncCallback = null;
+            Task uncancelledVerification = SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
+                ProviderName, KeyPath, isEnclaveEnabled: false, CMKSignature: new byte[] { 1, 2, 3 },
+                connection, command: null, CancellationToken.None);
+
+            if (verificationResult)
+            {
+                await uncancelledVerification;
+            }
+            else
+            {
+                await Assert.ThrowsAsync<InvalidOperationException>(() => uncancelledVerification);
+            }
+
+            Assert.Equal(2, provider.VerifyAsyncCallCount);
+        }
+
+        /// <summary>
         /// Verifies that provider failures are still wrapped in SQL.UnableToVerifyColumnMasterKeySignature.
         /// </summary>
         [Fact]
