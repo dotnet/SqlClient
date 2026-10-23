@@ -15,10 +15,18 @@ namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
 /// <summary>
 /// Verifies section selection and loading failures without changing process configuration.
 /// </summary>
-public class AuthenticationConfigurationLoadingTest
+[Collection(AuthenticationFeatureSwitchTestCollection.Name)]
+public class AuthenticationConfigurationLoadingTest : IDisposable
 {
     private const string Modern = ModernSection.Name;
     private const string Legacy = LegacySection.Name;
+    private readonly AuthenticationFeatureSwitchesHelper _switches = new()
+    {
+        UseStrictAuthenticationConfiguration = true
+    };
+
+    /// <summary>Restores the strict-configuration policy after each test.</summary>
+    public void Dispose() => _switches.Dispose();
 
     /// <summary>
     /// Only a lookup that finds neither section reports missing configuration.
@@ -153,20 +161,70 @@ public class AuthenticationConfigurationLoadingTest
             failure.Message);
     }
 
-    /// <summary>Retrieval failures escape unchanged and no later section is read.</summary>
+    /// <summary>Compatibility mode ignores mismatched modern handlers and reads legacy settings.</summary>
     [Theory]
-    [InlineData(true, false)]
-    [InlineData(false, false)]
-    [InlineData(true, true)]
-    [InlineData(false, true)]
-    public void LoadConfigurationPropagatesRetrievalFailure(bool modern, bool fatal)
+    [InlineData(typeof(object))]
+    [InlineData(typeof(AppSettingsSection))]
+    [InlineData(typeof(LegacySection))]
+    public void CompatibilityModeFallsBackAfterHandlerMismatch(Type type)
     {
+        using var switches = new AuthenticationFeatureSwitchesHelper
+        {
+            UseStrictAuthenticationConfiguration = false
+        };
+        var legacy = new LegacySection();
+        legacy.ElementInformation.Properties["applicationClientId"].Value = "legacy-client";
+        var reads = new List<string>();
+
+        var configuration = SqlAuthenticationConfiguration.Load(name =>
+        {
+            reads.Add(name);
+            return name == Modern ? Activator.CreateInstance(type) : legacy;
+        });
+
+        Assert.Equal(new[] { Modern, Legacy }, reads);
+        Assert.Equal("legacy-client", configuration.ApplicationClientId);
+    }
+
+    /// <summary>Compatibility mode also ignores a legacy handler owned by another provider.</summary>
+    [Fact]
+    public void CompatibilityModeIgnoresMismatchedLegacyHandler()
+    {
+        using var switches = new AuthenticationFeatureSwitchesHelper
+        {
+            UseStrictAuthenticationConfiguration = false
+        };
+        var configuration = SqlAuthenticationConfiguration.Load(
+            name => name == Modern ? null : new AppSettingsSection());
+
+        Assert.Null(configuration.ApplicationClientId);
+        Assert.Null(configuration.UseWamBroker);
+        Assert.Empty(configuration.InitializerType);
+        Assert.Empty(configuration.Providers);
+    }
+
+    /// <summary>Strict and fatal retrieval failures escape; compatibility failures yield empty settings.</summary>
+    [Theory]
+    [InlineData(true, false, false)]
+    [InlineData(false, false, false)]
+    [InlineData(true, true, false)]
+    [InlineData(false, true, false)]
+    [InlineData(true, false, true)]
+    [InlineData(false, false, true)]
+    [InlineData(true, true, true)]
+    [InlineData(false, true, true)]
+    public void LoadConfigurationHandlesRetrievalFailure(bool modern, bool fatal, bool strict)
+    {
+        using var switches = new AuthenticationFeatureSwitchesHelper
+        {
+            UseStrictAuthenticationConfiguration = strict
+        };
         // Exercise both reader positions, including a configuration wrapper around a fatal error.
         var reads = new List<string>();
         var expected = new ConfigurationErrorsException("Invalid section",
             fatal ? new OutOfMemoryException("Test fatal failure") : null);
 
-        var actual = Assert.Throws<ConfigurationErrorsException>(() =>
+        SqlAuthenticationConfiguration Load() =>
             SqlAuthenticationConfiguration.Load(name =>
             {
                 reads.Add(name);
@@ -175,11 +233,50 @@ public class AuthenticationConfigurationLoadingTest
                     throw expected;
                 }
                 return null;
-            }));
+            });
 
-        // Loading must preserve the original exception and never read beyond the failed section.
-        Assert.Same(expected, actual);
+        if (strict || fatal)
+        {
+            Assert.Same(expected, Assert.Throws<ConfigurationErrorsException>(() => Load()));
+        }
+        else
+        {
+            var configuration = Load();
+            Assert.Null(configuration.ApplicationClientId);
+            Assert.Null(configuration.UseWamBroker);
+            Assert.Empty(configuration.InitializerType);
+            Assert.Empty(configuration.Providers);
+        }
         Assert.Equal(modern ? new[] { Modern } : new[] { Modern, Legacy }, reads);
+    }
+
+    /// <summary>A load snapshots strictness before a section reader can change the cached switch.</summary>
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void LoadUsesOnePolicyForSelectionAndParsing(bool strict)
+    {
+        using var switches = new AuthenticationFeatureSwitchesHelper
+        {
+            UseStrictAuthenticationConfiguration = strict
+        };
+        var section = new ModernSection();
+        section.ElementInformation.Properties["useWamBroker"].Value = "invalid";
+
+        SqlAuthenticationConfiguration Load() => SqlAuthenticationConfiguration.Load(_ =>
+        {
+            switches.UseStrictAuthenticationConfiguration = !strict;
+            return section;
+        });
+
+        if (strict)
+        {
+            Assert.Throws<ConfigurationErrorsException>(() => Load());
+        }
+        else
+        {
+            Assert.Null(Load().UseWamBroker);
+        }
     }
 
     /// <summary>A malformed modern section must not be hidden by a valid legacy section.</summary>

@@ -236,7 +236,7 @@ cmd.Parameters.Add("@id", SqlDbType.Int).Value = userId;
 
 ## AppContext Switches
 
-AppContext switches allow runtime behavior changes without modifying connection strings. They are defined in `LocalAppContextSwitches.cs` and can be set via `AppContext.SetSwitch()` or `runtimeconfig.json`.
+AppContext switches allow runtime behavior changes without modifying connection strings. Driver switches are defined in `LocalAppContextSwitches.cs` and can be set via `AppContext.SetSwitch()` or `runtimeconfig.json`. Abstractions owns `UseStrictAuthenticationConfiguration` in `AuthenticationFeatureSwitches.cs`, avoiding a dependency back on the driver.
 
 ### Available Switches
 
@@ -258,7 +258,24 @@ AppContext switches allow runtime behavior changes without modifying connection 
 | `Switch.Microsoft.Data.SqlClient.UseCompatibilityProcessSni` | `false` | Uses legacy SNI processing path |
 | `Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2` | `false` | Enables the new `ChannelDbConnectionPool` implementation |
 | `Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows` | `false` | Forces managed SNI on Windows (instead of native SNI) |
+| `Switch.Microsoft.Data.SqlClient.UseStrictAuthenticationConfiguration` | `false` | Abstractions authentication loader only. Throws for recoverable configuration errors, mismatched handlers and invalid `useWamBroker` values instead of tracing and continuing. Driver integration is deferred to #4821 |
 | `Switch.Microsoft.Data.SqlClient.UseOneSecFloorInTimeoutCalculationDuringLogin` | `false` | Sets 1-second minimum in login timeout calculations |
+
+### Strict authentication configuration
+
+Set `Switch.Microsoft.Data.SqlClient.UseStrictAuthenticationConfiguration` before authentication
+initialization to opt into strict configuration reading and parsing. `AuthenticationFeatureSwitches`
+caches the value on first access for the lifetime of the process. The Abstractions loader
+snapshots that cached value once per load.
+With the default `false`, recoverable reading/schema errors are traced and return empty settings,
+handler mismatches are traced and ignored (allowing modern-to-legacy fallback), and invalid
+`useWamBroker` values leave the override unset while retaining other valid settings.
+With `true`, these conditions throw `ConfigurationErrorsException`; a mismatched or malformed
+modern section does not fall back. Fatal exceptions propagate in both modes.
+
+A declared modern section without an element still takes precedence over legacy in both modes.
+This switch does not enable app.config reading when `EnableAppConfig` disables it, and does not
+change the existing driver reader before the registry migration in #4821.
 
 ### Usage Example
 ```csharp

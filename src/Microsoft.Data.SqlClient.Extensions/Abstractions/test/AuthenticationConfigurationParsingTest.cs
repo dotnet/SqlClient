@@ -13,8 +13,41 @@ namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
 /// <summary>
 /// Verifies configuration string metadata and the authentication-method allowlist directly.
 /// </summary>
+[Collection(AuthenticationFeatureSwitchTestCollection.Name)]
 public class AuthenticationConfigurationParsingTest
 {
+    /// <summary>Only strict mode rejects invalid broker values; compatibility retains other settings.</summary>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void InvalidBrokerValueUsesSelectedPolicy(bool strict)
+    {
+        using var switches = new AuthenticationFeatureSwitchesHelper
+        {
+            UseStrictAuthenticationConfiguration = strict
+        };
+        var section = new ModernSection();
+        section.ElementInformation.Properties["applicationClientId"].Value = "configured-client";
+        section.ElementInformation.Properties["initializerType"].Value = "Example.Initializer";
+        section.ElementInformation.Properties["useWamBroker"].Value = "invalid";
+        section.Providers.Add(new ProviderSettings("active directory default", "Example.Provider"));
+
+        if (strict)
+        {
+            var failure = Assert.Throws<ConfigurationErrorsException>(
+                () => new SqlAuthenticationConfiguration(section));
+            Assert.Contains("useWamBroker", failure.Message);
+        }
+        else
+        {
+            var configuration = new SqlAuthenticationConfiguration(section);
+            Assert.Null(configuration.UseWamBroker);
+            Assert.Equal("configured-client", configuration.ApplicationClientId);
+            Assert.Equal("Example.Initializer", configuration.InitializerType);
+            Assert.Equal("Example.Provider", Assert.Single(configuration.Providers).Type);
+        }
+    }
+
     /// <summary>
     /// A caller-owned default configuration preserves provider defaults without loading app.config.
     /// </summary>

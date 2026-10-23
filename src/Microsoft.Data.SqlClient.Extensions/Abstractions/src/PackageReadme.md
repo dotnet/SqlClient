@@ -40,6 +40,38 @@ target uses the framework's `System.Configuration` instead, without introducing 
 ConfigurationManager package dependency. Authentication initialization and provider loading
 remain in the driver, and the modern section continues to take precedence over the legacy one.
 
+### Configuration error policy
+
+The Abstractions authentication loader defaults to compatibility mode:
+
+- Recoverable configuration-reading or schema errors are traced and produce empty settings,
+  without trying the legacy section after a reading error.
+- Incompatible handlers are traced and ignored. An ignored modern handler allows the loader
+  to check the legacy section, including when another SQL provider owns that section.
+- Invalid `useWamBroker` values are traced and ignored, preserving the provider's default
+  and all other valid settings.
+
+Strict reading and parsing can be enabled before authentication initialization:
+
+```csharp
+AppContext.SetSwitch(
+    "Switch.Microsoft.Data.SqlClient.UseStrictAuthenticationConfiguration",
+    true);
+```
+
+The switch defaults to `false` on both .NET Framework and modern .NET. Its value is cached on
+first access for the lifetime of the process. The loader snapshots that cached value once
+per load, so selection and parsing use the same policy. Strict mode throws
+`ConfigurationErrorsException` for the errors above; handler mismatches and malformed modern
+sections do not fall back to legacy. Both modes propagate fatal failures, including those
+wrapped in configuration exceptions, and neither mode activates initializers or providers.
+
+A declared modern section takes precedence even when its element is absent from app.config.
+These policies apply to the new Abstractions loader; the driver continues using its existing
+reader until the authentication registry migration in
+[dotnet/SqlClient#4821](https://github.com/dotnet/SqlClient/pull/4821).
+The switch does not enable configuration reading when `EnableAppConfig` disables it.
+
 Merge the following example into the application's app.config, replacing
 `ExampleAuthenticationProvider, ExampleApp` with the assembly-qualified name of an
 application-defined `SqlAuthenticationProvider`. The handler declaration continues to
