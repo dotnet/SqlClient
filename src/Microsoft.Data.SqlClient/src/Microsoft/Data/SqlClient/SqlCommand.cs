@@ -2294,35 +2294,10 @@ namespace Microsoft.Data.SqlClient
                     // parser, with it's associated code page.
                     if (mt.IsAnsiType)
                     {
-                        object val = sqlParam.GetCoercedValue();
-                        string s = null;
-
-                        // Deal with the sql types
-                        if (val is not null && val != DBNull.Value)
+                        int actualBytes = sqlParam.GetActualSizeInBytes(parser);
+                        if (actualBytes > size)
                         {
-                            // @TODO: I swear this can be one line in the if statement...
-                            s = val as string;
-                            if (s is null)
-                            {
-                                SqlString sval = val is SqlString sqlVal ? sqlVal : SqlString.Null;
-                                if (!sval.IsNull)
-                                {
-                                    s = sval.Value;
-                                }
-                            }
-                        }
-
-                        if (s is not null)
-                        {
-                            int actualBytes = parser.GetEncodingCharLength(
-                                value: s,
-                                numChars: sqlParam.GetActualSize(),
-                                charOffset: sqlParam.Offset,
-                                encoding: null);
-                            if (actualBytes > size)
-                            {
-                                size = actualBytes;
-                            }
+                            size = actualBytes;
                         }
                     }
 

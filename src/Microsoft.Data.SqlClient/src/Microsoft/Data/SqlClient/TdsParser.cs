@@ -10540,7 +10540,7 @@ namespace Microsoft.Data.SqlClient
                 size = -1;
                 actualSize = (encryptedValue == null) ? 0 : encryptedValue.Length;
 
-                encryptedParameterInfoToWrite = new SqlColumnEncryptionInputParameterInfo(param.GetMetadataForTypeInfo(),
+                encryptedParameterInfoToWrite = new SqlColumnEncryptionInputParameterInfo(param.GetMetadataForTypeInfo(this),
                                                                                           param.CipherMetadata);
 
                 // Set the value to the encrypted value and mark isSqlVal as false for VARBINARY encrypted value.
@@ -11012,7 +11012,7 @@ namespace Microsoft.Data.SqlClient
             // Determine Metadata
             //
             ParameterPeekAheadValue peekAhead;
-            SmiParameterMetaData metaData = param.MetaDataForSmi(out peekAhead);
+            SmiParameterMetaData metaData = param.MetaDataForSmi(this, out peekAhead);
 
             if (!Is2008OrNewer)
             {
