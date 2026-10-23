@@ -49,7 +49,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
         #else
-        public static void GetHMACWithSHA256(byte[] plainText, byte[] key, byte[] hash)
+        public static void GetHMACWithSHA256(byte[] plainText, byte[] key, Span<byte> hash)
         {
             const int MaxSHA256HashBytes = 32;
 
@@ -60,56 +60,18 @@ namespace Microsoft.Data.SqlClient
             byte[] computedHash = hmac.ComputeHash(plainText);
 
             // Truncate the hash if needed
-            Buffer.BlockCopy(computedHash, 0, hash, 0, hash.Length);
+            if (hash.Length >= computedHash.Length)
+            {
+                computedHash.CopyTo(hash);
+            }
+            else
+            {
+                computedHash.AsSpan(0, hash.Length).CopyTo(hash);
+            }
         }
         #endif
 
         #nullable restore
-
-        /// <summary>
-        /// Generates cryptographically random bytes
-        /// </summary>
-        /// <param name="randomBytes">No of cryptographically random bytes to be generated</param>
-        /// <returns>A byte array containing cryptographically generated random bytes</returns>
-        internal static void GenerateRandomBytes(byte[] randomBytes)
-        {
-            using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
-            {
-                rng.GetBytes(randomBytes);
-            }
-        }
-
-        /// <summary>
-        /// Compares two byte arrays and returns true if all bytes are equal
-        /// </summary>
-        /// <param name="buffer1">input buffer</param>
-        /// <param name="buffer2">another buffer to be compared against</param>
-        /// <param name="buffer2Index"></param>
-        /// <param name="lengthToCompare"></param>
-        /// <returns>returns true if both the arrays have the same byte values else returns false</returns>
-        internal static bool CompareBytes(byte[] buffer1, byte[] buffer2, int buffer2Index, int lengthToCompare)
-        {
-            if (buffer1 == null || buffer2 == null)
-            {
-                return false;
-            }
-
-            Debug.Assert(buffer2Index > -1 && buffer2Index < buffer2.Length, "invalid index");// bounds on buffer2Index
-            if ((buffer2.Length - buffer2Index) < lengthToCompare)
-            {
-                return false;
-            }
-
-            for (int index = 0; index < buffer1.Length && index < lengthToCompare; ++index)
-            {
-                if (buffer1[index] != buffer2[buffer2Index + index])
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
 
         /// <summary>
         /// Return the algorithm name mapped to an Id.
@@ -130,7 +92,7 @@ namespace Microsoft.Data.SqlClient
             }
             else if (TdsEnums.AEAD_AES_256_CBC_HMAC_SHA256 == cipherAlgorithmId)
             {
-                return SqlAeadAes256CbcHmac256Algorithm.AlgorithmName;
+                return AeadAes256CbcHmac256Algorithm.AlgorithmName;
             }
             else
             {
@@ -216,7 +178,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <summary>
         /// <para> Decrypts the symmetric key and saves it in metadata. In addition, initializes
-        /// the SqlClientEncryptionAlgorithm for rapid decryption.</para>
+        /// the EncryptionAlgorithm for rapid decryption.</para>
         /// </summary>
         internal static void DecryptSymmetricKey(SqlCipherMetadata md, SqlConnection connection, SqlCommand command)
         {
@@ -227,9 +189,9 @@ namespace Microsoft.Data.SqlClient
 
             DecryptSymmetricKey(md.EncryptionInfo, out symKey, out encryptionkeyInfoChosen, connection, command);
 
-            // Given the symmetric key instantiate a SqlClientEncryptionAlgorithm object and cache it in metadata
+            // Given the symmetric key instantiate a EncryptionAlgorithm object and cache it in metadata
             md.CipherAlgorithm = null;
-            SqlClientEncryptionAlgorithm cipherAlgorithm = null;
+            EncryptionAlgorithm cipherAlgorithm = null;
             string algorithmName = ValidateAndGetEncryptionAlgorithmName(md.CipherAlgorithmId, md.CipherAlgorithmName); // may throw
             EncryptionAlgorithmFactoryList.GetAlgorithm(symKey, md.EncryptionType, algorithmName, out cipherAlgorithm); // will validate algorithm name and type
             Debug.Assert(cipherAlgorithm is not null);
