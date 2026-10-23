@@ -25,6 +25,36 @@ tests, use only `net10.0`. Stress projects use `net462;net10.0`. PackageCompatib
 `net481;net10.0` with xUnit v3, and their Framework target requires Windows and .NET Framework 4.8.1.
 The historical `tools/SniCloseLegacyRepro` test matrix is unchanged.
 
+## Simulated server tests
+
+The unit project's `SimulatedServerTests` use local TDS endpoints, not an installed SQL Server.
+Run this suite with `TestSqlClientUnit` and a `FullyQualifiedName` filter containing
+`SimulatedServerTests`. Validate discovery and the resulting TRX case counts when narrowing a run;
+the default category filter excludes quarantined tests.
+
+For new scenarios, use explicit protocol gates rather than sleeps to decide which login phase
+fails. `GatedTdsServer` can withhold pre-login responses while keeping its port and existing sessions
+alive. This separates failover from post-login failures and allows pool clearing to be verified
+with physical connection identity. Use a numeric loopback address when DNS is not under test.
+
+Declare `SimulatedServerPoolScope` after the servers and before the connections in pooling scenarios.
+It assigns a unique pool identity and clears that pool before the ephemeral servers are disposed.
+Keep retry/error/partner assertions explicit; transport attempt counts are not proof of pool reuse.
+
+The simulator runs blocking handlers on dedicated workers. Fault budgets are reserved before
+response processing, and disposal must finish owned workers and report unexpected handler failures.
+Negative TLS scenarios can set `TdsServerArguments.ExpectTlsHandshakeFailure` to explicitly expect
+authentication failure during TLS negotiation. Missing certificates/private keys and exceptions from
+protocol handlers still fail disposal; the default remains strict. Assert the expected client failure
+as well, and keep success controls so simulator setup errors cannot masquerade as certificate rejection.
+`ServerLifecycleTests` covers these contracts. Validate changes on both supported frameworks and
+on native and managed SNI, including broader simulator consumers before removing a flaky trait.
+
+The manual `CertificateTestWithTdsServer` matrix requires an untrusted self-signed certificate.
+Its setup and cleanup scripts use `-SkipTrust` to leave root trust stores unchanged, and the test
+asserts `UntrustedRoot` before connecting. Installing that certificate as trusted invalidates
+the negative cases; explicit certificate pinning and `TrustServerCertificate` provide the success controls.
+
 ## CI Platform Coverage
 
 PR validation runs tests on Windows and Linux only. The
