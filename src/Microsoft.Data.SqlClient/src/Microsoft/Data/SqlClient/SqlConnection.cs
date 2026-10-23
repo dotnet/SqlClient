@@ -1448,6 +1448,28 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <summary>
+        /// Closes an already-quarantined connection even if pre-close diagnostics throw.
+        /// The fatal reader cleanup caller remains responsible for preserving its initiating exception.
+        /// </summary>
+        internal void CloseOnError()
+        {
+            DbConnectionInternal originalConnection = InnerConnection;
+            try
+            {
+                Close();
+            }
+            finally
+            {
+                // A pre-close subscriber can throw before Close reaches teardown. Only release
+                // the captured connection, never a replacement opened by a reentrant subscriber.
+                if (ReferenceEquals(InnerConnection, originalConnection))
+                {
+                    CloseInnerConnection();
+                }
+            }
+        }
+
         private void CloseInnerConnection()
         {
             // CloseConnection() now handles the lock

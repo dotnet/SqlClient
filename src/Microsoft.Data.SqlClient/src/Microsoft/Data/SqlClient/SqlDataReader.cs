@@ -1006,7 +1006,7 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     // Preserve reader ownership even when retiring the session fails.
-                    connectionToClose?.Close();
+                    connectionToClose?.CloseOnError();
                 }
                 finally
                 {

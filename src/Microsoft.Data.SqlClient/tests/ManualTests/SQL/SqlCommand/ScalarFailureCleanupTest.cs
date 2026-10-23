@@ -131,13 +131,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// checkout, without replacing the initiating failure if a connection-close subscriber throws.
         /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [InlineData(false, false, false)]
-        [InlineData(false, true, false)]
-        [InlineData(false, true, true)]
-        [InlineData(true, false, false)]
-        [InlineData(true, true, false)]
-        [InlineData(true, true, true)]
-        public void ReaderClose_FatalRestorationHonorsConnectionOwnership(bool mars, bool closeConnection, bool throwOnClose)
+        [InlineData(false, false, false, false)]
+        [InlineData(false, true, false, false)]
+        [InlineData(false, true, true, false)]
+        [InlineData(true, false, false, false)]
+        [InlineData(true, true, false, false)]
+        [InlineData(true, true, true, false)]
+        [InlineData(false, true, false, true)]
+        [InlineData(true, false, false, true)]
+        [InlineData(true, true, false, true)]
+        public void ReaderClose_FatalRestorationHonorsConnectionOwnership(
+            bool mars, bool closeConnection, bool throwOnClose, bool throwBeforeClose)
         {
             var builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
             {
@@ -151,6 +155,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Enlist = false
             };
             using SqlConnection connection = new(builder.ConnectionString);
+            int beforeCloseEvents = 0;
+            var observer = new FakeDiagnosticListenerObserver(value =>
+            {
+                if (value.Key == "Microsoft.Data.SqlClient.WriteConnectionCloseBefore" &&
+                    ReferenceEquals(connection, value.Value.GetType().GetProperty("Connection").GetValue(value.Value)))
+                {
+                    beforeCloseEvents++;
+                    if (throwBeforeClose)
+                    {
+                        throw new InvalidOperationException("Secondary pre-close failure");
+                    }
+                }
+            });
+            observer.Enable();
+            using var subscription = DiagnosticListener.AllListeners.Subscribe(observer);
             int closedEvents = 0;
             StateChangeEventHandler onStateChange = (_, args) =>
             {
@@ -187,6 +206,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.Same(failure, Record.Exception(() => reader.Close()));
                 Assert.Equal(1, notifications);
                 Assert.True(reader.IsClosed);
+                Assert.Equal(closeConnection || mars ? 1 : 0, beforeCloseEvents);
                 Assert.Equal(closeConnection || mars ? 1 : 0, closedEvents);
                 if (!closeConnection && !mars)
                 {
@@ -208,6 +228,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
+                observer.Disable();
                 connection.StateChange -= onStateChange;
                 SqlConnection.ClearPool(connection);
             }
@@ -353,8 +374,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// A fatal error on one MARS reader must complete a peer's timeout-free pending read,
         /// rather than merely disabling cancellation by marking the shared parser broken.
         /// </summary>
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public async Task FatalCleanup_CompletesPendingMarsPeer()
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task FatalCleanup_CompletesPendingMarsPeer(bool throwBeforeClose)
         {
             var builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
             {
@@ -373,12 +396,28 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Task<SqlDataReader> pending = peerCommand.ExecuteReaderAsync();
             Assert.False(pending.IsCompleted, "Peer must be waiting for server data before fatal cleanup.");
             var failure = new OutOfMemoryException("Fatal MARS sentinel");
+            int beforeCloseEvents = 0;
+            var observer = new FakeDiagnosticListenerObserver(value =>
+            {
+                if (value.Key == "Microsoft.Data.SqlClient.WriteConnectionCloseBefore" &&
+                    ReferenceEquals(connection, value.Value.GetType().GetProperty("Connection").GetValue(value.Value)))
+                {
+                    beforeCloseEvents++;
+                    if (throwBeforeClose)
+                    {
+                        throw new InvalidOperationException("Secondary pre-close failure");
+                    }
+                }
+            });
+            observer.Enable();
+            using var subscription = DiagnosticListener.AllListeners.Subscribe(observer);
             try
             {
                 Exception actual = Record.Exception(() => typeof(SqlDataReader)
                     .GetMethod("CloseOnError", BindingFlags.Instance | BindingFlags.NonPublic)
                     .Invoke(failingReader, new object[] { failure }));
                 Assert.Same(failure, Assert.IsType<TargetInvocationException>(actual).InnerException);
+                Assert.True(beforeCloseEvents > 0, "Expected a pre-close diagnostic callback.");
                 peerCommand.Cancel();
                 Assert.Same(pending, await Task.WhenAny(pending, Task.Delay(TimeSpan.FromSeconds(5))));
                 Assert.NotNull(await Record.ExceptionAsync(async () => await pending));
@@ -386,6 +425,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
+                observer.Disable();
                 connection.Close();
                 // Observe the peer even on a failed assertion; do not leave pending work behind.
                 await Record.ExceptionAsync(async () => await pending);
