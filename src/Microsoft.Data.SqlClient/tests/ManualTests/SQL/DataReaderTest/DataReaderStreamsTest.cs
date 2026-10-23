@@ -17,6 +17,50 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     [Trait("Set", "2")]
     public static class DataReaderStreamsTest
     {
+        /// <summary>
+        /// Materializing valid large PLP values must preserve their complete contents with
+        /// both command behaviors and both synchronous and asynchronous reads.
+        /// </summary>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(
+            nameof(GetCommandBehavioursAndIsAsync)
+#if NETFRAMEWORK
+            , DisableDiscoveryEnumeration = true
+#endif
+        )]
+        public static async Task MaterializeLargePlpValues(CommandBehavior behavior, bool isExecuteAsync)
+        {
+            string text = new string('x', 131073) + "\u4f60\u597d\ud83d\ude03";
+            string ansi = new string('y', 131073) + "end";
+            string xml = "<value>" + text + "</value>";
+            byte[] binary = Encoding.UTF8.GetBytes(text);
+            string connectionString = SetConnectionStringPacketSize(DataTestUtility.TCPConnectionString, 512);
+            using SqlConnection connection = new(connectionString);
+            using SqlCommand command = new("SELECT @binary, @unicode, @ansi, CAST(@xml AS xml)", connection);
+            command.Parameters.Add("@binary", SqlDbType.VarBinary, -1).Value = binary;
+            command.Parameters.Add("@unicode", SqlDbType.NVarChar, -1).Value = text;
+            command.Parameters.Add("@ansi", SqlDbType.VarChar, -1).Value = ansi;
+            command.Parameters.Add("@xml", SqlDbType.NVarChar, -1).Value = xml;
+            if (isExecuteAsync)
+            {
+                await connection.OpenAsync();
+            }
+            else
+            {
+                connection.Open();
+            }
+            using SqlDataReader reader = await ExecuteReader(command, behavior, isExecuteAsync);
+            Assert.True(await Read(reader, isExecuteAsync));
+
+            Assert.Equal(binary, isExecuteAsync
+                ? await reader.GetFieldValueAsync<byte[]>(0)
+                : reader.GetFieldValue<byte[]>(0));
+            Assert.Equal(text, isExecuteAsync ? await reader.GetFieldValueAsync<string>(1) : reader.GetString(1));
+            Assert.Equal(ansi, isExecuteAsync ? await reader.GetFieldValueAsync<string>(2) : reader.GetString(2));
+            Assert.Equal(xml, reader.GetSqlXml(3).Value);
+            Assert.False(await Read(reader, isExecuteAsync));
+        }
+
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(
             nameof(GetCommandBehavioursAndIsAsync)

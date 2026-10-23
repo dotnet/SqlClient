@@ -673,11 +673,11 @@ namespace Microsoft.Data.SqlClient
             charsCopied = 0;
             while (charsCopied < charsCount)
             {
-                // check if the current buffer contains some bytes we need to copy and copy them
-                //  in a block
+                // Do not copy beyond the current packet: a trailing UTF-16 byte may be
+                // followed by a TDS header, which TryReadChar must skip before reading its pair.
                 int bytesToRead = Math.Min(
                     (charsCount - charsCopied) * 2,
-                    unchecked((_inBytesRead - _inBytesUsed) & (int)0xFFFFFFFE) // it the result is odd take off the 0 to make it even
+                    unchecked(Math.Min(_inBytesPacket, _inBytesRead - _inBytesUsed) & (int)0xFFFFFFFE)
                 );
                 if (bytesToRead > 0)
                 {
@@ -1705,6 +1705,11 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 AssertValidState();
+                if (buf.Length != length)
+                {
+                    // Growth leaves spare capacity, but SqlBinary exposes the entire array.
+                    Array.Resize(ref buf, length);
+                }
             }
             else
             {
@@ -1982,26 +1987,33 @@ namespace Microsoft.Data.SqlClient
 
             if ((_bTmpRead > 0) || (((_inBytesUsed + 4) > _inBytesRead) || (_inBytesPacket < 4)))
             {
-                // If the int isn't fully in the buffer, or if it isn't fully in the packet,
-                // then use ReadByteArray since the logic is there to take care of that.
-
-                int bytesRead;
-                TdsOperationStatus result = TryReadByteArray(_bTmp.AsSpan(start: _bTmpRead), 4 - _bTmpRead, out bytesRead);
-                if (result != TdsOperationStatus.Done)
+                // Publish partial header progress before fetching another packet. Otherwise
+                // PLP continuation can incorrectly capture a checkpoint inside a chunk header.
+                while (_bTmpRead < sizeof(uint))
                 {
-                    Debug.Assert(_bTmpRead + bytesRead <= 4, "Read more data than required");
+                    if (_inBytesPacket == 0 || _inBytesUsed == _inBytesRead)
+                    {
+                        TdsOperationStatus prepareResult = TryPrepareBuffer();
+                        if (prepareResult != TdsOperationStatus.Done)
+                        {
+                            value = 0;
+                            return prepareResult;
+                        }
+                    }
+                    int bytesToRead = Math.Min(sizeof(uint) - _bTmpRead,
+                        Math.Min(_inBytesPacket, _inBytesRead - _inBytesUsed));
+                    TdsOperationStatus result = TryReadByteArray(_bTmp.AsSpan(_bTmpRead), bytesToRead, out int bytesRead);
                     _bTmpRead += bytesRead;
-                    value = 0;
-                    return result;
+                    if (result != TdsOperationStatus.Done)
+                    {
+                        value = 0;
+                        return result;
+                    }
                 }
-                else
-                {
-                    Debug.Assert(_bTmpRead + bytesRead == 4, "TryReadByteArray returned true without reading all data required");
-                    _bTmpRead = 0;
-                    AssertValidState();
-                    value = BinaryPrimitives.ReadUInt32LittleEndian(_bTmp);
-                    return TdsOperationStatus.Done;
-                }
+                _bTmpRead = 0;
+                AssertValidState();
+                value = BinaryPrimitives.ReadUInt32LittleEndian(_bTmp);
+                return TdsOperationStatus.Done;
             }
             else
             {
@@ -2346,8 +2358,7 @@ namespace Microsoft.Data.SqlClient
                 AssertValidState();
                 if (writeDataSizeToSnapshot && canContinue && _snapshot != null)
                 {
-                    // if there is a snapshot which it contains a stored plp buffer take it
-                    // and try to use it if it is the right length
+                    // A continuation may have completed the value before resuming this call.
                     byte[] existingBuff = TryTakeSnapshotStorage() as byte[];
                     if (existingBuff != null)
                     {
@@ -2362,44 +2373,35 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert((buff == null && offset == 0) || (buff.Length >= offset + len), "Invalid length sent to ReadPlpBytes()!");
 
             int bytesLeft = len;
+            int snapshotPacketId = -1;
 
-            // If total length is known up front, allocate the whole buffer in one shot instead of realloc'ing and copying over each time
-            if (buff == null && _longlen != TdsEnums.SQL_PLP_UNKNOWNLEN)
+            if (buff == null && _snapshot != null)
             {
-                if (_snapshot != null)
+                // Reuse partially filled buffers for both known and unknown total lengths.
+                // A continuation resumes after prior packets; compatibility replay starts over.
+                buff = TryTakeSnapshotStorage() as byte[];
+                if (buff != null && !compatibilityMode && writeDataSizeToSnapshot && canContinue)
                 {
-                    if (compatibilityMode && _snapshotStatus != SnapshotStatus.NotActive)
-                    {
-                        // legacy replay path perf optimization
-                        // if there is a snapshot which contains a stored plp buffer take it
-                        // and try to use it if it is the right length
-                        buff = TryTakeSnapshotStorage() as byte[];
-                    }
-                    else
-                    {
-                        // if there is a snapshot which it contains a stored plp buffer take it
-                        // and try to use it if it is the right length
-                        buff = TryTakeSnapshotStorage() as byte[];
-                        if (buff != null && writeDataSizeToSnapshot && canContinue)
-                        {
-                            offset = _snapshot.GetPacketDataOffset();
-                            totalBytesRead = offset;
-                        }
-                    }
-                }
-
-
-                if ((ulong)(buff?.Length ?? 0) != _longlen)
-                {
-                    // if the buffer is null or the wrong length create one to use
-                    buff = new byte[(Math.Min((int)_longlen, len))];
+                    offset = _snapshot.GetPacketDataOffset();
+                    totalBytesRead = offset;
+                    bytesLeft -= offset;
                 }
             }
 
             if (_longlenleft == 0)
             {
                 TdsOperationStatus result = TryReadPlpLength(false, out _);
-                if (result != TdsOperationStatus.Done || _longlenleft == 0)
+                if (result != TdsOperationStatus.Done)
+                {
+                    // A resumed read can pend again in the next chunk header. Keep its
+                    // payload buffer until the header is complete, just as for a payload pend.
+                    if (_snapshot != null && (compatibilityMode || canContinue))
+                    {
+                        SetSnapshotStorage(buff);
+                    }
+                    return result;
+                }
+                if (_longlenleft == 0)
                 {
                     if (_snapshot != null)
                     {
@@ -2410,28 +2412,43 @@ namespace Microsoft.Data.SqlClient
                         }
                         SetSnapshotStorage(null);
                     }
+                    if (buff == null)
+                    {
+                        buff = Array.Empty<byte>();
+                    }
                     return result;
                 }
             }
 
-            if (buff == null)
-            {
-                buff = new byte[_longlenleft];
-            }
-
             while (bytesLeft > 0)
             {
-                int bytesToRead = (int)Math.Min(_longlenleft, (ulong)bytesLeft);
-                if (buff.Length < (offset + bytesToRead))
+                TdsOperationStatus result = TdsOperationStatus.Done;
+                if (_inBytesPacket == 0 || _inBytesUsed == _inBytesRead)
                 {
-                    // Grow the array
-                    byte[] newbuf = new byte[offset + bytesToRead];
-                    Buffer.BlockCopy(buff, 0, newbuf, 0, offset);
-                    buff = newbuf;
-                    newbuf = null;
+                    result = TryPrepareBuffer();
                 }
 
-                TdsOperationStatus result = TryReadByteArray(buff.AsSpan(offset), bytesToRead, out int bytesRead);
+                int bytesRead = 0;
+                if (result == TdsOperationStatus.Done)
+                {
+                    // Chunk lengths can describe data that has not arrived yet. Limit each
+                    // allocation/read to the payload already available in the current packet.
+                    int bytesToRead = (int)Math.Min(_longlenleft,
+                        (ulong)Math.Min(bytesLeft, Math.Min(_inBytesPacket, _inBytesRead - _inBytesUsed)));
+                    int requiredLength = checked(offset + bytesToRead);
+                    if (buff == null || buff.Length < requiredLength)
+                    {
+                        byte[] newBuffer = new byte[GetPlpBufferSize(buff?.Length ?? 0, requiredLength, _longlen)];
+                        if (buff != null)
+                        {
+                            Buffer.BlockCopy(buff, 0, newBuffer, 0, offset);
+                        }
+                        buff = newBuffer;
+                    }
+
+                    result = TryReadByteArray(buff.AsSpan(offset), bytesToRead, out bytesRead);
+                }
+
                 Debug.Assert(bytesRead <= bytesLeft, "Read more bytes than we needed");
                 Debug.Assert((ulong)bytesRead <= _longlenleft, "Read more bytes than is available");
 
@@ -2457,7 +2474,7 @@ namespace Microsoft.Data.SqlClient
                             SetSnapshotStorage(buff);
                             if (writeDataSizeToSnapshot)
                             {
-                                AddSnapshotDataSize(bytesRead);
+                                AddPlpSnapshotDataSize(bytesRead, ref snapshotPacketId);
                             }
                         }
                     }
@@ -2465,7 +2482,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 if (writeDataSizeToSnapshot && canContinue)
                 {
-                    AddSnapshotDataSize(bytesRead);
+                    AddPlpSnapshotDataSize(bytesRead, ref snapshotPacketId);
                 }
 
                 if (_longlenleft == 0)
@@ -2482,10 +2499,10 @@ namespace Microsoft.Data.SqlClient
                                 // so it can be re-used when another packet arrives and we read again
                                 SetSnapshotStorage(buff);
                             }
-                            else if (result == TdsOperationStatus.NeedMoreData)
+                            else if (canContinue)
                             {
                                 SetSnapshotStorage(buff);
-                                // data bytes read from the current packet must be 0 here so do not save the snapshot data size
+                                // Chunk headers are not payload and must not change its snapshot count.
                             }
                         }
                         return result;
@@ -2507,6 +2524,25 @@ namespace Microsoft.Data.SqlClient
                 ClearSnapshotDataSize();
             }
             return TdsOperationStatus.Done;
+        }
+
+        internal static int GetPlpBufferSize(int currentLength, int requiredLength, ulong totalLength)
+        {
+            // Double capacity to amortize copies, but avoid growing past an accurate total hint.
+            // The hint is not a limit: if received data exceeds it, keep growing normally.
+            ulong growthLimit = totalLength >= (ulong)requiredLength ? Math.Min(totalLength, int.MaxValue) : int.MaxValue;
+            return Math.Max(requiredLength,
+                (int)Math.Min((ulong)currentLength * 2, growthLimit));
+        }
+
+        internal void AddPlpSnapshotDataSize(int size, ref int lastPacketId)
+        {
+            int packetId = GetSnapshotPacketID();
+            // Snapshot sizes are assigned, not incremented. Replayed packets start counting
+            // again, while multiple payload slices/chunks within one packet must accumulate.
+            int packetSize = packetId == lastPacketId ? GetSnapshotDataSize() : 0;
+            AddSnapshotDataSize(packetSize + size);
+            lastPacketId = packetId;
         }
         /////////////////////////////////////////
         // Value Skip Logic                    //

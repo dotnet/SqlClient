@@ -1096,6 +1096,11 @@ The <xref:Microsoft.Data.SqlClient.SqlDataReader.GetSchemaTable%2A> method retur
       </returns>
       <remarks>
         <para>
+          To avoid buffering the entire value, execute the command with <see cref="F:System.Data.CommandBehavior.SequentialAccess" />
+          and consume the stream incrementally. Without this behavior, the value is buffered in memory.
+          Materializing a large value can still exhaust available memory.
+        </para>
+        <para>
           <see cref="P:System.IO.Stream.ReadTimeout" /> defaults to the value of <see cref="P:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout" /> ; but you can modify <see cref="P:System.IO.Stream.ReadTimeout" /> via <b>GetStream</b>.
         </para>
         <para>
@@ -1176,6 +1181,11 @@ The <xref:Microsoft.Data.SqlClient.SqlDataReader.GetSchemaTable%2A> method retur
         The returned object.
       </returns>
       <remarks>
+        <para>
+          To avoid buffering the entire value, execute the command with <see cref="F:System.Data.CommandBehavior.SequentialAccess" />
+          and consume the reader incrementally. Without this behavior, the value is buffered in memory.
+          Reading the entire value into a string can still exhaust available memory.
+        </para>
         <para>
           <see cref="T:Microsoft.Data.SqlClient.SqlException" /> exceptions raised from <see cref="T:System.IO.TextReader" /> are thrown as <see cref="T:System.IO.IOException" /> exceptions; check the inner exception for the <see cref="T:Microsoft.Data.SqlClient.SqlException" />.
         </para>
