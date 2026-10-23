@@ -119,12 +119,12 @@ jobs:
           PR_NUMBER: ${{ inputs.pr_number }}
         run: |
           gh pr view "${PR_NUMBER}" --repo "${GITHUB_REPOSITORY}" \
-            --json number,merged,baseRefName,labels,mergeCommit,title \
+            --json number,state,mergedAt,baseRefName,labels,mergeCommit,title \
             --jq '
               "pr_number=\(.number)",
               "event_action=reconcile",
               "event_label=",
-              "merged=\(.merged)",
+              "merged=\(.state == "CLOSED" and .mergedAt != null)",
               "base_ref=\(.baseRefName)",
               "labels=\([.labels[].name] | join(","))",
               "merge_commit_sha=\(.mergeCommit.oid // "")",
