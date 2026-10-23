@@ -226,6 +226,9 @@
       <exception cref="T:System.ArgumentException">
         A <see langword="SqlDbType" /> that is not allowed was passed to the constructor as <paramref name="dbType" />.
       </exception>
+      <exception cref="T:System.NotSupportedException">
+        Globalization invariant mode is enabled and a <see langword="SqlDbType" /> which relates to a text or character type was passed to the constructor as <paramref name="dbType" />.
+      </exception>
     </ctorNameDbType>
     <ctorNameDbTypeMaxLength>
       <param name="name">
@@ -348,6 +351,9 @@
       </exception>
       <exception cref="T:System.ArgumentException">
         A SqlDbType that is not allowed was passed to the constructor as <paramref name="dbType" />.
+      </exception>
+      <exception cref="T:System.NotSupportedException">
+        Globalization invariant mode is enabled and a <see langword="SqlDbType" /> which relates to a text or character type was passed to the constructor as <paramref name="dbType" />.
       </exception>
     </ctorNameDbTypeMaxLength>
     <ctorNameDbTypeUserDefinedType>
@@ -624,6 +630,9 @@
       <remarks>
         For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/table-valued-parameters">Table-Valued Parameters</see>.
       </remarks>
+      <exception cref="T:System.NotSupportedException">
+        Globalization invariant mode is enabled and a <see langword="SqlDbType" /> which relates to a text or character type was passed to the constructor as <paramref name="dbType" />.
+      </exception>
     </ctorNameDbTypeUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal>
     <ctorNameDbTypeMaxLengthUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal>
       <param name="name">
@@ -653,6 +662,9 @@
       <remarks>
         For more information, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql/table-valued-parameters">Table-Valued Parameters</see>.
       </remarks>
+      <exception cref="T:System.NotSupportedException">
+        Globalization invariant mode is enabled and a <see langword="SqlDbType" /> which relates to a text or character type was passed to the constructor as <paramref name="dbType" />.
+      </exception>
     </ctorNameDbTypeMaxLengthUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal>
     <ctorNameDbTypePrecisionScaleUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal>
       <param name="name">

@@ -253,6 +253,50 @@ dotnet build -t:TestSqlClientFunctional -p:TestFramework=net10.0
 
 ### Packaging Projects
 
+#### Consumer family-version check
+
+The Microsoft.Data.SqlClient package owns `ValidateSqlClientFamilyPackageVersions` and
+ships it as `Microsoft.Data.SqlClient.targets` in both `build/` and `buildTransitive/`.
+NuGet imports it into direct consumers and transitive PackageReference consumers (unless
+build assets are excluded). When Microsoft.Data.SqlClient is present in the consuming
+package graph, it anchors comparisons against installed family members. Installed Logging,
+Abstractions, Extensions.Azure, and AKV packages must match the resolved SqlClient version
+exactly, including prerelease labels. Optional family packages are not required; independently
+versioned Microsoft.SqlServer.Server and native SNI packages are excluded. The target uses
+resolved compile/runtime package metadata or the active legacy `packages.config`
+(including `packages.<project-name>.config`), not
+assembly versions or declared version ranges, and skips design-time builds.
+Missing version metadata or a missing SqlClient anchor is not guessed.
+
+**SQLCLIENT001** warns when installed family versions differ; by default, the check
+does not fail the build. Upgrade them together; historical extension `1.0.0` versions
+are not automatically mapped to driver `7.0.0`/`7.0.1`. To suppress the warning, set
+`-p:SqlClientEnforceFamilyVersions=false` (or that property in the consumer
+project). It suppresses this check only, not incompatibilities.
+NuGet buildTransitive assets can propagate through project-reference chains when a
+referenced project consumes SqlClient as a package. Project-mode repository builds
+reference SqlClient's source project directly, so they do not import its packaged
+targets and are not validated by this consumer target.
+
+Run `dotnet tool restore` first to restore the repository's pinned PowerShell tool.
+The regression suite also requires Pester 5.7.1:
+
+```powershell
+dotnet tool run pwsh -NoProfile -Command "Install-Module Pester -RequiredVersion 5.7.1 -Repository PSGallery -Scope CurrentUser -Force -ErrorAction Stop"
+dotnet tool run pwsh -NoProfile -Command 'Import-Module Pester -RequiredVersion 5.7.1; Invoke-Pester -Path ./src/Microsoft.Data.SqlClient/tests/VersionChecks/VersionChecks.Tests.ps1 -CI'
+```
+
+The parameterized Pester suite creates small family-package fixtures in a private local
+feed, with the SqlClient fixture carrying the real shipped target, and verifies automatic
+imports for both direct and transitive package consumers. It also checks that the real
+SqlClient nuspec packs that target into `build/` and `buildTransitive/`, so no driver
+build is needed. It uses a unique directory under `tests/VersionChecks` and removes that
+directory on completion; no SQL Server is required.
+Add `-Tag Synthetic` to `Invoke-Pester` to run only the metadata and legacy manifest
+matrix without packing consumer fixtures.
+The suite is available for local execution only. PR and OneBranch pipelines do not
+install Pester or run these tests.
+
 Just like building and testing the various projects in this repository, packaging the projects into NuGet packages is
 also handled by `build.proj`. From the root of your repository, run `dotnet build` against `build.proj` with a pack target,
 following this pattern:

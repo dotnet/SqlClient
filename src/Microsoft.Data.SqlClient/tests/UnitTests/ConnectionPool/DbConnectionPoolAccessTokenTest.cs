@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
+using Microsoft.Data.SqlClient.Parser.Login;
 using Microsoft.Data.SqlClient.Tests.Common;
 using Microsoft.SqlServer.TDS.PreLogin;
 using Microsoft.SqlServer.TDS.Servers;
