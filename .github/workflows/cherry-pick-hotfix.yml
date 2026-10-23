@@ -111,6 +111,13 @@ jobs:
           } >> "${GITHUB_OUTPUT}"
           echo "pr_title=${PR_TITLE}" >> "${GITHUB_OUTPUT}"
 
+      - name: Checkout dispatch helper
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github/scripts/resolve-hotfix-dispatch-context.sh
+          sparse-checkout-cone-mode: false
+
       - name: Resolve PR context (workflow_dispatch)
         if: github.event_name == 'workflow_dispatch'
         id: resolve_dispatch
