@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -6,6 +6,7 @@ using System;
 using Xunit;
 using System.Data;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.Tests.Common.ConfigurableRetryLogic;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -31,15 +32,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [InlineData(RetryLogicConfigHelper.RetryMethodName_Exp, RetryLogicConfigHelper.RetryMethodName_Fix)]
         public void LoadValidInternalTypes(string method1, string method2)
         {
-            RetryLogicConfigs cnnCfg = RetryLogicConfigHelper.CreateRandomConfig(method1);
-            RetryLogicConfigs cmdCfg = RetryLogicConfigHelper.CreateRandomConfig(method2,
+            RetryLogicConfigs cnnCfg = RetryLogicLoaderHelper.CreateRandomConfig(method1);
+            RetryLogicConfigs cmdCfg = RetryLogicLoaderHelper.CreateRandomConfig(method2,
                                            // Doesn't accept DML statements
                                            @"^\b(?!UPDATE|DELETE|TRUNCATE|INSERT( +INTO){0,1})\b");
             // for sake of reducing the retry time in total
             cnnCfg.NumberOfTries = 1;
             cmdCfg.NumberOfTries = 1;
 
-            object loaderObj = RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider);
+            object loaderObj = RetryLogicLoaderHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider);
             Assert.NotNull(loaderObj);
             RetryLogicConfigHelper.AssessProvider(cnnProvider, cnnCfg);
             RetryLogicConfigHelper.AssessProvider(cmdProvider, cmdCfg);
@@ -66,8 +67,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [InlineData("Microsoft.Data.SqlClient.Tests.CustomConfigurableRetryLogicEx, ExternalConfigurableRetryLogic", "GetDefaultRetry")]
         public void LoadCustomMethod(string typeName, string methodName)
         {
-            RetryLogicConfigs cnnCfg = RetryLogicConfigHelper.CreateRandomConfig(methodName);
-            RetryLogicConfigs cmdCfg = RetryLogicConfigHelper.CreateRandomConfig(methodName);
+            RetryLogicConfigs cnnCfg = RetryLogicLoaderHelper.CreateRandomConfig(methodName);
+            RetryLogicConfigs cmdCfg = RetryLogicLoaderHelper.CreateRandomConfig(methodName);
             // for sake of reducing the retry time in total
             cnnCfg.RetryLogicType = typeName;
             cmdCfg.RetryLogicType = typeName;
@@ -75,7 +76,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             cnnCfg.NumberOfTries = 1;
             cmdCfg.NumberOfTries = 3;
 
-            object loaderObj = RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider);
+            object loaderObj = RetryLogicLoaderHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider);
             Assert.NotNull(loaderObj);
 
             TestConnection(cnnProvider, cnnCfg);
@@ -96,8 +97,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [InlineData("Microsoft.Data.SqlClient.Tests.CustomConfigurableRetryLogic, ExternalConfigurableRetryLogic", "getdefaultretry")]
         public void LoadInvalidCustomRetryLogicType(string typeName, string methodName)
         {
-            RetryLogicConfigs cnnCfg = RetryLogicConfigHelper.CreateRandomConfig(methodName);
-            RetryLogicConfigs cmdCfg = RetryLogicConfigHelper.CreateRandomConfig(methodName);
+            RetryLogicConfigs cnnCfg = RetryLogicLoaderHelper.CreateRandomConfig(methodName);
+            RetryLogicConfigs cmdCfg = RetryLogicLoaderHelper.CreateRandomConfig(methodName);
             // for sake of reducing the retry time in total
             cnnCfg.RetryLogicType = typeName;
             cmdCfg.RetryLogicType = typeName;
@@ -105,7 +106,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             cnnCfg.NumberOfTries = 1;
             cmdCfg.NumberOfTries = 3;
 
-            object loaderObj = RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider);
+            object loaderObj = RetryLogicLoaderHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider);
             Assert.NotNull(loaderObj);
 
             s_connectionCRLTest.DefaultOpenWithoutRetry(TcpCnnString, cnnProvider);
@@ -121,10 +122,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(RetryLogicConfigHelper.GetInvalidInternalMethodNames), MemberType = typeof(RetryLogicConfigHelper))]
         public void InvalidRetryMethodName(string methodName)
         {
-            RetryLogicConfigs cnnCfg = RetryLogicConfigHelper.CreateRandomConfig(methodName);
-            RetryLogicConfigs cmdCfg = RetryLogicConfigHelper.CreateRandomConfig(methodName, @"Don't care!");
+            RetryLogicConfigs cnnCfg = RetryLogicLoaderHelper.CreateRandomConfig(methodName);
+            RetryLogicConfigs cmdCfg = RetryLogicLoaderHelper.CreateRandomConfig(methodName, @"Don't care!");
 
-            object loaderObj = RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider);
+            object loaderObj = RetryLogicLoaderHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider);
             Assert.NotNull(loaderObj);
 
             // none retriable logic applies.
@@ -141,14 +142,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [InlineData("Microsoft.Data.SqlClient.SqlConfigurableRetryFactory")]
         public void InvalidRetryLogicTypeWithValidInternalMethodName(string typeName)
         {
-            RetryLogicConfigs cnnCfg = RetryLogicConfigHelper.CreateRandomConfig(RetryLogicConfigHelper.RetryMethodName_Fix);
+            RetryLogicConfigs cnnCfg = RetryLogicLoaderHelper.CreateRandomConfig(RetryLogicConfigHelper.RetryMethodName_Fix);
             cnnCfg.RetryLogicType = typeName;
-            RetryLogicConfigs cmdCfg = RetryLogicConfigHelper.CreateRandomConfig(RetryLogicConfigHelper.RetryMethodName_Fix);
+            RetryLogicConfigs cmdCfg = RetryLogicLoaderHelper.CreateRandomConfig(RetryLogicConfigHelper.RetryMethodName_Fix);
             // for sake of reducing the retry time in total
             cnnCfg.NumberOfTries = 1;
             cmdCfg.NumberOfTries = 1;
 
-            object loaderObj = RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider);
+            object loaderObj = RetryLogicLoaderHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider);
             Assert.NotNull(loaderObj);
             RetryLogicConfigHelper.AssessProvider(cnnProvider, cnnCfg);
             RetryLogicConfigHelper.AssessProvider(cmdProvider, cmdCfg);
@@ -162,23 +163,23 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(RetryLogicConfigHelper.GetIivalidTimes), MemberType = typeof(RetryLogicConfigHelper))]
         public void OutOfRangeTime(TimeSpan deltaTime, TimeSpan minTime, TimeSpan maxTime)
         {
-            RetryLogicConfigs cnnCfg = RetryLogicConfigHelper.CreateRandomConfig(RetryLogicConfigHelper.RetryMethodName_Fix);
+            RetryLogicConfigs cnnCfg = RetryLogicLoaderHelper.CreateRandomConfig(RetryLogicConfigHelper.RetryMethodName_Fix);
             cnnCfg.DeltaTime = deltaTime;
-            RetryLogicConfigs cmdCfg = RetryLogicConfigHelper.CreateRandomConfig(RetryLogicConfigHelper.RetryMethodName_Fix, @"Don't care!");
+            RetryLogicConfigs cmdCfg = RetryLogicLoaderHelper.CreateRandomConfig(RetryLogicConfigHelper.RetryMethodName_Fix, @"Don't care!");
 
-            var ex = Assert.Throws<System.Reflection.TargetInvocationException>(() => RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider));
+            var ex = Assert.Throws<System.Reflection.TargetInvocationException>(() => RetryLogicLoaderHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider));
             Assert.Equal(typeof(System.Configuration.ConfigurationErrorsException), ex.InnerException?.GetType());
             Assert.Equal(typeof(ArgumentException), ex.InnerException?.InnerException?.GetType());
 
-            cnnCfg = RetryLogicConfigHelper.CreateRandomConfig(RetryLogicConfigHelper.RetryMethodName_Fix);
+            cnnCfg = RetryLogicLoaderHelper.CreateRandomConfig(RetryLogicConfigHelper.RetryMethodName_Fix);
             cnnCfg.MinTimeInterval = minTime;
-            ex = Assert.Throws<System.Reflection.TargetInvocationException>(() => RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider));
+            ex = Assert.Throws<System.Reflection.TargetInvocationException>(() => RetryLogicLoaderHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider));
             Assert.Equal(typeof(System.Configuration.ConfigurationErrorsException), ex.InnerException?.GetType());
             Assert.Equal(typeof(ArgumentException), ex.InnerException?.InnerException?.GetType());
 
-            cnnCfg = RetryLogicConfigHelper.CreateRandomConfig(RetryLogicConfigHelper.RetryMethodName_Fix);
+            cnnCfg = RetryLogicLoaderHelper.CreateRandomConfig(RetryLogicConfigHelper.RetryMethodName_Fix);
             cnnCfg.MaxTimeInterval = maxTime;
-            ex = Assert.Throws<System.Reflection.TargetInvocationException>(() => RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider));
+            ex = Assert.Throws<System.Reflection.TargetInvocationException>(() => RetryLogicLoaderHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider));
             Assert.Equal(typeof(System.Configuration.ConfigurationErrorsException), ex.InnerException?.GetType());
             Assert.Equal(typeof(ArgumentException), ex.InnerException?.InnerException?.GetType());
         }
@@ -190,11 +191,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [InlineData(100)]
         public void InvalidNumberOfTries(int num)
         {
-            RetryLogicConfigs cnnCfg = RetryLogicConfigHelper.CreateRandomConfig(RetryLogicConfigHelper.RetryMethodName_Fix);
+            RetryLogicConfigs cnnCfg = RetryLogicLoaderHelper.CreateRandomConfig(RetryLogicConfigHelper.RetryMethodName_Fix);
             cnnCfg.NumberOfTries = num;
-            RetryLogicConfigs cmdCfg = RetryLogicConfigHelper.CreateRandomConfig(RetryLogicConfigHelper.RetryMethodName_Fix, @"Don't care!");
+            RetryLogicConfigs cmdCfg = RetryLogicLoaderHelper.CreateRandomConfig(RetryLogicConfigHelper.RetryMethodName_Fix, @"Don't care!");
 
-            var ex = Assert.Throws<System.Reflection.TargetInvocationException>(() => RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider));
+            var ex = Assert.Throws<System.Reflection.TargetInvocationException>(() => RetryLogicLoaderHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider));
             Assert.Equal(typeof(System.Configuration.ConfigurationErrorsException), ex.InnerException?.GetType());
             Assert.Equal(typeof(ArgumentException), ex.InnerException?.InnerException?.GetType());
         }
@@ -214,11 +215,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [InlineData(@"~!@#$%^&*()_+={}[]|\""':;.><?/")]
         public void InvalidTransientError(string errors)
         {
-            RetryLogicConfigs cnnCfg = RetryLogicConfigHelper.CreateRandomConfig(RetryLogicConfigHelper.RetryMethodName_Fix);
+            RetryLogicConfigs cnnCfg = RetryLogicLoaderHelper.CreateRandomConfig(RetryLogicConfigHelper.RetryMethodName_Fix);
             cnnCfg.TransientErrors = errors;
-            RetryLogicConfigs cmdCfg = RetryLogicConfigHelper.CreateRandomConfig(RetryLogicConfigHelper.RetryMethodName_Fix, @"Don't care!");
+            RetryLogicConfigs cmdCfg = RetryLogicLoaderHelper.CreateRandomConfig(RetryLogicConfigHelper.RetryMethodName_Fix, @"Don't care!");
 
-            var ex = Assert.Throws<System.Reflection.TargetInvocationException>(() => RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider));
+            var ex = Assert.Throws<System.Reflection.TargetInvocationException>(() => RetryLogicLoaderHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider));
             Assert.Equal(typeof(System.Configuration.ConfigurationErrorsException), ex.InnerException?.GetType());
             Assert.Equal(typeof(ArgumentException), ex.InnerException?.InnerException?.GetType());
         }
@@ -232,11 +233,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void ValidTransientError(string errors)
         {
             string[] transientErrorNumbers = errors.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-            RetryLogicConfigs cnnCfg = RetryLogicConfigHelper.CreateRandomConfig(RetryLogicConfigHelper.RetryMethodName_Fix);
+            RetryLogicConfigs cnnCfg = RetryLogicLoaderHelper.CreateRandomConfig(RetryLogicConfigHelper.RetryMethodName_Fix);
             cnnCfg.TransientErrors = errors;
-            RetryLogicConfigs cmdCfg = RetryLogicConfigHelper.CreateRandomConfig(RetryLogicConfigHelper.RetryMethodName_Fix, @"Don't care!");
+            RetryLogicConfigs cmdCfg = RetryLogicLoaderHelper.CreateRandomConfig(RetryLogicConfigHelper.RetryMethodName_Fix, @"Don't care!");
 
-            RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out _);
+            RetryLogicLoaderHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out _);
 
             foreach(string errorString in transientErrorNumbers)
             {
