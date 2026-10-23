@@ -188,3 +188,48 @@ Describe 'validate-localization.ps1' {
             Should -Throw '*does not have a non-empty English value*'
     }
 }
+
+Describe 'validate-localization.ps1 Report-Only Mode' {
+    It 'warns instead of failing when localized files have findings' {
+        $resources = New-ResourcesDirectory
+        Set-ResourceFile (Join-Path $resources 'Strings.resx') @{ Greeting = 'Hello'; Farewell = 'Goodbye' }
+        Set-ResourceFile (Join-Path $resources 'Strings.de.resx') @{ Greeting = 'Hallo' }
+
+        $output = & $scriptPath -ResourcesDirectory $resources -ReportOnly *>&1 | Out-String
+
+        $output | Should -Match 'report-only mode'
+        $output | Should -Match '##vso\[task.logissue type=warning\]'
+        # Without this the step renders as a clean success despite reporting warnings.
+        $output | Should -Match '##vso\[task\.complete result=SucceededWithIssues;\]'
+        $output | Should -Not -Match '##vso\[task.logissue type=error\]'
+    }
+
+    It 'does not claim the validation passed when findings were suppressed' {
+        $resources = New-ResourcesDirectory
+        Set-ResourceFile (Join-Path $resources 'Strings.resx') @{ Greeting = 'Hello' }
+        Set-ResourceFile (Join-Path $resources 'Strings.de.resx') @{ Greeting = 'Hello' }
+
+        $output = & $scriptPath -ResourcesDirectory $resources -ReportOnly *>&1 | Out-String
+
+        $output | Should -Not -Match 'validation passed'
+        $output | Should -Match 'validation examined'
+    }
+
+    It 'still fails on malformed inputs, which produce no findings to report' {
+        $resources = New-ResourcesDirectory
+        Set-ResourceFile (Join-Path $resources 'Strings.resx') @{ Greeting = 'Hello' }
+
+        { & $scriptPath -ResourcesDirectory $resources -ReportOnly } |
+            Should -Throw '*No localized Strings.*.resx files were found*'
+    }
+
+    It 'reports success normally when there are no findings' {
+        $resources = New-ResourcesDirectory
+        Set-ResourceFile (Join-Path $resources 'Strings.resx') @{ Greeting = 'Hello' }
+        Set-ResourceFile (Join-Path $resources 'Strings.fr.resx') @{ Greeting = 'Bonjour' }
+
+        $output = & $scriptPath -ResourcesDirectory $resources -ReportOnly *>&1 | Out-String
+
+        $output | Should -Match 'validation passed'
+    }
+}

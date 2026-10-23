@@ -110,7 +110,7 @@ jobs:
       - template: /eng/pipelines/common/steps/install-dotnet.yml@self
         parameters:
           debug: ${{ parameters.debug }}
-          runtimes: [8.x, 9.x, 10.x]
+          runtimes: [10.x]
 
       # Restore dotnet CLI tools (e.g. pwsh, apicompat) before building.
       - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self

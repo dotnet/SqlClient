@@ -58,9 +58,8 @@ Copy `config.default.jsonc` to `config.jsonc` and configure:
 
 | Property | Description |
 |----------|-------------|
-| `TCPConnectionString` | Primary TCP connection |
-| `NPConnectionString` | Named Pipes connection |
-| `AADPasswordConnectionString` | Entra ID password auth |
+| `TCPConnectionString` | Primary TCP connection to SQL Server or Azure SQL — used for all tests. Set to an Azure SQL endpoint for Entra ID auth tests. |
+| `NPConnectionString` | Named Pipes connection to on-premises SQL Server |
 | `AzureKeyVaultURL` | AKV for encryption tests |
 | `EnclaveEnabled` | Enable enclave tests |
 | `FileStreamDirectory` | FileStream test path |
@@ -148,7 +147,7 @@ dotnet build build.proj -t:TestSqlClientUnit
 dotnet build build.proj -t:TestSqlClientFunctional
 
 # Run manual tests for specific framework
-dotnet build build.proj -t:TestSqlClientManual -p:TestFramework=net8.0
+dotnet build build.proj -t:TestSqlClientManual -p:TestFramework=net10.0
 
 # Run specific test set
 dotnet build build.proj -t:TestSqlClientManual -p:TestSet=1
@@ -349,9 +348,10 @@ public async Task ExecuteCommand_ReturnsExpectedRows(bool async)
 ### DataTestUtility
 Common test helper class:
 ```csharp
-DataTestUtility.TCPConnectionString  // Get TCP connection
-DataTestUtility.AreConnStringsSetup  // Check if config exists
-DataTestUtility.IsAADPasswordConnStrSetup  // Check Entra ID config
+DataTestUtility.TCPConnectionString    // Get TCP connection string (on-prem or Azure SQL)
+DataTestUtility.AreConnStringsSetup    // Check if TCP/NP connection strings are configured
+DataTestUtility.IsAzureConnStringSetup // Check if TCPConnectionString points to Azure SQL
+DataTestUtility.IsAzureSqlConnectionString(connStr) // Detect whether any connection string targets Azure SQL
 ```
 
 ### AssertExtensions

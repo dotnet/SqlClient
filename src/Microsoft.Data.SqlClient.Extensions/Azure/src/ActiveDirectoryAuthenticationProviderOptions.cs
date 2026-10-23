@@ -6,7 +6,7 @@ using Microsoft.Identity.Client;
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <include file='../doc/ActiveDirectoryAuthenticationProviderOptions.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProviderOptions"]/*'/>
+    /// <include file='../doc/ActiveDirectoryAuthenticationProviderOptions.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProviderOptions"]/ActiveDirectoryAuthenticationProviderOptions/*'/>
     public sealed class ActiveDirectoryAuthenticationProviderOptions
     {
         /// <include file='../doc/ActiveDirectoryAuthenticationProviderOptions.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProviderOptions"]/DeviceCodeFlowCallback/*'/>
