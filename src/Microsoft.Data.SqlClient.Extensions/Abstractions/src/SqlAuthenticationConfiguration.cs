@@ -34,9 +34,14 @@ internal sealed class SqlAuthenticationConfiguration
     /// </summary>
     /// <param name="section">The selected section, or null for no authentication overrides.</param>
     /// <exception cref="ConfigurationErrorsException">
-    /// The schema or an explicitly configured broker value is invalid.
+    /// The schema is invalid, or strict mode is enabled and a configured broker value is invalid.
     /// </exception>
     internal SqlAuthenticationConfiguration(ConfigurationSection? section = null)
+        : this(section, AuthenticationFeatureSwitches.UseStrictAuthenticationConfiguration)
+    {
+    }
+
+    private SqlAuthenticationConfiguration(ConfigurationSection? section, bool strict)
     {
         if (section is null)
         {
@@ -72,14 +77,23 @@ internal sealed class SqlAuthenticationConfiguration
         {
             if (!bool.TryParse(useWamBrokerValue, out bool useWamBroker))
             {
-                throw new ConfigurationErrorsException(
-                    $"Invalid authentication configuration value '{useWamBrokerValue}' for " +
-                    "'useWamBroker'; expected 'true' or 'false'.");
+                if (strict)
+                {
+                    throw new ConfigurationErrorsException(
+                        $"Invalid authentication configuration value '{useWamBrokerValue}' for " +
+                        "'useWamBroker'; expected 'true' or 'false'.");
+                }
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "SqlAuthenticationConfiguration | Ignoring invalid UseWamBroker; " +
+                    "expected 'true' or 'false'.");
             }
-            UseWamBroker = useWamBroker;
-            SqlClientEventSource.Log.TryTraceEvent(
-                "SqlAuthenticationConfiguration | Received user-defined UseWamBroker={0}.",
-                useWamBroker);
+            else
+            {
+                UseWamBroker = useWamBroker;
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "SqlAuthenticationConfiguration | Received user-defined UseWamBroker={0}.",
+                    useWamBroker);
+            }
         }
         else
         {
@@ -92,28 +106,39 @@ internal sealed class SqlAuthenticationConfiguration
             .Select(provider => new ProviderSettings(provider.Name, provider.Type)).ToArray();
     }
 
-    /// <summary>Loads the modern section, falling back only when it is genuinely absent.</summary>
+    /// <summary>Loads the modern section, falling back when it is absent or ignored in compatibility mode.</summary>
     /// <param name="getSection">
     /// The section reader, or null to use the process-wide ConfigurationManager.
     /// </param>
     /// <returns>Validated settings, including empty settings when neither section exists.</returns>
+    /// <exception cref="ConfigurationErrorsException">
+    /// Configuration is invalid and strict mode is enabled, or the failure contains a fatal exception.
+    /// </exception>
     [RequiresUnreferencedCode("Authentication configuration resolves section handlers by name.")]
     [RequiresDynamicCode("Authentication configuration constructs section handlers dynamically.")]
     internal static SqlAuthenticationConfiguration Load(Func<string, object?>? getSection = null)
     {
-        ConfigurationSection? section;
+        bool strict = AuthenticationFeatureSwitches.UseStrictAuthenticationConfiguration;
         try
         {
-            section = FetchConfigurationSection("SqlClientAuthenticationProviders",
+            ConfigurationSection? section = FetchConfigurationSection("SqlClientAuthenticationProviders",
                 "Microsoft.Data.SqlClient.SqlClientAuthenticationProviderConfigurationSection",
-                getSection);
+                getSection, strict);
             if (section is null)
             {
-                // Do not hide malformed modern configuration by consulting the legacy section.
                 section = FetchConfigurationSection("SqlAuthenticationProviders",
                     "Microsoft.Data.SqlClient.SqlAuthenticationProviderConfigurationSection",
-                    getSection);
+                    getSection, strict);
             }
+
+            if (section is null)
+            {
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "SqlAuthenticationConfiguration | Neither SqlClientAuthenticationProviders " +
+                    "nor SqlAuthenticationProviders configuration section found.");
+            }
+
+            return new SqlAuthenticationConfiguration(section, strict);
         }
         catch (ConfigurationErrorsException e) when (ExceptionHelpers.IsRecoverableException(e))
         {
@@ -122,17 +147,12 @@ internal sealed class SqlAuthenticationConfiguration
                 "SqlAuthenticationProviders or SqlClientAuthenticationProviders. Correct " +
                 "app.config syntax and section handler declarations. ConfigurationManager failed " +
                 "to load due to configuration errors: {0}", e);
-            throw;
+            if (strict)
+            {
+                throw;
+            }
+            return new SqlAuthenticationConfiguration(null, strict);
         }
-
-        if (section is null)
-        {
-            SqlClientEventSource.Log.TryTraceEvent(
-                "SqlAuthenticationConfiguration | Neither SqlClientAuthenticationProviders " +
-                "nor SqlAuthenticationProviders configuration section found.");
-        }
-
-        return new SqlAuthenticationConfiguration(section);
     }
 
     /// <summary>
@@ -164,14 +184,21 @@ internal sealed class SqlAuthenticationConfiguration
     /// <param name="getSection">
     /// The section reader, or null to use the process-wide ConfigurationManager.
     /// </param>
-    /// <returns>The matching section, or null if absent.</returns>
+    /// <returns>The matching section, or null if absent or ignored in compatibility mode.</returns>
     /// <exception cref="ConfigurationErrorsException">
-    /// The section cannot be loaded or its handler is incompatible.
+    /// The section cannot be loaded, or strict mode is enabled and its handler is incompatible.
     /// </exception>
     [RequiresUnreferencedCode("Configuration section handlers are resolved by name.")]
     [RequiresDynamicCode("Configuration section handlers are constructed dynamically.")]
     internal static ConfigurationSection? FetchConfigurationSection(
         string name, string typeName, Func<string, object?>? getSection = null)
+        => FetchConfigurationSection(name, typeName, getSection,
+            AuthenticationFeatureSwitches.UseStrictAuthenticationConfiguration);
+
+    [RequiresUnreferencedCode("Configuration section handlers are resolved by name.")]
+    [RequiresDynamicCode("Configuration section handlers are constructed dynamically.")]
+    private static ConfigurationSection? FetchConfigurationSection(
+        string name, string typeName, Func<string, object?>? getSection, bool strict)
     {
         // TODO: Support reading configuration from appsettings.json for .NET runtime applications.
         object? section = (getSection ?? ConfigurationManager.GetSection)(name);
@@ -185,9 +212,16 @@ internal sealed class SqlAuthenticationConfiguration
         {
             return configSection;
         }
-        throw new ConfigurationErrorsException(
-            $"Authentication configuration section '{name}' must use handler " +
-            $"'{typeName}'; found '{section.GetType().FullName}'.");
+        if (strict)
+        {
+            throw new ConfigurationErrorsException(
+                $"Authentication configuration section '{name}' must use handler " +
+                $"'{typeName}'; found '{section.GetType().FullName}'.");
+        }
+        SqlClientEventSource.Log.TryTraceEvent(
+            "SqlAuthenticationConfiguration | Ignoring section '{0}': expected handler " +
+            "'{1}'; found '{2}'.", name, typeName, section.GetType().FullName);
+        return null;
     }
 
     /// <summary>Maps only supported authentication method names, ignoring case.</summary>
