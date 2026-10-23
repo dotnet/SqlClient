@@ -349,6 +349,7 @@ namespace Microsoft.Data.SqlClient.Server
             ((SmiDefaultFieldsProperty)_extendedProperties[SmiPropertySelector.DefaultFields]).CheckCount(_fieldMetaData.Count);
             ((SmiOrderProperty)_extendedProperties[SmiPropertySelector.SortOrder]).CheckCount(_fieldMetaData.Count);
             ((SmiUniqueKeyProperty)_extendedProperties[SmiPropertySelector.UniqueKey]).CheckCount(_fieldMetaData.Count);
+            ((SmiComputedFieldsProperty)_extendedProperties[SmiPropertySelector.ComputedFields]).CheckCount(_fieldMetaData.Count);
 #endif
         }
 

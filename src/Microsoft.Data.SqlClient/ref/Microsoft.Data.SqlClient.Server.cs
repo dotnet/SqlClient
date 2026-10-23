@@ -215,6 +215,8 @@ public sealed class SqlMetaData
     public System.Data.SqlTypes.SqlCompareOptions CompareOptions { get { throw null; } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/DbType/*' />
     public System.Data.DbType DbType { get { throw null; } }
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/IsComputed/*' />
+    public bool IsComputed { get { throw null; } init { } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/IsUniqueKey/*' />
     public bool IsUniqueKey { get { throw null; } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/LocaleId/*' />
