@@ -68,19 +68,24 @@ public class AuthenticationConfigurationFileTest
 
     /// <summary>Both handlers reach the loader without activating configured types or loading the driver.</summary>
     [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void HandlerLoadsSettings(bool modern)
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public void HandlerLoadsSettings(bool modern, bool configureBroker)
     {
         string name = modern ? Modern : Legacy;
         // Declare only the selected handler: a declared but absent modern section still takes precedence.
         string handler = modern
             ? nameof(SqlClientAuthenticationProviderConfigurationSection)
             : nameof(SqlAuthenticationProviderConfigurationSection);
+        string brokerAttribute = configureBroker ? "useWamBroker=\"false\"" : string.Empty;
+        bool? expectedUseWamBroker = configureBroker
+            ? false : new SqlAuthenticationConfiguration().UseWamBroker;
         WithConfiguration(
             $"<section name='{name}' type='Microsoft.Data.SqlClient.{handler}, Microsoft.Data.SqlClient.Extensions.Abstractions' />",
             $"""
-            <{name} applicationClientId="configured-client" initializerType="Missing.Initializer" useWamBroker="false">
+            <{name} applicationClientId="configured-client" initializerType="Missing.Initializer" {brokerAttribute}>
               <providers><add name="active directory default" type="Missing.Provider" /></providers>
             </{name}>
             """,
@@ -88,7 +93,7 @@ public class AuthenticationConfigurationFileTest
             {
                 var settings = SqlAuthenticationConfiguration.Load(configuration.GetSection);
                 Assert.Equal("configured-client", settings.ApplicationClientId);
-                Assert.False(settings.UseWamBroker);
+                Assert.Equal(expectedUseWamBroker, settings.UseWamBroker);
                 Assert.Equal("Missing.Initializer", settings.InitializerType);
                 Assert.Equal("Missing.Provider", Assert.Single(settings.Providers).Type);
             });
@@ -115,7 +120,7 @@ public class AuthenticationConfigurationFileTest
             {
                 var settings = SqlAuthenticationConfiguration.Load(configuration.GetSection);
                 Assert.Equal("configured-client", settings.ApplicationClientId);
-                Assert.Null(settings.UseWamBroker);
+                Assert.Equal(new SqlAuthenticationConfiguration().UseWamBroker, settings.UseWamBroker);
                 Assert.Equal("Missing.Initializer", settings.InitializerType);
                 Assert.Equal("Missing.Provider", Assert.Single(settings.Providers).Type);
             });
@@ -123,7 +128,7 @@ public class AuthenticationConfigurationFileTest
 
     /// <summary>A declared modern section without an element prevents reading populated legacy settings.</summary>
     [Fact]
-    public void DeclaredModernSectionWithoutElementTakesPrecedence()
+    public void ModernSectionDoesNotLoadFromLegacyConfigSection()
     {
         WithConfiguration(Declarations,
             $"""<{Legacy} applicationClientId="legacy-client" />""",
