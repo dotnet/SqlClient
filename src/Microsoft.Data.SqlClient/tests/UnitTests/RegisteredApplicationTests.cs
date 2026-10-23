@@ -121,19 +121,26 @@ public class RegisteredApplicationTests
     }
 
     /// <summary>
-    /// Verifies the driver properties part reports the connection pool V2 flag
-    /// when, and only when, that implementation is enabled.
+    /// Verifies the stable wire masks for every combination of pool V2 and
+    /// the two independently configured async compatibility switches.
     /// </summary>
     [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void DriverProperties_Reports_ConnectionPoolV2(bool useConnectionPoolV2)
+    [InlineData(false, false, false, 0UL)]
+    [InlineData(true, false, false, 1UL)]
+    [InlineData(false, true, false, 2UL)]
+    [InlineData(true, true, false, 3UL)]
+    [InlineData(false, false, true, 4UL)]
+    [InlineData(true, false, true, 5UL)]
+    [InlineData(false, true, true, 6UL)]
+    [InlineData(true, true, true, 7UL)]
+    public void DriverProperties_Reports_Configured_Switches(
+        bool useConnectionPoolV2,
+        bool useCompatibilityAsyncBehaviour,
+        bool useCompatibilityProcessSni,
+        ulong expected)
     {
-        SqlClientDriverProperties expected = useConnectionPoolV2
-            ? SqlClientDriverProperties.ConnectionPoolV2
-            : SqlClientDriverProperties.None;
-
-        Assert.Equal(expected, SqlClientDriverPropertiesResolver.Resolve(useConnectionPoolV2));
+        Assert.Equal(expected, (ulong)SqlClientDriverPropertiesResolver.Resolve(
+            useConnectionPoolV2, useCompatibilityAsyncBehaviour, useCompatibilityProcessSni));
     }
 
     /// <summary>
@@ -146,16 +153,18 @@ public class RegisteredApplicationTests
     }
 
     /// <summary>
-    /// Verifies the flags reported for this process agree with the switch they
+    /// Verifies the flags reported for this process agree with the switches they
     /// are derived from, so <see cref="SqlClientDriverPropertiesResolver.Current"/>
     /// cannot drift from the mapping it delegates to.
     /// </summary>
     [Fact]
     public void DriverProperties_Current_Matches_Switch()
     {
-        SqlClientDriverProperties expected =
-            SqlClientDriverPropertiesResolver.Resolve(LocalAppContextSwitches.UseConnectionPoolV2);
+        ulong expected =
+            (LocalAppContextSwitches.UseConnectionPoolV2 ? 1UL : 0UL) |
+            (LocalAppContextSwitches.ConfiguredUseCompatibilityAsyncBehaviour ? 2UL : 0UL) |
+            (LocalAppContextSwitches.UseCompatibilityProcessSni ? 4UL : 0UL);
 
-        Assert.Equal(expected, SqlClientDriverPropertiesResolver.Current);
+        Assert.Equal(expected, (ulong)SqlClientDriverPropertiesResolver.Current);
     }
 }
