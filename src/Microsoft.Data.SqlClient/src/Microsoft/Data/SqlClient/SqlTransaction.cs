@@ -74,6 +74,11 @@ namespace Microsoft.Data.SqlClient
 
         internal SqlInternalTransaction InternalTransaction { get; private set; }
 
+        // The server ended this transaction. Commit does not set or clear this.
+        // Rollback of the aborted transaction clears it. ZombieCheck may clear
+        // InternalTransaction without clearing this, and the command still rejects the next execute.
+        internal bool CompletedByServer { get; private set; }
+
         internal bool IsZombied => InternalTransaction == null || InternalTransaction.IsCompleted;
 
         internal int ObjectId { get; } = Interlocked.Increment(ref s_objectTypeCount);
@@ -149,7 +154,17 @@ namespace Microsoft.Data.SqlClient
             {
                 if (!IsZombied && !Is2005PartialZombie)
                 {
-                    InternalTransaction.Dispose();
+                    // Disposal rolls back through InternalTransaction, not Rollback(), so mark it
+                    // as an API completion. Otherwise Zombie treats the disposal as a server abort.
+                    try
+                    {
+                        _isFromApi = true;
+                        InternalTransaction.Dispose();
+                    }
+                    finally
+                    {
+                        _isFromApi = false;
+                    }
                 }
                 // @TODO: CER Exception Handling was removed here (see GH#3581)
             }
@@ -174,6 +189,7 @@ namespace Microsoft.Data.SqlClient
                     ObjectId);
 
                 InternalTransaction = null; // 2005 zombification
+                CompletedByServer = false;
             }
             else
             {
@@ -297,6 +313,10 @@ namespace Microsoft.Data.SqlClient
             // if the connection is already closed, then we're free to zombify...
             if (_connection.InnerConnection is SqlConnectionInternal && !_isFromApi)
             {
+                // Remember the server abort. A later ZombieCheck can clear InternalTransaction
+                // while throwing, and the command still has to reject its next execute.
+                CompletedByServer = true;
+
                 SqlClientEventSource.Log.TryAdvancedTraceEvent(
                     "SqlTransaction.Zombie | ADV | Object Id {0} yukon deferred zombie",
                     ObjectId);
