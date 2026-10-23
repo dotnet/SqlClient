@@ -39,7 +39,7 @@ public class AuthenticationConfigurationParsingTest
     public void ReadStringPreservesConfiguredValue(string name)
     {
         // Both forwarded handlers must expose the same string contract without trimming values.
-        foreach (var section in new LegacySection[]
+        foreach (var section in new ConfigurationSection[]
         {
             new LegacySection(),
             new ModernSection()

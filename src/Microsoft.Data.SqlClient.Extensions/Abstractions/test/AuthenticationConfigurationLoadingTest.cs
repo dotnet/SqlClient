@@ -73,10 +73,12 @@ public class AuthenticationConfigurationLoadingTest
     public void LoadSelectsExpectedSectionWithoutActivation(bool modern)
     {
         // Use a provider that throws on construction to keep loading separate from activation.
-        LegacySection section = modern
+        ConfigurationSection section = modern
             ? new ModernSection()
             : new LegacySection();
-        section.Providers.Add(new ProviderSettings(
+        var providers = Assert.IsType<ProviderSettingsCollection>(
+            section.ElementInformation.Properties["providers"].Value);
+        providers.Add(new ProviderSettings(
             "Active Directory Integrated", typeof(Provider).AssemblyQualifiedName));
         var reads = new List<string>();
 
