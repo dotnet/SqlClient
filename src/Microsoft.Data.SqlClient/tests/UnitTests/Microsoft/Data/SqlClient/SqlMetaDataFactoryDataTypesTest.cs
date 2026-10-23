@@ -7,6 +7,7 @@ using System.Data.Common;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using Microsoft.Data.SqlClient.Parser;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests;

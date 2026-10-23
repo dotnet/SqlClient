@@ -17,8 +17,8 @@
     <!-- FunctionalTests is not a friend assembly, so these tests compile linked internal sources. -->
     <!-- UnitTests and ManualTests use InternalsVisibleTo; that grant does not apply here. -->
     <!-- Prefer moving internal-only coverage to UnitTests rather than adding source links. -->
-    <Compile Include="$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/Packet.cs" />
-    <Compile Include="$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/TdsParserStateObject.Multiplexer.cs" />
+    <Compile Include="$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/Parser/Packet.cs" />
+    <Compile Include="$(RepoRoot)src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/Parser/TdsParserStateObject.Multiplexer.cs" />
   </ItemGroup>
 
   <!-- Embedded resources and content files  =========================== -->

@@ -10,6 +10,7 @@ using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Globalization;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Parser;
 
 namespace Microsoft.Data.SqlClient.Server
 {
@@ -27,7 +28,7 @@ namespace Microsoft.Data.SqlClient.Server
 
         /// <summary>
         ///  Standard type inference map to get SqlDbType when all you know is the value's type (typecode)
-        /// This map's index is off by one (add one to typecode locate correct entry) in order 
+        /// This map's index is off by one (add one to typecode locate correct entry) in order
         /// to support ExtendedSqlDbType.Invalid
         /// This array is meant to be accessed from InferSqlDbTypeFromTypeCode.
         /// </summary>
@@ -77,7 +78,7 @@ namespace Microsoft.Data.SqlClient.Server
             SqlDbType.DateTimeOffset,       // System.DateTimeOffset
 #if NET
             SqlDbType.Date,                 // System.DateOnly
-            SqlDbType.Time,                 // System.TimeOnly  
+            SqlDbType.Time,                 // System.TimeOnly
 #endif
         };
 
@@ -164,7 +165,7 @@ namespace Microsoft.Data.SqlClient.Server
                     type == SqlDbType.Text;
 
         // Does this type use PLP format values?
-        internal static bool IsPlpFormat(SmiMetaData metaData) => 
+        internal static bool IsPlpFormat(SmiMetaData metaData) =>
                     metaData.MaxLength == SmiMetaData.UnlimitedMaxLengthIndicator ||
                     metaData.SqlDbType == SqlDbType.Image ||
                     metaData.SqlDbType == SqlDbType.NText ||
@@ -174,7 +175,7 @@ namespace Microsoft.Data.SqlClient.Server
         // If we know we're only going to use this object to assign to a specific SqlDbType back end object,
         //  we can save some processing time by only checking for the few valid types that can be assigned to the dbType.
         //  This assumes a switch statement over SqlDbType is faster than getting the ClrTypeCode and iterating over a
-        //  series of if statements, or using a hash table. 
+        //  series of if statements, or using a hash table.
         // NOTE: the form of these checks is taking advantage of a feature of the JIT compiler that is supposed to
         //      optimize checks of the form '(xxx.GetType() == typeof( YYY ))'.  The JIT team claimed at one point that
         //      this doesn't even instantiate a Type instance, thus was the fastest method for individual comparisons.
@@ -403,7 +404,7 @@ namespace Microsoft.Data.SqlClient.Server
                         // SqlDbType doesn't help us here, call general-purpose function
                         extendedCode = DetermineExtendedTypeCode(value);
 
-                        // Some types aren't allowed for Variants but are for the general-purpose function.  
+                        // Some types aren't allowed for Variants but are for the general-purpose function.
                         //  Match behavior of other types and return invalid in these cases.
                         if (ExtendedClrTypeCode.SqlXml == extendedCode)
                         {
@@ -516,7 +517,7 @@ namespace Microsoft.Data.SqlClient.Server
             return s_extendedTypeCodeToSqlDbTypeMap[(int)typeCode + 1];
         }
 
-        // Infer SqlDbType from Type in the general case. 2008-only (or later) features that need to 
+        // Infer SqlDbType from Type in the general case. 2008-only (or later) features that need to
         //  infer types should use InferSqlDbTypeFromType_2008.
         internal static SqlDbType InferSqlDbTypeFromType(Type type)
         {
@@ -534,7 +535,7 @@ namespace Microsoft.Data.SqlClient.Server
             return returnType;
         }
 
-        // Inference rules changed for 2008-or-later-only cases.  Only features that are guaranteed to be 
+        // Inference rules changed for 2008-or-later-only cases.  Only features that are guaranteed to be
         //  running against 2008 and don't have backward compat issues should call this code path.
         //      example: TVP's are a new 2008 feature (no back compat issues) so can infer DATETIME2
         //          when mapping System.DateTime from DateTable or DbDataReader.  DATETIME2 is better because
@@ -736,7 +737,7 @@ namespace Microsoft.Data.SqlClient.Server
                 scale = 0;
             }
 
-            // In Net Core, since DataColumn.Locale is not accessible because it is internal and in a separate assembly, 
+            // In Net Core, since DataColumn.Locale is not accessible because it is internal and in a separate assembly,
             // we try to get the Locale from the parent
             CultureInfo columnLocale = parent != null ? parent.Locale : CultureInfo.CurrentCulture;
 
