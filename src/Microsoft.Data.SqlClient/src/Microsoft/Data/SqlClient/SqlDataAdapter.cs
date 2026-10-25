@@ -209,7 +209,9 @@ namespace Microsoft.Data.SqlClient
             if (command != null)
             {
                 _commandSet.Connection = command.Connection;
-                _commandSet.Transaction = command.Transaction;
+                // Transaction returns null after a server abort. The batch command still has to
+                // keep that transaction so its execute is rejected.
+                _commandSet.Transaction = command.BoundTransaction;
                 _commandSet.CommandTimeout = command.CommandTimeout;
             }
         }

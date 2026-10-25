@@ -876,6 +876,10 @@ namespace Microsoft.Data.SqlClient
 
         internal bool InPrepare => _inPrepare;
 
+        // Transaction returns null after the server aborts this command's transaction, but the
+        // field stays set so the next execute is rejected. Copies have to use the field.
+        internal SqlTransaction BoundTransaction => _transaction;
+
         // @TODO: Rename RowsAffectedInternal or
         // @TODO: Make `int?`
         internal int InternalRecordsAffected
@@ -3048,10 +3052,15 @@ namespace Microsoft.Data.SqlClient
             // we have a live reader for this command.
             _activeConnection.ValidateConnectionForExecute(method, this);
 
-            // Check to see if the currently set transaction has completed. If so, null out our
-            // local reference. A server-aborted transaction was already rejected above.
+            // Draining an abandoned reader can abort the transaction after the check above.
+            // Reject that too. A transaction the caller already finished is cleared instead.
             if (_transaction is not null && _transaction.Connection is null)
             {
+                if (_transaction.CompletedByServer)
+                {
+                    throw ADP.TransactionZombied(_transaction);
+                }
+
                 _transaction = null;
             }
 
