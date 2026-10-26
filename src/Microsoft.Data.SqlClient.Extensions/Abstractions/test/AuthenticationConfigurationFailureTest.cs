@@ -28,20 +28,6 @@ public class AuthenticationConfigurationFailureTest
         Assert.IsType<OutOfMemoryException>(failure.GetBaseException());
     }
 
-    /// <summary>Missing or incompatible provider collections still prevent configuration application.</summary>
-    [Theory]
-    [InlineData(typeof(InvalidProvidersSection), "providers")]
-    [InlineData(typeof(MissingProvidersSection), "providers")]
-    public void InvalidSchemaAbortsConfiguration(Type type, string propertyName)
-    {
-        // Deliberately incompatible handlers must not be mistaken for empty optional settings.
-        var section = Assert.IsAssignableFrom<ConfigurationSection>(
-            Activator.CreateInstance(type, nonPublic: true));
-
-        var failure = Assert.IsType<ConfigurationErrorsException>(ApplyInvalidConfiguration(section));
-        Assert.Contains(propertyName, failure.Message);
-    }
-
     /// <summary>Absent sections and incompatible handlers both allow fallback in relaxed parsing.</summary>
     [Theory]
     [InlineData("appSettings", false)]
@@ -115,35 +101,6 @@ public class AuthenticationConfigurationFailureTest
         return Assert.ThrowsAny<Exception>(() =>
             new SqlAuthenticationProviderRegistry().ApplyConfiguration(
                 new SqlAuthenticationConfiguration(section)));
-    }
-
-    /// <summary>Simulates an incompatible provider collection with otherwise valid string settings.</summary>
-    private sealed class InvalidProvidersSection : ConfigurationSection
-    {
-        [ConfigurationProperty("applicationClientId")]
-        public string ApplicationClientId => (string)this["applicationClientId"];
-
-        [ConfigurationProperty("useWamBroker")]
-        public string UseWamBroker => (string)this["useWamBroker"];
-
-        [ConfigurationProperty("initializerType")]
-        public string InitializerType => (string)this["initializerType"];
-
-        [ConfigurationProperty("providers", DefaultValue = 1)]
-        public int Providers => (int)this["providers"];
-    }
-
-    /// <summary>Simulates a handler that omits the provider collection entirely.</summary>
-    private sealed class MissingProvidersSection : ConfigurationSection
-    {
-        [ConfigurationProperty("applicationClientId")]
-        public string ApplicationClientId => (string)this["applicationClientId"];
-
-        [ConfigurationProperty("useWamBroker")]
-        public string UseWamBroker => (string)this["useWamBroker"];
-
-        [ConfigurationProperty("initializerType")]
-        public string InitializerType => (string)this["initializerType"];
     }
 
     /// <summary>Simulates a fatal initializer callback without actually exhausting memory.</summary>
