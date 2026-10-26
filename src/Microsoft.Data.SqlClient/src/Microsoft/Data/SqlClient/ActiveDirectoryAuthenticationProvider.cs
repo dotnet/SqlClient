@@ -27,7 +27,8 @@ namespace Microsoft.Data.SqlClient
         /// The purpose of this cache is to allow re-use of Access Tokens fetched for a user interactively or with any other mode
         /// to avoid interactive authentication request every-time, within application scope making use of MSAL's userTokenCache.
         /// </summary>
-        private static readonly ConcurrentDictionary<PublicClientAppKey, IPublicClientApplication> s_pcaMap = new();
+        // Internal for test access.
+        internal static readonly ConcurrentDictionary<PublicClientAppKey, IPublicClientApplication> s_pcaMap = new();
         private static readonly ConcurrentDictionary<TokenCredentialKey, TokenCredentialData> s_tokenCredentialMap = new();
         private static SemaphoreSlim s_pcaMapModifierSemaphore = new(1, 1);
         private static SemaphoreSlim s_tokenCredentialMapModifierSemaphore = new(1, 1);
@@ -37,6 +38,24 @@ namespace Microsoft.Data.SqlClient
         // MSAL redirect URI used when WAM brokered authentication is in effect on Windows. MSAL
         // expects the suffix to match the client id of the registered application.
         private const string s_wamBrokerRedirectUriPrefix = "ms-appx-web://microsoft.aad.brokerplugin/";
+
+        // MSAL error code raised by the Windows broker when no parent window handle is available.
+        // MSAL does not expose a public constant for this value.
+        internal const string WindowHandleRequiredErrorCode = "window_handle_required";
+
+        internal static MsalClientException CreateWindowHandleRequiredException(MsalClientException ex)
+        {
+            // TODO: Localize this message: https://github.com/dotnet/SqlClient/issues/4904
+            return new MsalClientException(
+                ex.ErrorCode,
+                "Active Directory Interactive authentication with Windows Web Account Manager (WAM) requires a valid parent window handle. " +
+                "Supply an application-owned window handle using ActiveDirectoryAuthenticationProvider.SetParentActivityOrWindowFunc. " +
+                "For windowless hosts, such as Azure Functions local workers, use Authentication=Active Directory Default with a configured non-interactive credential. " +
+                "To use interactive authentication without WAM, provide your own ApplicationClientId and set UseWamBroker=false. " +
+                "WAM cannot be disabled for SqlClient's first-party application ID. " +
+                ex.Message,
+                ex);
+        }
 
 #if NETFRAMEWORK
         // Non-broker redirect URI used on .NET Framework when WAM is not in use (legacy embedded
@@ -367,23 +386,37 @@ namespace Microsoft.Data.SqlClient
             {
                 try
                 {
-                    result = await TryAcquireTokenSilent(app, parameters, scopes, cts).ConfigureAwait(false);
-                    SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (silent) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result?.ExpiresOn);
-                }
-                catch (MsalUiRequiredException)
-                {
-                    // An 'MsalUiRequiredException' is thrown in the case where an interaction is required with the end user of the application,
-                    // for instance, if no refresh token was in the cache, or the user needs to consent, or re-sign-in (for instance if the password expired),
-                    // or the user needs to perform two factor authentication.
-                    result = await AcquireTokenInteractiveDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod, cts, _customWebUI, _deviceCodeFlowCallback).ConfigureAwait(false);
-                    SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result?.ExpiresOn);
-                }
+                    try
+                    {
+                        result = await TryAcquireTokenSilent(app, parameters, scopes, cts).ConfigureAwait(false);
+                        SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (silent) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result?.ExpiresOn);
+                    }
+                    catch (MsalUiRequiredException)
+                    {
+                        // An 'MsalUiRequiredException' is thrown in the case where an interaction is required with the end user of the application,
+                        // for instance, if no refresh token was in the cache, or the user needs to consent, or re-sign-in (for instance if the password expired),
+                        // or the user needs to perform two factor authentication.
+                        result = await AcquireTokenInteractiveDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod, cts, _customWebUI, _deviceCodeFlowCallback).ConfigureAwait(false);
+                        SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result?.ExpiresOn);
+                    }
 
-                if (result == null)
+                    if (result == null)
+                    {
+                        // If no existing 'account' is found, we request user to sign in interactively.
+                        result = await AcquireTokenInteractiveDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod, cts, _customWebUI, _deviceCodeFlowCallback).ConfigureAwait(false);
+                        SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result?.ExpiresOn);
+                    }
+                }
+                // MSAL raises window_handle_required only on Windows, where WAM needs a parent window.
+                // If WAM support is added for other platforms, revisit this filter and message.
+                catch (MsalClientException ex) when (
+                    parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryInteractive &&
+                    RuntimeInformation.IsOSPlatform(OSPlatform.Windows) &&
+                    _useWamBroker &&
+                    ex.ErrorCode == WindowHandleRequiredErrorCode)
                 {
-                    // If no existing 'account' is found, we request user to sign in interactively.
-                    result = await AcquireTokenInteractiveDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod, cts, _customWebUI, _deviceCodeFlowCallback).ConfigureAwait(false);
-                    SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result?.ExpiresOn);
+                    SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | WAM interactive authentication requires a valid parent window handle.");
+                    throw CreateWindowHandleRequiredException(ex);
                 }
             }
             else

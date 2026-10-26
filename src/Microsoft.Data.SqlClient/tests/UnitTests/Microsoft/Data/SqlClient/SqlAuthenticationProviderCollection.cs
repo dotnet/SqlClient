@@ -10,8 +10,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
     /// Defines a test collection that serializes execution of test classes
     /// which mutate the global <see cref="global::Microsoft.Data.SqlClient.SqlAuthenticationProvider"/> registry.
     /// </summary>
-    [CollectionDefinition("SqlAuthenticationProvider")]
+    [CollectionDefinition(Name)]
     public class SqlAuthenticationProviderCollection
     {
+        /// <summary>
+        /// The collection name used by tests that mutate global authentication provider state.
+        /// </summary>
+        public const string Name = "SqlAuthenticationProvider";
     }
 }

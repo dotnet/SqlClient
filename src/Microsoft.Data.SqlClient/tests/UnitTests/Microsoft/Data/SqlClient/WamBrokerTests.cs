@@ -9,7 +9,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
 {
-    [Collection("SqlAuthenticationProvider")]
+    [Collection(SqlAuthenticationProviderCollection.Name)]
     public class WamBrokerTests
     {
         // The SqlClient first-party application client id that is hard-coded in the provider.

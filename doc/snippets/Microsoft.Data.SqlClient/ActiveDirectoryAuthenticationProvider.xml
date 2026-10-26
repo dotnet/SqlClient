@@ -139,6 +139,15 @@
       </summary>
       <remarks>
         Mandatory to be set only on Android. See https://aka.ms/msal-net-android-activity for further documentation and details.
+        <para>
+          A worker process can lack a console window even when it runs on an interactive desktop, for example in the Azure Functions local host.
+          If no valid parent window is available and WAM requires interactive sign-in, authentication fails with guidance on supported alternatives.
+          Use <c>Authentication=Active Directory Default</c> with a configured non-interactive credential for windowless hosts.
+          To use interactive authentication without WAM, supply a custom
+          <see cref="P:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions.ApplicationClientId"/> and set
+          <see cref="P:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions.UseWamBroker"/> to <see langword="false"/>.
+          WAM cannot be disabled for SqlClient's first-party application ID.
+        </para>
       </remarks>
     </SetParentActivityOrWindowFunc>
     <SetIWin32WindowFunc>
