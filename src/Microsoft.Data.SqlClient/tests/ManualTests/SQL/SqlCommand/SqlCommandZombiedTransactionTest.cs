@@ -96,6 +96,64 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         /// <summary>
+        /// A T-SQL COMMIT finishes the transaction. The command that was bound to it must still run.
+        /// </summary>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public void Execute_AfterTsqlCommit_Runs()
+        {
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            connection.Open();
+
+            using SqlCommand setup = connection.CreateCommand();
+            setup.CommandText = "CREATE TABLE #CommittedTransaction (Id int NOT NULL);";
+            setup.ExecuteNonQuery();
+
+            using SqlCommand command = new SqlCommand("INSERT INTO #CommittedTransaction (Id) VALUES (1)", connection);
+            using (SqlTransaction transaction = connection.BeginTransaction())
+            {
+                command.Transaction = transaction;
+                using SqlCommand commit = new SqlCommand("COMMIT TRANSACTION", connection, transaction);
+                commit.ExecuteNonQuery();
+            }
+
+            Assert.Null(command.Transaction);
+            command.Connection = connection;
+            command.ExecuteNonQuery();
+
+            using SqlCommand count = new SqlCommand("SELECT COUNT(*) FROM #CommittedTransaction", connection);
+            Assert.Equal(1, (int)count.ExecuteScalar());
+        }
+
+        /// <summary>
+        /// A T-SQL COMMIT finishes the transaction. An async execute of the bound command must still run.
+        /// </summary>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public async Task Execute_AfterTsqlCommit_RunsAsync()
+        {
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            await connection.OpenAsync();
+
+            using SqlCommand setup = connection.CreateCommand();
+            setup.CommandText = "CREATE TABLE #CommittedTransaction (Id int NOT NULL);";
+            await setup.ExecuteNonQueryAsync();
+
+            using SqlCommand command = new SqlCommand("INSERT INTO #CommittedTransaction (Id) VALUES (1)", connection);
+            using (SqlTransaction transaction = connection.BeginTransaction())
+            {
+                command.Transaction = transaction;
+                using SqlCommand commit = new SqlCommand("COMMIT TRANSACTION", connection, transaction);
+                await commit.ExecuteNonQueryAsync();
+            }
+
+            Assert.Null(command.Transaction);
+            command.Connection = connection;
+            await command.ExecuteNonQueryAsync();
+
+            using SqlCommand count = new SqlCommand("SELECT COUNT(*) FROM #CommittedTransaction", connection);
+            Assert.Equal(1, (int)await count.ExecuteScalarAsync());
+        }
+
+        /// <summary>
         /// A batch must not copy <see cref="SqlCommand.Transaction"/> back onto its command.
         /// That getter returns null after a server abort, and the batch would auto-commit.
         /// </summary>
