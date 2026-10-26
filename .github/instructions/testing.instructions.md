@@ -7,11 +7,13 @@ applyTo: "**/tests/**,**/*Test*.cs"
 
 ```
 src/Microsoft.Data.SqlClient/tests/
+├── Common/                   # TestCommon utilities shared across test projects
 ├── FunctionalTests/          # Tests without SQL Server dependency
 ├── ManualTests/              # Integration tests requiring SQL Server
 ├── PerformanceTests/         # Benchmark-style perf validation
 ├── StressTests/              # Long-running stress coverage
-├── UnitTests/                # Unit tests with minimal dependencies
+├── UnitTests/                # Unit tests mirroring the tested source folders
+│   └── Utilities/            # Utilities used only by UnitTests
 └── tools/
     └── Microsoft.Data.SqlClient.TestUtilities/
         ├── config.default.jsonc  # Template configuration
@@ -172,6 +174,46 @@ dotnet test ... --filter "FullyQualifiedName=Namespace.ClassName.MethodName"
 
 ## Writing Tests
 
+### Required Test Authoring Rules
+
+These rules are mandatory for unit tests and should be strongly considered for manual and
+functional tests. Apply them when adding or changing tests, even if neighboring older tests use
+different conventions.
+
+1. **Structure:** Write sections in Arrange, Act, Assert, Cleanup order and mark each included
+   section with its own comment (`// Arrange`, `// Act`, `// Assert`, `// Cleanup`). Every test must
+   have Act and Assert sections. Include Arrange only when setup is needed, and Cleanup only when
+   a special construct needs teardown. If a section has multiple groups of steps, give each group
+   its own comment explaining what happens and, when unclear, why. Use `using` for normal resource
+   disposal; put special teardown in `finally` or a fixture so it also runs after a failed assertion.
+2. **Theory data:** Use `[InlineData]` for compile-time constant data. When it cannot represent the
+   parameters, always use `[MemberData]`, never `[ClassData]`. Declare the member's return type as
+   `TheoryData<...>` with the theory parameter types, not `IEnumerable<object[]>` or `object[][]`.
+3. **Class ownership:** A unit test file tests only the class it is named for. For example,
+   `TdsParserTests.cs` contains tests against `TdsParser`, not unrelated classes.
+4. **Method names:** Use `{MethodName}_{Input}_{ExpectedOutput}` without the tested class name.
+   Examples: `ExecuteReader_NullParameter_Throws` and
+   `ExecuteReader_ValidParameters_ReturnsReader`.
+5. **File placement:** Mirror the tested class's source folder structure under `UnitTests/`.
+   For example, within `src/Microsoft.Data.SqlClient/`,
+   `src/Microsoft/Data/SqlClient/Parser/TdsParser.cs` maps to
+   `tests/UnitTests/Microsoft/Data/SqlClient/Parser/TdsParserTests.cs`.
+6. **Unit-only utilities:** Place helpers used only by UnitTests in
+   `src/Microsoft.Data.SqlClient/tests/UnitTests/Utilities/`.
+7. **Shared utilities:** Place helpers shared across test projects in the TestCommon project at
+   `src/Microsoft.Data.SqlClient/tests/Common/`. Fuzz, stress, and performance test projects are
+   excluded from this sharing rule.
+8. **Focused scenarios:** Split separate scenarios into separate tests. Do not use switches,
+   boolean flags, or mode parameters to change the behavior a test exercises, including selecting
+   sync versus async calls. Theories may supply different inputs and expected results for the
+   same behavior; they must not dispatch to unrelated scenarios.
+9. **Beneficial tests:** Each test must exercise the intended product behavior and assert an
+   observable result that would detect a regression. For bug fixes, confirm the test fails for the
+   reported bug before the fix and passes afterward. Avoid tautologies, assertions only about
+   setup or mocks, and duplicates that add no distinct behavioral protection. Confirm the selected
+   tests actually ran: a successful command with zero matches or only skipped tests is not evidence
+   of coverage. Report any tests that could not run and why.
+
 ### Test Documentation Requirements
 
 To keep tests maintainable for contributors and AI agents, test intent must be documented at
@@ -196,78 +238,139 @@ class and method level.
 - Keep comments concise and factual.
 - Prefer behavior-focused wording over implementation trivia.
 - Avoid comments that merely repeat obvious code.
-- Use inline comments inside test methods only for non-obvious setup/act/assert details.
+- Always include the section and step-group comments required above. Keep additional inline
+  comments focused on non-obvious details.
 
 #### Example
 ```csharp
 /// <summary>
-/// Ensures malformed connection strings return a non-zero exit code and emit a parse error
-/// without verbose exception details.
+/// Ensures the server alias is recognized, preserving the supported keyword contract.
 /// </summary>
 [Fact]
-public void AppRunWithMalformedConnectionStringReturnsOneAndWritesParseError()
+public void ContainsKey_ServerAlias_ReturnsTrue()
 {
-        // Arrange / Act / Assert
+    // Arrange
+    var builder = new SqlConnectionStringBuilder();
+
+    // Act
+    bool result = builder.ContainsKey("Server");
+
+    // Assert
+    Assert.True(result);
 }
 ```
 
 ### Test Structure
 ```csharp
-public class FeatureNameTests
+/// <summary>Verifies connection string keyword contracts.</summary>
+public class SqlConnectionStringBuilderTests
 {
+    /// <summary>Ensures the server alias remains a supported keyword.</summary>
     [Fact]
-    public void MethodName_Scenario_ExpectedResult()
+    public void ContainsKey_ServerAlias_ReturnsTrue()
     {
         // Arrange
-        var sut = new SystemUnderTest();
+        var builder = new SqlConnectionStringBuilder();
 
         // Act
-        var result = sut.PerformAction();
+        bool result = builder.ContainsKey("Server");
 
         // Assert
-        Assert.Equal(expected, result);
+        Assert.True(result);
     }
 }
 ```
 
 ### Naming Conventions
 - Test class: `{ClassName}Tests`
-- Test method: `{Method}_{Scenario}_{ExpectedBehavior}`
-- Descriptive names that document behavior
+- Test method: `{MethodName}_{Input}_{ExpectedOutput}`
+- Do not include the tested class name in the method name.
+- Keep each unit test file focused on its named class and mirror the source folder structure.
 
 ### Common Patterns
 
 #### Connection Tests
 ```csharp
+/// <summary>Verifies an asynchronous open establishes a usable connection.</summary>
 [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
 public async Task OpenAsync_ValidConnection_Succeeds()
 {
+    // Arrange
     using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+
+    // Act
     await connection.OpenAsync();
+
+    // Assert
     Assert.Equal(ConnectionState.Open, connection.State);
 }
 ```
 
 #### Error Handling Tests
 ```csharp
+/// <summary>Verifies null keywords fail with the documented argument exception.</summary>
 [Fact]
-public void Parse_InvalidInput_ThrowsArgumentException()
+public void ContainsKey_NullKeyword_ThrowsArgumentNullException()
 {
-    Assert.Throws<ArgumentException>(() => Parser.Parse(null));
+    // Arrange
+    var builder = new SqlConnectionStringBuilder();
+
+    // Act
+    Action action = () => builder.ContainsKey(null);
+
+    // Assert
+    Assert.Throws<ArgumentNullException>(action);
 }
 ```
 
 #### Parameterized Tests
 ```csharp
+/// <summary>Ensures both server keyword aliases remain supported.</summary>
 [Theory]
-[InlineData("Server=host", "host")]
-[InlineData("Data Source=host", "host")]
-public void ServerProperty_VariousSyntax_ExtractsCorrectly(string connStr, string expected)
+[InlineData("Server")]
+[InlineData("Data Source")]
+public void ContainsKey_ServerAliases_ReturnsTrue(string keyword)
 {
-    var builder = new SqlConnectionStringBuilder(connStr);
-    Assert.Equal(expected, builder.DataSource);
+    // Arrange
+    var builder = new SqlConnectionStringBuilder();
+
+    // Act
+    bool result = builder.ContainsKey(keyword);
+
+    // Assert
+    Assert.True(result);
 }
 ```
+
+For non-constant parameters, use a member with a typed `TheoryData<...>` return type:
+
+```csharp
+/// <summary>Provides builders with and without a server to test removal results.</summary>
+public static TheoryData<SqlConnectionStringBuilder, bool> RemoveServerData =>
+    new TheoryData<SqlConnectionStringBuilder, bool>
+    {
+        { new SqlConnectionStringBuilder("Server=host"), true },
+        { new SqlConnectionStringBuilder(), false }
+    };
+
+/// <summary>Ensures removal reports whether the keyword was explicitly configured.</summary>
+[Theory]
+[MemberData(nameof(RemoveServerData))]
+public void Remove_KeywordPresence_ReturnsExpectedResult(
+    SqlConnectionStringBuilder builder, bool expected)
+{
+    // Act
+    bool result = builder.Remove("Data Source");
+
+    // Assert
+    Assert.Equal(expected, result);
+    Assert.False(builder.ShouldSerialize("Data Source"));
+}
+```
+
+Each row exercises the same operation; the boolean is an expected result, not a behavior switch.
+For exception tests, the Act section may declare the delegate invoked by `Assert.Throws` (or
+`Assert.ThrowsAsync`) in Assert; do not invoke the throwing operation before the assertion.
 
 ## Test Best Practices
 
@@ -292,43 +395,37 @@ Microsoft.Data.SqlClient exposes both synchronous and asynchronous APIs for most
 
 #### Pattern: Test Both Sync and Async
 ```csharp
+/// <summary>Verifies a synchronous open establishes a usable connection.</summary>
 [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-public void Connection_Open_Succeeds()
+public void Open_ValidConnection_Succeeds()
 {
+    // Arrange
     using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+
+    // Act
     connection.Open();
+
+    // Assert
     Assert.Equal(ConnectionState.Open, connection.State);
 }
 
+/// <summary>Verifies an asynchronous open establishes a usable connection.</summary>
 [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-public async Task Connection_OpenAsync_Succeeds()
+public async Task OpenAsync_ValidConnection_Succeeds()
 {
+    // Arrange
     using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+
+    // Act
     await connection.OpenAsync();
+
+    // Assert
     Assert.Equal(ConnectionState.Open, connection.State);
 }
 ```
 
-#### Pattern: Shared Helper with Sync/Async Variants
-```csharp
-[ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-[InlineData(true)]   // async
-[InlineData(false)]  // sync
-public async Task ExecuteCommand_ReturnsExpectedRows(bool async)
-{
-    using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
-    if (async)
-        await connection.OpenAsync();
-    else
-        connection.Open();
-
-    using var command = new SqlCommand("SELECT 1", connection);
-    object result = async
-        ? await command.ExecuteScalarAsync()
-        : command.ExecuteScalar();
-    Assert.Equal(1, (int)result);
-}
-```
+Keep sync and async cases in separate tests as shown above. Shared helpers may prepare common
+state, but must not hide behavior selection behind flags or switches.
 
 #### Key Sync/Async API Pairs to Cover
 | Sync Method | Async Method |

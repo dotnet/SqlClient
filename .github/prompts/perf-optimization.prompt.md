@@ -67,6 +67,10 @@ Before making changes, document:
 - Review for regressions on other platforms (if using `#if` guards).
 
 ## 6. Write Tests (if needed)
+- Read and follow the [test authoring rules](../instructions/testing.instructions.md#writing-tests).
+  They are mandatory for unit tests and strongly recommended for manual and functional tests.
+- Keep scenarios separate instead of selecting behavior with switches, and use meaningful assertions
+  that detect regressions. Confirm the intended tests actually ran; report skips or zero matches.
 - If the optimization changes internal structure, add unit tests to verify the new code path.
 - For cache/pool implementations, add tests for concurrent access.
 - For `ArrayPool` usage, verify buffers are returned (no leaks).
