@@ -2555,14 +2555,13 @@ namespace Microsoft.Data.SqlClient
                         // Remove the entry from the cache since it was inconsistent
                         SqlQueryMetadataCache.GetInstance().InvalidateCacheEntry(this);
                         // Kick off the retry
-                        bool invalidationCompleted = false;
+                        SqlConnectionInternal retryConnection = _activeConnection.InnerConnection as SqlConnectionInternal;
+                        Task<object> retryTask = null;
                         try
                         {
                             await InvalidateEnclaveSessionAsync(cancellationToken).ConfigureAwait(false);
-                            invalidationCompleted = true;
                             _internalEndExecuteInitiated = false;
-                            Task<object> retryTask;
-                            _enclaveRetryConnection = _activeConnection.InnerConnection as SqlConnectionInternal;
+                            _enclaveRetryConnection = retryConnection;
                             try
                             {
                                 retryTask = (Task<object>)retryFunc(
@@ -2579,39 +2578,18 @@ namespace Microsoft.Data.SqlClient
                                 _enclaveRetryConnection = null;
                             }
 
-                            await retryTask.ContinueWith(
-                                static (retryTask, state) =>
-                                {
-                                    TaskCompletionSource<object> completionSource = (TaskCompletionSource<object>)state;
-                                    if (retryTask.IsFaulted)
-                                    {
-                                        completionSource.TrySetException(retryTask.Exception.InnerException);
-                                    }
-                                    else if (retryTask.IsCanceled)
-                                    {
-                                        completionSource.TrySetCanceled();
-                                    }
-                                    else
-                                    {
-                                        completionSource.TrySetResult(retryTask.Result);
-                                    }
-                                },
-                                state: globalCompletion,
-                                TaskScheduler.Default).ConfigureAwait(false);
+                            object result = await retryTask.ConfigureAwait(false);
+                            globalCompletion.TrySetResult(result);
                         }
                         catch (Exception e2)
                         {
-                            if (!invalidationCompleted)
-                            {
-                                CachedAsyncState?.ResetAsyncState();
-                                if (_activeConnection.InnerConnection is SqlConnectionInternal innerConnection)
-                                {
-                                    innerConnection.DecrementAsyncCount();
-                                }
-                                _internalEndExecuteInitiated = false;
-                            }
+                            CachedAsyncState?.ResetAsyncState();
+                            // Failed retry setup cannot transfer the original reservation to End.
+                            retryConnection?.DecrementAsyncCount();
+                            _internalEndExecuteInitiated = false;
 
-                            if (e2 is OperationCanceledException && cancellationToken.IsCancellationRequested)
+                            if (e2 is OperationCanceledException &&
+                                (cancellationToken.IsCancellationRequested || retryTask?.IsCanceled == true))
                             {
                                 globalCompletion.TrySetCanceled();
                             }

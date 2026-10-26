@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Connection;
+using Microsoft.Data.SqlClient.Parser;
 using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
 
@@ -608,6 +609,92 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 .GetValue(inner));
         }
 
+        /// <summary>Retry preparation failures release the retained reservation after successful invalidation.</summary>
+        [Theory]
+        [InlineData(0, false)]
+        [InlineData(0, true)]
+        [InlineData(1, false)]
+        [InlineData(1, true)]
+        [InlineData(2, false)]
+        [InlineData(2, true)]
+        public async Task Retry_PreparationAborts_ReleasesOriginalReservation(int stage, bool cancel)
+        {
+            using Fixture fixture = new Fixture();
+            using SqlCommand command = fixture.CreateCommand();
+            using CancellationTokenSource cancellation = new CancellationTokenSource();
+            using ECDiffieHellman key = ECDiffieHellman.Create();
+            SetField(command, "enclaveAttestationParameters",
+                new SqlEnclaveAttestationParameters(1, Array.Empty<byte>(), key));
+            SetField(command, "enclavePackage", new EnclavePackage(Array.Empty<byte>(), fixture.Provider.Session));
+            typeof(SqlCommand).GetMethod("GetStateObject", BindingFlags.NonPublic | BindingFlags.Instance)
+                .Invoke(command, new object[] { null });
+            SqlConnectionInternal inner = (SqlConnectionInternal)fixture.Connection.InnerConnection;
+            inner.IncrementAsyncCount();
+            var local = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var global = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var retryEntered = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
+            Func<SqlCommand, IAsyncResult, bool, string, object> end =
+                (cmd, result, internalEnd, name) =>
+                    throw new EnclaveDelegate.RetryableEnclaveQueryExecutionException("Retry", null);
+            Func<SqlCommand, CommandBehavior, AsyncCallback, object, int, bool, bool, IAsyncResult> retry =
+                (cmd, behavior, callback, state, timeout, isRetry, asyncWrite) => RetryPreparationAsync();
+            typeof(SqlCommand).GetMethod("CreateLocalCompletionTask", BindingFlags.NonPublic | BindingFlags.Instance)
+                .Invoke(command, new object[]
+                {
+                    CommandBehavior.Default, null, 30, false, true, global, local, end, retry,
+                    nameof(SqlCommand.EndExecuteReader), ADP.TimerCurrent(), cancellation.Token
+                });
+            local.SetResult(null);
+            await await Task.WhenAny(fixture.Provider.Entered.Task, global.Task);
+            Assert.False(global.Task.IsCompleted);
+            fixture.Provider.CompleteSessionOperation();
+            await await Task.WhenAny(retryEntered.Task, global.Task);
+            Assert.False(global.Task.IsCompleted);
+            Assert.Equal(1, GetAsyncCount(inner));
+            if (cancel)
+            {
+                cancellation.Cancel();
+                await Assert.ThrowsAnyAsync<OperationCanceledException>(() => global.Task);
+                var failure = Assert.Throws<TargetInvocationException>(() =>
+                    typeof(SqlCommand).GetMethod("EndExecuteReaderAsync", BindingFlags.NonPublic | BindingFlags.Instance)
+                        .Invoke(command, new object[] { global.Task }));
+                Assert.IsType<TaskCanceledException>(failure.InnerException);
+            }
+            else
+            {
+                if (stage == 2)
+                {
+                    fixture.Provider.FailSessionOperation();
+                }
+                else
+                {
+                    fixture.Provider.Fail();
+                }
+                Assert.Same(fixture.Provider.Error,
+                    await Assert.ThrowsAsync<InvalidOperationException>(() => global.Task));
+            }
+            Assert.Equal(0, GetAsyncCount(inner));
+            Assert.False((bool)GetField(command, "_internalEndExecuteInitiated"));
+            Assert.Null(GetField(command, "_enclaveRetryConnection"));
+            Assert.False((bool)GetField(command, "_enclaveAttestationInProgress"));
+            using SqlCommand reusable = new SqlCommand("/* reuse after retry preparation */", fixture.Connection);
+            Assert.Equal(-1, await reusable.ExecuteNonQueryAsync());
+            Assert.Equal(0, GetAsyncCount(inner));
+
+            async Task<object> RetryPreparationAsync()
+            {
+                fixture.Provider.ResetSessionOperation();
+                fixture.Provider.SessionOperation = stage == 2;
+                fixture.Provider.Attestation = stage == 1;
+                Task preparation = stage == 2
+                    ? Invoke(command, "CreateEnclaveSessionAsync", new byte[] { 1 }, true, cancellation.Token)
+                    : Invoke(command, "PrepareForTransparentEncryptionAsync", 30, true, true, cancellation.Token);
+                retryEntered.SetResult(null);
+                await preparation;
+                return null;
+            }
+        }
+
         /// <summary>Invokes command-owned session logic without requiring a real attestation service.</summary>
         private static Task Invoke(SqlCommand command, string method, params object[] args) =>
             (Task)typeof(SqlCommand).GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic).Invoke(command, args);
@@ -733,7 +820,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
             private TaskCompletionSource<SqlEnclaveAttestationParameters> _pending =
                 new TaskCompletionSource<SqlEnclaveAttestationParameters>(TaskCreationOptions.RunContinuationsAsynchronously);
-            private readonly TaskCompletionSource<bool> _sessionOperation =
+            private TaskCompletionSource<bool> _sessionOperation =
+                new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+            /// <summary>Starts a distinct session-creation operation after invalidation succeeds.</summary>
+            internal void ResetSessionOperation() => _sessionOperation =
                 new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
             /// <summary>Releases a pending session operation successfully.</summary>

@@ -10,7 +10,8 @@ The execution cancellation token is passed to enclave provider operations,
 including attestation-service requests. Cancellation or provider failure during
 attestation preparation stops execution before the user query is sent and releases
 describe-encryption state. Cancellation or failure during retry-time invalidation
-prevents the retry and releases the original asynchronous operation's state.
+or subsequent attestation preparation releases the original asynchronous
+operation's connection reservation before reporting completion.
 Synchronous execution continues to use synchronous provider methods.
 
 Applications must serialize operations on a non-MARS connection. Execution
