@@ -2,7 +2,10 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.Collections.Concurrent;
+using System.Diagnostics.Tracing;
 using System.Runtime.InteropServices;
+using Microsoft.Data.SqlClient.Internal;
 using Microsoft.Identity.Client;
 
 namespace Microsoft.Data.SqlClient.Extensions.Azure.Test;
@@ -32,8 +35,12 @@ public class WamBrokerErrorTests
             () => throw new InvalidOperationException("Window discovery must not precede MSAL token acquisition."));
         var cause = new MsalClientException("window_handle_required", "Original MSAL diagnostic.");
 
+        using var listener = new FailureListener();
         AuthenticationException exception = await AcquireWithMsalExceptionAsync(
             provider, SqlAuthenticationMethod.ActiveDirectoryInteractive, cause);
+
+        Assert.Contains(listener.Events, entry => entry.Level == EventLevel.Error &&
+            Equals(entry.Payload![0], "Token acquisition failed.") && Equals(entry.Payload[1], "SqlClient"));
 
         Assert.Equal(SqlAuthenticationMethod.ActiveDirectoryInteractive, exception.Method);
         Assert.Equal(cause.ErrorCode, exception.FailureCode);
@@ -84,6 +91,34 @@ public class WamBrokerErrorTests
         Assert.Same(cause, exception.InnerException);
         Assert.False(exception.ShouldRetry);
         Assert.Equal($"Failed to acquire access token for {method}: {cause.Message}", exception.Message);
+    }
+
+    /// <summary>Collects SqlClient authentication trace events.</summary>
+    private sealed class FailureListener : EventListener
+    {
+        /// <summary>Gets the captured authentication events.</summary>
+        internal ConcurrentQueue<EventWrittenEventArgs> Events { get; } = new();
+
+        /// <summary>Starts collecting authentication events.</summary>
+        internal FailureListener() =>
+            EnableEvents(SqlClientEventSource.Log, EventLevel.Verbose, SqlClientEventSource.Keywords.AuthenticationTrace);
+
+        /// <summary>Disables explicitly so later tests do not inherit this demand.</summary>
+        public override void Dispose()
+        {
+            DisableEvents(SqlClientEventSource.Log);
+            base.Dispose();
+        }
+
+        /// <inheritdoc />
+        protected override void OnEventWritten(EventWrittenEventArgs eventData)
+        {
+            if (eventData.EventSource == SqlClientEventSource.Log &&
+                (eventData.Keywords & SqlClientEventSource.Keywords.AuthenticationTrace) != 0)
+            {
+                Events.Enqueue(eventData);
+            }
+        }
     }
 
     /// <summary>

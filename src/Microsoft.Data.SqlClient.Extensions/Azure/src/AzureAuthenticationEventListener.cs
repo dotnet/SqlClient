@@ -91,9 +91,13 @@ internal sealed class AzureAuthenticationEventListener : EventListener
     }
 
     /// <summary>Applies subscriptions outside the source lock.</summary>
-    /// <remarks>Restarts when a nested collector command changes demand, so a stale snapshot cannot undo it.</remarks>
+    /// <remarks>
+    /// Restarts when a nested or concurrent collector command changes demand. A restart reapplies every source,
+    /// because a stale enable from the interrupted pass may have landed after the newer one.
+    /// </remarks>
     private void ApplySubscriptions()
     {
+        bool force = false;
         while (true)
         {
             SourceState[] sources;
@@ -115,7 +119,7 @@ internal sealed class AzureAuthenticationEventListener : EventListener
 
                 if (state.Source.TryGetTarget(out EventSource? source))
                 {
-                    ApplySource(state, source, desired);
+                    ApplySource(state, source, desired, force);
                 }
             }
 
@@ -123,13 +127,19 @@ internal sealed class AzureAuthenticationEventListener : EventListener
             {
                 return;
             }
+
+            force = true;
         }
     }
 
-    /// <summary>Updates one SDK source; callers are inside framework subscription serialization.</summary>
-    private void ApplySource(SourceState state, EventSource source, EventLevel? desired)
+    /// <summary>Updates one SDK source.</summary>
+    /// <param name="state">This listener's tracked subscription for the source.</param>
+    /// <param name="source">The SDK source.</param>
+    /// <param name="desired">The level to apply, or null to unsubscribe.</param>
+    /// <param name="force">Reapplies even when the cached level matches, to repair a stale enable.</param>
+    private void ApplySource(SourceState state, EventSource source, EventLevel? desired, bool force = false)
     {
-        if (state.Level == desired)
+        if (!force && state.Level == desired)
         {
             return;
         }
@@ -139,6 +149,7 @@ internal sealed class AzureAuthenticationEventListener : EventListener
         state.Level = desired;
         try
         {
+            BeforeApplyForTest?.Invoke(source);
             if (desired.HasValue)
             {
                 EnableEvents(source, desired.Value);
@@ -154,6 +165,9 @@ internal sealed class AzureAuthenticationEventListener : EventListener
             throw;
         }
     }
+
+    /// <summary>Test hook run after a level is published and before it is applied to the SDK source.</summary>
+    internal Action<EventSource>? BeforeApplyForTest { get; set; }
 
     /// <summary>Gets the level this listener last applied to a source.</summary>
     /// <remarks>

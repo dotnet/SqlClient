@@ -479,6 +479,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             _useWamBroker &&
             ex.ErrorCode == "window_handle_required")
         {
+            AuthenticationLogger.Write(EventLevel.Error, "Token acquisition failed.", "SqlClient", parameters.ConnectionId);
             SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | WAM interactive authentication requires a valid parent window handle.");
 
             // TODO: Localize this message: https://github.com/dotnet/SqlClient/issues/4904

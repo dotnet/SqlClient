@@ -445,6 +445,40 @@ public class AuthenticationLoggingTests
         }
     }
 
+    /// <summary>A stale enable that lands after a nested, newer one is repaired.</summary>
+    [Fact]
+    public void AzureSdkEvents_StaleEnableAfterNestedCommandIsRepaired()
+    {
+        AzureAuthenticationEventListener shared = AzureAuthenticationEventListener.Instance;
+        using var source = new ControlledIdentitySource();
+        using var verbose = new AuthenticationListener(level: EventLevel.Informational);
+        verbose.Disable();
+        int once = 1;
+        shared.BeforeApplyForTest = applying =>
+        {
+            if (ReferenceEquals(applying, source) && Interlocked.Exchange(ref once, 0) == 1)
+            {
+                // Runs after Informational is published and before it is applied.
+                verbose.Enable(EventLevel.Verbose, SqlClientEventSource.Keywords.AuthenticationTrace);
+            }
+        };
+        try
+        {
+            using var informational = new AuthenticationListener(level: EventLevel.Informational);
+            Assert.Equal(0, once);
+            Assert.Equal(EventLevel.Verbose, shared.GetAppliedLevel(source));
+#if NET
+            // Delivery shows the listener's real subscription; the stale Informational enable would drop this.
+            source.LogMsalVerbose("after stale enable");
+            Assert.Equal(1, verbose.Count("after stale enable"));
+#endif
+        }
+        finally
+        {
+            shared.BeforeApplyForTest = null;
+        }
+    }
+
     /// <summary>Disposed SDK sources are not kept alive by the shared listener.</summary>
     [Fact]
     public void AzureSdkEvents_DoNotRetainDisposedSources()
