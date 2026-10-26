@@ -93,6 +93,9 @@ internal static class UserAgent
     ///     The <c>{Driver Properties}</c> part is a driver-owned feature flag
     ///     value, serialized as uppercase hexadecimal. It is always present.
     ///     Maximum length is 16 characters.
+    ///     Bit 0 reports connection pool V2; bits 1 and 2 report the configured
+    ///     UseCompatibilityAsyncBehaviour and UseCompatibilityProcessSni values,
+    ///     respectively, before any compatibility override is applied.
     ///   </para>
     ///   <para>
     ///     Any characters from the sourced values that are not one of the
