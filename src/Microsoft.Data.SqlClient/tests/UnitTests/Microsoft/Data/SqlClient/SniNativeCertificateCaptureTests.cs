@@ -11,6 +11,7 @@ using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using Interop.Windows.Sni;
 using Microsoft.Data.SqlClient.Connection;
+using Microsoft.Data.SqlClient.NativeSni;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests
