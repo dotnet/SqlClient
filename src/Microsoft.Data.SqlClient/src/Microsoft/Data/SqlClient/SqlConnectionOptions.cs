@@ -51,7 +51,6 @@ namespace Microsoft.Data.SqlClient
 
         internal enum TypeSystem
         {
-            SQLServer2005 = 2005,
             SQLServer2008 = 2008,
             SQLServer2012 = 2012,
         }
@@ -67,7 +66,6 @@ namespace Microsoft.Data.SqlClient
             // sentinel value that the connection string accepts for historical/compatibility
             // reasons. The actual type system it resolves to is decided where "Latest" is parsed.
             internal const string Latest = "Latest";
-            internal const string SQL_Server_2005 = "SQL Server 2005";
             internal const string SQL_Server_2008 = "SQL Server 2008";
             internal const string SQL_Server_2012 = "SQL Server 2012";
         }
@@ -472,10 +470,6 @@ namespace Microsoft.Data.SqlClient
                 // down-level types are surfaced) for existing applications that rely on the default,
                 // which would be a breaking change. Newer type systems must be requested explicitly.
                 _typeSystemVersion = TypeSystem.SQLServer2008;
-            }
-            else if (typeSystemVersionString.Equals(TYPESYSTEMVERSION.SQL_Server_2005, StringComparison.OrdinalIgnoreCase))
-            {
-                _typeSystemVersion = TypeSystem.SQLServer2005;
             }
             else if (typeSystemVersionString.Equals(TYPESYSTEMVERSION.SQL_Server_2008, StringComparison.OrdinalIgnoreCase))
             {

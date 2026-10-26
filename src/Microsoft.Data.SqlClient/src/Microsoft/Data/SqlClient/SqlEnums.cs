@@ -56,13 +56,8 @@ namespace Microsoft.Data.SqlClient
         internal readonly bool IsCharType;
         internal readonly bool IsNCharType;
         internal readonly bool IsSizeInCharacters;
-        internal readonly bool Is2008Type;
+        internal readonly bool IsStructuredType;
         internal readonly bool IsVarTime;
-
-        internal readonly bool Is70Supported;
-        internal readonly bool Is80Supported;
-        internal readonly bool Is90Supported;
-        internal readonly bool Is100Supported;
 
         // SqlVector Element Types
         //
@@ -106,13 +101,8 @@ namespace Microsoft.Data.SqlClient
             IsCharType = _IsCharType(sqldbType);
             IsNCharType = _IsNCharType(sqldbType);
             IsSizeInCharacters = _IsSizeInCharacters(sqldbType);
-            Is2008Type = _Is2008Type(sqldbType);
+            IsStructuredType = _IsStructuredType(sqldbType);
             IsVarTime = _IsVarTime(sqldbType);
-
-            Is70Supported = _Is70Supported(SqlDbType);
-            Is80Supported = _Is80Supported(SqlDbType);
-            Is90Supported = _Is90Supported(SqlDbType);
-            Is100Supported = _Is100Supported(SqlDbType);
         }
 
         // properties should be inlined so there should be no perf penalty for using these accessor functions
@@ -153,28 +143,7 @@ namespace Microsoft.Data.SqlClient
             type == SqlDbTypeExtensions.Vector ||
             (int)type == 24 /*SqlSmallVarBinary*/;
 
-        private static bool _Is70Supported(SqlDbType type) =>
-            type != SqlDbType.BigInt &&
-            (int)type > 0 &&
-            (int)type <= (int)SqlDbType.VarChar;
-
-        private static bool _Is80Supported(SqlDbType type) =>
-            (int)type >= 0 &&
-            (int)type <= (int)SqlDbType.Variant;
-
-        private static bool _Is90Supported(SqlDbType type) =>
-            _Is80Supported(type) ||
-            SqlDbType.Xml == type ||
-            SqlDbType.Udt == type;
-
-        private static bool _Is100Supported(SqlDbType type) =>
-            _Is90Supported(type) ||
-            SqlDbType.Date == type ||
-            SqlDbType.Time == type ||
-            SqlDbType.DateTime2 == type ||
-            SqlDbType.DateTimeOffset == type;
-
-        private static bool _Is2008Type(SqlDbType type) => SqlDbType.Structured == type;
+        private static bool _IsStructuredType(SqlDbType type) => SqlDbType.Structured == type;
 
         internal static bool _IsVarTime(SqlDbType type) =>
             type == SqlDbType.Time || type == SqlDbType.DateTime2 || type == SqlDbType.DateTimeOffset;

@@ -757,7 +757,7 @@ namespace Microsoft.Data.SqlClient.Server
             _sortOrdinal = sortOrdinal;
         }
 
-        // Construction for Decimal type and new 2008 Date/Time types
+        // Construction for Decimal, Time, DateTime2, and DateTimeOffset types.
         private void Construct(
             string name, 
             SqlDbType dbType, 

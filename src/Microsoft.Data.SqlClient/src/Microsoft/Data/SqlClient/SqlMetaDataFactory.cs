@@ -512,7 +512,7 @@ namespace Microsoft.Data.SqlClient
             const int IsFixedLengthSqlIndex = 9;
             const int ColumnSizeSqlIndex = 10;
 
-            // pre 9.0/2005 servers do not have UDTs
+            // UDT metadata requires SQL Server 2005 (9.0) or later.
             if (0 > string.Compare(serverVersion, ServerVersionNormalized90, StringComparison.OrdinalIgnoreCase))
             {
                 return;
@@ -629,8 +629,7 @@ namespace Microsoft.Data.SqlClient
             const int IsNullableSqlIndex = 1;
             const int ColumnSizeSqlIndex = 2;
 
-            // TODO: update this check once the server upgrades major version number!!!
-            // pre 9.0/2005 servers do not have Table types
+            // Table type metadata requires SQL Server 2008 (10.0) or later.
             if (0 > string.Compare(serverVersion, ServerVersionNormalized10, StringComparison.OrdinalIgnoreCase))
             {
                 return;
