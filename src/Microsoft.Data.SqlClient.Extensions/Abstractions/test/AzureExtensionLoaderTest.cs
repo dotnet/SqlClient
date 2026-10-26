@@ -17,7 +17,7 @@ public class AzureExtensionLoaderTest
         Assert.Null(AzureExtensionLoader.Load(nameof(AzureExtensionLoaderTest)));
     }
 
-    /// <summary>Production assembly resolution ignores recoverable binding errors but preserves fatal inner failures.</summary>
+    /// <summary>Assembly loading ignores recoverable binding errors but preserves fatal inner failures.</summary>
     [Theory]
     [InlineData("FileNotFound", false)]
     [InlineData("FileNotFound", true)]
@@ -37,36 +37,25 @@ public class AzureExtensionLoaderTest
             "BadImageFormat" => new BadImageFormatException("Test invalid assembly image", inner),
             _ => throw new ArgumentOutOfRangeException(nameof(failureType)),
         };
-        bool resolved = false;
-        ResolveEventHandler handler = (_, args) =>
+        bool loadAttempted = false;
+        Assembly LoadAssembly(AssemblyName assemblyName)
         {
-            if (new AssemblyName(args.Name).Name != AzureExtensionLoader.AssemblyName)
-            {
-                return null;
-            }
-
-            resolved = true;
+            Assert.Equal(AzureExtensionLoader.AssemblyName, assemblyName.Name);
+            loadAttempted = true;
             throw failure;
-        };
+        }
 
-        AppDomain.CurrentDomain.AssemblyResolve += handler;
-        try
+        if (fatal)
         {
-            if (fatal)
-            {
-                Exception actual = Assert.ThrowsAny<Exception>(() =>
-                    AzureExtensionLoader.Load(nameof(AzureExtensionLoaderTest)));
-                Assert.Same(inner, actual.GetBaseException());
-            }
-            else
-            {
-                Assert.Null(AzureExtensionLoader.Load(nameof(AzureExtensionLoaderTest)));
-            }
-            Assert.True(resolved);
+            Exception actual = Assert.ThrowsAny<Exception>(() =>
+                AzureExtensionLoader.Load(nameof(AzureExtensionLoaderTest), LoadAssembly));
+            Assert.Same(inner, actual.GetBaseException());
         }
-        finally
+        else
         {
-            AppDomain.CurrentDomain.AssemblyResolve -= handler;
+            Assert.Null(AzureExtensionLoader.Load(nameof(AzureExtensionLoaderTest), LoadAssembly));
         }
+
+        Assert.True(loadAttempted);
     }
 }
