@@ -10,7 +10,8 @@ namespace Microsoft.Data.SqlClient.Extensions.Azure.Test;
 /// process-wide authentication EventSource output. Parallelization is disabled so token
 /// acquisitions in other test classes cannot add events to these collectors.
 /// </summary>
-[CollectionDefinition("SqlAuthenticationProvider", DisableParallelization = true)]
+[CollectionDefinition(Name, DisableParallelization = true)]
 public class SqlAuthenticationProviderCollection
 {
+    public const string Name = "SqlAuthenticationProvider";
 }

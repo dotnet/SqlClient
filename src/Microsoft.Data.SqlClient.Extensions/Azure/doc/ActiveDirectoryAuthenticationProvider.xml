@@ -177,6 +177,15 @@ See the LICENSE file in the project root for more information.
         On non-Windows platforms, this callback is forwarded to MSAL so interactive flows can parent their UI to the host Activity / UIViewController (or platform equivalent).
 
         Exceptions thrown by <paramref name="parentActivityOrWindowFunc" /> when it is invoked by MSAL are not caught by the provider; they propagate up to the caller of the originating <c>AcquireToken</c> request so that bugs in the callback surface where they are most diagnosable.
+        <para>
+          A worker process can lack a console window even when it runs on an interactive desktop, for example in the Azure Functions local host.
+          If no valid parent window is available and WAM requires interactive sign-in, authentication fails with guidance on supported alternatives.
+          Use <c>Authentication=Active Directory Default</c> with a configured non-interactive credential for windowless hosts.
+          To use interactive authentication without WAM, supply a custom
+          <see cref="P:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions.ApplicationClientId"/> and set
+          <see cref="P:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions.UseWamBroker"/> to <see langword="false"/>.
+          WAM cannot be disabled for SqlClient's first-party application ID.
+        </para>
       </remarks>
     </SetParentActivityOrWindowFunc>
     <SetIWin32WindowFunc>

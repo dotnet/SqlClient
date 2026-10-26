@@ -20,7 +20,7 @@ using Microsoft.IdentityModel.Abstractions;
 namespace Microsoft.Data.SqlClient.Extensions.Azure.Test;
 
 /// <summary>Verifies non-PII authentication tracing without application logging callbacks.</summary>
-[Collection("SqlAuthenticationProvider")]
+[Collection(SqlAuthenticationProviderCollection.Name)]
 public class AuthenticationLoggingTests
 {
     /// <summary>Authentication diagnostics do not add public callback or PII configuration APIs.</summary>

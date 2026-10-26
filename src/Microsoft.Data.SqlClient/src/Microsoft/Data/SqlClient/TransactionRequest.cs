@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using Microsoft.Data.SqlClient.Parser;
+
 namespace Microsoft.Data.SqlClient;
 
 /// <summary>
@@ -15,7 +17,7 @@ internal enum TransactionRequest
     Promote,
     Commit,
     Rollback,
-    // TODO: since v2005, this is always mapped to the same behavior as Rollback. Remove in future.
+    // Mapped to Rollback; server completion notifications make a conditional rollback unnecessary.
     IfRollback,
     Save
 }

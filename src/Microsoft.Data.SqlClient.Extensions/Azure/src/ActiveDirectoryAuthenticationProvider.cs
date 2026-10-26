@@ -26,7 +26,8 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
     /// The purpose of this cache is to allow re-use of Access Tokens fetched for a user interactively or with any other mode
     /// to avoid interactive authentication request every-time, within application scope making use of MSAL's userTokenCache.
     /// </summary>
-    private static readonly ConcurrentDictionary<PublicClientAppKey, IPublicClientApplication> s_pcaMap = new();
+    // Internal for test access.
+    internal static readonly ConcurrentDictionary<PublicClientAppKey, IPublicClientApplication> s_pcaMap = new();
     private static readonly ConcurrentDictionary<TokenCredentialKey, TokenCredentialData> s_tokenCredentialMap = new();
     private static readonly SemaphoreSlim s_pcaMapModifierSemaphore = new(1, 1);
     private static readonly SemaphoreSlim s_tokenCredentialMapModifierSemaphore = new(1, 1);
@@ -469,6 +470,30 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             AuthenticationLogger.Write(EventLevel.Error, "Token acquisition failed.", "SqlClient", parameters.ConnectionId);
             // Already shaped for the caller; don't re-wrap it below.
             throw;
+        }
+        // MSAL raises window_handle_required only on Windows, where WAM needs a parent window.
+        // If WAM support is added for other platforms, revisit this filter and message.
+        catch (MsalClientException ex) when (
+            parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryInteractive &&
+            RuntimeInformation.IsOSPlatform(OSPlatform.Windows) &&
+            _useWamBroker &&
+            ex.ErrorCode == "window_handle_required")
+        {
+            SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | WAM interactive authentication requires a valid parent window handle.");
+
+            // TODO: Localize this message: https://github.com/dotnet/SqlClient/issues/4904
+            throw new Extensions.Azure.AuthenticationException(
+                parameters.AuthenticationMethod,
+                ex.ErrorCode,
+                shouldRetry: false,
+                retryPeriod: 0,
+                "Active Directory Interactive authentication with Windows Web Account Manager (WAM) requires a valid parent window handle. " +
+                "Supply an application-owned window handle using ActiveDirectoryAuthenticationProvider.SetParentActivityOrWindowFunc. " +
+                "For windowless hosts, such as Azure Functions local workers, use Authentication=Active Directory Default with a configured non-interactive credential. " +
+                "To use interactive authentication without WAM, provide your own ApplicationClientId and set UseWamBroker=false. " +
+                "WAM cannot be disabled for SqlClient's first-party application ID. " +
+                ex.Message,
+                ex);
         }
         catch (MsalException ex)
         {
