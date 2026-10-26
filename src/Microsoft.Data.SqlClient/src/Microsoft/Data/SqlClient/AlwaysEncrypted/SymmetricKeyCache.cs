@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using System.Threading;
@@ -23,6 +24,14 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
 
         private readonly MemoryCache _cache;
         private readonly object _publicationLock = new();
+        private readonly Dictionary<string, KeyLoadGate> _pendingKeyLoads = new();
+
+        private sealed class KeyLoadGate
+        {
+            internal readonly SemaphoreSlim Semaphore = new(1, 1);
+            // Count owners and waiters so removal cannot create a second gate for an active key.
+            internal int Users;
+        }
 
         private SymmetricKeyCache()
         {
@@ -112,7 +121,8 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
         /// </summary>
         /// <remarks>
         /// Provider I/O runs outside the process-wide gate so synchronous callers are not blocked by it.
-        /// Concurrent misses may decrypt the same key; the first published cache entry wins.
+        /// Async misses for the same key wait for its pending load and recheck the cache.
+        /// Different keys load independently; synchronous races retain first-published key identity.
         /// </remarks>
         internal async Task<SymmetricKey> GetKeyAsync(
             SqlEncryptionKeyInfo keyInfo,
@@ -125,6 +135,57 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
             Debug.Assert(serverName is not null, @"serverName should not be null.");
             string cacheLookupKey = CreateCacheLookupKey(keyInfo, serverName!);
 
+            if (_cache.TryGetValue(cacheLookupKey, out SymmetricKey? cachedKey) && cachedKey is not null)
+            {
+                return cachedKey;
+            }
+
+            KeyLoadGate gate;
+            lock (_publicationLock)
+            {
+                if (!_pendingKeyLoads.TryGetValue(cacheLookupKey, out gate!))
+                {
+                    gate = new KeyLoadGate();
+                    _pendingKeyLoads.Add(cacheLookupKey, gate);
+                }
+                gate.Users++;
+            }
+
+            bool acquired = false;
+            try
+            {
+                await gate.Semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+                acquired = true;
+                cancellationToken.ThrowIfCancellationRequested();
+                return await LoadKeyAsync(keyInfo, connection, command, cancellationToken, serverName!, cacheLookupKey)
+                    .ConfigureAwait(false);
+            }
+            finally
+            {
+                if (acquired)
+                {
+                    gate.Semaphore.Release();
+                }
+
+                lock (_publicationLock)
+                {
+                    if (--gate.Users == 0)
+                    {
+                        _pendingKeyLoads.Remove(cacheLookupKey);
+                        gate.Semaphore.Dispose();
+                    }
+                }
+            }
+        }
+
+        private async Task<SymmetricKey> LoadKeyAsync(
+            SqlEncryptionKeyInfo keyInfo,
+            SqlConnection connection,
+            SqlCommand? command,
+            CancellationToken cancellationToken,
+            string serverName,
+            string cacheLookupKey)
+        {
             if (_cache.TryGetValue(cacheLookupKey, out SymmetricKey? cachedKey) && cachedKey is not null)
             {
                 return cachedKey;
