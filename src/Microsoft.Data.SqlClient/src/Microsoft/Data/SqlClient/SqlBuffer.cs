@@ -536,7 +536,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // use static list of format strings indexed by scale for perf
-        private static readonly string[] s_sql2008DateTimeOffsetFormatByScale = new string[] {
+        private static readonly string[] s_sqlDateTimeOffsetFormatByScale = new string[] {
                 "yyyy-MM-dd HH:mm:ss zzz",
                 "yyyy-MM-dd HH:mm:ss.f zzz",
                 "yyyy-MM-dd HH:mm:ss.ff zzz",
@@ -547,7 +547,7 @@ namespace Microsoft.Data.SqlClient
                 "yyyy-MM-dd HH:mm:ss.fffffff zzz",
         };
 
-        private static readonly string[] s_sql2008DateTime2FormatByScale = new string[] {
+        private static readonly string[] s_sqlDateTime2FormatByScale = new string[] {
                 "yyyy-MM-dd HH:mm:ss",
                 "yyyy-MM-dd HH:mm:ss.f",
                 "yyyy-MM-dd HH:mm:ss.ff",
@@ -558,7 +558,7 @@ namespace Microsoft.Data.SqlClient
                 "yyyy-MM-dd HH:mm:ss.fffffff",
         };
 
-        private static readonly string[] s_sql2008TimeFormatByScale = new string[] {
+        private static readonly string[] s_sqlTimeFormatByScale = new string[] {
                 "HH:mm:ss",
                 "HH:mm:ss.f",
                 "HH:mm:ss.ff",
@@ -569,7 +569,7 @@ namespace Microsoft.Data.SqlClient
                 "HH:mm:ss.fffffff",
         };
 
-        internal string Sql2008DateTimeString
+        internal string SqlDateTimeString
         {
             get
             {
@@ -582,24 +582,24 @@ namespace Microsoft.Data.SqlClient
                 if (StorageType.Time == _type)
                 {
                     byte scale = _value._timeInfo._scale;
-                    return new DateTime(_value._timeInfo._ticks).ToString(s_sql2008TimeFormatByScale[scale], DateTimeFormatInfo.InvariantInfo);
+                    return new DateTime(_value._timeInfo._ticks).ToString(s_sqlTimeFormatByScale[scale], DateTimeFormatInfo.InvariantInfo);
                 }
                 if (StorageType.DateTime2 == _type)
                 {
                     byte scale = _value._dateTime2Info._timeInfo._scale;
-                    return DateTime.ToString(s_sql2008DateTime2FormatByScale[scale], DateTimeFormatInfo.InvariantInfo);
+                    return DateTime.ToString(s_sqlDateTime2FormatByScale[scale], DateTimeFormatInfo.InvariantInfo);
                 }
                 if (StorageType.DateTimeOffset == _type)
                 {
                     DateTimeOffset dto = DateTimeOffset;
                     byte scale = _value._dateTimeOffsetInfo._dateTime2Info._timeInfo._scale;
-                    return dto.ToString(s_sql2008DateTimeOffsetFormatByScale[scale], DateTimeFormatInfo.InvariantInfo);
+                    return dto.ToString(s_sqlDateTimeOffsetFormatByScale[scale], DateTimeFormatInfo.InvariantInfo);
                 }
                 return (string)Value; // anything else we haven't thought of goes through boxing.
             }
         }
 
-        internal SqlString Sql2008DateTimeSqlString
+        internal SqlString SqlDateTimeSqlString
         {
             get
             {
@@ -612,7 +612,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         return SqlString.Null;
                     }
-                    return new SqlString(Sql2008DateTimeString);
+                    return new SqlString(SqlDateTimeString);
                 }
                 return (SqlString)SqlValue; // anything else we haven't thought of goes through boxing.
             }

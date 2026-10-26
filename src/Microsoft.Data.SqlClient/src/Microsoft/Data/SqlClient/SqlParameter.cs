@@ -2114,7 +2114,8 @@ namespace Microsoft.Data.SqlClient
                 // 'this.Size' is in charaters;
                 // 'sizeInCharacters' is in characters;
                 // 'TdsEnums.TYPE_SIZE_LIMIT' is in bytes;
-                // For Non-NCharType and for non-2005 or greater variables, size should be maintained;
+                // Convert Unicode character sizes to bytes before comparing with the byte limit;
+                // other types retain their declared size in bytes.
                 // Reverting changes from bug VSTFDevDiv # 479739 as it caused an regression;
                 // Modifed variable names from 'size' to 'sizeInCharacters', 'actualSize' to 'actualSizeInBytes', and
                 // 'maxSize' to 'maxSizeInBytes'
