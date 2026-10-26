@@ -246,12 +246,20 @@ namespace Microsoft.Data.SqlClient.UnitTests
             TdsParser parser = CreateParser(encoding);
             using SqlCommand command = new();
             command.Parameters.Add(parameter);
-            MethodInfo buildParamList = typeof(SqlCommand).GetMethod(
-                "BuildParamList", BindingFlags.Instance | BindingFlags.NonPublic)!;
-            string declaration = (string)buildParamList.Invoke(
-                command, new object[] { parser, command.Parameters, false })!;
+            try
+            {
+                MethodInfo buildParamList = typeof(SqlCommand).GetMethod(
+                    "BuildParamList", BindingFlags.Instance | BindingFlags.NonPublic)!;
+                string declaration = (string)buildParamList.Invoke(
+                    command, new object[] { parser, command.Parameters, false })!;
 
-            return declaration;
+                return declaration;
+            }
+            finally
+            {
+                // Disposing a command does not release its parameters for the next declaration.
+                command.Parameters.Clear();
+            }
         }
 
         private static TdsParser CreateParser(Encoding encoding)
