@@ -105,7 +105,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         public async Task Open_UntrustedCertificate_ExceptionCarriesChainErrorAndHash(bool async)
         {
             using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
-            using TdsServer server = StartServer(_fixture.Localhost);
+            using TdsServer server = StartServer(_fixture.Localhost, expectTlsHandshakeFailure: true);
 
             using SqlConnection connection = new(BuildConnectionString(server.EndPoint.Port));
             SqlException ex = await Assert.ThrowsAsync<SqlException>(() => OpenAsync(connection, async));
@@ -133,7 +133,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         public async Task Open_HostNameMismatch_ExceptionCarriesHostNameMismatch(bool async)
         {
             using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
-            using TdsServer server = StartServer(_fixture.OtherHost);
+            using TdsServer server = StartServer(_fixture.OtherHost, expectTlsHandshakeFailure: true);
 
             using SqlConnection connection = new(BuildConnectionString(server.EndPoint.Port));
             SqlException ex = await Assert.ThrowsAsync<SqlException>(() => OpenAsync(connection, async));
@@ -154,7 +154,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         public async Task Open_HostNameInCertificateOverride_ReportsEffectiveVerdict(bool async)
         {
             using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
-            using TdsServer server = StartServer(_fixture.OtherHost);
+            using TdsServer server = StartServer(_fixture.OtherHost, expectTlsHandshakeFailure: true);
 
             using SqlConnection connection = new(BuildConnectionString(server.EndPoint.Port, hostNameInCertificate: "other.contoso.com"));
             SqlException ex = await Assert.ThrowsAsync<SqlException>(() => OpenAsync(connection, async));
@@ -172,7 +172,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         public async Task Open_ServerCertificateMismatch_ExceptionCarriesPinnedMismatch(bool async)
         {
             using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
-            using TdsServer server = StartServer(_fixture.Localhost);
+            using TdsServer server = StartServer(_fixture.Localhost, expectTlsHandshakeFailure: true);
             using TempCertFile pin = new(_fixture.OtherHost);
 
             using SqlConnection connection = new(BuildConnectionString(server.EndPoint.Port, serverCertificate: pin.Path));
@@ -192,7 +192,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         public async Task Open_FailureThenSuccess_DoesNotCarryPreviousAttemptCertificate(bool async)
         {
             using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
-            using TdsServer otherServer = StartServer(_fixture.OtherHost);
+            using TdsServer otherServer = StartServer(_fixture.OtherHost, expectTlsHandshakeFailure: true);
             using TdsServer server = StartServer(_fixture.Localhost);
             using TempCertFile pin = new(_fixture.Localhost);
 
@@ -248,13 +248,22 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             return switches;
         }
 
-        private static TdsServer StartServer(X509Certificate2 certificate)
+        /// <summary>
+        /// Starts a TLS 1.2 simulated server that requires encryption.
+        /// </summary>
+        /// <param name="certificate">The certificate the server presents.</param>
+        /// <param name="expectTlsHandshakeFailure">
+        /// True when the client is expected to reject the certificate, so the server treats the resulting
+        /// TLS handshake failure as expected rather than reporting it as a fault when it is stopped.
+        /// </param>
+        private static TdsServer StartServer(X509Certificate2 certificate, bool expectTlsHandshakeFailure = false)
         {
             TdsServer server = new(new TdsServerArguments
             {
                 Encryption = TDSPreLoginTokenEncryptionType.Required,
                 EncryptionCertificate = certificate,
                 EncryptionProtocols = SslProtocols.Tls12,
+                ExpectTlsHandshakeFailure = expectTlsHandshakeFailure,
             });
             server.Start();
             return server;
