@@ -777,10 +777,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
                 DecryptCallback = () =>
                 {
                     syncEntered.TrySetResult(true);
-                    if (!releaseSync.Wait(TimeSpan.FromSeconds(10)))
-                    {
-                        throw new TimeoutException("Synchronous provider was not released.");
-                    }
+                    releaseSync.Wait();
                     return NewPlaintextKey(seed: 44);
                 }
             };
@@ -788,7 +785,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             SqlEncryptionKeyInfo asyncKeyInfo = NewKeyInfo();
             SqlEncryptionKeyInfo syncKeyInfo = sameKey ? asyncKeyInfo : NewKeyInfo();
             Task<SymmetricKey> asyncKey = cache.GetKeyAsync(asyncKeyInfo, connection, command: null, CancellationToken.None);
-            Task<SymmetricKey> syncKey = Task.Run(() => cache.GetKey(syncKeyInfo, connection, command: null));
+            // Keep blocking provider I/O off the pool needed by the async continuations.
+            Task<SymmetricKey> syncKey = Task.Factory.StartNew(
+                () => cache.GetKey(syncKeyInfo, connection, command: null),
+                CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
 
             try
             {
