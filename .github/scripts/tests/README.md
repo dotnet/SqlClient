@@ -1,5 +1,30 @@
 # GitHub Actions Script Tests
 
+## Release-notes milestone exception tests
+
+`is-release-notes-only.test.cjs` uses the built-in Node.js test runner (Node.js
+20 or newer), with no npm dependencies:
+
+```bash
+node --test .github/scripts/tests/is-release-notes-only.test.cjs
+```
+
+Default-branch PRs with an assigned **open** milestone and a complete, nonempty
+file set exclusively under `release-notes/` or at exact `CHANGELOG.md` bypass
+only the milestone target-branch and next-version rules. Mixed changes and
+non-default targets retain the existing rules. Both names used by required
+status checks remain unchanged. API failures, incomplete pages, duplicate
+entries, unknown file statuses, and file counts beyond the API's 3,000-file
+limit fail the check rather than grant an exception. Renames/copies must have
+both paths in the allowlist; deleting code is not a release-notes-only change.
+
+Tests cover these rules, pagination boundaries, missing/closed milestones,
+stale events and concurrent PR changes, and wiring in both workflow jobs.
+Reconciliation continues to rerun the same workflow, including notes-only PRs.
+After landing changes to the check, update existing PR branches with the new
+base and trigger a fresh `pull_request` run; rerunning an old run reuses its old
+workflow/scripts and cannot activate the exception.
+
 ## Agentic triage output tests
 
 `validate-triage-output.test.cjs` uses the built-in Node.js test runner (Node.js
