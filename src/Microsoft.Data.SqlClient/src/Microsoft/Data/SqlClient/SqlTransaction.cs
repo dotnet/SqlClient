@@ -12,6 +12,7 @@ using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Parser;
 #if NETFRAMEWORK
 using System.Runtime.CompilerServices;
 #endif
@@ -87,7 +88,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/DbConnection/*' />
         protected override DbConnection DbConnection => Connection;
 
-        private bool Is2005PartialZombie => InternalTransaction?.IsCompleted == true;
+        private bool IsPartialZombie => InternalTransaction?.IsCompleted == true;
 
         private SqlStatistics Statistics => _connection?.StatisticsEnabled == true ? _connection.Statistics : null;
 
@@ -112,7 +113,7 @@ namespace Microsoft.Data.SqlClient
                     ObjectId,
                     ActivityCorrelator.Current,
                     Connection?.ClientConnectionId);
-                
+
                 try
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
@@ -153,7 +154,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (disposing)
             {
-                if (!IsZombied && !Is2005PartialZombie)
+                if (!IsZombied && !IsPartialZombie)
                 {
                     // Disposal rolls back through InternalTransaction, not Rollback(), so mark it
                     // as an API completion. Otherwise Zombie treats the disposal as a server abort.
@@ -182,14 +183,14 @@ namespace Microsoft.Data.SqlClient
                 InternalTransaction,
                 transactionName: null);
 
-            if (Is2005PartialZombie)
+            if (IsPartialZombie)
             {
                 // Put something in the trace in case a customer has an issue
                 SqlClientEventSource.Log.TryAdvancedTraceEvent(
                     "SqlTransaction.Rollback | ADV | Object Id {0}, partial zombie no rollback required",
                     ObjectId);
 
-                InternalTransaction = null; // 2005 zombification
+                InternalTransaction = null; // Complete the deferred zombification.
                 CompletedByServer = false;
             }
             else
@@ -204,7 +205,7 @@ namespace Microsoft.Data.SqlClient
                         ObjectId,
                         ActivityCorrelator.Current,
                         Connection?.ClientConnectionId);
-                    
+
                     try
                     {
 
@@ -309,9 +310,9 @@ namespace Microsoft.Data.SqlClient
 
         internal void Zombie()
         {
-            // For Yukon, we have to defer "zombification" until we get past the users' next
-            // rollback, else we'll throw an exception there that is a breaking change. Of course,
-            // if the connection is already closed, then we're free to zombify...
+            // When completion occurs outside the transaction API, retain the completed internal
+            // transaction so the next parameterless Rollback can succeed without another request.
+            // API-initiated completion or a closed connection can clear the reference immediately.
             if (_connection.InnerConnection is SqlConnectionInternal && !_isFromApi)
             {
                 // A T-SQL COMMIT reaches this path too. That transaction finished, so the
@@ -328,7 +329,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                // pre SQL 2005 zombification
+                // Complete zombification immediately.
                 InternalTransaction = null;
             }
         }
@@ -338,9 +339,9 @@ namespace Microsoft.Data.SqlClient
             // If this transaction has been completed, throw exception since it is unusable.
             if (IsZombied)
             {
-                if (Is2005PartialZombie)
+                if (IsPartialZombie)
                 {
-                    // SQL 2005 zombification
+                    // Clear the completed transaction before reporting that it is unusable.
                     InternalTransaction = null;
                 }
 

@@ -13,6 +13,7 @@ This package provides **Azure integration extensions** for [Microsoft.Data.SqlCl
 - **Managed Identity Support**: Connect to Azure SQL using Azure Managed Identities
 - **Token Caching**: Automatic caching of authentication tokens for improved performance
 - **Azure Identity Integration**: Use Azure.Identity credential types supplied by Azure.Core
+- **Azure Attestation**: Validates Microsoft Azure Attestation tokens for Always Encrypted with secure enclaves. Applications that connect with `Attestation Protocol=AAS` must reference this package.
 
 ## Supportability
 
@@ -145,6 +146,33 @@ await connection.OpenAsync();
 | Interactive | `InteractiveBrowserCredential` | Interactive user authentication |
 | Azure CLI | `AzureCliCredential` | Local development |
 | Visual Studio | `VisualStudioCredential` | Development in Visual Studio |
+
+### Interactive authentication in windowless Windows hosts
+
+On Windows, `Authentication=Active Directory Interactive` uses Web Account Manager
+(WAM) with SqlClient's built-in Microsoft application ID. WAM requires a valid
+parent window handle when interactive sign-in is needed. A local Azure Functions
+worker can lack a console window even when its developer is using an interactive
+desktop.
+
+For windowless local development, use `Authentication=Active Directory Default`
+with a configured developer credential, such as an Azure CLI or Visual Studio
+sign-in. For Azure-hosted Functions, prefer managed identity.
+
+If the application owns a suitable window, supply its handle through
+`ActiveDirectoryAuthenticationProvider.SetParentActivityOrWindowFunc` before
+opening connections. Do not use an unrelated application's window.
+
+If interactive sign-in without WAM is required, register your own Entra application
+and supply its client ID with `UseWamBroker = false`. Setting `UseWamBroker = false`
+alone does **not** disable WAM for SqlClient's first-party application ID.
+On modern .NET, configure a public client/native redirect URI of `http://localhost`
+for system-browser authentication and the Azure SQL Database delegated
+`user_impersonation` permission, with consent as required by your tenant. The signed-in
+user must also have database access.
+
+See the [custom application ID sample](https://github.com/dotnet/SqlClient/blob/main/doc/samples/ApplicationClientIdAzureAuthenticationProvider.cs)
+and the [MSAL parent window requirements](https://learn.microsoft.com/entra/msal/dotnet/acquiring-tokens/desktop-mobile/wam#parent-window-handles).
 
 ## Documentation
 

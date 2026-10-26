@@ -24,6 +24,8 @@ using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Parser;
+using Microsoft.Data.SqlClient.Parser.Tokens;
 using Microsoft.Data.SqlClient.Utilities;
 using Microsoft.SqlServer.Server;
 
@@ -2492,18 +2494,6 @@ namespace Microsoft.Data.SqlClient
                     return false; //we will not go into reconnection if we are inside the transaction
                 }
                 return GetOpenTdsConnection().HasLocalTransactionFromAPI;
-            }
-        }
-
-        internal bool Is2008OrNewer
-        {
-            get
-            {
-                if (_currentReconnectionTask != null)
-                { // holds true even if task is completed
-                    return true; // if CR is enabled, connection, if established, will be 2008+
-                }
-                return GetOpenTdsConnection().Is2008OrNewer;
             }
         }
 

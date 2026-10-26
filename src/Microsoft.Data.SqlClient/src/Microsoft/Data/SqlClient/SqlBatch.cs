@@ -372,15 +372,16 @@ namespace Microsoft.Data.SqlClient
         /// <param name="behavior">The behavior flags to validate.</param>
         /// <remarks>
         /// <para>
-        /// Only <see cref="CommandBehavior.SequentialAccess"/> and <see cref="CommandBehavior.CloseConnection"/> 
-        /// are supported at the batch level.
+        /// Supported values at the batch level are <see cref="CommandBehavior.Default"/>,
+        /// <see cref="CommandBehavior.SequentialAccess"/>, <see cref="CommandBehavior.CloseConnection"/>,
+        /// or a bitwise combination of <see cref="CommandBehavior.SequentialAccess"/> and <see cref="CommandBehavior.CloseConnection"/>.
         /// </para>
         /// <para>
         /// To apply other behaviors (such as <see cref="CommandBehavior.SingleRow"/> or <see cref="CommandBehavior.SchemaOnly"/>), 
         /// they must be set on individual <see cref="SqlBatchCommand"/> instances within the batch.
         /// </para>
         /// </remarks>
-        /// <exception cref="NotSupportedException">Thrown when unsupported behavior flags are detected.</exception>
+        /// <exception cref="ArgumentOutOfRangeException">Thrown when the behavior value is invalid or unsupported at the batch level.</exception>
         internal static void ValidateExecuteCommandBehavior(string method, CommandBehavior behavior)
         {
             if (0 != (behavior & ~(CommandBehavior.SequentialAccess | CommandBehavior.CloseConnection)))

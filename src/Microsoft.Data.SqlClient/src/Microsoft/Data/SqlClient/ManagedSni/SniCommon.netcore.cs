@@ -13,6 +13,7 @@ using System.Text;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Parser;
 
 namespace Microsoft.Data.SqlClient.ManagedSni
 {
@@ -44,9 +45,9 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         internal const int LocalDBBadRuntime = 57;
 
         /// <summary>
-        /// We either validate that the provided 'validationCert' matches the 'serverCert', or we validate that the server name in the 'serverCert' matches 'targetServerName'.
-        /// Certificate validation and chain trust validations are done by SSLStream class [System.Net.Security.SecureChannel.VerifyRemoteCertificate method]
-        /// This method is called as a result of callback for SSL Stream Certificate validation.
+        /// Validates an exact certificate pin or the expected certificate hostname.
+        /// An explicit hostname replaces the target server name for hostname validation.
+        /// Certificate-chain policy errors are supplied by the SslStream validation callback.
         /// </summary>
         /// <remarks>
         /// When <paramref name="validationCertFileName"/> is supplied, the presented server
@@ -73,15 +74,17 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         {
             using (SqlClientSNIEventScope.Create(nameof(SniCommon)))
             {
-                // When a pin is configured, require it to match even if the platform trusts the cert.
-                if (string.IsNullOrEmpty(validationCertFileName) && policyErrors == SslPolicyErrors.None)
+                bool hasHostNameInCertificate = !string.IsNullOrEmpty(hostNameInCertificate);
+                if (!hasHostNameInCertificate
+                    && string.IsNullOrEmpty(validationCertFileName)
+                    && policyErrors == SslPolicyErrors.None)
                 {
-                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniCommon), EventType.INFO, "Connection Id {0}, targetServerName {1}, SSL Server certificate has no policy errors and no ServerCertificate was supplied; skipping certificate comparison.", args0: connectionId, args1: targetServerName);
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniCommon), EventType.INFO, "Connection Id {0}, targetServerName {1}, SSL Server certificate has no policy errors and no HostNameInCertificate or ServerCertificate was supplied; skipping certificate comparison.", args0: connectionId, args1: targetServerName);
                     return true;
                 }
 
                 string serverNameToValidate;
-                if (!string.IsNullOrEmpty(hostNameInCertificate))
+                if (hasHostNameInCertificate)
                 {
                     serverNameToValidate = hostNameInCertificate;
                 }
@@ -117,15 +120,16 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                     }
                 }
 
-                // If we get to this point then there is a ssl policy flag.
                 StringBuilder messageBuilder = new();
-                if (policyErrors.HasFlag(SslPolicyErrors.RemoteCertificateNotAvailable))
+                if (serverCert is null ||
+                    policyErrors.HasFlag(SslPolicyErrors.RemoteCertificateNotAvailable))
                 {
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniCommon), EventType.ERR, "Connection Id {0}, targetServerName {1}, SSL Server certificate not validated as PolicyErrors set to RemoteCertificateNotAvailable.", args0: connectionId, args1: targetServerName);
                     messageBuilder.AppendLine(Strings.SQL_RemoteCertificateNotAvailable);
                 }
 
-                if (policyErrors.HasFlag(SslPolicyErrors.RemoteCertificateChainErrors))
+                if (serverCert is not null &&
+                    policyErrors.HasFlag(SslPolicyErrors.RemoteCertificateChainErrors))
                 {
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniCommon), EventType.ERR, "Connection Id {0}, targetServerName {0}, SslPolicyError {1}, SSL Policy certificate chain has errors.", args0: connectionId, args1: targetServerName, args2: policyErrors);
 
@@ -149,7 +153,9 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                     messageBuilder.AppendLine();
                 }
 
-                if (policyErrors.HasFlag(SslPolicyErrors.RemoteCertificateNameMismatch))
+                if (serverCert is not null &&
+                    (hasHostNameInCertificate ||
+                     policyErrors.HasFlag(SslPolicyErrors.RemoteCertificateNameMismatch)))
                 {
                     X509Certificate2 cert2 = serverCert as X509Certificate2;
                     if (!cert2.MatchesHostname(serverNameToValidate))

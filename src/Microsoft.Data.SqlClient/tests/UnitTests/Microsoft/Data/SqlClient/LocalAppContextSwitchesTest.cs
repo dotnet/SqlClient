@@ -5,6 +5,7 @@
 using Microsoft.Data.SqlClient.Tests.Common;
 #if NET
 using System.Runtime.InteropServices;
+using SwitchValue = Microsoft.Data.SqlClient.LocalAppContextSwitches.SwitchValue;
 #endif
 using Xunit;
 
@@ -25,7 +26,7 @@ public class LocalAppContextSwitchesTest
         // LocalAppContextSwitches caches each switch value on first access for
         // the lifetime of the process.  Other tests running in parallel may
         // already have triggered caching, or may use LocalAppContextSwitchesHelper
-        // to mutate the cached fields via reflection.  To make this test
+        // to mutate the cached values.  To make this test
         // deterministic, acquire the helper (which serializes against every
         // other helper user via a process-wide semaphore) and reset each
         // cached field to None so the properties re-read from AppContext.
@@ -91,4 +92,99 @@ public class LocalAppContextSwitchesTest
         Assert.False(switchesHelper.DisableTnirByDefault);
         #endif
     }
+
+    /// <summary>
+    /// Unset compatibility switches report their default configured values.
+    /// </summary>
+    [Fact]
+    public void DriverProperties_Report_Default_Compatibility()
+    {
+        // Arrange
+        using LocalAppContextSwitchesHelper switchesHelper = new();
+        switchesHelper.UseConnectionPoolV2 = null;
+        switchesHelper.UseCompatibilityAsyncBehaviour = null;
+        switchesHelper.UseCompatibilityProcessSni = null;
+
+        // Act
+        bool configuredAsync = LocalAppContextSwitches.UseCompatibilityAsyncBehaviourConfigured;
+        SqlClientDriverProperties properties = SqlClientDriverPropertiesResolver.Current;
+
+        // Assert
+        Assert.True(configuredAsync);
+        Assert.Equal((SqlClientDriverProperties)6, properties);
+    }
+
+    /// <summary>
+    /// Telemetry reports configured switch values independently, even when
+    /// ProcessSni compatibility forces the effective async behavior to true.
+    /// </summary>
+    [Theory]
+    [InlineData(false, false, false, 0)]
+    [InlineData(true, false, false, 1)]
+    [InlineData(false, true, false, 2)]
+    [InlineData(true, true, false, 3)]
+    [InlineData(false, false, true, 4)]
+    [InlineData(true, false, true, 5)]
+    [InlineData(false, true, true, 6)]
+    [InlineData(true, true, true, 7)]
+    public void DriverProperties_Report_Configured_Compatibility(
+        bool useConnectionPoolV2,
+        bool useCompatibilityAsyncBehaviour,
+        bool useCompatibilityProcessSni,
+        int expected)
+    {
+        // Arrange
+        using LocalAppContextSwitchesHelper switchesHelper = new();
+        switchesHelper.UseConnectionPoolV2 = useConnectionPoolV2;
+        switchesHelper.UseCompatibilityAsyncBehaviour = useCompatibilityAsyncBehaviour;
+        switchesHelper.UseCompatibilityProcessSni = useCompatibilityProcessSni;
+        bool expectedEffectiveAsync = useCompatibilityAsyncBehaviour || useCompatibilityProcessSni;
+
+        // Act
+        bool configuredAsync = LocalAppContextSwitches.UseCompatibilityAsyncBehaviourConfigured;
+        bool effectiveAsync = LocalAppContextSwitches.UseCompatibilityAsyncBehaviour;
+        SqlClientDriverProperties properties = SqlClientDriverPropertiesResolver.Current;
+
+        // Assert
+        Assert.Equal(useCompatibilityAsyncBehaviour, configuredAsync);
+        Assert.Equal(expectedEffectiveAsync, effectiveAsync);
+        Assert.Equal((SqlClientDriverProperties)expected, properties);
+    }
+
+    #if NET
+    /// <summary>
+    /// Verifies the managed-networking setter mutates its cache only on Windows and restores it
+    /// when the helper is disposed.
+    /// </summary>
+    [Fact]
+    public void UseManagedNetworkingSetter_MutatesOnlyOnWindowsAndRestoresOriginalValue()
+    {
+        SwitchValue original = LocalAppContextSwitches.s_useManagedNetworking;
+        bool newValue = original != SwitchValue.True;
+        SwitchValue expected = newValue ? SwitchValue.True : SwitchValue.False;
+
+        try
+        {
+            using (LocalAppContextSwitchesHelper switchesHelper = new())
+            {
+                switchesHelper.UseManagedNetworking = newValue;
+
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    Assert.Equal(expected, LocalAppContextSwitches.s_useManagedNetworking);
+                }
+                else
+                {
+                    Assert.Equal(original, LocalAppContextSwitches.s_useManagedNetworking);
+                }
+            }
+
+            Assert.Equal(original, LocalAppContextSwitches.s_useManagedNetworking);
+        }
+        finally
+        {
+            LocalAppContextSwitches.s_useManagedNetworking = original;
+        }
+    }
+    #endif
 }
