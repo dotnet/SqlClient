@@ -8,6 +8,7 @@ using System.Security.Cryptography.X509Certificates;
 using Interop.Windows.Sni;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.NativeSni;
 
 #nullable enable
 
@@ -44,7 +45,7 @@ namespace Microsoft.Data.SqlClient
         internal delegate uint ServerCertificateHashQuery(SNIHandle? handle, Span<byte> hash, out uint bytesWritten);
 
         /// <summary>
-        /// The instance used by <see cref="TdsParserStateObjectNative"/>, bound to the loaded SNI library.
+        /// The instance used by <see cref="Parser.TdsParserStateObjectNative"/>, bound to the loaded SNI library.
         /// </summary>
         internal static SniNativeCertificateCapture Default { get; } = new SniNativeCertificateCapture(
             static (SNIHandle? handle, ref SniCertValidationInfo info) => SniNativeWrapper.SniGetCertValidationInfo(handle!, ref info),
