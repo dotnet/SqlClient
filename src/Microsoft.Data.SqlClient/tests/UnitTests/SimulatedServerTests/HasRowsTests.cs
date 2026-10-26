@@ -39,6 +39,12 @@ public sealed class HasRowsTests
     }
 
     private const ushort AltMetadataId = 1;
+    // Only .NET Framework synthesizes a name for an unnamed aggregate column.
+#if NETFRAMEWORK
+    private const string ExpectedAggregateColumnName = "sum";
+#else
+    private const string ExpectedAggregateColumnName = "";
+#endif
     private static readonly int[] s_infoCounts = { 0, 1, 2, 3, 10 };
 
     /// <summary>Combines INFO counts with each placement around metadata and rows.</summary>
@@ -255,7 +261,7 @@ public sealed class HasRowsTests
 
         // Assert the aggregate row is a separate result and is not consumed by HasRows.
         Assert.True(reader.HasRows);
-        Assert.Equal("sum", reader.GetName(0));
+        Assert.Equal(ExpectedAggregateColumnName, reader.GetName(0));
         Assert.True(reader.Read());
         Assert.Equal(42, reader.GetInt32(0));
         if (placement == InfoPlacement.AfterRows)
@@ -308,7 +314,7 @@ public sealed class HasRowsTests
 
         // Assert the aggregate row is a separate result and is not consumed by HasRows.
         Assert.True(reader.HasRows);
-        Assert.Equal("sum", reader.GetName(0));
+        Assert.Equal(ExpectedAggregateColumnName, reader.GetName(0));
         Assert.True(await reader.ReadAsync());
         Assert.Equal(42, reader.GetInt32(0));
         if (placement == InfoPlacement.AfterRows)
@@ -358,7 +364,7 @@ public sealed class HasRowsTests
 
         // Assert the aggregate row and messages survive the result transition.
         Assert.True(reader.HasRows);
-        Assert.Equal("sum", reader.GetName(0));
+        Assert.Equal(ExpectedAggregateColumnName, reader.GetName(0));
         Assert.True(reader.Read());
         Assert.Equal(42, reader.GetInt32(0));
         if (placement == InfoPlacement.AfterRows)
@@ -408,7 +414,7 @@ public sealed class HasRowsTests
 
         // Assert the aggregate row and messages survive the result transition.
         Assert.True(reader.HasRows);
-        Assert.Equal("sum", reader.GetName(0));
+        Assert.Equal(ExpectedAggregateColumnName, reader.GetName(0));
         Assert.True(await reader.ReadAsync());
         Assert.Equal(42, reader.GetInt32(0));
         if (placement == InfoPlacement.AfterRows)
