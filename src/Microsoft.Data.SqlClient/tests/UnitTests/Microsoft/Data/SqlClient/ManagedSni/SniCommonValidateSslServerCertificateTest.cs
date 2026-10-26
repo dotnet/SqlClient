@@ -471,6 +471,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
                 HashAlgorithmName.SHA256,
                 RSASignaturePadding.Pkcs1);
 
+            // Explicit server authentication usage is required by macOS TLS certificate policy.
+            request.CertificateExtensions.Add(new X509EnhancedKeyUsageExtension(
+                new OidCollection { new Oid("1.3.6.1.5.5.7.3.1") }, true));
+            request.CertificateExtensions.Add(new X509KeyUsageExtension(
+                X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyEncipherment, false));
+
             if (dnsNames.Length > 0)
             {
                 SubjectAlternativeNameBuilder names = new();
