@@ -21,8 +21,9 @@ platform support, dependency floors, and final-version caveats.
 *What Changed:*
 
 - Added `Switch.Microsoft.Data.SqlClient.EnableTransactionIsolationLevelReset`, defaulting to
-  `false`. When enabled, a changed session isolation level is reset to `READ COMMITTED` before
-  pooled reuse when no existing enlistment or active delegated transaction root remains.
+  `false`. When enabled, a SqlClient-tracked session isolation level change is reset to
+  `READ COMMITTED` before pooled reuse when no existing enlistment or active delegated
+  transaction root remains.
   ([#96](https://github.com/dotnet/SqlClient/issues/96), [#4330](https://github.com/dotnet/SqlClient/pull/4330))
 
 *Who Benefits:*
@@ -34,6 +35,8 @@ platform support, dependency floors, and final-version caveats.
 - Enable the switch before opening connections. A reset adds a round trip only when required and
   uses the remaining connection-open timeout budget. Known Azure Synapse dedicated SQL pool
   endpoints are excluded. The default preserves existing behavior.
+- A user-issued `SET TRANSACTION ISOLATION LEVEL` command alone does not mark the connection
+  for this reset. The switch does not guarantee cleanup of arbitrary T-SQL isolation-level changes.
 
 #### Additional TimeOnly write paths (net10.0 only)
 
