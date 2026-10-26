@@ -24,18 +24,28 @@ internal static class AzureExtensionLoader
     /// <param name="caller">The caller name for diagnostics.</param>
     /// <returns>The trusted assembly, or null when missing, unloadable or untrusted.</returns>
     [RequiresUnreferencedCode("Azure authentication discovery loads an assembly by name.")]
-    internal static Assembly? Load(string caller)
+    internal static Assembly? Load(string caller) => Load(caller, static assemblyName =>
+    {
+#if STRONG_NAME_SIGNING
+        return Assembly.Load(assemblyName);
+#else
+        return Assembly.Load(assemblyName.Name!);
+#endif
+    });
+
+    [RequiresUnreferencedCode("Azure authentication discovery loads an assembly by name.")]
+    internal static Assembly? Load(string caller, Func<AssemblyName, Assembly> assemblyLoader)
     {
         try
         {
+            var qualifiedName = new AssemblyName(AssemblyName);
 #if STRONG_NAME_SIGNING
             SqlClientEventSource.Log.TryTraceEvent(
                 "{0}: Attempting to load Azure extension assembly={1} with expected public key token={2}",
                 caller, AssemblyName, BitConverter.ToString(s_publicKeyToken).Replace("-", ""));
 
-            var qualifiedName = new AssemblyName(AssemblyName);
             qualifiedName.SetPublicKeyToken(s_publicKeyToken);
-            var assembly = Assembly.Load(qualifiedName);
+            var assembly = assemblyLoader(qualifiedName);
 
 #if !NETFRAMEWORK
             // Framework binding enforces the token; .NET and .NET Standard need this check.
@@ -53,7 +63,7 @@ internal static class AzureExtensionLoader
                 "{0}: Attempting to load Azure extension assembly={1} without strong name " +
                 "verification; ensure this assembly is from a trusted source",
                 caller, AssemblyName);
-            var assembly = Assembly.Load(AssemblyName);
+            var assembly = assemblyLoader(qualifiedName);
 #endif
             return assembly;
         }
