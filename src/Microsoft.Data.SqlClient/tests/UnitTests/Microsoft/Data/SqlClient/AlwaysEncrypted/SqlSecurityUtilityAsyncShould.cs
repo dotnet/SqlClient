@@ -251,6 +251,53 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
         }
 
         /// <summary>
+        /// Cancellation during the final provider failure wins even when no next candidate checks the token.
+        /// </summary>
+        [Theory]
+        [InlineData(false, false)]
+        [InlineData(false, true)]
+        [InlineData(true, false)]
+        [InlineData(true, true)]
+        public async Task DecryptSymmetricKeyAsync_WhenFinalCandidateFailsAfterCancellation_ProducesCancelledTask(
+            bool completeAsynchronously, bool multipleCandidates)
+        {
+            using CancellationTokenSource cts = new();
+            TaskCompletionSource<byte[]> result = new(TaskCreationOptions.RunContinuationsAsynchronously);
+            int calls = 0;
+            TestKeyStoreProvider provider = new()
+            {
+                DecryptAsyncCallback = _ =>
+                {
+                    if (multipleCandidates && ++calls == 1)
+                    {
+                        return Task.FromException<byte[]>(new InvalidOperationException("First candidate failed"));
+                    }
+                    if (completeAsynchronously)
+                    {
+                        return result.Task;
+                    }
+                    cts.Cancel();
+                    return Task.FromException<byte[]>(new InvalidOperationException("Final candidate failed"));
+                }
+            };
+            using SqlConnection connection = NewConnection((ProviderName, provider));
+            SqlTceCipherInfoEntry entry = multipleCandidates
+                ? NewCipherInfoEntry(NewKeyInfo(), NewKeyInfo())
+                : NewCipherInfoEntry(NewKeyInfo());
+            Task decrypt = SqlSecurityUtility.DecryptSymmetricKeyAsync(entry, connection, null, cts.Token);
+            if (completeAsynchronously)
+            {
+                cts.Cancel();
+                result.TrySetException(new InvalidOperationException("Final candidate failed"));
+            }
+
+            OperationCanceledException error = await Assert.ThrowsAnyAsync<OperationCanceledException>(() => decrypt);
+            Assert.Equal(cts.Token, error.CancellationToken);
+            Assert.True(decrypt.IsCanceled);
+            Assert.Equal(multipleCandidates ? 2 : 1, provider.DecryptAsyncCallCount);
+        }
+
+        /// <summary>
         /// A pre-cancelled operation must not be replaced by validation errors from an unregistered provider.
         /// </summary>
         [Fact]
@@ -272,6 +319,44 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
         #endregion
 
         #region VerifyColumnMasterKeySignatureAsync
+
+        /// <summary>
+        /// A normal provider exception must not replace cancellation requested during CMK verification.
+        /// </summary>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task VerifyColumnMasterKeySignatureAsync_WhenProviderFailsAfterCancellation_ProducesCancelledTask(
+            bool completeAsynchronously)
+        {
+            using CancellationTokenSource cts = new();
+            TaskCompletionSource<bool> result = new(TaskCreationOptions.RunContinuationsAsynchronously);
+            TestKeyStoreProvider provider = new()
+            {
+                VerifyAsyncCallback = _ =>
+                {
+                    if (completeAsynchronously)
+                    {
+                        return result.Task;
+                    }
+                    cts.Cancel();
+                    return Task.FromException<bool>(new InvalidOperationException("Verification failed"));
+                }
+            };
+            using SqlConnection connection = NewConnection((ProviderName, provider));
+            Task verify = SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
+                ProviderName, KeyPath, true, new byte[] { 1, 2, 3 }, connection, null, cts.Token);
+            if (completeAsynchronously)
+            {
+                cts.Cancel();
+                result.TrySetException(new InvalidOperationException("Verification failed"));
+            }
+
+            OperationCanceledException error = await Assert.ThrowsAnyAsync<OperationCanceledException>(() => verify);
+            Assert.Equal(cts.Token, error.CancellationToken);
+            Assert.True(verify.IsCanceled);
+            Assert.Equal(1, provider.VerifyAsyncCallCount);
+        }
 
         /// <summary>
         /// Verifies that a valid signature completes and an invalid one is reported the same way the

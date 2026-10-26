@@ -324,6 +324,7 @@ namespace Microsoft.Data.SqlClient
 
             if (sqlClientSymmetricKey is null)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 Debug.Assert(lastException is not null, "CEK decryption failed without raising exceptions");
                 throw lastException;
             }
@@ -616,6 +617,7 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception e)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 throw SQL.UnableToVerifyColumnMasterKeySignature(e);
             }
 
