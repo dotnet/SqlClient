@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
     /// The cases below only cover authority shapes that Entra ID actually documents:
     /// https://learn.microsoft.com/entra/identity-platform/authentication-national-cloud
     /// </remarks>
-    [Collection("SqlAuthenticationProvider")]
+    [Collection(SqlAuthenticationProviderCollection.Name)]
     public class AuthorityParsingTests
     {
         private const string Tenant = "72f988bf-86f1-41af-91ab-2d7cd011db47";

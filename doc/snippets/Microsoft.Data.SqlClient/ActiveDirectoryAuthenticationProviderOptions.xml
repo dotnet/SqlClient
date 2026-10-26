@@ -29,6 +29,14 @@
                 Defaults to <see langword="false"/> when you provide a custom <see cref="ApplicationClientId"/>.
                 Otherwise, WAM broker mode is used automatically on Windows.
             </summary>
+            <remarks>
+                Setting this property to <see langword="false"/> does not disable WAM for SqlClient's first-party application ID,
+                including when that ID is supplied explicitly. Disabling WAM requires a custom application registration.
+                WAM interactive authentication requires a valid parent window handle. Applications with a window can supply
+                its handle using <see cref="M:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider.SetParentActivityOrWindowFunc(System.Func{System.Object})"/>.
+                Windowless hosts should use a non-interactive credential with <c>Authentication=Active Directory Default</c>,
+                or use their own application registration with WAM disabled if interactive sign-in is required.
+            </remarks>
         </UseWamBroker>
     </members>
 </docs>
