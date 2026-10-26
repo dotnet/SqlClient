@@ -6,6 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 > **Note:** Releases are sorted in reverse chronological order (newest first).
 
+## [Stable Release 6.1.8] - 2026-10-28
+
+### Changed
+
+- Updated the `System.Security.Cryptography.Pkcs` dependency to 8.0.2 (was 8.0.1) for .NET Framework 4.6.2, .NET 8.0, and .NET Standard 2.0, and updated the `Microsoft.Extensions.Caching.Memory`, `System.Configuration.ConfigurationManager`, and `System.Security.Cryptography.Pkcs` dependencies to 9.0.21 (was 9.0.11) for .NET 9.0.
+  ([#4842](https://github.com/dotnet/SqlClient/pull/4842), [#4862](https://github.com/dotnet/SqlClient/pull/4862), [#4870](https://github.com/dotnet/SqlClient/pull/4870))
+
+- Improved the error reported when `Active Directory Interactive` authentication through the Windows Web Account Manager (WAM) broker fails because the host has no parent window, such as a service or Azure Functions host. The resulting error now explains the supported alternatives: supply a parent window with `SetParentActivityOrWindowFunc`, use `Active Directory Default` with a configured non-interactive credential, or supply a custom `ApplicationClientId` with `UseWamBroker` disabled. The original MSAL error code and inner exception are preserved, and authentication selection, retry behavior, and other failures are unchanged. (Windows only)
+  ([#4854](https://github.com/dotnet/SqlClient/issues/4854), [#4858](https://github.com/dotnet/SqlClient/pull/4858), [#4918](https://github.com/dotnet/SqlClient/pull/4918))
+
+### Fixed
+
+- Fixed the managed SNI path ignoring `HostNameInCertificate` during server certificate validation. When `HostNameInCertificate` is set, it is now the only host name the server certificate is validated against, and certificates that do not match it are rejected. Default host-name selection when the property is not set, certificate chain validation, `ServerCertificate` matching, and the connection destination are unchanged. (net8.0/net9.0 only)
+  ([#4905](https://github.com/dotnet/SqlClient/pull/4905), [#4909](https://github.com/dotnet/SqlClient/pull/4909))
+
+- Fixed Always Encrypted enclave session caching so that cached enclave sessions are isolated by attestation protocol. A session established with one `Attestation Protocol` setting is no longer reused by a connection to the same server, database, and attestation URL that uses a different protocol.
+  ([#4829](https://github.com/dotnet/SqlClient/pull/4829), [#4868](https://github.com/dotnet/SqlClient/pull/4868))
+
+- Fixed `SqlDataReader.HasRows` returning `false` when a result set contains rows but the server sends multiple informational messages, or an informational message before an `ORDER` token, ahead of the first row. Empty results still report `false`, and `InfoMessage` delivery is unchanged.
+  ([#3018](https://github.com/dotnet/SqlClient/issues/3018), [#4773](https://github.com/dotnet/SqlClient/pull/4773), [#4898](https://github.com/dotnet/SqlClient/pull/4898))
+
+- Fixed an intermittent `InvalidOperationException` ("Nullable object must have a value") from statistics bookkeeping when commands complete concurrently on a MARS connection. This issue was reported as a regression starting with 6.1.4.
+  ([#4778](https://github.com/dotnet/SqlClient/issues/4778), [#4875](https://github.com/dotnet/SqlClient/pull/4875), [#4896](https://github.com/dotnet/SqlClient/pull/4896))
+
+- Fixed Entra ID authentication when the server supplies an authority URL with an OAuth endpoint suffix, such as `https://login.microsoftonline.com/<tenant>/oauth2/authorize` returned by the Dataverse/Dynamics 365 TDS endpoint. The provider now extracts the tenant from the first path segment and uses the normalized authority for Azure.Identity credentials, MSAL, and their cache keys. An authority URL that cannot be parsed now fails with a clear, localized `ArgumentException` naming the authority. Bare tenant authority URLs used by Azure SQL and Fabric retain their existing behavior.
+  ([#4496](https://github.com/dotnet/SqlClient/issues/4496), [#4521](https://github.com/dotnet/SqlClient/pull/4521), [#4791](https://github.com/dotnet/SqlClient/pull/4791), [#4807](https://github.com/dotnet/SqlClient/pull/4807))
+
 ## [Stable Release 7.1.1] - 2026-09-29
 
 ### Fixed
