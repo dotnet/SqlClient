@@ -239,9 +239,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         [InlineData(true)]
         public async Task Open_ServerRejectsEncryptionInPreLogin_ExceptionEncryptionInfoIsEmpty(bool async)
         {
-            // The server answers ENCRYPT_NOT_SUP while the client demands encryption, so pre-login fails
-            // before an encryption mode is negotiated.
-            using TdsServer server = new(new TdsServerArguments { Encryption = TDSPreLoginTokenEncryptionType.NotSupported });
+            // The server omits encryption support from its pre-login response while the client demands
+            // encryption, so pre-login fails before an encryption mode is negotiated. (A server configured
+            // with NotSupported would itself fault on the client's encryption request.)
+            using TdsServer server = new(new TdsServerArguments { Encryption = TDSPreLoginTokenEncryptionType.None });
             server.Start();
 
             using SqlConnection connection = new(BuildConnectionString(server.EndPoint.Port, SqlConnectionEncryptOption.Mandatory));
@@ -263,7 +264,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             // write and keeps the mode and protocol observed during the completed handshake. Managed SNI
             // fails inside the handshake and, in this slice, observes no protocol. The mode is never
             // reported without an observed protocol. Certificate fields are not asserted here.
-            using TdsServer server = new(CreateArguments<TdsServerArguments>(serverEncryption));
+            TdsServerArguments arguments = CreateArguments<TdsServerArguments>(serverEncryption);
+            arguments.ExpectTlsHandshakeFailure = true;
+            using TdsServer server = new(arguments);
             server.Start();
 
             using SqlConnection connection = new(BuildConnectionString(
