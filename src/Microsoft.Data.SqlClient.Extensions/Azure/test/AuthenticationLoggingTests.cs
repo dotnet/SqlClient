@@ -465,9 +465,10 @@ public class AuthenticationLoggingTests
         try
         {
             using var informational = new AuthenticationListener(level: EventLevel.Informational);
+#if NET
+            // .NET Framework merges collector levels, so the Informational apply and this interleaving never occur.
             Assert.Equal(0, once);
             Assert.Equal(EventLevel.Verbose, shared.GetAppliedLevel(source));
-#if NET
             // Delivery shows the listener's real subscription; the stale Informational enable would drop this.
             source.LogMsalVerbose("after stale enable");
             Assert.Equal(1, verbose.Count("after stale enable"));
