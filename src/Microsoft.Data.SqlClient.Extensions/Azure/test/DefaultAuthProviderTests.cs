@@ -23,7 +23,8 @@ public class DefaultAuthProviderTests
             Type loader = Assert.IsAssignableFrom<Type>(
                 assembly.GetType("Microsoft.Data.SqlClient.AzureExtensionLoader"));
             MethodInfo load = Assert.IsAssignableFrom<MethodInfo>(
-                loader.GetMethod("Load", BindingFlags.NonPublic | BindingFlags.Static));
+                loader.GetMethod("Load", BindingFlags.NonPublic | BindingFlags.Static,
+                    binder: null, types: new[] { typeof(string) }, modifiers: null));
 
             Assert.Same(expected, load.Invoke(null, new object[] { nameof(DefaultAuthProviderTests) }));
         }
