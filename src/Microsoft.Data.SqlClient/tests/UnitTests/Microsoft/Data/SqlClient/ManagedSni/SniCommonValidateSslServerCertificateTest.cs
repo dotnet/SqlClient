@@ -348,7 +348,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         [InlineData(null)]
         [InlineData("")]
         public void ValidateSslServerCertificate_NoExplicitName_NameMismatch_Throws(
-            string? hostNameInCertificate)
+            string hostNameInCertificate)
         {
             using X509Certificate2 serverCert = CreateSelfSignedCertificate("server.contoso.com");
 
@@ -375,14 +375,19 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         [InlineData("other.contoso.com", null, false,
             SslPolicyErrors.RemoteCertificateNameMismatch)]
         public async Task ValidateSslServerCertificate_TlsHandshake_UsesConfiguredName(
-            string certificateName, string? hostNameInCertificate, bool expectedSuccess,
+            string certificateName, string hostNameInCertificate, bool expectedSuccess,
             SslPolicyErrors expectedPolicyErrors)
         {
             using X509Certificate2 generatedCert = CreateSelfSignedCertificate(
                 certificateName, certificateName);
             // Schannel needs an imported private key rather than the generated ephemeral key.
+#if NET9_0_OR_GREATER
             using X509Certificate2 serverCert = X509CertificateLoader.LoadPkcs12(
                 generatedCert.Export(X509ContentType.Pfx), password: null);
+#else
+            using X509Certificate2 serverCert = new(
+                generatedCert.Export(X509ContentType.Pfx), (string)null);
+#endif
             using CancellationTokenSource timeout = new(TimeSpan.FromSeconds(30));
             using TcpListener listener = new(IPAddress.Loopback, 0);
             listener.Start();

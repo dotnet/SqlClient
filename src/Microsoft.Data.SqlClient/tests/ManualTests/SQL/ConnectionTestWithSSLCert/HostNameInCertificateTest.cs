@@ -50,8 +50,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Pooling = false,
                 ConnectRetryCount = 0
             };
-            using (SqlConnection connection =
-                DataTestUtility.CreateConnection(builder.ConnectionString))
+            using (SqlConnection connection = new(builder.ConnectionString))
             {
                 if (async)
                 {
@@ -65,8 +64,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             builder.HostNameInCertificate = $"sqlclient-{Guid.NewGuid():N}.invalid";
-            using SqlConnection mismatched =
-                DataTestUtility.CreateConnection(builder.ConnectionString);
+            using SqlConnection mismatched = new(builder.ConnectionString);
             SqlException exception = async
                 ? await Assert.ThrowsAsync<SqlException>(() => mismatched.OpenAsync())
                 : Assert.Throws<SqlException>(() => mismatched.Open());
