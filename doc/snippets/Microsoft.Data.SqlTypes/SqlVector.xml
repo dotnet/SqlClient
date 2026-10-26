@@ -16,12 +16,16 @@
           <c>SqlVector&lt;float&gt;</c>, which widens the elements to single precision. Widening
           is exact, so no information is lost. Values can be written to a <c>float16</c> column
           from .NET Framework as a JSON string, or as a <c>SqlVector&lt;float&gt;</c>, which the
-          server converts.
+          server converts. Native <c>float32</c> writes support at most 1,998 elements. To write
+          wider <c>float16</c> vectors, up to 3,996 elements, bind the JSON string as
+          <c>varchar(max)</c> instead.
         </para>
         <para>
-          A <c>float16</c> column is returned in its binary form when the connection asks
-          for it through the <c>Vector Type Support</c> keyword, which defaults to <c>v1</c>.
-          Otherwise such a column is returned as a <c>varchar(max)</c> containing a JSON array.
+          A <c>float16</c> column is returned in its binary form when
+          <c>Vector Type Support=v2</c> is configured and version 2 is negotiated with the server.
+          The keyword defaults to <c>v1</c>, which supports native <c>float32</c> only.
+          Under <c>v1</c> or <c>off</c>, a <c>float16</c> column is returned as
+          <c>varchar(max)</c> containing a JSON array.
         </para>
         <para>
           On .NET Framework, <c>float16</c> workloads do more work per value than they do on

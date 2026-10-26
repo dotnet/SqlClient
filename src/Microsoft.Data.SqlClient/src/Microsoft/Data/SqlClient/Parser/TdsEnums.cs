@@ -671,7 +671,6 @@ internal static class TdsEnums
     internal const byte VECTOR_VERSION_NOT_SUPPORTED = 0x00;
     internal const byte VECTOR_VERSION_FLOAT32 = 0x01;
     internal const byte VECTOR_VERSION_FLOAT16 = 0x02;
-    internal const byte MAX_SUPPORTED_VECTOR_VERSION = VECTOR_VERSION_FLOAT16;
     internal const int VECTOR_HEADER_SIZE = 8;
 
     // TCE Related constants
