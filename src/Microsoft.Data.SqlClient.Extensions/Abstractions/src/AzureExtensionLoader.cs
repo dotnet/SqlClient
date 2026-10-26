@@ -58,7 +58,8 @@ internal static class AzureExtensionLoader
             return assembly;
         }
         catch (Exception ex)
-        when (ex is FileNotFoundException or FileLoadException or BadImageFormatException)
+        when ((ex is FileNotFoundException or FileLoadException or BadImageFormatException)
+            && ExceptionHelpers.IsRecoverableException(ex))
         {
             SqlClientEventSource.Log.TryTraceEvent(
                 "{0}: Azure extension assembly={1} not found or not loadable; {2}: {3}",
