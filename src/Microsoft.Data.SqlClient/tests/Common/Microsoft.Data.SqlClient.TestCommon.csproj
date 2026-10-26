@@ -54,6 +54,8 @@
                       VersionOverride="$(MdsPackageVersion)"
                       GeneratePathProperty="true"
                       ExcludeAssets="compile" />
+    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Abstractions"
+                      Condition="'$(ReferenceType)' == 'Package'" />
     <!-- Compile against the implementation DLL; the package's ref assembly omits internals. -->
     <Reference Include="Microsoft.Data.SqlClient"
                Condition="'$(ReferenceType)' == 'Package'"
