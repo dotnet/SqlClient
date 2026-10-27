@@ -10,6 +10,7 @@ using System.Data;
 using System.Data.Common;
 using System.Data.SqlTypes;
 using System.Diagnostics;
+using Microsoft.Data.SqlClient.Parser;
 #if NET
 using System.Diagnostics.CodeAnalysis;
 #endif
