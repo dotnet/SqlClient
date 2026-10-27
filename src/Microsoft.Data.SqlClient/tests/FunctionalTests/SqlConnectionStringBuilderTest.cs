@@ -272,6 +272,8 @@ namespace Microsoft.Data.SqlClient.Tests
         [Theory]
         [InlineData("v3", typeof(ArgumentException))]
         [InlineData("2", typeof(ArgumentException))]
+        [InlineData("Off, V2", typeof(ArgumentException))]
+        [InlineData("V1, V1", typeof(ArgumentException))]
         [InlineData(DayOfWeek.Monday, typeof(ArgumentException))]
         [InlineData(1.5, typeof(ArgumentException))]
         [InlineData(1.5f, typeof(ArgumentException))]
@@ -294,12 +296,14 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         /// <summary>
-        /// Ensures both parsers reject unsupported vector support names and numeric strings.
+        /// Ensures both parsers reject unsupported names, numeric strings, and enum combinations.
         /// </summary>
         [Theory]
         [InlineData("v3")]
         [InlineData("2")]
         [InlineData("true")]
+        [InlineData("Off, V2")]
+        [InlineData("V1, V1")]
         public void ParseInvalidVectorTypeSupport_Throws(string invalid)
         {
             string connectionString = $"Vector Type Support={invalid}";
@@ -309,6 +313,27 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 using SqlConnection connection = new(connectionString);
             });
+        }
+
+        /// <summary>
+        /// Accepts every supported boxed integer width without treating numbers as string values.
+        /// </summary>
+        [Theory]
+        [InlineData((sbyte)2)]
+        [InlineData((byte)2)]
+        [InlineData((short)2)]
+        [InlineData((ushort)2)]
+        [InlineData(2)]
+        [InlineData(2U)]
+        [InlineData(2L)]
+        [InlineData(2UL)]
+        public void VectorTypeSupportIndexer_AcceptsIntegralTypes(object value)
+        {
+            SqlConnectionStringBuilder builder = new();
+            builder["Vector Type Support"] = value;
+
+            Assert.Equal(SqlVectorTypeSupport.V2, builder.VectorTypeSupport);
+            Assert.Equal("Vector Type Support=V2", builder.ToString());
         }
 
         [Fact]

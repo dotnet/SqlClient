@@ -65,8 +65,9 @@ namespace Microsoft.Data.Common
         }
 
         /// <summary>
-        /// Framework independent implementation of <see cref="ToSingle"/>. Exposed
-        /// separately so that it can be validated against <c>System.Half</c>.
+        /// Widens float16 to float32 for .NET Framework, which has no <c>System.Half</c>.
+        /// Compiled on .NET as well so tests can compare it against <c>System.Half</c>;
+        /// the .NET runtime path in <see cref="ToSingle"/> uses <c>System.Half</c> instead.
         /// </summary>
         internal static float ManualToSingle(ushort bits)
         {

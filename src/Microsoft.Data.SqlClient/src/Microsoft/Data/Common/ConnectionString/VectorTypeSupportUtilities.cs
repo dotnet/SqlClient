@@ -7,15 +7,24 @@ using System.Diagnostics;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.Parser;
 
+#nullable enable
+
 namespace Microsoft.Data.Common.ConnectionString
 {
     internal static class VectorTypeSupportUtilities
     {
+        #if DEBUG
+        static VectorTypeSupportUtilities()
+        {
+            Debug.Assert(Enum.GetNames(typeof(SqlVectorTypeSupport)).Length == 3,
+                "SqlVectorTypeSupport enum has changed, update needed");
+        }
+        #endif
+
         internal static bool TryConvertToVectorTypeSupport(string value, out SqlVectorTypeSupport result)
         {
-            Debug.Assert(Enum.GetNames(typeof(SqlVectorTypeSupport)).Length == 3, "SqlVectorTypeSupport enum has changed, update needed");
-            Debug.Assert(value != null, "TryConvertToVectorTypeSupport(null,...)");
-
+            // Match names only. Enum.TryParse also accepts numeric strings and comma-separated
+            // combinations such as "Off, V2", which are not connection string keyword values.
             if (StringComparer.OrdinalIgnoreCase.Equals(value, nameof(SqlVectorTypeSupport.Off)))
             {
                 result = SqlVectorTypeSupport.Off;
@@ -38,22 +47,23 @@ namespace Microsoft.Data.Common.ConnectionString
             }
         }
 
-        internal static bool IsValidVectorTypeSupportValue(SqlVectorTypeSupport value)
-        {
-            Debug.Assert(Enum.GetNames(typeof(SqlVectorTypeSupport)).Length == 3, "SqlVectorTypeSupport enum has changed, update needed");
-            return value == SqlVectorTypeSupport.Off || value == SqlVectorTypeSupport.V1 || value == SqlVectorTypeSupport.V2;
-        }
+        internal static bool IsValidVectorTypeSupportValue(SqlVectorTypeSupport value) =>
+            value is SqlVectorTypeSupport.Off or SqlVectorTypeSupport.V1 or SqlVectorTypeSupport.V2;
 
         internal static string VectorTypeSupportToString(SqlVectorTypeSupport value)
         {
-            Debug.Assert(IsValidVectorTypeSupportValue(value));
-
-            return value switch
+            switch (value)
             {
-                SqlVectorTypeSupport.Off => nameof(SqlVectorTypeSupport.Off),
-                SqlVectorTypeSupport.V2 => nameof(SqlVectorTypeSupport.V2),
-                _ => nameof(SqlVectorTypeSupport.V1),
-            };
+                case SqlVectorTypeSupport.Off:
+                    return nameof(SqlVectorTypeSupport.Off);
+                case SqlVectorTypeSupport.V1:
+                    return nameof(SqlVectorTypeSupport.V1);
+                case SqlVectorTypeSupport.V2:
+                    return nameof(SqlVectorTypeSupport.V2);
+                default:
+                    Debug.Fail("Invalid vector type support value.");
+                    throw ADP.InvalidEnumerationValue(typeof(SqlVectorTypeSupport), (int)value);
+            }
         }
 
         /// <summary>
@@ -64,8 +74,6 @@ namespace Microsoft.Data.Common.ConnectionString
         /// </summary>
         internal static SqlVectorTypeSupport ConvertToVectorTypeSupport(string keyword, object value)
         {
-            Debug.Assert(value != null, "ConvertToVectorTypeSupport(null)");
-
             if (value is string sValue)
             {
                 if (TryConvertToVectorTypeSupport(sValue, out SqlVectorTypeSupport result))
@@ -82,40 +90,36 @@ namespace Microsoft.Data.Common.ConnectionString
 
                 throw ADP.InvalidConnectionOptionValue(keyword);
             }
+
+            SqlVectorTypeSupport eValue;
+            if (value is SqlVectorTypeSupport support)
+            {
+                eValue = support;
+            }
+            else if (value.GetType().IsEnum || value is float || value is double)
+            {
+                // Enum.ToObject accepts foreign enums; on .NET 8 it also reinterprets float bits.
+                throw ADP.ConvertFailed(value.GetType(), typeof(SqlVectorTypeSupport), null);
+            }
             else
             {
-                SqlVectorTypeSupport eValue;
-
-                if (value is SqlVectorTypeSupport support)
+                try
                 {
-                    // Quick path for the most common case.
-                    eValue = support;
+                    // The indexer accepts boxed integers of different widths, not just Int32.
+                    eValue = (SqlVectorTypeSupport)Enum.ToObject(typeof(SqlVectorTypeSupport), value);
                 }
-                else if (value.GetType().IsEnum || value is float || value is double)
+                catch (ArgumentException e)
                 {
-                    // Reject unrelated enums and floating-point values. On .NET 8, Enum.ToObject
-                    // reinterprets floating-point bits as integers instead of rejecting the input.
-                    throw ADP.ConvertFailed(value.GetType(), typeof(SqlVectorTypeSupport), null);
+                    throw ADP.ConvertFailed(value.GetType(), typeof(SqlVectorTypeSupport), e);
                 }
-                else
-                {
-                    try
-                    {
-                        eValue = (SqlVectorTypeSupport)Enum.ToObject(typeof(SqlVectorTypeSupport), value);
-                    }
-                    catch (ArgumentException e)
-                    {
-                        throw ADP.ConvertFailed(value.GetType(), typeof(SqlVectorTypeSupport), e);
-                    }
-                }
-
-                if (IsValidVectorTypeSupportValue(eValue))
-                {
-                    return eValue;
-                }
-
-                throw ADP.InvalidEnumerationValue(typeof(SqlVectorTypeSupport), (int)eValue);
             }
+
+            if (IsValidVectorTypeSupportValue(eValue))
+            {
+                return eValue;
+            }
+
+            throw ADP.InvalidEnumerationValue(typeof(SqlVectorTypeSupport), (int)eValue);
         }
 
         /// <summary>
@@ -123,14 +127,18 @@ namespace Microsoft.Data.Common.ConnectionString
         /// </summary>
         internal static byte ToFeatureExtensionVersion(SqlVectorTypeSupport value)
         {
-            Debug.Assert(IsValidVectorTypeSupportValue(value));
-
-            return value switch
+            switch (value)
             {
-                SqlVectorTypeSupport.Off => TdsEnums.VECTOR_VERSION_NOT_SUPPORTED,
-                SqlVectorTypeSupport.V2 => TdsEnums.VECTOR_VERSION_FLOAT16,
-                _ => TdsEnums.VECTOR_VERSION_FLOAT32,
-            };
+                case SqlVectorTypeSupport.Off:
+                    return TdsEnums.VECTOR_VERSION_NOT_SUPPORTED;
+                case SqlVectorTypeSupport.V1:
+                    return TdsEnums.VECTOR_VERSION_FLOAT32;
+                case SqlVectorTypeSupport.V2:
+                    return TdsEnums.VECTOR_VERSION_FLOAT16;
+                default:
+                    Debug.Fail("Invalid vector type support value.");
+                    throw ADP.InvalidEnumerationValue(typeof(SqlVectorTypeSupport), (int)value);
+            }
         }
     }
 }

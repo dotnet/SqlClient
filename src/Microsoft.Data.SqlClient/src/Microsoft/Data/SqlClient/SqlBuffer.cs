@@ -1036,7 +1036,7 @@ namespace Microsoft.Data.SqlClient
         /// substituting a different base type, such values are surfaced as their JSON
         /// rendering, which is how they are already presented when the server does not
         /// negotiate float16 support. Callers that want a strongly typed value can
-        /// explicitly request one via <see cref="GetSqlVector{T}"/>.
+        /// explicitly request one via <see cref="SqlDataReader.GetSqlVector{T}(int)"/>.
         /// </remarks>
         internal object GetVectorValue()
         {
