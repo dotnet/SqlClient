@@ -19,6 +19,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
     /// </summary>
     public class PoolPruningGuardTest
     {
+        /// <summary>
+        /// A new guard is running, admits operations, and stays running once they release.
+        /// </summary>
         [Fact]
         public void NewGuard_IsRunningAndAdmits()
         {
@@ -45,9 +48,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             pool.OnShutdown = () =>
             {
                 runningDuringShutdown = guard.IsRunning;
-                PoolPruningGuard.Lease lease = guard.TryEnter();
+                using PoolPruningGuard.Lease lease = guard.TryEnter();
                 admittedDuringShutdown = lease.IsActive;
-                lease.Dispose();
             };
 
             Assert.True(guard.TryPrune(pool));
@@ -56,9 +58,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.False(runningDuringShutdown);
             Assert.False(admittedDuringShutdown);
             Assert.False(guard.IsRunning);
-            Assert.False(guard.TryEnter().IsActive);
+            using PoolPruningGuard.Lease refused = guard.TryEnter();
+            Assert.False(refused.IsActive);
         }
 
+        /// <summary>
+        /// An outstanding lease blocks pruning; once released, the guard admits again.
+        /// </summary>
         [Fact]
         public void TryPrune_WithActiveLease_KeepsRunning()
         {
@@ -71,9 +77,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.Equal(0, pool.ShutdownCalls);
             Assert.True(guard.IsRunning);
             lease.Dispose();
-            Assert.True(guard.TryEnter().IsActive);
+            using PoolPruningGuard.Lease next = guard.TryEnter();
+            Assert.True(next.IsActive);
         }
 
+        /// <summary>
+        /// A pool that still has connections is not pruned.
+        /// </summary>
         [Fact]
         public void TryPrune_WithConnections_KeepsRunning()
         {
@@ -99,34 +109,54 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.True(guard.TryClose());
 
             Assert.False(guard.IsRunning);
-            Assert.False(guard.TryEnter().IsActive);
+            using (PoolPruningGuard.Lease refused = guard.TryEnter())
+            {
+                Assert.False(refused.IsActive);
+            }
             lease.Dispose();
             Assert.False(guard.IsRunning);
-            Assert.False(guard.TryEnter().IsActive);
+            using PoolPruningGuard.Lease refusedAfterRelease = guard.TryEnter();
+            Assert.False(refusedAfterRelease.IsActive);
         }
 
+        /// <summary>
+        /// Only the first <see cref="PoolPruningGuard.TryClose"/> closes the guard; closing is
+        /// permanent.
+        /// </summary>
         [Fact]
         public void TryClose_IsOneShot()
         {
             var guard = new PoolPruningGuard();
 
             Assert.True(guard.TryClose());
+            Assert.False(guard.IsRunning);
             Assert.False(guard.TryClose());
             Assert.False(guard.IsRunning);
         }
 
+        /// <summary>
+        /// <see cref="PoolPruningGuard.TryClose"/> only closes the guard; the pool calls it from its
+        /// own Shutdown, so the guard never shuts the pool down there. A later prune is refused and
+        /// must not shut the pool down either.
+        /// </summary>
         [Fact]
-        public void TryPrune_AfterClose_DoesNotShutdownAgain()
+        public void TryPrune_AfterClose_RefusesWithoutShutdown()
         {
             var guard = new PoolPruningGuard();
             var pool = new FakePool();
-            guard.TryClose();
+
+            Assert.True(guard.TryClose());
+            Assert.Equal(0, pool.ShutdownCalls);
 
             Assert.False(guard.TryPrune(pool));
 
             Assert.Equal(0, pool.ShutdownCalls);
+            Assert.False(guard.IsRunning);
         }
 
+        /// <summary>
+        /// Disposing the same lease twice releases admission only once.
+        /// </summary>
         [Fact]
         public void LeaseDispose_Twice_ReleasesOnce()
         {
