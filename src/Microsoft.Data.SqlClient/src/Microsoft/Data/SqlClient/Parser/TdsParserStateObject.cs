@@ -16,7 +16,7 @@ using Microsoft.Data.SqlClient.Parser;
 using System.Runtime.ConstrainedExecution;
 #endif
 
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.Parser
 {
 #if NETFRAMEWORK
     using RuntimeHelpers = System.Runtime.CompilerServices.RuntimeHelpers;
@@ -276,7 +276,7 @@ namespace Microsoft.Data.SqlClient
         //
         // Sample code to enable:
         //
-        //    Type type = typeof(SqlDataReader).Assembly.GetType("Microsoft.Data.SqlClient.TdsParserStateObject");
+        //    Type type = typeof(SqlDataReader).Assembly.GetType("Microsoft.Data.SqlClient.Parser.TdsParserStateObject");
         //    System.Reflection.FieldInfo field = type.GetField("_forceAllPends", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
         //    if (field != null) {
         //        field.SetValue(null, true);

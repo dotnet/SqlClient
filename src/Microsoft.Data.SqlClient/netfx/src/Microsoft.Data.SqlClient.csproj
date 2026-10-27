@@ -898,8 +898,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\TdsOperationStatus.cs">
       <Link>Microsoft\Data\SqlClient\Parser\TdsOperationStatus.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserStateObject.cs">
-      <Link>Microsoft\Data\SqlClient\TdsParserStateObject.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\TdsParserStateObject.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\TdsParserStateObject.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserStateObjectFactory.Windows.cs">
       <Link>Microsoft\Data\SqlClient\TdsParserStateObjectFactory.Windows.cs</Link>
@@ -1034,7 +1034,7 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.netfx.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObject.netfx.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Parser\TdsParserStateObject.netfx.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectNative.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\SqlTypeWorkarounds.netfx.cs" />
   </ItemGroup>

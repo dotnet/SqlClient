@@ -6,6 +6,7 @@ using System;
 using System.Diagnostics;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Microsoft.Data.SqlClient.Parser;
 
 namespace Stress.Data.SqlClient
 {
