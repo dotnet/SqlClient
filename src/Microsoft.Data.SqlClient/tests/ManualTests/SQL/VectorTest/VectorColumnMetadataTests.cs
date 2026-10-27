@@ -191,16 +191,18 @@ public sealed class VectorColumnMetadataTests
 
         // The dimension count is known before any row is read, so a buffer can be sized once.
         float[] buffer = new float[dimensions];
+        int rowsRead = 0;
 
         while (reader.Read())
         {
-            Assert.Contains(baseType, new[] { "float16", "float32" });
-
             // Widening from float16 is exact, so single precision reads both base types
             // without loss, and is the only option where System.Half is unavailable.
             reader.GetSqlVector<float>(0).Memory.Span.CopyTo(buffer);
 
             Assert.Equal(new float[] { 1.5f, 2.5f, 3.5f }, buffer);
+            rowsRead++;
         }
+
+        Assert.Equal(2, rowsRead);
     }
 }
