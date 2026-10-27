@@ -26,6 +26,17 @@ function Invoke-SqlServerCertificateCommand {
 
   Write-Output "Certificate generation started..."
 
+  # Provision outside the certificate error handler so source/install failures terminate the task.
+  if ([System.Environment]::OSVersion.Platform -eq "Unix" -and
+      -not (Get-Module -ListAvailable -Name OpenSSL)) {
+      $repositoryScript = Join-Path $PSScriptRoot 'Register-SqlClientPSRepository.ps1'
+      if (-not (Test-Path -LiteralPath $repositoryScript)) {
+          $repositoryScript = Join-Path $PSScriptRoot '..\..\..\..\eng\scripts\Register-SqlClientPSRepository.ps1'
+      }
+      $repository = & $repositoryScript
+      Install-Module -Name OpenSSL -Repository $repository -Force -ErrorAction Stop
+  }
+
   # Change directory to where the tests are
   Write-Output "Change directory to $OutDir ..."
   cd $OutDir
@@ -45,11 +56,6 @@ function Invoke-SqlServerCertificateCommand {
     # Create a self-signed certificate
     if ($OS -eq "Unix") {
         chmod 777 $OutDir
-        # Install OpenSSL module if not already installed
-        if (-not (Get-Module -ListAvailable -Name OpenSSL))
-        {
-            Install-Module -Name OpenSSL -Repository PSGallery -Force
-        }
         # Show version of OpenSSL just to make sure it is installed
         openssl version
 

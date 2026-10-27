@@ -282,7 +282,7 @@ Run `dotnet tool restore` first to restore the repository's pinned PowerShell to
 The regression suite also requires Pester 5.7.1:
 
 ```powershell
-dotnet tool run pwsh -NoProfile -Command "Install-Module Pester -RequiredVersion 5.7.1 -Repository PSGallery -Scope CurrentUser -Force -ErrorAction Stop"
+dotnet tool run pwsh -NoProfile -Command '$repository = & .\eng\scripts\Register-SqlClientPSRepository.ps1; Install-Module Pester -RequiredVersion 5.7.1 -Repository $repository -Scope CurrentUser -Force -ErrorAction Stop'
 dotnet tool run pwsh -NoProfile -Command 'Import-Module Pester -RequiredVersion 5.7.1; Invoke-Pester -Path ./src/Microsoft.Data.SqlClient/tests/VersionChecks/VersionChecks.Tests.ps1 -CI'
 ```
 
@@ -296,6 +296,13 @@ Add `-Tag Synthetic` to `Invoke-Pester` to run only the metadata and legacy mani
 matrix without packing consumer fixtures.
 The suite is available for local execution only. PR and OneBranch pipelines do not
 install Pester or run these tests.
+
+PowerShell module installs use the public SqlClient Azure Artifacts feed anonymously
+through its NuGet v2 endpoint and PowerShell Gallery upstream. The registration helper
+creates a trusted `SqlClient` PowerShellGet repository for the current user, or reuses
+a matching registration without changing its trust policy. A conflicting registration
+or unavailable feed fails explicitly; there is no fallback to PSGallery. `NuGet.config`
+continues to use the feed's v3 endpoint for .NET packages.
 
 Just like building and testing the various projects in this repository, packaging the projects into NuGet packages is
 also handled by `build.proj`. From the root of your repository, run `dotnet build` against `build.proj` with a pack target,

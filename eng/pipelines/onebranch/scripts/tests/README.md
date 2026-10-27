@@ -7,7 +7,14 @@ Pester tests for PowerShell scripts used by OneBranch pipeline steps.
 - PowerShell 7+, as restored by `dotnet tool restore` from `dotnet-tools.json`. Windows
   PowerShell 5.1 is not supported: these scripts and tests use types that exist only in
   PowerShell Core, such as `Microsoft.PowerShell.Commands.HttpResponseException`.
-- [Pester v5](https://pester.dev/) (`Install-Module Pester -MinimumVersion 5.0 -Scope CurrentUser`)
+- [Pester v5 or later](https://pester.dev/), installed from the public SqlClient feed.
+
+From the repository root, install Pester using anonymous feed access:
+
+```powershell
+$repository = & .\eng\scripts\Register-SqlClientPSRepository.ps1
+Install-Module Pester -MinimumVersion 5.0 -Repository $repository -Scope CurrentUser -ErrorAction Stop
+```
 
 ## Running the Tests
 

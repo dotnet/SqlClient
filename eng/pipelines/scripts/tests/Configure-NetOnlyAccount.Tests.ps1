@@ -50,6 +50,13 @@ Describe 'Net-only provisioning lifecycle' -Skip:(-not $IsWindows) {
         Mock Write-Host {}
         Mock Import-Module {}
         Mock Install-Module {}
+        Mock Get-PSRepository {
+            [pscustomobject]@{
+                Name = 'SqlClient'
+                SourceLocation = 'https://sqlclientdrivers.pkgs.visualstudio.com/public/_packaging/sqlclient/nuget/v2'
+                PackageManagementProvider = 'NuGet'
+            }
+        }
         Mock Get-Module { [pscustomobject]@{ Version = [version]'22.4.5.1' } } -ParameterFilter {
             $FullyQualifiedName.Name -eq 'SqlServer'
         }
@@ -90,8 +97,17 @@ Describe 'Net-only provisioning lifecycle' -Skip:(-not $IsWindows) {
 
         Should -Invoke Install-Module -Times 1 -Exactly -ParameterFilter {
             $Name -eq 'SqlServer' -and $RequiredVersion -eq '22.4.5.1' -and
-            $Repository -eq 'PSGallery' -and $Scope -eq 'CurrentUser' -and $AllowClobber -and $Force
+            $Repository -eq 'SqlClient' -and $Scope -eq 'CurrentUser' -and $AllowClobber -and $Force
         }
+    }
+
+    It 'does not install a module or create an account if repository lookup fails' {
+        Mock Get-Module {} -ParameterFilter { $FullyQualifiedName.Name -eq 'SqlServer' }
+        Mock Get-PSRepository { throw 'repository lookup failed' }
+
+        { & $scriptPath -Mode setup } | Should -Throw '*repository lookup failed*'
+        Should -Invoke Install-Module -Times 0 -Exactly
+        Should -Invoke New-LocalUser -Times 0 -Exactly
     }
 
     It 'uses the secret pipeline password as a read-only SecureString and disposes it on <Outcome>' -ForEach @(
