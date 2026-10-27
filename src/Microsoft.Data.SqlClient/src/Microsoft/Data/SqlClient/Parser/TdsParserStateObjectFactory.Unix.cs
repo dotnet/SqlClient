@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using Microsoft.Data.SqlClient.ManagedSni;
-using Microsoft.Data.SqlClient.Parser;
 
 namespace Microsoft.Data.SqlClient.Parser
 {

@@ -6,7 +6,6 @@ using System;
 using System.Diagnostics;
 using Interop.Windows.Sni;
 using Microsoft.Data.SqlClient.ManagedSni;
-using Microsoft.Data.SqlClient.Parser;
 using SniError = Microsoft.Data.SqlClient.ManagedSni.SniError;
 
 namespace Microsoft.Data.SqlClient.Parser
@@ -44,13 +43,13 @@ namespace Microsoft.Data.SqlClient.Parser
                 _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
                 ThrowExceptionAndWarning(_physicalStateObj);
             }
-        }         
+        }
 
         private void WaitForSSLHandShakeToComplete(ref uint error, ref int protocolVersion)
         {
-            // in the case where an async connection is made, encryption is used and Windows Authentication is used, 
-            // wait for SSL handshake to complete, so that the SSL context is fully negotiated before we try to use its 
-            // Channel Bindings as part of the Windows Authentication context build (SSL handshake must complete 
+            // in the case where an async connection is made, encryption is used and Windows Authentication is used,
+            // wait for SSL handshake to complete, so that the SSL context is fully negotiated before we try to use its
+            // Channel Bindings as part of the Windows Authentication context build (SSL handshake must complete
             // before calling SNISecGenClientContext).
             error = _physicalStateObj.WaitForSSLHandShakeToComplete(out protocolVersion);
             if (error != TdsEnums.SNI_SUCCESS)

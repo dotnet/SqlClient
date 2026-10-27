@@ -3,16 +3,15 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using Microsoft.Data.SqlClient.Parser;
 
 namespace Microsoft.Data.SqlClient.Parser
 {
     // This structure is used for transporting packet handle references between the
-    // TdsParserStateObject base class and Managed or Native implementations. 
+    // TdsParserStateObject base class and Managed or Native implementations.
     // It prevents the native IntPtr type from being boxed and prevents the need to cast from
     // object which loses compile time type safety.
     // It carries type information so that assertions about the type of handle can be made in the
-    // implemented abstract methods. 
+    // implemented abstract methods.
     // It is a ref struct so that it can only be used to transport the handles and not store them
 
     // N.B. If you change this type you must also change the version for the other platform
@@ -31,7 +30,7 @@ namespace Microsoft.Data.SqlClient.Parser
         /// which is due to be passed to the native SNI layer.
         /// </summary>
         public const int NativePacketType = 2;
-        
+
         #if NET
         /// <summary>
         /// PacketHandle is transporting a managed packet. The ManagedPacket field is valid.
@@ -41,7 +40,7 @@ namespace Microsoft.Data.SqlClient.Parser
 
         public readonly ManagedSni.SniPacket ManagedPacket;
         #endif
-        
+
         public readonly SNIPacket NativePacket;
         public readonly IntPtr NativePointer;
         public readonly int Type;

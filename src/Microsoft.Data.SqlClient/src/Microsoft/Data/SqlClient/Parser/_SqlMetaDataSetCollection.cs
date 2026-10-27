@@ -51,7 +51,7 @@ namespace Microsoft.Data.SqlClient.Parser
         public object Clone()
         {
             _SqlMetaDataSetCollection result = new _SqlMetaDataSetCollection() { metaDataSet = metaDataSet?.Clone() };
-            
+
             foreach (_SqlMetaDataSet set in _altMetaDataSetArray)
             {
                 result._altMetaDataSetArray.Add(set.Clone());

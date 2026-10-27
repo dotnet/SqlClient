@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using Microsoft.Data.SqlClient.Parser;
 
 // @TODO: This is only a stub partial for clearing errors while merging other files.
 
@@ -18,11 +17,11 @@ namespace Microsoft.Data.SqlClient.Parser
         internal bool _asyncWrite = false;
 
         internal SqlInternalConnectionTds Connection { get; set; }
-        
+
         internal SqlInternalTransaction CurrentTransaction { get; set; }
-        
+
         internal TdsParserState State { get; set; }
-        
+
         internal static SqlDecimal AdjustSqlDecimalScale(SqlDecimal sqlValue, int scale) =>
             SqlDecimal.Null;
 
@@ -37,14 +36,14 @@ namespace Microsoft.Data.SqlClient.Parser
 
         internal TdsParserStateObject GetSession(object owner) =>
             null;
-        
+
         internal void LoadColumnEncryptionKeys(
             _SqlMetaDataSet metadataCollection,
             SqlConnection connection,
             SqlCommand command = null)
         {
         }
-        
+
         internal void Run(
             RunBehavior runBehavior,
             SqlCommand cmdHandler,
@@ -53,7 +52,7 @@ namespace Microsoft.Data.SqlClient.Parser
             TdsParserStateObject stateObj)
         {
         }
-        
+
         #if NETFRAMEWORK
         internal void RunReliably(
             RunBehavior runBehavior,
@@ -64,7 +63,7 @@ namespace Microsoft.Data.SqlClient.Parser
         {
         }
         #endif
-        
+
         internal Task TdsExecuteSQLBatch(
             string text,
             int timeout,
@@ -103,7 +102,7 @@ namespace Microsoft.Data.SqlClient.Parser
         internal void WriteSqlVariantDate(DateTime value, TdsParserStateObject stateObj)
         {
         }
-        
+
         internal void WriteSqlVariantDateTime2(DateTime value, TdsParserStateObject stateObj)
         {
         }

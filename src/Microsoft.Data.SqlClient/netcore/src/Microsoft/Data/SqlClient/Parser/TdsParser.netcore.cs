@@ -3,8 +3,8 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Diagnostics;
 using System.Buffers.Binary;
+using System.Diagnostics;
 
 namespace Microsoft.Data.SqlClient.Parser
 {
@@ -15,7 +15,7 @@ namespace Microsoft.Data.SqlClient.Parser
         internal static void FillDoubleBytes(double value, Span<byte> buffer) => BinaryPrimitives.TryWriteInt64LittleEndian(buffer, BitConverter.DoubleToInt64Bits(value));
 
         internal static void FillFloatBytes(float value, Span<byte> buffer) => BinaryPrimitives.TryWriteInt32LittleEndian(buffer, BitConverterCompatible.SingleToInt32Bits(value));
-        
+
         internal static Guid ConstructGuid(ReadOnlySpan<byte> bytes)
         {
             Debug.Assert(bytes.Length >= 16, "not enough bytes to set guid");

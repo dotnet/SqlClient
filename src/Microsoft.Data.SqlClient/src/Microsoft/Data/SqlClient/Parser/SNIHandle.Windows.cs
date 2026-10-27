@@ -7,7 +7,6 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Interop.Windows.Sni;
 using Microsoft.Data.Common;
-using Microsoft.Data.SqlClient.Parser;
 
 namespace Microsoft.Data.SqlClient.Parser
 {
@@ -47,7 +46,7 @@ namespace Microsoft.Data.SqlClient.Parser
                 // Option ignoreSniOpenTimeout is no longer available
                 //if (ignoreSniOpenTimeout)
                 //{
-                //    // UNDONE: ITEM12001110 (DB Mirroring Reconnect) Old behavior of not truly honoring timeout presevered 
+                //    // UNDONE: ITEM12001110 (DB Mirroring Reconnect) Old behavior of not truly honoring timeout presevered
                 //    //  for non-failover scenarios to avoid breaking changes as part of a QFE.  Consider fixing timeout
                 //    //  handling in next full release and removing ignoreSniOpenTimeout parameter.
                 //    timeout = Timeout.Infinite; // -1 == native SNIOPEN_TIMEOUT_VALUE / INFINITE

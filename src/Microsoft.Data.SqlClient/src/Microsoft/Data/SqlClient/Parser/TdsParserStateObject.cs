@@ -11,7 +11,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
-using Microsoft.Data.SqlClient.Parser;
 #if NETFRAMEWORK
 using System.Runtime.ConstrainedExecution;
 #endif

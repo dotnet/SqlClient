@@ -4,7 +4,6 @@ using System.Net;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Interop.Windows.Sni;
-using Microsoft.Data.SqlClient.Parser;
 
 namespace Microsoft.Data.SqlClient.Parser
 {
