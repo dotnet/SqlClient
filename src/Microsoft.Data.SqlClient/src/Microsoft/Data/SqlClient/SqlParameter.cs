@@ -18,6 +18,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Xml;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Parser.Tokens;
 using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlClient.Server;
 using Microsoft.Data.SqlTypes;

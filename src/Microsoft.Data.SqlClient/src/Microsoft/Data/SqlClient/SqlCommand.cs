@@ -20,6 +20,7 @@ using Microsoft.Data.Sql;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Parser.Tokens;
 using Microsoft.Data.SqlClient.Parser;
 
 #if NETFRAMEWORK

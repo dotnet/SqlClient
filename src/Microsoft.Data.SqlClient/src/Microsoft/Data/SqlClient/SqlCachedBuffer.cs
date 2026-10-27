@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Xml;
+using Microsoft.Data.SqlClient.Parser.Tokens;
 using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlTypes;
 

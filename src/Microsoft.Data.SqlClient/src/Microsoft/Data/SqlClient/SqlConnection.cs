@@ -25,6 +25,7 @@ using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.SqlServer.Server;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Parser.Tokens;
 using Microsoft.Data.SqlClient.Parser;
 #if NETFRAMEWORK
 using System.Runtime.CompilerServices;
