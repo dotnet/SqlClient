@@ -88,7 +88,7 @@ internal sealed class SqlAuthenticationConfiguration
         if (section.ElementInformation.Properties["providers"]?.Value
             is ProviderSettingsCollection providers)
         {
-            // Snapshot entries, but defer method validation and activation to preserve fail-fast order.
+            // Snapshot entries, but defer method validation and activation to the registry.
             Providers = providers.Cast<ProviderSettings>()
                 .Select(provider => new ProviderSettings(provider.Name, provider.Type)).ToArray();
         }

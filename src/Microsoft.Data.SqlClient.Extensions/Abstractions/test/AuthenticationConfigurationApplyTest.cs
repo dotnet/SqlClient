@@ -8,7 +8,7 @@ using Tier = Microsoft.Data.SqlClient.SqlAuthenticationProviderRegistry.Registra
 namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
 
 /// <summary>
-/// Verifies configured activation, precedence and fail-fast application on isolated registries.
+/// Verifies best-effort configured activation and precedence on isolated registries.
 /// </summary>
 [Collection(AuthenticationFeatureSwitchTestCollection.Name)]
 public class AuthenticationConfigurationApplyTest : IDisposable
@@ -118,12 +118,13 @@ public class AuthenticationConfigurationApplyTest : IDisposable
     }
 
     /// <summary>
-    /// Initializer failures stop provider activation and restore ordinary registration precedence.
+    /// Initializer failures are traced without blocking provider activation or leaking initializer precedence.
     /// </summary>
     [Theory]
     [InlineData("construct:initializer")]
     [InlineData("initialize")]
-    public void ApplyConfigurationStopsAfterInitializerFailure(string failureAt)
+    [InlineData("after:initialize")]
+    public void ApplyConfigurationContinuesAfterInitializerFailure(string failureAt)
     {
         // Seed a Config registration to detect a callback-context flag left set after failure.
         var existing = CreateSection();
@@ -136,59 +137,53 @@ public class AuthenticationConfigurationApplyTest : IDisposable
             typeof(Initializer).AssemblyQualifiedName;
         AddProvider(section, "Active Directory Interactive", typeof(SecondProvider));
 
-        var failure = Assert.Throws<ArgumentException>(() =>
-            Apply(section));
+        using var listener = new AuthenticationTraceListener();
+        Apply(section);
 
-        // Later providers stay unconstructed and subsequent callers retain Application tier.
-        Assert.Same(_context.Failure, failure.GetBaseException());
-        Assert.Contains(typeof(Initializer).AssemblyQualifiedName!, failure.Message);
-        Assert.DoesNotContain("construct:second", _context.Events);
+        Assert.Contains(listener.Messages, message =>
+            message.Contains(typeof(Initializer).AssemblyQualifiedName!) &&
+            message.Contains(_context.Failure.Message));
+        Assert.Contains("construct:second", _context.Events);
+        Assert.False(_context.Registry.Register(
+            SqlAuthenticationMethod.ActiveDirectoryInteractive, new ThirdProvider()));
         Assert.False(_context.Registry.Register(
             SqlAuthenticationMethod.ActiveDirectoryIntegrated, new ThirdProvider()));
     }
 
     /// <summary>
-    /// Earlier providers survive later failures, and entries after the failure are not applied.
+    /// Earlier providers survive a failing entry, and later entries still acquire configuration precedence.
     /// </summary>
     [Theory]
     [InlineData("construct:second")]
     [InlineData("support:second")]
     public void ApplyConfigurationPreservesPartialState(string failureAt)
     {
-        // A failing middle entry exposes both retained earlier state and skipped later work.
+        // A failing middle entry must not prevent the final entry from being applied.
         _context.FailureAt = failureAt;
         var section = CreateSection();
         AddProvider(section, "Active Directory Integrated", typeof(FirstProvider));
         AddProvider(section, "Active Directory Interactive", typeof(SecondProvider));
         AddProvider(section, "Active Directory Default", typeof(ThirdProvider));
 
-        Exception failure = Assert.ThrowsAny<Exception>(() =>
-            Apply(section));
+        using var listener = new AuthenticationTraceListener();
+        Apply(section);
 
-        // Construction failures are wrapped; support failures preserve their own exception.
-        Assert.Same(_context.Failure, failure.GetBaseException());
-        if (failureAt == "construct:second")
-        {
-            Assert.IsType<ArgumentException>(failure);
-            Assert.Contains(typeof(SecondProvider).AssemblyQualifiedName!, failure.Message);
-            Assert.Contains("Active Directory Interactive", failure.Message);
-        }
-        else
-        {
-            Assert.Same(_context.Failure, failure);
-        }
-        Assert.Equal(new[] { "construct:first", "construct:second" }, _context.Events);
-        // Only the first method should have acquired configuration precedence.
+        Assert.Contains(listener.Messages, message =>
+            message.Contains(typeof(SecondProvider).AssemblyQualifiedName!) &&
+            message.Contains("Active Directory Interactive") &&
+            message.Contains(_context.Failure.Message));
+        Assert.Equal(new[] { "construct:first", "construct:second", "construct:third" },
+            _context.Events);
         Assert.False(_context.Registry.Register(
             SqlAuthenticationMethod.ActiveDirectoryIntegrated, new ThirdProvider()));
         Assert.True(_context.Registry.Register(
             SqlAuthenticationMethod.ActiveDirectoryInteractive, new ThirdProvider()));
-        Assert.True(_context.Registry.Register(
+        Assert.False(_context.Registry.Register(
             SqlAuthenticationMethod.ActiveDirectoryDefault, new ThirdProvider()));
     }
 
     /// <summary>
-    /// Unknown methods fail before constructing that entry or any later provider.
+    /// Unknown methods are traced and skipped before construction without skipping later providers.
     /// </summary>
     [Theory]
     [InlineData("unknown")]
@@ -201,15 +196,18 @@ public class AuthenticationConfigurationApplyTest : IDisposable
         AddProvider(section, method, typeof(FirstProvider));
         AddProvider(section, "Active Directory Default", typeof(SecondProvider));
 
-        var failure = Assert.Throws<NotSupportedException>(() =>
-            Apply(section));
+        using var listener = new AuthenticationTraceListener();
+        Apply(section);
 
-        Assert.Contains(method, failure.Message);
-        Assert.Empty(_context.Events);
+        Assert.Contains(listener.Messages, message => message.Contains(method) &&
+            message.Contains(typeof(FirstProvider).AssemblyQualifiedName!));
+        Assert.Equal(new[] { "construct:second" }, _context.Events);
+        Assert.False(_context.Registry.Register(
+            SqlAuthenticationMethod.ActiveDirectoryDefault, new ThirdProvider()));
     }
 
     /// <summary>
-    /// A provider rejecting its configured method aborts before later entries are constructed.
+    /// A provider rejecting its configured method is skipped without preventing later entries.
     /// </summary>
     [Fact]
     public void ApplyConfigurationRejectsUnsupportedProvider()
@@ -219,24 +217,26 @@ public class AuthenticationConfigurationApplyTest : IDisposable
         AddProvider(section, "Active Directory Integrated", typeof(UnsupportedProvider));
         AddProvider(section, "Active Directory Default", typeof(SecondProvider));
 
-        var failure = Assert.Throws<NotSupportedException>(() =>
-            Apply(section));
+        using var listener = new AuthenticationTraceListener();
+        Apply(section);
 
-        // The rejected entry must not reserve its method or allow later provider construction.
-        Assert.Contains(typeof(UnsupportedProvider).AssemblyQualifiedName!, failure.Message);
-        Assert.Contains("Active Directory Integrated", failure.Message);
-        Assert.Equal(new[] { "construct:unsupported" }, _context.Events);
+        Assert.Contains(listener.Messages, message =>
+            message.Contains(typeof(UnsupportedProvider).AssemblyQualifiedName!) &&
+            message.Contains("Active Directory Integrated"));
+        Assert.Equal(new[] { "construct:unsupported", "construct:second" }, _context.Events);
         Assert.True(_context.Registry.Register(
             SqlAuthenticationMethod.ActiveDirectoryIntegrated, new FirstProvider()));
+        Assert.False(_context.Registry.Register(
+            SqlAuthenticationMethod.ActiveDirectoryDefault, new ThirdProvider()));
     }
 
     /// <summary>
-    /// Failed replacement callbacks preserve the old provider and stop subsequent entries.
+    /// Failed replacement callbacks preserve the old provider while subsequent entries are applied.
     /// </summary>
     [Theory]
     [InlineData("unload:first")]
     [InlineData("load:second")]
-    public void ApplyConfigurationStopsAfterCallbackFailure(string failureAt)
+    public void ApplyConfigurationContinuesAfterCallbackFailure(string failureAt)
     {
         // Replacing an existing configured provider reaches both unload and load failure paths.
         var existing = CreateSection();
@@ -248,24 +248,28 @@ public class AuthenticationConfigurationApplyTest : IDisposable
         AddProvider(section, "Active Directory Integrated", typeof(SecondProvider));
         AddProvider(section, "Active Directory Default", typeof(ThirdProvider));
 
-        Assert.Same(_context.Failure, Assert.Throws<InvalidOperationException>(() =>
-            Apply(section)));
+        using var listener = new AuthenticationTraceListener();
+        Apply(section);
 
+        Assert.Contains(listener.Messages, message =>
+            message.Contains(typeof(SecondProvider).AssemblyQualifiedName!) &&
+            message.Contains(_context.Failure.Message));
         Assert.Equal(failureAt == "unload:first"
-            ? new[] { "construct:second", "unload:first" }
-            : new[] { "construct:second", "unload:first", "load:second" }, _context.Events);
+            ? new[] { "construct:second", "unload:first", "construct:third" }
+            : new[] { "construct:second", "unload:first", "load:second", "construct:third" },
+            _context.Events);
         _context.FailureAt = null;
         // A successful replacement must still unload the original, proving failed publication.
         Assert.True(_context.Registry.Register(
             SqlAuthenticationMethod.ActiveDirectoryIntegrated, new ThirdProvider(), Tier.Config));
         Assert.Equal(new[] { "unload:first", "load:third" },
             _context.Events.Skip(_context.Events.Count - 2));
-        Assert.True(_context.Registry.Register(
+        Assert.False(_context.Registry.Register(
             SqlAuthenticationMethod.ActiveDirectoryDefault, new ThirdProvider()));
     }
 
     /// <summary>
-    /// Missing types or parameterless constructors produce actionable activation errors.
+    /// Missing types or parameterless constructors are traced without skipping later providers.
     /// </summary>
     [Theory]
     [InlineData(true, true)]
@@ -290,20 +294,15 @@ public class AuthenticationConfigurationApplyTest : IDisposable
         }
         AddProvider(section, "Active Directory Default", typeof(ThirdProvider));
 
-        var failure = Assert.Throws<ArgumentException>(() =>
-            Apply(section));
+        using var listener = new AuthenticationTraceListener();
+        Apply(section);
 
-        // Diagnostics must retain the configured name and the specific reflection failure.
-        Assert.Contains(typeName, failure.Message);
-        if (missingType)
-        {
-            Assert.IsType<TypeLoadException>(failure.InnerException);
-        }
-        else
-        {
-            Assert.IsType<MissingMethodException>(failure.InnerException);
-        }
-        Assert.Empty(_context.Events);
+        Assert.Contains(listener.Messages, message =>
+            message.Contains(typeName) &&
+            message.Contains(missingType ? nameof(TypeLoadException) : nameof(MissingMethodException)));
+        Assert.Equal(new[] { "construct:third" }, _context.Events);
+        Assert.False(_context.Registry.Register(
+            SqlAuthenticationMethod.ActiveDirectoryDefault, new FirstProvider()));
     }
 
     /// <summary>
@@ -429,6 +428,7 @@ public class AuthenticationConfigurationApplyTest : IDisposable
             Current.Record("initialize");
             Assert.True(Current.Registry.Register(
                 SqlAuthenticationMethod.ActiveDirectoryIntegrated, new FirstProvider()));
+            Current.FailIfRequested("after:initialize");
         }
     }
 
@@ -479,7 +479,7 @@ public class AuthenticationConfigurationApplyTest : IDisposable
     /// <summary>Supplies a replacement or later failing configured provider.</summary>
     public sealed class SecondProvider() : Provider("second");
 
-    /// <summary>Detects whether entries after a failure were incorrectly activated.</summary>
+    /// <summary>Detects whether entries after a failure are still activated.</summary>
     public sealed class ThirdProvider() : Provider("third");
 
     /// <summary>Rejects the configured method before registration can publish it.</summary>

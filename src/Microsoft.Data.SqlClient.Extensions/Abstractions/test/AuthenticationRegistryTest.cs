@@ -82,7 +82,7 @@ public class AuthenticationRegistryTest
 
         Assert.Contains(listener.Messages, message =>
             message.Contains("ActiveDirectoryAuthenticationProviderOptions") &&
-            message.Contains("Upgrade") && message.Contains("1.1.0"));
+            message.Contains("Upgrade") && message.Contains("7.0.2"));
         Assert.True(registry.Register(SqlAuthenticationMethod.ActiveDirectoryDefault, new Provider(true)));
     }
 
@@ -144,7 +144,7 @@ public class AuthenticationRegistryTest
             listener.Messages);
     }
 
-    /// <summary>Registration errors inside configured initializers must abort configuration.</summary>
+    /// <summary>Registration errors escape the initializer callback for configuration application to trace.</summary>
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
@@ -487,24 +487,26 @@ public class AuthenticationRegistryTest
                 : null;
     }
 
-    private sealed class AuthenticationTraceListener : EventListener
+}
+
+/// <summary>Collects authentication trace messages for serialized registry and configuration tests.</summary>
+internal sealed class AuthenticationTraceListener : EventListener
+{
+    internal ConcurrentQueue<string> Messages { get; } = new();
+
+    protected override void OnEventSourceCreated(EventSource eventSource)
     {
-        internal ConcurrentQueue<string> Messages { get; } = new();
-
-        protected override void OnEventSourceCreated(EventSource eventSource)
+        if (eventSource.Name == "Microsoft.Data.SqlClient.EventSource")
         {
-            if (eventSource.Name == "Microsoft.Data.SqlClient.EventSource")
-            {
-                EnableEvents(eventSource, EventLevel.Informational, (EventKeywords)2);
-            }
+            EnableEvents(eventSource, EventLevel.Informational, (EventKeywords)2);
         }
+    }
 
-        protected override void OnEventWritten(EventWrittenEventArgs eventData)
+    protected override void OnEventWritten(EventWrittenEventArgs eventData)
+    {
+        if (eventData.EventId == 3 && eventData.Payload?[0] is string message)
         {
-            if (eventData.EventId == 3 && eventData.Payload?[0] is string message)
-            {
-                Messages.Enqueue(message);
-            }
+            Messages.Enqueue(message);
         }
     }
 }

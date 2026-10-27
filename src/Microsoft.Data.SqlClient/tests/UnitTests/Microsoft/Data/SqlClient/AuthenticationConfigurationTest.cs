@@ -109,7 +109,7 @@ public class AuthenticationConfigurationTest
                 throw new InvalidOperationException("Disabled authentication configuration must not be read.");
             };
 
-            bootstrap.Invoke(registry, new object[] { reader });
+            bootstrap.Invoke(registry, new object?[] { reader, null });
 
             Assert.Equal(0, reads);
         }

@@ -6,7 +6,7 @@ using System.Configuration;
 
 namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
 
-/// <summary>Verifies configuration failures abort application without masking fatal errors.</summary>
+/// <summary>Verifies best-effort configuration application never masks fatal errors.</summary>
 public class AuthenticationConfigurationFailureTest
 {
     /// <summary>Malformed broker values are ignored without skipping configured provider activation.</summary>
@@ -64,13 +64,13 @@ public class AuthenticationConfigurationFailureTest
         Assert.IsType<OutOfMemoryException>(failure.GetBaseException());
     }
 
-    /// <summary>Null or incompatible activation results abort before later providers are created.</summary>
+    /// <summary>Null or incompatible activation results do not prevent reaching later fatal failures.</summary>
     [Theory]
     [InlineData(typeof(int?), true)]
     [InlineData(typeof(int?), false)]
     [InlineData(typeof(object), true)]
     [InlineData(typeof(object), false)]
-    public void InvalidActivationAbortsBeforeLaterProviders(Type type, bool initializer)
+    public void InvalidActivationContinuesToLaterProviders(Type type, bool initializer)
     {
         // Nullable activation produces null; object activation produces an incompatible instance.
         var section = new SqlClientAuthenticationProviderConfigurationSection();
@@ -84,13 +84,12 @@ public class AuthenticationConfigurationFailureTest
                 "Active Directory Integrated", type.AssemblyQualifiedName));
         }
 
-        // Reaching this constructor would raise a fatal error rather than the configuration error.
+        // A recoverable activation error must not prevent this later constructor from running.
         section.Providers.Add(new ProviderSettings(
             "Active Directory Interactive", typeof(FailingProvider).AssemblyQualifiedName));
 
-        var failure = Assert.IsType<ArgumentException>(ApplyInvalidConfiguration(section));
-        Assert.Contains(type.AssemblyQualifiedName!, failure.Message);
-        Assert.True(ExceptionHelpers.IsRecoverableException(failure));
+        Exception failure = ApplyInvalidConfiguration(section);
+        Assert.IsType<OutOfMemoryException>(failure.GetBaseException());
     }
 
     /// <summary>Applies invalid configuration to an isolated registry and captures its failure.</summary>
