@@ -10,6 +10,7 @@ using Microsoft.SqlServer.TDS.FeatureExtAck;
 using Microsoft.SqlServer.TDS.Servers;
 using TDSDoneToken = global::Microsoft.SqlServer.TDS.Done.TDSDoneToken;
 using Xunit;
+using Microsoft.Data.SqlClient.Parser;
 
 namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests;
 

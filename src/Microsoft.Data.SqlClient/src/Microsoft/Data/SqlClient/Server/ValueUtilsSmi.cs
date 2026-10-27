@@ -13,6 +13,7 @@ using System.IO;
 using System.Reflection;
 using System.Xml;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlTypes;
 
 #if NET

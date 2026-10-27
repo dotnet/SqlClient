@@ -5,7 +5,7 @@
 using System.Diagnostics;
 using Microsoft.Data.SqlClient.Server;
 
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.Parser
 {
     // Simple Getter/Setter for structured parameters to allow using common ValueUtilsSmi code.
     //  This is a stand-in to having a true SmiRequestExecutor class for TDS.

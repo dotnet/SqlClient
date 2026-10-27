@@ -5,6 +5,7 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using Microsoft.Data.SqlClient.Parser;
 
 namespace Microsoft.Data.SqlClient
 {
