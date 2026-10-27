@@ -1,4 +1,4 @@
-﻿<docs>
+<docs>
   <members name="SqlConnection">
     <SqlConnection>
       <summary>
@@ -361,9 +361,14 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and a
           are the same, they will be grouped into the same connection pool.
         </para>
         <para>
-          When using a token callback function, the connection manages
-          refreshing the tokens returned by the callback.  The application is
-          not responsible for knowing when tokens expire.
+          The driver manages token refresh and discards pooled connections with
+          expired or nearly expired tokens before reuse. Connections in use or
+          reused within the same active transaction are unaffected.
+        </para>
+        <para>
+          New physical connections invoke the callback only when a cached token
+          is missing or needs refreshing. Reusing a pooled connection does not
+          invoke the callback.
         </para>
         <para>
           This property is mutually exclusive with the
@@ -1036,7 +1041,7 @@ The following table lists the valid names for keyword values within the <xref:Mi
 |Transaction Binding|Implicit Unbind|Controls connection association with an enlisted `System.Transactions` transaction.<br /><br /> Possible values are:<br /><br /> `Transaction Binding=Implicit Unbind;`<br /><br /> `Transaction Binding=Explicit Unbind;`<br /><br /> Implicit Unbind causes the connection to detach from the transaction when it ends. After detaching, additional requests on the connection are performed in autocommit mode. The `System.Transactions.Transaction.Current` property is not checked when executing requests while the transaction is active. After the transaction has ended, additional requests are performed in autocommit mode.<br /><br /> If the system ends the transaction (in the scope of a using block) before the last command completes, it will throw <xref:System.InvalidOperationException>.<br /><br /> Explicit Unbind causes the connection to remain attached to the transaction until the connection is closed or an explicit `SqlConnection.TransactionEnlist(null)` is called. Beginning in .NET Framework 4.0, changes to Implicit Unbind make Explicit Unbind obsolete. An `InvalidOperationException` is thrown if `Transaction.Current` is not the enlisted transaction or if the enlisted transaction is not active.|  
 |Transparent Network IP Resolution<br /><br /> -or-<br /><br />TransparentNetworkIPResolution|See description.|**Deprecated.** Use `Multi Subnet Failover` instead.<br /><br /> On .NET Framework, when the value of this key is set to `true`, the driver runs multiple connect rounds across the DNS-resolved IP addresses, with progressively larger per-attempt timeouts and a 500 ms minimum on the sequential-mode attempt, until a connection succeeds or the overall `Connect Timeout` is reached.<br /><br /> If the `MultiSubnetFailover` key is set to `true`, `TransparentNetworkIPResolution` is ignored.<br /><br /> If the `Failover Partner` key is set, `TransparentNetworkIPResolution` is ignored.<br /><br /> On .NET Framework, if `TransparentNetworkIPResolution` isn't specified in the connection string, the driver automatically disables TNIR when the data source is an Azure SQL endpoint (`.database.windows.net`, `.database.cloudapi.de`, `.database.usgovcloudapi.net`, `.database.chinacloudapi.cn`, or `.database.fabric.microsoft.com`), when the `Authentication` key is set to any Microsoft Entra ID method (`Active Directory Password`, `Active Directory Integrated`, `Active Directory Interactive`, `Active Directory Service Principal`, `Active Directory Device Code Flow`, `Active Directory Managed Identity`, `Active Directory MSI`, `Active Directory Default`, or `Active Directory Workload Identity`), or when the <xref:Microsoft.Data.SqlClient.SqlConnection.AccessToken> or <xref:Microsoft.Data.SqlClient.SqlConnection.AccessTokenCallback> property is set on the <xref:Microsoft.Data.SqlClient.SqlConnection>. For these automatic conditions, an explicit `TransparentNetworkIPResolution` value bypasses the automatic behavior: `True` enables TNIR, and `False` disables TNIR unconditionally. To restore the automatic behavior, remove the keyword from the connection string.<br /><br /> On .NET (Core, .NET 5+), `TransparentNetworkIPResolution` isn't a recognized connection-string keyword. Setting it (with any value) throws <xref:System.ArgumentException> when the driver parses the connection string.<br /><br /> On .NET Framework, the value of this key must be `true`, `false`, `yes`, or `no`.<br /><br /> A value of `yes` is treated the same as a value of `true`.<br /><br /> A value of `no` is treated the same as a value of `false`.|
 |Trust Server Certificate<br /><br /> -or-<br /><br />TrustServerCertificate|'false'|When set to `true`, TLS is used to encrypt the channel when bypassing walking the certificate chain to validate trust. If TrustServerCertificate is set to `true` and Encrypt is set to `false`, the channel is not encrypted. Recognized values are `true`, `false`, `yes`, and `no`. For more information, see [Connection String Syntax](https://learn.microsoft.com/sql/connect/ado-net/connection-string-syntax).|  
-|Type System Version|N/A|A string value that indicates the type system the application expects. The functionality available to a client application is dependent on the version of SQL Server and the compatibility level of the database. Explicitly setting the type system version that the client application was written for avoids potential problems that could cause an application to break if a different version of SQL Server is used. **Note:**  The type system version cannot be set for common language runtime (CLR) code executing in-process in SQL Server. For more information, see [SQL Server Common Language Runtime Integration](https://learn.microsoft.com/dotnet/framework/data/adonet/sql/sql-server-common-language-runtime-integration). <br /><br /> Possible values are:<br /><br /> `Type System Version=SQL Server 2012;`<br /><br /> `Type System Version=SQL Server 2008;`<br /><br /> `Type System Version=SQL Server 2005;`<br /><br /> `Type System Version=Latest;`<br /><br /> `Type System Version=SQL Server 2012;` specifies that the application will require version 11.0.0.0 of Microsoft.SqlServer.Types.dll. The other `Type System Version` settings will require version 10.0.0.0 of Microsoft.SqlServer.Types.dll.<br /><br /> `Latest` is obsolete and should not be used. `Latest` is equivalent to `Type System Version=SQL Server 2008;`.|  
+|Type System Version|Latest|A string value that indicates the client type system the application expects; it does not select the SQL Server version to connect to. **Note:** The type system version cannot be set for common language runtime (CLR) code executing in-process in SQL Server. For more information, see [SQL Server Common Language Runtime Integration](https://learn.microsoft.com/dotnet/framework/data/adonet/sql/sql-server-common-language-runtime-integration).<br /><br /> Accepted values are `SQL Server 2008`, `SQL Server 2012`, and `Latest`. `SQL Server 2012` selects version 11.0.0.0 of Microsoft.SqlServer.Types.dll for UDT assembly binding; `SQL Server 2008` and `Latest` select version 10.0.0.0. `Latest` is retained for compatibility and is equivalent to `SQL Server 2008`; it does not automatically advance to a newer type system. Prefer an explicit setting when a specific type system is required.<br /><br /> **Migration:** `Type System Version=SQL Server 2005` is no longer accepted and throws <xref:System.ArgumentException> during <xref:Microsoft.Data.SqlClient.SqlConnection> construction, before connecting. Remove the setting to use the default, or replace it with `Type System Version=SQL Server 2008;` or `Type System Version=SQL Server 2012;`. The 2005 compatibility projections are no longer available: `date`, `time`, `datetime2`, and `datetimeoffset` values are exposed as CLR date/time values rather than strings, and large UDTs are materialized as CLR UDT objects rather than binary values. Update reader accessors, casts, and schema/type expectations accordingly. This applies even when connecting to a newer SQL Server instance.|
 |User ID<br /><br /> -or-<br /><br /> UID<br /><br /> -or-<br /><br /> User|N/A|The SQL Server login account. Not recommended. To maintain a high level of security, we strongly recommend that you use the `Integrated Security` or `Trusted_Connection` keywords instead. <xref:Microsoft.Data.SqlClient.SqlCredential> is a more secure way to specify credentials for a connection that uses SQL Server Authentication.<br /><br /> The user ID must be 128 characters or less.|  
 |User Instance|'false'|A value that indicates whether to redirect the connection from the default SQL Server Express instance to a runtime-initiated instance running under the account of the caller.|  
 |Workstation ID<br /><br /> -or-<br /><br /> WSID|The local computer name|The name of the workstation connecting to SQL Server.<br /><br /> The ID must be 128 characters or less.|  
@@ -1395,7 +1400,7 @@ For more information on working with events, see [Connection Events](https://lea
         The cancellation token.
       </param>
       <summary>
-        An asynchronous version of <see cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema()" />, which returns schema information for the data source of this <see cref="T:Microsoft.Data.SqlClient.SqlConnection" />. For more information about schemas, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql-server-schema-collections">SQL Server Schema Collections</see>.
+        An asynchronous version of <see cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema" />, which returns schema information for the data source of this <see cref="T:Microsoft.Data.SqlClient.SqlConnection" />. For more information about schemas, see <see href="https://learn.microsoft.com/sql/connect/ado-net/sql-server-schema-collections">SQL Server Schema Collections</see>.
       </summary>
       <returns>
         A task representing the asynchronous operation.
@@ -1699,7 +1704,7 @@ For more information on working with events, see [Connection Events](https://lea
         The cancellation token.
       </param>
       <summary>
-        An asynchronous version of <see cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema(string)" />, which returns schema information for the data source of this <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> using the specified string for the schema name.
+        An asynchronous version of <see cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema(System.String)" />, which returns schema information for the data source of this <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> using the specified string for the schema name.
       </summary>
       <returns>
         A task representing the asynchronous operation.
@@ -1753,7 +1758,7 @@ For more information on working with events, see [Connection Events](https://lea
         The cancellation token.
       </param>
       <summary>
-        An asynchronous version of <see cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema(string, string[])" />, which returns schema information for the data source of this <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> using the specified string for the schema name and the specified string array for the restriction values.
+        An asynchronous version of <see cref="M:Microsoft.Data.SqlClient.SqlConnection.GetSchema(System.String,System.String[])" />, which returns schema information for the data source of this <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> using the specified string for the schema name and the specified string array for the restriction values.
       </summary>
       <returns>
         A task representing the asynchronous operation.
@@ -1778,6 +1783,9 @@ For more information on working with events, see [Connection Events](https://lea
       <remarks>
         <para>
           Clients that want to process warnings or informational messages sent by the server should create an <see cref="T:Microsoft.Data.SqlClient.SqlInfoMessageEventHandler" /> delegate to listen to this event.
+        </para>
+        <para>
+          When using <see cref="M:Microsoft.Data.SqlClient.SqlCommand.ExecuteReader" />, informational messages can be received while reading rows or advancing to the next result, including messages after the last row, such as execution statistics. Read each result to completion and call <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.NextResult" /> until it returns <see langword="false" />, even when only one row-returning result is expected. Do not use <see cref="F:System.Data.CommandBehavior.SingleResult" /> when trailing <see cref="E:Microsoft.Data.SqlClient.SqlConnection.InfoMessage" /> events are needed: in this mode, <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.NextResult" /> drains unread results as cleanup and discards informational messages encountered during that cleanup. Informational messages encountered while <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.Close" /> or <see cref="M:System.IDisposable.Dispose" /> drains unread results are discarded rather than raised as <see cref="E:Microsoft.Data.SqlClient.SqlConnection.InfoMessage" /> events. Closing or disposing the reader is therefore not a substitute for explicitly processing all results when these messages are needed. See the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> example for a loop that processes the first result before advancing.
         </para>
         <para>
           The <see cref="E:Microsoft.Data.SqlClient.SqlConnection.InfoMessage" /> event occurs when a message with a severity of 10 or less is returned by SQL Server. Messages that have a severity between 11 and 20 raise an error and messages that have a severity over 20 causes the connection to close. For more information on SQL Server error levels, see <see href="https://learn.microsoft.com/sql/relational-databases/errors-events/database-engine-error-severities">Database Engine Error Severities</see>.
@@ -2295,6 +2303,56 @@ The following sample tries to open a connection to an invalid database to simula
         </para>
       </remarks>
     </System.ICloneable.Clone>
+    <RegisteredApplication>
+      <summary>
+        Gets or sets the middleware application identity reported to the server for this connection.
+      </summary>
+      <value>
+        A <see cref="T:Microsoft.Data.SqlClient.RegisteredApplication" /> value. The default is
+        <see cref="F:Microsoft.Data.SqlClient.RegisteredApplication.Unknown" />.
+      </value>
+      <example>
+        <para>
+          Set the identity before opening the connection:
+        </para>
+        <code language="c#">
+          using Microsoft.Data.SqlClient;
+
+          using SqlConnection connection = new(connectionString)
+          {
+              RegisteredApplication = RegisteredApplication.EntityFrameworkCore
+          };
+          connection.Open();
+        </code>
+      </example>
+      <exception cref="T:System.InvalidOperationException">
+        The connection is opening or open. The identity is reported during login, so it must be set beforehand.
+      </exception>
+      <remarks>
+        <para>
+          This API is intended for registered applications that reserve an identifier in
+          <see cref="T:Microsoft.Data.SqlClient.RegisteredApplication" />. An unregistered identifier may be reported by
+          casting a value to that type.
+        </para>
+        <para>
+          This value is telemetry. It is supplied entirely by the client, which may report any identifier in range,
+          so it is not an authenticated identity and must not be used for authorization or any other security
+          decision.
+        </para>
+        <para>
+          The identity is sent once, during login, so it must be set before the connection is opened.
+        </para>
+        <para>
+          When pooling is enabled the value is reported only while establishing a new physical connection, and it is
+          not part of the pool key. A connection served from the pool therefore reports the identity of whichever
+          connection caused that physical connection to be created, and physical connections opened in the background
+          to satisfy <c>Min Pool Size</c> report
+          <see cref="F:Microsoft.Data.SqlClient.RegisteredApplication.Unknown" />. Applications that mix identities over one
+          connection string should treat this telemetry as indicative rather than exact, or disable pooling where an
+          exact attribution is required.
+        </para>
+      </remarks>
+    </RegisteredApplication>
     <WorkstationId>
       <summary>
         Gets a string that identifies the database client.

@@ -6,6 +6,7 @@ using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Parser;
 
 #nullable enable
 
@@ -13,7 +14,7 @@ namespace Microsoft.Data.SqlClient;
 
 internal sealed partial class SqlMetaDataFactory
 {
-    private static void LoadDataTypesDataTables(DataSet metaDataCollectionsDataSet)
+    private static void LoadDataTypesDataTables(DataSet metaDataCollectionsDataSet, bool jsonTypeSupported)
     {
         DataTable dataTypesDataTable = CreateDataTypesDataTable();
 
@@ -58,8 +59,10 @@ internal sealed partial class SqlMetaDataFactory
             minimumVersion: "10.00.000.0");
 
         AddLongStringOrBinaryType(SqlDbType.Xml);
-        AddLongStringOrBinaryType(SqlDbTypeExtensions.Json, literalPrefix: "'", literalSuffix: "'",
-            minimumVersion: "17.00.000.0");
+        if (jsonTypeSupported)
+        {
+            AddLongStringOrBinaryType(SqlDbTypeExtensions.Json, literalPrefix: "'", literalSuffix: "'");
+        }
         AddLongStringOrBinaryType(SqlDbType.Text, literalPrefix: "'", literalSuffix: "'");
         AddLongStringOrBinaryType(SqlDbType.NText, literalPrefix: "N'", literalSuffix: "'");
         AddLongStringOrBinaryType(SqlDbType.Image, literalPrefix: "0x");

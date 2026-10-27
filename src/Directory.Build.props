@@ -141,7 +141,6 @@
           Condition="'$(SqlClientVersionsImported)' != 'true'" />
 
   <ItemGroup Condition="$(BuildForRelease) == 'true'">
-    <SourceRoot Include="$(MSBuildThisFileDirectory)/" />
     <EmbeddedFiles Include="$(GeneratedAssemblyInfoFile)" />
   </ItemGroup>
 
@@ -234,7 +233,6 @@
 
   <!-- Provides Build properties -->
   <Import Project="$(ToolsDir)props\AssemblyInfo.props" />
-  <Import Project="$(ToolsDir)props\AssemblyRef.props" />
   <Import Project="$(ToolsDir)targets\RepositoryInfo.targets" />
 
   <!-- Fix GetTargetPath issues - see https://github.com/dotnet/msbuild/issues/4303#issuecomment-482345617 -->

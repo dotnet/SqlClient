@@ -236,14 +236,16 @@ cmd.Parameters.Add("@id", SqlDbType.Int).Value = userId;
 
 ## AppContext Switches
 
-AppContext switches allow runtime behavior changes without modifying connection strings. They are defined in `LocalAppContextSwitches.cs` and can be set via `AppContext.SetSwitch()` or `runtimeconfig.json`.
+AppContext switches allow runtime behavior changes without modifying connection strings. Driver switches are defined in `LocalAppContextSwitches.cs` and can be set via `AppContext.SetSwitch()` or `runtimeconfig.json`.
 
 ### Available Switches
 
 | Switch Name | Default | Description |
 |-------------|---------|-------------|
 | `Switch.Microsoft.Data.SqlClient.DisableTNIRByDefaultInConnectionString` | `false` | Disables Transparent Network IP Resolution by default |
+| `Switch.Microsoft.Data.SqlClient.EnableAppConfig` | `true` | .NET only. Controls whether SqlClient reads app.config: configurable retry logic, authentication providers and switch overrides. See [Trimming](#trimming) |
 | `Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault` | `false` | Sets `MultiSubnetFailover=true` as the default for all connections |
+| `Switch.Microsoft.Data.SqlClient.EnableTransactionIsolationLevelReset` | `false` | Resets a changed session transaction isolation level to `READ COMMITTED` before a pooled connection is reused |
 | `Switch.Microsoft.Data.SqlClient.EnableUserAgent` | varies | Controls sending user agent information to SQL Server |
 | `Switch.Microsoft.Data.SqlClient.IgnoreServerProvidedFailoverPartner` | `false` | Ignores failover partner information sent by the server |
 | `Switch.Microsoft.Data.SqlClient.UseLegacyFailoverAlternationOnLoginSqlErrors` | `false` | Restores legacy `LoginWithFailover` alternation for login-phase SQL errors when parser state is not `Closed` |
@@ -257,6 +259,36 @@ AppContext switches allow runtime behavior changes without modifying connection 
 | `Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2` | `false` | Enables the new `ChannelDbConnectionPool` implementation |
 | `Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows` | `false` | Forces managed SNI on Windows (instead of native SNI) |
 | `Switch.Microsoft.Data.SqlClient.UseOneSecFloorInTimeoutCalculationDuringLogin` | `false` | Sets 1-second minimum in login timeout calculations |
+
+### Authentication configuration in app.config
+
+The `SqlClientAuthenticationProviders` (modern) and `SqlAuthenticationProviders`
+(legacy) sections are optional. Applications may provide full, partial, or no
+configuration, and may register providers in code instead.
+
+- **No config file or section:** this is normal. The driver uses its default providers and settings.
+- **Partial configuration:** the driver applies the valid settings and uses defaults for the rest.
+- **Invalid entries:** an invalid `useWamBroker` value is traced and ignored, keeping the default
+  and other valid settings. Configuration-reading errors (`ConfigurationErrorsException`) are
+  traced and produce empty settings without trying legacy. Other exception types propagate;
+  initializer and provider validation or activation can still fail.
+- **Internal handler metadata mismatches:** assert in Debug. In Release, treat the affected
+  string setting or provider list as empty while retaining other valid settings.
+  Omitting an optional XML attribute uses the handler's default and is not a metadata mismatch.
+- **Precedence:** if the modern section is declared, it wins over the legacy section, even when
+  its element is absent. The legacy section is read only when the modern section is missing or
+  its handler type doesn't match.
+- **Config providers take precedence:** a provider listed in app.config for an authentication
+  method can't be replaced by `SqlAuthenticationProvider.SetProvider`.
+
+To diagnose unexpected provider selection, turn on `SqlClientEventSource` tracing.
+Skipped or invalid settings are reported there.
+
+These loading policies apply to the new Abstractions loader; the driver continues using its
+existing reader until the registry migration in #4821.
+
+On .NET, `Switch.Microsoft.Data.SqlClient.EnableAppConfig` controls whether configuration
+is read at all. See [Trimming](#trimming).
 
 ### Usage Example
 ```csharp
@@ -272,6 +304,18 @@ AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverB
 //   }
 // }
 ```
+
+### Trimming
+
+Setting `EnableAppConfig` to `false` at publish time removes the configuration reading from a trimmed or Native AOT application:
+
+```xml
+<ItemGroup>
+  <RuntimeHostConfigurationOption Include="Switch.Microsoft.Data.SqlClient.EnableAppConfig" Value="false" Trim="true" />
+</ItemGroup>
+```
+
+Setting it only at run time, with `AppContext.SetSwitch` or `runtimeconfig.json`, stops the reading but leaves the trim warnings. On .NET Framework the switch has no effect, since trimming does not apply there.
 
 ### Guidelines for Adding New Switches
 1. Define the switch name constant in `LocalAppContextSwitches.cs`

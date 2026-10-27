@@ -152,8 +152,8 @@ jobs:
       - name: project
         value: src/Microsoft.Data.SqlClient.Extensions/Azure/test/Azure.Test.csproj
 
-      # dotnet CLI arguments for build/test/pack commands.
-      - name: buildArguments
+      # Follow the repository's pipeline argument variable naming convention.
+      - name: dotnetBuildOpts
         value: >-
           -p:Configuration=${{ parameters.buildConfiguration }}
           --verbosity ${{ parameters.dotnetVerbosity }}
@@ -228,7 +228,7 @@ jobs:
       - template: /eng/pipelines/common/steps/install-dotnet.yml@self
         parameters:
           debug: ${{ parameters.debug }}
-          runtimes: [8.x, 9.x]
+          runtimes: [10.x]
 
       # The Windows agent images include a suitable .NET Framework runtime, so
       # we don't have to install one explicitly.
@@ -246,19 +246,17 @@ jobs:
           # The config.jsonc file has many options, but only some of them are
           # used by the Azure package tests.  We only specify the ones that are
           # necessary here.
-
-          AADServicePrincipalId: $(AADServicePrincipalId)
           AzureKeyVaultTenantId: $(AzureKeyVaultTenantId)
           # macOS doesn't support managed identities.
           ManagedIdentitySupported: ${{ not(eq(parameters.poolImage, 'macos-latest')) }}
-          TCPConnectionString: $(AZURE_DB_TCP_CONN_STRING)
+          TCPConnectionString: $(AZURE_SQL_CONN_STRING_WestUS2)
           UserManagedIdentityClientId: $(UserManagedIdentityClientId)
           WorkloadIdentityFederationServiceConnectionId: $(WorkloadIdentityFederationServiceConnectionId)
           # Avoid exposing secrets to pipeline jobs triggered via forks.  This
           # prevents external contributors from creating PRs and running
           # pipelines that could expose these secrets.
           ${{ if eq(variables['System.PullRequest.IsFork'], 'False') }}:
-            AADPasswordConnectionString: $(AAD_PASSWORD_CONN_STR)
+            AADServicePrincipalId: $(AADServicePrincipalId)
             AADServicePrincipalSecret: $(AADServicePrincipalSecret)
 
       # Perform any local SQL Server setup.
@@ -270,7 +268,7 @@ jobs:
         inputs:
           command: build
           projects: $(project)
-          arguments: $(buildArguments)
+          arguments: $(dotnetBuildOpts)
 
       # List the DLLs in the output directory for debugging purposes.
       - ${{ if eq(parameters.debug, true) }}:
@@ -305,7 +303,7 @@ jobs:
             command: test
             projects: $(project)
             arguments: >-
-              $(buildArguments)
+              $(dotnetBuildOpts)
               --no-build
               -f ${{ runtime }}
               --filter "category != failing & category != flaky & category != interactive"
@@ -323,7 +321,7 @@ jobs:
             command: test
             projects: $(project)
             arguments: >-
-              $(buildArguments)
+              $(dotnetBuildOpts)
               --no-build
               -f ${{ runtime }}
               --filter "category = flaky"
@@ -343,7 +341,7 @@ jobs:
             command: test
             projects: $(project)
             arguments: >-
-              $(buildArguments)
+              $(dotnetBuildOpts)
               --no-build
               -f ${{ runtime }}
               --filter "category != failing & category != flaky & category != interactive"
@@ -361,7 +359,7 @@ jobs:
             command: test
             projects: $(project)
             arguments: >-
-              $(buildArguments)
+              $(dotnetBuildOpts)
               --no-build
               -f ${{ runtime }}
               --filter "category = flaky"

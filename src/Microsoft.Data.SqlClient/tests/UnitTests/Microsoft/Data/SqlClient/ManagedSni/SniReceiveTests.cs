@@ -13,6 +13,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ManagedSni;
+using Microsoft.Data.SqlClient.Parser;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni

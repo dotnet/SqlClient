@@ -628,6 +628,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Timeout expired.  The connection timeout period elapsed before the transaction isolation level of the pooled connection could be reset..
+        /// </summary>
+        internal static string ADP_IsolationLevelResetTimeout {
+            get {
+                return ResourceManager.GetString("ADP_IsolationLevelResetTimeout", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Keyword not supported: &apos;{0}&apos;..
         /// </summary>
         internal static string ADP_KeywordNotSupported {
@@ -3355,6 +3364,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to When Globalization Invariant Mode is enabled, SqlMetaData instances describing character or text types must specify an LCID..
+        /// </summary>
+        internal static string SQL_GlobalizationInvariantModeRequiresLcid {
+            get {
+                return ResourceManager.GetString("SQL_GlobalizationInvariantModeRequiresLcid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Instance failure..
         /// </summary>
         internal static string SQL_InstanceFailure {
@@ -3840,6 +3858,15 @@ namespace System {
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized string similar to Prepare is not supported when EnableOptimizedParameterBinding is enabled. Create a new SqlCommand and either set EnableOptimizedParameterBinding to false before its first execution or execute it without calling Prepare..
+        /// </summary>
+        internal static string SQL_PrepareNotSupportedForOptimizedBinding {
+            get {
+                return ResourceManager.GetString("SQL_PrepareNotSupportedForOptimizedBinding", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Certificate failed chain validation. Error(s): &apos;{0}&apos;..
         /// </summary>
@@ -5178,6 +5205,15 @@ namespace System {
         internal static string TCE_AttestationURLNotSupported {
             get {
                 return ResourceManager.GetString("TCE_AttestationURLNotSupported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Attestation protocol &apos;AAS&apos; requires the Microsoft.Data.SqlClient.Extensions.Azure package, at the same version as Microsoft.Data.SqlClient. Add or update the reference to that package, or specify a different attestation protocol in the connection string..
+        /// </summary>
+        internal static string TCE_AzureAttestationExtensionNotFound {
+            get {
+                return ResourceManager.GetString("TCE_AzureAttestationExtensionNotFound", resourceCulture);
             }
         }
         

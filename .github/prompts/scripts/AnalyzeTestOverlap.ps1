@@ -26,7 +26,7 @@
 .PARAMETER Framework
     The target framework moniker (TFM) to build and run tests against.  Must
     match a valid <TargetFramework> in the test project (e.g., "net462",
-    "net9.0").  Default is "net462".
+    "net10.0").  Default is "net462".
 
 .PARAMETER Project
     The relative path to the test project (.csproj) to analyze.  Default is

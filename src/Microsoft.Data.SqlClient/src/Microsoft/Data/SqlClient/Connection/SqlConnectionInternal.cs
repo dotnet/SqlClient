@@ -17,6 +17,9 @@ using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Parser;
+using Microsoft.Data.SqlClient.Parser.Login;
+using Microsoft.Data.SqlClient.Parser.Tokens;
 using Microsoft.Data.SqlClient.Utilities;
 using IsolationLevel = System.Data.IsolationLevel;
 
@@ -240,6 +243,19 @@ namespace Microsoft.Data.SqlClient.Connection
         // @TODO: Rename for naming conventions (remove f prefix)
         private bool _fConnectionOpen = false;
 
+        /// <summary>
+        /// Whether a database <c>ENV_CHANGE</c> token arrived while the most recent login
+        /// response was being parsed.
+        /// </summary>
+        /// <remarks>
+        /// Diagnostic only. <see cref="CurrentDatabase"/> alone cannot distinguish a server
+        /// that reported a database from one that reported none, because the value a login
+        /// falls back to is the initial catalog and a server may legitimately report exactly
+        /// that. Reset immediately before the login response is parsed and read only while
+        /// completing that same login, so a later <c>USE</c> cannot leave it stale.
+        /// </remarks>
+        private bool _databaseEnvChangeReceived;
+
         private readonly SqlCredential _credential;
 
         private string _currentLanguage;
@@ -299,12 +315,36 @@ namespace Microsoft.Data.SqlClient.Connection
         // @TODO: Rename to match naming conventions (remove f prefix)
         private readonly bool _fResetConnection;
 
+        // Tracks whether a SQL Server session transaction isolation level
+        // change has been issued on this connection (via SqlTransaction or
+        // System.Transactions enlistment) but not yet undone. SQL Server's
+        // sp_reset_connection does not reset the session isolation level, so
+        // without compensation a pooled connection leaks the level to its
+        // next user.
+        private bool _isolationLevelDirty;
+
+        /// <summary>
+        /// Gets or sets whether a session transaction isolation level change is pending reset.
+        /// Exposed for tests that must observe or seed this state.
+        /// </summary>
+        internal bool IsolationLevelDirty
+        {
+            get => _isolationLevelDirty;
+            set => _isolationLevelDirty = value;
+        }
+
 
 
         // @TODO: Rename to match naming conventions
         private bool _SQLDNSRetryEnabled = false;
 
         private bool _sessionRecoveryRequested;
+
+        /// <summary>
+        /// The middleware application identity of the <see cref="SqlConnection"/> that caused
+        /// this physical connection to be created. Reported once, at login.
+        /// </summary>
+        private readonly RegisteredApplication _registeredApplication;
 
         private int _threadIdOwningParserLock = -1;
 
@@ -344,12 +384,14 @@ namespace Microsoft.Data.SqlClient.Connection
             IDbConnectionPool pool = null,
             Func<SqlAuthenticationParameters, CancellationToken, Task<SqlAuthenticationToken>> accessTokenCallback = null,
             SspiContextProvider sspiContextProvider = null,
-            ISqlClientMetrics metrics = null)
+            ISqlClientMetrics metrics = null,
+            RegisteredApplication registeredApplication = RegisteredApplication.Unknown)
             : base(metrics)
         {
             Debug.Assert(connectionOptions is not null, "null connectionOptions");
 
             ConnectionOptions = connectionOptions;
+            _registeredApplication = registeredApplication;
 
             #if DEBUG
             if (reconnectSessionData != null)
@@ -581,11 +623,6 @@ namespace Microsoft.Data.SqlClient.Connection
         internal string InstanceName
         {
             get => _instanceName;
-        }
-
-        internal bool Is2008OrNewer
-        {
-            get => _parser.Is2008OrNewer;
         }
 
         /// <summary>
@@ -836,7 +873,10 @@ namespace Microsoft.Data.SqlClient.Connection
             // another one, the connection simply switches enlistments. This behavior matches
             // OLEDB and ODBC.
 
-            Enlist(transaction);
+            // This is a user-initiated enlistment rather than a connection-open. Every batch this
+            // path can emit is bounded by the connect timeout, matching the other enlistment I/O
+            // in this file (EnlistNonNull, GetDTCAddress, PropagateTransactionCookie).
+            Enlist(transaction, ConnectionOptions.ConnectTimeout);
             // @TODO: CER Exception Handling was removed here (see GH#3581)
         }
 
@@ -1018,9 +1058,9 @@ namespace Microsoft.Data.SqlClient.Connection
                 "unenlisted.",
                 ObjectID);
 
-            // The EnlistTransaction above will return an TransactionEnded event, which causes the
-            // TdsParser to clear the current transaction. In either case, when we're working with
-            // a 2005 or newer server we better not have a current transaction at this point.
+            // The EnlistTransaction above will return a TransactionEnded event, which causes the
+            // TdsParser to clear the current transaction. There must be no current transaction
+            // after unenlisting.
             Debug.Assert(CurrentTransaction == null, "unenlisted transaction with non-null current transaction?");
         }
 
@@ -1055,7 +1095,7 @@ namespace Microsoft.Data.SqlClient.Connection
 
             string transactionName = name ?? string.Empty;
 
-            ExecuteTransaction2005(transactionRequest, transactionName, iso, internalTransaction, isDelegateControlRequest);
+            ExecuteTransactionInternal(transactionRequest, transactionName, iso, internalTransaction, isDelegateControlRequest);
         }
 
         internal SqlDataReader FindLiveReader(SqlCommand command)
@@ -1144,6 +1184,7 @@ namespace Microsoft.Data.SqlClient.Connection
                     }
 
                     CurrentDatabase = rec._newValue;
+                    _databaseEnvChangeReceived = true;
                     break;
 
                 case TdsEnums.ENV_LANG:
@@ -1210,7 +1251,7 @@ namespace Microsoft.Data.SqlClient.Connection
                     break;
 
                 case TdsEnums.ENV_TRANSACTIONMANAGERADDRESS:
-                    // For now, we skip these 2005 only env change notifications
+                    // Ignore transaction manager address notifications.
                     break;
 
                 case TdsEnums.ENV_SPRESETCONNECTIONACK:
@@ -1993,7 +2034,7 @@ namespace Microsoft.Data.SqlClient.Connection
                 _currentSessionData._tdsVersion = Capabilities.TdsVersion;
             }
         }
-        
+
         /// <summary>
         /// Selects the <see cref="TimeoutTimer"/> that governs the login phase based on
         /// <see cref="LocalAppContextSwitches.UseOverallConnectTimeoutForPoolWait"/>.
@@ -2073,12 +2114,37 @@ namespace Microsoft.Data.SqlClient.Connection
 
         #region Protected Methods
 
-        protected override void Activate(Transaction transaction)
+        protected override void Activate(Transaction transaction, TimeoutTimer timeout)
         {
             #if NETFRAMEWORK
             // Demand for unspecified failover pooled connections
             FailoverPermissionDemand();
             #endif
+
+            // sp_reset_connection does not reset the session transaction isolation level, so when a
+            // previous Begin or reassertion changed it we scrub it here, on checkout, when the opt-in switch is
+            // enabled.
+            //
+            // This runs on checkout rather than on pool return for two reasons:
+            //
+            //  - On return the connection may still be enlisted in a live TransactionScope, because
+            //    Close is routinely called inside the scope. Issuing SET there would downgrade the
+            //    isolation level for any further connection vended into that same scope from the
+            //    transacted pool, which is the defect tracked by #146.
+            //  - ResetConnection, the other pool-return hook, is also invoked from
+            //    PutObjectFromTransactedPool on the System.Transactions transaction-completion
+            //    callback thread while holding a lock on the connection. That path deliberately
+            //    avoids socket work on a thread it does not own.
+            //
+            // A delegated root can remain active after EnlistedTransaction has been detached.
+            // Preserve the dirty flag until both forms of transaction ownership have ended.
+            if (_isolationLevelDirty &&
+                LocalAppContextSwitches.EnableTransactionIsolationLevelReset &&
+                EnlistedTransaction is null &&
+                !IsTransactionRoot)
+            {
+                ResetSessionIsolationLevel(timeout);
+            }
 
             // When we're required to automatically enlist in transactions and there is one we
             // enlist in it. On the other hand, if there isn't a transaction, and we are
@@ -2089,12 +2155,12 @@ namespace Microsoft.Data.SqlClient.Connection
             {
                 if (ConnectionOptions.Enlist)
                 {
-                    Enlist(transaction);
+                    Enlist(transaction, ConnectionOptions.ConnectTimeout);
                 }
             }
             else
             {
-                Enlist(null);
+                Enlist(null, ConnectionOptions.ConnectTimeout);
             }
         }
 
@@ -2300,6 +2366,11 @@ namespace Microsoft.Data.SqlClient.Connection
 
         private void CompleteLogin(bool enlistOK) // @TODO: Rename as per guidelines
         {
+            // Scope the diagnostic flag to the login response parsed by the Run below, so a
+            // database ENV_CHANGE from an earlier login or a later USE cannot be mistaken
+            // for one sent by this recovery.
+            _databaseEnvChangeReceived = false;
+
             _parser.Run(
                 RunBehavior.UntilDone,
                 cmdHandler: null,
@@ -2360,6 +2431,49 @@ namespace Microsoft.Data.SqlClient.Connection
                     _currentSessionData._encrypted = isEncrypted;
                 }
 
+                // Diagnostic only: compare the database captured before the connection
+                // dropped with the database the server reported during the recovery
+                // login, and trace a mismatch. Recovery behavior is deliberately left
+                // unchanged so that the mismatch can be observed without altering it.
+                //
+                // Compare ordinally: a case-sensitive server can host databases whose
+                // names differ only by case, so a case-insensitive match would treat two
+                // distinct recovery targets as equal and miss the mismatch.
+                if (_recoverySessionData != null)
+                {
+                    string recoveredDatabase = _recoverySessionData._database
+                        ?? _recoverySessionData._initialDatabase;
+
+                    if (recoveredDatabase != null
+                        && !string.Equals(CurrentDatabase, recoveredDatabase, StringComparison.Ordinal))
+                    {
+                        // Distinguish the two server behaviors. A server that reported the
+                        // wrong database and one that reported none are different faults,
+                        // and the fallback value is indistinguishable from a reported one.
+                        if (_databaseEnvChangeReceived)
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent(
+                                "SqlInternalConnectionTds.CompleteLogin | ERR | " +
+                                "Object Id {0}, Database context mismatch after session recovery. " +
+                                "Expected database '{1}', server reported '{2}'.",
+                                ObjectID,
+                                recoveredDatabase,
+                                CurrentDatabase);
+                        }
+                        else
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent(
+                                "SqlInternalConnectionTds.CompleteLogin | ERR | " +
+                                "Object Id {0}, Database context mismatch after session recovery. " +
+                                "Expected database '{1}', but the recovery response carried no " +
+                                "database ENV_CHANGE and the connection fell back to '{2}'.",
+                                ObjectID,
+                                recoveredDatabase,
+                                CurrentDatabase);
+                        }
+                    }
+                }
+
                 _recoverySessionData = null;
             }
 
@@ -2380,13 +2494,18 @@ namespace Microsoft.Data.SqlClient.Connection
             {
                 _parser._physicalStateObj.SniContext = SniContext.Snix_AutoEnlist;
                 Transaction tx = ADP.GetCurrentTransaction();
-                Enlist(tx);
+                Enlist(tx, ConnectionOptions.ConnectTimeout);
             }
 
             _parser._physicalStateObj.SniContext = SniContext.Snix_Login;
         }
 
-        private void Enlist(Transaction transaction)
+        /// <param name="transaction">Ambient transaction to attach to, or null to un-enlist.</param>
+        /// <param name="timeout">
+        /// Timeout, in seconds, for any T-SQL batch this method has to emit. All current callers
+        /// pass the connect timeout, matching the other enlistment I/O in this file.
+        /// </param>
+        private void Enlist(Transaction transaction, int timeout)
         {
             // This method should not be called while the connection has a reference to an active
             // delegated transaction. Manual enlistment via SqlConnection.EnlistTransaction should
@@ -2435,6 +2554,107 @@ namespace Microsoft.Data.SqlClient.Connection
             {
                 // Only enlist if it's different...
                 EnlistNonNull(transaction);
+            }
+            else if (_parser._fResetConnection)
+            {
+                // Same System.Transactions transaction being re-attached to the same
+                // pooled physical connection (transacted-pool re-checkout inside an
+                // open TransactionScope). The queued sp_reset_connection_keep_transaction
+                // does not preserve the SQL Server session isolation level on every
+                // server (notably Azure SQL DB), so without re-asserting the level the
+                // second and later opens inside the scope would silently run at the
+                // database default.
+                //
+                // When a SET batch is emitted, the queued reset rides along on that
+                // batch's TDS header, so the reset itself costs nothing extra and the
+                // SET is the only added round trip. For ReadCommitted no batch is sent
+                // at all (see ReassertSessionIsolationLevel), so the reset simply rides
+                // the user's next command exactly as it would have without this fix.
+                ReassertSessionIsolationLevel(transaction.IsolationLevel, timeout);
+            }
+        }
+
+        // Re-issues SET TRANSACTION ISOLATION LEVEL on the physical state object so
+        // the next batch in this pooled connection observes the System.Transactions
+        // ambient isolation level even after sp_reset_connection_keep_transaction
+        // resets the session.
+        internal void ReassertSessionIsolationLevel(System.Transactions.IsolationLevel sysIso, int timeout)
+        {
+            string isoSql;
+            switch (sysIso)
+            {
+                case System.Transactions.IsolationLevel.ReadUncommitted:
+                    isoSql = "READ UNCOMMITTED";
+                    break;
+                case System.Transactions.IsolationLevel.ReadCommitted:
+                    // sp_reset_connection_keep_transaction returns the session to READ COMMITTED,
+                    // and SQL Server has no database setting that changes that named level
+                    // (READ_COMMITTED_SNAPSHOT changes the behavior of READ COMMITTED, not its
+                    // name). Re-asserting it would therefore be a no-op, so skip the batch and
+                    // save the round trip. This is the common case for applications that opt out
+                    // of the TransactionScope default of Serializable.
+                    return;
+                case System.Transactions.IsolationLevel.RepeatableRead:
+                    isoSql = "REPEATABLE READ";
+                    break;
+                case System.Transactions.IsolationLevel.Serializable:
+                    isoSql = "SERIALIZABLE";
+                    break;
+                case System.Transactions.IsolationLevel.Snapshot:
+                    // Moving *into* SNAPSHOT part-way through a transaction that began under a
+                    // different level aborts that transaction, but the preserved transaction on
+                    // this path was itself begun under snapshot isolation by the transaction
+                    // manager request. Returning to SNAPSHOT is therefore legal, and it is
+                    // required, because sp_reset_connection_keep_transaction may have cleared
+                    // the session level.
+                    isoSql = "SNAPSHOT";
+                    break;
+                default:
+                    // Unspecified / Chaos: nothing meaningful to assert.
+                    return;
+            }
+
+            // Dedicated Synapse pools reject SET TRANSACTION ISOLATION LEVEL with error 104409;
+            // their effective isolation is service-controlled. Sending it would fail the second
+            // Open inside the same TransactionScope, so skip the reassert there.
+            if (ADP.IsAzureSynapseDedicatedPoolEndpoint(ConnectionOptions.DataSource))
+            {
+                return;
+            }
+
+            // Matches the batch/Run shape used by ChangeDatabase, including its up-front
+            // validation that the parser is usable and the physical state object is idle.
+            ValidateConnectionForExecute(null);
+
+            try
+            {
+                Task executeTask = _parser.TdsExecuteSQLBatch(
+                    $"SET TRANSACTION ISOLATION LEVEL {isoSql};",
+                    timeout,
+                    notificationRequest: null,
+                    _parser._physicalStateObj,
+                    sync: true);
+
+                Debug.Assert(executeTask == null, "Shouldn't get a task when doing sync writes");
+
+                _parser.Run(
+                    RunBehavior.UntilDone,
+                    cmdHandler: null,
+                    dataStream: null,
+                    bulkCopyHandler: null,
+                    _parser._physicalStateObj);
+
+                // This SET changed the session level directly. The connection may never have sent a
+                // TM Begin request that marks the session dirty; for example, promoted (distributed)
+                // transactions are joined by propagating a DTC transaction token instead (see
+                // PropagateTransactionCookie). Mark the session here so the next pooled checkout
+                // resets it.
+                _isolationLevelDirty = true;
+            }
+            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
+            {
+                DoomThisConnection();
+                throw;
             }
         }
 
@@ -2589,22 +2809,19 @@ namespace Microsoft.Data.SqlClient.Connection
             // Tell the base class about our enlistment
             EnlistedTransaction = transaction;
 
-            // If we're on a 2005 or newer server, and we delegate the transaction successfully, we
-            // will have begun a transaction, which produces a transaction ID that we should
-            // execute all requests on. The TdsParser will store this information as the current
-            // transaction.
+            // If we delegate the transaction successfully, we will have begun a transaction, which
+            // produces a transaction ID that we should execute all requests on. The TdsParser will
+            // store this information as the current transaction.
 
-            // Likewise, propagating a transaction to a 2005 or newer server will produce a
-            // transaction id that The TdsParser will store as the current transaction.
+            // Likewise, propagating a transaction will produce a transaction id that The TdsParser
+            // will store as the current transaction.
 
-            // In either case, when we're working with a 2005 or newer server we better have a
-            // current transaction by now.
+            // In either case, we better have a current transaction by now.
 
             Debug.Assert(CurrentTransaction != null, "delegated/enlisted transaction with null current transaction?");
         }
 
-        // @TODO: Rename to ExecuteTransactionInternal ... we don't have multiple server version implementations of this
-        private void ExecuteTransaction2005(
+        private void ExecuteTransactionInternal(
             TransactionRequest transactionRequest,
             string transactionName,
             System.Data.IsolationLevel iso, // @TODO: We have three different IsolationTypes, maybe we can indicate which one is which a bit better.
@@ -2670,9 +2887,8 @@ namespace Microsoft.Data.SqlClient.Connection
                         requestType = TdsEnums.TransactionManagerRequestType.Commit;
                         break;
                     case TransactionRequest.IfRollback:
-                        // Map IfRollback to Rollback since with 2005 and beyond we should never
-                        // need the "if" since the server will inform us when transactions have
-                        // completed as a result of an error on the server.
+                        // Map IfRollback to Rollback: the server notifies us when a transaction
+                        // completes after an error, so no conditional rollback is needed.
                     case TransactionRequest.Rollback:
                         requestType = TdsEnums.TransactionManagerRequestType.Rollback;
                         break;
@@ -2728,7 +2944,7 @@ namespace Microsoft.Data.SqlClient.Connection
 
                     if (internalTransaction.OpenResultsCount != 0)
                     {
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.ExecuteTransaction2005|DATA|CATCH> {0}, Connection is marked to be doomed when closed. Transaction ended with OpenResultsCount {1} > 0, MARSOn {2}",
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.ExecuteTransactionInternal|DATA|CATCH> {0}, Connection is marked to be doomed when closed. Transaction ended with OpenResultsCount {1} > 0, MARSOn {2}",
                                                                ObjectID,
                                                                internalTransaction.OpenResultsCount,
                                                                _parser.MARSOn);
@@ -2747,6 +2963,23 @@ namespace Microsoft.Data.SqlClient.Connection
                     internalTransaction,
                     stateObj,
                     isDelegateControlRequest);
+
+                // TdsExecuteTransactionManagerRequest throws if Begin fails, so reaching this point
+                // means a non-default isolation level was applied successfully.
+                //
+                // Dedicated Synapse pools are excluded. Note that the TM request itself does
+                // succeed there even for levels the equivalent T-SQL statement rejects with 104409,
+                // so the absence of an exception is not evidence that the session level actually
+                // changed: those pools operate exclusively at READ UNCOMMITTED and coerce the
+                // request. Marking the connection dirty would therefore schedule a reset that can
+                // only fail, for a session level that never diverged in the first place.
+                if (requestType == TdsEnums.TransactionManagerRequestType.Begin &&
+                    isoLevel != TdsEnums.TransactionManagerIsolationLevel.Unspecified &&
+                    isoLevel != TdsEnums.TransactionManagerIsolationLevel.ReadCommitted &&
+                    !ADP.IsAzureSynapseDedicatedPoolEndpoint(ConnectionOptions.DataSource))
+                {
+                    _isolationLevelDirty = true;
+                }
             }
             finally
             {
@@ -3063,6 +3296,7 @@ namespace Microsoft.Data.SqlClient.Connection
             login.password = ConnectionOptions.Password;
             login.applicationName = ConnectionOptions.ApplicationName;
             login.language = _currentLanguage;
+            login.appId = _registeredApplication;
 
             if (!login.userInstance)
             {
@@ -3988,6 +4222,78 @@ namespace Microsoft.Data.SqlClient.Connection
             }
         }
 
+        // Issues "SET TRANSACTION ISOLATION LEVEL READ COMMITTED;" on the physical state object so
+        // this user of the pooled connection observes the default session isolation level.
+        internal void ResetSessionIsolationLevel(TimeoutTimer timeout)
+        {
+            if (IsConnectionDoomed)
+            {
+                return;
+            }
+
+            // Consumed unconditionally: whether the statement succeeds, is skipped, or is rejected
+            // by the server, there is no point re-issuing it on every subsequent checkout of this
+            // connection. On the failure paths below the connection is doomed and destroyed, so the
+            // flag's value stops mattering.
+            _isolationLevelDirty = false;
+
+            // Dedicated Synapse pools reject this SET statement with error 104409. Their effective
+            // isolation is controlled by the service/database configuration, not this reset.
+            if (ADP.IsAzureSynapseDedicatedPoolEndpoint(ConnectionOptions.DataSource))
+            {
+                Debug.Fail("A dedicated Synapse connection should never require an isolation level reset.");
+                return;
+            }
+
+            try
+            {
+                // Use the caller's remaining Open budget, including time spent in the pool.
+                // Only Connect Timeout=0 intentionally permits an unlimited reset.
+                long timeoutMilliseconds = 0;
+                if (!timeout.IsInfinite)
+                {
+                    timeoutMilliseconds = timeout.MillisecondsRemaining;
+                    if (timeoutMilliseconds == 0)
+                    {
+                        // A zero value would mean "no timeout" to the parser, so fail before sending.
+                        throw ADP.IsolationLevelResetTimeout();
+                    }
+                }
+
+                // A Broken or Closed parser makes the send and Run below silent no-ops, which would
+                // hand out a connection whose session level was never scrubbed. Fail instead.
+                ValidateConnectionForExecute(null);
+
+                _parser.TdsExecuteSQLBatchWithMillisecondTimeout(
+                        text: "SET TRANSACTION ISOLATION LEVEL READ COMMITTED;",
+                        timeoutMilliseconds: timeoutMilliseconds,
+                        notificationRequest: null,
+                        stateObj: _parser._physicalStateObj,
+                        sync: true);
+                _parser.Run(RunBehavior.UntilDone, null, null, null, _parser._physicalStateObj);
+
+                if (_parser.State is not TdsParserState.OpenLoggedIn)
+                {
+                    throw ADP.ClosedConnectionError();
+                }
+            }
+            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
+            {
+                // We could not confirm that the session isolation level was scrubbed. This covers a
+                // timeout, where an attention was sent and the batch may or may not have taken
+                // effect, as well as any other catchable failure. Because the state is unknown, the
+                // connection may still be carrying an elevated isolation level and is not safe to
+                // hand to the caller or to return to the pool.
+                //
+                // Doom it and rethrow. Both pool implementations wrap ActivateConnection in a
+                // try/catch that calls ReturnInternalConnection and rethrows, so the doomed
+                // connection is destroyed rather than pooled and the caller's Open observes the
+                // original error instead of receiving an unusable connection.
+                DoomThisConnection();
+                throw;
+            }
+        }
+
         /// <summary>
         /// Decides whether a connection reset must preserve the server-side transaction, i.e.
         /// whether <c>ST_RESET_CONNECTION_PRESERVE_TRANSACTION</c> should be sent instead of a
@@ -4096,7 +4402,6 @@ namespace Microsoft.Data.SqlClient.Connection
                         // Verify LocalHost for |DataDirectory| usage
                         SqlConnectionOptions.VerifyLocalHostAndFixup(
                             ref host,
-                            enforceLocalHost: true,
                             fixup: true);
                     }
                 }

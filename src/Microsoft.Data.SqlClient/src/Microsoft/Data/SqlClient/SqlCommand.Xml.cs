@@ -13,6 +13,7 @@ using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.Server;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlClient.Utilities;
 
 #if NETFRAMEWORK
@@ -35,7 +36,7 @@ namespace Microsoft.Data.SqlClient
         public IAsyncResult BeginExecuteXmlReader() =>
             BeginExecuteXmlReader(callback: null, stateObject: null);
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteXmlReader[@name="AsyncCallbackAndstateObject"]/*'/>
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteXmlReader[@name="AsyncCallbackAndStateObject"]/*'/>
         #if NETFRAMEWORK
         [HostProtection(ExternalThreading = true)]
         #endif

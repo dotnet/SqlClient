@@ -24,20 +24,19 @@ using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Parser;
+using Microsoft.Data.SqlClient.Parser.Tokens;
 using Microsoft.Data.SqlClient.Utilities;
 using Microsoft.SqlServer.Server;
 
 #if NETFRAMEWORK
-using System.Runtime.CompilerServices;
 using System.Security.Permissions;
 using System.Security.Principal;
 #endif
 
-#if NETFRAMEWORK
-[assembly: InternalsVisibleTo("System.Data.DataSetExtensions, PublicKey=" + Microsoft.Data.SqlClient.AssemblyRef.EcmaPublicKeyFull)] // DevDiv Bugs 92166
 // NOTE: The current Microsoft.VSDesigner editor attributes are implemented for System.Data.SqlClient, and are not publicly available.
 // New attributes that are designed to work with Microsoft.Data.SqlClient and are publicly documented should be included in future.
-#endif
+
 namespace Microsoft.Data.SqlClient
 {
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/SqlConnection/*' />
@@ -153,7 +152,9 @@ namespace Microsoft.Data.SqlClient
             {
                 if (_retryLogicProvider == null)
                 {
-                    _retryLogicProvider = SqlConfigurableRetryLogicManager.ConnectionProvider;
+                    _retryLogicProvider = LocalAppContextSwitches.EnableAppConfig
+                        ? SqlConfigurableRetryLogicManager.ConnectionProvider
+                        : SqlConfigurableRetryFactory.NoneRetryProvider;
                 }
                 return _retryLogicProvider;
             }
@@ -262,6 +263,7 @@ namespace Microsoft.Data.SqlClient
 
             _accessToken = connection._accessToken;
             _accessTokenCallback = connection._accessTokenCallback;
+            RegisteredApplication = connection.RegisteredApplication;
 
             // CopyFrom retains the source PoolGroup, and therefore the source ConnectionPoolKey.
             // The provider must be copied along with it, otherwise the clone would authenticate
@@ -378,6 +380,34 @@ namespace Microsoft.Data.SqlClient
 
                 // Set the dictionary to the ReadOnly dictionary.
                 s_globalCustomColumnEncryptionKeyStoreProviders = customColumnEncryptionKeyStoreProviders;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RegisteredApplication/*' />
+        [CLSCompliant(false)]
+        public RegisteredApplication RegisteredApplication
+        {
+            get;
+            set
+            {
+                DbConnectionInternal connectionInternal = InnerConnection;
+                bool canSet = connectionInternal.AllowSetConnectionString;
+                if (canSet)
+                {
+                    // Reserve the closed state so Open cannot read the old value while this setter
+                    // publishes the new one.
+                    canSet = SetInnerConnectionFrom(DbConnectionClosedBusy.SingletonInstance, connectionInternal);
+                    if (canSet)
+                    {
+                        field = value;
+                        SetInnerConnectionTo(connectionInternal);
+                    }
+                }
+
+                if (!canSet)
+                {
+                    throw ADP.OpenConnectionPropertySet(nameof(RegisteredApplication), connectionInternal.State);
+                }
             }
         }
 
@@ -2464,18 +2494,6 @@ namespace Microsoft.Data.SqlClient
                     return false; //we will not go into reconnection if we are inside the transaction
                 }
                 return GetOpenTdsConnection().HasLocalTransactionFromAPI;
-            }
-        }
-
-        internal bool Is2008OrNewer
-        {
-            get
-            {
-                if (_currentReconnectionTask != null)
-                { // holds true even if task is completed
-                    return true; // if CR is enabled, connection, if established, will be 2008+
-                }
-                return GetOpenTdsConnection().Is2008OrNewer;
             }
         }
 

@@ -183,7 +183,7 @@ jobs:
       # Install the .NET SDK and Runtimes.
       - template: /eng/pipelines/common/steps/install-dotnet.yml@self
         parameters:
-          runtimes: [8.x, 9.x]
+          runtimes: [10.x]
 
       # Setup the local SQL Server.
       - ${{ parameters.sqlSetupStep }}

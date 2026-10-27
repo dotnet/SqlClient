@@ -10,6 +10,7 @@ using System.Diagnostics;
 using System.Security.Authentication;
 using System.Threading;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Parser;
 
 namespace Microsoft.Data.SqlClient.ManagedSni
 {
@@ -186,6 +187,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             Debug.Assert(Monitor.IsEntered(DemuxerSync), "HandleReceiveError was called without being locked.");
             if (_dataBytesLeft > 0 && _currentPacket != null)
             {
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniMarsConnection), EventType.ERR, "MARS Session Id {0}, Returning incomplete packet after receive error, _dataBytesLeft {1}", args0: ConnectionId, args1: _dataBytesLeft);
                 ReturnPacket(_currentPacket);
                 _currentPacket = null;
                 _dataBytesLeft = 0;
