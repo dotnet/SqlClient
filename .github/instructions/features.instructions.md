@@ -271,8 +271,14 @@ configuration, and may register providers in code instead.
 - **Partial configuration:** the driver applies the valid settings and uses defaults for the rest.
 - **Invalid entries:** an invalid `useWamBroker` value is traced and ignored, keeping the default
   and other valid settings. Configuration-reading errors (`ConfigurationErrorsException`) are
-  traced and produce empty settings without trying legacy. Other exception types propagate;
-  initializer and provider validation or activation can still fail.
+  traced and produce empty settings without trying legacy. Other exception types reach registry
+  bootstrap, which traces recoverable failures and continues with enabled Azure discovery.
+- **Activation failures:** recoverable initializer failures are traced without preventing the
+  configured provider list from being applied. Failed provider entries are traced and skipped,
+  and later entries are still attempted. Enabled Azure discovery runs afterward using valid
+  option overrides and fills only unregistered methods. Successful configuration registrations
+  retain precedence. Fatal activation errors propagate. Configuration and discovery are attempted
+  once; restart after correcting configuration to retry failed entries.
 - **Internal handler metadata mismatches:** assert in Debug. In Release, treat the affected
   string setting or provider list as empty while retaining other valid settings.
   Omitting an optional XML attribute uses the handler's default and is not a metadata mismatch.

@@ -26,14 +26,15 @@ The provider registry and bootstrap live in this package. `GetProvider` and `Set
 work directly, including under NativeAOT, without loading SqlClient through reflection.
 Configuration providers and configured initializers take precedence over application
 registrations; application registrations take precedence over the discovered Azure default.
-After a recoverable registry initialization failure, lookup still returns any successfully
-registered provider and application registration remains available. Null providers,
+Recoverable configuration failures are traced without preventing later configured providers,
+enabled Azure discovery or application registration. Successful configuration registrations
+retain precedence; discovered Azure defaults fill only unregistered methods. Null providers,
 unsupported methods and throwing registration callbacks return `false`, without replacing
 the existing provider. These failures are traced through `Microsoft.Data.SqlClient.EventSource`
 (Informational level, Trace keyword `0x2`) with corrective guidance.
-Bootstrap failures are cached and logged on subsequent accesses. Register an application provider
-as a workaround, or correct the cause and restart the application to retry configuration and
-discovery. Successful configuration registrations retain precedence after a failure.
+Configuration and optional discovery are attempted once. Failed entries are not retried on later
+accesses. Register an application provider as a workaround, or correct the cause and restart the
+application to retry configuration and discovery.
 
 Untrimmed applications retain app.config loading and automatic Azure discovery. These switches
 default to `true` and are cached independently on first access for the lifetime of the process:
@@ -44,7 +45,7 @@ default to `true` and are cached independently on first access for the lifetime 
 Automatic Azure discovery requires the `ActiveDirectoryAuthenticationProviderOptions` constructor
 from a compatible `Microsoft.Data.SqlClient.Extensions.Azure` package, even when no overrides are
 configured. Discovery does not fall back to parameterless or string-based provider constructors.
-An extension missing the options contract is traced with upgrade guidance: use version 1.1.0 or
+An extension missing the options contract is traced with upgrade guidance: use version 7.0.2 or
 later with that contract and keep SqlClient family package versions compatible.
 
 ### Authentication compatibility considerations
@@ -55,11 +56,12 @@ signatures, but is not a behavior-neutral change. Compared with the previous dri
 | Area | Compatibility difference |
 |---|---|
 | Configured initializer precedence | Providers registered during a configured initializer's `Initialize()` now receive configuration precedence. Application `SetProvider` calls can no longer replace them; explicit configuration entries were already protected. Change the configuration or initializer instead. |
+| Configuration-provider replacement callbacks | Providers listed in app.config's `<providers>` collection now use the same replacement callbacks as `SetProvider`, including calls made by an initializer. Previously, configuration assignments bypassed these callbacks. Replacing an existing provider for the same authentication method invokes the old provider's `BeforeUnload` and the replacement's `BeforeLoad` before publishing the replacement. Registering for a method with no existing provider invokes neither callback. |
 | Older Azure extensions | Automatic discovery no longer falls back to parameterless or string-based constructors. An older extension without the options-based contract may stop supplying the default provider. Upgrade to a compatible extension with that contract, or explicitly register a provider. This change does not remove those public constructors. |
 | .NET Framework configuration switch | `EnableAppConfig=false` now disables authentication configuration on .NET Framework, where it previously remained enabled. The driver's retry configuration and switch-override readers remain .NET-only. |
 | Lookup synchronization | `GetProvider` now takes the registry lock used by bootstrap and replacement `BeforeLoad`/`BeforeUnload` callbacks. Slow callbacks delay other lookups and connection logins. Keep callbacks short: synchronously waiting for another thread that accesses the registry can deadlock. |
 | Bootstrap failure reporting | Driver access previously could expose the manager's cached type-initialization exception. Now, if no usable provider or access-token callback is available, the driver's `Open` and `OpenAsync` report missing-provider guidance as a `SqlException`, rather than the previous missing-provider `ArgumentException`. Detailed bootstrap and Azure loading causes remain in Abstractions' EventSource traces, not a diagnostic API or the connection exception's inner exception. |
-| Recovery after failed bootstrap | A failed manager static initialization previously prevented recovery through that manager. After a recoverable bootstrap failure, application registration and lookup now remain usable without restarting. The failure stays cached, failed configuration is not retried, and successful configuration registrations retain precedence. Restart after correcting the cause to retry bootstrap. |
+| Configuration failure handling | A failed manager static initialization previously prevented recovery through that manager. Recoverable initializer and provider failures are now traced and skipped; later configured providers and enabled Azure discovery are still attempted. Successful configuration registrations retain precedence, and application registration and lookup remain usable. Failed configuration is not retried until the application restarts. Fatal activation errors still propagate. |
 
 Strict configuration parsing is not introduced: configuration reading retains the relaxed policy
 described below. New capabilities include registration without loading SqlClient, explicit
@@ -120,8 +122,8 @@ string setting or provider list is treated as empty while other valid settings a
 Omitting optional XML attributes does not cause a metadata mismatch.
 
 Loading only reads settings. It doesn't create or activate initializers or providers.
-Other exception types propagate, and initializer or provider validation and activation
-can still fail later.
+Other exception types reach registry bootstrap, which traces recoverable failures and continues
+with Azure discovery if enabled. Initializer and provider validation and activation happen later.
 
 Use `SqlClientEventSource` tracing to see settings that were skipped or ignored.
 
@@ -144,14 +146,17 @@ The `EnableAppConfig` switch gates configuration reading; it does not change par
 preserving existing compiled consumers and initializer declarations.
 
 If an explicitly configured initializer or provider cannot be loaded, instantiated, or applied,
-configuration application stops and registry bootstrap fails. Configured entries are not silently
-skipped. Recoverable bootstrap failures are cached as described above, but do not prevent explicit
-application registration or lookup of successfully registered providers. Earlier registrations
-and initializer/provider callback side effects are not rolled back.
+the recoverable failure is traced and remaining configured providers are still attempted. A failed
+initializer is not resumed, and a failed provider entry is skipped. Valid Azure option overrides
+and successful registrations are retained. Azure discovery runs afterward whenever supported and
+enabled, even after configuration reading or activation fails; it cannot replace an existing
+registration. Fatal activation errors still propagate. Earlier registrations and
+initializer/provider callback side effects are not rolled back.
 
 Missing sections and empty optional settings remain valid.
-Registration errors inside a configured initializer propagate to fail bootstrap,
-rather than being converted to an ignorable `false` result. Successful registrations are traced
+Registration errors inside a configured initializer stop that initializer, rather than being
+converted to an ignorable `false` result. Configuration application traces the failure and continues
+with the configured provider list. Successful registrations are traced
 with their authentication method, provider type and precedence tier; refused registrations are
 traced separately and do not produce success events.
 
