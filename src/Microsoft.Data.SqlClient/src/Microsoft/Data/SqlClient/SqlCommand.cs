@@ -605,9 +605,9 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
 
-                // Rollback of a transaction the server already aborted clears the mark, so drop
-                // that reference. Until then it stays attached, and the next execute is rejected
-                // instead of auto-committing.
+                // Rollback or disposal of a transaction the server already aborted clears the
+                // mark, so drop that reference. Until then it stays attached, and the next
+                // execute is rejected instead of auto-committing.
                 if (_transaction is not null && _transaction.Connection is null && !_transaction.CompletedByServer)
                 {
                     _transaction = null;
@@ -738,9 +738,9 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                // Rollback of a transaction the server already aborted clears the mark, so drop
-                // that reference. Until then it stays attached: the getter still returns null,
-                // and the next execute is rejected instead of auto-committing.
+                // Rollback or disposal of a transaction the server already aborted clears the
+                // mark, so drop that reference. Until then it stays attached: the getter still
+                // returns null, and the next execute is rejected instead of auto-committing.
                 if (_transaction is not null && _transaction.Connection is null)
                 {
                     if (!_transaction.CompletedByServer)

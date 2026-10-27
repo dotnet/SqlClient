@@ -96,6 +96,36 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         /// <summary>
+        /// Disposing a transaction the server already aborted clears it, the same as rollback.
+        /// The command that was bound to it must still run.
+        /// </summary>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public void Execute_AfterDisposingServerAbortedTransaction_Runs()
+        {
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            connection.Open();
+
+            using SqlCommand setup = connection.CreateCommand();
+            setup.CommandText = "SET XACT_ABORT ON; CREATE TABLE #DisposedAbort (Id int NOT NULL);";
+            setup.ExecuteNonQuery();
+
+            using SqlCommand command = new SqlCommand("INSERT INTO #DisposedAbort (Id) VALUES (1)", connection);
+            using (SqlTransaction transaction = connection.BeginTransaction())
+            {
+                command.Transaction = transaction;
+                using SqlCommand abort = new SqlCommand("SELECT CAST('n/a' AS int)", connection, transaction);
+                Assert.Throws<SqlException>(() => abort.ExecuteScalar());
+            }
+
+            Assert.Null(command.Transaction);
+            command.Connection = connection;
+            command.ExecuteNonQuery();
+
+            using SqlCommand count = new SqlCommand("SELECT COUNT(*) FROM #DisposedAbort", connection);
+            Assert.Equal(1, (int)count.ExecuteScalar());
+        }
+
+        /// <summary>
         /// A T-SQL COMMIT finishes the transaction. The command that was bound to it must still run.
         /// </summary>
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
@@ -399,8 +429,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.NotNull(remove);
                 remove.Invoke(connection, new object[] { reader });
 
-                // Commit may surface the abort. The write that follows must not auto-commit.
-                Record.Exception(() => transaction.Commit());
+                InvalidOperationException commitException = Assert.Throws<InvalidOperationException>(() => transaction.Commit());
+                Assert.Contains("no longer usable", commitException.Message);
 
                 InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => insert.ExecuteNonQuery());
                 Assert.Contains("no longer usable", exception.Message);
@@ -421,6 +451,42 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             using SqlCommand count = new SqlCommand("SELECT COUNT(*) FROM #CommitAbandonedRollback", connection);
             Assert.Equal(0, (int)count.ExecuteScalar());
+        }
+
+        /// <summary>
+        /// Commit during a bulk-copy notification has to throw the bulk-copy lock error
+        /// before it drains the connection.
+        /// </summary>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public void Commit_DuringBulkCopy_ThrowsLockError()
+        {
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            connection.Open();
+
+            using SqlCommand setup = connection.CreateCommand();
+            setup.CommandText = "CREATE TABLE #BulkCommit (Id int NOT NULL);";
+            setup.ExecuteNonQuery();
+
+            using SqlTransaction transaction = connection.BeginTransaction();
+            DataTable rows = new DataTable();
+            rows.Columns.Add("Id", typeof(int));
+            rows.Rows.Add(1);
+            rows.Rows.Add(2);
+
+            using SqlBulkCopy bulkCopy = new SqlBulkCopy(connection, SqlBulkCopyOptions.Default, transaction);
+            bulkCopy.DestinationTableName = "#BulkCommit";
+            bulkCopy.NotifyAfter = 1;
+            bulkCopy.SqlRowsCopied += (_, _) => transaction.Commit();
+
+            Exception exception = Record.Exception(() => bulkCopy.WriteToServer(rows));
+            Assert.NotNull(exception);
+            while (exception.InnerException != null)
+            {
+                exception = exception.InnerException;
+            }
+
+            Assert.IsType<InvalidOperationException>(exception);
+            Assert.Contains(SystemDataResourceManager.Instance.SQL_ConnectionLockedForBcpEvent, exception.Message);
         }
     }
 }
