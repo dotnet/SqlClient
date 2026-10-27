@@ -34,7 +34,8 @@
 # A re-run replays the original run's commit, which means it executes the
 # workflow definition and script as they existed then. API lookups (including
 # release branches and release-note file classification) are evaluated live.
-# The file classifier rejects an event that no longer matches the live PR.
+# The file classifier rejects stale PR identity but allows the default branch
+# to advance before a re-run; its base SHA must remain stable during retrieval.
 #
 # So a pull request whose most recent milestone check predates the arrival of
 # the target-branch rule will replay the older check, pass it, and keep its

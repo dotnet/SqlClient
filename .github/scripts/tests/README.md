@@ -21,6 +21,10 @@ both paths in the allowlist; deleting code is not a release-notes-only change.
 Tests cover these rules, pagination boundaries, missing/closed milestones,
 stale events and concurrent PR changes, and wiring in both workflow jobs.
 Reconciliation continues to rerun the same workflow, including notes-only PRs.
+Unrelated default-branch updates before a rerun are allowed: the head, target,
+milestone, and file count must still match the event, while base-SHA stability
+is checked between the live snapshots around file retrieval, not against the
+historical event. Base changes during retrieval still fail closed.
 After landing changes to the check, update existing PR branches with the new
 base and trigger a fresh `pull_request` run; rerunning an old run reuses its old
 workflow/scripts and cannot activate the exception.

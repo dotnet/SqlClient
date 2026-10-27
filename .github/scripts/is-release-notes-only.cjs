@@ -33,19 +33,25 @@ module.exports = async ({ github, context, core }) => {
 
     const args = { ...context.repo, pull_number: pr.number };
     const snapshot = value => JSON.stringify([
-        value?.head?.sha, value?.base?.sha, value?.base?.ref, value?.changed_files,
+        value?.head?.sha, value?.base?.ref, value?.changed_files,
         value?.milestone?.id, value?.milestone?.title, value?.milestone?.state,
     ]);
-    const verifySnapshot = async () => {
+    const verifySnapshot = async expectedBaseSha => {
         const { data } = await github.rest.pulls.get(args);
-        if (snapshot(data) !== snapshot(pr)) {
+        if (!data?.base?.sha) {
+            throw new Error('Missing live base commit identity for release-notes classification.');
+        }
+        if (snapshot(data) !== snapshot(pr)
+            || (expectedBaseSha !== undefined && data.base.sha !== expectedBaseSha)) {
             throw new Error('PR changed since this event or during file retrieval; trigger a fresh milestone check.');
         }
+        return data.base.sha;
     };
 
-    // File data is live, but the workflow verdict belongs to the event's
-    // commits/milestone. Check before and after pagination to reject stale runs.
-    await verifySnapshot();
+    // Reconciliation replays an older event after main may have advanced.
+    // Match PR identity to the event, but compare base SHA only between live
+    // snapshots so unrelated merges do not prevent a stable retrieval.
+    const liveBaseSha = await verifySnapshot();
     const filenames = new Set();
     const statuses = new Set(['added', 'modified', 'removed', 'renamed', 'copied', 'changed', 'unchanged']);
     const allowedPath = path => typeof path === 'string'
@@ -76,7 +82,7 @@ module.exports = async ({ github, context, core }) => {
             }
         }
     }
-    await verifySnapshot();
+    await verifySnapshot(liveBaseSha);
     if (notesOnly) {
         core.notice('Release-notes-only PR on the default branch: skipping milestone branch and next-version rules; the open-milestone requirement still applies.');
     }

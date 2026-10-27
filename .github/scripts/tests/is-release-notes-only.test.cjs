@@ -205,7 +205,6 @@ test('duplicate file entries cannot stand in for omitted files', async () => {
 
 for (const change of [
     pr => { pr.head.sha = 'new-head'; },
-    pr => { pr.base.sha = 'new-base'; },
     pr => { pr.base.ref = 'release/6.1'; },
     pr => { pr.changed_files++; },
     pr => { pr.milestone.state = 'closed'; },
@@ -224,6 +223,48 @@ for (const change of [
             return result;
         };
         await assert.rejects(classify(concurrent), /changed/);
+    });
+}
+
+for (const filename of ['release-notes/a.md', 'src/Driver.cs']) {
+    test(`reconciliation permits main advancing before retrieval for ${filename}`, async () => {
+        const f = fixture([{ filename, status: 'modified' }]);
+        f.live.base.sha = 'advanced-main';
+        assert.equal(await classify(f), filename.startsWith('release-notes/'));
+        assert.equal(f.calls.filter(([name]) => name === 'get').length, 2);
+    });
+}
+
+for (const initialBase of ['base-sha', 'advanced-main']) {
+    test(`base advancement during retrieval fails closed starting at ${initialBase}`, async () => {
+        const f = fixture();
+        f.live.base.sha = initialBase;
+        const listFiles = f.github.rest.pulls.listFiles;
+        f.github.rest.pulls.listFiles = async args => {
+            const result = await listFiles(args);
+            f.live.base.sha = 'changed-during-retrieval';
+            return result;
+        };
+        await assert.rejects(classify(f), /changed/);
+        assert.equal(f.calls.filter(([name]) => name === 'listFiles').length, 1);
+        assert.equal(f.calls.filter(([name]) => name === 'get').length, 2);
+    });
+}
+
+for (const duringRetrieval of [false, true]) {
+    test(`missing live base SHA fails closed ${duringRetrieval ? 'after' : 'before'} retrieval`, async () => {
+        const f = fixture();
+        if (duringRetrieval) {
+            const listFiles = f.github.rest.pulls.listFiles;
+            f.github.rest.pulls.listFiles = async args => {
+                const result = await listFiles(args);
+                delete f.live.base.sha;
+                return result;
+            };
+        } else {
+            delete f.live.base.sha;
+        }
+        await assert.rejects(classify(f), /Missing live base commit identity/);
     });
 }
 
