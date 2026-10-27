@@ -5,11 +5,11 @@
 using Microsoft.Data.SqlClient.Parser;
 
 // @TODO: Introduce polymorphism to remove need for this level of indirection
-#if NET && _WINDOWS
+#if NETFRAMEWORK
 
 using System;
 
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.Parser
 {
     /// <summary>
     /// This structure is used for transporting packet handle references between the
@@ -38,34 +38,23 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         public const int NativePacketType = 2;
 
-        /// <summary>
-        /// PacketHandle is transporting a managed packet. The ManagedPacket field is valid.
-        /// A PacketHandle used by the managed SNI layer will always have this type.
-        /// </summary>
-        public const int ManagedPacketType = 3;
-
         // @TODO: To auto-properties
-        public readonly ManagedSni.SniPacket ManagedPacket;
         public readonly SNIPacket NativePacket;
         public readonly IntPtr NativePointer;
         public readonly int Type;
 
-        private PacketHandle(IntPtr nativePointer, SNIPacket nativePacket, ManagedSni.SniPacket managedPacket, int type)
+        private PacketHandle(IntPtr nativePointer, SNIPacket nativePacket, int type)
         {
             Type = type;
-            ManagedPacket = managedPacket;
             NativePointer = nativePointer;
             NativePacket = nativePacket;
         }
 
-        public static PacketHandle FromManagedPacket(ManagedSni.SniPacket managedPacket) =>
-            new PacketHandle(nativePointer: IntPtr.Zero, nativePacket: null, managedPacket, ManagedPacketType);
-
         public static PacketHandle FromNativePacket(SNIPacket nativePacket) =>
-            new PacketHandle(nativePointer: IntPtr.Zero, nativePacket, managedPacket: null, NativePacketType);
+            new PacketHandle(nativePointer: IntPtr.Zero, nativePacket, NativePacketType);
 
         public static PacketHandle FromNativePointer(IntPtr nativePointer) =>
-            new PacketHandle(nativePointer, nativePacket: null, managedPacket: null, NativePointerType);
+            new PacketHandle(nativePointer, nativePacket: null, NativePointerType);
     }
 }
 

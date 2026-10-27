@@ -2,11 +2,14 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-// @TODO: Introduce polymorphism to remove need for this level of indirection
-// @TODO: Also, why do we have any other type besides managed defined here?
-#if NET && _UNIX
+using Microsoft.Data.SqlClient.Parser;
 
-namespace Microsoft.Data.SqlClient
+// @TODO: Introduce polymorphism to remove need for this level of indirection
+#if NET && _WINDOWS
+
+using System;
+
+namespace Microsoft.Data.SqlClient.Parser
 {
     /// <summary>
     /// This structure is used for transporting packet handle references between the
@@ -27,12 +30,14 @@ namespace Microsoft.Data.SqlClient
         /// packet which has been read from the native SNI layer.
         /// </summary>
         public const int NativePointerType = 1;
+
         /// <summary>
         /// PacketHandle is transporting a native packet. The NativePacket field is valid.
         /// A PacketHandle has this type when managed code is directly referencing a packet
         /// which is due to be passed to the native SNI layer.
         /// </summary>
         public const int NativePacketType = 2;
+
         /// <summary>
         /// PacketHandle is transporting a managed packet. The ManagedPacket field is valid.
         /// A PacketHandle used by the managed SNI layer will always have this type.
@@ -41,16 +46,26 @@ namespace Microsoft.Data.SqlClient
 
         // @TODO: To auto-properties
         public readonly ManagedSni.SniPacket ManagedPacket;
+        public readonly SNIPacket NativePacket;
+        public readonly IntPtr NativePointer;
         public readonly int Type;
 
-        private PacketHandle(ManagedSni.SniPacket managedPacket, int type)
+        private PacketHandle(IntPtr nativePointer, SNIPacket nativePacket, ManagedSni.SniPacket managedPacket, int type)
         {
             Type = type;
             ManagedPacket = managedPacket;
+            NativePointer = nativePointer;
+            NativePacket = nativePacket;
         }
 
         public static PacketHandle FromManagedPacket(ManagedSni.SniPacket managedPacket) =>
-            new PacketHandle(managedPacket, ManagedPacketType);
+            new PacketHandle(nativePointer: IntPtr.Zero, nativePacket: null, managedPacket, ManagedPacketType);
+
+        public static PacketHandle FromNativePacket(SNIPacket nativePacket) =>
+            new PacketHandle(nativePointer: IntPtr.Zero, nativePacket, managedPacket: null, NativePacketType);
+
+        public static PacketHandle FromNativePointer(IntPtr nativePointer) =>
+            new PacketHandle(nativePointer, nativePacket: null, managedPacket: null, NativePointerType);
     }
 }
 
