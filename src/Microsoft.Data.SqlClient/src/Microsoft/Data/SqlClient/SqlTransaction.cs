@@ -118,6 +118,19 @@ namespace Microsoft.Data.SqlClient
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
 
+                    // Validation drains an abandoned reader before the commit is sent. Leave
+                    // _isFromApi clear so a rollback found there stays attached. Rollback and
+                    // disposal still set the flag around the request the caller made.
+                    if (_connection.InnerConnection is SqlConnectionInternal openConnection)
+                    {
+                        openConnection.ValidateConnectionForExecute(null);
+                    }
+
+                    if (IsZombied)
+                    {
+                        ZombieCheck();
+                    }
+
                     _isFromApi = true;
 
                     InternalTransaction.Commit();

@@ -153,8 +153,17 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/AddToBatch/*' />
         protected override int AddToBatch(IDbCommand command)
         {
+            SqlCommand batchCommand = (SqlCommand)command;
+            SqlTransaction transaction = batchCommand.BoundTransaction;
+            // Append copies the text and parameters only. A server abort on this command has to
+            // be rejected here. A transaction the caller already finished is left alone.
+            if (transaction != null && transaction.Connection == null && transaction.CompletedByServer)
+            {
+                throw ADP.TransactionZombied(transaction);
+            }
+
             int commandIdentifier = _commandSet.CommandCount;
-            _commandSet.Append((SqlCommand)command);
+            _commandSet.Append(batchCommand);
             return commandIdentifier;
         }
 

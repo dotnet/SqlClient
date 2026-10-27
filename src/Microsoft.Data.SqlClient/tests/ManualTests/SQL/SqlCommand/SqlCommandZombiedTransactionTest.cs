@@ -154,6 +154,34 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         /// <summary>
+        /// <see cref="SqlTransaction.Commit"/> finishes the transaction. The command that was bound to it must still run.
+        /// </summary>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public void Execute_AfterApiCommit_Runs()
+        {
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            connection.Open();
+
+            using SqlCommand setup = connection.CreateCommand();
+            setup.CommandText = "CREATE TABLE #ApiCommittedTransaction (Id int NOT NULL);";
+            setup.ExecuteNonQuery();
+
+            using SqlCommand command = new SqlCommand("INSERT INTO #ApiCommittedTransaction (Id) VALUES (1)", connection);
+            using (SqlTransaction transaction = connection.BeginTransaction())
+            {
+                command.Transaction = transaction;
+                transaction.Commit();
+            }
+
+            Assert.Null(command.Transaction);
+            command.Connection = connection;
+            command.ExecuteNonQuery();
+
+            using SqlCommand count = new SqlCommand("SELECT COUNT(*) FROM #ApiCommittedTransaction", connection);
+            Assert.Equal(1, (int)count.ExecuteScalar());
+        }
+
+        /// <summary>
         /// A batch must not copy <see cref="SqlCommand.Transaction"/> back onto its command.
         /// That getter returns null after a server abort, and the batch would auto-commit.
         /// </summary>
@@ -249,6 +277,47 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         /// <summary>
+        /// Batch setup copies <see cref="SqlDataAdapter.SelectCommand"/> when it is present.
+        /// The insert being written can still hold a server abort, and that command has to be rejected.
+        /// </summary>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public void Update_AdapterBatchWithUnboundSelect_DoesNotAutocommit()
+        {
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            connection.Open();
+
+            using SqlCommand setup = connection.CreateCommand();
+            setup.CommandText = "SET XACT_ABORT ON; CREATE TABLE #AdapterSelectAbort (Id int NOT NULL);";
+            setup.ExecuteNonQuery();
+
+            using SqlTransaction transaction = connection.BeginTransaction();
+            using SqlCommand select = new SqlCommand("SELECT Id FROM #AdapterSelectAbort", connection);
+            using SqlCommand insert = new SqlCommand("INSERT INTO #AdapterSelectAbort (Id) VALUES (@Id)", connection, transaction);
+            insert.Parameters.Add(new SqlParameter("@Id", SqlDbType.Int, 0, "Id"));
+            insert.UpdatedRowSource = UpdateRowSource.None;
+            using SqlCommand abort = new SqlCommand("SELECT CAST('n/a' AS int)", connection, transaction);
+            Assert.Throws<SqlException>(() => abort.ExecuteScalar());
+
+            using DataTable table = new DataTable();
+            table.Columns.Add("Id", typeof(int));
+            table.Rows.Add(1);
+            table.Rows.Add(2);
+
+            using SqlDataAdapter adapter = new SqlDataAdapter
+            {
+                SelectCommand = select,
+                InsertCommand = insert,
+                UpdateBatchSize = 2
+            };
+
+            InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => adapter.Update(table));
+            Assert.Contains("no longer usable", exception.Message);
+
+            using SqlCommand count = new SqlCommand("SELECT COUNT(*) FROM #AdapterSelectAbort", connection);
+            Assert.Equal(0, (int)count.ExecuteScalar());
+        }
+
+        /// <summary>
         /// An abandoned reader can still hold the server rollback. The next execute drains it and
         /// must reject the write. Closing the reader here would consume that rollback first.
         /// </summary>
@@ -297,6 +366,60 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             using SqlCommand count = new SqlCommand("SELECT COUNT(*) FROM #AbandonedRollback", connection);
+            Assert.Equal(0, (int)count.ExecuteScalar());
+        }
+
+        /// <summary>
+        /// Commit drains an abandoned reader before it sends the commit. A rollback still in that
+        /// reader has to stay attached, and the bound command must not auto-commit.
+        /// </summary>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public void Execute_AfterCommitDrainsAbandonedRollback_DoesNotAutocommit()
+        {
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            connection.Open();
+
+            using SqlCommand setup = connection.CreateCommand();
+            setup.CommandText = "CREATE TABLE #CommitAbandonedRollback (Id int NOT NULL);";
+            setup.ExecuteNonQuery();
+
+            using SqlTransaction transaction = connection.BeginTransaction();
+            using SqlCommand insert = new SqlCommand("INSERT INTO #CommitAbandonedRollback (Id) VALUES (1)", connection, transaction);
+            using SqlCommand read = new SqlCommand("SELECT 1; ROLLBACK;", connection, transaction);
+            SqlDataReader reader = read.ExecuteReader();
+            try
+            {
+                Assert.True(reader.Read());
+                Assert.Equal(1, reader.GetInt32(0));
+
+                // Drop the reader from the connection without reading the rollback that follows.
+                MethodInfo remove = typeof(SqlConnection).GetMethod(
+                    "RemoveWeakReference",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                Assert.NotNull(remove);
+                remove.Invoke(connection, new object[] { reader });
+
+                // Commit may surface the abort. The write that follows must not auto-commit.
+                Record.Exception(() => transaction.Commit());
+
+                InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => insert.ExecuteNonQuery());
+                Assert.Contains("no longer usable", exception.Message);
+            }
+            finally
+            {
+                try
+                {
+                    reader.Dispose();
+                }
+                catch (SqlException)
+                {
+                }
+                catch (InvalidOperationException)
+                {
+                }
+            }
+
+            using SqlCommand count = new SqlCommand("SELECT COUNT(*) FROM #CommitAbandonedRollback", connection);
             Assert.Equal(0, (int)count.ExecuteScalar());
         }
     }
