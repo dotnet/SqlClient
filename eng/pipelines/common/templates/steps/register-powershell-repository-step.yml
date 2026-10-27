@@ -1,0 +1,18 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# Register once per job, before module installs, under the same user as the consumers.
+# NuGet.config's governed source is the single feed-address configuration.
+parameters:
+  - name: repositoryName
+    type: string
+
+steps:
+  - pwsh: |
+      & "$(Build.SourcesDirectory)/eng/scripts/Register-SqlClientPSRepository.ps1" -RepositoryName $env:POWERSHELL_REPOSITORY_NAME
+    displayName: Register governed PowerShell repository
+    env:
+      POWERSHELL_REPOSITORY_NAME: ${{ parameters.repositoryName }}

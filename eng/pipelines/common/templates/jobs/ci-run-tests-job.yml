@@ -4,6 +4,10 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
+  - name: powerShellRepository
+    type: string
+    default: SqlClient
+
   # The name of the Abstractions pipeline artifact to download when referenceType is 'Package'.
   - name: abstractionsArtifactsName
     type: string
@@ -170,6 +174,9 @@ jobs:
       - imageOverride -equals ${{ parameters.poolImage }}
 
   variables:
+    - name: SQLCLIENT_POWERSHELL_REPOSITORY
+      value: ${{ parameters.powerShellRepository }}
+
     - name: dotnetx86RootPath
       value: '$(dotnetx86Path)'
 
@@ -216,6 +223,10 @@ jobs:
 
   # Restore dotnet CLI tools (e.g. pwsh, apicompat) before building.
   - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
+
+  - template: /eng/pipelines/common/templates/steps/register-powershell-repository-step.yml@self
+    parameters:
+      repositoryName: ${{ parameters.powerShellRepository }}
 
   - ${{ if ne(parameters.prebuildSteps, '') }}:
     - ${{ parameters.prebuildSteps }} # extra steps to run before the build like downloading sni and the required configuration
@@ -352,6 +363,7 @@ jobs:
     - template: /eng/pipelines/common/templates/steps/configure-netonly-account-step.yml@self
       parameters:
         mode: setup
+        powerShellRepository: ${{ parameters.powerShellRepository }}
 
   # Gate: record that all setup steps (SDK install, build, SQL config, x86 SDK
   # install, etc.) completed successfully.  Test steps condition on this variable
@@ -392,6 +404,7 @@ jobs:
     - template: /eng/pipelines/common/templates/steps/configure-netonly-account-step.yml@self
       parameters:
         mode: cleanup
+        powerShellRepository: ${{ parameters.powerShellRepository }}
 
   - template: /eng/pipelines/common/templates/steps/publish-test-results-step.yml@self
     parameters:

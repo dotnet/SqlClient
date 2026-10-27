@@ -7,7 +7,11 @@
 # Comments: This scripts creates SSL Self-Signed Certificate for TestTdsServer in pfx format.
 # This script is not intended to be used in any production environments.
 
-param ($OutDir, [switch] $SkipTrust)
+param (
+    $OutDir,
+    [switch] $SkipTrust,
+    [string] $PowerShellRepository = $env:SQLCLIENT_POWERSHELL_REPOSITORY
+)
 
 function Invoke-SqlServerCertificateCommand {
   [CmdletBinding()]
@@ -29,12 +33,10 @@ function Invoke-SqlServerCertificateCommand {
   # Provision outside the certificate error handler so source/install failures terminate the task.
   if ([System.Environment]::OSVersion.Platform -eq "Unix" -and
       -not (Get-Module -ListAvailable -Name OpenSSL)) {
-      $repositoryScript = Join-Path $PSScriptRoot 'Register-SqlClientPSRepository.ps1'
-      if (-not (Test-Path -LiteralPath $repositoryScript)) {
-          $repositoryScript = Join-Path $PSScriptRoot '..\..\..\..\eng\scripts\Register-SqlClientPSRepository.ps1'
+      if ([string]::IsNullOrWhiteSpace($PowerShellRepository)) {
+          throw 'PowerShellRepository must name a pre-registered repository to install the OpenSSL module. Pass it explicitly or set SQLCLIENT_POWERSHELL_REPOSITORY.'
       }
-      $repository = & $repositoryScript
-      Install-Module -Name OpenSSL -Repository $repository -Force -ErrorAction Stop
+      Install-Module -Name OpenSSL -Repository $PowerShellRepository -Force -ErrorAction Stop
   }
 
   # Change directory to where the tests are

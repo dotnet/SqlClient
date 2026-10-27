@@ -7,12 +7,13 @@ Pester tests for pipeline helpers, argument templates, and build orchestration.
 These tests require **PowerShell 7+** and **Pester v5 or later**:
 
 ```powershell
-$repository = & .\eng\scripts\Register-SqlClientPSRepository.ps1
-Install-Module Pester -MinimumVersion 5.0 -Repository $repository -Scope CurrentUser -Force -SkipPublisherCheck -ErrorAction Stop
+.\eng\scripts\Register-SqlClientPSRepository.ps1 -RepositoryName SqlClient
+Install-Module Pester -MinimumVersion 5.0 -Repository SqlClient -Scope CurrentUser -Force -SkipPublisherCheck -ErrorAction Stop
 ```
 
 Run the prerequisite commands from the repository root. The helper registers the
-public SqlClient feed anonymously; see [module source details](../../../../BUILDGUIDE.md).
+public SqlClient feed anonymously from `NuGet.config`'s `governed` source;
+see [module source details](../../../../BUILDGUIDE.md).
 
 `Build-Orchestration.Tests.ps1` also requires the .NET SDK pinned by
 [`global.json`](../../../../global.json), available as `dotnet` on `PATH`.

@@ -12,8 +12,8 @@ Pester tests for PowerShell scripts used by OneBranch pipeline steps.
 From the repository root, install Pester using anonymous feed access:
 
 ```powershell
-$repository = & .\eng\scripts\Register-SqlClientPSRepository.ps1
-Install-Module Pester -MinimumVersion 5.0 -Repository $repository -Scope CurrentUser -ErrorAction Stop
+.\eng\scripts\Register-SqlClientPSRepository.ps1 -RepositoryName SqlClient
+Install-Module Pester -MinimumVersion 5.0 -Repository SqlClient -Scope CurrentUser -ErrorAction Stop
 ```
 
 ## Running the Tests

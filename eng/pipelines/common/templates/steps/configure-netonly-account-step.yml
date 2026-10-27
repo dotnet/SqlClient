@@ -10,6 +10,9 @@
 # and secret netOnlyPassword.
 # No server roles or database users are granted; tests must use master.
 parameters:
+  - name: powerShellRepository
+    type: string
+
   - name: mode
     type: string
     default: setup
@@ -38,6 +41,7 @@ steps:
       # Single quotes preserve undefined ADO macros as literals for cleanup's absent-value checks.
       arguments: >-
         -Mode '${{ parameters.mode }}'
+        -PowerShellRepository '${{ parameters.powerShellRepository }}'
         -InstanceName '${{ parameters.instanceName }}'
         -Port '${{ parameters.port }}'
         -AccountName '$(netOnlyUser)'

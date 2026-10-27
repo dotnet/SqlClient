@@ -50,13 +50,7 @@ Describe 'Net-only provisioning lifecycle' -Skip:(-not $IsWindows) {
         Mock Write-Host {}
         Mock Import-Module {}
         Mock Install-Module {}
-        Mock Get-PSRepository {
-            [pscustomobject]@{
-                Name = 'SqlClient'
-                SourceLocation = 'https://sqlclientdrivers.pkgs.visualstudio.com/public/_packaging/sqlclient/nuget/v2'
-                PackageManagementProvider = 'NuGet'
-            }
-        }
+        Mock Register-PSRepository { throw 'Consumers must not register repositories' }
         Mock Get-Module { [pscustomobject]@{ Version = [version]'22.4.5.1' } } -ParameterFilter {
             $FullyQualifiedName.Name -eq 'SqlServer'
         }
@@ -90,22 +84,21 @@ Describe 'Net-only provisioning lifecycle' -Skip:(-not $IsWindows) {
         }
     }
 
-    It 'installs only the pinned module when it is missing' {
+    It 'installs only the pinned module from the supplied repository when it is missing' {
         Mock Get-Module {} -ParameterFilter { $FullyQualifiedName.Name -eq 'SqlServer' }
 
-        & $scriptPath -Mode setup
+        & $scriptPath -Mode setup -PowerShellRepository CustomModules
 
         Should -Invoke Install-Module -Times 1 -Exactly -ParameterFilter {
             $Name -eq 'SqlServer' -and $RequiredVersion -eq '22.4.5.1' -and
-            $Repository -eq 'SqlClient' -and $Scope -eq 'CurrentUser' -and $AllowClobber -and $Force
+            $Repository -eq 'CustomModules' -and $Scope -eq 'CurrentUser' -and $AllowClobber -and $Force
         }
+        Should -Invoke Register-PSRepository -Times 0 -Exactly
     }
 
-    It 'does not install a module or create an account if repository lookup fails' {
+    It 'requires an explicit repository name before installing a missing module' {
         Mock Get-Module {} -ParameterFilter { $FullyQualifiedName.Name -eq 'SqlServer' }
-        Mock Get-PSRepository { throw 'repository lookup failed' }
-
-        { & $scriptPath -Mode setup } | Should -Throw '*repository lookup failed*'
+        { & $scriptPath -Mode setup } | Should -Throw '*PowerShellRepository must name*'
         Should -Invoke Install-Module -Times 0 -Exactly
         Should -Invoke New-LocalUser -Times 0 -Exactly
     }
@@ -160,7 +153,7 @@ Describe 'Net-only provisioning lifecycle' -Skip:(-not $IsWindows) {
         Mock Get-Module {} -ParameterFilter { $FullyQualifiedName.Name -eq 'SqlServer' }
         Mock Install-Module { throw 'module installation failed' }
 
-        { & $scriptPath -Mode setup } | Should -Throw '*module installation failed*'
+        { & $scriptPath -Mode setup -PowerShellRepository CustomModules } | Should -Throw '*module installation failed*'
         Should -Invoke New-LocalUser -Times 0 -Exactly
     }
 

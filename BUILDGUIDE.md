@@ -282,7 +282,8 @@ Run `dotnet tool restore` first to restore the repository's pinned PowerShell to
 The regression suite also requires Pester 5.7.1:
 
 ```powershell
-dotnet tool run pwsh -NoProfile -Command '$repository = & .\eng\scripts\Register-SqlClientPSRepository.ps1; Install-Module Pester -RequiredVersion 5.7.1 -Repository $repository -Scope CurrentUser -Force -ErrorAction Stop'
+dotnet tool run pwsh -NoProfile -File .\eng\scripts\Register-SqlClientPSRepository.ps1 -RepositoryName SqlClient
+dotnet tool run pwsh -NoProfile -Command 'Install-Module Pester -RequiredVersion 5.7.1 -Repository SqlClient -Scope CurrentUser -Force -ErrorAction Stop'
 dotnet tool run pwsh -NoProfile -Command 'Import-Module Pester -RequiredVersion 5.7.1; Invoke-Pester -Path ./src/Microsoft.Data.SqlClient/tests/VersionChecks/VersionChecks.Tests.ps1 -CI'
 ```
 
@@ -297,12 +298,21 @@ matrix without packing consumer fixtures.
 The suite is available for local execution only. PR and OneBranch pipelines do not
 install Pester or run these tests.
 
-PowerShell module installs use the public SqlClient Azure Artifacts feed anonymously
-through its NuGet v2 endpoint and PowerShell Gallery upstream. The registration helper
-creates a trusted `SqlClient` PowerShellGet repository for the current user, or reuses
-a matching registration without changing its trust policy. A conflicting registration
-or unavailable feed fails explicitly; there is no fallback to PSGallery. `NuGet.config`
-continues to use the feed's v3 endpoint for .NET packages.
+`NuGet.config`'s `governed` package source is the single feed-address configuration
+for .NET packages and PowerShell modules. The registration helper derives the Azure
+Artifacts NuGet v2 endpoint from that v3 index URL and registers it anonymously.
+It creates a trusted PowerShellGet repository under the supplied name for the current
+user, or reuses a matching registration without changing its trust policy. Conflicting
+registrations and source failures stop explicitly; there is no fallback to PSGallery.
+
+Pipelines register the repository once per job with the reusable
+`eng/pipelines/common/templates/steps/register-powershell-repository-step.yml`
+template, passing `repositoryName`. Module-install consumers take only the
+`powerShellRepository` name parameter and assume registration has already occurred.
+Registration and installation must run as the same user. CI/PR test jobs pass the
+name to certificate subprocesses through `SQLCLIENT_POWERSHELL_REPOSITORY`; local
+manual-test runs should set that environment variable after registration.
+Direct `makepfxcert.ps1` calls can instead pass `-PowerShellRepository SqlClient`.
 
 Just like building and testing the various projects in this repository, packaging the projects into NuGet packages is
 also handled by `build.proj`. From the root of your repository, run `dotnet build` against `build.proj` with a pack target,

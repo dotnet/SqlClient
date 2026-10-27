@@ -36,9 +36,6 @@
     <!-- Certificate stuff for AE tests -->
     <None Update="makepfxcert.ps1"
           CopyToOutputDirectory="PreserveNewest" />
-    <None Include="$(RepoRoot)eng/scripts/Register-SqlClientPSRepository.ps1"
-          Link="Register-SqlClientPSRepository.ps1"
-          CopyToOutputDirectory="PreserveNewest" />
     <None Update="mismatchedcert.cer"
           CopyToOutputDirectory="PreserveNewest" />
     <None Update="removecert.ps1"

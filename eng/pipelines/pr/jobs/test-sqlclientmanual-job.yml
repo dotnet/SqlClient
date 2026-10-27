@@ -5,6 +5,10 @@
 #################################################################################
 
 parameters:
+  - name: powerShellRepository
+    type: string
+    default: SqlClient
+
   # General Parameters =====================================================
 
   # Configuration with which to build the packages and execute the tests.
@@ -135,6 +139,9 @@ jobs:
         - imageOverride -equals ${{ parameters.poolImage }}
 
     variables:
+      - name: SQLCLIENT_POWERSHELL_REPOSITORY
+        value: ${{ parameters.powerShellRepository }}
+
       # Bring the generated SA password from the secrets stage into scope for this test stage.
       # Note: Because this is set at runtime, it must be referenced as `$(saPassword)`.
       - name: saPassword
@@ -156,6 +163,10 @@ jobs:
 
       # Restore dotnet tools
       - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
+
+      - template: /eng/pipelines/common/templates/steps/register-powershell-repository-step.yml@self
+        parameters:
+          repositoryName: ${{ parameters.powerShellRepository }}
 
       # Configure the local SQL Server instance
       - ${{ if eq(parameters.isLocalServer, true) }}:
@@ -212,6 +223,7 @@ jobs:
         - template: /eng/pipelines/common/templates/steps/configure-netonly-account-step.yml@self
           parameters:
             mode: setup
+            powerShellRepository: ${{ parameters.powerShellRepository }}
 
       # Execute TestSqlClientManual target from build.proj
       - task: DotNetCoreCLI@2
@@ -242,6 +254,7 @@ jobs:
         - template: /eng/pipelines/common/templates/steps/configure-netonly-account-step.yml@self
           parameters:
             mode: cleanup
+            powerShellRepository: ${{ parameters.powerShellRepository }}
 
       # Publish test results
       - template: /eng/pipelines/pr/steps/publish-test-results-step.yml@self
