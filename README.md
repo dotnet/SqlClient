@@ -29,7 +29,6 @@ When targeting .NET on Windows, a package reference to [Microsoft.Data.SqlClient
 | :---- | :------------- |
 | Best Practices | [coding-best-practices.md](/policy/coding-best-practices.md) |
 | Build Guide | [BUILDGUIDE.md](/BUILDGUIDE.md) |
-| Networking Defaults and Migration | [networking-defaults.md](/doc/networking-defaults.md) |
 | Changelog | [CHANGELOG.md](CHANGELOG.md) |
 | Code of Conduct | [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) |
 | Coding Style | [coding-style.md](/policy/coding-style.md) |
