@@ -11,7 +11,7 @@ using Interop.Windows.Sni;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Parser;
 
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.Parser
 {
     internal class TdsParserStateObjectNative : TdsParserStateObject
     {

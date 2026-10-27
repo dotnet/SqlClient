@@ -868,17 +868,17 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\TdsParserStateObject.cs">
       <Link>Microsoft\Data\SqlClient\Parser\TdsParserStateObject.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserStaticMethods.cs">
-      <Link>Microsoft\Data\SqlClient\TdsParserStaticMethods.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\TdsParserStaticMethods.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\TdsParserStaticMethods.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsRecordBufferSetter.cs">
-      <Link>Microsoft\Data\SqlClient\TdsRecordBufferSetter.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\TdsRecordBufferSetter.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\TdsRecordBufferSetter.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserSessionPool.cs">
-      <Link>Microsoft\Data\SqlClient\TdsParserSessionPool.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\TdsParserSessionPool.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\TdsParserSessionPool.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsValueSetter.cs">
-      <Link>Microsoft\Data\SqlClient\TdsValueSetter.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\TdsValueSetter.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\TdsValueSetter.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProvider.cs">
       <Link>Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProvider.cs</Link>
@@ -919,7 +919,7 @@
     <Compile Include="Microsoft\Data\SqlClient\Parser\TdsParser.netcore.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Parser\TdsParser.RegisterEncoding.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Parser\TdsParserStateObject.netcore.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectManaged.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Parser\TdsParserStateObjectManaged.cs" />
     <Compile Include="Microsoft.Data.SqlClient.TypeForwards.cs" />
   </ItemGroup>
   <!-- Windows only -->
@@ -1080,14 +1080,14 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\WritePacketCache.Windows.cs">
       <Link>Microsoft\Data\SqlClient\Parser\WritePacketCache.Windows.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserStateObjectFactory.Windows.cs">
-      <Link>Microsoft\Data\SqlClient\TdsParserStateObjectFactory.Windows.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\TdsParserStateObjectFactory.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\TdsParserStateObjectFactory.Windows.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs">
       <Link>Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs</Link>
     </Compile>
     <Compile Include="Microsoft\Data\SqlClient\Parser\TdsParser.Windows.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectNative.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Parser\TdsParserStateObjectNative.cs" />
   </ItemGroup>
   <!-- Unix only -->
   <ItemGroup Condition="'$(TargetsUnix)' == 'true'">
@@ -1121,8 +1121,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCspProvider.netcore.Unix.cs">
       <Link>Microsoft\Data\SqlClinet\SqlColumnEncryptionCspProvider.netcore.Unix.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserStateObjectFactory.Unix.cs">
-      <Link>Microsoft\Data\SqlClient\TdsParserStateObjectFactory.Unix.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\TdsParserStateObjectFactory.Unix.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\TdsParserStateObjectFactory.Unix.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlFileStream.netcore.Unix.cs">
       <Link>Microsoft\Data\SqlTypes\SqlFileStream.netcore.Unix.cs</Link>

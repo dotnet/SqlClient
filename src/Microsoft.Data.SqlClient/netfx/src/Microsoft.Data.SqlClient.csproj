@@ -901,14 +901,14 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\TdsParserStateObject.cs">
       <Link>Microsoft\Data\SqlClient\Parser\TdsParserStateObject.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserStateObjectFactory.Windows.cs">
-      <Link>Microsoft\Data\SqlClient\TdsParserStateObjectFactory.Windows.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\TdsParserStateObjectFactory.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\TdsParserStateObjectFactory.Windows.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserStaticMethods.cs">
-      <Link>Microsoft\Data\SqlClient\TdsParserStaticMethods.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\TdsParserStaticMethods.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\TdsParserStaticMethods.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsRecordBufferSetter.cs">
-      <Link>Microsoft\Data\SqlClient\TdsRecordBufferSetter.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\TdsRecordBufferSetter.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\TdsRecordBufferSetter.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\CallbackType.cs">
       <Link>Microsoft\Data\SqlClient\Parser\CallbackType.cs</Link>
@@ -976,11 +976,11 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\SslProtocolsHelper.cs">
       <Link>Microsoft\Data\SqlClient\Parser\SslProtocolsHelper.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserSessionPool.cs">
-      <Link>Microsoft\Data\SqlClient\TdsParserSessionPool.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\TdsParserSessionPool.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\TdsParserSessionPool.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsValueSetter.cs">
-      <Link>Microsoft\Data\SqlClient\TdsValueSetter.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\TdsValueSetter.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\TdsValueSetter.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Utilities\BufferWriterExtensions.netfx.cs">
       <Link>Microsoft\Data\SqlClient\Utilities\BufferWriterExtensions.netfx.cs</Link>
@@ -1035,7 +1035,7 @@
     <Compile Include="Microsoft\Data\SqlClient\Parser\TdsParser.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Parser\TdsParser.netfx.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Parser\TdsParserStateObject.netfx.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectNative.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Parser\TdsParserStateObjectNative.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\SqlTypeWorkarounds.netfx.cs" />
   </ItemGroup>
   <!-- Resources  -->

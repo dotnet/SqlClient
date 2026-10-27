@@ -9,7 +9,7 @@ using System.Runtime.Versioning;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Parser;
 
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.Parser
 {
     internal sealed class TdsParserStaticMethods
     {
