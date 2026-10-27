@@ -237,4 +237,3 @@ namespace Microsoft.Data.SqlClient.Parser
     }
 }
 
-

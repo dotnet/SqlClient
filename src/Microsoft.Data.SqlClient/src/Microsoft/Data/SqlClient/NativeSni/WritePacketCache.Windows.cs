@@ -6,7 +6,7 @@ using System;
 using System.Collections.Generic;
 using Interop.Windows.Sni;
 
-namespace Microsoft.Data.SqlClient.Parser
+namespace Microsoft.Data.SqlClient.NativeSni
 {
     internal sealed class WritePacketCache : IDisposable
     {

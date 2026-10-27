@@ -856,8 +856,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\MultiPartTableName.cs">
       <Link>Microsoft\Data\SqlClient\Parser\Tokens\MultiPartTableName.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\SslProtocolsHelper.cs">
-      <Link>Microsoft\Data\SqlClient\Parser\SslProtocolsHelper.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\SslProtocolHelpers.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\SslProtocolHelpers.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\LastIOTimer.cs">
       <Link>Microsoft\Data\SqlClient\Parser\LastIOTimer.cs</Link>
@@ -1068,17 +1068,17 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCertificateStoreProvider.Windows.cs">
       <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionCertificateStoreProvider.Windows.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\SNILoadHandle.Windows.cs">
-      <Link>Microsoft\Data\SqlClient\Parser\SNILoadHandle.Windows.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\NativeSni\SNILoadHandle.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\NativeSni\SNILoadHandle.Windows.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\SNIHandle.Windows.cs">
-      <Link>Microsoft\Data\SqlClient\Parser\SNIHandle.Windows.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\NativeSni\SNIHandle.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\NativeSni\SNIHandle.Windows.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\SNIPacket.Windows.cs">
-      <Link>Microsoft\Data\SqlClient\Parser\SNIPacket.Windows.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\NativeSni\SNIPacket.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\NativeSni\SNIPacket.Windows.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\WritePacketCache.Windows.cs">
-      <Link>Microsoft\Data\SqlClient\Parser\WritePacketCache.Windows.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\NativeSni\WritePacketCache.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\NativeSni\WritePacketCache.Windows.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\TdsParserStateObjectFactory.Windows.cs">
       <Link>Microsoft\Data\SqlClient\Parser\TdsParserStateObjectFactory.Windows.cs</Link>
