@@ -5,7 +5,6 @@
 #if _WINDOWS
 using Microsoft.Data.SqlClient.NativeSni;
 #endif
-using Microsoft.Data.SqlClient.Parser;
 
  #if _WINDOWS
 

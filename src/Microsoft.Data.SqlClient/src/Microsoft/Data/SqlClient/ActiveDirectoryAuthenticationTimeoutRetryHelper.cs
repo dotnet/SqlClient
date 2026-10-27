@@ -7,7 +7,6 @@ using System.ComponentModel;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Data.SqlClient.Parser.Login;
-using Microsoft.Data.SqlClient.Parser;
 
 namespace Microsoft.Data.SqlClient
 {

@@ -228,6 +228,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
     }
+
     /// <summary>
     /// Represents Encryption related information of the cipher data.
     /// </summary>
@@ -415,6 +416,7 @@ namespace Microsoft.Data.SqlClient
             return _sqlClientEncryptionAlgorithm != null ? true : false;
         }
     }
+
     /// <summary>
     /// Class encapsulating additional information when sending encrypted input parameters.
     /// </summary>
