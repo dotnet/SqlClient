@@ -12,9 +12,8 @@ subnets. With MSF enabled, `IPAddressPreference` and TNIR have no effect.
 
 Set `MultiSubnetFailover=false` for database mirroring, including when the server
 supplies the failover partner, and for non-TCP connections such as Named Pipes,
-Shared Memory, and LocalDB. MSF also retains its existing restrictions on
-named-instance discovery and endpoints with more than 64 IP addresses. Use an
-explicit TCP hostname and port where appropriate.
+Shared Memory, and LocalDB. MSF also fails when a hostname resolves to more than 64
+IP addresses. Use an explicit TCP hostname and port where appropriate.
 
 For example, a mirroring connection string must include the opt-out:
 
