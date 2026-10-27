@@ -790,8 +790,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\TdsParameterSetter.cs">
       <Link>Microsoft\Data\SqlClient\Parser\TdsParameterSetter.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParser.cs">
-      <Link>Microsoft\Data\SqlClient\TdsParser.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\TdsParser.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\TdsParser.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\CallbackType.cs">
       <Link>Microsoft\Data\SqlClient\Parser\CallbackType.cs</Link>
@@ -915,9 +915,9 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlConnection.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionHelper.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsParser.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsParser.netcore.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsParser.RegisterEncoding.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Parser\TdsParser.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Parser\TdsParser.netcore.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Parser\TdsParser.RegisterEncoding.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Parser\TdsParserStateObject.netcore.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectManaged.cs" />
     <Compile Include="Microsoft.Data.SqlClient.TypeForwards.cs" />
@@ -1086,7 +1086,7 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs">
       <Link>Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs</Link>
     </Compile>
-    <Compile Include="Microsoft\Data\SqlClient\TdsParser.Windows.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Parser\TdsParser.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectNative.cs" />
   </ItemGroup>
   <!-- Unix only -->
@@ -1127,7 +1127,7 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlTypes\SqlFileStream.netcore.Unix.cs">
       <Link>Microsoft\Data\SqlTypes\SqlFileStream.netcore.Unix.cs</Link>
     </Compile>
-    <Compile Include="Microsoft\Data\SqlClient\TdsParser.Unix.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Parser\TdsParser.Unix.cs" />
   </ItemGroup>
   <!-- Resources -->
   <ItemGroup>

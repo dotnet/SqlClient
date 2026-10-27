@@ -5,7 +5,7 @@
 using Microsoft.Data.SqlClient.ManagedSni;
 using Microsoft.Data.SqlClient.Parser;
 
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.Parser
 {
     sealed internal partial class TdsParser
     {

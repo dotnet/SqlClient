@@ -11,7 +11,7 @@ using System.Data.SqlTypes;
 using System.Threading.Tasks;
 using Microsoft.Data.Sql;
 
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.Parser
 {
     internal partial class TdsParser
     {

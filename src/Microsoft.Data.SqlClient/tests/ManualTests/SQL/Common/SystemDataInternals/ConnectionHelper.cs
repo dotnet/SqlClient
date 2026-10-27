@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
         private static Type s_sqlInternalConnection = s_MicrosoftDotData.GetType("Microsoft.Data.SqlClient.SqlInternalConnection");
         private static Type s_sqlInternalConnectionTds = s_MicrosoftDotData.GetType("Microsoft.Data.SqlClient.SqlInternalConnectionTds");
         private static Type s_dbConnectionInternal = s_MicrosoftDotData.GetType("Microsoft.Data.ProviderBase.DbConnectionInternal");
-        private static Type s_tdsParser = s_MicrosoftDotData.GetType("Microsoft.Data.SqlClient.TdsParser");
+        private static Type s_tdsParser = s_MicrosoftDotData.GetType("Microsoft.Data.SqlClient.Parser.TdsParser");
         private static Type s_tdsParserStateObject = s_MicrosoftDotData.GetType("Microsoft.Data.SqlClient.Parser.TdsParserStateObject");
         private static Type s_SQLDNSInfo = s_MicrosoftDotData.GetType("Microsoft.Data.SqlClient.SQLDNSInfo");
         private static PropertyInfo s_sqlConnectionInternalConnection = s_sqlConnection.GetProperty("InnerConnection", BindingFlags.Instance | BindingFlags.NonPublic);

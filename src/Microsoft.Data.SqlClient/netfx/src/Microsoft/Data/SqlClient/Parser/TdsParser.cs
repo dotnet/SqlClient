@@ -36,7 +36,7 @@ using Microsoft.Data.SqlTypes;
 #endif
 using Microsoft.SqlServer.Server;
 
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.Parser
 {
     // The TdsParser Object controls reading/writing to the netlib, parsing the tds,
     // and surfacing objects to the user.

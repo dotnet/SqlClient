@@ -4,7 +4,7 @@
 
 using System.Text;
 
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.Parser
 {
     internal sealed partial class TdsParser
     {

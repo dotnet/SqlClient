@@ -9,7 +9,7 @@ using Microsoft.Data.SqlClient.ManagedSni;
 using Microsoft.Data.SqlClient.Parser;
 using SniError = Microsoft.Data.SqlClient.ManagedSni.SniError;
 
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.Parser
 {
     internal sealed partial class TdsParser
     {

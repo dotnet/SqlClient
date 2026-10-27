@@ -7,7 +7,7 @@ using Microsoft.Data.SqlClient.Utilities;
 
 #nullable enable
 
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.Parser
 {
     
     internal partial class TdsParser
