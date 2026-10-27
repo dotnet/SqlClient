@@ -560,8 +560,8 @@ public class AuthenticationLoggingTests
         var parameters = new SqlAuthenticationParameters(method, "test-server", "test-db",
             "https://database.windows.net/", "https://login.microsoftonline.com/", "", "", listener.ConnectionId, 30);
         await Assert.ThrowsAsync<AuthenticationException>(() => provider.AcquireTokenAsync(parameters));
-        Assert.Contains(listener.Events, entry => Equals(entry.Payload![0], "Token acquisition started.") && Equals(entry.Payload[2], listener.ConnectionId.ToString()));
-        Assert.Contains(listener.Events, entry => Equals(entry.Payload![0], "Token acquisition failed.") && Equals(entry.Payload[2], listener.ConnectionId.ToString()));
+        Assert.Contains(listener.Events, entry => ((entry.Payload![0] as string)?.StartsWith("Token acquisition started for ", StringComparison.Ordinal) ?? false) && Equals(entry.Payload[2], listener.ConnectionId.ToString()));
+        Assert.Contains(listener.Events, entry => ((entry.Payload![0] as string)?.StartsWith("Token acquisition failed for ", StringComparison.Ordinal) ?? false) && Equals(entry.Payload[2], listener.ConnectionId.ToString()));
     }
 
     /// <summary>Real SDK success preserves the token while emitting sanitized provider and Azure events.</summary>
@@ -591,8 +591,8 @@ public class AuthenticationLoggingTests
             SqlAuthenticationToken token = await provider.AcquireTokenAsync(parameters);
             Assert.Equal("<access-token>", token.AccessToken);
             Assert.Contains(listener.Events, entry => Equals(entry.Payload![1], "Azure-Identity"));
-            Assert.Contains(listener.Events, entry => Equals(entry.Payload![0], "Token acquisition succeeded."));
-            Assert.DoesNotContain(listener.Events, entry => Equals(entry.Payload![0], "Token acquisition failed."));
+            Assert.Contains(listener.Events, entry => ((entry.Payload![0] as string)?.StartsWith("Token acquisition succeeded for ", StringComparison.Ordinal) ?? false));
+            Assert.DoesNotContain(listener.Events, entry => ((entry.Payload![0] as string)?.StartsWith("Token acquisition failed for ", StringComparison.Ordinal) ?? false));
             Assert.All(listener.Events, entry => Assert.DoesNotContain("<access-token>", string.Join(" ", entry.Payload!)));
         }
         finally
@@ -627,7 +627,7 @@ public class AuthenticationLoggingTests
             connection.Open();
         }
         Assert.Contains(listener.Events, entry => Equals(entry.Payload![1], "Azure-Identity"));
-        Assert.Contains(listener.Events, entry => Equals(entry.Payload![0], "Token acquisition succeeded.") &&
+        Assert.Contains(listener.Events, entry => ((entry.Payload![0] as string)?.StartsWith("Token acquisition succeeded for ", StringComparison.Ordinal) ?? false) &&
             Equals(entry.Payload[2], connection.ClientConnectionId.ToString()));
     }
 

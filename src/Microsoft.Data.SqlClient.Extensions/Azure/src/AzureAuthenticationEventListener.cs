@@ -10,22 +10,75 @@ namespace Microsoft.Data.SqlClient;
 
 /// <summary>Bridges a supported, non-PII subset of process-wide Azure-Identity events into SqlClient's EventSource.</summary>
 /// <remarks>
-/// Subscriptions follow collector demand for the SqlClient AuthenticationTrace keyword. Token failure events are
-/// correlated through their parent request ID; other events are written with an empty connection ID.
+/// <para>
+/// <b>Lifetime and source discovery.</b> One listener exists per process. It is created lazily by
+/// <see cref="Instance"/> on the first token request that uses Azure.Identity, and is never disposed. Azure.Core
+/// names its identity source "Azure-Identity", or "Azure-Identity-N" when another load context already owns that
+/// name. The listener finds sources that already exist through <see cref="EventSource.GetSources"/>, and sources
+/// created later through <see cref="OnEventSourceCreated"/>. Each source is tracked by a weak reference, so the
+/// listener never keeps a collectible load context alive.
+/// </para>
+/// <para>
+/// <b>Subscription follows demand.</b> The listener subscribes to SDK sources only while some collector enables
+/// SqlClient's AuthenticationTrace keyword. It hooks <see cref="EventSource.EventCommandExecuted"/> on
+/// <see cref="SqlClientEventSource.Log"/>; each enable or disable command recalculates the desired level and
+/// reapplies it to every tracked source. With no collector, SDK events are not raised at all.
+/// </para>
+/// <para>
+/// <b>What is forwarded.</b> Only reviewed events are copied: MSAL log events (single string payload, produced by
+/// clients with PII logging disabled), the DefaultAzureCredential selected type, and a generic message for
+/// GetTokenFailed. GetTokenFailed is correlated to a connection through its parent request ID; its raw exception
+/// payload is dropped because it can contain personal information. All other events are ignored.
+/// </para>
+/// <para>
+/// <b>Concurrency.</b> <see cref="_gate"/> protects the source list and <see cref="_version"/>. SDK
+/// enable/disable calls are made outside the lock, because the framework takes its own listener lock and can call
+/// back into this class. Each demand change bumps the version. A pass that sees the version change restarts and
+/// forces every source to be reapplied, so a stale level from an interrupted pass is always overwritten.
+/// </para>
+/// <para>
+/// <b>Applied level.</b> <see cref="SourceState.Level"/> records the level this listener last applied, which
+/// lets unchanged sources be skipped. <see cref="EventSource.IsEnabled(EventLevel, EventKeywords)"/> cannot be
+/// used for this, because it merges every listener on the source.
+/// </para>
+/// <para>
+/// The class stays as one unit because the discovery, demand, and forwarding parts share the same framework
+/// callbacks and lock; splitting them would spread one ordering contract across several types.
+/// <see cref="BeforeApplyForTest"/> and <see cref="GetAppliedLevel"/> exist only for tests.
+/// </para>
 /// </remarks>
 internal sealed class AzureAuthenticationEventListener : EventListener
 {
+    /// <summary>The process-wide listener, created on first use and thread-safe by default.</summary>
     private static readonly Lazy<AzureAuthenticationEventListener> s_instance = new(() => new AzureAuthenticationEventListener());
+
+    /// <summary>Protects <see cref="_sources"/> and <see cref="_version"/>; never held while calling SDK hooks.</summary>
     private readonly object _gate = new();
+
+    /// <summary>Supported SDK sources seen so far, held weakly with the level this listener applied to each.</summary>
     private readonly List<SourceState> _sources = new();
+
+    /// <summary>
+    /// False while the base constructor runs. The base class calls <see cref="OnEventSourceCreated"/> before this
+    /// class's fields are set, so those early calls are ignored and the constructor replays the sources instead.
+    /// </summary>
     private readonly bool _ready;
+
+    /// <summary>Bumped on every source or demand change, so an apply pass can detect that it is stale.</summary>
     private int _version;
 
     /// <summary>Observes current and future SDK sources without retaining their defining assemblies.</summary>
     private AzureAuthenticationEventListener()
     {
+        // The base constructor has already called OnEventSourceCreated for every existing source, while _ready was
+        // false, so those calls were ignored. From here on, new sources are handled as they are created.
         _ready = true;
+
+        // Recalculate SDK subscriptions whenever a collector enables or disables SqlClient's EventSource.
         SqlClientEventSource.Log.EventCommandExecuted += OnSqlClientCommand;
+
+        // Replay the sources ignored during base construction. A source created concurrently may be seen both here
+        // and in OnEventSourceCreated; RegisterSource ignores the duplicate.
         foreach (EventSource source in EventSource.GetSources())
         {
             if (IsSupportedSourceName(source.Name))
@@ -34,6 +87,7 @@ internal sealed class AzureAuthenticationEventListener : EventListener
             }
         }
 
+        // Apply the current collector demand to the sources found above.
         ApplySubscriptions();
     }
 
@@ -54,6 +108,8 @@ internal sealed class AzureAuthenticationEventListener : EventListener
 
             var state = new SourceState(source);
             _sources.Add(state);
+
+            // A running apply pass took its snapshot without this source; make it restart.
             _version++;
             return state;
         }
@@ -69,6 +125,7 @@ internal sealed class AzureAuthenticationEventListener : EventListener
             return;
         }
 
+        // Apply now, inside the framework callback, so the source is configured before it writes its first event.
         ApplySource(RegisterSource(eventSource), eventSource, GetDesiredLevel());
     }
 
@@ -77,11 +134,13 @@ internal sealed class AzureAuthenticationEventListener : EventListener
     /// <param name="args">The collector command.</param>
     private void OnSqlClientCommand(object? sender, EventCommandEventArgs args)
     {
+        // Other commands, such as SendManifest, do not change which levels collectors want.
         if (args.Command is not (EventCommand.Enable or EventCommand.Disable))
         {
             return;
         }
 
+        // Mark any pass in progress as stale before starting a new one.
         lock (_gate)
         {
             _version++;
@@ -102,6 +161,7 @@ internal sealed class AzureAuthenticationEventListener : EventListener
         {
             SourceState[] sources;
             int version;
+            // Snapshot the sources under the lock, dropping ones that have been collected, then work outside it.
             lock (_gate)
             {
                 version = _version;
@@ -112,6 +172,7 @@ internal sealed class AzureAuthenticationEventListener : EventListener
             EventLevel? desired = GetDesiredLevel();
             foreach (SourceState state in sources)
             {
+                // A newer command or source arrived; stop and start over with fresh demand.
                 if (version != Volatile.Read(ref _version))
                 {
                     break;
@@ -123,11 +184,14 @@ internal sealed class AzureAuthenticationEventListener : EventListener
                 }
             }
 
+            // Nothing changed during the pass, so every source has the latest level.
             if (version == Volatile.Read(ref _version))
             {
                 return;
             }
 
+            // The interrupted pass may have applied a level after a newer pass applied its own, leaving the cached
+            // level wrong. Reapply all sources on the next pass instead of trusting the cache.
             force = true;
         }
     }
@@ -139,6 +203,7 @@ internal sealed class AzureAuthenticationEventListener : EventListener
     /// <param name="force">Reapplies even when the cached level matches, to repair a stale enable.</param>
     private void ApplySource(SourceState state, EventSource source, EventLevel? desired, bool force = false)
     {
+        // Skip sources that already have the desired level, unless a restart requires a full reapply.
         if (!force && state.Level == desired)
         {
             return;
@@ -161,6 +226,7 @@ internal sealed class AzureAuthenticationEventListener : EventListener
         }
         catch
         {
+            // Keep the cache matching the SDK source, so a later pass retries this update.
             state.Level = previous;
             throw;
         }
@@ -205,6 +271,7 @@ internal sealed class AzureAuthenticationEventListener : EventListener
     /// <returns>The most detailed required SDK level, or null when no collector needs capture.</returns>
     private static EventLevel? GetDesiredLevel()
     {
+        // Find the most detailed level any collector wants. LogAlways (0) is checked first, so a higher level wins.
         EventLevel? desired = null;
         for (EventLevel level = EventLevel.LogAlways; level <= EventLevel.Verbose; level++)
         {
@@ -224,11 +291,13 @@ internal sealed class AzureAuthenticationEventListener : EventListener
     /// <param name="eventData">The SDK event; unrecognized or unsafe payloads are not copied.</param>
     protected override void OnEventWritten(EventWrittenEventArgs eventData)
     {
+        // EventListener receives events from every source it enabled; ignore anything else.
         if (!IsSupportedSourceName(eventData.EventSource.Name))
         {
             return;
         }
 
+        // Each SDK event must match a reviewed ID, name, and payload shape before anything is copied.
         EventLevel? level = GetMsalLevel(eventData.EventId, eventData.EventName);
 
         // Azure credential MSAL events carry no request ID, so they cannot be correlated.

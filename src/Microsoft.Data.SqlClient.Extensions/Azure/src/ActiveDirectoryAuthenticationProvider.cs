@@ -199,6 +199,14 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
         _parentActivityOrWindowFunc = parentActivityOrWindowFunc;
     }
 
+    /// <summary>Writes a SqlClient token acquisition event that names the authentication method.</summary>
+    /// <param name="level">The event severity.</param>
+    /// <param name="outcome">The stage reached: started, succeeded, or failed.</param>
+    /// <param name="parameters">The request; only its method and connection ID are logged.</param>
+    private static void WriteTokenEvent(EventLevel level, string outcome, SqlAuthenticationParameters parameters) =>
+        AuthenticationLogger.Write(level, $"Token acquisition {outcome} for {parameters.AuthenticationMethod}.",
+            "SqlClient", parameters.ConnectionId);
+
     /// <include file='../doc/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/AcquireTokenAsync/*'/>
     public override async Task<SqlAuthenticationToken> AcquireTokenAsync(SqlAuthenticationParameters parameters)
     {
@@ -209,7 +217,10 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             or SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
             or SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity)
         {
-            // Starts forwarding Azure-Identity events when a collector enables AuthenticationTrace.
+            // These methods acquire tokens through Azure.Identity. The first such request creates the process-wide
+            // listener bridge, which tracks every supported Azure-Identity event source for the rest of the process.
+            // It subscribes to those sources only while a collector enables SqlClient's AuthenticationTrace keyword,
+            // and then forwards a curated, non-PII subset of their events through SqlClientEventSource.
             _ = AzureAuthenticationEventListener.Instance;
         }
 
@@ -231,7 +242,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
                 cts.CancelAfter(timeout);
             }
 
-            AuthenticationLogger.Write(EventLevel.Informational, "Token acquisition started.", "SqlClient", parameters.ConnectionId);
+            WriteTokenEvent(EventLevel.Informational, "started", parameters);
 
             string scope = parameters.Resource.EndsWith(s_defaultScopeSuffix, StringComparison.Ordinal) ? parameters.Resource : parameters.Resource + s_defaultScopeSuffix;
             string[] scopes = [scope];
@@ -285,7 +296,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
                 TokenCredentialKey tokenCredentialKey = new(typeof(DefaultAzureCredential), authorityUrl, scope, tenant, clientId);
                 AccessToken accessToken = await GetTokenAsync(tokenCredentialKey, string.Empty, tokenRequestContext, cts.Token).ConfigureAwait(false);
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Default auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
-                AuthenticationLogger.Write(EventLevel.Informational, "Token acquisition succeeded.", "SqlClient", parameters.ConnectionId);
+                WriteTokenEvent(EventLevel.Informational, "succeeded", parameters);
                 return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
             }
 
@@ -295,7 +306,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
                 TokenCredentialKey tokenCredentialKey = new(typeof(ManagedIdentityCredential), authorityUrl, scope, string.Empty, clientId);
                 AccessToken accessToken = await GetTokenAsync(tokenCredentialKey, string.Empty, tokenRequestContext, cts.Token).ConfigureAwait(false);
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Managed Identity auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
-                AuthenticationLogger.Write(EventLevel.Informational, "Token acquisition succeeded.", "SqlClient", parameters.ConnectionId);
+                WriteTokenEvent(EventLevel.Informational, "succeeded", parameters);
                 return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
             }
 
@@ -306,7 +317,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
                 string password = parameters.Password is null ? string.Empty : parameters.Password;
                 AccessToken accessToken = await GetTokenAsync(tokenCredentialKey, password, tokenRequestContext, cts.Token).ConfigureAwait(false);
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Service Principal auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
-                AuthenticationLogger.Write(EventLevel.Informational, "Token acquisition succeeded.", "SqlClient", parameters.ConnectionId);
+                WriteTokenEvent(EventLevel.Informational, "succeeded", parameters);
                 return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
             }
 
@@ -318,7 +329,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
                 // a CredentialUnavailableException will be thrown instead
                 AccessToken accessToken = await GetTokenAsync(tokenCredentialKey, string.Empty, tokenRequestContext, cts.Token).ConfigureAwait(false);
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Workload Identity auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
-                AuthenticationLogger.Write(EventLevel.Informational, "Token acquisition succeeded.", "SqlClient", parameters.ConnectionId);
+                WriteTokenEvent(EventLevel.Informational, "succeeded", parameters);
                 return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
             }
 
@@ -462,12 +473,12 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
                     "Internal error - authentication result is null");
             }
 
-            AuthenticationLogger.Write(EventLevel.Informational, "Token acquisition succeeded.", "SqlClient", parameters.ConnectionId);
+            WriteTokenEvent(EventLevel.Informational, "succeeded", parameters);
             return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
         }
         catch (Extensions.Azure.AuthenticationException)
         {
-            AuthenticationLogger.Write(EventLevel.Error, "Token acquisition failed.", "SqlClient", parameters.ConnectionId);
+            WriteTokenEvent(EventLevel.Error, "failed", parameters);
             // Already shaped for the caller; don't re-wrap it below.
             throw;
         }
@@ -479,7 +490,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
             _useWamBroker &&
             ex.ErrorCode == "window_handle_required")
         {
-            AuthenticationLogger.Write(EventLevel.Error, "Token acquisition failed.", "SqlClient", parameters.ConnectionId);
+            WriteTokenEvent(EventLevel.Error, "failed", parameters);
             SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | WAM interactive authentication requires a valid parent window handle.");
 
             // TODO: Localize this message: https://github.com/dotnet/SqlClient/issues/4904
@@ -498,7 +509,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
         }
         catch (MsalException ex)
         {
-            AuthenticationLogger.Write(EventLevel.Error, "Token acquisition failed.", "SqlClient", parameters.ConnectionId);
+            WriteTokenEvent(EventLevel.Error, "failed", parameters);
             // Check for an explicitly retryable error.
             if (ex is MsalServiceException svcEx &&
                 svcEx.StatusCode == MsalRetryStatusCode)
@@ -573,7 +584,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
                  or AuthenticationRequiredException
                  or CredentialUnavailableException)
         {
-            AuthenticationLogger.Write(EventLevel.Error, "Token acquisition failed.", "SqlClient", parameters.ConnectionId);
+            WriteTokenEvent(EventLevel.Error, "failed", parameters);
             // These errors aren't retryable.
             throw new Extensions.Azure.AuthenticationException(
                 parameters.AuthenticationMethod,
@@ -585,7 +596,7 @@ public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthentic
         }
         catch (Exception ex)
         {
-            AuthenticationLogger.Write(EventLevel.Error, "Token acquisition failed.", "SqlClient", parameters.ConnectionId);
+            WriteTokenEvent(EventLevel.Error, "failed", parameters);
             // These errors aren't retryable.
             throw new Extensions.Azure.AuthenticationException(
                 parameters.AuthenticationMethod,

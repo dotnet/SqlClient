@@ -68,8 +68,9 @@ internal static class AuthenticationLogger
         {
             if (Map(entry.EventLogLevel) is { } level)
             {
-                // The provider sets each request's MSAL correlation ID to the connection ID.
-                Guid.TryParse(entry.CorrelationId, out Guid connectionId);
+                // The provider sets each request's MSAL correlation ID to the connection ID, and MSAL returns it in
+                // the same "D" format. Anything else, such as MSAL's own IDs for uncorrelated work, logs as empty.
+                Guid.TryParseExact(entry.CorrelationId, "D", out Guid connectionId);
                 Write(level, entry.Message ?? "MSAL emitted a diagnostic without message text.", "MSAL", connectionId);
             }
         }

@@ -40,7 +40,7 @@ public class WamBrokerErrorTests
             provider, SqlAuthenticationMethod.ActiveDirectoryInteractive, cause);
 
         Assert.Contains(listener.Events, entry => entry.Level == EventLevel.Error &&
-            Equals(entry.Payload![0], "Token acquisition failed.") && Equals(entry.Payload[1], "SqlClient"));
+            Equals(entry.Payload![0], "Token acquisition failed for ActiveDirectoryInteractive.") && Equals(entry.Payload[1], "SqlClient"));
 
         Assert.Equal(SqlAuthenticationMethod.ActiveDirectoryInteractive, exception.Method);
         Assert.Equal(cause.ErrorCode, exception.FailureCode);
