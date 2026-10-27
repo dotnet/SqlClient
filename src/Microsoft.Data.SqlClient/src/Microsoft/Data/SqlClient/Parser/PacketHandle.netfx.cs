@@ -2,6 +2,10 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if _WINDOWS
+using Microsoft.Data.SqlClient.NativeSni;
+#endif
+
 
 // @TODO: Introduce polymorphism to remove need for this level of indirection
 #if NETFRAMEWORK

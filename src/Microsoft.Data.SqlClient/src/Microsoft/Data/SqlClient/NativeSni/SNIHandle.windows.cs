@@ -5,11 +5,12 @@
 #if _WINDOWS
 
 using System;
+using Microsoft.Data.SqlClient.Parser;
 using System.Runtime.InteropServices;
 using Interop.Windows.Sni;
 using Microsoft.Data.Common;
 
-namespace Microsoft.Data.SqlClient.Parser
+namespace Microsoft.Data.SqlClient.NativeSni
 {
     internal sealed class SNIHandle : SafeHandle
     {
