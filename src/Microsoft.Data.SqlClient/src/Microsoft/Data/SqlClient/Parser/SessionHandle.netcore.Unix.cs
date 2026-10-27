@@ -6,7 +6,7 @@ using Microsoft.Data.SqlClient.Parser;
 
 #if NET
 
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.Parser
 {
     // this structure is used for transporting packet handle references between the TdsParserStateObject
     //  base class and Managed or Native implementations. 

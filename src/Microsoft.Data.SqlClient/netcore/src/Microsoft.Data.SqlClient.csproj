@@ -1053,8 +1053,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\PacketHandle.Windows.cs">
       <Link>Microsoft\Data\SqlClient\Parser\PacketHandle.Windows.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SessionHandle.Windows.cs">
-      <Link>Microsoft\Data\SqlClient\SessionHandle.Windows.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\SessionHandle.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\SessionHandle.Windows.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.Windows.cs">
       <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.Windows.cs</Link>
@@ -1109,8 +1109,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\PacketHandle.netcore.Unix.cs">
       <Link>Microsoft\Data\SqlClient\Parser\PacketHandle.netcore.Unix.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SessionHandle.netcore.Unix.cs">
-      <Link>Microsoft\Data\SqlClient\SessionHandle.netcore.Unix.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\SessionHandle.netcore.Unix.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\SessionHandle.netcore.Unix.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCertificateStoreProvider.netcore.Unix.cs">
       <Link>Microsoft\Data\SqlClinet\SqlColumnEncryptionCertificateStoreProvider.netcore.Unix.cs</Link>
