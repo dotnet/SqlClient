@@ -2,11 +2,12 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-namespace Microsoft.Data.SqlClient.Parser
+namespace Microsoft.Data.SqlClient.Parser.Login
 {
-    internal enum PreLoginHandshakeStatus
+    internal sealed class SqlFedAuthToken
     {
-        Successful,
-        InstanceFailure
+        internal uint dataLen;
+        internal byte[] accessToken;
+        internal long expirationFileTime;
     }
 }

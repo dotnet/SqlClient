@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 using Interop.Windows.Sni;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.Parser.Login;
 
 namespace Microsoft.Data.SqlClient.Parser
 {

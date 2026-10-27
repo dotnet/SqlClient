@@ -9,6 +9,7 @@ using System;
 using System.Data.SqlTypes;
 using System.Threading.Tasks;
 using Microsoft.Data.Sql;
+using Microsoft.Data.SqlClient.Parser.Tokens;
 
 namespace Microsoft.Data.SqlClient.Parser
 {

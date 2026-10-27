@@ -11,6 +11,8 @@ using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using Microsoft.Data.SqlClient.Parser.Login;
+using Microsoft.Data.SqlClient.Parser.Tokens;
 #if NET
 using System.Security.Authentication;
 #else

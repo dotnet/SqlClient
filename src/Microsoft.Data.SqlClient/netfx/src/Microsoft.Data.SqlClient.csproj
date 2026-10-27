@@ -913,14 +913,14 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\CallbackType.cs">
       <Link>Microsoft\Data\SqlClient\Parser\CallbackType.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\EncryptionOptions.cs">
-      <Link>Microsoft\Data\SqlClient\Parser\EncryptionOptions.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Login\EncryptionOptions.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Login\EncryptionOptions.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\PreLoginHandshakeStatus.cs">
-      <Link>Microsoft\Data\SqlClient\Parser\PreLoginHandshakeStatus.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Login\PreLoginHandshakeStatus.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Login\PreLoginHandshakeStatus.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\PreLoginOptions.cs">
-      <Link>Microsoft\Data\SqlClient\Parser\PreLoginOptions.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Login\PreLoginOptions.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Login\PreLoginOptions.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\RunBehavior.cs">
       <Link>Microsoft\Data\SqlClient\Parser\RunBehavior.cs</Link>
@@ -928,50 +928,50 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\TdsParserState.cs">
       <Link>Microsoft\Data\SqlClient\Parser\TdsParserState.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\FederatedAuthenticationFeatureExtensionData.cs">
-      <Link>Microsoft\Data\SqlClient\Parser\FederatedAuthenticationFeatureExtensionData.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Login\FederatedAuthenticationFeatureExtensionData.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Login\FederatedAuthenticationFeatureExtensionData.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\RoutingInfo.cs">
-      <Link>Microsoft\Data\SqlClient\Parser\RoutingInfo.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\RoutingInfo.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Tokens\RoutingInfo.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\SqlLogin.cs">
-      <Link>Microsoft\Data\SqlClient\Parser\SqlLogin.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Login\SqlLogin.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Login\SqlLogin.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\SqlLoginAck.cs">
-      <Link>Microsoft\Data\SqlClient\Parser\SqlLoginAck.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\SqlLoginAck.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Tokens\SqlLoginAck.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\SqlFedAuthInfo.cs">
-      <Link>Microsoft\Data\SqlClient\Parser\SqlFedAuthInfo.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\SqlFedAuthInfo.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Tokens\SqlFedAuthInfo.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\SqlFedAuthToken.cs">
-      <Link>Microsoft\Data\SqlClient\Parser\SqlFedAuthToken.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Login\SqlFedAuthToken.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Login\SqlFedAuthToken.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\_SqlMetaData.cs">
-      <Link>Microsoft\Data\SqlClient\Parser\_SqlMetaData.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\_SqlMetaData.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Tokens\_SqlMetaData.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\_SqlMetaDataSet.cs">
-      <Link>Microsoft\Data\SqlClient\Parser\_SqlMetaDataSet.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\_SqlMetaDataSet.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Tokens\_SqlMetaDataSet.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\_SqlMetaDataSetCollection.cs">
-      <Link>Microsoft\Data\SqlClient\Parser\_SqlMetaDataSetCollection.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\_SqlMetaDataSetCollection.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Tokens\_SqlMetaDataSetCollection.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\SqlMetaDataPriv.cs">
-      <Link>Microsoft\Data\SqlClient\Parser\SqlMetaDataPriv.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\SqlMetaDataPriv.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Tokens\SqlMetaDataPriv.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\SqlMetaDataXmlSchemaCollection.cs">
-      <Link>Microsoft\Data\SqlClient\Parser\SqlMetaDataXmlSchemaCollection.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\SqlMetaDataXmlSchemaCollection.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Tokens\SqlMetaDataXmlSchemaCollection.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\SqlMetaDataUdt.cs">
-      <Link>Microsoft\Data\SqlClient\Parser\SqlMetaDataUdt.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\SqlMetaDataUdt.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Tokens\SqlMetaDataUdt.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\_SqlRPC.cs">
       <Link>Microsoft\Data\SqlClient\Parser\_SqlRPC.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\SqlReturnValue.cs">
-      <Link>Microsoft\Data\SqlClient\Parser\SqlReturnValue.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\SqlReturnValue.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Tokens\SqlReturnValue.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\MultiPartTableName.cs">
-      <Link>Microsoft\Data\SqlClient\Parser\MultiPartTableName.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\MultiPartTableName.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Tokens\MultiPartTableName.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\SslProtocolsHelper.cs">
       <Link>Microsoft\Data\SqlClient\Parser\SslProtocolsHelper.cs</Link>

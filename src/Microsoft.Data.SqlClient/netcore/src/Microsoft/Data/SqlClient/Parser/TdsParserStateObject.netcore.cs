@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ManagedSni;
+using Microsoft.Data.SqlClient.Parser.Login;
 
 namespace Microsoft.Data.SqlClient.Parser
 {

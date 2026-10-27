@@ -8,6 +8,7 @@ using System.Data;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.Parser;
+using Microsoft.Data.SqlClient.Parser.Tokens;
 using Microsoft.SqlServer.TDS;
 using Microsoft.SqlServer.TDS.ColMetadata;
 using Microsoft.SqlServer.TDS.Done;

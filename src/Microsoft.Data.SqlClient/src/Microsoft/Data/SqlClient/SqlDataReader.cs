@@ -11,6 +11,7 @@ using System.Data.Common;
 using System.Data.SqlTypes;
 using System.Diagnostics;
 using Microsoft.Data.SqlClient.Parser;
+using Microsoft.Data.SqlClient.Parser.Tokens;
 #if NET
 using System.Diagnostics.CodeAnalysis;
 #endif

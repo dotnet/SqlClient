@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using Microsoft.Data.SqlClient.Parser;
+using Microsoft.Data.SqlClient.Parser.Login;
 
 #if NET
 
