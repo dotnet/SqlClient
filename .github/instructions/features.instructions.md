@@ -15,7 +15,7 @@ This is a comprehensive reference of supported connection string keywords.
 | `Initial Catalog` | Database | Database name |
 | `Failover Partner` | | Mirroring failover partner |
 | `ApplicationIntent` | | ReadWrite (default) or ReadOnly |
-| `MultiSubnetFailover` | | Enable multi-subnet failover |
+| `MultiSubnetFailover` | | Enable multi-subnet failover (default `true`) |
 
 ### Authentication
 
@@ -242,9 +242,9 @@ AppContext switches allow runtime behavior changes without modifying connection 
 
 | Switch Name | Default | Description |
 |-------------|---------|-------------|
-| `Switch.Microsoft.Data.SqlClient.DisableTNIRByDefaultInConnectionString` | `false` | Disables Transparent Network IP Resolution by default |
+| `Switch.Microsoft.Data.SqlClient.DisableTNIRByDefaultInConnectionString` | `true` | .NET Framework only. Set to `false` to restore the legacy TNIR default; MSF must also be disabled for TNIR to take effect |
 | `Switch.Microsoft.Data.SqlClient.EnableAppConfig` | `true` | .NET only. Controls whether SqlClient reads app.config: configurable retry logic, authentication providers and switch overrides. See [Trimming](#trimming) |
-| `Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault` | `false` | Sets `MultiSubnetFailover=true` as the default for all connections |
+| `Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault` | `true` | Sets the default for `MultiSubnetFailover`; set to `false` to restore the legacy default. Explicit connection-string values take precedence |
 | `Switch.Microsoft.Data.SqlClient.EnableTransactionIsolationLevelReset` | `false` | Resets a changed session transaction isolation level to `READ COMMITTED` before a pooled connection is reused |
 | `Switch.Microsoft.Data.SqlClient.EnableUserAgent` | varies | Controls sending user agent information to SQL Server |
 | `Switch.Microsoft.Data.SqlClient.IgnoreServerProvidedFailoverPartner` | `false` | Ignores failover partner information sent by the server |

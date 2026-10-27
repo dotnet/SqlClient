@@ -25,9 +25,89 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 {
+    /// <summary>
+    /// Verifies connection establishment and retry behavior against simulated TDS endpoints.
+    /// </summary>
     [Collection(SimulatedServerTestCollection.Name)]
     public class ConnectionTests
     {
+#if NETFRAMEWORK
+        /// <summary>
+        /// Opens with TNIR disabled by default or restored through its legacy switch, with MSF off.
+        /// </summary>
+        [Theory]
+        [InlineData(null, false)]
+        [InlineData(null, true)]
+        [InlineData(false, false)]
+        [InlineData(false, true)]
+        public async Task TransparentNetworkIPResolution_DefaultAndOptIn_OpenSucceeds(bool? disabledAppContext, bool useAsync)
+        {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.DisableTnirByDefault = disabledAppContext;
+            using TdsServer server = new(new TdsServerArguments());
+            server.Start();
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = $"127.0.0.1,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                MultiSubnetFailover = false,
+                Pooling = false
+            };
+            using SqlConnection connection = new(builder.ConnectionString);
+            if (useAsync)
+            {
+                await connection.OpenAsync();
+            }
+            else
+            {
+                connection.Open();
+            }
+
+#pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
+            Assert.Equal(!(disabledAppContext ?? true), builder.TransparentNetworkIPResolution);
+#pragma warning restore 618
+            Assert.False(builder.ShouldSerialize("TransparentNetworkIPResolution"));
+            Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.Equal(1, server.Login7Count);
+        }
+#endif
+
+        /// <summary>
+        /// Opens a TCP connection through both public paths with the new default and compatibility opt-out.
+        /// </summary>
+        [Theory]
+        [InlineData(null, false)]
+        [InlineData(null, true)]
+        [InlineData(false, false)]
+        [InlineData(false, true)]
+        public async Task MultiSubnetFailover_DefaultAndOptOut_OpenSucceeds(bool? enabledAppContext, bool useAsync)
+        {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.EnableMultiSubnetFailoverByDefault = enabledAppContext;
+            using TdsServer server = new(new TdsServerArguments());
+            server.Start();
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = $"127.0.0.1,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                Pooling = false
+            };
+            using SqlConnection connection = new(builder.ConnectionString);
+            if (useAsync)
+            {
+                await connection.OpenAsync();
+            }
+            else
+            {
+                connection.Open();
+            }
+
+            Assert.Equal(enabledAppContext ?? true, builder.MultiSubnetFailover);
+            Assert.False(builder.ShouldSerialize("MultiSubnetFailover"));
+            Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.Equal(1, server.Login7Count);
+        }
+
         [Fact]
         public void ConnectionTest()
         {

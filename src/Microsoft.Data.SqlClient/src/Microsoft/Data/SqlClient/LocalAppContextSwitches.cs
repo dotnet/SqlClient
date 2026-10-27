@@ -370,16 +370,16 @@ internal static class LocalAppContextSwitches
     ///   1: All IPs are attempted in parallel
     ///   2: All IPs are attempted one after another
     ///
-    /// TransparentNetworkIPResolution is enabled by default.
-    /// MultiSubnetFailover is disabled by default.  To disable TNIR, you can
-    /// enable the app context switch.
+    /// TransparentNetworkIPResolution is disabled by default.
+    /// Set this switch to false to restore its legacy default. TNIR is still
+    /// ignored when MultiSubnetFailover is enabled.
     ///
-    /// The default value of this switch is false.
+    /// The default value of this switch is true.
     /// </summary>
     public static bool DisableTnirByDefault =>
         AcquireAndReturn(
             DisableTnirByDefaultString,
-            defaultValue: false,
+            defaultValue: true,
             ref s_disableTnirByDefault);
     #endif
 
@@ -410,17 +410,18 @@ internal static class LocalAppContextSwitches
     #endif
 
     /// <summary>
-    /// When set to true, the default value for MultiSubnetFailover connection
-    /// string property will be true instead of false. This enables parallel IP
+    /// Controls the default value for the MultiSubnetFailover connection
+    /// string property. When enabled, this allows parallel IP
     /// connection attempts for improved connection times in multi-subnet
     /// environments.
     ///
-    /// The default value of this switch is false.
+    /// The default value of this switch is true. Set it to false to restore
+    /// the legacy default. An explicit connection-string value takes precedence.
     /// </summary>
     public static bool EnableMultiSubnetFailoverByDefault =>
         AcquireAndReturn(
             EnableMultiSubnetFailoverByDefaultString,
-            defaultValue: false,
+            defaultValue: true,
             ref s_enableMultiSubnetFailoverByDefault);
 
     #if NET

@@ -73,7 +73,7 @@ public class LocalAppContextSwitchesTest
         Assert.False(switchesHelper.IgnoreServerProvidedFailoverPartner);
         Assert.False(switchesHelper.UseLegacyFailoverAlternationOnLoginSqlErrors);
         Assert.False(switchesHelper.EnableTransactionIsolationLevelReset);
-        Assert.False(switchesHelper.EnableMultiSubnetFailoverByDefault);
+        Assert.True(switchesHelper.EnableMultiSubnetFailoverByDefault);
         #if NET
         Assert.True(switchesHelper.EnableAppConfig);
         Assert.False(switchesHelper.GlobalizationInvariantMode);
@@ -89,7 +89,7 @@ public class LocalAppContextSwitchesTest
         }
         #endif
         #if NETFRAMEWORK
-        Assert.False(switchesHelper.DisableTnirByDefault);
+        Assert.True(switchesHelper.DisableTnirByDefault);
         #endif
     }
 
