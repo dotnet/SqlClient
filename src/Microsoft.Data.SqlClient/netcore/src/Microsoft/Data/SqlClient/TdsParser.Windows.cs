@@ -6,6 +6,7 @@ using System;
 using System.Diagnostics;
 using Interop.Windows.Sni;
 using Microsoft.Data.SqlClient.ManagedSni;
+using Microsoft.Data.SqlClient.Parser;
 using SniError = Microsoft.Data.SqlClient.ManagedSni.SniError;
 
 namespace Microsoft.Data.SqlClient

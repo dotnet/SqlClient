@@ -745,11 +745,50 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Utilities\ObjectPools.cs">
       <Link>Microsoft\Data\SqlClient\Utilities\ObjectPools.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsEnums.cs">
-      <Link>Microsoft\Data\SqlClient\TdsEnums.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\TdsEnums.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\TdsEnums.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParameterSetter.cs">
-      <Link>Microsoft\Data\SqlClient\TdsParameterSetter.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\SniContext.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\SniContext.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\ParsingErrorState.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\ParsingErrorState.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlConnectionAttestationProtocol.cs">
+      <Link>Microsoft\Data\SqlClient\SqlConnectionAttestationProtocol.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlConnectionIPAddressPreference.cs">
+      <Link>Microsoft\Data\SqlClient\SqlConnectionIPAddressPreference.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlConnectionColumnEncryptionSetting.cs">
+      <Link>Microsoft\Data\SqlClient\SqlConnectionColumnEncryptionSetting.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlConnectionOverrides.cs">
+      <Link>Microsoft\Data\SqlClient\SqlConnectionOverrides.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlCommandColumnEncryptionSetting.cs">
+      <Link>Microsoft\Data\SqlClient\SqlCommandColumnEncryptionSetting.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlAuthenticationMethod.cs">
+      <Link>Microsoft\Data\SqlClient\SqlAuthenticationMethod.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TransparentNetworkResolutionState.cs">
+      <Link>Microsoft\Data\SqlClient\TransparentNetworkResolutionState.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ActiveDirectoryAuthentication.cs">
+      <Link>Microsoft\Data\SqlClient\ActiveDirectoryAuthentication.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\DescribeParameterEncryptionResultSet1.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\DescribeParameterEncryptionResultSet1.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\DescribeParameterEncryptionResultSet2.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\DescribeParameterEncryptionResultSet2.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\DescribeParameterEncryptionResultSet3.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\DescribeParameterEncryptionResultSet3.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\TdsParameterSetter.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\TdsParameterSetter.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParser.cs">
       <Link>Microsoft\Data\SqlClient\TdsParser.cs</Link>

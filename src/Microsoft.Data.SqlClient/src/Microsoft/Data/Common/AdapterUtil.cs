@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Data.SqlTypes;
@@ -11,20 +12,19 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Runtime.CompilerServices;
-
 using System.Security;
+using System.Security.Authentication;
 using System.Security.Permissions;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
+using IsolationLevel = System.Data.IsolationLevel;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.SqlClient;
-using IsolationLevel = System.Data.IsolationLevel;
+using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Identity.Client;
 using Microsoft.SqlServer.Server;
-using System.Security.Authentication;
-using System.Collections.Generic;
 
 #if NETFRAMEWORK
 using System.Reflection;

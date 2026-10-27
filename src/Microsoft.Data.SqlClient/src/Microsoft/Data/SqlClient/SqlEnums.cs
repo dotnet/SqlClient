@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using Microsoft.Data.SqlClient.Parser;
 #if NETFRAMEWORK
 using System.Data.OleDb;
 #endif

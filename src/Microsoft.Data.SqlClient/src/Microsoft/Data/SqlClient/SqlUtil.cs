@@ -16,6 +16,7 @@ using System.Threading.Tasks;
 using System.Transactions;
 using Interop.Common.Sni;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Parser;
 
 #if NETFRAMEWORK
 using System.Runtime.InteropServices;
