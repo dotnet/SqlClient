@@ -5,7 +5,6 @@
 using System;
 using System.Diagnostics;
 using System.Reflection;
-using Microsoft.Data.SqlClient.Parser;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
 {

@@ -4,7 +4,6 @@
 
 using System;
 using System.Reflection;
-using Microsoft.Data.SqlClient.Parser;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
@@ -45,7 +44,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
             // These managed SNI handles are allowed to be null, since they
             // won't exist in .NET Framework builds.
             s_tdsParserStateObjectManaged =
-                assembly.GetType("Microsoft.Data.SqlClient.ManagedSni.TdsParserStateObjectManaged");
+                assembly.GetType("Microsoft.Data.SqlClient.Parser.TdsParserStateObjectManaged");
             s_tdsParserStateObjectManagedSessionHandle = null;
             if (s_tdsParserStateObjectManaged is not null)
             {

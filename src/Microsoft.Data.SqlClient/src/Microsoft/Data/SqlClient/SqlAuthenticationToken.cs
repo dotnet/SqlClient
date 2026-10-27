@@ -4,7 +4,6 @@
 
 using System;
 using System.Text;
-using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlClient.Parser.Login;
 
 namespace Microsoft.Data.SqlClient

@@ -7,6 +7,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.Data.Common;
 
+#if NETFRAMEWORK
+using Microsoft.Data.SqlClient.NativeSni;
+#endif
+
 namespace Microsoft.Data.SqlClient.Parser
 {
     internal class TdsParserSessionPool
@@ -236,4 +240,3 @@ namespace Microsoft.Data.SqlClient.Parser
 #endif
     }
 }
-

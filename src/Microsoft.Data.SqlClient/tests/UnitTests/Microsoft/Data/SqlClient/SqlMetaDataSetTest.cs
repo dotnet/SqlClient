@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Data;
-using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlClient.Parser.Tokens;
 using Xunit;
 

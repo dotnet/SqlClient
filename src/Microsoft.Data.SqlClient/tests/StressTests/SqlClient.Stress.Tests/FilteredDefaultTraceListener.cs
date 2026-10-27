@@ -6,7 +6,6 @@ using System;
 using System.Diagnostics;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using Microsoft.Data.SqlClient.Parser;
 
 namespace Stress.Data.SqlClient
 {
@@ -82,9 +81,9 @@ namespace Stress.Data.SqlClient
 
         private static readonly FilteredAssert[] s_assertsToFilter = new FilteredAssert[] {
             new FilteredAssert("TdsParser::ThrowExceptionAndWarning called with no exceptions or warnings!", 433324, MatchType.Exact, HandlingOption.WriteToConsole,
-                "Microsoft.Data.SqlClient.TdsParser.ThrowExceptionAndWarning",
-                "Microsoft.Data.SqlClient.TdsParserStateObject.ThrowExceptionAndWarning",
-                "Microsoft.Data.SqlClient.TdsParserStateObject.ReadAsyncCallbackCaptureException"),
+                "Microsoft.Data.SqlClient.Parser.TdsParser.ThrowExceptionAndWarning",
+                "Microsoft.Data.SqlClient.Parser.TdsParserStateObject.ThrowExceptionAndWarning",
+                "Microsoft.Data.SqlClient.Parser.TdsParserStateObject.ReadAsyncCallbackCaptureException"),
         };
 
         public FilteredDefaultTraceListener(DefaultTraceListener listenerToClone) : base()

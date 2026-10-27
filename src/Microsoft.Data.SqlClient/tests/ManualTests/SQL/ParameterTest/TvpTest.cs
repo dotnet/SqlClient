@@ -16,7 +16,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
-using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlClient.Server;
 using Xunit;
 
