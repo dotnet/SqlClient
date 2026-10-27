@@ -4,6 +4,7 @@
 
 using System.Diagnostics;
 using System.Globalization;
+using Microsoft.Data.SqlClient.Parser;
 
 namespace Microsoft.Data.SqlClient.Connection
 {
