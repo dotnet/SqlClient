@@ -5,9 +5,9 @@
 using Microsoft.Data.SqlClient.Parser;
 
 // @TODO: Merge with other implementations (and/or introduce polymorphism to handle this indirection)
-#if NET && _WINDOWS
+#if NETFRAMEWORK
 
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.Parser
 {
     /// <summary>
     /// This structure is used for transporting packet handle references between the
@@ -16,33 +16,26 @@ namespace Microsoft.Data.SqlClient
     /// abstract methods.
     /// </summary>
     /// <remarks>
-    /// It is a ref struct so that it can only be used to transport the handles and not store them.
+    /// It is a ref struct so that it can only be used to transport the handles and not store them
     /// If you change this type you must also change the version for the other platform.
     /// </remarks>
     internal readonly ref struct SessionHandle
     {
-        public const int NativeHandleType = 1;
-        public const int ManagedHandleType = 2;
-
-        // @TODO: Make auto-properties
-        public readonly ManagedSni.SniHandle ManagedHandle;
+        // @TODO: Make internal, auto-property
         public readonly SNIHandle NativeHandle;
-        public readonly int Type;
 
-        public SessionHandle(ManagedSni.SniHandle managedHandle, SNIHandle nativeHandle, int type)
+        public SessionHandle(SNIHandle nativeHandle)
         {
-            Type = type;
-            ManagedHandle = managedHandle;
             NativeHandle = nativeHandle;
         }
 
-        public bool IsNull => (Type == NativeHandleType) ? NativeHandle is null : ManagedHandle is null;
-
-        public static SessionHandle FromManagedSession(ManagedSni.SniHandle managedSessionHandle) =>
-            new SessionHandle(managedSessionHandle, nativeHandle: null, ManagedHandleType);
+        public bool IsNull
+        {
+            get => NativeHandle is null;
+        }
 
         public static SessionHandle FromNativeHandle(SNIHandle nativeSessionHandle) =>
-            new SessionHandle(managedHandle: null, nativeSessionHandle, NativeHandleType);
+            new SessionHandle(nativeSessionHandle);
     }
 }
 

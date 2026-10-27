@@ -6,7 +6,7 @@
 // @TODO: Also, why do we have native handle type defined in Unix which doesn't ever have a native handle type?
 #if NET && _UNIX
 
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.Parser
 {
     /// <summary>
     /// This structure is used for transporting packet handle references between the
