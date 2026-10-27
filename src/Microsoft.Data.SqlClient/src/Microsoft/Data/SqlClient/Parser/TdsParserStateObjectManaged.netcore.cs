@@ -20,7 +20,9 @@ using Microsoft.Data.SqlClient.Internal;
 #nullable enable
 
 // @TODO: If this is in the manages SNI namespace, it should be in the managed SNI folder
-namespace Microsoft.Data.SqlClient.ManagedSni
+using Microsoft.Data.SqlClient.ManagedSni;
+
+namespace Microsoft.Data.SqlClient.Parser
 {
     internal sealed class TdsParserStateObjectManaged : TdsParserStateObject
     {
