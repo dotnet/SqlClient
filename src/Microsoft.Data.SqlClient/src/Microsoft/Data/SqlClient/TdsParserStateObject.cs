@@ -29,17 +29,7 @@ namespace Microsoft.Data.SqlClient
     using RuntimeHelpers = System.Runtime.CompilerServices.RuntimeHelpers;
 #endif
     
-    sealed internal class LastIOTimer
-    {
-        internal long _value;
-    }
 
-    internal enum TdsOperationStatus : int
-    {
-        Done = 0,
-        NeedMoreData = 1,
-        InvalidData = 2
-    }
 
     internal abstract partial class TdsParserStateObject
     {
