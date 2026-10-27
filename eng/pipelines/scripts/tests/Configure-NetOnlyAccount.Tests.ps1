@@ -94,6 +94,52 @@ Describe 'Net-only provisioning lifecycle' -Skip:(-not $IsWindows) {
         }
     }
 
+    It 'uses the secret pipeline password as a read-only SecureString and disposes it on <Outcome>' -ForEach @(
+        @{ Outcome = 'success'; FailCreation = $false }
+        @{ Outcome = 'failure'; FailCreation = $true }
+    ) {
+        $passwordState = @{ Published = $null; Account = $null }
+        Mock Write-Host {
+            $passwordState.Published = "$Object".Substring(
+                '##vso[task.setvariable variable=netOnlyPassword;issecret=true]'.Length)
+        } -ParameterFilter {
+            "$Object".StartsWith('##vso[task.setvariable variable=netOnlyPassword;issecret=true]')
+        }
+        Mock New-LocalUser {
+            $passwordState.Account = $Password
+            $Password | Should -BeOfType ([System.Security.SecureString])
+            $Password.IsReadOnly() | Should -BeTrue
+            $Password.Length | Should -Be 48
+            $credential = [System.Net.NetworkCredential]::new('', $Password)
+            $credential.Password | Should -BeExactly $passwordState.Published
+            $credential.Password | Should -Match '^Aa1![A-Za-z0-9+/]{43}=$'
+            if ($FailCreation) {
+                throw 'account creation failed'
+            }
+            [pscustomobject]@{ SID = $sid; Description = $Description }
+        }
+
+        try {
+            if ($FailCreation) {
+                { & $scriptPath -Mode setup } | Should -Throw '*account creation failed*'
+            }
+            else {
+                & $scriptPath -Mode setup
+            }
+
+            Should -Invoke New-LocalUser -Times 1 -Exactly
+            Should -Invoke Write-Host -Times 1 -Exactly -ParameterFilter {
+                "$Object".StartsWith('##vso[task.setvariable variable=netOnlyPassword;issecret=true]')
+            }
+            $passwordState.Account | Should -BeOfType ([System.Security.SecureString])
+            $disposalError = { $passwordState.Account.IsReadOnly() } | Should -Throw -PassThru
+            $disposalError.Exception.InnerException | Should -BeOfType ([ObjectDisposedException])
+        }
+        finally {
+            $passwordState.Clear()
+        }
+    }
+
     It 'does not create an account if module installation fails' {
         Mock Get-Module {} -ParameterFilter { $FullyQualifiedName.Name -eq 'SqlServer' }
         Mock Install-Module { throw 'module installation failed' }
