@@ -9,6 +9,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Interop.Windows.Sni;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Parser;
 
 namespace Microsoft.Data.SqlClient
 {

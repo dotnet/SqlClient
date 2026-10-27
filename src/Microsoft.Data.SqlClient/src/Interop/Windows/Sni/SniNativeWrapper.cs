@@ -9,6 +9,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Interop.Windows.Sni;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlClient.Utilities;
 
 #if NETFRAMEWORK

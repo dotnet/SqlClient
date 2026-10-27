@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using Microsoft.Data.SqlClient.Parser;
+
 #if NET
  // #define TRACE_HISTORY // this is used for advanced debugging when you need to trace the entire lifetime of a single packet, be very careful with it
 

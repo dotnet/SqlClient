@@ -1023,8 +1023,17 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlColumnEncryptionCertificateStoreProvider.Windows.cs">
       <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionCertificateStoreProvider.Windows.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserSafeHandles.Windows.cs">
-      <Link>Microsoft\Data\SqlClient\TdsParserSafeHandles.Windows.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\SNILoadHandle.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\SNILoadHandle.Windows.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\SNIHandle.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\SNIHandle.Windows.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\SNIPacket.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\SNIPacket.Windows.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\WritePacketCache.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\WritePacketCache.Windows.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserStateObjectFactory.Windows.cs">
       <Link>Microsoft\Data\SqlClient\TdsParserStateObjectFactory.Windows.cs</Link>

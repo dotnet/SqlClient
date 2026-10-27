@@ -12,6 +12,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.Parser;
 
 // @TODO: If this is in the manages SNI namespace, it should be in the managed SNI folder
 namespace Microsoft.Data.SqlClient.ManagedSni
