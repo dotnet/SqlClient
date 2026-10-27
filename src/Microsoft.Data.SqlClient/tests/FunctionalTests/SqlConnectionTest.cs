@@ -3,10 +3,11 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Data;
 using System.Collections.Generic;
-using Xunit;
+using System.Data;
 using System.Reflection;
+using Microsoft.Data.SqlClient.Parser;
+using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
 {

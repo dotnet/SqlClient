@@ -1050,8 +1050,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\LocalDB.netcore.Windows.cs">
       <Link>Microsoft\Data\SqlClient\ManagedSni\LocalDB.netcore.Windows.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\PacketHandle.Windows.cs">
-      <Link>Microsoft\Data\SqlClient\PacketHandle.Windows.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\PacketHandle.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\PacketHandle.Windows.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SessionHandle.Windows.cs">
       <Link>Microsoft\Data\SqlClient\SessionHandle.Windows.cs</Link>
@@ -1106,8 +1106,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ManagedSni\LocalDB.netcore.Unix.cs">
       <Link>Microsoft\Data\SqlClient\ManagedSni\LocalDB.netcore.Unix.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\PacketHandle.netcore.Unix.cs">
-      <Link>Microsoft\Data\SqlClient\PacketHandle.netcore.Unix.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\PacketHandle.netcore.Unix.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\PacketHandle.netcore.Unix.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SessionHandle.netcore.Unix.cs">
       <Link>Microsoft\Data\SqlClient\SessionHandle.netcore.Unix.cs</Link>
