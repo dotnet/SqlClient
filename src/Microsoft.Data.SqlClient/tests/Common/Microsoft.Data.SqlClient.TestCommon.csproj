@@ -55,11 +55,24 @@
                       GeneratePathProperty="true"
                       ExcludeAssets="compile" />
     <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Abstractions"
-                      Condition="'$(ReferenceType)' == 'Package'" />
+                      Condition="'$(ReferenceType)' == 'Package' and '$(MdsPackageVersion)' == ''" />
     <!-- Compile against the implementation DLL; the package's ref assembly omits internals. -->
     <Reference Include="Microsoft.Data.SqlClient"
                Condition="'$(ReferenceType)' == 'Package'"
                HintPath="$(PkgMicrosoft_Data_SqlClient)/lib/$(_SqlClientPackageTfm)/Microsoft.Data.SqlClient.dll" />
+  </ItemGroup>
+
+  <!--
+    The published SqlClient family release 7.1.0-preview1.26124.5 contains incorrect dependency
+    declarations: the driver requires prerelease Abstractions and Logging packages that were
+    never published. This is a permanent workaround so PerformanceTests can use that broken
+    release as a baseline whenever needed. Match its overrides with the published 1.0.0 sibling
+    packages here because TestCommon is restored independently; without these references,
+    restore fails with NU1603 even though PerformanceTests supplies its own overrides.
+  -->
+  <ItemGroup Condition="'$(ReferenceType)' == 'Package' and '$(MdsPackageVersion)' == '7.1.0-preview1.26124.5'">
+    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Abstractions" VersionOverride="1.0.0" />
+    <PackageReference Include="Microsoft.Data.SqlClient.Internal.Logging" VersionOverride="1.0.0" />
   </ItemGroup>
 
   <!-- References for netfx -->
