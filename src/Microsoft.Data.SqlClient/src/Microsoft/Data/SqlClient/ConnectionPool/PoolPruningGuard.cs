@@ -22,14 +22,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
     /// admission and must dispose it; ownership moves with the lease when it is handed to a
     /// background worker, and the giver clears its copy (<c>lease = default</c>).
     /// <para>
-    /// <see cref="_state"/> packs a closed flag, a pruning flag and the active operation count
-    /// into one <see cref="int"/>, so every transition (admit, release, prune, close) is a single
-    /// compare-and-swap. Splitting them into separate fields would reopen the races this type
-    /// exists to close: a pool could be retired between a caller's state check and its count
-    /// increment, or be reported as running after it already refused admission. Admission is
-    /// lock-free and allocation-free because it runs on every checkout.
-    /// </para>
-    /// <para>
     /// Closing (prune or shutdown) is permanent and keeps the count, so operations admitted
     /// before an explicit shutdown still release normally.
     /// </para>
@@ -45,6 +37,17 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <summary>Bits holding the number of admitted operations.</summary>
         private const int CountMask = 0x3FFFFFFF;
 
+        /// <summary>
+        /// Packs <see cref="ClosedFlag"/>, <see cref="PruningFlag"/> and the active operation count
+        /// (<see cref="CountMask"/>) into one <see cref="int"/>, so every transition (admit,
+        /// release, prune, close) is a single compare-and-swap.
+        /// </summary>
+        /// <remarks>
+        /// Splitting these into separate fields would reopen the races this type exists to close:
+        /// a pool could be retired between a caller's state check and its count increment, or be
+        /// reported as running after it already refused admission. Admission is lock-free and
+        /// allocation-free because it runs on every checkout.
+        /// </remarks>
         private int _state;
 
         private static bool IsClosed(int state) => (state & ClosedFlag) != 0;
@@ -64,6 +67,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// Admits an operation. The returned lease is inactive (<see cref="Lease.IsActive"/> is
         /// <see langword="false"/>) once the pool has been pruned or shut down.
         /// </summary>
+        /// <exception cref="InvalidOperationException">
+        /// The active operation count would overflow into the flag bits.
+        /// </exception>
         /// <remarks>
         /// While a prune decision is in progress this spins briefly (never takes a lock) until
         /// the decision either reopens admission or marks the pool pruned.
@@ -84,7 +90,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     spinner.SpinOnce();
                     continue;
                 }
-                Debug.Assert(ActiveCount(state) < CountMask, "PoolPruningGuard active count overflow.");
+                if (ActiveCount(state) == CountMask)
+                {
+                    // Incrementing further would carry into the flag bits and corrupt the state.
+                    throw ADP.InvalidOperation("PoolPruningGuard active operation count overflow.");
+                }
                 if (Interlocked.CompareExchange(ref _state, state + 1, state) == state)
                 {
                     return new Lease(this);
