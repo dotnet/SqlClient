@@ -14,13 +14,17 @@ public class WindowlessInteractiveConnectionTests
     /// Both connection-opening APIs surface the actionable WAM error when no parent window
     /// is supplied. A unique login hint prevents reuse of a silently cached account.
     /// </summary>
-    [ConditionalTheory(typeof(Config), nameof(Config.OnWindows), nameof(Config.IsAzureSqlConnectionString))]
+    [ConditionalTheory(
+        typeof(Config),
+        nameof(Config.OnWindows),
+        nameof(Config.HasTcpConnectionString),
+        nameof(Config.IsAzureSqlServer))]
     [Trait("category", "interactive")]
     [InlineData(false)]
     [InlineData(true)]
     public async Task Open_MissingParentWindow_ExplainsSupportedAlternatives(bool async)
     {
-        var builder = new SqlConnectionStringBuilder(Config.TCPConnectionString)
+        var builder = new SqlConnectionStringBuilder(Config.TcpConnectionString)
         {
             Authentication = SqlAuthenticationMethod.ActiveDirectoryInteractive,
             IntegratedSecurity = false,
