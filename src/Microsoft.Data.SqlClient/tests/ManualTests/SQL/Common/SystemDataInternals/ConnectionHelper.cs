@@ -49,7 +49,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
             s_SQLDNSInfo.GetProperty("Port", BindingFlags.Instance | BindingFlags.Public);
 
         // TdsParser
-        private static readonly Type s_tdsParser = s_MicrosoftDotData.GetType("Microsoft.Data.SqlClient.TdsParser");
+        private static readonly Type s_tdsParser = s_MicrosoftDotData.GetType("Microsoft.Data.SqlClient.Parser.TdsParser");
         private static readonly FieldInfo s_tdsParser_physicalStateObj =
             s_tdsParser.GetField("_physicalStateObj", BindingFlags.Instance | BindingFlags.NonPublic);
 
