@@ -9,7 +9,7 @@ using Microsoft.Data.SqlClient.Tests;
 using Microsoft.Data.SqlClient.Tests.Common;
 using Microsoft.Data.SqlClient.Parser;
 
-namespace Microsoft.Data.SqlClient
+namespace Microsoft.Data.SqlClient.Parser
 {
     internal struct PacketHandle
     {

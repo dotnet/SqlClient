@@ -54,7 +54,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
             s_tdsParser.GetField("_physicalStateObj", BindingFlags.Instance | BindingFlags.NonPublic);
 
         // TdsParserStateObject
-        private static readonly Type s_tdsParserStateObject = s_MicrosoftDotData.GetType("Microsoft.Data.SqlClient.TdsParserStateObject");
+        private static readonly Type s_tdsParserStateObject = s_MicrosoftDotData.GetType("Microsoft.Data.SqlClient.Parser.TdsParserStateObject");
         private static readonly FieldInfo s_tdsParserStateObject_enforcedTimeoutDelayInMilliSeconds =
             s_tdsParserStateObject.GetField("_enforcedTimeoutDelayInMilliSeconds", BindingFlags.Instance | BindingFlags.NonPublic);
         private static readonly FieldInfo s_tdsParserStateObject_enforceTimeoutDelay =
