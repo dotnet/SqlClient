@@ -859,6 +859,12 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\SslProtocolsHelper.cs">
       <Link>Microsoft\Data\SqlClient\Parser\SslProtocolsHelper.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\LastIOTimer.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\LastIOTimer.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\TdsOperationStatus.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\TdsOperationStatus.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserStateObject.cs">
       <Link>Microsoft\Data\SqlClient\TdsParserStateObject.cs</Link>
     </Compile>

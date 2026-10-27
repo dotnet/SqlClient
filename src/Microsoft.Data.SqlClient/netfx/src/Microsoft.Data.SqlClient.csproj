@@ -892,6 +892,12 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\WritePacketCache.Windows.cs">
       <Link>Microsoft\Data\SqlClient\Parser\WritePacketCache.Windows.cs</Link>
     </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\LastIOTimer.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\LastIOTimer.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\TdsOperationStatus.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\TdsOperationStatus.cs</Link>
+    </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserStateObject.cs">
       <Link>Microsoft\Data\SqlClient\TdsParserStateObject.cs</Link>
     </Compile>
