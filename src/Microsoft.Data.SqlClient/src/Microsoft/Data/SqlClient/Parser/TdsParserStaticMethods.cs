@@ -6,7 +6,6 @@ using System;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using Microsoft.Data.Common;
-using Microsoft.Data.SqlClient.Parser;
 
 namespace Microsoft.Data.SqlClient.Parser
 {

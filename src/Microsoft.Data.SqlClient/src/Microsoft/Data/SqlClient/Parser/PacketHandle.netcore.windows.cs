@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using Microsoft.Data.SqlClient.Parser;
 
 // @TODO: Introduce polymorphism to remove need for this level of indirection
 #if NET && _WINDOWS
