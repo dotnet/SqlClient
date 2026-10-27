@@ -47,6 +47,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
             Assert.Equal(IPAddress.Loopback.ToString(), dnsInfo.AddrIPv4);
         }
 
+        // When no address accepts the connection, no socket is returned and no DNS info is
+        // recorded, so the caller reports a connection failure.
         [Fact]
         public void ParallelConnect_AllAddressesFail_ReturnsNoSocket()
         {
