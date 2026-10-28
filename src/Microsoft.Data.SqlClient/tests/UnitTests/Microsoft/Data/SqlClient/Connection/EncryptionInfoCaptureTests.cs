@@ -27,7 +27,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
             Assert.Null(capture.CipherSuite);
             SqlConnectionEncryptionInfo snapshot = capture.ToSnapshot();
-            Assert.Null(snapshot.NegotiatedCipherSuite);
+            Assert.Null(snapshot.NegotiatedCipherSuiteId);
             Assert.Equal(SqlConnectionEncryptionMode.Full, snapshot.NegotiatedEncryptionMode);
         }
 
@@ -49,13 +49,26 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
             SqlConnectionEncryptionInfo snapshot = capture.ToSnapshot();
 
-            Assert.Equal(SampleCipherSuite, snapshot.NegotiatedCipherSuite);
+            Assert.Equal(SampleCipherSuite, snapshot.NegotiatedCipherSuiteId);
             Assert.Equal(SqlConnectionEncryptionMode.Full, snapshot.NegotiatedEncryptionMode);
             Assert.Equal(SslProtocols.Tls12, snapshot.NegotiatedEncryptionProtocol);
             Assert.Null(snapshot.PresentedServerCertificateHash256);
             Assert.Null(snapshot.ValidationErrors);
             Assert.Null(snapshot.ChainStatus);
         }
+
+#if NET
+        [Fact]
+        public void Recorded_SurfacesAsTlsCipherSuiteOnNet()
+        {
+            EncryptionInfoCapture capture = new();
+            capture.RecordCipherSuite(SampleCipherSuite);
+
+            Assert.Equal(
+                System.Net.Security.TlsCipherSuite.TLS_AES_256_GCM_SHA384,
+                capture.ToSnapshot().NegotiatedCipherSuite);
+        }
+#endif
 
         [Fact]
         public void RecordedAlone_HasValuesAndIsNotEmpty()
@@ -66,7 +79,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.True(capture.HasValues);
             SqlConnectionEncryptionInfo snapshot = capture.ToSnapshot();
             Assert.NotSame(SqlConnectionEncryptionInfo.Empty, snapshot);
-            Assert.Equal(SampleCipherSuite, snapshot.NegotiatedCipherSuite);
+            Assert.Equal(SampleCipherSuite, snapshot.NegotiatedCipherSuiteId);
         }
 
         [Theory]
@@ -77,7 +90,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             EncryptionInfoCapture capture = new();
             capture.RecordCipherSuite(cipherSuite);
 
-            Assert.Equal(cipherSuite, capture.ToSnapshot().NegotiatedCipherSuite);
+            Assert.Equal(cipherSuite, capture.ToSnapshot().NegotiatedCipherSuiteId);
         }
 
         [Theory]
@@ -90,7 +103,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             capture.RecordCipherSuite(cipherSuite);
 
             Assert.Equal(SampleCipherSuite, capture.CipherSuite);
-            Assert.Equal(SampleCipherSuite, capture.ToSnapshot().NegotiatedCipherSuite);
+            Assert.Equal(SampleCipherSuite, capture.ToSnapshot().NegotiatedCipherSuiteId);
         }
 
         [Fact]
@@ -117,7 +130,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             capture.DiscardUnobservedNegotiation();
 
             SqlConnectionEncryptionInfo snapshot = capture.ToSnapshot();
-            Assert.Equal(SampleCipherSuite, snapshot.NegotiatedCipherSuite);
+            Assert.Equal(SampleCipherSuite, snapshot.NegotiatedCipherSuiteId);
             Assert.Equal(SqlConnectionEncryptionMode.Full, snapshot.NegotiatedEncryptionMode);
             Assert.Equal(SslProtocols.Tls12, snapshot.NegotiatedEncryptionProtocol);
         }
@@ -132,7 +145,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             capture.DiscardUnobservedNegotiation();
 
             SqlConnectionEncryptionInfo snapshot = capture.ToSnapshot();
-            Assert.Equal(SampleCipherSuite, snapshot.NegotiatedCipherSuite);
+            Assert.Equal(SampleCipherSuite, snapshot.NegotiatedCipherSuiteId);
             Assert.Null(snapshot.NegotiatedEncryptionMode);
             Assert.Null(snapshot.NegotiatedEncryptionProtocol);
         }
@@ -146,7 +159,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             capture.DiscardUnobservedNegotiation();
 
             Assert.Null(capture.CipherSuite);
-            Assert.Null(capture.ToSnapshot().NegotiatedCipherSuite);
+            Assert.Null(capture.ToSnapshot().NegotiatedCipherSuiteId);
         }
 
         [Fact]
@@ -191,7 +204,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             exception.EncryptionInfo = capture.ToSnapshot();
             capture.Reset();
 
-            Assert.Equal(SampleCipherSuite, exception.EncryptionInfo.NegotiatedCipherSuite);
+            Assert.Equal(SampleCipherSuite, exception.EncryptionInfo.NegotiatedCipherSuiteId);
             Assert.Equal(messageBefore, exception.Message);
         }
 
@@ -205,8 +218,8 @@ namespace Microsoft.Data.SqlClient.UnitTests
             capture.Reset();
             capture.RecordCipherSuite(0x1301);
 
-            Assert.Equal(SampleCipherSuite, first.NegotiatedCipherSuite);
-            Assert.Equal(0x1301, capture.ToSnapshot().NegotiatedCipherSuite);
+            Assert.Equal(SampleCipherSuite, first.NegotiatedCipherSuiteId);
+            Assert.Equal(0x1301, capture.ToSnapshot().NegotiatedCipherSuiteId);
         }
     }
 }
