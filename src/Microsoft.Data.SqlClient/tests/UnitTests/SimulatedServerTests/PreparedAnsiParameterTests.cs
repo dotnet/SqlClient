@@ -58,8 +58,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             typeof(SqlCommand).GetField("_inPrepare",
                 BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(command, true);
-            SqlReturnValue handle = new();
-            handle.value.Int32 = 123;
+            TdsReturnValueToken handle = new();
+            handle.Value.Int32 = 123;
             command.OnReturnValue(handle, (TdsParserStateObject)state);
             parameter.Value = new string(nextMultibyte ? '\u00e9' : 'a', 4000);
 
