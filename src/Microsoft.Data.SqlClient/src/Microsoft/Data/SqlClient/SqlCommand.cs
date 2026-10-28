@@ -287,6 +287,11 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private object _prepareHandle = s_cachedInvalidPrepareHandle;
 
+        // These capacities describe the server declaration, not the current parameter values.
+        // Zero skips non-ANSI parameters; -1 denotes a MAX declaration.
+        private int[] _preparedParameterByteCapacities;
+        private int[] _pendingParameterByteCapacities;
+
         /// <summary>
         /// Last TaskCompletionSource for reconnect task - use for cancellation only.
         /// </summary>
@@ -629,6 +634,8 @@ namespace Microsoft.Data.SqlClient
                             // Clean prepare status (even successful unprepare does not do that)
                             // @TODO: ... but it does?
                             _prepareHandle = s_cachedInvalidPrepareHandle;
+                            _preparedParameterByteCapacities = null;
+                            _pendingParameterByteCapacities = null;
                             _execType = EXECTYPE.UNPREPARED;
                         }
                     }
@@ -1604,8 +1611,10 @@ namespace Microsoft.Data.SqlClient
                 if (!returnValue.value.IsNull)
                 {
                     _prepareHandle = returnValue.value.Int32;
+                    _preparedParameterByteCapacities = _pendingParameterByteCapacities;
                 }
 
+                _pendingParameterByteCapacities = null;
                 _inPrepare = false;
                 return;
             }
@@ -2213,11 +2222,7 @@ namespace Microsoft.Data.SqlClient
                     // parser, with it's associated code page.
                     if (mt.IsAnsiType)
                     {
-                        int actualBytes = sqlParam.GetActualSizeInBytes(parser);
-                        if (actualBytes > size)
-                        {
-                            size = actualBytes;
-                        }
+                        size = GetAnsiParameterByteCapacity(sqlParam, parser);
                     }
 
                     // If the user specified a 0-sized parameter for a variable length field, pass
@@ -2246,6 +2251,56 @@ namespace Microsoft.Data.SqlClient
             }
 
             return paramList.ToString();
+        }
+
+        private static int GetAnsiParameterByteCapacity(SqlParameter parameter, TdsParser parser)
+        {
+            MetaType metaType = parameter.InternalMetaType;
+            if (!metaType.IsAnsiType || parameter.Direction == ParameterDirection.ReturnValue)
+            {
+                return 0;
+            }
+            if (metaType.IsPlp)
+            {
+                return -1;
+            }
+            if (metaType.IsLong)
+            {
+                return 0;
+            }
+
+            int capacity = Math.Max(parameter.Size, parameter.GetActualSizeInBytes(parser));
+            return capacity == 0 ? TdsEnums.MAXSIZE : capacity;
+        }
+
+        private bool PreparedParametersRequireReprepare()
+        {
+            if (_preparedParameterByteCapacities == null ||
+                _preparedParameterByteCapacities.Length != _parameters.Count)
+            {
+                return true;
+            }
+
+            TdsParser parser = _stateObj.Parser;
+            for (int i = 0; i < _parameters.Count; i++)
+            {
+                int preparedCapacity = _preparedParameterByteCapacities[i];
+                if (preparedCapacity == 0 || preparedCapacity == -1)
+                {
+                    continue;
+                }
+
+                SqlParameter parameter = _parameters[i];
+                parameter.Validate(i, isCommandProc: false);
+                parameter.ValidateTypeLengths(parser);
+                int requiredCapacity = GetAnsiParameterByteCapacity(parameter, parser);
+                if (requiredCapacity == -1 || requiredCapacity > preparedCapacity)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -2838,6 +2893,9 @@ namespace Microsoft.Data.SqlClient
                 _prepareHandle);
 
             _execType = EXECTYPE.PREPAREPENDING;
+
+            _preparedParameterByteCapacities = null;
+            _pendingParameterByteCapacities = null;
 
             // Don't zero out the handle because we'll pass it in to sp_prepexec on the next prepare
             // Unless the close count isn't the same as when we last prepared
