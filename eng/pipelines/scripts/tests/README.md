@@ -28,7 +28,7 @@ Add `-Output Detailed` to see per-test results.
 
 | File | Covers |
 | ---- | ------ |
-| `Open-LocalizationPr.Tests.ps1` | `Open-LocalizationPr.ps1` — de-duplication of the scheduled localization pull request. |
+| `Open-LocalizationPr.Tests.ps1` | `Open-LocalizationPr.ps1` — localization PR de-duplication, portable Git authentication, inherited-header resets, and credential cleanup after success or failure. |
 | `Install-DockerCli.macos.Tests.ps1` | `Install-DockerCli.macos.ps1` — Homebrew bottle selection for the macOS docker CLI. |
 | `Pipeline-Arguments.Tests.ps1` | PR build/pack/test argument quoting and the repository's CI variable naming convention. |
 | `Pipeline-Platforms.Tests.ps1` | Windows/Linux-only PR validation, macOS job/dependency exclusion, and unchanged CI macOS defaults. |
@@ -38,6 +38,11 @@ The localization and Docker helper tests mock `git`, `tar`, `Invoke-RestMethod`,
 and `Invoke-WebRequest`, so they do not access the network or modify a real
 repository. The build-orchestration tests run real MSBuild evaluation and targets
 with a recording child CLI stub; they do not restore, build, or pack the driver.
+The localization tests also use real Git configuration queries (without network
+access) to verify that the authentication header is correctly parsed. The publisher
+uses `GIT_CONFIG_PARAMETERS` rather than the Git-2.31-only `GIT_CONFIG_COUNT`
+mechanism, preserves inherited configuration, and logs the Git executable and
+version for diagnosing differences between checkout and PowerShell tasks.
 They also evaluate the actual test projects to verify that the forwarded family version sets the
 central SqlClient, Abstractions, and Logging package ranges. Stress uses its own central file with
 the supplied SqlClient version; Abstractions and Logging are transitive dependencies there.

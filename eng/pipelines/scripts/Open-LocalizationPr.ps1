@@ -279,6 +279,7 @@ if ($DryRun) {
 Write-Host ''
 
 $originalLocation = Get-Location
+$originalGitConfigParameters = $env:GIT_CONFIG_PARAMETERS
 
 try {
     #region Clone and stage
@@ -287,17 +288,22 @@ try {
         Remove-Item -LiteralPath $WorkingDirectory -Recurse -Force
     }
 
-    # Authenticate through git's environment-based config rather than the remote
-    # URL, so the token never lands in .git/config, on a process command line, or
-    # in Invoke-Git's exception messages. GIT_CONFIG_* is honoured by git 2.31+
-    # and applies to clone, fetch and push alike.
+    # GIT_CONFIG_PARAMETERS also works with Git versions before 2.31. Keep the
+    # token out of command arguments and repository config, and reset inherited
+    # GitHub headers before adding ours so credentials are not sent twice.
     $basicAuth = [Convert]::ToBase64String(
         [Text.Encoding]::ASCII.GetBytes("x-access-token:$AccessToken"))
-    $env:GIT_CONFIG_COUNT = '1'
-    $env:GIT_CONFIG_KEY_0 = 'http.https://github.com/.extraheader'
-    $env:GIT_CONFIG_VALUE_0 = "AUTHORIZATION: basic $basicAuth"
+    $authConfig = "'http.https://github.com/.extraheader=' 'http.https://github.com/.extraheader=AUTHORIZATION: basic $basicAuth'"
+    $env:GIT_CONFIG_PARAMETERS = if ([string]::IsNullOrWhiteSpace($originalGitConfigParameters)) {
+        $authConfig
+    }
+    else {
+        "$originalGitConfigParameters $authConfig"
+    }
     $cloneUrl = "https://github.com/$repoSlug.git"
 
+    Write-Host "Git executable: $((Get-Command git -ErrorAction Stop).Source)"
+    Invoke-Git --version
     Write-Host "Cloning $repoSlug@$BaseBranch..."
     Invoke-Git clone --branch $BaseBranch --quiet $cloneUrl $WorkingDirectory
 
@@ -444,9 +450,7 @@ try {
 finally {
     Set-Location -LiteralPath $originalLocation
 
-    Remove-Item Env:\GIT_CONFIG_COUNT -ErrorAction SilentlyContinue
-    Remove-Item Env:\GIT_CONFIG_KEY_0 -ErrorAction SilentlyContinue
-    Remove-Item Env:\GIT_CONFIG_VALUE_0 -ErrorAction SilentlyContinue
+    $env:GIT_CONFIG_PARAMETERS = $originalGitConfigParameters
 
     if ($ownedWorkingDirectory -and (Test-Path -LiteralPath $WorkingDirectory)) {
         Remove-Item -LiteralPath $WorkingDirectory -Recurse -Force -ErrorAction SilentlyContinue

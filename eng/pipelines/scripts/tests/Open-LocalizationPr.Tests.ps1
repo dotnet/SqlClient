@@ -14,6 +14,7 @@
 BeforeAll {
     $global:scriptPath = Join-Path $PSScriptRoot '..' 'Open-LocalizationPr.ps1'
     $global:resourcesPath = 'src/Microsoft.Data.SqlClient/src/Resources'
+    $global:nativeGit = (Get-Command git -CommandType Application | Select-Object -First 1).Source
 
     function New-TempDirectoryPath {
         return Join-Path ([System.IO.Path]::GetTempPath()) "loc-test-$([guid]::NewGuid().ToString('n'))"
@@ -59,6 +60,13 @@ Describe 'Open-LocalizationPr.ps1' {
             $global:LASTEXITCODE = 0
 
             if ($joined -like 'clone*') {
+                $global:cloneGitConfigParameters = $env:GIT_CONFIG_PARAMETERS
+                $global:cloneGitConfigCount = $env:GIT_CONFIG_COUNT
+                $global:cloneEffectiveHeaders = @(& $global:nativeGit config --get-urlmatch http.extraheader https://github.com/dotnet/SqlClient.git)
+                if ($global:cloneExitCode -ne 0) {
+                    $global:LASTEXITCODE = $global:cloneExitCode
+                    return
+                }
                 # Stand in for a real clone so the script finds the expected layout.
                 New-Item -ItemType Directory -Force -Path (Join-Path $global:workDir $global:resourcesPath) | Out-Null
                 return
@@ -99,12 +107,23 @@ Describe 'Open-LocalizationPr.ps1' {
         $global:remoteTree = $null
         $global:remoteParent = $null
         $global:openPullRequests = @()
+        $global:cloneExitCode = 0
+        $global:cloneGitConfigParameters = $null
+        $global:cloneGitConfigCount = $null
+        $global:savedGitEnvironment = @{}
+        foreach ($name in @('GIT_CONFIG_PARAMETERS', 'GIT_CONFIG_COUNT', 'GIT_CONFIG_KEY_0', 'GIT_CONFIG_VALUE_0')) {
+            $global:savedGitEnvironment[$name] = [Environment]::GetEnvironmentVariable($name)
+            [Environment]::SetEnvironmentVariable($name, $null)
+        }
 
         $global:sourceDir = New-SourceTree
         $global:workDir = New-TempDirectoryPath
     }
 
     AfterEach {
+        foreach ($name in $global:savedGitEnvironment.Keys) {
+            [Environment]::SetEnvironmentVariable($name, $global:savedGitEnvironment[$name])
+        }
         foreach ($path in @($global:sourceDir, $global:workDir)) {
             if ($path -and (Test-Path -LiteralPath $path)) {
                 Remove-Item -LiteralPath $path -Recurse -Force -ErrorAction SilentlyContinue
@@ -297,7 +316,22 @@ Describe 'Open-LocalizationPr.ps1' {
                 Should -BeLike '*https://github.com/dotnet/SqlClient.git*'
         }
 
-        It 'Clears the git credential environment afterwards' {
+        It 'Supplies authentication through the portable Git configuration environment' {
+            & $global:scriptPath `
+                -GitHubRepository 'dotnet/SqlClient' `
+                -AccessToken 'token' `
+                -SourceDirectory $global:sourceDir `
+                -WorkingDirectory $global:workDir
+
+            $expected = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes('x-access-token:token'))
+            $global:cloneGitConfigParameters |
+                Should -Be "'http.https://github.com/.extraheader=' 'http.https://github.com/.extraheader=AUTHORIZATION: basic $expected'"
+            $global:cloneGitConfigCount | Should -BeNullOrEmpty
+            @($global:cloneEffectiveHeaders | Where-Object { $_ }).Count | Should -Be 1
+            $global:cloneEffectiveHeaders[-1] | Should -Be "AUTHORIZATION: basic $expected"
+        }
+
+        It 'Clears its credential environment afterwards' {
             & $global:scriptPath `
                 -GitHubRepository 'dotnet/SqlClient' `
                 -AccessToken 'token' `
@@ -306,6 +340,75 @@ Describe 'Open-LocalizationPr.ps1' {
 
             $env:GIT_CONFIG_COUNT | Should -BeNullOrEmpty
             $env:GIT_CONFIG_VALUE_0 | Should -BeNullOrEmpty
+            $env:GIT_CONFIG_PARAMETERS | Should -BeNullOrEmpty
+        }
+
+        It 'Preserves inherited Git configuration' {
+            $original = "'test.inherited=value with spaces'"
+            $env:GIT_CONFIG_PARAMETERS = $original
+            $env:GIT_CONFIG_COUNT = '1'
+            $env:GIT_CONFIG_KEY_0 = 'test.count'
+            $env:GIT_CONFIG_VALUE_0 = 'inherited'
+
+            & $global:scriptPath `
+                -GitHubRepository 'dotnet/SqlClient' `
+                -AccessToken 'token' `
+                -SourceDirectory $global:sourceDir `
+                -WorkingDirectory $global:workDir
+
+            $global:cloneGitConfigParameters.StartsWith("$original ") | Should -BeTrue
+            $global:cloneGitConfigCount | Should -Be '1'
+            $env:GIT_CONFIG_PARAMETERS | Should -Be $original
+            $env:GIT_CONFIG_COUNT | Should -Be '1'
+            $env:GIT_CONFIG_KEY_0 | Should -Be 'test.count'
+            $env:GIT_CONFIG_VALUE_0 | Should -Be 'inherited'
+        }
+
+        It 'Restores inherited configuration when cloning fails' {
+            $original = "'test.inherited=original'"
+            $env:GIT_CONFIG_PARAMETERS = $original
+            $global:cloneExitCode = 128
+
+            { & $global:scriptPath `
+                -GitHubRepository 'dotnet/SqlClient' `
+                -AccessToken 'token' `
+                -SourceDirectory $global:sourceDir `
+                -WorkingDirectory $global:workDir } | Should -Throw '*failed with exit code 128*'
+
+            $env:GIT_CONFIG_PARAMETERS | Should -Be $original
+            $env:GIT_CONFIG_COUNT | Should -BeNullOrEmpty
+        }
+
+        It 'Resets inherited GitHub headers before authenticating' {
+            $env:GIT_CONFIG_PARAMETERS = "'http.https://github.com/.extraheader=AUTHORIZATION: inherited'"
+            $env:GIT_CONFIG_COUNT = '1'
+            $env:GIT_CONFIG_KEY_0 = 'http.https://github.com/.extraheader'
+            $env:GIT_CONFIG_VALUE_0 = 'AUTHORIZATION: another-inherited-header'
+
+            & $global:scriptPath `
+                -GitHubRepository 'dotnet/SqlClient' `
+                -AccessToken 'token' `
+                -SourceDirectory $global:sourceDir `
+                -WorkingDirectory $global:workDir
+
+            # Git retains empty reset entries; the HTTP client discards preceding headers.
+            $headers = $global:cloneEffectiveHeaders
+            $headers[-2] | Should -BeNullOrEmpty
+            $expected = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes('x-access-token:token'))
+            $headers[-1] | Should -Be "AUTHORIZATION: basic $expected"
+            $env:GIT_CONFIG_VALUE_0 | Should -Be 'AUTHORIZATION: another-inherited-header'
+        }
+
+        It 'Removes its credentials when cloning fails without inherited configuration' {
+            $global:cloneExitCode = 128
+
+            { & $global:scriptPath `
+                -GitHubRepository 'dotnet/SqlClient' `
+                -AccessToken 'token' `
+                -SourceDirectory $global:sourceDir `
+                -WorkingDirectory $global:workDir } | Should -Throw '*failed with exit code 128*'
+
+            $env:GIT_CONFIG_PARAMETERS | Should -BeNullOrEmpty
         }
     }
 
