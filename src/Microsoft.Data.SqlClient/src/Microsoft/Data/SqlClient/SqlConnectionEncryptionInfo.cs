@@ -64,7 +64,7 @@ namespace Microsoft.Data.SqlClient
 
             NegotiatedEncryptionMode = negotiatedEncryptionMode;
             NegotiatedEncryptionProtocol = negotiatedEncryptionProtocol;
-            NegotiatedCipherSuite = negotiatedCipherSuite;
+            NegotiatedCipherSuiteId = negotiatedCipherSuite;
             if (presentedServerCertificateHash256 is not null)
             {
                 if (presentedServerCertificateHash256.Length != CertificateHash256Length)
@@ -86,8 +86,20 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/NegotiatedEncryptionProtocol/*' />
         public SslProtocols? NegotiatedEncryptionProtocol { get; }
 
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/NegotiatedCipherSuiteId/*' />
+        public int? NegotiatedCipherSuiteId { get; }
+
+#if NET
+        // Strongly typed view of NegotiatedCipherSuiteId. TlsCipherSuite is ushort-backed, matching
+        // SslStream.NegotiatedCipherSuite, so this member is not CLS-compliant. Values with no named
+        // enum member are preserved.
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/NegotiatedCipherSuite/*' />
-        public int? NegotiatedCipherSuite { get; }
+        [CLSCompliant(false)]
+        public System.Net.Security.TlsCipherSuite? NegotiatedCipherSuite =>
+            NegotiatedCipherSuiteId is int value
+                ? (System.Net.Security.TlsCipherSuite)value
+                : null;
+#endif
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/PresentedServerCertificateHash256/*' />
         public ReadOnlyMemory<byte>? PresentedServerCertificateHash256 =>
@@ -107,7 +119,7 @@ namespace Microsoft.Data.SqlClient
         internal bool IsEmpty =>
             NegotiatedEncryptionMode is null &&
             NegotiatedEncryptionProtocol is null &&
-            NegotiatedCipherSuite is null &&
+            NegotiatedCipherSuiteId is null &&
             _presentedServerCertificateHash256 is null &&
             ValidationErrors is null &&
             ChainStatus is null;
