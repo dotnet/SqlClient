@@ -24,22 +24,34 @@ Restore the repository-pinned PowerShell first:
 dotnet tool restore
 ```
 
-From this directory:
+Start a PowerShell session with the restored tool:
 
 ```console
-dotnet tool run pwsh -NoProfile -Command "Import-Module Pester -RequiredVersion 6.2.0; Invoke-Pester ./publish-symbols.Tests.ps1"
+dotnet tool run pwsh -NoProfile
+```
+
+Import Pester once in that session before running any of the test commands below:
+
+```powershell
+Import-Module Pester -RequiredVersion 6.2.0
+```
+
+From this directory:
+
+```powershell
+Invoke-Pester ./publish-symbols.Tests.ps1
 ```
 
 Or from the repository root:
 
-```console
-dotnet tool run pwsh -NoProfile -Command "Import-Module Pester -RequiredVersion 6.2.0; Invoke-Pester ./eng/pipelines/onebranch/scripts/tests/"
+```powershell
+Invoke-Pester ./eng/pipelines/onebranch/scripts/tests/
 ```
 
 For detailed output:
 
-```console
-dotnet tool run pwsh -NoProfile -Command "Import-Module Pester -RequiredVersion 6.2.0; Invoke-Pester ./publish-symbols.Tests.ps1 -Output Detailed"
+```powershell
+Invoke-Pester ./publish-symbols.Tests.ps1 -Output Detailed
 ```
 
 ## Test Coverage

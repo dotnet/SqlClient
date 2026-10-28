@@ -10,8 +10,8 @@
 #
 # IMPORTANT: Pipeline definitions and @self templates are compiled from the triggered branch tip at
 # queue time, but file-based tasks still read scripts from the runtime working tree.  After aligning
-# the source, this template restores eng/pipelines from the queued commit so compiled pipeline steps
-# and their scripts remain in lockstep.
+# the source, this template restores eng/pipelines and the PowerShell repository registration helper
+# from the queued commit so compiled pipeline steps and their scripts remain in lockstep.
 #
 # The consuming pipeline MUST declare the upstream pipeline as a resource whose alias matches the
 # upstreamPipeline parameter, e.g.:
@@ -56,8 +56,8 @@ steps:
       Write-Host "Aligning source to ${{ parameters.upstreamPipeline }} commit $sha"
       git checkout --force $sha
       if ($LASTEXITCODE -ne 0) { throw "Failed to check out upstream commit $sha." }
-      Write-Host "Restoring eng/pipelines from queued pipeline commit $pipelineSourceSha"
-      git checkout --force $pipelineSourceSha -- eng/pipelines
-      if ($LASTEXITCODE -ne 0) { throw "Failed to restore eng/pipelines from $pipelineSourceSha." }
+      Write-Host "Restoring pipeline definitions and repository registration helper from queued pipeline commit $pipelineSourceSha"
+      git checkout --force $pipelineSourceSha -- eng/pipelines eng/scripts/Register-SqlClientPSRepository.ps1
+      if ($LASTEXITCODE -ne 0) { throw "Failed to restore pipeline definitions and repository registration helper from $pipelineSourceSha." }
     displayName: Align Source With Upstream Commit
     condition: ne(variables['resources.pipeline.${{ parameters.upstreamPipeline }}.sourceCommit'], '')

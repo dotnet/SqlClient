@@ -123,6 +123,48 @@ Describe 'SqlClient PowerShell repository registration' {
 }
 
 Describe 'Explicit repository registration and module consumers' {
+    It 'restores the queued registration helper when aligning to an older package commit' {
+        $source = Get-Content (Join-Path $repoRoot 'eng\pipelines\common\steps\align-source-with-upstream-step.yml') -Raw
+        $source | Should -Match 'git checkout --force \$pipelineSourceSha -- eng/pipelines eng/scripts/Register-SqlClientPSRepository.ps1'
+        $directory = Join-Path $TestDrive 'alignment'
+        New-Item -ItemType Directory -Path $directory | Out-Null
+        Push-Location $directory
+        try {
+            git init --quiet
+            $LASTEXITCODE | Should -Be 0
+            git config user.name 'Fixture'
+            git config user.email 'fixture@example.invalid'
+            New-Item -ItemType Directory -Path 'eng\pipelines' -Force | Out-Null
+            'old pipeline' | Set-Content 'eng\pipelines\fixture.yml'
+            'old source' | Set-Content 'source.txt'
+            git add .
+            git -c commit.gpgsign=false commit --quiet -m old
+            $LASTEXITCODE | Should -Be 0
+            $upstream = git rev-parse HEAD
+            New-Item -ItemType Directory -Path 'eng\scripts' -Force | Out-Null
+            Copy-Item -LiteralPath $scriptPath -Destination 'eng\scripts'
+            'queued pipeline' | Set-Content 'eng\pipelines\fixture.yml'
+            'new source' | Set-Content 'source.txt'
+            git add .
+            git -c commit.gpgsign=false commit --quiet -m queued
+            $LASTEXITCODE | Should -Be 0
+            $pipelineSourceSha = git rev-parse HEAD
+            git checkout --quiet --force $upstream
+            $LASTEXITCODE | Should -Be 0
+            Test-Path 'eng\scripts\Register-SqlClientPSRepository.ps1' | Should -BeFalse
+            $restore = [regex]::Match($source, '(?m)^\s*(git checkout --force \$pipelineSourceSha -- .+)$').Groups[1].Value
+            & ([scriptblock]::Create($restore))
+            $LASTEXITCODE | Should -Be 0
+            Get-Content 'source.txt' | Should -Be 'old source'
+            Get-Content 'eng\pipelines\fixture.yml' | Should -Be 'queued pipeline'
+            Get-Content 'eng\scripts\Register-SqlClientPSRepository.ps1' -Raw |
+                Should -Be (Get-Content $scriptPath -Raw)
+        }
+        finally {
+            Pop-Location
+        }
+    }
+
     It 'passes the repository name into the reusable registration step' {
         $source = Get-Content (Join-Path $repoRoot 'eng\pipelines\common\templates\steps\register-powershell-repository-step.yml') -Raw
         $source | Should -Match 'name: repositoryName'
