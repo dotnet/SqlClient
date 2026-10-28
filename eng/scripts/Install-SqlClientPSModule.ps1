@@ -4,7 +4,7 @@
 
 <#
 .SYNOPSIS
-Installs a PowerShell module from the governed source in NuGet.config.
+Installs a PowerShell module from the governed source in PowerShell.config.
 .DESCRIPTION
 Resolves the repository name and uses it immediately for installation under the
 current user. Registration and installation failures propagate without fallback.

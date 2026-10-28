@@ -10,15 +10,15 @@ BeforeAll {
 
 Describe 'SqlClient PowerShell repository registration' {
     BeforeEach {
-        $configPath = Join-Path $TestDrive 'NuGet.config'
-        '<configuration><packageSources><add key="governed" value="https://example.invalid/public/_packaging/modules/nuget/v3/index.json" /></packageSources></configuration>' |
+        $configPath = Join-Path $TestDrive 'PowerShell.config'
+        '<configuration><repository sourceLocation="https://example.invalid/public/_packaging/modules/nuget/v2" /></configuration>' |
             Set-Content -LiteralPath $configPath
-        $registerParameters = @{ RepositoryName = 'CustomModules'; NuGetConfigPath = $configPath }
+        $registerParameters = @{ RepositoryName = 'CustomModules'; ConfigPath = $configPath }
         Mock Get-PSRepository {}
         Mock Register-PSRepository {}
     }
 
-    It 'derives the v2 source from NuGet.config and registers the supplied name anonymously' {
+    It 'reads the explicit source from PowerShell.config and registers the supplied name anonymously' {
         $result = & $scriptPath @registerParameters
 
         @($result).Count | Should -Be 1
@@ -73,13 +73,14 @@ Describe 'SqlClient PowerShell repository registration' {
     }
 
     It 'rejects <Problem> configuration before registering anything' -ForEach @(
-        @{ Problem = 'missing governed source'; Xml = '<configuration><packageSources /></configuration>' }
-        @{ Problem = 'duplicate governed sources'; Xml = '<configuration><packageSources><add key="governed" value="https://example.invalid/a" /><add key="governed" value="https://example.invalid/b" /></packageSources></configuration>' }
+        @{ Problem = 'missing repository'; Xml = '<configuration />' }
+        @{ Problem = 'duplicate repositories'; Xml = '<configuration><repository sourceLocation="https://example.invalid/a" /><repository sourceLocation="https://example.invalid/b" /></configuration>' }
+        @{ Problem = 'missing source location'; Xml = '<configuration><repository /></configuration>' }
         @{ Problem = 'malformed XML'; Xml = '<configuration>' }
-        @{ Problem = 'relative URL'; Xml = '<configuration><packageSources><add key="governed" value="packages" /></packageSources></configuration>' }
-        @{ Problem = 'HTTP URL'; Xml = '<configuration><packageSources><add key="governed" value="http://example.invalid/_packaging/modules/nuget/v3/index.json" /></packageSources></configuration>' }
-        @{ Problem = 'unsupported endpoint'; Xml = '<configuration><packageSources><add key="governed" value="https://example.invalid/nuget/v3/index.json" /></packageSources></configuration>' }
-        @{ Problem = 'query string'; Xml = '<configuration><packageSources><add key="governed" value="https://example.invalid/_packaging/modules/nuget/v3/index.json?query=value" /></packageSources></configuration>' }
+        @{ Problem = 'relative URL'; Xml = '<configuration><repository sourceLocation="packages" /></configuration>' }
+        @{ Problem = 'HTTP URL'; Xml = '<configuration><repository sourceLocation="http://example.invalid/_packaging/modules/nuget/v2" /></configuration>' }
+        @{ Problem = 'unsupported endpoint'; Xml = '<configuration><repository sourceLocation="https://example.invalid/nuget/v3/index.json" /></configuration>' }
+        @{ Problem = 'query string'; Xml = '<configuration><repository sourceLocation="https://example.invalid/_packaging/modules/nuget/v2?query=value" /></configuration>' }
     ) {
         $Xml | Set-Content -LiteralPath $configPath
 
@@ -89,7 +90,7 @@ Describe 'SqlClient PowerShell repository registration' {
     }
 
     It 'fails explicitly when the config file is missing' {
-        $registerParameters.NuGetConfigPath = Join-Path $TestDrive 'missing.config'
+        $registerParameters.ConfigPath = Join-Path $TestDrive 'missing.config'
 
         { & $scriptPath @registerParameters } | Should -Throw
         Should -Invoke Register-PSRepository -Times 0 -Exactly
@@ -103,9 +104,10 @@ Describe 'SqlClient PowerShell repository registration' {
         finally {
             Pop-Location
         }
-        [xml] $config = Get-Content (Join-Path $repoRoot 'NuGet.config') -Raw
-        $expected = $config.SelectSingleNode('/configuration/packageSources/add[@key="governed"]').value -replace '/nuget/v3/index\.json$', '/nuget/v2'
+        [xml] $config = Get-Content (Join-Path $repoRoot 'PowerShell.config') -Raw
+        $expected = $config.configuration.repository.sourceLocation
         Should -Invoke Register-PSRepository -Times 1 -Exactly -ParameterFilter { $SourceLocation -eq $expected }
+        Get-Content $scriptPath -Raw | Should -Not -Match 'NuGet\.config|NuGetConfigPath'
     }
 
     It 'propagates repository enumeration failures' {
@@ -123,9 +125,9 @@ Describe 'SqlClient PowerShell repository registration' {
 }
 
 Describe 'Module prerequisite pipeline wiring' {
-    It 'restores both queued helpers when aligning to an older package commit' {
+    It 'restores the queued module config and helpers when aligning to an older package commit' {
         $source = Get-Content (Join-Path $repoRoot 'eng\pipelines\common\steps\align-source-with-upstream-step.yml') -Raw
-        $source | Should -Match 'git checkout --force \$pipelineSourceSha -- eng/pipelines eng/scripts/Register-SqlClientPSRepository.ps1 eng/scripts/Install-SqlClientPSModule.ps1'
+        $source | Should -Match 'git checkout --force \$pipelineSourceSha -- eng/pipelines eng/scripts/Register-SqlClientPSRepository.ps1 eng/scripts/Install-SqlClientPSModule.ps1 PowerShell.config'
         $directory = Join-Path $TestDrive 'alignment'
         New-Item -ItemType Directory -Path $directory | Out-Null
         Push-Location $directory
@@ -144,6 +146,7 @@ Describe 'Module prerequisite pipeline wiring' {
             New-Item -ItemType Directory -Path 'eng\scripts' -Force | Out-Null
             Copy-Item -LiteralPath $scriptPath -Destination 'eng\scripts'
             Copy-Item (Join-Path $repoRoot 'eng\scripts\Install-SqlClientPSModule.ps1') 'eng\scripts'
+            Copy-Item (Join-Path $repoRoot 'PowerShell.config') '.'
             'queued pipeline' | Set-Content 'eng\pipelines\fixture.yml'
             'new source' | Set-Content 'source.txt'
             git add .
@@ -154,11 +157,14 @@ Describe 'Module prerequisite pipeline wiring' {
             $LASTEXITCODE | Should -Be 0
             Test-Path 'eng\scripts\Register-SqlClientPSRepository.ps1' | Should -BeFalse
             Test-Path 'eng\scripts\Install-SqlClientPSModule.ps1' | Should -BeFalse
+            Test-Path 'PowerShell.config' | Should -BeFalse
             $restore = [regex]::Match($source, '(?m)^\s*(git checkout --force \$pipelineSourceSha -- .+)$').Groups[1].Value
             & ([scriptblock]::Create($restore))
             $LASTEXITCODE | Should -Be 0
             Get-Content 'source.txt' | Should -Be 'old source'
             Get-Content 'eng\pipelines\fixture.yml' | Should -Be 'queued pipeline'
+            Get-Content 'PowerShell.config' -Raw |
+                Should -Be (Get-Content (Join-Path $repoRoot 'PowerShell.config') -Raw)
             foreach ($helper in @('Register-SqlClientPSRepository.ps1', 'Install-SqlClientPSModule.ps1')) {
                 Get-Content "eng\scripts\$helper" -Raw |
                     Should -Be (Get-Content (Join-Path $repoRoot "eng\scripts\$helper") -Raw)

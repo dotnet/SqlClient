@@ -11,7 +11,7 @@ These tests require **PowerShell 7+** and **Pester 6.2.0**:
 ```
 
 Run the prerequisite commands from the repository root. The helper registers the
-public SqlClient feed anonymously from `NuGet.config`'s `governed` source;
+public SqlClient feed anonymously from the root `PowerShell.config`;
 see [module source details](../../../../BUILDGUIDE.md).
 
 `Build-Orchestration.Tests.ps1` also requires the .NET SDK pinned by

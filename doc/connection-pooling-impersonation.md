@@ -82,7 +82,7 @@ non-administrator local account and a SQL Windows login with access to `master`.
 Provisioning runs under PowerShell 7.4 or later and uses the pinned `SqlServer`
 PowerShell module (22.4.5.1), backed by Microsoft.Data.SqlClient. The reusable module
 installation step installs that version for the current user if it is missing,
-registering and immediately using `NuGet.config`'s `governed` source. Account setup
+registering and immediately using the source in the root `PowerShell.config`. Account setup
 and cleanup only import the preinstalled module. For local setup, first run
 `.\eng\scripts\Install-SqlClientPSModule.ps1 -Name SqlServer -RequiredVersion 22.4.5.1 -SkipIfInstalled -AllowClobber`.
 SQL login management connects to the configured local TCP port with Windows

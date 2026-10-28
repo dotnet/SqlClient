@@ -6,7 +6,7 @@
 .SYNOPSIS
 Registers the public SqlClient feed for PowerShellGet and returns its repository name.
 .DESCRIPTION
-Reads the governed source from NuGet.config and uses its NuGet v2 endpoint
+Reads the repository source from PowerShell.config and uses its NuGet v2 endpoint
 anonymously, including its PowerShell Gallery upstream.
 An existing registration must match; it is never overwritten.
 Registration and lookup failures propagate without falling back to another source.
@@ -18,22 +18,22 @@ param(
     [string] $RepositoryName,
 
     [ValidateNotNullOrEmpty()]
-    [string] $NuGetConfigPath = (Join-Path $PSScriptRoot '..\..\NuGet.config')
+    [string] $ConfigPath = (Join-Path $PSScriptRoot '..\..\PowerShell.config')
 )
 
 $ErrorActionPreference = 'Stop'
-[xml] $config = Get-Content -LiteralPath $NuGetConfigPath -Raw -ErrorAction Stop
-$sources = $config.SelectNodes('/configuration/packageSources/add[@key="governed"]')
+[xml] $config = Get-Content -LiteralPath $ConfigPath -Raw -ErrorAction Stop
+$sources = $config.SelectNodes('/configuration/repository')
 if ($sources.Count -ne 1) {
-    throw "Expected exactly one 'governed' package source in '$NuGetConfigPath'."
+    throw "Expected exactly one repository in '$ConfigPath'."
 }
-[uri] $source = $sources[0].GetAttribute('value')
+[uri] $source = $sources[0].GetAttribute('sourceLocation')
 if (-not $source.IsAbsoluteUri -or $source.Scheme -ne 'https' -or
     $source.UserInfo -or $source.Query -or $source.Fragment -or
-    $source.AbsolutePath -notmatch '/_packaging/[^/]+/nuget/v3/index\.json$') {
-    throw "The 'governed' source in '$NuGetConfigPath' must be an HTTPS Azure Artifacts NuGet v3 index URL."
+    $source.AbsolutePath -notmatch '/_packaging/[^/]+/nuget/v2/?$') {
+    throw "The repository in '$ConfigPath' must have an HTTPS Azure Artifacts NuGet v2 sourceLocation."
 }
-$sourceLocation = $source.AbsoluteUri -replace '/nuget/v3/index\.json$', '/nuget/v2'
+$sourceLocation = $source.AbsoluteUri.TrimEnd('/')
 
 $repository = Get-PSRepository -ErrorAction Stop | Where-Object { $_.Name -eq $RepositoryName }
 if ($repository) {

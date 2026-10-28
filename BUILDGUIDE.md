@@ -297,9 +297,11 @@ matrix without packing consumer fixtures.
 The suite is available for local execution only. PR and OneBranch pipelines do not
 install Pester or run these tests.
 
-`NuGet.config`'s `governed` package source is the single feed-address configuration
-for .NET packages and PowerShell modules. The registration helper derives the Azure
-Artifacts NuGet v2 endpoint from that v3 index URL and registers it anonymously.
+`PowerShell.config`, alongside `NuGet.config` in the repository root, is the single
+feed-address configuration for PowerShell modules. Set its repository's
+`sourceLocation` to the Azure Artifacts NuGet v2 endpoint. The registration helper
+reads that URL directly and registers it anonymously; it does not read or derive
+anything from the .NET package sources in `NuGet.config`.
 It creates a trusted PowerShellGet repository under the supplied name for the current
 user, or reuses a matching registration without changing its trust policy. Conflicting
 registrations and source failures stop explicitly; there is no fallback to PSGallery.
