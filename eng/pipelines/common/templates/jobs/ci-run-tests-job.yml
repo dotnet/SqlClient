@@ -217,12 +217,6 @@ jobs:
   # Restore dotnet CLI tools (e.g. pwsh, apicompat) before building.
   - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
 
-  - ${{ if and(eq(parameters.operatingSystem, 'Linux'), eq(parameters.configSqlFor, 'local'), contains(parameters.testSet, '1')) }}:
-    - template: /eng/pipelines/common/templates/steps/install-powershell-module-step.yml@self
-      parameters:
-        name: OpenSSL
-        skipIfInstalled: true
-
   - ${{ if ne(parameters.prebuildSteps, '') }}:
     - ${{ parameters.prebuildSteps }} # extra steps to run before the build like downloading sni and the required configuration
 

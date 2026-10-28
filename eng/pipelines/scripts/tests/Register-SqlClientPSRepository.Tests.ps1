@@ -170,16 +170,31 @@ Describe 'Module prerequisite pipeline wiring' {
     }
 
     It 'installs OpenSSL only for Linux local-server set-1 jobs in <Path>' -ForEach @(
-        @{ Path = 'eng\pipelines\common\templates\jobs\ci-run-tests-job.yml'; OS = 'operatingSystem'; Local = "eq(parameters.configSqlFor, 'local')" }
-        @{ Path = 'eng\pipelines\pr\jobs\test-sqlclientmanual-job.yml'; OS = 'platformOperatingSystem'; Local = 'parameters.isLocalServer' }
+        @{ Path = 'eng\pipelines\common\templates\stages\ci-run-tests-stage.yml'; Condition = "and(eq(config.value.operatingSystem, 'Linux'), eq(config.value.configSqlFor, 'local'), contains(testSet, '1'))" }
+        @{ Path = 'eng\pipelines\pr\jobs\test-sqlclientmanual-job.yml'; Condition = "and(eq(parameters.platformOperatingSystem, 'Linux'), parameters.isLocalServer, contains(parameters.testSet, '1'))" }
     ) {
         $source = Get-Content (Join-Path $repoRoot $Path) -Raw
-        $condition = "and(eq(parameters.$OS, 'Linux'), $Local, contains(parameters.testSet, '1'))"
-        $source | Should -Match ([regex]::Escape($condition))
+        $source | Should -Match ([regex]::Escape($Condition))
         $source | Should -Match 'install-powershell-module-step.yml@self\r?\n\s+parameters:\r?\n\s+name: OpenSSL\r?\n\s+skipIfInstalled: true'
-        $source.IndexOf('install-powershell-module-step.yml') |
-            Should -BeLessThan ([regex]::Match($source, 'configure-netonly-account-step.yml|TestSqlClientManual|run-all-tests-step.yml').Index)
+        if ($Path -like '*\pr\*') {
+            $source.IndexOf('install-powershell-module-step.yml') |
+                Should -BeLessThan $source.IndexOf('TestSqlClientManual')
+        }
         $source | Should -Not -Match '[Pp]owerShellRepository|Register-.*PSRepository'
+    }
+
+    It 'adds the Linux prerequisite through prebuild steps without specializing the shared job' {
+        $stage = Get-Content (Join-Path $repoRoot 'eng\pipelines\common\templates\stages\ci-run-tests-stage.yml') -Raw
+        $modernStart = $stage.IndexOf('- ${{ else }}: # .NET')
+        $modernStart | Should -BeGreaterThan 0
+        $stage.Substring(0, $modernStart) | Should -Not -Match 'name: OpenSSL'
+        $modern = $stage.Substring($modernStart)
+        $modern | Should -Match 'prebuildSteps:\r?\n\s+- \$\{\{ if and\(eq\(config.value.operatingSystem'
+        $modern | Should -Match 'skipIfInstalled: true\r?\n\s+- \$\{\{ parameters.prebuildSteps \}\}'
+        $job = Get-Content (Join-Path $repoRoot 'eng\pipelines\common\templates\jobs\ci-run-tests-job.yml') -Raw
+        $job | Should -Not -Match 'OpenSSL|install-powershell-module-step'
+        $job.IndexOf('- ${{ parameters.prebuildSteps }}') |
+            Should -BeLessThan $job.IndexOf('ci-project-build-step.yml')
     }
 
     It 'installs the pinned SqlServer prerequisite only before net-only setup' {

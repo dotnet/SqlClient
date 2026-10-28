@@ -155,7 +155,13 @@ stages:
                     mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
                     sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
                     sqlServerPackageVersion: $(sqlServerPackageVersion)
-                    prebuildSteps: ${{ parameters.prebuildSteps }}
+                    prebuildSteps:
+                      - ${{ if and(eq(config.value.operatingSystem, 'Linux'), eq(config.value.configSqlFor, 'local'), contains(testSet, '1')) }}:
+                        - template: /eng/pipelines/common/templates/steps/install-powershell-module-step.yml@self
+                          parameters:
+                            name: OpenSSL
+                            skipIfInstalled: true
+                      - ${{ parameters.prebuildSteps }}
                     targetFramework: ${{ targetFramework }}
                     netcoreVersionTestUtils: ${{config.value.netcoreVersionTestUtils }}
                     testSet: ${{ testSet }}
