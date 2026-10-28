@@ -74,8 +74,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Null(info.ValidationErrors);
             Assert.Null(info.ChainStatus);
             // The published cipher suite is the one the client SslStream negotiated.
-            Assert.NotNull(info.NegotiatedCipherSuite);
-            Assert.Equal(GetClientSslStreamCipherSuite(connection), info.NegotiatedCipherSuite);
+            Assert.NotNull(info.NegotiatedCipherSuiteId);
+            Assert.Equal(GetClientSslStreamCipherSuite(connection), info.NegotiatedCipherSuiteId);
         }
 
         [Theory]
@@ -124,7 +124,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             // same server and protocol negotiates the same suite.
             using SqlConnection trusted = new(BuildConnectionString(server.EndPoint.Port, trustServerCertificate: true));
             await OpenAsync(trusted, async);
-            Assert.Equal(GetClientSslStreamCipherSuite(trusted), info.NegotiatedCipherSuite);
+            Assert.Equal(GetClientSslStreamCipherSuite(trusted), info.NegotiatedCipherSuiteId);
         }
 
         [Theory]
@@ -216,8 +216,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         {
             Assert.Equal(SqlConnectionEncryptionMode.Full, info.NegotiatedEncryptionMode);
             Assert.Equal(SslProtocols.Tls12, info.NegotiatedEncryptionProtocol);
-            Assert.NotNull(info.NegotiatedCipherSuite);
-            Assert.InRange(info.NegotiatedCipherSuite.Value, 1, 0xFFFF);
+            Assert.NotNull(info.NegotiatedCipherSuiteId);
+            Assert.InRange(info.NegotiatedCipherSuiteId!.Value, 1, 0xFFFF);
         }
 
         /// <summary>
