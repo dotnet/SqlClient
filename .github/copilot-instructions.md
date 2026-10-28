@@ -123,6 +123,18 @@ When a new issue is created, follow these steps:
   - [ ] Ensure no breaking changes introduced
 - Ensure the PR passes all CI checks before merging.
 
+### Pull Request Milestones
+
+- Milestone assignment is a maintainer responsibility, not an agent responsibility. This applies
+  to all agents, including Agent merge.
+- Do not set, replace, or remove a PR milestone unless the user explicitly identifies the PR as
+  a backport or specifies its intended milestone. If the intended milestone is unclear, ask the
+  user rather than inferring it from available open milestones, branch names, or package versions.
+- Preserve human milestone changes, including removal of a milestone. Do not undo them based on
+  an earlier assignment or instruction; a later explicit user instruction is required to change them.
+- A failing milestone check is not authorization to change milestone settings or move a PR into
+  an open milestone. Report the check as a maintainer-action blocker instead.
+
 ### ✅ Closing Issues
 - Add a comment summarizing the fix and referencing the PR
 
