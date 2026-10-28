@@ -220,7 +220,6 @@ Describe 'Module prerequisite pipeline wiring' {
 
     It 'keeps module installation and repository plumbing out of <Path>' -ForEach @(
         @{ Path = 'eng\scripts\Configure-NetOnlyAccount.ps1' }
-        @{ Path = 'src\Microsoft.Data.SqlClient\tests\ManualTests\makepfxcert.ps1' }
         @{ Path = 'src\Microsoft.Data.SqlClient\tests\ManualTests\SQL\ConnectionTestWithSSLCert\CertificateTestWithTdsServer.cs' }
         @{ Path = 'src\Microsoft.Data.SqlClient\tests\ManualTests\DataCommon\DataTestUtility.cs' }
         @{ Path = 'src\Microsoft.Data.SqlClient\tests\tools\Microsoft.Data.SqlClient.TestUtilities\Config.cs' }
@@ -228,6 +227,74 @@ Describe 'Module prerequisite pipeline wiring' {
     ) {
         Get-Content (Join-Path $repoRoot $Path) -Raw |
             Should -Not -Match 'Install-Module|Register-.*PSRepository|[Pp]owerShellRepository'
+    }
+
+    Describe 'Certificate script local module fallback' {
+        BeforeAll {
+            $certificateScript = Join-Path $repoRoot 'src\Microsoft.Data.SqlClient\tests\ManualTests\makepfxcert.ps1'
+            $tokens = $null
+            $parseErrors = $null
+            $ast = [System.Management.Automation.Language.Parser]::ParseFile(
+                $certificateScript, [ref] $tokens, [ref] $parseErrors)
+            $parseErrors.Count | Should -Be 0
+            $unixBranch = $ast.Find({
+                param($node)
+                $node -is [System.Management.Automation.Language.IfStatementAst] -and
+                    $node.Clauses[0].Item1.Extent.Text -eq '$OS -eq "Unix"'
+            }, $true)
+            $fallback = $unixBranch.Clauses[0].Item2.Statements[0]
+            $fallback.Extent.Text | Should -Match 'Get-Module -ListAvailable -Name OpenSSL'
+            $invokeFallback = [scriptblock]::Create(
+                'param($PSScriptRoot)' + "`n" + $fallback.Extent.Text)
+        }
+
+        BeforeEach {
+            $checkout = Join-Path $TestDrive 'checkout'
+            $installerDirectory = Join-Path $checkout 'eng\scripts'
+            $outputDirectory = Join-Path $checkout 'artifacts\manualtests'
+            New-Item -ItemType Directory -Path $installerDirectory, $outputDirectory -Force | Out-Null
+            $fixtureInstaller = Join-Path $installerDirectory 'Install-SqlClientPSModule.ps1'
+            'param($Name, [switch] $SkipIfInstalled); [pscustomobject]@{ Name = $Name; Skip = [bool] $SkipIfInstalled }' |
+                Set-Content -LiteralPath $fixtureInstaller
+            Mock Get-Module {}
+        }
+
+        It 'installs a missing module through the shared installer from <Location>' -ForEach @(
+            @{ Location = 'source'; RelativePath = 'src\Microsoft.Data.SqlClient\tests\ManualTests' }
+            @{ Location = 'build output'; RelativePath = 'artifacts\manualtests' }
+        ) {
+            $scriptDirectory = Join-Path $checkout $RelativePath
+            New-Item -ItemType Directory -Path $scriptDirectory -Force | Out-Null
+            Push-Location $TestDrive
+            try {
+                $result = & $invokeFallback $scriptDirectory
+            }
+            finally {
+                Pop-Location
+            }
+            $result.Name | Should -BeExactly 'OpenSSL'
+            $result.Skip | Should -BeTrue
+        }
+
+        It 'does not invoke the installer when OpenSSL is already available' {
+            Mock Get-Module { [pscustomobject]@{ Name = 'OpenSSL' } }
+            'throw "installer must not run"' | Set-Content -LiteralPath $fixtureInstaller
+
+            & $invokeFallback $outputDirectory | Should -BeNullOrEmpty
+        }
+
+        It 'reports a missing checkout instead of switching repositories' {
+            $outside = Join-Path $TestDrive 'outside'
+            New-Item -ItemType Directory -Path $outside -Force | Out-Null
+
+            { & $invokeFallback $outside } | Should -Throw '*Cannot find the SqlClient module installer*'
+        }
+
+        It 'propagates installation failures to certificate generation error handling' {
+            'throw "module install failed"' | Set-Content -LiteralPath $fixtureInstaller
+
+            { & $invokeFallback $outputDirectory } | Should -Throw '*module install failed*'
+        }
     }
 
     It 'escapes module inputs in one shared template' {

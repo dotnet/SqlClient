@@ -321,8 +321,10 @@ Repository names do not travel through jobs, test configuration, or subprocesses
 The net-only account step installs SqlServer 22.4.5.1 before setup; cleanup does
 not install anything. Linux local-server manual-test jobs that include set 1
 install OpenSSL before the certificate tests. Linux Kerberos setup installs
-SqlServer before checking connectivity. The test scripts only consume the installed
-prerequisites. Registration, installation, and consumption must run as the same user.
+SqlServer before checking connectivity. For local Unix runs, the certificate script
+also installs a missing OpenSSL module through the shared installer, locating it from
+the script's checkout or in-repository build output. Outside a checkout, preinstall
+the module. Registration, installation, and consumption must run as the same user.
 For local runs, use the same installer before invoking those scripts:
 
 ```powershell

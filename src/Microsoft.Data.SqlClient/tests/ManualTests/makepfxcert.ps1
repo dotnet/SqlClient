@@ -47,6 +47,20 @@ function Invoke-SqlServerCertificateCommand {
 
     # Create a self-signed certificate
     if ($OS -eq "Unix") {
+        if (-not (Get-Module -ListAvailable -Name OpenSSL)) {
+            # Local runs may not have executed the pipeline prerequisite step.
+            $repositoryDirectory = Get-Item -LiteralPath $PSScriptRoot
+            while ($repositoryDirectory -and -not (Test-Path -LiteralPath (
+                Join-Path $repositoryDirectory.FullName 'eng/scripts/Install-SqlClientPSModule.ps1'
+            ))) {
+                $repositoryDirectory = $repositoryDirectory.Parent
+            }
+            if (-not $repositoryDirectory) {
+                throw 'Cannot find the SqlClient module installer. Run from a repository checkout or preinstall OpenSSL.'
+            }
+            & (Join-Path $repositoryDirectory.FullName 'eng/scripts/Install-SqlClientPSModule.ps1') `
+                -Name OpenSSL -SkipIfInstalled
+        }
         chmod 777 $OutDir
         # Show version of OpenSSL just to make sure it is installed
         openssl version
