@@ -41,16 +41,19 @@
         On runtimes where <see cref="T:System.Security.Authentication.SslProtocols" /> does not define a named member for the negotiated version (for example, TLS 1.3 on .NET Framework), the numeric protocol value is preserved.
       </remarks>
     </NegotiatedEncryptionProtocol>
-    <NegotiatedCipherSuite>
+    <NegotiatedCipherSuiteId>
       <summary>
-        Gets the TLS cipher suite that the server selected for the encrypted channel.
+        Gets the identifier of the TLS cipher suite that the server selected for the encrypted channel.
       </summary>
       <value>
         The IANA TLS cipher suite identifier selected by the server (for example, <c>0x1302</c> for <c>TLS_AES_256_GCM_SHA384</c>), or <see langword="null" /> if the cipher suite is not available.
       </value>
       <remarks>
         <para>
-          The value is the 16-bit identifier from the IANA TLS Cipher Suites registry, in the range 0 to 0xFFFF. It is not a Windows <c>ALG_ID</c>. On .NET, the value can be cast to <c>System.Net.Security.TlsCipherSuite</c>.
+          The value is the 16-bit identifier from the IANA TLS Cipher Suites registry, in the range 0 to 0xFFFF. It is not a Windows <c>ALG_ID</c>. This property has the same type and value on every target framework and is CLS-compliant. Identifiers that have no named member in <c>System.Net.Security.TlsCipherSuite</c> (for example, newly registered or GREASE values) are returned unchanged.
+        </para>
+        <para>
+          On .NET, the same value is also available as a <c>System.Net.Security.TlsCipherSuite</c> through the <c>NegotiatedCipherSuite</c> property.
         </para>
         <para>
           A <see langword="null" /> value means the driver could not obtain the cipher suite: no TLS handshake took place, the value was not captured on the current code path, the network layer in use does not report it, or the connection attempt failed before the value was known. It does not mean that the server selected no cipher suite.
@@ -60,6 +63,22 @@
         </para>
         <para>
           This value describes only the cipher suite selected by the server. It does not list the cipher suites offered by the client.
+        </para>
+      </remarks>
+    </NegotiatedCipherSuiteId>
+    <NegotiatedCipherSuite>
+      <summary>
+        Gets the TLS cipher suite that the server selected for the encrypted channel, as a <c>System.Net.Security.TlsCipherSuite</c>. This property is available only on .NET.
+      </summary>
+      <value>
+        The value of <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptionInfo.NegotiatedCipherSuiteId" /> converted to <c>System.Net.Security.TlsCipherSuite</c>, or <see langword="null" /> if the cipher suite is not available.
+      </value>
+      <remarks>
+        <para>
+          This property returns the same value as <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptionInfo.NegotiatedCipherSuiteId" />, using the type of <c>System.Net.Security.SslStream.NegotiatedCipherSuite</c>. An identifier that has no named member in the enumeration is preserved numerically and is not discarded. The <see langword="null" /> and failure semantics are the same as for <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptionInfo.NegotiatedCipherSuiteId" />.
+        </para>
+        <para>
+          <c>TlsCipherSuite</c> is an unsigned 16-bit enumeration, so this property is not CLS-compliant. Use <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptionInfo.NegotiatedCipherSuiteId" /> from CLS-compliant code or from libraries that target .NET Standard or .NET Framework.
         </para>
       </remarks>
     </NegotiatedCipherSuite>

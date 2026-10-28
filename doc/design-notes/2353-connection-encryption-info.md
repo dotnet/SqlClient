@@ -46,7 +46,8 @@ applicable.
 | --- | --- | --- |
 | `NegotiatedEncryptionMode` | `SqlConnectionEncryptionMode?` | Actual encryption outcome, not the requested `Encrypt` setting. |
 | `NegotiatedEncryptionProtocol` | `SslProtocols?` | Negotiated TLS version, such as TLS 1.2 or TLS 1.3. |
-| `NegotiatedCipherSuite` | `int?` | IANA TLS cipher suite identifier selected by the server, such as `0x1302` (`TLS_AES_256_GCM_SHA384`). *Needs API review.* |
+| `NegotiatedCipherSuiteId` | `int?` on every target framework; CLS-compliant | IANA TLS cipher suite identifier selected by the server, such as `0x1302` (`TLS_AES_256_GCM_SHA384`). *Needs API review.* |
+| `NegotiatedCipherSuite` | `TlsCipherSuite?`; .NET only; not CLS-compliant | The same value as `NegotiatedCipherSuiteId`, typed as `System.Net.Security.TlsCipherSuite`. *Needs API review.* |
 | `PresentedServerCertificateHash256` | `ReadOnlyMemory<byte>?` | SHA-256 of the complete DER-encoded server-presented leaf certificate: 32 bytes when available. Not a public-key-only hash, and not the caller's configured certificate. |
 | `ValidationErrors` | `SqlServerCertificateValidationErrors?` | Effective certificate-validation result under the connection's configured rules. |
 | `ChainStatus` | `X509ChainStatusFlags?` | Applicable chain-validation flags, such as `UntrustedRoot`, `NotTimeValid`, or `Revoked`. |
@@ -76,7 +77,11 @@ namespace Microsoft.Data.SqlClient
     {
         public SqlConnectionEncryptionMode? NegotiatedEncryptionMode { get; }
         public SslProtocols? NegotiatedEncryptionProtocol { get; }
-        public int? NegotiatedCipherSuite { get; }
+        public int? NegotiatedCipherSuiteId { get; }
+#if NET
+        [CLSCompliant(false)]
+        public System.Net.Security.TlsCipherSuite? NegotiatedCipherSuite { get; }
+#endif
         public ReadOnlyMemory<byte>? PresentedServerCertificateHash256 { get; }
         public SqlServerCertificateValidationErrors? ValidationErrors { get; }
         public X509ChainStatusFlags? ChainStatus { get; }
@@ -109,15 +114,31 @@ snapshots.
 
 > **Needs API review.** This property is a proposal and has not yet been reviewed by the team.
 
-`NegotiatedCipherSuite` is the 16-bit identifier from the IANA TLS Cipher Suites registry
-for the suite the server selected in its ServerHello, for example `0x1302` for
-`TLS_AES_256_GCM_SHA384`. It is not a Windows `ALG_ID`. On .NET, it can be cast to
-`System.Net.Security.TlsCipherSuite`.
+`NegotiatedCipherSuiteId` is the 16-bit identifier from the IANA TLS Cipher Suites
+registry for the suite the server selected in its ServerHello, for example `0x1302` for
+`TLS_AES_256_GCM_SHA384`. It is not a Windows `ALG_ID`.
 
-- **Why `int?`:** `TlsCipherSuite` does not exist on .NET Framework or .NET Standard 2.0,
-  and its `ushort` backing type is not CLS-compliant (the assembly is
-  `[CLSCompliant(true)]`). `int` matches the integral types used elsewhere in the
-  public API, and the driver only stores values from 0 to 0xFFFF.
+- **One shared member, plus a strong type on .NET:** `NegotiatedCipherSuiteId` is `int?`
+  on every target framework. On .NET only, `NegotiatedCipherSuite` exposes the same value
+  as `System.Net.Security.TlsCipherSuite?`, the type `SslStream.NegotiatedCipherSuite`
+  uses. .NET Framework and .NET Standard 2.0 have no `NegotiatedCipherSuite` member,
+  because `TlsCipherSuite` does not exist there.
+- **Why not a per-target type for one property name:** the package ships a
+  `netstandard2.0` reference assembly. If `NegotiatedCipherSuite` were `ushort?` there and
+  `TlsCipherSuite?` on .NET, a library compiled against .NET Standard would bind to
+  `Nullable<ushort> get_NegotiatedCipherSuite()`, which does not exist in the .NET
+  implementation, and would fail at run time with `MissingMethodException`. With this
+  shape, the only member present on every target has an identical signature everywhere.
+- **CLS compliance:** `NegotiatedCipherSuiteId` is CLS-compliant and carries no
+  attribute. `TlsCipherSuite` is backed by `ushort`, so `NegotiatedCipherSuite` is marked
+  `[CLSCompliant(false)]`, as `SslStream.NegotiatedCipherSuite` is. The assembly stays
+  `[CLSCompliant(true)]`.
+- **Unknown identifiers are preserved:** `NegotiatedCipherSuiteId` returns the captured
+  identifier unchanged, and `NegotiatedCipherSuite` casts it without `Enum.IsDefined`
+  filtering, so newly registered or GREASE values are not dropped.
+- **Internal contract:** the internal constructor and capture paths use `int?` (0 to
+  0xFFFF) on every target, so the network-layer plumbing does not depend on the target
+  framework.
 - **`null` means unavailable:** no TLS, the value was not captured on the current code
   path, the network layer (for example, an older native SNI) does not report it, or the
   attempt failed before the value was known. It does not mean the server selected no

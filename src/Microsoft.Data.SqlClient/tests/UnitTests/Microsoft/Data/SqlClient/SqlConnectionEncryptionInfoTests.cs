@@ -327,7 +327,7 @@ namespace Microsoft.Data.SqlClient
 
             Assert.Equal(SqlConnectionEncryptionMode.Strict, info.NegotiatedEncryptionMode);
             Assert.Equal(SslProtocols.Tls12, info.NegotiatedEncryptionProtocol);
-            Assert.Equal(SampleCipherSuite, info.NegotiatedCipherSuite);
+            Assert.Equal(SampleCipherSuite, info.NegotiatedCipherSuiteId);
             Assert.NotNull(info.PresentedServerCertificateHash256);
             Assert.Equal(SampleHashHex, ToHex(info.PresentedServerCertificateHash256!.Value));
             Assert.Equal(SqlServerCertificateValidationErrors.HostNameMismatch, info.ValidationErrors);
@@ -429,7 +429,10 @@ namespace Microsoft.Data.SqlClient
         {
             SqlConnectionEncryptionInfo info = new(SqlConnectionEncryptionMode.Full, SslProtocols.Tls12, null, null, null);
 
+            Assert.Null(info.NegotiatedCipherSuiteId);
+#if NET
             Assert.Null(info.NegotiatedCipherSuite);
+#endif
             Assert.False(info.IsEmpty);
         }
 
@@ -447,8 +450,10 @@ namespace Microsoft.Data.SqlClient
         {
             SqlConnectionEncryptionInfo info = new(null, null, null, null, null, cipherSuite);
 
-            Assert.True(info.NegotiatedCipherSuite.HasValue);
-            Assert.Equal(cipherSuite, info.NegotiatedCipherSuite);
+            Assert.Equal(cipherSuite, info.NegotiatedCipherSuiteId);
+#if NET
+            Assert.Equal((System.Net.Security.TlsCipherSuite)cipherSuite, info.NegotiatedCipherSuite);
+#endif
             Assert.False(info.IsEmpty);
         }
 
@@ -468,14 +473,92 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Verifies the public property is a nullable <see cref="int"/> (CLS-compliant, available on every target).
+        /// Verifies that <c>NegotiatedCipherSuiteId</c> is a read-only <c>int?</c> on every target
+        /// framework and carries no <see cref="CLSCompliantAttribute"/>, so it inherits the assembly's
+        /// CLS compliance and has an identical signature everywhere.
         /// </summary>
         [Fact]
-        public void NegotiatedCipherSuite_PropertyType_IsNullableInt()
+        public void NegotiatedCipherSuiteId_PropertyShape_IsSameOnEveryTargetFramework()
         {
-            Assert.Equal(
-                typeof(int?),
-                typeof(SqlConnectionEncryptionInfo).GetProperty(nameof(SqlConnectionEncryptionInfo.NegotiatedCipherSuite))!.PropertyType);
+            System.Reflection.PropertyInfo? property =
+                typeof(SqlConnectionEncryptionInfo).GetProperty(nameof(SqlConnectionEncryptionInfo.NegotiatedCipherSuiteId));
+
+            Assert.NotNull(property);
+            Assert.Equal(typeof(int?), property!.PropertyType);
+            Assert.True(property.CanRead);
+            Assert.False(property.CanWrite);
+            Assert.True(property.GetMethod!.IsPublic);
+            Assert.Null(Attribute.GetCustomAttribute(property, typeof(CLSCompliantAttribute)));
+            Assert.Null(Attribute.GetCustomAttribute(property.GetMethod, typeof(CLSCompliantAttribute)));
+        }
+
+        /// <summary>
+        /// Verifies that the strongly typed <c>NegotiatedCipherSuite</c> property exists only on .NET,
+        /// as a read-only <c>TlsCipherSuite?</c> marked not CLS-compliant.
+        /// </summary>
+        [Fact]
+        public void NegotiatedCipherSuite_PropertyShape_MatchesTargetFramework()
+        {
+            System.Reflection.PropertyInfo? property =
+                typeof(SqlConnectionEncryptionInfo).GetProperty("NegotiatedCipherSuite");
+
+#if NET
+            Assert.NotNull(property);
+            Assert.Equal(typeof(System.Net.Security.TlsCipherSuite?), property!.PropertyType);
+            Assert.True(property.CanRead);
+            Assert.False(property.CanWrite);
+            CLSCompliantAttribute? cls =
+                (CLSCompliantAttribute?)Attribute.GetCustomAttribute(property, typeof(CLSCompliantAttribute));
+            Assert.NotNull(cls);
+            Assert.False(cls!.IsCompliant);
+#else
+            Assert.Null(property);
+#endif
+        }
+
+        /// <summary>
+        /// Verifies that the assembly remains CLS-compliant overall.
+        /// </summary>
+        [Fact]
+        public void Assembly_RemainsClsCompliant()
+        {
+            CLSCompliantAttribute? cls = (CLSCompliantAttribute?)Attribute.GetCustomAttribute(
+                typeof(SqlConnectionEncryptionInfo).Assembly, typeof(CLSCompliantAttribute));
+
+            Assert.NotNull(cls);
+            Assert.True(cls!.IsCompliant);
+        }
+
+#if NET
+        /// <summary>
+        /// Verifies that a known IANA identifier maps to the matching named <c>TlsCipherSuite</c> member.
+        /// </summary>
+        [Fact]
+        public void NegotiatedCipherSuite_KnownIdentifier_MapsToNamedMember()
+        {
+            SqlConnectionEncryptionInfo info = new(null, null, null, null, null, 0x1302);
+
+            Assert.Equal(System.Net.Security.TlsCipherSuite.TLS_AES_256_GCM_SHA384, info.NegotiatedCipherSuite);
+            Assert.Equal(0x1302, info.NegotiatedCipherSuiteId);
+        }
+#endif
+
+        /// <summary>
+        /// Verifies that a valid 16-bit identifier with no named <c>TlsCipherSuite</c> member (for
+        /// example, a GREASE value) is preserved numerically and not filtered out.
+        /// </summary>
+        [Theory]
+        [InlineData(0x0A0A)]
+        [InlineData(0xFAFA)]
+        public void NegotiatedCipherSuite_UnknownIdentifier_IsPreserved(int cipherSuite)
+        {
+            SqlConnectionEncryptionInfo info = new(null, null, null, null, null, cipherSuite);
+
+            Assert.Equal(cipherSuite, info.NegotiatedCipherSuiteId);
+#if NET
+            Assert.False(Enum.IsDefined(typeof(System.Net.Security.TlsCipherSuite), (ushort)cipherSuite));
+            Assert.Equal((System.Net.Security.TlsCipherSuite)cipherSuite, info.NegotiatedCipherSuite);
+#endif
         }
 
         /// <summary>
@@ -490,8 +573,8 @@ namespace Microsoft.Data.SqlClient
 
             SqlException clone = ex.InternalClone();
 
-            Assert.Equal(SampleCipherSuite, clone.EncryptionInfo.NegotiatedCipherSuite);
-            Assert.DoesNotContain(nameof(SqlConnectionEncryptionInfo.NegotiatedCipherSuite), ex.ToString());
+            Assert.Equal(SampleCipherSuite, clone.EncryptionInfo.NegotiatedCipherSuiteId);
+            Assert.DoesNotContain("NegotiatedCipherSuite", ex.ToString());
             Assert.DoesNotContain("TLS_AES_256_GCM_SHA384", ex.ToString());
         }
 
@@ -614,7 +697,10 @@ namespace Microsoft.Data.SqlClient
             Assert.NotNull(info);
             Assert.Null(info.NegotiatedEncryptionMode);
             Assert.Null(info.NegotiatedEncryptionProtocol);
+            Assert.Null(info.NegotiatedCipherSuiteId);
+#if NET
             Assert.Null(info.NegotiatedCipherSuite);
+#endif
             Assert.Null(info.PresentedServerCertificateHash256);
             Assert.Null(info.ValidationErrors);
             Assert.Null(info.ChainStatus);
