@@ -335,7 +335,7 @@ and trailing data from newer versions is ignored.
 | `ServerCertificateValidationErrors` | `dwValidationErrors` (`VALIDATION_ERRORS`) | Same bit values; unknown bits preserved |
 | `ServerCertificateChainStatus` | `dwChainStatus` (`CHAIN_STATUS`) | Raw `CERT_TRUST_*` error status equals `X509ChainStatusFlags`; unknown bits preserved |
 | `NegotiatedProtocol` | `dwProtocol` (`PROTOCOL`) | `SP_PROT_*` client bits mapped as for the handshake result; used only when the protocol was not already recorded (for example, after a failed handshake) |
-| `NegotiatedCipherSuite` | `dwCipherSuite` (`CIPHER_SUITE` 0x80) | Used only when `dwVersion >= 2` and `cbSize >= 68`; values of 0 or above 0xFFFF are ignored. Adopted through the certificate capture when no suite was recorded for the attempt |
+| `NegotiatedCipherSuiteId` (and `NegotiatedCipherSuite` on .NET) | `dwCipherSuite` (`CIPHER_SUITE` 0x80) | Used only when `dwVersion >= 2` and `cbSize >= 68`; values of 0 or above 0xFFFF are ignored. Adopted through the certificate capture when no suite was recorded for the attempt. Exposed as `int?` `NegotiatedCipherSuiteId` on every target; on .NET, `NegotiatedCipherSuite` returns the same value as `TlsCipherSuite`, keeping identifiers with no named member |
 
 The cipher suite is captured at the same points as the hash and protocol: after a successful
 handshake, after a deferred-validation failure, and best effort after an

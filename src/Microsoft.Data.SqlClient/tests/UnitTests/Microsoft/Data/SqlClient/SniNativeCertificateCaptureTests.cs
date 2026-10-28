@@ -532,7 +532,12 @@ namespace Microsoft.Data.SqlClient.UnitTests
             capture.DiscardUnobservedNegotiation();
 
             SqlConnectionEncryptionInfo snapshot = capture.ToSnapshot();
-            Assert.Equal(0xC030, snapshot.NegotiatedCipherSuite);
+            Assert.Equal(0xC030, snapshot.NegotiatedCipherSuiteId);
+#if NET
+            Assert.Equal(
+                System.Net.Security.TlsCipherSuite.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+                snapshot.NegotiatedCipherSuite);
+#endif
             Assert.Equal(SslProtocols.Tls12, snapshot.NegotiatedEncryptionProtocol);
             Assert.Equal(SqlServerCertificateValidationErrors.ChainError, snapshot.ValidationErrors);
         }
@@ -544,7 +549,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             capture.RecordServerCertificate(new ServerCertificateCapture(null, null, null, SslProtocols.Tls12, 0xC030));
             capture.Reset();
 
-            Assert.Null(capture.ToSnapshot().NegotiatedCipherSuite);
+            Assert.Null(capture.ToSnapshot().NegotiatedCipherSuiteId);
             Assert.False(capture.HasValues);
         }
 
