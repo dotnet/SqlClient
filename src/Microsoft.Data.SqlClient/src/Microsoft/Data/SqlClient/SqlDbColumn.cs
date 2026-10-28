@@ -13,9 +13,9 @@ namespace Microsoft.Data.SqlClient
 {
     internal class SqlDbColumn : DbColumn
     {
-        private readonly _SqlMetaData _metadata;
+        private readonly TdsColumnMetadata _metadata;
 
-        internal SqlDbColumn(_SqlMetaData md)
+        internal SqlDbColumn(TdsColumnMetadata md)
         {
             _metadata = md;
             Populate();
@@ -24,19 +24,19 @@ namespace Microsoft.Data.SqlClient
         private void Populate()
         {
             AllowDBNull = _metadata.IsNullable;
-            BaseCatalogName = _metadata.catalogName;
+            BaseCatalogName = _metadata.CatalogName;
             BaseColumnName = _metadata.baseColumn;
-            BaseSchemaName = _metadata.schemaName;
-            BaseServerName = _metadata.serverName;
-            BaseTableName = _metadata.tableName;
+            BaseSchemaName = _metadata.SchemaName;
+            BaseServerName = _metadata.ServerName;
+            BaseTableName = _metadata.TableName;
             ColumnName = _metadata.column;
-            ColumnOrdinal = _metadata.ordinal;
-            ColumnSize = (_metadata.metaType.IsSizeInCharacters && (_metadata.length != 0x7fffffff)) ? (_metadata.length / 2) : _metadata.length;
+            ColumnOrdinal = _metadata.Ordinal;
+            ColumnSize = (_metadata.MetaType.IsSizeInCharacters && (_metadata.length != 0x7fffffff)) ? (_metadata.length / 2) : _metadata.length;
             IsAutoIncrement = _metadata.IsIdentity;
             IsIdentity = _metadata.IsIdentity;
-            IsLong = _metadata.metaType.IsLong;
+            IsLong = _metadata.MetaType.IsLong;
 
-            if (SqlDbType.Timestamp == _metadata.type)
+            if (SqlDbType.Timestamp == _metadata.DbType)
             {
                 IsUnique = true;
             }
@@ -51,12 +51,12 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                NumericPrecision = _metadata.metaType.Precision;
+                NumericPrecision = _metadata.MetaType.Precision;
             }
 
             IsReadOnly = _metadata.IsReadOnly;
 
-            UdtAssemblyQualifiedName = _metadata.udt?.AssemblyQualifiedName;
+            UdtAssemblyQualifiedName = _metadata.Udt?.AssemblyQualifiedName;
 
         }
 
@@ -157,7 +157,7 @@ namespace Microsoft.Data.SqlClient
         /// <c>float16</c>, or <see langword="null"/> if the column is not a vector.
         /// </summary>
         private string VectorBaseType =>
-            _metadata.type != SqlDbTypeExtensions.Vector
+            _metadata.DbType != SqlDbTypeExtensions.Vector
                 ? null
                 : (MetaType.SqlVectorElementType)_metadata.scale switch
                 {
@@ -176,7 +176,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (_metadata.type != SqlDbTypeExtensions.Vector)
+                if (_metadata.DbType != SqlDbTypeExtensions.Vector)
                 {
                     return null;
                 }

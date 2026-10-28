@@ -25,11 +25,19 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 {
+    /// <summary>
+    /// Exercises connection establishment and failure handling against simulated TDS servers.
+    /// </summary>
     [Collection(SimulatedServerTestCollection.Name)]
     public class ConnectionTests
     {
-        [Fact]
-        public void ConnectionTest()
+        /// <summary>
+        /// Opens a connection through both public entry points, including managed SNI on Unix.
+        /// </summary>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task ConnectionTest(bool useAsync)
         {
             using TdsServer server = new(new TdsServerArguments() { });
             server.Start();
@@ -40,7 +48,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 Pooling = false, // No pooling needed; avoids leaking a pooled connection to this ephemeral port
             }.ConnectionString;
             using SqlConnection connection = new(connStr);
-            connection.Open();
+            if (useAsync)
+            {
+                await connection.OpenAsync();
+            }
+            else
+            {
+                connection.Open();
+            }
+
+            Assert.Equal(ConnectionState.Open, connection.State);
         }
 
         [Fact]
