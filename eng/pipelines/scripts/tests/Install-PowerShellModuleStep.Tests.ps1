@@ -4,7 +4,20 @@
 
 BeforeAll {
     $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..\..\..')).Path
-    $installer = Join-Path $repoRoot 'eng\scripts\Install-SqlClientPSModule.ps1'
+    $template = Get-Content (Join-Path $repoRoot 'eng\pipelines\common\templates\steps\install-powershell-module-step.yml') -Raw
+    $inline = [regex]::Match($template, '(?ms)^  - pwsh: \|\r?\n(.*?)(?=^    displayName:)').Groups[1].Value
+    $inline | Should -Not -BeNullOrEmpty
+    $installer = {
+        param([string] $Name, [string] $RequiredVersion, [switch] $SkipIfInstalled, [switch] $AllowClobber)
+        $script = [regex]::Replace($inline, '\$\{\{ replace\(parameters\.name,.*?\) \}\}',
+            { $Name.Replace("'", "''") })
+        $script = [regex]::Replace($script, '\$\{\{ replace\(parameters\.requiredVersion,.*?\) \}\}',
+            { $RequiredVersion.Replace("'", "''") })
+        $script = $script.Replace('$${{ parameters.skipIfInstalled }}', '$' + $SkipIfInstalled.ToString())
+        $script = $script.Replace('$${{ parameters.allowClobber }}', '$' + $AllowClobber.ToString())
+        $script = $script.Replace('$(Build.SourcesDirectory)', $repoRoot)
+        & ([scriptblock]::Create($script))
+    }
 }
 
 Describe 'Governed PowerShell module installation' {

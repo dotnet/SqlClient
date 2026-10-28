@@ -7,7 +7,8 @@ Pester tests for pipeline helpers, argument templates, and build orchestration.
 These tests require **PowerShell 7+** and **Pester 6.2.0**:
 
 ```powershell
-.\eng\scripts\Install-SqlClientPSModule.ps1 -Name Pester -RequiredVersion 6.2.0
+$repository = & .\eng\scripts\Register-SqlClientPSRepository.ps1 -RepositoryName SqlClient
+Install-Module Pester -RequiredVersion 6.2.0 -Repository $repository -Scope CurrentUser -Force
 ```
 
 Run the prerequisite commands from the repository root. The helper registers the
@@ -33,8 +34,8 @@ Add `-Output Detailed` to see per-test results.
 | File | Covers |
 | ---- | ------ |
 | `Register-SqlClientPSRepository.Tests.ps1` | Governed module source registration, conflicts, failures, and prerequisite-step wiring. |
-| `Install-SqlClientPSModule.Tests.ps1` | Immediate use of the registered repository, version pins, installed-module reuse, and failure propagation. |
-| `Configure-NetOnlyAccount.Tests.ps1` | Pinned SqlServer installation and temporary account provisioning/cleanup. |
+| `Install-PowerShellModuleStep.Tests.ps1` | Inline installation step: immediate use of the registered repository, version pins, installed-module reuse, and failure propagation. |
+| `Configure-NetOnlyAccount.Tests.ps1` | Pinned SqlServer import and temporary account provisioning/cleanup. |
 | `Open-LocalizationPr.Tests.ps1` | `Open-LocalizationPr.ps1` — de-duplication of the scheduled localization pull request. |
 | `Install-DockerCli.macos.Tests.ps1` | `Install-DockerCli.macos.ps1` — Homebrew bottle selection for the macOS docker CLI. |
 | `Pipeline-Arguments.Tests.ps1` | PR build/pack/test argument quoting and the repository's CI variable naming convention. |

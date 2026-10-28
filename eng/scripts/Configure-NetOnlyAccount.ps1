@@ -11,7 +11,7 @@ Creates or removes a temporary local Windows account and its local SQL Windows l
 .DESCRIPTION
 Run setup and cleanup on the same Windows agent using PowerShell 7.4 or later,
 as a local administrator with permission to create and drop SQL logins.
-Install the pinned SqlServer module with Install-SqlClientPSModule.ps1 before setup.
+Install the pinned SqlServer module before setup; see BUILDGUIDE.md for local commands.
 Setup and cleanup use its Invoke-Sqlcmd cmdlet, backed by
 Microsoft.Data.SqlClient, with Windows authentication over the configured TCP port.
 The local CI server's certificate is trusted explicitly for these encrypted connections.

@@ -127,7 +127,7 @@ Describe 'SqlClient PowerShell repository registration' {
 Describe 'Module prerequisite pipeline wiring' {
     It 'restores the queued module config and helpers when aligning to an older package commit' {
         $source = Get-Content (Join-Path $repoRoot 'eng\pipelines\common\steps\align-source-with-upstream-step.yml') -Raw
-        $source | Should -Match 'git checkout --force \$pipelineSourceSha -- eng/pipelines eng/scripts/Register-SqlClientPSRepository.ps1 eng/scripts/Install-SqlClientPSModule.ps1 PowerShell.config'
+        $source | Should -Match 'git checkout --force \$pipelineSourceSha -- eng/pipelines eng/scripts/Register-SqlClientPSRepository.ps1 PowerShell.config'
         $directory = Join-Path $TestDrive 'alignment'
         New-Item -ItemType Directory -Path $directory | Out-Null
         Push-Location $directory
@@ -145,7 +145,6 @@ Describe 'Module prerequisite pipeline wiring' {
             $upstream = git rev-parse HEAD
             New-Item -ItemType Directory -Path 'eng\scripts' -Force | Out-Null
             Copy-Item -LiteralPath $scriptPath -Destination 'eng\scripts'
-            Copy-Item (Join-Path $repoRoot 'eng\scripts\Install-SqlClientPSModule.ps1') 'eng\scripts'
             Copy-Item (Join-Path $repoRoot 'PowerShell.config') '.'
             'queued pipeline' | Set-Content 'eng\pipelines\fixture.yml'
             'new source' | Set-Content 'source.txt'
@@ -156,7 +155,6 @@ Describe 'Module prerequisite pipeline wiring' {
             git checkout --quiet --force $upstream
             $LASTEXITCODE | Should -Be 0
             Test-Path 'eng\scripts\Register-SqlClientPSRepository.ps1' | Should -BeFalse
-            Test-Path 'eng\scripts\Install-SqlClientPSModule.ps1' | Should -BeFalse
             Test-Path 'PowerShell.config' | Should -BeFalse
             $restore = [regex]::Match($source, '(?m)^\s*(git checkout --force \$pipelineSourceSha -- .+)$').Groups[1].Value
             & ([scriptblock]::Create($restore))
@@ -165,10 +163,8 @@ Describe 'Module prerequisite pipeline wiring' {
             Get-Content 'eng\pipelines\fixture.yml' | Should -Be 'queued pipeline'
             Get-Content 'PowerShell.config' -Raw |
                 Should -Be (Get-Content (Join-Path $repoRoot 'PowerShell.config') -Raw)
-            foreach ($helper in @('Register-SqlClientPSRepository.ps1', 'Install-SqlClientPSModule.ps1')) {
-                Get-Content "eng\scripts\$helper" -Raw |
-                    Should -Be (Get-Content (Join-Path $repoRoot "eng\scripts\$helper") -Raw)
-            }
+            Get-Content 'eng\scripts\Register-SqlClientPSRepository.ps1' -Raw |
+                Should -Be (Get-Content $scriptPath -Raw)
         }
         finally {
             Pop-Location
@@ -203,23 +199,50 @@ Describe 'Module prerequisite pipeline wiring' {
             Should -BeLessThan $job.IndexOf('ci-project-build-step.yml')
     }
 
-    It 'installs the pinned SqlServer prerequisite only before net-only setup' {
-        $source = Get-Content (Join-Path $repoRoot 'eng\pipelines\common\templates\steps\configure-netonly-account-step.yml') -Raw
-        $source | Should -Match "if eq\(parameters.mode, 'setup'\)"
+    It 'installs pinned SqlServer alongside other job prerequisites in <Path>' -ForEach @(
+        @{
+            Path = 'eng\pipelines\common\templates\stages\ci-run-tests-stage.yml'
+            Condition = "and(eq(config.value.operatingSystem, 'Windows'), eq(config.value.configSqlFor, 'local'), eq(testSet, '3'), eq(coalesce(config.value.configProperties.instanceName, 'MSSQLSERVER'), 'MSSQLSERVER'))"
+        }
+        @{
+            Path = 'eng\pipelines\pr\jobs\test-sqlclientmanual-job.yml'
+            Condition = "and(eq(parameters.platformOperatingSystem, 'Windows'), parameters.isLocalServer, eq(parameters.configDisplayName, 'localhost'), contains(parameters.testSet, '3'))"
+        }
+    ) {
+        $source = Get-Content (Join-Path $repoRoot $Path) -Raw
+        $source | Should -Match ([regex]::Escape($Condition))
         $source | Should -Match 'name: SqlServer\r?\n\s+requiredVersion: 22.4.5.1\r?\n\s+skipIfInstalled: true\r?\n\s+allowClobber: true'
-        $source.IndexOf('install-powershell-module-step.yml') | Should -BeLessThan $source.IndexOf('task: PowerShell@2')
+        if ($Path -like '*\pr\*') {
+            $source.IndexOf('restore-dotnet-tools.yml') |
+                Should -BeLessThan $source.IndexOf('install-powershell-module-step.yml')
+            $source.IndexOf('install-powershell-module-step.yml') |
+                Should -BeLessThan $source.IndexOf('configure-sqlserver-step.yml')
+        }
+        else {
+            ([regex]::Matches($source, 'name: SqlServer')).Count | Should -Be 2
+        }
+        $account = Get-Content (Join-Path $repoRoot 'eng\pipelines\common\templates\steps\configure-netonly-account-step.yml') -Raw
+        $account | Should -Not -Match 'install-powershell-module|Install-Module'
         $source | Should -Not -Match '[Pp]owerShellRepository'
     }
 
     It 'installs unpinned SqlServer before the Kerberos connectivity check' {
-        $source = Get-Content (Join-Path $repoRoot 'eng\pipelines\ci\kerberos\linux-setup-step.yml') -Raw
+        $source = Get-Content (Join-Path $repoRoot 'eng\pipelines\ci\kerberos\sqlclient-ci-kerberos-job.yml') -Raw
+        $source | Should -Match "if eq\(parameters.operatingSystem, 'Linux'\)"
         $source | Should -Match 'install-powershell-module-step.yml@self\r?\n\s+parameters:\r?\n\s+name: SqlServer'
-        $source.IndexOf('install-powershell-module-step.yml') | Should -BeLessThan $source.IndexOf('Import-Module SqlServer')
+        $source.IndexOf('restore-dotnet-tools.yml') |
+            Should -BeLessThan $source.IndexOf('install-powershell-module-step.yml')
+        $source.IndexOf('install-powershell-module-step.yml') |
+            Should -BeLessThan $source.IndexOf('linux-setup-step.yml')
         $source | Should -Not -Match 'requiredVersion|Install-Module|[Pp]owerShellRepository'
+        $setup = Get-Content (Join-Path $repoRoot 'eng\pipelines\ci\kerberos\linux-setup-step.yml') -Raw
+        $setup | Should -Not -Match 'install-powershell-module|Install-Module'
+        $setup | Should -Match 'Import-Module SqlServer'
     }
 
     It 'keeps module installation and repository plumbing out of <Path>' -ForEach @(
         @{ Path = 'eng\scripts\Configure-NetOnlyAccount.ps1' }
+        @{ Path = 'src\Microsoft.Data.SqlClient\tests\ManualTests\makepfxcert.ps1' }
         @{ Path = 'src\Microsoft.Data.SqlClient\tests\ManualTests\SQL\ConnectionTestWithSSLCert\CertificateTestWithTdsServer.cs' }
         @{ Path = 'src\Microsoft.Data.SqlClient\tests\ManualTests\DataCommon\DataTestUtility.cs' }
         @{ Path = 'src\Microsoft.Data.SqlClient\tests\tools\Microsoft.Data.SqlClient.TestUtilities\Config.cs' }
@@ -229,79 +252,12 @@ Describe 'Module prerequisite pipeline wiring' {
             Should -Not -Match 'Install-Module|Register-.*PSRepository|[Pp]owerShellRepository'
     }
 
-    Describe 'Certificate script local module fallback' {
-        BeforeAll {
-            $certificateScript = Join-Path $repoRoot 'src\Microsoft.Data.SqlClient\tests\ManualTests\makepfxcert.ps1'
-            $tokens = $null
-            $parseErrors = $null
-            $ast = [System.Management.Automation.Language.Parser]::ParseFile(
-                $certificateScript, [ref] $tokens, [ref] $parseErrors)
-            $parseErrors.Count | Should -Be 0
-            $unixBranch = $ast.Find({
-                param($node)
-                $node -is [System.Management.Automation.Language.IfStatementAst] -and
-                    $node.Clauses[0].Item1.Extent.Text -eq '$OS -eq "Unix"'
-            }, $true)
-            $fallback = $unixBranch.Clauses[0].Item2.Statements[0]
-            $fallback.Extent.Text | Should -Match 'Get-Module -ListAvailable -Name OpenSSL'
-            $invokeFallback = [scriptblock]::Create(
-                'param($PSScriptRoot)' + "`n" + $fallback.Extent.Text)
-        }
-
-        BeforeEach {
-            $checkout = Join-Path $TestDrive 'checkout'
-            $installerDirectory = Join-Path $checkout 'eng\scripts'
-            $outputDirectory = Join-Path $checkout 'artifacts\manualtests'
-            New-Item -ItemType Directory -Path $installerDirectory, $outputDirectory -Force | Out-Null
-            $fixtureInstaller = Join-Path $installerDirectory 'Install-SqlClientPSModule.ps1'
-            'param($Name, [switch] $SkipIfInstalled); [pscustomobject]@{ Name = $Name; Skip = [bool] $SkipIfInstalled }' |
-                Set-Content -LiteralPath $fixtureInstaller
-            Mock Get-Module {}
-        }
-
-        It 'installs a missing module through the shared installer from <Location>' -ForEach @(
-            @{ Location = 'source'; RelativePath = 'src\Microsoft.Data.SqlClient\tests\ManualTests' }
-            @{ Location = 'build output'; RelativePath = 'artifacts\manualtests' }
-        ) {
-            $scriptDirectory = Join-Path $checkout $RelativePath
-            New-Item -ItemType Directory -Path $scriptDirectory -Force | Out-Null
-            Push-Location $TestDrive
-            try {
-                $result = & $invokeFallback $scriptDirectory
-            }
-            finally {
-                Pop-Location
-            }
-            $result.Name | Should -BeExactly 'OpenSSL'
-            $result.Skip | Should -BeTrue
-        }
-
-        It 'does not invoke the installer when OpenSSL is already available' {
-            Mock Get-Module { [pscustomobject]@{ Name = 'OpenSSL' } }
-            'throw "installer must not run"' | Set-Content -LiteralPath $fixtureInstaller
-
-            & $invokeFallback $outputDirectory | Should -BeNullOrEmpty
-        }
-
-        It 'reports a missing checkout instead of switching repositories' {
-            $outside = Join-Path $TestDrive 'outside'
-            New-Item -ItemType Directory -Path $outside -Force | Out-Null
-
-            { & $invokeFallback $outside } | Should -Throw '*Cannot find the SqlClient module installer*'
-        }
-
-        It 'propagates installation failures to certificate generation error handling' {
-            'throw "module install failed"' | Set-Content -LiteralPath $fixtureInstaller
-
-            { & $invokeFallback $outputDirectory } | Should -Throw '*module install failed*'
-        }
-    }
-
     It 'escapes module inputs in one shared template' {
         $source = Get-Content (Join-Path $repoRoot 'eng\pipelines\common\templates\steps\install-powershell-module-step.yml') -Raw
-        $source | Should -Match 'Install-SqlClientPSModule.ps1'
+        $source | Should -Match 'Register-SqlClientPSRepository.ps1'
+        $source | Should -Match 'Install-Module @install'
         $source | Should -Match 'Module name and version must be literal template parameters'
-        $source | Should -Not -Match 'RepositoryName|https://|env:'
+        $source | Should -Not -Match 'Install-SqlClientPSModule|https://|env:'
         foreach ($parameter in @('name', 'requiredVersion')) {
             $pattern = "'\$\{\{ replace\(parameters\.$parameter, '{4}, '{6}\) \}\}'"
             $literal = [regex]::Match($source, $pattern).Value

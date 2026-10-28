@@ -101,10 +101,6 @@ steps:
     env:
       DOMAIN_PASSWORD: ${{ parameters.kerberosDomainPassword }}
 
-  - template: /eng/pipelines/common/templates/steps/install-powershell-module-step.yml@self
-    parameters:
-      name: SqlServer
-
   - pwsh: |
       Import-Module SqlServer
       Invoke-Sqlcmd -Query "SELECT @@VERSION, @@SERVERNAME" -ConnectionString $env:REMOTE_TCP_CONN_STRING

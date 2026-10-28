@@ -81,10 +81,15 @@ Windows local-server Set 3 CI jobs for the default SQL instance provision a uniq
 non-administrator local account and a SQL Windows login with access to `master`.
 Provisioning runs under PowerShell 7.4 or later and uses the pinned `SqlServer`
 PowerShell module (22.4.5.1), backed by Microsoft.Data.SqlClient. The reusable module
-installation step installs that version for the current user if it is missing,
+installation step installs that version during job initialization for the current user if missing,
 registering and immediately using the source in the root `PowerShell.config`. Account setup
-and cleanup only import the preinstalled module. For local setup, first run
-`.\eng\scripts\Install-SqlClientPSModule.ps1 -Name SqlServer -RequiredVersion 22.4.5.1 -SkipIfInstalled -AllowClobber`.
+and cleanup only import the preinstalled module. For local setup, first run:
+
+```powershell
+$repository = & .\eng\scripts\Register-SqlClientPSRepository.ps1 -RepositoryName SqlClient
+Install-Module SqlServer -RequiredVersion 22.4.5.1 -Repository $repository -Scope CurrentUser -Force -AllowClobber
+```
+
 SQL login management connects to the configured local TCP port with Windows
 authentication and encryption, explicitly trusting the local CI server certificate.
 The generated password is passed only as a secret test-process environment

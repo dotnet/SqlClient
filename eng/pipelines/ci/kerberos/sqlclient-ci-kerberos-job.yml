@@ -84,6 +84,11 @@ jobs:
 
       - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
 
+      - ${{ if eq(parameters.operatingSystem, 'Linux') }}:
+        - template: /eng/pipelines/common/templates/steps/install-powershell-module-step.yml@self
+          parameters:
+            name: SqlServer
+
       - task: NuGetAuthenticate@1
         displayName: Authenticate NuGet feeds
 

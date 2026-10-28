@@ -27,14 +27,6 @@ parameters:
     default: '1433'
 
 steps:
-  - ${{ if eq(parameters.mode, 'setup') }}:
-    - template: /eng/pipelines/common/templates/steps/install-powershell-module-step.yml@self
-      parameters:
-        name: SqlServer
-        requiredVersion: 22.4.5.1
-        skipIfInstalled: true
-        allowClobber: true
-
   - task: PowerShell@2
     displayName: '${{ parameters.mode }} temporary net-only account [Win]'
     ${{ if eq(parameters.mode, 'cleanup') }}:

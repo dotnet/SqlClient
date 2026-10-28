@@ -282,7 +282,8 @@ Run `dotnet tool restore` first to restore the repository's pinned PowerShell to
 The regression suite also requires Pester 6.2.0:
 
 ```powershell
-dotnet tool run pwsh -NoProfile -File .\eng\scripts\Install-SqlClientPSModule.ps1 -Name Pester -RequiredVersion 6.2.0
+dotnet tool run pwsh -NoProfile -File .\eng\scripts\Register-SqlClientPSRepository.ps1 -RepositoryName SqlClient
+dotnet tool run pwsh -NoProfile -Command 'Install-Module Pester -RequiredVersion 6.2.0 -Repository SqlClient -Scope CurrentUser -Force'
 dotnet tool run pwsh -NoProfile -Command 'Import-Module Pester -RequiredVersion 6.2.0; Invoke-Pester -Path ./src/Microsoft.Data.SqlClient/tests/VersionChecks/VersionChecks.Tests.ps1 -CI'
 ```
 
@@ -314,24 +315,25 @@ Pipelines install prerequisites with the reusable
 `eng/pipelines/common/templates/steps/install-powershell-module-step.yml` template.
 It accepts a module `name`, optional `requiredVersion`, `skipIfInstalled`, and
 `allowClobber`. Module names and versions are literal template parameters, not
-runtime `$(variables)`. Its shared `eng/scripts/Install-SqlClientPSModule.ps1` installer
-resolves the repository name and immediately uses it for `Install-Module`.
+runtime `$(variables)`. The step calls the registration helper and immediately
+uses the returned repository name for `Install-Module` in the same inline script.
 Repository names do not travel through jobs, test configuration, or subprocesses.
 
-The net-only account step installs SqlServer 22.4.5.1 before setup; cleanup does
-not install anything. Linux local-server manual-test jobs that include set 1
-install OpenSSL before the certificate tests. Linux Kerberos setup installs
-SqlServer before checking connectivity. For local Unix runs, the certificate script
-also installs a missing OpenSSL module through the shared installer, locating it from
-the script's checkout or in-repository build output. Outside a checkout, preinstall
-the module. Registration, installation, and consumption must run as the same user.
-For local runs, use the same installer before invoking those scripts:
+Jobs install their PowerShell prerequisites together after restoring .NET tools,
+before building or configuring SQL Server/accounts. Windows net-only jobs install
+SqlServer 22.4.5.1; Linux local-server manual-test jobs that include set 1 install
+OpenSSL; Linux Kerberos jobs install unpinned SqlServer. Account setup/cleanup and
+certificate scripts only consume these prerequisites and never install modules.
+Registration, installation, and consumption must run as the same user.
+For local runs, register the source and install the needed modules before invoking
+those scripts:
 
 ```powershell
+$repository = & .\eng\scripts\Register-SqlClientPSRepository.ps1 -RepositoryName SqlClient
 # Before Windows net-only account setup, using PowerShell 7.4 or later:
-.\eng\scripts\Install-SqlClientPSModule.ps1 -Name SqlServer -RequiredVersion 22.4.5.1 -SkipIfInstalled -AllowClobber
+Install-Module SqlServer -RequiredVersion 22.4.5.1 -Repository $repository -Scope CurrentUser -Force -AllowClobber
 # Before Unix certificate tests (the openssl executable must also be installed):
-.\eng\scripts\Install-SqlClientPSModule.ps1 -Name OpenSSL -SkipIfInstalled
+Install-Module OpenSSL -Repository $repository -Scope CurrentUser -Force
 ```
 
 Just like building and testing the various projects in this repository, packaging the projects into NuGet packages is
