@@ -4,11 +4,11 @@ Pester tests for pipeline helpers, argument templates, and build orchestration.
 
 ## Prerequisites
 
-These tests require **PowerShell 7+** and **Pester v5 or later**:
+These tests require **PowerShell 7+** and **Pester 6.2.0**:
 
 ```powershell
 .\eng\scripts\Register-SqlClientPSRepository.ps1 -RepositoryName SqlClient
-Install-Module Pester -MinimumVersion 5.0 -Repository SqlClient -Scope CurrentUser -Force -SkipPublisherCheck -ErrorAction Stop
+Install-Module Pester -RequiredVersion 6.2.0 -Repository SqlClient -Scope CurrentUser -Force -SkipPublisherCheck -ErrorAction Stop
 ```
 
 Run the prerequisite commands from the repository root. The helper registers the
@@ -23,7 +23,7 @@ see [module source details](../../../../BUILDGUIDE.md).
 Run these commands from the repository root:
 
 ```powershell
-Import-Module Pester -MinimumVersion 5.0
+Import-Module Pester -RequiredVersion 6.2.0
 Invoke-Pester ./eng/pipelines/scripts/tests/
 ```
 

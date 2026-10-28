@@ -7,13 +7,13 @@ Pester tests for PowerShell scripts used by OneBranch pipeline steps.
 - PowerShell 7+, as restored by `dotnet tool restore` from `dotnet-tools.json`. Windows
   PowerShell 5.1 is not supported: these scripts and tests use types that exist only in
   PowerShell Core, such as `Microsoft.PowerShell.Commands.HttpResponseException`.
-- [Pester v5 or later](https://pester.dev/), installed from the public SqlClient feed.
+- [Pester 6.2.0](https://pester.dev/), installed from the public SqlClient feed.
 
 From the repository root, install Pester using anonymous feed access:
 
 ```powershell
 .\eng\scripts\Register-SqlClientPSRepository.ps1 -RepositoryName SqlClient
-Install-Module Pester -MinimumVersion 5.0 -Repository SqlClient -Scope CurrentUser -ErrorAction Stop
+Install-Module Pester -RequiredVersion 6.2.0 -Repository SqlClient -Scope CurrentUser -ErrorAction Stop
 ```
 
 ## Running the Tests
@@ -27,19 +27,19 @@ dotnet tool restore
 From this directory:
 
 ```console
-dotnet tool run pwsh -NoProfile -Command "Invoke-Pester ./publish-symbols.Tests.ps1"
+dotnet tool run pwsh -NoProfile -Command "Import-Module Pester -RequiredVersion 6.2.0; Invoke-Pester ./publish-symbols.Tests.ps1"
 ```
 
 Or from the repository root:
 
 ```console
-dotnet tool run pwsh -NoProfile -Command "Invoke-Pester ./eng/pipelines/onebranch/scripts/tests/"
+dotnet tool run pwsh -NoProfile -Command "Import-Module Pester -RequiredVersion 6.2.0; Invoke-Pester ./eng/pipelines/onebranch/scripts/tests/"
 ```
 
 For detailed output:
 
 ```console
-dotnet tool run pwsh -NoProfile -Command "Invoke-Pester ./publish-symbols.Tests.ps1 -Output Detailed"
+dotnet tool run pwsh -NoProfile -Command "Import-Module Pester -RequiredVersion 6.2.0; Invoke-Pester ./publish-symbols.Tests.ps1 -Output Detailed"
 ```
 
 ## Test Coverage

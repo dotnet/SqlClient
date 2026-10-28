@@ -279,12 +279,12 @@ reference SqlClient's source project directly, so they do not import its package
 targets and are not validated by this consumer target.
 
 Run `dotnet tool restore` first to restore the repository's pinned PowerShell tool.
-The regression suite also requires Pester 5.7.1:
+The regression suite also requires Pester 6.2.0:
 
 ```powershell
 dotnet tool run pwsh -NoProfile -File .\eng\scripts\Register-SqlClientPSRepository.ps1 -RepositoryName SqlClient
-dotnet tool run pwsh -NoProfile -Command 'Install-Module Pester -RequiredVersion 5.7.1 -Repository SqlClient -Scope CurrentUser -Force -ErrorAction Stop'
-dotnet tool run pwsh -NoProfile -Command 'Import-Module Pester -RequiredVersion 5.7.1; Invoke-Pester -Path ./src/Microsoft.Data.SqlClient/tests/VersionChecks/VersionChecks.Tests.ps1 -CI'
+dotnet tool run pwsh -NoProfile -Command 'Install-Module Pester -RequiredVersion 6.2.0 -Repository SqlClient -Scope CurrentUser -Force -ErrorAction Stop'
+dotnet tool run pwsh -NoProfile -Command 'Import-Module Pester -RequiredVersion 6.2.0; Invoke-Pester -Path ./src/Microsoft.Data.SqlClient/tests/VersionChecks/VersionChecks.Tests.ps1 -CI'
 ```
 
 The parameterized Pester suite creates small family-package fixtures in a private local
