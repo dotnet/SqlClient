@@ -304,14 +304,22 @@ Artifacts NuGet v2 endpoint from that v3 index URL and registers it anonymously.
 It creates a trusted PowerShellGet repository under the supplied name for the current
 user, or reuses a matching registration without changing its trust policy. Conflicting
 registrations and source failures stop explicitly; there is no fallback to PSGallery.
+In a live PowerShellGet 2.2.5 comparison, registration accepted both endpoints, but
+`Find-Module SqlServer -RequiredVersion 22.4.5.1` failed against v3 and succeeded
+against v2. The helper uses v2 for this toolchain; registration alone does not verify
+that module lookup works.
 
 Pipelines register the repository once per job with the reusable
 `eng/pipelines/common/templates/steps/register-powershell-repository-step.yml`
 template, passing `repositoryName`. Module-install consumers take only the
 `powerShellRepository` name parameter and assume registration has already occurred.
-Registration and installation must run as the same user. CI/PR test jobs pass the
-name to certificate subprocesses through `SQLCLIENT_POWERSHELL_REPOSITORY`; local
-manual-test runs should set that environment variable after registration.
+Use a literal repository name rather than a runtime `$(variable)` reference;
+the step rejects runtime references before executing scripts. Template expressions
+escape apostrophes so supplied names remain literal PowerShell arguments.
+Registration and installation must run as the same user. CI/PR test jobs write the
+name into the existing test configuration's `PowerShellRepository` property, and the
+certificate test passes it explicitly to the script. Local manual-test runs should
+set that configuration property after registration.
 Direct `makepfxcert.ps1` calls can instead pass `-PowerShellRepository SqlClient`.
 
 Just like building and testing the various projects in this repository, packaging the projects into NuGet packages is

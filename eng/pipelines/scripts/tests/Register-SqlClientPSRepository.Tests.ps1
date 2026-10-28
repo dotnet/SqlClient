@@ -168,8 +168,10 @@ Describe 'Explicit repository registration and module consumers' {
     It 'passes the repository name into the reusable registration step' {
         $source = Get-Content (Join-Path $repoRoot 'eng\pipelines\common\templates\steps\register-powershell-repository-step.yml') -Raw
         $source | Should -Match 'name: repositoryName'
-        $source | Should -Match 'Register-SqlClientPSRepository.ps1" -RepositoryName \$env:POWERSHELL_REPOSITORY_NAME'
-        $source | Should -Match 'POWERSHELL_REPOSITORY_NAME: \$\{\{ parameters.repositoryName \}\}'
+        $source | Should -Match 'Register-SqlClientPSRepository.ps1" -RepositoryName'
+        $source | Should -Match ([regex]::Escape("contains(parameters.repositoryName, '`$(')"))
+        $source | Should -Match 'repositoryName must be a literal template parameter'
+        $source | Should -Not -Match 'POWERSHELL_REPOSITORY_NAME|env:'
         $source | Should -Not -Match 'https://'
     }
 
@@ -185,19 +187,20 @@ Describe 'Explicit repository registration and module consumers' {
         $source.IndexOf('register-powershell-repository-step.yml') |
             Should -BeLessThan ([regex]::Match($source, 'configure-netonly-account-step.yml|Install-Module|TestSqlClientManual|run-all-tests-step.yml').Index)
         if ($Path -notlike '*linux-setup*') {
-            $source | Should -Match 'name: SQLCLIENT_POWERSHELL_REPOSITORY\r?\n\s+value: \$\{\{ parameters.powerShellRepository \}\}'
+            $source | Should -Not -Match 'SQLCLIENT_POWERSHELL_REPOSITORY'
+            $source | Should -Match 'PowerShellRepository[: ]'
             ([regex]::Matches($source, 'powerShellRepository: \$\{\{ parameters.powerShellRepository \}\}')).Count |
                 Should -Be 2
         }
         else {
-            $source | Should -Match 'Install-Module -Name SqlServer -Repository \$env:POWERSHELL_REPOSITORY_NAME'
-            $source | Should -Match 'POWERSHELL_REPOSITORY_NAME: \$\{\{ parameters.powerShellRepository \}\}'
+            $source | Should -Match 'Install-Module -Name SqlServer -Repository'
+            $source | Should -Not -Match 'POWERSHELL_REPOSITORY_NAME'
         }
     }
 
     It 'passes the name through the net-only and Kerberos templates' {
         $netOnly = Get-Content (Join-Path $repoRoot 'eng\pipelines\common\templates\steps\configure-netonly-account-step.yml') -Raw
-        $netOnly | Should -Match "-PowerShellRepository '\$\{\{ parameters.powerShellRepository \}\}'"
+        $netOnly | Should -Match "-PowerShellRepository '\$\{\{ replace\(parameters.powerShellRepository,"
         $kerberos = Get-Content (Join-Path $repoRoot 'eng\pipelines\ci\kerberos\sqlclient-ci-kerberos-job.yml') -Raw
         $kerberos | Should -Match 'powerShellRepository: \$\{\{ parameters.powerShellRepository \}\}'
     }
@@ -236,20 +239,111 @@ Describe 'Explicit repository registration and module consumers' {
         }
     }
 
-    It 'receives the pipeline repository name through the certificate script parameter default' {
+    It 'binds the certificate repository only from an explicit parameter' {
         $path = Join-Path $repoRoot 'src\Microsoft.Data.SqlClient\tests\ManualTests\makepfxcert.ps1'
         $ast = [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$null, [ref]$null)
         $parameter = $ast.ParamBlock.Parameters | Where-Object { $_.Name.VariablePath.UserPath -eq 'PowerShellRepository' }
-        $parameter.DefaultValue.Extent.Text | Should -Be '$env:SQLCLIENT_POWERSHELL_REPOSITORY'
+        $parameter.DefaultValue | Should -BeNullOrEmpty
         $bind = [scriptblock]::Create($ast.ParamBlock.Extent.Text + "`n`$PowerShellRepository")
-        $original = $env:SQLCLIENT_POWERSHELL_REPOSITORY
+        & $bind | Should -BeNullOrEmpty
+        & $bind -PowerShellRepository ExplicitModules | Should -BeExactly 'ExplicitModules'
+    }
+
+    It 'escapes template parameters as literal PowerShell data in <Path>' -ForEach @(
+        @{ Path = 'eng\pipelines\common\templates\steps\register-powershell-repository-step.yml' }
+        @{ Path = 'eng\pipelines\ci\kerberos\linux-setup-step.yml' }
+        @{ Path = 'eng\pipelines\common\templates\steps\configure-netonly-account-step.yml' }
+        @{ Path = 'eng\pipelines\common\templates\steps\update-config-file-step.yml' }
+        @{ Path = 'eng\pipelines\pr\jobs\test-sqlclientmanual-job.yml' }
+    ) {
+        $source = Get-Content (Join-Path $repoRoot $Path) -Raw
+        $pattern = "'\$\{\{ replace\(parameters\.[Pp]owerShellRepository, '{4}, '{6}\) \}\}'"
+        if ($Path -like '*register-powershell*') {
+            $pattern = "'\$\{\{ replace\(parameters\.repositoryName, '{4}, '{6}\) \}\}'"
+        }
+        $literal = [regex]::Match($source, $pattern).Value
+        $literal | Should -Not -BeNullOrEmpty
+        foreach ($value in @('CustomModules', "a'; throw 'injected'; #", 'a`";${value};#',
+                "a'`nthrow 'injected")) {
+            $expanded = [regex]::Replace($literal, '\$\{\{.*?\}\}', { $value.Replace("'", "''") })
+            & ([scriptblock]::Create($expanded)) | Should -BeExactly $value
+        }
+    }
+
+    It 'writes the selected repository into test configuration and reads it in the certificate caller' {
+        $update = Get-Content (Join-Path $repoRoot 'eng\pipelines\common\templates\steps\update-config-file-step.yml') -Raw
+        $update | Should -Match '\$p.PowerShellRepository='
+        $ci = Get-Content (Join-Path $repoRoot 'eng\pipelines\common\templates\jobs\ci-run-tests-job.yml') -Raw
+        $ci | Should -Match 'PowerShellRepository: \$\{\{ parameters.powerShellRepository \}\}'
+        $pr = Get-Content (Join-Path $repoRoot 'eng\pipelines\pr\jobs\test-sqlclientmanual-job.yml') -Raw
+        $pr | Should -Match '\$config.PowerShellRepository ='
+        $config = Get-Content (Join-Path $repoRoot 'src\Microsoft.Data.SqlClient\tests\tools\Microsoft.Data.SqlClient.TestUtilities\Config.cs') -Raw
+        $config | Should -Match 'public string\? PowerShellRepository = null;'
+        $defaults = Get-Content (Join-Path $repoRoot 'src\Microsoft.Data.SqlClient\tests\tools\Microsoft.Data.SqlClient.TestUtilities\config.default.jsonc') -Raw | ConvertFrom-Json
+        $defaults.PowerShellRepository | Should -Be ''
+        $utility = Get-Content (Join-Path $repoRoot 'src\Microsoft.Data.SqlClient\tests\ManualTests\DataCommon\DataTestUtility.cs') -Raw
+        $utility | Should -Match 'PowerShellRepository = c.PowerShellRepository;'
+        $caller = Get-Content (Join-Path $repoRoot 'src\Microsoft.Data.SqlClient\tests\ManualTests\SQL\ConnectionTestWithSSLCert\CertificateTestWithTdsServer.cs') -Raw
+        $caller | Should -Match 'RunPowershellScript\(s_fullPathToPowershellScript, DataTestUtility.PowerShellRepository\)'
+    }
+}
+
+Describe 'Certificate subprocess repository arguments' {
+    BeforeAll {
+        $source = Get-Content (Join-Path $repoRoot 'src\Microsoft.Data.SqlClient\tests\ManualTests\SQL\ConnectionTestWithSSLCert\CertificateTestWithTdsServer.cs') -Raw
+        $method = [regex]::Match($source, '(?s)        private static void RunPowershellScript.*?(?=        /// <summary>)').Value
+        $method | Should -Not -BeNullOrEmpty
+        $method = $method.Replace('private static', 'public static')
+        Add-Type -TypeDefinition @"
+#nullable enable
+using System;
+using System.IO;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Text.RegularExpressions;
+public static class CertificateProcessFixture {
+$method
+}
+"@
+    }
+
+    BeforeEach {
+        $stub = Join-Path $TestDrive 'capture.ps1'
+        $capture = Join-Path $TestDrive 'repository-name.txt'
+        if (Test-Path -LiteralPath $capture) {
+            Remove-Item -LiteralPath $capture
+        }
+        @'
+param($OutDir, [switch] $SkipTrust, [string] $PowerShellRepository)
+$PowerShellRepository | Set-Content (Join-Path $OutDir 'repository-name.txt')
+'@ | Set-Content -LiteralPath $stub
+    }
+
+    It 'passes <Name> explicitly to a real child PowerShell process' -ForEach @(
+        @{ Name = 'CustomModules' }
+        @{ Name = 'Feed_6.2-0' }
+    ) {
+        $original = [Environment]::CurrentDirectory
         try {
-            $env:SQLCLIENT_POWERSHELL_REPOSITORY = 'PipelineModules'
-            & $bind | Should -BeExactly 'PipelineModules'
-            & $bind -PowerShellRepository ExplicitModules | Should -BeExactly 'ExplicitModules'
+            [Environment]::CurrentDirectory = $TestDrive
+            [CertificateProcessFixture]::RunPowershellScript($stub, $Name)
+            Get-Content (Join-Path $TestDrive 'repository-name.txt') | Should -BeExactly $Name
         }
         finally {
-            $env:SQLCLIENT_POWERSHELL_REPOSITORY = $original
+            [Environment]::CurrentDirectory = $original
         }
+    }
+
+    It 'rejects unsafe repository argument <Name> before launching a child' -ForEach @(
+        @{ Name = 'two words' }
+        @{ Name = 'a"; throw "injected' }
+        @{ Name = "a`nInjected" }
+        @{ Name = '-option' }
+        @{ Name = '$(injected)' }
+    ) {
+        { [CertificateProcessFixture]::RunPowershellScript($stub, $Name) } |
+            Should -Throw '*Expected a PowerShell repository name*'
+        Test-Path (Join-Path $TestDrive 'repository-name.txt') | Should -BeFalse
     }
 }

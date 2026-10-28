@@ -51,6 +51,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static Uri AKVBaseUri = null;
         public static readonly string PowerShellPath = null;
+        public static readonly string PowerShellRepository = null;
         public static string FileStreamDirectory = null;
 
         public static readonly string DNSCachingConnString = null;
@@ -284,6 +285,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             EnclaveAzureDatabaseConnString = c.EnclaveAzureDatabaseConnString;
             UserManagedIdentityClientId = c.UserManagedIdentityClientId;
             PowerShellPath = c.PowerShellPath;
+            PowerShellRepository = c.PowerShellRepository;
             KerberosDomainPassword = c.KerberosDomainPassword;
             KerberosDomainUser = c.KerberosDomainUser;
             IsUserManagedIdentitySupported = c.ManagedIdentitySupported && !string.IsNullOrEmpty(UserManagedIdentityClientId);

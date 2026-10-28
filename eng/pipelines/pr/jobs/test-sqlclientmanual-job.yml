@@ -139,9 +139,6 @@ jobs:
         - imageOverride -equals ${{ parameters.poolImage }}
 
     variables:
-      - name: SQLCLIENT_POWERSHELL_REPOSITORY
-        value: ${{ parameters.powerShellRepository }}
-
       # Bring the generated SA password from the secrets stage into scope for this test stage.
       # Note: Because this is set at runtime, it must be referenced as `$(saPassword)`.
       - name: saPassword
@@ -195,6 +192,7 @@ jobs:
           $config = Get-Content -Raw $defaultConfigPath | ConvertFrom-Json
 
           # Update the config values
+          $config.PowerShellRepository = '${{ replace(parameters.powerShellRepository, '''', '''''') }}'
           $config.TCPConnectionString = "${{ parameters.connectionStringTcp }}"
           $config.NPConnectionString = "${{ parameters.connectionStringNp }}"
           $config.AzureKeyVaultURL = "${{ parameters.azureKeyVaultUrl }}"

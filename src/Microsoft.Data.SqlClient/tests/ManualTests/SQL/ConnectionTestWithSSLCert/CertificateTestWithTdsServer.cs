@@ -11,6 +11,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using System.ServiceProcess;
 using System.Text;
+using System.Text.RegularExpressions;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon;
 using Microsoft.SqlServer.TDS.Servers;
 using Microsoft.Win32;
@@ -68,7 +69,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // Clean up partial setup because xUnit does not call Dispose when construction fails.
             try
             {
-                RunPowershellScript(s_fullPathToPowershellScript);
+                RunPowershellScript(s_fullPathToPowershellScript, DataTestUtility.PowerShellRepository);
             }
             catch
             {
@@ -196,7 +197,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        private static void RunPowershellScript(string script)
+        private static void RunPowershellScript(string script, string? powerShellRepository = null)
         {
             string currentDirectory = Directory.GetCurrentDirectory();
             string powerShellCommand =
@@ -209,6 +210,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 throw new Exception($"Script {script} does not exist");
             }
 
+            string arguments = $"\"{script}\" -OutDir \"{currentDirectory}\" -SkipTrust";
+            if (!string.IsNullOrEmpty(powerShellRepository))
+            {
+                if (!Regex.IsMatch(powerShellRepository, @"\A[A-Za-z0-9][A-Za-z0-9_.-]*\z"))
+                {
+                    throw new ArgumentException("Expected a PowerShell repository name containing only " +
+                        "ASCII letters, digits, underscores, dots, or hyphens.", nameof(powerShellRepository));
+                }
+                arguments += $" -PowerShellRepository \"{powerShellRepository}\"";
+            }
+
             StringBuilder output = new();
             Process proc = new()
             {
@@ -218,7 +230,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     RedirectStandardError = true,
                     RedirectStandardOutput = true,
                     UseShellExecute = false,
-                    Arguments = $"\"{script}\" -OutDir \"{currentDirectory}\" -SkipTrust",
+                    Arguments = arguments,
                     CreateNoWindow = false,
                     Verb = "runas"
                 }

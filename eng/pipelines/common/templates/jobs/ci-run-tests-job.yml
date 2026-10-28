@@ -174,9 +174,6 @@ jobs:
       - imageOverride -equals ${{ parameters.poolImage }}
 
   variables:
-    - name: SQLCLIENT_POWERSHELL_REPOSITORY
-      value: ${{ parameters.powerShellRepository }}
-
     - name: dotnetx86RootPath
       value: '$(dotnetx86Path)'
 
@@ -241,6 +238,7 @@ jobs:
   - ${{ if ne(parameters.configProperties, '{}') }}:
     - template: /eng/pipelines/common/templates/steps/update-config-file-step.yml@self # update config.jsonc file
       parameters:
+        PowerShellRepository: ${{ parameters.powerShellRepository }}
         debug: ${{ parameters.debug }}
         saPassword: ${{ parameters.saPassword }}
         UseManagedSNIOnWindows: ${{ parameters.usemanagedSNI }}

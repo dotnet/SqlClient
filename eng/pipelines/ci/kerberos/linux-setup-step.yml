@@ -109,10 +109,9 @@ steps:
       repositoryName: ${{ parameters.powerShellRepository }}
 
   - pwsh: |
-      Install-Module -Name SqlServer -Repository $env:POWERSHELL_REPOSITORY_NAME -Force -Confirm:$false -ErrorAction Stop
+      Install-Module -Name SqlServer -Repository '${{ replace(parameters.powerShellRepository, '''', '''''') }}' -Force -Confirm:$false -ErrorAction Stop
       Import-Module SqlServer
       Invoke-Sqlcmd -Query "SELECT @@VERSION, @@SERVERNAME" -ConnectionString $env:REMOTE_TCP_CONN_STRING
     displayName: Verify SQL connectivity
     env:
-      POWERSHELL_REPOSITORY_NAME: ${{ parameters.powerShellRepository }}
       REMOTE_TCP_CONN_STRING: $(REMOTE_TCP_CONN_STRING)

@@ -46,6 +46,7 @@ namespace Microsoft.Data.SqlClient.TestUtilities
         public bool SupportsSystemAssignedManagedIdentity = false;
         public string? UserManagedIdentityClientId = null;
         public string? PowerShellPath = null;
+        public string? PowerShellRepository = null;
         public string? AliasName = null;
         public string? KerberosDomainPassword = null;
         public string? KerberosDomainUser = null;
