@@ -326,8 +326,11 @@ the physical handle):
 
 Both reads are wrapped in `try`/`catch` so that capture never affects the handshake. A suite of
 `0` (`TLS_NULL_WITH_NULL_NULL`, nothing agreed yet) is treated as unavailable. Without TLS, the
-property is `null`. Managed SNI runs only on `net10.0`; on `net462` this capture is not compiled
-and the property stays `null` until native SNI support (Slice D).
+properties are `null`. The value flows through the SNI handles, `ServerCertificateCapture` and
+`EncryptionInfoCapture` as an `int`. `NegotiatedCipherSuiteId` returns it unchanged, and on .NET
+`NegotiatedCipherSuite` casts the same value to `TlsCipherSuite`.
+Managed SNI runs only on `net10.0`; on `net462` this capture is not compiled
+and `NegotiatedCipherSuiteId` stays `null` until native SNI support (Slice D).
 
 ## 5. Scope
 

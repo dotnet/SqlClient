@@ -482,12 +482,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             if (serverEncryption == ServerEncryption.NotSupported)
             {
                 // No TLS handshake took place, so no cipher suite was negotiated.
-                Assert.Null(info.NegotiatedCipherSuite);
+                Assert.Null(info.NegotiatedCipherSuiteId);
             }
             else if (LocalAppContextSwitches.UseManagedNetworking)
             {
-                Assert.NotNull(info.NegotiatedCipherSuite);
-                Assert.InRange(info.NegotiatedCipherSuite.Value, 1, 0xFFFF);
+                Assert.NotNull(info.NegotiatedCipherSuiteId);
+                Assert.InRange(info.NegotiatedCipherSuiteId!.Value, 1, 0xFFFF);
             }
         }
 
