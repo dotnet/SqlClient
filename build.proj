@@ -1095,12 +1095,11 @@
   </Target>
 
   <!-- TestAbstractions: Runs Microsoft.Data.SqlClient.Extensions.Abstractions.Tests -->
-  <Target Name="TestAbstractions">
+  <PropertyGroup>
+    <TestAbstractionsDependsOn Condition="'$(ReferenceType)' == 'package' AND '$(SkipDependencyPack)' != 'true'">PackLogging</TestAbstractionsDependsOn>
+  </PropertyGroup>
+  <Target Name="TestAbstractions" DependsOnTargets="$(TestAbstractionsDependsOn)">
     <PropertyGroup>
-      <!--
-        Note: This test exclusively uses project references, so neither ReferenceType nor any
-        package version arguments are specified in this command.
-      -->
       <LogFilePrefix>AbstractionsTests-$(OS)</LogFilePrefix>
       <LogFilePrefix Condition="'$(TestFramework)' != ''">$(LogFilePrefix)-$(TestFramework)</LogFilePrefix>
 
@@ -1109,6 +1108,16 @@
         -p:Configuration=$(Configuration)
         $(SigningKeyPathArgument)
         $(TestSigningKeyPathArgument)
+
+        <!-- Versioning arguments -->
+        $(BuildNumberArgument)
+        $(BuildSuffixArgument)
+        $(PackageVersionSqlClientArgument)
+        $(FileVersionSqlClientArgument)
+
+        <!-- Reference Type Arguments -->
+        $(ReferenceTypeArgument)
+
         $(TestBlameArgument)
         $(TestCodeCoverageArgument)
         $(TestFiltersArgument)

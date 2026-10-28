@@ -27,20 +27,25 @@ See the LICENSE file in the project root for more information.
         <para>
           Configuration reading uses a relaxed policy that traces and ignores configuration-reading,
           handler, schema and broker-value errors. Ignoring these errors may select unintended
-          providers or provider settings. Explicit initializer/provider activation or registration
-          failures abort bootstrap. Missing sections and empty optional attributes remain valid.
+          providers or provider settings. Recoverable initializer activation or registration
+          failures stop that initializer, but later configured providers are still attempted.
+          Recoverable provider-entry failures are traced and skipped without blocking later
+          entries or enabled Azure discovery. Fatal failures propagate.
+          Missing sections and empty optional attributes remain valid.
         </para>
         <para>
-          Recoverable bootstrap failures are cached and traced. Subsequent calls to
+          Enable tracing before the first registry access to capture configuration and discovery
+          failures. Failed entries are not retried on subsequent accesses.
+          Only unexpected recoverable bootstrap failures are cached and traced again.
+          Subsequent calls to
           <see cref="SqlAuthenticationProvider.GetProvider"/> can still return successfully
           registered providers, and <see cref="SqlAuthenticationProvider.SetProvider"/> can
           register application providers without retrying bootstrap. Configuration registrations
           retain precedence. Correct the configuration and restart the application to retry
-          bootstrap.
+          configuration or discovery.
         </para>
         <para>
-          Application stops at the first failure; earlier registrations and initializer/provider
-          callback side effects are not rolled back.
+          Earlier registrations and initializer/provider callback side effects are not rolled back.
         </para>
       </remarks>
     </SqlAuthenticationProviderConfigurationSection>

@@ -13,8 +13,11 @@ See the LICENSE file in the project root for more information.
         <see cref="SqlAuthenticationProvider.SetProvider"/> on the current thread are supported.
         Do not synchronously wait for another thread that calls either method: that thread blocks
         on the registry lock, causing a deadlock.
-        Exceptions from initialization or registration abort registry bootstrap. Earlier
-        registrations and initializer side effects are not rolled back.
+        Recoverable initialization or registration failures stop this initializer and are traced,
+        but later configured providers and enabled Azure discovery are still attempted.
+        Fatal failures propagate. Earlier registrations and initializer side effects are not
+        rolled back. Enable tracing before the first registry access to capture these failures;
+        failed initialization is not retried until the application restarts.
       </remarks>
     </SqlAuthenticationInitializer>
     <ctor>

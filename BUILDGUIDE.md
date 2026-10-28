@@ -205,7 +205,11 @@ dotnet build build.proj -t:TestAbstractions -p:TestFramework=net10.0 -p:Referenc
 ```
 
 Signed Abstractions builds use the repository test public key for their `InternalsVisibleTo`
-grant. The cache helper and discovery tests access internal members in both signed and unsigned builds.
+grant in Package mode. Pass `-p:ReferenceType=Package` together with `SigningKeyPath` and
+`TestSigningKeyPath` to run signed tests. `TestAbstractions` prepares the Logging package unless
+`SkipDependencyPack=true` and forwards the selected reference mode, versions and signing keys.
+The test project still references Abstractions directly; its Logging dependency follows the
+selected reference mode. Signed Project builds intentionally omit test access.
 
 The executable current/legacy app.config compatibility harness is deferred to
 [#4817](https://github.com/dotnet/SqlClient/pull/4817); its scenario project and test target are

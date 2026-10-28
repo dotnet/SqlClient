@@ -135,8 +135,12 @@ See the LICENSE file in the project root for more information.
         are unavailable in trimmed and NativeAOT .NET 10 publishes; explicitly register providers
         with SetProvider. Recoverable registry initialization failures emit diagnostic traces
         through Microsoft.Data.SqlClient.EventSource with the Trace keyword (0x2).
-        Failures are cached and logged on subsequent accesses, including when tracing is enabled
-        after the first failure. Lookups still return successfully registered providers.
+        Enable tracing before the first registry access to capture configuration-reading,
+        initializer/provider activation and Azure-discovery failures. Recoverable failures in
+        these steps are traced and handled without caching them for later diagnostic replay.
+        Only unexpected recoverable bootstrap failures are cached and logged on subsequent
+        accesses, including when tracing is enabled after the first failure.
+        Lookups still return successfully registered providers.
         Register an application provider as a workaround, or correct the reported configuration
         or package version problem and restart the application to retry bootstrap.
         <para>
@@ -164,12 +168,15 @@ See the LICENSE file in the project root for more information.
         the discovered Azure default. Outside configured initializer execution, a null provider,
         unsupported method or recoverable provider callback failure returns false and emits diagnostic traces
         through Microsoft.Data.SqlClient.EventSource with the Trace keyword (0x2).
-        During a configured initializer, registration errors propagate so registry initialization
-        cannot succeed after a failed configuration-owned registration.
-        Failed registrations do not replace the existing provider. Registry initialization
-        failures are cached and traced, but application registration remains available without
-        retrying bootstrap. Existing configuration registrations retain precedence. Correct the
-        reported cause and restart the application to retry bootstrap.
+        During a configured initializer, registration errors propagate to the configuration
+        application step and stop that initializer. Recoverable initializer failures are traced,
+        and later configured providers and enabled Azure discovery are still attempted.
+        Failed provider entries are traced and skipped without blocking later entries.
+        Fatal failures propagate. Failed registrations do not replace the existing provider.
+        Unexpected recoverable bootstrap failures are cached and traced, but application
+        registration remains available without retrying bootstrap. Existing configuration
+        registrations retain precedence. Correct the reported cause and restart the application
+        to retry failed configuration or discovery.
         <para>
           Registry bootstrap and provider replacement callbacks execute while a registry lock is
           held. Same-thread calls to <see cref="GetProvider"/> and <see cref="SetProvider"/> are

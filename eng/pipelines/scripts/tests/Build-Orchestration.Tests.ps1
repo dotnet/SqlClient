@@ -620,6 +620,65 @@ Describe 'build.proj dependency packing' {
     }
 }
 
+Describe 'Abstractions test orchestration' {
+    It 'forwards Package mode, versions and signing keys to the test command' {
+        $arguments = Get-ChildArguments 'TestAbstractions' @(
+            '-p:ReferenceType=Package',
+            '-p:PackageVersionSqlClient=8.1.2-review',
+            '-p:FileVersionSqlClient=8.1.2.42',
+            '-p:BuildNumber=42',
+            '-p:BuildSuffix=ci',
+            '-p:SigningKeyPath=driver-key.snk',
+            '-p:TestSigningKeyPath=test-key.snk'
+        )
+        $testStart = [Array]::IndexOf($arguments, 'test')
+        $testStart | Should -BeGreaterOrEqual 0
+        $testArguments = $arguments[$testStart..($arguments.Count - 1)]
+
+        $testArguments | Should -Contain '-p:ReferenceType=Package'
+        $testArguments | Should -Contain '-p:SqlClientPackageVersion=8.1.2-review'
+        $testArguments | Should -Contain '-p:SqlClientFileVersion=8.1.2.42'
+        $testArguments | Should -Contain '-p:BuildNumber=42'
+        $testArguments | Should -Contain '-p:BuildSuffix=ci'
+        $testArguments | Should -Contain '-p:SigningKeyPath=driver-key.snk'
+        $testArguments | Should -Contain '-p:TestSigningKeyPath=test-key.snk'
+    }
+
+    It 'packs Logging before testing in Package mode with the same version and signing key' {
+        $arguments = Get-ChildArguments 'TestAbstractions' @(
+            '-p:ReferenceType=Package',
+            '-p:PackageVersionSqlClient=8.1.2-review',
+            '-p:SigningKeyPath=driver-key.snk'
+        )
+        $packStart = [Array]::IndexOf($arguments, 'pack')
+        $testStart = [Array]::IndexOf($arguments, 'test')
+        $packStart | Should -BeGreaterOrEqual 0
+        $testStart | Should -BeGreaterThan $packStart
+        $packArguments = $arguments[$packStart..($testStart - 1)]
+
+        (Split-Path $packArguments[1] -Leaf) | Should -Be 'Logging.csproj'
+        $packArguments | Should -Contain '-p:SqlClientPackageVersion=8.1.2-review'
+        $packArguments | Should -Contain '-p:SigningKeyPath=driver-key.snk'
+    }
+
+    It 'does not pack Logging with <Property>' -ForEach @(
+        @{ Property = '-p:ReferenceType=Project' }
+        @{ Property = '-p:SkipDependencyPack=true' }
+    ) {
+        $properties = @($Property)
+        if ($Property -eq '-p:SkipDependencyPack=true') {
+            $properties += '-p:ReferenceType=Package'
+        }
+        $arguments = Get-ChildArguments 'TestAbstractions' $properties
+
+        $arguments | Should -Contain 'test'
+        $arguments | Should -Not -Contain 'pack'
+        if ($Property -eq '-p:SkipDependencyPack=true') {
+            $arguments | Should -Contain '-p:ReferenceType=Package'
+        }
+    }
+}
+
 Describe 'test project family versions' {
     It 'uses the forwarded family version for central dependencies in <Target>' -ForEach @(
         @{ Target = 'BuildSqlClientTestsFunctional' }
