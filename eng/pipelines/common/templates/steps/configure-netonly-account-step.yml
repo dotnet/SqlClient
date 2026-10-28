@@ -10,9 +10,6 @@
 # and secret netOnlyPassword.
 # No server roles or database users are granted; tests must use master.
 parameters:
-  - name: powerShellRepository
-    type: string
-
   - name: mode
     type: string
     default: setup
@@ -30,6 +27,14 @@ parameters:
     default: '1433'
 
 steps:
+  - ${{ if eq(parameters.mode, 'setup') }}:
+    - template: /eng/pipelines/common/templates/steps/install-powershell-module-step.yml@self
+      parameters:
+        name: SqlServer
+        requiredVersion: 22.4.5.1
+        skipIfInstalled: true
+        allowClobber: true
+
   - task: PowerShell@2
     displayName: '${{ parameters.mode }} temporary net-only account [Win]'
     ${{ if eq(parameters.mode, 'cleanup') }}:
@@ -41,7 +46,6 @@ steps:
       # Single quotes preserve undefined ADO macros as literals for cleanup's absent-value checks.
       arguments: >-
         -Mode '${{ parameters.mode }}'
-        -PowerShellRepository '${{ replace(parameters.powerShellRepository, '''', '''''') }}'
         -InstanceName '${{ parameters.instanceName }}'
         -Port '${{ parameters.port }}'
         -AccountName '$(netOnlyUser)'

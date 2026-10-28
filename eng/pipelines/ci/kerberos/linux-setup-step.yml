@@ -8,9 +8,6 @@
 
 parameters:
 
-  - name: powerShellRepository
-    type: string
-
   - name: kerberosDomain
     type: string
 
@@ -104,12 +101,11 @@ steps:
     env:
       DOMAIN_PASSWORD: ${{ parameters.kerberosDomainPassword }}
 
-  - template: /eng/pipelines/common/templates/steps/register-powershell-repository-step.yml@self
+  - template: /eng/pipelines/common/templates/steps/install-powershell-module-step.yml@self
     parameters:
-      repositoryName: ${{ parameters.powerShellRepository }}
+      name: SqlServer
 
   - pwsh: |
-      Install-Module -Name SqlServer -Repository '${{ replace(parameters.powerShellRepository, '''', '''''') }}' -Force -Confirm:$false -ErrorAction Stop
       Import-Module SqlServer
       Invoke-Sqlcmd -Query "SELECT @@VERSION, @@SERVERNAME" -ConnectionString $env:REMOTE_TCP_CONN_STRING
     displayName: Verify SQL connectivity

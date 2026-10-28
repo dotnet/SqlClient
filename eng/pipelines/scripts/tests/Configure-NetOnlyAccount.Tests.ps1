@@ -49,11 +49,8 @@ Describe 'Net-only provisioning lifecycle' -Skip:(-not $IsWindows) {
     BeforeEach {
         Mock Write-Host {}
         Mock Import-Module {}
-        Mock Install-Module {}
+        Mock Install-Module { throw 'Module installation belongs in the prerequisite step' }
         Mock Register-PSRepository { throw 'Consumers must not register repositories' }
-        Mock Get-Module { [pscustomobject]@{ Version = [version]'22.4.5.1' } } -ParameterFilter {
-            $FullyQualifiedName.Name -eq 'SqlServer'
-        }
         Mock Get-LocalUser {}
         Mock New-LocalUser {
             [pscustomobject]@{ SID = $sid; Description = $Description }
@@ -82,25 +79,6 @@ Describe 'Net-only provisioning lifecycle' -Skip:(-not $IsWindows) {
         Should -Invoke Write-Host -Times 1 -Exactly -ParameterFilter {
             "$Object" -like '*variable=netOnlyConnectionString;*Data Source=tcp:localhost,15433;*'
         }
-    }
-
-    It 'installs only the pinned module from the supplied repository when it is missing' {
-        Mock Get-Module {} -ParameterFilter { $FullyQualifiedName.Name -eq 'SqlServer' }
-
-        & $scriptPath -Mode setup -PowerShellRepository CustomModules
-
-        Should -Invoke Install-Module -Times 1 -Exactly -ParameterFilter {
-            $Name -eq 'SqlServer' -and $RequiredVersion -eq '22.4.5.1' -and
-            $Repository -eq 'CustomModules' -and $Scope -eq 'CurrentUser' -and $AllowClobber -and $Force
-        }
-        Should -Invoke Register-PSRepository -Times 0 -Exactly
-    }
-
-    It 'requires an explicit repository name before installing a missing module' {
-        Mock Get-Module {} -ParameterFilter { $FullyQualifiedName.Name -eq 'SqlServer' }
-        { & $scriptPath -Mode setup } | Should -Throw '*PowerShellRepository must name*'
-        Should -Invoke Install-Module -Times 0 -Exactly
-        Should -Invoke New-LocalUser -Times 0 -Exactly
     }
 
     It 'uses the secret pipeline password as a read-only SecureString and disposes it on <Outcome>' -ForEach @(
@@ -147,14 +125,6 @@ Describe 'Net-only provisioning lifecycle' -Skip:(-not $IsWindows) {
         finally {
             $passwordState.Clear()
         }
-    }
-
-    It 'does not create an account if module installation fails' {
-        Mock Get-Module {} -ParameterFilter { $FullyQualifiedName.Name -eq 'SqlServer' }
-        Mock Install-Module { throw 'module installation failed' }
-
-        { & $scriptPath -Mode setup -PowerShellRepository CustomModules } | Should -Throw '*module installation failed*'
-        Should -Invoke New-LocalUser -Times 0 -Exactly
     }
 
     It 'does not create an account if module import fails' {

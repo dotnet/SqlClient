@@ -39,8 +39,6 @@
     "SupportsSystemAssignedManagedIdentity": false,
     "UserManagedIdentityClientId": "",
     "PowerShellPath": "",
-    // Pre-registered repository used when certificate setup must install OpenSSL.
-    "PowerShellRepository": "",
     "AliasName": "",
     "WorkloadIdentityFederationServiceConnectionId": "",
     "KerberosDomainPassword": "",

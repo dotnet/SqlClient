@@ -11,8 +11,8 @@ Creates or removes a temporary local Windows account and its local SQL Windows l
 .DESCRIPTION
 Run setup and cleanup on the same Windows agent using PowerShell 7.4 or later,
 as a local administrator with permission to create and drop SQL logins.
-Setup installs the pinned SqlServer module from the pre-registered PowerShellRepository
-for the current user if needed. Setup and cleanup use its Invoke-Sqlcmd cmdlet, backed by
+Install the pinned SqlServer module with Install-SqlClientPSModule.ps1 before setup.
+Setup and cleanup use its Invoke-Sqlcmd cmdlet, backed by
 Microsoft.Data.SqlClient, with Windows authentication over the configured TCP port.
 The local CI server's certificate is trusted explicitly for these encrypted connections.
 Setup publishes the account identity before provisioning and registers the
@@ -29,9 +29,6 @@ param(
     [Parameter(Mandatory = $true)]
     [ValidateSet('setup', 'cleanup')]
     [string] $Mode,
-
-    [ValidateNotNullOrEmpty()]
-    [string] $PowerShellRepository,
 
     [ValidatePattern('^[A-Za-z0-9_][A-Za-z0-9_$-]{0,127}$')]
     [string] $InstanceName = 'MSSQLSERVER',
@@ -91,14 +88,6 @@ try {
     }
     Import-Module Microsoft.PowerShell.LocalAccounts -ErrorAction Stop
     $sqlServerModule = @{ ModuleName = 'SqlServer'; RequiredVersion = '22.4.5.1' }
-    if ($Mode -eq 'setup' -and -not (Get-Module -ListAvailable -FullyQualifiedName $sqlServerModule)) {
-        $operation = 'install the SqlServer module'
-        if ([string]::IsNullOrWhiteSpace($PowerShellRepository)) {
-            throw 'PowerShellRepository must name a pre-registered repository to install the SqlServer module.'
-        }
-        Install-Module -Name $sqlServerModule.ModuleName -RequiredVersion $sqlServerModule.RequiredVersion `
-            -Repository $PowerShellRepository -Scope CurrentUser -AllowClobber -Force -ErrorAction Stop
-    }
     $operation = 'import the SqlServer module'
     Import-Module -FullyQualifiedName $sqlServerModule -ErrorAction Stop
 

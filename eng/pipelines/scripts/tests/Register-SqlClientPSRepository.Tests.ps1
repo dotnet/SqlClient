@@ -122,10 +122,10 @@ Describe 'SqlClient PowerShell repository registration' {
     }
 }
 
-Describe 'Explicit repository registration and module consumers' {
-    It 'restores the queued registration helper when aligning to an older package commit' {
+Describe 'Module prerequisite pipeline wiring' {
+    It 'restores both queued helpers when aligning to an older package commit' {
         $source = Get-Content (Join-Path $repoRoot 'eng\pipelines\common\steps\align-source-with-upstream-step.yml') -Raw
-        $source | Should -Match 'git checkout --force \$pipelineSourceSha -- eng/pipelines eng/scripts/Register-SqlClientPSRepository.ps1'
+        $source | Should -Match 'git checkout --force \$pipelineSourceSha -- eng/pipelines eng/scripts/Register-SqlClientPSRepository.ps1 eng/scripts/Install-SqlClientPSModule.ps1'
         $directory = Join-Path $TestDrive 'alignment'
         New-Item -ItemType Directory -Path $directory | Out-Null
         Push-Location $directory
@@ -143,6 +143,7 @@ Describe 'Explicit repository registration and module consumers' {
             $upstream = git rev-parse HEAD
             New-Item -ItemType Directory -Path 'eng\scripts' -Force | Out-Null
             Copy-Item -LiteralPath $scriptPath -Destination 'eng\scripts'
+            Copy-Item (Join-Path $repoRoot 'eng\scripts\Install-SqlClientPSModule.ps1') 'eng\scripts'
             'queued pipeline' | Set-Content 'eng\pipelines\fixture.yml'
             'new source' | Set-Content 'source.txt'
             git add .
@@ -152,198 +153,76 @@ Describe 'Explicit repository registration and module consumers' {
             git checkout --quiet --force $upstream
             $LASTEXITCODE | Should -Be 0
             Test-Path 'eng\scripts\Register-SqlClientPSRepository.ps1' | Should -BeFalse
+            Test-Path 'eng\scripts\Install-SqlClientPSModule.ps1' | Should -BeFalse
             $restore = [regex]::Match($source, '(?m)^\s*(git checkout --force \$pipelineSourceSha -- .+)$').Groups[1].Value
             & ([scriptblock]::Create($restore))
             $LASTEXITCODE | Should -Be 0
             Get-Content 'source.txt' | Should -Be 'old source'
             Get-Content 'eng\pipelines\fixture.yml' | Should -Be 'queued pipeline'
-            Get-Content 'eng\scripts\Register-SqlClientPSRepository.ps1' -Raw |
-                Should -Be (Get-Content $scriptPath -Raw)
+            foreach ($helper in @('Register-SqlClientPSRepository.ps1', 'Install-SqlClientPSModule.ps1')) {
+                Get-Content "eng\scripts\$helper" -Raw |
+                    Should -Be (Get-Content (Join-Path $repoRoot "eng\scripts\$helper") -Raw)
+            }
         }
         finally {
             Pop-Location
         }
     }
 
-    It 'passes the repository name into the reusable registration step' {
-        $source = Get-Content (Join-Path $repoRoot 'eng\pipelines\common\templates\steps\register-powershell-repository-step.yml') -Raw
-        $source | Should -Match 'name: repositoryName'
-        $source | Should -Match 'Register-SqlClientPSRepository.ps1" -RepositoryName'
-        $source | Should -Match ([regex]::Escape("contains(parameters.repositoryName, '`$(')"))
-        $source | Should -Match 'repositoryName must be a literal template parameter'
-        $source | Should -Not -Match 'POWERSHELL_REPOSITORY_NAME|env:'
-        $source | Should -Not -Match 'https://'
-    }
-
-    It 'registers once before installs/tests and forwards the same name in <Path>' -ForEach @(
-        @{ Path = 'eng\pipelines\common\templates\jobs\ci-run-tests-job.yml' }
-        @{ Path = 'eng\pipelines\pr\jobs\test-sqlclientmanual-job.yml' }
-        @{ Path = 'eng\pipelines\ci\kerberos\linux-setup-step.yml' }
+    It 'installs OpenSSL only for Linux local-server set-1 jobs in <Path>' -ForEach @(
+        @{ Path = 'eng\pipelines\common\templates\jobs\ci-run-tests-job.yml'; OS = 'operatingSystem'; Local = "eq(parameters.configSqlFor, 'local')" }
+        @{ Path = 'eng\pipelines\pr\jobs\test-sqlclientmanual-job.yml'; OS = 'platformOperatingSystem'; Local = 'parameters.isLocalServer' }
     ) {
         $source = Get-Content (Join-Path $repoRoot $Path) -Raw
-        ([regex]::Matches($source, 'template: /eng/pipelines/common/templates/steps/register-powershell-repository-step.yml@self')).Count |
-            Should -Be 1
-        $source | Should -Match 'repositoryName: \$\{\{ parameters.powerShellRepository \}\}'
-        $source.IndexOf('register-powershell-repository-step.yml') |
-            Should -BeLessThan ([regex]::Match($source, 'configure-netonly-account-step.yml|Install-Module|TestSqlClientManual|run-all-tests-step.yml').Index)
-        if ($Path -notlike '*linux-setup*') {
-            $source | Should -Not -Match 'SQLCLIENT_POWERSHELL_REPOSITORY'
-            $source | Should -Match 'PowerShellRepository[: ]'
-            ([regex]::Matches($source, 'powerShellRepository: \$\{\{ parameters.powerShellRepository \}\}')).Count |
-                Should -Be 2
-        }
-        else {
-            $source | Should -Match 'Install-Module -Name SqlServer -Repository'
-            $source | Should -Not -Match 'POWERSHELL_REPOSITORY_NAME'
-        }
+        $condition = "and(eq(parameters.$OS, 'Linux'), $Local, contains(parameters.testSet, '1'))"
+        $source | Should -Match ([regex]::Escape($condition))
+        $source | Should -Match 'install-powershell-module-step.yml@self\r?\n\s+parameters:\r?\n\s+name: OpenSSL\r?\n\s+skipIfInstalled: true'
+        $source.IndexOf('install-powershell-module-step.yml') |
+            Should -BeLessThan ([regex]::Match($source, 'configure-netonly-account-step.yml|TestSqlClientManual|run-all-tests-step.yml').Index)
+        $source | Should -Not -Match '[Pp]owerShellRepository|Register-.*PSRepository'
     }
 
-    It 'passes the name through the net-only and Kerberos templates' {
-        $netOnly = Get-Content (Join-Path $repoRoot 'eng\pipelines\common\templates\steps\configure-netonly-account-step.yml') -Raw
-        $netOnly | Should -Match "-PowerShellRepository '\$\{\{ replace\(parameters.powerShellRepository,"
-        $kerberos = Get-Content (Join-Path $repoRoot 'eng\pipelines\ci\kerberos\sqlclient-ci-kerberos-job.yml') -Raw
-        $kerberos | Should -Match 'powerShellRepository: \$\{\{ parameters.powerShellRepository \}\}'
+    It 'installs the pinned SqlServer prerequisite only before net-only setup' {
+        $source = Get-Content (Join-Path $repoRoot 'eng\pipelines\common\templates\steps\configure-netonly-account-step.yml') -Raw
+        $source | Should -Match "if eq\(parameters.mode, 'setup'\)"
+        $source | Should -Match 'name: SqlServer\r?\n\s+requiredVersion: 22.4.5.1\r?\n\s+skipIfInstalled: true\r?\n\s+allowClobber: true'
+        $source.IndexOf('install-powershell-module-step.yml') | Should -BeLessThan $source.IndexOf('task: PowerShell@2')
+        $source | Should -Not -Match '[Pp]owerShellRepository'
     }
 
-    It 'keeps registration and feed addresses out of <Path>' -ForEach @(
+    It 'installs unpinned SqlServer before the Kerberos connectivity check' {
+        $source = Get-Content (Join-Path $repoRoot 'eng\pipelines\ci\kerberos\linux-setup-step.yml') -Raw
+        $source | Should -Match 'install-powershell-module-step.yml@self\r?\n\s+parameters:\r?\n\s+name: SqlServer'
+        $source.IndexOf('install-powershell-module-step.yml') | Should -BeLessThan $source.IndexOf('Import-Module SqlServer')
+        $source | Should -Not -Match 'requiredVersion|Install-Module|[Pp]owerShellRepository'
+    }
+
+    It 'keeps module installation and repository plumbing out of <Path>' -ForEach @(
         @{ Path = 'eng\scripts\Configure-NetOnlyAccount.ps1' }
         @{ Path = 'src\Microsoft.Data.SqlClient\tests\ManualTests\makepfxcert.ps1' }
-    ) {
-        $source = Get-Content (Join-Path $repoRoot $Path) -Raw
-        $source | Should -Not -Match 'Register-.*PSRepository|Get-PSRepository|https://|PSGallery'
-        $source | Should -Match '-Repository \$PowerShellRepository'
-    }
-
-    It 'installs certificate modules with the supplied name and propagates install failures' {
-        Mock Install-Module {}
-        $path = Join-Path $repoRoot 'src\Microsoft.Data.SqlClient\tests\ManualTests\makepfxcert.ps1'
-        $ast = [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$null, [ref]$null)
-        $provision = $ast.Find({
-            param($node)
-            $node -is [System.Management.Automation.Language.IfStatementAst] -and
-            $node.Clauses[0].Item1.Extent.Text -like '*Get-Module*OpenSSL*'
-        }, $true)
-        $body = $provision.Clauses[0].Item2.Extent.Text
-        $run = [scriptblock]::Create("param(`$PowerShellRepository) & $body")
-        & $run CustomModules
-        Should -Invoke Install-Module -Times 1 -Exactly -ParameterFilter {
-            $Name -eq 'OpenSSL' -and $Repository -eq 'CustomModules' -and $Force -and $ErrorAction -eq 'Stop'
-        }
-        { & $run '' } | Should -Throw '*PowerShellRepository must name*'
-        Mock Install-Module { throw 'feed unavailable' }
-        { & $run CustomModules } | Should -Throw '*feed unavailable*'
-        $parent = $provision.Parent
-        while ($parent) {
-            $parent | Should -Not -BeOfType ([System.Management.Automation.Language.TryStatementAst])
-            $parent = $parent.Parent
-        }
-    }
-
-    It 'binds the certificate repository only from an explicit parameter' {
-        $path = Join-Path $repoRoot 'src\Microsoft.Data.SqlClient\tests\ManualTests\makepfxcert.ps1'
-        $ast = [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$null, [ref]$null)
-        $parameter = $ast.ParamBlock.Parameters | Where-Object { $_.Name.VariablePath.UserPath -eq 'PowerShellRepository' }
-        $parameter.DefaultValue | Should -BeNullOrEmpty
-        $bind = [scriptblock]::Create($ast.ParamBlock.Extent.Text + "`n`$PowerShellRepository")
-        & $bind | Should -BeNullOrEmpty
-        & $bind -PowerShellRepository ExplicitModules | Should -BeExactly 'ExplicitModules'
-    }
-
-    It 'escapes template parameters as literal PowerShell data in <Path>' -ForEach @(
-        @{ Path = 'eng\pipelines\common\templates\steps\register-powershell-repository-step.yml' }
-        @{ Path = 'eng\pipelines\ci\kerberos\linux-setup-step.yml' }
-        @{ Path = 'eng\pipelines\common\templates\steps\configure-netonly-account-step.yml' }
+        @{ Path = 'src\Microsoft.Data.SqlClient\tests\ManualTests\SQL\ConnectionTestWithSSLCert\CertificateTestWithTdsServer.cs' }
+        @{ Path = 'src\Microsoft.Data.SqlClient\tests\ManualTests\DataCommon\DataTestUtility.cs' }
+        @{ Path = 'src\Microsoft.Data.SqlClient\tests\tools\Microsoft.Data.SqlClient.TestUtilities\Config.cs' }
         @{ Path = 'eng\pipelines\common\templates\steps\update-config-file-step.yml' }
-        @{ Path = 'eng\pipelines\pr\jobs\test-sqlclientmanual-job.yml' }
     ) {
-        $source = Get-Content (Join-Path $repoRoot $Path) -Raw
-        $pattern = "'\$\{\{ replace\(parameters\.[Pp]owerShellRepository, '{4}, '{6}\) \}\}'"
-        if ($Path -like '*register-powershell*') {
-            $pattern = "'\$\{\{ replace\(parameters\.repositoryName, '{4}, '{6}\) \}\}'"
-        }
-        $literal = [regex]::Match($source, $pattern).Value
-        $literal | Should -Not -BeNullOrEmpty
-        foreach ($value in @('CustomModules', "a'; throw 'injected'; #", 'a`";${value};#',
-                "a'`nthrow 'injected")) {
-            $expanded = [regex]::Replace($literal, '\$\{\{.*?\}\}', { $value.Replace("'", "''") })
-            & ([scriptblock]::Create($expanded)) | Should -BeExactly $value
-        }
+        Get-Content (Join-Path $repoRoot $Path) -Raw |
+            Should -Not -Match 'Install-Module|Register-.*PSRepository|[Pp]owerShellRepository'
     }
 
-    It 'writes the selected repository into test configuration and reads it in the certificate caller' {
-        $update = Get-Content (Join-Path $repoRoot 'eng\pipelines\common\templates\steps\update-config-file-step.yml') -Raw
-        $update | Should -Match '\$p.PowerShellRepository='
-        $ci = Get-Content (Join-Path $repoRoot 'eng\pipelines\common\templates\jobs\ci-run-tests-job.yml') -Raw
-        $ci | Should -Match 'PowerShellRepository: \$\{\{ parameters.powerShellRepository \}\}'
-        $pr = Get-Content (Join-Path $repoRoot 'eng\pipelines\pr\jobs\test-sqlclientmanual-job.yml') -Raw
-        $pr | Should -Match '\$config.PowerShellRepository ='
-        $config = Get-Content (Join-Path $repoRoot 'src\Microsoft.Data.SqlClient\tests\tools\Microsoft.Data.SqlClient.TestUtilities\Config.cs') -Raw
-        $config | Should -Match 'public string\? PowerShellRepository = null;'
-        $defaults = Get-Content (Join-Path $repoRoot 'src\Microsoft.Data.SqlClient\tests\tools\Microsoft.Data.SqlClient.TestUtilities\config.default.jsonc') -Raw | ConvertFrom-Json
-        $defaults.PowerShellRepository | Should -Be ''
-        $utility = Get-Content (Join-Path $repoRoot 'src\Microsoft.Data.SqlClient\tests\ManualTests\DataCommon\DataTestUtility.cs') -Raw
-        $utility | Should -Match 'PowerShellRepository = c.PowerShellRepository;'
-        $caller = Get-Content (Join-Path $repoRoot 'src\Microsoft.Data.SqlClient\tests\ManualTests\SQL\ConnectionTestWithSSLCert\CertificateTestWithTdsServer.cs') -Raw
-        $caller | Should -Match 'RunPowershellScript\(s_fullPathToPowershellScript, DataTestUtility.PowerShellRepository\)'
-    }
-}
-
-Describe 'Certificate subprocess repository arguments' {
-    BeforeAll {
-        $source = Get-Content (Join-Path $repoRoot 'src\Microsoft.Data.SqlClient\tests\ManualTests\SQL\ConnectionTestWithSSLCert\CertificateTestWithTdsServer.cs') -Raw
-        $method = [regex]::Match($source, '(?s)        private static void RunPowershellScript.*?(?=        /// <summary>)').Value
-        $method | Should -Not -BeNullOrEmpty
-        $method = $method.Replace('private static', 'public static')
-        Add-Type -TypeDefinition @"
-#nullable enable
-using System;
-using System.IO;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Text.RegularExpressions;
-public static class CertificateProcessFixture {
-$method
-}
-"@
-    }
-
-    BeforeEach {
-        $stub = Join-Path $TestDrive 'capture.ps1'
-        $capture = Join-Path $TestDrive 'repository-name.txt'
-        if (Test-Path -LiteralPath $capture) {
-            Remove-Item -LiteralPath $capture
+    It 'escapes module inputs in one shared template' {
+        $source = Get-Content (Join-Path $repoRoot 'eng\pipelines\common\templates\steps\install-powershell-module-step.yml') -Raw
+        $source | Should -Match 'Install-SqlClientPSModule.ps1'
+        $source | Should -Match 'Module name and version must be literal template parameters'
+        $source | Should -Not -Match 'RepositoryName|https://|env:'
+        foreach ($parameter in @('name', 'requiredVersion')) {
+            $pattern = "'\$\{\{ replace\(parameters\.$parameter, '{4}, '{6}\) \}\}'"
+            $literal = [regex]::Match($source, $pattern).Value
+            $literal | Should -Not -BeNullOrEmpty
+            foreach ($value in @('SqlServer', "a'; throw 'injected'; #", 'a`";${value};#',
+                    "a'`nthrow 'injected")) {
+                $expanded = [regex]::Replace($literal, '\$\{\{.*?\}\}', { $value.Replace("'", "''") })
+                & ([scriptblock]::Create($expanded)) | Should -BeExactly $value
+            }
         }
-        @'
-param($OutDir, [switch] $SkipTrust, [string] $PowerShellRepository)
-$PowerShellRepository | Set-Content (Join-Path $OutDir 'repository-name.txt')
-'@ | Set-Content -LiteralPath $stub
-    }
-
-    It 'passes <Name> explicitly to a real child PowerShell process' -ForEach @(
-        @{ Name = 'CustomModules' }
-        @{ Name = 'Feed_6.2-0' }
-    ) {
-        $original = [Environment]::CurrentDirectory
-        try {
-            [Environment]::CurrentDirectory = $TestDrive
-            [CertificateProcessFixture]::RunPowershellScript($stub, $Name)
-            Get-Content (Join-Path $TestDrive 'repository-name.txt') | Should -BeExactly $Name
-        }
-        finally {
-            [Environment]::CurrentDirectory = $original
-        }
-    }
-
-    It 'rejects unsafe repository argument <Name> before launching a child' -ForEach @(
-        @{ Name = 'two words' }
-        @{ Name = 'a"; throw "injected' }
-        @{ Name = "a`nInjected" }
-        @{ Name = '-option' }
-        @{ Name = '$(injected)' }
-    ) {
-        { [CertificateProcessFixture]::RunPowershellScript($stub, $Name) } |
-            Should -Throw '*Expected a PowerShell repository name*'
-        Test-Path (Join-Path $TestDrive 'repository-name.txt') | Should -BeFalse
     }
 }

@@ -9,8 +9,7 @@
 
 param (
     $OutDir,
-    [switch] $SkipTrust,
-    [string] $PowerShellRepository
+    [switch] $SkipTrust
 )
 
 function Invoke-SqlServerCertificateCommand {
@@ -29,15 +28,6 @@ function Invoke-SqlServerCertificateCommand {
   Set-PSDebug -Trace 1
 
   Write-Output "Certificate generation started..."
-
-  # Provision outside the certificate error handler so source/install failures terminate the task.
-  if ([System.Environment]::OSVersion.Platform -eq "Unix" -and
-      -not (Get-Module -ListAvailable -Name OpenSSL)) {
-      if ([string]::IsNullOrWhiteSpace($PowerShellRepository)) {
-          throw 'PowerShellRepository must name a pre-registered repository to install the OpenSSL module.'
-      }
-      Install-Module -Name OpenSSL -Repository $PowerShellRepository -Force -ErrorAction Stop
-  }
 
   # Change directory to where the tests are
   Write-Output "Change directory to $OutDir ..."

@@ -282,8 +282,7 @@ Run `dotnet tool restore` first to restore the repository's pinned PowerShell to
 The regression suite also requires Pester 6.2.0:
 
 ```powershell
-dotnet tool run pwsh -NoProfile -File .\eng\scripts\Register-SqlClientPSRepository.ps1 -RepositoryName SqlClient
-dotnet tool run pwsh -NoProfile -Command 'Install-Module Pester -RequiredVersion 6.2.0 -Repository SqlClient -Scope CurrentUser -Force -ErrorAction Stop'
+dotnet tool run pwsh -NoProfile -File .\eng\scripts\Install-SqlClientPSModule.ps1 -Name Pester -RequiredVersion 6.2.0
 dotnet tool run pwsh -NoProfile -Command 'Import-Module Pester -RequiredVersion 6.2.0; Invoke-Pester -Path ./src/Microsoft.Data.SqlClient/tests/VersionChecks/VersionChecks.Tests.ps1 -CI'
 ```
 
@@ -309,18 +308,27 @@ In a live PowerShellGet 2.2.5 comparison, registration accepted both endpoints, 
 against v2. The helper uses v2 for this toolchain; registration alone does not verify
 that module lookup works.
 
-Pipelines register the repository once per job with the reusable
-`eng/pipelines/common/templates/steps/register-powershell-repository-step.yml`
-template, passing `repositoryName`. Module-install consumers take only the
-`powerShellRepository` name parameter and assume registration has already occurred.
-Use a literal repository name rather than a runtime `$(variable)` reference;
-the step rejects runtime references before executing scripts. Template expressions
-escape apostrophes so supplied names remain literal PowerShell arguments.
-Registration and installation must run as the same user. CI/PR test jobs write the
-name into the existing test configuration's `PowerShellRepository` property, and the
-certificate test passes it explicitly to the script. Local manual-test runs should
-set that configuration property after registration.
-Direct `makepfxcert.ps1` calls can instead pass `-PowerShellRepository SqlClient`.
+Pipelines install prerequisites with the reusable
+`eng/pipelines/common/templates/steps/install-powershell-module-step.yml` template.
+It accepts a module `name`, optional `requiredVersion`, `skipIfInstalled`, and
+`allowClobber`. Module names and versions are literal template parameters, not
+runtime `$(variables)`. Its shared `eng/scripts/Install-SqlClientPSModule.ps1` installer
+resolves the repository name and immediately uses it for `Install-Module`.
+Repository names do not travel through jobs, test configuration, or subprocesses.
+
+The net-only account step installs SqlServer 22.4.5.1 before setup; cleanup does
+not install anything. Linux local-server manual-test jobs that include set 1
+install OpenSSL before the certificate tests. Linux Kerberos setup installs
+SqlServer before checking connectivity. The test scripts only consume the installed
+prerequisites. Registration, installation, and consumption must run as the same user.
+For local runs, use the same installer before invoking those scripts:
+
+```powershell
+# Before Windows net-only account setup, using PowerShell 7.4 or later:
+.\eng\scripts\Install-SqlClientPSModule.ps1 -Name SqlServer -RequiredVersion 22.4.5.1 -SkipIfInstalled -AllowClobber
+# Before Unix certificate tests (the openssl executable must also be installed):
+.\eng\scripts\Install-SqlClientPSModule.ps1 -Name OpenSSL -SkipIfInstalled
+```
 
 Just like building and testing the various projects in this repository, packaging the projects into NuGet packages is
 also handled by `build.proj`. From the root of your repository, run `dotnet build` against `build.proj` with a pack target,

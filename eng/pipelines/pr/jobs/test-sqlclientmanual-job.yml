@@ -5,10 +5,6 @@
 #################################################################################
 
 parameters:
-  - name: powerShellRepository
-    type: string
-    default: SqlClient
-
   # General Parameters =====================================================
 
   # Configuration with which to build the packages and execute the tests.
@@ -161,9 +157,11 @@ jobs:
       # Restore dotnet tools
       - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
 
-      - template: /eng/pipelines/common/templates/steps/register-powershell-repository-step.yml@self
-        parameters:
-          repositoryName: ${{ parameters.powerShellRepository }}
+      - ${{ if and(eq(parameters.platformOperatingSystem, 'Linux'), parameters.isLocalServer, contains(parameters.testSet, '1')) }}:
+        - template: /eng/pipelines/common/templates/steps/install-powershell-module-step.yml@self
+          parameters:
+            name: OpenSSL
+            skipIfInstalled: true
 
       # Configure the local SQL Server instance
       - ${{ if eq(parameters.isLocalServer, true) }}:
@@ -192,7 +190,6 @@ jobs:
           $config = Get-Content -Raw $defaultConfigPath | ConvertFrom-Json
 
           # Update the config values
-          $config.PowerShellRepository = '${{ replace(parameters.powerShellRepository, '''', '''''') }}'
           $config.TCPConnectionString = "${{ parameters.connectionStringTcp }}"
           $config.NPConnectionString = "${{ parameters.connectionStringNp }}"
           $config.AzureKeyVaultURL = "${{ parameters.azureKeyVaultUrl }}"
@@ -221,7 +218,6 @@ jobs:
         - template: /eng/pipelines/common/templates/steps/configure-netonly-account-step.yml@self
           parameters:
             mode: setup
-            powerShellRepository: ${{ parameters.powerShellRepository }}
 
       # Execute TestSqlClientManual target from build.proj
       - task: DotNetCoreCLI@2
@@ -252,7 +248,6 @@ jobs:
         - template: /eng/pipelines/common/templates/steps/configure-netonly-account-step.yml@self
           parameters:
             mode: cleanup
-            powerShellRepository: ${{ parameters.powerShellRepository }}
 
       # Publish test results
       - template: /eng/pipelines/pr/steps/publish-test-results-step.yml@self

@@ -8,10 +8,6 @@
 
 parameters:
 
-  - name: powerShellRepository
-    type: string
-    default: SqlClient
-
   - name: buildConfiguration
     type: string
     values:
@@ -99,7 +95,6 @@ jobs:
       - ${{ if eq(parameters.operatingSystem, 'Linux') }}:
         - template: /eng/pipelines/ci/kerberos/linux-setup-step.yml@self
           parameters:
-            powerShellRepository: ${{ parameters.powerShellRepository }}
             kerberosDomain: $(KerberosDomain)
             kerberosDomainOU: $(KerberosDomainOU)
             kerberosDomainUser: $(KerberosDomainUser)

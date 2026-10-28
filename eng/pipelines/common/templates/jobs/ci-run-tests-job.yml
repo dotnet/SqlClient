@@ -4,10 +4,6 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 parameters:
-  - name: powerShellRepository
-    type: string
-    default: SqlClient
-
   # The name of the Abstractions pipeline artifact to download when referenceType is 'Package'.
   - name: abstractionsArtifactsName
     type: string
@@ -221,9 +217,11 @@ jobs:
   # Restore dotnet CLI tools (e.g. pwsh, apicompat) before building.
   - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
 
-  - template: /eng/pipelines/common/templates/steps/register-powershell-repository-step.yml@self
-    parameters:
-      repositoryName: ${{ parameters.powerShellRepository }}
+  - ${{ if and(eq(parameters.operatingSystem, 'Linux'), eq(parameters.configSqlFor, 'local'), contains(parameters.testSet, '1')) }}:
+    - template: /eng/pipelines/common/templates/steps/install-powershell-module-step.yml@self
+      parameters:
+        name: OpenSSL
+        skipIfInstalled: true
 
   - ${{ if ne(parameters.prebuildSteps, '') }}:
     - ${{ parameters.prebuildSteps }} # extra steps to run before the build like downloading sni and the required configuration
@@ -238,7 +236,6 @@ jobs:
   - ${{ if ne(parameters.configProperties, '{}') }}:
     - template: /eng/pipelines/common/templates/steps/update-config-file-step.yml@self # update config.jsonc file
       parameters:
-        PowerShellRepository: ${{ parameters.powerShellRepository }}
         debug: ${{ parameters.debug }}
         saPassword: ${{ parameters.saPassword }}
         UseManagedSNIOnWindows: ${{ parameters.usemanagedSNI }}
@@ -361,7 +358,6 @@ jobs:
     - template: /eng/pipelines/common/templates/steps/configure-netonly-account-step.yml@self
       parameters:
         mode: setup
-        powerShellRepository: ${{ parameters.powerShellRepository }}
 
   # Gate: record that all setup steps (SDK install, build, SQL config, x86 SDK
   # install, etc.) completed successfully.  Test steps condition on this variable
@@ -402,7 +398,6 @@ jobs:
     - template: /eng/pipelines/common/templates/steps/configure-netonly-account-step.yml@self
       parameters:
         mode: cleanup
-        powerShellRepository: ${{ parameters.powerShellRepository }}
 
   - template: /eng/pipelines/common/templates/steps/publish-test-results-step.yml@self
     parameters:

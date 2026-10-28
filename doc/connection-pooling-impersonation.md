@@ -80,10 +80,11 @@ existing `Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows` setting
 Windows local-server Set 3 CI jobs for the default SQL instance provision a unique
 non-administrator local account and a SQL Windows login with access to `master`.
 Provisioning runs under PowerShell 7.4 or later and uses the pinned `SqlServer`
-PowerShell module (22.4.5.1), backed by Microsoft.Data.SqlClient. Setup installs
-that version from the pre-registered repository passed as `PowerShellRepository`
-for the current user if it is missing; cleanup reuses it. Pipelines register the
-repository in a separate reusable step, using `NuGet.config`'s `governed` source.
+PowerShell module (22.4.5.1), backed by Microsoft.Data.SqlClient. The reusable module
+installation step installs that version for the current user if it is missing,
+registering and immediately using `NuGet.config`'s `governed` source. Account setup
+and cleanup only import the preinstalled module. For local setup, first run
+`.\eng\scripts\Install-SqlClientPSModule.ps1 -Name SqlServer -RequiredVersion 22.4.5.1 -SkipIfInstalled -AllowClobber`.
 SQL login management connects to the configured local TCP port with Windows
 authentication and encryption, explicitly trusting the local CI server certificate.
 The generated password is passed only as a secret test-process environment
