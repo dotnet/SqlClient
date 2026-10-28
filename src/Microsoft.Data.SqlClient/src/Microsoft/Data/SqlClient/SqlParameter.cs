@@ -780,8 +780,8 @@ namespace Microsoft.Data.SqlClient
                         #if NET
                         return SqlVector<Half>.CreateNullFromServer(elementCount);
                         #else
-                        // System.Half is unavailable, so a float16 vector has no faithful
-                        // strongly typed representation and is surfaced as single precision.
+                        // Unlike reader columns, vector-bound output values retain a vector
+                        // representation. Framework widens float16 to SqlVector<float>.
                         // A float16 column may declare more dimensions than can be sent as
                         // float32, so the server's count is taken as given.
                         return SqlVector<float>.CreateNullFromServer(elementCount);

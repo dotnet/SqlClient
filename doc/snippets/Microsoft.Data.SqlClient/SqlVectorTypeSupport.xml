@@ -42,6 +42,13 @@
           read as a <c>SqlVector&lt;float&gt;</c> on request.
         </para>
         <para>
+          The column representations above describe reader results. Output parameters follow
+          their client-side binding: on .NET Framework, a <c>SqlVector&lt;float&gt;</c> binding
+          returns a <c>SqlVector&lt;float&gt;</c>, while a <c>varchar(max)</c> binding returns
+          JSON text. For non-null text output, <c>Value</c> is a <c>string</c> and
+          <c>SqlValue</c> is a <c>SqlString</c>.
+        </para>
+        <para>
           On .NET Framework, the driver widens each element of a <c>float16</c> column to
           <c>float32</c> as it reads, and renders the result as a JSON array for the string read
           paths. On .NET, a <c>SqlVector&lt;Half&gt;</c> wraps the payload the server sent, so no
