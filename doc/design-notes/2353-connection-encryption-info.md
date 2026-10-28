@@ -273,7 +273,10 @@ completes the capture is released, so SSL errors on an open connection never alt
 snapshot.
 
 **Cipher suite.** `EncryptionInfoCapture.RecordCipherSuite(int cipherSuite)` is the single
-recording point for `NegotiatedCipherSuite`. Slice B adds only the plumbing: the value is reset
+recording point for `NegotiatedCipherSuiteId` and, on .NET, `NegotiatedCipherSuite`. The capture stores the IANA identifier as an integer on
+every target framework and passes it to the snapshot constructor, so `NegotiatedCipherSuiteId`
+(every target) and the .NET-only `NegotiatedCipherSuite` (`TlsCipherSuite?`) read the same value
+(Slice C records `(int)SslStream.NegotiatedCipherSuite`). Slice B adds only the plumbing: the value is reset
 with the other fields at the start of every physical login attempt, flows into the snapshot
 published on `SqlConnection` and attached to `SqlException`, and values outside 0–0xFFFF are
 ignored instead of failing the login. No transport calls it in this slice, so the property stays
