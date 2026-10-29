@@ -17,6 +17,9 @@ using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Parser;
+using Microsoft.Data.SqlClient.Parser.Login;
+using Microsoft.Data.SqlClient.Parser.Tokens;
 using Microsoft.Data.SqlClient.Utilities;
 using IsolationLevel = System.Data.IsolationLevel;
 
@@ -622,11 +625,6 @@ namespace Microsoft.Data.SqlClient.Connection
             get => _instanceName;
         }
 
-        internal bool Is2008OrNewer
-        {
-            get => _parser.Is2008OrNewer;
-        }
-
         /// <summary>
         /// Validates if federated authentication is used, Access Token used by this connection is
         /// active for the value of 'accessTokenExpirationBufferTime'.
@@ -727,7 +725,7 @@ namespace Microsoft.Data.SqlClient.Connection
 
         internal string RoutingDestination { get; private set; }
 
-        internal RoutingInfo RoutingInfo { get; private set; } = null;
+        internal TdsEnvChangeRoutingInfo RoutingInfo { get; private set; } = null;
 
         internal int ServerProcessId
         {
@@ -1060,9 +1058,9 @@ namespace Microsoft.Data.SqlClient.Connection
                 "unenlisted.",
                 ObjectID);
 
-            // The EnlistTransaction above will return an TransactionEnded event, which causes the
-            // TdsParser to clear the current transaction. In either case, when we're working with
-            // a 2005 or newer server we better not have a current transaction at this point.
+            // The EnlistTransaction above will return a TransactionEnded event, which causes the
+            // TdsParser to clear the current transaction. There must be no current transaction
+            // after unenlisting.
             Debug.Assert(CurrentTransaction == null, "unenlisted transaction with non-null current transaction?");
         }
 
@@ -1097,7 +1095,7 @@ namespace Microsoft.Data.SqlClient.Connection
 
             string transactionName = name ?? string.Empty;
 
-            ExecuteTransaction2005(transactionRequest, transactionName, iso, internalTransaction, isDelegateControlRequest);
+            ExecuteTransactionInternal(transactionRequest, transactionName, iso, internalTransaction, isDelegateControlRequest);
         }
 
         internal SqlDataReader FindLiveReader(SqlCommand command)
@@ -1253,7 +1251,7 @@ namespace Microsoft.Data.SqlClient.Connection
                     break;
 
                 case TdsEnums.ENV_TRANSACTIONMANAGERADDRESS:
-                    // For now, we skip these 2005 only env change notifications
+                    // Ignore transaction manager address notifications.
                     break;
 
                 case TdsEnums.ENV_SPRESETCONNECTIONACK:
@@ -2036,7 +2034,7 @@ namespace Microsoft.Data.SqlClient.Connection
                 _currentSessionData._tdsVersion = Capabilities.TdsVersion;
             }
         }
-        
+
         /// <summary>
         /// Selects the <see cref="TimeoutTimer"/> that governs the login phase based on
         /// <see cref="LocalAppContextSwitches.UseOverallConnectTimeoutForPoolWait"/>.
@@ -2811,22 +2809,19 @@ namespace Microsoft.Data.SqlClient.Connection
             // Tell the base class about our enlistment
             EnlistedTransaction = transaction;
 
-            // If we're on a 2005 or newer server, and we delegate the transaction successfully, we
-            // will have begun a transaction, which produces a transaction ID that we should
-            // execute all requests on. The TdsParser will store this information as the current
-            // transaction.
+            // If we delegate the transaction successfully, we will have begun a transaction, which
+            // produces a transaction ID that we should execute all requests on. The TdsParser will
+            // store this information as the current transaction.
 
-            // Likewise, propagating a transaction to a 2005 or newer server will produce a
-            // transaction id that The TdsParser will store as the current transaction.
+            // Likewise, propagating a transaction will produce a transaction id that The TdsParser
+            // will store as the current transaction.
 
-            // In either case, when we're working with a 2005 or newer server we better have a
-            // current transaction by now.
+            // In either case, we better have a current transaction by now.
 
             Debug.Assert(CurrentTransaction != null, "delegated/enlisted transaction with null current transaction?");
         }
 
-        // @TODO: Rename to ExecuteTransactionInternal ... we don't have multiple server version implementations of this
-        private void ExecuteTransaction2005(
+        private void ExecuteTransactionInternal(
             TransactionRequest transactionRequest,
             string transactionName,
             System.Data.IsolationLevel iso, // @TODO: We have three different IsolationTypes, maybe we can indicate which one is which a bit better.
@@ -2892,9 +2887,8 @@ namespace Microsoft.Data.SqlClient.Connection
                         requestType = TdsEnums.TransactionManagerRequestType.Commit;
                         break;
                     case TransactionRequest.IfRollback:
-                        // Map IfRollback to Rollback since with 2005 and beyond we should never
-                        // need the "if" since the server will inform us when transactions have
-                        // completed as a result of an error on the server.
+                        // Map IfRollback to Rollback: the server notifies us when a transaction
+                        // completes after an error, so no conditional rollback is needed.
                     case TransactionRequest.Rollback:
                         requestType = TdsEnums.TransactionManagerRequestType.Rollback;
                         break;
@@ -2950,7 +2944,7 @@ namespace Microsoft.Data.SqlClient.Connection
 
                     if (internalTransaction.OpenResultsCount != 0)
                     {
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.ExecuteTransaction2005|DATA|CATCH> {0}, Connection is marked to be doomed when closed. Transaction ended with OpenResultsCount {1} > 0, MARSOn {2}",
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.ExecuteTransactionInternal|DATA|CATCH> {0}, Connection is marked to be doomed when closed. Transaction ended with OpenResultsCount {1} > 0, MARSOn {2}",
                                                                ObjectID,
                                                                internalTransaction.OpenResultsCount,
                                                                _parser.MARSOn);
