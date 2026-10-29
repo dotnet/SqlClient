@@ -60,10 +60,11 @@ Describe 'CI dotnet argument variables in <RelativePath>' -ForEach @(
         ([regex]::Matches($template, '\$\(dotnetBuildOpts\)')).Count | Should -Be 5
     }
 
-    Describe 'authentication CI matrix' {
+    Describe 'authentication PR matrix' {
         BeforeAll {
             $pipelineRoot = Join-Path $PSScriptRoot '../..'
             $template = Get-Content (Join-Path $pipelineRoot 'pr/stages/authentication-validation-stage.yml') -Raw
+            $pr = Get-Content (Join-Path $pipelineRoot 'pr/sqlclient-pr-pipeline.yml') -Raw
             $core = Get-Content (Join-Path $pipelineRoot 'dotnet-sqlclient-ci-core.yml') -Raw
         }
 
@@ -83,11 +84,18 @@ Describe 'CI dotnet argument variables in <RelativePath>' -ForEach @(
             $template | Should -Match 'authentication-linux-\$\{\{ referenceType \}\}/nuget'
             $template | Should -Match 'authentication-windows-\$\{\{ referenceType \}\}/nuget'
             ([regex]::Matches($template, '-p:PackageVersionSqlClient=8.0.0-auth.\$\(Build.BuildId\)')).Count | Should -Be 2
-            $core | Should -Match '/eng/pipelines/pr/stages/authentication-validation-stage.yml@self'
-            $core | Should -Match 'poolName: \$\{\{ parameters.defaultPoolName \}\}'
-            $core | Should -Match 'linuxPoolImage: ADO-UB24'
-            $core | Should -Match 'windowsPoolImage: ADO-Win25'
-            $core | Should -Match 'buildConfiguration: \$\{\{ parameters.buildConfiguration \}\}'
+            $pr | Should -Match ('(?m)^  - template: /eng/pipelines/pr/stages/' +
+                'authentication-validation-stage.yml@self\r?\n' +
+                '    parameters:\r?\n' +
+                '      poolName: \$\(general_purpose_pool_name\)\r?\n' +
+                '      linuxPoolImage: ADO-UB24\r?\n' +
+                '      windowsPoolImage: ADO-Win25\r?\n' +
+                '      buildConfiguration: Debug')
+        }
+
+        It 'runs independently in the modern PR pipeline only' {
+            $core | Should -Not -Match 'authentication-validation-stage.yml'
+            $template | Should -Match 'dependsOn: \[\]'
         }
     }
 }

@@ -97,9 +97,10 @@ the computed family version before building so every fixture uses the same packa
 included in `BuildTests`. Both fixtures are in the solution. The focused targets
 remain available; ordinary xUnit tests are unchanged. See the
 [authentication harness README](src/Microsoft.Data.SqlClient/tests/AuthenticationTests/README.md).
-The authentication CI stage independently builds and runs Project **and** Package jobs
+The modern `sqlclient-pr` pipeline's authentication stage independently builds and runs
+Project **and** Package jobs
 on Linux (net10.0, trim/AOT) and Windows (net462), with isolated caches and no assumed
-artifact downloads.
+artifact downloads. The legacy PR/CI pipelines do not run this stage.
 
 ### Building Projects
 

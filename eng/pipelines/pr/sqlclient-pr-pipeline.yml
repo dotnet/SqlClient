@@ -114,6 +114,14 @@ stages:
       poolName: $(general_purpose_pool_name)
       poolImage: ADO-UB24
 
+  # Stage 1c: Validate authentication configuration and publishing independently
+  - template: /eng/pipelines/pr/stages/authentication-validation-stage.yml@self
+    parameters:
+      poolName: $(general_purpose_pool_name)
+      linuxPoolImage: ADO-UB24
+      windowsPoolImage: ADO-Win25
+      buildConfiguration: Debug
+
   # Stage 2: Execute tests and collect code coverage
   - template: /eng/pipelines/pr/stages/test-stages.yml@self
     parameters:
