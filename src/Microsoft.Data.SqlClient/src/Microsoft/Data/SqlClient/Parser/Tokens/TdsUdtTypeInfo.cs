@@ -16,6 +16,7 @@ namespace Microsoft.Data.SqlClient.Parser.Tokens
         /// Represents the fully qualified type name of the UDT, including the name of the assembly
         /// in which the type is defined.
         /// </summary>
+        // @TODO: This cannot be an auto property yet because this value is set via an out parameter in TryRead*.
         internal string AssemblyQualifiedName;
 
         /// <summary>
