@@ -41,6 +41,7 @@ public class ParserPrerequisiteTests
         TDSTokenType tokenType, bool useAsync)
     {
         using TdsServerFixture fixture = new();
+        // Replace login completion with a token whose metadata or provider was never initialized.
         fixture.TdsServer.OnAuthenticationResponseCompleted = response =>
         {
             response.Clear();
@@ -51,6 +52,7 @@ public class ParserPrerequisiteTests
         InvalidOperationException error = await Assert.ThrowsAsync<InvalidOperationException>(
             () => Open(connection, useAsync));
 
+        // Reject the stream at its first login attempt, without leaving the connection open.
         AssertParsingError(error);
         Assert.Equal(ConnectionState.Closed, connection.State);
         Assert.Equal(1, fixture.TdsServer.PreLoginCount);
@@ -75,6 +77,7 @@ public class ParserPrerequisiteTests
         using ConnectionPoolVersionScope version = new(usePoolV2);
         using TdsServerFixture fixture = new();
         SqlConnectionStringBuilder builder = CreateBuilder(fixture);
+        // A leaked pool slot blocks recovery; disabling backoff exposes each new login attempt.
         builder.Pooling = true;
         builder.MaxPoolSize = 1;
         builder.PoolBlockingPeriod = PoolBlockingPeriod.NeverBlock;
@@ -94,6 +97,7 @@ public class ParserPrerequisiteTests
             fixture.TdsServer.OnSQLBatchCompleted = SetInvalidResponse;
         }
 
+        // Repeated failures must release the sole slot, whether login or a command rejects the row.
         for (int attempt = 0; attempt < 2; attempt++)
         {
             using SqlConnection failed = new(builder.ConnectionString);
@@ -115,6 +119,7 @@ public class ParserPrerequisiteTests
             Assert.Equal(ConnectionState.Closed, failed.State);
         }
 
+        // Restore valid responses and require a fresh physical login, not a damaged pooled session.
         fixture.TdsServer.OnAuthenticationResponseCompleted = null;
         fixture.TdsServer.OnSQLBatchCompleted = null;
         using SqlConnection valid = new(builder.ConnectionString);
@@ -144,6 +149,7 @@ public class ParserPrerequisiteTests
         TDSTokenType tokenType, bool useReader, bool useAsync)
     {
         using TdsServerFixture fixture = new();
+        // Let login succeed, then return a row without the metadata required to interpret it.
         fixture.TdsServer.OnSQLBatchCompleted = response =>
         {
             response.Clear();
@@ -155,6 +161,7 @@ public class ParserPrerequisiteTests
         using SqlCommand command = new("SELECT 1", connection);
 
         SqlDataReader? reader = null;
+        // Exercise both reader consumption and the non-query path that skips returned rows.
         Exception? operationError = await Record.ExceptionAsync(
             async () =>
             {
@@ -182,6 +189,7 @@ public class ParserPrerequisiteTests
                 }
             });
 
+        // Capture failure and closure before disposal so cleanup cannot mask the operation's error.
         ConnectionState stateAfterOperation = connection.State;
         Exception? disposeError = Record.Exception(() => reader?.Dispose());
 
@@ -212,6 +220,7 @@ public class ParserPrerequisiteTests
         bool includeAlternateMetadata, bool useReader, bool useAsync, bool readAllRows)
     {
         using TdsServerFixture fixture = new();
+        // Metadata, when present, defines ID 1; the alternate row deliberately requests ID 2.
         fixture.TdsServer.OnSQLBatchCompleted = response =>
             SetResult(response, includeAlternateMetadata, alternateId: 2);
         using SqlConnection connection = new(CreateBuilder(fixture).ConnectionString);
@@ -229,6 +238,7 @@ public class ParserPrerequisiteTests
                         : command.ExecuteReader();
                     Assert.True(useAsync ? await reader.ReadAsync() : reader.Read());
                     Assert.Equal(1, reader.GetInt32(0));
+                    // Cover transitions with either all primary rows consumed or a null row unread.
                     if (readAllRows)
                     {
                         Assert.True(useAsync ? await reader.ReadAsync() : reader.Read());
@@ -253,6 +263,7 @@ public class ParserPrerequisiteTests
                 }
             });
 
+        // Disposal must succeed independently, not substitute its own error for NextResult's.
         ConnectionState stateAfterOperation = connection.State;
         Exception? disposeError = Record.Exception(() => reader?.Dispose());
 
@@ -272,6 +283,7 @@ public class ParserPrerequisiteTests
     public async Task ValidMetadata_PreservesResultProcessing(bool useReader, bool useAsync)
     {
         using TdsServerFixture fixture = new();
+        // The valid control pairs alternate row ID 1 with its metadata after ordinary/null rows.
         fixture.TdsServer.OnSQLBatchCompleted = response =>
             SetResult(response, includeAlternateMetadata: true, alternateId: 1);
         using SqlConnection connection = new(CreateBuilder(fixture).ConnectionString);
@@ -285,12 +297,14 @@ public class ParserPrerequisiteTests
                 : command.ExecuteReader();
             Assert.True(useAsync ? await reader.ReadAsync() : reader.Read());
             Assert.Equal(1, reader.GetInt32(0));
+            // Leave the null-compressed row unread so NextResult must skip it before the alternate.
             Assert.True(useAsync ? await reader.NextResultAsync() : reader.NextResult());
             Assert.True(useAsync ? await reader.ReadAsync() : reader.Read());
             Assert.Equal(42, reader.GetInt32(0));
             Assert.False(useAsync ? await reader.ReadAsync() : reader.Read());
             Assert.False(useAsync ? await reader.NextResultAsync() : reader.NextResult());
         }
+        // Non-query execution must also skip the complete, valid result stream without rejection.
         else if (useAsync)
         {
             await command.ExecuteNonQueryAsync();
@@ -321,6 +335,7 @@ public class ParserPrerequisiteTests
         {
             SetResult(response, includeAlternateMetadata: true,
                 alternateId: knownId ? (ushort)1 : (ushort)2);
+            // Measure everything before ALTROW so padding can position its identifier precisely.
             using MemoryStream prefix = new();
             for (int index = 0; index < response.Count - 2; index++)
             {
@@ -330,6 +345,8 @@ public class ParserPrerequisiteTests
             TDSInfoToken padding = new(0, 0, 0, string.Empty);
             using MemoryStream emptyPadding = new();
             padding.Deflate(emptyPadding);
+            // Leave two payload bytes: the ALTROW token byte and the first identifier byte.
+            // The second identifier byte must then be read from the next TDS packet.
             int targetLength = connection.PacketSize - TdsEnums.HEADER_LEN - 2;
             int textBytes = targetLength - (int)prefix.Length - (int)emptyPadding.Length;
             Assert.True(textBytes >= 0);
@@ -353,6 +370,7 @@ public class ParserPrerequisiteTests
             }
         }
 
+        // Packet continuation must preserve both valid lookup and rejection of an unknown ID.
         if (knownId)
         {
             await Execute();

@@ -37,6 +37,7 @@ public class ParserResultProcessingTest
             connection.Open();
         }
 
+        // Sorting puts NULL first and leaves a deterministic unread row before the second result.
         using SqlCommand command = new(
             "SELECT CAST(NULL AS int) AS value UNION ALL SELECT 1 UNION ALL SELECT 2 " +
             "ORDER BY value; " +
@@ -52,6 +53,7 @@ public class ParserResultProcessingTest
             Assert.True(reader.IsDBNull(0));
             Assert.True(useAsync ? await reader.ReadAsync() : reader.Read());
             Assert.Equal(1, reader.GetInt32(0));
+            // Skip the unread value 2 and verify that the next result uses its own metadata.
             Assert.True(useAsync ? await reader.NextResultAsync() : reader.NextResult());
             Assert.True(useAsync ? await reader.ReadAsync() : reader.Read());
             Assert.Equal(42, reader.GetInt32(0));
@@ -59,6 +61,7 @@ public class ParserResultProcessingTest
             Assert.False(useAsync ? await reader.NextResultAsync() : reader.NextResult());
         }
 
+        // A subsequent command proves valid result processing did not invalidate the connection.
         command.CommandText = "SELECT 7";
         object result = useAsync
             ? await command.ExecuteScalarAsync()
