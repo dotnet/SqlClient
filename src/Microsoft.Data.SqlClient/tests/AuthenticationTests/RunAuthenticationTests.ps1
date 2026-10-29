@@ -100,12 +100,26 @@ $extension = if ($Framework -eq 'net462') { 'exe' } else { 'dll' }
 $app = Join-Path $output "AuthenticationConfigurationTest.$extension"
 $configPath = "$app.config"
 $originalConfig = [System.IO.File]::ReadAllBytes($configPath)
+$generatedConfig = [System.Xml.XmlDocument]::new()
+$generatedConfig.Load($configPath)
+$generatedRuntime = $generatedConfig.SelectSingleNode('/configuration/runtime')
 try {
     $scenarios = @('configured', 'legacy')
     if ($AllScenarios) { $scenarios += @('bad-provider', 'bad-initializer', 'bad-unsupported', 'disabled') }
     foreach ($scenario in $scenarios) {
         $config = if ($scenario -in @('configured', 'disabled')) { 'app.config' } else { "$scenario.config" }
-        Copy-Item -LiteralPath (Join-Path $PSScriptRoot "ConfigurationTest/$config") -Destination $configPath -Force
+        $scenarioConfig = [System.Xml.XmlDocument]::new()
+        $scenarioConfig.Load((Join-Path $PSScriptRoot "ConfigurationTest/$config"))
+        if ($generatedRuntime) {
+            $runtime = $scenarioConfig.ImportNode($generatedRuntime, $true)
+            $scenarioRuntime = $scenarioConfig.SelectSingleNode('/configuration/runtime')
+            if ($scenarioRuntime) {
+                $scenarioConfig.DocumentElement.ReplaceChild($runtime, $scenarioRuntime) | Out-Null
+            } else {
+                $scenarioConfig.DocumentElement.AppendChild($runtime) | Out-Null
+            }
+        }
+        $scenarioConfig.Save($configPath)
         if ($Framework -eq 'net462') {
             & $app $scenario
             if ($LASTEXITCODE -ne 0) { throw "Configuration test failed: $scenario" }
