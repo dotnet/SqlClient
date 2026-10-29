@@ -94,8 +94,11 @@ versions, configuration and reference mode flow to all fixtures; the runner free
 the computed family version before building so every fixture uses the same package graph.
 
 `BuildAuthenticationTests` builds scenario fixtures without executing them and is
-included in `BuildTests`. Both fixtures are in the solution. The focused targets
-remain available; ordinary xUnit tests are unchanged. See the
+included in `BuildTests`. When `TestFramework` is unset, it builds both net462 and
+net10.0; an explicit value selects a single framework. Scenario execution preserves
+generated runtime settings, including .NET Framework assembly-binding redirects,
+and restores the original configuration afterward. Both fixtures are in the solution.
+The focused targets remain available; ordinary xUnit tests are unchanged. See the
 [authentication harness README](src/Microsoft.Data.SqlClient/tests/AuthenticationTests/README.md).
 The modern `sqlclient-pr` pipeline's authentication stage independently builds and runs
 Project **and** Package jobs

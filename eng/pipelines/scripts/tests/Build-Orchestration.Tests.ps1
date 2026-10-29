@@ -176,7 +176,10 @@ Describe 'authentication scenario orchestration' {
             '-p:BuildNumber=123.4', '-p:BuildSuffix=probe', '-p:AuthenticationPublish=true'
         )
         $script = $arguments[([array]::IndexOf($arguments, '-File') + 1)]
-        [System.IO.Path]::GetFullPath($script) | Should -Be "$repoRoot/src/Microsoft.Data.SqlClient/tests/AuthenticationTests/RunAuthenticationTests.ps1"
+        $expectedScript = Join-Path $repoRoot `
+            'src/Microsoft.Data.SqlClient/tests/AuthenticationTests/RunAuthenticationTests.ps1'
+        [System.IO.Path]::GetFullPath($script) |
+            Should -Be ([System.IO.Path]::GetFullPath($expectedScript))
         foreach ($value in @('Package', 'Debug', 'net462', '8.0.0-probe.6', '8.0.0.6', '1.0.0-probe', '123.4', 'probe')) {
             $arguments | Should -Contain $value
         }
@@ -201,6 +204,26 @@ Describe 'authentication scenario orchestration' {
             Should -Match 'BuildAuthenticationTests'
     }
 
+    It 'builds <Mode> authentication frameworks <ExpectedFrameworks> for TestFramework=<Framework>' -ForEach @(
+        foreach ($mode in @('Project', 'Package')) {
+            @{ Mode = $mode; Framework = ''; ExpectedFrameworks = @('net462', 'net10.0') }
+            @{ Mode = $mode; Framework = 'net462'; ExpectedFrameworks = @('net462') }
+            @{ Mode = $mode; Framework = 'net10.0'; ExpectedFrameworks = @('net10.0') }
+        }
+    ) {
+        $arguments = Get-ChildArguments 'BuildAuthenticationTests' @(
+            "-p:ReferenceType=$Mode", "-p:TestFramework=$Framework", '-p:SkipDependencyPack=true'
+        )
+        $frameworks = @(
+            for ($i = 0; $i -lt $arguments.Count; $i++) {
+                if ($arguments[$i] -eq '-Framework') { $arguments[$i + 1] }
+            }
+        )
+        $frameworks -join ',' | Should -Be ($ExpectedFrameworks -join ',')
+        @($arguments | Where-Object { $_ -eq '-BuildOnly' }).Count |
+            Should -Be $ExpectedFrameworks.Count
+    }
+
     It '<Fixture> uses actual <Mode> references with the computed family version' -ForEach @(
         foreach ($fixture in @('ConfigurationTest', 'PublishTest')) {
             foreach ($mode in @('Project', 'Package')) {
@@ -222,6 +245,108 @@ Describe 'authentication scenario orchestration' {
             $familyPackages.Count | Should -Be 2
             @($result.Items.PackageVersion | Where-Object { $_.Identity -eq 'Microsoft.Data.SqlClient.Extensions.Azure' })[0].Version |
                 Should -Match 'probe\.123\.4'
+        }
+    }
+}
+
+Describe 'authentication scenario configuration preservation' {
+    BeforeEach {
+        $authenticationFixture = Join-Path $TestDrive `
+            'src/Microsoft.Data.SqlClient/tests/AuthenticationTests'
+        $configurationHome = Join-Path $authenticationFixture 'ConfigurationTest'
+        $output = Join-Path $configurationHome 'bin/Release/net10.0'
+        New-Item -ItemType Directory -Path $output -Force | Out-Null
+        $source = Join-Path $repoRoot 'src/Microsoft.Data.SqlClient/tests/AuthenticationTests'
+        Copy-Item (Join-Path $source 'RunAuthenticationTests.ps1') $authenticationFixture
+        Copy-Item (Join-Path $source 'ConfigurationTest/*.config') $configurationHome
+        $authenticationConfig = Join-Path $output 'AuthenticationConfigurationTest.dll.config'
+        $authenticationSnapshots = [System.Collections.Generic.List[xml]]::new()
+        $authenticationScenarios = [System.Collections.Generic.List[string]]::new()
+        $authenticationFailure = $false
+
+        Mock dotnet {
+            $global:LASTEXITCODE = 0
+            if ($args -contains '-getProperty:SqlClientPackageVersion') {
+                return '8.0.0-config-probe'
+            }
+            if ($args[0] -eq 'build') { return }
+            $authenticationSnapshots.Add(
+                [xml][System.IO.File]::ReadAllText($authenticationConfig))
+            $authenticationScenarios.Add($args[1])
+            if ($authenticationFailure -and $args[1] -eq 'legacy') {
+                $global:LASTEXITCODE = 1
+            }
+        }
+    }
+
+    It 'preserves generated runtime=<HasRuntime>, replaces scenario runtime=<ScenarioRuntime>, and restores bytes after failure=<Fail>' -ForEach @(
+        @{ HasRuntime = $true; ScenarioRuntime = $false; Fail = $false }
+        @{ HasRuntime = $true; ScenarioRuntime = $false; Fail = $true }
+        @{ HasRuntime = $false; ScenarioRuntime = $false; Fail = $false }
+        @{ HasRuntime = $false; ScenarioRuntime = $false; Fail = $true }
+        @{ HasRuntime = $true; ScenarioRuntime = $true; Fail = $false }
+        @{ HasRuntime = $true; ScenarioRuntime = $true; Fail = $true }
+    ) {
+        if ($ScenarioRuntime) {
+            $scenarioPath = Join-Path $authenticationFixture 'ConfigurationTest/app.config'
+            [xml]$scenarioDocument = Get-Content $scenarioPath -Raw
+            $scenarioDocument.DocumentElement.AppendChild(
+                $scenarioDocument.CreateElement('runtime')) | Out-Null
+            $scenarioDocument.Save($scenarioPath)
+        }
+        $runtime = if ($HasRuntime) {
+            @'
+  <runtime>
+    <assemblyBinding xmlns="urn:schemas-microsoft-com:asm.v1">
+      <dependentAssembly>
+        <assemblyIdentity name="ConfigurationProbe" publicKeyToken="0123456789abcdef" culture="neutral" />
+        <bindingRedirect oldVersion="0.0.0.0-2.0.0.0" newVersion="2.0.0.0" />
+      </dependentAssembly>
+    </assemblyBinding>
+    <loadFromRemoteSources enabled="true" />
+  </runtime>
+'@
+        } else { '' }
+        $original = "<?xml version=`"1.0`" encoding=`"utf-8`"?>`n<configuration>`n$runtime`n</configuration>`n"
+        [System.IO.File]::WriteAllText($authenticationConfig, $original)
+        $originalBytes = [Convert]::ToBase64String(
+            [System.IO.File]::ReadAllBytes($authenticationConfig))
+        $authenticationFailure = $Fail
+        $runner = Join-Path $authenticationFixture 'RunAuthenticationTests.ps1'
+        if ($Fail) {
+            { & $runner -Framework net10.0 -AllScenarios } | Should -Throw '*dotnet failed*'
+        } else {
+            & $runner -Framework net10.0 -AllScenarios
+        }
+
+        [Convert]::ToBase64String([System.IO.File]::ReadAllBytes($authenticationConfig)) |
+            Should -Be $originalBytes
+        $expectedScenarios = if ($Fail) { 'configured,legacy' } else {
+            'configured,legacy,bad-provider,bad-initializer,bad-unsupported,disabled'
+        }
+        $authenticationScenarios -join ',' | Should -Be $expectedScenarios
+        $expectedRuntime = ([xml]$original).SelectSingleNode('/configuration/runtime')
+        for ($i = 0; $i -lt $authenticationSnapshots.Count; $i++) {
+            $snapshot = $authenticationSnapshots[$i]
+            $actualRuntime = $snapshot.SelectSingleNode('/configuration/runtime')
+            if ($HasRuntime) {
+                $actualRuntime | Should -Not -BeNullOrEmpty
+                $actualRuntime.OuterXml | Should -Be $expectedRuntime.OuterXml
+            } else {
+                $actualRuntime | Should -BeNullOrEmpty
+            }
+            $scenario = $authenticationScenarios[$i]
+            $config = if ($scenario -in @('configured', 'disabled')) {
+                'app.config'
+            } else { "$scenario.config" }
+            $expected = [xml](Get-Content (Join-Path $authenticationFixture `
+                "ConfigurationTest/$config") -Raw)
+            $snapshot.configuration.FirstChild.Name | Should -Be 'configSections'
+            $snapshot.configuration.configSections.OuterXml |
+                Should -Be $expected.configuration.configSections.OuterXml
+            $authenticationSection = '/configuration/*[not(self::configSections or self::runtime)]'
+            $snapshot.SelectSingleNode($authenticationSection).OuterXml |
+                Should -Be $expected.SelectSingleNode($authenticationSection).OuterXml
         }
     }
 }
@@ -910,7 +1035,9 @@ Describe 'SqlClient build helper path quoting' {
 
         $arguments | Should -Contain '-File'
         $script = $arguments[([array]::IndexOf($arguments, '-File') + 1)]
-        [System.IO.Path]::GetFullPath($script.Replace('\', '/')) | Should -Be "$repoRoot/tools/intellisense/TrimDocs.ps1"
+        $expectedScript = Join-Path $repoRoot 'tools/intellisense/TrimDocs.ps1'
+        [System.IO.Path]::GetFullPath($script.Replace('\', '/')) |
+            Should -Be ([System.IO.Path]::GetFullPath($expectedScript))
         $arguments | Should -Contain ([System.IO.Path]::GetFullPath($documentation))
     }
 

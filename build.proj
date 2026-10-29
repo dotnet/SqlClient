@@ -622,19 +622,23 @@
     <AuthenticationBuildNumberArgument Condition="'$(BuildNumber)' != ''">-BuildNumber "$(BuildNumber)"</AuthenticationBuildNumberArgument>
     <AuthenticationBuildSuffixArgument Condition="'$(BuildSuffix)' != ''">-BuildSuffix "$(BuildSuffix)"</AuthenticationBuildSuffixArgument>
     <AuthenticationPublishArgument Condition="'$(AuthenticationPublish)' == 'true'">-Publish</AuthenticationPublishArgument>
-    <AuthenticationCommand>&quot;$(DotnetPath)dotnet&quot; tool run pwsh -- -NonInteractive -NoProfile -File &quot;$(AuthenticationTestsScript)&quot; -Framework $(AuthenticationTestFramework) -ReferenceType $(ReferenceType) -Configuration $(Configuration) $(AuthenticationPackageVersionArgument) $(AuthenticationFileVersionArgument) $(AuthenticationSqlServerVersionArgument) $(AuthenticationBuildNumberArgument) $(AuthenticationBuildSuffixArgument)</AuthenticationCommand>
+    <AuthenticationCommand>&quot;$(DotnetPath)dotnet&quot; tool run pwsh -- -NonInteractive -NoProfile -File &quot;$(AuthenticationTestsScript)&quot; -ReferenceType $(ReferenceType) -Configuration $(Configuration) $(AuthenticationPackageVersionArgument) $(AuthenticationFileVersionArgument) $(AuthenticationSqlServerVersionArgument) $(AuthenticationBuildNumberArgument) $(AuthenticationBuildSuffixArgument)</AuthenticationCommand>
     <TestAuthenticationConfigurationDependsOn Condition="'$(ReferenceType)' == 'Package' AND '$(SkipDependencyPack)' != 'true'">PackSqlClient;PackAzure</TestAuthenticationConfigurationDependsOn>
   </PropertyGroup>
   <Target Name="TestAuthenticationConfiguration" DependsOnTargets="$(TestAuthenticationConfigurationDependsOn)">
-    <Exec Command="$(AuthenticationCommand)"
+    <Exec Command="$(AuthenticationCommand) -Framework $(AuthenticationTestFramework)"
           WorkingDirectory="$(RepoRoot)" />
   </Target>
   <Target Name="TestAuthentication" DependsOnTargets="$(TestAuthenticationConfigurationDependsOn)">
-    <Exec Command="$(AuthenticationCommand) -AllScenarios $(AuthenticationPublishArgument)"
+    <Exec Command="$(AuthenticationCommand) -Framework $(AuthenticationTestFramework) -AllScenarios $(AuthenticationPublishArgument)"
           WorkingDirectory="$(RepoRoot)" />
   </Target>
   <Target Name="BuildAuthenticationTests" DependsOnTargets="$(TestAuthenticationConfigurationDependsOn)">
-    <Exec Command="$(AuthenticationCommand) -BuildOnly"
+    <ItemGroup>
+      <_AuthenticationBuildFramework Include="net462;net10.0" Condition="'$(TestFramework)' == ''" />
+      <_AuthenticationBuildFramework Include="$(TestFramework)" Condition="'$(TestFramework)' != ''" />
+    </ItemGroup>
+    <Exec Command="$(AuthenticationCommand) -Framework %(_AuthenticationBuildFramework.Identity) -BuildOnly"
           WorkingDirectory="$(RepoRoot)" />
   </Target>
 

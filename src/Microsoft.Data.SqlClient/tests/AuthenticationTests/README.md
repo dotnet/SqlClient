@@ -30,8 +30,14 @@ configuration. `TestAuthentication` runs six configuration scenarios. Optional
 
 On Windows use `TestFramework=net462` and omit publishing. Linux may cross-build
 net462 using `BuildAuthenticationTests`, but **cannot execute its Windows runtime
-checks**. `BuildTests` includes `BuildAuthenticationTests`; the solution includes
-both fixtures. Direct runner invocation requires packages prepared in advance.
+checks**. Without `TestFramework`, `BuildAuthenticationTests` builds both net462
+and net10.0; an explicit value builds only that framework. `BuildTests` includes
+`BuildAuthenticationTests`; the solution includes both fixtures. Direct runner
+invocation requires packages prepared in advance.
+
+Scenario configuration retains the generated `runtime` settings, including
+.NET Framework assembly-binding redirects. The runner restores the original
+configuration bytes after execution, including when a scenario fails.
 
 The CI stage runs both reference modes on Linux and Windows, self-building its
 packages with per-job caches and unique versions rather than assuming artifacts.
