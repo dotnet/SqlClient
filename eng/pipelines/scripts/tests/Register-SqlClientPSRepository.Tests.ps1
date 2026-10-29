@@ -16,6 +16,7 @@ Describe 'SqlClient PowerShell repository registration' {
         $registerParameters = @{ RepositoryName = 'CustomModules'; ConfigPath = $configPath }
         Mock Get-PSResourceRepository {}
         Mock Register-PSResourceRepository {}
+        Mock Set-PSResourceRepository {}
     }
 
     It 'passes the configured URI to PSResourceGet without endpoint restrictions (<Source>)' -ForEach @(
@@ -41,7 +42,8 @@ Describe 'SqlClient PowerShell repository registration' {
         $result | Should -BeExactly 'CustomModules'
         Should -Invoke Register-PSResourceRepository -Times 1 -Exactly -ParameterFilter {
             $Name -eq 'CustomModules' -and $Uri -eq $sourceLocation -and $Trusted -and
-            $ErrorAction -eq 'Stop' -and -not $CredentialInfo
+            $ErrorAction -eq 'Stop' -and -not $CredentialInfo -and
+            $CredentialProvider -eq 'None'
         }
     }
 
@@ -54,11 +56,46 @@ Describe 'SqlClient PowerShell repository registration' {
                 Name = 'CustomModules'
                 Uri = [uri] ($sourceLocation + $Suffix)
                 Trusted = $false
+                CredentialProvider = 'None'
             }
         }
 
         & $scriptPath @registerParameters | Should -BeExactly 'CustomModules'
         Should -Invoke Register-PSResourceRepository -Times 0 -Exactly
+        Should -Invoke Set-PSResourceRepository -Times 0 -Exactly
+    }
+
+    It 'disables automatic authentication on a matching public repository without changing trust' {
+        Mock Get-PSResourceRepository {
+            [pscustomobject]@{
+                Name = 'CustomModules'
+                Uri = [uri] $sourceLocation
+                Trusted = $false
+                CredentialProvider = 'AzArtifacts'
+            }
+        }
+
+        & $scriptPath @registerParameters | Should -BeExactly 'CustomModules'
+
+        Should -Invoke Register-PSResourceRepository -Times 0 -Exactly
+        Should -Invoke Set-PSResourceRepository -Times 1 -Exactly -ParameterFilter {
+            $Name -eq 'CustomModules' -and $CredentialProvider -eq 'None' -and
+            -not $PSBoundParameters.ContainsKey('Trusted') -and $ErrorAction -eq 'Stop'
+        }
+    }
+
+    It 'propagates failure to configure anonymous access' {
+        Mock Get-PSResourceRepository {
+            [pscustomobject]@{
+                Name = 'CustomModules'
+                Uri = [uri] $sourceLocation
+                CredentialProvider = 'AzArtifacts'
+            }
+        }
+        Mock Set-PSResourceRepository { throw 'anonymous repository configuration failed' }
+
+        { & $scriptPath @registerParameters } |
+            Should -Throw '*anonymous repository configuration failed*'
     }
 
     It 'returns only the repository name when registration emits success output' {

@@ -54,6 +54,7 @@ The target uses PSResourceGet from the restored PowerShell tool and the anonymou
 [`PowerShell.config`](PowerShell.config). It reuses exact installed versions and installs
 missing resources for the current user, without clobbering existing commands or falling
 back to other sources.
+Automatic credential-provider selection is disabled for anonymous feed access.
 Restore and consumption must use the same user.
 Consumers import modules normally; the manifest pins installation, not runtime resolution.
 Run restore explicitly after manifest changes or on a new machine/user. It does not build

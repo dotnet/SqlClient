@@ -6,8 +6,8 @@
 .SYNOPSIS
 Registers the configured feed for PSResourceGet and returns its repository name.
 .DESCRIPTION
-Reads the repository source from PowerShell.config and registers it anonymously.
-An existing registration must match; it is never overwritten.
+Reads the repository source from PowerShell.config and disables automatic credential providers.
+An existing source must match; its trust policy is retained.
 Registration and lookup failures propagate without falling back to another source.
 #>
 [CmdletBinding()]
@@ -36,10 +36,14 @@ if ($repository) {
         ([uri] $sourceLocation).AbsoluteUri.TrimEnd('/')) {
         throw "Resolve the conflicting registration for PowerShell repository '$RepositoryName'."
     }
+    if ($repository.CredentialProvider -ne 'None') {
+        $null = Set-PSResourceRepository -Name $RepositoryName -CredentialProvider None `
+            -ErrorAction Stop
+    }
 }
 else {
     $null = Register-PSResourceRepository -Name $RepositoryName -Uri $sourceLocation `
-        -Trusted -ErrorAction Stop
+        -CredentialProvider None -Trusted -ErrorAction Stop
 }
 
 $RepositoryName

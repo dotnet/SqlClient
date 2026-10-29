@@ -102,7 +102,8 @@ dotnet build build.proj -t:RestorePowerShellModules
 
 This restores all versions in `powershell-modules.json` for the current user and reuses
 matching installed versions. Test targets do not install modules automatically.
-On Unix, also install the OS `openssl` executable before certificate tests.
+The [Unix certificate script](src/Microsoft.Data.SqlClient/tests/ManualTests/makepfxcert.ps1)
+calls the native `openssl` CLI; ensure it is available on `PATH` before certificate tests.
 See [PowerShell module setup](BUILDGUIDE.md#powershell-modules) for feed and pipeline details.
 
 | Target                    | Description                                                                                                              |
