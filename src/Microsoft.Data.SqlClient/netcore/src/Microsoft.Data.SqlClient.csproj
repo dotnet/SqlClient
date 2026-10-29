@@ -1023,8 +1023,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\SqlMetaDataXmlSchemaCollection.cs">
       <Link>Microsoft\Data\SqlClient\Parser\Tokens\SqlMetaDataXmlSchemaCollection.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\SqlReturnValue.cs">
-      <Link>Microsoft\Data\SqlClient\Parser\Tokens\SqlReturnValue.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\TdsReturnValueToken.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Tokens\TdsReturnValueToken.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\SslProtocolHelpers.cs">
       <Link>Microsoft\Data\SqlClient\Parser\SslProtocolHelpers.cs</Link>
