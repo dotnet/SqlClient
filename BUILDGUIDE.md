@@ -56,6 +56,52 @@ package the project. The `build.proj` file provides convenient targets to accomp
 > This section is not exhaustive of all targets or parameters to `build.proj`. Complete documentation is available in
 > [`build.proj`](build.proj).
 
+### Authentication configuration compatibility checks
+
+The executable fixtures under `src/Microsoft.Data.SqlClient/tests/AuthenticationTests/`
+run in separate processes to validate both current and legacy app.config section
+declarations, their forwarded handler types, initializer activation and configured
+provider precedence, without SQL Server or identity-service access.
+
+```bash
+dotnet build build.proj -t:TestAuthenticationConfiguration -p:Configuration=Release -p:TestFramework=net10.0 -p:ReferenceType=Project
+dotnet build build.proj -t:TestAuthenticationConfiguration -p:Configuration=Release -p:TestFramework=net10.0 -p:ReferenceType=Package
+```
+
+Package mode prepares local packages unless `-p:SkipDependencyPack=true` is supplied.
+Use `-p:PackageVersionSqlClient=<version>` for prebuilt packages and an isolated
+`NUGET_PACKAGES` directory when validating package changes to avoid stale cache entries.
+On Windows, select `-p:TestFramework=net462` to execute .NET Framework checks.
+Cross-building .NET Framework on Linux does not execute those scenarios.
+
+`TestAuthentication` runs the complete configuration/discovery/precedence matrix,
+invalid provider/initializer/unsupported-provider recovery checks and
+disabled switches. Add `AuthenticationPublish=true`
+on Linux to publish **and execute** linux-x64 trimmed and NativeAOT consumers with
+compiler/linker warnings as errors. GCC and the NativeAOT prerequisites are required.
+
+```bash
+dotnet build build.proj -t:TestAuthentication -p:Configuration=Release -p:TestFramework=net10.0 -p:ReferenceType=Project -p:AuthenticationPublish=true -p:PackageVersionSqlClient=8.0.0-stack.6
+dotnet build build.proj -t:TestAuthentication -p:Configuration=Release -p:TestFramework=net10.0 -p:ReferenceType=Package -p:AuthenticationPublish=true -p:PackageVersionSqlClient=8.0.0-stack.6
+```
+
+The Package target prepares Logging, Abstractions, SqlServer, SqlClient and Azure
+through the normal pack targets. The fixtures use conditional package references,
+verify local family packages exist and inspect restored assets; Package mode never
+falls back to project references. Use a unique family version and isolated
+`NUGET_PACKAGES` for each changed package image. Build number, suffix, file/package
+versions, configuration and reference mode flow to all fixtures; the runner freezes
+the computed family version before building so every fixture uses the same package graph.
+
+`BuildAuthenticationTests` builds scenario fixtures without executing them and is
+included in `BuildTests`. Both fixtures are in the solution. The focused targets
+remain available; ordinary xUnit tests are unchanged. See the
+[authentication harness README](src/Microsoft.Data.SqlClient/tests/AuthenticationTests/README.md).
+The modern `sqlclient-pr` pipeline's authentication stage independently builds and runs
+Project **and** Package jobs
+on Linux (net10.0, trim/AOT) and Windows (net462), with isolated caches and no assumed
+artifact downloads. The legacy PR/CI pipelines do not run this stage.
+
 ### Building Projects
 
 From the root of your repository, run `dotnet build` against `build.proj` with a build target, following this pattern:
@@ -183,6 +229,9 @@ dotnet build -t:<test_target> [optional_parameters]
 |----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
 | `Test`                     | Runs the driver and extension test targets. Without `TestFramework`, all declared frameworks are attempted, including .NET Framework. _This takes considerable time and requires configured servers_. |
 | `TestAbstractions`         | Runs all tests for Microsoft.Data.SqlClient.Extensions.Abstractions                                                                                 |
+| `TestAuthenticationConfiguration` | Runs the dedicated current/legacy app.config compatibility scenarios without SQL Server. |
+| `TestAuthentication` | Runs all authentication executable scenarios; optionally publishes and executes trimmed/NativeAOT consumers with `AuthenticationPublish=true`. |
+| `BuildAuthenticationTests` | Builds the scenario fixtures without executing them; included in `BuildTests`. |
 | `TestAkvProvider`          | Runs the unit test project for Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.                                                      |
 | `TestAzure`                | Runs all tests for Microsoft.Data.SqlClient.Extensions.Azure                                                                                        |
 | `TestSqlClient`            | Runs the unit, functional, and manual test projects for Microsoft.Data.SqlClient.                                                                    |
@@ -211,10 +260,9 @@ grant in Package mode. Pass `-p:ReferenceType=Package` together with `SigningKey
 The test project still references Abstractions directly; its Logging dependency follows the
 selected reference mode. Signed Project builds intentionally omit test access.
 
-The executable current/legacy app.config compatibility harness is deferred to
-[#4817](https://github.com/dotnet/SqlClient/pull/4817); its scenario project and test target are
-not available in this layer. Executing `net462` tests requires Windows; a Linux cross-build is
-not runtime validation.
+The executable current/legacy app.config compatibility harness is available through
+`TestAuthenticationConfiguration` and `TestAuthentication`, as described above.
+Executing `net462` tests requires Windows; a Linux cross-build is not runtime validation.
 
 > [!TIP]
 > In project-reference mode, test targets automatically build their dependencies. In package mode,
