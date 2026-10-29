@@ -208,6 +208,7 @@
   </Folder>
   <Folder Name="/test/AuthenticationTests/">
     <Project Path="Microsoft.Data.SqlClient/tests/AuthenticationTests/ConfigurationTest/ConfigurationTest.csproj" />
+    <Project Path="Microsoft.Data.SqlClient/tests/AuthenticationTests/RuntimeVersionTest/RuntimeVersionTest.csproj" />
     <Project Path="Microsoft.Data.SqlClient/tests/AuthenticationTests/PublishTest/PublishTest.csproj" />
   </Folder>
   <Folder Name="/test/Stress/">

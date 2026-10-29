@@ -147,13 +147,14 @@ printf 'ARG:%s\n' "$@"
 }
 
 Describe 'authentication scenario orchestration' {
-    It 'keeps configuration and publishing fixtures together with warnings treated as errors' {
+    It 'keeps the complete harness together and preserves warnings-as-errors and binding version checks' {
         $fixtureHome = Join-Path $repoRoot 'src/Microsoft.Data.SqlClient/tests/AuthenticationTests'
         foreach ($config in @('app.config', 'legacy.config', 'bad-provider.config', 'bad-initializer.config', 'bad-unsupported.config')) {
             Test-Path (Join-Path $fixtureHome "ConfigurationTest/$config") | Should -BeTrue
         }
         $runner = Get-Content (Join-Path $fixtureHome 'RunAuthenticationTests.ps1') -Raw
         $runner | Should -Match "'bad-provider', 'bad-initializer', 'bad-unsupported', 'disabled'"
+        $runner | Should -Match "'bad-runtime', 'bad-runtime-disabled'"
         $runner | Should -Match 'Assert-PackageAssets'
         $runner | Should -Match 'metadata.source'
         $runner | Should -Match 'getProperty:SqlClientPackageVersion'
@@ -161,11 +162,14 @@ Describe 'authentication scenario orchestration' {
         foreach ($gate in @('TreatWarningsAsErrors', 'ILLinkTreatWarningsAsErrors', 'IlcTreatWarningsAsErrors')) {
             $runner | Should -Match "-p:${gate}=true"
         }
+        [xml]$replacement = Get-Content (Join-Path $fixtureHome 'RuntimeVersionTest/RuntimeVersionTest.csproj') -Raw
+        $replacement.Project.PropertyGroup.AssemblyVersion | Should -Be '$(SqlClientAssemblyVersion)'
         Test-Path (Join-Path $fixtureHome 'PublishTest/PublishTest.csproj') | Should -BeTrue
     }
 
     It 'forwards mode, configuration and all version inputs to <Target>' -ForEach @(
         @{ Target = 'TestAuthenticationConfiguration'; Switch = $null }
+        @{ Target = 'TestAuthenticationRuntimeVersions'; Switch = '-RuntimeVersions' }
         @{ Target = 'TestAuthentication'; Switch = '-AllScenarios' }
         @{ Target = 'BuildAuthenticationTests'; Switch = '-BuildOnly' }
     ) {
@@ -182,6 +186,7 @@ Describe 'authentication scenario orchestration' {
         }
         if ($Switch) { $arguments | Should -Contain $Switch }
         if ($Target -eq 'TestAuthentication') {
+            $arguments | Should -Contain '-RuntimeVersions'
             $arguments | Should -Contain '-Publish'
         } else {
             $arguments | Should -Not -Contain '-Publish'
@@ -193,7 +198,7 @@ Describe 'authentication scenario orchestration' {
         $group = @($build.Project.PropertyGroup.TestAuthenticationConfigurationDependsOn | Where-Object { $_ })[0]
         $group.Condition | Should -Match "'\$\(ReferenceType\)' == 'Package'"
         $group.InnerText | Should -Be 'PackSqlClient;PackAzure'
-        foreach ($target in @('TestAuthentication', 'TestAuthenticationConfiguration', 'BuildAuthenticationTests')) {
+        foreach ($target in @('TestAuthentication', 'TestAuthenticationConfiguration', 'TestAuthenticationRuntimeVersions', 'BuildAuthenticationTests')) {
             @($build.Project.Target | Where-Object Name -eq $target)[0].DependsOnTargets |
                 Should -Be '$(TestAuthenticationConfigurationDependsOn)'
         }
