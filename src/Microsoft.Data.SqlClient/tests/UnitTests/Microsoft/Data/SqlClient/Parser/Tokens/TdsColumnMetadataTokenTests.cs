@@ -13,10 +13,10 @@ namespace Microsoft.Data.SqlClient.UnitTests
     /// ensuring that null-pruning of unmatched columns in AnalyzeTargetAndCreateUpdateBulkCommand
     /// does not corrupt the cached metadata when CacheMetadata is enabled.
     /// </summary>
-    public class SqlMetaDataSetTest
+    public class TdsColumnMetadataTokenTests
     {
         [Fact]
-        public void SqlMetaDataSet_Clone_ProducesIndependentCopy()
+        public void Clone_ProducesIndependentCopy()
         {
             // Arrange: create a metadata set with 3 columns simulating a destination table
             TdsColumnMetadataToken original = new TdsColumnMetadataToken(3);
@@ -38,7 +38,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         }
 
         [Fact]
-        public void SqlMetaDataSet_Clone_NullingMultipleEntries_OriginalRetainsAll()
+        public void Clone_NullingMultipleEntries_OriginalRetainsAll()
         {
             // Arrange: simulate a table with 4 columns
             TdsColumnMetadataToken original = new TdsColumnMetadataToken(4);
@@ -68,7 +68,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         }
 
         [Fact]
-        public void SqlMetaDataSet_Clone_RepeatedCloneAndPrune_OriginalSurvives()
+        public void Clone_RepeatedCloneAndPrune_OriginalSurvives()
         {
             // Arrange: simulate the scenario where multiple WriteToServer calls each
             // clone and prune different subsets of columns
@@ -109,7 +109,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         }
 
         [Fact]
-        public void SqlMetaDataSet_Clone_PreservesOrdinals()
+        public void Clone_PreservesOrdinals()
         {
             // Verify that cloned entries maintain correct ordinal values,
             // which are used for column matching in AnalyzeTargetAndCreateUpdateBulkCommand
@@ -126,7 +126,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         }
 
         [Fact]
-        public void SqlMetaDataSet_Clone_PreservesCekTable()
+        public void Clone_PreservesCekTable()
         {
             // Verify that cloning preserves the CEK table reference, which is needed by
             // WriteCekTable in TdsParser to send encryption key entries to SQL Server.
@@ -147,7 +147,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         }
 
         [Fact]
-        public void SqlMetaData_Clone_PreservesIsEncrypted()
+        public void Clone_PreservesIsEncrypted()
         {
             // Verify that cloning a _SqlMetaData entry preserves the isEncrypted flag.
             // WriteBulkCopyMetaData checks md.isEncrypted to set the TDS IsEncrypted flag
@@ -163,7 +163,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         }
 
         [Fact]
-        public void SqlMetaData_Clone_PreservesCipherMetadata()
+        public void Clone_PreservesCipherMetadata()
         {
             // Verify that cloning preserves cipherMD, which is needed by
             // WriteCryptoMetadata (for CekTableOrdinal, CipherAlgorithmId, etc.)
@@ -193,7 +193,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         }
 
         [Fact]
-        public void SqlMetaData_Clone_PreservesBaseTI()
+        public void Clone_PreservesBaseTI()
         {
             // Verify that cloning preserves baseTI, which represents the plaintext
             // TYPE_INFO for encrypted columns. WriteCryptoMetadata calls
@@ -217,7 +217,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         }
 
         [Fact]
-        public void SqlMetaDataSet_Clone_PreservesFullAlwaysEncryptedMetadata()
+        public void Clone_PreservesFullAlwaysEncryptedMetadata()
         {
             // End-to-end test: verify that a cloned _SqlMetaDataSet with Always Encrypted
             // metadata retains all AE fields needed by the bulk copy TDS write path:
