@@ -259,10 +259,9 @@ grant in Package mode. Pass `-p:ReferenceType=Package` together with `SigningKey
 The test project still references Abstractions directly; its Logging dependency follows the
 selected reference mode. Signed Project builds intentionally omit test access.
 
-The executable current/legacy app.config compatibility harness is deferred to
-[#4817](https://github.com/dotnet/SqlClient/pull/4817); its scenario project and test target are
-not available in this layer. Executing `net462` tests requires Windows; a Linux cross-build is
-not runtime validation.
+The executable current/legacy app.config compatibility harness is available through
+`TestAuthenticationConfiguration` and `TestAuthentication`, as described above.
+Executing `net462` tests requires Windows; a Linux cross-build is not runtime validation.
 
 > [!TIP]
 > In project-reference mode, test targets automatically build their dependencies. In package mode,
