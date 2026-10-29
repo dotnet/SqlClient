@@ -201,7 +201,7 @@ namespace Microsoft.Data.SqlClient.Parser.Tokens
         /// <returns>
         /// A new TdsColumnMetadata object that is a copy of the current instance.
         /// </returns>
-        internal new TdsColumnMetadata Clone() =>
+        internal override TdsColumnMetadata Clone() =>
             new TdsColumnMetadata(this);
 
         private bool HasFlag(MetadataFlags flag)
