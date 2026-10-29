@@ -629,12 +629,8 @@
     <Exec Command="$(AuthenticationCommand)"
           WorkingDirectory="$(RepoRoot)" />
   </Target>
-  <Target Name="TestAuthenticationRuntimeVersions" DependsOnTargets="$(TestAuthenticationConfigurationDependsOn)">
-    <Exec Command="$(AuthenticationCommand) -RuntimeVersions"
-          WorkingDirectory="$(RepoRoot)" />
-  </Target>
   <Target Name="TestAuthentication" DependsOnTargets="$(TestAuthenticationConfigurationDependsOn)">
-    <Exec Command="$(AuthenticationCommand) -AllScenarios -RuntimeVersions $(AuthenticationPublishArgument)"
+    <Exec Command="$(AuthenticationCommand) -AllScenarios $(AuthenticationPublishArgument)"
           WorkingDirectory="$(RepoRoot)" />
   </Target>
   <Target Name="BuildAuthenticationTests" DependsOnTargets="$(TestAuthenticationConfigurationDependsOn)">
