@@ -18,6 +18,64 @@ This package supports:
 
 - .NET Framework 4.6.2 (uses the framework's `System.Configuration` assembly)
 - .NET Standard 2.0 (compatible with .NET Framework 4.6.1+, .NET Core 2.0+, and .NET 5+)
+- .NET 10.0 (trim/AOT-analyzed authentication registration)
+
+## Authentication registration
+
+The provider registry and bootstrap live in this package. `GetProvider` and `SetProvider`
+work directly, including under NativeAOT, without loading SqlClient through reflection.
+Configuration providers and configured initializers take precedence over application
+registrations; application registrations take precedence over the discovered Azure default.
+Recoverable configuration failures are traced without preventing later configured providers,
+enabled Azure discovery or application registration. Successful configuration registrations
+retain precedence; discovered Azure defaults fill only unregistered methods. Null providers,
+unsupported methods and throwing registration callbacks return `false`, without replacing
+the existing provider. These failures are traced through `Microsoft.Data.SqlClient.EventSource`
+(Informational level, Trace keyword `0x2`) with corrective guidance.
+Configuration and optional discovery are attempted once. Failed entries are not retried on later
+accesses. Register an application provider as a workaround, or correct the cause and restart the
+application to retry configuration and discovery.
+
+Untrimmed applications retain app.config loading and automatic Azure discovery. These switches
+default to `true` and are cached independently on first access for the lifetime of the process:
+
+- `Switch.Microsoft.Data.SqlClient.EnableAppConfig`
+- `Switch.Microsoft.Data.SqlClient.EnableAzureExtensionDiscovery`
+
+Automatic Azure discovery requires the `ActiveDirectoryAuthenticationProviderOptions` constructor
+from a compatible `Microsoft.Data.SqlClient.Extensions.Azure` package, even when no overrides are
+configured. Discovery does not fall back to parameterless or string-based provider constructors.
+An extension missing the options contract is traced with upgrade guidance: use version 7.0.2 or
+later with that contract and keep SqlClient family package versions compatible.
+
+### Authentication compatibility considerations
+
+Moving authentication registration from the driver to Abstractions preserves the public method
+signatures, but is not a behavior-neutral change. Compared with the previous driver-owned registry:
+
+| Area | Compatibility difference |
+|---|---|
+| Configured initializer precedence | Providers registered during a configured initializer's `Initialize()` now receive configuration precedence. Application `SetProvider` calls can no longer replace them; explicit configuration entries were already protected. Change the configuration or initializer instead. |
+| Configuration-provider replacement callbacks | Providers listed in app.config's `<providers>` collection now use the same replacement callbacks as `SetProvider`, including calls made by an initializer. Previously, configuration assignments bypassed these callbacks. Replacing an existing provider for the same authentication method invokes the old provider's `BeforeUnload` and the replacement's `BeforeLoad` before publishing the replacement. Registering for a method with no existing provider invokes neither callback. |
+| Older Azure extensions | Automatic discovery no longer falls back to parameterless or string-based constructors. An older extension without the options-based contract may stop supplying the default provider. Upgrade to a compatible extension with that contract, or explicitly register a provider. This change does not remove those public constructors. |
+| .NET Framework configuration switch | `EnableAppConfig=false` now disables authentication configuration on .NET Framework, where it previously remained enabled. The driver's retry configuration and switch-override readers remain .NET-only. |
+| Lookup synchronization | `GetProvider` now takes the registry lock used by bootstrap and replacement `BeforeLoad`/`BeforeUnload` callbacks. Slow callbacks delay other lookups and connection logins. Keep callbacks short: synchronously waiting for another thread that accesses the registry can deadlock. |
+| Bootstrap failure reporting | Driver access previously could expose the manager's cached type-initialization exception. Now, if no usable provider or access-token callback is available, the driver's `Open` and `OpenAsync` report missing-provider guidance as a `SqlException`, rather than the previous missing-provider `ArgumentException`. Detailed bootstrap and Azure loading causes remain in Abstractions' EventSource traces, not a diagnostic API or the connection exception's inner exception. |
+| Configuration failure handling | A failed manager static initialization previously prevented recovery through that manager. Recoverable initializer and provider failures are now traced and skipped; later configured providers and enabled Azure discovery are still attempted. Successful configuration registrations retain precedence, and application registration and lookup remain usable. Failed configuration is not retried until the application restarts. Fatal activation errors still propagate. |
+
+Strict configuration parsing is not introduced: configuration reading retains the relaxed policy
+described below. New capabilities include registration without loading SqlClient, explicit
+registration under trimming/NativeAOT, and the independent `EnableAzureExtensionDiscovery` switch.
+
+Set switches before first registry access. On .NET 10 trimmed and NativeAOT publishes, both
+reflective paths are removed automatically. Explicitly construct and register a provider for
+each required authentication method before opening connections. The Azure provider is supplied
+by `Microsoft.Data.SqlClient.Extensions.Azure`. Authentication discovery loads the optional Azure
+assembly within Abstractions. The driver independently loads it for Azure Attestation, without
+processing authentication configuration or consulting the authentication discovery switch.
+Both loaders enforce the same assembly identity checks in signed builds.
+Publish-time overrides use
+`RuntimeHostConfigurationOption` with `Trim="true"`; runtime changes cannot affect trimming.
 
 ## Authentication configuration
 
@@ -38,7 +96,7 @@ For the .NET Standard target, `System.Configuration.ConfigurationManager` is a t
 compile dependency required by the handlers' configuration base types. The .NET Framework
 target uses the framework's `System.Configuration` instead, without introducing a
 ConfigurationManager package dependency. Authentication initialization and provider loading
-remain in the driver, and the modern section continues to take precedence over the legacy one.
+are owned by this package, and the modern section takes precedence over the legacy one.
 
 ## Configuration loading
 
@@ -64,14 +122,43 @@ string setting or provider list is treated as empty while other valid settings a
 Omitting optional XML attributes does not cause a metadata mismatch.
 
 Loading only reads settings. It doesn't create or activate initializers or providers.
-Other exception types propagate, and initializer or provider validation and activation
-can still fail later.
+Other exception types reach registry bootstrap, which traces recoverable failures and continues
+with Azure discovery if enabled. Initializer and provider validation and activation happen later.
 
 Use `SqlClientEventSource` tracing to see settings that were skipped or ignored.
 
-These policies apply to the new Abstractions loader; the driver continues using its existing
-reader until the authentication registry migration in
-[dotnet/SqlClient#4821](https://github.com/dotnet/SqlClient/pull/4821).
+> **Warning:** Relaxed loading and parsing can permit the driver to install and configure
+> unexpected providers or provider settings. Ignoring broken
+> authentication configuration can select legacy providers, allow default providers to be
+> installed, or retain default broker settings instead of the application's intended settings.
+> Tracing these errors does not prevent those unintended configurations.
+
+As in the driver, all `ConfigurationErrorsException` failures are traced and ignored, even
+when they wrap fatal failures. Other exception types propagate to registry bootstrap.
+Reading settings does not activate initializers or providers; registry bootstrap applies
+the resulting settings afterward.
+
+A declared modern section takes precedence even when its element is absent from app.config.
+These policies apply to registry bootstrap through the Abstractions loader.
+The `EnableAppConfig` switch gates configuration reading; it does not change parsing policy.
+
+`SqlAuthenticationInitializer` is also defined in Abstractions and forwarded from SqlClient,
+preserving existing compiled consumers and initializer declarations.
+
+If an explicitly configured initializer or provider cannot be loaded, instantiated, or applied,
+the recoverable failure is traced and remaining configured providers are still attempted. A failed
+initializer is not resumed, and a failed provider entry is skipped. Valid Azure option overrides
+and successful registrations are retained. Azure discovery runs afterward whenever supported and
+enabled, even after configuration reading or activation fails; it cannot replace an existing
+registration. Fatal activation errors still propagate. Earlier registrations and
+initializer/provider callback side effects are not rolled back.
+
+Missing sections and empty optional settings remain valid.
+Registration errors inside a configured initializer stop that initializer, rather than being
+converted to an ignorable `false` result. Configuration application traces the failure and continues
+with the configured provider list. Successful registrations are traced
+with their authentication method, provider type and precedence tier; refused registrations are
+traced separately and do not produce success events.
 
 Merge the following example into the application's app.config, replacing
 `ExampleAuthenticationProvider, ExampleApp` with the assembly-qualified name of an
