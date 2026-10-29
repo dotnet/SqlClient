@@ -1021,8 +1021,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\SqlLoginAck.cs">
       <Link>Microsoft\Data\SqlClient\Parser\Tokens\SqlLoginAck.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\SqlMetaDataPriv.cs">
-      <Link>Microsoft\Data\SqlClient\Parser\Tokens\SqlMetaDataPriv.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\TdsTypeInfo.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Tokens\TdsTypeInfo.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\SqlMetaDataUdt.cs">
       <Link>Microsoft\Data\SqlClient\Parser\Tokens\SqlMetaDataUdt.cs</Link>

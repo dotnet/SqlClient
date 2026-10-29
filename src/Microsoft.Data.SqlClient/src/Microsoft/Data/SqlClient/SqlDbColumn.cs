@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClient
             IsIdentity = _metadata.IsIdentity;
             IsLong = _metadata.metaType.IsLong;
 
-            if (SqlDbType.Timestamp == _metadata.type)
+            if (SqlDbType.Timestamp == _metadata.DbType)
             {
                 IsUnique = true;
             }
