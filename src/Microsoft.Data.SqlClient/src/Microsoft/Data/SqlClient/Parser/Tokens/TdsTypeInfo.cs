@@ -151,12 +151,7 @@ namespace Microsoft.Data.SqlClient.Parser.Tokens
             this.MetaType = original.MetaType;
             this.flags = original.flags;
 
-            if (original.UdtTypeInfo != null)
-            {
-                UdtTypeInfo = new TdsUdtTypeInfo();
-                UdtTypeInfo.CopyFrom(original.UdtTypeInfo);
-            }
-
+            this.UdtTypeInfo = original.UdtTypeInfo?.Clone();
             this.XmlTypeInfo = original.XmlTypeInfo?.Clone();
 
             this.IsEncrypted = original.IsEncrypted;
