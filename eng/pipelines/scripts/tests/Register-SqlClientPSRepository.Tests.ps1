@@ -225,11 +225,11 @@ Describe 'Module prerequisite pipeline wiring' {
         $account | Should -Not -Match 'restore-powershell|install-powershell|Install-Module'
     }
 
-    It 'imports the centrally pinned SqlServer version for Kerberos connectivity' {
+    It 'imports the restored SqlServer module for Kerberos connectivity' {
         $setup = Get-Content (Join-Path $repoRoot 'eng\pipelines\ci\kerberos\linux-setup-step.yml') -Raw
         $setup | Should -Not -Match 'restore-powershell|install-powershell|Install-Module'
-        $setup | Should -Match 'powershell-modules.json'
-        $setup | Should -Match 'RequiredVersion = \$modules.modules.SqlServer.version'
+        $setup | Should -Not -Match 'powershell-modules.json|RequiredVersion'
+        $setup | Should -Match '(?m)^\s+Import-Module SqlServer\r?$'
     }
 
     It 'keeps module installation and repository plumbing out of <Path>' -ForEach @(
