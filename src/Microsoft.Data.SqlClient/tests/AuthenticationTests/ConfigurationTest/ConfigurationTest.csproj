@@ -15,6 +15,9 @@
     <PackageReference Include="Microsoft.Data.SqlClient" />
     <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Azure" />
   </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
+    <Reference Include="System.Configuration" />
+  </ItemGroup>
   <ItemGroup>
     <None Update="*.config" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
