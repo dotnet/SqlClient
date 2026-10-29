@@ -28,9 +28,9 @@ Describe 'Net-only provisioning lifecycle' -Skip:(-not $IsWindows) {
             )
         }
         function Get-LocalUser {}
-        function Install-Module {
+        function Install-PSResource {
             [CmdletBinding()]
-            param($Name, $RequiredVersion, $Repository, $Scope, [switch] $AllowClobber, [switch] $Force)
+            param($Name, $Version, $Repository, $Scope)
         }
         function New-LocalUser {
             param($Name, $Password, $Description, $ErrorAction)
@@ -49,8 +49,8 @@ Describe 'Net-only provisioning lifecycle' -Skip:(-not $IsWindows) {
     BeforeEach {
         Mock Write-Host {}
         Mock Import-Module {}
-        Mock Install-Module { throw 'Module installation belongs in the prerequisite step' }
-        Mock Register-PSRepository { throw 'Consumers must not register repositories' }
+        Mock Install-PSResource { throw 'Resource installation belongs in the prerequisite step' }
+        Mock Register-PSResourceRepository { throw 'Consumers must not register repositories' }
         Mock Get-LocalUser {}
         Mock New-LocalUser {
             [pscustomobject]@{ SID = $sid; Description = $Description }
@@ -76,7 +76,7 @@ Describe 'Net-only provisioning lifecycle' -Skip:(-not $IsWindows) {
         Should -Invoke Import-Module -Times 1 -Exactly -ParameterFilter {
             $Name -eq 'SqlServer' -and $ErrorAction -eq 'Stop'
         }
-        Should -Invoke Install-Module -Times 0 -Exactly
+        Should -Invoke Install-PSResource -Times 0 -Exactly
         Should -Invoke Invoke-Sqlcmd -Times 1 -Exactly -ParameterFilter {
             $ServerInstance -eq 'tcp:localhost,15433' -and $Database -eq 'master' -and
             $ConnectionTimeout -eq 15 -and $QueryTimeout -eq 30 -and
@@ -162,7 +162,7 @@ Describe 'Net-only provisioning lifecycle' -Skip:(-not $IsWindows) {
         & $scriptPath -Mode cleanup -AccountName $Name
 
         Should -Invoke Import-Module -Times 0 -Exactly
-        Should -Invoke Install-Module -Times 0 -Exactly
+        Should -Invoke Install-PSResource -Times 0 -Exactly
         Should -Invoke Invoke-Sqlcmd -Times 0 -Exactly
         Should -Invoke Remove-LocalUser -Times 0 -Exactly
     }
@@ -174,7 +174,7 @@ Describe 'Net-only provisioning lifecycle' -Skip:(-not $IsWindows) {
 
         & $scriptPath -Mode cleanup -AccountName $accountName -AccountSid $sid.Value
 
-        Should -Invoke Install-Module -Times 0 -Exactly
+        Should -Invoke Install-PSResource -Times 0 -Exactly
         Should -Invoke Invoke-Sqlcmd -Times 1 -Exactly -ParameterFilter {
             $Query.Contains($sidHex) -and $Query.Contains("name = @login AND type = 'U'") -and
             $Query.Contains("CONVERT(varbinary(85), NULLIF(@sid, ''), 1)") -and

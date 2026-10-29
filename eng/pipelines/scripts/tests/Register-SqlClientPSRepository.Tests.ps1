@@ -14,8 +14,24 @@ Describe 'SqlClient PowerShell repository registration' {
         '<configuration><repository sourceLocation="https://example.invalid/public/_packaging/modules/nuget/v2" /></configuration>' |
             Set-Content -LiteralPath $configPath
         $registerParameters = @{ RepositoryName = 'CustomModules'; ConfigPath = $configPath }
-        Mock Get-PSRepository {}
-        Mock Register-PSRepository {}
+        Mock Get-PSResourceRepository {}
+        Mock Register-PSResourceRepository {}
+    }
+
+    It 'passes the configured URI to PSResourceGet without endpoint restrictions (<Source>)' -ForEach @(
+        @{ Source = 'https://example.invalid/nuget/v3/index.json' }
+        @{ Source = 'https://example.invalid/custom?mode=resources' }
+        @{ Source = 'http://example.invalid/nuget/v2' }
+    ) {
+        "<configuration><repository sourceLocation=`"$Source`" /></configuration>" |
+            Set-Content -LiteralPath $configPath
+
+        & $scriptPath @registerParameters | Should -BeExactly 'CustomModules'
+
+        Should -Invoke Register-PSResourceRepository -Times 1 -Exactly -ParameterFilter {
+            $Name -eq 'CustomModules' -and
+            $Uri -eq $Source -and $Trusted
+        }
     }
 
     It 'reads the explicit source from PowerShell.config and registers the supplied name anonymously' {
@@ -23,10 +39,9 @@ Describe 'SqlClient PowerShell repository registration' {
 
         @($result).Count | Should -Be 1
         $result | Should -BeExactly 'CustomModules'
-        Should -Invoke Register-PSRepository -Times 1 -Exactly -ParameterFilter {
-            $Name -eq 'CustomModules' -and $SourceLocation -eq $sourceLocation -and
-            $PackageManagementProvider -eq 'NuGet' -and $InstallationPolicy -eq 'Trusted' -and
-            $ErrorAction -eq 'Stop' -and -not $Credential
+        Should -Invoke Register-PSResourceRepository -Times 1 -Exactly -ParameterFilter {
+            $Name -eq 'CustomModules' -and $Uri -eq $sourceLocation -and $Trusted -and
+            $ErrorAction -eq 'Stop' -and -not $CredentialInfo
         }
     }
 
@@ -34,23 +49,22 @@ Describe 'SqlClient PowerShell repository registration' {
         @{ Suffix = '' }
         @{ Suffix = '/' }
     ) {
-        Mock Get-PSRepository {
+        Mock Get-PSResourceRepository {
             [pscustomobject]@{
                 Name = 'CustomModules'
-                SourceLocation = $sourceLocation + $Suffix
-                PackageManagementProvider = 'NuGet'
-                InstallationPolicy = 'Untrusted'
+                Uri = [uri] ($sourceLocation + $Suffix)
+                Trusted = $false
             }
         }
 
         & $scriptPath @registerParameters | Should -BeExactly 'CustomModules'
-        Should -Invoke Register-PSRepository -Times 0 -Exactly
+        Should -Invoke Register-PSResourceRepository -Times 0 -Exactly
     }
 
     It 'returns only the repository name when registration emits success output' {
-        Mock Register-PSRepository {
-            "Package source with Name: $Name added successfully."
-            [pscustomobject]@{ Name = $Name; SourceLocation = $SourceLocation }
+        Mock Register-PSResourceRepository {
+            "Registered repository $Name."
+            [pscustomobject]@{ Name = $Name; Uri = $Uri }
         }
 
         $result = @(& $scriptPath @registerParameters)
@@ -60,28 +74,24 @@ Describe 'SqlClient PowerShell repository registration' {
     }
 
     It 'ignores unrelated repository registrations' {
-        Mock Get-PSRepository {
-            [pscustomobject]@{ Name = 'AnotherFeed'; SourceLocation = 'https://example.invalid/nuget/v2' }
+        Mock Get-PSResourceRepository {
+            [pscustomobject]@{ Name = 'AnotherFeed'; Uri = [uri] 'https://example.invalid/nuget/v2' }
         }
 
         & $scriptPath @registerParameters | Should -BeExactly 'CustomModules'
-        Should -Invoke Register-PSRepository -Times 1 -Exactly
+        Should -Invoke Register-PSResourceRepository -Times 1 -Exactly
     }
 
-    It 'rejects a conflicting <Conflict> without overwriting it' -ForEach @(
-        @{ Conflict = 'source'; Location = 'https://example.invalid/other/nuget/v2'; Provider = 'NuGet' }
-        @{ Conflict = 'provider'; Location = 'https://example.invalid/public/_packaging/modules/nuget/v2'; Provider = 'Other' }
-    ) {
-        Mock Get-PSRepository {
+    It 'rejects a conflicting source without overwriting it' {
+        Mock Get-PSResourceRepository {
             [pscustomobject]@{
                 Name = 'CustomModules'
-                SourceLocation = $Location
-                PackageManagementProvider = $Provider
+                Uri = [uri] 'https://example.invalid/other/nuget/v2'
             }
         }
 
         { & $scriptPath @registerParameters } | Should -Throw '*conflicting registration*'
-        Should -Invoke Register-PSRepository -Times 0 -Exactly
+        Should -Invoke Register-PSResourceRepository -Times 0 -Exactly
     }
 
     It 'rejects <Problem> configuration before registering anything' -ForEach @(
@@ -89,23 +99,19 @@ Describe 'SqlClient PowerShell repository registration' {
         @{ Problem = 'duplicate repositories'; Xml = '<configuration><repository sourceLocation="https://example.invalid/a" /><repository sourceLocation="https://example.invalid/b" /></configuration>' }
         @{ Problem = 'missing source location'; Xml = '<configuration><repository /></configuration>' }
         @{ Problem = 'malformed XML'; Xml = '<configuration>' }
-        @{ Problem = 'relative URL'; Xml = '<configuration><repository sourceLocation="packages" /></configuration>' }
-        @{ Problem = 'HTTP URL'; Xml = '<configuration><repository sourceLocation="http://example.invalid/_packaging/modules/nuget/v2" /></configuration>' }
-        @{ Problem = 'unsupported endpoint'; Xml = '<configuration><repository sourceLocation="https://example.invalid/nuget/v3/index.json" /></configuration>' }
-        @{ Problem = 'query string'; Xml = '<configuration><repository sourceLocation="https://example.invalid/_packaging/modules/nuget/v2?query=value" /></configuration>' }
     ) {
         $Xml | Set-Content -LiteralPath $configPath
 
         { & $scriptPath @registerParameters } | Should -Throw
-        Should -Invoke Get-PSRepository -Times 0 -Exactly
-        Should -Invoke Register-PSRepository -Times 0 -Exactly
+        Should -Invoke Get-PSResourceRepository -Times 0 -Exactly
+        Should -Invoke Register-PSResourceRepository -Times 0 -Exactly
     }
 
     It 'fails explicitly when the config file is missing' {
         $registerParameters.ConfigPath = Join-Path $TestDrive 'missing.config'
 
         { & $scriptPath @registerParameters } | Should -Throw
-        Should -Invoke Register-PSRepository -Times 0 -Exactly
+        Should -Invoke Register-PSResourceRepository -Times 0 -Exactly
     }
 
     It 'uses the checked-in config by default without depending on the working directory' {
@@ -118,19 +124,21 @@ Describe 'SqlClient PowerShell repository registration' {
         }
         [xml] $config = Get-Content (Join-Path $repoRoot 'PowerShell.config') -Raw
         $expected = $config.configuration.repository.sourceLocation
-        Should -Invoke Register-PSRepository -Times 1 -Exactly -ParameterFilter { $SourceLocation -eq $expected }
+        Should -Invoke Register-PSResourceRepository -Times 1 -Exactly -ParameterFilter {
+            $Uri -eq $expected
+        }
         Get-Content $scriptPath -Raw | Should -Not -Match 'NuGet\.config|NuGetConfigPath'
     }
 
     It 'propagates repository enumeration failures' {
-        Mock Get-PSRepository { throw 'repository lookup failed' }
+        Mock Get-PSResourceRepository { throw 'repository lookup failed' }
 
         { & $scriptPath @registerParameters } | Should -Throw '*repository lookup failed*'
-        Should -Invoke Register-PSRepository -Times 0 -Exactly
+        Should -Invoke Register-PSResourceRepository -Times 0 -Exactly
     }
 
     It 'propagates registration failures without returning a repository name' {
-        Mock Register-PSRepository { throw 'repository registration failed' }
+        Mock Register-PSResourceRepository { throw 'repository registration failed' }
 
         { & $scriptPath @registerParameters } | Should -Throw '*repository registration failed*'
     }
@@ -222,12 +230,12 @@ Describe 'Module prerequisite pipeline wiring' {
 
     It 'keeps restore out of account setup and cleanup' {
         $account = Get-Content (Join-Path $repoRoot 'eng\pipelines\common\templates\steps\configure-netonly-account-step.yml') -Raw
-        $account | Should -Not -Match 'restore-powershell|install-powershell|Install-Module'
+        $account | Should -Not -Match 'restore-powershell|install-powershell|Install-(Module|PSResource)'
     }
 
     It 'imports the restored SqlServer module for Kerberos connectivity' {
         $setup = Get-Content (Join-Path $repoRoot 'eng\pipelines\ci\kerberos\linux-setup-step.yml') -Raw
-        $setup | Should -Not -Match 'restore-powershell|install-powershell|Install-Module'
+        $setup | Should -Not -Match 'restore-powershell|install-powershell|Install-(Module|PSResource)'
         $setup | Should -Not -Match 'powershell-modules.json|RequiredVersion'
         $setup | Should -Match '(?m)^\s+Import-Module SqlServer\r?$'
     }
@@ -241,12 +249,12 @@ Describe 'Module prerequisite pipeline wiring' {
         @{ Path = 'eng\pipelines\common\templates\steps\update-config-file-step.yml' }
     ) {
         Get-Content (Join-Path $repoRoot $Path) -Raw |
-            Should -Not -Match 'Install-Module|Register-.*PSRepository|[Pp]owerShellRepository'
+            Should -Not -Match 'Install-(Module|PSResource)|Register-.*PS(Resource)?Repository|[Pp]owerShellRepository'
     }
 
     It 'calls the standalone build hook without interpolating module data into YAML' {
         $source = Get-Content (Join-Path $repoRoot 'eng\pipelines\common\steps\restore-powershell-modules.yml') -Raw
         $source | Should -Match 'dotnet msbuild tools/targets/RestorePowerShellModules.targets -t:RestorePowerShellModules'
-        $source | Should -Not -Match 'Install-Module|Register-.*PSRepository|parameters:|env:|replace\('
+        $source | Should -Not -Match 'Install-(Module|PSResource)|Register-.*PS(Resource)?Repository|parameters:|env:|replace\('
     }
 }

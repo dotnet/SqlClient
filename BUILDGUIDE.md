@@ -42,48 +42,31 @@ dotnet tool restore
 
 ### PowerShell Modules
 
-Before running manual tests, net-only account setup, or Pester tests, explicitly restore
-the repository's PowerShell modules from the repository root:
+Before using scripts or tests that need PowerShell resources, run from the repository root:
 
 ```console
 dotnet tool restore
 dotnet build build.proj -t:RestorePowerShellModules
 ```
 
-[`powershell-modules.json`](powershell-modules.json) is the single module/version manifest,
-listing SqlServer, OpenSSL, and Pester with exact versions and per-module install options.
-The target reuses installed exact versions and installs missing versions for the current user.
-These pins govern installation. Consumers use normal unversioned imports; when multiple
-versions are available, PowerShell's normal module resolution applies.
-SqlServer and OpenSSL allow overlapping command names during installation; restore does not
-import either module into the calling session.
-Only Pester may enable `skipPublisherCheck`, preserving its transition from the differently
-signed Windows inbox module; publisher checks stay enabled for other modules.
-It does not build the driver or run tests, and is not an automatic dependency of build/test targets.
-Rerun it after changing the manifest or when setting up a new machine/user.
-The Unix certificate tests also require the OS `openssl` executable; the PowerShell module
-does not replace it. Restore and consumption must run as the same user.
+Add or update resource versions in [`powershell-modules.json`](powershell-modules.json).
+The target uses PSResourceGet from the restored PowerShell tool and the anonymous feed in
+[`PowerShell.config`](PowerShell.config). It reuses exact installed versions and installs
+missing resources for the current user, without clobbering existing commands or falling
+back to other sources.
+Restore and consumption must use the same user.
+Consumers import modules normally; the manifest pins installation, not runtime resolution.
+Run restore explicitly after manifest changes or on a new machine/user. It does not build
+the driver, run tests, or install OS-level tools.
 
-[`PowerShell.config`](PowerShell.config), beside `NuGet.config`, is the single feed-address
-configuration for PowerShell modules. Its `sourceLocation` is the public Azure Artifacts
-NuGet v2 endpoint, used anonymously and independently of .NET package sources.
-The restore script registers `SqlClient` once when a missing module needs installation.
-Matching registrations retain their trust policy; conflicting registrations and source/installation
-failures stop explicitly without falling back to PSGallery.
-In a live PowerShellGet 2.2.5 comparison, registration accepted both endpoints, but
-`Find-Module SqlServer -RequiredVersion 22.4.5.1` failed against v3 and succeeded against v2.
-Registration alone does not verify that module lookup works.
-
-Pipelines call `eng/pipelines/common/steps/restore-powershell-modules.yml` immediately after
-.NET tool restore, before building or configuring SQL Server/accounts. The step invokes the
-same target through its standalone file:
+Pipelines run the same restore after .NET tool restore through
+`eng/pipelines/common/steps/restore-powershell-modules.yml`:
 
 ```console
 dotnet msbuild tools/targets/RestorePowerShellModules.targets -t:RestorePowerShellModules
 ```
 
-This entry point also works locally. It lets pipelines restore queued module tooling when
-testing an older package-producing commit without replacing that commit's `build.proj`.
+The standalone entry point also works locally and with older package-producing commits.
 Account setup/cleanup and certificate scripts only consume prerequisites; they never install modules.
 
 ## Developer Workflow

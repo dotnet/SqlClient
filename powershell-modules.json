@@ -2,16 +2,13 @@
   "version": 1,
   "modules": {
     "SqlServer": {
-      "version": "22.4.5.1",
-      "allowClobber": true
+      "version": "22.4.5.1"
     },
     "OpenSSL": {
-      "version": "1.0.0",
-      "allowClobber": true
+      "version": "1.0.0"
     },
     "Pester": {
-      "version": "6.2.0",
-      "skipPublisherCheck": true
+      "version": "6.2.0"
     }
   }
 }

@@ -4,10 +4,9 @@
 
 <#
 .SYNOPSIS
-Registers the public SqlClient feed for PowerShellGet and returns its repository name.
+Registers the configured feed for PSResourceGet and returns its repository name.
 .DESCRIPTION
-Reads the repository source from PowerShell.config and uses its NuGet v2 endpoint
-anonymously, including its PowerShell Gallery upstream.
+Reads the repository source from PowerShell.config and registers it anonymously.
 An existing registration must match; it is never overwritten.
 Registration and lookup failures propagate without falling back to another source.
 #>
@@ -24,27 +23,23 @@ param(
 $ErrorActionPreference = 'Stop'
 [xml] $config = Get-Content -LiteralPath $ConfigPath -Raw -ErrorAction Stop
 $sources = $config.SelectNodes('/configuration/repository')
-if ($sources.Count -ne 1) {
-    throw "Expected exactly one repository in '$ConfigPath'."
+if ($sources.Count -ne 1 -or
+    [string]::IsNullOrWhiteSpace($sources[0].GetAttribute('sourceLocation'))) {
+    throw "Expected exactly one repository with a sourceLocation in '$ConfigPath'."
 }
-[uri] $source = $sources[0].GetAttribute('sourceLocation')
-if (-not $source.IsAbsoluteUri -or $source.Scheme -ne 'https' -or
-    $source.UserInfo -or $source.Query -or $source.Fragment -or
-    $source.AbsolutePath -notmatch '/_packaging/[^/]+/nuget/v2/?$') {
-    throw "The repository in '$ConfigPath' must have an HTTPS Azure Artifacts NuGet v2 sourceLocation."
-}
-$sourceLocation = $source.AbsoluteUri.TrimEnd('/')
+$sourceLocation = $sources[0].GetAttribute('sourceLocation')
 
-$repository = Get-PSRepository -ErrorAction Stop | Where-Object { $_.Name -eq $RepositoryName }
+$repository = Get-PSResourceRepository -ErrorAction Stop |
+    Where-Object { $_.Name -eq $RepositoryName }
 if ($repository) {
-    if ($repository.SourceLocation.TrimEnd('/') -cne $sourceLocation -or
-        $repository.PackageManagementProvider -ne 'NuGet') {
-        throw "PowerShell repository '$RepositoryName' does not point to '$sourceLocation' using NuGet. Resolve the conflicting registration before installing modules."
+    if ($repository.Uri.AbsoluteUri.TrimEnd('/') -cne
+        ([uri] $sourceLocation).AbsoluteUri.TrimEnd('/')) {
+        throw "Resolve the conflicting registration for PowerShell repository '$RepositoryName'."
     }
 }
 else {
-    $null = Register-PSRepository -Name $RepositoryName -SourceLocation $sourceLocation `
-        -PackageManagementProvider NuGet -InstallationPolicy Trusted -ErrorAction Stop
+    $null = Register-PSResourceRepository -Name $RepositoryName -Uri $sourceLocation `
+        -Trusted -ErrorAction Stop
 }
 
 $RepositoryName

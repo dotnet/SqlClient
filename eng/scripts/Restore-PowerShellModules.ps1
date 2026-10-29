@@ -4,7 +4,7 @@
 
 <#
 .SYNOPSIS
-Restores the exact module versions listed in powershell-modules.json.
+Restores the exact resource versions listed in powershell-modules.json using PSResourceGet.
 .DESCRIPTION
 Reuses installed versions and installs missing versions for the current user from
 PowerShell.config. Registration and installation failures stop without switching sources.
@@ -25,48 +25,42 @@ if ($entries.Count -eq 0) {
     throw "No PowerShell modules are defined in '$ManifestPath'."
 }
 
-$modules = @(
+$resources = @(
     foreach ($entry in $entries) {
         [version] $version = $null
         if ($entry.Name -notmatch '\A[A-Za-z0-9][A-Za-z0-9_.-]*\z' -or
             $entry.Value -isnot [pscustomobject] -or
+            @($entry.Value.PSObject.Properties).Count -ne 1 -or
             $entry.Value.version -isnot [string] -or
             -not [version]::TryParse($entry.Value.version, [ref] $version)) {
-            throw "Module '$($entry.Name)' must have a valid name and exact version in '$ManifestPath'."
-        }
-        $allowClobber = $entry.Value.PSObject.Properties['allowClobber']
-        if ($allowClobber -and $allowClobber.Value -isnot [bool]) {
-            throw "Module '$($entry.Name)' must have a boolean allowClobber in '$ManifestPath'."
-        }
-        $skipPublisherCheck = $entry.Value.PSObject.Properties['skipPublisherCheck']
-        if ($skipPublisherCheck -and $skipPublisherCheck.Value -isnot [bool]) {
-            throw "Module '$($entry.Name)' must have a boolean skipPublisherCheck in '$ManifestPath'."
-        }
-        if ($skipPublisherCheck -and $skipPublisherCheck.Value -and $entry.Name -ne 'Pester') {
-            throw "Only Pester may enable skipPublisherCheck in '$ManifestPath'."
+            throw "Module '$($entry.Name)' must have a valid name and only an exact version in '$ManifestPath'."
         }
         [pscustomobject]@{
             Name = $entry.Name
             Version = $version
-            AllowClobber = $allowClobber -and $allowClobber.Value
-            SkipPublisherCheck = $skipPublisherCheck -and $skipPublisherCheck.Value
         }
     }
 )
 
 $repositoryName = $null
-foreach ($module in $modules) {
-    $specification = @{ ModuleName = $module.Name; RequiredVersion = $module.Version }
-    if (Get-Module -ListAvailable -FullyQualifiedName $specification) {
-        Write-Host "$($module.Name) $($module.Version) is already installed."
+foreach ($resource in $resources) {
+    $requiredVersion = "[$($resource.Version)]"
+    try {
+        $installed = Get-InstalledPSResource -Name $resource.Name -Version $requiredVersion `
+            -ErrorAction Stop
+    }
+    catch [Microsoft.PowerShell.PSResourceGet.UtilClasses.ResourceNotFoundException] {
+        $installed = $null
+    }
+    if ($installed) {
+        Write-Host "$($resource.Name) $($resource.Version) is already installed."
         continue
     }
     if (-not $repositoryName) {
         $repositoryName = & (Join-Path $PSScriptRoot 'Register-SqlClientPSRepository.ps1') `
             -RepositoryName SqlClient
     }
-    Write-Host "Restoring $($module.Name) $($module.Version) from $repositoryName."
-    Install-Module -Name $module.Name -RequiredVersion $module.Version -Repository $repositoryName `
-        -Scope CurrentUser -Force -AllowClobber:$module.AllowClobber `
-        -SkipPublisherCheck:$module.SkipPublisherCheck -ErrorAction Stop
+    Write-Host "Restoring $($resource.Name) $($resource.Version) from $repositoryName."
+    Install-PSResource -Name $resource.Name -Version $requiredVersion -Repository $repositoryName `
+        -Scope CurrentUser -NoClobber -ErrorAction Stop
 }
