@@ -8,18 +8,29 @@ MSF attempts TCP connections to DNS-resolved IP addresses in parallel and uses
 the first successful connection. The addresses do not need to be in different
 subnets. With MSF enabled, `IPAddressPreference` and TNIR have no effect.
 
-## Incompatible connection options
+## Where the default applies
 
-Set `MultiSubnetFailover=false` for database mirroring, including when the server
-supplies the failover partner, and for non-TCP connections such as Named Pipes,
-Shared Memory, and LocalDB. MSF also fails when a hostname resolves to more than 64
-IP addresses. Use an explicit TCP hostname and port where appropriate.
+The default applies only when SqlClient connects over TCP. When
+`MultiSubnetFailover` is not set in the connection string, it is turned off for:
 
-For example, a mirroring connection string must include the opt-out:
+- A configured `Failover Partner`, or a failover partner sent by the server
+  (database mirroring).
+- Named Pipes and Shared Memory, from an `np:` or `lpc:` prefix, a pipe path,
+  `Network Library` (.NET Framework), or a client alias.
+- LocalDB, and `admin:` or `via:` connections.
+- On Windows with native SNI, a local server without a prefix (for example `.`,
+  `(local)`, `localhost`, or the machine name), which tries Shared Memory first.
 
-```text
-Server=<principal>;Database=<database>;Failover Partner=<partner>;Integrated Security=true;MultiSubnetFailover=false
-```
+For a remote server without a prefix, native SNI on Windows uses TCP only with
+MSF, so it no longer falls back to Named Pipes. Add `np:` or set
+`MultiSubnetFailover=false` to keep Named Pipes.
+
+`SqlConnectionStringBuilder.MultiSubnetFailover` returns the default (`true`), not
+the value used for the connection.
+
+An explicit `MultiSubnetFailover=true` is always used as-is. It still fails with
+a failover partner and with non-TCP protocols. MSF also fails when a hostname
+resolves to more than 64 IP addresses.
 
 ## Restoring the previous defaults
 

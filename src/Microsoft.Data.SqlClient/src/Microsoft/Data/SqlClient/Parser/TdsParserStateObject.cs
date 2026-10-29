@@ -4124,9 +4124,9 @@ namespace Microsoft.Data.SqlClient.Parser
                             }
                             else if ((_parser.State == TdsParserState.OpenNotLoggedIn)
 #if NETFRAMEWORK
-                                && (_parser.Connection.ConnectionOptions.MultiSubnetFailover || _parser.Connection.ConnectionOptions.TransparentNetworkIPResolution))
+                                && (_parser.Connection.MultiSubnetFailover || _parser.Connection.ConnectionOptions.TransparentNetworkIPResolution))
 #else
-                                && (_parser.Connection.ConnectionOptions.MultiSubnetFailover))
+                                && (_parser.Connection.MultiSubnetFailover))
 #endif
                             {
                                 // For MultiSubnet Failover during login, never break the connection, just close the TdsParser

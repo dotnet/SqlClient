@@ -1094,7 +1094,7 @@ The following example converts an existing connection string from using SQL Serv
           To restore the previous default, set <c>Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault</c> to <c>false</c> before using SqlClient. An explicit connection-string value takes precedence over the switch.
         </para>
         <para>
-          Set <c>MultiSubnetFailover=false</c> for database mirroring (including a server-provided failover partner) or non-TCP connections, such as Named Pipes and LocalDB. When enabled, this option overrides <c>IPAddressPreference</c> and, on .NET Framework, <c>TransparentNetworkIPResolution</c>.
+          When this key is not set, the default applies only to TCP connections. It is turned off for a failover partner (configured or sent by the server), Named Pipes, Shared Memory, LocalDB, a non-TCP <c>Network Library</c> or client alias, and, with native SNI on Windows, a local server without a protocol prefix. This property returns the default, not the value used for the connection. An explicit <c>true</c> is used as-is and still fails with a failover partner or a non-TCP protocol. When enabled, this option overrides <c>IPAddressPreference</c> and, on .NET Framework, <c>TransparentNetworkIPResolution</c>.
         </para>
       </remarks>
     </MultiSubnetFailover>

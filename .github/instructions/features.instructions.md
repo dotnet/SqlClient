@@ -15,7 +15,7 @@ This is a comprehensive reference of supported connection string keywords.
 | `Initial Catalog` | Database | Database name |
 | `Failover Partner` | | Mirroring failover partner |
 | `ApplicationIntent` | | ReadWrite (default) or ReadOnly |
-| `MultiSubnetFailover` | | Enable multi-subnet failover (default `true`) |
+| `MultiSubnetFailover` | | Enable multi-subnet failover (default `true` for TCP only; an explicit value is used as-is) |
 
 ### Authentication
 

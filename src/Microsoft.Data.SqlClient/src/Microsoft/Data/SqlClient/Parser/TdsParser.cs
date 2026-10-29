@@ -442,7 +442,7 @@ namespace Microsoft.Data.SqlClient.Parser
             _connHandler.TimeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.PreLoginBegin);
             _connHandler.TimeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.InitializeConnection);
 
-            bool fParallel = _connHandler.ConnectionOptions.MultiSubnetFailover;
+            bool fParallel = _connHandler.MultiSubnetFailover;
             TransparentNetworkResolutionState transparentNetworkResolutionState;
             int totalTimeout;
 
@@ -1631,9 +1631,9 @@ namespace Microsoft.Data.SqlClient.Parser
             if (breakConnection)
             {
 #if NETFRAMEWORK
-                if ((_state == TdsParserState.OpenNotLoggedIn) && (_connHandler.ConnectionOptions.TransparentNetworkIPResolution || _connHandler.ConnectionOptions.MultiSubnetFailover || _loginWithFailover) && (temp.Count == 1) && ((temp[0].Number == TdsEnums.TIMEOUT_EXPIRED) || (temp[0].Number == TdsEnums.SNI_WAIT_TIMEOUT)))
+                if ((_state == TdsParserState.OpenNotLoggedIn) && (_connHandler.ConnectionOptions.TransparentNetworkIPResolution || _connHandler.MultiSubnetFailover || _loginWithFailover) && (temp.Count == 1) && ((temp[0].Number == TdsEnums.TIMEOUT_EXPIRED) || (temp[0].Number == TdsEnums.SNI_WAIT_TIMEOUT)))
 #else
-                if ((_state == TdsParserState.OpenNotLoggedIn) && (_connHandler.ConnectionOptions.MultiSubnetFailover || _loginWithFailover) && (temp.Count == 1) && ((temp[0].Number == TdsEnums.TIMEOUT_EXPIRED) || (temp[0].Number == TdsEnums.SNI_WAIT_TIMEOUT)))
+                if ((_state == TdsParserState.OpenNotLoggedIn) && (_connHandler.MultiSubnetFailover || _loginWithFailover) && (temp.Count == 1) && ((temp[0].Number == TdsEnums.TIMEOUT_EXPIRED) || (temp[0].Number == TdsEnums.SNI_WAIT_TIMEOUT)))
 #endif
                 {
                     // DevDiv2 Bug 459546: With "MultiSubnetFailover=yes" in the Connection String, SQLClient incorrectly throws a Timeout using shorter time slice (3-4 seconds), not honoring the actual 'Connect Timeout'
@@ -14364,7 +14364,7 @@ namespace Microsoft.Data.SqlClient.Parser
                             _statistics == null ? bool.TrueString : bool.FalseString,
                             _statisticsIsInTransaction ? bool.TrueString : bool.FalseString,
                             _fPreserveTransaction ? bool.TrueString : bool.FalseString,
-                            _connHandler == null ? "(null)" : _connHandler.ConnectionOptions.MultiSubnetFailover.ToString((IFormatProvider)null),
+                            _connHandler == null ? "(null)" : _connHandler.MultiSubnetFailover.ToString((IFormatProvider)null),
 #if NETFRAMEWORK
                            _connHandler == null ? "(null)" : _connHandler.ConnectionOptions.TransparentNetworkIPResolution.ToString((IFormatProvider)null));
 #else

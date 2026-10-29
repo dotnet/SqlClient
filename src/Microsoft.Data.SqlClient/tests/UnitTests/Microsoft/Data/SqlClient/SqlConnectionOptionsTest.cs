@@ -197,12 +197,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Mirroring requires MSF to be disabled explicitly or through the compatibility opt-out.
+        /// Failover Partner throws only with an explicit MSF=true. The default is turned off.
         /// </summary>
         [Theory]
-        [InlineData(null, null, true)]
+        [InlineData(null, null, false)]
         [InlineData(true, null, true)]
-        [InlineData(null, true, true)]
+        [InlineData(null, true, false)]
         [InlineData(true, false, true)]
         [InlineData(false, null, false)]
         [InlineData(false, true, false)]
@@ -234,6 +234,75 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
                 Assert.False(options.MultiSubnetFailover);
                 Assert.Equal("partner", options.FailoverPartner);
             }
+        }
+
+        /// <summary>
+        /// The MSF default applies only when SNI uses TCP. Without a prefix, managed SNI uses
+        /// TCP, and native SNI uses shared memory for the local machine.
+        /// </summary>
+        [Theory]
+        [InlineData("server", true, true)]
+        [InlineData("server.contoso.com,1433", true, true)]
+        [InlineData(@"server\instance", true, true)]
+        [InlineData("10.0.0.5", true, true)]
+        [InlineData("[fe80::1],1433", true, true)]
+        [InlineData("tcp:server", true, true)]
+        [InlineData("tcp:localhost", true, true)]
+        [InlineData("tcp:.", true, true)]
+        [InlineData(" TCP:server ", true, true)]
+        [InlineData("", false, true)]
+        [InlineData(".", false, true)]
+        [InlineData(@".\SQLEXPRESS", false, true)]
+        [InlineData("(local)", false, true)]
+        [InlineData("localhost", false, true)]
+        [InlineData("localhost,1433", false, true)]
+        [InlineData("127.0.0.1", false, true)]
+        [InlineData("::1", false, true)]
+        [InlineData("[::1],1433", false, true)]
+        [InlineData("np:server", false, false)]
+        [InlineData(@"np:\\server\pipe\sql\query", false, false)]
+        [InlineData(@"\\server\pipe\sql\query", false, false)]
+        [InlineData("lpc:.", false, false)]
+        [InlineData("admin:server", false, false)]
+        [InlineData("via:server,1433", false, false)]
+        [InlineData(@"(localdb)\MSSQLLocalDB", false, false)]
+        public void UsesTcpProtocol_DependsOnServerNameAndSni(string serverName, bool expectedNative, bool expectedManaged)
+        {
+            Assert.Equal(expectedNative, SqlConnectionOptions.UsesTcpProtocol(serverName, useManagedNetworking: false));
+            Assert.Equal(expectedManaged, SqlConnectionOptions.UsesTcpProtocol(serverName, useManagedNetworking: true));
+        }
+
+        /// <summary>
+        /// With native SNI, the local machine name uses shared memory first.
+        /// </summary>
+        [Fact]
+        public void UsesTcpProtocol_LocalMachineName_NativeIsNotTcp()
+        {
+            Assert.False(SqlConnectionOptions.UsesTcpProtocol(Environment.MachineName, useManagedNetworking: false));
+            Assert.False(SqlConnectionOptions.UsesTcpProtocol($"{Environment.MachineName}.contoso.com", useManagedNetworking: false));
+            Assert.True(SqlConnectionOptions.UsesTcpProtocol(Environment.MachineName, useManagedNetworking: true));
+        }
+
+        /// <summary>
+        /// The options keep the default for any data source; the connection applies the protocol
+        /// rule after alias resolution. An explicit value is kept as-is.
+        /// </summary>
+        [Theory]
+        [InlineData("np:server", null, true, false)]
+        [InlineData("localhost", null, true, false)]
+        [InlineData("np:server", true, true, true)]
+        [InlineData("server", false, false, true)]
+        public void MultiSubnetFailover_Options_KeepsConfiguredValue(string dataSource, bool? msf, bool expected, bool expectedExplicit)
+        {
+            _appContextSwitchHelper.EnableMultiSubnetFailoverByDefault = true;
+            string connectionString = msf.HasValue
+                ? $"Data Source={dataSource};MultiSubnetFailover={msf.Value}"
+                : $"Data Source={dataSource}";
+
+            SqlConnectionOptions options = new(connectionString);
+
+            Assert.Equal(expected, options.MultiSubnetFailover);
+            Assert.Equal(expectedExplicit, options.IsMultiSubnetFailoverExplicit);
         }
     }
 }
