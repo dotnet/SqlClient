@@ -1627,8 +1627,12 @@ namespace Microsoft.Data.SqlClient
                             {
                                 // for these types, ActualSize is the num of chars, not actual bytes - since non-unicode chars are not always uniform size
                                 coercedSize = (!HasFlag(SqlParameterFlags.IsNull) && (!HasFlag(SqlParameterFlags.CoercedValueIsDataFeed))) ? (StringSize(val, HasFlag(SqlParameterFlags.CoercedValueIsSqlType))) : 0;
-                                // Size limits the transmitted slice, which starts at Offset.
-                                coercedSize = Math.Max(0, coercedSize - Offset);
+                                // ANSI variants serialize the whole string, ignoring Offset.
+                                if (!isSqlVariant)
+                                {
+                                    // Size limits the transmitted slice, which starts at Offset.
+                                    coercedSize = Math.Max(0, coercedSize - Offset);
+                                }
                                 _actualSize = (ShouldSerializeSize() ? Size : 0);
                                 _actualSize = (ShouldSerializeSize() && (_actualSize <= coercedSize)) ? _actualSize : coercedSize;
                                 if (_actualSize == -1)

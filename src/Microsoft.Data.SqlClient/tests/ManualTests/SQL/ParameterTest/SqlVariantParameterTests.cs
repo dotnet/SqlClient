@@ -8,6 +8,7 @@ using System.Data;
 using System.Data.SqlTypes;
 using System.Globalization;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.Server;
 using Xunit;
 
@@ -104,6 +105,50 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // Assert
             Assert.Equal(expectedTypeName, actualTypeName);
             Assert.Equal(expectedBaseTypeName, actualBaseTypeName);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup),
+            nameof(DataTestUtility.IsNotAzureSynapse))]
+        [InlineData(false, false)]
+        [InlineData(false, true)]
+        [InlineData(true, false)]
+        [InlineData(true, true)]
+        public async Task AnsiVariant_OffsetChanged_PreservesCompleteValueAndCommandReuse(
+            bool useAsync, bool sqlString)
+        {
+            SqlConnectionStringBuilder builder = new(_connStr) { Pooling = false };
+            using SqlConnection connection = new(builder.ConnectionString);
+            if (useAsync)
+            {
+                await connection.OpenAsync();
+            }
+            else
+            {
+                connection.Open();
+            }
+            using SqlCommand command = connection.CreateCommand();
+            command.CommandText = "SELECT @p, DATALENGTH(@p), " +
+                "CONVERT(varchar(20), SQL_VARIANT_PROPERTY(@p, 'BaseType')), @marker";
+            string text = "A" + new string('b', 4498) + "Z";
+            SqlParameter parameter = command.Parameters.Add("@p", SqlDbType.Variant);
+            parameter.Value = sqlString ? new SqlString(text) : (object)text;
+            const int Marker = 0x12345678;
+            command.Parameters.Add("@marker", SqlDbType.Int).Value = Marker;
+
+            // The ANSI variant writer ignores Offset; reusing the command must preserve that.
+            foreach (int offset in new[] { 0, 1, 0 })
+            {
+                parameter.Offset = offset;
+                using SqlDataReader reader = useAsync
+                    ? await command.ExecuteReaderAsync() : command.ExecuteReader();
+                Assert.True(useAsync ? await reader.ReadAsync() : reader.Read());
+                Assert.Equal(text, reader.GetString(0));
+                Assert.Equal(4500, reader.GetInt32(1));
+                Assert.Equal("varchar", reader.GetString(2));
+                Assert.Equal(Marker, reader.GetInt32(3));
+                Assert.False(useAsync ? await reader.ReadAsync() : reader.Read());
+                Assert.False(useAsync ? await reader.NextResultAsync() : reader.NextResult());
+            }
         }
 
         /// <summary>
