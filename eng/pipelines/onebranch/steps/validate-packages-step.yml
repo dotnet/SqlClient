@@ -59,6 +59,9 @@ parameters:
     type: boolean
 
 steps:
+  - task: NuGetAuthenticate@1
+    displayName: 'Authenticate NuGet feeds'
+
   - task: DotNetCoreCLI@2
     displayName: 'build.proj - BuildPackageValidator'
     inputs:
