@@ -1800,6 +1800,9 @@
   <data name="TCE_EnclaveTypeNullForEnclaveBasedQuery" xml:space="preserve">
     <value>내부 오류가 발생했습니다. enclave 계산이 필요한 쿼리를 실행할 때 SQL Server에서 수신된 enclave 형식이 null이거나 비어 있습니다.</value>
   </data>
+  <data name="TCE_AzureAttestationExtensionNotFound" xml:space="preserve">
+    <value>Attestation protocol 'AAS' requires the Microsoft.Data.SqlClient.Extensions.Azure package, at the same version as Microsoft.Data.SqlClient. Add or update the reference to that package, or specify a different attestation protocol in the connection string.</value>
+  </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
     <value>enclave 형식 '{0}' 및 증명 프로토콜 '{1}'에 대한 enclave 공급자를 찾을 수 없습니다. 연결 문자열에 올바른 증명 프로토콜을 지정하세요. </value>
   </data>
@@ -2067,6 +2070,9 @@
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
     <value>부모 명령에서 EnableOptimizedParameterBinding을 사용하는 경우 매개 변수 '{0}'에는 Direction Output 또는 InputOutput을 사용할 수 없습니다.</value>
   </data>
+  <data name="SQL_PrepareNotSupportedForOptimizedBinding" xml:space="preserve">
+    <value>Prepare is not supported when EnableOptimizedParameterBinding is enabled. Create a new SqlCommand and either set EnableOptimizedParameterBinding to false before its first execution or execute it without calling Prepare.</value>
+  </data>
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
     <value>'{0}' 인증 방법을 사용하여 액세스 토큰을 검색하는 동안 연결 시간이 초과되었습니다. 마지막 오류: {1}: {2}</value>
   </data>
@@ -2099,6 +2105,9 @@
   </data>
   <data name="SqlAppContextSwitchManager_InvalidValue" xml:space="preserve">
     <value>AppContext 스위치 '{0}'={1}을(를) 설정하는 동안 예외가 발생했습니다.</value>
+  </data>
+  <data name="SQL_GlobalizationInvariantModeRequiresLcid" xml:space="preserve">
+    <value>When Globalization Invariant Mode is enabled, SqlMetaData instances describing character or text types must specify an LCID.</value>
   </data>
   <data name="SQL_GlobalizationInvariantModeNotSupported" xml:space="preserve">
     <value>전역화 고정 모드는 지원되지 않습니다.</value>
