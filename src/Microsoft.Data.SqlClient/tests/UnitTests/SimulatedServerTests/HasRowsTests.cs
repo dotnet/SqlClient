@@ -17,6 +17,8 @@ using Microsoft.SqlServer.TDS.Row;
 using Microsoft.SqlServer.TDS.Servers;
 using Microsoft.SqlServer.TDS.SQLBatch;
 using Xunit;
+using Microsoft.Data.SqlClient.Parser.Tokens;
+using Microsoft.Data.SqlClient.Parser;
 
 namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests;
 

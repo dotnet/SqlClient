@@ -12,6 +12,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Xunit;
+using Microsoft.Data.SqlClient.Parser;
 
 namespace Microsoft.Data.SqlClient.Tests
 {

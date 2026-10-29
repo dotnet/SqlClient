@@ -229,17 +229,6 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-    internal sealed partial class _SqlMetaDataSet
-    {
-        internal readonly SqlTceCipherInfoTable cekTable; // table of "column encryption keys" used for this metadataset
-
-        internal _SqlMetaDataSet(int count, SqlTceCipherInfoTable cipherTable)
-            : this(count)
-        {
-            cekTable = cipherTable;
-        }
-    }
-
     /// <summary>
     /// Represents Encryption related information of the cipher data.
     /// </summary>
@@ -425,44 +414,6 @@ namespace Microsoft.Data.SqlClient
         internal bool IsAlgorithmInitialized()
         {
             return _sqlClientEncryptionAlgorithm != null ? true : false;
-        }
-    }
-
-    internal partial class SqlMetaDataPriv
-    {
-        internal bool isEncrypted; // TCE encrypted?
-        internal SqlMetaDataPriv baseTI;   // for encrypted columns, represents the TYPE_INFO for plaintext value
-        internal SqlCipherMetadata cipherMD; // Cipher related metadata for encrypted columns.
-
-        /// <summary>
-        /// Is the algorithm handle for the cipher encryption initialized ?
-        /// </summary>
-        /// <returns></returns>
-        internal bool IsAlgorithmInitialized()
-        {
-            if (cipherMD != null)
-            {
-                return cipherMD.IsAlgorithmInitialized();
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Returns the normalization rule version byte.
-        /// </summary>
-        /// <returns></returns>
-        internal byte NormalizationRuleVersion
-        {
-            get
-            {
-                if (cipherMD != null)
-                {
-                    return cipherMD.NormalizationRuleVersion;
-                }
-
-                return 0x00;
-            }
         }
     }
 

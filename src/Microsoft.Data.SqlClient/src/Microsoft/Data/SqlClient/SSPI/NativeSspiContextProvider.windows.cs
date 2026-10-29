@@ -3,6 +3,11 @@
 // See the LICENSE file in the project root for more information.
 
 #if _WINDOWS
+using Microsoft.Data.SqlClient.NativeSni;
+#endif
+using Microsoft.Data.SqlClient.Parser;
+
+#if _WINDOWS
 
 using System;
 using System.Buffers;

@@ -83,7 +83,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.True(result.IsFaulted, string.Format("Expected task result to be faulted, but instead it was {0}", result.Status));
                 Assert.True(connection.State == ConnectionState.Open, string.Format("Expected connection to be open after soft timeout, but it was {0}", connection.State));
 
-                Type type = typeof(SqlDataReader).GetTypeInfo().Assembly.GetType("Microsoft.Data.SqlClient.TdsParserStateObject");
+                Type type = typeof(SqlDataReader).GetTypeInfo().Assembly.GetType("Microsoft.Data.SqlClient.Parser.TdsParserStateObject");
                 FieldInfo field = type.GetField("s_skipSendAttention", BindingFlags.NonPublic | BindingFlags.Static);
 
                 Assert.True(field != null, "Error: This test cannot succeed on retail builds because it uses the s_skipSendAttention test hook");
@@ -131,7 +131,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 Assert.True(connection.State == ConnectionState.Open, string.Format("Expected connection to be open after soft timeout, but it was {0}", connection.State));
 
-                Type type = typeof(SqlDataReader).GetTypeInfo().Assembly.GetType("Microsoft.Data.SqlClient.TdsParserStateObject");
+                Type type = typeof(SqlDataReader).GetTypeInfo().Assembly.GetType("Microsoft.Data.SqlClient.Parser.TdsParserStateObject");
                 FieldInfo field = type.GetField("s_skipSendAttention", BindingFlags.NonPublic | BindingFlags.Static);
 
                 Assert.True(field != null, "Error: This test cannot succeed on retail builds because it uses the s_skipSendAttention test hook");

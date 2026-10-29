@@ -10,6 +10,7 @@ using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Globalization;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Parser;
 
 namespace Microsoft.Data.SqlClient.Server
 {
