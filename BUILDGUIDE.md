@@ -51,10 +51,12 @@ dotnet build build.proj -t:RestorePowerShellModules
 ```
 
 [`powershell-modules.json`](powershell-modules.json) is the single module/version manifest,
-listing SqlServer, OpenSSL, and Pester with exact versions and per-module `allowClobber` options.
+listing SqlServer, OpenSSL, and Pester with exact versions and per-module install options.
 The target reuses installed exact versions and installs missing versions for the current user.
 SqlServer and OpenSSL allow overlapping command names during installation; restore does not
 import either module into the calling session.
+Only Pester may enable `skipPublisherCheck`, preserving its transition from the differently
+signed Windows inbox module; publisher checks stay enabled for other modules.
 It does not build the driver or run tests, and is not an automatic dependency of build/test targets.
 Rerun it after changing the manifest or when setting up a new machine/user.
 The Unix certificate tests also require the OS `openssl` executable; the PowerShell module

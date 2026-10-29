@@ -10,7 +10,8 @@
       "allowClobber": true
     },
     "Pester": {
-      "version": "6.2.0"
+      "version": "6.2.0",
+      "skipPublisherCheck": true
     }
   }
 }

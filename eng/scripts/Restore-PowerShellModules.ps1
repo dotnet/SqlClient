@@ -38,10 +38,18 @@ $modules = @(
         if ($allowClobber -and $allowClobber.Value -isnot [bool]) {
             throw "Module '$($entry.Name)' must have a boolean allowClobber in '$ManifestPath'."
         }
+        $skipPublisherCheck = $entry.Value.PSObject.Properties['skipPublisherCheck']
+        if ($skipPublisherCheck -and $skipPublisherCheck.Value -isnot [bool]) {
+            throw "Module '$($entry.Name)' must have a boolean skipPublisherCheck in '$ManifestPath'."
+        }
+        if ($skipPublisherCheck -and $skipPublisherCheck.Value -and $entry.Name -ne 'Pester') {
+            throw "Only Pester may enable skipPublisherCheck in '$ManifestPath'."
+        }
         [pscustomobject]@{
             Name = $entry.Name
             Version = $version
             AllowClobber = $allowClobber -and $allowClobber.Value
+            SkipPublisherCheck = $skipPublisherCheck -and $skipPublisherCheck.Value
         }
     }
 )
@@ -59,5 +67,6 @@ foreach ($module in $modules) {
     }
     Write-Host "Restoring $($module.Name) $($module.Version) from $repositoryName."
     Install-Module -Name $module.Name -RequiredVersion $module.Version -Repository $repositoryName `
-        -Scope CurrentUser -Force -AllowClobber:$module.AllowClobber -ErrorAction Stop
+        -Scope CurrentUser -Force -AllowClobber:$module.AllowClobber `
+        -SkipPublisherCheck:$module.SkipPublisherCheck -ErrorAction Stop
 }

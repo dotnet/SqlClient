@@ -52,6 +52,39 @@ Describe 'Manifest-backed PowerShell module restore' {
         Should -Invoke Install-Module -Times 0 -Exactly -ParameterFilter { $Name -eq 'One' }
     }
 
+    It 'only enables Pester publisher transitions when requested (<Enabled>)' -ForEach @(
+        @{ Enabled = $true }
+        @{ Enabled = $false }
+    ) {
+        @{
+            version = 1
+            modules = @{
+                Pester = @{ version = '1.0.0'; skipPublisherCheck = $Enabled }
+                One = @{ version = '1.0.0' }
+            }
+        } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $manifestPath
+
+        & $restore -ManifestPath $manifestPath
+
+        Should -Invoke Install-Module -Times 1 -Exactly -ParameterFilter {
+            $Name -eq 'Pester' -and [bool]$SkipPublisherCheck -eq $Enabled
+        }
+        Should -Invoke Install-Module -Times 1 -Exactly -ParameterFilter {
+            $Name -eq 'One' -and -not $SkipPublisherCheck
+        }
+    }
+
+    It 'preserves the checked-in Pester publisher exception without bypassing other modules' {
+        & $restore
+
+        Should -Invoke Install-Module -Times 1 -Exactly -ParameterFilter {
+            $Name -eq 'Pester' -and $SkipPublisherCheck
+        }
+        Should -Invoke Install-Module -Times 2 -Exactly -ParameterFilter {
+            $Name -ne 'Pester' -and -not $SkipPublisherCheck
+        }
+    }
+
     It 'does not contact the repository when all required versions are installed' {
         Mock Get-Module { [pscustomobject]@{ Name = 'installed' } }
 
@@ -107,6 +140,8 @@ Describe 'Manifest-backed PowerShell module restore' {
         @{ Problem = 'floating version'; Json = '{"version":1,"modules":{"One":{"version":"*"}}}' }
         @{ Problem = 'invalid version'; Json = '{"version":1,"modules":{"One":{"version":"latest"}}}' }
         @{ Problem = 'invalid options'; Json = '{"version":1,"modules":{"One":{"version":"1.0.0","allowClobber":"false"}}}' }
+        @{ Problem = 'invalid publisher option'; Json = '{"version":1,"modules":{"Pester":{"version":"1.0.0","skipPublisherCheck":"true"}}}' }
+        @{ Problem = 'publisher bypass for another module'; Json = '{"version":1,"modules":{"One":{"version":"1.0.0","skipPublisherCheck":true}}}' }
         @{ Problem = 'invalid later entry'; Json = '{"version":1,"modules":{"One":{"version":"1.0.0"},"Two":{}}}' }
     ) {
         $Json | Set-Content -LiteralPath $manifestPath
