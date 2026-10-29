@@ -122,6 +122,29 @@ The most commonly used test parameters are:
 | `-p:TestResultsFolderPath=` | `test_results`                                            | Directory where test results are written.                                                                                     |
 | `-p:TestSet=`               | Empty                                                     | Selects manual test sets. Supported values include `1`, `2`, `3`, `AE`, and combinations such as `13` or `12AE`.              |
 
+## Sequential Unicode Decoding Regression
+
+`SqlUnicodeEncodingTests` checks raw UTF-16LE code-unit preservation, partial consumption, offsets,
+zero-capacity conversions, and unchanged input bytes. Run it without a database:
+
+```bash
+dotnet test src/Microsoft.Data.SqlClient/tests/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj \
+  --framework net10.0 --filter "FullyQualifiedName~SqlUnicodeEncodingTests" --blame-hang-timeout 10m
+```
+
+With SQL Server test configuration in place, run the Unicode round-trip regression:
+
+```bash
+dotnet build -t:TestSqlClientManual -p:TestFramework=net10.0 \
+  -p:TestFilters=FullyQualifiedName~UnicodeParameterAndReaderRoundTrip_PreservesWorldwideText
+```
+
+The integration test covers buffered and streamed parameters, synchronous and asynchronous readers,
+single-character and mixed-size reads, destination offsets, zero-length reads, and EOF over packet-spanning
+`nvarchar(max)` text. It uses the standard database-object fixtures and skips when connection strings are not configured.
+SQL Server may run remotely; verifying the big-endian decoder path requires running the test client on a real
+big-endian runtime (for example, s390x). Passing on x64 verifies only the little-endian path.
+
 ## Test Filters
 
 `build.proj` passes `TestFilters` to `dotnet test --filter`. By default, tests marked with these categories are excluded:

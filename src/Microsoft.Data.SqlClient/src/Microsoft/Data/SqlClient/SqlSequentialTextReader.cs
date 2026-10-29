@@ -6,6 +6,7 @@ using System;
 using System.Buffers;
 using System.Buffers.Binary;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -539,17 +540,19 @@ namespace Microsoft.Data.SqlClient
                 bytesUsed = charsUsed * 2;
                 completed = (bytesUsed == byteCount);
 
-                // BlockCopy uses offsets\length measured in bytes, not the actual array index
-                if (!BitConverter.IsLittleEndian)
+                ReadOnlySpan<byte> source = bytes.AsSpan(byteIndex, bytesUsed);
+                Span<char> destination = chars.AsSpan(charIndex, charsUsed);
+                if (BitConverter.IsLittleEndian)
                 {
-                    Span<byte> span = bytes.AsSpan();
-                    for (int ii = byteIndex; ii < byteIndex + bytesUsed; ii += 2)
+                    MemoryMarshal.Cast<byte, char>(source).CopyTo(destination);
+                }
+                else
+                {
+                    for (int i = 0; i < destination.Length; i++)
                     {
-                        short value = BinaryPrimitives.ReadInt16LittleEndian(span.Slice(ii));
-                        BinaryPrimitives.WriteInt16BigEndian(span.Slice(ii), value);
+                        destination[i] = (char)BinaryPrimitives.ReadUInt16LittleEndian(source.Slice(i * 2, 2));
                     }
                 }
-                Buffer.BlockCopy(bytes, byteIndex, chars, charIndex * 2, bytesUsed);
             }
         }
     }
