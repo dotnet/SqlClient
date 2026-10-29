@@ -996,8 +996,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Login\PreLoginOptions.cs">
       <Link>Microsoft\Data\SqlClient\Parser\Login\PreLoginOptions.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\RoutingInfo.cs">
-      <Link>Microsoft\Data\SqlClient\Parser\Tokens\RoutingInfo.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\TdsEnvChangeRoutingInfo.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Tokens\TdsEnvChangeRoutingInfo.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\RunBehavior.cs">
       <Link>Microsoft\Data\SqlClient\Parser\RunBehavior.cs</Link>

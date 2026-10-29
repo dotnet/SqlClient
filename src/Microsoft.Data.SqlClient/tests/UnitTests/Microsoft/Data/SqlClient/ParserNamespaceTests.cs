@@ -52,7 +52,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [InlineData("Parser.Tokens.TdsColumnMetadataToken")]
         [InlineData("Parser.Tokens.TdsColumnMetadataTokenCollection")]
         [InlineData("Parser.Tokens.TdsTableName")]
-        [InlineData("Parser.Tokens.RoutingInfo")]
+        [InlineData("Parser.Tokens.TdsEnvChangeRoutingInfo")]
         public void ParserTypesCanBeResolvedByName(string name)
         {
             Assembly assembly = typeof(SqlConnection).Assembly;
