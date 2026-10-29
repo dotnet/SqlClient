@@ -47,6 +47,18 @@ Describe 'SqlClient PowerShell repository registration' {
         Should -Invoke Register-PSRepository -Times 0 -Exactly
     }
 
+    It 'returns only the repository name when registration emits success output' {
+        Mock Register-PSRepository {
+            "Package source with Name: $Name added successfully."
+            [pscustomobject]@{ Name = $Name; SourceLocation = $SourceLocation }
+        }
+
+        $result = @(& $scriptPath @registerParameters)
+
+        $result.Count | Should -Be 1
+        $result[0] | Should -BeExactly 'CustomModules'
+    }
+
     It 'ignores unrelated repository registrations' {
         Mock Get-PSRepository {
             [pscustomobject]@{ Name = 'AnotherFeed'; SourceLocation = 'https://example.invalid/nuget/v2' }

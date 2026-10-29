@@ -43,7 +43,7 @@ if ($repository) {
     }
 }
 else {
-    Register-PSRepository -Name $RepositoryName -SourceLocation $sourceLocation `
+    $null = Register-PSRepository -Name $RepositoryName -SourceLocation $sourceLocation `
         -PackageManagementProvider NuGet -InstallationPolicy Trusted -ErrorAction Stop
 }
 

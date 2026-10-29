@@ -21,7 +21,10 @@ Describe 'Manifest-backed PowerShell module restore' {
 
     It 'registers once and restores every exact version with its manifest options' {
         $events = [System.Collections.Generic.List[string]]::new()
-        Mock Register-PSRepository { $events.Add('register') }
+        Mock Register-PSRepository {
+            $events.Add('register')
+            "Package source with Name: $Name added successfully."
+        }
         Mock Install-Module { $events.Add($Name) }
 
         & $restore -ManifestPath $manifestPath
@@ -29,7 +32,8 @@ Describe 'Manifest-backed PowerShell module restore' {
         $events -join ',' | Should -BeExactly 'register,One,Two'
         Should -Invoke Register-PSRepository -Times 1 -Exactly
         Should -Invoke Install-Module -Times 2 -Exactly -ParameterFilter {
-            $Repository -eq 'SqlClient' -and $Scope -eq 'CurrentUser' -and
+            @($Repository).Count -eq 1 -and $Repository[0] -eq 'SqlClient' -and
+            $Scope -eq 'CurrentUser' -and
             $Force -and $ErrorAction -eq 'Stop'
         }
         Should -Invoke Install-Module -Times 1 -Exactly -ParameterFilter {
