@@ -5,8 +5,6 @@
 BeforeAll {
     $scriptPath = Join-Path $PSScriptRoot '..\..\..\scripts\Configure-NetOnlyAccount.ps1'
     $templatePath = Join-Path $PSScriptRoot '..\..\common\templates\steps\configure-netonly-account-step.yml'
-    $moduleManifestPath = Join-Path $PSScriptRoot '..\..\..\..\powershell-modules.json'
-    $sqlServerVersion = (Get-Content $moduleManifestPath -Raw | ConvertFrom-Json).modules.SqlServer.version
 }
 
 Describe 'Net-only provisioning runtime' {
@@ -61,23 +59,22 @@ Describe 'Net-only provisioning lifecycle' -Skip:(-not $IsWindows) {
         Mock Invoke-Sqlcmd {}
     }
 
-    It 'uses the SqlServer version from the shared manifest' {
-        Mock Get-Content { '{"modules":{"SqlServer":{"version":"9.8.7.6"}}}' }
+    It 'uses the restored SqlServer module without reading the manifest' {
+        Mock Get-Content { throw 'Consumers must not read the module manifest' }
 
         & $scriptPath -Mode setup
 
         Should -Invoke Import-Module -Times 1 -Exactly -ParameterFilter {
-            $FullyQualifiedName.Name -eq 'SqlServer' -and
-            $FullyQualifiedName.RequiredVersion -eq '9.8.7.6'
+            $Name -eq 'SqlServer' -and -not $FullyQualifiedName -and
+            -not $RequiredVersion -and -not $MinimumVersion -and -not $MaximumVersion
         }
     }
 
-    It 'loads the pinned module before creating an account and uses TCP with integrated authentication' {
+    It 'loads the module before creating an account and uses TCP with integrated authentication' {
         & $scriptPath -Mode setup -Port 15433
 
         Should -Invoke Import-Module -Times 1 -Exactly -ParameterFilter {
-            $FullyQualifiedName.Name -eq 'SqlServer' -and
-            $FullyQualifiedName.RequiredVersion -eq $sqlServerVersion
+            $Name -eq 'SqlServer' -and $ErrorAction -eq 'Stop'
         }
         Should -Invoke Install-Module -Times 0 -Exactly
         Should -Invoke Invoke-Sqlcmd -Times 1 -Exactly -ParameterFilter {
@@ -142,7 +139,7 @@ Describe 'Net-only provisioning lifecycle' -Skip:(-not $IsWindows) {
 
     It 'does not create an account if module import fails' {
         Mock Import-Module { throw 'module import failed' } -ParameterFilter {
-            $FullyQualifiedName.Name -eq 'SqlServer'
+            $Name -eq 'SqlServer'
         }
 
         { & $scriptPath -Mode setup } | Should -Throw '*module import failed*'

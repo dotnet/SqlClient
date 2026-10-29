@@ -53,6 +53,8 @@ dotnet build build.proj -t:RestorePowerShellModules
 [`powershell-modules.json`](powershell-modules.json) is the single module/version manifest,
 listing SqlServer, OpenSSL, and Pester with exact versions and per-module install options.
 The target reuses installed exact versions and installs missing versions for the current user.
+These pins govern installation. Consumers use normal unversioned imports; when multiple
+versions are available, PowerShell's normal module resolution applies.
 SqlServer and OpenSSL allow overlapping command names during installation; restore does not
 import either module into the calling session.
 Only Pester may enable `skipPublisherCheck`, preserving its transition from the differently
@@ -326,8 +328,7 @@ Restore [.NET tools and PowerShell modules](#powershell-modules) first, then run
 
 ```powershell
 dotnet tool run pwsh -- -NoProfile -Command '
-    $modules = Get-Content ./powershell-modules.json -Raw | ConvertFrom-Json
-    Import-Module Pester -RequiredVersion $modules.modules.Pester.version
+    Import-Module Pester
     Invoke-Pester -Path ./src/Microsoft.Data.SqlClient/tests/VersionChecks/VersionChecks.Tests.ps1 -CI
 '
 ```

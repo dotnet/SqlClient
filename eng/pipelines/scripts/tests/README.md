@@ -40,7 +40,7 @@ Add `-Output Detailed` to see per-test results.
 | ---- | ------ |
 | `Register-SqlClientPSRepository.Tests.ps1` | Governed module source registration, conflicts, failures, and prerequisite-step wiring. |
 | `Restore-PowerShellModules.Tests.ps1` | Manifest validation, exact-version restore/reuse, Pester-only publisher-transition handling, one governed repository, and failure propagation. |
-| `Configure-NetOnlyAccount.Tests.ps1` | Pinned SqlServer import and temporary account provisioning/cleanup. |
+| `Configure-NetOnlyAccount.Tests.ps1` | SqlServer import and temporary account provisioning/cleanup. |
 | `Open-LocalizationPr.Tests.ps1` | `Open-LocalizationPr.ps1` — de-duplication of the scheduled localization pull request. |
 | `Install-DockerCli.macos.Tests.ps1` | `Install-DockerCli.macos.ps1` — Homebrew bottle selection for the macOS docker CLI. |
 | `Pipeline-Arguments.Tests.ps1` | PR build/pack/test argument quoting and the repository's CI variable naming convention. |

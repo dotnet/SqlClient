@@ -79,11 +79,12 @@ existing `Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows` setting
 
 Windows local-server Set 3 CI jobs for the default SQL instance provision a unique
 non-administrator local account and a SQL Windows login with access to `master`.
-Provisioning runs under PowerShell 7.4 or later and uses the pinned `SqlServer`
+Provisioning runs under PowerShell 7.4 or later and uses the `SqlServer`
 PowerShell module, backed by Microsoft.Data.SqlClient. The shared `RestorePowerShellModules`
 target installs the versions in `powershell-modules.json` during job initialization for the
 current user if missing, using the source in the root `PowerShell.config`. Account setup
-and cleanup import the manifest's SqlServer version. For local setup, first run from the root:
+and cleanup import SqlServer normally, without selecting a version themselves.
+For local setup, first run from the root:
 
 ```console
 dotnet tool restore

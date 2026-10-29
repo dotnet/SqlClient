@@ -11,7 +11,7 @@ Creates or removes a temporary local Windows account and its local SQL Windows l
 .DESCRIPTION
 Run setup and cleanup on the same Windows agent using PowerShell 7.4 or later,
 as a local administrator with permission to create and drop SQL logins.
-Install the pinned SqlServer module before setup; see BUILDGUIDE.md for local commands.
+Restore PowerShell module prerequisites before setup; see BUILDGUIDE.md for local commands.
 Setup and cleanup use its Invoke-Sqlcmd cmdlet, backed by
 Microsoft.Data.SqlClient, with Windows authentication over the configured TCP port.
 The local CI server's certificate is trusted explicitly for these encrypted connections.
@@ -87,14 +87,8 @@ try {
         throw 'A 64-bit PowerShell process on Windows is required.'
     }
     Import-Module Microsoft.PowerShell.LocalAccounts -ErrorAction Stop
-    $moduleManifest = Get-Content (Join-Path $PSScriptRoot '..\..\powershell-modules.json') -Raw |
-        ConvertFrom-Json
-    $sqlServerModule = @{
-        ModuleName = 'SqlServer'
-        RequiredVersion = $moduleManifest.modules.SqlServer.version
-    }
     $operation = 'import the SqlServer module'
-    Import-Module -FullyQualifiedName $sqlServerModule -ErrorAction Stop
+    Import-Module SqlServer -ErrorAction Stop
 
     if ($Mode -eq 'setup') {
         $operation = 'select a unique local account name'
