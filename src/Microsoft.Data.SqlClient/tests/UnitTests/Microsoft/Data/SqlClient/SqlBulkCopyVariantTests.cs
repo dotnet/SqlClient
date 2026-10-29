@@ -6,6 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.Data.SqlTypes;
 using System.Reflection;
+using Microsoft.Data.SqlClient.Parser;
+using Microsoft.Data.SqlClient.Parser.Tokens;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests
@@ -115,9 +117,9 @@ namespace Microsoft.Data.SqlClient.UnitTests
         public void DecryptedMoneyRetainsSourceType(int tdsType, int length, bool isSmallMoney)
         {
             SqlBuffer buffer = new SqlBuffer();
-            SqlMetaDataPriv metadata = new SqlMetaDataPriv
+            TdsTypeInfo metadata = new TdsTypeInfo
             {
-                baseTI = new SqlMetaDataPriv { tdsType = (byte)tdsType, length = length }
+                BaseTypeInfo = new TdsTypeInfo { TdsType = (byte)tdsType, length = length }
             };
             // Always Encrypted normalizes both subtypes to eight bytes. This encodes -1.2345;
             // the original type/length, including nullable SQLMONEYN, must determine the subtype.

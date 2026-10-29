@@ -732,6 +732,10 @@ This property corresponds to the "FailoverPartnerSPN" and "Failover Partner SPN"
           <![CDATA[  
 This property corresponds to the "HostNameInCertificate" and "Host Name in Certificate" keys within the connection string. 
 
+When certificate hostname validation is performed, an explicitly supplied value is the only
+expected hostname. It replaces the hostname from `Data Source` for that validation without
+changing the connection destination.
+
 > [!NOTE]
 > This property only applies when using `Encrypt` in <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory%2A> or <xref:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Strict%2A> mode, otherwise it is ignored.
 
@@ -1569,23 +1573,31 @@ This property corresponds to the "ServerSPN" and "Server SPN" keys within the co
             <description>Description</description>
           </listheader>
           <item>
-            <term>SQL Server 2005</term>
-            <description>Uses the SQL Server 2005 type system. No conversions are made for the current version of ADO.NET.</description>
+            <term>SQL Server 2008</term>
+            <description>Uses the SQL Server 2008 type system and version 10.0.0.0 of Microsoft.SqlServer.Types.dll for UDT assembly binding.</description>
           </item>
           <item>
-            <term>SQL Server 2008</term>
-            <description>Uses the SQL Server 2008 type system.</description>
+            <term>SQL Server 2012</term>
+            <description>Uses the SQL Server 2012 type system and version 11.0.0.0 of Microsoft.SqlServer.Types.dll for UDT assembly binding.</description>
           </item>
           <item>
             <term>Latest</term>
             <description>
-              Use the latest version than this client-server pair can handle. This will automatically move forward as the client and server components are upgraded.
+              The default value. Retained for compatibility and equivalent to SQL Server 2008; it does not automatically advance to a newer type system.
             </description>
           </item>
         </list>
       </value>
       <remarks>
-        The <c>TypeSystemVersion</c> property can be used to specify a down-level version of SQL Server for applications written against that version. This avoids possible problems with incompatible types in a newer version of SQL Server that may cause the application to break.
+        <para>
+          This property selects the client type system the application expects, not the SQL Server version to connect to. Prefer an explicit setting when a specific type system is required.
+        </para>
+        <para>
+          <c>Type System Version=SQL Server 2005</c> is no longer accepted. A connection string containing this value throws <see cref="T:System.ArgumentException" /> during <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> construction, before connecting, even when the target is a newer SQL Server instance. Remove the setting to use the default, or replace it with <c>Type System Version=SQL Server 2008;</c> or <c>Type System Version=SQL Server 2012;</c>.
+        </para>
+        <para>
+          The 2005 compatibility projections are no longer available: <c>date</c>, <c>time</c>, <c>datetime2</c>, and <c>datetimeoffset</c> values are exposed as CLR date/time values rather than strings, and large UDTs are materialized as CLR UDT objects rather than binary values. Update reader accessors, casts, and schema/type expectations accordingly.
+        </para>
       </remarks>
     </TypeSystemVersion>
     <UserID>

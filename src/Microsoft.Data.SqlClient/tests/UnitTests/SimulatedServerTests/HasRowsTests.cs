@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.Parser;
+using Microsoft.Data.SqlClient.Parser.Tokens;
 using Microsoft.SqlServer.TDS;
 using Microsoft.SqlServer.TDS.ColMetadata;
 using Microsoft.SqlServer.TDS.Done;
@@ -512,7 +514,7 @@ public sealed class HasRowsTests
         state.SniContext = SniContext.Snix_Read;
         state.SetBuffer(new[] { token }, 0, 1);
         state._inBytesPacket = 1;
-        _SqlMetaDataSet metadata = new(1, null);
+        TdsColumnMetadataToken metadata = new(1, null);
 
         // Act
         TdsOperationStatus result = useAlternateMetadata

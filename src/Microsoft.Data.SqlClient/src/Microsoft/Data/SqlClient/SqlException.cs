@@ -56,9 +56,7 @@ namespace Microsoft.Data.SqlClient
         private SqlException(SerializationInfo si, StreamingContext sc) : base(si, sc)
         {
             _connectionOpenRetryFailures = s_emptyConnectionOpenRetryFailures;
-#if NETFRAMEWORK
             _errors = (SqlErrorCollection)si.GetValue("Errors", typeof(SqlErrorCollection));
-#endif
             HResult = SqlExceptionHResult;
             foreach (SerializationEntry siEntry in si)
             {
@@ -79,7 +77,7 @@ namespace Microsoft.Data.SqlClient
             // ConnectionOpenRetryFailures is request-scoped diagnostic context and is intentionally
             // not carried through legacy formatter-based serialization.
             base.GetObjectData(si, context);
-            si.AddValue("Errors", null); // Not specifying type to enable serialization of null value of non-serializable type
+            si.AddValue("Errors", _errors, typeof(SqlErrorCollection));
             si.AddValue("ClientConnectionId", _clientConnectionId, typeof(object));
 
             // Writing sqlerrors to base exception data table

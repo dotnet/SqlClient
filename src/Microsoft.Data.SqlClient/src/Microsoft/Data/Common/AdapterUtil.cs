@@ -26,6 +26,7 @@ using Microsoft.SqlServer.Server;
 using Microsoft.Win32;
 using IsolationLevel = System.Data.IsolationLevel;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Parser;
 
 #if NETFRAMEWORK
 using System.Reflection;
@@ -505,10 +506,9 @@ namespace Microsoft.Data.Common
 
         internal static void ValidateTdsVersion(uint tdsVersion)
         {
-            if (tdsVersion is not TdsEnums.SQL2005_VERSION
-                and not TdsEnums.SQL2008_VERSION
-                and not TdsEnums.TDS7X_VERSION
-                and not TdsEnums.TDS80_VERSION)
+            if (tdsVersion is not TdsEnums.SQL2008_VERSION
+                          and not TdsEnums.TDS7X_VERSION
+                          and not TdsEnums.TDS80_VERSION)
             {
                 throw SQL.InvalidTDSVersion();
             }
