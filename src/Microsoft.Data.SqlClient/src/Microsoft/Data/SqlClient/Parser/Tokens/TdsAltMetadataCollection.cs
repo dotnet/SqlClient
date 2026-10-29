@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClient.Parser.Tokens
         internal TdsColumnMetadataToken MetadataSet { get; set; }
 
         /// <summary>
-        /// Creates a deep copy of the current TdsAltMetadataCollection instance, including all its elements.
+        /// Clones the collection and each metadata-set object; nested schema and encryption metadata may remain shared.
         /// </summary>
         public object Clone()
         {
