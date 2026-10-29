@@ -197,6 +197,57 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         /// <summary>
+        /// When the factory redirects a replacement to a fresh pool because the old connection's
+        /// pool was retired, the replacement must belong to the fresh pool and the old connection
+        /// must be removed from its own pool's inventory, without throwing.
+        /// </summary>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task Replace_AfterSourcePoolRetired_MovesToNewPool(bool channel)
+        {
+            var factory = new PruningConnectionFactory();
+            IDbConnectionPool source = CreatePool(factory, channel);
+            using var owner = new SqlConnection();
+            owner.PoolGroup = source.PoolGroup;
+            DbConnectionInternal oldConnection = (await Acquire(source, owner, async: false))!;
+            DbConnectionInternal? connection = null;
+            try
+            {
+                source.PoolGroup.Clear();
+                Assert.False(source.IsRunning);
+                IDbConnectionPool destination = CreatePool(factory, channel);
+
+                Assert.True(factory.TryGetConnection(
+                    owner,
+                    null!,
+                    oldConnection,
+                    TimeoutTimer.StartNew(TimeSpan.FromSeconds(10)),
+                    forceNewConnection: true,
+                    out connection));
+
+                Assert.NotNull(connection);
+                Assert.NotSame(oldConnection, connection);
+                Assert.Same(destination, connection!.Pool);
+                Assert.Equal(1, destination.Count);
+                Assert.Equal(0, source.Count);
+                Assert.True(oldConnection.IsConnectionDoomed);
+                Assert.Equal(2, factory.CreateCount);
+
+                destination.ReturnInternalConnection(connection, owner);
+                connection = null;
+            }
+            finally
+            {
+                if (connection != null)
+                {
+                    connection.Pool!.ReturnInternalConnection(connection, owner);
+                }
+                Drain(factory, source);
+            }
+        }
+
+        /// <summary>
         /// Background minimum-size replenishment must protect its uncounted physical creation,
         /// independently of any user acquisition.
         /// </summary>

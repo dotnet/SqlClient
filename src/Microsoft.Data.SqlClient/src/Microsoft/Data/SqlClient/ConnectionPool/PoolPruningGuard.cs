@@ -63,6 +63,19 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// </summary>
         internal bool IsRunning => !IsClosed(Volatile.Read(ref _state));
 
+        /// <summary>Highest active operation count the guard can represent.</summary>
+        internal const int MaxActiveCount = CountMask;
+
+        /// <summary>
+        /// Test hook: sets the active operation count of an open guard, so tests can reach
+        /// counts (such as the overflow boundary) that are impractical to admit one by one.
+        /// </summary>
+        internal void SetActiveCountForTest(int count)
+        {
+            Debug.Assert(count >= 0 && count <= CountMask, "Count out of range.");
+            Volatile.Write(ref _state, count);
+        }
+
         /// <summary>
         /// Admits an operation. The returned lease is inactive (<see cref="Lease.IsActive"/> is
         /// <see langword="false"/>) once the pool has been pruned or shut down.

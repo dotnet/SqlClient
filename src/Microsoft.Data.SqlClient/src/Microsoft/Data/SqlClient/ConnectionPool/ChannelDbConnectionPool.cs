@@ -431,6 +431,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             SqlClientEventSource.Log.TryPoolerTraceEvent(
                 "ChannelDbConnectionPool.ReplaceConnection | INFO | {0}, replacing connection.", Id);
 
+            if (oldConnection.Pool is { } ownerPool && ownerPool != this)
+            {
+                return ReplaceForeignConnection(owningObject, oldConnection, ownerPool, timeout);
+            }
+
             // First, prefer to get an idle connection from the pool. 
             // If one is available, we can avoid the cost of creating a new connection.
             DbConnectionInternal? newConnection = GetIdleConnection();
@@ -559,6 +564,39 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             SqlClientEventSource.Log.TryPoolerTraceEvent(
                 "ChannelDbConnectionPool.ReplaceConnection | INFO | {0}, connection replaced successfully.", Id);
+
+            return newConnection;
+        }
+
+        /// <summary>
+        /// Replaces a connection owned by another pool. This happens when the factory redirects a
+        /// replacement because the old connection's pool was retired. The replacement takes its
+        /// own slot in this pool. The old connection is doomed and returned to its owning pool,
+        /// which removes it from that pool's inventory exactly once.
+        /// </summary>
+        private DbConnectionInternal ReplaceForeignConnection(
+            DbConnection owningObject,
+            DbConnectionInternal oldConnection,
+            IDbConnectionPool ownerPool,
+            TimeoutTimer timeout)
+        {
+            // Synchronous acquisition completes inline. It honors this pool's capacity and
+            // counts the soft connect. On failure the old connection stays with its owner.
+            DbConnectionInternal newConnection = GetInternalConnection(
+                    owningObject,
+                    async: false,
+                    timeout,
+                    oldConnection.EnlistedTransaction)
+                .ConfigureAwait(false).GetAwaiter().GetResult();
+
+            oldConnection.DoomThisConnection();
+            ownerPool.ReturnInternalConnection(oldConnection, owningObject);
+
+            SqlClientEventSource.Log.TryPoolerTraceEvent(
+                "ChannelDbConnectionPool.ReplaceConnection | INFO | {0}, Replaced {1} of pool {2}.",
+                Id,
+                oldConnection.ObjectID,
+                ownerPool.Id);
 
             return newConnection;
         }

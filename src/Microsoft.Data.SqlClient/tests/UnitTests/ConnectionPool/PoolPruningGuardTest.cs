@@ -35,6 +35,27 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         /// <summary>
+        /// Admission at the maximum count throws instead of carrying into the flag bits, and
+        /// succeeds again once an outstanding lease is released.
+        /// </summary>
+        [Fact]
+        public void TryEnter_AtMaxCount_ThrowsUntilALeaseIsReleased()
+        {
+            var guard = new PoolPruningGuard();
+            guard.SetActiveCountForTest(PoolPruningGuard.MaxActiveCount - 1);
+
+            PoolPruningGuard.Lease first = guard.TryEnter();
+            Assert.True(first.IsActive);
+
+            Assert.Throws<InvalidOperationException>(() => guard.TryEnter());
+            Assert.True(guard.IsRunning);
+
+            first.Dispose();
+            using PoolPruningGuard.Lease next = guard.TryEnter();
+            Assert.True(next.IsActive);
+        }
+
+        /// <summary>
         /// A caller refused admission must already observe the pool as not running; otherwise it
         /// could report a false pooled-open timeout instead of retrying on a new pool.
         /// </summary>
