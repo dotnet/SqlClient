@@ -118,6 +118,17 @@ Describe 'Manifest-backed PowerShell module restore' {
         Should -Invoke Install-PSResource -Times 0 -Exactly
     }
 
+    It 'does not restore the unused OpenSSL wrapper from the checked-in manifest' {
+        & $restore
+
+        Should -Invoke Get-InstalledPSResource -Times 0 -Exactly -ParameterFilter {
+            $Name -eq 'OpenSSL'
+        }
+        Should -Invoke Install-PSResource -Times 0 -Exactly -ParameterFilter {
+            $Name -eq 'OpenSSL'
+        }
+    }
+
     It 'rejects <Problem> before looking up or installing modules' -ForEach @(
         @{ Problem = 'malformed JSON'; Json = '{' }
         @{ Problem = 'unsupported schema'; Json = '{"version":2,"modules":{"One":{"version":"1.0.0"}}}' }
