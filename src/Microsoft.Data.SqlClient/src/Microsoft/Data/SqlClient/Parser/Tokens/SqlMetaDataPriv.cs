@@ -70,9 +70,6 @@ namespace Microsoft.Data.SqlClient.Parser.Tokens
             this.encoding = original.encoding;
             this.metaType = original.metaType;
             this.flags = original.flags;
-            this.isEncrypted = original.isEncrypted;
-            this.baseTI = original.baseTI;
-            this.cipherMD = original.cipherMD;
 
             if (original.udt != null)
             {

@@ -37,7 +37,6 @@ namespace Microsoft.Data.SqlClient.Parser.Tokens
             _visibleColumnMap = original._visibleColumnMap;
             dbColumnSchema = original.dbColumnSchema;
             schemaTable = original.schemaTable;
-            cekTable = original.cekTable;
 
             if (original._metaDataArray == null)
             {

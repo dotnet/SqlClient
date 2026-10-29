@@ -13,7 +13,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
-        public void ClonePreservesColumnEncryptionMetadata(bool encrypted)
+        public void CloneDoesNotCopyColumnEncryptionMetadata(bool encrypted)
         {
             _SqlMetaData original = new(0)
             {
@@ -29,9 +29,9 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
             Assert.NotSame(original, clone);
             Assert.Equal(original.type, clone.type);
-            Assert.Equal(encrypted, clone.isEncrypted);
-            Assert.Same(original.baseTI, clone.baseTI);
-            Assert.Same(original.cipherMD, clone.cipherMD);
+            Assert.False(clone.isEncrypted);
+            Assert.Null(clone.baseTI);
+            Assert.Null(clone.cipherMD);
             Assert.NotSame(original.udt, clone.udt);
             Assert.Equal(original.udt.TypeName, clone.udt.TypeName);
             Assert.NotSame(original.xmlSchemaCollection, clone.xmlSchemaCollection);
@@ -41,19 +41,23 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
-        public void ClonePreservesCipherTable(bool encrypted)
+        public void CloneDoesNotCopyCipherTable(bool encrypted)
         {
             SqlTceCipherInfoTable cipherTable = encrypted ? new SqlTceCipherInfoTable(1) : null;
             _SqlMetaDataSet original = new(1, cipherTable);
             original[0].isEncrypted = encrypted;
+            original[0].baseTI = encrypted ? new SqlMetaDataPriv { type = SqlDbType.Int } : null;
+            original[0].cipherMD = encrypted ? new SqlCipherMetadata(new SqlTceCipherInfoEntry(), 0, 2, null, 1, 1) : null;
 
             _SqlMetaDataSet clone = original.Clone();
 
             Assert.NotSame(original, clone);
-            Assert.Same(cipherTable, clone.cekTable);
+            Assert.Null(clone.cekTable);
             Assert.Equal(original.Length, clone.Length);
             Assert.NotSame(original[0], clone[0]);
-            Assert.Equal(encrypted, clone[0].isEncrypted);
+            Assert.False(clone[0].isEncrypted);
+            Assert.Null(clone[0].baseTI);
+            Assert.Null(clone[0].cipherMD);
         }
     }
 }
