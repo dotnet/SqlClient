@@ -11,6 +11,9 @@ Pester tests for PowerShell scripts used by OneBranch pipeline steps.
 
 From the repository root, restore tools and modules using anonymous feed access:
 
+Run `dotnet tool restore` first to install the pinned `pwsh` tool, including on Linux;
+the module-restore target uses that tool, so no globally installed PowerShell is required.
+
 ```console
 dotnet tool restore
 dotnet build build.proj -t:RestorePowerShellModules
@@ -27,8 +30,7 @@ dotnet tool run pwsh -NoProfile
 Import Pester once in that session before running any of the test commands below:
 
 ```powershell
-$modules = Get-Content ./powershell-modules.json -Raw | ConvertFrom-Json
-Import-Module Pester -RequiredVersion $modules.modules.Pester.version
+Import-Module Pester
 ```
 
 From this directory:

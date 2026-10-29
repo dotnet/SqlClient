@@ -28,8 +28,7 @@ dotnet tool run pwsh -- -NoProfile
 In that PowerShell session:
 
 ```powershell
-$modules = Get-Content ./powershell-modules.json -Raw | ConvertFrom-Json
-Import-Module Pester -RequiredVersion $modules.modules.Pester.version
+Import-Module Pester
 Invoke-Pester ./eng/pipelines/scripts/tests/
 ```
 
