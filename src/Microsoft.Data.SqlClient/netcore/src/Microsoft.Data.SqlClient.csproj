@@ -1020,8 +1020,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\TdsUdtTypeInfo.cs">
       <Link>Microsoft\Data\SqlClient\Parser\Tokens\TdsUdtTypeInfo.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\SqlMetaDataXmlSchemaCollection.cs">
-      <Link>Microsoft\Data\SqlClient\Parser\Tokens\SqlMetaDataXmlSchemaCollection.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\TdsXmlTypeInfo.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Tokens\TdsXmlTypeInfo.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\TdsReturnValueToken.cs">
       <Link>Microsoft\Data\SqlClient\Parser\Tokens\TdsReturnValueToken.cs</Link>
