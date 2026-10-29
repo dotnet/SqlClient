@@ -1225,7 +1225,7 @@ namespace Microsoft.Data.SqlClient
             }
             else if (metaData.DbType == SqlDbTypeExtensions.Vector)
             {
-                fieldType = GetVectorFieldType(metaData.scale);
+                fieldType = MetaType.GetVectorFieldType(metaData.scale, providerSpecific: false);
             }
             else
             { // For all other types, including Xml - use data in MetaType.
@@ -1241,49 +1241,6 @@ namespace Microsoft.Data.SqlClient
             }
 
             return fieldType;
-        }
-
-#if !NETFRAMEWORK
-        [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
-#endif
-        private static Type GetVectorFieldType(byte vectorElementType)
-        {
-            MetaType.SqlVectorElementType elementType = (MetaType.SqlVectorElementType)vectorElementType;
-            return elementType switch
-            {
-                MetaType.SqlVectorElementType.Float32 => typeof(SqlVector<float>),
-                // .NET Framework has no System.Half, so there is no faithful strongly
-                // typed representation of a float16 vector. Such columns are reported as
-                // strings, matching how they are presented when the server does not
-                // negotiate float16 support.
-                #if NET
-                MetaType.SqlVectorElementType.Float16 => typeof(SqlVector<Half>),
-                #else
-                MetaType.SqlVectorElementType.Float16 => typeof(string),
-                #endif
-                _ => throw SQL.VectorTypeNotSupported(elementType.ToString()),
-            };
-        }
-
-#if !NETFRAMEWORK
-        [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
-#endif
-        private static Type GetVectorProviderSpecificFieldType(byte vectorElementType)
-        {
-            MetaType.SqlVectorElementType elementType = (MetaType.SqlVectorElementType)vectorElementType;
-            return elementType switch
-            {
-                MetaType.SqlVectorElementType.Float32 => typeof(SqlVector<float>),
-                // As above, but the provider specific accessors return types from
-                // System.Data.SqlTypes, so the JSON rendering is reported as a SqlString
-                // rather than as a CLR string.
-                #if NET
-                MetaType.SqlVectorElementType.Float16 => typeof(SqlVector<Half>),
-                #else
-                MetaType.SqlVectorElementType.Float16 => typeof(SqlString),
-                #endif
-                _ => throw SQL.VectorTypeNotSupported(elementType.ToString()),
-            };
         }
 
         internal virtual int GetLocaleId(int i)
@@ -1362,7 +1319,8 @@ namespace Microsoft.Data.SqlClient
             }
             else if (metaData.DbType == SqlDbTypeExtensions.Vector)
             {
-                providerSpecificFieldType = GetVectorProviderSpecificFieldType(metaData.scale);
+                providerSpecificFieldType = MetaType.GetVectorFieldType(
+                    metaData.scale, providerSpecific: true);
             }
             else
             {

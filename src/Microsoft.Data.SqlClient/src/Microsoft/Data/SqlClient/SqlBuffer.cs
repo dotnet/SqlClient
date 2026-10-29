@@ -1064,15 +1064,20 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal object GetVectorSqlValue()
         {
-            #if NET
-            return GetVectorValue();
-            #else
             var elementType = (MetaType.SqlVectorElementType)_value._vectorInfo._elementType;
-
-            return elementType == MetaType.SqlVectorElementType.Float16
-                ? SqlString
-                : GetVectorValue();
-            #endif
+            switch (elementType)
+            {
+                case MetaType.SqlVectorElementType.Float32:
+                    return GetSqlVector<float>();
+                case MetaType.SqlVectorElementType.Float16:
+                    #if NET
+                    return GetSqlVector<Half>();
+                    #else
+                    return SqlString;
+                    #endif
+                default:
+                    throw SQL.VectorTypeNotSupported(elementType.ToString());
+            }
         }
 
         internal object SqlValue

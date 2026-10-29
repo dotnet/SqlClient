@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Text.Json;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.Parser;
 using Xunit;
@@ -11,6 +12,9 @@ using Xunit;
 
 namespace Microsoft.Data.SqlTypes.UnitTests;
 
+/// <summary>
+/// Verifies vector construction, payload validation, and conversions without a SQL Server.
+/// </summary>
 public class SqlVectorTest
 {
     #region Tests
@@ -145,8 +149,11 @@ public class SqlVectorTest
             ivec.VectorPayload);
     }
 
+    /// <summary>
+    /// Reads a matching float32 payload through the strict factory without changing its bytes.
+    /// </summary>
     [Fact]
-    public void Construct_Bytes()
+    public void FromTdsPayload_StrictMatchingType()
     {
         float[] data = new float[] { 6.6f, 7.7f };
         var bytes =
@@ -154,7 +161,7 @@ public class SqlVectorTest
                 new byte[] { 0xA9, 0x01, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00 },
                 data);
         
-        var vec = new SqlVector<float>(bytes);
+        var vec = SqlVector<float>.FromTdsPayload(bytes, allowWidening: false);
         Assert.False(vec.IsNull);
         Assert.Equal(2, vec.Length);
         Assert.Equal(new ReadOnlyMemory<float>(data).ToArray(), vec.Memory.ToArray());
@@ -172,47 +179,69 @@ public class SqlVectorTest
         Assert.Equal(bytes, ivec.VectorPayload);
     }
 
+    /// <summary>
+    /// Rejects a truncated header in the strict payload path.
+    /// </summary>
     [Fact]
-    public void Construct_Bytes_ShortHeader()
+    public void FromTdsPayload_StrictShortHeader()
     {
         Assert.Throws<ArgumentException>(() =>
         {
-            new SqlVector<float>(new byte[] { 0xA9, 0x01, 0x00, 0x00 });
+            SqlVector<float>.FromTdsPayload(
+                new byte[] { 0xA9, 0x01, 0x00, 0x00 }, allowWidening: false);
         });
     }
 
+    /// <summary>
+    /// Rejects an unknown payload marker in the strict payload path.
+    /// </summary>
     [Fact]
-    public void Construct_Bytes_UnknownMagic()
+    public void FromTdsPayload_StrictUnknownMagic()
     {
         Assert.Throws<ArgumentException>(() =>
         {
-            new SqlVector<float>(
-                new byte[] { 0xA8, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 });
+            SqlVector<float>.FromTdsPayload(
+                new byte[] { 0xA8, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
+                allowWidening: false);
         });
     }
 
+    /// <summary>
+    /// Rejects an unsupported payload version in the strict payload path.
+    /// </summary>
     [Fact]
-    public void Construct_Bytes_UnsupportedVersion()
+    public void FromTdsPayload_StrictUnsupportedVersion()
     {
         Assert.Throws<ArgumentException>(() =>
         {
-            new SqlVector<float>(
-                new byte[] { 0xA9, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 });
+            SqlVector<float>.FromTdsPayload(
+                new byte[] { 0xA9, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
+                allowWidening: false);
         });
     }
 
-    [Fact]
-    public void Construct_Bytes_TypeMismatch()
+    /// <summary>
+    /// Rejects a different base type rather than widening it when strict matching is requested.
+    /// </summary>
+    /// <param name="elementType">A supported or unknown base type different from float32.</param>
+    [Theory]
+    [InlineData((byte)0x01)]
+    [InlineData((byte)0x03)]
+    public void FromTdsPayload_StrictTypeMismatch(byte elementType)
     {
         Assert.Throws<ArgumentException>(() =>
         {
-            new SqlVector<float>(
-                new byte[] { 0xA9, 0x01, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00 });
+            SqlVector<float>.FromTdsPayload(
+                new byte[] { 0xA9, 0x01, 0x01, 0x00, elementType, 0x00, 0x00, 0x00, 0x00, 0x3C },
+                allowWidening: false);
         });
     }
 
+    /// <summary>
+    /// Rejects payload bytes whose length disagrees with the declared dimension count.
+    /// </summary>
     [Fact]
-    public void Construct_Bytes_LengthMismatch()
+    public void FromTdsPayload_StrictLengthMismatch()
     {
         // The header indicates 2 elements, but the payload has 3 floats.
         var header = new byte[] { 0xA9, 0x01, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00 };
@@ -222,7 +251,7 @@ public class SqlVectorTest
         
         Assert.Throws<ArgumentException>(() =>
         {
-            new SqlVector<float>(bytes);
+            SqlVector<float>.FromTdsPayload(bytes, allowWidening: false);
         });
     }
 
@@ -478,6 +507,68 @@ public class SqlVectorTest
             Assert.Equal((byte)MetaType.SqlVectorElementType.Float32, payload[4]);
         }
     }
+
+    /// <summary>
+    /// Keeps the vector-owned JSON parser on the existing float32 representation.
+    /// </summary>
+    [Fact]
+    public void ParseFloat32Json()
+    {
+        SqlVector<float> vector = SqlVector<float>.Parse("[1.5,2.5]");
+        Assert.Equal(new[] { 1.5f, 2.5f }, vector.Memory.ToArray());
+        Assert.Equal((byte)MetaType.SqlVectorElementType.Float32, ((ISqlVector)vector).ElementType);
+    }
+
+    /// <summary>
+    /// Preserves the existing runtime's direct float32 JSON rounding rather than introducing
+    /// the distinct double-to-float32 parsing used by server-side float16 JSON conversion.
+    /// </summary>
+    [Fact]
+    public void ParseFloat32JsonPreservesExistingRounding()
+    {
+        const string Json = "[1.0004883408546447753906250001]";
+        float expected = JsonSerializer.Deserialize(
+            Json, SqlClientJsonSerializerContext.Default.SingleArray)![0];
+        float actual = SqlVector<float>.Parse(Json).Memory.Span[0];
+        Assert.Equal(
+            BitConverter.ToInt32(BitConverter.GetBytes(expected), 0),
+            BitConverter.ToInt32(BitConverter.GetBytes(actual), 0));
+    }
+
+    /// <summary>
+    /// Preserves the existing invalid-JSON wrapper and the original JSON exception.
+    /// </summary>
+    [Fact]
+    public void ParseFloat32JsonPreservesErrorWrapping()
+    {
+        InvalidOperationException exception = Assert.Throws<InvalidOperationException>(
+            () => SqlVector<float>.Parse("[not-json]"));
+        Assert.IsType<JsonException>(exception.InnerException);
+    }
+
+    /// <summary>
+    /// Keeps JSON null's existing empty-memory constructor behavior.
+    /// </summary>
+    [Fact]
+    public void ParseFloat32JsonNullPreservesConstructorBehavior()
+    {
+        SqlVector<float> expected = new(ReadOnlyMemory<float>.Empty);
+        SqlVector<float> actual = SqlVector<float>.Parse("null");
+        Assert.Equal(expected.IsNull, actual.IsNull);
+        Assert.Equal(expected.Length, actual.Length);
+        Assert.Equal(((ISqlVector)expected).VectorPayload, ((ISqlVector)actual).VectorPayload);
+    }
+
+    #if NET
+    /// <summary>
+    /// Does not introduce a client-side float16 JSON conversion through the new parser.
+    /// </summary>
+    [Fact]
+    public void ParseFloat16JsonIsNotIntroduced()
+    {
+        Assert.Throws<NotSupportedException>(() => SqlVector<Half>.Parse("[1.5]"));
+    }
+    #endif
 
     #region Helpers
 

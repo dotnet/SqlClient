@@ -40,13 +40,6 @@ namespace Microsoft.Data.SqlClient
 
         private readonly DataSet _collectionDataSet;
         private readonly string _serverVersion;
-        private readonly bool _jsonTypeSupported;
-
-        /// <summary>
-        /// The version negotiated via the VECTORSUPPORT feature extension, which decides
-        /// whether a vector type is reported in the DataTypes collection.
-        /// </summary>
-        private readonly byte _vectorVersion;
 
         public SqlMetaDataFactory(Stream xmlStream, ConnectionCapabilities connectionCapabilities)
         {
@@ -55,10 +48,7 @@ namespace Microsoft.Data.SqlClient
             ADP.CheckArgumentNull(connectionCapabilities.ServerVersion, nameof(connectionCapabilities.ServerVersion));
 
             _serverVersion = connectionCapabilities.ServerVersion;
-            _jsonTypeSupported = connectionCapabilities.JsonType;
-            _vectorVersion = connectionCapabilities.VectorVersion;
-
-            _collectionDataSet = LoadDataSetFromXml(xmlStream);
+            _collectionDataSet = LoadDataSetFromXml(xmlStream, connectionCapabilities);
         }
 
         private bool SupportedByCurrentVersion(DataRow requestedCollectionRow)
@@ -720,14 +710,15 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Create MetaDataCollections DataSet from XML
-        private DataSet LoadDataSetFromXml(Stream XmlStream)
+        private DataSet LoadDataSetFromXml(
+            Stream XmlStream, ConnectionCapabilities connectionCapabilities)
         {
             DataSet metaDataCollectionsDataSet = new("NewDataSet")
             {
                 Locale = CultureInfo.InvariantCulture
             };
 
-            LoadDataTypesDataTables(metaDataCollectionsDataSet, _jsonTypeSupported, _vectorVersion);
+            LoadDataTypesDataTables(metaDataCollectionsDataSet, connectionCapabilities);
 
             XmlReaderSettings settings = new()
             {

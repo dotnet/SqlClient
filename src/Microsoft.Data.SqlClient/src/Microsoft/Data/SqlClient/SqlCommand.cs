@@ -2202,19 +2202,8 @@ namespace Microsoft.Data.SqlClient
                     // InvalidCastException if an incompatible value is specified for vector type.
                     ISqlVector vectorProps = (ISqlVector)sqlParam.Value;
 
-                    // The base type is only stated for float16, so that the declaration
-                    // emitted for float32 vectors is unchanged from earlier versions and
-                    // remains understood by servers which predate float16 support. The
-                    // declaration must agree with the base type written into the binary
-                    // parameter metadata, which is derived from the same value.
-                    if (vectorProps.ElementType == (byte)MetaType.SqlVectorElementType.Float16)
-                    {
-                        paramList.AppendFormat("({0}, float16)", vectorProps.Length);
-                    }
-                    else
-                    {
-                        paramList.AppendFormat("({0})", vectorProps.Length);
-                    }
+                    MetaType.AppendVectorTypeArguments(
+                        paramList, vectorProps.Length, vectorProps.ElementType);
                 }
                 else if (!mt.IsFixed && !mt.IsLong && mt.SqlDbType is not  SqlDbType.Timestamp
                                                                    and not SqlDbType.Udt

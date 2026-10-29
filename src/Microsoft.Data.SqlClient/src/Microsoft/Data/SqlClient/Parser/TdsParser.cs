@@ -86,17 +86,6 @@ namespace Microsoft.Data.SqlClient.Parser
 
         private SqlCollation _defaultCollation;                         // default collation from the server
 
-        /// <summary>
-        /// The default collation reported by the server, used for a column whose destination
-        /// type carries no collation of its own but which is sent as character data.
-        /// </summary>
-        internal SqlCollation DefaultCollation => _defaultCollation;
-
-        /// <summary>
-        /// The code page which corresponds to <see cref="DefaultCollation"/>.
-        /// </summary>
-        internal int DefaultCodePage => _defaultCodePage;
-
         private int _defaultCodePage;
 
         private int _defaultLCID;

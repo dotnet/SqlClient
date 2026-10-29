@@ -23,48 +23,29 @@ namespace Microsoft.Data.Common.ConnectionString
 
         internal static bool TryConvertToVectorTypeSupport(string value, out SqlVectorTypeSupport result)
         {
-            // Match names only. Enum.TryParse also accepts numeric strings and comma-separated
-            // combinations such as "Off, V2", which are not connection string keyword values.
-            if (StringComparer.OrdinalIgnoreCase.Equals(value, nameof(SqlVectorTypeSupport.Off)))
+            // Require a name, not a numeric string or a combination such as "Off, V2".
+            if (Enum.TryParse(value, ignoreCase: true, out result)
+                && IsValidVectorTypeSupportValue(result)
+                && StringComparer.OrdinalIgnoreCase.Equals(value, VectorTypeSupportToString(result)))
             {
-                result = SqlVectorTypeSupport.Off;
                 return true;
             }
-            else if (StringComparer.OrdinalIgnoreCase.Equals(value, nameof(SqlVectorTypeSupport.V1)))
-            {
-                result = SqlVectorTypeSupport.V1;
-                return true;
-            }
-            else if (StringComparer.OrdinalIgnoreCase.Equals(value, nameof(SqlVectorTypeSupport.V2)))
-            {
-                result = SqlVectorTypeSupport.V2;
-                return true;
-            }
-            else
-            {
-                result = DbConnectionStringDefaults.VectorTypeSupport;
-                return false;
-            }
+
+            result = DbConnectionStringDefaults.VectorTypeSupport;
+            return false;
         }
 
         internal static bool IsValidVectorTypeSupportValue(SqlVectorTypeSupport value) =>
             value is SqlVectorTypeSupport.Off or SqlVectorTypeSupport.V1 or SqlVectorTypeSupport.V2;
 
-        internal static string VectorTypeSupportToString(SqlVectorTypeSupport value)
-        {
-            switch (value)
+        internal static string VectorTypeSupportToString(SqlVectorTypeSupport value) =>
+            value switch
             {
-                case SqlVectorTypeSupport.Off:
-                    return nameof(SqlVectorTypeSupport.Off);
-                case SqlVectorTypeSupport.V1:
-                    return nameof(SqlVectorTypeSupport.V1);
-                case SqlVectorTypeSupport.V2:
-                    return nameof(SqlVectorTypeSupport.V2);
-                default:
-                    Debug.Fail("Invalid vector type support value.");
-                    throw ADP.InvalidEnumerationValue(typeof(SqlVectorTypeSupport), (int)value);
-            }
-        }
+                SqlVectorTypeSupport.Off => nameof(SqlVectorTypeSupport.Off),
+                SqlVectorTypeSupport.V1 => nameof(SqlVectorTypeSupport.V1),
+                SqlVectorTypeSupport.V2 => nameof(SqlVectorTypeSupport.V2),
+                _ => throw InvalidVectorTypeSupportValue(value),
+            };
 
         /// <summary>
         /// Converts the given value to a <see cref="SqlVectorTypeSupport"/>, following the same
@@ -76,19 +57,9 @@ namespace Microsoft.Data.Common.ConnectionString
         {
             if (value is string sValue)
             {
-                if (TryConvertToVectorTypeSupport(sValue, out SqlVectorTypeSupport result))
-                {
-                    return result;
-                }
-
-                // Try again without any leading or trailing whitespace.
-                sValue = sValue.Trim();
-                if (TryConvertToVectorTypeSupport(sValue, out result))
-                {
-                    return result;
-                }
-
-                throw ADP.InvalidConnectionOptionValue(keyword);
+                return TryConvertToVectorTypeSupport(sValue.Trim(), out SqlVectorTypeSupport result)
+                    ? result
+                    : throw ADP.InvalidConnectionOptionValue(keyword);
             }
 
             SqlVectorTypeSupport eValue;
@@ -125,20 +96,20 @@ namespace Microsoft.Data.Common.ConnectionString
         /// <summary>
         /// The vector feature extension version which corresponds to the given setting.
         /// </summary>
-        internal static byte ToFeatureExtensionVersion(SqlVectorTypeSupport value)
-        {
-            switch (value)
+        internal static byte ToFeatureExtensionVersion(SqlVectorTypeSupport value) =>
+            value switch
             {
-                case SqlVectorTypeSupport.Off:
-                    return TdsEnums.VECTOR_VERSION_NOT_SUPPORTED;
-                case SqlVectorTypeSupport.V1:
-                    return TdsEnums.VECTOR_VERSION_FLOAT32;
-                case SqlVectorTypeSupport.V2:
-                    return TdsEnums.VECTOR_VERSION_FLOAT16;
-                default:
-                    Debug.Fail("Invalid vector type support value.");
-                    throw ADP.InvalidEnumerationValue(typeof(SqlVectorTypeSupport), (int)value);
-            }
+                SqlVectorTypeSupport.Off => TdsEnums.VECTOR_VERSION_NOT_SUPPORTED,
+                SqlVectorTypeSupport.V1 => TdsEnums.VECTOR_VERSION_FLOAT32,
+                SqlVectorTypeSupport.V2 => TdsEnums.VECTOR_VERSION_FLOAT16,
+                _ => throw InvalidVectorTypeSupportValue(value),
+            };
+
+        private static ArgumentOutOfRangeException InvalidVectorTypeSupportValue(
+            SqlVectorTypeSupport value)
+        {
+            Debug.Fail("Invalid vector type support value.");
+            return ADP.InvalidEnumerationValue(typeof(SqlVectorTypeSupport), (int)value);
         }
     }
 }

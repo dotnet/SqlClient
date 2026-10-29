@@ -14,7 +14,6 @@ using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Text;
-using System.Text.Json;
 using System.Threading;
 using System.Xml;
 using Microsoft.Data.Common;
@@ -793,10 +792,12 @@ namespace Microsoft.Data.SqlClient
             switch (elementType)
             {
                 case MetaType.SqlVectorElementType.Float32:
-                    return new SqlVector<float>((byte[])_sqlBufferReturnValue.Value);
+                    return SqlVector<float>.FromTdsPayload(
+                        (byte[])_sqlBufferReturnValue.Value, allowWidening: false);
                 case MetaType.SqlVectorElementType.Float16:
                     #if NET
-                    return new SqlVector<Half>((byte[])_sqlBufferReturnValue.Value);
+                    return SqlVector<Half>.FromTdsPayload(
+                        (byte[])_sqlBufferReturnValue.Value, allowWidening: false);
                     #else
                     // Widening binary16 to binary32 is exact, so no information is lost.
                     return SqlVector<float>.FromTdsPayload((byte[])_sqlBufferReturnValue.Value);
@@ -2413,15 +2414,7 @@ namespace Microsoft.Data.SqlClient
                     #endif
                     else if (currentType == typeof(string) && destinationType.SqlDbType == SqlDbTypeExtensions.Vector)
                     {
-                        try
-                        {
-                            value = ((ISqlVector)new SqlVector<float>(
-                                JsonSerializer.Deserialize((string)value, SqlClientJsonSerializerContext.Default.SingleArray))).VectorPayload;
-                        }
-                        catch (Exception ex) when (ex is ArgumentNullException || ex is JsonException)
-                        {
-                            throw ADP.InvalidJsonStringForVector((string)value, ex);
-                        }
+                        value = ((ISqlVector)SqlVector<float>.Parse((string)value)).VectorPayload;
                     }
                     else if (
                         TdsEnums.SQLTABLE == destinationType.TDSType &&

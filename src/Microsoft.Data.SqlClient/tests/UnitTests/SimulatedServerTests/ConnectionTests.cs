@@ -1071,8 +1071,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         // Test to verify that the server and client negotiate
         // the common feature extension version.
         // The connection requests the version configured by the Vector Type Support
-        // keyword, which defaults to v1. These cases opt in to v2, which adds the
-        // float16 base type to the float32 support in v1.
+        // keyword, which defaults to v2 and adds the float16 base type to the
+        // float32 support in v1.
         [Theory]
         // A server which supports the same version as the client negotiates that version.
         [InlineData(true, 0x2, 0x2)]
@@ -1147,8 +1147,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 DataSource = $"localhost,{server.EndPoint.Port}",
                 Encrypt = SqlConnectionEncryptOption.Optional,
                 Pooling = false, // Disable pooling so an expected failure does not poison a shared pool
-                // The keyword defaults to v1, so opt in to the version under test.
-                VectorTypeSupport = SqlVectorTypeSupport.V2,
             }.ConnectionString;
             using var connection = new SqlConnection(connStr);
             if (expectedConnectionResult)
@@ -1239,24 +1237,24 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
         /// <summary>
         /// Verifies that the driver refuses an acknowledgement above the version this
-        /// connection asked for, even when it is one the client could otherwise interpret.
-        /// The keyword is an opt-in, so honouring a v2 acknowledgement on a v1 connection
-        /// would return float16 columns in their binary form to an application which never
-        /// asked for that - the precise back-compat change the keyword exists to prevent.
+        /// connection asked for. An explicit V1 setting must preserve text results for
+        /// vector columns with a float16 base type, even though the default requests V2.
         /// </summary>
         /// <param name="setting">The version the connection asks for, or null to leave it at the default.</param>
+        /// <param name="serverVersion">An acknowledgement above the requested version.</param>
         [Theory]
-        // The default is v1, so an application which says nothing is covered too.
-        [InlineData(null)]
-        [InlineData(SqlVectorTypeSupport.V1)]
-        public void TestConnRejectsVectorFeatExtVersionAboveRequested(SqlVectorTypeSupport? setting)
+        [InlineData(null, 0x3)]
+        [InlineData(SqlVectorTypeSupport.V1, 0x2)]
+        [InlineData(SqlVectorTypeSupport.V2, 0x3)]
+        public void TestConnRejectsVectorFeatExtVersionAboveRequested(
+            SqlVectorTypeSupport? setting, byte serverVersion)
         {
             using TdsServer server = new();
             server.Start();
             server.EnableVectorFeatureExt = true;
             // The server acknowledges its own version rather than capping it to the
             // client's, which is what a server that does not honour the request would do.
-            server.ServerSupportedVectorFeatureExtVersion = 0x2;
+            server.ServerSupportedVectorFeatureExtVersion = serverVersion;
             server.AcknowledgeRawVectorFeatureExtVersion = true;
 
             byte acknowledgedVersion = 0;
@@ -1292,36 +1290,40 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             Assert.Throws<InvalidOperationException>(() => connection.Open());
 
-            // Confirms the server really did acknowledge v2, so the failure above is the
+            // Confirms the server really did acknowledge its version, so the failure above is the
             // requested version being exceeded rather than an unrelated connection problem.
-            Assert.Equal(0x2, acknowledgedVersion);
+            Assert.Equal(serverVersion, acknowledgedVersion);
         }
 
         /// <summary>
         /// Verifies that the version requested at login follows the <c>Vector Type Support</c>
         /// keyword, and that the request is omitted entirely when the keyword asks for no
-        /// vector support. This is the opt-in contract: the keyword defaults to v1, so
-        /// upgrading the driver does not change the representation an existing application
-        /// receives.
+        /// vector support. The default requests V2, while explicit V1 and Off settings
+        /// preserve their compatibility behavior for both synchronous and asynchronous opens.
         /// </summary>
         /// <param name="setting">The keyword value, or null to leave it unset.</param>
         /// <param name="expectRequest">Whether a feature request is expected at login.</param>
         /// <param name="expectedRequestedVersion">The version expected in that request.</param>
+        /// <param name="useAsync">Whether to open the connection asynchronously.</param>
+        /// <returns>A task that completes after the login request has been verified.</returns>
         // Test that the vector feature extension version requested at login follows the
         // Vector Type Support keyword, and that the request is omitted entirely when the
         // keyword asks for no vector support.
         [Theory]
-        // The keyword defaults to v1, so an application which says nothing keeps the
-        // representation it had before float16 existed.
-        [InlineData(null, true, 0x1)]
-        [InlineData(SqlVectorTypeSupport.V1, true, 0x1)]
-        [InlineData(SqlVectorTypeSupport.V2, true, 0x2)]
+        [InlineData(null, true, 0x2, false)]
+        [InlineData(null, true, 0x2, true)]
+        [InlineData(SqlVectorTypeSupport.V1, true, 0x1, false)]
+        [InlineData(SqlVectorTypeSupport.V1, true, 0x1, true)]
+        [InlineData(SqlVectorTypeSupport.V2, true, 0x2, false)]
+        [InlineData(SqlVectorTypeSupport.V2, true, 0x2, true)]
         // Off omits the feature request, leaving vector columns as varchar(max).
-        [InlineData(SqlVectorTypeSupport.Off, false, 0x0)]
-        public void TestVectorFeatExtVersionFollowsConnectionString(
+        [InlineData(SqlVectorTypeSupport.Off, false, 0x0, false)]
+        [InlineData(SqlVectorTypeSupport.Off, false, 0x0, true)]
+        public async Task TestVectorFeatExtVersionFollowsConnectionString(
             SqlVectorTypeSupport? setting,
             bool expectRequest,
-            byte expectedRequestedVersion)
+            byte expectedRequestedVersion,
+            bool useAsync)
         {
             using TdsServer server = new();
             server.Start();
@@ -1357,7 +1359,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }
 
             using SqlConnection connection = new(builder.ConnectionString);
-            connection.Open();
+            if (useAsync)
+            {
+                await connection.OpenAsync();
+            }
+            else
+            {
+                connection.Open();
+            }
 
             Assert.Equal(expectRequest, requestSeen);
             Assert.Equal(expectedRequestedVersion, requestedVersion);

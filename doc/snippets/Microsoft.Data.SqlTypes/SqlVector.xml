@@ -11,31 +11,35 @@
         </para>
         <para>
           <see cref="T:System.Half" /> is not available on .NET Framework, so
-          <c>SqlVector&lt;Half&gt;</c> cannot be used there. A <c>float16</c> column can still be
-          read on .NET Framework, either as a JSON array through the string read paths, or as a
-          <c>SqlVector&lt;float&gt;</c>, which widens the elements to single precision. Widening
-          is exact, so no information is lost. Values can be written to a <c>float16</c> column
-          from .NET Framework as a JSON string, or as a <c>SqlVector&lt;float&gt;</c>, which the
-          server converts. Native <c>float32</c> writes support at most 1,998 elements. To write
+          <c>SqlVector&lt;Half&gt;</c> cannot be used there. A vector column with a
+          <c>float16</c> base type can still be read on .NET Framework, either as a JSON array
+          through the string read paths, or as a <c>SqlVector&lt;float&gt;</c>, which widens the
+          elements to <c>float32</c>. Widening is exact, so no information is lost. Values can
+          be written to a vector column with a <c>float16</c> base type from .NET Framework
+          as a JSON string, or as a <c>SqlVector&lt;float&gt;</c>, which the server converts.
+          Native <c>float32</c> writes support at most 1,998 elements. To write
           wider <c>float16</c> vectors, up to 3,996 elements, bind the JSON string as
           <c>varchar(max)</c> instead.
         </para>
         <para>
-          A <c>float16</c> column is returned in its binary form when
-          <c>Vector Type Support=v2</c> is configured and version 2 is negotiated with the server.
-          The keyword defaults to <c>v1</c>, which supports native <c>float32</c> only.
-          Under <c>v1</c> or <c>off</c>, a <c>float16</c> column is returned as
-          <c>varchar(max)</c> containing a JSON array.
+          A vector column with a <c>float16</c> base type is returned in its binary form when
+          version 2 is negotiated with the server. Starting with Microsoft.Data.SqlClient 8.0,
+          <c>Vector Type Support</c> defaults to <c>v2</c>, requesting native support for both
+          base types. On .NET, this changes the column's default result type from a JSON
+          string to <c>SqlVector&lt;Half&gt;</c>. Set <c>Vector Type Support=v1</c> to retain
+          JSON string results for that base type while keeping native <c>float32</c> support.
+          Under <c>v1</c> or <c>off</c>, a vector column with a <c>float16</c> base type is
+          returned as <c>varchar(max)</c> containing a JSON array.
         </para>
         <para>
           On .NET Framework, <c>float16</c> workloads do more work per value than they do on
           .NET. Because <see cref="T:System.Half" /> isn't available, the driver widens each
-          element to single precision when it reads a <c>float16</c> column, and renders the
-          result as a JSON array for the string read paths. On .NET, a
-          <c>SqlVector&lt;Half&gt;</c> wraps the payload the server sent, so no per-element
-          conversion takes place. If you read <c>float16</c> columns in bulk on .NET Framework,
-          prefer <c>GetSqlVector&lt;float&gt;</c> over the string read paths: both widen the
-          elements, but only the string paths also serialize the result.
+          element to <c>float32</c> when it reads a vector column with a <c>float16</c>
+          base type, and renders the result as a JSON array for the string read paths. On .NET,
+          a <c>SqlVector&lt;Half&gt;</c> wraps the payload the server sent, so no per-element
+          conversion takes place. If you read vector columns with a <c>float16</c> base type in
+          bulk on .NET Framework, prefer <c>GetSqlVector&lt;float&gt;</c> over the string read
+          paths: both widen the elements, but only the string paths also serialize the result.
         </para>
         <para>
           Conversion between base types is performed by SQL Server, which reports an error if a
@@ -46,15 +50,16 @@
         <para>
           Bulk copy preserves the base type of native vector sources in its incoming
           declaration and payload. SQL Server converts the value to the destination column's
-          base type. JSON text copied into a <c>float16</c> column is sent as
-          <c>varchar(max)</c>, so SQL Server performs its parsing and rounding too.
+          base type. JSON text copied into a vector column with a <c>float16</c> base type is
+          sent as <c>varchar(max)</c>, so SQL Server performs its parsing and rounding too.
           The existing JSON-to-<c>float32</c> bulk-copy conversion is unchanged.
         </para>
         <para>
           <c>GetColumnSchema()</c> exposes <c>VectorBaseType</c> (a string) and
           <c>VectorDimensions</c> (an integer) through the column indexer. Both are
           <see langword="null"/> when the result is not reported as a vector, including a
-          <c>float16</c> column returned as <c>varchar(max)</c> under <c>v1</c>.
+          vector column with a <c>float16</c> base type returned as <c>varchar(max)</c>
+          under <c>v1</c>.
           For table or view columns, the
           <see href="https://learn.microsoft.com/sql/relational-databases/system-catalog-views/sys-columns-transact-sql">sys.columns catalog view</see>
           exposes <c>vector_dimensions</c>, <c>vector_base_type</c>, and
@@ -64,6 +69,13 @@
           JSON returned by the server under <c>v1</c> and JSON rendered by the driver under
           <c>v2</c> can use different numeric notation. Compare the represented values rather
           than expecting identical text.
+        </para>
+        <para>
+          The vector row in <c>GetSchema("DataTypes")</c> describes column creation according
+          to the negotiated version. Under V1, <c>CreateFormat</c> is <c>vector({0})</c> and
+          <c>CreateParameters</c> is <c>dimensions</c>. Under V2, they are
+          <c>vector({0}, {1})</c> and <c>dimensions,base_type</c>, so tools can request either
+          <c>float32</c> or <c>float16</c>. No vector row is reported without vector negotiation.
         </para>
       </remarks>
     </SqlVector>

@@ -6,6 +6,27 @@
       </summary>
       <remarks>
         Microsoft SQL Server includes a popular command-prompt utility named **bcp** for moving data from one table to another, whether on a single server or between servers. The <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> class lets you write managed code solutions that provide similar functionality. There are other ways to load data into a SQL Server table (INSERT statements, for example), but <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> offers a significant performance advantage over them. The <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> class can be used to write data only to SQL Server tables. However, the data source is not limited to SQL Server; any data source can be used, as long as the data can be loaded to a <see cref="T:System.Data.DataTable" /> instance or read with a <see cref="T:System.Data.IDataReader" /> instance. <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> will fail when bulk loading a <see cref="T:System.Data.DataTable" /> column of type <see cref="T:System.Data.SqlTypes.SqlDateTime" /> into a SQL Server column whose type is one of the date/time types added in SQL Server 2008.
+        <para>
+          Native vector sources retain their base type in the incoming bulk declaration and
+          payload; SQL Server converts to the destination column's base type. For an
+          <see cref="T:System.Data.DataTable" /> column declared as <c>object</c>, the driver
+          examines the selected in-memory rows until the first non-null value identifies the
+          representation. Leading nulls are supported, and row-array subsets and row-state
+          filters are respected. An all-null column can require examining all selected rows.
+        </para>
+        <para>
+          Values are checked against the selected representation as they are copied; the driver
+          does not prevalidate the entire column. Do not mix native <c>SqlVector&lt;float&gt;</c>
+          and <c>SqlVector&lt;Half&gt;</c> values in one column. Existing float32 JSON coercion
+          is preserved. A later conversion failure can leave earlier batches committed;
+          use an explicit transaction when the whole operation must be atomic.
+        </para>
+        <para>
+          Reader metadata analysis does not consume row values. Custom readers supplying native
+          vectors should report the corresponding CLR field type; <c>SqlDataReader</c> supplies
+          native metadata directly. JSON text sent to a vector column with a <c>float16</c>
+          base type uses an explicit UTF-8 text representation, leaving conversion to SQL Server.
+        </para>
       </remarks>
       <example>
         <format type="text/markdown">

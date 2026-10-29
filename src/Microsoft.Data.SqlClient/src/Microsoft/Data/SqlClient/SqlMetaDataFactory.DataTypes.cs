@@ -14,7 +14,8 @@ namespace Microsoft.Data.SqlClient;
 
 internal sealed partial class SqlMetaDataFactory
 {
-    private static void LoadDataTypesDataTables(DataSet metaDataCollectionsDataSet, bool jsonTypeSupported, byte vectorVersion)
+    private static void LoadDataTypesDataTables(
+        DataSet metaDataCollectionsDataSet, ConnectionCapabilities connectionCapabilities)
     {
         DataTable dataTypesDataTable = CreateDataTypesDataTable();
 
@@ -59,7 +60,7 @@ internal sealed partial class SqlMetaDataFactory
             minimumVersion: "10.00.000.0");
 
         AddLongStringOrBinaryType(SqlDbType.Xml);
-        if (jsonTypeSupported)
+        if (connectionCapabilities.JsonType)
         {
             AddLongStringOrBinaryType(SqlDbTypeExtensions.Json, literalPrefix: "'", literalSuffix: "'");
         }
@@ -82,7 +83,7 @@ internal sealed partial class SqlMetaDataFactory
         // A vector type is reported when the connection has negotiated one, rather than
         // when the server reports a version which is new enough to have it. Azure SQL
         // reports 12.00 whatever it supports, so a version is not enough to tell.
-        if (vectorVersion != TdsEnums.VECTOR_VERSION_NOT_SUPPORTED)
+        if (connectionCapabilities.VectorVersion != TdsEnums.VECTOR_VERSION_NOT_SUPPORTED)
         {
             AddVectorType();
         }
@@ -374,10 +375,14 @@ internal sealed partial class SqlMetaDataFactory
             // A vector is transported as an 8 byte header followed by its elements, and
             // the whole value must fit within the maximum vector size.
             typeRow[DbMetaDataColumnNames.ColumnSize] = TdsEnums.MAXSIZE;
-            // A vector column declares its number of dimensions, and optionally its base
-            // type. The base type is omitted here because it defaults to float32.
-            typeRow[DbMetaDataColumnNames.CreateFormat] = $"{metaType.TypeName}({{0}})";
-            typeRow[DbMetaDataColumnNames.CreateParameters] = "dimensions";
+            bool supportsFloat16 =
+                connectionCapabilities.VectorVersion >= TdsEnums.VECTOR_VERSION_FLOAT16;
+            typeRow[DbMetaDataColumnNames.CreateFormat] = supportsFloat16
+                ? $"{metaType.TypeName}({{0}}, {{1}})"
+                : $"{metaType.TypeName}({{0}})";
+            typeRow[DbMetaDataColumnNames.CreateParameters] = supportsFloat16
+                ? "dimensions,base_type"
+                : "dimensions";
             typeRow[DbMetaDataColumnNames.DataType] = metaType.ClassType.FullName;
             typeRow[DbMetaDataColumnNames.IsAutoIncrementable] = false;
             // The DataType for a vector is a byte array, which is how it is transported

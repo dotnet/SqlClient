@@ -56,7 +56,7 @@ namespace Microsoft.Data.Common.ConnectionString
         internal const string TypeSystemVersion = "Latest";
         internal const string UserId = "";
         internal const bool UserInstance = false;
-        internal const SqlVectorTypeSupport VectorTypeSupport = SqlClient.SqlVectorTypeSupport.V1;
+        internal const SqlVectorTypeSupport VectorTypeSupport = SqlClient.SqlVectorTypeSupport.V2;
         internal const string WorkstationId = "";
         
         #if NETFRAMEWORK

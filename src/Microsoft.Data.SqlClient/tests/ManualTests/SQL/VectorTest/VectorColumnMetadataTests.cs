@@ -5,6 +5,9 @@
 using System;
 using System.Data;
 using System.Data.Common;
+using System.Text.Json;
+using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest;
@@ -12,8 +15,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest;
 #nullable enable
 
 /// <summary>
-/// Tests for the metadata a vector column reports. This applies to every base type, so the
-/// tests here use float32 and run against any server which supports vectors.
+/// Tests vector column metadata and result representations. Float32 cases run against any
+/// server with vector support; float16 cases require support for that base type.
 /// </summary>
 [Trait("Set", "3")]
 public sealed class VectorColumnMetadataTests
@@ -23,6 +26,68 @@ public sealed class VectorColumnMetadataTests
     public static bool IsSupported => DataTestUtility.IsSqlVectorSupported;
 
     public static bool IsFloat16Supported => DataTestUtility.IsSqlVectorFloat16Supported;
+
+    /// <summary>
+    /// Uses native float16 metadata by default while preserving explicit V1 and Off text
+    /// results, including the framework-specific CLR types and synchronous/asynchronous paths.
+    /// </summary>
+    /// <param name="setting">The requested version, or null to omit the keyword.</param>
+    /// <param name="expectNative">Whether native vector metadata is expected.</param>
+    /// <param name="useAsync">Whether to open, execute, and read asynchronously.</param>
+    /// <returns>A task that completes after metadata and returned values have been verified.</returns>
+    [ConditionalTheory(nameof(IsFloat16Supported))]
+    [InlineData(null, true, false)]
+    [InlineData(null, true, true)]
+    [InlineData(SqlVectorTypeSupport.V1, false, false)]
+    [InlineData(SqlVectorTypeSupport.V1, false, true)]
+    [InlineData(SqlVectorTypeSupport.V2, true, false)]
+    [InlineData(SqlVectorTypeSupport.V2, true, true)]
+    [InlineData(SqlVectorTypeSupport.Off, false, false)]
+    [InlineData(SqlVectorTypeSupport.Off, false, true)]
+    public async Task DefaultVectorSupportAndTextOptOuts(
+        SqlVectorTypeSupport? setting, bool expectNative, bool useAsync)
+    {
+        SqlConnectionStringBuilder builder = new(_connectionString);
+        builder.Remove("Vector Type Support");
+        if (setting.HasValue)
+        {
+            builder.VectorTypeSupport = setting.Value;
+        }
+
+        using SqlConnection connection = new(builder.ConnectionString);
+        if (useAsync)
+        {
+            await connection.OpenAsync();
+        }
+        else
+        {
+            connection.Open();
+        }
+
+        using SqlCommand command = new(
+            "SELECT CAST('[1.5,2.5,3.5]' AS vector(3, float16)) AS v", connection);
+        using SqlDataReader reader = useAsync
+            ? await command.ExecuteReaderAsync()
+            : command.ExecuteReader();
+        DbColumn column = reader.GetColumnSchema()[0];
+        Assert.Equal(expectNative ? "float16" : null, column["VectorBaseType"]);
+        Assert.Equal(expectNative ? (int?)3 : null, column["VectorDimensions"]);
+
+        Type expectedType = typeof(string);
+        #if NET
+        if (expectNative)
+        {
+            expectedType = typeof(Microsoft.Data.SqlTypes.SqlVector<Half>);
+        }
+        #endif
+        Assert.Equal(expectedType, reader.GetFieldType(0));
+        Assert.True(useAsync ? await reader.ReadAsync() : reader.Read());
+        Assert.IsType(expectedType, reader.GetValue(0));
+        Assert.Equal(
+            new[] { 1.5f, 2.5f, 3.5f },
+            JsonSerializer.Deserialize<float[]>(reader.GetString(0)));
+        Assert.False(useAsync ? await reader.ReadAsync() : reader.Read());
+    }
 
     /// <summary>
     /// Verifies that a vector column reports its base type and dimension count under their
@@ -106,7 +171,11 @@ public sealed class VectorColumnMetadataTests
     [ConditionalFact(nameof(IsSupported))]
     public void SchemaCollectionIncludesVectorType()
     {
-        using SqlConnection connection = new(_connectionString);
+        string connectionString = new SqlConnectionStringBuilder(_connectionString)
+        {
+            VectorTypeSupport = SqlVectorTypeSupport.V1
+        }.ConnectionString;
+        using SqlConnection connection = new(connectionString);
         connection.Open();
 
         DataRow? vectorRow = FindVectorType(connection);
@@ -114,6 +183,31 @@ public sealed class VectorColumnMetadataTests
         Assert.NotNull(vectorRow);
         Assert.Equal((int)SqlDbTypeExtensions.Vector, vectorRow!["ProviderDbType"]);
         Assert.Equal("vector({0})", vectorRow["CreateFormat"]);
+        Assert.Equal("dimensions", vectorRow["CreateParameters"]);
+    }
+
+    /// <summary>
+    /// Exposes the base-type creation argument at V2 and verifies both resulting declarations.
+    /// </summary>
+    /// <param name="baseType">The requested base type.</param>
+    [ConditionalTheory(nameof(IsFloat16Supported))]
+    [InlineData("float32")]
+    [InlineData("float16")]
+    public void V2CreationFormatIncludesBaseType(string baseType)
+    {
+        using SqlConnection connection = new(DataTestUtility.VectorFloat16ConnectionString);
+        connection.Open();
+        DataRow? vector = FindVectorType(connection);
+        Assert.NotNull(vector);
+        Assert.Equal("vector({0}, {1})", vector["CreateFormat"]);
+        Assert.Equal("dimensions,base_type", vector["CreateParameters"]);
+        string declaration = string.Format((string)vector["CreateFormat"], 3, baseType);
+        using Table table = new(connection, "VectorCreationFormat", $"(v {declaration} NULL)");
+        using SqlCommand command = new($"SELECT v FROM {table.Name}", connection);
+        using SqlDataReader reader = command.ExecuteReader();
+        DbColumn column = reader.GetColumnSchema()[0];
+        Assert.Equal(baseType, column["VectorBaseType"]);
+        Assert.Equal(3, column["VectorDimensions"]);
     }
 
     /// <summary>

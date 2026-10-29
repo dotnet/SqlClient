@@ -27,7 +27,7 @@ where T : unmanaged
 
     // Offsets of the fields within the vector header. Refer to TDS section 2.2.5.5.7.
     private const int VecHeaderLengthOffset = 2;
-    private const int VecHeaderElementTypeOffset = 4;
+    private const int VecHeaderElementTypeOffset = TdsEnums.VECTOR_ELEMENT_TYPE_OFFSET;
 
     #endregion
 
@@ -99,7 +99,7 @@ where T : unmanaged
         Memory = memory;
     }
 
-    internal SqlVector(byte[] tdsBytes)
+    private SqlVector(byte[] tdsBytes)
     {
         (_elementType, _elementSize, _) = GetTypeFieldsOrThrow();
 
@@ -165,8 +165,13 @@ where T : unmanaged
     /// the value is sent back to the server.
     /// </para>
     /// </remarks>
-    internal static SqlVector<T> FromTdsPayload(byte[] tdsBytes)
+    internal static SqlVector<T> FromTdsPayload(byte[] tdsBytes, bool allowWidening = true)
     {
+        if (!allowWidening)
+        {
+            return new SqlVector<T>(tdsBytes);
+        }
+
         ThrowIfHeaderInvalid(tdsBytes);
         ThrowIfNotConvertibleFrom(tdsBytes[VecHeaderElementTypeOffset]);
 
@@ -176,6 +181,29 @@ where T : unmanaged
         }
 
         return new SqlVector<T>(WidenFloat16Payload(tdsBytes), validateLength: false);
+    }
+
+    /// <summary>
+    /// Parses the existing JSON-to-float32 parameter representation. Other base types are
+    /// converted by SQL Server rather than by a client-side JSON narrowing operation.
+    /// </summary>
+    internal static SqlVector<T> Parse(string json)
+    {
+        if (typeof(T) != typeof(float))
+        {
+            throw SQL.VectorTypeNotSupported(typeof(T).FullName);
+        }
+
+        try
+        {
+            float[]? values = JsonSerializer.Deserialize(
+                json, SqlClientJsonSerializerContext.Default.SingleArray);
+            return new SqlVector<T>((T[]?)(object?)values);
+        }
+        catch (Exception ex) when (ex is ArgumentNullException || ex is JsonException)
+        {
+            throw ADP.InvalidJsonStringForVector(json, ex);
+        }
     }
 
     /// <summary>
@@ -286,30 +314,14 @@ where T : unmanaged
 
     private static (byte, byte, int) GetTypeFieldsOrThrow()
     {
-        byte elementType;
-        byte elementSize;
-        int maxSize;
-
-        if (typeof(T) == typeof(float))
-        {
-            elementType = (byte)MetaType.SqlVectorElementType.Float32;
-            elementSize = sizeof(float);
-        }
-        #if NET
-        else if (typeof(T) == typeof(Half))
-        {
-            elementType = (byte)MetaType.SqlVectorElementType.Float16;
-            // sizeof(Half) requires an unsafe context, so the size is stated explicitly.
-            elementSize = 2;
-        }
-        #endif
-        else
+        if (!MetaType.TryGetVectorElementType(typeof(SqlVector<T>), out byte elementType))
         {
             throw SQL.VectorTypeNotSupported(typeof(T).FullName);
         }
+        byte elementSize = (byte)MetaType.GetVectorElementSize(elementType);
         // The vector payload, including its header, must fit within the maximum vector size.
         // Calculate the maximum number of elements to simplify the validation of input sizes in constructors.
-        maxSize = (TdsEnums.MAXSIZE - TdsEnums.VECTOR_HEADER_SIZE) / elementSize;
+        int maxSize = (TdsEnums.MAXSIZE - TdsEnums.VECTOR_HEADER_SIZE) / elementSize;
 
         return (elementType, elementSize, maxSize);
     }

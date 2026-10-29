@@ -14,6 +14,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
+using System.Text;
 using System.Xml;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Parser;
@@ -1102,6 +1103,67 @@ namespace Microsoft.Data.SqlClient
             return 5;
         }
 
+        /// <summary>
+        /// Returns the native vector CLR type, or null when the framework cannot represent it.
+        /// </summary>
+#if NET
+        [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
+#endif
+        private static Type GetNativeVectorType(byte elementType) =>
+            (SqlVectorElementType)elementType switch
+            {
+                SqlVectorElementType.Float32 => typeof(SqlVector<float>),
+                #if NET
+                SqlVectorElementType.Float16 => typeof(SqlVector<Half>),
+                #else
+                SqlVectorElementType.Float16 => null,
+                #endif
+                _ => throw SQL.VectorTypeNotSupported(elementType.ToString()),
+            };
+
+        internal static bool TryGetVectorElementType(Type vectorType, out byte elementType)
+        {
+            if (vectorType != null)
+            {
+                if (vectorType == GetNativeVectorType((byte)SqlVectorElementType.Float32))
+                {
+                    elementType = (byte)SqlVectorElementType.Float32;
+                    return true;
+                }
+                if (vectorType == GetNativeVectorType((byte)SqlVectorElementType.Float16))
+                {
+                    elementType = (byte)SqlVectorElementType.Float16;
+                    return true;
+                }
+            }
+
+            elementType = (byte)SqlVectorElementType.Float32;
+            return false;
+        }
+
+#if NET
+        [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
+#endif
+        internal static Type GetVectorFieldType(byte elementType, bool providerSpecific) =>
+            GetNativeVectorType(elementType)
+                ?? (providerSpecific ? typeof(SqlString) : typeof(string));
+
+        internal static void AppendVectorTypeArguments(
+            StringBuilder builder, int dimensions, byte elementType)
+        {
+            switch ((SqlVectorElementType)elementType)
+            {
+                case SqlVectorElementType.Float32:
+                    builder.AppendFormat((IFormatProvider)null, "({0})", dimensions);
+                    break;
+                case SqlVectorElementType.Float16:
+                    builder.AppendFormat((IFormatProvider)null, "({0}, float16)", dimensions);
+                    break;
+                default:
+                    throw SQL.VectorTypeNotSupported(elementType.ToString());
+            }
+        }
+
         internal static int GetVectorElementSize(byte type)
         {
             switch ((SqlVectorElementType)type)
@@ -1175,4 +1237,3 @@ namespace Microsoft.Data.SqlClient
         public int time;
     }
 }
-

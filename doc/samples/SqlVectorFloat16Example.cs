@@ -7,6 +7,7 @@ namespace SqlVectorFloat16Example;
 // - Creates a table with a vector(3, float16) column
 // - Inserts vectors using SqlVector<Half> on .NET
 // - Inserts vectors from .NET Framework, where System.Half is unavailable
+// - Bulk copies an object-typed DataTable with a leading null and native float32 values
 // - Reads float16 vectors as SqlVector<Half>, as widened SqlVector<float>, and as JSON
 // - Inspects a column's base type and number of dimensions
 // - Converts between the float16 and float32 base types
@@ -27,8 +28,8 @@ class VectorFloat16ConsoleApp
 {
     // It is recommended to use a secure connection string in production code with valid cert.
     //
-    // "Vector Type Support=v2" opts in to the float16 base type. It defaults to v1, under
-    // which a float16 column is returned as a varchar(max) containing a JSON array.
+    // Explicitly request v2, the default starting with Microsoft.Data.SqlClient 8.0.
+    // Use v1 to receive a vector column with a float16 base type as varchar(max) JSON instead.
     private const string ConnectionString =
         "Server=localhost;Database=Demo2;Integrated Security=true;Encrypt=true;TrustServerCertificate=true;Vector Type Support=v2;";
 
@@ -44,6 +45,7 @@ class VectorFloat16ConsoleApp
             await CreateObjectsAsync(conn);
 
             await InsertVectorsAsync(conn);
+            await BulkCopyObjectValuesAsync(conn);
             await ReadVectorsAsync(conn);
             await ReadColumnMetadataAsync(conn);
             await ConvertBetweenBaseTypesAsync(conn);
@@ -88,7 +90,7 @@ CREATE TABLE {TableName}
 #endif
 
         // System.Half is unavailable on .NET Framework, so a float16 vector cannot be
-        // represented directly there. A vector of single precision values can be used
+        // represented directly there. A vector of float32 values can be used
         // instead: SQL Server converts it to the column's base type. The conversion loses
         // precision for values which float16 cannot represent exactly, and fails for values
         // outside its range, in the same way as inserting a JSON literal does.
@@ -105,6 +107,22 @@ CREATE TABLE {TableName}
     }
     #endregion
 
+    #region BulkCopyObjectValues
+    private static async Task BulkCopyObjectValuesAsync(SqlConnection conn)
+    {
+        using DataTable source = new();
+        source.Columns.Add("VectorData", typeof(object));
+        source.Rows.Add(DBNull.Value);
+        source.Rows.Add(new SqlVector<float>(new float[] { 1.5f, 2.5f, 3.5f }));
+
+        // The first non-null value identifies the float32 incoming representation.
+        // SQL Server converts it to the destination column's float16 base type.
+        using SqlBulkCopy copy = new(conn) { DestinationTableName = TableName };
+        copy.ColumnMappings.Add("VectorData", "VectorData");
+        await copy.WriteToServerAsync(source);
+    }
+    #endregion
+
     #region ReadFloat16Vectors
     private static async Task ReadVectorsAsync(SqlConnection conn)
     {
@@ -116,6 +134,11 @@ CREATE TABLE {TableName}
         while (await reader.ReadAsync())
         {
             int id = reader.GetInt32(0);
+            if (reader.IsDBNull(1))
+            {
+                Console.WriteLine($"  Id={id}: NULL");
+                continue;
+            }
 
 #if NET
             // On .NET, the column's own base type is available directly. A SqlVector<Half>
@@ -124,7 +147,7 @@ CREATE TABLE {TableName}
             Console.WriteLine($"  Id={id} as Half:  [{string.Join(", ", exact.Memory.ToArray())}]");
 #endif
 
-            // On any framework, the elements can be widened to single precision. Widening
+            // On any framework, the elements can be widened to float32. Widening
             // from float16 is exact, so no information is lost. On .NET Framework this is
             // the cheapest strongly typed read: the string read paths widen the elements
             // as well, and then serialize the result as a JSON array.
@@ -153,9 +176,9 @@ CREATE TABLE {TableName}
 
         // The base type is what a caller which does not know the schema in advance needs in
         // order to choose a read path. GetFieldType is not enough on its own: it reports
-        // string for a float16 column on .NET Framework, which is also what a plain
-        // varchar column reports, and it cannot distinguish the two base types at all when
-        // the caller wants to read both as SqlVector<float>.
+        // string for a vector column with a float16 base type on .NET Framework, just as it
+        // does for a varchar column. It cannot distinguish the two base types when the caller
+        // wants to read both as SqlVector<float>.
         string baseType = (string)column["VectorBaseType"];
         int dimensions = (int)column["VectorDimensions"];
 
@@ -176,7 +199,7 @@ CREATE TABLE {TableName}
                     break;
 
                 case "float16":
-                    // Widening from float16 is exact, so single precision is a lossless
+                    // Widening from float16 is exact, so float32 is a lossless
                     // representation for a caller which wants one array type throughout.
                     reader.GetSqlVector<float>(0).Memory.Span.CopyTo(buffer);
                     break;

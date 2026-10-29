@@ -1236,11 +1236,14 @@ The following example converts an existing connection string from using SQL Serv
       </summary>
       <value>
         A <see cref="T:Microsoft.Data.SqlClient.SqlVectorTypeSupport" />. The default is
-        <see cref="F:Microsoft.Data.SqlClient.SqlVectorTypeSupport.V1" />.
+        <see cref="F:Microsoft.Data.SqlClient.SqlVectorTypeSupport.V2" />.
       </value>
       <remarks>
         Corresponds to the <c>Vector Type Support</c> and <c>VectorTypeSupport</c> keys
         within the connection string, whose values are <c>off</c>, <c>v1</c> and <c>v2</c>.
+        Starting with Microsoft.Data.SqlClient 8.0, the default requests V2.
+        Set <c>v1</c> to preserve JSON string results for vector columns with a
+        <c>float16</c> base type.
       </remarks>
       <exception cref="T:System.ArgumentOutOfRangeException">
         The value is not a member of <see cref="T:Microsoft.Data.SqlClient.SqlVectorTypeSupport" />.

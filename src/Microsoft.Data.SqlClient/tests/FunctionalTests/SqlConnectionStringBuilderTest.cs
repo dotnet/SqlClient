@@ -245,6 +245,34 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         /// <summary>
+        /// Defaults vector support to V2 and restores that default when the setting is removed,
+        /// cleared, or assigned null through the indexer.
+        /// </summary>
+        [Fact]
+        public void VectorTypeSupportDefaultsAndResetsToV2()
+        {
+            SqlConnectionStringBuilder builder = new();
+            Assert.Equal(SqlVectorTypeSupport.V2, builder.VectorTypeSupport);
+            Assert.Equal(SqlVectorTypeSupport.V2, builder["Vector Type Support"]);
+            Assert.Empty(builder.ConnectionString);
+
+            builder.VectorTypeSupport = SqlVectorTypeSupport.V1;
+            Assert.True(builder.Remove("Vector Type Support"));
+            Assert.Equal(SqlVectorTypeSupport.V2, builder.VectorTypeSupport);
+            Assert.Empty(builder.ConnectionString);
+
+            builder.VectorTypeSupport = SqlVectorTypeSupport.Off;
+            builder.Clear();
+            Assert.Equal(SqlVectorTypeSupport.V2, builder.VectorTypeSupport);
+            Assert.Empty(builder.ConnectionString);
+
+            builder.VectorTypeSupport = SqlVectorTypeSupport.V1;
+            builder["Vector Type Support"] = null;
+            Assert.Equal(SqlVectorTypeSupport.V2, builder.VectorTypeSupport);
+            Assert.Empty(builder.ConnectionString);
+        }
+
+        /// <summary>
         /// Rejects undefined vector support enum values without changing the existing setting.
         /// </summary>
         [Theory]
@@ -271,8 +299,12 @@ namespace Microsoft.Data.SqlClient.Tests
         /// </summary>
         [Theory]
         [InlineData("v3", typeof(ArgumentException))]
+        [InlineData("0", typeof(ArgumentException))]
+        [InlineData("1", typeof(ArgumentException))]
         [InlineData("2", typeof(ArgumentException))]
+        [InlineData("+2", typeof(ArgumentException))]
         [InlineData("Off, V2", typeof(ArgumentException))]
+        [InlineData("off, v2", typeof(ArgumentException))]
         [InlineData("V1, V1", typeof(ArgumentException))]
         [InlineData(DayOfWeek.Monday, typeof(ArgumentException))]
         [InlineData(1.5, typeof(ArgumentException))]
@@ -300,9 +332,13 @@ namespace Microsoft.Data.SqlClient.Tests
         /// </summary>
         [Theory]
         [InlineData("v3")]
+        [InlineData("0")]
+        [InlineData("1")]
         [InlineData("2")]
+        [InlineData("+2")]
         [InlineData("true")]
         [InlineData("Off, V2")]
+        [InlineData("off, v2")]
         [InlineData("V1, V1")]
         public void ParseInvalidVectorTypeSupport_Throws(string invalid)
         {
@@ -1127,6 +1163,8 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("vectortypesupport = V2", SqlVectorTypeSupport.V2)]
         [InlineData("VECTORTYPESUPPORT = V2", SqlVectorTypeSupport.V2)]
         [InlineData("vectortypesupport = off", SqlVectorTypeSupport.Off)]
+        [InlineData("VectorTypeSupport = OFF", SqlVectorTypeSupport.Off)]
+        [InlineData("VectorTypeSupport = \" OfF \"", SqlVectorTypeSupport.Off)]
         [InlineData("VectorTypeSupport = \" v1 \"", SqlVectorTypeSupport.V1)]
         [InlineData("VECTOR TYPE SUPPORT = \" v2 \"", SqlVectorTypeSupport.V2)]
         public void VectorTypeSupportSynonymsResolveCorrectly(

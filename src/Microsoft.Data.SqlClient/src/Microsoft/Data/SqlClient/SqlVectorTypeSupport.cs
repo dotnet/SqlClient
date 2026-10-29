@@ -5,9 +5,6 @@
 namespace Microsoft.Data.SqlClient
 {
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlVectorTypeSupport.xml' path='docs/members[@name="SqlVectorTypeSupport"]/SqlVectorTypeSupport/*'/>
-#if NETFRAMEWORK
-    [System.Serializable]
-#endif
     public enum SqlVectorTypeSupport
     {
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlVectorTypeSupport.xml' path='docs/members[@name="SqlVectorTypeSupport"]/Off/*'/>

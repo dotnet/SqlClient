@@ -14,9 +14,11 @@
           containing a JSON array.
         </para>
         <para>
-          The default is <see cref="F:Microsoft.Data.SqlClient.SqlVectorTypeSupport.V1" />,
-          so an application opts in to a newer representation rather than receiving it when
-          it upgrades the driver.
+          Starting with Microsoft.Data.SqlClient 8.0, the default is
+          <see cref="F:Microsoft.Data.SqlClient.SqlVectorTypeSupport.V2" />. On .NET, successful
+          V2 negotiation changes the result of <c>GetValue</c> for a vector column with a
+          <c>float16</c> base type from a JSON string to <c>SqlVector&lt;Half&gt;</c>.
+          Set <c>Vector Type Support=v1</c> to preserve the JSON string representation.
         </para>
       </remarks>
     </SqlVectorTypeSupport>
@@ -30,16 +32,17 @@
       <summary>
         Vectors with a <c>float32</c> base type are returned in their binary form and are
         surfaced as <c>SqlVector&lt;float&gt;</c>. Columns with any other base type are
-        returned as a <c>varchar(max)</c> containing a JSON array. This is the default.
+        returned as a <c>varchar(max)</c> containing a JSON array.
       </summary>
     </V1>
     <V2>
       <summary>
         <para>
-          Adds <c>float16</c> to the base types returned in their binary form. On .NET such a
-          column is surfaced as <c>SqlVector&lt;System.Half&gt;</c>; on .NET Framework, where
-          <c>System.Half</c> is unavailable, it is surfaced as a JSON array string and can be
-          read as a <c>SqlVector&lt;float&gt;</c> on request.
+          Adds <c>float16</c> to the base types returned in their binary form. This is the
+          default starting with Microsoft.Data.SqlClient 8.0. On .NET, a vector column with a
+          <c>float16</c> base type is surfaced as <c>SqlVector&lt;System.Half&gt;</c>;
+          on .NET Framework, where <c>System.Half</c> is unavailable, it is surfaced as a
+          JSON array string and can be read as a <c>SqlVector&lt;float&gt;</c> on request.
         </para>
         <para>
           The column representations above describe reader results. Output parameters follow
@@ -49,11 +52,12 @@
           <c>SqlValue</c> is a <c>SqlString</c>.
         </para>
         <para>
-          On .NET Framework, the driver widens each element of a <c>float16</c> column to
-          <c>float32</c> as it reads, and renders the result as a JSON array for the string read
-          paths. On .NET, a <c>SqlVector&lt;Half&gt;</c> wraps the payload the server sent, so no
-          per-element conversion takes place. Take this into account when you choose this value
-          for a .NET Framework application which reads <c>float16</c> columns in bulk.
+          On .NET Framework, the driver widens each element of a vector column with a
+          <c>float16</c> base type to <c>float32</c> as it reads, and renders the result as a
+          JSON array for the string read paths. On .NET, a <c>SqlVector&lt;Half&gt;</c> wraps
+          the payload the server sent, so no per-element conversion takes place. Take this into
+          account when you choose this value for a .NET Framework application which reads vector
+          columns with a <c>float16</c> base type in bulk.
         </para>
       </summary>
     </V2>

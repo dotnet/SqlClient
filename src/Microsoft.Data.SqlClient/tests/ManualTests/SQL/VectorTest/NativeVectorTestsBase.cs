@@ -43,9 +43,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
         public virtual bool IsDefaultRepresentation => true;
 
         /// <summary>
-        /// The connection string the suite runs against. A float16 column is returned
-        /// in its binary form when the connection opts in to the feature extension version
-        /// which covers that base type, so a suite for such a column overrides this.
+        /// The connection string the suite runs against. Suites for vector columns with a
+        /// float16 base type explicitly select V2 so configured compatibility overrides do not
+        /// change the native representation they exercise.
         /// </summary>
         public virtual string ConnectionString => DataTestUtility.TCPConnectionString;
 
