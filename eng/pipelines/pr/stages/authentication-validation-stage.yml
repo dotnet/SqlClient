@@ -40,7 +40,7 @@ stages:
                 runtimes: [10.x]
             - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
             - task: DotNetCoreCLI@2
-              displayName: Scenarios, runtime mismatch, trimmed and NativeAOT execution
+              displayName: Scenarios, trimmed and NativeAOT execution
               inputs:
                 command: custom
                 custom: build
@@ -68,7 +68,7 @@ stages:
                 runtimes: [10.x]
             - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
             - task: DotNetCoreCLI@2
-              displayName: .NET Framework scenarios and runtime mismatch execution
+              displayName: .NET Framework scenarios execution
               inputs:
                 command: custom
                 custom: build

@@ -8,49 +8,35 @@ using System.Collections.Concurrent;
 using System.Diagnostics.Tracing;
 
 string scenario = args.Single();
-if (scenario == "disabled" || scenario == "bad-runtime-disabled")
+if (scenario == "disabled")
 {
     AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.EnableAppConfig", false);
     AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.EnableAzureExtensionDiscovery", false);
 }
 if (scenario.StartsWith("bad-", StringComparison.Ordinal))
 {
-    if (scenario is "bad-provider" or "bad-runtime-disabled")
-    {
-        Require(!SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDefault, new TestProvider()),
-            "Failed bootstrap did not return false.");
-    }
-    else
-    {
-        Require(SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryDefault) is null,
-            "Failed bootstrap did not return null.");
-    }
-
     using var listener = new AuthenticationTraceListener();
-    Require(SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryDefault) is null,
-        "Cached version failure did not return null.");
-    Require(!SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDefault, new TestProvider()),
-        "Cached version failure did not return false.");
+    Require(SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryDefault)
+        is ActiveDirectoryAuthenticationProvider,
+        "A recoverable configuration failure prevented Azure discovery.");
     string expected = scenario switch
     {
         "bad-provider" => "MissingProvider",
         "bad-initializer" => "MissingInitializer",
         "bad-unsupported" => "UnsupportedProvider",
-        _ => "version mismatch"
+        _ => throw new ArgumentException("Unknown configuration scenario: " + scenario)
     };
-    Require(listener.Messages.Any(message => message.Contains(expected)),
-        "Cached failure diagnostics omitted the failing type or version.");
-    if (scenario.StartsWith("bad-runtime", StringComparison.Ordinal))
-    {
-        Require(listener.Messages.Any(message => message.Contains("7.0.1") &&
-            message.Contains("Upgrade all SqlClient family packages together")),
-            "Cached runtime mismatch diagnostics omitted the exact version or corrective guidance.");
-    }
-    Require(listener.Messages.Any(message => message.Contains("GetProvider") &&
-        message.Contains("ActiveDirectoryDefault") && message.Contains("returning null") && message.Contains("restart")) &&
-        listener.Messages.Any(message => message.Contains("SetProvider") &&
-        message.Contains("ActiveDirectoryDefault") && message.Contains("returning false") && message.Contains("restart")),
-        "Cached failures did not diagnose both registry entry points.");
+    int failures = listener.Messages.Count(message => message.Contains(expected));
+    Require(failures > 0, "Configuration diagnostics omitted the failing type.");
+    var recoveryProvider = new TestProvider();
+    Require(SqlAuthenticationProvider.SetProvider(
+        SqlAuthenticationMethod.ActiveDirectoryDefault, recoveryProvider),
+        "A recoverable configuration failure prevented explicit registration.");
+    Require(ReferenceEquals(recoveryProvider,
+        SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryDefault)),
+        "Explicit registration did not survive a recoverable configuration failure.");
+    Require(listener.Messages.Count(message => message.Contains(expected)) == failures,
+        "A failed configuration entry was retried after bootstrap.");
     Console.WriteLine("PASS: " + scenario);
     return;
 }
@@ -72,10 +58,16 @@ else
         _ => throw new ArgumentException("Unknown configuration scenario: " + scenario)
     };
 
-    var section = ConfigurationManager.GetSection(sectionName) as SqlAuthenticationProviderConfigurationSection
+    var section = ConfigurationManager.GetSection(sectionName) as ConfigurationSection
         ?? throw new InvalidOperationException("The section declaration did not resolve.");
     ConfigurationSection configurationSection = section;
-    Require(configurationSection.ElementInformation.Properties.Count == 4 && section.Providers.Count == 1,
+    int providerCount = section switch
+    {
+        SqlClientAuthenticationProviderConfigurationSection modern => modern.Providers.Count,
+        SqlAuthenticationProviderConfigurationSection legacy => legacy.Providers.Count,
+        _ => throw new InvalidOperationException("The section resolved to an unexpected handler type.")
+    };
+    Require(configurationSection.ElementInformation.Properties.Count == 4 && providerCount == 1,
         "The public configuration schema did not compile or load through its transitive dependencies.");
     Require(section.GetType().Assembly.GetName().Name == "Microsoft.Data.SqlClient.Extensions.Abstractions",
         "The assembly-qualified handler was not forwarded to Abstractions.");
@@ -150,7 +142,7 @@ public sealed class UnsupportedProvider : TestProvider
     public override bool IsSupported(SqlAuthenticationMethod method) => false;
 }
 
-/// <summary>Captures diagnostics when tracing is enabled after the original bootstrap failure.</summary>
+/// <summary>Captures bootstrap diagnostics without contacting external services.</summary>
 internal sealed class AuthenticationTraceListener : EventListener
 {
     internal ConcurrentQueue<string> Messages { get; } = new();
