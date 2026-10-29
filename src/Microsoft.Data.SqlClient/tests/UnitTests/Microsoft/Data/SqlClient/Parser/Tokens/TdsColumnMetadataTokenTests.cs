@@ -9,7 +9,7 @@ using Xunit;
 namespace Microsoft.Data.SqlClient.UnitTests
 {
     /// <summary>
-    /// Tests that verify _SqlMetaDataSet.Clone() produces independent copies,
+    /// Tests that verify TdsColumnMetadataToken.Clone() produces independent copies,
     /// ensuring that null-pruning of unmatched columns in AnalyzeTargetAndCreateUpdateBulkCommand
     /// does not corrupt the cached metadata when CacheMetadata is enabled.
     /// </summary>
@@ -149,8 +149,8 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [Fact]
         public void Clone_PreservesIsEncrypted()
         {
-            // Verify that cloning a _SqlMetaData entry preserves the isEncrypted flag.
-            // WriteBulkCopyMetaData checks md.isEncrypted to set the TDS IsEncrypted flag
+            // Verify that cloning a TdsColumnMetadata entry preserves the IsEncrypted flag.
+            // WriteBulkCopyMetaData checks md.IsEncrypted to set the TDS IsEncrypted flag
             // and WriteCryptoMetadata checks it to decide whether to write cipher metadata.
             // If lost, encrypted columns are sent as plaintext.
             TdsColumnMetadataToken original = new TdsColumnMetadataToken(1);
@@ -219,7 +219,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [Fact]
         public void Clone_PreservesFullAlwaysEncryptedMetadata()
         {
-            // End-to-end test: verify that a cloned _SqlMetaDataSet with Always Encrypted
+            // End-to-end test: verify that a cloned TdsColumnMetadataToken with Always Encrypted
             // metadata retains all AE fields needed by the bulk copy TDS write path:
             // cekTable (for WriteCekTable), isEncrypted (for flag writing),
             // cipherMD (for WriteCryptoMetadata), and baseTI (for WriteTceUserTypeAndTypeInfo).
