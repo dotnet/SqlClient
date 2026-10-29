@@ -481,6 +481,11 @@ public class AuthenticationRegistryTest
         public override AssemblyName GetName() =>
             new("Microsoft.Data.SqlClient.Extensions.Azure") { Version = new Version(1, 0, 0, 0) };
 
+        public override object[] GetCustomAttributes(Type attributeType, bool inherit) =>
+            attributeType == typeof(AssemblyInformationalVersionAttribute)
+                ? typeof(SqlAuthenticationProvider).Assembly.GetCustomAttributes(attributeType, inherit)
+                : [];
+
         public override Type? GetType(string name) =>
             name == "Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider"
                 ? typeof(ThrowingProvider)

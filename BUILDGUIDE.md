@@ -74,9 +74,22 @@ Use `-p:PackageVersionSqlClient=<version>` for prebuilt packages and an isolated
 On Windows, select `-p:TestFramework=net462` to execute .NET Framework checks.
 Cross-building .NET Framework on Linux does not execute those scenarios.
 
+`TestAuthenticationRuntimeVersions` additionally replaces the driver DLL with a
+fixture retaining its assembly binding version but carrying an older informational
+version. Both ordinary bootstrap and bootstrap with configuration/discovery disabled
+must disable further automatic discovery, trace the failure once, and preserve explicit
+provider registration and lookup:
+
+```bash
+dotnet build build.proj -t:TestAuthenticationRuntimeVersions -p:Configuration=Release -p:TestFramework=net10.0 -p:ReferenceType=Project
+```
+
+The same target accepts `ReferenceType=Package` and the package-preparation options above.
+The runner restores the original DLL even if a scenario fails.
+
 `TestAuthentication` runs the complete configuration/discovery/precedence matrix,
-invalid provider/initializer/unsupported-provider recovery checks and
-disabled switches. Add `AuthenticationPublish=true`
+invalid provider/initializer/unsupported-provider recovery checks,
+disabled switches, and both runtime mismatch scenarios. Add `AuthenticationPublish=true`
 on Linux to publish **and execute** linux-x64 trimmed and NativeAOT consumers with
 compiler/linker warnings as errors. GCC and the NativeAOT prerequisites are required.
 
@@ -91,10 +104,11 @@ verify local family packages exist and inspect restored assets; Package mode nev
 falls back to project references. Use a unique family version and isolated
 `NUGET_PACKAGES` for each changed package image. Build number, suffix, file/package
 versions, configuration and reference mode flow to all fixtures; the runner freezes
-the computed family version before building so every fixture uses the same package graph.
+the computed family version before building, so JIT runtime version validation agrees
+with the package graph.
 
 `BuildAuthenticationTests` builds scenario fixtures without executing them and is
-included in `BuildTests`. Both fixtures are in the solution. The focused targets
+included in `BuildTests`. All three fixtures are in the solution. The focused targets
 remain available; ordinary xUnit tests are unchanged. See the
 [authentication harness README](src/Microsoft.Data.SqlClient/tests/AuthenticationTests/README.md).
 The modern `sqlclient-pr` pipeline's authentication stage independently builds and runs
@@ -230,6 +244,7 @@ dotnet build -t:<test_target> [optional_parameters]
 | `Test`                     | Runs the driver and extension test targets. Without `TestFramework`, all declared frameworks are attempted, including .NET Framework. _This takes considerable time and requires configured servers_. |
 | `TestAbstractions`         | Runs all tests for Microsoft.Data.SqlClient.Extensions.Abstractions                                                                                 |
 | `TestAuthenticationConfiguration` | Runs the dedicated current/legacy app.config compatibility scenarios without SQL Server. |
+| `TestAuthenticationRuntimeVersions` | Adds runtime DLL replacement checks with switches enabled and disabled. |
 | `TestAuthentication` | Runs all authentication executable scenarios; optionally publishes and executes trimmed/NativeAOT consumers with `AuthenticationPublish=true`. |
 | `BuildAuthenticationTests` | Builds the scenario fixtures without executing them; included in `BuildTests`. |
 | `TestAkvProvider`          | Runs the unit test project for Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.                                                      |

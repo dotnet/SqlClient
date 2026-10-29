@@ -39,6 +39,9 @@ internal sealed class SqlAuthenticationProviderRegistry
     /// <summary>Indicates that all enabled bootstrap steps were attempted.</summary>
     private bool _bootstrapCompleted;
 
+    /// <summary>Prevents further Azure discovery after a family-version policy failure.</summary>
+    private bool _azureDiscoveryDisabledByVersionFailure;
+
     /// <summary>
     /// Preserves the original bootstrap failure for subsequent registry accesses.
     /// </summary>
@@ -72,6 +75,9 @@ internal sealed class SqlAuthenticationProviderRegistry
         internal SqlAuthenticationProvider Provider { get; } = provider;
         internal RegistrationTier Tier { get; } = tier;
     }
+
+    /// <summary>Distinguishes incompatible family packages from recoverable configuration errors.</summary>
+    internal sealed class FamilyVersionException(string message) : InvalidOperationException(message);
 
     /// <summary>Validated authentication settings owned by this registry instance.</summary>
     private SqlAuthenticationConfiguration _configuration = new();
@@ -178,20 +184,25 @@ internal sealed class SqlAuthenticationProviderRegistry
     }
 
     /// <summary>
-    /// Discovers and registers Azure defaults using the supplied assembly loader.
+    /// Discovers and registers Azure defaults using the supplied assembly loader, after
+    /// validating the extension's family version.
     /// </summary>
     /// <param name="loadAssembly">
     /// The assembly loader; production uses <see cref="LoadAzureExtensionAssembly"/> to validate
     /// identity in signed builds.
     /// </param>
     /// <remarks>
-    /// Recoverable discovery failures are traced without failing registry bootstrap; fatal runtime
-    /// errors propagate.
+    /// Recoverable discovery failures are traced without failing registry bootstrap. Family-version
+    /// failures disable later discovery without blocking explicit registration. Fatal errors propagate.
     /// </remarks>
     [RequiresUnreferencedCode("Azure extension discovery loads types and constructors by name.")]
     [RequiresDynamicCode("Azure extension discovery constructs providers dynamically.")]
     internal void LoadAzureExtension(Func<Assembly?> loadAssembly)
     {
+        if (_azureDiscoveryDisabledByVersionFailure)
+        {
+            return;
+        }
         try
         {
             Assembly? assembly = loadAssembly();
@@ -205,6 +216,7 @@ internal sealed class SqlAuthenticationProviderRegistry
                 return;
             }
 
+            ValidateFamilyVersion(assembly);
             SqlClientEventSource.Log.TryTraceEvent(
                 nameof(SqlAuthenticationProviderRegistry) +
                 ": Azure extension assembly={0} found; attempting to set as default provider for " +
@@ -272,6 +284,10 @@ internal sealed class SqlAuthenticationProviderRegistry
                 ": Attempted to register Azure extension class={0} as the default for Active " +
                 "Directory authentication methods; existing registrations were preserved",
                 className);
+        }
+        catch (FamilyVersionException ex)
+        {
+            DisableAzureDiscovery(ex);
         }
         catch (Exception ex) when (ExceptionHelpers.IsRecoverableException(ex))
         {
@@ -348,7 +364,7 @@ internal sealed class SqlAuthenticationProviderRegistry
     #region Bootstrap, Configuration and Registration Methods
 
     /// <summary>
-    /// Runs the enabled configuration and Azure discovery steps on first access.
+    /// Validates loaded driver versions on access and runs configuration and Azure discovery once.
     /// </summary>
     /// <param name="getSection">
     /// The section reader, or null to use the process-wide ConfigurationManager.
@@ -368,10 +384,8 @@ internal sealed class SqlAuthenticationProviderRegistry
     {
         lock (_sync)
         {
-            // Cached failures take precedence over in-progress or completed bootstrap state.
-            _bootstrapFailure?.Throw();
             // Initializers can reenter on this thread; do not recursively bootstrap the registry.
-            if (_bootstrapCompleted || _bootstrapInProgress)
+            if (_bootstrapInProgress)
             {
                 return;
             }
@@ -379,6 +393,24 @@ internal sealed class SqlAuthenticationProviderRegistry
             try
             {
                 // Capability guards let trimming/AOT remove these reflective bootstrap paths.
+                if (!_azureDiscoveryDisabledByVersionFailure &&
+                    AuthenticationFeatureSwitches.IsRuntimeVersionValidationSupported)
+                {
+                    try
+                    {
+                        ValidateSqlClientVersion(
+                            loadIfMissing: !_bootstrapCompleted && _bootstrapFailure is null);
+                    }
+                    catch (FamilyVersionException e)
+                    {
+                        DisableAzureDiscovery(e);
+                    }
+                }
+                _bootstrapFailure?.Throw();
+                if (_bootstrapCompleted)
+                {
+                    return;
+                }
                 // Load configuration first so Azure discovery receives its option overrides.
                 if (AuthenticationFeatureSwitches.IsAppConfigSupported)
                 {
@@ -402,10 +434,12 @@ internal sealed class SqlAuthenticationProviderRegistry
             }
             catch (Exception e) when (ExceptionHelpers.IsRecoverableException(e))
             {
-                // Cache partial-bootstrap failures without losing their original stack.
-                SqlClientEventSource.Log.TryTraceEvent(
-                    "Authentication bootstrap failed: {0}", e);
-                _bootstrapFailure = ExceptionDispatchInfo.Capture(e);
+                if (!ReferenceEquals(_bootstrapFailure?.SourceException, e))
+                {
+                    SqlClientEventSource.Log.TryTraceEvent(
+                        "Authentication bootstrap failed: {0}", e);
+                    _bootstrapFailure = ExceptionDispatchInfo.Capture(e);
+                }
                 throw;
             }
             finally
@@ -610,6 +644,89 @@ internal sealed class SqlAuthenticationProviderRegistry
             }
         }
     }
+
+    /// <summary>Stops automatic discovery while preserving explicit and existing registrations.</summary>
+    /// <param name="error">The version-policy failure that makes automatic discovery unsafe.</param>
+    private void DisableAzureDiscovery(FamilyVersionException error)
+    {
+        _azureDiscoveryDisabledByVersionFailure = true;
+        SqlClientEventSource.Log.TryTraceEvent(
+            "SqlAuthenticationProviderRegistry: Family version validation failed; automatic Azure " +
+            "discovery and registration are disabled for this registry. Upgrade all SqlClient " +
+            "family packages together and restart the application to retry automatic discovery. " +
+            "Explicit registration and existing providers remain available. Error: {0}", error);
+    }
+
+    /// <summary>Validates drivers across load contexts, loading by name only on initial bootstrap.</summary>
+    /// <param name="loadIfMissing">Whether to try loading a driver when none is already loaded.</param>
+    /// <remarks>A missing SqlClient assembly is logged and does not prevent registration.</remarks>
+    /// <exception cref="InvalidOperationException">The family versions differ or cannot be determined.</exception>
+    [RequiresUnreferencedCode("The SqlClient assembly is loaded by name for version validation.")]
+    [RequiresDynamicCode("The SqlClient assembly is loaded dynamically.")]
+    private static void ValidateSqlClientVersion(bool loadIfMissing)
+    {
+        if (ValidateLoadedSqlClientVersions(AppDomain.CurrentDomain.GetAssemblies()) || !loadIfMissing)
+        {
+            return;
+        }
+        Assembly assembly;
+        try
+        {
+            assembly = Assembly.Load("Microsoft.Data.SqlClient");
+        }
+        catch (FileNotFoundException e)
+        {
+            SqlClientEventSource.Log.TryTraceEvent(
+                "SqlClient version validation skipped: assembly not installed. {0}", e.Message);
+            return;
+        }
+        ValidateFamilyVersion(assembly);
+    }
+
+    /// <summary>Checks every loaded driver because multiple load contexts can share this registry.</summary>
+    /// <param name="assemblies">The assemblies loaded across the application's load contexts.</param>
+    /// <returns>Whether at least one driver assembly was found and validated.</returns>
+    /// <exception cref="InvalidOperationException">A driver has incompatible or missing version metadata.</exception>
+    internal static bool ValidateLoadedSqlClientVersions(IEnumerable<Assembly> assemblies)
+    {
+        bool found = false;
+        foreach (Assembly assembly in assemblies)
+        {
+            if (string.Equals(assembly.GetName().Name, "Microsoft.Data.SqlClient",
+                StringComparison.OrdinalIgnoreCase))
+            {
+                ValidateFamilyVersion(assembly);
+                found = true;
+            }
+        }
+        return found;
+    }
+
+    /// <summary>Enforces exact family-version agreement between an assembly and Abstractions.</summary>
+    /// <param name="assembly">The loaded SqlClient family assembly to validate.</param>
+    /// <exception cref="InvalidOperationException">The family versions differ or cannot be determined.</exception>
+    internal static void ValidateFamilyVersion(Assembly assembly)
+    {
+        string expected = GetFamilyVersion(typeof(SqlAuthenticationProvider).Assembly);
+        string actual = GetFamilyVersion(assembly);
+        if (!string.Equals(expected, actual, StringComparison.Ordinal))
+        {
+            throw new FamilyVersionException(
+                $"SqlClient family version mismatch: {assembly.GetName().Name} is {actual}, " +
+                $"but Microsoft.Data.SqlClient.Extensions.Abstractions is {expected}. " +
+                "Upgrade all SqlClient family packages together.");
+        }
+    }
+
+    /// <summary>Reads an assembly's informational version without build metadata.</summary>
+    /// <param name="assembly">The assembly whose family version is required.</param>
+    /// <returns>The version including any prerelease label, but excluding the build metadata suffix.</returns>
+    /// <exception cref="InvalidOperationException">The assembly has no informational version attribute.</exception>
+    private static string GetFamilyVersion(Assembly assembly) =>
+        assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+            .InformationalVersion.Split('+')[0]
+            ?? throw new FamilyVersionException(
+                $"Cannot determine the exact SqlClient family version of {assembly.GetName().Name}.");
 
     #endregion
 }

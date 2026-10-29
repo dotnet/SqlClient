@@ -23,12 +23,12 @@ src/Microsoft.Data.SqlClient/tests/
 
 ### Authentication executable scenarios
 
-Keep non-xUnit authentication configuration and publish consumers in
+Keep non-xUnit authentication configuration, DLL-replacement and publish consumers in
 `src/Microsoft.Data.SqlClient/tests/AuthenticationTests/`, not inside Abstractions unit tests.
 Use `build.proj -t:TestAuthentication` with explicit `ReferenceType=Project` or `Package`;
 Package mode prepares real local sibling packages. Use an isolated `NUGET_PACKAGES` and
 unique `PackageVersionSqlClient` to avoid stale family images. The focused configuration
-target remains available. `AuthenticationPublish=true` adds Linux
+and runtime-version targets remain available. `AuthenticationPublish=true` adds Linux
 net10.0 linux-x64 trimmed/NativeAOT publishes and executions with warnings as errors.
 Windows executes net462 scenarios; Linux cross-builds are not Windows runtime validation.
 `BuildAuthenticationTests` is part of `BuildTests`; ordinary unit tests stay separate.

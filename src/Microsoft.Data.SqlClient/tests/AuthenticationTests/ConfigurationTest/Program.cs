@@ -8,10 +8,38 @@ using System.Collections.Concurrent;
 using System.Diagnostics.Tracing;
 
 string scenario = args.Single();
-if (scenario == "disabled")
+if (scenario == "disabled" || scenario == "bad-runtime-disabled")
 {
     AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.EnableAppConfig", false);
     AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.EnableAzureExtensionDiscovery", false);
+}
+if (scenario is "bad-runtime" or "bad-runtime-disabled")
+{
+    using var listener = new AuthenticationTraceListener();
+    Require(SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryDefault) is null,
+        "A driver version failure installed an automatic provider.");
+    var explicitProvider = new TestProvider();
+    Require(SqlAuthenticationProvider.SetProvider(
+        SqlAuthenticationMethod.ActiveDirectoryDefault, explicitProvider),
+        "A driver version failure blocked explicit registration.");
+    Require(ReferenceEquals(explicitProvider,
+        SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryDefault)),
+        "A driver version failure blocked explicit lookup.");
+    for (int attempt = 0; attempt < 2; attempt++)
+    {
+        Require(SqlAuthenticationProvider.GetProvider(
+            SqlAuthenticationMethod.ActiveDirectoryInteractive) is null,
+            "Automatic Azure discovery resumed after a driver version failure.");
+    }
+    Require(listener.Messages.Count(message =>
+        message.Contains("Family version validation failed")) == 1,
+        "The family-version failure was not diagnosed exactly once.");
+    Require(listener.Messages.Any(message => message.Contains("7.0.1") &&
+        message.Contains("Upgrade all SqlClient") &&
+        message.Contains("Explicit registration and existing providers remain available")),
+        "Version diagnostics omitted the mismatched version or corrective guidance.");
+    Console.WriteLine("PASS: " + scenario);
+    return;
 }
 if (scenario.StartsWith("bad-", StringComparison.Ordinal))
 {

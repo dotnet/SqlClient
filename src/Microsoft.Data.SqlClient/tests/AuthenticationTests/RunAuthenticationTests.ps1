@@ -14,6 +14,7 @@ param(
     [string]$PackageVersionSqlServer,
     [string]$BuildNumber,
     [string]$BuildSuffix,
+    [switch]$RuntimeVersions,
     [switch]$AllScenarios,
     [switch]$Publish,
     [switch]$BuildOnly
@@ -87,6 +88,9 @@ function Assert-PackageAssets {
 Invoke-DotNet -CommandArguments (@('build', $project, '-c', $Configuration, '-f', $Framework) + $buildOptions)
 Assert-PackageAssets 'ConfigurationTest'
 if ($BuildOnly) {
+    Invoke-DotNet -CommandArguments (@('build',
+        (Join-Path $PSScriptRoot 'RuntimeVersionTest/RuntimeVersionTest.csproj'),
+        '-c', $Configuration, '-f', $Framework) + $buildOptions)
     if ($Framework -eq 'net10.0') {
         Invoke-DotNet -CommandArguments (@('build',
             (Join-Path $PSScriptRoot 'PublishTest/PublishTest.csproj'),
@@ -115,6 +119,31 @@ try {
     }
 } finally {
     [System.IO.File]::WriteAllBytes($configPath, $originalConfig)
+}
+
+if ($RuntimeVersions) {
+    $replacementProject = Join-Path $PSScriptRoot 'RuntimeVersionTest/RuntimeVersionTest.csproj'
+    Invoke-DotNet -CommandArguments (@('build', $replacementProject, '-c', $Configuration, '-f', $Framework) + $buildOptions)
+    $driver = Join-Path $output 'Microsoft.Data.SqlClient.dll'
+    $backup = "$driver.$([guid]::NewGuid().ToString('n')).original"
+    Copy-Item -LiteralPath $driver -Destination $backup
+    try {
+        Copy-Item -LiteralPath (Join-Path $PSScriptRoot "RuntimeVersionTest/bin/$Configuration/$Framework/Microsoft.Data.SqlClient.dll") `
+            -Destination $driver -Force
+        [System.IO.File]::WriteAllText($configPath, '<configuration />')
+        foreach ($scenario in @('bad-runtime', 'bad-runtime-disabled')) {
+            if ($Framework -eq 'net462') {
+                & $app $scenario
+                if ($LASTEXITCODE -ne 0) { throw "Runtime version test failed: $scenario" }
+            } else {
+                Invoke-DotNet -CommandArguments @($app, $scenario)
+            }
+        }
+    } finally {
+        [System.IO.File]::WriteAllBytes($configPath, $originalConfig)
+        Copy-Item -LiteralPath $backup -Destination $driver -Force
+        Remove-Item -LiteralPath $backup
+    }
 }
 
 if ($Publish) {

@@ -261,6 +261,24 @@ AppContext switches allow runtime behavior changes without modifying connection 
 | `Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows` | `false` | Forces managed SNI on Windows (instead of native SNI) |
 | `Switch.Microsoft.Data.SqlClient.UseOneSecFloorInTimeoutCalculationDuringLogin` | `false` | Sets 1-second minimum in login timeout calculations |
 
+### Authentication family-version validation
+
+Untrimmed Abstractions checks loaded driver assemblies across load contexts and the discovered
+Azure extension against its exact informational version, including prerelease labels but excluding
+`+` build metadata. Do not accept a newer Azure version merely because its major version matches.
+
+A version-policy failure must be traced once and disable further automatic Azure discovery and
+registration for that registry. It must not poison bootstrap, remove existing providers, or make
+future explicit `SetProvider` and `GetProvider` calls fail solely because of that version error.
+Preserve normal argument/callback validation and configuration precedence. Restart with matching
+packages to retry automatic discovery. Trimmed/NativeAOT images remove this reflective check.
+
+This is a breaking change for mixed-version deployments relying on automatic Azure authentication.
+Document the workaround: disable `EnableAzureExtensionDiscovery` before first access, explicitly
+construct an Azure provider, and check `SetProvider` for every method used before opening connections.
+Explicit registration is not a binary-compatibility guarantee and does not suppress `SQLCLIENT001`.
+See the [consumer example](../../src/Microsoft.Data.SqlClient.Extensions/Azure/src/PackageReadme.md#using-a-newer-azure-package-explicitly).
+
 ### Authentication configuration in app.config
 
 The `SqlClientAuthenticationProviders` (modern) and `SqlAuthenticationProviders`

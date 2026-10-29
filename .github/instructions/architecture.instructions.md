@@ -171,6 +171,13 @@ SqlClient or Azure. The driver independently loads Azure for attestation, withou
 authentication configuration or consulting authentication discovery switches. Keep the two
 loaders' assembly identity checks consistent.
 
+Untrimmed authentication family-version checks require exact informational versions, not a
+same-major range. A failure disables further automatic Azure discovery for that registry without
+blocking explicit provider registration or lookup or removing existing providers. Keep this policy
+separate from recoverable configuration failures and consumer build-time warnings. Mixed-version
+consumers may explicitly register a provider after validating binary compatibility; preserve that
+escape hatch. See [family-version validation](features.instructions.md#authentication-family-version-validation).
+
 Located in `SSPI/` and authentication-related files:
 - Windows Authentication (SSPI/Kerberos)
 - SQL Server Authentication

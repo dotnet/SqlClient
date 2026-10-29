@@ -22,16 +22,18 @@ SqlServer version inputs and freezes the effective family version for all builds
 | Fixture | Checks |
 | --- | --- |
 | ConfigurationTest | Current and legacy real app.config handlers still compile through the public `ConfigurationSection` base type and resolve through driver type forwards; initializer/configuration beat discovered Azure and application registration; application registration replaces Azure; invalid provider/initializer/unsupported provider entries are traced once without blocking discovery or explicit registration; disabled switches leave explicit registration usable. |
+| RuntimeVersionTest | Replacement driver retains `$(SqlClientAssemblyVersion)` but reports informational version 7.0.1. With bootstrap switches enabled or disabled, the failure is traced once, future discovery stays disabled, and explicit registration/lookup remain usable. The runner uses empty configuration to isolate version validation and restores the real driver and configuration in `finally` blocks. |
 | PublishTest | References Abstractions and Azure but never uses Azure types in source. linux-x64 trim/AOT publishes treat C#, ILLink and ILC warnings as errors. Execution proves discovery absent and explicit registration succeeds; the runner verifies no Azure DLL or Azure runtime dependency remains. XML documentation is not a runtime assembly. |
 
 The focused `TestAuthenticationConfiguration` target runs just current/legacy
-configuration. `TestAuthentication` runs six configuration scenarios. Optional
+configuration; `TestAuthenticationRuntimeVersions` adds the replacement checks.
+`TestAuthentication` runs six configuration and two runtime scenarios. Optional
 `AuthenticationPublish=true` adds two publishes and executions.
 
 On Windows use `TestFramework=net462` and omit publishing. Linux may cross-build
 net462 using `BuildAuthenticationTests`, but **cannot execute its Windows runtime
 checks**. `BuildTests` includes `BuildAuthenticationTests`; the solution includes
-both fixtures. Direct runner invocation requires packages prepared in advance.
+all three fixtures. Direct runner invocation requires packages prepared in advance.
 
 The CI stage runs both reference modes on Linux and Windows, self-building its
 packages with per-job caches and unique versions rather than assuming artifacts.
