@@ -120,9 +120,9 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
             TdsColumnMetadataToken clone = original.Clone();
 
-            Assert.Equal(original[0].ordinal, clone[0].ordinal);
-            Assert.Equal(original[1].ordinal, clone[1].ordinal);
-            Assert.Equal(original[2].ordinal, clone[2].ordinal);
+            Assert.Equal(original[0].Ordinal, clone[0].Ordinal);
+            Assert.Equal(original[1].Ordinal, clone[1].Ordinal);
+            Assert.Equal(original[2].Ordinal, clone[2].Ordinal);
         }
 
         [Fact]
@@ -141,9 +141,9 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
             TdsColumnMetadataToken clone = original.Clone();
 
-            Assert.NotNull(clone.cekTable);
-            Assert.Same(original.cekTable, clone.cekTable);
-            Assert.Equal(2, clone.cekTable.Size);
+            Assert.NotNull(clone.CekTable);
+            Assert.Same(original.CekTable, clone.CekTable);
+            Assert.Equal(2, clone.CekTable.Size);
         }
 
         [Fact]
@@ -258,13 +258,13 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(System.Data.SqlDbType.Int, clone[1].baseTI.type);
 
             // The cekTable must be preserved on the clone
-            Assert.NotNull(clone.cekTable);
-            Assert.Equal(1, clone.cekTable.Size);
+            Assert.NotNull(clone.CekTable);
+            Assert.Equal(1, clone.CekTable.Size);
 
             // The original must remain completely intact
             Assert.NotNull(original[0]);
             Assert.NotNull(original[1]);
-            Assert.NotNull(original.cekTable);
+            Assert.NotNull(original.CekTable);
             Assert.True(original[1].isEncrypted);
         }
     }

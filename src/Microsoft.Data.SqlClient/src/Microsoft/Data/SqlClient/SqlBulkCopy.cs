@@ -694,7 +694,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
                     // Are we missing a mapping between the result column and
                     // this local column (by ordinal or name)?
-                    if (localColumn._destinationColumnOrdinal != metadata.ordinal
+                    if (localColumn._destinationColumnOrdinal != metadata.Ordinal
                         && UnquotedName(localColumn._destinationColumnName) != metadata.column)
                     {
                         // Yes, so move on to the next local column.
@@ -1685,11 +1685,11 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                             }
                             catch (SqlTruncateException)
                             {
-                                throw SQL.BulkLoadCannotConvertValue(value.GetType(), mt, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), ADP.ParameterValueOutOfRange(sqlValue));
+                                throw SQL.BulkLoadCannotConvertValue(value.GetType(), mt, metadata.Ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), ADP.ParameterValueOutOfRange(sqlValue));
                             }
                             catch (Exception e)
                             {
-                                throw SQL.BulkLoadCannotConvertValue(value.GetType(), mt, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), e);
+                                throw SQL.BulkLoadCannotConvertValue(value.GetType(), mt, metadata.Ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), e);
                             }
                         }
 
@@ -1780,7 +1780,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
                     default:
                         Debug.Fail("Unknown TdsType!" + type.NullableType.ToString("x2", (IFormatProvider)null));
-                        throw SQL.BulkLoadCannotConvertValue(value.GetType(), type, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), null);
+                        throw SQL.BulkLoadCannotConvertValue(value.GetType(), type, metadata.Ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), null);
                 }
 
                 if (typeChanged)
@@ -1797,7 +1797,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 {
                     throw;
                 }
-                throw SQL.BulkLoadCannotConvertValue(value.GetType(), type, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), e);
+                throw SQL.BulkLoadCannotConvertValue(value.GetType(), type, metadata.Ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), e);
             }
         }
 
