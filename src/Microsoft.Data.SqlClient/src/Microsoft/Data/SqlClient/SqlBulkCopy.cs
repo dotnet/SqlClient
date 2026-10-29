@@ -816,7 +816,16 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                         && incoming.DbType == SqlDbType.VarChar;
                     if (!ReferenceEquals(incoming, metadata))
                     {
-                        metadata.CopyFrom(incoming);
+                        // Keep the operation-owned column shared by mappings and TDS metadata;
+                        // only its incoming wire representation changes.
+                        metadata.DbType = incoming.DbType;
+                        metadata.TdsType = incoming.TdsType;
+                        metadata.MetaType = incoming.MetaType;
+                        metadata.length = incoming.length;
+                        metadata.scale = incoming.scale;
+                        metadata.collation = incoming.collation;
+                        metadata.CodePage = incoming.CodePage;
+                        metadata.Encoding = incoming.Encoding;
                     }
                     _sortedColumnMappings.Add(new _ColumnMapping(localColumn._internalSourceColumnOrdinal, metadata));
                     destColumnNames.Add(metadata.column);
