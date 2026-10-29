@@ -87,7 +87,12 @@ try {
         throw 'A 64-bit PowerShell process on Windows is required.'
     }
     Import-Module Microsoft.PowerShell.LocalAccounts -ErrorAction Stop
-    $sqlServerModule = @{ ModuleName = 'SqlServer'; RequiredVersion = '22.4.5.1' }
+    $moduleManifest = Get-Content (Join-Path $PSScriptRoot '..\..\powershell-modules.json') -Raw |
+        ConvertFrom-Json
+    $sqlServerModule = @{
+        ModuleName = 'SqlServer'
+        RequiredVersion = $moduleManifest.modules.SqlServer.version
+    }
     $operation = 'import the SqlServer module'
     Import-Module -FullyQualifiedName $sqlServerModule -ErrorAction Stop
 

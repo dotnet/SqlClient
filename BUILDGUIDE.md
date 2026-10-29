@@ -40,6 +40,48 @@ This repository uses .NET local tools (e.g. PowerShell) that must be restored be
 dotnet tool restore
 ```
 
+### PowerShell Modules
+
+Before running manual tests, net-only account setup, or Pester tests, explicitly restore
+the repository's PowerShell modules from the repository root:
+
+```console
+dotnet tool restore
+dotnet build build.proj -t:RestorePowerShellModules
+```
+
+[`powershell-modules.json`](powershell-modules.json) is the single module/version manifest,
+listing SqlServer, OpenSSL, and Pester with exact versions and per-module `allowClobber` options.
+The target reuses installed exact versions and installs missing versions for the current user.
+SqlServer and OpenSSL allow overlapping command names during installation; restore does not
+import either module into the calling session.
+It does not build the driver or run tests, and is not an automatic dependency of build/test targets.
+Rerun it after changing the manifest or when setting up a new machine/user.
+The Unix certificate tests also require the OS `openssl` executable; the PowerShell module
+does not replace it. Restore and consumption must run as the same user.
+
+[`PowerShell.config`](PowerShell.config), beside `NuGet.config`, is the single feed-address
+configuration for PowerShell modules. Its `sourceLocation` is the public Azure Artifacts
+NuGet v2 endpoint, used anonymously and independently of .NET package sources.
+The restore script registers `SqlClient` once when a missing module needs installation.
+Matching registrations retain their trust policy; conflicting registrations and source/installation
+failures stop explicitly without falling back to PSGallery.
+In a live PowerShellGet 2.2.5 comparison, registration accepted both endpoints, but
+`Find-Module SqlServer -RequiredVersion 22.4.5.1` failed against v3 and succeeded against v2.
+Registration alone does not verify that module lookup works.
+
+Pipelines call `eng/pipelines/common/steps/restore-powershell-modules.yml` immediately after
+.NET tool restore, before building or configuring SQL Server/accounts. The step invokes the
+same target through its standalone file:
+
+```console
+dotnet msbuild tools/targets/RestorePowerShellModules.targets -t:RestorePowerShellModules
+```
+
+This entry point also works locally. It lets pipelines restore queued module tooling when
+testing an older package-producing commit without replacing that commit's `build.proj`.
+Account setup/cleanup and certificate scripts only consume prerequisites; they never install modules.
+
 ## Developer Workflow
 
 Once you've cloned the repository and made your changes to the codebase, it is time to build, test, and optionally
@@ -278,13 +320,14 @@ referenced project consumes SqlClient as a package. Project-mode repository buil
 reference SqlClient's source project directly, so they do not import its packaged
 targets and are not validated by this consumer target.
 
-Run `dotnet tool restore` first to restore the repository's pinned PowerShell tool.
-The regression suite also requires Pester 6.2.0:
+Restore [.NET tools and PowerShell modules](#powershell-modules) first, then run:
 
 ```powershell
-dotnet tool run pwsh -NoProfile -File .\eng\scripts\Register-SqlClientPSRepository.ps1 -RepositoryName SqlClient
-dotnet tool run pwsh -NoProfile -Command 'Install-Module Pester -RequiredVersion 6.2.0 -Repository SqlClient -Scope CurrentUser -Force'
-dotnet tool run pwsh -NoProfile -Command 'Import-Module Pester -RequiredVersion 6.2.0; Invoke-Pester -Path ./src/Microsoft.Data.SqlClient/tests/VersionChecks/VersionChecks.Tests.ps1 -CI'
+dotnet tool run pwsh -- -NoProfile -Command '
+    $modules = Get-Content ./powershell-modules.json -Raw | ConvertFrom-Json
+    Import-Module Pester -RequiredVersion $modules.modules.Pester.version
+    Invoke-Pester -Path ./src/Microsoft.Data.SqlClient/tests/VersionChecks/VersionChecks.Tests.ps1 -CI
+'
 ```
 
 The parameterized Pester suite creates small family-package fixtures in a private local
@@ -295,46 +338,7 @@ build is needed. It uses a unique directory under `tests/VersionChecks` and remo
 directory on completion; no SQL Server is required.
 Add `-Tag Synthetic` to `Invoke-Pester` to run only the metadata and legacy manifest
 matrix without packing consumer fixtures.
-The suite is available for local execution only. PR and OneBranch pipelines do not
-install Pester or run these tests.
-
-`PowerShell.config`, alongside `NuGet.config` in the repository root, is the single
-feed-address configuration for PowerShell modules. Set its repository's
-`sourceLocation` to the Azure Artifacts NuGet v2 endpoint. The registration helper
-reads that URL directly and registers it anonymously; it does not read or derive
-anything from the .NET package sources in `NuGet.config`.
-It creates a trusted PowerShellGet repository under the supplied name for the current
-user, or reuses a matching registration without changing its trust policy. Conflicting
-registrations and source failures stop explicitly; there is no fallback to PSGallery.
-In a live PowerShellGet 2.2.5 comparison, registration accepted both endpoints, but
-`Find-Module SqlServer -RequiredVersion 22.4.5.1` failed against v3 and succeeded
-against v2. The helper uses v2 for this toolchain; registration alone does not verify
-that module lookup works.
-
-Pipelines install prerequisites with the reusable
-`eng/pipelines/common/templates/steps/install-powershell-module-step.yml` template.
-It accepts a module `name`, optional `requiredVersion`, `skipIfInstalled`, and
-`allowClobber`. Module names and versions are literal template parameters, not
-runtime `$(variables)`. The step calls the registration helper and immediately
-uses the returned repository name for `Install-Module` in the same inline script.
-Repository names do not travel through jobs, test configuration, or subprocesses.
-
-Jobs install their PowerShell prerequisites together after restoring .NET tools,
-before building or configuring SQL Server/accounts. Windows net-only jobs install
-SqlServer 22.4.5.1; Linux local-server manual-test jobs that include set 1 install
-OpenSSL; Linux Kerberos jobs install unpinned SqlServer. Account setup/cleanup and
-certificate scripts only consume these prerequisites and never install modules.
-Registration, installation, and consumption must run as the same user.
-For local runs, register the source and install the needed modules before invoking
-those scripts:
-
-```powershell
-$repository = & .\eng\scripts\Register-SqlClientPSRepository.ps1 -RepositoryName SqlClient
-# Before Windows net-only account setup, using PowerShell 7.4 or later:
-Install-Module SqlServer -RequiredVersion 22.4.5.1 -Repository $repository -Scope CurrentUser -Force -AllowClobber
-# Before Unix certificate tests (the openssl executable must also be installed):
-Install-Module OpenSSL -Repository $repository -Scope CurrentUser -Force
-```
+The suite is available for local execution only. PR and OneBranch pipelines do not run it.
 
 Just like building and testing the various projects in this repository, packaging the projects into NuGet packages is
 also handled by `build.proj`. From the root of your repository, run `dotnet build` against `build.proj` with a pack target,

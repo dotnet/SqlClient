@@ -102,7 +102,11 @@ steps:
       DOMAIN_PASSWORD: ${{ parameters.kerberosDomainPassword }}
 
   - pwsh: |
-      Import-Module SqlServer
+      $modules = Get-Content "$(Build.SourcesDirectory)/powershell-modules.json" -Raw | ConvertFrom-Json
+      Import-Module -FullyQualifiedName @{
+          ModuleName = 'SqlServer'
+          RequiredVersion = $modules.modules.SqlServer.version
+      }
       Invoke-Sqlcmd -Query "SELECT @@VERSION, @@SERVERNAME" -ConnectionString $env:REMOTE_TCP_CONN_STRING
     displayName: Verify SQL connectivity
     env:

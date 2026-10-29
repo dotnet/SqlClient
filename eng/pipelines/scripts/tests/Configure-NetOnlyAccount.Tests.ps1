@@ -5,6 +5,8 @@
 BeforeAll {
     $scriptPath = Join-Path $PSScriptRoot '..\..\..\scripts\Configure-NetOnlyAccount.ps1'
     $templatePath = Join-Path $PSScriptRoot '..\..\common\templates\steps\configure-netonly-account-step.yml'
+    $moduleManifestPath = Join-Path $PSScriptRoot '..\..\..\..\powershell-modules.json'
+    $sqlServerVersion = (Get-Content $moduleManifestPath -Raw | ConvertFrom-Json).modules.SqlServer.version
 }
 
 Describe 'Net-only provisioning runtime' {
@@ -59,12 +61,23 @@ Describe 'Net-only provisioning lifecycle' -Skip:(-not $IsWindows) {
         Mock Invoke-Sqlcmd {}
     }
 
+    It 'uses the SqlServer version from the shared manifest' {
+        Mock Get-Content { '{"modules":{"SqlServer":{"version":"9.8.7.6"}}}' }
+
+        & $scriptPath -Mode setup
+
+        Should -Invoke Import-Module -Times 1 -Exactly -ParameterFilter {
+            $FullyQualifiedName.Name -eq 'SqlServer' -and
+            $FullyQualifiedName.RequiredVersion -eq '9.8.7.6'
+        }
+    }
+
     It 'loads the pinned module before creating an account and uses TCP with integrated authentication' {
         & $scriptPath -Mode setup -Port 15433
 
         Should -Invoke Import-Module -Times 1 -Exactly -ParameterFilter {
             $FullyQualifiedName.Name -eq 'SqlServer' -and
-            $FullyQualifiedName.RequiredVersion -eq '22.4.5.1'
+            $FullyQualifiedName.RequiredVersion -eq $sqlServerVersion
         }
         Should -Invoke Install-Module -Times 0 -Exactly
         Should -Invoke Invoke-Sqlcmd -Times 1 -Exactly -ParameterFilter {

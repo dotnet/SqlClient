@@ -120,15 +120,7 @@ stages:
                   mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
                   sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
                   sqlServerPackageVersion: $(sqlServerPackageVersion)
-                  prebuildSteps:
-                    - ${{ if and(eq(config.value.operatingSystem, 'Windows'), eq(config.value.configSqlFor, 'local'), eq(testSet, '3'), eq(coalesce(config.value.configProperties.instanceName, 'MSSQLSERVER'), 'MSSQLSERVER')) }}:
-                      - template: /eng/pipelines/common/templates/steps/install-powershell-module-step.yml@self
-                        parameters:
-                          name: SqlServer
-                          requiredVersion: 22.4.5.1
-                          skipIfInstalled: true
-                          allowClobber: true
-                    - ${{ parameters.prebuildSteps }}
+                  prebuildSteps: ${{ parameters.prebuildSteps }}
                   targetFramework: ${{ targetFramework }}
                   netcoreVersionTestUtils: ${{config.value.netcoreVersionTestUtils }}
                   testSet: ${{ testSet }}
@@ -163,20 +155,7 @@ stages:
                     mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
                     sqlServerArtifactsName: ${{ parameters.sqlServerArtifactsName }}
                     sqlServerPackageVersion: $(sqlServerPackageVersion)
-                    prebuildSteps:
-                      - ${{ if and(eq(config.value.operatingSystem, 'Windows'), eq(config.value.configSqlFor, 'local'), eq(testSet, '3'), eq(coalesce(config.value.configProperties.instanceName, 'MSSQLSERVER'), 'MSSQLSERVER')) }}:
-                        - template: /eng/pipelines/common/templates/steps/install-powershell-module-step.yml@self
-                          parameters:
-                            name: SqlServer
-                            requiredVersion: 22.4.5.1
-                            skipIfInstalled: true
-                            allowClobber: true
-                      - ${{ if and(eq(config.value.operatingSystem, 'Linux'), eq(config.value.configSqlFor, 'local'), contains(testSet, '1')) }}:
-                        - template: /eng/pipelines/common/templates/steps/install-powershell-module-step.yml@self
-                          parameters:
-                            name: OpenSSL
-                            skipIfInstalled: true
-                      - ${{ parameters.prebuildSteps }}
+                    prebuildSteps: ${{ parameters.prebuildSteps }}
                     targetFramework: ${{ targetFramework }}
                     netcoreVersionTestUtils: ${{config.value.netcoreVersionTestUtils }}
                     testSet: ${{ testSet }}

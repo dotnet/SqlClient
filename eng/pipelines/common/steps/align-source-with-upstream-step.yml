@@ -10,8 +10,8 @@
 #
 # IMPORTANT: Pipeline definitions and @self templates are compiled from the triggered branch tip at
 # queue time, but file-based tasks still read scripts from the runtime working tree.  After aligning
-# the source, this template restores eng/pipelines, PowerShell.config and the registration helper
-# from the queued commit so compiled pipeline steps and their scripts remain in lockstep.
+# the source, this template restores pipeline/module-restore files from the queued commit
+# so compiled pipeline steps and their runtime dependencies remain in lockstep.
 #
 # The consuming pipeline MUST declare the upstream pipeline as a resource whose alias matches the
 # upstreamPipeline parameter, e.g.:
@@ -56,8 +56,8 @@ steps:
       Write-Host "Aligning source to ${{ parameters.upstreamPipeline }} commit $sha"
       git checkout --force $sha
       if ($LASTEXITCODE -ne 0) { throw "Failed to check out upstream commit $sha." }
-      Write-Host "Restoring pipeline definitions, PowerShell.config and registration helper from queued pipeline commit $pipelineSourceSha"
-      git checkout --force $pipelineSourceSha -- eng/pipelines eng/scripts/Register-SqlClientPSRepository.ps1 PowerShell.config
-      if ($LASTEXITCODE -ne 0) { throw "Failed to restore pipeline definitions, PowerShell.config and registration helper from $pipelineSourceSha." }
+      Write-Host "Restoring pipeline definitions and module-restore files from queued pipeline commit $pipelineSourceSha"
+      git checkout --force $pipelineSourceSha -- eng/pipelines eng/scripts/Register-SqlClientPSRepository.ps1 eng/scripts/Restore-PowerShellModules.ps1 PowerShell.config powershell-modules.json tools/targets/RestorePowerShellModules.targets
+      if ($LASTEXITCODE -ne 0) { throw "Failed to restore pipeline definitions and module-restore files from $pipelineSourceSha." }
     displayName: Align Source With Upstream Commit
     condition: ne(variables['resources.pipeline.${{ parameters.upstreamPipeline }}.sourceCommit'], '')

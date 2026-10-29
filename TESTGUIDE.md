@@ -92,6 +92,19 @@ build step is not required. In package mode, prepare the referenced packages fir
 
 ## Test Targets
 
+Before manual tests or their certificate/account setup, explicitly restore PowerShell modules
+from the repository root:
+
+```console
+dotnet tool restore
+dotnet build build.proj -t:RestorePowerShellModules
+```
+
+This restores all versions in `powershell-modules.json` for the current user and reuses
+matching installed versions. Test targets do not install modules automatically.
+On Unix, also install the OS `openssl` executable before certificate tests.
+See [PowerShell module setup](BUILDGUIDE.md#powershell-modules) for feed and pipeline details.
+
 | Target                    | Description                                                                                                              |
 |---------------------------|--------------------------------------------------------------------------------------------------------------------------|
 | `Test`                    | Runs the Abstractions, Azure, AKV Provider, and SqlClient test targets below. Excludes tool tests and performance/stress runners. |

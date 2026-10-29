@@ -127,7 +127,7 @@ Describe 'SqlClient PowerShell repository registration' {
 Describe 'Module prerequisite pipeline wiring' {
     It 'restores the queued module config and helpers when aligning to an older package commit' {
         $source = Get-Content (Join-Path $repoRoot 'eng\pipelines\common\steps\align-source-with-upstream-step.yml') -Raw
-        $source | Should -Match 'git checkout --force \$pipelineSourceSha -- eng/pipelines eng/scripts/Register-SqlClientPSRepository.ps1 PowerShell.config'
+        $source | Should -Match 'git checkout --force \$pipelineSourceSha -- eng/pipelines eng/scripts/Register-SqlClientPSRepository.ps1 eng/scripts/Restore-PowerShellModules.ps1 PowerShell.config powershell-modules.json tools/targets/RestorePowerShellModules.targets'
         $directory = Join-Path $TestDrive 'alignment'
         New-Item -ItemType Directory -Path $directory | Out-Null
         Push-Location $directory
@@ -139,13 +139,19 @@ Describe 'Module prerequisite pipeline wiring' {
             New-Item -ItemType Directory -Path 'eng\pipelines' -Force | Out-Null
             'old pipeline' | Set-Content 'eng\pipelines\fixture.yml'
             'old source' | Set-Content 'source.txt'
+            '<Project><Target Name="OldBuild" /></Project>' | Set-Content 'build.proj'
             git add .
             git -c commit.gpgsign=false commit --quiet -m old
             $LASTEXITCODE | Should -Be 0
             $upstream = git rev-parse HEAD
             New-Item -ItemType Directory -Path 'eng\scripts' -Force | Out-Null
             Copy-Item -LiteralPath $scriptPath -Destination 'eng\scripts'
+            Copy-Item (Join-Path $repoRoot 'eng\scripts\Restore-PowerShellModules.ps1') 'eng\scripts'
             Copy-Item (Join-Path $repoRoot 'PowerShell.config') '.'
+            Copy-Item (Join-Path $repoRoot 'powershell-modules.json') '.'
+            New-Item -ItemType Directory -Path 'tools\targets' -Force | Out-Null
+            Copy-Item (Join-Path $repoRoot 'tools\targets\RestorePowerShellModules.targets') 'tools\targets'
+            '<Project><Target Name="NewBuild" /></Project>' | Set-Content 'build.proj'
             'queued pipeline' | Set-Content 'eng\pipelines\fixture.yml'
             'new source' | Set-Content 'source.txt'
             git add .
@@ -155,89 +161,63 @@ Describe 'Module prerequisite pipeline wiring' {
             git checkout --quiet --force $upstream
             $LASTEXITCODE | Should -Be 0
             Test-Path 'eng\scripts\Register-SqlClientPSRepository.ps1' | Should -BeFalse
+            Test-Path 'eng\scripts\Restore-PowerShellModules.ps1' | Should -BeFalse
             Test-Path 'PowerShell.config' | Should -BeFalse
+            Test-Path 'powershell-modules.json' | Should -BeFalse
+            Test-Path 'tools\targets\RestorePowerShellModules.targets' | Should -BeFalse
             $restore = [regex]::Match($source, '(?m)^\s*(git checkout --force \$pipelineSourceSha -- .+)$').Groups[1].Value
             & ([scriptblock]::Create($restore))
             $LASTEXITCODE | Should -Be 0
             Get-Content 'source.txt' | Should -Be 'old source'
+            Get-Content 'build.proj' | Should -Be '<Project><Target Name="OldBuild" /></Project>'
             Get-Content 'eng\pipelines\fixture.yml' | Should -Be 'queued pipeline'
             Get-Content 'PowerShell.config' -Raw |
                 Should -Be (Get-Content (Join-Path $repoRoot 'PowerShell.config') -Raw)
             Get-Content 'eng\scripts\Register-SqlClientPSRepository.ps1' -Raw |
                 Should -Be (Get-Content $scriptPath -Raw)
+            foreach ($path in @('eng\scripts\Restore-PowerShellModules.ps1',
+                    'powershell-modules.json', 'tools\targets\RestorePowerShellModules.targets')) {
+                Get-Content $path -Raw | Should -Be (Get-Content (Join-Path $repoRoot $path) -Raw)
+            }
         }
         finally {
             Pop-Location
         }
     }
 
-    It 'installs OpenSSL only for Linux local-server set-1 jobs in <Path>' -ForEach @(
-        @{ Path = 'eng\pipelines\common\templates\stages\ci-run-tests-stage.yml'; Condition = "and(eq(config.value.operatingSystem, 'Linux'), eq(config.value.configSqlFor, 'local'), contains(testSet, '1'))" }
-        @{ Path = 'eng\pipelines\pr\jobs\test-sqlclientmanual-job.yml'; Condition = "and(eq(parameters.platformOperatingSystem, 'Linux'), parameters.isLocalServer, contains(parameters.testSet, '1'))" }
+    It 'restores modules once after dotnet tools and before setup in <Path>' -ForEach @(
+        @{ Path = 'eng\pipelines\common\templates\jobs\ci-run-tests-job.yml'; Next = 'ci-project-build-step.yml' }
+        @{ Path = 'eng\pipelines\pr\jobs\test-sqlclientmanual-job.yml'; Next = 'configure-sqlserver-step.yml' }
+        @{ Path = 'eng\pipelines\ci\kerberos\sqlclient-ci-kerberos-job.yml'; Next = 'linux-setup-step.yml' }
     ) {
         $source = Get-Content (Join-Path $repoRoot $Path) -Raw
-        $source | Should -Match ([regex]::Escape($Condition))
-        $source | Should -Match 'install-powershell-module-step.yml@self\r?\n\s+parameters:\r?\n\s+name: OpenSSL\r?\n\s+skipIfInstalled: true'
-        if ($Path -like '*\pr\*') {
-            $source.IndexOf('install-powershell-module-step.yml') |
-                Should -BeLessThan $source.IndexOf('TestSqlClientManual')
-        }
-        $source | Should -Not -Match '[Pp]owerShellRepository|Register-.*PSRepository'
+        ([regex]::Matches($source, 'restore-powershell-modules.yml@self')).Count | Should -Be 1
+        $source.IndexOf('restore-dotnet-tools.yml') |
+            Should -BeLessThan $source.IndexOf('restore-powershell-modules.yml')
+        $source.IndexOf('restore-powershell-modules.yml') | Should -BeLessThan $source.IndexOf($Next)
+        $source | Should -Not -Match 'install-powershell-module-step|(?m:^\s+name: (OpenSSL|SqlServer)\s*$)'
     }
 
-    It 'adds the Linux prerequisite through prebuild steps without specializing the shared job' {
+    It 'preserves existing prebuild steps without module-specific stage gates' {
         $stage = Get-Content (Join-Path $repoRoot 'eng\pipelines\common\templates\stages\ci-run-tests-stage.yml') -Raw
-        $modernStart = $stage.IndexOf('- ${{ else }}: # .NET')
-        $modernStart | Should -BeGreaterThan 0
-        $stage.Substring(0, $modernStart) | Should -Not -Match 'name: OpenSSL'
-        $modern = $stage.Substring($modernStart)
-        $modern | Should -Match 'prebuildSteps:\r?\n\s+- \$\{\{ if and\(eq\(config.value.operatingSystem'
-        $modern | Should -Match 'skipIfInstalled: true\r?\n\s+- \$\{\{ parameters.prebuildSteps \}\}'
+        ([regex]::Matches($stage, 'prebuildSteps: \$\{\{ parameters.prebuildSteps \}\}')).Count |
+            Should -Be 2
+        $stage | Should -Not -Match 'OpenSSL|SqlServer\r?\n|install-powershell-module-step'
         $job = Get-Content (Join-Path $repoRoot 'eng\pipelines\common\templates\jobs\ci-run-tests-job.yml') -Raw
-        $job | Should -Not -Match 'OpenSSL|install-powershell-module-step'
         $job.IndexOf('- ${{ parameters.prebuildSteps }}') |
             Should -BeLessThan $job.IndexOf('ci-project-build-step.yml')
     }
 
-    It 'installs pinned SqlServer alongside other job prerequisites in <Path>' -ForEach @(
-        @{
-            Path = 'eng\pipelines\common\templates\stages\ci-run-tests-stage.yml'
-            Condition = "and(eq(config.value.operatingSystem, 'Windows'), eq(config.value.configSqlFor, 'local'), eq(testSet, '3'), eq(coalesce(config.value.configProperties.instanceName, 'MSSQLSERVER'), 'MSSQLSERVER'))"
-        }
-        @{
-            Path = 'eng\pipelines\pr\jobs\test-sqlclientmanual-job.yml'
-            Condition = "and(eq(parameters.platformOperatingSystem, 'Windows'), parameters.isLocalServer, eq(parameters.configDisplayName, 'localhost'), contains(parameters.testSet, '3'))"
-        }
-    ) {
-        $source = Get-Content (Join-Path $repoRoot $Path) -Raw
-        $source | Should -Match ([regex]::Escape($Condition))
-        $source | Should -Match 'name: SqlServer\r?\n\s+requiredVersion: 22.4.5.1\r?\n\s+skipIfInstalled: true\r?\n\s+allowClobber: true'
-        if ($Path -like '*\pr\*') {
-            $source.IndexOf('restore-dotnet-tools.yml') |
-                Should -BeLessThan $source.IndexOf('install-powershell-module-step.yml')
-            $source.IndexOf('install-powershell-module-step.yml') |
-                Should -BeLessThan $source.IndexOf('configure-sqlserver-step.yml')
-        }
-        else {
-            ([regex]::Matches($source, 'name: SqlServer')).Count | Should -Be 2
-        }
+    It 'keeps restore out of account setup and cleanup' {
         $account = Get-Content (Join-Path $repoRoot 'eng\pipelines\common\templates\steps\configure-netonly-account-step.yml') -Raw
-        $account | Should -Not -Match 'install-powershell-module|Install-Module'
-        $source | Should -Not -Match '[Pp]owerShellRepository'
+        $account | Should -Not -Match 'restore-powershell|install-powershell|Install-Module'
     }
 
-    It 'installs unpinned SqlServer before the Kerberos connectivity check' {
-        $source = Get-Content (Join-Path $repoRoot 'eng\pipelines\ci\kerberos\sqlclient-ci-kerberos-job.yml') -Raw
-        $source | Should -Match "if eq\(parameters.operatingSystem, 'Linux'\)"
-        $source | Should -Match 'install-powershell-module-step.yml@self\r?\n\s+parameters:\r?\n\s+name: SqlServer'
-        $source.IndexOf('restore-dotnet-tools.yml') |
-            Should -BeLessThan $source.IndexOf('install-powershell-module-step.yml')
-        $source.IndexOf('install-powershell-module-step.yml') |
-            Should -BeLessThan $source.IndexOf('linux-setup-step.yml')
-        $source | Should -Not -Match 'requiredVersion|Install-Module|[Pp]owerShellRepository'
+    It 'imports the centrally pinned SqlServer version for Kerberos connectivity' {
         $setup = Get-Content (Join-Path $repoRoot 'eng\pipelines\ci\kerberos\linux-setup-step.yml') -Raw
-        $setup | Should -Not -Match 'install-powershell-module|Install-Module'
-        $setup | Should -Match 'Import-Module SqlServer'
+        $setup | Should -Not -Match 'restore-powershell|install-powershell|Install-Module'
+        $setup | Should -Match 'powershell-modules.json'
+        $setup | Should -Match 'RequiredVersion = \$modules.modules.SqlServer.version'
     }
 
     It 'keeps module installation and repository plumbing out of <Path>' -ForEach @(
@@ -252,21 +232,9 @@ Describe 'Module prerequisite pipeline wiring' {
             Should -Not -Match 'Install-Module|Register-.*PSRepository|[Pp]owerShellRepository'
     }
 
-    It 'escapes module inputs in one shared template' {
-        $source = Get-Content (Join-Path $repoRoot 'eng\pipelines\common\templates\steps\install-powershell-module-step.yml') -Raw
-        $source | Should -Match 'Register-SqlClientPSRepository.ps1'
-        $source | Should -Match 'Install-Module @install'
-        $source | Should -Match 'Module name and version must be literal template parameters'
-        $source | Should -Not -Match 'Install-SqlClientPSModule|https://|env:'
-        foreach ($parameter in @('name', 'requiredVersion')) {
-            $pattern = "'\$\{\{ replace\(parameters\.$parameter, '{4}, '{6}\) \}\}'"
-            $literal = [regex]::Match($source, $pattern).Value
-            $literal | Should -Not -BeNullOrEmpty
-            foreach ($value in @('SqlServer', "a'; throw 'injected'; #", 'a`";${value};#',
-                    "a'`nthrow 'injected")) {
-                $expanded = [regex]::Replace($literal, '\$\{\{.*?\}\}', { $value.Replace("'", "''") })
-                & ([scriptblock]::Create($expanded)) | Should -BeExactly $value
-            }
-        }
+    It 'calls the standalone build hook without interpolating module data into YAML' {
+        $source = Get-Content (Join-Path $repoRoot 'eng\pipelines\common\steps\restore-powershell-modules.yml') -Raw
+        $source | Should -Match 'dotnet msbuild tools/targets/RestorePowerShellModules.targets -t:RestorePowerShellModules'
+        $source | Should -Not -Match 'Install-Module|Register-.*PSRepository|parameters:|env:|replace\('
     }
 }
