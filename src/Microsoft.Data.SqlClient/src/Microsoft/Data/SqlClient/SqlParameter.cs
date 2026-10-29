@@ -1131,10 +1131,8 @@ namespace Microsoft.Data.SqlClient
             );
             destination._metaType = _metaType;
             destination._collation = _collation;
-            if (_xmlTypeInfo != null)
-            {
-                destination.EnsureXmlSchemaCollection().CopyFrom(_xmlTypeInfo);
-            }
+
+            destination._xmlTypeInfo = _xmlTypeInfo?.Clone();
             destination._udtTypeName = _udtTypeName;
             destination._typeName = _typeName;
             destination._udtLoadError = _udtLoadError;
