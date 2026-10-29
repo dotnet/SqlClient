@@ -53,10 +53,10 @@ namespace Microsoft.Data.SqlClient
     // The controlling class for one result (metadata + rows)
     internal sealed class Result
     {
-        private readonly _SqlMetaDataSet _metadata;
+        private readonly TdsColumnMetadataToken _metadata;
         private readonly List<Row> _rowset;
 
-        internal Result(_SqlMetaDataSet metadata)
+        internal Result(TdsColumnMetadataToken metadata)
         {
             _metadata = metadata;
             _rowset = new List<Row>();
@@ -64,7 +64,7 @@ namespace Microsoft.Data.SqlClient
 
         internal int Count => _rowset.Count;
 
-        internal _SqlMetaDataSet MetaData => _metadata;
+        internal TdsColumnMetadataToken MetaData => _metadata;
 
         internal Row this[int index] => _rowset[index];
 
@@ -87,7 +87,7 @@ namespace Microsoft.Data.SqlClient
 
         // Callback function for the tdsparser
         // (note that setting the metadata adds a resultset)
-        internal void SetMetaData(_SqlMetaDataSet metadata)
+        internal void SetMetaData(TdsColumnMetadataToken metadata)
         {
             _resultSet = new Result(metadata);
             _results.Add(_resultSet);
@@ -243,7 +243,7 @@ namespace Microsoft.Data.SqlClient
         // Per-operation clone of the destination table metadata, used when CacheMetadata is
         // enabled so that column-pruning in AnalyzeTargetAndCreateUpdateBulkCommand does not
         // mutate the cached BulkCopySimpleResultSet.
-        private _SqlMetaDataSet _operationMetaData;
+        private TdsColumnMetadataToken _operationMetaData;
 
 #if DEBUG
         internal static bool s_setAlwaysTaskOnWrite; //when set and in DEBUG mode, TdsParser::WriteBulkCopyValue will always return a task
@@ -629,7 +629,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         // metaDataSet is passed in by the caller so that when CacheMetadata is enabled, the
         // caller can supply a clone, allowing this method to null-prune unmatched/rejected
         // columns freely without mutating the shared cache.
-        private string AnalyzeTargetAndCreateUpdateBulkCommand(BulkCopySimpleResultSet internalResults, _SqlMetaDataSet metaDataSet)
+        private string AnalyzeTargetAndCreateUpdateBulkCommand(BulkCopySimpleResultSet internalResults, TdsColumnMetadataToken metaDataSet)
         {
             Debug.Assert(internalResults != null, "Where are the results from the initial query?");
             Debug.Assert(metaDataSet != null, "metaDataSet must not be null");
@@ -975,7 +975,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         {
             _stateObj.SetTimeoutSeconds(BulkCopyTimeout);
 
-            _SqlMetaDataSet metadataCollection = _operationMetaData ?? internalResults[MetaDataResultId].MetaData;
+            TdsColumnMetadataToken metadataCollection = _operationMetaData ?? internalResults[MetaDataResultId].MetaData;
             _stateObj._outputMessageType = TdsEnums.MT_BULK;
             _parser.WriteBulkCopyMetaData(metadataCollection, _sortedColumnMappings.Count, _stateObj);
         }
@@ -2953,7 +2953,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 // CreateAndExecuteInitialQueryAsync). Clone the metadata set so that
                 // AnalyzeTargetAndCreateUpdateBulkCommand can null-prune unmatched/rejected
                 // columns without mutating the cache across WriteToServer calls.
-                _SqlMetaDataSet metaDataSet = CachedMetadata != null
+                TdsColumnMetadataToken metaDataSet = CachedMetadata != null
                     ? internalResults[MetaDataResultId].MetaData.Clone()
                     : internalResults[MetaDataResultId].MetaData;
                 updateBulkCommandText = AnalyzeTargetAndCreateUpdateBulkCommand(internalResults, metaDataSet);

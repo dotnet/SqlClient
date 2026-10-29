@@ -9,8 +9,9 @@ using System.Diagnostics;
 
 namespace Microsoft.Data.SqlClient.Parser.Tokens
 {
-    internal sealed class _SqlMetaDataSet
+    internal sealed class TdsColumnMetadataToken
     {
+        internal readonly SqlTceCipherInfoTable cekTable; // table of "column encryption keys" used for this metadataset
         internal ushort id;             // for altrow-columns only
 
         internal DataTable schemaTable;
@@ -20,7 +21,7 @@ namespace Microsoft.Data.SqlClient.Parser.Tokens
         private int _hiddenColumnCount;
         private int[] _visibleColumnMap;
 
-        internal _SqlMetaDataSet(int count)
+        internal TdsColumnMetadataToken(int count)
         {
             _hiddenColumnCount = -1;
             _metaDataArray = new _SqlMetaData[count];
@@ -30,7 +31,13 @@ namespace Microsoft.Data.SqlClient.Parser.Tokens
             }
         }
 
-        private _SqlMetaDataSet(_SqlMetaDataSet original)
+        internal TdsColumnMetadataToken(int count, SqlTceCipherInfoTable cipherTable)
+            : this(count)
+        {
+            cekTable = cipherTable;
+        }
+
+        private TdsColumnMetadataToken(TdsColumnMetadataToken original)
         {
             id = original.id;
             _hiddenColumnCount = original._hiddenColumnCount;
@@ -102,9 +109,9 @@ namespace Microsoft.Data.SqlClient.Parser.Tokens
             }
         }
 
-        public _SqlMetaDataSet Clone()
+        public TdsColumnMetadataToken Clone()
         {
-            return new _SqlMetaDataSet(this);
+            return new TdsColumnMetadataToken(this);
         }
 
         private void SetupHiddenColumns()
@@ -133,14 +140,6 @@ namespace Microsoft.Data.SqlClient.Parser.Tokens
                 _visibleColumnMap = visibleColumnMap;
             }
             _hiddenColumnCount = hiddenColumnCount;
-        }
-
-        internal readonly SqlTceCipherInfoTable cekTable; // table of "column encryption keys" used for this metadataset
-
-        internal _SqlMetaDataSet(int count, SqlTceCipherInfoTable cipherTable)
-            : this(count)
-        {
-            cekTable = cipherTable;
         }
     }
 }

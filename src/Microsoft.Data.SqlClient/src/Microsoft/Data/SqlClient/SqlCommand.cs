@@ -176,7 +176,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Cut down on object creation and cache all the cached metadata
         /// </summary>
-        private _SqlMetaDataSet _cachedMetaData;
+        private TdsColumnMetadataToken _cachedMetaData;
 
         /// <summary>
         /// Column Encryption Override. Defaults to SqlConnectionSetting, in which case it will be
@@ -894,7 +894,7 @@ namespace Microsoft.Data.SqlClient
 
         // @TODO: Autoproperty
         // @TODO: MetaData or Metadata?
-        internal _SqlMetaDataSet MetaData => _cachedMetaData;
+        internal TdsColumnMetadataToken MetaData => _cachedMetaData;
 
         // @TODO: Rename to match conventions.
         internal int ObjectID { get; } = Interlocked.Increment(ref _objectTypeCount);
