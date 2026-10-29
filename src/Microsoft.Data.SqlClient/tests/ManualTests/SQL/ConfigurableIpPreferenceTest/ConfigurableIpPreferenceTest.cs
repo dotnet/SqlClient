@@ -59,7 +59,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [InlineData(";IPAddressPreference=UsePlatformDefault")]
         public void ConfigurableIpPreference(string ipPreference)
         {
+            // MSF ignores IPAddressPreference, so turn it off.
             using (SqlConnection connection = CreateConnection(TCPConnectionString + ipPreference
+                + ";MultiSubnetFailover=false"
 #if NETFRAMEWORK
                 + ";TransparentNetworkIPResolution=false"   // doesn't support in .NET Core
 #endif
