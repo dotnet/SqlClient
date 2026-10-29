@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="SQL_CannotCreateAuthProvider" xml:space="preserve">
+    <value>Failed to instantiate an authentication provider with type '{1}' for '{0}'.</value>
+  </data>
+  <data name="SQL_CannotCreateAuthInitializer" xml:space="preserve">
+    <value>Failed to instantiate a SqlAuthenticationInitializer with type '{0}'.</value>
+  </data>
+  <data name="SQL_UnsupportedAuthenticationByProvider" xml:space="preserve">
+    <value>The provider '{0}' does not support authentication '{1}'.</value>
+  </data>
+  <data name="SQL_UnsupportedAuthentication" xml:space="preserve">
+    <value>The authentication '{0}' is not supported.</value>
+  </data>
+  <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
+    <value>Setting 'useWamBroker' requires the 'Microsoft.Data.SqlClient.Extensions.Azure' package to expose 'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions'. Upgrade the 'Microsoft.Data.SqlClient.Extensions.Azure' package to at least v1.1.0 that includes this type.</value>
+  </data>
+  <data name="SQL_InvalidAuthenticationProviderCollection" xml:space="preserve">
+    <value>The authentication configuration property 'providers' must be a ProviderSettingsCollection.</value>
+  </data>
+  <data name="SQL_InvalidAuthenticationBrokerValue" xml:space="preserve">
+    <value>Invalid authentication configuration value '{0}' for 'useWamBroker'; expected 'true' or 'false'.</value>
+  </data>
+  <data name="SQL_MissingAuthenticationConfigurationProperty" xml:space="preserve">
+    <value>The authentication configuration is missing property '{0}'.</value>
+  </data>
+  <data name="SQL_InvalidAuthenticationConfigurationPropertyType" xml:space="preserve">
+    <value>Authentication configuration property '{0}' must be a string.</value>
+  </data>
+  <data name="SQL_InvalidAuthenticationConfigurationHandler" xml:space="preserve">
+    <value>Authentication configuration section '{0}' must use handler '{1}'; found '{2}'.</value>
+  </data>
+  <data name="SQL_InvalidAuthenticationInitializerInstance" xml:space="preserve">
+    <value>The configured initializer must create a non-null SqlAuthenticationInitializer instance.</value>
+  </data>
+  <data name="SQL_InvalidAuthenticationProviderInstance" xml:space="preserve">
+    <value>The configured provider must create a non-null SqlAuthenticationProvider instance.</value>
+  </data>
+  <data name="SQL_CannotRegisterAuthProvider" xml:space="preserve">
+    <value>Configured authentication provider '{1}' could not be registered for method '{0}'.</value>
+  </data>
+</root>

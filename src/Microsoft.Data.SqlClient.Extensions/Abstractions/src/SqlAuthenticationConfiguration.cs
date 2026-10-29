@@ -14,8 +14,6 @@ namespace Microsoft.Data.SqlClient;
 /// </summary>
 internal sealed class SqlAuthenticationConfiguration
 {
-    // TODO: Localize exception messages in a later PR.
-
     /// <summary>The client ID override, or null to preserve the Azure provider's default.</summary>
     internal string? ApplicationClientId { get; }
 
@@ -225,8 +223,7 @@ internal sealed class SqlAuthenticationConfiguration
             case "active directory workload identity":
                 return SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity;
             default:
-                throw new NotSupportedException(
-                    $"Configured authentication method '{authentication}' is not supported.");
+                throw AuthenticationStrings.UnsupportedAuthentication(authentication);
         }
     }
 }
