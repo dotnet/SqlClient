@@ -51,7 +51,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [InlineData("Parser.Tokens.TdsColumnMetadata")]
         [InlineData("Parser.Tokens.TdsColumnMetadataToken")]
         [InlineData("Parser.Tokens.TdsColumnMetadataTokenCollection")]
-        [InlineData("Parser.Tokens.MultiPartTableName")]
+        [InlineData("Parser.Tokens.TdsTableName")]
         [InlineData("Parser.Tokens.RoutingInfo")]
         public void ParserTypesCanBeResolvedByName(string name)
         {
