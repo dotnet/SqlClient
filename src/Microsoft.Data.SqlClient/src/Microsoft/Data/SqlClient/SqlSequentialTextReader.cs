@@ -543,7 +543,7 @@ namespace Microsoft.Data.SqlClient
                 if (!BitConverter.IsLittleEndian)
                 {
                     Span<byte> span = bytes.AsSpan();
-                    for (int ii = 0; ii < byteCount; ii += 2)
+                    for (int ii = byteIndex; ii < byteIndex + bytesUsed; ii += 2)
                     {
                         short value = BinaryPrimitives.ReadInt16LittleEndian(span.Slice(ii));
                         BinaryPrimitives.WriteInt16BigEndian(span.Slice(ii), value);
