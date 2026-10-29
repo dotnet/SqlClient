@@ -994,29 +994,54 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Reads a PRELOGIN option header (2-byte offset followed by 2-byte length, both big-endian)
-        /// starting at <paramref name="offset"/>, and validates that both the header and the
-        /// <paramref name="bytesToRead"/> bytes of option data it points to lie within
-        /// <paramref name="payload"/>.
+        /// Reads a PRELOGIN option header (2-byte offset followed by 2-byte length, both
+        /// big-endian) starting at <paramref name="offset"/>, and validates it. The header must
+        /// lie within <paramref name="payload"/>, the declared length must equal
+        /// <paramref name="expectedBytes"/> when one is given, and the option data the header
+        /// describes must lie within <paramref name="payload"/>.
         /// </summary>
+        /// <param name="payload">The PRELOGIN response.</param>
+        /// <param name="offset">
+        /// The offset of the option header; advanced past the header on return.
+        /// </param>
+        /// <param name="expectedBytes">
+        /// The exact data length the option must declare, or <see langword="null"/> to accept
+        /// any declared length for options whose data the client does not read.
+        /// </param>
         /// <returns>The offset of the option data within <paramref name="payload"/>.</returns>
-        private int ReadPreLoginOptionPayloadOffset(byte[] payload, ref int offset, int bytesToRead)
+        private int ReadPreLoginOptionPayloadOffset(
+            byte[] payload,
+            ref int offset,
+            int? expectedBytes)
         {
             if (offset + 4 > payload.Length)
             {
-                SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.ConsumePreLoginHandshake|ERR> {0}, " +
-                    "PreLogin option header at offset {1} exceeds response length {2}.", ObjectID, offset, payload.Length);
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "<sc.TdsParser.ConsumePreLoginHandshake|ERR> {0}, " +
+                    "PreLogin option header at offset {1} exceeds response length {2}.",
+                    ObjectID, offset, payload.Length);
                 throw SQL.ParsingErrorOffset(ParsingErrorState.CorruptedTdsStream, offset);
             }
 
             int payloadOffset = payload[offset++] << 8 | payload[offset++];
-            // The declared option length is not needed; only the bytes actually consumed are validated.
-            offset += 2;
+            int payloadLength = payload[offset++] << 8 | payload[offset++];
 
-            if (payloadOffset + bytesToRead > payload.Length)
+            if (expectedBytes.HasValue && payloadLength != expectedBytes.Value)
             {
-                SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.ConsumePreLoginHandshake|ERR> {0}, " +
-                    "PreLogin option data at offset {1} exceeds response length {2}.", ObjectID, payloadOffset, payload.Length);
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "<sc.TdsParser.ConsumePreLoginHandshake|ERR> {0}, " +
+                    "PreLogin option length {1} does not match expected length {2}.",
+                    ObjectID, payloadLength, expectedBytes.Value);
+                throw SQL.ParsingErrorLength(ParsingErrorState.CorruptedTdsStream, payloadLength);
+            }
+
+            if (payloadOffset + payloadLength > payload.Length)
+            {
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "<sc.TdsParser.ConsumePreLoginHandshake|ERR> {0}, " +
+                    "PreLogin option data at offset {1} with length {2} exceeds response " +
+                    "length {3}.",
+                    ObjectID, payloadOffset, payloadLength, payload.Length);
                 throw SQL.ParsingErrorOffset(ParsingErrorState.CorruptedTdsStream, payloadOffset);
             }
 
@@ -1085,7 +1110,9 @@ namespace Microsoft.Data.SqlClient
                 switch (option)
                 {
                     case (int)PreLoginOptions.VERSION:
-                        payloadOffset = ReadPreLoginOptionPayloadOffset(payload, ref offset, bytesToRead: 4);
+                        // UL_VERSION (4 bytes) followed by US_SUBBUILD (2 bytes).
+                        payloadOffset = ReadPreLoginOptionPayloadOffset(
+                            payload, ref offset, expectedBytes: 6);
 
                         byte majorVersion = payload[payloadOffset];
                         byte minorVersion = payload[payloadOffset + 1];
@@ -1094,14 +1121,14 @@ namespace Microsoft.Data.SqlClient
                         break;
 
                     case (int)PreLoginOptions.ENCRYPT:
+                        payloadOffset = ReadPreLoginOptionPayloadOffset(
+                            payload, ref offset, expectedBytes: 1);
+
                         if (tlsFirst)
                         {
-                            // Can skip/ignore this option if we are doing TDS 8.
-                            offset += 4;
+                            // Can skip/ignore this option's value if we are doing TDS 8.
                             break;
                         }
-
-                        payloadOffset = ReadPreLoginOptionPayloadOffset(payload, ref offset, bytesToRead: 1);
 
                         EncryptionOptions serverOption = ((EncryptionOptions)payload[payloadOffset]) & EncryptionOptions.OPTIONS_MASK;
 
@@ -1157,7 +1184,8 @@ namespace Microsoft.Data.SqlClient
                         break;
 
                     case (int)PreLoginOptions.INSTANCE:
-                        payloadOffset = ReadPreLoginOptionPayloadOffset(payload, ref offset, bytesToRead: 1);
+                        payloadOffset = ReadPreLoginOptionPayloadOffset(
+                            payload, ref offset, expectedBytes: 1);
 
                         byte ERROR_INST = 0x1;
                         byte instanceResult = payload[payloadOffset];
@@ -1173,12 +1201,13 @@ namespace Microsoft.Data.SqlClient
                         break;
 
                     case (int)PreLoginOptions.THREADID:
-                        // DO NOTHING FOR THREADID
-                        offset += 4;
+                        // The value is not used; only validate the header.
+                        ReadPreLoginOptionPayloadOffset(payload, ref offset, expectedBytes: null);
                         break;
 
                     case (int)PreLoginOptions.MARS:
-                        payloadOffset = ReadPreLoginOptionPayloadOffset(payload, ref offset, bytesToRead: 1);
+                        payloadOffset = ReadPreLoginOptionPayloadOffset(
+                            payload, ref offset, expectedBytes: 1);
 
                         marsCapable = (payload[payloadOffset] == 0 ? false : true);
 
@@ -1186,12 +1215,13 @@ namespace Microsoft.Data.SqlClient
                         break;
 
                     case (int)PreLoginOptions.TRACEID:
-                        // DO NOTHING FOR TRACEID
-                        offset += 4;
+                        // The value is not used; only validate the header.
+                        ReadPreLoginOptionPayloadOffset(payload, ref offset, expectedBytes: null);
                         break;
 
                     case (int)PreLoginOptions.FEDAUTHREQUIRED:
-                        payloadOffset = ReadPreLoginOptionPayloadOffset(payload, ref offset, bytesToRead: 1);
+                        payloadOffset = ReadPreLoginOptionPayloadOffset(
+                            payload, ref offset, expectedBytes: 1);
 
                         // Only 0x00 and 0x01 are accepted values from the server.
                         if (payload[payloadOffset] != 0x00 && payload[payloadOffset] != 0x01)
@@ -1215,8 +1245,8 @@ namespace Microsoft.Data.SqlClient
                     default:
                         Debug.Fail("UNKNOWN option in ConsumePreLoginHandshake, option:" + option);
 
-                        // DO NOTHING FOR THESE UNKNOWN OPTIONS
-                        offset += 4;
+                        // The value is not used; only validate the header.
+                        ReadPreLoginOptionPayloadOffset(payload, ref offset, expectedBytes: null);
 
                         break;
                 }
