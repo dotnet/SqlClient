@@ -30,10 +30,10 @@ namespace Microsoft.Data.SqlClient
             BaseTableName = _metadata.TableName;
             ColumnName = _metadata.column;
             ColumnOrdinal = _metadata.Ordinal;
-            ColumnSize = (_metadata.metaType.IsSizeInCharacters && (_metadata.length != 0x7fffffff)) ? (_metadata.length / 2) : _metadata.length;
+            ColumnSize = (_metadata.MetaType.IsSizeInCharacters && (_metadata.length != 0x7fffffff)) ? (_metadata.length / 2) : _metadata.length;
             IsAutoIncrement = _metadata.IsIdentity;
             IsIdentity = _metadata.IsIdentity;
-            IsLong = _metadata.metaType.IsLong;
+            IsLong = _metadata.MetaType.IsLong;
 
             if (SqlDbType.Timestamp == _metadata.DbType)
             {
@@ -50,12 +50,12 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                NumericPrecision = _metadata.metaType.Precision;
+                NumericPrecision = _metadata.MetaType.Precision;
             }
 
             IsReadOnly = _metadata.IsReadOnly;
 
-            UdtAssemblyQualifiedName = _metadata.udt?.AssemblyQualifiedName;
+            UdtAssemblyQualifiedName = _metadata.Udt?.AssemblyQualifiedName;
 
         }
 
