@@ -54,6 +54,55 @@ using Azure.Identity.Broker must also upgrade it to 1.6.0 or later.
 See the [Azure SDK migration guide](https://github.com/Azure/azure-sdk-for-net/blob/main/sdk/identity/Azure.Identity/MigrationGuide.md)
 for details.
 
+## Breaking change: exact versions for automatic authentication discovery
+
+Untrimmed authentication bootstrap requires the loaded SqlClient driver and automatically
+discovered Azure extension to match Abstractions' exact informational version, including
+prerelease labels and excluding `+` build metadata. A newer Azure patch or minor version is
+not automatically accepted merely because its major version matches.
+
+This changes behavior for mixed-version deployments that previously relied on successful assembly
+binding and automatic provider discovery. A driver or discovered Azure version-policy failure is
+traced once and disables further automatic Azure discovery and registration for that registry.
+Existing providers are preserved, and explicit `SetProvider` and `GetProvider` remain usable with
+their normal validation and configuration precedence. Without a registered provider or an
+access-token callback, Entra ID connections can fail because no authentication provider is available.
+
+The recommended fix is to upgrade SqlClient, Abstractions, Azure, Logging and AKV together to the
+same exact package version, then restart to retry automatic discovery. SqlServer.Server and
+native SNI are independently versioned.
+
+### Using a newer Azure package explicitly
+
+If you deliberately deploy a newer Azure package, opt out of automatic authentication discovery
+before the first registry access and construct and register the provider yourself:
+
+```csharp
+using System;
+using Microsoft.Data.SqlClient;
+
+AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.EnableAzureExtensionDiscovery", false);
+
+var provider = new ActiveDirectoryAuthenticationProvider(
+    new ActiveDirectoryAuthenticationProviderOptions());
+if (!SqlAuthenticationProvider.SetProvider(
+    SqlAuthenticationMethod.ActiveDirectoryDefault, provider))
+{
+    throw new InvalidOperationException(
+        "Provider registration failed. Check configuration precedence and SqlClient traces.");
+}
+```
+
+Register a provider for every authentication method your application uses, before opening
+connections. Configuration-owned registrations retain precedence; change the configuration or
+initializer if it prevents your explicit registration.
+
+Explicit registration bypasses automatic discovery's version gate, not binary compatibility
+requirements. A newer Azure package can require newer Abstractions or Logging APIs; you must
+validate the selected package combination and upgrade those dependencies when required.
+It does not suppress the separate `SQLCLIENT001` build warning or alter Azure Attestation loading.
+An application-supplied `AccessTokenCallback`, as shown below, is another authentication option.
+
 ## Getting Started
 
 ### Connect Using Default Azure Credential

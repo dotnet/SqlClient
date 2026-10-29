@@ -108,10 +108,12 @@ app.config loading are removed. Untrimmed applications retain both paths. The sw
 `Switch.Microsoft.Data.SqlClient.EnableAzureExtensionDiscovery` default to `true` and are cached
 on first access. Recoverable initialization failures emit diagnostic guidance through
 `Microsoft.Data.SqlClient.EventSource` (Informational level, Trace keyword `0x2`).
-Bootstrap failures are cached without blocking explicit application registration or lookup of
-successfully registered providers. Register a provider as a workaround, or correct the cause and
-restart the application to retry bootstrap. Detailed causes remain in Abstractions traces rather
-than the connection exception.
+Recoverable configuration bootstrap failures are cached without blocking explicit application
+registration or lookup of successfully registered providers. Register a provider as a workaround,
+or correct the cause and restart the application to retry configuration. Family-version failures
+disable further automatic Azure discovery, but existing providers and explicit registration and
+lookup remain available. Detailed causes remain in Abstractions traces rather than the connection
+exception.
 
 #### Authentication compatibility considerations
 
@@ -126,6 +128,7 @@ introduces these observable differences from the previous driver-owned registry:
 | Lookup synchronization | Registry lookups now take the same lock as bootstrap and replacement `BeforeLoad`/`BeforeUnload` callbacks. Slow callbacks delay other lookups and connection logins. Keep callbacks short: waiting synchronously for another thread that accesses the registry can deadlock. |
 | Bootstrap failure reporting | Driver access previously could expose the manager's cached type-initialization exception. Now, if no usable provider or access-token callback is available, `Open` and `OpenAsync` report missing-provider guidance as a `SqlException`, rather than the previous missing-provider `ArgumentException`. Detailed causes remain in Abstractions EventSource traces, not a diagnostic API or the connection exception's inner exception. |
 | Recovery after failed bootstrap | Unlike a failed manager static initialization, a recoverable cached bootstrap failure no longer prevents explicit application registration or lookup of successfully registered providers. Failed configuration is not retried, and successful configuration registrations retain precedence. Restart after correcting the cause to retry bootstrap. |
+| Mixed-family automatic discovery | Automatic Azure authentication discovery now requires exact driver/Azure versions matching Abstractions, even when mixed versions bind successfully or Azure is newer within the same major. A version failure disables further automatic discovery, so Entra ID connections may lack a provider. Explicit registration and existing providers remain usable. |
 
 Strict configuration parsing is not introduced: configuration reading retains its relaxed error
 policy. Registration without loading the driver, explicit registration under trimming/NativeAOT,
@@ -134,11 +137,24 @@ and the independent `EnableAzureExtensionDiscovery` switch are new capabilities.
 Upgrade SqlClient, Abstractions, Azure, Logging and AKV together to the same exact package
 version, including prerelease labels. Untrimmed bootstrap validates loaded SqlClient and
 discovered Azure informational versions against Abstractions; source-control build metadata
-is ignored. Disabling app.config
-or discovery does not disable the SqlClient runtime check. Fixed trimmed/AOT images remove
+is ignored. Driver checks cover all loaded contexts and run on later registry access too,
+including when a plugin loads a driver after successful bootstrap. Driver and discovered Azure
+version failures are traced once and disable further automatic Azure discovery and registration,
+without removing existing providers or disabling explicit `GetProvider` and `SetProvider` calls.
+Normal configuration precedence and argument and callback validation still apply. Restart with
+matching packages to retry automatic discovery. Disabling app.config or discovery does not disable
+the initial SqlClient runtime check. Fixed trimmed/AOT images remove
 reflective runtime validation, so ensure the resolved package versions match before
 publishing. Consumer build-time enforcement is maintained separately from authentication
 bootstrap. SqlServer.Server and native SNI remain independently versioned.
+
+If you deliberately choose a newer Azure package, disable `EnableAzureExtensionDiscovery` before
+first registry access and explicitly construct and register an `ActiveDirectoryAuthenticationProvider`
+for each required method before opening connections. See the
+[explicit registration example](https://github.com/dotnet/SqlClient/blob/main/src/Microsoft.Data.SqlClient.Extensions/Azure/src/PackageReadme.md#using-a-newer-azure-package-explicitly).
+Check the `SetProvider` result: configuration-owned registrations still take precedence.
+This opts out of automatic discovery; it does not make incompatible binaries work or suppress
+`SQLCLIENT001`. Validate the newer Azure package with its required Abstractions and Logging APIs.
 
 With this package reference, you can continue to use Entra ID authentication modes directly in your connection string:
 

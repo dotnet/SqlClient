@@ -70,6 +70,7 @@ signatures, but is not a behavior-neutral change. Compared with the previous dri
 | Lookup synchronization | `GetProvider` now takes the registry lock used by bootstrap and replacement `BeforeLoad`/`BeforeUnload` callbacks. Slow callbacks delay other lookups and connection logins. Keep callbacks short: synchronously waiting for another thread that accesses the registry can deadlock. |
 | Bootstrap failure reporting | Driver access previously could expose the manager's cached type-initialization exception. Now, if no usable provider or access-token callback is available, the driver's `Open` and `OpenAsync` report missing-provider guidance as a `SqlException`, rather than the previous missing-provider `ArgumentException`. Detailed bootstrap and Azure loading causes remain in Abstractions' EventSource traces, not a diagnostic API or the connection exception's inner exception. |
 | Configuration failure handling | A failed manager static initialization previously prevented recovery through that manager. Recoverable initializer and provider failures are now traced and skipped; later configured providers and enabled Azure discovery are still attempted. Successful configuration registrations retain precedence, and application registration and lookup remain usable. Failed configuration is not retried until the application restarts. Fatal activation errors still propagate. |
+| Mixed-family automatic discovery | A driver or discovered Azure version-policy failure now disables further automatic Azure discovery, even when assembly binding succeeds or Azure is a newer version in the same major. Applications relying on that automatic provider can lose Entra ID connectivity. Existing registrations and explicit `SetProvider`/`GetProvider` remain usable. |
 
 Strict configuration parsing is not introduced: configuration reading retains the relaxed policy
 described below. New capabilities include registration without loading SqlClient, explicit
@@ -93,9 +94,24 @@ and native SNI are independently versioned.
 
 Untrimmed registry bootstrap compares the loaded SqlClient and discovered Azure assemblies'
 informational versions against Abstractions, excluding source-control build metadata.
-Mismatches are cached and traced with upgrade/restart guidance; `GetProvider` and
-`SetProvider` return `null` and `false`. Disabling configuration or Azure discovery
-does not disable the SqlClient runtime check.
+Driver checks inspect every loaded SqlClient assembly across load contexts. Registry access
+rechecks loaded drivers after bootstrap too, until a version-policy failure disables automatic
+Azure discovery. A plugin that shares Abstractions cannot bypass that check by loading its driver
+later.
+Driver or discovered Azure version-policy failures are traced once and permanently disable further
+automatic Azure discovery and registration for that registry. They do not fail registry bootstrap,
+remove existing providers, or prevent explicit `SetProvider` and `GetProvider` calls from working.
+Configuration precedence and normal argument and callback validation still apply.
+Upgrade packages and restart to retry automatic discovery. Disabling configuration or Azure
+discovery does not disable the initial SqlClient runtime check.
+
+For a deliberately newer Azure package, disable `EnableAzureExtensionDiscovery` before first
+registry access, construct an `ActiveDirectoryAuthenticationProvider` with its options, and
+call `SetProvider` for every required authentication method before opening connections. See the
+[explicit registration example](https://github.com/dotnet/SqlClient/blob/main/src/Microsoft.Data.SqlClient.Extensions/Azure/src/PackageReadme.md#using-a-newer-azure-package-explicitly).
+Configuration-owned providers still take precedence. This workaround bypasses automatic
+discovery's version gate, not binary compatibility requirements or the separate `SQLCLIENT001`
+build warning; validate the newer extension against its resolved Abstractions and Logging APIs.
 
 Trimmed/NativeAOT fixed images remove reflective runtime validation. Ensure the
 resolved package versions match before publishing; consumer build-time enforcement
