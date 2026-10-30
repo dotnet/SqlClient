@@ -6,7 +6,7 @@ T:System.Runtime.CompilerServices.IteratorStateMachineAttribute
 
 # @TODO: Remove these attributes when nullability is fully implemented.
 # Without them, the APICompat tool will report errors for nullability mismatches between the
-# nullable-oblivious ref project and the partially nullable ref project.
+# nullable-oblivious reference project and the partially nullable implementation project.
 T:System.Runtime.CompilerServices.NullableAttribute
 T:System.Runtime.CompilerServices.NullableContextAttribute
 
