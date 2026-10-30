@@ -31,7 +31,7 @@ extends: v1/Perf.Test.Job.yml@PerfTemplates
       │   SCPs <testResultsSubDir> back, publishes it, tears the VM down)
       ▼
 ON THE VM  ── run-perf-tests.{sh,ps1}
-      1. Install the .NET SDK pinned by global.json (+ runtimes).
+      1. Install the .NET SDK pinned by global.json (+ the .NET 10.0 runtime).
       2. Create the perf database on the VM's SQL Server.
       3. Inject the VM SQL connection string into runnerconfig.
       4. Baseline pass  → MDS <baselineVersion> from NuGet.org (Package mode)   → results/baseline/
@@ -58,16 +58,16 @@ context variables are available (the VM is behind NAT and lacks the pipeline ide
 | Parameter | Default | Description |
 | --------- | ------- | ----------- |
 | `platform` | `linux` | `linux` or `windows` VM + client. |
-| `dotnetFramework` | `net9.0` | TFM the benchmarks run against (`net8.0`/`net9.0`/`net10.0`). |
+| `dotnetFramework` | `net10.0` | TFM the benchmarks run against (`net10.0` only). |
 | `testTimeoutMinutes` | `180` | Template timeout waiting for the VM run. |
 | `baselineVersion` | `7.0.2` | **Baseline Version** — released MDS the branch is compared against. Empty = current-only (no baseline pass / comparison). |
 | `regressionThreshold` | `10` | Percent slowdown (current vs baseline mean) flagged as a regression. |
 | `failOnRegression` | `false` | When `true`, a candidate-slower regression **fails** the run (gate). In interleaved mode only **confirmed** regressions (best-of-N majority) fail. Default off. |
 | `benchmarkRunMode` | `interleaved` | `interleaved` (per-unit baseline↔candidate + best-of-N confirmation) or `sequential` (legacy two full passes). |
 | `confirmationRuns` | `3` | Best-of-N: interleaved passes for a flagged unit before a regression is confirmed. `1` disables confirmation. Interleaved mode only. |
-| `useManagedSniOnWindows` | `false` | SqlClient `UseManagedSniOnWindows` flag. Applied to the runner config for **both** passes on the VM and recorded in `PerfRun.Config`. Default matches the checked-in `runnerconfig.jsonc`. |
-| `useOptimizedAsyncBehaviour` | `true` | SqlClient `UseOptimizedAsyncBehaviour` flag. Applied to both passes and recorded in `PerfRun.Config`. Default matches `runnerconfig.jsonc`. |
-| `useConnectionPoolV2` | `false` | SqlClient `UseConnectionPoolV2` flag. Applied to both passes and recorded in `PerfRun.Config`. Default matches `runnerconfig.jsonc`. |
+| `useManagedSniOnWindows` | `false` | SqlClient `UseManagedSniOnWindows` flag. Applied to the runner config for **both** passes on the VM and recorded in `PerfRun.Config`. Default matches the checked-in `runnerconfig.default.jsonc`. |
+| `useOptimizedAsyncBehaviour` | `true` | SqlClient `UseOptimizedAsyncBehaviour` flag. Applied to both passes and recorded in `PerfRun.Config`. Default matches `runnerconfig.default.jsonc`. |
+| `useConnectionPoolV2` | `false` | SqlClient `UseConnectionPoolV2` flag. Applied to both passes and recorded in `PerfRun.Config`. Default matches `runnerconfig.default.jsonc`. |
 | `enableKustoIngestion` | `true` | **Ingest results into Kusto** — when `false`, the run still benchmarks + compares but skips ingesting into the perf database. When `true`, ingestion additionally requires the `ADX Cluster Variables` group to be populated. |
 
 The following values are **fixed constants** in the pipeline (not parameters or variables), since they
@@ -241,7 +241,7 @@ longer conflates it with checkout cost.
 The same principle applies to how a benchmark schedules its workers. A sync `Open()` that has to
 wait blocks whichever thread it runs on, so a pool whose waiter wake-up needs a queued continuation
 stalls when every threadpool thread is already blocked; the wake-up waits on thread injection. On
-the TFMs the perf project builds (net8.0-net10.0) the runtime is told about cooperative blocking and
+the TFM the perf project builds (net10.0) the runtime is told about cooperative blocking and
 compensates quickly, so that stall is tens to a few hundred milliseconds, and that is the only
 expectation these benchmarks validate. On net462 the `Task` wait never notifies the pool, so the
 wake-up falls to starvation detection and hill climbing and is materially slower; the pool carries no
@@ -335,6 +335,23 @@ supplies the isolated dedicated host, the tuned SQL instance, and the disjoint c
 | Regression gate | `failOnRegression` threads `--fail-on-regression`; only a **candidate-slower** delta past the threshold fails, and in interleaved mode only after best-of-N confirmation. Default off. |
 | Interleaving | In `interleaved` mode the harness runs **one benchmark unit at a time, baseline then candidate back-to-back**, so both sides see the same host state (see below). |
 | Best-of-N confirmation | A unit flagged in the first interleaved pass is re-run `confirmationRuns` times; a regression is **confirmed** only on a strict majority. Unconfirmed flags are reported but never fail the gate. |
+
+### Windows physical opens
+
+The Windows connection probe measured raw TCP at about 0.06 ms but a physical
+`SqlConnection.Open()` at about 158 ms when the runner used the `sa` SQL login, with the same result
+from native and managed SNI. Changing TLS and TCP acknowledgment settings did not change that
+latency. The Windows image runs SQL Server 2025, which verifies SQL-login passwords with 100,000
+PBKDF2 iterations; Microsoft documents the resulting login-performance impact.
+
+The benchmark process runs through a public-key SSH token, which cannot delegate Windows credentials
+to the VM's private network address. When the injected SQL endpoint resolves to a local interface,
+the Windows harness connects to the same SQL Server 2025 instance over local TCP loopback with
+integrated authentication. It grants the ephemeral VM identity `db_owner` in the perf database; `sa`
+remains unchanged and is used only for one-time setup. External SQL endpoints continue to use the
+injected address and SQL authentication. This stays on SQL Server 2025's supported authentication
+path while preventing password hashing from dominating local tests that intentionally create
+physical connections.
 
 ### Interleaving + best-of-N (run model)
 
@@ -471,4 +488,18 @@ translated NDJSON as the `perf-kusto-payloads` artifact for manual/backfill inge
 | Ingestion auth error | The service connection's SP lacks **Database Ingestor** on the target database. |
 | "Kusto ingestion was queued, but the ingestion principal is not authorized to query the database" | The SP has **Database Ingestor** but not **Database Viewer**. Ingestion succeeded; grant **Database Viewer** so the verify step can confirm the rows landed. |
 | `Kusto ingestion not yet queryable after Ns ... no ingestion failures were reported` (warning, step passes) | Expected, harmless: queued ingestion is asynchronous and small perf payloads can take longer than the verify window to become queryable. The step **warns and passes** because `.show ingestion failures` is clean, so the rows will land shortly. The step only **fails** when `.show ingestion failures` actually reports failures — in that case confirm the `PerfRun` / `PerfBenchmarkResult` tables exist with columns matching the schema above (a schema/column-name mismatch is the usual cause; the self-contained inline JSON mapping rules out a missing server-side named mapping). |
-| Benchmarks not CPU-pinned | `PERF_CLIENT_CPUS` was not injected, or `taskset` is unavailable on the VM. |
+| Benchmarks not CPU-pinned | `PERF_CLIENT_CPUS` was not injected, or `taskset` is unavailable on the VM. For interleaved Windows runs, check stderr for `SetProcessAffinityMask` warnings with the child PID, requested mask, and Win32 error code/message. Pinning remains best effort; masks are limited to the Python process's pointer width (32 or 64 bits) and cannot span processor groups. |
+
+### Affinity regression tests
+
+Run the standard-library tests from the repository root:
+
+```text
+python -m unittest discover -s eng/pipelines/perf/scripts/tests -p test_affinity.py -v
+```
+
+On Windows, `py -3` can be used instead of `python`. The tests cover the Windows ctypes
+signature, error diagnostics, mask bounds, and unchanged Linux warning-only behavior.
+Windows-only tests also pin a disposable Python child to an available CPU and read its
+affinity back, and check the real error from an invalid handle. No SQL Server is needed,
+and the test runner's affinity is never changed.

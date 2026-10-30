@@ -245,7 +245,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         {
             Debug.Assert(connectionPoolGroup != null, "null connectionPoolGroup");
 
-            if (identity != null && identity.IsRestricted)
+            if (identity.IsRestricted)
             {
                 throw ADP.InternalError(ADP.InternalErrorCode.AttemptingToPoolOnRestrictedToken);
             }
@@ -385,11 +385,25 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         public bool UseLoadBalancing => PoolGroupOptions.UseLoadBalancing;
 
-        private bool UsingIntegrateSecurity => _identity != null && DbConnectionPoolIdentity.NoIdentity != _identity;
+        private bool UsingIntegrateSecurity => DbConnectionPoolIdentity.NoIdentity != _identity;
 
         public TransactedConnectionPool TransactedConnectionPool => _transactedConnectionPool;
 
-        internal void CleanupCallback(object state)
+        /// <summary>
+        /// Periodic pruning callback invoked by <see cref="_cleanupTimer"/>. Destroys idle
+        /// connections that have aged out of the general pool (those above
+        /// <see cref="MinPoolSize"/> that have been on <c>_stackOld</c> for a full cleanup
+        /// period) and promotes the remaining <c>_stackNew</c> entries onto <c>_stackOld</c>
+        /// so they become eligible for pruning on the next tick. Connections held in the
+        /// <see cref="TransactedConnectionPool"/> are not touched here; the transaction-end
+        /// event is responsible for releasing them.
+        /// </summary>
+        /// <remarks>
+        /// Exposed as <c>internal</c> (rather than <c>private</c>) solely so unit tests can
+        /// invoke a deterministic prune cycle without waiting on the cleanup timer.
+        /// </remarks>
+#nullable enable annotations
+        internal void CleanupCallback(object? state)
         {
             // If the pool is not running, skip work. Shutdown disposes the timer, but
             // a callback may already be in-flight when Shutdown runs; this guard ensures it does
@@ -515,6 +529,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // Queue up a request to bring us up to MinPoolSize
             QueuePoolCreateRequest();
         }
+#nullable restore annotations
 
         public void Clear()
         {
@@ -1207,7 +1222,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 // that disconnect unpaired and drive the active-soft-connects gauge negative.
                 // Counted inside this branch so that no connection vended means no soft connect.
                 Metrics.SoftConnectRequest();
-                PrepareConnection(owningObject, obj, transaction);
+                PrepareConnection(owningObject, obj, transaction, timeout);
             }
 
             connection = obj;
@@ -1215,7 +1230,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             return true;
         }
 
-        private void PrepareConnection(DbConnection owningObject, DbConnectionInternal obj, Transaction transaction)
+        private void PrepareConnection(DbConnection owningObject, DbConnectionInternal obj, Transaction transaction, TimeoutTimer timeout)
         {
             lock (obj)
             {   // Protect against Clear and ReclaimEmancipatedObjects, which call IsEmancipated, which is affected by PrePush and PostPop
@@ -1223,7 +1238,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
             try
             {
-                obj.ActivateConnection(transaction);
+                obj.ActivateConnection(transaction, timeout);
             }
             catch
             {
@@ -1259,7 +1274,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             if (newConnection != null)
             {
                 Metrics.SoftConnectRequest();
-                PrepareConnection(owningObject, newConnection, oldConnection.EnlistedTransaction);
+                PrepareConnection(
+                    owningObject, newConnection, oldConnection.EnlistedTransaction, timeout);
 
                 if (oldConnection.Pool is { } ownerPool && ownerPool != this)
                 {
@@ -1655,6 +1671,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.ReclaimEmancipatedObjects|RES|CPOOL> {0}, Connection {1}, Reclaiming.", Id, obj.ObjectID);
 
                 Metrics.ReclaimedConnectionRequest();
+
+                // PrePush already claimed this checkout under the connection lock. Balance it
+                // here; ReturnInternalConnection would attempt to claim it a second time.
+                Metrics.SoftDisconnectRequest();
 
                 emancipatedObjectFound = true;
 

@@ -14,6 +14,9 @@
 # and make the next series eligible, but emits no pull request activity, so
 # already open pull requests would otherwise keep their previous verdicts.
 #
+# Release-notes-only PRs remain in the reconciliation set. Their re-run uses
+# the same file classifier and open-milestone gate as any other PR check.
+#
 # This lives in its own workflow so that check-milestone.yml stays purely pull
 # request scoped, and so the elevated 'actions: write' permission needed to
 # re-run checks is isolated from the PR gate.

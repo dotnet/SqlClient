@@ -28,7 +28,19 @@ internal enum SqlClientDriverProperties : ulong
     ///   (<c>Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2</c>) is
     ///   enabled.
     /// </summary>
-    ConnectionPoolV2 = 1
+    ConnectionPoolV2 = 1,
+
+    /// <summary>
+    ///   <c>Switch.Microsoft.Data.SqlClient.UseCompatibilityAsyncBehaviour</c>
+    ///   is configured true, independently of the ProcessSni compatibility override.
+    /// </summary>
+    UseCompatibilityAsyncBehaviour = 2,
+
+    /// <summary>
+    ///   <c>Switch.Microsoft.Data.SqlClient.UseCompatibilityProcessSni</c>
+    ///   is configured true.
+    /// </summary>
+    UseCompatibilityProcessSni = 4
 }
 
 /// <summary>
@@ -45,13 +57,22 @@ internal static class SqlClientDriverPropertiesResolver
     ///   for the life of the process.
     /// </remarks>
     internal static SqlClientDriverProperties Current =>
-        Resolve(LocalAppContextSwitches.UseConnectionPoolV2);
+        Resolve(
+            LocalAppContextSwitches.UseConnectionPoolV2,
+            LocalAppContextSwitches.UseCompatibilityAsyncBehaviourConfigured,
+            LocalAppContextSwitches.UseCompatibilityProcessSni);
 
     /// <summary>
     ///   Maps the process configuration to the flags that describe it.
     /// </summary>
     /// <param name="useConnectionPoolV2">
     ///   Whether the connection pool V2 implementation is enabled.
+    /// </param>
+    /// <param name="useCompatibilityAsyncBehaviour">
+    ///   The configured async compatibility value, before any ProcessSni override.
+    /// </param>
+    /// <param name="useCompatibilityProcessSni">
+    ///   The configured ProcessSni compatibility value.
     /// </param>
     /// <returns>
     ///   The flags describing the supplied configuration.
@@ -61,13 +82,26 @@ internal static class SqlClientDriverPropertiesResolver
     ///   switches it reads are cached for the life of the process, which makes
     ///   them impractical to vary in a test.
     /// </remarks>
-    internal static SqlClientDriverProperties Resolve(bool useConnectionPoolV2)
+    internal static SqlClientDriverProperties Resolve(
+        bool useConnectionPoolV2,
+        bool useCompatibilityAsyncBehaviour,
+        bool useCompatibilityProcessSni)
     {
         SqlClientDriverProperties properties = SqlClientDriverProperties.None;
 
         if (useConnectionPoolV2)
         {
             properties |= SqlClientDriverProperties.ConnectionPoolV2;
+        }
+
+        if (useCompatibilityAsyncBehaviour)
+        {
+            properties |= SqlClientDriverProperties.UseCompatibilityAsyncBehaviour;
+        }
+
+        if (useCompatibilityProcessSni)
+        {
+            properties |= SqlClientDriverProperties.UseCompatibilityProcessSni;
         }
 
         return properties;
