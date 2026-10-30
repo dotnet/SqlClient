@@ -48,9 +48,29 @@ namespace Microsoft.Data.SqlClient.Test.Stress
                 }
 
 
+                ValidateStackFrames(stackFrames);
                 StackFrames = stackFrames;
                 BugNumber = bugNumber;
                 Handler = assertHandlingOption;
+            }
+
+            // Stack frames are matched by name, so fail fast if a type or method was renamed or moved.
+            private static void ValidateStackFrames(string[] stackFrames)
+            {
+                foreach (string frame in stackFrames)
+                {
+                    int separator = frame.LastIndexOf('.');
+                    string typeName = frame.Substring(0, separator);
+                    string methodName = frame.Substring(separator + 1);
+
+                    Type type = s_systemDataAssembly.GetType(typeName)
+                        ?? throw new InvalidOperationException($"Filtered assert stack frame type '{typeName}' was not found.");
+
+                    if (type.GetMember(methodName, MemberTypes.Method, BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic).Length == 0)
+                    {
+                        throw new InvalidOperationException($"Filtered assert stack frame method '{frame}' was not found.");
+                    }
+                }
             }
 
             /// <summary>
@@ -81,9 +101,9 @@ namespace Microsoft.Data.SqlClient.Test.Stress
 
         private static readonly FilteredAssert[] s_assertsToFilter = new FilteredAssert[] {
             new FilteredAssert("TdsParser::ThrowExceptionAndWarning called with no exceptions or warnings!", 433324, MatchType.Exact, HandlingOption.WriteToConsole,
-                "Microsoft.Data.SqlClient.TdsParser.ThrowExceptionAndWarning",
-                "Microsoft.Data.SqlClient.TdsParserStateObject.ThrowExceptionAndWarning",
-                "Microsoft.Data.SqlClient.TdsParserStateObject.ReadAsyncCallbackCaptureException"),
+                "Microsoft.Data.SqlClient.Parser.TdsParser.ThrowExceptionAndWarning",
+                "Microsoft.Data.SqlClient.Parser.TdsParserStateObject.ThrowExceptionAndWarning",
+                "Microsoft.Data.SqlClient.Parser.TdsParserStateObject.ReadAsyncCallbackCaptureException"),
         };
 
         public FilteredDefaultTraceListener(DefaultTraceListener listenerToClone) : base()

@@ -295,7 +295,7 @@ namespace Microsoft.Data.SqlClient.Parser
         //
         // Sample code to enable:
         //
-        //    Type type = typeof(SqlDataReader).Assembly.GetType("Microsoft.Data.SqlClient.TdsParserStateObject");
+        //    Type type = typeof(SqlDataReader).Assembly.GetType("Microsoft.Data.SqlClient.Parser.TdsParserStateObject");
         //    System.Reflection.FieldInfo field = type.GetField("_forceAllPends", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
         //    if (field != null) {
         //        field.SetValue(null, true);

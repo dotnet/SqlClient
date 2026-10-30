@@ -39,11 +39,11 @@ Per-session state management:
 - Async I/O coordination
 - State tracking for pending operations
 
-### TdsParserHelperClasses.cs
-Supporting data structures:
-- SqlMetaData parsing
-- Column metadata
-- Type conversion utilities
+### Parser/Tokens/
+Token and metadata data structures:
+- `SqlMetaDataPriv.cs` and `_SqlMetaData.cs`: column metadata
+- `_SqlMetaDataSet.cs` and `_SqlMetaDataSetCollection.cs`: metadata sets
+- `RoutingInfo.cs` and `SqlFedAuthInfo.cs`: routing and authentication token data
 
 ## Packet Structure
 
