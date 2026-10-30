@@ -19,12 +19,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal static SqlConnectionEncryptionInfo Empty { get; } = new();
 
-        /// <summary>
-        /// Length in bytes of a SHA-256 hash.
-        /// </summary>
-        internal const int CertificateHash256Length = 32;
-
-        private readonly byte[]? _presentedServerCertificateHash256;
+        private readonly byte[]? _presentedServerCertificate;
 
         private SqlConnectionEncryptionInfo()
         {
@@ -36,9 +31,9 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <param name="negotiatedEncryptionMode">The negotiated encryption mode.</param>
         /// <param name="negotiatedEncryptionProtocol">The negotiated TLS protocol version.</param>
-        /// <param name="presentedServerCertificateHash256">
-        /// SHA-256 of the DER-encoded server-presented leaf certificate; must be exactly 32 bytes
-        /// when not <see langword="null"/>. The array is copied.
+        /// <param name="presentedServerCertificate">
+        /// The DER encoding of the leaf certificate presented by the server. The array is copied;
+        /// an empty array is treated as <see langword="null"/>.
         /// </param>
         /// <param name="validationErrors">The certificate validation errors observed by the driver.</param>
         /// <param name="chainStatus">The aggregated X.509 chain status flags.</param>
@@ -49,7 +44,7 @@ namespace Microsoft.Data.SqlClient
         internal SqlConnectionEncryptionInfo(
             SqlConnectionEncryptionMode? negotiatedEncryptionMode,
             SslProtocols? negotiatedEncryptionProtocol,
-            byte[]? presentedServerCertificateHash256,
+            byte[]? presentedServerCertificate,
             SqlServerCertificateValidationErrors? validationErrors,
             X509ChainStatusFlags? chainStatus,
             int? negotiatedCipherSuite = null)
@@ -65,16 +60,9 @@ namespace Microsoft.Data.SqlClient
             NegotiatedEncryptionMode = negotiatedEncryptionMode;
             NegotiatedEncryptionProtocol = negotiatedEncryptionProtocol;
             NegotiatedCipherSuiteId = negotiatedCipherSuite;
-            if (presentedServerCertificateHash256 is not null)
+            if (presentedServerCertificate is { Length: > 0 })
             {
-                if (presentedServerCertificateHash256.Length != CertificateHash256Length)
-                {
-                    throw new ArgumentException(
-                        $"A SHA-256 certificate hash must be {CertificateHash256Length} bytes.",
-                        nameof(presentedServerCertificateHash256));
-                }
-
-                _presentedServerCertificateHash256 = (byte[])presentedServerCertificateHash256.Clone();
+                _presentedServerCertificate = (byte[])presentedServerCertificate.Clone();
             }
             ValidationErrors = validationErrors;
             ChainStatus = chainStatus;
@@ -101,11 +89,34 @@ namespace Microsoft.Data.SqlClient
                 : null;
 #endif
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/PresentedServerCertificateHash256/*' />
-        public ReadOnlyMemory<byte>? PresentedServerCertificateHash256 =>
-            _presentedServerCertificateHash256 is null
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/GetServerCertificate/*' />
+        public X509Certificate2? GetServerCertificate()
+        {
+            if (_presentedServerCertificate is null)
+            {
+                return null;
+            }
+
+            try
+            {
+                return X509CertificateLoader.LoadCertificate(_presentedServerCertificate);
+            }
+            catch (Exception)
+            {
+                // Diagnostics only: bytes that cannot be parsed are reported as unavailable.
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Gets the captured DER encoding of the server-presented leaf certificate, or
+        /// <see langword="null"/> if none was captured. The memory is read-only and owned by
+        /// the snapshot.
+        /// </summary>
+        internal ReadOnlyMemory<byte>? PresentedServerCertificateRawData =>
+            _presentedServerCertificate is null
                 ? (ReadOnlyMemory<byte>?)null
-                : new ReadOnlyMemory<byte>(_presentedServerCertificateHash256);
+                : new ReadOnlyMemory<byte>(_presentedServerCertificate);
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/ValidationErrors/*' />
         public SqlServerCertificateValidationErrors? ValidationErrors { get; }
@@ -120,7 +131,7 @@ namespace Microsoft.Data.SqlClient
             NegotiatedEncryptionMode is null &&
             NegotiatedEncryptionProtocol is null &&
             NegotiatedCipherSuiteId is null &&
-            _presentedServerCertificateHash256 is null &&
+            _presentedServerCertificate is null &&
             ValidationErrors is null &&
             ChainStatus is null;
     }
