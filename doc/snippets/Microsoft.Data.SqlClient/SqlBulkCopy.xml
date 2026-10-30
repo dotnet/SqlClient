@@ -36,6 +36,9 @@
           its row is copied, without consuming values during metadata analysis. This includes
           a vector column with a <c>float16</c> base type exposed as text under
           <c>Vector Type Support=v1</c> or <c>off</c>. DBNull and SQL-null vectors remain SQL NULL.
+          For a native <c>json</c> destination, this reader fallback declares UTF-8
+          <c>varchar(max)</c> input with matching wire metadata and collation; SQL Server validates
+          and stores the JSON value.
           Streaming may remain enabled for other columns; the vector itself is not read through
           a text-reader accessor.
         </para>

@@ -813,7 +813,8 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
                     TdsColumnMetadata incoming = GetVectorBulkMetadata(
                         metadata, localColumn._internalSourceColumnOrdinal);
-                    bool isVectorTextSource = metadata.DbType == SqlDbTypeExtensions.Vector
+                    bool isVectorTextSource =
+                        metadata.DbType is SqlDbTypeExtensions.Vector or SqlDbTypeExtensions.Json
                         && incoming.DbType == SqlDbType.VarChar;
                     if (!ReferenceEquals(incoming, metadata))
                     {
@@ -1561,7 +1562,9 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 {
                     if (destination.DbType != SqlDbTypeExtensions.Vector)
                     {
-                        return destination;
+                        return destination.DbType == SqlDbTypeExtensions.Json && !isDataRowSource
+                            ? GetVectorTextBulkMetadata(destination)
+                            : destination;
                     }
                     dimensions = MetaType.GetVectorElementCount(destination.length, destination.scale);
                 }
@@ -1587,19 +1590,27 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             {
                 // Preserve the established float32 JSON coercion. Float16 text is sent
                 // unchanged so its parsing and rounding are performed by SQL Server.
-                TdsColumnMetadata incoming = (TdsColumnMetadata)destination.Clone();
-                incoming.DbType = SqlDbType.VarChar;
-                incoming.MetaType = MetaType.MetaMaxVarChar;
-                incoming.TdsType = incoming.MetaType.TDSType;
-                incoming.length = MAX_LENGTH;
-                incoming.scale = incoming.MetaType.Scale;
-                incoming.collation = s_vectorTextCollation;
-                incoming.Encoding = Encoding.UTF8;
-                incoming.CodePage = incoming.Encoding.CodePage;
-                return incoming;
+                return GetVectorTextBulkMetadata(destination);
             }
 
             return destination;
+        }
+
+        /// <summary>
+        /// Describes vector JSON as explicit UTF-8 text for server-side conversion.
+        /// </summary>
+        private static TdsColumnMetadata GetVectorTextBulkMetadata(TdsColumnMetadata destination)
+        {
+            TdsColumnMetadata incoming = (TdsColumnMetadata)destination.Clone();
+            incoming.DbType = SqlDbType.VarChar;
+            incoming.MetaType = MetaType.MetaMaxVarChar;
+            incoming.TdsType = incoming.MetaType.TDSType;
+            incoming.length = MAX_LENGTH;
+            incoming.scale = incoming.MetaType.Scale;
+            incoming.collation = s_vectorTextCollation;
+            incoming.Encoding = Encoding.UTF8;
+            incoming.CodePage = incoming.Encoding.CodePage;
+            return incoming;
         }
 
         private SourceColumnMetadata GetColumnMetadata(int ordinal)
