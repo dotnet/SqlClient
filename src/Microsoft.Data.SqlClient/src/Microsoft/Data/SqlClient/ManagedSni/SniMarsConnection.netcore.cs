@@ -131,11 +131,11 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         {
             using (SqlClientSNIEventScope.Create(nameof(SniMarsConnection)))
             {
-                lock (DemuxerSync)
+                SniPacket previousPacket = packet;
+                packet = null;
+                try
                 {
-                    SniPacket previousPacket = packet;
-                    packet = null;
-                    try
+                    lock (DemuxerSync)
                     {
                         var response = _lowerHandle.ReceiveAsync(ref packet);
                         if (response != TdsEnums.SNI_SUCCESS_IO_PENDING && packet == null)
@@ -150,15 +150,15 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 #endif
                         return response;
                     }
-                    finally
+                }
+                finally
+                {
+                    if (previousPacket != null)
                     {
-                        if (previousPacket != null)
-                        {
-                            ReturnPacket(previousPacket);
+                        ReturnPacket(previousPacket);
 #if DEBUG
-                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniMarsConnection), EventType.INFO, "MARS Session Id {0}, Packet {1} returned", args0: ConnectionId, args1: previousPacket._id);
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniMarsConnection), EventType.INFO, "MARS Session Id {0}, Packet {1} returned", args0: ConnectionId, args1: previousPacket._id);
 #endif
-                        }
                     }
                 }
             }

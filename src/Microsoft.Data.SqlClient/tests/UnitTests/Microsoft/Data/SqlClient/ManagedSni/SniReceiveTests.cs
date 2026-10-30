@@ -390,6 +390,38 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         }
 
         /// <summary>
+        /// Re-arming a receive holds the demultiplexer lock only for the transport call,
+        /// not while returning the consumed packet to the physical handle's pool.
+        /// </summary>
+        [Fact]
+        public void MarsReceive_ReturnsConsumedPacketOutsideDemuxerLock()
+        {
+            PacketReturnHandle handle = new();
+            SniMarsConnection mars = new(handle);
+            handle.DemuxerSync = mars.DemuxerSync;
+            SniPacket previousPacket = handle.RentPacket(0, 1);
+            SniPacket? packet = previousPacket;
+            try
+            {
+                Assert.Equal(TdsEnums.SNI_SUCCESS_IO_PENDING, mars.ReceiveAsync(ref packet));
+                Assert.True(previousPacket.IsInvalid);
+                Assert.NotNull(packet);
+                Assert.False(packet.IsInvalid);
+            }
+            finally
+            {
+                if (!previousPacket.IsInvalid)
+                {
+                    handle.ReturnPacket(previousPacket);
+                }
+                if (packet is not null && !packet.IsInvalid)
+                {
+                    handle.ReturnPacket(packet);
+                }
+            }
+        }
+
+        /// <summary>
         /// Successful re-arms recycle consumed packets without clearing the new packet's
         /// callback or data, including after the physical packet pool starts reusing objects.
         /// </summary>
@@ -430,6 +462,59 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
                     connection.Handle.ReturnPacket(packet);
                 }
             }
+        }
+
+        /// <summary>
+        /// Checks the demultiplexer lock boundary while using the real physical packet pool.
+        /// </summary>
+        private sealed class PacketReturnHandle : SniPhysicalHandle
+        {
+            public object? DemuxerSync { get; set; }
+
+            public override Guid ConnectionId { get; } = Guid.NewGuid();
+
+            public override uint Status => TdsEnums.SNI_SUCCESS;
+
+            public override uint ReceiveAsync(ref SniPacket packet)
+            {
+                Assert.NotNull(DemuxerSync);
+                Assert.True(Monitor.IsEntered(DemuxerSync));
+                packet = RentPacket(0, 1);
+                return TdsEnums.SNI_SUCCESS_IO_PENDING;
+            }
+
+            public override void ReturnPacket(SniPacket packet)
+            {
+                Assert.NotNull(DemuxerSync);
+                Assert.False(Monitor.IsEntered(DemuxerSync));
+                base.ReturnPacket(packet);
+            }
+
+            public override uint CheckConnection() => throw new NotSupportedException();
+
+            public override void DisableSsl() => throw new NotSupportedException();
+
+            public override void Dispose() => throw new NotSupportedException();
+
+            public override uint EnableSsl(uint options) => throw new NotSupportedException();
+
+            public override uint Receive(out SniPacket packet, int timeoutInMilliseconds)
+                => throw new NotSupportedException();
+
+            public override uint Send(SniPacket packet) => throw new NotSupportedException();
+
+            public override uint SendAsync(SniPacket packet) => throw new NotSupportedException();
+
+            public override void SetAsyncCallbacks(
+                SniAsyncCallback receiveCallback, SniAsyncCallback sendCallback)
+            {
+            }
+
+            public override void SetBufferSize(int bufferSize) => throw new NotSupportedException();
+
+#if DEBUG
+            public override void KillConnection() => throw new NotSupportedException();
+#endif
         }
 
         /// <summary>

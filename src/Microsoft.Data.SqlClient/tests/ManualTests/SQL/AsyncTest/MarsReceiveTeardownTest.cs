@@ -20,7 +20,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     /// writes a severity-20 error to the server log.
     /// </summary>
     [Trait("Set", "1")]
-    [Collection(nameof(MarsReceiveTeardownCollection))]
     public sealed class MarsReceiveTeardownTest
     {
         /// <summary>
@@ -173,14 +172,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             GC.WaitForPendingFinalizers();
             GC.Collect();
         }
-    }
-
-    /// <summary>
-    /// Isolates the process-wide unobserved-exception handler and forced garbage collections.
-    /// </summary>
-    [CollectionDefinition(nameof(MarsReceiveTeardownCollection), DisableParallelization = true)]
-    public sealed class MarsReceiveTeardownCollection
-    {
     }
 }
 
