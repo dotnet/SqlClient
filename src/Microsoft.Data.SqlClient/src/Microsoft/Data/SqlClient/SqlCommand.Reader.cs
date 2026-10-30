@@ -785,8 +785,8 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            // The server can return a handle before reporting a preparation error.
-            // Retain this state even if OnReturnValue clears _inPrepare while reading the response.
+            // OnReturnValue clears _inPrepare even when preparation returns a null handle.
+            // A committed capacity snapshot distinguishes a valid handle from failed preparation.
             bool wasInPrepare = _inPrepare;
             if (runBehavior is RunBehavior.UntilDone)
             {
@@ -810,11 +810,10 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (ADP.IsCatchableExceptionType(e))
                     {
-                        if (wasInPrepare)
+                        if (wasInPrepare && _preparedParameterByteCapacities == null)
                         {
-                            // The flag is expected to be reset by OnReturnValue. We should receive
-                            // the handle unless command execution failed. If it fails, move back
-                            // to pending state.
+                            // Preparation failed without returning a handle. A returned handle and
+                            // its capacity snapshot remain reusable after an execution error.
                             _inPrepare = false;                  // reset the flag
                             _prepareHandle = s_cachedInvalidPrepareHandle;
                             _preparedParameterByteCapacities = null;
@@ -880,11 +879,10 @@ namespace Microsoft.Data.SqlClient
                 }
                 catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                 {
-                    if (wasInPrepare)
+                    if (wasInPrepare && _preparedParameterByteCapacities == null)
                     {
-                        // The flag is expected to be reset by OnReturnValue. We should receive
-                        // the handle unless command execution failed. If it fails, move back
-                        // to pending state.
+                        // Preparation failed without returning a handle. A returned handle and
+                        // its capacity snapshot remain reusable after an execution error.
                         _inPrepare = false;                  // reset the flag
                         _prepareHandle = s_cachedInvalidPrepareHandle;
                         _preparedParameterByteCapacities = null;

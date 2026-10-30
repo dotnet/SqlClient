@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Data;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -16,6 +17,144 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     [Trait("Set", "3")]
     public static class Utf8ParameterTests
     {
+        /// <summary>Verifies output capacity on reuse and records #4953's unsized limitation.</summary>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup),
+            nameof(DataTestUtility.IsUTF8Supported), nameof(DataTestUtility.IsNotAzureServer),
+            nameof(DataTestUtility.IsNotAzureSynapse))]
+        [InlineData(false, ParameterDirection.Output, 8000, 0)]
+        [InlineData(true, ParameterDirection.Output, 8000, 0)]
+        [InlineData(false, ParameterDirection.InputOutput, 8000, 0)]
+        [InlineData(true, ParameterDirection.InputOutput, 8000, 0)]
+        [InlineData(false, ParameterDirection.Output, -1, 0)]
+        [InlineData(true, ParameterDirection.Output, -1, 0)]
+        [InlineData(false, ParameterDirection.InputOutput, -1, 0)]
+        [InlineData(true, ParameterDirection.InputOutput, -1, 0)]
+        [InlineData(false, ParameterDirection.Output, 8000, 1)]
+        [InlineData(true, ParameterDirection.Output, 8000, 1)]
+        [InlineData(false, ParameterDirection.InputOutput, 8000, 1)]
+        [InlineData(true, ParameterDirection.InputOutput, 8000, 1)]
+        [InlineData(false, ParameterDirection.Output, -1, 1)]
+        [InlineData(true, ParameterDirection.Output, -1, 1)]
+        [InlineData(false, ParameterDirection.InputOutput, -1, 1)]
+        [InlineData(true, ParameterDirection.InputOutput, -1, 1)]
+        [InlineData(false, ParameterDirection.Output, 8000, 2)]
+        [InlineData(true, ParameterDirection.Output, 8000, 2)]
+        [InlineData(false, ParameterDirection.InputOutput, 8000, 2)]
+        [InlineData(true, ParameterDirection.InputOutput, 8000, 2)]
+        [InlineData(false, ParameterDirection.Output, -1, 2)]
+        [InlineData(true, ParameterDirection.Output, -1, 2)]
+        [InlineData(false, ParameterDirection.InputOutput, -1, 2)]
+        [InlineData(true, ParameterDirection.InputOutput, -1, 2)]
+        [InlineData(false, ParameterDirection.Output, 0, 0)]
+        [InlineData(true, ParameterDirection.Output, 0, 0)]
+        [InlineData(false, ParameterDirection.InputOutput, 0, 0)]
+        [InlineData(true, ParameterDirection.InputOutput, 0, 0)]
+        public static async Task AnsiOutputDirections_CommandReuse_RespectsCapacityAndInference(
+            bool useAsync, ParameterDirection direction, int size, int commandMode)
+        {
+            // Arrange: use a UTF-8 database so characters and encoded byte counts differ.
+            string database = DataTestUtility.GetLongName("Utf8Output", false);
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
+            {
+                InitialCatalog = "master",
+                Pooling = false
+            };
+            using SqlConnection admin = new(builder.ConnectionString);
+            admin.Open();
+            using (SqlCommand create = admin.CreateCommand())
+            {
+                create.CommandText = $"CREATE DATABASE [{database}] " +
+                    "COLLATE Latin1_General_100_CI_AS_SC_UTF8";
+                create.ExecuteNonQuery();
+            }
+            try
+            {
+                builder.InitialCatalog = database;
+                using SqlConnection connection = new(builder.ConnectionString);
+                await connection.OpenAsync();
+                const string Batch = "SELECT @p; SET @p = @source;";
+                using StoredProcedure procedure = commandMode == 1
+                    ? new StoredProcedure(connection, "Utf8Output",
+                        "@p varchar(max) OUTPUT, @source nvarchar(max) AS " + Batch)
+                    : null;
+                using SqlCommand command = connection.CreateCommand();
+                command.CommandText = procedure?.Name ?? Batch;
+                command.CommandType = commandMode == 1
+                    ? CommandType.StoredProcedure : CommandType.Text;
+                SqlParameter source = command.Parameters.Add("@source", SqlDbType.NVarChar, -1);
+                SqlParameter parameter = command.Parameters.Add("@p", SqlDbType.VarChar, size);
+                parameter.Direction = direction;
+
+                if (size == 0)
+                {
+                    // Characterize #4953's unsized-output limitation without changing Size policy.
+                    command.CommandText = "SET @p = @source;";
+                    parameter.Value = "abcdefgh";
+                    source.Value = new string('\u00e9', 2);
+                    // Act
+                    if (useAsync)
+                    {
+                        await command.ExecuteNonQueryAsync();
+                    }
+                    else
+                    {
+                        command.ExecuteNonQuery();
+                    }
+                    // Assert
+                    Assert.Equal(direction == ParameterDirection.Output
+                        ? string.Empty : new string('\u00e9', 2), parameter.Value);
+                    source.Value = new string('\u00e9', 4);
+                    InvalidOperationException exception = useAsync
+                        ? await Assert.ThrowsAsync<InvalidOperationException>(
+                            () => command.ExecuteNonQueryAsync())
+                        : Assert.Throws<InvalidOperationException>(() => command.ExecuteNonQuery());
+                    Assert.Contains(nameof(SqlParameter.Size), exception.Message);
+                    return;
+                }
+
+                parameter.Value = "a" + new string('\u00e9', 4000);
+                parameter.Offset = 1;
+                if (commandMode == 2)
+                {
+                    command.Prepare();
+                }
+                foreach (int count in new[] { 4000, 4001, 4000, 4001 })
+                {
+                    string text = new('\u00e9', count);
+                    source.Value = text;
+                    parameter.Value = direction == ParameterDirection.Output
+                        ? "ignored" : "a" + text;
+                    // Act: inspect the input leg, then consume output tokens before checking Value.
+                    using (SqlDataReader reader = useAsync
+                        ? await command.ExecuteReaderAsync() : command.ExecuteReader())
+                    {
+                        // Assert
+                        Assert.True(useAsync ? await reader.ReadAsync() : reader.Read());
+                        if (direction == ParameterDirection.Output)
+                        {
+                            Assert.True(reader.IsDBNull(0));
+                        }
+                        else
+                        {
+                            Assert.Equal(text, reader.GetString(0));
+                        }
+                        Assert.False(useAsync ? await reader.ReadAsync() : reader.Read());
+                        Assert.False(useAsync
+                            ? await reader.NextResultAsync() : reader.NextResult());
+                    }
+                    string expected = direction == ParameterDirection.Output && size == 8000
+                        ? text.Substring(0, Math.Min(count, 4000)) : text;
+                    Assert.Equal(expected, parameter.Value);
+                    Assert.Equal(size, parameter.Size);
+                }
+            }
+            finally
+            {
+                // Cleanup
+                DataTestUtility.DropDatabase(admin, database);
+            }
+        }
+
         /// <summary>
         /// Covers text, stored-procedure and prepared RPCs with sync and async execution.
         /// </summary>
