@@ -946,8 +946,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Login\SqlFedAuthToken.cs">
       <Link>Microsoft\Data\SqlClient\Parser\Login\SqlFedAuthToken.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\_SqlMetaData.cs">
-      <Link>Microsoft\Data\SqlClient\Parser\Tokens\_SqlMetaData.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\TdsColumnMetadata.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Tokens\TdsColumnMetadata.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\TdsColumnMetadataToken.cs">
       <Link>Microsoft\Data\SqlClient\Parser\Tokens\TdsColumnMetadataToken.cs</Link>

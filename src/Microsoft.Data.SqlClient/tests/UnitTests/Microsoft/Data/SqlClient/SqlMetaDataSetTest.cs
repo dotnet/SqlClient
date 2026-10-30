@@ -15,7 +15,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [InlineData(true)]
         public void CloneDoesNotCopyColumnEncryptionMetadata(bool encrypted)
         {
-            _SqlMetaData original = new(0)
+            TdsColumnMetadata original = new(0)
             {
                 type = SqlDbType.VarBinary,
                 isEncrypted = encrypted,
@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
                 xmlSchemaCollection = new SqlMetaDataXmlSchemaCollection { Name = "TestSchema" }
             };
 
-            _SqlMetaData clone = (_SqlMetaData)original.Clone();
+            TdsColumnMetadata clone = (TdsColumnMetadata)original.Clone();
 
             Assert.NotSame(original, clone);
             Assert.Equal(original.type, clone.type);
