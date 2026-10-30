@@ -27,6 +27,17 @@
           native metadata directly. JSON text sent to a vector column with a <c>float16</c>
           base type uses an explicit UTF-8 text representation, leaving conversion to SQL Server.
         </para>
+        <para>
+          A <see cref="T:System.Data.DataTableReader" /> or custom reader supplying native
+          <c>SqlVector&lt;T&gt;</c> values needs native vector destination metadata to infer the
+          dimensions. If the destination metadata is text, provide JSON string values instead.
+          This includes a vector column with a <c>float16</c> base type exposed as text under
+          <c>Vector Type Support=v1</c> or <c>off</c>. A CLR field type alone does not supply a
+          dimension count, and the driver does not consume reader values or silently serialize
+          native vectors to JSON to infer that information. Use an in-memory
+          <see cref="T:System.Data.DataTable" /> source or a <c>SqlDataReader</c> with native
+          vector metadata when the source's binary representation must be retained.
+        </para>
       </remarks>
       <example>
         <format type="text/markdown">

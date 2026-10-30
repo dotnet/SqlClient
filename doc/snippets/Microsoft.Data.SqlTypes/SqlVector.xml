@@ -26,7 +26,9 @@
           version 2 is negotiated with the server. Starting with Microsoft.Data.SqlClient 8.0,
           <c>Vector Type Support</c> defaults to <c>v2</c>, requesting native support for both
           base types. On .NET, this changes the column's default result type from a JSON
-          string to <c>SqlVector&lt;Half&gt;</c>. Set <c>Vector Type Support=v1</c> to retain
+          string to <c>SqlVector&lt;Half&gt;</c>. This is a breaking change for applications
+          that expect a string from the default reader accessors or schema.
+          Set <c>Vector Type Support=v1</c> to retain
           JSON string results for that base type while keeping native <c>float32</c> support.
           Under <c>v1</c> or <c>off</c>, a vector column with a <c>float16</c> base type is
           returned as <c>varchar(max)</c> containing a JSON array.
@@ -53,6 +55,14 @@
           base type. JSON text copied into a vector column with a <c>float16</c> base type is
           sent as <c>varchar(max)</c>, so SQL Server performs its parsing and rounding too.
           The existing JSON-to-<c>float32</c> bulk-copy conversion is unchanged.
+        </para>
+        <para>
+          <c>Vector Type Support</c> selects the requested result representation; it does not
+          add client-side rejection of outgoing vector values under <c>v1</c> or <c>off</c>.
+          Unsupported writes are reported by SQL Server. Native vector columns in table-valued
+          parameters are not supported by <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" />;
+          use individual vector parameters or <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" />
+          instead.
         </para>
         <para>
           <c>GetColumnSchema()</c> exposes <c>VectorBaseType</c> (a string) and
