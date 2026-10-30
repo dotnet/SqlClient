@@ -51,8 +51,8 @@ namespace Interop.Windows.Sni
         public void SniGetLastError(out SniError pLastError) =>
             SNIGetLastError(out pLastError);
 
-        public unsafe uint SniGetServerCertificateHash(SNIHandle pConn, byte* pbHash, uint cbHash, out uint pcbWritten) =>
-            SNIGetServerCertificateHashWrapper(pConn, pbHash, cbHash, out pcbWritten);
+        public unsafe uint SniGetServerCertificate(SNIHandle pConn, byte* pbCertificate, uint cbCertificate, out uint pcbCertificate) =>
+            SNIGetServerCertificateWrapper(pConn, pbCertificate, cbCertificate, out pcbCertificate);
 
         public uint SniGetPeerAddrStrWrapper(
             SNIHandle pConn,
@@ -207,11 +207,11 @@ namespace Interop.Windows.Sni
             ref SniCertValidationInfo pInfo);
 
         [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
-        private static extern unsafe uint SNIGetServerCertificateHashWrapper(
+        private static extern unsafe uint SNIGetServerCertificateWrapper(
             [In] SNIHandle pConn,
-            byte* pbHash,
-            uint cbHash,
-            out uint pcbWritten);
+            byte* pbCertificate,
+            uint cbCertificate,
+            out uint pcbCertificate);
 
         [DllImport(DllName, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
         private static extern uint SNIGetPeerAddrStrWrapper(
