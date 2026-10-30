@@ -3,9 +3,11 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
 
 #nullable enable
@@ -21,6 +23,15 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
         private static readonly SemaphoreSlim s_cacheLock = new(1, 1);
 
         private readonly MemoryCache _cache;
+        private readonly object _publicationLock = new();
+        private readonly Dictionary<string, KeyLoadGate> _pendingKeyLoads = new();
+
+        private sealed class KeyLoadGate
+        {
+            internal readonly SemaphoreSlim Semaphore = new(1, 1);
+            // Count owners and waiters so removal cannot create a second gate for an active key.
+            internal int Users;
+        }
 
         private SymmetricKeyCache()
         {
@@ -36,17 +47,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
         {
             string serverName = connection.DataSource;
             Debug.Assert(serverName is not null, @"serverName should not be null.");
-            int capacity = serverName!.Length + SqlSecurityUtility.GetBase64LengthFromByteLength(keyInfo.encryptedKey.Length) + keyInfo.keyStoreName.Length + 2 /* separators */;
-            StringBuilder cacheLookupKeyBuilder = new(serverName, capacity);
-
-            cacheLookupKeyBuilder.Append(':');
-            cacheLookupKeyBuilder.Append(Convert.ToBase64String(keyInfo.encryptedKey));
-            cacheLookupKeyBuilder.Append(':');
-            cacheLookupKeyBuilder.Append(keyInfo.keyStoreName);
-
-            string cacheLookupKey = cacheLookupKeyBuilder.ToString();
-
-            Debug.Assert(cacheLookupKey.Length <= capacity, "We needed to allocate a larger array");
+            string cacheLookupKey = CreateCacheLookupKey(keyInfo, serverName!);
 
             // Lookup the key in cache
             if (!_cache.TryGetValue(cacheLookupKey, out SymmetricKey? encryptionKey)
@@ -101,7 +102,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
                         {
                             // In case multiple threads reach here at the same time, the first one wins.
                             // The allocated memory will be reclaimed by Garbage Collector.
-                            _cache.Set(cacheLookupKey, encryptionKey, absoluteExpirationRelativeToNow: SqlConnection.ColumnEncryptionKeyCacheTtl);
+                            encryptionKey = PublishKey(cacheLookupKey, encryptionKey, SqlConnection.ColumnEncryptionKeyCacheTtl);
                         }
                     }
                 }
@@ -113,6 +114,159 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
             }
 
             return encryptionKey;
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves a plaintext key, preserving cancellation and provider error wrapping.
+        /// </summary>
+        /// <remarks>
+        /// Provider I/O runs outside the process-wide gate so synchronous callers are not blocked by it.
+        /// Async misses for the same key wait for its pending load and recheck the cache.
+        /// Different keys load independently; synchronous races retain first-published key identity.
+        /// </remarks>
+        internal async Task<SymmetricKey> GetKeyAsync(
+            SqlEncryptionKeyInfo keyInfo,
+            SqlConnection connection,
+            SqlCommand? command,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            string serverName = connection.DataSource;
+            Debug.Assert(serverName is not null, @"serverName should not be null.");
+            string cacheLookupKey = CreateCacheLookupKey(keyInfo, serverName!);
+
+            if (_cache.TryGetValue(cacheLookupKey, out SymmetricKey? cachedKey) && cachedKey is not null)
+            {
+                return cachedKey;
+            }
+
+            KeyLoadGate gate;
+            lock (_publicationLock)
+            {
+                if (!_pendingKeyLoads.TryGetValue(cacheLookupKey, out gate!))
+                {
+                    gate = new KeyLoadGate();
+                    _pendingKeyLoads.Add(cacheLookupKey, gate);
+                }
+                gate.Users++;
+            }
+
+            bool acquired = false;
+            try
+            {
+                await gate.Semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+                acquired = true;
+                cancellationToken.ThrowIfCancellationRequested();
+                return await LoadKeyAsync(keyInfo, connection, command, cancellationToken, serverName!, cacheLookupKey)
+                    .ConfigureAwait(false);
+            }
+            finally
+            {
+                if (acquired)
+                {
+                    gate.Semaphore.Release();
+                }
+
+                lock (_publicationLock)
+                {
+                    if (--gate.Users == 0)
+                    {
+                        _pendingKeyLoads.Remove(cacheLookupKey);
+                        gate.Semaphore.Dispose();
+                    }
+                }
+            }
+        }
+
+        private async Task<SymmetricKey> LoadKeyAsync(
+            SqlEncryptionKeyInfo keyInfo,
+            SqlConnection connection,
+            SqlCommand? command,
+            CancellationToken cancellationToken,
+            string serverName,
+            string cacheLookupKey)
+        {
+            if (_cache.TryGetValue(cacheLookupKey, out SymmetricKey? cachedKey) && cachedKey is not null)
+            {
+                return cachedKey;
+            }
+
+            Debug.Assert(SqlConnection.ColumnEncryptionTrustedMasterKeyPaths is not null,
+                @"SqlConnection.ColumnEncryptionTrustedMasterKeyPaths should not be null");
+            SqlSecurityUtility.ThrowIfKeyPathIsNotTrustedForServer(serverName, keyInfo.keyPath);
+
+            if (!SqlSecurityUtility.TryGetColumnEncryptionKeyStoreProvider(
+                keyInfo.keyStoreName, out SqlColumnEncryptionKeyStoreProvider provider, connection, command))
+            {
+                throw SQL.UnrecognizedKeyStoreProviderName(keyInfo.keyStoreName,
+                    SqlConnection.GetColumnEncryptionSystemKeyStoreProvidersNames(),
+                    SqlSecurityUtility.GetListOfProviderNamesThatWereSearched(connection, command));
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            byte[] plaintextKey;
+            try
+            {
+                // Global providers must not keep a second CEK cache. Concurrent assignments are idempotent.
+                provider.ColumnEncryptionKeyCacheTtl = TimeSpan.Zero;
+                plaintextKey = await provider
+                    .DecryptColumnEncryptionKeyAsync(keyInfo.keyPath, keyInfo.algorithmName, keyInfo.encryptedKey, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception e)
+            {
+                string keyHex = SqlSecurityUtility.GetBytesAsString(keyInfo.encryptedKey, fLast: true, countOfBytes: 10);
+                throw SQL.KeyDecryptionFailed(keyInfo.keyStoreName, keyHex, e);
+            }
+
+            SymmetricKey decryptedKey = new(plaintextKey);
+            TimeSpan cacheTtl = SqlConnection.ColumnEncryptionKeyCacheTtl;
+            if (cacheTtl == TimeSpan.Zero)
+            {
+                return decryptedKey;
+            }
+
+            // Publish completed decryption even if cancellation arrived after the provider returned.
+            return PublishKey(cacheLookupKey, decryptedKey, cacheTtl);
+        }
+
+        /// <summary>
+        /// Publishes one shared key instance under a short lock that never covers provider I/O.
+        /// </summary>
+        private SymmetricKey PublishKey(string cacheLookupKey, SymmetricKey decryptedKey, TimeSpan cacheTtl)
+        {
+            lock (_publicationLock)
+            {
+                if (_cache.TryGetValue(cacheLookupKey, out SymmetricKey? cachedKey) && cachedKey is not null)
+                {
+                    return cachedKey;
+                }
+
+                _cache.Set(cacheLookupKey, decryptedKey, absoluteExpirationRelativeToNow: cacheTtl);
+                return decryptedKey;
+            }
+        }
+
+        /// <summary>
+        /// Builds the shared sync/async cache lookup key from the server and encrypted key material.
+        /// </summary>
+        private static string CreateCacheLookupKey(SqlEncryptionKeyInfo keyInfo, string serverName)
+        {
+            int capacity = serverName.Length + SqlSecurityUtility.GetBase64LengthFromByteLength(keyInfo.encryptedKey.Length) + keyInfo.keyStoreName.Length + 2 /* separators */;
+            StringBuilder cacheLookupKeyBuilder = new(serverName, capacity);
+            cacheLookupKeyBuilder.Append(':');
+            cacheLookupKeyBuilder.Append(Convert.ToBase64String(keyInfo.encryptedKey));
+            cacheLookupKeyBuilder.Append(':');
+            cacheLookupKeyBuilder.Append(keyInfo.keyStoreName);
+
+            string cacheLookupKey = cacheLookupKeyBuilder.ToString();
+            Debug.Assert(cacheLookupKey.Length <= capacity, "We needed to allocate a larger array");
+            return cacheLookupKey;
         }
     }
 }
