@@ -875,12 +875,12 @@ namespace Microsoft.Data.SqlClient
                 return true;
             }
 
-            string machineName = Environment.MachineName;
-            return string.Equals(host, machineName, StringComparison.OrdinalIgnoreCase) ||
-                   (host.Length > machineName.Length &&
-                    host[machineName.Length] == '.' &&
-                    host.StartsWith(machineName, StringComparison.OrdinalIgnoreCase));
+            // Match the full name only; a remote host can share the short machine name.
+            return string.Equals(host, Environment.MachineName, StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(host.TrimEnd('.'), s_localFullyQualifiedName.Value, StringComparison.OrdinalIgnoreCase);
         }
+
+        private static readonly Lazy<string> s_localFullyQualifiedName = new(GetComputerNameDnsFullyQualified);
 
         private static string GetComputerNameDnsFullyQualified()
         {

@@ -279,7 +279,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
         public void UsesTcpProtocol_LocalMachineName_NativeIsNotTcp()
         {
             Assert.False(SqlConnectionOptions.UsesTcpProtocol(Environment.MachineName, useManagedNetworking: false));
-            Assert.False(SqlConnectionOptions.UsesTcpProtocol($"{Environment.MachineName}.contoso.com", useManagedNetworking: false));
+            // A remote host that shares the short machine name is not local.
+            Assert.True(SqlConnectionOptions.UsesTcpProtocol($"{Environment.MachineName}.remote-domain.invalid", useManagedNetworking: false));
             Assert.True(SqlConnectionOptions.UsesTcpProtocol(Environment.MachineName, useManagedNetworking: true));
         }
 

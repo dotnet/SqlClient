@@ -310,8 +310,6 @@ namespace Microsoft.Data.SqlClient.Connection
         /// </remarks>
         private readonly SqlConnectionPoolGroupProviderInfo _poolGroupProviderInfo;
 
-        private bool _multiSubnetFailover;
-
         private SessionData _recoverySessionData;
 
         // @TODO: Rename to match naming conventions (remove f prefix)
@@ -393,7 +391,7 @@ namespace Microsoft.Data.SqlClient.Connection
             Debug.Assert(connectionOptions is not null, "null connectionOptions");
 
             ConnectionOptions = connectionOptions;
-            _multiSubnetFailover = connectionOptions.MultiSubnetFailover;
+            MultiSubnetFailover = connectionOptions.MultiSubnetFailover;
             _registeredApplication = registeredApplication;
 
             #if DEBUG
@@ -552,7 +550,7 @@ namespace Microsoft.Data.SqlClient.Connection
         /// turned off when the resolved protocol is not TCP, or when the server sends a database
         /// mirroring failover partner.
         /// </summary>
-        internal bool MultiSubnetFailover => _multiSubnetFailover;
+        internal bool MultiSubnetFailover { get; private set; }
 
         // Turns off MultiSubnetFailover when it came from the default, so database mirroring
         // keeps working. Returns false when it was set explicitly.
@@ -563,7 +561,7 @@ namespace Microsoft.Data.SqlClient.Connection
                 return false;
             }
 
-            _multiSubnetFailover = false;
+            MultiSubnetFailover = false;
             return true;
         }
 
@@ -572,7 +570,7 @@ namespace Microsoft.Data.SqlClient.Connection
         // still reports its existing error for non-TCP protocols.
         private void ApplyDefaultMultiSubnetFailoverForProtocol(ServerInfo serverInfo)
         {
-            if (_multiSubnetFailover &&
+            if (MultiSubnetFailover &&
                 !SqlConnectionOptions.UsesTcpProtocol(serverInfo.ExtendedServerName, LocalAppContextSwitches.UseManagedNetworking))
             {
                 TryDisableDefaultMultiSubnetFailover();
@@ -3803,7 +3801,7 @@ namespace Microsoft.Data.SqlClient.Connection
             SqlCredential credential, // @TODO: This isn't used anywhere
             TimeoutTimer timeout)
         {
-            TryDisableDefaultMultiSubnetFailover();
+            // SqlConnectionOptions turns off the default when a failover partner is configured.
             Debug.Assert(!MultiSubnetFailover,
                 "MultiSubnetFailover should not be set if failover partner is used");
 
