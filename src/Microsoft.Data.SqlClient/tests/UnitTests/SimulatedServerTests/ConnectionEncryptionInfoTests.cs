@@ -74,7 +74,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             Assert.Equal(ConnectionState.Open, connection.State);
             AssertNegotiated(connection.EncryptionInfo, serverEncryption);
-            AssertCertificateFieldsNull(connection.EncryptionInfo);
+            AssertBypassedCertificateFields(connection.EncryptionInfo, serverEncryption);
         }
 
         [Theory]
@@ -91,7 +91,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             Assert.Equal(SqlConnectionEncryptionMode.Full, connection.EncryptionInfo.NegotiatedEncryptionMode);
             Assert.Equal(SslProtocols.Tls12, connection.EncryptionInfo.NegotiatedEncryptionProtocol);
-            AssertCertificateFieldsNull(connection.EncryptionInfo);
+            AssertBypassedCertificateFields(connection.EncryptionInfo, ServerEncryption.Required);
         }
 
         [Theory]
@@ -211,7 +211,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             Assert.Equal(18456, ex.Number);
             AssertNegotiated(ex.EncryptionInfo, serverEncryption);
-            AssertCertificateFieldsNull(ex.EncryptionInfo);
+            AssertBypassedCertificateFields(ex.EncryptionInfo, serverEncryption);
             Assert.True(connection.EncryptionInfo.IsEmpty);
 
             // Values are not surfaced through message text.
@@ -262,8 +262,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             // The fixture certificate is self-signed and not installed in any trusted store, so
             // certificate validation fails. Native SNI (Schannel) defers that verdict until the LOGIN7
             // write and keeps the mode and protocol observed during the completed handshake. Managed SNI
-            // fails inside the handshake and, in this slice, observes no protocol. The mode is never
-            // reported without an observed protocol. Certificate fields are not asserted here.
+            // fails inside the handshake but records the protocol agreed before the validation callback.
+            // The mode is never reported without an observed protocol. Certificate fields are not asserted here.
             TdsServerArguments arguments = CreateArguments<TdsServerArguments>(serverEncryption);
             arguments.ExpectTlsHandshakeFailure = true;
             using TdsServer server = new(arguments);
@@ -285,6 +285,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             {
                 Assert.Equal(SqlConnectionEncryptionMode.Full, ex.EncryptionInfo.NegotiatedEncryptionMode);
             }
+
+            if (LocalAppContextSwitches.UseManagedNetworking)
+            {
+                // SslStream agrees the protocol version before raising the validation callback.
+                Assert.NotNull(ex.EncryptionInfo.NegotiatedEncryptionProtocol);
+            }
+
             Assert.True(connection.EncryptionInfo.IsEmpty);
         }
 
@@ -448,12 +455,40 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }
         }
 
-        private static void AssertCertificateFieldsNull(SqlConnectionEncryptionInfo info)
+        /// <summary>
+        /// These tests use TrustServerCertificate=true, so SqlClient never evaluates the certificate:
+        ///         the verdict and chain status are always unavailable. Managed SNI still records the presented
+                /// certificate whenever a TLS handshake took place; native SNI does not capture certificate
+                /// details.
+        /// </summary>
+        private void AssertBypassedCertificateFields(SqlConnectionEncryptionInfo info, ServerEncryption serverEncryption)
         {
-            Assert.Null(info.PresentedServerCertificateRawData);
-            Assert.Null(info.GetServerCertificate());
+            if (serverEncryption != ServerEncryption.NotSupported && LocalAppContextSwitches.UseManagedNetworking)
+            {
+                Assert.NotNull(info.PresentedServerCertificateRawData);
+                Assert.Equal(_certificate.RawData, info.PresentedServerCertificateRawData.Value.ToArray());
+                using X509Certificate2? presented = info.GetServerCertificate();
+                Assert.NotNull(presented);
+                Assert.Equal(_certificate.RawData, presented.RawData);
+            }
+            else
+            {
+                Assert.Null(info.PresentedServerCertificateRawData);
+                Assert.Null(info.GetServerCertificate());
+            }
             Assert.Null(info.ValidationErrors);
             Assert.Null(info.ChainStatus);
+
+            if (serverEncryption == ServerEncryption.NotSupported)
+            {
+                // No TLS handshake took place, so no cipher suite was negotiated.
+                Assert.Null(info.NegotiatedCipherSuiteId);
+            }
+            else if (LocalAppContextSwitches.UseManagedNetworking)
+            {
+                Assert.NotNull(info.NegotiatedCipherSuiteId);
+                Assert.InRange(info.NegotiatedCipherSuiteId!.Value, 1, 0xFFFF);
+            }
         }
 
         private static int GetUnusedPort()
