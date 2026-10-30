@@ -15,7 +15,6 @@ using System.Transactions;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Diagnostics;
-using static Microsoft.Data.SqlClient.ConnectionPool.DbConnectionPoolState;
 using Microsoft.Data.SqlClient.Internal;
 
 namespace Microsoft.Data.SqlClient.ConnectionPool
@@ -51,25 +50,57 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
     {
 
         private static int _objectTypeCount;
+        private readonly PoolPruningGuard _pruningGuard = new();
 
         public int Id => Interlocked.Increment(ref _objectTypeCount);
 
-        public DbConnectionPoolState State { get; set; }
+        // Non-zero once Shutdown's one-time cleanup has started.
+        private int _shutdownInitiated;
 
         // This class is a way to stash our cloned Tx key for later disposal when it's no longer needed.
         // We can't get at the key in the dictionary without enumerating entries, so we stash an extra
         // copy as part of the value.
 
-        private sealed class PendingGetConnection
+        internal sealed class PendingGetConnection
         {
-            public PendingGetConnection(long dueTime, DbConnection owner, TaskCompletionSource<DbConnectionInternal> completion, TimeoutTimer timeout)
+            public PendingGetConnection(long dueTime, DbConnection owner, TaskCompletionSource<DbConnectionInternal> completion, TimeoutTimer timeout, PoolPruningGuard.Lease lease)
             {
                 DueTime = dueTime;
                 Owner = owner;
                 Completion = completion;
                 Timeout = timeout;
+                _lease = lease;
             }
             public long DueTime { get; private set; }
+            // Pruning lease owned by this request. A field (not a property) so releasing it mutates
+            // this storage and repeated releases are no-ops.
+            private PoolPruningGuard.Lease _lease;
+            /// <summary>Releases the pruning lease once the request is processed; idempotent.</summary>
+            public void ReleaseLease() => _lease.Dispose();
+
+            // 0 = unclaimed, 1 = claimed by a worker or abandoned by a failed scheduler.
+            private int _claimed;
+
+            /// <summary>
+            /// Claims the request for a worker. Only the claimant may process it and release its
+            /// lease, so a worker never loses admission while it is creating a connection.
+            /// </summary>
+            public bool TryClaim() => Interlocked.CompareExchange(ref _claimed, 1, 0) == 0;
+
+            /// <summary>
+            /// Releases the lease of a request no worker has claimed. Returns
+            /// <see langword="false"/> when a worker already owns it; that worker keeps the
+            /// lease until it finishes and releases it itself.
+            /// </summary>
+            public bool TryAbandon()
+            {
+                if (!TryClaim())
+                {
+                    return false;
+                }
+                ReleaseLease();
+                return true;
+            }
             public DbConnection Owner { get; private set; }
             public TaskCompletionSource<DbConnectionInternal> Completion { get; private set; }
             public TimeoutTimer Timeout { get; private set; }
@@ -271,7 +302,6 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             _transactedConnectionPool = new TransactedConnectionPool(this, Metrics);
 
             _poolCreateRequest = new WaitCallback(PoolCreateRequest); // used by CleanupCallback
-            State = Running;
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.DbConnectionPool|RES|CPOOL> {0}, Constructed.", Id);
 
             //_cleanupTimer & QueuePoolCreateRequest is delayed until DbConnectionPoolGroup calls
@@ -304,7 +334,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         {
             get
             {
-                if (State is not Running) // Don't allow connection create when not running.
+                if (!IsRunning) // Don't allow connection create when not running.
                 {
                     return false;
                 }
@@ -331,10 +361,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         public DbConnectionPoolIdentity Identity => _identity;
 
-        public bool IsRunning
-        {
-            get { return State is Running; }
-        }
+        /// <inheritdoc/>
+        /// <remarks>
+        /// Derived from the pruning guard's single atomic state, so the pool stops running in the
+        /// same step that refuses new admission.
+        /// </remarks>
+        public bool IsRunning => _pruningGuard.IsRunning;
 
         internal int MaxPoolSize => PoolGroupOptions.MaxPoolSize;
 
@@ -373,10 +405,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 #nullable enable annotations
         internal void CleanupCallback(object? state)
         {
-            // If the pool is not Running, skip work. Shutdown disposes the timer, but
+            // If the pool is not running, skip work. Shutdown disposes the timer, but
             // a callback may already be in-flight when Shutdown runs; this guard ensures it does
             // not perform pruning or re-arm pool create requests.
-            if (State is not Running)
+            if (!IsRunning)
             {
                 return;
             }
@@ -549,6 +581,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 _cleanupWait,
                 _cleanupWait);
 
+        // Callers must already hold a pruning guard lease (admission, replacement, or pool-create lease),
+        // so already-admitted work can finish after Shutdown closes the guard.
         private DbConnectionInternal CreateObject(DbConnection owningObject, DbConnectionInternal oldConnection, TimeoutTimer timeout)
         {
             DbConnectionInternal newObj = null;
@@ -633,7 +667,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     // transaction object will ensure that it is owned (not lost),
                     // and it will be certain to put it back into the pool.
 
-                    if (State is ShuttingDown)
+                    if (!IsRunning)
                     {
                         if (obj.IsTransactionRoot)
                         {
@@ -671,7 +705,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                             Transaction transaction = obj.EnlistedTransaction;
                             if (transaction != null)
                             {
-                                // NOTE: we're not locking on _state, so it's possible that its
+                                // NOTE: we're not locking around IsRunning, so it's possible that its
                                 //   value could change between the conditional check and here.
                                 //   Although perhaps not ideal, this is OK because the
                                 //   DelegatedTransactionEnded event will clean up the
@@ -796,8 +830,15 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                     while (_pendingOpens.TryDequeue(out next))
                     {
+                        if (!next.TryClaim())
+                        {
+                            // Abandoned after a scheduling failure; its lease is already released.
+                            continue;
+                        }
+
                         if (next.Completion.Task.IsCompleted)
                         {
+                            next.ReleaseLease();
                             continue;
                         }
 
@@ -832,22 +873,29 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                             caughtException = e;
                         }
 
-                        if (caughtException != null)
+                        try
                         {
-                            next.Completion.TrySetException(caughtException);
-                        }
-                        else if (timeout)
-                        {
-                            next.Completion.TrySetException(ADP.ExceptionWithStackTrace(ADP.PooledOpenTimeout()));
-                        }
-                        else
-                        {
-                            Debug.Assert(connection != null, "connection should never be null in success case");
-                            if (!next.Completion.TrySetResult(connection))
+                            if (caughtException != null)
                             {
-                                // if the completion was cancelled, lets try and get this connection back for the next try
-                                ReturnInternalConnection(connection, next.Owner);
+                                next.Completion.TrySetException(caughtException);
                             }
+                            else if (timeout)
+                            {
+                                next.Completion.TrySetException(ADP.ExceptionWithStackTrace(ADP.PooledOpenTimeout()));
+                            }
+                            else
+                            {
+                                Debug.Assert(connection != null, "connection should never be null in success case");
+                                if (!next.Completion.TrySetResult(connection))
+                                {
+                                    // if the completion was cancelled, lets try and get this connection back for the next try
+                                    ReturnInternalConnection(connection, next.Owner);
+                                }
+                            }
+                        }
+                        finally
+                        {
+                            next.ReleaseLease();
                         }
                     }
                 }
@@ -888,6 +936,25 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         public bool TryGetConnection(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal> taskCompletionSource, TimeoutTimer timeout, out DbConnectionInternal connection)
         {
+            PoolPruningGuard.Lease lease = _pruningGuard.TryEnter();
+            if (!lease.IsActive)
+            {
+                connection = null;
+                return true;
+            }
+            try
+            {
+                // TryGetConnectionCore clears 'lease' when it transfers ownership to a pending request.
+                return TryGetConnectionCore(owningObject, taskCompletionSource, timeout, out connection, ref lease);
+            }
+            finally
+            {
+                lease.Dispose();
+            }
+        }
+
+        private bool TryGetConnectionCore(DbConnection owningObject, TaskCompletionSource<DbConnectionInternal> taskCompletionSource, TimeoutTimer timeout, out DbConnectionInternal connection, ref PoolPruningGuard.Lease lease)
+        {
             uint waitForMultipleObjectsTimeout = 0;
             bool allowCreate = false;
 
@@ -897,9 +964,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 allowCreate = true;
             }            
             
-            if (State is not Running)
+            if (!IsRunning)
             {
-                SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, DbConnectionInternal State != Running.", Id);
+                SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Pool is not running.", Id);
                 connection = null;
                 return true;
             }
@@ -917,10 +984,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
             // Before queueing, the factory can still redirect this request to a new pool.
             // Once queued, the request must finish on this pool, even if it is retired.
-            if (State is not Running)
+            if (!IsRunning)
             {
                 SqlClientEventSource.Log.TryPoolerTraceEvent(
-                    "<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Pool not Running after inner TryGetConnection; short-circuit async path.", Id);
+                    "<prov.DbConnectionPool.GetConnection|RES|CPOOL> {0}, Pool is not running after inner TryGetConnection; short-circuit async path.", Id);
                 connection = null;
                 return true;
             }
@@ -946,15 +1013,30 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     dueTime,
                     owningObject,
                     taskCompletionSource,
-                    timeout);
+                    timeout,
+                    lease);
             _pendingOpens.Enqueue(pendingGetConnection);
+            // Ownership of the lease moves to the queued request; the worker releases it.
+            lease = default;
 
             // it is better to StartNew too many times than not enough
             if (_pendingOpensWaiting == 0)
             {
-                Thread waitOpenThread = new Thread(WaitForPendingOpen);
-                waitOpenThread.IsBackground = true;
-                waitOpenThread.Start();
+                try
+                {
+                    Thread waitOpenThread = new Thread(WaitForPendingOpen);
+                    waitOpenThread.IsBackground = true;
+                    waitOpenThread.Start();
+                }
+                catch (Exception e)
+                {
+                    // Fail the request. Release its lease only if no worker has claimed it; a worker
+                    // that already dequeued it keeps the lease until its create finishes, and its
+                    // TrySetResult then fails so it returns the connection to the pool.
+                    pendingGetConnection.TryAbandon();
+                    taskCompletionSource.TrySetException(e);
+                    throw;
+                }
             }
 
             connection = null;
@@ -1173,8 +1255,18 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// <param name="owningObject">Outer connection that currently owns <paramref name="oldConnection"/></param>
         /// <param name="oldConnection">Inner connection that will be replaced</param>
         /// <param name="timeout">Overall timeout budget for this connection request.</param>
-        /// <returns>A new inner connection that is attached to the <paramref name="owningObject"/></returns>
+        /// <returns>A new inner connection that is attached to the <paramref name="owningObject"/>, or null if the pool was retired before admission.</returns>
         public DbConnectionInternal ReplaceConnection(DbConnection owningObject, DbConnectionInternal oldConnection, TimeoutTimer timeout)
+        {
+            using PoolPruningGuard.Lease lease = _pruningGuard.TryEnter();
+            if (!lease.IsActive)
+            {
+                return null;
+            }
+            return ReplaceConnectionCore(owningObject, oldConnection, timeout);
+        }
+
+        private DbConnectionInternal ReplaceConnectionCore(DbConnection owningObject, DbConnectionInternal oldConnection, TimeoutTimer timeout)
         {
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.ReplaceConnection|RES|CPOOL> {0}, replacing connection.", Id);
             DbConnectionInternal newConnection = UserCreateRequest(owningObject, timeout, oldConnection);
@@ -1182,7 +1274,20 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             if (newConnection != null)
             {
                 Metrics.SoftConnectRequest();
-                PrepareConnection(owningObject, newConnection, oldConnection.EnlistedTransaction, timeout);
+                PrepareConnection(
+                    owningObject, newConnection, oldConnection.EnlistedTransaction, timeout);
+
+                if (oldConnection.Pool is { } ownerPool && ownerPool != this)
+                {
+                    // The factory redirected this replacement because the old connection's pool
+                    // was retired. CreateObject only removes connections this pool owns, so doom
+                    // the old connection and return it to its owner, which removes it from that
+                    // pool's inventory exactly once.
+                    oldConnection.DoomThisConnection();
+                    ownerPool.ReturnInternalConnection(oldConnection, owningObject);
+                    return newConnection;
+                }
+
                 oldConnection.DeactivateConnection();
                 oldConnection.Dispose();
 
@@ -1279,7 +1384,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             long scopeID = SqlClientEventSource.Log.TryPoolerScopeEnterEvent("<prov.DbConnectionPool.PoolCreateRequest|RES|INFO|CPOOL> {0}", Id);
             try
             {
-                if (State is Running)
+                if (IsRunning)
                 {
                     // in case WaitForPendingOpen ever failed with no subsequent OpenAsync calls,
                     // start it back up again
@@ -1373,6 +1478,11 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
             finally
             {
+                // Release the lease handed over by QueuePoolCreateRequest.
+                if (state is PoolPruningGuard.Lease lease)
+                {
+                    lease.Dispose();
+                }
                 SqlClientEventSource.Log.TryPoolerScopeLeaveEvent(scopeID);
             }
         }
@@ -1458,7 +1568,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // done and all transactions are ended.
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.PutObjectFromTransactedPool|RES|CPOOL> {0}, Connection {1}, Transaction has ended.", Id, obj.ObjectID);
 
-            if (State is Running && obj.CanBePooled)
+            if (IsRunning && obj.CanBePooled)
             {
                 obj.ResetConnection();
                 PutNewObject(obj);
@@ -1472,10 +1582,32 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         private void QueuePoolCreateRequest()
         {
-            if (State is Running)
+            // The lease is handed to PoolCreateRequest so a queued replenishment keeps
+            // the pool from being pruned before the worker runs.
+            if (!IsRunning)
             {
-                // Make sure we're at quota by posting a callback to the threadpool.
-                ThreadPool.QueueUserWorkItem(_poolCreateRequest);
+                return;
+            }
+
+            PoolPruningGuard.Lease lease = _pruningGuard.TryEnter();
+            if (!lease.IsActive)
+            {
+                return;
+            }
+
+            bool queued = false;
+            try
+            {
+                // Make sure we're at quota by posting a callback to the threadpool. Boxing the
+                // lease allocates, but only on this replenishment path, not on checkout.
+                queued = ThreadPool.QueueUserWorkItem(_poolCreateRequest, lease);
+            }
+            finally
+            {
+                if (!queued)
+                {
+                    lease.Dispose();
+                }
             }
         }
 
@@ -1560,7 +1692,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // Shutdown() would create a fresh _cleanupTimer and queue a PoolCreateRequest
             // against a pool that will never accept connections back, leaking the timer
             // and scheduling background work that immediately short-circuits.
-            if (State is not Running)
+            if (!IsRunning)
             {
                 return;
             }
@@ -1573,16 +1705,19 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             }
         }
 
+        public bool TryPrune() => _pruningGuard.TryPrune(this);
+
         public void Shutdown()
         {
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionPool.Shutdown|RES|INFO|CPOOL> {0}", Id);
 
-            // Idempotent: subsequent calls observe ShuttingDown and bail.
-            if (State == ShuttingDown)
+            // Stop admission. A prune may already have closed the guard; the cleanup below
+            // must still run exactly once.
+            _pruningGuard.TryClose();
+            if (Interlocked.Exchange(ref _shutdownInitiated, 1) != 0)
             {
                 return;
             }
-            State = ShuttingDown;
 
             // Stop maintenance, but let admitted requests finish. Their connections are
             // destroyed by DeactivateObject when returned to this retired pool.
