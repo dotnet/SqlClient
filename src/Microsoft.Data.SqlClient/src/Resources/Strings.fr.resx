@@ -591,26 +591,11 @@
   <data name="SQL_NonLocalSSEInstance" xml:space="preserve">
     <value>La redirection d'instance SSE n'est pas prise en charge pour les instances d'utilisateurs non locaux.</value>
   </data>
-  <data name="SQL_UnsupportedAuthentication" xml:space="preserve">
-    <value>L'authentification '{0}' n'est pas prise en charge.</value>
-  </data>
-  <data name="SQL_CannotCreateAuthProvider" xml:space="preserve">
-    <value>Échec de l'instanciation d'un fournisseur d'authentification ayant le type '{1}' pour '{0}'.</value>
-  </data>
-  <data name="SQL_CannotCreateAuthInitializer" xml:space="preserve">
-    <value>Échec de l'instanciation d'un SqlAuthenticationInitializer ayant le type '{0}'.</value>
-  </data>
-  <data name="SQL_UnsupportedAuthenticationByProvider" xml:space="preserve">
-    <value>Le fournisseur '{0}' ne prend pas en charge l'authentification '{1}'.</value>
-  </data>
   <data name="SQL_CannotFindAuthProvider" xml:space="preserve">
     <value>Le fournisseur d'authentification est introuvable pour '{0}'.</value>
   </data>
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
     <value>Impossible de trouver un fournisseur d'authentification pour « {0} ». Installez le package NuGet « Microsoft.Data.SqlClient.Extensions.Azure » (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure) pour utiliser les méthodes d'authentification Active Directory Domain Services (Entra ID).</value>
-  </data>
-  <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>Le paramètre « useWamBroker » nécessite le package « Microsoft.Data.SqlClient.Extensions.Azure » pour exposer « Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions ». Mettez à niveau le package « Microsoft.Data.SqlClient.Extensions.Azure » vers la version 1.1.0 ou ultérieure, qui inclut ce type.</value>
   </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>Le paramètre « {0} » ne peut pas être Null ou vide.</value>

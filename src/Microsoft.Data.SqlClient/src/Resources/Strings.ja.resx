@@ -591,26 +591,11 @@
   <data name="SQL_NonLocalSSEInstance" xml:space="preserve">
     <value>非ローカル ユーザーのインスタンスでは、SSE インスタンスのリダイレクトを行うことはできません。</value>
   </data>
-  <data name="SQL_UnsupportedAuthentication" xml:space="preserve">
-    <value>認証 '{0}' はサポートされていません。</value>
-  </data>
-  <data name="SQL_CannotCreateAuthProvider" xml:space="preserve">
-    <value>'{0}' の種類 '{1}' の認証プロバイダーをインスタンス化できませんでした。</value>
-  </data>
-  <data name="SQL_CannotCreateAuthInitializer" xml:space="preserve">
-    <value>種類 '{0}' の SqlAuthenticationInitializer をインスタンス化できませんでした。</value>
-  </data>
-  <data name="SQL_UnsupportedAuthenticationByProvider" xml:space="preserve">
-    <value>プロバイダー '{0}' では認証 '{1}' はサポートされていません。</value>
-  </data>
   <data name="SQL_CannotFindAuthProvider" xml:space="preserve">
     <value>'{0}' の認証プロバイダーが見つかりません。</value>
   </data>
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
     <value>'{0}' の認証プロバイダーが見つかりません。Active Directory (Entra ID) 認証方法を使用するには、'Microsoft.Data.SqlClient.Extensions.Azure' NuGet パッケージ (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure) をインストールしてください。</value>
-  </data>
-  <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>'useWamBroker' を設定するには、'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions' を公開する 'Microsoft.Data.SqlClient.Extensions.Azure' パッケージが必要です。この型を含む v1.1.0 以降の 'Microsoft.Data.SqlClient.Extensions.Azure' パッケージにアップグレードしてください。</value>
   </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>パラメーター '{0}' を null や空にすることはできません。</value>
