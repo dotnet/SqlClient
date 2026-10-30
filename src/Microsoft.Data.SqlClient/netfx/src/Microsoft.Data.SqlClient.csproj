@@ -967,8 +967,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\_SqlRPC.cs">
       <Link>Microsoft\Data\SqlClient\Parser\_SqlRPC.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\SqlReturnValue.cs">
-      <Link>Microsoft\Data\SqlClient\Parser\Tokens\SqlReturnValue.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\TdsReturnValueToken.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Tokens\TdsReturnValueToken.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\MultiPartTableName.cs">
       <Link>Microsoft\Data\SqlClient\Parser\Tokens\MultiPartTableName.cs</Link>

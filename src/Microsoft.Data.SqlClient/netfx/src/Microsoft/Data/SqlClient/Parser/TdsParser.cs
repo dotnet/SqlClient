@@ -2571,7 +2571,7 @@ namespace Microsoft.Data.SqlClient.Parser
                         break;
                     case TdsEnums.SQLRETURNVALUE:
                         {
-                            SqlReturnValue returnValue;
+                            TdsReturnValueToken returnValue;
                             result = TryProcessReturnValue(tokenLength, stateObj, out returnValue,
                                                        cmdHandler?.ColumnEncryptionSetting ?? SqlCommandColumnEncryptionSetting.UseConnectionSetting);
                             if (result != TdsOperationStatus.Done)
@@ -4182,12 +4182,12 @@ namespace Microsoft.Data.SqlClient.Parser
 
         internal TdsOperationStatus TryProcessReturnValue(int length,
             TdsParserStateObject stateObj,
-            out SqlReturnValue returnValue,
+            out TdsReturnValueToken returnValue,
             SqlCommandColumnEncryptionSetting columnEncryptionSetting)
         {
             TdsOperationStatus result;
             returnValue = null;
-            SqlReturnValue rec = new SqlReturnValue();
+            TdsReturnValueToken rec = new TdsReturnValueToken();
             rec.length = length;        // In 2005 this length is -1
             result = stateObj.TryReadUInt16(out rec.parmIndex);
             if (result != TdsOperationStatus.Done)

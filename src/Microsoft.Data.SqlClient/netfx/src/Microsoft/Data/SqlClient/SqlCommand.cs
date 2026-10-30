@@ -5893,7 +5893,7 @@ namespace Microsoft.Data.SqlClient
         // If named, match the parameter name, otherwise fill in based on ordinal position.
         // If the parameter is not bound, then ignore the return value.
         //
-        internal void OnReturnValue(SqlReturnValue rec, TdsParserStateObject stateObj)
+        internal void OnReturnValue(TdsReturnValueToken rec, TdsParserStateObject stateObj)
         {
             if (_inPrepare)
             {
