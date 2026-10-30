@@ -159,15 +159,6 @@ namespace Microsoft.Data.SqlClient.Parser.Tokens
         /// </summary>
         public TdsXmlTypeInfo XmlTypeInfo { get; set; }
 
-        /// <summary>
-        /// Creates a new instance of the TdsTypeInfo class that is a copy of the current instance.
-        /// </summary>
-        /// <returns>
-        /// A new TdsTypeInfo instance populated with the same values as the original.
-        /// </returns>
-        internal virtual TdsTypeInfo Clone() =>
-            new TdsTypeInfo(this);
-
         private bool HasFlag(TdsTypeInfoFlags flag)
         {
             return (flags & flag) != 0;
