@@ -12,7 +12,3 @@ T:System.Runtime.CompilerServices.NullableContextAttribute
 
 # @TODO: Remove this when NativeAOT support is fully implemented (dotnet/SqlClient#1947).
 T:System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembersAttribute
-
-# Runtime compatibility metadata. TypeForwardedFrom identifies the original assembly identity and is
-# intentionally not required to match between the reference and implementation assemblies.
-T:System.Runtime.CompilerServices.TypeForwardedFromAttribute
