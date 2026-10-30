@@ -8,7 +8,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests
 {
-    public class SqlMetaDataSetTest
+    public class TdsColumnMetadataTokenTests
     {
         [Theory]
         [InlineData(false)]
