@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClient.Parser.Tokens
 #endif
 
         /// <summary>
-        /// Constructs a new instance of TddsReturnValueToken with the value initialized to a new
+    /// Constructs a new instance of TdsReturnValueToken with the value initialized to a new
         /// <see cref="SqlBuffer"/> instance.
         /// </summary>
         internal TdsReturnValueToken() : base()
