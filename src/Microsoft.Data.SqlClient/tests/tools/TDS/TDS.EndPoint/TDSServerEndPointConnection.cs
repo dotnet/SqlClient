@@ -24,6 +24,8 @@ namespace Microsoft.SqlServer.TDS.EndPoint
     {
         private TDSServerParser _parser;
 
+        internal bool ExpectTlsHandshakeFailure { get; set; }
+
         public TDSServerEndPointConnection(ITDSServer server, TcpClient connection)
             : base(server, connection)
         {
@@ -33,7 +35,10 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         {
             // Create a server TDS parser
             Debug.Assert(_parser == null, "PrepareForProcessingData should not be called twice");
-            _parser = new TDSServerParser(Server, Session, rawStream);
+            _parser = new TDSServerParser(Server, Session, rawStream)
+            {
+                ExpectTlsHandshakeFailure = ExpectTlsHandshakeFailure
+            };
         }
 
         public override void ProcessData(Stream rawStream)
@@ -56,6 +61,8 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         /// Signals the processor loop to stop.
         /// </summary>
         private volatile bool _stopRequested;
+
+        internal Exception ProcessingException { get; private set; }
 
         /// <summary>
         /// Gets/Sets the event log for the proxy server
@@ -127,8 +134,10 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         /// </summary>
         internal void Start()
         {
-            // Prepare and start the processor on a background task.
-            ProcessorTask = Task.Run(RunConnectionHandler);
+            // Socket reads and simulated delays block. They must not starve the client
+            // opens and continuations sharing the process-wide thread pool.
+            ProcessorTask = Task.Factory.StartNew(RunConnectionHandler,
+                CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
         }
 
         /// <summary>
@@ -148,37 +157,18 @@ namespace Microsoft.SqlServer.TDS.EndPoint
 
             // Close the socket first.  This unblocks any synchronous read or poll
             // the processor task may be waiting on, causing it to exit its loop.
-            if (Connection != null)
-            {
-                try
-                {
-                    Connection.Close();
-                    Connection.Dispose();
-                }
-                catch (Exception)
-                {
-                    // Ignore errors closing the socket during teardown.
-                }
-
-                Connection = null;
-            }
+            Connection?.Close();
 
             // Deterministically wait for the processor task to finish so that no
             // background work (socket I/O, counter mutation) outlives Dispose().
             // A bounded wait guards against an unexpected hang.
-            try
+            if (ProcessorTask != null && !ProcessorTask.Wait(TimeSpan.FromSeconds(30)))
             {
-                // Surface a hang: if the processor task does not complete within the bound,
-                // log it rather than silently returning while background work may continue.
-                if (ProcessorTask != null && !ProcessorTask.Wait(TimeSpan.FromSeconds(30)))
-                {
-                    Log("Processor task did not complete within 30 seconds during Dispose.");
-                }
+                throw new TimeoutException("TDS connection processor did not stop during Dispose.");
             }
-            catch (AggregateException)
+            if (ProcessingException != null)
             {
-                // Exceptions observed by the processor task are already logged in
-                // RunConnectionHandler; nothing else to do here.
+                throw new InvalidOperationException("TDS connection processor failed.", ProcessingException);
             }
         }
 
@@ -189,18 +179,10 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         {
             TcpClient connection = Connection;
 
-            // Dispose() may have already closed and nulled the connection before this task
-            // began running. Treat that as a normal (already torn down) shutdown rather than
-            // dereferencing a null Connection and logging a spurious error.
-            if (connection == null)
-            {
-                OnConnectionClosed?.Invoke(this, null);
-                return;
-            }
-
             try
             {
                 // Get network stream
+                Socket socket = connection.Client;
                 NetworkStream rawStream = connection.GetStream();
                 PrepareForProcessingData(rawStream);
 
@@ -213,7 +195,7 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                     {
                         ProcessData(rawStream);
                     }
-                    else if (connection.Client.Poll(100_000 /* 100 ms */, SelectMode.SelectRead)
+                    else if (socket.Poll(100_000 /* 100 ms */, SelectMode.SelectRead)
                         && !rawStream.DataAvailable)
                     {
                         // Poll reports readable with no data available when the
@@ -222,7 +204,8 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is IOException || ex is SocketException ||
+                (_stopRequested && ex is ObjectDisposedException))
             {
                 // A socket close during Dispose is an expected part of teardown, so only log
                 // when a stop was not requested. This keeps real failures visible in CI logs
@@ -232,19 +215,26 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                     Log(ex.ToString());
                 }
             }
-
-            try
+            catch (Exception ex)
             {
-                // Disconnect the client
-                connection?.Close();
+                ProcessingException = ex;
+                Log(ex.ToString());
             }
-            catch (Exception)
+            finally
             {
-                // Do nothing there
+                connection.Close();
+                try
+                {
+                    Server.CloseSession(Session);
+                }
+                catch (Exception ex)
+                {
+                    ProcessingException = ProcessingException == null
+                        ? ex
+                        : new AggregateException(ProcessingException, ex);
+                }
+                OnConnectionClosed?.Invoke(this, EventArgs.Empty);
             }
-
-            // Notify subscribers that this connection is closed
-            OnConnectionClosed?.Invoke(this, null);
         }
 
         /// <summary>
