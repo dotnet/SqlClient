@@ -4884,11 +4884,12 @@ namespace Microsoft.Data.SqlClient.Parser
                 {
                     return result;
                 }
-                result = stateObj.TryReadUInt16(out col.operand);
+                result = stateObj.TryReadUInt16(out ushort operand);
                 if (result != TdsOperationStatus.Done)
                 {
                     return result;
                 }
+                col.Operand = operand;
 
                 // TCE is not applicable to AltMetadata.
                 result = TryCommonProcessMetaData(stateObj, col, null, fColMD: false, columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Disabled);
@@ -11184,8 +11185,8 @@ namespace Microsoft.Data.SqlClient.Parser
 
                     if (md.metaType.IsLong && !md.metaType.IsPlp)
                     {
-                        WriteShort(md.tableName.Length, stateObj);
-                        WriteString(md.tableName, stateObj);
+                        WriteShort(md.TableName.Length, stateObj);
+                        WriteString(md.TableName, stateObj);
                     }
 
                     WriteCryptoMetadata(md, stateObj);
