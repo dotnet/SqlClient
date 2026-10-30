@@ -129,7 +129,31 @@ See the LICENSE file in the project root for more information.
     <GetProvider>
       <summary>Gets an authentication provider by method.</summary>
       <param name="authenticationMethod">The authentication method.</param>
-      <returns>The authentication provider or <see langword="null" /> if not found.</returns>
+      <returns>The authentication provider or <see langword="null" /> if no provider is registered.</returns>
+      <remarks>
+        Bootstraps the registry on first access. Configuration and reflective Azure discovery
+        are unavailable in trimmed and NativeAOT .NET 10 publishes; explicitly register providers
+        with SetProvider. Recoverable registry initialization failures emit diagnostic traces
+        through Microsoft.Data.SqlClient.EventSource with the Trace keyword (0x2).
+        Enable tracing before the first registry access to capture configuration-reading,
+        initializer/provider activation and Azure-discovery failures. Recoverable failures in
+        these steps are traced and handled without caching them for later diagnostic replay.
+        Only unexpected recoverable bootstrap failures are cached and logged on subsequent
+        accesses, including when tracing is enabled after the first failure.
+        Lookups still return successfully registered providers.
+        Register an application provider as a workaround, or correct the reported configuration
+        or package version problem and restart the application to retry bootstrap.
+        <para>
+          Registry bootstrap and provider replacement callbacks execute while a registry lock is
+          held. Same-thread calls to <see cref="GetProvider"/> and <see cref="SetProvider"/> are
+          supported. If a callback changes the registration for the same method, replacement
+          rechecks precedence and retries callbacks against the current registration; callbacks
+          may therefore run more than once. Code executing under that lock must not synchronously
+          wait for another thread that calls either method. The other thread blocks on the lock,
+          causing a deadlock.
+          During bootstrap, a reentrant lookup sees only the providers registered so far.
+        </para>
+      </remarks>
     </GetProvider>
     <SetProvider>
       <summary>Sets an authentication provider by method.</summary>
@@ -138,6 +162,31 @@ See the LICENSE file in the project root for more information.
       <returns>
         <see langword="true" /> if the operation succeeded; otherwise, <see langword="false" /> (for example, the existing provider disallows overriding).
       </returns>
+      <remarks>
+        Works directly under NativeAOT. Configuration providers and configured initializers
+        cannot be overwritten by application registrations. Application registrations replace
+        the discovered Azure default. Outside configured initializer execution, a null provider,
+        unsupported method or recoverable provider callback failure returns false and emits diagnostic traces
+        through Microsoft.Data.SqlClient.EventSource with the Trace keyword (0x2).
+        During a configured initializer, registration errors propagate to the configuration
+        application step and stop that initializer. Recoverable initializer failures are traced,
+        and later configured providers and enabled Azure discovery are still attempted.
+        Failed provider entries are traced and skipped without blocking later entries.
+        Fatal failures propagate. Failed registrations do not replace the existing provider.
+        Unexpected recoverable bootstrap failures are cached and traced, but application
+        registration remains available without retrying bootstrap. Existing configuration
+        registrations retain precedence. Correct the reported cause and restart the application
+        to retry failed configuration or discovery.
+        <para>
+          Registry bootstrap and provider replacement callbacks execute while a registry lock is
+          held. Same-thread calls to <see cref="GetProvider"/> and <see cref="SetProvider"/> are
+          supported. If a callback changes the registration for the same method, replacement
+          rechecks precedence and retries callbacks against the current registration; callbacks
+          may therefore run more than once. Code executing under that lock must not synchronously
+          wait for another thread that calls either method. The other thread blocks on the lock,
+          causing a deadlock.
+        </para>
+      </remarks>
     </SetProvider>
   </members>
 </docs>
