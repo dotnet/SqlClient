@@ -84,7 +84,7 @@ namespace Microsoft.Data.SqlClient
         internal readonly int ObjectID = Interlocked.Increment(ref s_objectTypeCount);
 
         // metadata (no explicit table, use 'Table')
-        private MultiPartTableName[] _tableNames = null;
+        private TdsTableName[] _tableNames = null;
         private string _resetOptionsString;
 
         private int _lastColumnWithDataChunkRead;
@@ -425,7 +425,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal MultiPartTableName[] TableNames
+        internal TdsTableName[] TableNames
         {
             get
             {
@@ -6092,7 +6092,7 @@ namespace Microsoft.Data.SqlClient
 
             public TdsColumnMetadataToken _metadata;
             public TdsAltMetadataCollection _altMetaDataSetCollection;
-            public MultiPartTableName[] _tableNames;
+            public TdsTableName[] _tableNames;
 
             public SqlSequentialStream _currentStream;
             public SqlSequentialTextReader _currentTextReader;

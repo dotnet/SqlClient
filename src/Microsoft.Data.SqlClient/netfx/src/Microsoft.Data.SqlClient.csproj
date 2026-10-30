@@ -970,8 +970,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\TdsReturnValueToken.cs">
       <Link>Microsoft\Data\SqlClient\Parser\Tokens\TdsReturnValueToken.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\MultiPartTableName.cs">
-      <Link>Microsoft\Data\SqlClient\Parser\Tokens\MultiPartTableName.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\TdsTableName.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Tokens\TdsTableName.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\SslProtocolHelpers.cs">
       <Link>Microsoft\Data\SqlClient\Parser\SslProtocolHelpers.cs</Link>

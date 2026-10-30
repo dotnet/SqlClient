@@ -2598,7 +2598,7 @@ namespace Microsoft.Data.SqlClient.Parser
                         {
                             if (dataStream != null)
                             {
-                                MultiPartTableName[] tableNames;
+                                TdsTableName[] tableNames;
                                 result = TryProcessTableName(tokenLength, stateObj, out tableNames);
                                 if (result != TdsOperationStatus.Done)
                                 {
@@ -5418,7 +5418,7 @@ namespace Microsoft.Data.SqlClient.Parser
             if (col.metaType.IsLong && !col.metaType.IsPlp)
             {
                 int unusedLen = 0xFFFF;      //We ignore this value
-                result = TryProcessOneTable(stateObj, ref unusedLen, out col.multiPartTableName);
+                result = TryProcessOneTable(stateObj, ref unusedLen, out col.tableName);
                 if (result != TdsOperationStatus.Done)
                 {
                     return result;
@@ -5573,12 +5573,12 @@ namespace Microsoft.Data.SqlClient.Parser
             }
         }
 
-        internal TdsOperationStatus TryProcessTableName(int length, TdsParserStateObject stateObj, out MultiPartTableName[] multiPartTableNames)
+        internal TdsOperationStatus TryProcessTableName(int length, TdsParserStateObject stateObj, out TdsTableName[] multiPartTableNames)
         {
             int tablesAdded = 0;
 
-            MultiPartTableName[] tables = new MultiPartTableName[1];
-            MultiPartTableName mpt;
+            TdsTableName[] tables = new TdsTableName[1];
+            TdsTableName mpt;
             while (length > 0)
             {
                 // UNDONE: BUG(?) SQL 8.003 returns two tables sometimes
@@ -5596,7 +5596,7 @@ namespace Microsoft.Data.SqlClient.Parser
                 }
                 else
                 {
-                    MultiPartTableName[] newTables = new MultiPartTableName[tables.Length + 1];
+                    TdsTableName[] newTables = new TdsTableName[tables.Length + 1];
                     Array.Copy(tables, 0, newTables, 0, tables.Length);
                     newTables[tables.Length] = mpt;
                     tables = newTables;
@@ -5609,15 +5609,15 @@ namespace Microsoft.Data.SqlClient.Parser
             return TdsOperationStatus.Done;
         }
 
-        private TdsOperationStatus TryProcessOneTable(TdsParserStateObject stateObj, ref int length, out MultiPartTableName multiPartTableName)
+        private TdsOperationStatus TryProcessOneTable(TdsParserStateObject stateObj, ref int length, out TdsTableName multiPartTableName)
         {
             ushort tableLen;
-            MultiPartTableName mpt;
+            TdsTableName mpt;
             string value;
 
-            multiPartTableName = default(MultiPartTableName);
+            multiPartTableName = default(TdsTableName);
 
-            mpt = new MultiPartTableName();
+            mpt = new TdsTableName();
             byte nParts;
 
             // Find out how many parts in the TDS stream
@@ -5759,7 +5759,7 @@ namespace Microsoft.Data.SqlClient.Parser
                 if ((reader.TableNames != null) && (col.tableNum > 0))
                 {
                     Debug.Assert(reader.TableNames.Length >= col.tableNum, "invalid tableNames array!");
-                    col.multiPartTableName = reader.TableNames[col.tableNum - 1];
+                    col.tableName = reader.TableNames[col.tableNum - 1];
                 }
 
                 // MDAC 60109: expressions are readonly
