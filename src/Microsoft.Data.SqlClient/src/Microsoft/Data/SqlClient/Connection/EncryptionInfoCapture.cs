@@ -31,12 +31,6 @@ namespace Microsoft.Data.SqlClient.Connection
     internal sealed class EncryptionInfoCapture
     {
         /// <summary>
-        /// Gets the SHA-256 hash of the presented server certificate for the current attempt, or
-        /// <see langword="null"/> if the transport did not observe a presented certificate.
-        /// </summary>
-        public byte[]? CertificateHash256 { get; private set; }
-
-        /// <summary>
         /// Gets the combined chain status flags for the current attempt, or <see langword="null"/>
         /// if the chain was not consulted or is unavailable.
         /// </summary>
@@ -55,7 +49,7 @@ namespace Microsoft.Data.SqlClient.Connection
             Mode is not null ||
             Protocol is not null ||
             CipherSuite is not null ||
-            CertificateHash256 is not null ||
+            ServerCertificateRawData is not null ||
             ValidationErrors is not null ||
             ChainStatus is not null;
 
@@ -70,6 +64,12 @@ namespace Microsoft.Data.SqlClient.Connection
         /// if no TLS handshake completed or the transport did not report a protocol.
         /// </summary>
         public SslProtocols? Protocol { get; private set; }
+
+        /// <summary>
+        /// Gets the DER encoding of the presented server certificate for the current attempt, or
+        /// <see langword="null"/> if the transport did not capture a presented certificate.
+        /// </summary>
+        public byte[]? ServerCertificateRawData { get; private set; }
 
         /// <summary>
         /// Gets SqlClient's effective certificate validation verdict for the current attempt, or
@@ -150,7 +150,7 @@ namespace Microsoft.Data.SqlClient.Connection
                 return;
             }
 
-            CertificateHash256 = capture.Hash256;
+            ServerCertificateRawData = capture.RawCertificate;
             ValidationErrors = capture.ValidationErrors;
             ChainStatus = capture.ChainStatus;
 
@@ -175,7 +175,7 @@ namespace Microsoft.Data.SqlClient.Connection
             Mode = null;
             Protocol = null;
             CipherSuite = null;
-            CertificateHash256 = null;
+            ServerCertificateRawData = null;
             ValidationErrors = null;
             ChainStatus = null;
         }
@@ -194,7 +194,7 @@ namespace Microsoft.Data.SqlClient.Connection
                 ? new SqlConnectionEncryptionInfo(
                     negotiatedEncryptionMode: Mode,
                     negotiatedEncryptionProtocol: Protocol,
-                    presentedServerCertificate: CertificateHash256,
+                    presentedServerCertificate: ServerCertificateRawData,
                     validationErrors: ValidationErrors,
                     chainStatus: ChainStatus,
 #if NET
