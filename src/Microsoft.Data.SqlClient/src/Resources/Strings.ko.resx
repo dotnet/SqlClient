@@ -2071,7 +2071,7 @@
     <value>부모 명령에서 EnableOptimizedParameterBinding을 사용하는 경우 매개 변수 '{0}'에는 Direction Output 또는 InputOutput을 사용할 수 없습니다.</value>
   </data>
   <data name="SQL_PrepareNotSupportedForOptimizedBinding" xml:space="preserve">
-    <value>Prepare is not supported when EnableOptimizedParameterBinding is enabled. Create a new SqlCommand and either set EnableOptimizedParameterBinding to false before its first execution or execute it without calling Prepare.</value>
+    <value>EnableOptimizedParameterBinding이 사용하도록 설정된 경우 준비가 지원되지 않습니다. 새 SqlCommand를 만들고 처음 실행하기 전에 EnableOptimizedParameterBinding을 false로 설정하거나 Prepare를 호출하지 않고 실행하십시오.</value>
   </data>
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
     <value>'{0}' 인증 방법을 사용하여 액세스 토큰을 검색하는 동안 연결 시간이 초과되었습니다. 마지막 오류: {1}: {2}</value>

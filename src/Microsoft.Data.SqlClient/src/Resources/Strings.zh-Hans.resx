@@ -2071,7 +2071,7 @@
     <value>当在父命令上启用 EnableOptimizedParameterBinding 时，参数“{0}”不能具有 Direction Output 或 InputOutput。</value>
   </data>
   <data name="SQL_PrepareNotSupportedForOptimizedBinding" xml:space="preserve">
-    <value>Prepare is not supported when EnableOptimizedParameterBinding is enabled. Create a new SqlCommand and either set EnableOptimizedParameterBinding to false before its first execution or execute it without calling Prepare.</value>
+    <value>启用 EnableOptimizedParameterBinding 时不支持准备。创建新的 SqlCommand，并在首次执行前将 EnableOptimizedParameterBinding 设置为 false，或者在不调用 Prepare 的情况下执行它。</value>
   </data>
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
     <value>使用“{0}”身份验证方法检索访问令牌时连接超时。最后一个错误: {1}: {2}</value>

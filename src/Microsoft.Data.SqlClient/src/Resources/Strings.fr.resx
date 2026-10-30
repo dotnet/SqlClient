@@ -1801,7 +1801,7 @@
     <value>Erreur interne. Le type d'enclave reçu de la part de SQL Server a une valeur null ou est vide durant l'exécution d'une requête qui nécessite des calculs d'enclave.</value>
   </data>
   <data name="TCE_AzureAttestationExtensionNotFound" xml:space="preserve">
-    <value>Attestation protocol 'AAS' requires the Microsoft.Data.SqlClient.Extensions.Azure package, at the same version as Microsoft.Data.SqlClient. Add or update the reference to that package, or specify a different attestation protocol in the connection string.</value>
+    <value>Le protocole d’attestation « AAS » nécessite Microsoft.Data.SqlClient.Extensions. Package Azure, avec la même version que Microsoft.Data.SqlClient. Ajoutez ou mettez à jour la référence à ce package, ou spécifiez un autre protocole d’attestation dans la chaîne de connexion.</value>
   </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
     <value>Aucun fournisseur d'enclave pour le type d'enclave « {0} » et le protocole d'attestation « {1} ». Spécifiez le protocole d'attestation approprié dans la chaîne de connexion. </value>
@@ -2071,7 +2071,7 @@
     <value>Le paramètre « {0} » ne peut pas avoir Direction Output ou InputOutput lorsque EnableOptimizedParameterBinding est activé sur la commande parente.</value>
   </data>
   <data name="SQL_PrepareNotSupportedForOptimizedBinding" xml:space="preserve">
-    <value>Prepare is not supported when EnableOptimizedParameterBinding is enabled. Create a new SqlCommand and either set EnableOptimizedParameterBinding to false before its first execution or execute it without calling Prepare.</value>
+    <value>La préparation n’est pas prise en charge lorsque EnableOptimizedParameterBinding est activé. Créez un SqlCommand et définissez EnableOptimizedParameterBinding sur false avant sa première exécution ou exécutez-le sans appeler Prepare.</value>
   </data>
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
     <value>La connexion a expiré lors de la récupération d’un jeton d’accès à l’aide de '{0}' méthode d’authentification. Dernière erreur : {1} : {2}</value>
@@ -2107,7 +2107,7 @@
     <value>Une exception s’est produite lors de la tentative de définition du commutateur AppContext '{0}'={1}.</value>
   </data>
   <data name="SQL_GlobalizationInvariantModeRequiresLcid" xml:space="preserve">
-    <value>When Globalization Invariant Mode is enabled, SqlMetaData instances describing character or text types must specify an LCID.</value>
+    <value>Quand le mode invariant de globalisation est activé, les instances de SqlMetaData qui décrivent des types de caractères ou de texte doivent spécifier un LCID.</value>
   </data>
   <data name="SQL_GlobalizationInvariantModeNotSupported" xml:space="preserve">
     <value>Le mode invariant de la globalisation n’est pas pris en charge.</value>
