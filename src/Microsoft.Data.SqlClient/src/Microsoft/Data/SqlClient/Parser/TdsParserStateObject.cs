@@ -217,7 +217,7 @@ namespace Microsoft.Data.SqlClient.Parser
         internal int _partialHeaderBytesRead;
 
         internal TdsColumnMetadataToken _cleanupMetaData;
-        internal _SqlMetaDataSetCollection _cleanupAltMetaDataSetArray;
+        internal TdsAltMetadataCollection _cleanupAltMetaDataSetArray;
 
         private SniContext _sniContext = SniContext.Undefined;
 #if DEBUG
@@ -3564,7 +3564,7 @@ namespace Microsoft.Data.SqlClient.Parser
                 private byte _messageStatus;
                 internal NullBitmap _nullBitmapInfo;
                 private TdsColumnMetadataToken _cleanupMetaData;
-                internal _SqlMetaDataSetCollection _cleanupAltMetaDataSetArray;
+                internal TdsAltMetadataCollection _cleanupAltMetaDataSetArray;
                 private SnapshottedStateFlags _state;
 
                 internal void Capture(TdsParserStateObject stateObj, bool trackStack = true)
@@ -3702,7 +3702,7 @@ namespace Microsoft.Data.SqlClient.Parser
             {
                 if (_stateObj._cleanupAltMetaDataSetArray != null && object.ReferenceEquals(_replayStateData?._cleanupAltMetaDataSetArray ?? default, _stateObj._cleanupAltMetaDataSetArray))
                 {
-                    _stateObj._cleanupAltMetaDataSetArray = (_SqlMetaDataSetCollection)_stateObj._cleanupAltMetaDataSetArray.Clone();
+                    _stateObj._cleanupAltMetaDataSetArray = (TdsAltMetadataCollection)_stateObj._cleanupAltMetaDataSetArray.Clone();
                 }
             }
 

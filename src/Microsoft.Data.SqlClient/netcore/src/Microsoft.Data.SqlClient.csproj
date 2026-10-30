@@ -835,8 +835,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\TdsColumnMetadataToken.cs">
       <Link>Microsoft\Data\SqlClient\Parser\Tokens\TdsColumnMetadataToken.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\_SqlMetaDataSetCollection.cs">
-      <Link>Microsoft\Data\SqlClient\Parser\Tokens\_SqlMetaDataSetCollection.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\TdsAltMetadataCollection.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Tokens\TdsAltMetadataCollection.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\SqlMetaDataPriv.cs">
       <Link>Microsoft\Data\SqlClient\Parser\Tokens\SqlMetaDataPriv.cs</Link>
