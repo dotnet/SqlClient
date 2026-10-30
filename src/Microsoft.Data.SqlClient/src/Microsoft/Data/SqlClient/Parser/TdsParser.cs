@@ -1403,7 +1403,10 @@ namespace Microsoft.Data.SqlClient.Parser
 #nullable enable
         internal void ProcessSSPI(int receivedLength)
         {
-            Debug.Assert(_authenticationProvider is not null);
+            if (_authenticationProvider is null)
+            {
+                ThrowCorruptedTdsStream();
+            }
 
             SniContext outerContext = _physicalStateObj.SniContext;
             _physicalStateObj.SniContext = SniContext.Snix_ProcessSspi;
@@ -2355,7 +2358,8 @@ namespace Microsoft.Data.SqlClient.Parser
         }
 
         /// <summary>
-        /// Checks if the given token is a valid TDS token
+        /// Checks whether the token type is recognized. Its handler must also validate the
+        /// parser state required to process it.
         /// </summary>
         /// <param name="token">Token to check</param>
         /// <returns>True if the token is a valid TDS token, otherwise false</returns>
@@ -2391,6 +2395,19 @@ namespace Microsoft.Data.SqlClient.Parser
                 token == TdsEnums.SQLFEATUREEXTACK ||
                 token == TdsEnums.SQLSESSIONSTATE ||
                 token == TdsEnums.SQLFEDAUTHINFO);
+        }
+
+        /// <summary>
+        /// Rejects invalid token prerequisites using the existing parsing error, after ensuring
+        /// the connection cannot be reused. This does not convert other failures to SqlException.
+        /// </summary>
+        internal void ThrowCorruptedTdsStream()
+        {
+            SqlClientEventSource.Log.TryTraceEvent(
+                "<sc.TdsParser|ERR> Invalid state for received TDS token. Object ID {0}", ObjectID);
+            _state = TdsParserState.Broken;
+            _connHandler.BreakConnection();
+            throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
         }
 
         // Main parse loop for the top-level tds tokens, calls back into the I*Handler interfaces
@@ -2872,7 +2889,10 @@ namespace Microsoft.Data.SqlClient.Parser
                     case TdsEnums.SQLROW:
                     case TdsEnums.SQLNBCROW:
                         {
-                            Debug.Assert(stateObj._cleanupMetaData != null, "Reading a row, but the metadata is null");
+                            if (stateObj._cleanupMetaData == null)
+                            {
+                                ThrowCorruptedTdsStream();
+                            }
 
                             if (token == TdsEnums.SQLNBCROW)
                             {
@@ -3029,6 +3049,11 @@ namespace Microsoft.Data.SqlClient.Parser
                         }
                     case TdsEnums.SQLALTROW:
                         {
+                            if (stateObj._cleanupAltMetaDataSetArray == null)
+                            {
+                                ThrowCorruptedTdsStream();
+                            }
+
                             result = stateObj.TryStartNewRow(isNullCompressed: false);
                             if (result != TdsOperationStatus.Done)
                             {
@@ -3047,7 +3072,14 @@ namespace Microsoft.Data.SqlClient.Parser
                                     return result;
                                 }
 
-                                result = TrySkipRow(stateObj._cleanupAltMetaDataSetArray.GetAltMetadata(altRowId), stateObj);
+                                TdsColumnMetadataToken metadata =
+                                    stateObj._cleanupAltMetaDataSetArray.GetAltMetadata(altRowId);
+                                if (metadata == null)
+                                {
+                                    ThrowCorruptedTdsStream();
+                                }
+
+                                result = TrySkipRow(metadata, stateObj);
                                 if (result != TdsOperationStatus.Done)
                                 {
                                     // skip altRow
