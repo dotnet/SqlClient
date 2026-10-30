@@ -6,6 +6,7 @@ using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Microsoft.Data.SqlClient.AlwaysEncrypted;
 using Microsoft.Data.SqlClient.Server;
 
 namespace Microsoft.Data.SqlClient
@@ -263,7 +264,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Encryption Algorithm Handle.
         /// </summary>
-        private SqlClientEncryptionAlgorithm _sqlClientEncryptionAlgorithm;
+        private EncryptionAlgorithm _sqlClientEncryptionAlgorithm;
 
         /// <summary>
         /// Sql Encryption Key Info.
@@ -338,7 +339,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Return the cipher encryption algorithm handle.
         /// </summary>
-        internal SqlClientEncryptionAlgorithm CipherAlgorithm
+        internal EncryptionAlgorithm CipherAlgorithm
         {
             get
             {

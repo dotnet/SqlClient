@@ -152,10 +152,10 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 SymmetricKey symmetricKey = new SymmetricKey(sessionKey);
-                SqlClientEncryptionAlgorithm sqlClientEncryptionAlgorithm = AeadAes256CbcHmac256Factory.Instance.Create(
+                EncryptionAlgorithm sqlClientEncryptionAlgorithm = AeadAes256CbcHmac256Factory.Instance.Create(
                     symmetricKey,
                     EncryptionType.Randomized,
-                    SqlAeadAes256CbcHmac256Algorithm.AlgorithmName
+                    AeadAes256CbcHmac256Algorithm.AlgorithmName
                 );
                 return sqlClientEncryptionAlgorithm.EncryptData(bytePackage);
             }

@@ -19,6 +19,6 @@ internal abstract class EncryptionAlgorithmFactory
     /// <param name="encryptionKey">Root key that should be passed to the cryptographic algorithm to be created</param>
     /// <param name="encryptionType">Encryption Type, some algorithms will need this</param>
     /// <param name="encryptionAlgorithm">Cryptographic algorithm name. Needed for extracting version bits</param>
-    /// <returns>Return a newly created SqlClientEncryptionAlgorithm instance</returns>
-    internal abstract SqlClientEncryptionAlgorithm Create(SymmetricKey encryptionKey, EncryptionType encryptionType, string encryptionAlgorithm);
+    /// <returns>Return a newly created EncryptionAlgorithm instance</returns>
+    internal abstract EncryptionAlgorithm Create(SymmetricKey encryptionKey, EncryptionType encryptionType, string encryptionAlgorithm);
 }

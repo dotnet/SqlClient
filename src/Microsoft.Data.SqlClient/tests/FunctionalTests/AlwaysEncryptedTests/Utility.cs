@@ -25,8 +25,8 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         public static PropertyInfo aeadAes256CbcHmac256FactoryInstance = aeadAes256CbcHmac256Factory.GetProperty("Instance", BindingFlags.Static | BindingFlags.Public);
         public static ConstructorInfo sqlColumnEncryptionKeyConstructor = symmetricKey.GetConstructor(BindingFlags.Public | BindingFlags.Instance, null, new Type[] { typeof(byte[]) }, null);
         public static MethodInfo aeadAes256CbcHmac256FactoryCreate = aeadAes256CbcHmac256Factory.GetMethod("Create", BindingFlags.Instance | BindingFlags.NonPublic);
-        public static Type sqlClientEncryptionAlgorithm = systemData.GetType("Microsoft.Data.SqlClient.SqlClientEncryptionAlgorithm");
-        public static MethodInfo sqlClientEncryptionAlgorithmEncryptData = sqlClientEncryptionAlgorithm.GetMethod("EncryptData", BindingFlags.Instance | BindingFlags.NonPublic);
+        public static Type encryptionAlgorithm = systemData.GetType("Microsoft.Data.SqlClient.AlwaysEncrypted.EncryptionAlgorithm");
+        public static MethodInfo encryptionAlgorithmEncryptData = encryptionAlgorithm.GetMethod("EncryptData", BindingFlags.Instance | BindingFlags.NonPublic);
         public static Type SqlCipherMetadata = systemData.GetType("Microsoft.Data.SqlClient.SqlCipherMetadata");
         public static FieldInfo sqlTceCipherInfoEntryField = SqlCipherMetadata.GetField("_sqlTceCipherInfoEntry", BindingFlags.Instance | BindingFlags.NonPublic);
         public static Type SqlTceCipherInfoEntry = systemData.GetType("Microsoft.Data.SqlClient.SqlTceCipherInfoEntry");
@@ -36,7 +36,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         public static Type SqlSecurityUtil = systemData.GetType("Microsoft.Data.SqlClient.SqlSecurityUtility", throwOnError: true);
         public static MethodInfo SqlSecurityUtilEncryptWithKey = SqlSecurityUtil.GetMethod("EncryptWithKey", BindingFlags.Static | BindingFlags.NonPublic);
         public static MethodInfo SqlSecurityUtilDecryptWithKey = SqlSecurityUtil.GetMethod("DecryptWithKey", BindingFlags.Static | BindingFlags.NonPublic);
-        public static MethodInfo sqlClientEncryptionAlgorithmDecryptData = sqlClientEncryptionAlgorithm.GetMethod("DecryptData", BindingFlags.Instance | BindingFlags.NonPublic);
+        public static MethodInfo encryptionAlgorithmDecryptData = encryptionAlgorithm.GetMethod("DecryptData", BindingFlags.Instance | BindingFlags.NonPublic);
 
         #region Fields
 
@@ -200,7 +200,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             Assert.True(authenticatedAES != null);
 
             parameters = new object[] { plainTextData };
-            Object finalCellBlob = sqlClientEncryptionAlgorithmEncryptData.Invoke(authenticatedAES, parameters);
+            Object finalCellBlob = encryptionAlgorithmEncryptData.Invoke(authenticatedAES, parameters);
             Assert.True(finalCellBlob != null);
 
             encryptedData = (byte[])finalCellBlob;
@@ -268,7 +268,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             Assert.True(authenticatedAES != null);
 
             parameters = new object[] { encryptedCellBlob };
-            Object decryptedValue = sqlClientEncryptionAlgorithmDecryptData.Invoke(authenticatedAES, parameters);
+            Object decryptedValue = encryptionAlgorithmDecryptData.Invoke(authenticatedAES, parameters);
             Assert.True(decryptedValue != null);
 
             decryptedData = (byte[])decryptedValue;
