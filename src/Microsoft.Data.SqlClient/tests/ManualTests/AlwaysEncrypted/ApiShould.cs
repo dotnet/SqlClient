@@ -2597,6 +2597,135 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.Same(secondSession, await ExecuteEnclaveQueryAsync(secondConnectionString, customerId, isAsync));
         }
 
+        /// <summary>
+        /// All execution APIs establish an enclave session after invalidation and reuse it on the next call.
+        /// XML projects plaintext while the randomized encrypted predicate requires enclave evaluation.
+        /// </summary>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore), nameof(DataTestUtility.EnclaveEnabled))]
+        [ClassData(typeof(AEConnectionStringProviderWithBooleanVariable))]
+        public async Task TestEnclaveExecutionApis(string connectionString, bool isAsync)
+        {
+            const int customerId = 52;
+            CleanUpTable(connectionString, _tableName);
+            InsertRows(_tableName, 1, GetValues(dataHint: customerId), connectionString);
+
+            for (int api = 0; api < 4; api++)
+            {
+                await ExecuteEnclaveQueryAsync(connectionString, customerId, isAsync, invalidateSession: true);
+                using SqlConnection connection = new(connectionString);
+                if (isAsync)
+                {
+                    await connection.OpenAsync();
+                }
+                else
+                {
+                    connection.Open();
+                }
+
+                string predicate = $"FROM [{_tableName}] WHERE CustomerId > @CustomerId";
+                string query = api switch
+                {
+                    1 => $"UPDATE [{_tableName}] SET FirstName = FirstName WHERE CustomerId > @CustomerId",
+                    3 => $"SELECT 1 AS [value] {predicate} FOR XML PATH('row')",
+                    _ => $"SELECT CustomerId {predicate}"
+                };
+                using SqlCommand command = new(query, connection, null, SqlCommandColumnEncryptionSetting.Enabled);
+                command.CommandTimeout = 90;
+                command.Parameters.Add("@CustomerId", SqlDbType.Int).Value = 0;
+                using CancellationTokenSource cancellation = new(TimeSpan.FromSeconds(90));
+                object session = null;
+                for (int attempt = 0; attempt < 2; attempt++)
+                {
+                    switch (api)
+                    {
+                        case 0:
+                            using (SqlDataReader reader = isAsync
+                                ? await command.ExecuteReaderAsync(cancellation.Token)
+                                : command.ExecuteReader())
+                            {
+                                Assert.True(isAsync ? await reader.ReadAsync(cancellation.Token) : reader.Read());
+                                Assert.Equal(customerId, reader.GetInt32(0));
+                                Assert.False(isAsync ? await reader.ReadAsync(cancellation.Token) : reader.Read());
+                            }
+                            break;
+                        case 1:
+                            Assert.Equal(1, isAsync
+                                ? await command.ExecuteNonQueryAsync(cancellation.Token)
+                                : command.ExecuteNonQuery());
+                            break;
+                        case 2:
+                            Assert.Equal(customerId, isAsync
+                                ? await command.ExecuteScalarAsync(cancellation.Token)
+                                : command.ExecuteScalar());
+                            break;
+                        default:
+                            using (System.Xml.XmlReader reader = isAsync
+                                ? await command.ExecuteXmlReaderAsync(cancellation.Token)
+                                : command.ExecuteXmlReader())
+                            {
+                                Assert.True(reader.Read());
+                                Assert.Equal("<row><value>1</value></row>", reader.ReadOuterXml());
+                            }
+                            break;
+                    }
+
+                    object currentSession = CommandHelper.GetEnclaveSession(command);
+                    Assert.NotNull(currentSession);
+                    if (attempt == 0)
+                    {
+                        session = currentSession;
+                    }
+                    else
+                    {
+                        Assert.Same(session, currentSession);
+                        CommandHelper.InvalidateEnclaveSession(command);
+                    }
+                }
+            }
+        }
+
+        /// <summary>A warm parameterless batch keeps a non-MARS connection busy until its reader is closed.</summary>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore), nameof(DataTestUtility.EnclaveEnabled))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public async Task TestParameterlessEnclaveBatchKeepsConnectionBusy(string connectionString)
+        {
+            connectionString = new SqlConnectionStringBuilder(connectionString)
+            {
+                MultipleActiveResultSets = false
+            }.ConnectionString;
+            const int customerId = 53;
+            CleanUpTable(connectionString, _tableName);
+            InsertRows(_tableName, 1, GetValues(dataHint: customerId), connectionString);
+            Assert.NotNull(await ExecuteEnclaveQueryAsync(connectionString, customerId, isAsync: true));
+            using SqlConnection connection = new(connectionString);
+            await connection.OpenAsync();
+            using SqlBatch batch = new() { Connection = connection };
+            batch.BatchCommands.Add(new SqlBatchCommand("SELECT 1",
+                columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled));
+            batch.BatchCommands.Add(new SqlBatchCommand("SELECT 2",
+                columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled));
+            using CancellationTokenSource cancellation = new(TimeSpan.FromSeconds(90));
+            Task<SqlDataReader> pendingReader = batch.ExecuteReaderAsync(cancellation.Token);
+            using SqlCommand other = new("SELECT 3", connection, null, SqlCommandColumnEncryptionSetting.Disabled);
+            Exception overlapFailure = Record.Exception(() =>
+            {
+                using SqlDataReader competingReader = other.ExecuteReader();
+            });
+            using (SqlDataReader reader = await pendingReader)
+            {
+                Assert.IsType<InvalidOperationException>(overlapFailure);
+                Assert.True(await reader.ReadAsync(cancellation.Token));
+                Assert.Equal(1, reader.GetInt32(0));
+                Assert.False(await reader.ReadAsync(cancellation.Token));
+                Assert.True(await reader.NextResultAsync(cancellation.Token));
+                Assert.True(await reader.ReadAsync(cancellation.Token));
+                Assert.Equal(2, reader.GetInt32(0));
+                Assert.False(await reader.ReadAsync(cancellation.Token));
+                Assert.False(await reader.NextResultAsync(cancellation.Token));
+            }
+            Assert.Equal(3, await other.ExecuteScalarAsync(cancellation.Token));
+        }
+
         public static bool IsHgsVbsEnclaveSetup() =>
             DataTestUtility.IsTargetReadyForAeWithKeyStore() &&
             DataTestUtility.EnclaveEnabled &&
