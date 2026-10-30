@@ -1801,7 +1801,7 @@
     <value>Vnitřní chyba. Při spouštění dotazu, který vyžaduje výpočty v enklávě, je typ enklávy přijatý ze systému SQL Server null nebo prázdný.</value>
   </data>
   <data name="TCE_AzureAttestationExtensionNotFound" xml:space="preserve">
-    <value>Attestation protocol 'AAS' requires the Microsoft.Data.SqlClient.Extensions.Azure package, at the same version as Microsoft.Data.SqlClient. Add or update the reference to that package, or specify a different attestation protocol in the connection string.</value>
+    <value>Protokol ověření identity AAS vyžaduje Microsoft.Data.SqlClient.Extensions. Balíček Azure ve stejné verzi jako Microsoft.Data.SqlClient. Přidejte nebo aktualizujte odkaz na tento balíček, nebo v připojovací řetězec zadejte jiný protokol ověření identity.</value>
   </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
     <value>Pro typu enklávy {0} a protokol ověření identity {1} se nenašel žádný zprostředkovatel enklávy. Zadejte prosím v připojovacím řetězci správný protokol ověření identity. </value>
