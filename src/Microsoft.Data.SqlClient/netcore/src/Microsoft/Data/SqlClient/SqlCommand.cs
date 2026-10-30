@@ -5698,9 +5698,9 @@ namespace Microsoft.Data.SqlClient
         {
             if (_inPrepare)
             {
-                if (!rec.value.IsNull)
+                if (!rec.Value.IsNull)
                 {
-                    _prepareHandle = rec.value.Int32;
+                    _prepareHandle = rec.Value.Int32;
                 }
                 _inPrepare = false;
                 return;
@@ -5733,7 +5733,7 @@ namespace Microsoft.Data.SqlClient
                         throw ADP.ClosedConnectionError();
                     }
 
-                    if (!rec.value.IsNull)
+                    if (!rec.Value.IsNull)
                     {
                         try
                         {
@@ -5741,7 +5741,7 @@ namespace Microsoft.Data.SqlClient
 
                             // Get the key information from the parameter and decrypt the value.
                             rec.cipherMD.EncryptionInfo = thisParam.CipherMetadata.EncryptionInfo;
-                            byte[] unencryptedBytes = SqlSecurityUtility.DecryptWithKey(rec.value.ByteArray, rec.cipherMD, _activeConnection, this);
+                            byte[] unencryptedBytes = SqlSecurityUtility.DecryptWithKey(rec.Value.ByteArray, rec.cipherMD, _activeConnection, this);
 
                             if (unencryptedBytes != null)
                             {
@@ -5785,13 +5785,13 @@ namespace Microsoft.Data.SqlClient
                             Connection.CheckGetExtendedUDTInfo(rec, true);
 
                             //extract the byte array from the param value
-                            if (rec.value.IsNull)
+                            if (rec.Value.IsNull)
                             {
                                 data = DBNull.Value;
                             }
                             else
                             {
-                                data = rec.value.ByteArray; //should work for both sql and non-sql values
+                                data = rec.Value.ByteArray; //should work for both sql and non-sql values
                             }
 
                             //call the connection to instantiate the UDT object
@@ -5814,7 +5814,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        thisParam.SetSqlBuffer(rec.value);
+                        thisParam.SetSqlBuffer(rec.Value);
                     }
 
                     MetaType mt = MetaType.GetMetaTypeFromSqlDbType(rec.type, false);
