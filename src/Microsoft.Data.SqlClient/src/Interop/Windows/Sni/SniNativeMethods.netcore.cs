@@ -30,6 +30,9 @@ namespace Interop.Windows.Sni
         public uint SniClose(IntPtr pConn) =>
             SNICloseWrapper(pConn);
 
+        public uint SniGetCertValidationInfo(SNIHandle pConn, ref SniCertValidationInfo pInfo) =>
+            SNIGetCertValidationInfoWrapper(pConn, ref pInfo);
+
         public uint SniGetMaxComposedSpnLength() =>
             GetSniMaxComposedSpnLength();
 
@@ -47,6 +50,9 @@ namespace Interop.Windows.Sni
 
         public void SniGetLastError(out SniError pLastError) =>
             SNIGetLastError(out pLastError);
+
+        public unsafe uint SniGetServerCertificate(SNIHandle pConn, byte* pbCertificate, uint cbCertificate, out uint pcbCertificate) =>
+            SNIGetServerCertificateWrapper(pConn, pbCertificate, cbCertificate, out pcbCertificate);
 
         public uint SniGetPeerAddrStrWrapper(
             SNIHandle pConn,
@@ -194,6 +200,18 @@ namespace Interop.Windows.Sni
 
         [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
         private static extern void SNIGetLastError(out SniError pErrorStruct);
+
+        [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+        private static extern uint SNIGetCertValidationInfoWrapper(
+            [In] SNIHandle pConn,
+            ref SniCertValidationInfo pInfo);
+
+        [DllImport(DllName, CallingConvention = CallingConvention.Cdecl)]
+        private static extern unsafe uint SNIGetServerCertificateWrapper(
+            [In] SNIHandle pConn,
+            byte* pbCertificate,
+            uint cbCertificate,
+            out uint pcbCertificate);
 
         [DllImport(DllName, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
         private static extern uint SNIGetPeerAddrStrWrapper(
