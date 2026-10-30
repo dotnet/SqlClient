@@ -537,7 +537,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
                     using CancellationTokenSource timeout = new(TimeSpan.FromSeconds(5));
                     Task accept = server.WaitForConnectionAsync(timeout.Token);
                     Handle = new SniNpHandle(
-                        ".", pipeName, TimeoutTimer.StartNew(TimeSpan.FromSeconds(5)),
+                        ".", pipeName, TimeoutTimer.StartSecondsTimeout(5),
                         tlsFirst: false, hostNameInCertificate: null, serverCertificateFilename: null);
                     accept.GetAwaiter().GetResult();
                 }
@@ -549,7 +549,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
                     Handle = new SniTcpHandle(
                         IPAddress.Loopback.ToString(),
                         ((IPEndPoint)listener.LocalEndpoint).Port,
-                        TimeoutTimer.StartNew(TimeSpan.FromSeconds(5)),
+                        TimeoutTimer.StartSecondsTimeout(5),
                         parallel: false,
                         SqlConnectionIPAddressPreference.IPv4First,
                         cachedFQDN: nameof(SniReceiveTests),
