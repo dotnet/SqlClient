@@ -55,7 +55,7 @@ namespace Interop.Windows.Sni
         public void SniGetLastError(out SniError pLastError) =>
             throw ADP.SNIPlatformNotSupported(_architecture);
 
-        public unsafe uint SniGetServerCertificateHash(SNIHandle pConn, byte* pbHash, uint cbHash, out uint pcbWritten) =>
+        public unsafe uint SniGetServerCertificate(SNIHandle pConn, byte* pbCertificate, uint cbCertificate, out uint pcbCertificate) =>
             throw ADP.SNIPlatformNotSupported(_architecture);
 
         public uint SniGetPeerAddrStrWrapper(

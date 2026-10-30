@@ -513,11 +513,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }
             else if (info.NegotiatedCipherSuiteId is int cipherSuite)
             {
-                // Native SNI reports the cipher suite only with an sni.dll that returns version 2 of the
-                // certificate validation info. Until that SNI package ships, accept either null or a value;
-                // a reported value implies the newer exports, so the hash must be present too.
+                // Native SNI reports the cipher suite only with an sni.dll that has the certificate capture
+                // exports. Until that SNI package ships, accept either null or a value; a reported value
+                // implies the newer exports, so the presented certificate must be present too.
                 Assert.InRange(cipherSuite, 1, 0xFFFF);
-                Assert.NotNull(info.PresentedServerCertificateHash256);
+                Assert.NotNull(info.PresentedServerCertificateRawData);
             }
         }
 
