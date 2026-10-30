@@ -1,0 +1,68 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+#
+# Close Backport Issue on Release-Branch Merge
+#
+# Companion to hotfix-label-issue.yml, sync-hotfix-label-to-pr.yml, and
+# cherry-pick-hotfix.yml. Works together to automate backporting a fix from
+# an issue through to a merged cherry-pick PR.
+#
+# GitHub only auto-closes an issue referenced by a PR's closing keywords
+# (Fixes/Closes/Resolves #N) when that PR merges into the repository's
+# default branch, and doesn't even populate the issue's cross-reference for
+# non-default-branch PRs. The cherry-pick PRs opened by cherry-pick-hotfix.yml
+# always target a release/X.Y branch, so this workflow closes that gap by
+# reading the backport issue number(s) that cherry-pick-to-release.sh records
+# in the PR body and closing each one explicitly once the PR merges.
+#
+#################################################################################
+
+name: Close Backport Issue on Release-Branch Merge
+
+# 'pull_request_target' (rather than 'pull_request') is required so the
+# workflow has write access to close issues. The job's 'if' condition below
+# restricts execution to same-repository automation branches, so this write
+# access is never exercised for a fork PR despite the trigger supporting them.
+on:
+  pull_request_target:
+    types: [closed]
+
+permissions:
+  contents: read
+  pull-requests: read
+  issues: write
+
+jobs:
+  close-backport-issue:
+    # Only fire for merged PRs targeting a release branch, opened from this
+    # same repository (never a fork), on a branch matching the naming
+    # convention cherry-pick-to-release.sh always uses for the branches it
+    # creates and pushes ("dev/automation/pr-<N>-to-<version>"). The
+    # "backport-issue-numbers" marker in the PR body is otherwise just text
+    # any PR author could include, and this job runs as 'pull_request_target'
+    # with 'issues: write' -- without this restriction, a merged fork PR
+    # carrying a forged marker could close arbitrary issues. Requiring both
+    # a same-repo head and the automation's exact branch prefix ensures this
+    # only ever fires for PRs our own automation created.
+    if: >-
+      github.event.pull_request.merged == true &&
+      startsWith(github.event.pull_request.base.ref, 'release/') &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      startsWith(github.event.pull_request.head.ref, 'dev/automation/pr-')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          # Only the scripts directory is needed; skip full history.
+          sparse-checkout: .github/scripts
+          sparse-checkout-cone-mode: false
+
+      - name: Close referenced issue(s)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: bash "${GITHUB_WORKSPACE}/.github/scripts/close-backport-issue.sh"

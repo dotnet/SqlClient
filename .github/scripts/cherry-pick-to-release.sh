@@ -32,6 +32,22 @@
 #   5. Milestone lookup is best-effort. If the milestone doesn't exist yet
 #      the PR is created without one and a warning note is added to the body.
 #
+#   6. Backport issue lookup is also best-effort: if the original PR's
+#      closing keywords reference an issue, and that issue has a sub-issue
+#      milestoned VERSION (the backport issue created by
+#      create-backport-issue.sh when the issue was labeled
+#      "Hotfix <version>"), a human-readable "Fixes #<backport-issue>" line
+#      is appended to the cherry-pick PR body for visibility. Because the
+#      cherry-pick PR targets a release branch (not the default branch),
+#      GitHub does not parse closing keywords into 'closingIssuesReferences'
+#      for it at all (that's populated only for keywords on default-branch
+#      PRs, or issues manually linked via the PR's "Development" sidebar), so
+#      the "Fixes #N" text alone would never let close-backport-issue.yml
+#      find the issue to close. A machine-readable
+#      "<!-- backport-issue-numbers: N N ... -->" marker is also embedded in
+#      the body; close-backport-issue.sh reads that marker directly instead
+#      of relying on 'closingIssuesReferences'.
+#
 # REQUIRED ENVIRONMENT VARIABLES
 # ------------------------------
 #   VERSION            Full hotfix version, e.g. "7.0.1".
@@ -154,6 +170,134 @@ lookup_milestone() {
   fi
 }
 
+# -- Helper: look up the backport issue ---------------------------------------
+# Best-effort, mirroring lookup_milestone. If the original PR's closing
+# keywords reference an issue, and that issue has a sub-issue milestoned
+# VERSION (the backport issue created by create-backport-issue.sh when the
+# issue was labeled "Hotfix <version>"), a "Fixes #<backport-issue>" line is
+# appended to the cherry-pick PR body for human visibility, and the issue
+# number is also recorded in a "<!-- backport-issue-numbers: ... -->" marker.
+# Because this PR targets a release branch rather than the default branch,
+# GitHub does not populate 'closingIssuesReferences' for closing keywords in
+# its body at all (only default-branch keyword references and manually
+# sidebar-linked issues appear there), so the "Fixes #N" text by itself gives
+# close-backport-issue.yml nothing to find. The marker is the only reliable
+# record of which issue(s) to close once this PR merges.
+# If nothing matches, this is silently skipped — it's a convenience, not a
+# requirement.
+# create-backport-issue.sh (creates that sub-issue) and this cherry-pick can
+# run concurrently, both triggered by the same "Hotfix <version>" label event
+# — most directly when sync-hotfix-label-from-issue.sh dispatches
+# cherry-pick-hotfix.yml in "reconcile" mode for an already-merged PR at the
+# same time hotfix-label-issue.yml is creating the backport issue. To avoid
+# a false "nothing to find" from that race, a missing sub-issue is retried a
+# few times (with a short delay) as long as the parent issue still carries
+# the label that would have triggered its creation.
+lookup_backport_issue() {
+  local version="$1"
+  BACKPORT_ISSUE_NOTE=""
+  local backport_issue_numbers=""
+
+  # closingIssuesReferences can include issues from other repositories (e.g.
+  # "Fixes owner/other#123"). Only consider references in this repository —
+  # a bare '.number' would otherwise let a cross-repo reference collide with
+  # an unrelated local issue of the same number. 'gh ... --jq' takes a single
+  # query string (no jq '--arg' passthrough — see note above), so the repo
+  # is escaped and interpolated directly.
+  local repo_escaped
+  repo_escaped=$(printf '%s' "${GITHUB_REPOSITORY}" | sed 's/["\\]/\\&/g')
+
+  local closing_issues
+  closing_issues=$(gh pr view "${PR_NUMBER}" --repo "${GITHUB_REPOSITORY}" \
+    --json closingIssuesReferences \
+    --jq ".closingIssuesReferences[] | select((.repository.owner.login + \"/\" + .repository.name) == \"${repo_escaped}\") | .number" \
+    2>/dev/null || true)
+
+  if [[ -z "${closing_issues}" ]]; then
+    return
+  fi
+
+  # 'gh api --jq' takes a single query string and does not support jq's
+  # '--arg' for safe variable injection, so the version is escaped and
+  # interpolated directly into the filter expression.
+  local version_escaped
+  version_escaped=$(printf '%s' "${version}" | sed 's/["\\]/\\&/g')
+
+  # A single PR can close multiple Hotfix-labeled parent issues for the same
+  # release (e.g. two related bugs fixed together); accumulate a "Fixes" line
+  # for every parent that has a matching backport issue instead of stopping
+  # at the first match, so the cherry-pick PR closes all of them.
+  #
+  # A parent issue's sub-issues can include unrelated children milestoned to
+  # the same release (e.g. a separate follow-up task), so matching on
+  # milestone alone can pick the wrong one. create-backport-issue.sh always
+  # titles the backport issue "[VERSION] <parent title>", so also require
+  # that deterministic prefix to identify the right sub-issue.
+  # create-backport-issue.sh (triggered by the same "Hotfix <version>" label
+  # on the parent issue) runs concurrently with this cherry-pick, not before
+  # it — there's no ordering guarantee between the two. If the parent issue
+  # currently carries the label but its backport sub-issue hasn't shown up
+  # yet, retry briefly rather than silently missing it on the first look.
+  # A handful of short retries comfortably covers that workflow's runtime
+  # without meaningfully delaying the (far more common) case where no
+  # backport issue is expected at all.
+  local -r backport_lookup_max_attempts=6
+  local -r backport_lookup_retry_delay_seconds=10
+
+  local issue_number backport_number match_count attempt issue_labels
+  while IFS= read -r issue_number; do
+    [[ -z "${issue_number}" ]] && continue
+
+    for (( attempt = 1; attempt <= backport_lookup_max_attempts; attempt++ )); do
+      backport_number=$(gh api "repos/${GITHUB_REPOSITORY}/issues/${issue_number}/sub_issues" \
+        --paginate --jq ".[] | select(.milestone.title == \"${version_escaped}\" and (.title | startswith(\"[${version_escaped}] \"))) | .number" \
+        2>/dev/null || true)
+      match_count=$(grep -c . <<< "${backport_number}" || true)
+      backport_number=$(head -n1 <<< "${backport_number}")
+
+      if [[ -n "${backport_number}" ]]; then
+        break
+      fi
+
+      # Nothing found yet. Only worth retrying if the parent issue still
+      # carries the label that would have triggered create-backport-issue.sh
+      # in the first place — otherwise no backport issue is expected and
+      # retrying would just waste time.
+      issue_labels=$(gh api "repos/${GITHUB_REPOSITORY}/issues/${issue_number}" \
+        --jq '.labels[].name' 2>/dev/null || true)
+      if ! grep -qx "Hotfix ${version}" <<< "${issue_labels}"; then
+        break
+      fi
+
+      if [[ "${attempt}" -lt "${backport_lookup_max_attempts}" ]]; then
+        echo "No backport issue found yet for #${issue_number} (milestone '${version}')," \
+             "but the 'Hotfix ${version}' label is present; retrying" \
+             "(attempt ${attempt}/${backport_lookup_max_attempts})..."
+        sleep "${backport_lookup_retry_delay_seconds}"
+      fi
+    done
+
+    if [[ "${match_count}" -gt 1 ]]; then
+      echo "::warning::Issue #${issue_number} has multiple sub-issues titled" \
+           "'[${version}] ...' milestoned '${version}'; using the first (#${backport_number})."
+    fi
+
+    if [[ -n "${backport_number}" ]]; then
+      echo "Found backport issue #${backport_number} (sub-issue of #${issue_number}, milestone '${version}')."
+      BACKPORT_ISSUE_NOTE+=$'\n\nFixes #'"${backport_number}"
+      backport_issue_numbers+="${backport_number} "
+    fi
+  done <<< "${closing_issues}"
+
+  # Prepend the machine-readable marker (if any backport issues were found)
+  # so close-backport-issue.sh can recover the issue numbers without relying
+  # on GitHub's closing-keyword parsing, which doesn't run for non-default-
+  # branch PRs. Kept on its own HTML-comment line so it never renders.
+  if [[ -n "${backport_issue_numbers}" ]]; then
+    BACKPORT_ISSUE_NOTE=$'\n\n<!-- backport-issue-numbers: '"${backport_issue_numbers}"'-->'"${BACKPORT_ISSUE_NOTE}"
+  fi
+}
+
 # -- Step 4: Attempt the cherry-pick ------------------------------------------
 # Options (--mainline) must precede the commit operand.
 if git cherry-pick ${MAINLINE_FLAG} "${MERGE_COMMIT_SHA}"; then
@@ -162,12 +306,13 @@ if git cherry-pick ${MAINLINE_FLAG} "${MERGE_COMMIT_SHA}"; then
   git push origin "${CHERRY_PICK_BRANCH}"
 
   lookup_milestone "${VERSION}"
+  lookup_backport_issue "${VERSION}"
 
   gh pr create \
     --base "${TARGET_BRANCH}" \
     --head "${CHERRY_PICK_BRANCH}" \
     --title "[${VERSION} Cherry-pick] ${PR_TITLE}" \
-    --body "Cherry-pick of #${PR_NUMBER} (${MERGE_COMMIT_SHA}) into \`${TARGET_BRANCH}\`.${MILESTONE_NOTE}" \
+    --body "Cherry-pick of #${PR_NUMBER} (${MERGE_COMMIT_SHA}) into \`${TARGET_BRANCH}\`.${MILESTONE_NOTE}${BACKPORT_ISSUE_NOTE}" \
     ${MILESTONE_ARG}
 else
   # --- Conflict path ---
@@ -192,6 +337,7 @@ else
   git push origin "${CHERRY_PICK_BRANCH}"
 
   lookup_milestone "${VERSION}"
+  lookup_backport_issue "${VERSION}"
 
   # Build the PR body using printf to avoid quoting pitfalls with embedded
   # newlines (mixed $'...' and '...' quoting can leave literal \n in output).
@@ -199,6 +345,7 @@ else
     "Cherry-pick of #${PR_NUMBER} (${MERGE_COMMIT_SHA}) into " \
     "\`${TARGET_BRANCH}\` **failed due to merge conflicts**." \
     "${MILESTONE_NOTE}" \
+    "${BACKPORT_ISSUE_NOTE}" \
     $'\n\nPlease resolve manually:\n```bash\n' \
     "git fetch origin" \
     $'\n' \
