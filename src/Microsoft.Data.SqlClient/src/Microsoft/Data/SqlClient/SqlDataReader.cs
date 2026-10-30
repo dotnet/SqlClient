@@ -3560,7 +3560,7 @@ namespace Microsoft.Data.SqlClient
                             if (_altRowStatus == ALTROWSTATUS.Null)
                             {
                                 // cache the regular metadata
-                                _altMetaDataSetCollection.metaDataSet = _metaData;
+                                _altMetaDataSetCollection.MetadataSet = _metaData;
                                 _metaData = null;
                             }
                             else
@@ -3825,7 +3825,7 @@ namespace Microsoft.Data.SqlClient
                                         more = false;
                                         return result;
                                     }
-                                    TdsColumnMetadataToken altMetaDataSet = _altMetaDataSetCollection.GetAltMetaData(altRowId);
+                                    TdsColumnMetadataToken altMetaDataSet = _altMetaDataSetCollection.GetAltMetadata(altRowId);
                                     if (altMetaDataSet != null)
                                     {
                                         _metaData = altMetaDataSet;
@@ -3834,7 +3834,7 @@ namespace Microsoft.Data.SqlClient
                                     break;
                                 case ALTROWSTATUS.Done:
                                     // restore the row-metaData
-                                    _metaData = _altMetaDataSetCollection.metaDataSet;
+                                    _metaData = _altMetaDataSetCollection.MetadataSet;
                                     Debug.Assert(_altRowStatus == ALTROWSTATUS.Done, "invalid AltRowStatus");
                                     _altRowStatus = ALTROWSTATUS.Null;
                                     break;
@@ -4676,7 +4676,7 @@ namespace Microsoft.Data.SqlClient
             {
                 _altMetaDataSetCollection = (TdsAltMetadataCollection)_altMetaDataSetCollection.Clone();
             }
-            _altMetaDataSetCollection.SetAltMetaData(metaDataSet);
+            _altMetaDataSetCollection.SetAltMetadata(metaDataSet);
             _metaDataConsumed = metaDataConsumed;
             if (_metaDataConsumed && _parser != null)
             {
