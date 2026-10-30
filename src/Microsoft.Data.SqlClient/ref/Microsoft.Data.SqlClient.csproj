@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <!-- General Properties ============================================== -->
   <PropertyGroup>
     <AssemblyName>Microsoft.Data.SqlClient</AssemblyName>
@@ -217,5 +217,6 @@
   <ItemGroup>
     <!-- GenAPI does not reproduce forwards from the reference assembly. -->
     <Compile Include="../src/TypeForwards.Abstractions.cs" Link="TypeForwards.Abstractions.cs" />
+    <Compile Include="../src/TypeForwards.netcore.cs" Link="TypeForwards.netcore.cs" />
   </ItemGroup>
 </Project>

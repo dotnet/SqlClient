@@ -84,10 +84,6 @@
   </PropertyGroup>
   <ItemGroup Condition="'$(ApiCompatValidateAssemblies)' == 'true'">
     <ApiCompatExcludeAttributesFile Include="ApiCompatExcludeAttributes.txt" />
-    <ApiCompatSuppressionFile Include="ApiCompatSuppressions.xml" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(ApiCompatValidateAssemblies)' == 'true' AND '$(TargetFramework)' != 'net462'">
-    <ApiCompatSuppressionFile Include="ApiCompatSuppressions.netcore.xml" />
   </ItemGroup>
 
   <!-- NuGet Package Config ============================================ -->
