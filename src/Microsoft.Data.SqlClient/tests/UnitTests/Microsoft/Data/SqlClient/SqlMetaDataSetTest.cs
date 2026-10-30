@@ -52,7 +52,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             TdsColumnMetadataToken clone = original.Clone();
 
             Assert.NotSame(original, clone);
-            Assert.Null(clone.cekTable);
+            Assert.Null(clone.CekTable);
             Assert.Equal(original.Length, clone.Length);
             Assert.NotSame(original[0], clone[0]);
             Assert.False(clone[0].isEncrypted);
