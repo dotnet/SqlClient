@@ -12,8 +12,9 @@ BeforeAll {
     if ($IsWindows) {
         @'
 @echo off
+echo CWD:"%CD%"
 :next
-if "%~1"=="" exit /b 0
+if [%1]==[] exit /b 0
 echo ARG:"%~1"
 shift
 goto next
@@ -22,6 +23,7 @@ goto next
     else {
         @'
 #!/bin/sh
+printf 'CWD:%s\n' "$PWD"
 printf 'ARG:%s\n' "$@"
 '@ | Set-Content (Join-Path $stubDirectory 'dotnet')
         & chmod +x (Join-Path $stubDirectory 'dotnet')
@@ -492,6 +494,61 @@ Describe 'reference assembly baseline framework resolution' {
         $result = Invoke-RefBaselineProbe $Available $Properties
         $result.ExitCode | Should -Not -Be 0
         $result.Output | Should -Match ([regex]::Escape("has no ref/$Missing/Microsoft.Data.SqlClient.dll for local $Local"))
+    }
+}
+
+Describe 'build.proj PowerShell module restore' {
+    It 'runs the restored PowerShell tool without building or testing any projects' {
+        $arguments = Get-ChildArguments 'RestorePowerShellModules'
+
+        $arguments[0..6] -join '|' | Should -Be 'tool|run|pwsh|--|-NoProfile|-NonInteractive|-File'
+        [IO.Path]::GetFullPath($arguments[7]) |
+            Should -Be (Join-Path $repoRoot 'eng\scripts\Restore-PowerShellModules.ps1')
+        $arguments.Count | Should -Be 8
+    }
+
+    It 'runs the standalone target from another working directory' {
+        $target = Join-Path $repoRoot 'tools\targets\RestorePowerShellModules.targets'
+        Push-Location $TestDrive
+        try {
+            $output = & $dotnet msbuild $target -nologo -v:normal -t:RestorePowerShellModules `
+                "-p:DotnetPath=$stubDirectory/" 2>&1
+            $LASTEXITCODE | Should -Be 0
+        }
+        finally {
+            Pop-Location
+        }
+        $workingDirectory = @($output | ForEach-Object {
+            if ("$_".Trim() -match '^CWD:(.*)$') { $Matches[1].Trim('"') }
+        })
+        $workingDirectory.Count | Should -Be 1
+        $workingDirectory[0].TrimEnd('\', '/') | Should -Be $repoRoot.TrimEnd('\', '/')
+    }
+
+    It 'does not restore modules implicitly during manual tests' {
+        $arguments = Get-ChildArguments 'TestSqlClientManual' @('-p:TestFramework=net10.0')
+
+        $arguments | Should -Not -Contain 'tool'
+        $arguments | Should -Not -Contain 'pwsh'
+        $arguments | Should -Contain 'test'
+    }
+
+    It 'propagates a failed restore tool exit code' {
+        $directory = Join-Path $TestDrive 'failed module restore'
+        New-Item -ItemType Directory -Path $directory -Force | Out-Null
+        if ($IsWindows) {
+            "@echo off`nexit /b 17" | Set-Content (Join-Path $directory 'dotnet.cmd')
+        }
+        else {
+            "#!/bin/sh`nexit 17" | Set-Content (Join-Path $directory 'dotnet')
+            & chmod +x (Join-Path $directory 'dotnet')
+            $LASTEXITCODE | Should -Be 0
+        }
+        $output = & $dotnet msbuild $buildProject -nologo -v:quiet -t:RestorePowerShellModules `
+            "-p:DotnetPath=$directory/" 2>&1
+
+        $LASTEXITCODE | Should -Not -Be 0
+        $output -join "`n" | Should -Match 'exited with code 17'
     }
 }
 

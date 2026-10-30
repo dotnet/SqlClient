@@ -4,11 +4,15 @@ Pester tests for pipeline helpers, argument templates, and build orchestration.
 
 ## Prerequisites
 
-These tests require **PowerShell 7+** and **Pester v5 or later**:
+Restore the pinned PowerShell tool and module versions from the repository root:
 
-```powershell
-Install-Module Pester -MinimumVersion 5.0 -Scope CurrentUser -Force -SkipPublisherCheck
+```console
+dotnet tool restore
+dotnet build build.proj -t:RestorePowerShellModules
 ```
+
+The target restores `powershell-modules.json` from the anonymous public SqlClient feed in
+`PowerShell.config`; see [module setup](../../../../BUILDGUIDE.md#powershell-modules).
 
 `Build-Orchestration.Tests.ps1` also requires the .NET SDK pinned by
 [`global.json`](../../../../global.json), available as `dotnet` on `PATH`.
@@ -17,8 +21,14 @@ Install-Module Pester -MinimumVersion 5.0 -Scope CurrentUser -Force -SkipPublish
 
 Run these commands from the repository root:
 
+```console
+dotnet tool run pwsh -- -NoProfile
+```
+
+In that PowerShell session:
+
 ```powershell
-Import-Module Pester -MinimumVersion 5.0
+Import-Module Pester
 Invoke-Pester ./eng/pipelines/scripts/tests/
 ```
 
@@ -28,11 +38,14 @@ Add `-Output Detailed` to see per-test results.
 
 | File | Covers |
 | ---- | ------ |
+| `Register-SqlClientPSRepository.Tests.ps1` | Governed module source registration, conflicts, failures, and prerequisite-step wiring. |
+| `Restore-PowerShellModules.Tests.ps1` | Manifest validation, exact-version PSResourceGet restore/reuse, one governed repository, and failure propagation. |
+| `Configure-NetOnlyAccount.Tests.ps1` | SqlServer import and temporary account provisioning/cleanup. |
 | `Open-LocalizationPr.Tests.ps1` | `Open-LocalizationPr.ps1` — de-duplication of the scheduled localization pull request. |
 | `Install-DockerCli.macos.Tests.ps1` | `Install-DockerCli.macos.ps1` — Homebrew bottle selection for the macOS docker CLI. |
 | `Pipeline-Arguments.Tests.ps1` | PR build/pack/test argument quoting and the repository's CI variable naming convention. |
 | `Pipeline-Platforms.Tests.ps1` | Windows/Linux-only PR validation, macOS job/dependency exclusion, and unchanged CI macOS defaults. |
-| `Build-Orchestration.Tests.ps1` | MSBuild test filters, dependency-pack ordering/version forwarding, local restore freshness, and generated command-line argument quoting. |
+| `Build-Orchestration.Tests.ps1` | Explicit root/standalone PowerShell module restore, MSBuild test filters, dependency-pack ordering/version forwarding, local restore freshness, and generated argument quoting. |
 
 The localization and Docker helper tests mock `git`, `tar`, `Invoke-RestMethod`,
 and `Invoke-WebRequest`, so they do not access the network or modify a real
