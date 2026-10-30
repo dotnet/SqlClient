@@ -1102,6 +1102,10 @@ public sealed class SqlConnection : System.Data.Common.DbConnection, System.IClo
     [System.ComponentModel.BrowsableAttribute(true)]
     [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
     public override string DataSource { get { throw null; } }
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/EncryptionInfo/*'/>
+    [System.ComponentModel.BrowsableAttribute(false)]
+    [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
+    public Microsoft.Data.SqlClient.SqlConnectionEncryptionInfo EncryptionInfo { get { throw null; } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/FireInfoMessageEventOnUserErrors/*'/>
     public bool FireInfoMessageEventOnUserErrors { get { throw null; } set { } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/PacketSize/*'/>
@@ -1293,6 +1297,58 @@ public sealed class SqlConnectionEncryptOption
 
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/GetHashCode/*' />
     public override int GetHashCode() { throw null; }
+}
+
+/// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/SqlConnectionEncryptionInfo/*'/>
+public sealed class SqlConnectionEncryptionInfo
+{
+    internal SqlConnectionEncryptionInfo() { }
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/NegotiatedEncryptionMode/*'/>
+    public Microsoft.Data.SqlClient.SqlConnectionEncryptionMode? NegotiatedEncryptionMode { get { throw null; } }
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/NegotiatedEncryptionProtocol/*'/>
+    public System.Security.Authentication.SslProtocols? NegotiatedEncryptionProtocol { get { throw null; } }
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/NegotiatedCipherSuiteId/*'/>
+    public int? NegotiatedCipherSuiteId { get { throw null; } }
+#if NET
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/NegotiatedCipherSuite/*'/>
+    [System.CLSCompliantAttribute(false)]
+    public System.Net.Security.TlsCipherSuite? NegotiatedCipherSuite { get { throw null; } }
+#endif
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/ValidationErrors/*'/>
+    public Microsoft.Data.SqlClient.SqlServerCertificateValidationErrors? ValidationErrors { get { throw null; } }
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/ChainStatus/*'/>
+    public System.Security.Cryptography.X509Certificates.X509ChainStatusFlags? ChainStatus { get { throw null; } }
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/GetServerCertificate/*'/>
+    public System.Security.Cryptography.X509Certificates.X509Certificate2 GetServerCertificate() { throw null; }
+}
+
+/// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionMode.xml' path='docs/members[@name="SqlConnectionEncryptionMode"]/SqlConnectionEncryptionMode/*'/>
+public enum SqlConnectionEncryptionMode
+{
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionMode.xml' path='docs/members[@name="SqlConnectionEncryptionMode"]/None/*'/>
+    None = 0,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionMode.xml' path='docs/members[@name="SqlConnectionEncryptionMode"]/LoginOnly/*'/>
+    LoginOnly = 1,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionMode.xml' path='docs/members[@name="SqlConnectionEncryptionMode"]/Full/*'/>
+    Full = 2,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionMode.xml' path='docs/members[@name="SqlConnectionEncryptionMode"]/Strict/*'/>
+    Strict = 3,
+}
+
+/// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlServerCertificateValidationErrors.xml' path='docs/members[@name="SqlServerCertificateValidationErrors"]/SqlServerCertificateValidationErrors/*'/>
+[System.FlagsAttribute]
+public enum SqlServerCertificateValidationErrors
+{
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlServerCertificateValidationErrors.xml' path='docs/members[@name="SqlServerCertificateValidationErrors"]/None/*'/>
+    None = 0,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlServerCertificateValidationErrors.xml' path='docs/members[@name="SqlServerCertificateValidationErrors"]/ServerCertificateMissing/*'/>
+    ServerCertificateMissing = 1,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlServerCertificateValidationErrors.xml' path='docs/members[@name="SqlServerCertificateValidationErrors"]/HostNameMismatch/*'/>
+    HostNameMismatch = 2,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlServerCertificateValidationErrors.xml' path='docs/members[@name="SqlServerCertificateValidationErrors"]/ChainError/*'/>
+    ChainError = 4,
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlServerCertificateValidationErrors.xml' path='docs/members[@name="SqlServerCertificateValidationErrors"]/PinnedCertificateMismatch/*'/>
+    PinnedCertificateMismatch = 8,
 }
 
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionIPAddressPreference.xml' path='docs/members[@name="SqlConnectionIPAddressPreference"]/SqlConnectionIPAddressPreferenceNetfx/*' />
@@ -1891,6 +1947,8 @@ public sealed class SqlException : System.Data.Common.DbException
     public byte Class { get { throw null; } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/ClientConnectionId/*'/>
     public System.Guid ClientConnectionId { get { throw null; } }
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/EncryptionInfo/*'/>
+    public Microsoft.Data.SqlClient.SqlConnectionEncryptionInfo EncryptionInfo { get { throw null; } }
 
     #if NET
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/DbBatchCommand/*' />

@@ -37,6 +37,13 @@ namespace Microsoft.Data.SqlClient
 #endif
         // Do not serialize this field! It is used to indicate that no reconnection attempts are required
         internal bool _doNotReconnect = false;
+        // Diagnostic snapshot only; not serialized so the existing serialization graph is unchanged.
+        // A null value (including after deserialization) is surfaced as an empty snapshot.
+#if NETFRAMEWORK
+        [IgnoreDataMember]
+#endif
+        [NonSerialized]
+        private SqlConnectionEncryptionInfo _encryptionInfo;
 
         private SqlException(string message, SqlErrorCollection errorCollection, Exception innerException, Guid conId) : base(message, innerException)
         {
@@ -133,6 +140,13 @@ namespace Microsoft.Data.SqlClient
             internal set => _batchCommand = value;
         }
         #endif
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/EncryptionInfo/*' />
+        public SqlConnectionEncryptionInfo EncryptionInfo
+        {
+            get => _encryptionInfo ?? SqlConnectionEncryptionInfo.Empty;
+            internal set => _encryptionInfo = value;
+        }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/ToString/*' />
         public override string ToString()
@@ -303,6 +317,7 @@ namespace Microsoft.Data.SqlClient
             }
             exception._batchCommand = _batchCommand;
             exception._doNotReconnect = _doNotReconnect;
+            exception._encryptionInfo = _encryptionInfo;
             return exception;
         }
     }

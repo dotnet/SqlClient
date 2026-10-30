@@ -1,0 +1,37 @@
+<docs>
+  <members name="SqlServerCertificateValidationErrors">
+    <SqlServerCertificateValidationErrors>
+      <summary>
+        Specifies server certificate validation errors observed by the driver. This enumeration supports a bitwise combination of its member values.
+      </summary>
+      <remarks>
+        Reported by <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptionInfo.ValidationErrors" />. A <see langword="null" /> value for that property means validation did not run or the outcome is not available; <see cref="F:Microsoft.Data.SqlClient.SqlServerCertificateValidationErrors.None" /> means validation ran and no errors were observed.
+      </remarks>
+    </SqlServerCertificateValidationErrors>
+    <None>
+      <summary>
+        Certificate validation ran and no errors were observed.
+      </summary>
+    </None>
+    <ServerCertificateMissing>
+      <summary>
+        The server did not present a certificate.
+      </summary>
+    </ServerCertificateMissing>
+    <HostNameMismatch>
+      <summary>
+        The certificate presented by the server does not match the expected host name.
+      </summary>
+    </HostNameMismatch>
+    <ChainError>
+      <summary>
+        The certificate chain could not be built or validated. See <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptionInfo.ChainStatus" /> for details.
+      </summary>
+    </ChainError>
+    <PinnedCertificateMismatch>
+      <summary>
+        The certificate presented by the server does not match the certificate configured with the <c>ServerCertificate</c> connection string keyword.
+      </summary>
+    </PinnedCertificateMismatch>
+  </members>
+</docs>
