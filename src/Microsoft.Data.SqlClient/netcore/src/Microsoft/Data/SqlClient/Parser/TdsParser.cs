@@ -13447,7 +13447,7 @@ namespace Microsoft.Data.SqlClient.Parser
             }
             if (metaData.Udt is null)
             {
-                metaData.Udt = new SqlMetaDataUdt();
+                metaData.Udt = new TdsUdtTypeInfo();
             }
             if (byteLength != 0)
             {

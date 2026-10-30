@@ -21,7 +21,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
                 IsEncrypted = encrypted,
                 BaseTypeInfo = encrypted ? new TdsTypeInfo { DbType = SqlDbType.Int } : null,
                 CipherMetadata = encrypted ? new SqlCipherMetadata(new SqlTceCipherInfoEntry(), 0, 2, null, 1, 1) : null,
-                Udt = new SqlMetaDataUdt { TypeName = "TestType" },
+                Udt = new TdsUdtTypeInfo { TypeName = "TestType" },
                 XmlSchemaCollection = new SqlMetaDataXmlSchemaCollection { Name = "TestSchema" }
             };
 

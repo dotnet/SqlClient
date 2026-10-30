@@ -844,8 +844,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\SqlMetaDataXmlSchemaCollection.cs">
       <Link>Microsoft\Data\SqlClient\Parser\Tokens\SqlMetaDataXmlSchemaCollection.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\SqlMetaDataUdt.cs">
-      <Link>Microsoft\Data\SqlClient\Parser\Tokens\SqlMetaDataUdt.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\TdsUdtTypeInfo.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Tokens\TdsUdtTypeInfo.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\_SqlRPC.cs">
       <Link>Microsoft\Data\SqlClient\Parser\_SqlRPC.cs</Link>
