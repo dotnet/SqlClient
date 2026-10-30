@@ -41,3 +41,30 @@ configuration bytes after execution, including when a scenario fails.
 
 The CI stage runs both reference modes on Linux and Windows, self-building its
 packages with per-job caches and unique versions rather than assuming artifacts.
+
+## Registry publishing regression fixture
+
+[RegistryPublishTest](RegistryPublishTest/AuthenticationPublishTest.csproj) preserves
+the registry-specific publish checks developed during PR #4821. It references only
+the Abstractions project and supplies a synthetic Azure discovery contract; it does
+not validate the real Azure package or Package reference mode.
+
+From the repository root, publish each case to a separate, empty output directory:
+
+```bash
+dotnet publish src/Microsoft.Data.SqlClient/tests/AuthenticationTests/RegistryPublishTest/AuthenticationPublishTest.csproj -c Release -r linux-x64 -p:ReferenceType=Project -p:EnableReflection=true -o /tmp/registry-reflection
+dotnet publish src/Microsoft.Data.SqlClient/tests/AuthenticationTests/RegistryPublishTest/AuthenticationPublishTest.csproj -c Release -r linux-x64 -p:ReferenceType=Project -p:EnableReflection=false -o /tmp/registry-explicit
+dotnet publish src/Microsoft.Data.SqlClient/tests/AuthenticationTests/RegistryPublishTest/AuthenticationPublishTest.csproj -c Release -r linux-x64 -p:ReferenceType=Project -p:EnableReflection=false -p:NativeAot=true -p:CppCompilerAndLinker=/usr/bin/gcc -o /tmp/registry-aot
+```
+
+Run `Microsoft.Data.SqlClient.Extensions.Azure` from each output directory. Enabled
+reflection checks configuration activation, initializer execution and discovery in
+trimmed JIT, explicitly rooting the contracts and accepting linker diagnostics.
+Disabled reflection checks explicit registration in trimmed JIT and Native AOT.
+Publish settings are local project properties to avoid propagating trimming into
+the multi-targeted dependency restore.
+
+The enabled-reflection case is expected to fail until the pending PR #4821 change
+stops capability guards from unconditionally removing those paths during trimming.
+This fixture is deliberately not yet wired into the default runner, solution or CI;
+reconcile that integration as the parent PRs merge.
