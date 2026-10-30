@@ -158,9 +158,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             switchesHelper.EnableMultiSubnetFailoverByDefault = true;
             using TdsServer server = new(new TdsServerArguments { FailoverPartner = "localhost,1234" });
             server.Start();
+            // .NET Framework requires Initial Catalog when the server sends a failover partner.
             SqlConnectionStringBuilder builder = new()
             {
                 DataSource = $"tcp:127.0.0.1,{server.EndPoint.Port}",
+                InitialCatalog = "master",
                 Encrypt = SqlConnectionEncryptOption.Optional,
                 Pooling = false
             };
