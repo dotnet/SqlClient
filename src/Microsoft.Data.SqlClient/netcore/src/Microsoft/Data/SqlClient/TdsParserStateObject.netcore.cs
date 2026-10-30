@@ -364,7 +364,13 @@ namespace Microsoft.Data.SqlClient
             bool processFinallyBlock = true;
             try
             {
-                Debug.Assert(CheckPacket(packet, source) && source != null, "AsyncResult null on callback");
+                // Closing a MARS connection can clear a session's task before its error callback.
+                // The late callback must still retire the pending callback count.
+                Debug.Assert(
+                    (CheckPacket(packet, source) && source != null) ||
+                    (source == null && error != 0 && _parser.MARSOn &&
+                        (_parser.State == TdsParserState.Closed || _parser.State == TdsParserState.Broken)),
+                    "AsyncResult null on callback");
 
                 if (_parser.MARSOn)
                 {
