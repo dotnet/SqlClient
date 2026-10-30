@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
+
 namespace Microsoft.SqlServer.TDS.Servers
 {
     public class TransientTdsErrorTdsServerArguments : TdsServerArguments
@@ -33,5 +35,11 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// when a test needs to avoid automatic break/doom behavior in the client.
         /// </summary>
         public byte ErrorClass { get; set; } = 20;
+
+        /// <summary>
+        /// Optional delay applied to login responses after all configured transient errors have
+        /// been emitted. Tests use this to make a final retry exhaust the overall connect timeout.
+        /// </summary>
+        public TimeSpan DelayAfterTransientErrors { get; set; } = TimeSpan.Zero;
     }
 }

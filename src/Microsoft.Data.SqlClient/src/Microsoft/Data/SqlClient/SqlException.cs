@@ -4,6 +4,8 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data.Common;
 using System.Diagnostics;
@@ -24,6 +26,10 @@ namespace Microsoft.Data.SqlClient
         private const int SqlExceptionHResult = unchecked((int)0x80131904);
 
         private readonly SqlErrorCollection _errors;
+        private static readonly ReadOnlyCollection<SqlException> s_emptyConnectionOpenRetryFailures =
+            Array.AsReadOnly(Array.Empty<SqlException>());
+        private IReadOnlyList<SqlException> _connectionOpenRetryFailures =
+            s_emptyConnectionOpenRetryFailures;
 #if NETFRAMEWORK
         [OptionalField(VersionAdded = 4)]
 #endif
@@ -49,6 +55,7 @@ namespace Microsoft.Data.SqlClient
 #endif
         private SqlException(SerializationInfo si, StreamingContext sc) : base(si, sc)
         {
+            _connectionOpenRetryFailures = s_emptyConnectionOpenRetryFailures;
             _errors = (SqlErrorCollection)si.GetValue("Errors", typeof(SqlErrorCollection));
             HResult = SqlExceptionHResult;
             foreach (SerializationEntry siEntry in si)
@@ -67,6 +74,8 @@ namespace Microsoft.Data.SqlClient
 #endif
         public override void GetObjectData(SerializationInfo si, StreamingContext context)
         {
+            // ConnectionOpenRetryFailures is request-scoped diagnostic context and is intentionally
+            // not carried through legacy formatter-based serialization.
             base.GetObjectData(si, context);
             si.AddValue("Errors", _errors, typeof(SqlErrorCollection));
             si.AddValue("ClientConnectionId", _clientConnectionId, typeof(object));
@@ -89,6 +98,10 @@ namespace Microsoft.Data.SqlClient
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
 #endif
         public SqlErrorCollection Errors => _errors ?? new SqlErrorCollection();
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/ConnectionOpenRetryFailures/*' />
+        public IReadOnlyList<SqlException> ConnectionOpenRetryFailures =>
+            _connectionOpenRetryFailures ?? s_emptyConnectionOpenRetryFailures;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/ClientConnectionId/*' />
         public Guid ClientConnectionId => _clientConnectionId;
@@ -160,6 +173,27 @@ namespace Microsoft.Data.SqlClient
             {
                 sb.AppendLine();
                 sb.AppendFormat(SQLMessage.ExRoutingDestination(), Data[RoutingDestinationKey]);
+            }
+
+            if (ConnectionOpenRetryFailures.Count > 0)
+            {
+                sb.AppendLine();
+                sb.Append(
+                    StringsHelper.GetString(
+                        Strings.SQL_ConnectionOpenRetryFailures,
+                        ConnectionOpenRetryFailures.Count));
+
+                for (int i = 0; i < ConnectionOpenRetryFailures.Count; i++)
+                {
+                    SqlException failure = ConnectionOpenRetryFailures[i];
+                    sb.AppendLine();
+                    sb.Append(
+                        StringsHelper.GetString(
+                            Strings.SQL_ConnectionOpenRetryFailure,
+                            i + 1,
+                            failure.GetType().FullName,
+                            failure.Message));
+                }
             }
 
             return sb.ToString();
@@ -292,6 +326,9 @@ namespace Microsoft.Data.SqlClient
         }
 
         internal SqlException InternalClone()
+            => InternalClone(includeConnectionOpenRetryFailures: true);
+
+        internal SqlException InternalClone(bool includeConnectionOpenRetryFailures)
         {
             SqlException exception = new(Message, _errors, InnerException, _clientConnectionId);
             if (Data != null)
@@ -303,7 +340,38 @@ namespace Microsoft.Data.SqlClient
             }
             exception._batchCommand = _batchCommand;
             exception._doNotReconnect = _doNotReconnect;
+            exception._connectionOpenRetryFailures = includeConnectionOpenRetryFailures
+                ? ConnectionOpenRetryFailures
+                : s_emptyConnectionOpenRetryFailures;
             return exception;
+        }
+
+        /// <summary>
+        /// Attaches the transient failures observed before this terminal connection open failure.
+        /// Existing failures on this exception are appended after the supplied list.
+        /// </summary>
+        internal void SetConnectionOpenRetryFailures(
+            IReadOnlyList<SqlException> retryFailures)
+        {
+            if (retryFailures is null || retryFailures.Count == 0)
+            {
+                return;
+            }
+
+            var combined = new SqlException[
+                retryFailures.Count + ConnectionOpenRetryFailures.Count];
+            for (int i = 0; i < retryFailures.Count; i++)
+            {
+                combined[i] = retryFailures[i];
+            }
+
+            for (int i = 0; i < ConnectionOpenRetryFailures.Count; i++)
+            {
+                combined[retryFailures.Count + i] =
+                    ConnectionOpenRetryFailures[i];
+            }
+
+            _connectionOpenRetryFailures = Array.AsReadOnly(combined);
         }
     }
 }
