@@ -1801,7 +1801,7 @@
     <value>İç Hata. Kapanım hesaplamaları gerektiren bir sorgu yürütülürken SQL Server'dan alınan kapanım türü null veya boş.</value>
   </data>
   <data name="TCE_AzureAttestationExtensionNotFound" xml:space="preserve">
-    <value>'AAS' kanıtlama protokolü Microsoft.Data.SqlClient.Extensions gerektirir. AzureAzure paketi, Microsoft.Data.SqlClient ile aynı sürümde. Bu pakete başvuru ekleyin veya güncelleştirin ya da bağlantı dizesi farklı bir kanıtlama protokolü belirtin.</value>
+    <value>'AAS' kanıtlama protokolü, Microsoft.Data.SqlClient ile aynı sürümdeki Microsoft.Data.SqlClient.Extensions.Azure paketini gerektirir. Bu pakete başvuru ekleyin veya başvuruyu güncelleştirin ya da bağlantı dizesinde farklı bir kanıtlama protokolü belirtin.</value>
   </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
     <value>Kapanım türü '{0}' ve kanıtlama protokolü '{1}' için kapanım sağlayıcısı bulunamadı. Lütfen bağlantı dizesinde doğru kanıtlama protokolünü belirtin. </value>
