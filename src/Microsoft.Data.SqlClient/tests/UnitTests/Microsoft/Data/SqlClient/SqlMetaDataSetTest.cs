@@ -17,9 +17,9 @@ namespace Microsoft.Data.SqlClient.UnitTests
         {
             TdsColumnMetadata original = new(0)
             {
-                type = SqlDbType.VarBinary,
+                DbType = SqlDbType.VarBinary,
                 isEncrypted = encrypted,
-                baseTI = encrypted ? new SqlMetaDataPriv { type = SqlDbType.Int } : null,
+                baseTI = encrypted ? new TdsTypeInfo { DbType = SqlDbType.Int } : null,
                 cipherMD = encrypted ? new SqlCipherMetadata(new SqlTceCipherInfoEntry(), 0, 2, null, 1, 1) : null,
                 udt = new SqlMetaDataUdt { TypeName = "TestType" },
                 xmlSchemaCollection = new SqlMetaDataXmlSchemaCollection { Name = "TestSchema" }
@@ -28,7 +28,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             TdsColumnMetadata clone = (TdsColumnMetadata)original.Clone();
 
             Assert.NotSame(original, clone);
-            Assert.Equal(original.type, clone.type);
+            Assert.Equal(original.DbType, clone.DbType);
             Assert.False(clone.isEncrypted);
             Assert.Null(clone.baseTI);
             Assert.Null(clone.cipherMD);
@@ -46,7 +46,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             SqlTceCipherInfoTable cipherTable = encrypted ? new SqlTceCipherInfoTable(1) : null;
             TdsColumnMetadataToken original = new(1, cipherTable);
             original[0].isEncrypted = encrypted;
-            original[0].baseTI = encrypted ? new SqlMetaDataPriv { type = SqlDbType.Int } : null;
+            original[0].baseTI = encrypted ? new TdsTypeInfo { DbType = SqlDbType.Int } : null;
             original[0].cipherMD = encrypted ? new SqlCipherMetadata(new SqlTceCipherInfoEntry(), 0, 2, null, 1, 1) : null;
 
             TdsColumnMetadataToken clone = original.Clone();

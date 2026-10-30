@@ -5920,9 +5920,9 @@ namespace Microsoft.Data.SqlClient
                     thisParam.Direction == ParameterDirection.InputOutput ||
                     thisParam.Direction == ParameterDirection.ReturnValue))
                 {
-                    if (rec.tdsType != TdsEnums.SQLBIGVARBINARY)
+                    if (rec.TdsType != TdsEnums.SQLBIGVARBINARY)
                     {
-                        throw SQL.InvalidDataTypeForEncryptedParameter(thisParam.GetPrefixedParameterName(), rec.tdsType, TdsEnums.SQLBIGVARBINARY);
+                        throw SQL.InvalidDataTypeForEncryptedParameter(thisParam.GetPrefixedParameterName(), rec.TdsType, TdsEnums.SQLBIGVARBINARY);
                     }
 
                     // Decrypt the ciphertext
@@ -6016,9 +6016,9 @@ namespace Microsoft.Data.SqlClient
                         thisParam.SetSqlBuffer(rec.Value);
                     }
 
-                    MetaType mt = MetaType.GetMetaTypeFromSqlDbType(rec.type, rec.IsMultiValued);
+                    MetaType mt = MetaType.GetMetaTypeFromSqlDbType(rec.DbType, rec.IsMultiValued);
 
-                    if (rec.type == SqlDbType.Decimal)
+                    if (rec.DbType == SqlDbType.Decimal)
                     {
                         thisParam.ScaleInternal = rec.scale;
                         thisParam.PrecisionInternal = rec.precision;
@@ -6027,7 +6027,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         thisParam.ScaleInternal = rec.scale;
                     }
-                    else if (rec.type == SqlDbType.Xml)
+                    else if (rec.DbType == SqlDbType.Xml)
                     {
                         SqlCachedBuffer cachedBuffer = (thisParam.Value as SqlCachedBuffer);
                         if (cachedBuffer != null)

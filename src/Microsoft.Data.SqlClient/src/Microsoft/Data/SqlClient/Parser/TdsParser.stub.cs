@@ -28,7 +28,7 @@ namespace Microsoft.Data.SqlClient.Parser
 
         internal object EncryptColumnValue(
             object value,
-            SqlMetaDataPriv metadata,
+            TdsTypeInfo metadata,
             string column,
             TdsParserStateObject stateObj,
             bool isDataFeed,
@@ -90,7 +90,7 @@ namespace Microsoft.Data.SqlClient.Parser
 
         internal Task WriteBulkCopyValue(
             object value,
-            SqlMetaDataPriv metadata,
+            TdsTypeInfo metadata,
             TdsParserStateObject stateObj,
             bool isSqlType,
             bool isDataFeed,

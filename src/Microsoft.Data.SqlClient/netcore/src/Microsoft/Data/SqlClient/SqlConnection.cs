@@ -2503,7 +2503,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal void CheckGetExtendedUDTInfo(SqlMetaDataPriv metaData, bool fThrow)
+        internal void CheckGetExtendedUDTInfo(TdsTypeInfo metaData, bool fThrow)
         {
             if (metaData.udt?.Type == null)
             { // If null, we have not obtained extended info.
@@ -2519,7 +2519,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal object GetUdtValue(object value, SqlMetaDataPriv metaData, bool returnDBNull)
+        internal object GetUdtValue(object value, TdsTypeInfo metaData, bool returnDBNull)
         {
             if (returnDBNull && ADP.IsNull(value))
             {

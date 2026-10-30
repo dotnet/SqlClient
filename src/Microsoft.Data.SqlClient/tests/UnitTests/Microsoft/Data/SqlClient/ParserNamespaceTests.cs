@@ -34,7 +34,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [InlineData("Parser.Tokens.SqlLoginAck")]
         [InlineData("Parser.Tokens.SqlFedAuthInfo")]
         [InlineData("Parser.Tokens.TdsReturnValueToken")]
-        [InlineData("Parser.Tokens.SqlMetaDataPriv")]
+        [InlineData("Parser.Tokens.TdsTypeInfo")]
         [InlineData("Parser.Tokens.SqlMetaDataUdt")]
         [InlineData("Parser.Tokens.SqlMetaDataXmlSchemaCollection")]
         [InlineData("Parser.Tokens.TdsColumnMetadata")]

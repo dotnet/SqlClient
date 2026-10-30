@@ -602,7 +602,7 @@ namespace Microsoft.Data.SqlClient
                     //
                     // We will not process timestamp or identity columns.
                     //
-                    if (metadata.type == SqlDbType.Timestamp
+                    if (metadata.DbType == SqlDbType.Timestamp
                         || (metadata.IsIdentity && !IsCopyOption(SqlBulkCopyOptions.KeepIdentity)))
                     {
                         rejected = true;
@@ -623,25 +623,25 @@ namespace Microsoft.Data.SqlClient
                     }
 
                     // Some datatypes need special handling ...
-                    if (metadata.type == SqlDbType.Variant)
+                    if (metadata.DbType == SqlDbType.Variant)
                     {
                         AppendColumnNameAndTypeName(updateBulkCommandText, metadata.column, "sql_variant");
                     }
-                    else if (metadata.type == SqlDbType.Udt)
+                    else if (metadata.DbType == SqlDbType.Udt)
                     {
                         AppendColumnNameAndTypeName(updateBulkCommandText, metadata.column, "varbinary");
                     }
-                    else if (metadata.type == SqlDbTypeExtensions.Json)
+                    else if (metadata.DbType == SqlDbTypeExtensions.Json)
                     {
                         AppendColumnNameAndTypeName(updateBulkCommandText, metadata.column, "json");
                     }
-                    else if (metadata.type == SqlDbTypeExtensions.Vector)
+                    else if (metadata.DbType == SqlDbTypeExtensions.Vector)
                     {
                         AppendColumnNameAndTypeName(updateBulkCommandText, metadata.column, "vector");
                     }
                     else
                     {
-                        AppendColumnNameAndTypeName(updateBulkCommandText, metadata.column, metadata.type.ToString());
+                        AppendColumnNameAndTypeName(updateBulkCommandText, metadata.column, metadata.DbType.ToString());
                     }
 
                     switch (metadata.metaType.NullableType)
@@ -705,7 +705,7 @@ namespace Microsoft.Data.SqlClient
                     object rowvalue = rowset[i][CollationId];
 
                     bool shouldSendCollation;
-                    switch (metadata.type)
+                    switch (metadata.DbType)
                     {
                         case SqlDbType.Char:
                         case SqlDbType.NChar:
@@ -1008,7 +1008,7 @@ namespace Microsoft.Data.SqlClient
 
                             object value = _sqlDataReaderRowSource.GetValue(sourceOrdinal);
                             isNull = ((value == null) || (value == DBNull.Value));
-                            if ((!isNull) && (metadata.type == SqlDbType.Udt))
+                            if ((!isNull) && (metadata.DbType == SqlDbType.Udt))
                             {
                                 var columnAsINullable = value as INullable;
                                 isNull = (columnAsINullable != null) && columnAsINullable.IsNull;
@@ -1272,18 +1272,18 @@ namespace Microsoft.Data.SqlClient
                     MetaType mtSource = _sqlDataReaderRowSource.MetaData[sourceOrdinal].metaType;
 
                     // There is no memory gain for non-sequential access for binary
-                    if ((metadata.type == SqlDbType.VarBinary) && (mtSource.IsBinType) && (mtSource.SqlDbType != SqlDbType.Timestamp) && _sqlDataReaderRowSource.IsCommandBehavior(CommandBehavior.SequentialAccess))
+                    if ((metadata.DbType == SqlDbType.VarBinary) && (mtSource.IsBinType) && (mtSource.SqlDbType != SqlDbType.Timestamp) && _sqlDataReaderRowSource.IsCommandBehavior(CommandBehavior.SequentialAccess))
                     {
                         isDataFeed = true;
                         method = ValueMethod.DataFeedStream;
                     }
                     // For text and XML there is memory gain from streaming on destination side even if reader is non-sequential
-                    else if ((metadata.type is SqlDbType.VarChar or SqlDbType.NVarChar or SqlDbTypeExtensions.Json) && mtSource.IsCharType && mtSource.SqlDbType != SqlDbType.Xml)
+                    else if ((metadata.DbType is SqlDbType.VarChar or SqlDbType.NVarChar or SqlDbTypeExtensions.Json) && mtSource.IsCharType && mtSource.SqlDbType != SqlDbType.Xml)
                     {
                         isDataFeed = true;
                         method = ValueMethod.DataFeedText;
                     }
-                    else if ((metadata.type == SqlDbType.Xml) && (mtSource.SqlDbType == SqlDbType.Xml))
+                    else if ((metadata.DbType == SqlDbType.Xml) && (mtSource.SqlDbType == SqlDbType.Xml))
                     {
                         isDataFeed = true;
                         method = ValueMethod.DataFeedXml;
@@ -1296,12 +1296,12 @@ namespace Microsoft.Data.SqlClient
                 }
                 else if (_dbDataReaderRowSource != null)
                 {
-                    if (metadata.type == SqlDbType.VarBinary)
+                    if (metadata.DbType == SqlDbType.VarBinary)
                     {
                         isDataFeed = true;
                         method = ValueMethod.DataFeedStream;
                     }
-                    else if ((metadata.type == SqlDbType.VarChar) || (metadata.type == SqlDbType.NVarChar))
+                    else if ((metadata.DbType == SqlDbType.VarChar) || (metadata.DbType == SqlDbType.NVarChar))
                     {
                         isDataFeed = true;
                         method = ValueMethod.DataFeedText;
@@ -2284,7 +2284,7 @@ namespace Microsoft.Data.SqlClient
 
             //write part
             Task writeTask = null;
-            if (metadata.type != SqlDbType.Variant)
+            if (metadata.DbType != SqlDbType.Variant)
             {
                 //this is the most common path
                 writeTask = _parser.WriteBulkCopyValue(value, metadata, _stateObj, isSqlType, isDataFeed, isNull); //returns Task/Null

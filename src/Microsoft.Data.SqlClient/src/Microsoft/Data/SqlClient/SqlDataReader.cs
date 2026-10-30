@@ -331,13 +331,13 @@ namespace Microsoft.Data.SqlClient
                         string typeSpecificNamePart2 = null;
                         string typeSpecificNamePart3 = null;
 
-                        if (SqlDbType.Xml == colMetaData.type)
+                        if (SqlDbType.Xml == colMetaData.DbType)
                         {
                             typeSpecificNamePart1 = colMetaData.xmlSchemaCollection?.Database;
                             typeSpecificNamePart2 = colMetaData.xmlSchemaCollection?.OwningSchema;
                             typeSpecificNamePart3 = colMetaData.xmlSchemaCollection?.Name;
                         }
-                        else if (SqlDbType.Udt == colMetaData.type)
+                        else if (SqlDbType.Udt == colMetaData.DbType)
                         {
                             Connection.CheckGetExtendedUDTInfo(colMetaData, true); // Ensure that colMetaData.udtType is set
 
@@ -351,15 +351,15 @@ namespace Microsoft.Data.SqlClient
                         {
                             length = (int)SmiMetaData.UnlimitedMaxLengthIndicator;
                         }
-                        else if (SqlDbType.NChar == colMetaData.type
-                                || SqlDbType.NVarChar == colMetaData.type)
+                        else if (SqlDbType.NChar == colMetaData.DbType
+                                || SqlDbType.NVarChar == colMetaData.DbType)
                         {
                             length /= ADP.CharSize;
                         }
 
                         metaDataReturn[returnIndex] =
                             new SmiQueryMetaData(
-                                colMetaData.type,
+                                colMetaData.DbType,
                                 length,
                                 colMetaData.precision,
                                 colMetaData.scale,
@@ -601,13 +601,13 @@ namespace Microsoft.Data.SqlClient
 
                 schemaRow[dataType] = GetFieldTypeInternal(col);
                 schemaRow[providerSpecificDataType] = GetProviderSpecificFieldTypeInternal(col);
-                schemaRow[nonVersionedProviderType] = (int)(col.cipherMD != null ? col.baseTI.type : col.type); // SqlDbType enum value - does not change with TypeSystem.
+                schemaRow[nonVersionedProviderType] = (int)(col.cipherMD != null ? col.baseTI.DbType : col.DbType); // SqlDbType enum value - does not change with TypeSystem.
                 schemaRow[dataTypeName] = GetDataTypeNameInternal(col);
 
                 if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && col.Is2008DateTimeType)
                 {
                     schemaRow[providerType] = SqlDbType.NVarChar;
-                    switch (col.type)
+                    switch (col.DbType)
                     {
                         case SqlDbType.Date:
                             schemaRow[size] = TdsEnums.WHIDBEY_DATE_LENGTH;
@@ -643,14 +643,14 @@ namespace Microsoft.Data.SqlClient
                     // TypeSystem.SQLServer2005 and above
 
                     // SqlDbType enum value - always the actual type for SQLServer2005.
-                    schemaRow[providerType] = (int)(col.cipherMD != null ? col.baseTI.type : col.type);
+                    schemaRow[providerType] = (int)(col.cipherMD != null ? col.baseTI.DbType : col.DbType);
 
-                    if (col.type == SqlDbType.Udt)
+                    if (col.DbType == SqlDbType.Udt)
                     { // Additional metadata for UDTs.
                         Debug.Assert(Connection.Is2008OrNewer, "Invalid Column type received from the server");
                         schemaRow[udtAssemblyQualifiedName] = col.udt?.AssemblyQualifiedName;
                     }
-                    else if (col.type == SqlDbType.Xml)
+                    else if (col.DbType == SqlDbType.Xml)
                     { // Additional metadata for Xml.
                         schemaRow[xmlSchemaCollectionDatabase] = col.xmlSchemaCollection?.Database;
                         schemaRow[xmlSchemaCollectionOwningSchema] = col.xmlSchemaCollection?.OwningSchema;
@@ -737,7 +737,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 // mark unique for timestamp columns
-                if (SqlDbType.Timestamp == col.type)
+                if (SqlDbType.Timestamp == col.DbType)
                 {
                     schemaRow[isUnique] = true;
                     schemaRow[isRowVersion] = true;
@@ -1349,7 +1349,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // TypeSystem.SQLServer2005 and above
 
-                if (metaData.type == SqlDbType.Udt)
+                if (metaData.DbType == SqlDbType.Udt)
                 {
                     dataTypeName = metaData.udt?.DatabaseName + "." + metaData.udt?.SchemaName + "." + metaData.udt?.TypeName;
                 }
@@ -1437,12 +1437,12 @@ namespace Microsoft.Data.SqlClient
             else if (_typeSystem != SqlConnectionString.TypeSystem.SQLServer2000)
             {
                 // TypeSystem.SQLServer2005 and above
-                if (metaData.type == SqlDbType.Udt)
+                if (metaData.DbType == SqlDbType.Udt)
                 {
                     Connection.CheckGetExtendedUDTInfo(metaData, false);
                     fieldType = metaData.udt?.Type;
                 }
-                else if (metaData.type == SqlDbTypeExtensions.Vector)
+                else if (metaData.DbType == SqlDbTypeExtensions.Vector)
                 {
                     fieldType = GetVectorFieldType(metaData.scale);
                 }
@@ -1569,12 +1569,12 @@ namespace Microsoft.Data.SqlClient
             else if (_typeSystem != SqlConnectionString.TypeSystem.SQLServer2000)
             {
                 // TypeSystem.SQLServer2005 and above
-                if (metaData.type == SqlDbType.Udt)
+                if (metaData.DbType == SqlDbType.Udt)
                 {
                     Connection.CheckGetExtendedUDTInfo(metaData, false);
                     providerSpecificFieldType = metaData.udt?.Type;
                 }
-                else if (metaData.type == SqlDbTypeExtensions.Vector)
+                else if (metaData.DbType == SqlDbTypeExtensions.Vector)
                 {
                     providerSpecificFieldType = GetVectorFieldType(metaData.scale);
                 }
@@ -2309,11 +2309,11 @@ namespace Microsoft.Data.SqlClient
             if (_metaData[i].cipherMD != null)
             {
                 Debug.Assert(_metaData[i].baseTI != null, @"_metaData[i].baseTI should not be null.");
-                sqlDbType = _metaData[i].baseTI.type;
+                sqlDbType = _metaData[i].baseTI.DbType;
             }
             else
             {
-                sqlDbType = _metaData[i].type;
+                sqlDbType = _metaData[i].DbType;
             }
 
             try
@@ -2908,7 +2908,7 @@ namespace Microsoft.Data.SqlClient
         //       Always make sure to take reference copies of anything set to null in TryCloseInternal()
         private object GetSqlValueFromSqlBufferInternal(SqlBuffer data, TdsColumnMetadata metaData)
         {
-            Debug.Assert(!data.IsEmpty || data.IsNull || metaData.type == SqlDbType.Timestamp, "Data has been read, but the buffer is empty");
+            Debug.Assert(!data.IsEmpty || data.IsNull || metaData.DbType == SqlDbType.Timestamp, "Data has been read, but the buffer is empty");
 
             // Convert 2008 types to string
             if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
@@ -2923,7 +2923,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // TypeSystem.SQLServer2005 and above
 
-                if (metaData.type == SqlDbType.Udt)
+                if (metaData.DbType == SqlDbType.Udt)
                 {
                     SqlConnection connection = _connection;
                     if (connection != null)
@@ -2945,7 +2945,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // TypeSystem.SQLServer2000
 
-                if (metaData.type == SqlDbType.Xml)
+                if (metaData.DbType == SqlDbType.Xml)
                 {
                     return data.SqlString;
                 }
@@ -3097,7 +3097,7 @@ namespace Microsoft.Data.SqlClient
         //       Always make sure to take reference copies of anything set to null in TryCloseInternal()
         private object GetValueFromSqlBufferInternal(SqlBuffer data, TdsColumnMetadata metaData)
         {
-            Debug.Assert(!data.IsEmpty || data.IsNull || metaData.type == SqlDbType.Timestamp, "Data has been read, but the buffer is empty");
+            Debug.Assert(!data.IsEmpty || data.IsNull || metaData.DbType == SqlDbType.Timestamp, "Data has been read, but the buffer is empty");
 
             if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
             {
@@ -3118,7 +3118,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // TypeSystem.SQLServer2005 and above
 
-                if (metaData.type == SqlDbTypeExtensions.Vector)
+                if (metaData.DbType == SqlDbTypeExtensions.Vector)
                 {
                     if (data.IsNull)
                     {
@@ -3136,7 +3136,7 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
 
-                if (metaData.type != SqlDbType.Udt)
+                if (metaData.DbType != SqlDbType.Udt)
                 {
                     return data.Value;
                 }
@@ -4312,7 +4312,7 @@ namespace Microsoft.Data.SqlClient
                     Debug.Assert(i == _sharedState._nextColumnDataToRead ||                                                          // Either we haven't read the column yet
                         ((i + 1 < _sharedState._nextColumnDataToRead) && (IsCommandBehavior(CommandBehavior.SequentialAccess))) ||   // Or we're in sequential mode and we've read way past the column (i.e. it was not the last column we read)
                         (!_data[i].IsEmpty || _data[i].IsNull) ||                                                       // Or we should have data stored for the column (unless the column was null)
-                        (_metaData[i].type == SqlDbType.Timestamp),                                                     // Or Dev11 Bug #336820, Dev10 Bug #479607 (SqlClient: IsDBNull always returns false for timestamp datatype)
+                        (_metaData[i].DbType == SqlDbType.Timestamp),                                                     // Or Dev11 Bug #336820, Dev10 Bug #479607 (SqlClient: IsDBNull always returns false for timestamp datatype)
                                                                                                                         //    Due to a bug in TdsParser.GetNullSqlValue, Timestamps' IsNull is not correctly set - so we need to bypass the check
                         "Gone past column, be we have no data stored for it");
                     return TdsOperationStatus.Done;
@@ -4391,7 +4391,7 @@ namespace Microsoft.Data.SqlClient
 
                         if (isNull)
                         {
-                            if (columnMetaData.type != SqlDbType.Timestamp)
+                            if (columnMetaData.DbType != SqlDbType.Timestamp)
                             {
                                 TdsParser.GetNullSqlValue(_data[_sharedState._nextColumnDataToRead],
                                     columnMetaData,
@@ -4442,7 +4442,7 @@ namespace Microsoft.Data.SqlClient
 
                     // Trigger new behavior for RowVersion to send DBNull.Value by allowing entry for Timestamp or discard entry for Timestamp for legacy support.
                     // if LegacyRowVersionNullBehavior is enabled, Timestamp type must enter "else" block.
-                    if (isNull && (!LocalAppContextSwitches.LegacyRowVersionNullBehavior || columnMetaData.type != SqlDbType.Timestamp))
+                    if (isNull && (!LocalAppContextSwitches.LegacyRowVersionNullBehavior || columnMetaData.DbType != SqlDbType.Timestamp))
                     {
                         TdsParser.GetNullSqlValue(_data[_sharedState._nextColumnDataToRead],
                                 columnMetaData,
@@ -4542,15 +4542,15 @@ namespace Microsoft.Data.SqlClient
                         return false;
                     }
                     int maxHeaderSize;
-                    byte typeAndMask = (byte)(_metaData[currentColumn].tdsType & TdsEnums.SQLLenMask);
+                    byte typeAndMask = (byte)(_metaData[currentColumn].TdsType & TdsEnums.SQLLenMask);
                     if ((typeAndMask == TdsEnums.SQLVarLen) || (typeAndMask == TdsEnums.SQLVarCnt))
                     {
-                        if (0 != (_metaData[currentColumn].tdsType & 0x80))
+                        if (0 != (_metaData[currentColumn].TdsType & 0x80))
                         {
                             // UInt16 represents size
                             maxHeaderSize = 2;
                         }
-                        else if (0 == (_metaData[currentColumn].tdsType & 0x0c))
+                        else if (0 == (_metaData[currentColumn].TdsType & 0x0c))
                         {
                             // UInt32 represents size
                             maxHeaderSize = 4;
