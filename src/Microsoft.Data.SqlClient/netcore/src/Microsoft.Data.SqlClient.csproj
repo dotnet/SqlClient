@@ -814,8 +814,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Login\FederatedAuthenticationFeatureExtensionData.cs">
       <Link>Microsoft\Data\SqlClient\Parser\Login\FederatedAuthenticationFeatureExtensionData.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\RoutingInfo.cs">
-      <Link>Microsoft\Data\SqlClient\Parser\Tokens\RoutingInfo.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\TdsEnvChangeRoutingInfo.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Tokens\TdsEnvChangeRoutingInfo.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Login\SqlLogin.cs">
       <Link>Microsoft\Data\SqlClient\Parser\Login\SqlLogin.cs</Link>

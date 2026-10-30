@@ -3040,7 +3040,7 @@ namespace Microsoft.Data.SqlClient.Parser
                         {
                             return result;
                         }
-                        env._newRoutingInfo = new RoutingInfo(protocol, port, serverName);
+                        env._newRoutingInfo = new TdsEnvChangeRoutingInfo(protocol, port, serverName);
                         ushort oldLength;
                         result = stateObj.TryReadUInt16(out oldLength);
                         if (result != TdsOperationStatus.Done)
