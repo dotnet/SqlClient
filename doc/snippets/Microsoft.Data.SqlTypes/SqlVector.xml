@@ -50,11 +50,20 @@
           cannot represent exactly, in the same way as inserting a JSON literal does.
         </para>
         <para>
-          Bulk copy preserves the base type of native vector sources in its incoming
+          With native vector metadata, bulk copy preserves the source base type in its incoming
           declaration and payload. SQL Server converts the value to the destination column's
           base type. JSON text copied into a vector column with a <c>float16</c> base type is
           sent as <c>varchar(max)</c>, so SQL Server performs its parsing and rounding too.
           The existing JSON-to-<c>float32</c> bulk-copy conversion is unchanged.
+        </para>
+        <para>
+          For a non-SqlClient reader supplying <c>SqlVector&lt;T&gt;</c> values to unencrypted
+          text incoming columns, bulk copy renders each non-null value as JSON during row copying.
+          This permits <c>DataTableReader</c> and custom typed readers to target
+          <c>varchar</c>, <c>nvarchar</c>, <c>json</c>, and vector columns exposed as text.
+          Null values remain SQL NULL, and native vector incoming columns retain their binary path.
+          This fallback uses the existing vector JSON renderer; it is not a float32-to-float16
+          encoder and does not change text parameter coercion.
         </para>
         <para>
           <c>Vector Type Support</c> selects the requested result representation; it does not

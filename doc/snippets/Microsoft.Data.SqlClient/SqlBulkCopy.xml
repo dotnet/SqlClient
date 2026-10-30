@@ -7,8 +7,9 @@
       <remarks>
         Microsoft SQL Server includes a popular command-prompt utility named **bcp** for moving data from one table to another, whether on a single server or between servers. The <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> class lets you write managed code solutions that provide similar functionality. There are other ways to load data into a SQL Server table (INSERT statements, for example), but <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> offers a significant performance advantage over them. The <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> class can be used to write data only to SQL Server tables. However, the data source is not limited to SQL Server; any data source can be used, as long as the data can be loaded to a <see cref="T:System.Data.DataTable" /> instance or read with a <see cref="T:System.Data.IDataReader" /> instance. <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> will fail when bulk loading a <see cref="T:System.Data.DataTable" /> column of type <see cref="T:System.Data.SqlTypes.SqlDateTime" /> into a SQL Server column whose type is one of the date/time types added in SQL Server 2008.
         <para>
-          Native vector sources retain their base type in the incoming bulk declaration and
-          payload; SQL Server converts to the destination column's base type. For an
+          When native vector metadata is available, bulk copy retains the source base type in
+          the incoming declaration and payload; SQL Server converts to the destination column's
+          base type. For an
           <see cref="T:System.Data.DataTable" /> column declared as <c>object</c>, the driver
           examines the selected in-memory rows until the first non-null value identifies the
           representation. Leading nulls are supported, and row-array subsets and row-state
@@ -28,15 +29,22 @@
           base type uses an explicit UTF-8 text representation, leaving conversion to SQL Server.
         </para>
         <para>
-          A <see cref="T:System.Data.DataTableReader" /> or custom reader supplying native
-          <c>SqlVector&lt;T&gt;</c> values needs native vector destination metadata to infer the
-          dimensions. If the destination metadata is text, provide JSON string values instead.
-          This includes a vector column with a <c>float16</c> base type exposed as text under
-          <c>Vector Type Support=v1</c> or <c>off</c>. A CLR field type alone does not supply a
-          dimension count, and the driver does not consume reader values or silently serialize
-          native vectors to JSON to infer that information. Use an in-memory
-          <see cref="T:System.Data.DataTable" /> source or a <c>SqlDataReader</c> with native
-          vector metadata when the source's binary representation must be retained.
+          A <see cref="T:System.Data.DataTableReader" /> or custom reader reporting a native
+          <c>SqlVector&lt;T&gt;</c> field type can supply vector values to unencrypted
+          <c>varchar</c>, <c>nvarchar</c>, or <c>json</c> incoming columns. When native
+          dimensions are unavailable, each non-null vector is rendered as a JSON array while
+          its row is copied, without consuming values during metadata analysis. This includes
+          a vector column with a <c>float16</c> base type exposed as text under
+          <c>Vector Type Support=v1</c> or <c>off</c>. DBNull and SQL-null vectors remain SQL NULL.
+          Streaming may remain enabled for other columns; the vector itself is not read through
+          a text-reader accessor.
+        </para>
+        <para>
+          This JSON fallback is specific to non-SqlClient reader sources with text incoming
+          metadata. It does not change ordinary parameter coercion or native binary transfers
+          from in-memory sources, native <c>SqlDataReader</c> metadata, or readers targeting
+          native vector incoming columns. JSON parsing by the server can differ from native conversion,
+          including signed-zero handling; use a native transfer when binary preservation matters.
         </para>
       </remarks>
       <example>

@@ -8,6 +8,7 @@ namespace SqlVectorFloat16Example;
 // - Inserts vectors using SqlVector<Half> on .NET
 // - Inserts vectors from .NET Framework, where System.Half is unavailable
 // - Bulk copies an object-typed DataTable with a leading null and native float32 values
+// - Copies a typed DataTableReader through the JSON fallback when V1 exposes the target as text
 // - Reads float16 vectors as SqlVector<Half>, as widened SqlVector<float>, and as JSON
 // - Inspects a column's base type and number of dimensions
 // - Converts between the float16 and float32 base types
@@ -46,6 +47,7 @@ class VectorFloat16ConsoleApp
 
             await InsertVectorsAsync(conn);
             await BulkCopyObjectValuesAsync(conn);
+            await BulkCopyReaderValuesAsync();
             await ReadVectorsAsync(conn);
             await ReadColumnMetadataAsync(conn);
             await ConvertBetweenBaseTypesAsync(conn);
@@ -120,6 +122,32 @@ CREATE TABLE {TableName}
         using SqlBulkCopy copy = new(conn) { DestinationTableName = TableName };
         copy.ColumnMappings.Add("VectorData", "VectorData");
         await copy.WriteToServerAsync(source);
+    }
+    #endregion
+
+    #region BulkCopyReaderValues
+    private static async Task BulkCopyReaderValuesAsync()
+    {
+        using DataTable source = new();
+        source.Columns.Add("VectorData", typeof(SqlVector<float>));
+        source.Rows.Add(DBNull.Value);
+        source.Rows.Add(new SqlVector<float>(new float[] { 1.5f, 2.5f, 3.5f }));
+        using DataTableReader reader = source.CreateDataReader();
+
+        // V1 exposes the float16 destination as text. Values are rendered as JSON while
+        // their rows are copied; nulls remain SQL NULL and metadata discovery reads no values.
+        DbConnectionStringBuilder builder = new()
+        {
+            ConnectionString = ConnectionString
+        };
+        builder["Vector Type Support"] = "v1";
+        using SqlBulkCopy copy = new(builder.ConnectionString)
+        {
+            DestinationTableName = TableName,
+            EnableStreaming = true
+        };
+        copy.ColumnMappings.Add("VectorData", "VectorData");
+        await copy.WriteToServerAsync(reader);
     }
     #endregion
 

@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Data;
 using System.Text.Json;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.Parser;
@@ -569,6 +570,25 @@ public class SqlVectorTest
         Assert.Throws<NotSupportedException>(() => SqlVector<Half>.Parse("[1.5]"));
     }
     #endif
+
+    /// <summary>
+    /// Keeps the bulk-reader fallback from changing ordinary text parameter coercion.
+    /// </summary>
+    /// <param name="destination">The text parameter type.</param>
+    [Theory]
+    [InlineData(SqlDbType.VarChar)]
+    [InlineData(SqlDbType.NVarChar)]
+    [InlineData(SqlDbTypeExtensions.Json)]
+    public void TextParameterCoercionDoesNotSerializeVectors(SqlDbType destination)
+    {
+        MetaType type = MetaType.GetMetaTypeFromSqlDbType(destination, false);
+        Assert.Throws<InvalidCastException>(() => SqlParameter.CoerceValue(
+            new SqlVector<float>(new[] { 1.5f }), type, out _, out _, false));
+        #if NET
+        Assert.Throws<InvalidCastException>(() => SqlParameter.CoerceValue(
+            new SqlVector<Half>(new[] { (Half)1.5f }), type, out _, out _, false));
+        #endif
+    }
 
     #region Helpers
 

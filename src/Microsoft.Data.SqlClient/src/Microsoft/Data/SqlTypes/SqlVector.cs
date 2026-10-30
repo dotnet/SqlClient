@@ -307,6 +307,7 @@ where T : unmanaged
     byte ISqlVector.ElementSize => _elementSize;
     byte[] ISqlVector.VectorPayload => _tdsBytes;
     int ISqlVector.Size => _size;
+    string ISqlVector.GetString() => GetString();
 
     #endregion
 

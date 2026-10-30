@@ -128,7 +128,7 @@ namespace Microsoft.Data.SqlClient
             DbDataReader
         }
 
-        // Enum for specifying SqlDataReader.Get method used
+        // Specifies how a source column value is read.
         private enum ValueMethod : byte
         {
             GetValue,
@@ -138,7 +138,8 @@ namespace Microsoft.Data.SqlClient
             DataFeedStream,
             DataFeedText,
             DataFeedXml,
-            VectorPayload
+            VectorPayload,
+            VectorValue
         }
 
         // Used to hold column metadata for SqlDataReader case
@@ -1285,7 +1286,9 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                         IDataReader rowSourceAsIDataReader = (IDataReader)_rowSource;
 
                         // Only use IsDbNull when streaming is enabled and only for non-SqlDataReader
-                        if ((_enableStreaming) && (_sqlDataReaderRowSource == null) && (rowSourceAsIDataReader.IsDBNull(sourceOrdinal)))
+                        if (_enableStreaming
+                            && _currentRowMetadata[destRowIndex].Method != ValueMethod.VectorValue
+                            && rowSourceAsIDataReader.IsDBNull(sourceOrdinal))
                         {
                             isSqlType = false;
                             isNull = true;
@@ -1651,6 +1654,19 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                     method = ValueMethod.GetValue;
                 }
             }
+            else if (!metadata.IsEncrypted
+                && _sqlDataReaderRowSource == null
+                && _rowSourceType is ValueSourceType.IDataReader or ValueSourceType.DbDataReader
+                && metadata.DbType is SqlDbTypeExtensions.Vector or SqlDbType.VarChar
+                    or SqlDbType.NVarChar or SqlDbTypeExtensions.Json
+                && MetaType.TryGetVectorElementType(GetSourceColumnType(sourceOrdinal), out _))
+            {
+                // Inspect the value for nulls instead of DataTableReader's UDT null accessor.
+                // A native vector is not a text stream, even when its destination is text.
+                isSqlType = false;
+                isDataFeed = false;
+                method = ValueMethod.VectorValue;
+            }
             // Check for data streams
             else if (_enableStreaming && (metadata.length == MAX_LENGTH || metadata.MetaType.SqlDbType == SqlDbTypeExtensions.Json))
             {
@@ -1969,6 +1985,18 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
             try
             {
+                if (!metadata.IsEncrypted
+                    && _sqlDataReaderRowSource == null
+                    && _rowSourceType is ValueSourceType.IDataReader or ValueSourceType.DbDataReader
+                    && metadata.DbType is SqlDbType.VarChar or SqlDbType.NVarChar
+                        or SqlDbTypeExtensions.Json
+                    && value is ISqlVector vector)
+                {
+                    // Generic readers provide no native dimensions for a text declaration.
+                    value = vector.GetString();
+                    isSqlType = false;
+                }
+
                 MetaType mt;
                 switch (type.NullableType)
                 {

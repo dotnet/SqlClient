@@ -158,6 +158,12 @@ Notes:
   is preserved. Reader setup uses schema metadata instead of consuming values.
 - Synthetic text input for a destination vector column with a `float16` base type uses an explicit
   UTF-8 encoding/collation pair; SQL Server still performs JSON parsing and conversion.
+- Typed non-SqlClient readers, including `DataTableReader`, render native vector values as JSON
+  during row copying when incoming metadata is unencrypted `varchar`, `nvarchar`, or `json`.
+  This also covers float16 destinations exposed as text under V1/Off. No metadata-time value
+  reads occur; nulls remain SQL NULL, and vector fields bypass text-stream/null pre-check accessors.
+  Native vector metadata still selects the binary path. Ordinary parameter coercion and
+  in-memory source policies are unchanged.
 - A column's base type and number of dimensions are available from the column schema:
   `reader.GetColumnSchema()[i]["VectorBaseType"]` and `["VectorDimensions"]`. Both are `null`
   for columns which are not reported as vectors, including float16 under `v1`. These
