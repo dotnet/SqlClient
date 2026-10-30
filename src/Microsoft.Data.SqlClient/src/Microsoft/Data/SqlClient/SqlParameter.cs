@@ -835,6 +835,7 @@ namespace Microsoft.Data.SqlClient
                     throw ADP.InvalidOffsetValue(value);
                 }
                 _offset = value;
+                _actualSize = -1;
             }
         }
 
@@ -1626,6 +1627,12 @@ namespace Microsoft.Data.SqlClient
                             {
                                 // for these types, ActualSize is the num of chars, not actual bytes - since non-unicode chars are not always uniform size
                                 coercedSize = (!HasFlag(SqlParameterFlags.IsNull) && (!HasFlag(SqlParameterFlags.CoercedValueIsDataFeed))) ? (StringSize(val, HasFlag(SqlParameterFlags.CoercedValueIsSqlType))) : 0;
+                                // ANSI variants serialize the whole string, ignoring Offset.
+                                if (!isSqlVariant)
+                                {
+                                    // Size limits the transmitted slice, which starts at Offset.
+                                    coercedSize = Math.Max(0, coercedSize - Offset);
+                                }
                                 _actualSize = (ShouldSerializeSize() ? Size : 0);
                                 _actualSize = (ShouldSerializeSize() && (_actualSize <= coercedSize)) ? _actualSize : coercedSize;
                                 if (_actualSize == -1)
@@ -1719,28 +1726,56 @@ namespace Microsoft.Data.SqlClient
             return ShouldSerializeSize() ? Size : ValueSize(CoercedValue);
         }
 
+        // GetActualSize deliberately returns characters for ANSI values. Share the byte count
+        // between SQL declarations, RPC promotion, and Always Encrypted type_info metadata.
+        internal int GetActualSizeInBytes(TdsParser parser)
+        {
+            int actualSize = GetActualSize();
+            if (!InternalMetaType.IsAnsiType || IsNull ||
+                HasFlag(SqlParameterFlags.CoercedValueIsDataFeed) ||
+                Direction == ParameterDirection.Output)
+            {
+                return actualSize;
+            }
+
+            object value = GetCoercedValue();
+            string text = value is SqlString sqlString ? sqlString.Value :
+                value is SqlChars sqlChars ? new string(sqlChars.Value) : (string)value;
+
+            return parser.GetEncodingCharLength(text, actualSize, Offset, null);
+        }
+
         /// <summary>
         /// Get SMI Metadata to write out type_info stream.
         /// </summary>
         /// <returns></returns>
-        internal SmiParameterMetaData GetMetadataForTypeInfo()
+        internal SmiParameterMetaData GetMetadataForTypeInfo(TdsParser parser)
         {
             if (_internalMetaType == null)
             {
                 _internalMetaType = GetMetaTypeOnly();
             }
 
-            return MetaDataForSmi(out _);
+            return MetaDataForSmi(parser, out _);
         }
 
         // IMPORTANT DEVNOTE: This method is being used for parameter encryption functionality, to get the type_info TDS object from SqlParameter.
         // Please consider impact to that when changing this method. Refer to the callers of SqlParameter.GetMetadataForTypeInfo().
-        internal SmiParameterMetaData MetaDataForSmi(out ParameterPeekAheadValue peekAhead)
+        internal SmiParameterMetaData MetaDataForSmi(
+            TdsParser parser, out ParameterPeekAheadValue peekAhead)
         {
             peekAhead = null;
-            MetaType mt = ValidateTypeLengths();
-            long actualLen = GetActualSize();
+            MetaType mt = ValidateTypeLengths(parser);
+            long actualLen = mt.IsAnsiType && !mt.IsLong
+                ? GetActualSizeInBytes(parser)
+                : GetActualSize();
             long maxLen = Size;
+
+            // MAX promotion can be caused by encoded bytes even when Size is below 8000.
+            if (mt.IsAnsiType && mt.IsPlp)
+            {
+                maxLen = SmiMetaData.UnlimitedMaxLengthIndicator;
+            }
 
             // GetActualSize returns bytes length, but smi expects char length for
             //  character types, so adjust
@@ -2091,7 +2126,7 @@ namespace Microsoft.Data.SqlClient
 
         // func will change type to that with a 4 byte length if the type has a two
         // byte length and a parameter length > than that expressible in 2 bytes
-        internal MetaType ValidateTypeLengths()
+        internal MetaType ValidateTypeLengths(TdsParser parser)
         {
             MetaType mt = InternalMetaType;
             // Since the server will automatically reject any
@@ -2103,6 +2138,16 @@ namespace Microsoft.Data.SqlClient
             { // if type has 2 byte length
                 long actualSizeInBytes = GetActualSize();
                 long sizeInCharacters = Size;
+
+                // GetActualSize returns characters for ANSI strings. Decide whether to use
+                // MAX before building the SQL declaration or writing the RPC metadata, using
+                // the same connection encoding and character slice as the serializer.
+                if (mt.IsAnsiType &&
+                    actualSizeInBytes <= TdsEnums.TYPE_SIZE_LIMIT &&
+                    sizeInCharacters <= TdsEnums.TYPE_SIZE_LIMIT && sizeInCharacters != -1)
+                {
+                    actualSizeInBytes = GetActualSizeInBytes(parser);
+                }
 
                 // Bug: VSTFDevDiv #636867
                 // Notes:
