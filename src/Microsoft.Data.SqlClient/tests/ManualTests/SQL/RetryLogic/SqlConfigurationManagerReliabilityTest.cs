@@ -6,10 +6,14 @@ using System;
 using Xunit;
 using System.Data;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.Tests;
 using Microsoft.Data.SqlClient.Tests.Common.ConfigurableRetryLogic;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    /// <summary>
+    /// Verifies configuration-based retry provider loading and validation.
+    /// </summary>
     [Trait("Set", "2")]
     public class SqlConfigurationManagerReliabilityTest
     {
@@ -57,13 +61,29 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         #endregion
 
         #region External Functions
+        /// <summary>
+        /// Supplies the retry helper's current identity for both unsigned and signed test builds.
+        /// </summary>
+        public static TheoryData<string, string> FullyQualifiedCustomMethods => new()
+        {
+            {
+                typeof(CustomConfigurableRetryLogic).AssemblyQualifiedName,
+                nameof(CustomConfigurableRetryLogic.GetDefaultRetry)
+            }
+        };
+
+        /// <summary>
+        /// Verifies custom provider loading and sync/async retries using real database operations.
+        /// </summary>
+        /// <param name="typeName">The configured retry helper type.</param>
+        /// <param name="methodName">The retry provider factory method.</param>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [InlineData("Microsoft.Data.SqlClient.Tests.StaticCustomConfigurableRetryLogic, ExternalConfigurableRetryLogic", "GetDefaultRetry_static")]
         [InlineData("Microsoft.Data.SqlClient.Tests.StructCustomConfigurableRetryLogic, ExternalConfigurableRetryLogic", "GetDefaultRetry_static")]
         [InlineData("Microsoft.Data.SqlClient.Tests.StructCustomConfigurableRetryLogic, ExternalConfigurableRetryLogic", "GetDefaultRetry")]
         [InlineData("Microsoft.Data.SqlClient.Tests.CustomConfigurableRetryLogic, ExternalConfigurableRetryLogic", "GetDefaultRetry_static")]
         [InlineData("Microsoft.Data.SqlClient.Tests.CustomConfigurableRetryLogic, ExternalConfigurableRetryLogic", "GetDefaultRetry")]
-        [InlineData("Microsoft.Data.SqlClient.Tests.CustomConfigurableRetryLogic, ExternalConfigurableRetryLogic, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null", "GetDefaultRetry")]
+        [MemberData(nameof(FullyQualifiedCustomMethods))]
         [InlineData("Microsoft.Data.SqlClient.Tests.CustomConfigurableRetryLogicEx, ExternalConfigurableRetryLogic", "GetDefaultRetry")]
         public void LoadCustomMethod(string typeName, string methodName)
         {
@@ -82,6 +102,33 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             TestConnection(cnnProvider, cnnCfg);
             TestCommandExecute(cmdProvider, cmdCfg);
             TestCommandExecuteAsync(cmdProvider, cmdCfg).Wait();
+        }
+
+        /// <summary>
+        /// Guards fully qualified provider binding and sync/async retry behavior without SQL Server.
+        /// </summary>
+        /// <param name="typeName">The retry helper's assembly-qualified type name.</param>
+        /// <param name="methodName">The retry provider factory method.</param>
+        [Theory]
+        [MemberData(nameof(FullyQualifiedCustomMethods))]
+        public async Task LoadFullyQualifiedCustomMethod_WithoutServer(string typeName, string methodName)
+        {
+            RetryLogicConfigs config = RetryLogicLoaderHelper.CreateRandomConfig(methodName);
+            config.RetryLogicType = typeName;
+            config.NumberOfTries = 3;
+
+            RetryLogicLoaderHelper.ReturnLoaderAndProviders(config, config,
+                out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider);
+            Assert.IsType<CustomRetryLogicProvider>(cnnProvider);
+            Assert.IsType<CustomRetryLogicProvider>(cmdProvider);
+
+            var syncError = Assert.Throws<AggregateException>(() =>
+                cnnProvider.Execute<int>(this, () => throw new InvalidOperationException()));
+            Assert.Equal(config.NumberOfTries, syncError.InnerExceptions.Count);
+
+            var asyncError = await Assert.ThrowsAsync<AggregateException>(() =>
+                cmdProvider.ExecuteAsync<int>(this, () => Task.FromException<int>(new InvalidOperationException())));
+            Assert.Equal(config.NumberOfTries, asyncError.InnerExceptions.Count);
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
