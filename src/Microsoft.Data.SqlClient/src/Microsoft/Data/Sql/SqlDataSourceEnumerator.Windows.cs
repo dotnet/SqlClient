@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 using System.Data;
 using System.Data.Common;
+using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlClient.Server;
 
 namespace Microsoft.Data.Sql
@@ -15,7 +16,7 @@ namespace Microsoft.Data.Sql
 #if NETFRAMEWORK
             return SqlDataSourceEnumeratorNativeHelper.GetDataSources();
 #else
-            return SqlClient.TdsParserStateObjectFactory.UseManagedSNI ? SqlDataSourceEnumeratorManagedHelper.GetDataSources() : SqlDataSourceEnumeratorNativeHelper.GetDataSources();
+            return TdsParserStateObjectFactory.UseManagedSNI ? SqlDataSourceEnumeratorManagedHelper.GetDataSources() : SqlDataSourceEnumeratorNativeHelper.GetDataSources();
 #endif
         }
     }

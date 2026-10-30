@@ -10,6 +10,7 @@ using System.Security;
 using System.Text;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient.Parser;
 using static Microsoft.Data.Sql.SqlDataSourceEnumeratorUtil;
 
 namespace Microsoft.Data.Sql

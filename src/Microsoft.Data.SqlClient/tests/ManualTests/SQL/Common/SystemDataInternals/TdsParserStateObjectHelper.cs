@@ -23,7 +23,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
             Assembly assembly = typeof(Microsoft.Data.SqlClient.SqlConnection).GetTypeInfo().Assembly;
             Assert.True(assembly is not null, nameof(assembly));
 
-            Type tdsParserStateObject = assembly.GetType("Microsoft.Data.SqlClient.TdsParserStateObject");
+            Type tdsParserStateObject = assembly.GetType("Microsoft.Data.SqlClient.Parser.TdsParserStateObject");
             Assert.True(tdsParserStateObject is not null, nameof(tdsParserStateObject));
 
             s_forceAllPends = tdsParserStateObject.GetField("s_forceAllPends", BindingFlags.Static | BindingFlags.NonPublic);
@@ -44,7 +44,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
             // These managed SNI handles are allowed to be null, since they
             // won't exist in .NET Framework builds.
             s_tdsParserStateObjectManaged =
-                assembly.GetType("Microsoft.Data.SqlClient.ManagedSni.TdsParserStateObjectManaged");
+                assembly.GetType("Microsoft.Data.SqlClient.Parser.TdsParserStateObjectManaged");
             s_tdsParserStateObjectManagedSessionHandle = null;
             if (s_tdsParserStateObjectManaged is not null)
             {

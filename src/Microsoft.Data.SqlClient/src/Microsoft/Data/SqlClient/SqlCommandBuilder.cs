@@ -12,6 +12,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using Microsoft.Data.Common;
 using Microsoft.Data.Sql;
+using Microsoft.Data.SqlClient.Parser;
 
 namespace Microsoft.Data.SqlClient
 {

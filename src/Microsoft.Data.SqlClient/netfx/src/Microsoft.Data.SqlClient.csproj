@@ -367,8 +367,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SSPI\SspiAuthenticationParameters.cs">
       <Link>Microsoft\Data\SqlClient\SSPI\SspiAuthenticationParameters.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParser.cs">
-      <Link>Microsoft\Data\SqlClient\TdsParser.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\TdsParser.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\TdsParser.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\Sql\SqlDataSourceEnumerator.cs">
       <Link>Microsoft\Data\Sql\SqlDataSourceEnumerator.cs</Link>
@@ -454,8 +454,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\OnChangedEventHandler.cs">
       <Link>Microsoft\Data\SqlClient\OnChangedEventHandler.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\PacketHandle.Windows.cs">
-      <Link>Microsoft\Data\SqlClient\PacketHandle.Windows.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\PacketHandle.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\PacketHandle.Windows.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ParameterPeekAheadValue.cs">
       <Link>Microsoft\Data\SqlClient\ParameterPeekAheadValue.cs</Link>
@@ -577,8 +577,8 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ISqlVector.cs">
       <Link>Microsoft\Data\SqlClient\ISqlVector.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SessionHandle.Windows.cs">
-      <Link>Microsoft\Data\SqlClient\SessionHandle.Windows.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\SessionHandle.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\SessionHandle.Windows.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SignatureVerificationCache.cs">
       <Link>Microsoft\Data\SqlClient\SignatureVerificationCache.cs</Link>
@@ -835,35 +835,152 @@
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlUtil.cs">
       <Link>Microsoft\Data\SqlClient\SqlUtil.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsEnums.cs">
-      <Link>Microsoft\Data\SqlClient\TdsEnums.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\TdsEnums.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\TdsEnums.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParameterSetter.cs">
-      <Link>Microsoft\Data\SqlClient\TdsParameterSetter.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\SniContext.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\SniContext.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserSafeHandles.Windows.cs">
-      <Link>Microsoft\Data\SqlClient\TdsParserSafeHandles.Windows.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\ParsingErrorState.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\ParsingErrorState.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserStateObject.cs">
-      <Link>Microsoft\Data\SqlClient\TdsParserStateObject.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlConnectionAttestationProtocol.cs">
+      <Link>Microsoft\Data\SqlClient\SqlConnectionAttestationProtocol.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserStateObjectFactory.Windows.cs">
-      <Link>Microsoft\Data\SqlClient\TdsParserStateObjectFactory.Windows.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlConnectionIPAddressPreference.cs">
+      <Link>Microsoft\Data\SqlClient\SqlConnectionIPAddressPreference.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserStaticMethods.cs">
-      <Link>Microsoft\Data\SqlClient\TdsParserStaticMethods.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlConnectionColumnEncryptionSetting.cs">
+      <Link>Microsoft\Data\SqlClient\SqlConnectionColumnEncryptionSetting.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsRecordBufferSetter.cs">
-      <Link>Microsoft\Data\SqlClient\TdsRecordBufferSetter.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlConnectionOverrides.cs">
+      <Link>Microsoft\Data\SqlClient\SqlConnectionOverrides.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserHelperClasses.cs">
-      <Link>Microsoft\Data\SqlClient\TdsParserHelperClasses.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlCommandColumnEncryptionSetting.cs">
+      <Link>Microsoft\Data\SqlClient\SqlCommandColumnEncryptionSetting.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsParserSessionPool.cs">
-      <Link>Microsoft\Data\SqlClient\TdsParserSessionPool.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\SqlAuthenticationMethod.cs">
+      <Link>Microsoft\Data\SqlClient\SqlAuthenticationMethod.cs</Link>
     </Compile>
-    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TdsValueSetter.cs">
-      <Link>Microsoft\Data\SqlClient\TdsValueSetter.cs</Link>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\TransparentNetworkResolutionState.cs">
+      <Link>Microsoft\Data\SqlClient\TransparentNetworkResolutionState.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\ActiveDirectoryAuthentication.cs">
+      <Link>Microsoft\Data\SqlClient\ActiveDirectoryAuthentication.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\DescribeParameterEncryptionResultSet1.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\DescribeParameterEncryptionResultSet1.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\DescribeParameterEncryptionResultSet2.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\DescribeParameterEncryptionResultSet2.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\DescribeParameterEncryptionResultSet3.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\DescribeParameterEncryptionResultSet3.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\TdsParameterSetter.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\TdsParameterSetter.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\NativeSni\SNILoadHandle.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\NativeSni\SNILoadHandle.Windows.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\NativeSni\SNIHandle.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\NativeSni\SNIHandle.Windows.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\NativeSni\SNIPacket.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\NativeSni\SNIPacket.Windows.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\NativeSni\WritePacketCache.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\NativeSni\WritePacketCache.Windows.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\LastIOTimer.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\LastIOTimer.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\TdsOperationStatus.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\TdsOperationStatus.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\TdsParserStateObject.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\TdsParserStateObject.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\TdsParserStateObjectFactory.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\TdsParserStateObjectFactory.Windows.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\TdsParserStaticMethods.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\TdsParserStaticMethods.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\TdsRecordBufferSetter.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\TdsRecordBufferSetter.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\CallbackType.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\CallbackType.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Login\EncryptionOptions.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Login\EncryptionOptions.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Login\PreLoginHandshakeStatus.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Login\PreLoginHandshakeStatus.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Login\PreLoginOptions.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Login\PreLoginOptions.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\RunBehavior.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\RunBehavior.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\TdsParserState.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\TdsParserState.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Login\FederatedAuthenticationFeatureExtensionData.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Login\FederatedAuthenticationFeatureExtensionData.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\RoutingInfo.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Tokens\RoutingInfo.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Login\SqlLogin.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Login\SqlLogin.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\SqlLoginAck.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Tokens\SqlLoginAck.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\SqlFedAuthInfo.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Tokens\SqlFedAuthInfo.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Login\SqlFedAuthToken.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Login\SqlFedAuthToken.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\_SqlMetaData.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Tokens\_SqlMetaData.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\_SqlMetaDataSet.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Tokens\_SqlMetaDataSet.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\_SqlMetaDataSetCollection.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Tokens\_SqlMetaDataSetCollection.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\SqlMetaDataPriv.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Tokens\SqlMetaDataPriv.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\SqlMetaDataXmlSchemaCollection.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Tokens\SqlMetaDataXmlSchemaCollection.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\SqlMetaDataUdt.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Tokens\SqlMetaDataUdt.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\_SqlRPC.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\_SqlRPC.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\SqlReturnValue.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Tokens\SqlReturnValue.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\Tokens\MultiPartTableName.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\Tokens\MultiPartTableName.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\SslProtocolHelpers.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\SslProtocolHelpers.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\TdsParserSessionPool.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\TdsParserSessionPool.cs</Link>
+    </Compile>
+    <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Parser\TdsValueSetter.cs">
+      <Link>Microsoft\Data\SqlClient\Parser\TdsValueSetter.cs</Link>
     </Compile>
     <Compile Include="$(CommonSourceRoot)Microsoft\Data\SqlClient\Utilities\BufferWriterExtensions.netfx.cs">
       <Link>Microsoft\Data\SqlClient\Utilities\BufferWriterExtensions.netfx.cs</Link>
@@ -915,10 +1032,10 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlConnection.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionHelper.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsParser.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsParser.netfx.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObject.netfx.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectNative.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Parser\TdsParser.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Parser\TdsParser.netfx.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Parser\TdsParserStateObject.netfx.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Parser\TdsParserStateObjectNative.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\SqlTypeWorkarounds.netfx.cs" />
   </ItemGroup>
   <!-- Resources  -->

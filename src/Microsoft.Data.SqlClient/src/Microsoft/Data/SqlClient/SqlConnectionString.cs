@@ -8,13 +8,14 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Net;
 using System.Net.NetworkInformation;
-using System.Threading;
 using System.Runtime.Versioning;
 using System.Security;
 using System.Security.Permissions;
+using System.Threading;
 using Microsoft.Data.Common;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.SqlClient.LocalDb;
+using Microsoft.Data.SqlClient.Parser;
 
 namespace Microsoft.Data.SqlClient
 {

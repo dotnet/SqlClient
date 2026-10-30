@@ -19,6 +19,9 @@ using Microsoft.Data.Common;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
+using Microsoft.Data.SqlClient.Parser;
+using Microsoft.Data.SqlClient.Parser.Login;
+using Microsoft.Data.SqlClient.Parser.Tokens;
 using Microsoft.Identity.Client;
 
 namespace Microsoft.Data.SqlClient

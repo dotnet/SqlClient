@@ -7,6 +7,7 @@ using System.Runtime.Versioning;
 using System.Security.Permissions;
 using System.Security.Principal;
 using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient.Parser;
 
 namespace Microsoft.Data.SqlClient.ConnectionPool
 {

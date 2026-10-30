@@ -9,15 +9,15 @@ using System.Data;
 using System.Data.Common;
 using System.Data.SqlTypes;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
-using System.Globalization;
 using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.SqlClient.Server;
 using Xunit;
-using System.Linq;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {

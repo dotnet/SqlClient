@@ -9,6 +9,7 @@ using System.Data.Common;
 using System.Diagnostics;
 using System.Threading;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Parser;
 
 #if NET
 using Microsoft.Data.SqlClient.Diagnostics;

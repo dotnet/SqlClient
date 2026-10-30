@@ -60,7 +60,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.Common.SystemDataInte
             {
                 Assembly sqlConnectionAssembly = Assembly.GetAssembly(typeof(SqlConnection));
 
-                Type sqlFedAuthTokenType = sqlConnectionAssembly.GetType("Microsoft.Data.SqlClient.SqlFedAuthToken");
+                Type sqlFedAuthTokenType = sqlConnectionAssembly.GetType("Microsoft.Data.SqlClient.Parser.Login.SqlFedAuthToken");
 
                 Type[] sqlFedAuthTokenTypeArray = new Type[] { sqlFedAuthTokenType };
 
