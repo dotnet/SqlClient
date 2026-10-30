@@ -14,6 +14,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
+using System.Text;
 using System.Xml;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Parser;
@@ -65,7 +66,8 @@ namespace Microsoft.Data.SqlClient
         // in the TDS protocol.
         internal enum SqlVectorElementType : byte
         {
-            Float32 = 0x00
+            Float32 = 0x00,
+            Float16 = 0x01
         }
 
         public MetaType(byte precision, byte scale, int fixedLength, bool isFixed, bool isLong, bool isPlp, byte tdsType, byte nullableTdsType, string typeName,
@@ -386,6 +388,12 @@ namespace Microsoft.Data.SqlClient
                     {
                         return s_MetaVector;
                     }
+                    #if NET
+                    else if (dataType == typeof(SqlVector<Half>))
+                    {
+                        return s_MetaVector;
+                    }
+                    #endif
                     else if (dataType == typeof(SqlString))
                     {
                         return ((inferLen && !((SqlString)value).IsNull)
@@ -1095,11 +1103,77 @@ namespace Microsoft.Data.SqlClient
             return 5;
         }
 
+        /// <summary>
+        /// Returns the native vector CLR type, or null when the framework cannot represent it.
+        /// </summary>
+#if NET
+        [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
+#endif
+        private static Type GetNativeVectorType(byte elementType) =>
+            (SqlVectorElementType)elementType switch
+            {
+                SqlVectorElementType.Float32 => typeof(SqlVector<float>),
+                #if NET
+                SqlVectorElementType.Float16 => typeof(SqlVector<Half>),
+                #else
+                SqlVectorElementType.Float16 => null,
+                #endif
+                _ => throw SQL.VectorTypeNotSupported(elementType.ToString()),
+            };
+
+        internal static bool TryGetVectorElementType(Type vectorType, out byte elementType)
+        {
+            if (vectorType != null)
+            {
+                if (vectorType == GetNativeVectorType((byte)SqlVectorElementType.Float32))
+                {
+                    elementType = (byte)SqlVectorElementType.Float32;
+                    return true;
+                }
+                if (vectorType == GetNativeVectorType((byte)SqlVectorElementType.Float16))
+                {
+                    elementType = (byte)SqlVectorElementType.Float16;
+                    return true;
+                }
+            }
+
+            elementType = (byte)SqlVectorElementType.Float32;
+            return false;
+        }
+
+#if NET
+        [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
+#endif
+        internal static Type GetVectorFieldType(byte elementType, bool providerSpecific) =>
+            GetNativeVectorType(elementType)
+                ?? (providerSpecific ? typeof(SqlString) : typeof(string));
+
+        internal static void AppendVectorTypeArguments(
+            StringBuilder builder, int dimensions, byte elementType)
+        {
+            switch ((SqlVectorElementType)elementType)
+            {
+                case SqlVectorElementType.Float32:
+                    builder.AppendFormat((IFormatProvider)null, "({0})", dimensions);
+                    break;
+                case SqlVectorElementType.Float16:
+                    builder.AppendFormat((IFormatProvider)null, "({0}, float16)", dimensions);
+                    break;
+                default:
+                    throw SQL.VectorTypeNotSupported(elementType.ToString());
+            }
+        }
+
         internal static int GetVectorElementSize(byte type)
         {
-            switch (type)
+            switch ((SqlVectorElementType)type)
             {
-                case 0: return sizeof(float);
+                case SqlVectorElementType.Float32:
+                    return sizeof(float);
+                case SqlVectorElementType.Float16:
+                    // System.Half is not available on all target frameworks, so the
+                    // binary16 element size is stated explicitly.
+                    return 2;
                 default:
                     throw SQL.VectorTypeNotSupported(type.ToString());
             }
@@ -1163,4 +1237,3 @@ namespace Microsoft.Data.SqlClient
         public int time;
     }
 }
-

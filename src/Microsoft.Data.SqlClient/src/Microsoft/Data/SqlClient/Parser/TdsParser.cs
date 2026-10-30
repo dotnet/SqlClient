@@ -9211,7 +9211,12 @@ namespace Microsoft.Data.SqlClient.Parser
                 // Feature Data Length
                 WriteInt(1, _physicalStateObj);
 
-                _physicalStateObj.WriteByte(TdsEnums.MAX_SUPPORTED_VECTOR_VERSION);
+                // The version the connection asks for, rather than the highest this client
+                // understands, so that an application opts in to a newer representation
+                // rather than receiving it on upgrade.
+                _physicalStateObj.WriteByte(
+                    VectorTypeSupportUtilities.ToFeatureExtensionVersion(
+                        _connHandler.ConnectionOptions.VectorTypeSupport));
             }
 
             return len;

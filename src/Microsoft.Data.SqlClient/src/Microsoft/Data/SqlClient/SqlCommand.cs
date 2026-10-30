@@ -2201,7 +2201,9 @@ namespace Microsoft.Data.SqlClient
                     // The validate function for SqlParameters would have already thrown
                     // InvalidCastException if an incompatible value is specified for vector type.
                     ISqlVector vectorProps = (ISqlVector)sqlParam.Value;
-                    paramList.AppendFormat("({0})", vectorProps.Length);
+
+                    MetaType.AppendVectorTypeArguments(
+                        paramList, vectorProps.Length, vectorProps.ElementType);
                 }
                 else if (!mt.IsFixed && !mt.IsLong && mt.SqlDbType is not  SqlDbType.Timestamp
                                                                    and not SqlDbType.Udt

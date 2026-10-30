@@ -25,6 +25,10 @@ where T : unmanaged
     private const byte VecHeaderMagicNo = 0xA9;
     private const byte VecVersionNo = 0x01;
 
+    // Offsets of the fields within the vector header. Refer to TDS section 2.2.5.5.7.
+    private const int VecHeaderLengthOffset = 2;
+    private const int VecHeaderElementTypeOffset = TdsEnums.VECTOR_ELEMENT_TYPE_OFFSET;
+
     #endregion
 
     #region Fields
@@ -38,10 +42,10 @@ where T : unmanaged
 
     #region Constructors
 
-    private SqlVector(int length)
+    private SqlVector(int length, bool validateLength)
     {
         (_elementType, _elementSize, int maxElements) = GetTypeFieldsOrThrow();
-        if (length < 0 || length > maxElements)
+        if (length < 0 || (validateLength && length > maxElements))
         {
             throw ADP.InvalidArraySize(nameof(length));
         }
@@ -56,13 +60,32 @@ where T : unmanaged
     }
 
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/CreateNull/*' />
-    public static SqlVector<T> CreateNull(int length) => new(length);
+    public static SqlVector<T> CreateNull(int length) => new(length, validateLength: true);
+
+    /// <summary>
+    /// Creates a null vector for a column read from the server, without applying the
+    /// element count limit which governs construction by a caller.
+    /// </summary>
+    /// <remarks>
+    /// The limit is the number of elements of <typeparamref name="T"/> whose payload fits
+    /// in the maximum vector size, so it is a property of the type a value is sent as. A column read
+    /// as a wider type than its own base type can exceed it: a <c>float16</c> column may
+    /// declare up to 3996 dimensions, while 1998 is the most that can be sent as
+    /// <c>float32</c>. Rejecting those here would make such a column unreadable, which on
+    /// .NET Framework would mean unreadable by any means, since every read path there
+    /// widens to <c>float32</c>.
+    /// </remarks>
+    internal static SqlVector<T> CreateNullFromServer(int length) => new(length, validateLength: false);
 
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlVector.xml' path='docs/members[@name="SqlVector"]/ctor1/*' />
-    public SqlVector(ReadOnlyMemory<T> memory)
+    public SqlVector(ReadOnlyMemory<T> memory) : this(memory, validateLength: true)
+    {
+    }
+
+    private SqlVector(ReadOnlyMemory<T> memory, bool validateLength)
     {
         (_elementType, _elementSize, int maxElements) = GetTypeFieldsOrThrow();
-        if (memory.Length > maxElements)
+        if (validateLength && memory.Length > maxElements)
         {
             throw ADP.InvalidArraySize(nameof(memory));
         }
@@ -76,7 +99,7 @@ where T : unmanaged
         Memory = memory;
     }
 
-    internal SqlVector(byte[] tdsBytes)
+    private SqlVector(byte[] tdsBytes)
     {
         (_elementType, _elementSize, _) = GetTypeFieldsOrThrow();
 
@@ -98,8 +121,167 @@ where T : unmanaged
         {
             return SQLMessage.NullString();
         }
-        // GetTypeFieldsOrThrow guarantees T is float.
-        return JsonSerializer.Serialize((ReadOnlyMemory<float>)(object)Memory, SqlClientJsonSerializerContext.Default.ReadOnlyMemorySingle);
+        #if NET
+        if (typeof(T) == typeof(Half))
+        {
+            // Widening binary16 to binary32 is exact, so serialising the widened values
+            // renders the true value of every element. Serialising Half directly would
+            // instead produce the shortest string that round-trips to the same Half,
+            // which can misrepresent the value: 65504 would render as "65500". Widening
+            // also keeps this rendering identical on .NET Framework, where System.Half
+            // is unavailable and float16 vectors are surfaced as single precision.
+            ReadOnlySpan<Half> elements = ((ReadOnlyMemory<Half>)(object)Memory).Span;
+            float[] widened = new float[elements.Length];
+
+            for (int i = 0; i < elements.Length; i++)
+            {
+                widened[i] = (float)elements[i];
+            }
+
+            return JsonSerializer.Serialize(widened, SqlClientJsonSerializerContext.Default.SingleArray);
+        }
+        #endif
+
+        // GetTypeFieldsOrThrow guarantees T is float once Half is handled above.
+        return JsonSerializer.Serialize(
+            (ReadOnlyMemory<float>)(object)Memory,
+            SqlClientJsonSerializerContext.Default.ReadOnlyMemorySingle);
+    }
+
+    /// <summary>
+    /// Creates a vector from a TDS payload, converting the elements when the payload's
+    /// base type differs from <typeparamref name="T"/>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Only widening conversions are performed, because they are always exact. A
+    /// <c>float16</c> payload can therefore be read as a <see cref="SqlVector{T}"/> of
+    /// <see cref="float"/>, which is the only way for .NET Framework callers to read
+    /// such a column in a strongly typed form, as <c>System.Half</c> is unavailable there.
+    /// </para>
+    /// <para>
+    /// The converted vector carries a payload rebuilt for <typeparamref name="T"/>, so
+    /// that <typeparamref name="T"/> alone continues to determine the base type used when
+    /// the value is sent back to the server.
+    /// </para>
+    /// </remarks>
+    internal static SqlVector<T> FromTdsPayload(byte[] tdsBytes, bool allowWidening = true)
+    {
+        if (!allowWidening)
+        {
+            return new SqlVector<T>(tdsBytes);
+        }
+
+        ThrowIfHeaderInvalid(tdsBytes);
+        ThrowIfNotConvertibleFrom(tdsBytes[VecHeaderElementTypeOffset]);
+
+        if (tdsBytes[VecHeaderElementTypeOffset] == ElementTypeOf())
+        {
+            return new SqlVector<T>(tdsBytes);
+        }
+
+        return new SqlVector<T>(WidenFloat16Payload(tdsBytes), validateLength: false);
+    }
+
+    /// <summary>
+    /// Parses the existing JSON-to-float32 parameter representation. Other base types are
+    /// converted by SQL Server rather than by a client-side JSON narrowing operation.
+    /// </summary>
+    internal static SqlVector<T> Parse(string json)
+    {
+        if (typeof(T) != typeof(float))
+        {
+            throw SQL.VectorTypeNotSupported(typeof(T).FullName);
+        }
+
+        try
+        {
+            float[]? values = JsonSerializer.Deserialize(
+                json, SqlClientJsonSerializerContext.Default.SingleArray);
+            return new SqlVector<T>((T[]?)(object?)values);
+        }
+        catch (Exception ex) when (ex is ArgumentNullException || ex is JsonException)
+        {
+            throw ADP.InvalidJsonStringForVector(json, ex);
+        }
+    }
+
+    /// <summary>
+    /// Throws if a payload with the given base type cannot be surfaced as a vector of
+    /// <typeparamref name="T"/>.
+    /// </summary>
+    /// <remarks>
+    /// Whether a payload can be read as a given element type is a property of the column's
+    /// base type, so this is checked before a value is examined. A null value would
+    /// otherwise appear to succeed where a populated one in the same column fails.
+    /// </remarks>
+    internal static void ThrowIfNotConvertibleFrom(byte payloadElementType)
+    {
+        byte targetElementType = ElementTypeOf();
+
+        if (payloadElementType == targetElementType)
+        {
+            return;
+        }
+
+        // Widening is exact, so it is performed implicitly. Narrowing is lossy and never is.
+        if (payloadElementType == (byte)MetaType.SqlVectorElementType.Float16 &&
+            targetElementType == (byte)MetaType.SqlVectorElementType.Float32)
+        {
+            return;
+        }
+
+        throw SQL.VectorTypeNotSupported(typeof(T).FullName);
+    }
+
+    /// <summary>
+    /// Validates the fields of a vector header which do not depend on the base type.
+    /// </summary>
+    private static void ThrowIfHeaderInvalid(byte[] tdsBytes)
+    {
+        if (tdsBytes.Length < TdsEnums.VECTOR_HEADER_SIZE ||
+            tdsBytes[0] != VecHeaderMagicNo ||
+            tdsBytes[1] != VecVersionNo)
+        {
+            throw ADP.InvalidVectorHeader();
+        }
+    }
+
+    /// <summary>
+    /// Returns the vector base type which corresponds to <typeparamref name="T"/>.
+    /// </summary>
+    private static byte ElementTypeOf()
+    {
+        (byte elementType, _, _) = GetTypeFieldsOrThrow();
+
+        return elementType;
+    }
+
+    /// <summary>
+    /// Widens the <c>float16</c> elements of a TDS payload to single precision values.
+    /// </summary>
+    private static ReadOnlyMemory<T> WidenFloat16Payload(byte[] tdsBytes)
+    {
+        const int Float16ElementSize = 2;
+
+        int length = BinaryPrimitives.ReadUInt16LittleEndian(tdsBytes.AsSpan(VecHeaderLengthOffset));
+
+        if (tdsBytes.Length != TdsEnums.VECTOR_HEADER_SIZE + (Float16ElementSize * length))
+        {
+            throw ADP.InvalidVectorHeader();
+        }
+
+        float[] widened = new float[length];
+
+        for (int i = 0, currPosition = TdsEnums.VECTOR_HEADER_SIZE; i < length; i++, currPosition += Float16ElementSize)
+        {
+            widened[i] = Float16Converter.ToSingle(
+                BinaryPrimitives.ReadUInt16LittleEndian(tdsBytes.AsSpan(currPosition)));
+        }
+
+        // T is known to be float on this path, so the cast through object simply
+        // reinterprets the memory's element type.
+        return (ReadOnlyMemory<T>)(object)new ReadOnlyMemory<float>(widened);
     }
 
     #endregion
@@ -125,6 +307,7 @@ where T : unmanaged
     byte ISqlVector.ElementSize => _elementSize;
     byte[] ISqlVector.VectorPayload => _tdsBytes;
     int ISqlVector.Size => _size;
+    string ISqlVector.GetString() => GetString();
 
     #endregion
 
@@ -132,22 +315,14 @@ where T : unmanaged
 
     private static (byte, byte, int) GetTypeFieldsOrThrow()
     {
-        byte elementType;
-        byte elementSize;
-        int maxSize;
-
-        if (typeof(T) == typeof(float))
-        {
-            elementType = (byte)MetaType.SqlVectorElementType.Float32;
-            elementSize = sizeof(float);
-        }
-        else
+        if (!MetaType.TryGetVectorElementType(typeof(SqlVector<T>), out byte elementType))
         {
             throw SQL.VectorTypeNotSupported(typeof(T).FullName);
         }
-        // The size of a vector (including its header) must not exceed the maximum size of a TDS packet.
+        byte elementSize = (byte)MetaType.GetVectorElementSize(elementType);
+        // The vector payload, including its header, must fit within the maximum vector size.
         // Calculate the maximum number of elements to simplify the validation of input sizes in constructors.
-        maxSize = (TdsEnums.MAXSIZE - TdsEnums.VECTOR_HEADER_SIZE) / elementSize;
+        int maxSize = (TdsEnums.MAXSIZE - TdsEnums.VECTOR_HEADER_SIZE) / elementSize;
 
         return (elementType, elementSize, maxSize);
     }
@@ -174,8 +349,8 @@ where T : unmanaged
         // Header Bytes
         result[0] = VecHeaderMagicNo;
         result[1] = VecVersionNo;
-        BinaryPrimitives.WriteUInt16LittleEndian(result.AsSpan(2), (ushort)Length);
-        result[4] = _elementType;
+        BinaryPrimitives.WriteUInt16LittleEndian(result.AsSpan(VecHeaderLengthOffset), (ushort)Length);
+        result[VecHeaderElementTypeOffset] = _elementType;
         result[5] = 0x00;
         result[6] = 0x00;
         result[7] = 0x00;
@@ -203,6 +378,17 @@ where T : unmanaged
                     #endif
                 }
             }
+            #if NET
+            else if (typeof(T) == typeof(Half))
+            {
+                for (int i = 0, currPosition = TdsEnums.VECTOR_HEADER_SIZE; i < values.Length; i++, currPosition += _elementSize)
+                {
+                    BinaryPrimitives.WriteUInt16LittleEndian(
+                        result.AsSpan(currPosition),
+                        BitConverter.HalfToUInt16Bits((Half)(object)valueSpan[i]));
+                }
+            }
+            #endif
         }
 
         return result;
@@ -219,14 +405,14 @@ where T : unmanaged
             // Do we support the version?
             rawBytes[1] != VecVersionNo ||
             // Do the vector types match?
-            rawBytes[4] != _elementType)
+            rawBytes[VecHeaderElementTypeOffset] != _elementType)
         {
             // No, so throw.
             throw ADP.InvalidVectorHeader();
         }
 
         // The vector length is an unsigned 16-bit integer, little-endian.
-        int length = BinaryPrimitives.ReadUInt16LittleEndian(rawBytes.AsSpan(2));
+        int length = BinaryPrimitives.ReadUInt16LittleEndian(rawBytes.AsSpan(VecHeaderLengthOffset));
 
         // The vector size is the number of bytes required to represent the vector in TDS.
         int size = TdsEnums.VECTOR_HEADER_SIZE + (_elementSize * length);
@@ -271,6 +457,16 @@ where T : unmanaged
                     #endif
                 }
             }
+            #if NET
+            else if (typeof(T) == typeof(Half))
+            {
+                for (int i = 0, currPosition = TdsEnums.VECTOR_HEADER_SIZE; i < Length; i++, currPosition += _elementSize)
+                {
+                    result[i] = (T)(object)BitConverter.UInt16BitsToHalf(
+                        BinaryPrimitives.ReadUInt16LittleEndian(_tdsBytes.AsSpan(currPosition)));
+                }
+            }
+            #endif
         }
 
         return result;

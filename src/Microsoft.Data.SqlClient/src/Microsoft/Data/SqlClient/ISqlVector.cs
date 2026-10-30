@@ -35,5 +35,10 @@ namespace Microsoft.Data.SqlClient
         /// Returns the total size in bytes for sending SqlVector value on TDS.
         /// </summary>
         int Size { get; }
+
+        /// <summary>
+        /// Returns JSON array text for a non-null vector.
+        /// </summary>
+        string GetString();
     }
 }

@@ -14,7 +14,6 @@ using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Text;
-using System.Text.Json;
 using System.Threading;
 using System.Xml;
 using Microsoft.Data.Common;
@@ -775,7 +774,17 @@ namespace Microsoft.Data.SqlClient
                 switch (elementType)
                 {
                     case MetaType.SqlVectorElementType.Float32:
-                        return SqlVector<float>.CreateNull(elementCount);
+                        return SqlVector<float>.CreateNullFromServer(elementCount);
+                    case MetaType.SqlVectorElementType.Float16:
+                        #if NET
+                        return SqlVector<Half>.CreateNullFromServer(elementCount);
+                        #else
+                        // Unlike reader columns, vector-bound output values retain a vector
+                        // representation. Framework widens float16 to SqlVector<float>.
+                        // A float16 column may declare more dimensions than can be sent as
+                        // float32, so the server's count is taken as given.
+                        return SqlVector<float>.CreateNullFromServer(elementCount);
+                        #endif
                     default:
                         throw SQL.VectorTypeNotSupported(elementType.ToString());
                 }
@@ -783,7 +792,16 @@ namespace Microsoft.Data.SqlClient
             switch (elementType)
             {
                 case MetaType.SqlVectorElementType.Float32:
-                    return new SqlVector<float>((byte[])_sqlBufferReturnValue.Value);
+                    return SqlVector<float>.FromTdsPayload(
+                        (byte[])_sqlBufferReturnValue.Value, allowWidening: false);
+                case MetaType.SqlVectorElementType.Float16:
+                    #if NET
+                    return SqlVector<Half>.FromTdsPayload(
+                        (byte[])_sqlBufferReturnValue.Value, allowWidening: false);
+                    #else
+                    // Widening binary16 to binary32 is exact, so no information is lost.
+                    return SqlVector<float>.FromTdsPayload((byte[])_sqlBufferReturnValue.Value);
+                    #endif
                 default:
                     throw SQL.VectorTypeNotSupported(elementType.ToString());
             }
@@ -2386,16 +2404,15 @@ namespace Microsoft.Data.SqlClient
                     {
                         value = ((ISqlVector)value).VectorPayload;
                     }
+                    #if NET
+                    else if (currentType == typeof(SqlVector<Half>))
+                    {
+                        value = ((ISqlVector)value).VectorPayload;
+                    }
+                    #endif
                     else if (currentType == typeof(string) && destinationType.SqlDbType == SqlDbTypeExtensions.Vector)
                     {
-                        try
-                        {
-                            value = ((ISqlVector)new SqlVector<float>(JsonSerializer.Deserialize((string)value, SqlClientJsonSerializerContext.Default.SingleArray))).VectorPayload;
-                        }
-                        catch (Exception ex) when (ex is ArgumentNullException || ex is JsonException)
-                        {
-                            throw ADP.InvalidJsonStringForVector((string)value, ex);
-                        }
+                        value = ((ISqlVector)SqlVector<float>.Parse((string)value)).VectorPayload;
                     }
                     else if (
                         TdsEnums.SQLTABLE == destinationType.TDSType &&
