@@ -119,8 +119,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Throws<SqlException>(() => connection.Open());
         }
 
-        [Fact]
-        public void NetworkDelayAtRoutedLocation_RetryDisabled_ShouldSucceed()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void NetworkDelayAtRoutedLocation_RetryDisabled_ShouldSucceed(bool multiSubnetFailoverEnabled)
         {
             // Arrange
             using TransientDelayTdsServer server = new(
@@ -146,7 +148,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 ApplicationIntent = ApplicationIntent.ReadOnly,
                 ConnectTimeout = 5,
                 ConnectRetryCount = 0, // disable retry
-                Encrypt = false
+                Encrypt = false,
+                MultiSubnetFailover = multiSubnetFailoverEnabled,
+#if NETFRAMEWORK
+                #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
+                TransparentNetworkIPResolution = multiSubnetFailoverEnabled,
+                #pragma warning restore 618
+#endif
             };
             using SqlConnection connection = new(builder.ConnectionString);
 
@@ -157,7 +165,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.Equal($"localhost,{router.EndPoint.Port}", connection.DataSource);
             Assert.Equal(1, router.PreLoginCount);
-            Assert.Equal(1, server.PreLoginCount);
+            if (multiSubnetFailoverEnabled)
+            {
+                // MultiSubnetFailover fan-out count is DNS/timing-dependent; only assert a
+                // completed pre-login at the routed location.
+                Assert.True(server.PreLoginCount - server.AbandonedPreLoginCount >= 1);
+            }
+            else
+            {
+                Assert.Equal(1, server.PreLoginCount);
+            }
         }
 
         [Fact]

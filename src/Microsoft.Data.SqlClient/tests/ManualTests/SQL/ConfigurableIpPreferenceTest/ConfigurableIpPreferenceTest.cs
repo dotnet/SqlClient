@@ -59,7 +59,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [InlineData(";IPAddressPreference=UsePlatformDefault")]
         public void ConfigurableIpPreference(string ipPreference)
         {
+            // MSF ignores IPAddressPreference, so turn it off.
             using (SqlConnection connection = CreateConnection(TCPConnectionString + ipPreference
+                + ";MultiSubnetFailover=false"
 #if NETFRAMEWORK
                 + ";TransparentNetworkIPResolution=false"   // doesn't support in .NET Core
 #endif
@@ -94,7 +96,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private void TestCachedConfigurableIpPreference(string ipPreference, string cnnString)
         {
-            using (SqlConnection connection = new SqlConnection(cnnString + ipPreference))
+            using (SqlConnection connection = new SqlConnection(cnnString + ipPreference
+                + ";MultiSubnetFailover=false"))
             {
                 // each successful connection updates the dns cache entry for the data source
                 connection.Open();

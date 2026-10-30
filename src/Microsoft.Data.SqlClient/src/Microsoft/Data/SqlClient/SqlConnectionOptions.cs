@@ -378,6 +378,12 @@ namespace Microsoft.Data.SqlClient
             }
 #endif // NETFRAMEWORK
 
+            // The MultiSubnetFailover default does not apply with a failover partner.
+            if (_multiSubnetFailover && !IsMultiSubnetFailoverExplicit && !string.IsNullOrEmpty(_failoverPartner))
+            {
+                _multiSubnetFailover = false;
+            }
+
             if (_encrypt == SqlConnectionEncryptOption.Optional)
             {    // Support legacy registry encryption settings
                 const string folder = "Software\\Microsoft\\MSSQLServer\\Client\\SuperSocketNetLib";
@@ -644,6 +650,13 @@ namespace Microsoft.Data.SqlClient
         internal bool Enlist => _enlist;
         internal bool MARS => _mars;
         internal bool MultiSubnetFailover => _multiSubnetFailover;
+
+        /// <summary>
+        /// True when MultiSubnetFailover is set in the connection string. When false, the
+        /// value comes from the default, and the connection turns it off when the resolved
+        /// protocol is not TCP.
+        /// </summary>
+        internal bool IsMultiSubnetFailoverExplicit => ContainsKey(DbConnectionStringKeywords.MultiSubnetFailover);
         internal SqlAuthenticationMethod Authentication => _authType;
         internal SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting => _columnEncryptionSetting;
         internal string EnclaveAttestationUrl => _enclaveAttestationUrl;
@@ -785,6 +798,89 @@ namespace Microsoft.Data.SqlClient
                 }
             }
         }
+
+        private static readonly char[] s_hostSeparators = { '\\', ',' };
+
+        /// <summary>
+        /// Returns true when SNI connects to the server name over TCP only. The server name must
+        /// already include any protocol from Network Library or a client alias.
+        /// </summary>
+        /// <param name="serverName">Server name, with an optional protocol prefix.</param>
+        /// <param name="useManagedNetworking">True for managed SNI, false for native SNI.</param>
+        internal static bool UsesTcpProtocol(string serverName, bool useManagedNetworking)
+        {
+            string value = serverName?.Trim() ?? string.Empty;
+
+            // Named pipe path, e.g. \\server\pipe\sql\query, or LocalDB (named pipes).
+            if (value.StartsWith(@"\\", StringComparison.Ordinal) ||
+                value.StartsWith(@"(localdb)\", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            int colon = value.IndexOf(':');
+            if (colon > 0)
+            {
+                string protocol = value.Substring(0, colon).Trim();
+                if (string.Equals(protocol, TdsEnums.TCP, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+
+                if (string.Equals(protocol, TdsEnums.NP, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(protocol, TdsEnums.LPC, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(protocol, TdsEnums.VIA, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(protocol, TdsEnums.ADMIN, StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+
+                // Not a protocol prefix, e.g. an IPv6 address.
+            }
+
+            // Without a prefix, managed SNI uses TCP. Native SNI uses shared memory first for
+            // the local machine, and TCP for other servers when MultiSubnetFailover is on.
+            if (useManagedNetworking)
+            {
+                return true;
+            }
+
+            string host = value;
+            if (!host.StartsWith("[", StringComparison.Ordinal))
+            {
+                int separator = host.IndexOfAny(s_hostSeparators);
+                if (separator >= 0)
+                {
+                    host = host.Substring(0, separator);
+                }
+            }
+            else
+            {
+                int end = host.IndexOf(']');
+                host = end > 0 ? host.Substring(1, end - 1) : host;
+            }
+
+            return !IsLocalHostName(host.Trim());
+        }
+
+        private static bool IsLocalHostName(string host)
+        {
+            if (host.Length == 0 ||
+                host == "." ||
+                string.Equals(host, "(local)", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(host, "localhost", StringComparison.OrdinalIgnoreCase) ||
+                host == "127.0.0.1" ||
+                host == "::1")
+            {
+                return true;
+            }
+
+            // Match the full name only; a remote host can share the short machine name.
+            return string.Equals(host, Environment.MachineName, StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(host.TrimEnd('.'), s_localFullyQualifiedName.Value, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static readonly Lazy<string> s_localFullyQualifiedName = new(GetComputerNameDnsFullyQualified);
 
         private static string GetComputerNameDnsFullyQualified()
         {

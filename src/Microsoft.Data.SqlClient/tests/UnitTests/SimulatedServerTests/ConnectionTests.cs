@@ -31,6 +31,231 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
     [Collection(SimulatedServerTestCollection.Name)]
     public class ConnectionTests
     {
+#if NETFRAMEWORK
+        /// <summary>
+        /// Opens with TNIR disabled by default or restored through its legacy switch, with MSF off.
+        /// </summary>
+        [Theory]
+        [InlineData(null, false)]
+        [InlineData(null, true)]
+        [InlineData(false, false)]
+        [InlineData(false, true)]
+        public async Task TransparentNetworkIPResolution_DefaultAndOptIn_OpenSucceeds(bool? disabledAppContext, bool useAsync)
+        {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.DisableTnirByDefault = disabledAppContext;
+            using TdsServer server = new(new TdsServerArguments());
+            server.Start();
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = $"127.0.0.1,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                MultiSubnetFailover = false,
+                Pooling = false
+            };
+            using SqlConnection connection = new(builder.ConnectionString);
+            if (useAsync)
+            {
+                await connection.OpenAsync();
+            }
+            else
+            {
+                connection.Open();
+            }
+
+#pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
+            Assert.Equal(!(disabledAppContext ?? true), builder.TransparentNetworkIPResolution);
+#pragma warning restore 618
+            Assert.False(builder.ShouldSerialize("TransparentNetworkIPResolution"));
+            Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.Equal(1, server.Login7Count);
+        }
+#endif
+
+        /// <summary>
+        /// Opens a TCP connection through both public paths with the new default and compatibility opt-out.
+        /// </summary>
+        [Theory]
+        [InlineData(null, false)]
+        [InlineData(null, true)]
+        [InlineData(false, false)]
+        [InlineData(false, true)]
+        public async Task MultiSubnetFailover_DefaultAndOptOut_OpenSucceeds(bool? enabledAppContext, bool useAsync)
+        {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.EnableMultiSubnetFailoverByDefault = enabledAppContext;
+            using TdsServer server = new(new TdsServerArguments());
+            server.Start();
+            SqlConnectionStringBuilder builder = new()
+            {
+                // tcp: so the default applies to a local server.
+                DataSource = $"tcp:127.0.0.1,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                Pooling = false
+            };
+            using SqlConnection connection = new(builder.ConnectionString);
+            if (useAsync)
+            {
+                await connection.OpenAsync();
+            }
+            else
+            {
+                connection.Open();
+            }
+
+            Assert.Equal(enabledAppContext ?? true, builder.MultiSubnetFailover);
+            Assert.False(builder.ShouldSerialize("MultiSubnetFailover"));
+            Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.Equal(enabledAppContext ?? true, GetEffectiveMultiSubnetFailover(connection));
+            Assert.Equal(1, server.Login7Count);
+        }
+
+        /// <summary>
+        /// Without a protocol prefix, a local server uses TCP with managed SNI and shared memory
+        /// first with native SNI, so the default applies only with managed SNI.
+        /// </summary>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task MultiSubnetFailover_Default_LocalNoPrefix_FollowsSniProtocol(bool useAsync)
+        {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.EnableMultiSubnetFailoverByDefault = true;
+            using TdsServer server = new(new TdsServerArguments());
+            server.Start();
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = $"127.0.0.1,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                Pooling = false
+            };
+            using SqlConnection connection = new(builder.ConnectionString);
+            if (useAsync)
+            {
+                await connection.OpenAsync();
+            }
+            else
+            {
+                connection.Open();
+            }
+
+            Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.Equal(LocalAppContextSwitches.UseManagedNetworking, GetEffectiveMultiSubnetFailover(connection));
+        }
+
+        private static bool GetEffectiveMultiSubnetFailover(SqlConnection connection) =>
+            ((global::Microsoft.Data.SqlClient.Connection.SqlConnectionInternal)connection.InnerConnection).MultiSubnetFailover;
+
+        /// <summary>
+        /// A server-sent mirroring partner turns off the default MultiSubnetFailover instead of failing.
+        /// </summary>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task MultiSubnetFailover_Default_ServerFailoverPartner_OpenSucceeds(bool useAsync)
+        {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.EnableMultiSubnetFailoverByDefault = true;
+            using TdsServer server = new(new TdsServerArguments { FailoverPartner = "localhost,1234" });
+            server.Start();
+            // .NET Framework requires Initial Catalog when the server sends a failover partner.
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = $"tcp:127.0.0.1,{server.EndPoint.Port}",
+                InitialCatalog = "master",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                Pooling = false
+            };
+            using SqlConnection connection = new(builder.ConnectionString);
+            if (useAsync)
+            {
+                await connection.OpenAsync();
+            }
+            else
+            {
+                connection.Open();
+            }
+
+            Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.False(GetEffectiveMultiSubnetFailover(connection));
+        }
+
+        /// <summary>
+        /// Pool expansion disables default MSF when an earlier connection cached a mirroring partner.
+        /// </summary>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task MultiSubnetFailover_Default_CachedFailoverPartner_OpenSucceeds(bool useAsync)
+        {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.EnableMultiSubnetFailoverByDefault = true;
+            using TdsServer server = new(new TdsServerArguments { FailoverPartner = "localhost,1234" });
+            server.Start();
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = $"tcp:127.0.0.1,{server.EndPoint.Port}",
+                InitialCatalog = "master",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                Pooling = true,
+                ApplicationName = Guid.NewGuid().ToString()
+            };
+            using SqlConnection first = new(builder.ConnectionString);
+            using SqlConnection second = new(builder.ConnectionString);
+            try
+            {
+                if (useAsync)
+                {
+                    await first.OpenAsync();
+                    await second.OpenAsync();
+                }
+                else
+                {
+                    first.Open();
+                    second.Open();
+                }
+
+                Assert.Equal(ConnectionState.Open, first.State);
+                Assert.Equal(ConnectionState.Open, second.State);
+                Assert.NotEqual(first.ClientConnectionId, second.ClientConnectionId);
+                Assert.Equal(2, server.Login7Count);
+                Assert.False(GetEffectiveMultiSubnetFailover(first));
+                Assert.False(GetEffectiveMultiSubnetFailover(second));
+            }
+            finally
+            {
+                SqlConnection.ClearPool(first);
+            }
+        }
+
+        /// <summary>
+        /// A server-sent mirroring partner still fails when MultiSubnetFailover is set explicitly.
+        /// </summary>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task MultiSubnetFailover_Explicit_ServerFailoverPartner_Throws(bool useAsync)
+        {
+            using TdsServer server = new(new TdsServerArguments { FailoverPartner = "localhost,1234" });
+            server.Start();
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = $"tcp:127.0.0.1,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                MultiSubnetFailover = true,
+                Pooling = false
+            };
+            using SqlConnection connection = new(builder.ConnectionString);
+            if (useAsync)
+            {
+                await Assert.ThrowsAsync<SqlException>(() => connection.OpenAsync());
+            }
+            else
+            {
+                Assert.Throws<SqlException>(() => connection.Open());
+            }
+        }
+
         /// <summary>
         /// Opens a connection through both public entry points, including managed SNI on Unix.
         /// </summary>
