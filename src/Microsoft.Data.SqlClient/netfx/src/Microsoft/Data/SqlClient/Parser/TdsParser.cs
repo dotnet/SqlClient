@@ -4885,11 +4885,11 @@ namespace Microsoft.Data.SqlClient.Parser
                     return result;
                 }
                 result = stateObj.TryReadUInt16(out ushort operand);
+                col.Operand = operand;
                 if (result != TdsOperationStatus.Done)
                 {
                     return result;
                 }
-                col.Operand = operand;
 
                 // TCE is not applicable to AltMetadata.
                 result = TryCommonProcessMetaData(stateObj, col, null, fColMD: false, columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Disabled);

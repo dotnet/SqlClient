@@ -3,12 +3,30 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+#if NET
+using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
+#endif
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.Parser.Tokens
 {
     public class TdsUdtTypeInfoTests
     {
+#if NET
+        [Fact]
+        public void Type_PreservesTrimmingRequirements()
+        {
+            PropertyInfo property = typeof(TdsUdtTypeInfo).GetProperty(
+                nameof(TdsUdtTypeInfo.Type), BindingFlags.Instance | BindingFlags.NonPublic);
+            DynamicallyAccessedMembersAttribute attribute =
+                property.GetCustomAttribute<DynamicallyAccessedMembersAttribute>();
+
+            Assert.NotNull(attribute);
+            Assert.Equal(DynamicallyAccessedMemberTypes.All, attribute.MemberTypes);
+        }
+#endif
+
         [Fact]
         public void Constructor_InitializesPropertiesWithDefaultValues()
         {

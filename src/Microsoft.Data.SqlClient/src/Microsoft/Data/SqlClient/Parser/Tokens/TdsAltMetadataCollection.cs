@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClient.Parser.Tokens
         internal TdsColumnMetadataToken MetadataSet { get; set; }
 
         /// <summary>
-        /// Clones the collection and each metadata-set object; nested schema and encryption metadata may remain shared.
+        /// Clones the collection and each metadata-set object; cached schema data may remain shared.
         /// </summary>
         public object Clone()
         {

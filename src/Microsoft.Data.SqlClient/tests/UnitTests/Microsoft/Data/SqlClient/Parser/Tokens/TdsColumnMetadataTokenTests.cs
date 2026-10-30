@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
                 XmlTypeInfo = new TdsXmlTypeInfo { Name = "TestSchema" }
             };
 
-            TdsColumnMetadata clone = (TdsColumnMetadata)original.Clone();
+            TdsColumnMetadata clone = original.Clone();
 
             Assert.NotSame(original, clone);
             Assert.Equal(original.DbType, clone.DbType);

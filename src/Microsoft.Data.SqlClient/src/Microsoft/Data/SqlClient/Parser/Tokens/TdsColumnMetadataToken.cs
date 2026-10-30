@@ -117,8 +117,8 @@ namespace Microsoft.Data.SqlClient.Parser.Tokens
         }
 
         /// <summary>
-        /// Creates a new instance with independently cloned column metadata entries. Cached schema data,
-        /// the CEK table, and nested encryption metadata remain shared with the current instance.
+        /// Creates a new instance with independently cloned column metadata entries and shared cached schema data.
+        /// Column-encryption metadata and the CEK table are not copied, preserving release/6.1 behavior.
         /// </summary>
         public TdsColumnMetadataToken Clone()
         {
