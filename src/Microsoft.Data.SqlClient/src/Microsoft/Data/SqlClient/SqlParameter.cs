@@ -2282,7 +2282,7 @@ namespace Microsoft.Data.SqlClient
         }
 
 
-        // Coerced Value is also used in SqlBulkCopy.ConvertValue(object value, _SqlMetaData metadata)
+        // Coerced Value is also used in SqlBulkCopy.ConvertValue(object value, TdsColumnMetadata metadata)
         internal static object CoerceValue(object value, MetaType destinationType, out bool coercedToDataFeed, out bool typeChanged, bool allowStreaming = true)
         {
             Debug.Assert(!(value is DataFeed), "Value provided should not already be a data feed");

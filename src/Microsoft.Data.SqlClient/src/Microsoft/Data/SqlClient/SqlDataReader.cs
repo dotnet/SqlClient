@@ -561,7 +561,7 @@ namespace Microsoft.Data.SqlClient
                 // For MAX and XML datatypes, we get 0x7fffffff from the server. Do not divide this.
                 if (col.CipherMetadata != null)
                 {
-                    Debug.Assert(col.BaseTypeInfo != null && col.BaseTypeInfo.MetaType != null, "col.baseTI and col.baseTI.metaType should not be null.");
+                    Debug.Assert(col.BaseTypeInfo != null && col.BaseTypeInfo.MetaType != null, "col.BaseTypeInfo and col.BaseTypeInfo.MetaType should not be null.");
                     schemaRow[size] = (col.BaseTypeInfo.MetaType.IsSizeInCharacters && (col.BaseTypeInfo.length != 0x7fffffff)) ? (col.BaseTypeInfo.length / 2) : col.BaseTypeInfo.length;
                 }
                 else
@@ -622,7 +622,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (col.CipherMetadata != null)
                 {
-                    Debug.Assert(col.BaseTypeInfo != null, @"col.baseTI should not be null.");
+                    Debug.Assert(col.BaseTypeInfo != null, @"col.BaseTypeInfo should not be null.");
                     if (TdsEnums.UNKNOWN_PRECISION_SCALE != col.BaseTypeInfo.precision)
                     {
                         schemaRow[precision] = col.BaseTypeInfo.precision;
@@ -647,7 +647,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else if (col.CipherMetadata != null)
                 {
-                    Debug.Assert(col.BaseTypeInfo != null, @"col.baseTI should not be null.");
+                    Debug.Assert(col.BaseTypeInfo != null, @"col.BaseTypeInfo should not be null.");
                     if (TdsEnums.UNKNOWN_PRECISION_SCALE != col.BaseTypeInfo.scale)
                     {
                         schemaRow[scale] = col.BaseTypeInfo.scale;
@@ -682,8 +682,8 @@ namespace Microsoft.Data.SqlClient
 
                 if (col.CipherMetadata != null)
                 {
-                    Debug.Assert(col.BaseTypeInfo != null, @"col.baseTI should not be null.");
-                    Debug.Assert(col.BaseTypeInfo.MetaType != null, @"col.baseTI.metaType should not be null.");
+                    Debug.Assert(col.BaseTypeInfo != null, @"col.BaseTypeInfo should not be null.");
+                    Debug.Assert(col.BaseTypeInfo.MetaType != null, @"col.BaseTypeInfo.MetaType should not be null.");
                     schemaRow[isLong] = col.BaseTypeInfo.MetaType.IsLong;
                 }
                 else
@@ -1211,7 +1211,7 @@ namespace Microsoft.Data.SqlClient
                 { // For all other types, including Xml - use data in MetaType.
                     if (metaData.CipherMetadata != null)
                     {
-                        Debug.Assert(metaData.BaseTypeInfo != null && metaData.BaseTypeInfo.MetaType != null, "metaData.baseTI and metaData.baseTI.metaType should not be null.");
+                        Debug.Assert(metaData.BaseTypeInfo != null && metaData.BaseTypeInfo.MetaType != null, "metaData.BaseTypeInfo and metaData.BaseTypeInfo.MetaType should not be null.");
                         dataTypeName = metaData.BaseTypeInfo.MetaType.TypeName;
                     }
                     else
@@ -1290,7 +1290,7 @@ namespace Microsoft.Data.SqlClient
                 { // For all other types, including Xml - use data in MetaType.
                     if (metaData.CipherMetadata != null)
                     {
-                        Debug.Assert(metaData.BaseTypeInfo != null && metaData.BaseTypeInfo.MetaType != null, "metaData.baseTI and metaData.baseTI.metaType should not be null.");
+                        Debug.Assert(metaData.BaseTypeInfo != null && metaData.BaseTypeInfo.MetaType != null, "metaData.BaseTypeInfo and metaData.BaseTypeInfo.MetaType should not be null.");
                         fieldType = metaData.BaseTypeInfo.MetaType.ClassType;
                     }
                     else
@@ -1323,7 +1323,7 @@ namespace Microsoft.Data.SqlClient
 
             if (tdsColumnMetadata.CipherMetadata != null)
             {
-                // If this column is encrypted, get the collation from baseTI
+                // If this column is encrypted, get the collation from BaseTypeInfo
                 //
                 if (tdsColumnMetadata.BaseTypeInfo.collation != null)
                 {
@@ -1411,7 +1411,7 @@ namespace Microsoft.Data.SqlClient
                     if (metaData.CipherMetadata != null)
                     {
                         Debug.Assert(metaData.BaseTypeInfo != null && metaData.BaseTypeInfo.MetaType != null,
-                            "metaData.baseTI and metaData.baseTI.metaType should not be null.");
+                            "metaData.BaseTypeInfo and metaData.BaseTypeInfo.MetaType should not be null.");
                         providerSpecificFieldType = metaData.BaseTypeInfo.MetaType.SqlType; // SqlType type.
                     }
                     else
@@ -1964,7 +1964,7 @@ namespace Microsoft.Data.SqlClient
 
             if (_metaData[i].CipherMetadata != null)
             {
-                Debug.Assert(_metaData[i].BaseTypeInfo != null, "_metaData[i].baseTI should not be null.");
+                Debug.Assert(_metaData[i].BaseTypeInfo != null, "_metaData[i].BaseTypeInfo should not be null.");
                 mt = _metaData[i].BaseTypeInfo.MetaType;
             }
             else
@@ -2049,7 +2049,7 @@ namespace Microsoft.Data.SqlClient
             MetaType mt = null;
             if (_metaData[i].CipherMetadata != null)
             {
-                Debug.Assert(_metaData[i].BaseTypeInfo != null, @"_metaData[i].baseTI should not be null.");
+                Debug.Assert(_metaData[i].BaseTypeInfo != null, @"_metaData[i].BaseTypeInfo should not be null.");
                 mt = _metaData[i].BaseTypeInfo.MetaType;
             }
             else
@@ -2062,7 +2062,7 @@ namespace Microsoft.Data.SqlClient
             SqlDbType sqlDbType;
             if (_metaData[i].CipherMetadata != null)
             {
-                Debug.Assert(_metaData[i].BaseTypeInfo != null, @"_metaData[i].baseTI should not be null.");
+                Debug.Assert(_metaData[i].BaseTypeInfo != null, @"_metaData[i].BaseTypeInfo should not be null.");
                 sqlDbType = _metaData[i].BaseTypeInfo.DbType;
             }
             else
@@ -2945,7 +2945,7 @@ namespace Microsoft.Data.SqlClient
                 MetaType metaType = metaData.MetaType;
                 if (metaData.CipherMetadata != null)
                 {
-                    Debug.Assert(metaData.BaseTypeInfo != null, "_metaData[i].baseTI should not be null.");
+                    Debug.Assert(metaData.BaseTypeInfo != null, "metaData.BaseTypeInfo should not be null.");
                     metaType = metaData.BaseTypeInfo.MetaType;
                 }
 

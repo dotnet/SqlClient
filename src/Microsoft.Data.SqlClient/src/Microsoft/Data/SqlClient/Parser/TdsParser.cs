@@ -5014,7 +5014,7 @@ namespace Microsoft.Data.SqlClient.Parser
                 return result;
             }
 
-            Debug.Assert(col.CipherMetadata == null, "col.cipherMD should be null in TryProcessTceCryptoMetadata.");
+            Debug.Assert(col.CipherMetadata == null, "col.CipherMetadata should be null in TryProcessTceCryptoMetadata.");
 
             // Check if TCE is enable and if it is set the crypto MD for the column.
             // TCE is enabled if the command is set to enabled or to resultset only and this is not a return value
@@ -6218,7 +6218,7 @@ namespace Microsoft.Data.SqlClient.Parser
             for (int i = 0; i < columns.Length; i++)
             {
                 TdsColumnMetadata md = columns[i];
-                Debug.Assert(md != null, "_SqlMetaData should not be null for column " + i.ToString(CultureInfo.InvariantCulture));
+                Debug.Assert(md != null, "TdsColumnMetadata should not be null for column " + i.ToString(CultureInfo.InvariantCulture));
 
                 bool isNull;
                 ulong len;

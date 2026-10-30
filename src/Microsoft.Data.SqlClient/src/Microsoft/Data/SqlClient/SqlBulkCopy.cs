@@ -1771,7 +1771,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             bool typeChanged = false;
 
             // If the column is encrypted then we are going to transparently encrypt this column
-            // (based on connection string setting)- Use the metaType for the underlying
+            // (based on connection string setting)- Use the BaseTypeInfo.MetaType for the underlying
             // value (unencrypted value) for conversion/casting purposes (below).
             // Note - this flag is set if connection string options has TCE turned on
             byte scale = metadata.scale;

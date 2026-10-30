@@ -8,7 +8,7 @@ using Xunit;
 namespace Microsoft.Data.SqlClient.UnitTests
 {
     /// <summary>
-    /// Tests that verify _SqlMetaDataSet.Clone() produces independent copies,
+    /// Tests that verify TdsColumnMetadataToken.Clone() produces independent copies,
     /// ensuring that null-pruning of unmatched columns in AnalyzeTargetAndCreateUpdateBulkCommand
     /// does not corrupt the cached metadata when CacheMetadata is enabled.
     /// </summary>
@@ -129,7 +129,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         {
             // Verify that cloning preserves the CEK table reference, which is needed by
             // WriteCekTable in TdsParser to send encryption key entries to SQL Server.
-            // Without this, WriteCekTable sees cekTable == null and writes 0 CEK entries.
+            // Without this, WriteCekTable sees CekTable == null and writes 0 CEK entries.
             SqlTceCipherInfoTable cekTable = new SqlTceCipherInfoTable(2);
             cekTable[0] = new SqlTceCipherInfoEntry(ordinal: 0);
             cekTable[1] = new SqlTceCipherInfoEntry(ordinal: 1);
@@ -148,8 +148,8 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [Fact]
         public void Clone_PreservesIsEncrypted()
         {
-            // Verify that cloning a _SqlMetaData entry preserves the isEncrypted flag.
-            // WriteBulkCopyMetaData checks md.isEncrypted to set the TDS IsEncrypted flag
+            // Verify that cloning a TdsColumnMetadata entry preserves the IsEncrypted flag.
+            // WriteBulkCopyMetaData checks md.IsEncrypted to set the TDS IsEncrypted flag
             // and WriteCryptoMetadata checks it to decide whether to write cipher metadata.
             // If lost, encrypted columns are sent as plaintext.
             TdsColumnMetadataToken original = new TdsColumnMetadataToken(1);
@@ -164,7 +164,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [Fact]
         public void Clone_PreservesCipherMetadata()
         {
-            // Verify that cloning preserves cipherMD, which is needed by
+            // Verify that cloning preserves CipherMetadata, which is needed by
             // WriteCryptoMetadata (for CekTableOrdinal, CipherAlgorithmId, etc.)
             // and LoadColumnEncryptionKeys (to decrypt symmetric keys).
             SqlTceCipherInfoEntry cekEntry = new SqlTceCipherInfoEntry(ordinal: 0);
@@ -194,9 +194,9 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [Fact]
         public void Clone_PreservesBaseTI()
         {
-            // Verify that cloning preserves baseTI, which represents the plaintext
+            // Verify that cloning preserves BaseTypeInfo, which represents the plaintext
             // TYPE_INFO for encrypted columns. WriteCryptoMetadata calls
-            // WriteTceUserTypeAndTypeInfo(md.baseTI) to send the unencrypted type info.
+            // WriteTceUserTypeAndTypeInfo(md.BaseTypeInfo) to send the unencrypted type info.
             TdsTypeInfo baseTI = new TdsTypeInfo();
             baseTI.DbType = System.Data.SqlDbType.NVarChar;
             baseTI.length = 100;
@@ -218,10 +218,10 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [Fact]
         public void Clone_PreservesFullAlwaysEncryptedMetadata()
         {
-            // End-to-end test: verify that a cloned _SqlMetaDataSet with Always Encrypted
+            // End-to-end test: verify that a cloned TdsColumnMetadataToken with Always Encrypted
             // metadata retains all AE fields needed by the bulk copy TDS write path:
-            // cekTable (for WriteCekTable), isEncrypted (for flag writing),
-            // cipherMD (for WriteCryptoMetadata), and baseTI (for WriteTceUserTypeAndTypeInfo).
+            // CekTable (for WriteCekTable), IsEncrypted (for flag writing),
+            // CipherMetadata (for WriteCryptoMetadata), and BaseTypeInfo (for WriteTceUserTypeAndTypeInfo).
             SqlTceCipherInfoEntry cekEntry = new SqlTceCipherInfoEntry(ordinal: 0);
             SqlTceCipherInfoTable cekTable = new SqlTceCipherInfoTable(1);
             cekTable[0] = cekEntry;
@@ -256,7 +256,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.NotNull(clone[1].BaseTypeInfo);
             Assert.Equal(System.Data.SqlDbType.Int, clone[1].BaseTypeInfo.DbType);
 
-            // The cekTable must be preserved on the clone
+            // The CekTable must be preserved on the clone
             Assert.NotNull(clone.CekTable);
             Assert.Equal(1, clone.CekTable.Size);
 
