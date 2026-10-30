@@ -1422,6 +1422,9 @@
   <data name="SNI_ERROR_57" xml:space="preserve">
     <value>Invalid SQLUserInstance.dll found at the location specified in the registry. Verify that the Local Database Runtime feature of SQL Server Express is properly installed.</value>
   </data>
+  <data name="SNI_TDS8_ApplicationProtocolNotNegotiated" xml:space="preserve">
+    <value>The server did not negotiate the required TLS application protocol '{0}' (negotiated: '{1}'). The connection was closed because strict encryption requires TDS 8.0.</value>
+  </data>
   <data name="Snix_Connect" xml:space="preserve">
     <value>A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections.</value>
   </data>
