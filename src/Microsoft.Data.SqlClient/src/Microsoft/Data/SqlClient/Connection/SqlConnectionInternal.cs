@@ -3801,7 +3801,8 @@ namespace Microsoft.Data.SqlClient.Connection
             SqlCredential credential, // @TODO: This isn't used anywhere
             TimeoutTimer timeout)
         {
-            // SqlConnectionOptions turns off the default when a failover partner is configured.
+            // A pool group can also cache a partner learned from an earlier connection.
+            TryDisableDefaultMultiSubnetFailover();
             Debug.Assert(!MultiSubnetFailover,
                 "MultiSubnetFailover should not be set if failover partner is used");
 

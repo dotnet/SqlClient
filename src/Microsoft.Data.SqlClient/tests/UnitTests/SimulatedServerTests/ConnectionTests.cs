@@ -181,6 +181,54 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         /// <summary>
+        /// Pool expansion disables default MSF when an earlier connection cached a mirroring partner.
+        /// </summary>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task MultiSubnetFailover_Default_CachedFailoverPartner_OpenSucceeds(bool useAsync)
+        {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.EnableMultiSubnetFailoverByDefault = true;
+            using TdsServer server = new(new TdsServerArguments { FailoverPartner = "localhost,1234" });
+            server.Start();
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = $"tcp:127.0.0.1,{server.EndPoint.Port}",
+                InitialCatalog = "master",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                Pooling = true,
+                ApplicationName = Guid.NewGuid().ToString()
+            };
+            using SqlConnection first = new(builder.ConnectionString);
+            using SqlConnection second = new(builder.ConnectionString);
+            try
+            {
+                if (useAsync)
+                {
+                    await first.OpenAsync();
+                    await second.OpenAsync();
+                }
+                else
+                {
+                    first.Open();
+                    second.Open();
+                }
+
+                Assert.Equal(ConnectionState.Open, first.State);
+                Assert.Equal(ConnectionState.Open, second.State);
+                Assert.NotEqual(first.ClientConnectionId, second.ClientConnectionId);
+                Assert.Equal(2, server.Login7Count);
+                Assert.False(GetEffectiveMultiSubnetFailover(first));
+                Assert.False(GetEffectiveMultiSubnetFailover(second));
+            }
+            finally
+            {
+                SqlConnection.ClearPool(first);
+            }
+        }
+
+        /// <summary>
         /// A server-sent mirroring partner still fails when MultiSubnetFailover is set explicitly.
         /// </summary>
         [Theory]

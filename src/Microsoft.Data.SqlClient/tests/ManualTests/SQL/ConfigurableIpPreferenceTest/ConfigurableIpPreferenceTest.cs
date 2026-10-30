@@ -96,7 +96,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private void TestCachedConfigurableIpPreference(string ipPreference, string cnnString)
         {
-            using (SqlConnection connection = new SqlConnection(cnnString + ipPreference))
+            using (SqlConnection connection = new SqlConnection(cnnString + ipPreference
+                + ";MultiSubnetFailover=false"))
             {
                 // each successful connection updates the dns cache entry for the data source
                 connection.Open();
