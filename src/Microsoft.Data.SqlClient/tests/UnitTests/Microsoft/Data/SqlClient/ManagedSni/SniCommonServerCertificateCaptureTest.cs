@@ -19,8 +19,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
 {
     /// <summary>
     /// Tests for the certificate details that managed SNI captures from the TLS validation callback:
-    /// SqlClient's effective validation verdict, the original callback chain status, and the SHA-256
-    /// hash of the presented certificate.
+    /// SqlClient's effective validation verdict, the original callback chain status, and the DER
+    /// encoding of the presented certificate.
     /// </summary>
     public class SniCommonServerCertificateCaptureTest
     {
@@ -267,36 +267,84 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
             if (capturing is not null && cert is not null)
             {
                 ServerCertificateCapture capture = SniCommon.CreateServerCertificateCapture(cert, verdict);
-                AssertNoLeak(capture.Hash256!, capturing.Message);
-                AssertNoLeak(capture.Hash256!, capturing.ToString());
+                AssertNoLeak(capture.RawCertificate!, capturing.Message);
+                AssertNoLeak(capture.RawCertificate!, capturing.ToString());
             }
         }
 
         [Fact]
-        public void CreateServerCertificateCapture_HashIsSha256OfDer()
+        public void CreateServerCertificateCapture_CapturesDer()
         {
             using X509Certificate2 serverCert = CreateSelfSignedCertificate(ServerName);
 
             ServerCertificateCapture capture = SniCommon.CreateServerCertificateCapture(serverCert, new ServerCertificateVerdict(SqlServerCertificateValidationErrors.None, X509ChainStatusFlags.NoError));
 
-            Assert.NotNull(capture.Hash256);
-            Assert.Equal(32, capture.Hash256!.Length);
-
-            using SHA256 sha256 = SHA256.Create();
-            Assert.Equal(sha256.ComputeHash(serverCert.Export(X509ContentType.Cert)), capture.Hash256);
+            Assert.NotNull(capture.RawCertificate);
+            Assert.Equal(serverCert.Export(X509ContentType.Cert), capture.RawCertificate);
             Assert.Equal(SqlServerCertificateValidationErrors.None, capture.ValidationErrors);
             Assert.Equal(X509ChainStatusFlags.NoError, capture.ChainStatus);
+
+            // The capture owns its copy; it is not the certificate's internal buffer.
+            capture.RawCertificate![0] ^= 0xFF;
+            Assert.NotEqual(capture.RawCertificate, serverCert.RawData);
         }
 
         [Fact]
-        public void CreateServerCertificateCapture_Bypass_HashOnly()
+        public void CreateServerCertificateCapture_OverSizeCap_CertificateUnavailable()
+        {
+            using X509Certificate2 serverCert = CreateSelfSignedCertificate(ServerName, ServerCertificateCapture.MaxRawCertificateSize);
+            Assert.True(serverCert.RawData.Length > ServerCertificateCapture.MaxRawCertificateSize);
+
+            ServerCertificateCapture capture = SniCommon.CreateServerCertificateCapture(
+                serverCert,
+                new ServerCertificateVerdict(SqlServerCertificateValidationErrors.ChainError, X509ChainStatusFlags.UntrustedRoot));
+
+            // Only the certificate is dropped; the other captured values are unaffected.
+            Assert.Null(capture.RawCertificate);
+            Assert.Equal(SqlServerCertificateValidationErrors.ChainError, capture.ValidationErrors);
+            Assert.Equal(X509ChainStatusFlags.UntrustedRoot, capture.ChainStatus);
+        }
+
+        [Fact]
+        public void CreateServerCertificateCapture_AtSizeCap_CertificateCaptured()
+        {
+            using X509Certificate2 serverCert = CreateSelfSignedCertificate(ServerName, ServerCertificateCapture.MaxRawCertificateSize / 2);
+            Assert.InRange(serverCert.RawData.Length, 1, ServerCertificateCapture.MaxRawCertificateSize);
+
+            Assert.Equal(serverCert.RawData, SniCommon.GetRawCertificate(serverCert));
+        }
+
+        [Fact]
+        public void CreateServerCertificateCapture_FirstCertificateWins()
+        {
+            using X509Certificate2 first = CreateSelfSignedCertificate(ServerName);
+            using X509Certificate2 second = CreateSelfSignedCertificate("other.contoso.com");
+
+            ServerCertificateCapture previous = SniCommon.CreateServerCertificateCapture(first, default);
+            ServerCertificateCapture next = SniCommon.CreateServerCertificateCapture(
+                second,
+                new ServerCertificateVerdict(SqlServerCertificateValidationErrors.HostNameMismatch, X509ChainStatusFlags.NoError),
+                sender: null,
+                previous: previous);
+
+            // The certificate stays the first one presented in the attempt; the verdict is the latest.
+            Assert.Equal(first.RawData, next.RawCertificate);
+            Assert.Equal(SqlServerCertificateValidationErrors.HostNameMismatch, next.ValidationErrors);
+
+            // A previous capture without a certificate does not block capturing a later one.
+            ServerCertificateCapture empty = SniCommon.CreateServerCertificateCapture(null!, default);
+            Assert.Equal(second.RawData, SniCommon.CreateServerCertificateCapture(second, default, previous: empty).RawCertificate);
+        }
+
+        [Fact]
+        public void CreateServerCertificateCapture_Bypass_CertificateOnly()
         {
             using X509Certificate2 serverCert = CreateSelfSignedCertificate(ServerName);
 
             // TrustServerCertificate bypass: validation is never run, so the verdict stays default.
             ServerCertificateCapture capture = SniCommon.CreateServerCertificateCapture(serverCert, default);
 
-            Assert.Equal(SHA256.HashData(serverCert.RawData), capture.Hash256);
+            Assert.Equal(serverCert.RawData, capture.RawCertificate);
             Assert.Null(capture.ValidationErrors);
             Assert.Null(capture.ChainStatus);
             Assert.Null(capture.Protocol);
@@ -337,13 +385,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         }
 
         [Fact]
-        public void CreateServerCertificateCapture_NoCertificate_HashUnavailable()
+        public void CreateServerCertificateCapture_NoCertificate_CertificateUnavailable()
         {
             ServerCertificateCapture capture = SniCommon.CreateServerCertificateCapture(
                 null!,
                 new ServerCertificateVerdict(SqlServerCertificateValidationErrors.ServerCertificateMissing, null));
 
-            Assert.Null(capture.Hash256);
+            Assert.Null(capture.RawCertificate);
             Assert.Equal(SqlServerCertificateValidationErrors.ServerCertificateMissing, capture.ValidationErrors);
             Assert.Null(capture.ChainStatus);
         }
@@ -416,17 +464,24 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         [Fact]
         public void EncryptionInfoCapture_RecordServerCertificate_PublishesInSnapshot()
         {
-            byte[] hash = SHA256.HashData(new byte[] { 1, 2, 3 });
+            using X509Certificate2 serverCert = CreateSelfSignedCertificate(ServerName);
             EncryptionInfoCapture capture = new();
 
-            capture.RecordServerCertificate(new ServerCertificateCapture(hash, SqlServerCertificateValidationErrors.ChainError, X509ChainStatusFlags.UntrustedRoot));
+            capture.RecordServerCertificate(new ServerCertificateCapture(SniCommon.GetRawCertificate(serverCert), SqlServerCertificateValidationErrors.ChainError, X509ChainStatusFlags.UntrustedRoot));
 
             Assert.True(capture.HasValues);
+            Assert.Equal(serverCert.RawData, capture.ServerCertificateRawData);
             SqlConnectionEncryptionInfo snapshot = capture.ToSnapshot();
             Assert.False(snapshot.IsEmpty);
             Assert.Null(snapshot.NegotiatedEncryptionMode);
             Assert.Null(snapshot.NegotiatedEncryptionProtocol);
-            Assert.Equal(hash, snapshot.PresentedServerCertificateHash256!.Value.ToArray());
+            Assert.Equal(serverCert.RawData, snapshot.PresentedServerCertificateRawData!.Value.ToArray());
+            using (X509Certificate2? roundTripped = snapshot.GetServerCertificate())
+            {
+                Assert.NotNull(roundTripped);
+                Assert.Equal(serverCert.RawData, roundTripped.RawData);
+                Assert.False(roundTripped.HasPrivateKey);
+            }
             Assert.Equal(SqlServerCertificateValidationErrors.ChainError, snapshot.ValidationErrors);
             Assert.Equal(X509ChainStatusFlags.UntrustedRoot, snapshot.ChainStatus);
 
@@ -445,7 +500,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
             SqlConnectionEncryptionInfo snapshot = capture.ToSnapshot();
             Assert.Equal(SqlServerCertificateValidationErrors.None, snapshot.ValidationErrors);
             Assert.Equal(X509ChainStatusFlags.NoError, snapshot.ChainStatus);
-            Assert.Null(snapshot.PresentedServerCertificateHash256);
+            Assert.Null(snapshot.PresentedServerCertificateRawData);
+            Assert.Null(snapshot.GetServerCertificate());
         }
 
         [Fact]
@@ -459,13 +515,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         }
 
         [Fact]
-        public void EncryptionInfoCapture_HashNotInSnapshotText()
+        public void EncryptionInfoCapture_CertificateNotInSnapshotText()
         {
-            byte[] hash = SHA256.HashData(new byte[] { 4, 5, 6 });
+            using X509Certificate2 serverCert = CreateSelfSignedCertificate(ServerName);
             EncryptionInfoCapture capture = new();
-            capture.RecordServerCertificate(new ServerCertificateCapture(hash, SqlServerCertificateValidationErrors.ChainError, X509ChainStatusFlags.UntrustedRoot));
+            capture.RecordServerCertificate(new ServerCertificateCapture(serverCert.RawData, SqlServerCertificateValidationErrors.ChainError, X509ChainStatusFlags.UntrustedRoot));
 
-            AssertNoLeak(hash, capture.ToSnapshot().ToString() ?? string.Empty);
+            string text = capture.ToSnapshot().ToString() ?? string.Empty;
+            AssertNoLeak(serverCert.RawData, text);
+            Assert.DoesNotContain(serverCert.Thumbprint, text, StringComparison.OrdinalIgnoreCase);
         }
 
         #endregion
@@ -513,20 +571,33 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
             return chain;
         }
 
-        private static void AssertNoLeak(byte[] hash, string text)
+        private static void AssertNoLeak(byte[] certificate, string text)
         {
-            Assert.DoesNotContain(Convert.ToHexString(hash), text, StringComparison.OrdinalIgnoreCase);
-            Assert.DoesNotContain(Convert.ToBase64String(hash), text, StringComparison.Ordinal);
-            Assert.DoesNotContain(BitConverter.ToString(hash), text, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain(Convert.ToHexString(certificate), text, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain(Convert.ToBase64String(certificate), text, StringComparison.Ordinal);
+            Assert.DoesNotContain(BitConverter.ToString(certificate), text, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain(Convert.ToHexString(SHA256.HashData(certificate)), text, StringComparison.OrdinalIgnoreCase);
         }
 
-        private static X509Certificate2 CreateSelfSignedCertificate(string subjectCommonName)
+        /// <param name="subjectCommonName">The subject and DNS SAN.</param>
+        /// <param name="paddingBytes">
+        /// When non-zero, adds a private, non-critical extension of this many bytes to grow the DER
+        /// encoding (used to test the capture size cap).
+        /// </param>
+        private static X509Certificate2 CreateSelfSignedCertificate(string subjectCommonName, int paddingBytes = 0)
         {
             using RSA rsa = RSA.Create(2048);
             CertificateRequest request = new($"CN={subjectCommonName}", rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
             SubjectAlternativeNameBuilder san = new();
             san.AddDnsName(subjectCommonName);
             request.CertificateExtensions.Add(san.Build());
+            if (paddingBytes > 0)
+            {
+                // A DER OCTET STRING keeps the extension value well-formed.
+                System.Formats.Asn1.AsnWriter writer = new(System.Formats.Asn1.AsnEncodingRules.DER);
+                writer.WriteOctetString(new byte[paddingBytes]);
+                request.CertificateExtensions.Add(new X509Extension("1.3.6.1.4.1.311.999.1", writer.Encode(), critical: false));
+            }
 
             DateTimeOffset notBefore = DateTimeOffset.UtcNow.AddMinutes(-5);
             return request.CreateSelfSigned(notBefore, notBefore.AddHours(1));

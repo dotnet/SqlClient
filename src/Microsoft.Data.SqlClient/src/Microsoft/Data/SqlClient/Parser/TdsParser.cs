@@ -962,7 +962,7 @@ namespace Microsoft.Data.SqlClient.Parser
             EncryptionInfoAccumulator accumulator = _connHandler?.EncryptionInfoAccumulator;
             if (accumulator is not null && certificateCapture is not null)
             {
-                accumulator.CertificateHash256 = certificateCapture.Hash256;
+                accumulator.ServerCertificateRawData = certificateCapture.RawCertificate;
                 accumulator.ValidationErrors = certificateCapture.ValidationErrors;
                 accumulator.ChainStatus = certificateCapture.ChainStatus;
 

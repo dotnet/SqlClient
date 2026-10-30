@@ -41,7 +41,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
     /// <summary>
     /// End-to-end verification, against the simulated TDS server over TLS, that managed SNI publishes the
-    /// presented server certificate hash, SqlClient's effective validation verdict, and the callback chain
+    /// presented server certificate, SqlClient's effective validation verdict, and the callback chain
     /// status to <see cref="SqlConnection.EncryptionInfo"/> and <see cref="SqlException.EncryptionInfo"/>.
     /// Managed SNI is forced on Windows via the <c>UseManagedNetworkingOnWindows</c> switch.
     /// </summary>
@@ -58,7 +58,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
-        public async Task Open_TrustServerCertificate_PublishesHashWithoutVerdict(bool async)
+        public async Task Open_TrustServerCertificate_PublishesCertificateWithoutVerdict(bool async)
         {
             using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
             using TdsServer server = StartServer(_fixture.Localhost);
@@ -69,7 +69,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             SqlConnectionEncryptionInfo info = connection.EncryptionInfo;
             Assert.Equal(SqlConnectionEncryptionMode.Full, info.NegotiatedEncryptionMode);
             Assert.Equal(SslProtocols.Tls12, info.NegotiatedEncryptionProtocol);
-            AssertHash(_fixture.Localhost, info);
+            AssertCertificate(_fixture.Localhost, info);
             // The certificate was presented but SqlClient did not evaluate it.
             Assert.Null(info.ValidationErrors);
             Assert.Null(info.ChainStatus);
@@ -81,7 +81,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
-        public async Task Open_MatchingServerCertificate_PublishesHashAndNoErrors(bool async)
+        public async Task Open_MatchingServerCertificate_PublishesCertificateAndNoErrors(bool async)
         {
             using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
             using TdsServer server = StartServer(_fixture.Localhost);
@@ -93,7 +93,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             SqlConnectionEncryptionInfo info = connection.EncryptionInfo;
             Assert.Equal(SqlConnectionEncryptionMode.Full, info.NegotiatedEncryptionMode);
             Assert.Equal(SslProtocols.Tls12, info.NegotiatedEncryptionProtocol);
-            AssertHash(_fixture.Localhost, info);
+            AssertCertificate(_fixture.Localhost, info);
             Assert.Equal(SqlServerCertificateValidationErrors.None, info.ValidationErrors);
             // The chain is not consulted when a ServerCertificate pin decides trust.
             Assert.Null(info.ChainStatus);
@@ -102,7 +102,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
-        public async Task Open_UntrustedCertificate_ExceptionCarriesChainErrorAndHash(bool async)
+        public async Task Open_UntrustedCertificate_ExceptionCarriesChainErrorAndCertificate(bool async)
         {
             using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
             using TdsServer server = StartServer(_fixture.Localhost, expectTlsHandshakeFailure: true);
@@ -111,7 +111,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             SqlException ex = await Assert.ThrowsAsync<SqlException>(() => OpenAsync(connection, async));
 
             SqlConnectionEncryptionInfo info = ex.EncryptionInfo;
-            AssertHash(_fixture.Localhost, info);
+            AssertCertificate(_fixture.Localhost, info);
             Assert.Equal(SqlServerCertificateValidationErrors.ChainError, info.ValidationErrors);
             Assert.NotNull(info.ChainStatus);
             Assert.NotEqual(X509ChainStatusFlags.NoError, info.ChainStatus);
@@ -139,7 +139,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             SqlException ex = await Assert.ThrowsAsync<SqlException>(() => OpenAsync(connection, async));
 
             SqlConnectionEncryptionInfo info = ex.EncryptionInfo;
-            AssertHash(_fixture.OtherHost, info);
+            AssertCertificate(_fixture.OtherHost, info);
             Assert.Equal(
                 SqlServerCertificateValidationErrors.ChainError | SqlServerCertificateValidationErrors.HostNameMismatch,
                 info.ValidationErrors);
@@ -162,7 +162,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             // The platform reported a name mismatch, but HostNameInCertificate resolves it; only the
             // untrusted chain remains in SqlClient's effective verdict.
             Assert.Equal(SqlServerCertificateValidationErrors.ChainError, ex.EncryptionInfo.ValidationErrors);
-            AssertHash(_fixture.OtherHost, ex.EncryptionInfo);
+            AssertCertificate(_fixture.OtherHost, ex.EncryptionInfo);
             AssertObservedNegotiation(ex.EncryptionInfo);
         }
 
@@ -179,7 +179,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             SqlException ex = await Assert.ThrowsAsync<SqlException>(() => OpenAsync(connection, async));
 
             SqlConnectionEncryptionInfo info = ex.EncryptionInfo;
-            AssertHash(_fixture.Localhost, info);
+            AssertCertificate(_fixture.Localhost, info);
             Assert.Equal(SqlServerCertificateValidationErrors.PinnedCertificateMismatch, info.ValidationErrors);
             Assert.Null(info.ChainStatus);
             AssertObservedNegotiation(info);
@@ -198,11 +198,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             using SqlConnection failing = new(BuildConnectionString(otherServer.EndPoint.Port, serverCertificate: pin.Path));
             SqlException ex = await Assert.ThrowsAsync<SqlException>(() => OpenAsync(failing, async));
-            AssertHash(_fixture.OtherHost, ex.EncryptionInfo);
+            AssertCertificate(_fixture.OtherHost, ex.EncryptionInfo);
 
             using SqlConnection connection = new(BuildConnectionString(server.EndPoint.Port, serverCertificate: pin.Path));
             await OpenAsync(connection, async);
-            AssertHash(_fixture.Localhost, connection.EncryptionInfo);
+            AssertCertificate(_fixture.Localhost, connection.EncryptionInfo);
             Assert.Equal(SqlServerCertificateValidationErrors.None, connection.EncryptionInfo.ValidationErrors);
         }
 
@@ -306,16 +306,21 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             return Task.CompletedTask;
         }
 
-        private static void AssertHash(X509Certificate2 expected, SqlConnectionEncryptionInfo info)
+        private static void AssertCertificate(X509Certificate2 expected, SqlConnectionEncryptionInfo info)
         {
-            Assert.NotNull(info.PresentedServerCertificateHash256);
-            Assert.Equal(SHA256.HashData(expected.RawData), info.PresentedServerCertificateHash256.Value.ToArray());
+            Assert.NotNull(info.PresentedServerCertificateRawData);
+            Assert.Equal(expected.RawData, info.PresentedServerCertificateRawData.Value.ToArray());
+
+            using X509Certificate2? certificate = info.GetServerCertificate();
+            Assert.NotNull(certificate);
+            Assert.Equal(expected.RawData, certificate.RawData);
+            Assert.False(certificate.HasPrivateKey);
         }
 
         private static void AssertNoLeak(SqlException ex, SqlConnectionEncryptionInfo info)
         {
-            byte[] hash = info.PresentedServerCertificateHash256!.Value.ToArray();
-            string[] encodings = { Convert.ToHexString(hash), Convert.ToBase64String(hash), BitConverter.ToString(hash) };
+            byte[] der = info.PresentedServerCertificateRawData!.Value.ToArray();
+            string[] encodings = { Convert.ToHexString(der), Convert.ToBase64String(der), BitConverter.ToString(der), Convert.ToHexString(SHA256.HashData(der)) };
             foreach (string encoding in encodings)
             {
                 Assert.DoesNotContain(encoding, ex.Message, StringComparison.OrdinalIgnoreCase);

@@ -286,28 +286,51 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <param name="serverCert">The certificate presented by the server, if any.</param>
         /// <param name="verdict">The verdict recorded by validation; default when not evaluated.</param>
         /// <param name="sender">The <see cref="SslStream"/> raising the validation callback, if any.</param>
+        /// <param name="previous">
+        /// The capture already recorded for this handshake attempt, if any. The first certificate
+        /// captured in an attempt is kept; a later callback invocation does not replace it.
+        /// </param>
         /// <returns>The capture. Never <see langword="null"/>.</returns>
-        internal static ServerCertificateCapture CreateServerCertificateCapture(X509Certificate serverCert, in ServerCertificateVerdict verdict, object sender = null)
+        internal static ServerCertificateCapture CreateServerCertificateCapture(X509Certificate serverCert, in ServerCertificateVerdict verdict, object sender = null, ServerCertificateCapture previous = null)
         {
-            byte[] hash = null;
-            if (serverCert is not null)
-            {
-                try
-                {
-                    hash = SHA256.HashData(serverCert.GetRawCertData());
-                }
-                catch (CryptographicException)
-                {
-                    // Capture must never affect the handshake outcome; leave the hash unavailable.
-                }
-            }
+            byte[] rawCertificate = previous?.RawCertificate ?? GetRawCertificate(serverCert);
 
             return new ServerCertificateCapture(
-                hash,
+                rawCertificate,
                 verdict.ValidationErrors,
                 verdict.ChainStatus,
                 GetHandshakeProtocol(sender),
                 GetNegotiatedCipherSuite(sender as SslStream));
+        }
+
+        /// <summary>
+        /// Copies the DER encoding of the presented certificate for diagnostics.
+        /// </summary>
+        /// <param name="serverCert">The certificate presented by the server, if any.</param>
+        /// <returns>
+        /// The DER bytes, or <see langword="null"/> when no certificate was presented, its encoding
+        /// cannot be read, or it is larger than <see cref="ServerCertificateCapture.MaxRawCertificateSize"/>.
+        /// </returns>
+        internal static byte[] GetRawCertificate(X509Certificate serverCert)
+        {
+            if (serverCert is null)
+            {
+                return null;
+            }
+
+            try
+            {
+                // GetRawCertData returns a new array, so the capture owns it.
+                byte[] rawCertificate = serverCert.GetRawCertData();
+                return rawCertificate is { Length: > 0 and <= ServerCertificateCapture.MaxRawCertificateSize }
+                    ? rawCertificate
+                    : null;
+            }
+            catch (CryptographicException)
+            {
+                // Capture must never affect the handshake outcome; leave the certificate unavailable.
+                return null;
+            }
         }
 
         /// <summary>
