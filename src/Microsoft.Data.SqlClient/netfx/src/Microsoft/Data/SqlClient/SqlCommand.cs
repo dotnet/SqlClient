@@ -5914,7 +5914,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // If the parameter's direction is InputOutput, Output or ReturnValue and it needs to be transparently encrypted/decrypted
                 // then simply decrypt, deserialize and set the value.
-                if (rec.cipherMD != null &&
+                if (rec.CipherMetadata != null &&
                     thisParam.CipherMetadata != null &&
                     (thisParam.Direction == ParameterDirection.Output ||
                     thisParam.Direction == ParameterDirection.InputOutput ||
@@ -5939,8 +5939,8 @@ namespace Microsoft.Data.SqlClient
                             Debug.Assert(_activeConnection != null, @"_activeConnection should not be null");
 
                             // Get the key information from the parameter and decrypt the value.
-                            rec.cipherMD.EncryptionInfo = thisParam.CipherMetadata.EncryptionInfo;
-                            byte[] unencryptedBytes = SqlSecurityUtility.DecryptWithKey(rec.Value.ByteArray, rec.cipherMD, _activeConnection, this);
+                            rec.CipherMetadata.EncryptionInfo = thisParam.CipherMetadata.EncryptionInfo;
+                            byte[] unencryptedBytes = SqlSecurityUtility.DecryptWithKey(rec.Value.ByteArray, rec.CipherMetadata, _activeConnection, this);
 
                             if (unencryptedBytes != null)
                             {
