@@ -8,6 +8,11 @@
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(TestSigningKeyPath)' != ''">
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(TestSigningKeyPath)</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+
   <!-- Compiler Options ================================================ -->
   <PropertyGroup>
     <ImplicitUsings>enable</ImplicitUsings>

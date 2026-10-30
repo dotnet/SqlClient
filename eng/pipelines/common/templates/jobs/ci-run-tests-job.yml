@@ -8,6 +8,11 @@ parameters:
   - name: abstractionsArtifactsName
     type: string
 
+  # The name of the Azure pipeline artifact to download when referenceType is 'Package'.
+  - name: azureArtifactsName
+    type: string
+    default: Azure.Artifacts
+
   # The name of the Logging pipeline artifact to download when referenceType is 'Package'.
   - name: loggingArtifactsName
     type: string
@@ -170,13 +175,19 @@ jobs:
 
   steps:
 
-  # If we're testing in Package mode, download the Abstractions and MDS package
-  # artifacts and put them in the packages/ directory in the repo root.
+  # If we're testing in Package mode, download the sibling package artifacts and
+  # put them in the packages/ directory in the repo root.
   - ${{ if eq(parameters.referenceType, 'Package') }}:
     - task: DownloadPipelineArtifact@2
       displayName: Download Abstractions Package Artifacts
       inputs:
         artifactName: ${{ parameters.abstractionsArtifactsName }}
+        targetPath: $(Build.SourcesDirectory)/packages
+
+    - task: DownloadPipelineArtifact@2
+      displayName: Download Azure Package Artifacts
+      inputs:
+        artifactName: ${{ parameters.azureArtifactsName }}
         targetPath: $(Build.SourcesDirectory)/packages
 
     - task: DownloadPipelineArtifact@2
