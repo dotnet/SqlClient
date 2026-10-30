@@ -131,7 +131,7 @@ namespace Microsoft.Data.SqlClient.Connection
                 ? new SqlConnectionEncryptionInfo(
                     negotiatedEncryptionMode: Mode,
                     negotiatedEncryptionProtocol: Protocol,
-                    presentedServerCertificateHash256: null,
+                    presentedServerCertificate: null,
                     validationErrors: null,
                     chainStatus: null,
                     negotiatedCipherSuite: CipherSuite)

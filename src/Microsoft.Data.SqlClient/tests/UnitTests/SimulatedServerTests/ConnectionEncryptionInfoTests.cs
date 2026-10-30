@@ -450,7 +450,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
         private static void AssertCertificateFieldsNull(SqlConnectionEncryptionInfo info)
         {
-            Assert.Null(info.PresentedServerCertificateHash256);
+            Assert.Null(info.PresentedServerCertificateRawData);
+            Assert.Null(info.GetServerCertificate());
             Assert.Null(info.ValidationErrors);
             Assert.Null(info.ChainStatus);
         }
