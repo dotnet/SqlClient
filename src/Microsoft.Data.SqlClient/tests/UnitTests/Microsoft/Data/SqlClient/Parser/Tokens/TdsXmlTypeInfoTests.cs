@@ -12,12 +12,12 @@ namespace Microsoft.Data.SqlClient.Parser.Tokens
         public void Constructor_InitializesPropertiesWithDefaultValues()
         {
             // Arrange & Act
-            var udtTypeInfo = new TdsXmlTypeInfo();
+            var xmlTypeInfo = new TdsXmlTypeInfo();
 
             // Assert
-            Assert.Null(udtTypeInfo.Database);
-            Assert.Null(udtTypeInfo.Name);
-            Assert.Null(udtTypeInfo.OwningSchema);
+            Assert.Null(xmlTypeInfo.Database);
+            Assert.Null(xmlTypeInfo.Name);
+            Assert.Null(xmlTypeInfo.OwningSchema);
         }
 
         [Fact]
@@ -35,6 +35,7 @@ namespace Microsoft.Data.SqlClient.Parser.Tokens
             var cloned = original.Clone();
 
             // Assert
+            Assert.NotSame(original, cloned);
             Assert.Equal(original.Database, cloned.Database);
             Assert.Equal(original.Name, cloned.Name);
             Assert.Equal(original.OwningSchema, cloned.OwningSchema);
