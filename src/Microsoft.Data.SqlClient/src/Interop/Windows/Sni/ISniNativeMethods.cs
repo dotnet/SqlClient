@@ -34,7 +34,7 @@ namespace Interop.Windows.Sni
 
         void SniGetLastError(out SniError pLastError);
 
-        unsafe uint SniGetServerCertificateHash(SNIHandle pConn, byte* pbHash, uint cbHash, out uint pcbWritten);
+        unsafe uint SniGetServerCertificate(SNIHandle pConn, byte* pbCertificate, uint cbCertificate, out uint pcbCertificate);
 
         uint SniGetPeerAddrStrWrapper(SNIHandle pConn, int bufferSize, StringBuilder addrBuffer, out uint addrLength);
 

@@ -9,36 +9,27 @@ namespace Interop.Windows.Sni
 {
     /// <summary>
     /// Managed mirror of the native <c>SNI_CERT_VALIDATION_INFO</c> structure filled by
-    /// <c>SNIGetCertValidationInfoWrapper</c>. The layout is sequential and blittable: version 1 is
-    /// 64 bytes of <c>DWORD</c> fields and a 32-byte hash buffer; version 2 appends
-    /// <see cref="dwCipherSuite"/> for a total of 68 bytes.
+    /// <c>SNIGetCertValidationInfoWrapper</c>. Version 1 is 32 bytes of sequential, blittable
+    /// <c>DWORD</c> fields.
     /// </summary>
     /// <remarks>
     /// A field is meaningful only when its corresponding <see cref="SniCertInfoAvailability"/> flag is
-    /// set in <see cref="dwAvailable"/>. The caller requests version 2 by passing
-    /// <see cref="cbSize"/> = <see cref="Size"/>; an SNI library that only knows version 1 writes
-    /// <see cref="SizeV1"/> bytes, reports <see cref="dwVersion"/> = 1, and leaves the remaining
-    /// bytes untouched.
+    /// set in <see cref="dwAvailable"/>. The presented certificate itself is not part of this
+    /// structure; when <see cref="SniCertInfoAvailability.Certificate"/> is set it is read with
+    /// <c>SNIGetServerCertificateWrapper</c>. Earlier preview SNI libraries used a larger structure
+    /// and reject a <see cref="cbSize"/> of 32 with <c>ERROR_INVALID_PARAMETER</c>, so no data is
+    /// read from them.
     /// </remarks>
     [StructLayout(LayoutKind.Sequential)]
-    internal unsafe struct SniCertValidationInfo
+    internal struct SniCertValidationInfo
     {
-        /// <summary>Size, in bytes, of the version 1 structure.</summary>
-        internal const int SizeV1 = 64;
-
-        /// <summary>Size, in bytes, of the version 2 structure requested by this client.</summary>
-        internal const int Size = 68;
-
-        /// <summary>Length, in bytes, of a SHA-256 hash.</summary>
-        internal const int HashLength = 32;
+        /// <summary>Size, in bytes, of the structure requested by this client.</summary>
+        internal const int Size = 32;
 
         /// <summary>Minimum structure version understood by this client.</summary>
-        internal const uint MinimumVersion = 1;
+        internal const uint CurrentVersion = 1;
 
-        /// <summary>First structure version that carries <see cref="dwCipherSuite"/>.</summary>
-        internal const uint CipherSuiteVersion = 2;
-
-        /// <summary>In: size of the caller's buffer (at least <see cref="SizeV1"/>). Out: number of bytes written.</summary>
+        /// <summary>In: size of the caller's buffer (at least <see cref="Size"/>). Out: number of bytes written.</summary>
         public uint cbSize;
 
         /// <summary>Out: structure version.</summary>
@@ -59,13 +50,7 @@ namespace Interop.Windows.Sni
         /// <summary>Out: raw <c>CERT_TRUST_STATUS.dwErrorStatus</c>; identical to <c>X509ChainStatusFlags</c>.</summary>
         public uint dwChainStatus;
 
-        /// <summary>Out: number of valid bytes in <see cref="rgbHash"/> (32 or 0).</summary>
-        public uint cbHash;
-
-        /// <summary>Out: SHA-256 hash of the presented leaf certificate's DER encoding.</summary>
-        public fixed byte rgbHash[HashLength];
-
-        /// <summary>Out (version 2): IANA identifier of the negotiated TLS cipher suite.</summary>
+        /// <summary>Out: IANA identifier of the negotiated TLS cipher suite.</summary>
         public uint dwCipherSuite;
 
         /// <summary>
@@ -83,7 +68,7 @@ namespace Interop.Windows.Sni
         None = 0x0,
         AttemptStarted = 0x1,
         Protocol = 0x2,
-        Hash = 0x4,
+        Certificate = 0x4,
         ValidationErrors = 0x8,
         ChainStatus = 0x10,
         HandshakeCompleted = 0x20,

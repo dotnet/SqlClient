@@ -313,43 +313,50 @@ reporting `None`.
 
 ### Native SNI certificate capture
 
-Native SNI (Windows) records the same details through two `sni.dll` exports,
-`SNIGetCertValidationInfoWrapper` and `SNIGetServerCertificateHashWrapper`, that return
-values SNI saved during the client TLS handshake. SqlClient queries them after the
-handshake completes and again when it fails (before the handle closes). Querying performs
-no validation or network work, never changes `SNIGetLastError`, and never throws: any
-error leaves the fields `null` without changing the connection outcome or the thrown
-exception.
+Native SNI (Windows) records the same details through two `sni.dll` exports that return values
+SNI saved during the client TLS handshake: `SNIGetCertValidationInfoWrapper` fills a structure
+with the validation details, and `SNIGetServerCertificateWrapper` copies the presented leaf
+certificate's DER encoding. SqlClient queries them after the handshake completes and again when
+it fails (before the handle closes). Querying performs no validation or network work, never
+changes `SNIGetLastError`, and never throws: any error leaves the fields `null` without changing
+the connection outcome or the thrown exception.
 
-`SNI_CERT_VALIDATION_INFO` is a blittable structure of `DWORD` fields. Version 1 is 64
-bytes; version 2 appends `dwCipherSuite` at offset 64 for a total of 68 bytes. SqlClient
-passes `cbSize = 68` to request version 2. On output, `cbSize` is the number of bytes
-written (64 or 68) and `dwVersion` is 1 or 2; an older SNI writes only the 64-byte version 1
-structure and leaves the trailing bytes untouched. A field is used only when its
-`dwAvailable` flag is set; structures with `cbSize < 64` or `dwVersion < 1` are ignored,
-and trailing data from newer versions is ignored.
+`SNI_CERT_VALIDATION_INFO` is a 32-byte blittable structure of `DWORD` fields (version 1):
+`cbSize` (0), `dwVersion` (4), `dwAvailable` (8), `dwValidationMode` (12), `dwProtocol` (16),
+`dwValidationErrors` (20), `dwChainStatus` (24) and `dwCipherSuite` (28). SqlClient passes
+`cbSize = 32`; SNI writes 32 bytes and sets `cbSize = 32` and `dwVersion = 1`. A field is used
+only when its `dwAvailable` flag is set; structures with `cbSize < 32` or `dwVersion < 1` are
+ignored, and trailing data from newer versions is ignored.
+
+The certificate is read only when the `CERTIFICATE` flag (0x4) is set. SqlClient first queries
+its size with an empty buffer, which returns `ERROR_INSUFFICIENT_BUFFER` (122) and the size, and
+then copies it into a buffer of that size, which must return `ERROR_SUCCESS` with the same size.
+A size of 0 or above 64 KiB (`ServerCertificateCapture.MaxRawCertificateSize`), any other return
+code (such as `ERROR_NOT_FOUND`, 1168), or a size that changed between the calls leaves the
+certificate `null`; the other fields are still reported.
 
 | Field | Native source (`dwAvailable` flag) | Mapping |
 | --- | --- | --- |
-| `PresentedServerCertificateHash256` | `rgbHash` (`HASH`, `cbHash == 32`) | 32 bytes copied |
+| `PresentedServerCertificateRawData` / `GetServerCertificate()` | `SNIGetServerCertificateWrapper` (`CERTIFICATE` 0x4) | DER bytes copied; 1 byte to 64 KiB |
 | `ServerCertificateValidationErrors` | `dwValidationErrors` (`VALIDATION_ERRORS`) | Same bit values; unknown bits preserved |
 | `ServerCertificateChainStatus` | `dwChainStatus` (`CHAIN_STATUS`) | Raw `CERT_TRUST_*` error status equals `X509ChainStatusFlags`; unknown bits preserved |
 | `NegotiatedProtocol` | `dwProtocol` (`PROTOCOL`) | `SP_PROT_*` client bits mapped as for the handshake result; used only when the protocol was not already recorded (for example, after a failed handshake) |
-| `NegotiatedCipherSuiteId` (and `NegotiatedCipherSuite` on .NET) | `dwCipherSuite` (`CIPHER_SUITE` 0x80) | Used only when `dwVersion >= 2` and `cbSize >= 68`; values of 0 or above 0xFFFF are ignored. Adopted through the certificate capture when no suite was recorded for the attempt. Exposed as `int?` `NegotiatedCipherSuiteId` on every target; on .NET, `NegotiatedCipherSuite` returns the same value as `TlsCipherSuite`, keeping identifiers with no named member |
+| `NegotiatedCipherSuiteId` (and `NegotiatedCipherSuite` on .NET) | `dwCipherSuite` (`CIPHER_SUITE` 0x80) | Values of 0 or above 0xFFFF are ignored. Adopted through the certificate capture when no suite was recorded for the attempt. Exposed as `int?` `NegotiatedCipherSuiteId` on every target; on .NET, `NegotiatedCipherSuite` returns the same value as `TlsCipherSuite`, keeping identifiers with no named member |
 
-The cipher suite is captured at the same points as the hash and protocol: after a successful
-handshake, after a deferred-validation failure, and best effort after an
-`InitializeSecurityContext` failure. Native SNI resets it at every handshake, and an observed
-value is kept on failure like the protocol.
+The cipher suite is captured at the same points as the certificate and protocol: after a
+successful handshake, after a deferred-validation failure, and best effort after an
+`InitializeSecurityContext` failure. Native SNI resets all values at every handshake, and an
+observed value is kept on failure like the protocol.
 
 **Older `sni.dll`:** a missing export is detected once (`EntryPointNotFoundException`) and
-cached; the certificate fields and the cipher suite then remain `null`. If only the hash
-export exists, the hash is still captured. A library that returns only version 1 reports the
-certificate fields but no cipher suite.
+cached. Without `SNIGetCertValidationInfoWrapper`, the certificate fields and the cipher suite
+remain `null`, and the certificate isn't read. Without `SNIGetServerCertificateWrapper`, only
+the certificate is `null`. Earlier preview libraries that used a larger structure reject
+`cbSize = 32` with `ERROR_INVALID_PARAMETER`, so they report nothing.
 
 **Deferred validation:** native SNI always defers server certificate validation until after
 Schannel has the presented certificate. There is no opt-in or opt-out switch. Deferral
-records the hash, validation errors, and chain status in every validation mode, including
+records the certificate, validation errors, and chain status in every validation mode, including
 Schannel automatic validation (`Encrypt` without `HostNameInCertificate`), on both success
 and failure. A certificate that fails the chain and doesn't match the host name reports
 `HostNameMismatch | ChainError`, the same as Managed SNI. Deferral doesn't change whether a
@@ -357,12 +364,12 @@ certificate is accepted or rejected, or the resulting error codes. Fields are ne
 from HRESULTs or messages; a field whose availability flag isn't set stays `null`.
 
 **SNI dependency:** this behavior requires a `sni.dll` built with the certificate capture
-exports, deferred validation (SNI commit `b9d842c`), and the host-name verdict fix (SNI
-commit `55d318d`); the cipher suite also requires version 2 of the structure (SNI commit
-`4e8d29b3`). These are introduced by an upcoming native SNI package. Until it ships,
-or with any older `sni.dll`, Native SNI reports no certificate details and the fields
-remain `null`, as described for older `sni.dll` versions above.
-
+exports (`SNIGetCertValidationInfoWrapper` with the 32-byte structure and
+`SNIGetServerCertificateWrapper`), deferred validation (SNI commit `b9d842c`), and the
+host-name verdict fix (SNI commit `55d318d`). These are introduced by an upcoming native SNI
+package (SNI PR 8573). Until it ships, or with any older `sni.dll`, Native SNI reports no
+certificate details and the fields remain `null`, as described for older `sni.dll` versions
+above.
 **Cipher suite (Managed SNI).** Managed SNI reads `(int)SslStream.NegotiatedCipherSuite` at the
 same two points as the protocol, on both the TCP and named-pipe handles (MARS passes through to
 the physical handle):

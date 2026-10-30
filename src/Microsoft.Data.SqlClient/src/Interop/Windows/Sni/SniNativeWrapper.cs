@@ -382,15 +382,17 @@ namespace Microsoft.Data.SqlClient
             s_nativeMethods.SniGetCertValidationInfo(pConn, ref pInfo);
 
         /// <summary>
-        /// Queries native SNI for the SHA-256 hash of the server certificate presented during the most
-        /// recent client TLS handshake on <paramref name="pConn"/>.
+        /// Copies the DER encoding of the server certificate presented during the most recent client
+        /// TLS handshake on <paramref name="pConn"/> into <paramref name="certificate"/>. Pass an empty
+        /// buffer to query the size, which is returned in <paramref name="certificateSize"/>.
         /// </summary>
         /// <exception cref="EntryPointNotFoundException">The loaded SNI library does not export the function.</exception>
-        internal static unsafe uint SniGetServerCertificateHash(SNIHandle pConn, Span<byte> hash, out uint bytesWritten)
+        internal static unsafe uint SniGetServerCertificate(SNIHandle pConn, Span<byte> certificate, out uint certificateSize)
         {
-            fixed (byte* pHash = hash)
+            // An empty span pins to a null pointer, which native SNI treats as a size query.
+            fixed (byte* pCertificate = certificate)
             {
-                return s_nativeMethods.SniGetServerCertificateHash(pConn, pHash, (uint)hash.Length, out bytesWritten);
+                return s_nativeMethods.SniGetServerCertificate(pConn, pCertificate, (uint)certificate.Length, out certificateSize);
             }
         }
 

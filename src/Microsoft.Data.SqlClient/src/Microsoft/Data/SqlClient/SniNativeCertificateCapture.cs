@@ -21,9 +21,9 @@ namespace Microsoft.Data.SqlClient
     /// <remarks>
     /// <para>
     /// The native exports used here (<c>SNIGetCertValidationInfoWrapper</c> and
-    /// <c>SNIGetServerCertificateHashWrapper</c>) are not present in older SNI libraries. The first
-    /// call that finds an export missing records that fact, and subsequent captures skip it, leaving
-    /// the certificate fields unavailable. Connections are never affected.
+    /// <c>SNIGetServerCertificateWrapper</c>) are not present in older SNI libraries. The first call
+    /// that finds an export missing records that fact, and subsequent captures skip it, leaving the
+    /// corresponding fields unavailable. Connections are never affected.
     /// </para>
     /// <para>
     /// Capture is diagnostic only: it never throws, never changes the connection outcome or the
@@ -41,26 +41,29 @@ namespace Microsoft.Data.SqlClient
         /// <summary>Queries <c>SNIGetCertValidationInfoWrapper</c>.</summary>
         internal delegate uint CertValidationInfoQuery(SNIHandle? handle, ref SniCertValidationInfo info);
 
-        /// <summary>Queries <c>SNIGetServerCertificateHashWrapper</c>.</summary>
-        internal delegate uint ServerCertificateHashQuery(SNIHandle? handle, Span<byte> hash, out uint bytesWritten);
+        /// <summary>
+        /// Queries <c>SNIGetServerCertificateWrapper</c>. An empty <paramref name="certificate"/> buffer
+        /// requests only the size.
+        /// </summary>
+        internal delegate uint ServerCertificateQuery(SNIHandle? handle, Span<byte> certificate, out uint certificateSize);
 
         /// <summary>
         /// The instance used by <see cref="Parser.TdsParserStateObjectNative"/>, bound to the loaded SNI library.
         /// </summary>
         internal static SniNativeCertificateCapture Default { get; } = new SniNativeCertificateCapture(
             static (SNIHandle? handle, ref SniCertValidationInfo info) => SniNativeWrapper.SniGetCertValidationInfo(handle!, ref info),
-            static (SNIHandle? handle, Span<byte> hash, out uint bytesWritten) => SniNativeWrapper.SniGetServerCertificateHash(handle!, hash, out bytesWritten));
+            static (SNIHandle? handle, Span<byte> certificate, out uint certificateSize) => SniNativeWrapper.SniGetServerCertificate(handle!, certificate, out certificateSize));
 
         private readonly CertValidationInfoQuery _validationInfoQuery;
-        private readonly ServerCertificateHashQuery _hashQuery;
+        private readonly ServerCertificateQuery _certificateQuery;
 
         private volatile bool _validationInfoUnavailable;
-        private volatile bool _hashUnavailable;
+        private volatile bool _certificateUnavailable;
 
-        internal SniNativeCertificateCapture(CertValidationInfoQuery validationInfoQuery, ServerCertificateHashQuery hashQuery)
+        internal SniNativeCertificateCapture(CertValidationInfoQuery validationInfoQuery, ServerCertificateQuery certificateQuery)
         {
             _validationInfoQuery = validationInfoQuery;
-            _hashQuery = hashQuery;
+            _certificateQuery = certificateQuery;
         }
 
         /// <summary>
@@ -70,10 +73,10 @@ namespace Microsoft.Data.SqlClient
         internal bool IsValidationInfoUnavailable => _validationInfoUnavailable;
 
         /// <summary>
-        /// Gets a value indicating whether <c>SNIGetServerCertificateHashWrapper</c> was found to be
+        /// Gets a value indicating whether <c>SNIGetServerCertificateWrapper</c> was found to be
         /// missing from the loaded SNI library.
         /// </summary>
-        internal bool IsHashUnavailable => _hashUnavailable;
+        internal bool IsCertificateUnavailable => _certificateUnavailable;
 
         /// <summary>
         /// Reads the certificate details native SNI recorded for <paramref name="handle"/>.
@@ -84,32 +87,36 @@ namespace Microsoft.Data.SqlClient
         /// </returns>
         internal ServerCertificateCapture? TryCapture(SNIHandle? handle)
         {
+            if (_validationInfoUnavailable)
+            {
+                return null;
+            }
+
             try
             {
-                if (!_validationInfoUnavailable)
+                SniCertValidationInfo info = SniCertValidationInfo.Create();
+                uint result;
+                try
                 {
-                    SniCertValidationInfo info = SniCertValidationInfo.Create();
-                    uint result;
-                    try
-                    {
-                        result = _validationInfoQuery(handle, ref info);
-                    }
-                    catch (EntryPointNotFoundException)
-                    {
-                        _validationInfoUnavailable = true;
-                        SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SniNativeCertificateCapture.TryCapture|ADV> SNIGetCertValidationInfoWrapper is not exported by the loaded SNI library; certificate details are unavailable.");
-                        result = uint.MaxValue;
-                    }
-
-                    if (!_validationInfoUnavailable)
-                    {
-                        return result == ERROR_SUCCESS ? Map(info) : null;
-                    }
+                    result = _validationInfoQuery(handle, ref info);
+                }
+                catch (EntryPointNotFoundException)
+                {
+                    _validationInfoUnavailable = true;
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SniNativeCertificateCapture.TryCapture|ADV> SNIGetCertValidationInfoWrapper is not exported by the loaded SNI library; certificate details are unavailable.");
+                    return null;
                 }
 
-                // The structured export is missing; a library exporting only the hash function can
-                // still identify the presented certificate.
-                return TryCaptureHashOnly(handle);
+                if (result != ERROR_SUCCESS || !IsValid(info))
+                {
+                    return null;
+                }
+
+                byte[]? rawCertificate = (info.dwAvailable & (uint)SniCertInfoAvailability.Certificate) != 0
+                    ? TryReadCertificate(handle)
+                    : null;
+
+                return Map(info, rawCertificate);
             }
             catch (Exception e)
             {
@@ -118,55 +125,72 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private ServerCertificateCapture? TryCaptureHashOnly(SNIHandle? handle)
+        /// <summary>
+        /// Reads the presented certificate with a size query followed by a copy. Any failure leaves
+        /// the certificate unavailable without affecting the other captured fields.
+        /// </summary>
+        private byte[]? TryReadCertificate(SNIHandle? handle)
         {
-            if (_hashUnavailable)
+            if (_certificateUnavailable)
             {
                 return null;
             }
 
-            byte[] hash = new byte[SniCertValidationInfo.HashLength];
-            uint result;
-            uint written;
             try
             {
-                result = _hashQuery(handle, hash, out written);
+                uint result = _certificateQuery(handle, Span<byte>.Empty, out uint size);
+                if (result != ERROR_INSUFFICIENT_BUFFER || size == 0 || size > ServerCertificateCapture.MaxRawCertificateSize)
+                {
+                    return null;
+                }
+
+                byte[] certificate = new byte[size];
+                result = _certificateQuery(handle, certificate, out uint written);
+                return result == ERROR_SUCCESS && written == size ? certificate : null;
             }
             catch (EntryPointNotFoundException)
             {
-                _hashUnavailable = true;
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SniNativeCertificateCapture.TryCapture|ADV> SNIGetServerCertificateHashWrapper is not exported by the loaded SNI library; certificate hash is unavailable.");
+                _certificateUnavailable = true;
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SniNativeCertificateCapture.TryCapture|ADV> SNIGetServerCertificateWrapper is not exported by the loaded SNI library; the presented certificate is unavailable.");
                 return null;
             }
-
-            return result == ERROR_SUCCESS && written == SniCertValidationInfo.HashLength
-                ? new ServerCertificateCapture(hash, validationErrors: null, chainStatus: null)
-                : null;
+            catch (Exception e)
+            {
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SniNativeCertificateCapture.TryCapture|ADV> Presented certificate unavailable; read failed with {0}.", e.GetType().Name);
+                return null;
+            }
         }
 
+        private static bool IsValid(SniCertValidationInfo info) =>
+            info.cbSize >= SniCertValidationInfo.Size && info.dwVersion >= SniCertValidationInfo.CurrentVersion;
+
         /// <summary>
-        /// Maps a native <see cref="SniCertValidationInfo"/> to a <see cref="ServerCertificateCapture"/>.
-        /// Only fields whose availability flag is set are populated; all others remain
-        /// <see langword="null"/>.
+        /// Maps a native <see cref="SniCertValidationInfo"/> and the separately read presented
+        /// certificate to a <see cref="ServerCertificateCapture"/>. Only fields whose availability
+        /// flag is set are populated; all others remain <see langword="null"/>.
         /// </summary>
+        /// <param name="info">The structure returned by native SNI.</param>
+        /// <param name="rawCertificate">
+        /// The DER encoding read with <c>SNIGetServerCertificateWrapper</c>, or <see langword="null"/>.
+        /// Ignored unless <see cref="SniCertInfoAvailability.Certificate"/> is set.
+        /// </param>
         /// <returns>
         /// The mapped details, or <see langword="null"/> if the structure is malformed or reports no
         /// usable field.
         /// </returns>
-        internal static unsafe ServerCertificateCapture? Map(SniCertValidationInfo info)
+        internal static ServerCertificateCapture? Map(SniCertValidationInfo info, byte[]? rawCertificate = null)
         {
-            if (info.cbSize < SniCertValidationInfo.SizeV1 || info.dwVersion < SniCertValidationInfo.MinimumVersion)
+            if (!IsValid(info))
             {
                 return null;
             }
 
             SniCertInfoAvailability available = (SniCertInfoAvailability)info.dwAvailable;
 
-            byte[]? hash = null;
-            if ((available & SniCertInfoAvailability.Hash) != 0 && info.cbHash == SniCertValidationInfo.HashLength)
-            {
-                hash = new ReadOnlySpan<byte>(info.rgbHash, SniCertValidationInfo.HashLength).ToArray();
-            }
+            byte[]? certificate = (available & SniCertInfoAvailability.Certificate) != 0 &&
+                rawCertificate is { Length: > 0 and <= ServerCertificateCapture.MaxRawCertificateSize }
+                ? rawCertificate
+                : null;
 
             // Bit values are defined to be identical to the managed enums; unknown bits are preserved.
             SqlServerCertificateValidationErrors? validationErrors = (available & SniCertInfoAvailability.ValidationErrors) != 0
@@ -187,24 +211,20 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            // The cipher suite exists only in version 2 responses; a version 1 library leaves those
-            // bytes untouched, so they are ignored unless the library reports writing them.
             int? cipherSuite = null;
-            if (info.dwVersion >= SniCertValidationInfo.CipherSuiteVersion &&
-                info.cbSize >= SniCertValidationInfo.Size &&
-                (available & SniCertInfoAvailability.CipherSuite) != 0 &&
+            if ((available & SniCertInfoAvailability.CipherSuite) != 0 &&
                 info.dwCipherSuite != 0 &&
                 info.dwCipherSuite <= ushort.MaxValue)
             {
                 cipherSuite = (int)info.dwCipherSuite;
             }
 
-            if (hash is null && validationErrors is null && chainStatus is null && protocol is null && cipherSuite is null)
+            if (certificate is null && validationErrors is null && chainStatus is null && protocol is null && cipherSuite is null)
             {
                 return null;
             }
 
-            return new ServerCertificateCapture(hash, validationErrors, chainStatus, protocol, cipherSuite);
+            return new ServerCertificateCapture(certificate, validationErrors, chainStatus, protocol, cipherSuite);
         }
     }
 }
