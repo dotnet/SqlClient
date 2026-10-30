@@ -52,7 +52,8 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(SampleCipherSuite, snapshot.NegotiatedCipherSuiteId);
             Assert.Equal(SqlConnectionEncryptionMode.Full, snapshot.NegotiatedEncryptionMode);
             Assert.Equal(SslProtocols.Tls12, snapshot.NegotiatedEncryptionProtocol);
-            Assert.Null(snapshot.PresentedServerCertificateHash256);
+            Assert.Null(snapshot.PresentedServerCertificateRawData);
+            Assert.Null(snapshot.GetServerCertificate());
             Assert.Null(snapshot.ValidationErrors);
             Assert.Null(snapshot.ChainStatus);
         }
