@@ -21,8 +21,8 @@ namespace Microsoft.Data.SqlClient.UnitTests
                 IsEncrypted = encrypted,
                 BaseTypeInfo = encrypted ? new TdsTypeInfo { DbType = SqlDbType.Int } : null,
                 CipherMetadata = encrypted ? new SqlCipherMetadata(new SqlTceCipherInfoEntry(), 0, 2, null, 1, 1) : null,
-                Udt = new TdsUdtTypeInfo { TypeName = "TestType" },
-                XmlSchemaCollection = new SqlMetaDataXmlSchemaCollection { Name = "TestSchema" }
+                UdtTypeInfo = new TdsUdtTypeInfo { TypeName = "TestType" },
+                XmlTypeInfo = new TdsXmlTypeInfo { Name = "TestSchema" }
             };
 
             TdsColumnMetadata clone = (TdsColumnMetadata)original.Clone();
@@ -32,10 +32,10 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.False(clone.IsEncrypted);
             Assert.Null(clone.BaseTypeInfo);
             Assert.Null(clone.CipherMetadata);
-            Assert.NotSame(original.Udt, clone.Udt);
-            Assert.Equal(original.Udt.TypeName, clone.Udt.TypeName);
-            Assert.NotSame(original.XmlSchemaCollection, clone.XmlSchemaCollection);
-            Assert.Equal(original.XmlSchemaCollection.Name, clone.XmlSchemaCollection.Name);
+            Assert.NotSame(original.UdtTypeInfo, clone.UdtTypeInfo);
+            Assert.Equal(original.UdtTypeInfo.TypeName, clone.UdtTypeInfo.TypeName);
+            Assert.NotSame(original.XmlTypeInfo, clone.XmlTypeInfo);
+            Assert.Equal(original.XmlTypeInfo.Name, clone.XmlTypeInfo.Name);
         }
 
         [Theory]

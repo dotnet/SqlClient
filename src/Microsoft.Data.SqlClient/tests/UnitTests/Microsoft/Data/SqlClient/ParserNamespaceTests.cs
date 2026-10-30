@@ -36,7 +36,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [InlineData("Parser.Tokens.TdsReturnValueToken")]
         [InlineData("Parser.Tokens.TdsTypeInfo")]
         [InlineData("Parser.Tokens.TdsUdtTypeInfo")]
-        [InlineData("Parser.Tokens.SqlMetaDataXmlSchemaCollection")]
+        [InlineData("Parser.Tokens.TdsXmlTypeInfo")]
         [InlineData("Parser.Tokens.TdsColumnMetadata")]
         [InlineData("Parser.Tokens.TdsColumnMetadataToken")]
         [InlineData("Parser.Tokens.TdsAltMetadataCollection")]
