@@ -1314,12 +1314,12 @@ public sealed class SqlConnectionEncryptionInfo
     [System.CLSCompliantAttribute(false)]
     public System.Net.Security.TlsCipherSuite? NegotiatedCipherSuite { get { throw null; } }
 #endif
-    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/PresentedServerCertificateHash256/*'/>
-    public System.ReadOnlyMemory<byte>? PresentedServerCertificateHash256 { get { throw null; } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/ValidationErrors/*'/>
     public Microsoft.Data.SqlClient.SqlServerCertificateValidationErrors? ValidationErrors { get { throw null; } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/ChainStatus/*'/>
     public System.Security.Cryptography.X509Certificates.X509ChainStatusFlags? ChainStatus { get { throw null; } }
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/GetServerCertificate/*'/>
+    public System.Security.Cryptography.X509Certificates.X509Certificate2 GetServerCertificate() { throw null; }
 }
 
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionMode.xml' path='docs/members[@name="SqlConnectionEncryptionMode"]/SqlConnectionEncryptionMode/*'/>

@@ -21,8 +21,8 @@ Today an application can only see the encryption it *requested* (`Encrypt`,
 what was actually negotiated, and when certificate validation fails the only information
 available is the localized exception message.
 
-The proposal brings the negotiated encryption mode, TLS version, a server-certificate
-identifier, and structured validation results into one model that is available for both
+The proposal brings the negotiated encryption mode, TLS version, the server-presented
+certificate, and structured validation results into one model that is available for both
 successful and failed connection attempts. Tools such as SSMS can then show connection
 security properties and build actionable failure messages from the driver's own
 observations, without a second handshake.
@@ -31,9 +31,9 @@ observations, without a second handshake.
 
 | Scenario | Proposed capability | Value |
 | --- | --- | --- |
-| Show security information for an open connection | Read the negotiated encryption mode, TLS version, and presented server-certificate hash from `connection.EncryptionInfo`. | Display the actual negotiated values. |
-| Explain a failed certificate validation | Read typed validation errors, applicable chain-status flags, and the certificate hash from `exception.EncryptionInfo`, when captured. | Build user-facing messages from structured results rather than localized exception text. |
-| Identify the certificate involved in the attempt | Use a SHA-256 hash captured from that attempt's presented certificate. | Correlate the reported result with the certificate observed on that same connection attempt. |
+| Show security information for an open connection | Read the negotiated encryption mode, TLS version, and presented server certificate from `connection.EncryptionInfo`. | Display the actual negotiated values. |
+| Explain a failed certificate validation | Read typed validation errors, applicable chain-status flags, and the presented certificate from `exception.EncryptionInfo`, when captured. | Build user-facing messages from structured results rather than localized exception text. |
+| Identify the certificate involved in the attempt | Call `GetServerCertificate()` to get the leaf certificate captured from that attempt. | Show subject, issuer, validity, SANs, and thumbprint of the certificate observed on that same connection attempt. |
 
 ## 3. Proposed API
 
@@ -48,9 +48,12 @@ applicable.
 | `NegotiatedEncryptionProtocol` | `SslProtocols?` | Negotiated TLS version, such as TLS 1.2 or TLS 1.3. |
 | `NegotiatedCipherSuiteId` | `int?` on every target framework; CLS-compliant | IANA TLS cipher suite identifier selected by the server, such as `0x1302` (`TLS_AES_256_GCM_SHA384`). *Needs API review.* |
 | `NegotiatedCipherSuite` | `TlsCipherSuite?`; .NET only; not CLS-compliant | The same value as `NegotiatedCipherSuiteId`, typed as `System.Net.Security.TlsCipherSuite`. *Needs API review.* |
-| `PresentedServerCertificateHash256` | `ReadOnlyMemory<byte>?` | SHA-256 of the complete DER-encoded server-presented leaf certificate: 32 bytes when available. Not a public-key-only hash, and not the caller's configured certificate. |
 | `ValidationErrors` | `SqlServerCertificateValidationErrors?` | Effective certificate-validation result under the connection's configured rules. |
 | `ChainStatus` | `X509ChainStatusFlags?` | Applicable chain-validation flags, such as `UntrustedRoot`, `NotTimeValid`, or `Revoked`. |
+
+| Method on `SqlConnectionEncryptionInfo` | Return type | Meaning |
+| --- | --- | --- |
+| `GetServerCertificate()` | `X509Certificate2?` | The leaf certificate the server presented, as a new instance on every call, or `null` when none was captured. Not the caller's configured certificate. |
 
 ```csharp
 using System;
@@ -82,9 +85,11 @@ namespace Microsoft.Data.SqlClient
         [CLSCompliant(false)]
         public System.Net.Security.TlsCipherSuite? NegotiatedCipherSuite { get; }
 #endif
-        public ReadOnlyMemory<byte>? PresentedServerCertificateHash256 { get; }
         public SqlServerCertificateValidationErrors? ValidationErrors { get; }
         public X509ChainStatusFlags? ChainStatus { get; }
+
+        // New instance on every call; the caller owns and disposes it.
+        public X509Certificate2? GetServerCertificate();
     }
 
     public enum SqlConnectionEncryptionMode
@@ -150,12 +155,39 @@ registry for the suite the server selected in its ServerHello, for example `0x13
 - **Out of scope:** the client's offered suite list, CAPI2-level chain detail, and
   key-exchange group or post-quantum information.
 
-### Certificate hash
+### Server certificate
 
-`PresentedServerCertificateHash256` is computed over the complete DER encoding of the
-certificate the server presented. It identifies the certificate; validation results are
-reported separately through `ValidationErrors` and `ChainStatus`. The snapshot keeps a
-private copy of the bytes and exposes them as read-only memory.
+Following the threat model review, the snapshot exposes the full certificate the server
+presented instead of a hash of it. A hash only lets a caller correlate against a
+certificate it already has; the certificate itself lets tools show subject, issuer,
+validity, subject alternative names, and any thumbprint the caller wants to compute.
+
+- **Leaf only, public data only:** the certificate is what the server sent in the TLS
+  handshake. The chain is not included, and the certificate never has a private key.
+- **Captured on success and on failure:** the certificate is captured whenever the server
+  presents one, including with `TrustServerCertificate=true` and when validation fails
+  (read it from `SqlException.EncryptionInfo`).
+- **Diagnostics only:** returning a certificate is not a trust decision. Validation results
+  are reported separately through `ValidationErrors` and `ChainStatus`, and callers must
+  not use the certificate to override or bypass the driver's validation.
+- **Storage:** the snapshot keeps a private copy of the DER bytes. Each call parses them
+  with `X509CertificateLoader.LoadCertificate` (from `Microsoft.Bcl.Cryptography` on .NET
+  Framework). Bytes that cannot be parsed are reported as `null`; the method does not
+  throw. The bytes are never written to `ToString()`, exception messages, traces, or
+  serialization.
+- **Capture limit:** certificates larger than 64 KiB (DER) are not captured; the method
+  returns `null` and the connection is unaffected.
+
+#### Why a method rather than a property
+
+- **Ownership:** `X509Certificate2` is disposable. Returning a new instance on each call
+  makes the caller the clear owner. A shared instance would leave it unclear who disposes
+  it, and disposing it would break other readers of the same snapshot.
+- **Immutability:** on .NET Framework, `X509Certificate2` is mutable (`Import`, `Reset`).
+  A shared instance would let one caller change what others see; a fresh instance per
+  call keeps the snapshot immutable.
+- **Cost:** each call parses the certificate. .NET design guidelines advise against
+  hiding that kind of work, or returning a new object each time, behind a property getter.
 
 ### Certificate-validation outcomes
 
@@ -170,8 +202,7 @@ private copy of the bytes and exposes them as read-only memory.
 | `PinnedCertificateMismatch = 8` | The presented certificate did not match the certificate configured through `ServerCertificate`. |
 
 A pin mismatch is distinct from a chain error: the existing pin check compares
-certificate bytes, and this proposal does not change that comparison to use the
-diagnostic hash. A missing or unreadable configured file is not a completed pin
+certificate bytes, and this proposal does not change that comparison. A missing or unreadable configured file is not a completed pin
 comparison and is not reported as a mismatch.
 
 ## 4. Behavior
@@ -205,8 +236,8 @@ comparison and is not reported as a mismatch.
 
 ## 5. Scope
 
-The API reports negotiated encryption, TLS protocol, the server-selected cipher suite, the server-presented certificate's
-SHA-256 hash, and certificate-validation results for successful and failed connection
+The API reports negotiated encryption, TLS protocol, the server-selected cipher suite, the
+server-presented leaf certificate, and certificate-validation results for successful and failed connection
 attempts.
 
 Intended coverage includes the supported .NET Framework and .NET targets, Managed and
@@ -220,5 +251,5 @@ The feature is delivered as a stack of pull requests:
 | --- | --- |
 | **A** | Public API surface only. Both getters return an empty snapshot. |
 | **B** | Capture the negotiated mode, TLS protocol and cipher suite, and attach the snapshot to `SqlException` when opening fails. |
-| **C** | Capture certificate details (hash, validation errors, and chain status) in Managed SNI, on both successful and failed attempts. |
+| **C** | Capture certificate details (presented certificate, validation errors, and chain status) in Managed SNI, on both successful and failed attempts. |
 | **D** | Native SNI interop for the certificate details and cipher suite. |

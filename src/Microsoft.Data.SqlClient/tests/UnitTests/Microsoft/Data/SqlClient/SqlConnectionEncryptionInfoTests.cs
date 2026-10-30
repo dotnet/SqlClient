@@ -19,23 +19,22 @@ namespace Microsoft.Data.SqlClient
     public class SqlConnectionEncryptionInfoTests
     {
         private const string ServerVersion = "16.00.1000";
-        private const string SampleHashHex = "000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F";
+
+        // Public-only, self-signed ECDSA P-256 test certificate (CN=encryption-info.test). It has
+        // no private key and is used only to verify DER round-tripping.
+        private const string SampleCertificateBase64 =
+            "MIIBNDCB2qADAgECAggohG/gEdxs1TAKBggqhkjOPQQDAjAfMR0wGwYDVQQDExRlbmNyeXB0aW9uLWluZm8u" +
+            "dGVzdDAgFw0yNjAxMDEwMDAwMDBaGA8yMTI2MDEwMTAwMDAwMFowHzEdMBsGA1UEAxMUZW5jcnlwdGlvbi1p" +
+            "bmZvLnRlc3QwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAATKtC9pE1F5JC1ciq1W/ANr5OBPgXrlvMpmPXMr" +
+            "ectPyl630QJbCUT640lSLXUfdF3/8iTglUTiCyxg7SNUztJKMAoGCCqGSM49BAMCA0kAMEYCIQDoHA2MzlvfTWHm" +
+            "n8Iioi8sMoKAnV/DcSrw50GwJf+fGAIhAPCezMdXBEwwpf4MU2fkmifrj36YES+JJM49BDRItkIl";
+        private const string SampleCertificateThumbprint = "60820F552FF4F3CAAEC10B18EB468A16F01D7313";
+        private const string SampleCertificateSubject = "CN=encryption-info.test";
 
         // IANA identifier for TLS_AES_256_GCM_SHA384.
         private const int SampleCipherSuite = 0x1302;
 
-        private static byte[] CreateSampleHash()
-        {
-            byte[] hash = new byte[SqlConnectionEncryptionInfo.CertificateHash256Length];
-            for (int i = 0; i < hash.Length; i++)
-            {
-                hash[i] = (byte)i;
-            }
-            return hash;
-        }
-
-        private static string ToHex(ReadOnlyMemory<byte> bytes) =>
-            BitConverter.ToString(bytes.ToArray()).Replace("-", string.Empty);
+        private static byte[] CreateSampleCertificate() => Convert.FromBase64String(SampleCertificateBase64);
 
         #region Empty snapshot
 
@@ -259,8 +258,10 @@ namespace Microsoft.Data.SqlClient
             stream.Position = 0;
             string payload = new StreamReader(stream).ReadToEnd();
             Assert.DoesNotContain(nameof(SqlException.EncryptionInfo), payload);
-            Assert.DoesNotContain(SampleHashHex, payload, StringComparison.OrdinalIgnoreCase);
-            Assert.DoesNotContain(Convert.ToBase64String(CreateSampleHash()), payload);
+            Assert.DoesNotContain(
+                SampleCertificateThumbprint, payload, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain(SampleCertificateBase64.Substring(0, 24), payload);
+            Assert.DoesNotContain("encryption-info.test", payload);
 
             stream.Position = 0;
             SqlException? roundTripped = serializer.ReadObject(stream) as SqlException;
@@ -306,10 +307,11 @@ namespace Microsoft.Data.SqlClient
 
             Assert.Equal(withoutInfo.Message, withInfo.Message);
             Assert.Equal(withoutInfo.ToString(), withInfo.ToString());
-            Assert.DoesNotContain(SampleHashHex, withInfo.ToString(), StringComparison.OrdinalIgnoreCase);
-            Assert.DoesNotContain(SampleHashHex, withInfo.Message, StringComparison.OrdinalIgnoreCase);
-            Assert.DoesNotContain(Convert.ToBase64String(CreateSampleHash()), withInfo.ToString());
-            Assert.DoesNotContain(nameof(SqlConnectionEncryptionInfo.PresentedServerCertificateHash256), withInfo.ToString());
+            Assert.DoesNotContain(SampleCertificateThumbprint, withInfo.ToString(), StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain(SampleCertificateThumbprint, withInfo.Message, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain(SampleCertificateBase64.Substring(0, 24), withInfo.ToString());
+            Assert.DoesNotContain("encryption-info.test", withInfo.ToString());
+            Assert.DoesNotContain(nameof(SqlConnectionEncryptionInfo.GetServerCertificate), withInfo.ToString());
             Assert.DoesNotContain(nameof(SqlConnectionEncryptionMode.Strict), withInfo.Message);
         }
 
@@ -328,8 +330,13 @@ namespace Microsoft.Data.SqlClient
             Assert.Equal(SqlConnectionEncryptionMode.Strict, info.NegotiatedEncryptionMode);
             Assert.Equal(SslProtocols.Tls12, info.NegotiatedEncryptionProtocol);
             Assert.Equal(SampleCipherSuite, info.NegotiatedCipherSuiteId);
-            Assert.NotNull(info.PresentedServerCertificateHash256);
-            Assert.Equal(SampleHashHex, ToHex(info.PresentedServerCertificateHash256!.Value));
+            Assert.NotNull(info.PresentedServerCertificateRawData);
+            Assert.Equal(CreateSampleCertificate(), info.PresentedServerCertificateRawData!.Value.ToArray());
+            using (X509Certificate2? certificate = info.GetServerCertificate())
+            {
+                Assert.NotNull(certificate);
+                Assert.Equal(SampleCertificateThumbprint, certificate!.Thumbprint);
+            }
             Assert.Equal(SqlServerCertificateValidationErrors.HostNameMismatch, info.ValidationErrors);
             Assert.Equal(X509ChainStatusFlags.UntrustedRoot, info.ChainStatus);
             Assert.False(info.IsEmpty);
@@ -350,7 +357,7 @@ namespace Microsoft.Data.SqlClient
             SqlConnectionEncryptionInfo info = new(
                 fieldIndex == 0 ? SqlConnectionEncryptionMode.None : null,
                 fieldIndex == 1 ? SslProtocols.None : null,
-                fieldIndex == 2 ? new byte[SqlConnectionEncryptionInfo.CertificateHash256Length] : null,
+                fieldIndex == 2 ? CreateSampleCertificate() : null,
                 fieldIndex == 3 ? SqlServerCertificateValidationErrors.None : null,
                 fieldIndex == 4 ? X509ChainStatusFlags.NoError : null,
                 fieldIndex == 5 ? 0 : null);
@@ -367,7 +374,7 @@ namespace Microsoft.Data.SqlClient
             SqlConnectionEncryptionInfo info = new(
                 SqlConnectionEncryptionMode.None,
                 SslProtocols.None,
-                presentedServerCertificateHash256: null,
+                presentedServerCertificate: null,
                 SqlServerCertificateValidationErrors.None,
                 X509ChainStatusFlags.NoError);
 
@@ -379,7 +386,8 @@ namespace Microsoft.Data.SqlClient
             Assert.Equal(SqlServerCertificateValidationErrors.None, info.ValidationErrors);
             Assert.True(info.ChainStatus.HasValue);
             Assert.Equal(X509ChainStatusFlags.NoError, info.ChainStatus);
-            Assert.Null(info.PresentedServerCertificateHash256);
+            Assert.Null(info.PresentedServerCertificateRawData);
+            Assert.Null(info.GetServerCertificate());
         }
 
         /// <summary>
@@ -578,45 +586,69 @@ namespace Microsoft.Data.SqlClient
             Assert.DoesNotContain("TLS_AES_256_GCM_SHA384", ex.ToString());
         }
 
+        #endregion
+
+        #region Server certificate
+
         /// <summary>
-        /// Verifies that an all-zero 32-byte hash is exposed and is distinct from null.
+        /// Verifies that the certificate is exposed as a public method returning
+        /// <see cref="X509Certificate2"/> and that no hash property remains.
         /// </summary>
         [Fact]
-        public void PresentedServerCertificateHash256_ZeroBytes_DistinctFromNull()
+        public void GetServerCertificate_PublicShape()
         {
-            SqlConnectionEncryptionInfo info = new(null, null, new byte[32], null, null);
+            Type type = typeof(SqlConnectionEncryptionInfo);
+            System.Reflection.MethodInfo? method = type.GetMethod(
+                nameof(SqlConnectionEncryptionInfo.GetServerCertificate),
+                Type.EmptyTypes);
 
-            Assert.True(info.PresentedServerCertificateHash256.HasValue);
-            Assert.Equal(32, info.PresentedServerCertificateHash256!.Value.Length);
-            Assert.All(info.PresentedServerCertificateHash256.Value.ToArray(), b => Assert.Equal(0, b));
+            Assert.NotNull(method);
+            Assert.True(method!.IsPublic);
+            Assert.Equal(typeof(X509Certificate2), method.ReturnType);
+            Assert.Null(type.GetProperty("PresentedServerCertificateHash256"));
+            Assert.Null(type.GetProperty("ServerCertificate"));
+            Assert.Null(type.GetProperty("PresentedServerCertificateRawData"));
         }
 
         /// <summary>
-        /// Verifies that a null hash is reported as unavailable.
+        /// Verifies that the returned certificate matches the captured DER bytes.
         /// </summary>
         [Fact]
-        public void PresentedServerCertificateHash256_Null_IsUnavailable()
+        public void GetServerCertificate_RoundTripsCertificate()
         {
-            SqlConnectionEncryptionInfo info = new(SqlConnectionEncryptionMode.Full, null, null, null, null);
+            byte[] der = CreateSampleCertificate();
+            SqlConnectionEncryptionInfo info = new(null, null, der, null, null);
 
-            Assert.Null(info.PresentedServerCertificateHash256);
+            using X509Certificate2? certificate = info.GetServerCertificate();
+
+            Assert.NotNull(certificate);
+            Assert.Equal(SampleCertificateThumbprint, certificate!.Thumbprint);
+            Assert.Equal(SampleCertificateSubject, certificate.Subject);
+            Assert.Equal(der, certificate.RawData);
+            Assert.False(certificate.HasPrivateKey);
         }
 
         /// <summary>
-        /// Verifies that a hash that is not exactly 32 bytes is rejected.
+        /// Verifies that every call returns a new, independently owned instance, and that
+        /// disposing one does not affect later calls.
         /// </summary>
-        [Theory]
-        [InlineData(0)]
-        [InlineData(20)]
-        [InlineData(31)]
-        [InlineData(33)]
-        [InlineData(64)]
-        public void Constructor_InvalidHashLength_Throws(int length)
+        [Fact]
+        public void GetServerCertificate_ReturnsNewInstancePerCall()
         {
-            ArgumentException ex = Assert.Throws<ArgumentException>(
-                () => new SqlConnectionEncryptionInfo(null, null, new byte[length], null, null));
+            SqlConnectionEncryptionInfo info = CreatePopulated();
 
-            Assert.Equal("presentedServerCertificateHash256", ex.ParamName);
+            X509Certificate2? first = info.GetServerCertificate();
+            using X509Certificate2? second = info.GetServerCertificate();
+
+            Assert.NotNull(first);
+            Assert.NotNull(second);
+            Assert.NotSame(first, second);
+
+            first!.Dispose();
+
+            using X509Certificate2? third = info.GetServerCertificate();
+            Assert.Equal(SampleCertificateThumbprint, second!.Thumbprint);
+            Assert.Equal(SampleCertificateThumbprint, third!.Thumbprint);
         }
 
         /// <summary>
@@ -624,35 +656,103 @@ namespace Microsoft.Data.SqlClient
         /// snapshot.
         /// </summary>
         [Fact]
-        public void PresentedServerCertificateHash256_SourceMutation_DoesNotAffectSnapshot()
+        public void GetServerCertificate_SourceMutation_DoesNotAffectSnapshot()
         {
-            byte[] source = CreateSampleHash();
+            byte[] source = CreateSampleCertificate();
             SqlConnectionEncryptionInfo info = new(null, null, source, null, null);
 
             Array.Clear(source, 0, source.Length);
-            source[0] = 0xFF;
 
-            Assert.Equal(SampleHashHex, ToHex(info.PresentedServerCertificateHash256!.Value));
+            Assert.Equal(CreateSampleCertificate(), info.PresentedServerCertificateRawData!.Value.ToArray());
+            using X509Certificate2? certificate = info.GetServerCertificate();
+            Assert.Equal(SampleCertificateThumbprint, certificate!.Thumbprint);
         }
 
         /// <summary>
-        /// Verifies that the property is read-only memory and that copies taken from it cannot
-        /// change the snapshot.
+        /// Verifies that mutating the raw data of a returned certificate does not change the
+        /// snapshot.
         /// </summary>
         [Fact]
-        public void PresentedServerCertificateHash256_ReturnedCopy_DoesNotAffectSnapshot()
+        public void GetServerCertificate_ReturnedRawDataMutation_DoesNotAffectSnapshot()
         {
-            Assert.Equal(
-                typeof(ReadOnlyMemory<byte>?),
-                typeof(SqlConnectionEncryptionInfo)
-                    .GetProperty(nameof(SqlConnectionEncryptionInfo.PresentedServerCertificateHash256))!
-                    .PropertyType);
-
             SqlConnectionEncryptionInfo info = CreatePopulated();
-            byte[] copy = info.PresentedServerCertificateHash256!.Value.ToArray();
-            Array.Clear(copy, 0, copy.Length);
 
-            Assert.Equal(SampleHashHex, ToHex(info.PresentedServerCertificateHash256!.Value));
+            using (X509Certificate2? certificate = info.GetServerCertificate())
+            {
+                byte[] raw = certificate!.RawData;
+                Array.Clear(raw, 0, raw.Length);
+            }
+
+            using X509Certificate2? again = info.GetServerCertificate();
+            Assert.Equal(SampleCertificateThumbprint, again!.Thumbprint);
+        }
+
+        /// <summary>
+        /// Verifies that a cloned <see cref="SqlException"/> exposes an equivalent certificate,
+        /// and that disposing a certificate returned from one exception does not affect the other.
+        /// </summary>
+        [Fact]
+        public void GetServerCertificate_ExceptionClone_IsIsolated()
+        {
+            SqlException ex = SqlException.CreateException(CreateErrorCollection(), ServerVersion);
+            ex.EncryptionInfo = CreatePopulated();
+            SqlException clone = ex.InternalClone();
+
+            X509Certificate2? fromOriginal = ex.EncryptionInfo.GetServerCertificate();
+            using X509Certificate2? fromClone = clone.EncryptionInfo.GetServerCertificate();
+
+            Assert.NotSame(fromOriginal, fromClone);
+            fromOriginal!.Dispose();
+
+            Assert.Equal(SampleCertificateThumbprint, fromClone!.Thumbprint);
+            using X509Certificate2? again = ex.EncryptionInfo.GetServerCertificate();
+            Assert.Equal(SampleCertificateThumbprint, again!.Thumbprint);
+        }
+
+        /// <summary>
+        /// Verifies that null or empty certificate bytes are reported as unavailable.
+        /// </summary>
+        [Fact]
+        public void GetServerCertificate_NullOrEmpty_ReturnsNull()
+        {
+            SqlConnectionEncryptionInfo fromNull =
+                new(SqlConnectionEncryptionMode.Full, null, null, null, null);
+            SqlConnectionEncryptionInfo fromEmpty = new(null, null, Array.Empty<byte>(), null, null);
+
+            Assert.Null(fromNull.GetServerCertificate());
+            Assert.Null(fromNull.PresentedServerCertificateRawData);
+            Assert.Null(fromEmpty.GetServerCertificate());
+            Assert.Null(fromEmpty.PresentedServerCertificateRawData);
+            Assert.True(fromEmpty.IsEmpty);
+        }
+
+        /// <summary>
+        /// Verifies that bytes that cannot be parsed as a certificate are reported as
+        /// unavailable instead of throwing.
+        /// </summary>
+        [Theory]
+        [InlineData(new byte[] { 0x01 })]
+        [InlineData(new byte[] { 0x30, 0x82, 0x01, 0x00, 0x00 })]
+        [InlineData(new byte[] { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF })]
+        public void GetServerCertificate_UnparsableBytes_ReturnsNull(byte[] bytes)
+        {
+            SqlConnectionEncryptionInfo info = new(null, null, bytes, null, null);
+
+            Assert.Null(info.GetServerCertificate());
+            Assert.False(info.IsEmpty);
+        }
+
+        /// <summary>
+        /// Verifies that a captured certificate alone makes the snapshot non-empty.
+        /// </summary>
+        [Fact]
+        public void GetServerCertificate_CertificateOnly_IsNotEmpty()
+        {
+            SqlConnectionEncryptionInfo info = new(null, null, CreateSampleCertificate(), null, null);
+
+            Assert.False(info.IsEmpty);
+            Assert.Null(info.NegotiatedEncryptionMode);
+            Assert.Null(info.ValidationErrors);
         }
 
         #endregion
@@ -701,7 +801,8 @@ namespace Microsoft.Data.SqlClient
 #if NET
             Assert.Null(info.NegotiatedCipherSuite);
 #endif
-            Assert.Null(info.PresentedServerCertificateHash256);
+            Assert.Null(info.PresentedServerCertificateRawData);
+            Assert.Null(info.GetServerCertificate());
             Assert.Null(info.ValidationErrors);
             Assert.Null(info.ChainStatus);
         }
@@ -710,7 +811,7 @@ namespace Microsoft.Data.SqlClient
             new(
                 SqlConnectionEncryptionMode.Strict,
                 SslProtocols.Tls12,
-                CreateSampleHash(),
+                CreateSampleCertificate(),
                 SqlServerCertificateValidationErrors.HostNameMismatch,
                 X509ChainStatusFlags.UntrustedRoot,
                 SampleCipherSuite);

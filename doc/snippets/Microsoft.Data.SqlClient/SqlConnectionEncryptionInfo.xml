@@ -9,13 +9,13 @@
           Instances are obtained from <see cref="P:Microsoft.Data.SqlClient.SqlConnection.EncryptionInfo" /> or <see cref="P:Microsoft.Data.SqlClient.SqlException.EncryptionInfo" />. Applications cannot create instances directly.
         </para>
         <para>
-          Every property is nullable. A <see langword="null" /> value means the information is not available (for example, the connection has not reached the relevant phase, the information was not captured on the current code path, or the driver does not yet populate it). A <see langword="null" /> value never means that encryption or certificate validation succeeded.
+          Every property is nullable, and <see cref="M:Microsoft.Data.SqlClient.SqlConnectionEncryptionInfo.GetServerCertificate" /> can return <see langword="null" />. A <see langword="null" /> value means the information is not available (for example, the connection has not reached the relevant phase, the information was not captured on the current code path, or the driver does not yet populate it). A <see langword="null" /> value never means that encryption or certificate validation succeeded.
         </para>
         <para>
           This type is intended for diagnostics only. It must not be used to make security decisions; the driver's own validation is authoritative.
         </para>
         <para>
-          In the current release, the driver does not yet populate this information and every property returns <see langword="null" />.
+          In the current release, the driver does not yet populate this information: every property returns <see langword="null" />, and <see cref="M:Microsoft.Data.SqlClient.SqlConnectionEncryptionInfo.GetServerCertificate" /> returns <see langword="null" />.
         </para>
       </remarks>
     </SqlConnectionEncryptionInfo>
@@ -82,25 +82,31 @@
         </para>
       </remarks>
     </NegotiatedCipherSuite>
-    <PresentedServerCertificateHash256>
+    <GetServerCertificate>
       <summary>
-        Gets the SHA-256 hash of the leaf certificate presented by the server during the TLS handshake.
+        Returns the leaf certificate that the server presented during the TLS handshake.
       </summary>
-      <value>
-        A 32-byte SHA-256 hash of the complete DER-encoded server-presented leaf certificate, or <see langword="null" /> if no certificate was presented or the hash is not available.
-      </value>
+      <returns>
+        A new <see cref="T:System.Security.Cryptography.X509Certificates.X509Certificate2" /> instance that contains the server-presented leaf certificate, or <see langword="null" /> if no certificate was captured for the connection attempt or the captured certificate cannot be parsed.
+      </returns>
       <remarks>
         <para>
-          The hash is computed over the complete DER encoding of the certificate the server presented. It is not a hash of the public key only, and it does not describe a certificate configured by the caller (for example, through <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ServerCertificate" />).
+          Each call returns a new instance. The caller owns the returned certificate and should dispose it when it is no longer needed. Disposing it does not affect this snapshot or later calls.
         </para>
         <para>
-          The hash identifies the certificate for correlation with server-side configuration, regardless of whether the certificate passed validation. Validation results are reported separately through <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptionInfo.ValidationErrors" /> and <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptionInfo.ChainStatus" />.
+          The returned certificate is the leaf certificate only; the chain is not included. It never contains a private key. It is the certificate the server presented, not a certificate configured by the caller (for example, through <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ServerCertificate" />).
         </para>
         <para>
-          The returned memory is read-only and owned by the snapshot.
+          The certificate is captured whenever the server presents one, including when <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.TrustServerCertificate" /> is <see langword="true" /> and when certificate validation fails. On failure, read it from <see cref="P:Microsoft.Data.SqlClient.SqlException.EncryptionInfo" />. Validation results are reported separately through <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptionInfo.ValidationErrors" /> and <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptionInfo.ChainStatus" />.
+        </para>
+        <para>
+          This method is intended for diagnostics only. Its result is not a trust decision: a returned certificate does not mean that it passed validation, and it must not be used to override or bypass the driver's certificate validation.
+        </para>
+        <para>
+          This method does not throw. It does not perform a handshake or certificate validation.
         </para>
       </remarks>
-    </PresentedServerCertificateHash256>
+    </GetServerCertificate>
     <ValidationErrors>
       <summary>
         Gets the server certificate validation errors observed by the driver.
