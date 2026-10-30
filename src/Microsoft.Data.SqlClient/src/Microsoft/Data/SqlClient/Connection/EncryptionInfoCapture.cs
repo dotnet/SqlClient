@@ -52,15 +52,15 @@ namespace Microsoft.Data.SqlClient.Connection
             Mode is not null ||
             Protocol is not null ||
             CipherSuite is not null ||
-            CertificateHash256 is not null ||
+            ServerCertificateRawData is not null ||
             ValidationErrors is not null ||
             ChainStatus is not null;
 
         /// <summary>
-        /// Gets the SHA-256 hash of the presented server certificate for the current attempt, or
-        /// <see langword="null"/> if the transport did not observe a presented certificate.
+        /// Gets the DER encoding of the presented server certificate for the current attempt, or
+        /// <see langword="null"/> if the transport did not capture a presented certificate.
         /// </summary>
-        public byte[]? CertificateHash256 { get; private set; }
+        public byte[]? ServerCertificateRawData { get; private set; }
 
         /// <summary>
         /// Gets SqlClient's effective certificate validation verdict for the current attempt, or
@@ -82,7 +82,7 @@ namespace Microsoft.Data.SqlClient.Connection
             Mode = null;
             Protocol = null;
             CipherSuite = null;
-            CertificateHash256 = null;
+            ServerCertificateRawData = null;
             ValidationErrors = null;
             ChainStatus = null;
         }
@@ -117,7 +117,7 @@ namespace Microsoft.Data.SqlClient.Connection
                 return;
             }
 
-            CertificateHash256 = capture.Hash256;
+            ServerCertificateRawData = capture.RawCertificate;
             ValidationErrors = capture.ValidationErrors;
             ChainStatus = capture.ChainStatus;
 
@@ -190,7 +190,7 @@ namespace Microsoft.Data.SqlClient.Connection
                 ? new SqlConnectionEncryptionInfo(
                     negotiatedEncryptionMode: Mode,
                     negotiatedEncryptionProtocol: Protocol,
-                    presentedServerCertificate: CertificateHash256,
+                    presentedServerCertificate: ServerCertificateRawData,
                     validationErrors: ValidationErrors,
                     chainStatus: ChainStatus,
                     negotiatedCipherSuite: CipherSuite)
