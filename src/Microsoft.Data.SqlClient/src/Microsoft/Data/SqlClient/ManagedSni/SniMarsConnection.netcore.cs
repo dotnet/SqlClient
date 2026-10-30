@@ -128,22 +128,35 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         {
             using (TrySNIEventScope.Create(nameof(SniMarsConnection)))
             {
-                if (packet != null)
+                SniPacket previousPacket = packet;
+                packet = null;
+                try
                 {
-                    ReturnPacket(packet);
+                    lock (DemuxerSync)
+                    {
+                        var response = _lowerHandle.ReceiveAsync(ref packet);
+                        if (response != TdsEnums.SNI_SUCCESS_IO_PENDING && packet == null)
+                        {
+                            // Immediate transport errors release the new packet. Keep the consumed
+                            // packet alive so HandleReceiveError can notify all sessions and release it.
+                            packet = previousPacket;
+                            previousPacket = null;
+                        }
 #if DEBUG
-                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniMarsConnection), EventType.INFO, "MARS Session Id {0}, Packet {1} returned", args0: ConnectionId, args1: packet?._id);
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniMarsConnection), EventType.INFO, "MARS Session Id {0}, Received new packet {1}", args0: ConnectionId, args1: packet?._id);
 #endif
-                    packet = null;
+                        return response;
+                    }
                 }
-
-                lock (DemuxerSync)
+                finally
                 {
-                    var response = _lowerHandle.ReceiveAsync(ref packet);
+                    if (previousPacket != null)
+                    {
+                        ReturnPacket(previousPacket);
 #if DEBUG
-                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniMarsConnection), EventType.INFO, "MARS Session Id {0}, Received new packet {1}", args0: ConnectionId, args1: packet?._id);
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniMarsConnection), EventType.INFO, "MARS Session Id {0}, Packet {1} returned", args0: ConnectionId, args1: previousPacket._id);
 #endif
-                    return response;
+                    }
                 }
             }
         }
@@ -168,7 +181,15 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// </summary>
         public void HandleReceiveError(SniPacket packet)
         {
-            Debug.Assert(Monitor.IsEntered(this), "HandleReceiveError was called without being locked.");
+            Debug.Assert(Monitor.IsEntered(DemuxerSync), "HandleReceiveError was called without being locked.");
+            if (_dataBytesLeft > 0 && _currentPacket != null)
+            {
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniMarsConnection), EventType.ERR, "MARS Session Id {0}, Returning incomplete packet after receive error, _dataBytesLeft {1}", args0: ConnectionId, args1: _dataBytesLeft);
+                ReturnPacket(_currentPacket);
+                _currentPacket = null;
+                _dataBytesLeft = 0;
+            }
+
             foreach (SniMarsHandle handle in _sessions.Values)
             {
                 if (packet.HasAsyncIOCompletionCallback)

@@ -2602,7 +2602,10 @@ namespace Microsoft.Data.SqlClient
         internal TdsOperationStatus TryReadNetworkPacket()
         {
 #if DEBUG
-            Debug.Assert(!_shouldHaveEnoughData || _attentionSent, "Caller said there should be enough data, but we are currently reading a packet");
+            // Teardown can invalidate the reader's buffered-data estimate before this call.
+            Debug.Assert(!_shouldHaveEnoughData || _attentionSent ||
+                _parser.State == TdsParserState.Closed || _parser.State == TdsParserState.Broken,
+                "Caller said there should be enough data, but we are currently reading a packet");
 #endif
             TdsOperationStatus result = TdsOperationStatus.InvalidData;
             if (_snapshot != null)
