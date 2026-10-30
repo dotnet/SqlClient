@@ -818,6 +818,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/IsNullable/*' />
+        [DefaultValue(false)]
         public override bool IsNullable
         {
             get => HasFlag(SqlParameterFlags.IsNullable);
@@ -825,6 +826,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Offset/*' />
+        [Browsable(false)]
+        [EditorBrowsable(EditorBrowsableState.Advanced)]
         public int Offset
         {
             get => _offset;

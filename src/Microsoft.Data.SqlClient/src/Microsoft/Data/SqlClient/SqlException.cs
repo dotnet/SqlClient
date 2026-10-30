@@ -85,9 +85,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Errors/*' />
         // runtime will call even if private...
-#if NETFRAMEWORK
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
-#endif
         public SqlErrorCollection Errors => _errors ?? new SqlErrorCollection();
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/ClientConnectionId/*' />
