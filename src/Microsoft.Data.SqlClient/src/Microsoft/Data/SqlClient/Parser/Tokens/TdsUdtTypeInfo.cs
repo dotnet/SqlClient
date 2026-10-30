@@ -38,7 +38,7 @@ namespace Microsoft.Data.SqlClient.Parser.Tokens
         internal string TypeName;
 
         /// <summary>
-        /// Represents the data type the UDT, providing metadata necessary for runtime type resolution
+        /// Represents the data type of the UDT, providing metadata necessary for runtime type resolution
         /// and compatibility checks.
         /// </summary>
 #if NET
