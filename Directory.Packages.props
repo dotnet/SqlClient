@@ -53,7 +53,8 @@
   <PropertyGroup>
     <!-- SNI version (external package, version declared once here) -->
     <SniVersion>7.1.0-preview3.26303.1</SniVersion>
-    <SniVersionRange>[$(SniVersion), $([MSBuild]::Add($(SniVersion.Split('.')[0]), 1)).0.0)</SniVersionRange>
+    <!-- E2E branch only: pin the native certificate-copy ABI and deployed DLL identity. -->
+    <SniVersionRange>[$(SniVersion)]</SniVersionRange>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(ReferenceType)' == 'Package'">

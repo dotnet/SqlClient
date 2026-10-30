@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- LOCAL E2E ONLY: harness for connection encryption info (#2353). Not part of the product build. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net462;net10.0</TargetFrameworks>
+    <PlatformTarget>x64</PlatformTarget>
+    <!-- Optional: dotnet build -p:E2EPlatform=x86 builds an x86 harness into bin-x86\ (native SNI x86 coverage). -->
+    <PlatformTarget Condition="'$(E2EPlatform)' != ''">$(E2EPlatform)</PlatformTarget>
+    <OutputPath Condition="'$(E2EPlatform)' != ''">bin-$(E2EPlatform)\$(Configuration)\</OutputPath>
+    <IntermediateOutputPath Condition="'$(E2EPlatform)' != ''">obj\$(E2EPlatform)\$(Configuration)\</IntermediateOutputPath>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <RunAnalyzers>false</RunAnalyzers>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Microsoft.Data.SqlClient\src\Microsoft.Data.SqlClient.csproj" />
+    <ProjectReference Include="..\..\src\Microsoft.Data.SqlClient\tests\tools\TDS\TDS.Servers\TDS.Servers.csproj" />
+  </ItemGroup>
+
+</Project>

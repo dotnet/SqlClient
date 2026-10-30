@@ -1,0 +1,11 @@
+/*
+!/.gitignore
+!/EncryptionInfoE2E/
+!/run-full-certificate.ps1
+!/verify-full-certificate.ps1
+!/verify-certificate-leak-controls.ps1
+!/FULL-CERTIFICATE-E2E-RESULTS.md
+!/full-certificate-cbee4b1/
+/full-certificate-cbee4b1/*
+!/full-certificate-cbee4b1/summary.tsv
+!/full-certificate-cbee4b1/identity.json

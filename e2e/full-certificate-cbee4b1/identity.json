@@ -1,0 +1,19 @@
+{
+  "Timestamp": "2026-10-30T08:20:40.4895244Z",
+  "ProductCommit": "cbee4b1a7b6eafd9226670d2720d893fee661abb",
+  "SniPackage": "7.1.0-preview3.26303.1",
+  "SniX64": "FFC43EB7C389FDDEBE3B176AFB5C528FAA3155C0A31632D4C6AC0EAB1C4D725E",
+  "StockSniX64": "E61EE1F20BB345147F85820B0D03C2B154BF9CD6B4971708114BB4782FD35B26",
+  "OS": "Microsoft Windows NT 10.0.26300.0",
+  "Sql": [
+    {
+      "Port": 50904,
+      "Version": "16.0.1210.3 Developer Edition (64-bit)"
+    },
+    {
+      "Port": 1440,
+      "Version": "17.0.1145.4 Enterprise Developer Edition (64-bit)"
+    }
+  ],
+  "FrameworkRelease": 534296
+}
