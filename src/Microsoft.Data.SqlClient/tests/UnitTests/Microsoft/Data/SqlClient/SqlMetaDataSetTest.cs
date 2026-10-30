@@ -44,12 +44,12 @@ namespace Microsoft.Data.SqlClient.UnitTests
         public void CloneDoesNotCopyCipherTable(bool encrypted)
         {
             SqlTceCipherInfoTable cipherTable = encrypted ? new SqlTceCipherInfoTable(1) : null;
-            _SqlMetaDataSet original = new(1, cipherTable);
+            TdsColumnMetadataToken original = new(1, cipherTable);
             original[0].isEncrypted = encrypted;
             original[0].baseTI = encrypted ? new SqlMetaDataPriv { type = SqlDbType.Int } : null;
             original[0].cipherMD = encrypted ? new SqlCipherMetadata(new SqlTceCipherInfoEntry(), 0, 2, null, 1, 1) : null;
 
-            _SqlMetaDataSet clone = original.Clone();
+            TdsColumnMetadataToken clone = original.Clone();
 
             Assert.NotSame(original, clone);
             Assert.Null(clone.cekTable);

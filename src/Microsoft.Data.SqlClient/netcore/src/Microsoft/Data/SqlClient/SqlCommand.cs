@@ -204,7 +204,7 @@ namespace Microsoft.Data.SqlClient
 
         // cut down on object creation and cache all these
         // cached metadata
-        private _SqlMetaDataSet _cachedMetaData;
+        private TdsColumnMetadataToken _cachedMetaData;
 
         internal ConcurrentDictionary<int, SqlTceCipherInfoEntry> keysToBeSentToEnclave;
         internal bool requiresEnclaveComputations = false;
@@ -3589,7 +3589,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // get cached metadata
-        internal _SqlMetaDataSet MetaData
+        internal TdsColumnMetadataToken MetaData
         {
             get
             {
@@ -5383,7 +5383,7 @@ namespace Microsoft.Data.SqlClient
                     else
                     {
                         //we need this call to ensure that the datareader is properly intialized, the getter is initializing state in SqlDataReader
-                        _SqlMetaDataSet temp = ds.MetaData;
+                        TdsColumnMetadataToken temp = ds.MetaData;
                     }
                     ds.IsInitialized = true;
                 }

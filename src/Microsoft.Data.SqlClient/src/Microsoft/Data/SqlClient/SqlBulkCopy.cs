@@ -51,10 +51,10 @@ namespace Microsoft.Data.SqlClient
     // The controlling class for one result (metadata + rows)
     internal sealed class Result
     {
-        private readonly _SqlMetaDataSet _metadata;
+        private readonly TdsColumnMetadataToken _metadata;
         private readonly List<Row> _rowset;
 
-        internal Result(_SqlMetaDataSet metadata)
+        internal Result(TdsColumnMetadataToken metadata)
         {
             _metadata = metadata;
             _rowset = new List<Row>();
@@ -62,7 +62,7 @@ namespace Microsoft.Data.SqlClient
 
         internal int Count => _rowset.Count;
 
-        internal _SqlMetaDataSet MetaData => _metadata;
+        internal TdsColumnMetadataToken MetaData => _metadata;
 
         internal Row this[int index] => _rowset[index];
 
@@ -85,7 +85,7 @@ namespace Microsoft.Data.SqlClient
 
         // Callback function for the tdsparser
         // (note that setting the metadata adds a resultset)
-        internal void SetMetaData(_SqlMetaDataSet metadata)
+        internal void SetMetaData(TdsColumnMetadataToken metadata)
         {
             _resultSet = new Result(metadata);
             _results.Add(_resultSet);
@@ -568,7 +568,7 @@ namespace Microsoft.Data.SqlClient
             bool appendComma = false;
 
             // Loop over the metadata for each result column.
-            _SqlMetaDataSet metaDataSet = internalResults[MetaDataResultId].MetaData;
+            TdsColumnMetadataToken metaDataSet = internalResults[MetaDataResultId].MetaData;
             _sortedColumnMappings = new List<_ColumnMapping>(metaDataSet.Length);
             for (int i = 0; i < metaDataSet.Length; i++)
             {
@@ -865,7 +865,7 @@ namespace Microsoft.Data.SqlClient
         {
             _stateObj.SetTimeoutSeconds(BulkCopyTimeout);
 
-            _SqlMetaDataSet metadataCollection = internalResults[MetaDataResultId].MetaData;
+            TdsColumnMetadataToken metadataCollection = internalResults[MetaDataResultId].MetaData;
             _stateObj._outputMessageType = TdsEnums.MT_BULK;
             _parser.WriteBulkCopyMetaData(metadataCollection, _sortedColumnMappings.Count, _stateObj);
         }

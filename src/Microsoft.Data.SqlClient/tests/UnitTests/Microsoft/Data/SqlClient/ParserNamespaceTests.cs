@@ -38,7 +38,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [InlineData("Parser.Tokens.SqlMetaDataUdt")]
         [InlineData("Parser.Tokens.SqlMetaDataXmlSchemaCollection")]
         [InlineData("Parser.Tokens._SqlMetaData")]
-        [InlineData("Parser.Tokens._SqlMetaDataSet")]
+        [InlineData("Parser.Tokens.TdsColumnMetadataToken")]
         [InlineData("Parser.Tokens._SqlMetaDataSetCollection")]
         [InlineData("Parser.Tokens.MultiPartTableName")]
         [InlineData("Parser.Tokens.RoutingInfo")]
