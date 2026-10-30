@@ -299,7 +299,7 @@ TLS protocol agreed for the handshake (see **Failure path** above).
 
 | Field | Source | `null` when |
 | --- | --- | --- |
-| `PresentedServerCertificateHash256` | SHA-256 of the presented leaf certificate's DER encoding (`GetRawCertData()`) | No certificate was presented. Captured even when `TrustServerCertificate` bypasses validation. |
+| `PresentedServerCertificateRawData` / `GetServerCertificate()` | A copy of the presented leaf certificate's DER encoding (`GetRawCertData()`); the first certificate presented in the attempt is kept | No certificate was presented, or its encoding exceeds 64 KiB (`ServerCertificateCapture.MaxRawCertificateSize`). Captured even when `TrustServerCertificate` bypasses validation, and on validation failure. |
 | `ServerCertificateValidationErrors` | Effective SqlClient verdict: `ServerCertificateMissing`, `ChainError`, `HostNameMismatch` (after `HostNameInCertificate`), `PinnedCertificateMismatch` (`ServerCertificate`); `None` when validation passed | Validation was bypassed, or the configured `ServerCertificate` file could not be read. |
 | `ServerCertificateChainStatus` | Bitwise OR of the original callback chain's `ChainStatus` flags (no chain rebuild); `NoError` when the chain was evaluated cleanly | Validation was bypassed, `ServerCertificate` pinning is used (the chain isn't consulted), no certificate was presented, or the platform reported a chain error without flags. |
 

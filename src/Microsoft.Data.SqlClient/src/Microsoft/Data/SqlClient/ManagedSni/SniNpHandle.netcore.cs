@@ -404,8 +404,9 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 }
                 finally
                 {
-                    // Recorded for both outcomes so that a failed handshake still reports what was observed.
-                    Volatile.Write(ref _serverCertificateCapture, SniCommon.CreateServerCertificateCapture(serverCertificate, verdict, sender));
+                    // Recorded for both outcomes (including when validation is bypassed) so that a failed
+                    // handshake still reports what was observed. The first certificate of the attempt is kept.
+                    Volatile.Write(ref _serverCertificateCapture, SniCommon.CreateServerCertificateCapture(serverCertificate, verdict, sender, Volatile.Read(ref _serverCertificateCapture)));
                 }
             }
         }

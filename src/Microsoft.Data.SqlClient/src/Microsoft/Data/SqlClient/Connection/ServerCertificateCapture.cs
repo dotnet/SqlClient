@@ -15,20 +15,26 @@ namespace Microsoft.Data.SqlClient.Connection
     /// </summary>
     /// <remarks>
     /// Each value is <see langword="null"/> when it is unavailable: no certificate was presented
-    /// (<see cref="Hash256"/>), SqlClient did not evaluate the certificate
-    /// (<see cref="ValidationErrors"/>), or the original chain was not consulted or reported no
-    /// usable status (<see cref="ChainStatus"/>). This type never carries the certificate itself.
+    /// or it was larger than <see cref="MaxRawCertificateSize"/> (<see cref="RawCertificate"/>),
+    /// SqlClient did not evaluate the certificate (<see cref="ValidationErrors"/>), or the original
+    /// chain was not consulted or reported no usable status (<see cref="ChainStatus"/>).
     /// </remarks>
     internal sealed class ServerCertificateCapture
     {
+        /// <summary>
+        /// The largest DER-encoded certificate, in bytes, that is captured. A larger certificate is
+        /// not captured; the connection is unaffected.
+        /// </summary>
+        internal const int MaxRawCertificateSize = 64 * 1024;
+
         internal ServerCertificateCapture(
-            byte[]? hash256,
+            byte[]? rawCertificate,
             SqlServerCertificateValidationErrors? validationErrors,
             X509ChainStatusFlags? chainStatus,
             SslProtocols? protocol = null,
             int? cipherSuite = null)
         {
-            Hash256 = hash256;
+            RawCertificate = rawCertificate;
             ValidationErrors = validationErrors;
             ChainStatus = chainStatus;
             Protocol = protocol;
@@ -36,10 +42,11 @@ namespace Microsoft.Data.SqlClient.Connection
         }
 
         /// <summary>
-        /// Gets the SHA-256 hash of the DER encoding of the presented leaf certificate, or
-        /// <see langword="null"/> if no certificate was presented.
+        /// Gets the DER encoding of the presented leaf certificate, or <see langword="null"/> if no
+        /// certificate was presented or it was larger than <see cref="MaxRawCertificateSize"/>.
+        /// The array is owned by this capture and must not be modified.
         /// </summary>
-        public byte[]? Hash256 { get; }
+        public byte[]? RawCertificate { get; }
 
         /// <summary>
         /// Gets SqlClient's effective validation verdict, or <see langword="null"/> if SqlClient did
