@@ -347,6 +347,10 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private SqlTransaction _transaction;
 
+        // Transactions from commands copied into a batch. The batch command itself may have
+        // none. ValidateCommand rechecks these after a drain and before the write is sent.
+        private List<SqlTransaction> _retainedBatchTransactions;
+
         /// <summary>
         /// How command results are applied to a DataRow when used by the update method of
         /// DbDataAdapter.
@@ -835,6 +839,11 @@ namespace Microsoft.Data.SqlClient
         // Transaction returns null after the server aborts this command's transaction, but the
         // field stays set so the next execute is rejected. Copies have to use the field.
         internal SqlTransaction BoundTransaction => _transaction;
+
+        internal void RetainBatchTransactions(List<SqlTransaction> transactions)
+        {
+            _retainedBatchTransactions = transactions;
+        }
 
         // @TODO: Rename RowsAffectedInternal or
         // @TODO: Make `int?`
@@ -2981,6 +2990,22 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 _transaction = null;
+            }
+
+            // A batch copies each command's text without its transaction. Recheck those after
+            // the drain above, before a write is sent. A transaction the caller already finished
+            // is left alone.
+            List<SqlTransaction> retainedTransactions = _retainedBatchTransactions;
+            if (retainedTransactions is not null)
+            {
+                for (int index = 0; index < retainedTransactions.Count; index++)
+                {
+                    SqlTransaction retainedTransaction = retainedTransactions[index];
+                    if (retainedTransaction is not null && retainedTransaction.Connection is null && retainedTransaction.CompletedByServer)
+                    {
+                        throw ADP.TransactionZombied(retainedTransaction);
+                    }
+                }
             }
 
             // Throw if the connection is in a transaction but there is no locally assigned

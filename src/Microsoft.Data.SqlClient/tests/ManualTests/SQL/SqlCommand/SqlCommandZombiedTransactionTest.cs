@@ -126,6 +126,114 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         /// <summary>
+        /// Abort, catch the exception from <see cref="SqlTransaction.IsolationLevel"/>, dispose,
+        /// then run the bound command. That read clears the internal transaction before it throws.
+        /// </summary>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public void Execute_AfterDisposingFullyZombiedTransaction_Runs()
+        {
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            connection.Open();
+
+            using SqlCommand setup = connection.CreateCommand();
+            setup.CommandText = "SET XACT_ABORT ON; CREATE TABLE #DisposedFullZombie (Id int NOT NULL);";
+            setup.ExecuteNonQuery();
+
+            using SqlCommand command = new SqlCommand("INSERT INTO #DisposedFullZombie (Id) VALUES (1)", connection);
+            SqlTransaction transaction = connection.BeginTransaction();
+            command.Transaction = transaction;
+            bool disposedAfterCompletion = false;
+            try
+            {
+                using SqlCommand abort = new SqlCommand("SELECT CAST('n/a' AS int)", connection, transaction);
+                try
+                {
+                    abort.ExecuteScalar();
+                }
+                catch (SqlException)
+                {
+                    try
+                    {
+                        _ = transaction.IsolationLevel;
+                    }
+                    catch (InvalidOperationException exception)
+                    {
+                        Assert.Contains("no longer usable", exception.Message);
+                        transaction.Dispose();
+                        disposedAfterCompletion = true;
+                    }
+                }
+            }
+            finally
+            {
+                transaction.Dispose();
+            }
+
+            Assert.True(disposedAfterCompletion);
+
+            Assert.Null(command.Transaction);
+            command.Connection = connection;
+            command.ExecuteNonQuery();
+
+            using SqlCommand count = new SqlCommand("SELECT COUNT(*) FROM #DisposedFullZombie", connection);
+            Assert.Equal(1, (int)count.ExecuteScalar());
+        }
+
+        /// <summary>
+        /// Abort, catch the exception from <see cref="SqlTransaction.Commit"/>, dispose, then run
+        /// the bound command asynchronously. That commit clears the internal transaction before it throws.
+        /// </summary>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public async Task Execute_AfterDisposingFullyZombiedTransaction_RunsAsync()
+        {
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            await connection.OpenAsync();
+
+            using SqlCommand setup = connection.CreateCommand();
+            setup.CommandText = "SET XACT_ABORT ON; CREATE TABLE #DisposedFullZombieAsync (Id int NOT NULL);";
+            await setup.ExecuteNonQueryAsync();
+
+            using SqlCommand command = new SqlCommand("INSERT INTO #DisposedFullZombieAsync (Id) VALUES (1)", connection);
+            SqlTransaction transaction = connection.BeginTransaction();
+            command.Transaction = transaction;
+            bool disposedAfterCompletion = false;
+            try
+            {
+                using SqlCommand abort = new SqlCommand("SELECT CAST('n/a' AS int)", connection, transaction);
+                try
+                {
+                    abort.ExecuteScalar();
+                }
+                catch (SqlException)
+                {
+                    try
+                    {
+                        transaction.Commit();
+                    }
+                    catch (InvalidOperationException exception)
+                    {
+                        Assert.Contains("no longer usable", exception.Message);
+                        transaction.Dispose();
+                        disposedAfterCompletion = true;
+                    }
+                }
+            }
+            finally
+            {
+                transaction.Dispose();
+            }
+
+            Assert.True(disposedAfterCompletion);
+
+            Assert.Null(command.Transaction);
+            command.Connection = connection;
+            await command.ExecuteNonQueryAsync();
+
+            using SqlCommand count = new SqlCommand("SELECT COUNT(*) FROM #DisposedFullZombieAsync", connection);
+            Assert.Equal(1, (int)await count.ExecuteScalarAsync());
+        }
+
+        /// <summary>
         /// A T-SQL COMMIT finishes the transaction. The command that was bound to it must still run.
         /// </summary>
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
@@ -344,6 +452,71 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Contains("no longer usable", exception.Message);
 
             using SqlCommand count = new SqlCommand("SELECT COUNT(*) FROM #AdapterSelectAbort", connection);
+            Assert.Equal(0, (int)count.ExecuteScalar());
+        }
+
+        /// <summary>
+        /// An unbound select supplies the batch transaction. An unread rollback is drained when the
+        /// batch runs, and the insert that still names the aborted transaction must not auto-commit.
+        /// </summary>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public void Update_AdapterBatchAfterDrainingAbandonedRollback_DoesNotAutocommit()
+        {
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            connection.Open();
+
+            using SqlCommand setup = connection.CreateCommand();
+            setup.CommandText = "CREATE TABLE #AdapterDrainAbort (Id int NOT NULL);";
+            setup.ExecuteNonQuery();
+
+            using SqlTransaction transaction = connection.BeginTransaction();
+            using SqlCommand select = new SqlCommand("SELECT Id FROM #AdapterDrainAbort", connection);
+            using SqlCommand insert = new SqlCommand("INSERT INTO #AdapterDrainAbort (Id) VALUES (@Id)", connection, transaction);
+            insert.Parameters.Add(new SqlParameter("@Id", SqlDbType.Int, 0, "Id"));
+            insert.UpdatedRowSource = UpdateRowSource.None;
+            using SqlCommand read = new SqlCommand("SELECT 1; ROLLBACK;", connection, transaction);
+            SqlDataReader reader = read.ExecuteReader();
+            try
+            {
+                Assert.True(reader.Read());
+                Assert.Equal(1, reader.GetInt32(0));
+
+                MethodInfo remove = typeof(SqlConnection).GetMethod(
+                    "RemoveWeakReference",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                Assert.NotNull(remove);
+                remove.Invoke(connection, new object[] { reader });
+
+                using DataTable table = new DataTable();
+                table.Columns.Add("Id", typeof(int));
+                table.Rows.Add(1);
+                table.Rows.Add(2);
+
+                using SqlDataAdapter adapter = new SqlDataAdapter
+                {
+                    SelectCommand = select,
+                    InsertCommand = insert,
+                    UpdateBatchSize = 2
+                };
+
+                InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => adapter.Update(table));
+                Assert.Contains("no longer usable", exception.Message);
+            }
+            finally
+            {
+                try
+                {
+                    reader.Dispose();
+                }
+                catch (SqlException)
+                {
+                }
+                catch (InvalidOperationException)
+                {
+                }
+            }
+
+            using SqlCommand count = new SqlCommand("SELECT COUNT(*) FROM #AdapterDrainAbort", connection);
             Assert.Equal(0, (int)count.ExecuteScalar());
         }
 

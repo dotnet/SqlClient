@@ -155,8 +155,9 @@ namespace Microsoft.Data.SqlClient
         {
             SqlCommand batchCommand = (SqlCommand)command;
             SqlTransaction transaction = batchCommand.BoundTransaction;
-            // Append copies the text and parameters only. A server abort on this command has to
-            // be rejected here. A transaction the caller already finished is left alone.
+            // Append copies the text and parameters only. A server abort already on this command
+            // has to be rejected here. One found when the batch later drains is rejected again
+            // before the writes are sent. A transaction the caller already finished is left alone.
             if (transaction != null && transaction.Connection == null && transaction.CompletedByServer)
             {
                 throw ADP.TransactionZombied(transaction);

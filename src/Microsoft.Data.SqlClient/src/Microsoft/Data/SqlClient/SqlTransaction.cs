@@ -78,7 +78,7 @@ namespace Microsoft.Data.SqlClient
         // The server aborted this transaction. A T-SQL COMMIT reaches Zombie too and
         // leaves this clear, so the bound command can run again. Rollback or disposal
         // of the aborted transaction clears it. ZombieCheck may clear InternalTransaction
-        // without clearing this, and the command still rejects the next execute.
+        // without clearing this, and the command still rejects until disposal.
         internal bool CompletedByServer { get; private set; }
 
         internal bool IsZombied => InternalTransaction == null || InternalTransaction.IsCompleted;
@@ -176,9 +176,15 @@ namespace Microsoft.Data.SqlClient
             {
                 if (IsPartialZombie)
                 {
-                    // The server already finished this transaction. Rollback clears the
-                    // abort mark; disposal has to do the same or the bound command stays rejected.
+                    // The server already finished this transaction. Rollback clears the abort
+                    // mark. Disposal has to do the same or the bound command stays rejected.
                     InternalTransaction = null;
+                    CompletedByServer = false;
+                }
+                else if (CompletedByServer)
+                {
+                    // ZombieCheck already dropped InternalTransaction while throwing. Clear the
+                    // abort mark too, or the bound command stays rejected.
                     CompletedByServer = false;
                 }
                 else if (!IsZombied)
