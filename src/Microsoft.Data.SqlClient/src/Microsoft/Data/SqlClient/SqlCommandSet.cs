@@ -24,11 +24,13 @@ namespace Microsoft.Data.SqlClient
 
         private SqlCommand _batchCommand;
         private List<SqlBatchCommand> _commandList;
+        private List<SqlTransaction> _batchTransactions;
 
         internal SqlCommandSet() : base()
         {
             _batchCommand = new SqlCommand();
             _commandList = new List<SqlBatchCommand>();
+            _batchTransactions = new List<SqlTransaction>();
         }
 
         internal SqlCommand BatchCommand
@@ -181,6 +183,9 @@ namespace Microsoft.Data.SqlClient
             SqlBatchCommand cmd = new SqlBatchCommand(cmdText, parameters, command.CommandType, command.ColumnEncryptionSetting);
 
             CommandList.Add(cmd);
+            // The batch command copies text and parameters only. Keep this transaction so
+            // the batch can reject a server abort found while it drains.
+            _batchTransactions.Add(command.BoundTransaction);
         }
 
         internal static void BuildStoredProcedureName(StringBuilder builder, string part)
@@ -223,6 +228,11 @@ namespace Microsoft.Data.SqlClient
             {
                 commandList.Clear();
             }
+            List<SqlTransaction> transactions = _batchTransactions;
+            if (transactions != null)
+            {
+                transactions.Clear();
+            }
         }
 
         internal void Dispose()
@@ -230,6 +240,7 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryTraceEvent("SqlCommandSet.Dispose | API | Object Id {0}", ObjectID);
             SqlCommand command = _batchCommand;
             _commandList = null;
+            _batchTransactions = null;
             _batchCommand = null;
 
             if (command != null)
@@ -247,14 +258,23 @@ namespace Microsoft.Data.SqlClient
             {
                 ValidateCommandBehavior(nameof(ExecuteNonQuery), CommandBehavior.Default);
 
-                BatchCommand.SetBatchRPCMode(true);
-                BatchCommand.Parameters.Clear();
-                for (int index = 0; index < _commandList.Count; index++)
+                SqlCommand batchCommand = BatchCommand;
+                batchCommand.RetainBatchTransactions(_batchTransactions);
+                try
                 {
-                    BatchCommand.AddBatchCommand(_commandList[index]);
+                    batchCommand.SetBatchRPCMode(true);
+                    batchCommand.Parameters.Clear();
+                    for (int index = 0; index < _commandList.Count; index++)
+                    {
+                        batchCommand.AddBatchCommand(_commandList[index]);
+                    }
+                    batchCommand.SetBatchRPCModeReadyToExecute();
+                    return batchCommand.ExecuteNonQuery();
                 }
-                BatchCommand.SetBatchRPCModeReadyToExecute();
-                return BatchCommand.ExecuteNonQuery();
+                finally
+                {
+                    batchCommand.RetainBatchTransactions(null);
+                }
             }
         }
 
