@@ -39,6 +39,12 @@ You must ensure the <xref:Microsoft.Data.SqlClient.SqlDataReader.Close%2A> metho
 
 The `Close` method populates the values for output parameters, return values and `RecordsAffected` on the <xref:Microsoft.Data.SqlClient.SqlDataReader> by consuming any pending results. This may be a long operation depending on the amount of data to be consumed. If output values, return values, and `RecordsAffected` are not important to your application, the time to close may be shortened by calling the <xref:Microsoft.Data.SqlClient.SqlCommand.Cancel%2A> method of the associated <xref:Microsoft.Data.SqlClient.SqlCommand> object before the `Close` method is called.
 
+Closing or disposing a reader is cleanup, not confirmation that the command succeeded.
+Cleanup can discard pending nonfatal server errors, including severity-16 errors rethrown
+from a `CATCH` block. To observe errors in the remaining response, use default command
+behavior and explicitly advance through all results with `NextResult()` or
+`NextResultAsync()` before closing. Do not rely on disposal to report those errors.
+
 > [!CAUTION]
 >  Do not call `Close` or `Dispose` on a Connection, a DataReader, or any other managed object in the `Finalize` method of your class. In a finalizer, you should only release unmanaged resources that your class owns directly. If your class does not own any unmanaged resources, do not include a `Finalize` method in your class definition. For more information, see [Garbage Collection](https://learn.microsoft.com/dotnet/standard/garbage-collection/).  
 
@@ -183,7 +189,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection>, a
         The value of the specified column.
       </returns>
       <remarks>
-        Not supported for <see cref="T:Microsoft.Data.SqlClient" />.
+        Not supported for <see cref="N:Microsoft.Data.SqlClient" />.
       </remarks>
       <exception cref="T:System.InvalidCastException">
         The specified cast is not valid.
@@ -1349,6 +1355,15 @@ The <xref:Microsoft.Data.SqlClient.SqlDataReader.GetSchemaTable%2A> method retur
       </summary>
       <value><see langword="true" /> if the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> contains one or more rows; otherwise <see langword="false" />.
       </value>
+      <remarks>
+        Informational messages from the server do not determine whether a result set contains rows.
+        These messages are available through the <see cref="E:Microsoft.Data.SqlClient.SqlConnection.InfoMessage" /> event.
+      </remarks>
+      <example>
+        <format type="text/markdown"><![CDATA[
+[!code-csharp[SqlDataReader_HasRows Example#1](~/../sqlclient/doc/samples/SqlDataReader_HasRows.cs#1)]
+]]></format>
+      </example>
     </HasRows>
     <IsClosed>
       <summary>
@@ -1502,7 +1517,30 @@ The <xref:Microsoft.Data.SqlClient.SqlDataReader.GetSchemaTable%2A> method retur
         <para>
           By default, the data reader is positioned on the first result.
         </para>
+        <para>
+          With default command behavior, continue calling NextResult until it returns false,
+          even when Read returned false for an empty result or no further result sets are expected.
+          Advancing processes the remaining response and can throw a SqlException for an error
+          reported after the current result's rows ended, such as THROW in a CATCH block.
+          Finishing a result set does not establish that the entire command succeeded.
+        </para>
+        <para>
+          Do not use CommandBehavior.SingleResult or CommandBehavior.SingleRow when all results
+          and trailing errors must be observed. These modes can discard remaining results and
+          their errors. Close and Dispose can also discard pending nonfatal errors.
+        </para>
       </remarks>
+      <example>
+        <format type="text/markdown"><![CDATA[
+The following example advances through every result, including empty results. Errors propagate
+to the caller; closing the reader is not used as an error check.
+
+[!code-csharp[Read all results](~/../sqlclient/doc/samples/SqlDataReader_NextResult.cs#1)]
+]]></format>
+      </example>
+      <exception cref="T:Microsoft.Data.SqlClient.SqlException">
+        SQL Server returned an error while processing the remaining command response.
+      </exception>
     </NextResult>
     <NextResultAsync>
       <param name="cancellationToken">
@@ -1520,8 +1558,18 @@ The <xref:Microsoft.Data.SqlClient.SqlDataReader.GetSchemaTable%2A> method retur
         A task representing the asynchronous operation.
       </returns>
       <remarks>
+        <para>
+          The result-boundary and trailing-error behavior is the same as NextResult. With default
+          command behavior, await each call until it returns false, including after empty results.
+          A server error encountered during advancement faults the returned task.
+        </para>
         For more information about asynchronous programming in the .NET Framework Data Provider for SQL Server, see <see href="https://learn.microsoft.com/sql/connect/ado-net/asynchronous-programming">Asynchronous Programming</see>.
       </remarks>
+      <example>
+        <format type="text/markdown"><![CDATA[
+[!code-csharp[Read all results asynchronously](~/../sqlclient/doc/samples/SqlDataReader_NextResult.cs#2)]
+]]></format>
+      </example>
       <exception cref="T:System.InvalidOperationException">
         Calling <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.NextResultAsync(System.Threading.CancellationToken)" /> more than once for the same instance before task completion.
       </exception>
@@ -1537,6 +1585,12 @@ The <xref:Microsoft.Data.SqlClient.SqlDataReader.GetSchemaTable%2A> method retur
       <remarks>
         <para>
           The default position of the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> is before the first record. Therefore, you must call <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.Read" /> to begin accessing any data.
+        </para>
+        <para>
+          A false return value means there are no more rows in the current result set, not that
+          the entire command succeeded. Errors reported after that result's DONE token can remain
+          pending. With default command behavior, call NextResult until it returns false to
+          process all results and observe trailing errors, even when this result was empty.
         </para>
         <para>
           Only one <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> per associated <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> may be open at a time, and any attempt to open another will fail until the first one is closed. Similarly, while the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> is being used, the associated <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> is busy serving it until you call <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.Close" />.
@@ -1613,6 +1667,10 @@ The <xref:Microsoft.Data.SqlClient.SqlDataReader.GetSchemaTable%2A> method retur
         <format type="text/markdown"><![CDATA[  
 ## Remarks  
 If the `behavior` parameter of <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteReaderAsync%2A> is set to `Default`, <xref:Microsoft.Data.SqlClient.SqlDataReader.ReadAsync%2A> reads the entire row before returning the Task.  
+
+A `false` result ends only the current result set. With default command behavior, continue
+with `NextResultAsync()` until it returns `false` to process the remaining results and
+observe trailing errors. The same result-boundary rules apply as for `Read()`.
 
 For more information, including code samples, about asynchronous programming in the .NET Framework Data Provider for SQL Server, see [Asynchronous Programming](https://learn.microsoft.com/sql/connect/ado-net/asynchronous-programming).  
 

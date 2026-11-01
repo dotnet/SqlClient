@@ -83,7 +83,7 @@
   <!-- SqlClient Reference -->
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\ref\Microsoft.Data.SqlClient.csproj"
-                      Condition="'$(ReferenceType)' != 'Package'" />
+                      Condition="'$(ReferenceType)' == 'Project'" />
     <PackageReference Include="Microsoft.Data.SqlClient"
                       Condition="'$(ReferenceType)' == 'Package'" />
   </ItemGroup>
@@ -91,7 +91,7 @@
   <!-- Logging Reference -->
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)/src/Microsoft.Data.SqlClient.Internal/Logging/src/Logging.csproj"
-                      Condition="'$(ReferenceType)' != 'Package'" />
+                      Condition="'$(ReferenceType)' == 'Project'" />
     <PackageReference Include="Microsoft.Data.SqlClient.Internal.Logging"
                       Condition="'$(ReferenceType)' == 'Package'" />
   </ItemGroup>

@@ -204,6 +204,9 @@
   <data name="ADP_PooledOpenTimeout" xml:space="preserve">
     <value>タイムアウトに達しました。プールから接続を取得する前にタイムアウト期間が過ぎました。プールされた接続がすべて使用中で、プール サイズの制限値に達した可能性があります。</value>
   </data>
+  <data name="ADP_IsolationLevelResetTimeout" xml:space="preserve">
+    <value>タイムアウトの期限が切れました。 プール済み接続のトランザクション分離レベルがリセット可能になる前に、接続タイムアウトの期間が経過しました。</value>
+  </data>
   <data name="ADP_NonPooledOpenTimeout" xml:space="preserve">
     <value>接続を開く試行がタイムアウトしました。接続を開く試行を行う前にタイムアウト期間が過ぎました。非プールの同時の接続試行が多すぎた可能性があります。</value>
   </data>
@@ -1797,6 +1800,9 @@
   <data name="TCE_EnclaveTypeNullForEnclaveBasedQuery" xml:space="preserve">
     <value>内部エラーです。エンクレーブ計算が必要なクエリを実行するときに SQL Server から受信したエンクレーブ型が null または空です。</value>
   </data>
+  <data name="TCE_AzureAttestationExtensionNotFound" xml:space="preserve">
+    <value>Attestation protocol 'AAS' requires the Microsoft.Data.SqlClient.Extensions.Azure package, at the same version as Microsoft.Data.SqlClient. Add or update the reference to that package, or specify a different attestation protocol in the connection string.</value>
+  </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
     <value>エンクレーブの種類 '{0}' および構成証明プロトコル '{1}' に対して、エンクレーブ プロバイダーが見つかりませんでした。接続文字列に正しい構成証明プロトコルを指定してください。</value>
   </data>
@@ -2064,6 +2070,9 @@
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
     <value>親コマンドで EnableOptimizedParameterBinding が有効になっている場合、パラメーター '{0}' に Direction 出力または InputOutput は指定できません。</value>
   </data>
+  <data name="SQL_PrepareNotSupportedForOptimizedBinding" xml:space="preserve">
+    <value>Prepare is not supported when EnableOptimizedParameterBinding is enabled. Create a new SqlCommand and either set EnableOptimizedParameterBinding to false before its first execution or execute it without calling Prepare.</value>
+  </data>
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
     <value>認証方法 '{0}' によるアクセス トークンの取得中に接続がタイムアウトしました。前回のエラー: {1}: {2}</value>
   </data>
@@ -2096,6 +2105,9 @@
   </data>
   <data name="SqlAppContextSwitchManager_InvalidValue" xml:space="preserve">
     <value>AppContext スイッチ '{0}'={1} の設定中に例外が発生しました。</value>
+  </data>
+  <data name="SQL_GlobalizationInvariantModeRequiresLcid" xml:space="preserve">
+    <value>When Globalization Invariant Mode is enabled, SqlMetaData instances describing character or text types must specify an LCID.</value>
   </data>
   <data name="SQL_GlobalizationInvariantModeNotSupported" xml:space="preserve">
     <value>グローバリゼーション インバリアント モードはサポートされていません。</value>

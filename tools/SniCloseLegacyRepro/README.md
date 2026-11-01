@@ -182,14 +182,14 @@ old in-box `System.Data.dll`.
 
 ```powershell
 # in-process tests only (no SQL Server):
-.\run-in-container.ps1
+.\tools\SniCloseLegacyRepro\run-in-container.ps1
 
 # faithful ICM match: 4.7.4081.0 + 4 processors, live MARS + stress:
 $env:SNICLOSE_CONNSTR = "Server=127.0.0.1,1434;Database=master;User ID=sa;Password=***;TrustServerCertificate=true"
-.\run-in-container.ps1 -Cpus 4
+.\tools\SniCloseLegacyRepro\run-in-container.ps1 -Cpus 4
 
 # a different framework image:
-.\run-in-container.ps1 -Image mcr.microsoft.com/dotnet/framework/runtime:4.8-windowsservercore-ltsc2019
+.\tools\SniCloseLegacyRepro\run-in-container.ps1 -Image mcr.microsoft.com/dotnet/framework/runtime:4.8-windowsservercore-ltsc2019
 ```
 
 **Networking:** a Windows container cannot reach the host's loopback, and

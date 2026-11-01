@@ -19,11 +19,9 @@
       <param name="jsonString">
         The serialized JSON string to use, or null.
       </param>
-      <throw>
-        <exception cref="System.Text.Json.JsonException">
-          If the given string is not valid JSON.
-        </exception>
-      </throw>
+      <exception cref="System.Text.Json.JsonException">
+        If the given string is not valid JSON.
+      </exception>
     </ctor2>
     <ctor3>
       <summary>
@@ -34,11 +32,9 @@
       <param name="jsonDoc">
         The document to use, or null.
       </param>
-      <throw>
-        <exception cref="System.ObjectDisposedException">
-          If the given document has been disposed of.
-        </exception>
-      </throw>
+      <exception cref="System.ObjectDisposedException">
+        If the given document has been disposed of.
+      </exception>
     </ctor3>
     <IsNull>
       <inheritdoc/>
@@ -54,11 +50,9 @@
       <summary>
         Gets the serialized JSON string of this <see cref="SqlJson" /> instance.
       </summary>
-      <throw>
-        <exception cref="System.Data.SqlTypes.SqlNullValueException">
-          If the JSON value is null.
-        </exception>
-      </throw>
+      <exception cref="System.Data.SqlTypes.SqlNullValueException">
+        If the JSON value is null.
+      </exception>
     </Value>
     <ToString>
       <summary>

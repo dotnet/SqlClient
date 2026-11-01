@@ -4,7 +4,7 @@
 
 namespace Microsoft.Data.SqlClient.Extensions.Azure.Test;
 
-[Collection("SqlAuthenticationProvider")]
+[Collection(SqlAuthenticationProviderCollection.Name)]
 public class DefaultAuthProviderTests
 {
     // Verify that our auth provider has been installed for all AAD/Entra

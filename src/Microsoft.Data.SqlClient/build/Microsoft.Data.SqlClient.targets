@@ -1,0 +1,80 @@
+<!--
+  Licensed to the .NET Foundation under one or more agreements. The .NET Foundation licenses this
+  file to you under the MIT license.
+-->
+<Project>
+  <!-- Microsoft.Data.SqlClient owns the consumer check and ships it in build/ and buildTransitive/.
+       When SqlClient is present in the consuming package graph, it anchors comparisons against
+       installed members of the lockstep family. SqlServer.Server and native SNI are independently
+       versioned. Project references are not package-version evidence.
+
+       This is a best-effort helper that surfaces mismatches where it can; it is not a guarantee.
+       Mixing family package versions is unsupported whether or not this check reports it.
+       Limitations:
+       - It relies on .NET SDK/NuGet targets and items (ResolvePackageAssets, ResolveReferences,
+         and the NuGetPackageId/NuGetPackageVersion metadata). SDKs, project types, or custom
+         pipelines that omit them, or run them in another order, silently skip the check.
+       - Multi-targeting outer builds do not resolve references; only inner builds are checked.
+       - Missing inputs are treated as "nothing to check" rather than guessed.
+       It does not raise errors on its own: mismatches are warnings, and failures to read inputs
+       (for example a malformed packages.config) are downgraded to MSBuild warnings. Consumers
+       that treat warnings as errors still see these as errors. -->
+  <PropertyGroup>
+    <SqlClientEnforceFamilyVersions Condition="'$(SqlClientEnforceFamilyVersions)' == ''">true</SqlClientEnforceFamilyVersions>
+  </PropertyGroup>
+
+  <Target Name="ValidateSqlClientFamilyPackageVersions"
+          AfterTargets="ResolvePackageAssets;ResolveReferences"
+          Condition="'$(SqlClientEnforceFamilyVersions)' == 'true' And '$(DesignTimeBuild)' != 'true'">
+    <ItemGroup>
+      <!-- Collect first, then use qualified metadata so framework/project references without
+           NuGet metadata cannot cause MSB4096. Include RID-specific runtime-only assets. -->
+      <_SqlClientResolvedAsset Include="@(ResolvedCompileFileDefinitions);@(ReferencePath);@(RuntimeCopyLocalItems);@(RuntimeTargetsCopyLocalItems)" />
+      <_SqlClientFamilyAsset Include="@(_SqlClientResolvedAsset)"
+          Condition="'%(_SqlClientResolvedAsset.NuGetPackageId)' == 'Microsoft.Data.SqlClient' Or
+                     '%(_SqlClientResolvedAsset.NuGetPackageId)' == 'Microsoft.Data.SqlClient.Extensions.Abstractions' Or
+                     '%(_SqlClientResolvedAsset.NuGetPackageId)' == 'Microsoft.Data.SqlClient.Extensions.Azure' Or
+                     '%(_SqlClientResolvedAsset.NuGetPackageId)' == 'Microsoft.Data.SqlClient.Internal.Logging' Or
+                     '%(_SqlClientResolvedAsset.NuGetPackageId)' == 'Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider'">
+        <FamilyVersion>%(_SqlClientResolvedAsset.NuGetPackageVersion)</FamilyVersion>
+        <FamilyId>%(_SqlClientResolvedAsset.NuGetPackageId)</FamilyId>
+      </_SqlClientFamilyAsset>
+      <_SqlClientAnchorVersion Include="@(_SqlClientFamilyAsset)"
+          Condition="'%(_SqlClientFamilyAsset.FamilyId)' == 'Microsoft.Data.SqlClient' And '%(_SqlClientFamilyAsset.FamilyVersion)' != ''" />
+    </ItemGroup>
+    <PropertyGroup>
+      <!-- Compare resolved version strings, including prerelease labels, not ranges or assembly
+           versions. Missing package metadata is not assigned a guessed version. -->
+      <_SqlClientExpectedFamilyVersion>@(_SqlClientAnchorVersion->'%(FamilyVersion)'->Distinct())</_SqlClientExpectedFamilyVersion>
+    </PropertyGroup>
+    <Warning Code="SQLCLIENT001"
+             Condition="'%(_SqlClientFamilyAsset.FamilyVersion)' != '' And '$(_SqlClientExpectedFamilyVersion)' != '' And '%(_SqlClientFamilyAsset.FamilyVersion)' != '$(_SqlClientExpectedFamilyVersion)'"
+             Text="SqlClient family version mismatch: %(_SqlClientFamilyAsset.FamilyId) is %(_SqlClientFamilyAsset.FamilyVersion), but Microsoft.Data.SqlClient is $(_SqlClientExpectedFamilyVersion). Upgrade all installed family packages together, including prerelease labels. Suppress warning: SqlClientEnforceFamilyVersions=false." />
+
+    <!-- Legacy packages.config consumers import build/ explicitly through NuGet installation.
+         Read installed versions from the manifest, independently of assembly reference metadata. -->
+    <PropertyGroup>
+      <!-- Match NuGet: prefer the project-specific manifest, replacing spaces with underscores. -->
+      <_SqlClientConfigPath Condition="'$(RestoreProjectStyle)' == 'PackagesConfig' Or
+                                       ('$(RestoreProjectStyle)' == '' And '@(PackageReference)' == '')">$(MSBuildProjectDirectory)/packages.$(MSBuildProjectName.Replace(' ', '_')).config</_SqlClientConfigPath>
+      <_SqlClientConfigPath Condition="('$(RestoreProjectStyle)' == 'PackagesConfig' Or
+                                        ('$(RestoreProjectStyle)' == '' And '@(PackageReference)' == '')) And
+                                       !Exists('$(_SqlClientConfigPath)')">$(MSBuildProjectDirectory)/packages.config</_SqlClientConfigPath>
+    </PropertyGroup>
+    <XmlPeek XmlInputPath="$(_SqlClientConfigPath)"
+             Query="/packages/package[translate(@id, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='microsoft.data.sqlclient']/@version"
+             Condition="Exists('$(_SqlClientConfigPath)')"
+             ContinueOnError="WarnAndContinue">
+      <Output TaskParameter="Result" PropertyName="_SqlClientConfigExpectedVersion" />
+    </XmlPeek>
+    <XmlPeek XmlInputPath="$(_SqlClientConfigPath)"
+             Query="/packages/package[(translate(@id, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='microsoft.data.sqlclient.internal.logging' or translate(@id, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='microsoft.data.sqlclient.extensions.abstractions' or translate(@id, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='microsoft.data.sqlclient' or translate(@id, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='microsoft.data.sqlclient.extensions.azure' or translate(@id, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')='microsoft.data.sqlclient.alwaysencrypted.azurekeyvaultprovider') and @version!='$(_SqlClientConfigExpectedVersion)']"
+             Condition="'$(_SqlClientConfigExpectedVersion)' != ''"
+             ContinueOnError="WarnAndContinue">
+      <Output TaskParameter="Result" ItemName="_SqlClientConfigMismatch" />
+    </XmlPeek>
+    <Warning Code="SQLCLIENT001"
+             Condition="'@(_SqlClientConfigMismatch)' != ''"
+             Text="SqlClient family version mismatch in $(_SqlClientConfigPath): %(_SqlClientConfigMismatch.Identity), but Microsoft.Data.SqlClient is $(_SqlClientConfigExpectedVersion). Upgrade all installed family packages together, including prerelease labels. Suppress warning: SqlClientEnforceFamilyVersions=false." />
+  </Target>
+</Project>

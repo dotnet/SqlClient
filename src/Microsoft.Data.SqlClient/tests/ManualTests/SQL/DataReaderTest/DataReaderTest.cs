@@ -24,10 +24,64 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         private static readonly object s_rowVersionLock = new();
 
+        /// <summary>
+        /// Checks HasRows and INFO delivery across populated and empty result sets
+        /// from SQL Server. PRINT before SELECT is compatibility coverage, not a repro
+        /// of issue #3018; simulated-server tests place INFO between metadata and rows.
+        /// </summary>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [InlineData(false)]
+        [InlineData(true)]
+        public static async Task HasRows_WithInfoMessages_AcrossResultSets(bool useAsync)
+        {
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            if (useAsync)
+            {
+                await connection.OpenAsync();
+            }
+            else
+            {
+                connection.Open();
+            }
+
+            List<string> messages = new();
+            connection.InfoMessage += (_, args) =>
+            {
+                foreach (SqlError error in args.Errors)
+                {
+                    messages.Add(error.Message);
+                }
+            };
+            using SqlCommand command = new(
+                "PRINT N'first'; PRINT N'second'; SELECT 1; " +
+                "PRINT N'third'; PRINT N'fourth'; SELECT 1 WHERE 1 = 0; SELECT 2;",
+                connection);
+            using SqlDataReader reader = useAsync
+                ? await command.ExecuteReaderAsync()
+                : command.ExecuteReader();
+
+            int[] expectedValues = { 1, 0, 2 };
+            for (int i = 0; i < expectedValues.Length; i++)
+            {
+                bool hasRows = expectedValues[i] != 0;
+                Assert.Equal(hasRows, reader.HasRows);
+                Assert.Equal(hasRows, useAsync ? await reader.ReadAsync() : reader.Read());
+                if (hasRows)
+                {
+                    Assert.Equal(expectedValues[i], reader.GetInt32(0));
+                    Assert.False(useAsync ? await reader.ReadAsync() : reader.Read());
+                }
+                Assert.Equal(hasRows, reader.HasRows);
+                Assert.Equal(i < expectedValues.Length - 1,
+                    useAsync ? await reader.NextResultAsync() : reader.NextResult());
+            }
+            Assert.Equal(new[] { "first", "second", "third", "fourth" }, messages);
+        }
+
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void LoadReaderIntoDataTableToTestGetSchemaTable()
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             connection.Open();
             var dt = new DataTable();
             using SqlCommand command = connection.CreateCommand();
@@ -45,7 +99,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void MultiQuerySchema()
         {
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             connection.Open();
             using SqlCommand command = connection.CreateCommand();
             // Use multiple queries
@@ -71,7 +125,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void CheckSparseColumnBit()
         {
             const int sparseColumns = 4095;
-            string tempTableName = DataTestUtility.GenerateObjectName();
+            string tempTableName = DataTestUtility.GetShortName("DataReaderTest");
 
             // TSQL for "CREATE TABLE" with sparse columns
             // table name will be provided as an argument
@@ -102,7 +156,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string createStatementFormat = createBuilder.ToString();
 
             // add a row with nulls only
-            using SqlConnection con = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using SqlConnection con = DataTestUtility.CreateConnection();
             using SqlCommand cmd = con.CreateCommand();
             try
             {
@@ -164,7 +218,7 @@ end
 close c
 deallocate c";
 
-            using SqlConnection conn = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection conn = DataTestUtility.CreateConnection();
             using SqlCommand collatedStringCommand = new(CollatedStringCommandText, conn);
 
             conn.Open();
@@ -241,7 +295,7 @@ deallocate c";
             // requested. The additional key information is provided as hidden columns and can be seen using
             // the difference between VisibleFieldCount and FieldCount on the reader
 
-            string tempTableName = DataTestUtility.GenerateObjectName();
+            string tempTableName = DataTestUtility.GetShortName("DataReaderTest", withBracket: false);
 
             string createQuery = $@"
                 create table [{tempTableName}] (
@@ -261,7 +315,7 @@ deallocate c";
             Type[] types = null;
             string[] names = null;
 
-            using (SqlConnection connection = new(DataTestUtility.TCPConnectionString))
+            using (SqlConnection connection = DataTestUtility.CreateConnection())
             {
                 connection.Open();
 
@@ -310,7 +364,7 @@ deallocate c";
                 using SwitchesHelper helper = new();
                 helper.LegacyRowVersionNullBehavior = false;
 
-                using SqlConnection con = new(DataTestUtility.TCPConnectionString);
+                using SqlConnection con = DataTestUtility.CreateConnection();
                 con.Open();
                 using SqlCommand command = con.CreateCommand();
                 command.CommandText = "select cast(null as rowversion) rv";
@@ -337,7 +391,7 @@ deallocate c";
         {
             int counter = 0;
 
-            using (var conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (var conn = DataTestUtility.CreateConnection())
             {
                 using (var cmd = new SqlCommand("SELECT EmployeeID,LastName,FirstName,Title,TitleOfCourtesy,BirthDate,HireDate,Address,City,Region,PostalCode,Country,HomePhone,Extension,Photo,Notes,ReportsTo,PhotoPath FROM Employees WHERE ReportsTo = @p0 OR (ReportsTo IS NULL AND @p0 IS NULL)", conn))
                 {
@@ -370,7 +424,7 @@ deallocate c";
         {
             int counter = 0;
 
-            using (var conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (var conn = DataTestUtility.CreateConnection())
             {
                 using (var cmd = new SqlCommand("SELECT EmployeeID,LastName,FirstName,Title,TitleOfCourtesy,BirthDate,HireDate,Address,City,Region,PostalCode,Country,HomePhone,Extension,Photo,Notes,ReportsTo,PhotoPath FROM Employees WHERE ReportsTo = @p0 OR (ReportsTo IS NULL AND @p0 IS NULL)", conn))
                 {
@@ -403,7 +457,7 @@ deallocate c";
         {
             int counter = 0;
 
-            using (var conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (var conn = DataTestUtility.CreateConnection())
             {
                 using (var cmd = new SqlCommand("SELECT EmployeeID,LastName,FirstName,Title,TitleOfCourtesy,BirthDate,HireDate,Address,City,Region,PostalCode,Country,HomePhone,Extension,convert(image,NULL) as Photo,Notes,ReportsTo,PhotoPath FROM Employees WHERE ReportsTo = @p0 OR (ReportsTo IS NULL AND @p0 IS NULL)", conn))
                 {
@@ -554,13 +608,13 @@ deallocate c";
    </book>
 </catalog>";
 
-            string tableName = DataTestUtility.GenerateObjectName();
+            string tableName = DataTestUtility.GetShortName("DataReaderTest", withBracket: false);
 
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
             builder.PersistSecurityInfo = true;
             builder.PacketSize = 3096; // should reproduce failure that this tests for in <100 reads
 
-            using (var connection = new SqlConnection(builder.ToString()))
+            using (var connection = DataTestUtility.CreateConnection(builder.ToString()))
             {
                 await connection.OpenAsync();
 
@@ -653,7 +707,7 @@ deallocate c";
 
             StringBuilder resultBuilder = new StringBuilder();
             CancellationTokenSource cts = new CancellationTokenSource();
-            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (var connection = DataTestUtility.CreateConnection())
             {
                 await connection.OpenAsync(cts.Token);
 
@@ -696,9 +750,9 @@ deallocate c";
             byte[] data = Enumerable.Range(0, Size)
                 .Select(i => (byte)(i % 256))
                 .ToArray();
-            string tableName = DataTestUtility.GenerateObjectName();
+            string tableName = DataTestUtility.GetShortName("DataReaderTest", withBracket: false);
 
-            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (var connection = DataTestUtility.CreateConnection())
             {
                 await connection.OpenAsync();
 
@@ -745,7 +799,7 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static async Task GetCharsSequentialAccess_NullBufferNegativeBufferIndex_ThrowsArgumentOutOfRange()
         {
-            using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using var connection = DataTestUtility.CreateConnection();
             await connection.OpenAsync();
 
             using var command = connection.CreateCommand();
@@ -765,7 +819,7 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
             const int length = 32000;
             const string sqlCharWithArg = "SELECT CONVERT(BIGINT, 1) AS [Id], CONVERT(NVARCHAR(MAX), @input) AS [Value];";
 
-            using (var sqlConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (var sqlConnection = DataTestUtility.CreateConnection())
             {
                 await sqlConnection.OpenAsync();
 
@@ -855,7 +909,7 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
             {
                 await cn.OpenAsync();
 
-                string tableName = DataTestUtility.GenerateObjectName();
+                string tableName = DataTestUtility.GetShortName("DataReaderTest", withBracket: false);
 
                 try
                 {
@@ -927,7 +981,7 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
                 using SwitchesHelper helper = new();
                 helper.LegacyRowVersionNullBehavior = true;
 
-                using SqlConnection con = new(DataTestUtility.TCPConnectionString);
+                using SqlConnection con = DataTestUtility.CreateConnection();
                 con.Open();
                 using SqlCommand command = con.CreateCommand();
                 command.CommandText = "select cast(null as rowversion) rv";
@@ -1063,7 +1117,7 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
             {
                 await cn.OpenAsync();
 
-                string tableName = DataTestUtility.GenerateObjectName();
+                string tableName = DataTestUtility.GetShortName("DataReaderTest", withBracket: false);
 
                 try
                 {
@@ -1104,7 +1158,7 @@ INSERT INTO [{tableName}] (Data) VALUES (@data);";
                     for (int packetSize = 512; packetSize<2048; packetSize+=3)
                     {
                         builder.PacketSize = packetSize;
-                        using (SqlConnection sizedConnection = new SqlConnection(builder.ToString()))
+                        using (SqlConnection sizedConnection = DataTestUtility.CreateConnection(builder.ToString()))
                         using (SqlCommand cmd = sizedConnection.CreateCommand())
                         {
                             sizedConnection.Open();

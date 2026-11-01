@@ -204,6 +204,9 @@
   <data name="ADP_PooledOpenTimeout" xml:space="preserve">
     <value>Zaman aşımı süresi sona erdi.  Havuzdan bağlantı alınmadan zaman aşımı süresi doldu.  Bu durum, havuza alınmamış tüm bağlantılar kullanımda olduğundan ve havuz boyutu üst sınırına ulaşıldığından olabilir.</value>
   </data>
+  <data name="ADP_IsolationLevelResetTimeout" xml:space="preserve">
+    <value>Zaman aşımı süresi doldu.  Havuza alınan bağlantının işlem yalıtım düzeyi sıfırlanmadan önce bağlantı zaman aşımı süresi doldu.</value>
+  </data>
   <data name="ADP_NonPooledOpenTimeout" xml:space="preserve">
     <value>Bağlantı açılmaya çalışılırken zaman aşımı oluştu.  Bağlantı açılmaya çalışılırken geçen süre aşıldı.  Bu, aynı anda çok fazla sayıda havuza alınmamış bağlantı denemesi nedeniyle oluşmuş olabilir.</value>
   </data>
@@ -1797,6 +1800,9 @@
   <data name="TCE_EnclaveTypeNullForEnclaveBasedQuery" xml:space="preserve">
     <value>İç Hata. Kapanım hesaplamaları gerektiren bir sorgu yürütülürken SQL Server'dan alınan kapanım türü null veya boş.</value>
   </data>
+  <data name="TCE_AzureAttestationExtensionNotFound" xml:space="preserve">
+    <value>Attestation protocol 'AAS' requires the Microsoft.Data.SqlClient.Extensions.Azure package, at the same version as Microsoft.Data.SqlClient. Add or update the reference to that package, or specify a different attestation protocol in the connection string.</value>
+  </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
     <value>Kapanım türü '{0}' ve kanıtlama protokolü '{1}' için kapanım sağlayıcısı bulunamadı. Lütfen bağlantı dizesinde doğru kanıtlama protokolünü belirtin. </value>
   </data>
@@ -2064,6 +2070,9 @@
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
     <value>Üst komutta EnableOptimizedParameterBinding etkinleştirildiğinde '{0}' parametresinin Yön Çıkışı veya InputOutput’u olamaz.</value>
   </data>
+  <data name="SQL_PrepareNotSupportedForOptimizedBinding" xml:space="preserve">
+    <value>Prepare is not supported when EnableOptimizedParameterBinding is enabled. Create a new SqlCommand and either set EnableOptimizedParameterBinding to false before its first execution or execute it without calling Prepare.</value>
+  </data>
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
     <value>'{0}' kimlik doğrulama yöntemi kullanılarak bir erişim belirteci alınırken bağlantı zaman aşımına uğradı. Son Hata: {1}: {2}</value>
   </data>
@@ -2096,6 +2105,9 @@
   </data>
   <data name="SqlAppContextSwitchManager_InvalidValue" xml:space="preserve">
     <value>AppContext Switch '{0}'={1} ayarlanırken özel durum oluştu.</value>
+  </data>
+  <data name="SQL_GlobalizationInvariantModeRequiresLcid" xml:space="preserve">
+    <value>When Globalization Invariant Mode is enabled, SqlMetaData instances describing character or text types must specify an LCID.</value>
   </data>
   <data name="SQL_GlobalizationInvariantModeNotSupported" xml:space="preserve">
     <value>Küreselleşme Değişmez Modu desteklenmiyor.</value>

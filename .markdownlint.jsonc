@@ -1,0 +1,18 @@
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+// Configuration for the markdownlint VS Code extension.
+// See https://github.com/DavidAnson/markdownlint for rule documentation.
+{
+  // MD013 - Line length: enforce a maximum line length of 100 characters
+  "MD013": {
+    "line_length": 100,
+    "tables": false
+  },
+  // MD024 - No duplicate headings: only flag duplicates among sibling headings
+  // (allows the same heading text under different parents)
+  "MD024": {
+    "siblings_only": true
+  }
+}

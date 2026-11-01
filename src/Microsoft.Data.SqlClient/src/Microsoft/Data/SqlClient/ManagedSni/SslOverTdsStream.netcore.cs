@@ -11,6 +11,7 @@ using System.IO.Pipes;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Parser;
 
 namespace Microsoft.Data.SqlClient.ManagedSni
 {
@@ -58,7 +59,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         }
 
         /// <summary>
-        /// Set stream length. 
+        /// Set stream length.
         /// </summary>
         /// <param name="value">Length</param>
         public override void SetLength(long value) => throw new NotSupportedException();
@@ -411,7 +412,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         private static void SetupPreLoginPacketHeader(byte[] buffer, int dataLength, int remainingLength)
         {
-            // We can only send 4088 bytes in one packet. Header[1] is set to 1 if this is a 
+            // We can only send 4088 bytes in one packet. Header[1] is set to 1 if this is a
             // partial packet (whether or not count != 0).
             buffer[7] = 0; // touch this first for the jit bounds check
             buffer[0] = PRELOGIN_PACKET_TYPE;

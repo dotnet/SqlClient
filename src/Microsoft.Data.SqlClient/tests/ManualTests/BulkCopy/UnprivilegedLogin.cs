@@ -51,7 +51,7 @@ public sealed class UnprivilegedLogin : IDisposable
         // create users and modify permissions; and an "unprivileged" connection, which is used to perform
         // the actual tests. The user associated with the latter connection will be denied SELECT permissions
         // over master.sys.all_columns.
-        _managementConnection = new SqlConnection(DataTestUtility.TCPConnectionString);
+        _managementConnection = DataTestUtility.CreateConnection();
 
         // NOTE: If setup fails part way through, this constructor never returns, so xUnit never calls
         //   Dispose and the connection plus the login/users created so far would be leaked. A server

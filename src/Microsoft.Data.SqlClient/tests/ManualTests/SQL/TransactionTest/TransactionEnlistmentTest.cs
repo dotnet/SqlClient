@@ -59,7 +59,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     Timeout = TransactionManager.DefaultTimeout
                 }, TransactionScopeAsyncFlowOption.Enabled);
 
-                using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+                using SqlConnection connection = DataTestUtility.CreateConnection();
                 connection.Open();
                 System.Transactions.Transaction.Current.EnlistDurable(EnlistmentForPrepare.s_id, new EnlistmentForPrepare(), EnlistmentOptions.None);
                 txScope.Complete();
@@ -221,7 +221,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void RunTestFormat(Action testCase)
         {
-            TestTableName = DataTestUtility.GenerateObjectName();
+            TestTableName = DataTestUtility.GetShortName("TransactionEnlistmentTest");
             DataTestUtility.RunNonQuery(ConnectionString, $"create table {TestTableName} (col1 int, col2 text)");
             try
             {

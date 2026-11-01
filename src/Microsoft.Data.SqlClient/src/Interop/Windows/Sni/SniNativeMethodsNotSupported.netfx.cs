@@ -9,18 +9,19 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient.NativeSni;
 
 namespace Interop.Windows.Sni
 {
     internal sealed class SniNativeMethodsNotSupported : ISniNativeMethods
     {
         private readonly string _architecture;
-        
+
         public SniNativeMethodsNotSupported(Architecture architecture)
         {
             _architecture = architecture.ToString();
         }
-        
+
         public uint SniAddProvider(SNIHandle pConn, Provider provider, ref AuthProviderInfo pInfo) =>
             throw ADP.SNIPlatformNotSupported(_architecture);
 
@@ -59,9 +60,6 @@ namespace Interop.Windows.Sni
             throw ADP.SNIPlatformNotSupported(_architecture);
 
         public uint SniInitialize(IntPtr pmo) =>
-            throw ADP.SNIPlatformNotSupported(_architecture);
-
-        public uint SniIsTokenRestricted(IntPtr token, out bool isRestricted) =>
             throw ADP.SNIPlatformNotSupported(_architecture);
 
         public uint SniOpenSyncExWrapper(ref SniClientConsumerInfo pClientConsumerInfo, out IntPtr ppConn) =>

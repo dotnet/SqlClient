@@ -5,17 +5,11 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.IdentityModel.JsonWebTokens;
-using Microsoft.IdentityModel.Logging;
-using Microsoft.IdentityModel.Protocols;
-using Microsoft.IdentityModel.Protocols.OpenIdConnect;
-using Microsoft.IdentityModel.Tokens;
+using System.Threading.Tasks;
+using Microsoft.Data.Common;
 
 // Azure Attestation Protocol Flow
 // To start the attestation process, Sql Client sends the Protocol Id (i.e. 1), Nonce, Attestation Url and ECDH Public Key
@@ -30,6 +24,9 @@ using Microsoft.IdentityModel.Tokens;
 // JWT validation
 // To get the signing key for the JWT, we use OpenIdConnect API's. It download the signing keys from the well-known endpoint.
 // We validate that JWT is signed, valid (i.e. not expired) and check the Issuer.
+// The OpenIdConnect and JWT handling lives in the Microsoft.Data.SqlClient.Extensions.Azure package
+// (see AzureAttestationTokenValidatorBinding), so that only applications using Azure Attestation
+// depend on the Microsoft.IdentityModel packages.
 
 // Claim validation:
 // Validate the RSA public key send by Sql server matches the value specified in JWT.
@@ -54,13 +51,25 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Members
-        // this is meta data endpoint for AAS provided by Windows team
-        // i.e. https://<attestation_instance>/.well-known/openid-configuration
-        // such as https://sql.azure.attest.com/.well-known/openid-configuration
-        private const string AttestationUrlSuffix = @"/.well-known/openid-configuration";
+        // The token validator to use, or null to use the Azure extension's.
+        private readonly AzureAttestationTokenValidatorBinding _validator;
 
-        private static readonly MemoryCache OpenIdConnectConfigurationCache = new MemoryCache(new MemoryCacheOptions());
-        private static readonly TimeSpan s_openIdConnectConfigurationCacheTimeout = TimeSpan.FromDays(1);
+        // How long to wait before retrying validation with refreshed signing keys.
+        private readonly TimeSpan _signingKeyRetryDelay;
+        #endregion
+
+        #region Constructors
+        internal AzureAttestationEnclaveProvider()
+            : this(null, TimeSpan.FromSeconds(SigningKeyRetryInSec))
+        {
+        }
+
+        // Lets tests supply a fake validator and a short retry delay.
+        internal AzureAttestationEnclaveProvider(AzureAttestationTokenValidatorBinding validator, TimeSpan signingKeyRetryDelay)
+        {
+            _validator = validator;
+            _signingKeyRetryDelay = signingKeyRetryDelay;
+        }
         #endregion
 
         #region Internal methods
@@ -94,8 +103,6 @@ namespace Microsoft.Data.SqlClient
                     {
                         byte[] nonce = customData;
 
-                        IdentityModelEventSource.ShowPII = true;
-
                         // Deserialize the payload
                         AzureAttestationInfo attestInfo = new AzureAttestationInfo(attestationInfo);
 
@@ -128,6 +135,51 @@ namespace Microsoft.Data.SqlClient
         internal override void InvalidateEnclaveSession(EnclaveSessionParameters enclaveSessionParameters, SqlEnclaveSession enclaveSessionToInvalidate)
         {
             InvalidateEnclaveSessionHelper(enclaveSessionParameters, enclaveSessionToInvalidate);
+        }
+
+        // The Azure Attestation protocol uses a client-generated nonce to prevent token replay.
+        protected override bool GeneratesNonceForAttestation => true;
+
+        // Asynchronous counterpart of CreateEnclaveSession. Performs the attestation service round
+        // trip (OpenID Connect metadata download) asynchronously.
+        //
+        // The async attestation gate is taken and released by the sealed CreateEnclaveSessionAsync in
+        // EnclaveProviderBase, which also re-checks the session cache before calling this method.
+        protected override async Task<(SqlEnclaveSession SqlEnclaveSession, long Counter)> CreateEnclaveSessionCoreAsync(
+            byte[] attestationInfo,
+            ECDiffieHellman clientDHKey,
+            EnclaveSessionParameters enclaveSessionParameters,
+            byte[] customData,
+            int customDataLength,
+            CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrEmpty(enclaveSessionParameters.AttestationUrl) || customData == null || customDataLength <= 0)
+            {
+                throw SQL.AttestationFailed(Strings.FailToCreateEnclaveSession);
+            }
+
+            byte[] nonce = customData;
+
+            // Deserialize the payload
+            AzureAttestationInfo attestInfo = new AzureAttestationInfo(attestationInfo);
+
+            // Validate the attestation info
+            await VerifyAzureAttestationInfoAsync(
+                enclaveSessionParameters.AttestationUrl,
+                attestInfo.EnclaveType,
+                attestInfo.AttestationToken.AttestationToken,
+                attestInfo.Identity,
+                nonce,
+                cancellationToken).ConfigureAwait(false);
+
+            // Set up shared secret and validate signature
+            byte[] sharedSecret = GetSharedSecret(attestInfo.Identity, nonce, attestInfo.EnclaveType, attestInfo.EnclaveDHInfo, clientDHKey);
+
+            // add session to cache
+            SqlEnclaveSession sqlEnclaveSession =
+                AddEnclaveSessionToCache(enclaveSessionParameters, sharedSecret, attestInfo.SessionId, out long counter);
+
+            return (sqlEnclaveSession, counter);
         }
         #endregion
 
@@ -278,43 +330,107 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // Performs Attestation per the protocol used by Azure Attestation Service
-        private void VerifyAzureAttestationInfo(string attestationUrl, EnclaveType enclaveType, string attestationToken, EnclavePublicKey enclavePublicKey, byte[] nonce)
+        // Performs Attestation per the protocol used by Azure Attestation Service.
+        // Internal for tests.
+        internal void VerifyAzureAttestationInfo(string attestationUrl, EnclaveType enclaveType, string attestationToken, EnclavePublicKey enclavePublicKey, byte[] nonce)
         {
-            bool shouldForceUpdateSigningKeys = false;
+            AzureAttestationTokenValidatorBinding validator = GetTokenValidator();
             string attestationInstanceUrl = GetAttestationInstanceUrl(attestationUrl);
 
-            bool shouldRetryValidation;
-            bool isSignatureValid;
-            string exceptionMessage = string.Empty;
-            do
+            bool forceRefreshSigningKeys = false;
+            while (true)
             {
-                shouldRetryValidation = false;
-
-                // Get the OpenId config object for the signing keys
-                OpenIdConnectConfiguration openIdConfig = GetOpenIdConfigForSigningKeys(attestationInstanceUrl, shouldForceUpdateSigningKeys);
-
-                // Verify the token signature against the signing keys downloaded from meta data end point
-                bool isKeySigningExpired;
-                isSignatureValid = VerifyTokenSignature(attestationToken, attestationInstanceUrl, openIdConfig.SigningKeys, out isKeySigningExpired, out exceptionMessage);
-
-                // In cases if we fail to validate the token, since we are using the old signing keys
-                // let's re-download the signing keys again and re-validate the token signature
-                if (!isSignatureValid && isKeySigningExpired && !shouldForceUpdateSigningKeys)
+                int status = validator.ValidateToken(attestationToken, attestationInstanceUrl, forceRefreshSigningKeys, out Exception error);
+                if (status == AzureAttestationTokenValidatorBinding.TokenValid)
                 {
-                    shouldForceUpdateSigningKeys = true;
-                    shouldRetryValidation = true;
+                    break;
                 }
-            }
-            while (shouldRetryValidation);
 
-            if (!isSignatureValid)
-            {
-                throw SQL.AttestationFailed(string.Format(Strings.AttestationTokenSignatureValidationFailed, exceptionMessage));
+                string exceptionMessage = ThrowIfNotRetryable(status, error);
+
+                // The cached signing keys may be stale. Wait, then download them again and
+                // re-validate the token, once. The synchronous path blocks the calling thread here.
+                Thread.Sleep(_signingKeyRetryDelay);
+
+                if (forceRefreshSigningKeys)
+                {
+                    throw SQL.AttestationFailed(string.Format(Strings.AttestationTokenSignatureValidationFailed, exceptionMessage));
+                }
+
+                forceRefreshSigningKeys = true;
             }
 
             // Validate claims in the token
-            ValidateAttestationClaims(enclaveType, attestationToken, enclavePublicKey, nonce);
+            ValidateAttestationClaims(validator, enclaveType, attestationToken, enclavePublicKey, nonce);
+        }
+
+        // Performs Attestation per the protocol used by Azure Attestation Service.
+        // Asynchronous counterpart of VerifyAzureAttestationInfo. Internal for tests.
+        internal async Task VerifyAzureAttestationInfoAsync(
+            string attestationUrl,
+            EnclaveType enclaveType,
+            string attestationToken,
+            EnclavePublicKey enclavePublicKey,
+            byte[] nonce,
+            CancellationToken cancellationToken)
+        {
+            AzureAttestationTokenValidatorBinding validator = GetTokenValidator();
+            string attestationInstanceUrl = GetAttestationInstanceUrl(attestationUrl);
+
+            bool forceRefreshSigningKeys = false;
+            while (true)
+            {
+                Tuple<int, Exception> result =
+                    await validator.ValidateTokenAsync(attestationToken, attestationInstanceUrl, forceRefreshSigningKeys, cancellationToken)
+                        .ConfigureAwait(false);
+                if (result.Item1 == AzureAttestationTokenValidatorBinding.TokenValid)
+                {
+                    break;
+                }
+
+                string exceptionMessage = ThrowIfNotRetryable(result.Item1, result.Item2);
+
+                // The cached signing keys may be stale. Wait, then download them again and
+                // re-validate the token, once. The asynchronous path must not block a thread.
+                await Task.Delay(_signingKeyRetryDelay, cancellationToken).ConfigureAwait(false);
+
+                if (forceRefreshSigningKeys)
+                {
+                    throw SQL.AttestationFailed(string.Format(Strings.AttestationTokenSignatureValidationFailed, exceptionMessage));
+                }
+
+                forceRefreshSigningKeys = true;
+            }
+
+            // Validate claims in the token
+            ValidateAttestationClaims(validator, enclaveType, attestationToken, enclavePublicKey, nonce);
+        }
+
+        // Returns the Azure Attestation token validator, or throws if the Azure extension isn't available.
+        private AzureAttestationTokenValidatorBinding GetTokenValidator()
+        {
+            return _validator ?? AzureAttestationTokenValidatorBinding.Instance ?? throw SQL.AzureAttestationExtensionNotFound();
+        }
+
+        // Translates a token validation failure into the SqlClient exception for it. Returns the
+        // message to report if the failure is retryable with refreshed signing keys; throws otherwise.
+        private static string ThrowIfNotRetryable(int status, Exception error)
+        {
+            string innerMostMessage = error is null ? string.Empty : GetInnerMostExceptionMessage(error);
+            switch (status)
+            {
+                case AzureAttestationTokenValidatorBinding.TokenValidationFailed:
+                    return innerMostMessage;
+
+                case AzureAttestationTokenValidatorBinding.TokenExpired:
+                    throw SQL.AttestationFailed(Strings.ExpiredAttestationToken, error);
+
+                case AzureAttestationTokenValidatorBinding.SigningKeysUnavailable:
+                    throw SQL.AttestationFailed(string.Format(Strings.GetAttestationTokenSigningKeysFailed, innerMostMessage), error);
+
+                default:
+                    throw SQL.AttestationFailed(string.Format(Strings.InvalidAttestationToken, innerMostMessage));
+            }
         }
 
         // Returns the innermost exception value
@@ -329,32 +445,6 @@ namespace Microsoft.Data.SqlClient
             return exLocal.Message;
         }
 
-        // For the given attestation url it downloads the token signing keys from the well-known openid configuration end point.
-        // It also caches that information for 1 day to avoid DDOS attacks.
-        private OpenIdConnectConfiguration GetOpenIdConfigForSigningKeys(string url, bool forceUpdate)
-        {
-            OpenIdConnectConfiguration openIdConnectConfig = OpenIdConnectConfigurationCache.Get<OpenIdConnectConfiguration>(url);
-            if (forceUpdate || openIdConnectConfig == null)
-            {
-                // Compute the meta data endpoint
-                string openIdMetadataEndpoint = url + AttestationUrlSuffix;
-
-                try
-                {
-                    IConfigurationManager<OpenIdConnectConfiguration> configurationManager = new ConfigurationManager<OpenIdConnectConfiguration>(openIdMetadataEndpoint, new OpenIdConnectConfigurationRetriever());
-                    openIdConnectConfig = configurationManager.GetConfigurationAsync(CancellationToken.None).Result;
-                }
-                catch (Exception exception)
-                {
-                    throw SQL.AttestationFailed(string.Format(Strings.GetAttestationTokenSigningKeysFailed, GetInnerMostExceptionMessage(exception)), exception);
-                }
-
-                OpenIdConnectConfigurationCache.Set<OpenIdConnectConfiguration>(url, openIdConnectConfig, absoluteExpirationRelativeToNow: s_openIdConnectConfigurationCacheTimeout);
-            }
-
-            return openIdConnectConfig;
-        }
-
         // Return the attestation instance url for given attestation url
         // such as for https://sql.azure.attest.com/attest/SgxEnclave?api-version=2017-11-01
         // It will return https://sql.azure.attest.com
@@ -362,72 +452,6 @@ namespace Microsoft.Data.SqlClient
         {
             Uri attestationUri = new Uri(attestationUrl);
             return attestationUri.GetLeftPart(UriPartial.Authority);
-        }
-
-        // Generate the list of valid issuer Url's (in case if tokenIssuerUrl is using default port)
-        private static ICollection<string> GenerateListOfIssuers(string tokenIssuerUrl)
-        {
-            List<string> issuerUrls = new List<string>();
-
-            Uri tokenIssuerUri = new Uri(tokenIssuerUrl);
-            int port = tokenIssuerUri.Port;
-            bool isDefaultPort = tokenIssuerUri.IsDefaultPort;
-
-            string issuerUrl = tokenIssuerUri.GetLeftPart(UriPartial.Authority);
-            issuerUrls.Add(issuerUrl);
-
-            if (isDefaultPort)
-            {
-                issuerUrls.Add(string.Concat(issuerUrl, ":", port.ToString()));
-            }
-
-            return issuerUrls;
-        }
-
-        // Verifies the attestation token is signed by correct signing keys.
-        private bool VerifyTokenSignature(string attestationToken, string tokenIssuerUrl, ICollection<SecurityKey> issuerSigningKeys, out bool isKeySigningExpired, out string exceptionMessage)
-        {
-            exceptionMessage = string.Empty;
-            bool isSignatureValid = false;
-            isKeySigningExpired = false;
-
-            // Configure the TokenValidationParameters
-            TokenValidationParameters validationParameters =
-                new TokenValidationParameters
-                {
-                    RequireExpirationTime = true,
-                    ValidateLifetime = true,
-                    ValidateIssuer = true,
-                    ValidateAudience = false, // CodeQL [SM04387] Required for an external standard: Microsoft Azure Attestation does not support the audience claim.
-                    RequireSignedTokens = true,
-                    ValidIssuers = GenerateListOfIssuers(tokenIssuerUrl),
-                    IssuerSigningKeys = issuerSigningKeys
-                };
-
-            try
-            {
-                JwtSecurityTokenHandler handler = new JwtSecurityTokenHandler();
-                var token = handler.ValidateToken(attestationToken, validationParameters, out _);
-                isSignatureValid = true;
-            }
-            catch (SecurityTokenExpiredException securityException)
-            {
-                throw SQL.AttestationFailed(Strings.ExpiredAttestationToken, securityException);
-            }
-            catch (SecurityTokenValidationException securityTokenException)
-            {
-                isKeySigningExpired = true;
-
-                // Sleep for SigningKeyRetryInSec sec before retrying to download the signing keys again.
-                Thread.Sleep(SigningKeyRetryInSec * 1000);
-                exceptionMessage = GetInnerMostExceptionMessage(securityTokenException);
-            }
-            catch (Exception exception)
-            {
-                throw SQL.AttestationFailed(string.Format(Strings.InvalidAttestationToken, GetInnerMostExceptionMessage(exception)));
-            }
-
-            return isSignatureValid;
         }
 
         // Computes the SHA256 hash of the byte array
@@ -449,25 +473,17 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Validate the claims in the attestation token
-        private void ValidateAttestationClaims(EnclaveType enclaveType, string attestationToken, EnclavePublicKey enclavePublicKey, byte[] nonce)
+        private void ValidateAttestationClaims(AzureAttestationTokenValidatorBinding validator, EnclaveType enclaveType, string attestationToken, EnclavePublicKey enclavePublicKey, byte[] nonce)
         {
-            // Read the json token
-            JsonWebToken token;
+            // Read the json token and get all the claims from it
+            Dictionary<string, string> claims;
             try
             {
-                JsonWebTokenHandler tokenHandler = new JsonWebTokenHandler();
-                token = tokenHandler.ReadJsonWebToken(attestationToken);
+                claims = validator.ReadClaims(attestationToken);
             }
             catch (ArgumentException argumentException)
             {
                 throw SQL.AttestationFailed(string.Format(Strings.FailToParseAttestationToken, argumentException.Message));
-            }
-
-            // Get all the claims from the token
-            Dictionary<string, string> claims = new Dictionary<string, string>();
-            foreach (Claim claim in token.Claims)
-            {
-                claims.Add(claim.Type, claim.Value);
             }
 
             // Get Enclave held data claim and validate it with the Base64UrlEncode(enclave public key)
@@ -495,7 +511,7 @@ namespace Microsoft.Data.SqlClient
             string encodedActualData = string.Empty;
             try
             {
-                encodedActualData = Base64UrlEncoder.Encode(actualData);
+                encodedActualData = Base64UrlEncode(actualData);
             }
             catch (Exception)
             {
@@ -507,6 +523,12 @@ namespace Microsoft.Data.SqlClient
             {
                 throw SQL.AttestationFailed(string.Format(Strings.InvalidClaimInAttestationToken, claimName, claimData));
             }
+        }
+
+        // Encodes the data as base64url without padding (RFC 4648, section 5), as used in JWT claims.
+        internal static string Base64UrlEncode(byte[] data)
+        {
+            return Convert.ToBase64String(data).TrimEnd('=').Replace('+', '-').Replace('/', '_');
         }
 
         private byte[] GetSharedSecret(EnclavePublicKey enclavePublicKey, byte[] nonce, EnclaveType enclaveType, EnclaveDiffieHellmanInfo enclaveDHInfo, ECDiffieHellman clientDHKey)

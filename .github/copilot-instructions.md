@@ -11,9 +11,9 @@
 
 ## 📚 Project Overview
 This project is a .NET data provider for SQL Server, enabling .NET applications to interact with SQL Server databases. It supports various features like connection pooling, transaction management, and asynchronous operations.
-The project builds from a **single unified project** at `src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj`. It targets `net8.0` and `net9.0` on all supported hosts, and adds `net462` only when building on Windows. The legacy `netfx/` and `netcore/` directories are being phased out — only their `ref/` folders (which define the public API surface) remain active.
+The project builds from a **single unified project** at `src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj`, targeting `net462;net10.0` (minimum runtime compatibility: .NET Framework 4.6.2 and .NET 10). Public API declarations are unified under `src/Microsoft.Data.SqlClient/ref/`; reference and unsupported-platform projects additionally preserve `netstandard2.0`. The legacy `netfx/` and `netcore/` directories are no longer used.
 The project includes:
-- **Public APIs**: Defined in `netcore/ref/` and `netfx/ref/` directories.
+- **Public APIs**: Defined by `src/Microsoft.Data.SqlClient/ref/Microsoft.Data.SqlClient.csproj` and the reference source files beside it.
 - **Implementations**: All source code in `src/Microsoft.Data.SqlClient/src/`.
 - **Tests**: Located in the `tests/` directory, covering unit and integration tests.
   - **Unit Tests**: Located in `src/Microsoft.Data.SqlClient/tests/UnitTests/`.
@@ -51,12 +51,12 @@ This project includes several key products and libraries that facilitate SQL Ser
 - **Logging and Diagnostics**: Provides event source tracing diagnostic capabilities for troubleshooting.
 - **Failover Support**: Handles automatic failover scenarios for high availability.
   - Compatibility switch: `Switch.Microsoft.Data.SqlClient.UseLegacyFailoverAlternationOnLoginSqlErrors` (default `false`) can restore legacy alternation behavior in `LoginWithFailover` for login-phase SQL errors.
-- **Cross-Platform Support**: Compatible with both .NET Framework and .NET Core, allowing applications to run on Windows, Linux, and macOS.
+- **Cross-Platform Support**: Compatible with .NET Framework 4.6.2+ on Windows and .NET 10+ on Windows, Linux, and macOS.
 - **Column Encryption AKV Provider**: Supports Azure Key Vault (AKV) provider for acquiring keys from Azure Key Vault to be used for encryption and decryption.
 
 ## 🧩 SNI Implementations
 There are two implementations of the SQL Server Network Interface (SNI) layer used in this project:
-- **Managed SNI**: A managed implementation of SNI that is used in .NET Core and .NET 5+ environments. It provides cross-platform support for SQL Server connectivity.
+- **Managed SNI**: A managed implementation of SNI that is used in .NET 10+ environments. It provides cross-platform support for SQL Server connectivity.
 - **Native SNI**: A native implementation of SNI that is used in .NET Framework and .NET Core environments on Windows. It's shipped as part of the `Microsoft.Data.SqlClient.SNI` and `Microsoft.Data.SqlClient.SNI.Runtime` packages.
   - **Microsoft.Data.SqlClient.SNI**: This package provides the native SNI layer for .NET Framework applications.
   - **Microsoft.Data.SqlClient.SNI.Runtime**: This package provides the native SNI layer for .NET Core applications on Windows.
@@ -104,7 +104,22 @@ When a new issue is created, follow these steps:
 - Follow a test-driven approach: write failing tests before implementing fixes.
 - **Cover both sync and async code paths** where the API exposes both variants (e.g., `Open`/`OpenAsync`, `ExecuteReader`/`ExecuteReaderAsync`). Sync and async implementations often differ internally.
 - Use the existing test framework in the `tests/` directory.
-- Follow the naming conventions and structure of existing tests.
+- Read and follow the [test authoring rules](instructions/testing.instructions.md#writing-tests).
+  They are mandatory for unit tests and strongly recommended for manual and functional tests;
+  older neighboring tests do not override them.
+- Use commented Arrange, Act, Assert, Cleanup sections in order; Act and Assert are required.
+  Include Arrange only for needed setup and Cleanup only for special teardown. Comment each group
+  of steps within a section to explain what happens and, when unclear, why.
+- Use `[MemberData]` with a declared `TheoryData<...>` return type for non-constant theory data;
+  never use `[ClassData]` for it.
+- Keep `{ClassName}Tests.cs` focused on that class and mirror its source folder under `UnitTests/`.
+  Name tests `{MethodName}_{Input}_{ExpectedOutput}` without the tested class name.
+- Put unit-only utilities in `tests/UnitTests/Utilities/` and utilities shared across test projects
+  in TestCommon (`tests/Common/`), excluding fuzz, stress, and performance projects from this rule.
+- Split separate scenarios into separate tests; do not select behavior with switches or flags,
+  including sync/async switches. Use theories only to vary inputs for the same behavior.
+- Verify that tests exercise the intended behavior and assert outcomes that detect regressions.
+  Confirm the intended tests actually ran; skipped tests or zero matches do not establish coverage.
 - Ensure tests are comprehensive and cover edge cases.
 - If the issue involves changes to public APIs, update the corresponding `ref/` projects to reflect those changes.
 - Add sample code snippets in the 'doc/samples/' directory to demonstrate the new or fixed functionality and link them in the documentation in `doc/` folder.
@@ -132,12 +147,13 @@ When a new issue is created, follow these steps:
 - Tag reviewers based on `CODEOWNERS` file
 
 ## 🌿 Branch Naming
-- All branches created by AI agents **must** use the `dev/automation/` prefix (e.g. `dev/automation/fix-connection-timeout`).
-- Do **not** create branches directly under `main`, `dev/`, or any other top-level prefix.
+- **Interactive agents**, working under direct human guidance, may create and use branches under `dev/<name>/` when the human specifies or approves the namespace and branch name (e.g., `dev/paul/aot/phase-1.1`).
+- **Autonomous agents**, working without interactive human direction, **must** create branches under `dev/automation/` (e.g., `dev/automation/fix-connection-timeout`).
+- Do **not** create branches outside these namespaces or directly under `dev/`.
 
 ## 🧠 Contextual Awareness
 - All source code is in `src/Microsoft.Data.SqlClient/src/`. Do NOT add code to legacy `netfx/src/` or `netcore/src/` directories.
-- Only `ref/` folders in `netcore/ref/` and `netfx/ref/` remain active for defining the public API surface.
+- Public API changes must update the unified `src/Microsoft.Data.SqlClient/ref/` sources for each affected target framework.
 - Check for platform-specific differences using file suffixes (`.netfx.cs`, `.netcore.cs`, `.windows.cs`, `.unix.cs`) and conditional compilation (`#if NETFRAMEWORK`, `#if NET`, `#if _WINDOWS`, `#if _UNIX`).
 - Respect API compatibility rules across .NET versions
 - Do not introduce breaking changes without proper justification and documentation

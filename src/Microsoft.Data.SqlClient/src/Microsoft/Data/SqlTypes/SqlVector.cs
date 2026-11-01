@@ -10,6 +10,7 @@ using System.Runtime.InteropServices;
 using System.Text.Json;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient.Parser;
 
 #nullable enable
 
@@ -97,7 +98,8 @@ where T : unmanaged
         {
             return SQLMessage.NullString();
         }
-        return JsonSerializer.Serialize(Memory);
+        // GetTypeFieldsOrThrow guarantees T is float.
+        return JsonSerializer.Serialize((ReadOnlyMemory<float>)(object)Memory, SqlClientJsonSerializerContext.Default.ReadOnlyMemorySingle);
     }
 
     #endregion

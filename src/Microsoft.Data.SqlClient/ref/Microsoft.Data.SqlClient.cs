@@ -13,7 +13,7 @@ public enum ApplicationIntent
     ReadWrite = 0
 }
 
-/// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/OnChangeEventHandler.xml' path='docs/members[@name="OnChangeEventHandler"]/*'/>
+/// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/OnChangeEventHandler.xml' path='docs/members[@name="OnChangeEventHandler"]/OnChangeEventHandler/*'/>
 public delegate void OnChangeEventHandler(object sender, Microsoft.Data.SqlClient.SqlNotificationEventArgs e);
 
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/PoolBlockingPeriod.xml' path='docs/members[@name="PoolBlockingPeriod"]/PoolBlockingPeriod/*'/>
@@ -211,7 +211,7 @@ public class SqlBatchCommand
     #if NET
     public override bool CanCreateParameter { get { throw null; } }
     #else
-    public bool CanCreateParameter { get { throw null; } set { } }
+    public bool CanCreateParameter { get { throw null; } }
     #endif
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommand.xml' path='docs/members[@name="SqlBatchCommand"]/CommandText/*'/>
     #if NET
@@ -257,6 +257,7 @@ public class SqlBatchCommandCollection : System.Data.Common.DbBatchCommandCollec
 public class SqlBatchCommandCollection : System.Collections.Generic.IList<Microsoft.Data.SqlClient.SqlBatchCommand>
 #endif
 {
+    internal SqlBatchCommandCollection(System.Collections.Generic.List<Microsoft.Data.SqlClient.SqlBatchCommand> batchCommands) { }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBatchCommandCollection.xml' path='docs/members[@name="SqlBatchCommandCollection"]/Count/*'/>
     #if NET
     public override int Count => throw null;
@@ -468,7 +469,7 @@ public sealed class SqlBulkCopyColumnMappingCollection : System.Collections.Coll
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHint.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHint"]/SqlBulkCopyColumnOrderHint/*'/>
 public sealed class SqlBulkCopyColumnOrderHint
 {
-    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHint.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHint"]/ctor[@name="columnStringAndsortOrderSortOrder"]/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHint.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHint"]/ctor[@name="columnStringAndSortOrderSortOrder"]/*'/>
     public SqlBulkCopyColumnOrderHint(string column, SortOrder sortOrder) { }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHint.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHint"]/Column/*'/>
     public string Column { get { throw null; } set { } }
@@ -483,7 +484,7 @@ public sealed class SqlBulkCopyColumnOrderHintCollection : System.Collections.Co
     public SqlBulkCopyColumnOrderHint this[int index] { get { throw null; } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/Add[@name="columnOrderHintParameter"]/*'/>
     public SqlBulkCopyColumnOrderHint Add(SqlBulkCopyColumnOrderHint columnOrderHint) { throw null; }
-    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/Add[@name="columnStringAndsortOrderSortOrder"]/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/Add[@name="columnStringAndSortOrderSortOrder"]/*'/>
     public SqlBulkCopyColumnOrderHint Add(string column, SortOrder sortOrder) { throw null; }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/Clear/*'/>
     public new void Clear() { }
@@ -876,7 +877,7 @@ public sealed class SqlCommand : System.Data.Common.DbCommand, System.ICloneable
     [System.Security.Permissions.HostProtectionAttribute(System.Security.Permissions.SecurityAction.LinkDemand, ExternalThreading = true)]
     #endif
     public System.IAsyncResult BeginExecuteXmlReader() { throw null; }
-    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteXmlReader[@name="AsyncCallbackAndstateObject"]/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteXmlReader[@name="AsyncCallbackAndStateObject"]/*'/>
     #if NETFRAMEWORK
     [System.Security.Permissions.HostProtectionAttribute(System.Security.Permissions.SecurityAction.LinkDemand, ExternalThreading = true)]
     #endif
@@ -1262,6 +1263,7 @@ public enum SqlConnectionColumnEncryptionSetting
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/SqlConnectionEncryptOption/*'/>
 public sealed class SqlConnectionEncryptOption
 {
+    private SqlConnectionEncryptOption(string value) { }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/Parse/*' />
     public static SqlConnectionEncryptOption Parse(string value) => throw null;
 
@@ -2409,7 +2411,7 @@ public abstract class SspiContextProvider
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SspiAuthenticationParameters.xml' path='docs/members[@name="SspiAuthenticationParameters"]/SspiAuthenticationParameters/*'/>
 public sealed class SspiAuthenticationParameters
 {
-    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SspiAuthenticationParameters.xml' path='docs/members[@name="SspiAuthenticationParameters"]/SspiAuthenticationParameters/ctor'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SspiAuthenticationParameters.xml' path='docs/members[@name="SspiAuthenticationParameters"]/ctor/*'/>
     public SspiAuthenticationParameters(
         string serverName,
         string resource,
@@ -2417,18 +2419,18 @@ public sealed class SspiAuthenticationParameters
         string databaseName = null,
         string password = null){}
 
-    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SspiAuthenticationParameters.xml' path='docs/members[@name="SspiAuthenticationParameters"]/SspiAuthenticationParameters/Resource'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SspiAuthenticationParameters.xml' path='docs/members[@name="SspiAuthenticationParameters"]/Resource/*'/>
     public string Resource { get { throw null; } }
 
-    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SspiAuthenticationParameters.xml' path='docs/members[@name="SspiAuthenticationParameters"]/SspiAuthenticationParameters/ServerName'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SspiAuthenticationParameters.xml' path='docs/members[@name="SspiAuthenticationParameters"]/ServerName/*'/>
     public string ServerName { get { throw null; } }
 
-    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SspiAuthenticationParameters.xml' path='docs/members[@name="SspiAuthenticationParameters"]/SspiAuthenticationParameters/UserId'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SspiAuthenticationParameters.xml' path='docs/members[@name="SspiAuthenticationParameters"]/UserId/*'/>
     public string UserId { get { throw null; } }
 
-    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SspiAuthenticationParameters.xml' path='docs/members[@name="SspiAuthenticationParameters"]/SspiAuthenticationParameters/DatabaseName'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SspiAuthenticationParameters.xml' path='docs/members[@name="SspiAuthenticationParameters"]/DatabaseName/*'/>
     public string DatabaseName { get { throw null; } }
 
-    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SspiAuthenticationParameters.xml' path='docs/members[@name="SspiAuthenticationParameters"]/SspiAuthenticationParameters/Password'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SspiAuthenticationParameters.xml' path='docs/members[@name="SspiAuthenticationParameters"]/Password/*'/>
     public string Password { get { throw null; } }
 }

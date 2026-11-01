@@ -69,7 +69,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JsonTest
 
         private void PopulateData(int noOfRecords, int rows)
         {
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection connection = DataTestUtility.CreateConnection())
             {
                 DataTestUtility.CreateTable(connection, _sourceTableName, "(data json)");
                 DataTestUtility.CreateTable(connection, _destinationTableName, "(data json)");
@@ -220,7 +220,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JsonTest
 
         private void BulkCopyData(CommandBehavior cb, bool enableStraming, int expectedTransferCount)
         {
-            using (SqlConnection sourceConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sourceConnection = DataTestUtility.CreateConnection())
             {
                 sourceConnection.Open();
                 SqlCommand commandRowCount = new SqlCommand("SELECT COUNT(*) FROM " + _destinationTableName, sourceConnection);
@@ -228,7 +228,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JsonTest
                 _output.WriteLine("Starting row count = {0}", countStart);
                 SqlCommand commandSourceData = new SqlCommand("SELECT data FROM " + _sourceTableName, sourceConnection);
                 SqlDataReader reader = commandSourceData.ExecuteReader(cb);
-                using (SqlConnection destinationConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+                using (SqlConnection destinationConnection = DataTestUtility.CreateConnection())
                 {
                     destinationConnection.Open();
                     using (SqlBulkCopy bulkCopy = new SqlBulkCopy(destinationConnection))
@@ -258,7 +258,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JsonTest
 
         private async Task BulkCopyDataAsync(CommandBehavior cb, bool enableStraming, int expectedTransferCount)
         {
-            using (SqlConnection sourceConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection sourceConnection = DataTestUtility.CreateConnection())
             {
                 await sourceConnection.OpenAsync();
                 SqlCommand commandRowCount = new SqlCommand("SELECT COUNT(*) FROM " + _destinationTableName, sourceConnection);
@@ -266,7 +266,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JsonTest
                 _output.WriteLine("Starting row count = {0}", countStart);
                 SqlCommand commandSourceData = new SqlCommand("SELECT data FROM " + _sourceTableName, sourceConnection);
                 SqlDataReader reader = await commandSourceData.ExecuteReaderAsync(cb);
-                using (SqlConnection destinationConnection = new SqlConnection(DataTestUtility.TCPConnectionString))
+                using (SqlConnection destinationConnection = DataTestUtility.CreateConnection())
                 {
                     await destinationConnection.OpenAsync();
                     using (SqlBulkCopy bulkCopy = new SqlBulkCopy(destinationConnection))
@@ -308,7 +308,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JsonTest
         public void TestJsonBulkCopy(CommandBehavior cb, bool enableStraming, int jsonArrayElements, int rows)
         {
             PopulateData(jsonArrayElements, rows);
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection connection = DataTestUtility.CreateConnection())
             {
                 BulkCopyData(cb, enableStraming, rows);
                 connection.Open();
@@ -328,7 +328,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.JsonTest
         public async Task TestJsonBulkCopyAsync(CommandBehavior cb, bool enableStraming, int jsonArrayElements, int rows)
         {
             PopulateData(jsonArrayElements, rows);
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection connection = DataTestUtility.CreateConnection())
             {
                 await BulkCopyDataAsync(cb, enableStraming, rows);
                 await connection.OpenAsync();
