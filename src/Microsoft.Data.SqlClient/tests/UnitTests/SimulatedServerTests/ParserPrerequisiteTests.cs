@@ -25,59 +25,427 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests;
 [Collection(SimulatedServerTestCollection.Name)]
 public class ParserPrerequisiteTests
 {
-    /// <summary>
-    /// Rejects tokens requiring uninitialized state during both connection-opening variants.
-    /// </summary>
+    /// <summary>Open rejects tokens whose metadata or authentication state is missing.</summary>
     [Theory]
-    [InlineData(TDSTokenType.Row, false)]
-    [InlineData(TDSTokenType.Row, true)]
-    [InlineData(TDSTokenType.NBCRow, false)]
-    [InlineData(TDSTokenType.NBCRow, true)]
-    [InlineData(TDSTokenType.AlternativeRow, false)]
-    [InlineData(TDSTokenType.AlternativeRow, true)]
-    [InlineData(TDSTokenType.SSPI, false)]
-    [InlineData(TDSTokenType.SSPI, true)]
-    public async Task LoginWithoutRequiredState_ThrowsParsingError(
-        TDSTokenType tokenType, bool useAsync)
+    [InlineData(TDSTokenType.Row)]
+    [InlineData(TDSTokenType.NBCRow)]
+    [InlineData(TDSTokenType.AlternativeRow)]
+    [InlineData(TDSTokenType.SSPI)]
+    public void Open_WithoutRequiredState_ThrowsParsingError(TDSTokenType tokenType)
     {
-        using TdsServerFixture fixture = new();
-        // Replace login completion with a token whose metadata or provider was never initialized.
+        // Arrange
+        using TdsServerFixture fixture = CreateInvalidLoginFixture(tokenType);
+        using SqlConnection connection = new(CreateBuilder(fixture).ConnectionString);
+
+        // Act
+        InvalidOperationException error = Assert.Throws<InvalidOperationException>(connection.Open);
+
+        // Assert
+        AssertRejectedConnection(error, connection);
+        Assert.Equal(1, fixture.TdsServer.PreLoginCount);
+    }
+
+    /// <summary>OpenAsync rejects tokens missing metadata or authentication state.</summary>
+    [Theory]
+    [InlineData(TDSTokenType.Row)]
+    [InlineData(TDSTokenType.NBCRow)]
+    [InlineData(TDSTokenType.AlternativeRow)]
+    [InlineData(TDSTokenType.SSPI)]
+    public async Task OpenAsync_WithoutRequiredState_ThrowsParsingError(TDSTokenType tokenType)
+    {
+        // Arrange
+        using TdsServerFixture fixture = CreateInvalidLoginFixture(tokenType);
+        using SqlConnection connection = new(CreateBuilder(fixture).ConnectionString);
+
+        // Act
+        InvalidOperationException error = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => connection.OpenAsync());
+
+        // Assert
+        AssertRejectedConnection(error, connection);
+        Assert.Equal(1, fixture.TdsServer.PreLoginCount);
+    }
+
+    /// <summary>Repeated sync parser failures release the sole slot in either pool.</summary>
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public Task ParserFailure_DoesNotPoisonPool(bool duringLogin, bool usePoolV2) =>
+        AssertPoolRecovery(duringLogin, usePoolV2,
+            connection =>
+            {
+                connection.Open();
+                return Task.CompletedTask;
+            },
+            command => Task.FromResult(command.ExecuteNonQuery()));
+
+    /// <summary>Repeated async parser failures release the sole slot in either pool.</summary>
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public Task ParserFailureAsync_DoesNotPoisonPool(bool duringLogin, bool usePoolV2) =>
+        AssertPoolRecovery(duringLogin, usePoolV2,
+            connection => connection.OpenAsync(), command => command.ExecuteNonQueryAsync());
+
+    /// <summary>Non-query row skipping rejects a batch without required row metadata.</summary>
+    [Theory]
+    [InlineData(TDSTokenType.Row)]
+    [InlineData(TDSTokenType.NBCRow)]
+    [InlineData(TDSTokenType.AlternativeRow)]
+    public void ExecuteNonQuery_WithoutRequiredState_ThrowsParsingError(TDSTokenType tokenType)
+    {
+        // Arrange
+        using BatchTestContext context = new(response => SetInvalidBatch(response, tokenType));
+        context.Connection.Open();
+
+        // Act
+        InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+            () => context.Command.ExecuteNonQuery());
+
+        // Assert
+        AssertRejectedConnection(error, context.Connection);
+    }
+
+    /// <summary>Asynchronous non-query row skipping rejects missing row metadata.</summary>
+    [Theory]
+    [InlineData(TDSTokenType.Row)]
+    [InlineData(TDSTokenType.NBCRow)]
+    [InlineData(TDSTokenType.AlternativeRow)]
+    public async Task ExecuteNonQueryAsync_WithoutRequiredState_ThrowsParsingError(
+        TDSTokenType tokenType)
+    {
+        // Arrange
+        using BatchTestContext context = new(response => SetInvalidBatch(response, tokenType));
+        await context.Connection.OpenAsync();
+
+        // Act
+        InvalidOperationException error = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => context.Command.ExecuteNonQueryAsync());
+
+        // Assert
+        AssertRejectedConnection(error, context.Connection);
+    }
+
+    /// <summary>Reader consumption rejects missing row metadata before disposal.</summary>
+    [Theory]
+    [InlineData(TDSTokenType.Row)]
+    [InlineData(TDSTokenType.NBCRow)]
+    [InlineData(TDSTokenType.AlternativeRow)]
+    public void ExecuteReader_WithoutRequiredState_ThrowsParsingError(TDSTokenType tokenType)
+    {
+        // Arrange
+        using BatchTestContext context = new(response => SetInvalidBatch(response, tokenType));
+        context.Connection.Open();
+        SqlDataReader? reader = null;
+
+        // Act
+        Exception? error = Record.Exception(() =>
+        {
+            reader = context.Command.ExecuteReader();
+            reader.Read();
+        });
+
+        // Assert / Cleanup
+        AssertRejectedReader(error, context.Connection, reader);
+    }
+
+    /// <summary>Async reader consumption rejects missing row metadata before disposal.</summary>
+    [Theory]
+    [InlineData(TDSTokenType.Row)]
+    [InlineData(TDSTokenType.NBCRow)]
+    [InlineData(TDSTokenType.AlternativeRow)]
+    public async Task ExecuteReaderAsync_WithoutRequiredState_ThrowsParsingError(
+        TDSTokenType tokenType)
+    {
+        // Arrange
+        using BatchTestContext context = new(response => SetInvalidBatch(response, tokenType));
+        await context.Connection.OpenAsync();
+        SqlDataReader? reader = null;
+
+        // Act
+        Exception? error = await Record.ExceptionAsync(async () =>
+        {
+            reader = await context.Command.ExecuteReaderAsync();
+            await reader.ReadAsync();
+        });
+
+        // Assert / Cleanup
+        AssertRejectedReader(error, context.Connection, reader);
+    }
+
+    /// <summary>Non-query execution rejects alternate rows without matching metadata.</summary>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ExecuteNonQuery_AlternateRowWithoutMatchingMetadata_ThrowsParsingError(
+        bool includeAlternateMetadata)
+    {
+        // Arrange
+        using BatchTestContext context = new(response =>
+            SetResult(response, includeAlternateMetadata, alternateId: 2));
+        context.Connection.Open();
+
+        // Act
+        InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+            () => context.Command.ExecuteNonQuery());
+
+        // Assert
+        AssertRejectedConnection(error, context.Connection);
+    }
+
+    /// <summary>Async non-query execution rejects unmatched alternate-row metadata.</summary>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ExecuteNonQueryAsync_AlternateRowWithoutMatchingMetadata_ThrowsParsingError(
+        bool includeAlternateMetadata)
+    {
+        // Arrange
+        using BatchTestContext context = new(response =>
+            SetResult(response, includeAlternateMetadata, alternateId: 2));
+        await context.Connection.OpenAsync();
+
+        // Act
+        InvalidOperationException error = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => context.Command.ExecuteNonQueryAsync());
+
+        // Assert
+        AssertRejectedConnection(error, context.Connection);
+    }
+
+    /// <summary>Result transitions reject unmatched alternate rows before disposal.</summary>
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public void NextResult_AlternateRowWithoutMatchingMetadata_ThrowsParsingError(
+        bool includeAlternateMetadata, bool readAllRows)
+    {
+        // Arrange
+        using BatchTestContext context = new(response =>
+            SetResult(response, includeAlternateMetadata, alternateId: 2));
+        context.Connection.Open();
+        SqlDataReader? reader = null;
+
+        // Act
+        Exception? error = Record.Exception(() =>
+        {
+            reader = context.Command.ExecuteReader();
+            ReadPrimaryRows(reader, readAllRows);
+            reader.NextResult();
+        });
+
+        // Assert / Cleanup
+        AssertRejectedReader(error, context.Connection, reader);
+    }
+
+    /// <summary>Async transitions reject unmatched alternate rows before disposal.</summary>
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public async Task NextResultAsync_AlternateRowWithoutMatchingMetadata_ThrowsParsingError(
+        bool includeAlternateMetadata, bool readAllRows)
+    {
+        // Arrange
+        using BatchTestContext context = new(response =>
+            SetResult(response, includeAlternateMetadata, alternateId: 2));
+        await context.Connection.OpenAsync();
+        SqlDataReader? reader = null;
+
+        // Act
+        Exception? error = await Record.ExceptionAsync(async () =>
+        {
+            reader = await context.Command.ExecuteReaderAsync();
+            await ReadPrimaryRowsAsync(reader, readAllRows);
+            await reader.NextResultAsync();
+        });
+
+        // Assert / Cleanup
+        AssertRejectedReader(error, context.Connection, reader);
+    }
+
+    /// <summary>Non-query execution skips valid primary and alternate results.</summary>
+    [Fact]
+    public void ExecuteNonQuery_ValidMetadata_PreservesConnection()
+    {
+        // Arrange
+        using BatchTestContext context = new(SetValidResult);
+        context.Connection.Open();
+
+        // Act
+        context.Command.ExecuteNonQuery();
+
+        // Assert
+        Assert.Equal(ConnectionState.Open, context.Connection.State);
+    }
+
+    /// <summary>Asynchronous non-query execution skips valid results without rejection.</summary>
+    [Fact]
+    public async Task ExecuteNonQueryAsync_ValidMetadata_PreservesConnection()
+    {
+        // Arrange
+        using BatchTestContext context = new(SetValidResult);
+        await context.Connection.OpenAsync();
+
+        // Act
+        await context.Command.ExecuteNonQueryAsync();
+
+        // Assert
+        Assert.Equal(ConnectionState.Open, context.Connection.State);
+    }
+
+    /// <summary>Result transitions skip a null row and consume the alternate result.</summary>
+    [Fact]
+    public void NextResult_ValidMetadata_PreservesResultProcessing()
+    {
+        // Arrange
+        using BatchTestContext context = new(SetValidResult);
+        context.Connection.Open();
+        using (SqlDataReader reader = context.Command.ExecuteReader())
+        {
+            ReadPrimaryRows(reader, readAllRows: false);
+
+            // Act
+            bool hasAlternateResult = reader.NextResult();
+
+            // Assert
+            Assert.True(hasAlternateResult);
+            Assert.True(reader.Read());
+            Assert.Equal(42, reader.GetInt32(0));
+            Assert.False(reader.Read());
+            Assert.False(reader.NextResult());
+        }
+
+        // Cleanup
+        Assert.Equal(ConnectionState.Open, context.Connection.State);
+    }
+
+    /// <summary>Async transitions skip a null row and consume the alternate result.</summary>
+    [Fact]
+    public async Task NextResultAsync_ValidMetadata_PreservesResultProcessing()
+    {
+        // Arrange
+        using BatchTestContext context = new(SetValidResult);
+        await context.Connection.OpenAsync();
+        using (SqlDataReader reader = await context.Command.ExecuteReaderAsync())
+        {
+            await ReadPrimaryRowsAsync(reader, readAllRows: false);
+
+            // Act
+            bool hasAlternateResult = await reader.NextResultAsync();
+
+            // Assert
+            Assert.True(hasAlternateResult);
+            Assert.True(await reader.ReadAsync());
+            Assert.Equal(42, reader.GetInt32(0));
+            Assert.False(await reader.ReadAsync());
+            Assert.False(await reader.NextResultAsync());
+        }
+
+        // Cleanup
+        Assert.Equal(ConnectionState.Open, context.Connection.State);
+    }
+
+    /// <summary>Packet continuation preserves lookup of a known alternate-row identifier.</summary>
+    [Fact]
+    public void ExecuteNonQuery_KnownAlternateRowIdAcrossPackets_PreservesConnection()
+    {
+        // Arrange
+        using BatchTestContext context = new();
+        context.Connection.Open();
+        context.SetPacketBoundaryResponse(alternateId: 1);
+
+        // Act
+        context.Command.ExecuteNonQuery();
+
+        // Assert
+        Assert.Equal(ConnectionState.Open, context.Connection.State);
+    }
+
+    /// <summary>Asynchronous packet continuation preserves lookup of a known identifier.</summary>
+    [Fact]
+    public async Task ExecuteNonQueryAsync_KnownAlternateRowIdAcrossPackets_PreservesConnection()
+    {
+        // Arrange
+        using BatchTestContext context = new();
+        await context.Connection.OpenAsync();
+        context.SetPacketBoundaryResponse(alternateId: 1);
+
+        // Act
+        await context.Command.ExecuteNonQueryAsync();
+
+        // Assert
+        Assert.Equal(ConnectionState.Open, context.Connection.State);
+    }
+
+    /// <summary>Packet continuation rejects an unknown alternate-row identifier.</summary>
+    [Fact]
+    public void ExecuteNonQuery_UnknownAlternateRowIdAcrossPackets_ThrowsParsingError()
+    {
+        // Arrange
+        using BatchTestContext context = new();
+        context.Connection.Open();
+        context.SetPacketBoundaryResponse(alternateId: 2);
+
+        // Act
+        InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+            () => context.Command.ExecuteNonQuery());
+
+        // Assert
+        AssertRejectedConnection(error, context.Connection);
+    }
+
+    /// <summary>Asynchronous packet continuation rejects an unknown identifier.</summary>
+    [Fact]
+    public async Task ExecuteNonQueryAsync_UnknownAlternateRowIdAcrossPackets_ThrowsParsingError()
+    {
+        // Arrange
+        using BatchTestContext context = new();
+        await context.Connection.OpenAsync();
+        context.SetPacketBoundaryResponse(alternateId: 2);
+
+        // Act
+        InvalidOperationException error = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => context.Command.ExecuteNonQueryAsync());
+
+        // Assert
+        AssertRejectedConnection(error, context.Connection);
+    }
+
+    /// <summary>Starts a server that sends a token missing its state during login.</summary>
+    /// <param name="tokenType">The token to send without metadata or a provider.</param>
+    /// <returns>A running fixture owned by the caller.</returns>
+    private static TdsServerFixture CreateInvalidLoginFixture(TDSTokenType tokenType)
+    {
+        TdsServerFixture fixture = new();
         fixture.TdsServer.OnAuthenticationResponseCompleted = response =>
         {
             response.Clear();
             response.Add(CreateToken(tokenType));
         };
-        using SqlConnection connection = new(CreateBuilder(fixture).ConnectionString);
-
-        InvalidOperationException error = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => Open(connection, useAsync));
-
-        // Reject the stream at its first login attempt, without leaving the connection open.
-        AssertParsingError(error);
-        Assert.Equal(ConnectionState.Closed, connection.State);
-        Assert.Equal(1, fixture.TdsServer.PreLoginCount);
+        return fixture;
     }
 
-    /// <summary>
-    /// Repeated parser failures during login or command processing cannot occupy the sole pool
-    /// slot or leave a reusable connection, with either pool and either execution variant.
-    /// </summary>
-    [Theory]
-    [InlineData(false, false, false)]
-    [InlineData(false, false, true)]
-    [InlineData(false, true, false)]
-    [InlineData(false, true, true)]
-    [InlineData(true, false, false)]
-    [InlineData(true, false, true)]
-    [InlineData(true, true, false)]
-    [InlineData(true, true, true)]
-    public async Task ParserFailure_DoesNotPoisonPool(
-        bool duringLogin, bool usePoolV2, bool useAsync)
+    /// <summary>Checks rejection and recovery using the supplied public entry points.</summary>
+    /// <param name="duringLogin">Whether to inject the malformed token during login.</param>
+    /// <param name="usePoolV2">The pool implementation to exercise.</param>
+    /// <param name="open">The synchronous or asynchronous connection-opening operation.</param>
+    /// <param name="execute">The corresponding non-query operation.</param>
+    /// <returns>A task that completes after a fresh physical connection is verified.</returns>
+    private static async Task AssertPoolRecovery(bool duringLogin, bool usePoolV2,
+        Func<SqlConnection, Task> open, Func<SqlCommand, Task> execute)
     {
+        // Arrange
         using ConnectionPoolVersionScope version = new(usePoolV2);
         using TdsServerFixture fixture = new();
         SqlConnectionStringBuilder builder = CreateBuilder(fixture);
-        // A leaked pool slot blocks recovery; disabling backoff exposes each new login attempt.
         builder.Pooling = true;
         builder.MaxPoolSize = 1;
         builder.PoolBlockingPeriod = PoolBlockingPeriod.NeverBlock;
@@ -87,7 +455,6 @@ public class ParserPrerequisiteTests
             response.Clear();
             response.Add(CreateToken(TDSTokenType.Row));
         }
-
         if (duringLogin)
         {
             fixture.TdsServer.OnAuthenticationResponseCompleted = SetInvalidResponse;
@@ -97,297 +464,129 @@ public class ParserPrerequisiteTests
             fixture.TdsServer.OnSQLBatchCompleted = SetInvalidResponse;
         }
 
-        // Repeated failures must release the sole slot, whether login or a command rejects the row.
+        // Act / Assert: repeated failures must release the sole pool slot.
         for (int attempt = 0; attempt < 2; attempt++)
         {
             using SqlConnection failed = new(builder.ConnectionString);
             InvalidOperationException error = await Assert.ThrowsAsync<InvalidOperationException>(
                 async () =>
                 {
-                    await Open(failed, useAsync);
+                    await open(failed);
                     using SqlCommand command = new("SELECT 1", failed);
-                    if (useAsync)
-                    {
-                        await command.ExecuteNonQueryAsync();
-                    }
-                    else
-                    {
-                        command.ExecuteNonQuery();
-                    }
+                    await execute(command);
                 });
-            AssertParsingError(error);
-            Assert.Equal(ConnectionState.Closed, failed.State);
+            AssertRejectedConnection(error, failed);
         }
 
-        // Restore valid responses and require a fresh physical login, not a damaged pooled session.
+        // Cleanup / Assert: recovery requires a fresh physical login.
         fixture.TdsServer.OnAuthenticationResponseCompleted = null;
         fixture.TdsServer.OnSQLBatchCompleted = null;
         using SqlConnection valid = new(builder.ConnectionString);
-        await Open(valid, useAsync);
+        await open(valid);
         Assert.Equal(ConnectionState.Open, valid.State);
         Assert.Equal(3, fixture.TdsServer.PreLoginCount);
     }
 
-    /// <summary>
-    /// Missing row state is rejected during command processing, including the early return
-    /// used by readers as well as the non-query row-skipping path.
-    /// </summary>
-    [Theory]
-    [InlineData(TDSTokenType.Row, false, false)]
-    [InlineData(TDSTokenType.Row, false, true)]
-    [InlineData(TDSTokenType.Row, true, false)]
-    [InlineData(TDSTokenType.Row, true, true)]
-    [InlineData(TDSTokenType.NBCRow, false, false)]
-    [InlineData(TDSTokenType.NBCRow, false, true)]
-    [InlineData(TDSTokenType.NBCRow, true, false)]
-    [InlineData(TDSTokenType.NBCRow, true, true)]
-    [InlineData(TDSTokenType.AlternativeRow, false, false)]
-    [InlineData(TDSTokenType.AlternativeRow, false, true)]
-    [InlineData(TDSTokenType.AlternativeRow, true, false)]
-    [InlineData(TDSTokenType.AlternativeRow, true, true)]
-    public async Task BatchWithoutRequiredState_ThrowsParsingError(
-        TDSTokenType tokenType, bool useReader, bool useAsync)
+    /// <summary>Checks that the corrupted-stream error closes the connection.</summary>
+    /// <param name="error">The operation's exception, captured before cleanup.</param>
+    /// <param name="connection">The connection that consumed the malformed response.</param>
+    private static void AssertRejectedConnection(
+        InvalidOperationException error, SqlConnection connection)
     {
-        using TdsServerFixture fixture = new();
-        // Let login succeed, then return a row without the metadata required to interpret it.
-        fixture.TdsServer.OnSQLBatchCompleted = response =>
-        {
-            response.Clear();
-            response.Add(CreateToken(tokenType));
-            response.Add(new TDSDoneToken(TDSDoneTokenStatusType.Final));
-        };
-        using SqlConnection connection = new(CreateBuilder(fixture).ConnectionString);
-        await Open(connection, useAsync);
-        using SqlCommand command = new("SELECT 1", connection);
+        Assert.Contains("Error state: 18", error.Message);
+        Assert.Equal(ConnectionState.Closed, connection.State);
+    }
 
-        SqlDataReader? reader = null;
-        // Exercise both reader consumption and the non-query path that skips returned rows.
-        Exception? operationError = await Record.ExceptionAsync(
-            async () =>
-            {
-                if (useReader)
-                {
-                    reader = useAsync
-                        ? await command.ExecuteReaderAsync()
-                        : command.ExecuteReader();
-                    if (useAsync)
-                    {
-                        await reader.ReadAsync();
-                    }
-                    else
-                    {
-                        reader.Read();
-                    }
-                }
-                else if (useAsync)
-                {
-                    await command.ExecuteNonQueryAsync();
-                }
-                else
-                {
-                    command.ExecuteNonQuery();
-                }
-            });
-
-        // Capture failure and closure before disposal so cleanup cannot mask the operation's error.
+    /// <summary>Checks rejection and connection state independently of reader cleanup.</summary>
+    /// <param name="error">The exception captured while opening or consuming the reader.</param>
+    /// <param name="connection">The connection whose state must be closed before disposal.</param>
+    /// <param name="reader">The reader to dispose, if execution returned one.</param>
+    private static void AssertRejectedReader(
+        Exception? error, SqlConnection connection, SqlDataReader? reader)
+    {
         ConnectionState stateAfterOperation = connection.State;
         Exception? disposeError = Record.Exception(() => reader?.Dispose());
-
-        AssertParsingError(Assert.IsType<InvalidOperationException>(operationError));
+        AssertRejectedConnection(Assert.IsType<InvalidOperationException>(error), connection);
         Assert.Equal(ConnectionState.Closed, stateAfterOperation);
         Assert.Null(disposeError);
     }
 
-    /// <summary>
-    /// Alternate rows must resolve their own metadata, not fall back to a primary result's
-    /// metadata. Consuming and skipping rows must fail before disposal, which is checked
-    /// separately so cleanup cannot substitute for the operation's exception.
-    /// </summary>
-    [Theory]
-    [InlineData(false, false, false, false)]
-    [InlineData(false, false, true, false)]
-    [InlineData(false, true, false, false)]
-    [InlineData(false, true, true, false)]
-    [InlineData(false, true, false, true)]
-    [InlineData(false, true, true, true)]
-    [InlineData(true, false, false, false)]
-    [InlineData(true, false, true, false)]
-    [InlineData(true, true, false, false)]
-    [InlineData(true, true, true, false)]
-    [InlineData(true, true, false, true)]
-    [InlineData(true, true, true, true)]
-    public async Task AlternateRowWithoutMatchingMetadata_ThrowsParsingError(
-        bool includeAlternateMetadata, bool useReader, bool useAsync, bool readAllRows)
+    /// <summary>Consumes the primary value and optionally the null row.</summary>
+    /// <param name="reader">The reader positioned before the primary rows.</param>
+    /// <param name="readAllRows">Whether to consume the null row rather than skip it.</param>
+    private static void ReadPrimaryRows(SqlDataReader reader, bool readAllRows)
     {
-        using TdsServerFixture fixture = new();
-        // Metadata, when present, defines ID 1; the alternate row deliberately requests ID 2.
-        fixture.TdsServer.OnSQLBatchCompleted = response =>
-            SetResult(response, includeAlternateMetadata, alternateId: 2);
-        using SqlConnection connection = new(CreateBuilder(fixture).ConnectionString);
-        await Open(connection, useAsync);
-        using SqlCommand command = new("SELECT 1", connection);
-
-        SqlDataReader? reader = null;
-        Exception? operationError = await Record.ExceptionAsync(
-            async () =>
-            {
-                if (useReader)
-                {
-                    reader = useAsync
-                        ? await command.ExecuteReaderAsync()
-                        : command.ExecuteReader();
-                    Assert.True(useAsync ? await reader.ReadAsync() : reader.Read());
-                    Assert.Equal(1, reader.GetInt32(0));
-                    // Cover transitions with either all primary rows consumed or a null row unread.
-                    if (readAllRows)
-                    {
-                        Assert.True(useAsync ? await reader.ReadAsync() : reader.Read());
-                        Assert.True(reader.IsDBNull(0));
-                    }
-                    if (useAsync)
-                    {
-                        await reader.NextResultAsync();
-                    }
-                    else
-                    {
-                        reader.NextResult();
-                    }
-                }
-                else if (useAsync)
-                {
-                    await command.ExecuteNonQueryAsync();
-                }
-                else
-                {
-                    command.ExecuteNonQuery();
-                }
-            });
-
-        // Disposal must succeed independently, not substitute its own error for NextResult's.
-        ConnectionState stateAfterOperation = connection.State;
-        Exception? disposeError = Record.Exception(() => reader?.Dispose());
-
-        AssertParsingError(Assert.IsType<InvalidOperationException>(operationError));
-        Assert.Equal(ConnectionState.Closed, stateAfterOperation);
-        Assert.Null(disposeError);
-    }
-
-    /// <summary>
-    /// Valid primary and alternate metadata still support consuming and skipping results.
-    /// </summary>
-    [Theory]
-    [InlineData(false, false)]
-    [InlineData(false, true)]
-    [InlineData(true, false)]
-    [InlineData(true, true)]
-    public async Task ValidMetadata_PreservesResultProcessing(bool useReader, bool useAsync)
-    {
-        using TdsServerFixture fixture = new();
-        // The valid control pairs alternate row ID 1 with its metadata after ordinary/null rows.
-        fixture.TdsServer.OnSQLBatchCompleted = response =>
-            SetResult(response, includeAlternateMetadata: true, alternateId: 1);
-        using SqlConnection connection = new(CreateBuilder(fixture).ConnectionString);
-        await Open(connection, useAsync);
-        using SqlCommand command = new("SELECT 1", connection);
-
-        if (useReader)
+        Assert.True(reader.Read());
+        Assert.Equal(1, reader.GetInt32(0));
+        if (readAllRows)
         {
-            using SqlDataReader reader = useAsync
-                ? await command.ExecuteReaderAsync()
-                : command.ExecuteReader();
-            Assert.True(useAsync ? await reader.ReadAsync() : reader.Read());
-            Assert.Equal(1, reader.GetInt32(0));
-            // Leave the null-compressed row unread so NextResult must skip it before the alternate.
-            Assert.True(useAsync ? await reader.NextResultAsync() : reader.NextResult());
-            Assert.True(useAsync ? await reader.ReadAsync() : reader.Read());
-            Assert.Equal(42, reader.GetInt32(0));
-            Assert.False(useAsync ? await reader.ReadAsync() : reader.Read());
-            Assert.False(useAsync ? await reader.NextResultAsync() : reader.NextResult());
-        }
-        // Non-query execution must also skip the complete, valid result stream without rejection.
-        else if (useAsync)
-        {
-            await command.ExecuteNonQueryAsync();
-        }
-        else
-        {
-            command.ExecuteNonQuery();
-        }
-
-        Assert.Equal(ConnectionState.Open, connection.State);
-    }
-
-    /// <summary>
-    /// Splits an alternate-row identifier across TDS packets to verify that continuation
-    /// preserves both successful metadata lookup and controlled rejection.
-    /// </summary>
-    [Theory]
-    [InlineData(false, false)]
-    [InlineData(false, true)]
-    [InlineData(true, false)]
-    [InlineData(true, true)]
-    public async Task AlternateRowIdAcrossPackets_PreservesValidation(bool knownId, bool useAsync)
-    {
-        using TdsServerFixture fixture = new();
-        using SqlConnection connection = new(CreateBuilder(fixture).ConnectionString);
-        await Open(connection, useAsync);
-        fixture.TdsServer.OnSQLBatchCompleted = response =>
-        {
-            SetResult(response, includeAlternateMetadata: true,
-                alternateId: knownId ? (ushort)1 : (ushort)2);
-            // Measure everything before ALTROW so padding can position its identifier precisely.
-            using MemoryStream prefix = new();
-            for (int index = 0; index < response.Count - 2; index++)
-            {
-                response[index].Deflate(prefix);
-            }
-
-            TDSInfoToken padding = new(0, 0, 0, string.Empty);
-            using MemoryStream emptyPadding = new();
-            padding.Deflate(emptyPadding);
-            // Leave two payload bytes: the ALTROW token byte and the first identifier byte.
-            // The second identifier byte must then be read from the next TDS packet.
-            int targetLength = connection.PacketSize - TdsEnums.HEADER_LEN - 2;
-            int textBytes = targetLength - (int)prefix.Length - (int)emptyPadding.Length;
-            Assert.True(textBytes >= 0);
-            Assert.Equal(0, textBytes % 2);
-            padding.Message = new string('x', textBytes / 2);
-            padding.Deflate(prefix);
-            Assert.Equal(targetLength, prefix.Length);
-            response.Insert(response.Count - 2, padding);
-        };
-        using SqlCommand command = new("SELECT 1", connection);
-
-        async Task Execute()
-        {
-            if (useAsync)
-            {
-                await command.ExecuteNonQueryAsync();
-            }
-            else
-            {
-                command.ExecuteNonQuery();
-            }
-        }
-
-        // Packet continuation must preserve both valid lookup and rejection of an unknown ID.
-        if (knownId)
-        {
-            await Execute();
-            Assert.Equal(ConnectionState.Open, connection.State);
-        }
-        else
-        {
-            InvalidOperationException error = await Assert.ThrowsAsync<InvalidOperationException>(
-                Execute);
-            AssertParsingError(error);
-            Assert.Equal(ConnectionState.Closed, connection.State);
+            Assert.True(reader.Read());
+            Assert.True(reader.IsDBNull(0));
         }
     }
 
-    /// <summary>
-    /// Builds a bounded, unpooled connection to the test's ephemeral server.
-    /// </summary>
+    /// <summary>Asynchronously consumes the primary value and optionally the null row.</summary>
+    /// <param name="reader">The reader positioned before the primary rows.</param>
+    /// <param name="readAllRows">Whether to consume the null row rather than skip it.</param>
+    /// <returns>A task that completes after the selected rows are checked.</returns>
+    private static async Task ReadPrimaryRowsAsync(SqlDataReader reader, bool readAllRows)
+    {
+        Assert.True(await reader.ReadAsync());
+        Assert.Equal(1, reader.GetInt32(0));
+        if (readAllRows)
+        {
+            Assert.True(await reader.ReadAsync());
+            Assert.True(reader.IsDBNull(0));
+        }
+    }
+
+    /// <summary>Owns the repeated server, connection and command setup for batch tests.</summary>
+    private sealed class BatchTestContext : IDisposable
+    {
+        private readonly TdsServerFixture _fixture = new();
+
+        /// <summary>Creates an unopened connection and installs the batch response.</summary>
+        /// <param name="response">The override, or null for the normal response.</param>
+        public BatchTestContext(Action<TDSMessage>? response = null)
+        {
+            _fixture.TdsServer.OnSQLBatchCompleted = response;
+            Connection = new SqlConnection(CreateBuilder(_fixture).ConnectionString);
+            Command = new SqlCommand("SELECT 1", Connection);
+        }
+
+        public SqlConnection Connection { get; }
+        public SqlCommand Command { get; }
+
+        /// <summary>Installs a response whose alternate-row identifier spans two packets.</summary>
+        /// <param name="alternateId">The identifier to split across packets.</param>
+        public void SetPacketBoundaryResponse(ushort alternateId) =>
+            _fixture.TdsServer.OnSQLBatchCompleted = response =>
+                SetPacketBoundaryResult(response, Connection.PacketSize, alternateId);
+
+        /// <summary>Disposes the command, connection and server in ownership order.</summary>
+        public void Dispose()
+        {
+            try
+            {
+                Command.Dispose();
+            }
+            finally
+            {
+                try
+                {
+                    Connection.Dispose();
+                }
+                finally
+                {
+                    _fixture.Dispose();
+                }
+            }
+        }
+    }
+
+    /// <summary>Builds a bounded, unpooled connection to the test's ephemeral server.</summary>
+    /// <param name="fixture">The server fixture supplying the ephemeral port.</param>
+    /// <returns>The connection settings used by the parser tests.</returns>
     private static SqlConnectionStringBuilder CreateBuilder(TdsServerFixture fixture) => new()
     {
         DataSource = $"localhost,{fixture.TdsServer.EndPoint.Port}",
@@ -397,39 +596,18 @@ public class ParserPrerequisiteTests
         ConnectRetryCount = 0
     };
 
-    /// <summary>
-    /// Exercises the selected public connection-opening entry point.
-    /// </summary>
-    private static async Task Open(SqlConnection connection, bool useAsync)
-    {
-        if (useAsync)
-        {
-            await connection.OpenAsync();
-        }
-        else
-        {
-            connection.Open();
-        }
-    }
-
-    /// <summary>
-    /// Requires the existing corrupted-stream failure rather than an incidental CLR exception.
-    /// </summary>
-    private static void AssertParsingError(InvalidOperationException error) =>
-        Assert.Contains("Error state: 18", error.Message);
-
-    /// <summary>
-    /// Writes a little-endian identifier without flushing the surrounding TDS message.
-    /// </summary>
+    /// <summary>Writes a little-endian identifier without flushing the TDS message.</summary>
+    /// <param name="destination">The stream receiving the identifier.</param>
+    /// <param name="value">The identifier to serialize.</param>
     private static void WriteUInt16(Stream destination, ushort value)
     {
         destination.WriteByte((byte)value);
         destination.WriteByte((byte)(value >> 8));
     }
 
-    /// <summary>
-    /// Creates a token without sending the state that would normally precede it.
-    /// </summary>
+    /// <summary>Creates a token without sending the state that would normally precede it.</summary>
+    /// <param name="tokenType">The token whose prerequisite state is missing.</param>
+    /// <returns>The malformed response token.</returns>
     private static TDSPacketToken CreateToken(TDSTokenType tokenType) => tokenType switch
     {
         TDSTokenType.Row => new TDSRowToken(new TDSColMetadataToken()),
@@ -439,9 +617,25 @@ public class ParserPrerequisiteTests
         _ => throw new ArgumentOutOfRangeException(nameof(tokenType))
     };
 
-    /// <summary>
-    /// Writes a primary result followed by an alternate row with optional metadata.
-    /// </summary>
+    /// <summary>Writes a token lacking its prerequisite state followed by a final DONE.</summary>
+    /// <param name="response">The response to replace.</param>
+    /// <param name="tokenType">The token to send without its required state.</param>
+    private static void SetInvalidBatch(TDSMessage response, TDSTokenType tokenType)
+    {
+        response.Clear();
+        response.Add(CreateToken(tokenType));
+        response.Add(new TDSDoneToken(TDSDoneTokenStatusType.Final));
+    }
+
+    /// <summary>Writes ordinary and null rows followed by a matching alternate result.</summary>
+    /// <param name="response">The response to replace with the valid result stream.</param>
+    private static void SetValidResult(TDSMessage response) =>
+        SetResult(response, includeAlternateMetadata: true, alternateId: 1);
+
+    /// <summary>Writes primary rows and an alternate row with optional metadata.</summary>
+    /// <param name="response">The response to replace.</param>
+    /// <param name="includeAlternateMetadata">Whether to declare metadata identifier one.</param>
+    /// <param name="alternateId">The identifier requested by the alternate row.</param>
     private static void SetResult(
         TDSMessage response, bool includeAlternateMetadata, ushort alternateId)
     {
@@ -464,9 +658,36 @@ public class ParserPrerequisiteTests
         response.Add(new TDSDoneToken(TDSDoneTokenStatusType.Final));
     }
 
-    /// <summary>
-    /// Serializes one integer alternate column using metadata identifier one.
-    /// </summary>
+    /// <summary>Pads a result so the alternate-row identifier spans two TDS packets.</summary>
+    /// <param name="response">The batch response to replace with the padded result.</param>
+    /// <param name="packetSize">The negotiated packet size, including its header.</param>
+    /// <param name="alternateId">The metadata identifier requested by the alternate row.</param>
+    private static void SetPacketBoundaryResult(
+        TDSMessage response, int packetSize, ushort alternateId)
+    {
+        SetResult(response, includeAlternateMetadata: true, alternateId);
+        using MemoryStream prefix = new();
+        for (int index = 0; index < response.Count - 2; index++)
+        {
+            response[index].Deflate(prefix);
+        }
+
+        TDSInfoToken padding = new(0, 0, 0, string.Empty);
+        using MemoryStream emptyPadding = new();
+        padding.Deflate(emptyPadding);
+        // Leave the ALTROW token and first identifier byte in this packet, and the next byte
+        // in the following packet.
+        int targetLength = packetSize - TdsEnums.HEADER_LEN - 2;
+        int textBytes = targetLength - (int)prefix.Length - (int)emptyPadding.Length;
+        Assert.True(textBytes >= 0);
+        Assert.Equal(0, textBytes % 2);
+        padding.Message = new string('x', textBytes / 2);
+        padding.Deflate(prefix);
+        Assert.Equal(targetLength, prefix.Length);
+        response.Insert(response.Count - 2, padding);
+    }
+
+    /// <summary>Serializes one integer alternate column using metadata identifier one.</summary>
     private sealed class AlternateMetadataToken : TDSPacketToken
     {
         public override bool Inflate(Stream source) => throw new NotSupportedException();
@@ -483,9 +704,7 @@ public class ParserPrerequisiteTests
         }
     }
 
-    /// <summary>
-    /// Serializes one alternate row referring to the supplied metadata identifier.
-    /// </summary>
+    /// <summary>Serializes an alternate row with the supplied metadata identifier.</summary>
     private sealed class AlternateRowToken(ushort id) : TDSPacketToken
     {
         public override bool Inflate(Stream source) => throw new NotSupportedException();
