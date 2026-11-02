@@ -2125,6 +2125,12 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                         break;
                     case TdsEnums.SQLXMLTYPE:
                     case TdsEnums.SQLJSON:
+                        if (type.NullableType == TdsEnums.SQLJSON && value is ISqlVector)
+                        {
+                            // Reject vectors before the representation assertion or JSON writer.
+                            value = SqlParameter.CoerceValue(
+                                value, type, out coercedToDataFeed, out typeChanged, false);
+                        }
                         // Could be either string, SqlCachedBuffer, XmlReader or XmlDataFeed
                         Debug.Assert((value is XmlReader) || (value is SqlCachedBuffer) || (value is string) || (value is SqlString) || (value is XmlDataFeed), "Invalid value type of Xml datatype");
                         if (value is XmlReader xmlReader)

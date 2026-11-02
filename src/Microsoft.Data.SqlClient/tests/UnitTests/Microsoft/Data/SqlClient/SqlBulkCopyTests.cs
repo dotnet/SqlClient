@@ -4,6 +4,7 @@
 
 using System;
 using System.Data;
+using System.Data.SqlTypes;
 using System.Reflection;
 using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlClient.Parser.Tokens;
@@ -17,6 +18,97 @@ namespace Microsoft.Data.SqlClient.UnitTests;
 /// <summary>Verifies bulk-copy metadata boundaries without a SQL Server.</summary>
 public sealed class SqlBulkCopyTests
 {
+    /// <summary>Supplies native vectors with both reader SQL-type classifications.</summary>
+    public static TheoryData<object, bool> NativeVectorJsonInputs
+    {
+        get
+        {
+            TheoryData<object, bool> data = new()
+            {
+                { new SqlVector<float>(new[] { 1.5f }), false },
+                { new SqlVector<float>(new[] { 1.5f }), true }
+            };
+            #if NET
+            data.Add(new SqlVector<Half>(new[] { (Half)1.5f }), false);
+            data.Add(new SqlVector<Half>(new[] { (Half)1.5f }), true);
+            #endif
+            return data;
+        }
+    }
+
+    /// <summary>Supplies existing JSON text and SQL-null representations.</summary>
+    public static TheoryData<object, bool, bool> JsonInputs => new()
+    {
+        { "[1.5]", false, false },
+        { new SqlString("[1.5]"), false, true },
+        { DBNull.Value, true, false },
+        { SqlString.Null, true, true },
+        { SqlVector<float>.CreateNull(1), true, true }
+    };
+
+    /// <summary>Rejects vectors before the JSON writer or Debug-only representation assertions.</summary>
+    /// <param name="value">The native vector value.</param>
+    /// <param name="isSqlType">The source reader's SQL-type classification.</param>
+    [Theory]
+    [MemberData(nameof(NativeVectorJsonInputs))]
+    public void ConvertValue_NativeVectorForJson_ThrowsConversionError(object value, bool isSqlType)
+    {
+        // Arrange
+        using SqlBulkCopy copy = new("Server=<server>");
+        TdsColumnMetadata metadata = new(0)
+        {
+            column = "v",
+            DbType = SqlDbTypeExtensions.Json,
+            TdsType = TdsEnums.SQLJSON,
+            MetaType = MetaType.s_MetaJson,
+            IsNullable = true
+        };
+        MethodInfo? method = typeof(SqlBulkCopy).GetMethod(
+            "ConvertValue", BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(method);
+        object[] arguments = { value, metadata, false, isSqlType, false };
+
+        // Act
+        Action convert = () => method.Invoke(copy, arguments);
+
+        // Assert
+        TargetInvocationException error = Assert.Throws<TargetInvocationException>(convert);
+        Assert.IsType<InvalidOperationException>(error.InnerException);
+        Assert.IsType<InvalidCastException>(error.GetBaseException());
+    }
+
+    /// <summary>Preserves existing JSON input representations and null handling.</summary>
+    /// <param name="value">The source value.</param>
+    /// <param name="isNull">Whether the source reports SQL NULL.</param>
+    /// <param name="isSqlType">The source reader's SQL-type classification.</param>
+    [Theory]
+    [MemberData(nameof(JsonInputs))]
+    public void ConvertValue_JsonInput_PreservesValue(object value, bool isNull, bool isSqlType)
+    {
+        // Arrange
+        using SqlBulkCopy copy = new("Server=<server>");
+        TdsColumnMetadata metadata = new(0)
+        {
+            column = "v",
+            DbType = SqlDbTypeExtensions.Json,
+            TdsType = TdsEnums.SQLJSON,
+            MetaType = MetaType.s_MetaJson,
+            IsNullable = true
+        };
+        MethodInfo? method = typeof(SqlBulkCopy).GetMethod(
+            "ConvertValue", BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(method);
+        object[] arguments = { value, metadata, isNull, isSqlType, false };
+
+        // Act
+        object? result = method.Invoke(copy, arguments);
+
+        // Assert
+        Assert.Same(value, result);
+        Assert.Equal(isSqlType, arguments[3]);
+        Assert.Equal(false, arguments[4]);
+    }
+
     /// <summary>Leaves JSON destinations unchanged without consuming the source reader.</summary>
     /// <param name="sourceType">The reader's declared CLR field type.</param>
     /// <param name="encrypted">Whether the destination metadata is encrypted.</param>
