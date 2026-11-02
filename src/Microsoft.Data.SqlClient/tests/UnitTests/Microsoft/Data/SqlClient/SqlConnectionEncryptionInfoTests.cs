@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Security.Authentication;
@@ -248,10 +249,17 @@ namespace Microsoft.Data.SqlClient
             SqlException original = SqlException.CreateException(CreateErrorCollection(), ServerVersion);
             original.EncryptionInfo = CreatePopulated();
 
-            // Exception.Data is backed by an internal dictionary type that must be a known type.
+            // Exception.Data is backed by an internal dictionary type, and GetObjectData writes the
+            // error collection, so these types must be known to the serializer.
             DataContractSerializer serializer = new(
                 typeof(SqlException),
-                new[] { original.Data.GetType() });
+                new[]
+                {
+                    original.Data.GetType(),
+                    typeof(SqlErrorCollection),
+                    typeof(SqlError),
+                    typeof(List<object>),
+                });
             using MemoryStream stream = new();
             serializer.WriteObject(stream, original);
 
