@@ -62,8 +62,8 @@ parameters:
     type: string
     default: ""
 
-  # Assembly file version for APIScan (e.g. 1.0.0.12345).
-  - name: assemblyFileVersion
+  # Registered APIScan major.minor version, supplied as a runtime $(...) reference.
+  - name: apiScanSoftwareVersion
     type: string
 
   # True to publish symbols to private and public servers.
@@ -104,12 +104,12 @@ jobs:
 
     variables:
       ob_outputDirectory: $(PACK_OUTPUT)
-      # APIScan configuration for this Extension package
+      # APIScan configuration for this package
       ob_sdl_apiscan_enabled: true
       ob_sdl_apiscan_softwareFolder: $(Build.SourcesDirectory)/apiScan/${{ parameters.packageName }}/dlls
       ob_sdl_apiscan_symbolsFolder: $(Build.SourcesDirectory)/apiScan/${{ parameters.packageName }}/pdbs
-      ob_sdl_apiscan_softwarename: ${{ parameters.packageFullName }}
-      ob_sdl_apiscan_versionNumber: ${{ parameters.assemblyFileVersion }}
+      ob_sdl_apiscan_softwareName: ${{ parameters.packageFullName }}
+      ob_sdl_apiscan_versionNumber: ${{ parameters.apiScanSoftwareVersion }}
 
       buildTarget: ${{ coalesce(parameters.buildTarget, format('Build{0}', parameters.packageName)) }}
       packTarget: ${{ coalesce(parameters.packTarget, format('Pack{0}', parameters.packageName)) }}
