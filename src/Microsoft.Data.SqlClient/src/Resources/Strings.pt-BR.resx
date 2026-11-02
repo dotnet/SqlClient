@@ -2071,7 +2071,7 @@
     <value>O parâmetro '{0}' não pode ter a saída de direção ou InputOutput quando EnableOptimizedParameterBinding está habilitado no comando pai.</value>
   </data>
   <data name="SQL_PrepareNotSupportedForOptimizedBinding" xml:space="preserve">
-    <value>Prepare is not supported when EnableOptimizedParameterBinding is enabled. Create a new SqlCommand and either set EnableOptimizedParameterBinding to false before its first execution or execute it without calling Prepare.</value>
+    <value>Prepare não tem suporte quando EnableOptimizedParameterBinding está habilitado. Crie um novo SqlCommand e defina EnableOptimizedParameterBinding como false antes da primeira execução ou execute-o sem chamar Prepare.</value>
   </data>
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
     <value>A conexão expirou ao recuperar um token de acesso usando o método de autenticação '{0}'. Último erro: {1}: {2}</value>
@@ -2107,7 +2107,7 @@
     <value>Ocorreu uma exceção ao tentar definir o AppContext Switch '{0}'={1}.</value>
   </data>
   <data name="SQL_GlobalizationInvariantModeRequiresLcid" xml:space="preserve">
-    <value>When Globalization Invariant Mode is enabled, SqlMetaData instances describing character or text types must specify an LCID.</value>
+    <value>Quando o Modo de Globalização Invariável está habilitado, as instâncias de SqlMetaData que descrevem tipos de caractere ou texto devem especificar um LCID.</value>
   </data>
   <data name="SQL_GlobalizationInvariantModeNotSupported" xml:space="preserve">
     <value>O modo invariante de globalização não é suportado.</value>

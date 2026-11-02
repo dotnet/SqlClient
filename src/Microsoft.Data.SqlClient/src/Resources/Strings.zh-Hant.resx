@@ -1801,7 +1801,7 @@
     <value>內部錯誤。執行需要 enclave 計算的查詢時，從 SQL Server 收到了 null 或空白的 enclave 類型。</value>
   </data>
   <data name="TCE_AzureAttestationExtensionNotFound" xml:space="preserve">
-    <value>Attestation protocol 'AAS' requires the Microsoft.Data.SqlClient.Extensions.Azure package, at the same version as Microsoft.Data.SqlClient. Add or update the reference to that package, or specify a different attestation protocol in the connection string.</value>
+    <value>證明協定 'AAS' 需要 Microsoft.Data.SqlClient.Extensions.Azure 套件，且版本必須與 Microsoft.Data.SqlClient 相同。請新增或更新此套件參考，或在連接字串中指定其他證明協定。</value>
   </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
     <value>找不到記憶體保護區類型 '{0}' 和證明通訊協定 '{1}' 的記憶體保護區提供者。請在連接字串中指定正確的證明通訊協定。 </value>
@@ -2107,7 +2107,7 @@
     <value>嘗試設定 AppCoNtext 切換 '{0}'={1} 時發生例外。</value>
   </data>
   <data name="SQL_GlobalizationInvariantModeRequiresLcid" xml:space="preserve">
-    <value>When Globalization Invariant Mode is enabled, SqlMetaData instances describing character or text types must specify an LCID.</value>
+    <value>啟用全球化不變模式時，描述字元或文字類型的 SqlMetaData 執行個體必須指定 LCID。</value>
   </data>
   <data name="SQL_GlobalizationInvariantModeNotSupported" xml:space="preserve">
     <value>不支援全域固定模式。</value>
