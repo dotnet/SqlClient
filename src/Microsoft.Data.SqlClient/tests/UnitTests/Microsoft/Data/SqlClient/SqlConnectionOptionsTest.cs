@@ -11,6 +11,9 @@ using SqlConnectionInternal = global::Microsoft.Data.SqlClient.Connection.SqlCon
 
 namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
 {
+    /// <summary>
+    /// Verifies connection-string defaults and explicit overrides of AppContext settings.
+    /// </summary>
     [Collection(AppContextSwitchTestCollection.Name)]
     public class SqlConnectionOptionsTest : IDisposable
     {
@@ -24,6 +27,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
         }
 
 #if NETFRAMEWORK
+        /// <summary>
+        /// TNIR is disabled by default, while explicit keywords override either switch setting.
+        /// </summary>
         [Theory]
         [InlineData("test.database.windows.net", true, true, true)]
         [InlineData("test.database.windows.net", false, true, false)]
@@ -33,7 +39,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
         [InlineData("test.database.windows.net", null, false, true)]
         [InlineData("test.database.windows.net", true, null, true)]
         [InlineData("test.database.windows.net", false, null, false)]
-        [InlineData("test.database.windows.net", null, null, true)]
+        [InlineData("test.database.windows.net", null, null, false)]
         [InlineData("my.test.server", true, true, true)]
         [InlineData("my.test.server", false, true, false)]
         [InlineData("my.test.server", null, true, false)]
@@ -42,7 +48,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
         [InlineData("my.test.server", null, false, true)]
         [InlineData("my.test.server", true, null, true)]
         [InlineData("my.test.server", false, null, false)]
-        [InlineData("my.test.server", null, null, true)]
+        [InlineData("my.test.server", null, null, false)]
         public void TestDefaultTnir(string dataSource, bool? tnirEnabledInConnString, bool? tnirDisabledAppContext, bool expectedValue)
         {
             // Note: TNIR is only supported on .NET Framework.
@@ -66,7 +72,34 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
             SqlConnectionOptions connectionString = new(builder.ConnectionString);
 
             // Assert
+#pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
+            Assert.Equal(expectedValue, builder.TransparentNetworkIPResolution);
+#pragma warning restore 618
             Assert.Equal(expectedValue, connectionString.TransparentNetworkIPResolution);
+        }
+
+        /// <summary>
+        /// Resetting the obsolete TNIR keyword restores the configured default on .NET Framework.
+        /// </summary>
+        [Theory]
+        [InlineData(null, false)]
+        [InlineData(true, false)]
+        [InlineData(false, true)]
+        public void TransparentNetworkIPResolution_Reset_RestoresDefault(bool? disabledAppContext, bool expectedValue)
+        {
+            _appContextSwitchHelper.DisableTnirByDefault = disabledAppContext;
+#pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
+            SqlConnectionStringBuilder builder = new() { TransparentNetworkIPResolution = !expectedValue };
+
+            Assert.True(builder.Remove("TransparentNetworkIPResolution"));
+            Assert.Equal(expectedValue, builder.TransparentNetworkIPResolution);
+            Assert.Empty(builder.ConnectionString);
+
+            builder.TransparentNetworkIPResolution = !expectedValue;
+            builder.Clear();
+            Assert.Equal(expectedValue, builder.TransparentNetworkIPResolution);
+#pragma warning restore 618
+            Assert.Empty(builder.ConnectionString);
         }
 
         /// <summary>
@@ -123,7 +156,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
         [InlineData(true, false, true)]
         [InlineData(false, false, false)]
         [InlineData(null, false, false)]
-        [InlineData(null, null, false)]
+        [InlineData(true, null, true)]
+        [InlineData(false, null, false)]
+        [InlineData(null, null, true)]
         public void TestDefaultMultiSubnetFailover(bool? msfInConnString, bool? msfEnabledAppContext, bool expectedValue)
         {
             _appContextSwitchHelper.EnableMultiSubnetFailoverByDefault = msfEnabledAppContext;
@@ -135,16 +170,47 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
             }
             SqlConnectionOptions connectionString = new(builder.ConnectionString);
 
+            Assert.Equal(expectedValue, builder.MultiSubnetFailover);
             Assert.Equal(expectedValue, connectionString.MultiSubnetFailover);
         }
 
         /// <summary>
-        /// Tests that MultiSubnetFailover=true cannot be used with FailoverPartner.
+        /// Removing or clearing an explicit value restores the current default without serializing it.
         /// </summary>
-        [Fact]
-        public void TestMultiSubnetFailoverWithFailoverPartnerThrows()
+        [Theory]
+        [InlineData(null, true)]
+        [InlineData(true, true)]
+        [InlineData(false, false)]
+        public void MultiSubnetFailover_Reset_RestoresDefault(bool? enabledAppContext, bool expectedValue)
         {
-            _appContextSwitchHelper.EnableMultiSubnetFailoverByDefault = true;
+            _appContextSwitchHelper.EnableMultiSubnetFailoverByDefault = enabledAppContext;
+            SqlConnectionStringBuilder builder = new() { MultiSubnetFailover = !expectedValue };
+
+            Assert.True(builder.Remove("MultiSubnetFailover"));
+            Assert.Equal(expectedValue, builder.MultiSubnetFailover);
+            Assert.Empty(builder.ConnectionString);
+
+            builder.MultiSubnetFailover = !expectedValue;
+            builder.Clear();
+            Assert.Equal(expectedValue, builder.MultiSubnetFailover);
+            Assert.Empty(builder.ConnectionString);
+        }
+
+        /// <summary>
+        /// Failover Partner throws only with an explicit MSF=true. The default is turned off.
+        /// </summary>
+        [Theory]
+        [InlineData(null, null, false)]
+        [InlineData(true, null, true)]
+        [InlineData(null, true, false)]
+        [InlineData(true, false, true)]
+        [InlineData(false, null, false)]
+        [InlineData(false, true, false)]
+        [InlineData(null, false, false)]
+        public void TestMultiSubnetFailoverWithFailoverPartner(
+            bool? msfInConnString, bool? msfEnabledAppContext, bool shouldThrow)
+        {
+            _appContextSwitchHelper.EnableMultiSubnetFailoverByDefault = msfEnabledAppContext;
 
             SqlConnectionStringBuilder builder = new()
             {
@@ -153,7 +219,91 @@ namespace Microsoft.Data.SqlClient.UnitTests.Microsoft.Data.SqlClient
                 InitialCatalog = "database"
             };
 
-            Assert.Throws<ArgumentException>(() => new SqlConnectionOptions(builder.ConnectionString));
+            if (msfInConnString.HasValue)
+            {
+                builder.MultiSubnetFailover = msfInConnString.Value;
+            }
+
+            if (shouldThrow)
+            {
+                Assert.Throws<ArgumentException>(() => new SqlConnectionOptions(builder.ConnectionString));
+            }
+            else
+            {
+                SqlConnectionOptions options = new(builder.ConnectionString);
+                Assert.False(options.MultiSubnetFailover);
+                Assert.Equal("partner", options.FailoverPartner);
+            }
+        }
+
+        /// <summary>
+        /// The MSF default applies only when SNI uses TCP. Without a prefix, managed SNI uses
+        /// TCP, and native SNI uses shared memory for the local machine.
+        /// </summary>
+        [Theory]
+        [InlineData("server", true, true)]
+        [InlineData("server.contoso.com,1433", true, true)]
+        [InlineData(@"server\instance", true, true)]
+        [InlineData("10.0.0.5", true, true)]
+        [InlineData("[fe80::1],1433", true, true)]
+        [InlineData("tcp:server", true, true)]
+        [InlineData("tcp:localhost", true, true)]
+        [InlineData("tcp:.", true, true)]
+        [InlineData(" TCP:server ", true, true)]
+        [InlineData("", false, true)]
+        [InlineData(".", false, true)]
+        [InlineData(@".\SQLEXPRESS", false, true)]
+        [InlineData("(local)", false, true)]
+        [InlineData("localhost", false, true)]
+        [InlineData("localhost,1433", false, true)]
+        [InlineData("127.0.0.1", false, true)]
+        [InlineData("::1", false, true)]
+        [InlineData("[::1],1433", false, true)]
+        [InlineData("np:server", false, false)]
+        [InlineData(@"np:\\server\pipe\sql\query", false, false)]
+        [InlineData(@"\\server\pipe\sql\query", false, false)]
+        [InlineData("lpc:.", false, false)]
+        [InlineData("admin:server", false, false)]
+        [InlineData("via:server,1433", false, false)]
+        [InlineData(@"(localdb)\MSSQLLocalDB", false, false)]
+        public void UsesTcpProtocol_DependsOnServerNameAndSni(string serverName, bool expectedNative, bool expectedManaged)
+        {
+            Assert.Equal(expectedNative, SqlConnectionOptions.UsesTcpProtocol(serverName, useManagedNetworking: false));
+            Assert.Equal(expectedManaged, SqlConnectionOptions.UsesTcpProtocol(serverName, useManagedNetworking: true));
+        }
+
+        /// <summary>
+        /// With native SNI, the local machine name uses shared memory first.
+        /// </summary>
+        [Fact]
+        public void UsesTcpProtocol_LocalMachineName_NativeIsNotTcp()
+        {
+            Assert.False(SqlConnectionOptions.UsesTcpProtocol(Environment.MachineName, useManagedNetworking: false));
+            // A remote host that shares the short machine name is not local.
+            Assert.True(SqlConnectionOptions.UsesTcpProtocol($"{Environment.MachineName}.remote-domain.invalid", useManagedNetworking: false));
+            Assert.True(SqlConnectionOptions.UsesTcpProtocol(Environment.MachineName, useManagedNetworking: true));
+        }
+
+        /// <summary>
+        /// The options keep the default for any data source; the connection applies the protocol
+        /// rule after alias resolution. An explicit value is kept as-is.
+        /// </summary>
+        [Theory]
+        [InlineData("np:server", null, true, false)]
+        [InlineData("localhost", null, true, false)]
+        [InlineData("np:server", true, true, true)]
+        [InlineData("server", false, false, true)]
+        public void MultiSubnetFailover_Options_KeepsConfiguredValue(string dataSource, bool? msf, bool expected, bool expectedExplicit)
+        {
+            _appContextSwitchHelper.EnableMultiSubnetFailoverByDefault = true;
+            string connectionString = msf.HasValue
+                ? $"Data Source={dataSource};MultiSubnetFailover={msf.Value}"
+                : $"Data Source={dataSource}";
+
+            SqlConnectionOptions options = new(connectionString);
+
+            Assert.Equal(expected, options.MultiSubnetFailover);
+            Assert.Equal(expectedExplicit, options.IsMultiSubnetFailoverExplicit);
         }
     }
 }

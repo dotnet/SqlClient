@@ -69,7 +69,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 ConnectRetryInterval = 1,
                 ConnectTimeout = 30,
                 Encrypt = SqlConnectionEncryptOption.Optional,
-                InitialCatalog = "test"
+                InitialCatalog = "test",
+                MultiSubnetFailover = false
             };
 
             using SimulatedServerPoolScope pool = new(builder);
@@ -318,6 +319,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 ConnectRetryCount = 0, // Disable retry
                 FailoverPartner = $"127.0.0.1,{failoverServer.EndPoint.Port}", // User provided failover partner
                 Encrypt = false,
+                MultiSubnetFailover = false,
                 Pooling = false, // Disable pooling to ensure a fresh connection attempt is made on failover
             };
             using SimulatedServerPoolScope pool = new(builder);
@@ -370,6 +372,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 ConnectRetryInterval = 1,
                 FailoverPartner = $"127.0.0.1,{failoverServer.EndPoint.Port}", // User provided failover partner
                 Encrypt = false,
+                MultiSubnetFailover = false,
 #if NETFRAMEWORK
                 #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
                 TransparentNetworkIPResolution = false,
@@ -478,7 +481,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 ConnectTimeout = 30,
                 ConnectRetryInterval = 1,
                 ConnectRetryCount = 0, // Disable retry
-                Encrypt = false
+                Encrypt = false,
+                MultiSubnetFailover = false
             };
             using SimulatedServerPoolScope pool = new(builder);
             using SqlConnection connection = new(builder.ConnectionString);
@@ -531,6 +535,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 ConnectTimeout = 30,
                 ConnectRetryInterval = 1,
                 Encrypt = false,
+                MultiSubnetFailover = false,
                 FailoverPartner = $"localhost:{failoverServer.EndPoint.Port}", // User provided failover partner
             };
             using SimulatedServerPoolScope pool = new(builder);
@@ -583,6 +588,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 ConnectRetryInterval = 1,
                 ConnectRetryCount = 0, // Disable retry
                 Encrypt = false,
+                MultiSubnetFailover = false,
                 FailoverPartner = $"localhost:{failoverServer.EndPoint.Port}", // User provided failover partner
             };
             using SimulatedServerPoolScope pool = new(builder);
@@ -630,6 +636,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 DataSource = $"127.0.0.1,{server.EndPoint.Port}",
                 InitialCatalog = "master",
                 Encrypt = false,
+                MultiSubnetFailover = false,
                 FailoverPartner = $"127.0.0.1,{failoverServer.EndPoint.Port}",
                 // Ensure pooling is enabled so that the failover partner information
                 // is persisted in the pool group. If pooling is disabled, the server
@@ -705,6 +712,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 ConnectTimeout = 30,
                 ConnectRetryInterval = 1,
                 Encrypt = false,
+                MultiSubnetFailover = false,
                 Pooling = false,
             };
             using SimulatedServerPoolScope pool = new(builder);
@@ -757,6 +765,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 ConnectTimeout = 30,
                 ConnectRetryInterval = 1,
                 Encrypt = false,
+                MultiSubnetFailover = false,
                 FailoverPartner = $"127.0.0.1,{failoverServer.EndPoint.Port}",
             };
             using SimulatedServerPoolScope pool = new(builder);
@@ -810,6 +819,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 ConnectTimeout = 30,
                 ConnectRetryInterval = 1,
                 Encrypt = SqlConnectionEncryptOption.Optional,
+                MultiSubnetFailover = false,
                 FailoverPartner = $"127.0.0.1,{failoverServer.EndPoint.Port}",
                 Pooling = true,
             };
@@ -886,6 +896,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 ConnectRetryInterval = 1,
                 ConnectRetryCount = 0,
                 Encrypt = false,
+                MultiSubnetFailover = false,
                 FailoverPartner = $"127.0.0.1,{failoverServer.EndPoint.Port}",
             };
             using SimulatedServerPoolScope pool = new(builder);
@@ -939,6 +950,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 ConnectTimeout = 30,
                 ConnectRetryInterval = 1,
                 Encrypt = false,
+                MultiSubnetFailover = false,
                 Pooling = false,
                 FailoverPartner = $"127.0.0.1,{failoverServer.EndPoint.Port}",
             };
@@ -990,6 +1002,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 ConnectTimeout = 30,
                 ConnectRetryInterval = 1,
                 Encrypt = false,
+                MultiSubnetFailover = false,
                 Pooling = false,
                 FailoverPartner = $"127.0.0.1,{failoverServer.EndPoint.Port}",
             };

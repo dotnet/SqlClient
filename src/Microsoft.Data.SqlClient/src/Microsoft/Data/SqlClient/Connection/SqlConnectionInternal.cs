@@ -391,6 +391,7 @@ namespace Microsoft.Data.SqlClient.Connection
             Debug.Assert(connectionOptions is not null, "null connectionOptions");
 
             ConnectionOptions = connectionOptions;
+            MultiSubnetFailover = connectionOptions.MultiSubnetFailover;
             _registeredApplication = registeredApplication;
 
             #if DEBUG
@@ -543,6 +544,38 @@ namespace Microsoft.Data.SqlClient.Connection
         /// The connection options to be used for this connection.
         /// </summary>
         internal SqlConnectionOptions ConnectionOptions { get; }
+
+        /// <summary>
+        /// MultiSubnetFailover in effect for this connection. A default (not explicit) value is
+        /// turned off when the resolved protocol is not TCP, or when the server sends a database
+        /// mirroring failover partner.
+        /// </summary>
+        internal bool MultiSubnetFailover { get; private set; }
+
+        // Turns off MultiSubnetFailover when it came from the default, so database mirroring
+        // keeps working. Returns false when it was set explicitly.
+        private bool TryDisableDefaultMultiSubnetFailover()
+        {
+            if (ConnectionOptions.IsMultiSubnetFailoverExplicit)
+            {
+                return false;
+            }
+
+            MultiSubnetFailover = false;
+            return true;
+        }
+
+        // Turns off a default MultiSubnetFailover when SNI will not use TCP only, e.g. named
+        // pipes, shared memory, LocalDB, or a non-TCP alias. An explicit value is kept, so SNI
+        // still reports its existing error for non-TCP protocols.
+        private void ApplyDefaultMultiSubnetFailoverForProtocol(ServerInfo serverInfo)
+        {
+            if (MultiSubnetFailover &&
+                !SqlConnectionOptions.UsesTcpProtocol(serverInfo.ExtendedServerName, LocalAppContextSwitches.UseManagedNetworking))
+            {
+                TryDisableDefaultMultiSubnetFailover();
+            }
+        }
 
         /// <summary>
         /// The current database for this connection. Null if the connection is not open yet.
@@ -3455,15 +3488,16 @@ namespace Microsoft.Data.SqlClient.Connection
             int sleepInterval = 100;
 
             ResolveExtendedServerName(serverInfo, !redirectedUserInstance, connectionOptions);
+            ApplyDefaultMultiSubnetFailoverForProtocol(serverInfo);
 
             #if NET
-            bool isParallel = connectionOptions.MultiSubnetFailover;
+            bool isParallel = MultiSubnetFailover;
             #else
             bool disableTnir = ShouldDisableTnir(
                 connectionOptions,
                 isAccessTokenProvided: IsAccessTokenProvided);
             TnirDisabledDuringLogin = disableTnir;
-            bool isParallel = connectionOptions.MultiSubnetFailover ||
+            bool isParallel = MultiSubnetFailover ||
                               (connectionOptions.TransparentNetworkIPResolution && !disableTnir);
             #endif
 
@@ -3474,7 +3508,7 @@ namespace Microsoft.Data.SqlClient.Connection
                 #if NET
                 float failoverTimeoutStep = ADP.FailoverTimeoutStep;
                 #else
-                float failoverTimeoutStep = connectionOptions.MultiSubnetFailover
+                float failoverTimeoutStep = MultiSubnetFailover
                     ? ADP.FailoverTimeoutStep
                     : ADP.FailoverTimeoutStepForTnir;
                 #endif
@@ -3573,10 +3607,11 @@ namespace Microsoft.Data.SqlClient.Connection
                         disableTnir: disableTnir);
                     #endif
 
-                    if (connectionOptions.MultiSubnetFailover && ServerProvidedFailoverPartner != null)
+                    if (MultiSubnetFailover && ServerProvidedFailoverPartner != null &&
+                        !TryDisableDefaultMultiSubnetFailover())
                     {
                         // connection succeeded: trigger exception if server sends failover partner
-                        // and MultiSubnetFailover is used
+                        // and MultiSubnetFailover is set explicitly
                         throw SQL.MultiSubnetFailoverWithFailoverPartner(
                             serverProvidedFailoverPartner: true,
                             internalConnection: this);
@@ -3670,7 +3705,7 @@ namespace Microsoft.Data.SqlClient.Connection
                 // Switch to failover logic if the server provided a partner
                 if (ServerProvidedFailoverPartner != null)
                 {
-                    if (connectionOptions.MultiSubnetFailover)
+                    if (MultiSubnetFailover && !TryDisableDefaultMultiSubnetFailover())
                     {
                         // connection failed: do not allow failover to server-provided failover partner if MultiSubnetFailover is set
                         throw SQL.MultiSubnetFailoverWithFailoverPartner(serverProvidedFailoverPartner: true, internalConnection: this);
@@ -3766,7 +3801,9 @@ namespace Microsoft.Data.SqlClient.Connection
             SqlCredential credential, // @TODO: This isn't used anywhere
             TimeoutTimer timeout)
         {
-            Debug.Assert(!connectionOptions.MultiSubnetFailover,
+            // A pool group can also cache a partner learned from an earlier connection.
+            TryDisableDefaultMultiSubnetFailover();
+            Debug.Assert(!MultiSubnetFailover,
                 "MultiSubnetFailover should not be set if failover partner is used");
 
             SqlClientEventSource.Log.TryAdvancedTraceEvent(
