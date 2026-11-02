@@ -184,6 +184,7 @@
     <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolTest.cs" />
     <Compile Include="SQL\ConnectionPoolTest\PoolBlockPeriodTest.cs" />
     <Compile Include="SQL\DataSourceParserTest\DataSourceParserTest.cs" />
+    <Compile Include="SQL\GlobalizationTest\GlobalizationEncodingTests.cs" />
     <Compile Include="SQL\InstanceNameTest\InstanceNameTest.cs" />
     <Compile Include="SQL\IntegratedAuthenticationTest\IntegratedAuthenticationTest.cs" />
     <Compile Include="SQL\JsonTest\JsonBulkCopyTest.cs" />
