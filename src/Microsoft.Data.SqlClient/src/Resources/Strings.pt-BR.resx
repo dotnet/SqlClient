@@ -1801,7 +1801,7 @@
     <value>Erro Interno. O tipo de enclave recebido do SQL Server é nulo ou vazio ao executar uma consulta que requer cálculos de enclave.</value>
   </data>
   <data name="TCE_AzureAttestationExtensionNotFound" xml:space="preserve">
-    <value>Attestation protocol 'AAS' requires the Microsoft.Data.SqlClient.Extensions.Azure package, at the same version as Microsoft.Data.SqlClient. Add or update the reference to that package, or specify a different attestation protocol in the connection string.</value>
+    <value>O protocolo de atestado 'AAS' requer o Microsoft.Data.SqlClient.Extensions. Pacote do Azure, na mesma versão que Microsoft.Data.SqlClient. Adicione ou atualize a referência a esse pacote ou especifique um protocolo de atestado diferente na cadeia de conexão.</value>
   </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
     <value>Não foi encontrado nenhum provedor de enclave para o tipo enclave '{0}' e o protocolo de atestado '{1}'. Especifique o protocolo de atestado correto na cadeia de conexão. </value>

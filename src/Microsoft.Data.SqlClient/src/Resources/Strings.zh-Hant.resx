@@ -2071,7 +2071,7 @@
     <value>在父命令上啟用 EnableOptimizedParameterBinding 時，參數 '{0}' 不能具有方向輸出或 InputOutput。</value>
   </data>
   <data name="SQL_PrepareNotSupportedForOptimizedBinding" xml:space="preserve">
-    <value>Prepare is not supported when EnableOptimizedParameterBinding is enabled. Create a new SqlCommand and either set EnableOptimizedParameterBinding to false before its first execution or execute it without calling Prepare.</value>
+    <value>啟用 EnableOptimizedParameterBinding 時不支援準備。建立新的 SqlCommand，並在第一次執行之前將 EnableOptimizedParameterBinding 設定為 false，或執行而不呼叫 Prepare。</value>
   </data>
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
     <value>使用 '{0}' 驗證方法擷取存取權杖時已逾時。上次錯誤: {1}: {2}</value>
