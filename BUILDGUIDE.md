@@ -195,30 +195,6 @@ dotnet test "src/Microsoft.Data.SqlClient/tests/UnitTests/Microsoft.Data.SqlClie
   --filter "category!=failing&category!=flaky&category!=interactive"
 ```
 
-## Sequential Unicode Decoding Regression
-
-`SqlUnicodeEncodingTests` checks raw UTF-16LE code-unit preservation, partial consumption,
-offsets, zero-capacity conversions, and unchanged input bytes without a database:
-
-```powershell
-dotnet test src\Microsoft.Data.SqlClient\tests\UnitTests\Microsoft.Data.SqlClient.UnitTests.csproj --framework net8.0 --filter "FullyQualifiedName~SqlUnicodeEncodingTests" --blame-hang-timeout 10m
-```
-
-With SQL Server test configuration in place, run the Unicode round-trip regression in test set 3:
-
-```powershell
-dotnet test src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTests.csproj --framework net8.0 -p:TestSet=3 --filter "FullyQualifiedName~UnicodeParameterAndReaderRoundTrip_PreservesWorldwideText" --blame-hang-timeout 10m
-```
-
-The integration test covers buffered and streamed parameters, synchronous and asynchronous
-readers, single-character and mixed-size reads, destination offsets, zero-length reads, and
-EOF over packet-spanning `nvarchar(max)` text. It uses the standard database-object fixtures
-and skips when connection strings are not configured. The tests also target `net9.0`,
-`net10.0`, and (on Windows) `net462`; the driver retains its release framework targets.
-SQL Server may run remotely; verifying the big-endian decoder path requires running the test
-client on a real big-endian runtime (for example, s390x). Passing on x64 verifies only the
-little-endian path.
-
 ## Testing with Package References
 
 The MDS driver consists of several components, each of which produces its own
