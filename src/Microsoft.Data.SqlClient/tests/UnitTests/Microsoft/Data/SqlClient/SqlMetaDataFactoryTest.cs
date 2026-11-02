@@ -158,9 +158,8 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
             DataTable dataTypes = connection.GetSchema(DbMetaDataCollectionNames.MetaDataCollections);
             DataRow[] rows = dataTypes.Select($"CollectionName = '{collectionName}'");
-            Assert.Single(rows);
 
-            DataRow row = rows[0];
+            DataRow row = Assert.Single(rows);
             Assert.Equal(numberOfRestrictions, row["NumberOfRestrictions"]);
             Assert.Equal(numberOfIdentifierParts, row["NumberOfIdentifierParts"]);
         }
@@ -224,9 +223,8 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
             DataTable dataTypes = connection.GetSchema(DbMetaDataCollectionNames.Restrictions);
             DataRow[] rows = dataTypes.Select($"CollectionName = '{collectionName}' AND RestrictionName = '{restrictionName}'");
-            Assert.Single(rows);
 
-            DataRow row = rows[0];
+            DataRow row = Assert.Single(rows);
             Assert.Equal(parameterName, row["ParameterName"]);
             Assert.Equal(restrictioinDefault, row["RestrictionDefault"]);
             Assert.Equal(restrictionNumber, row["RestrictionNumber"]);
@@ -284,9 +282,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
                 return;
             }
 
-            Assert.Single(dataTypeRows);
-
-            DataRow dataTypeRow = dataTypeRows[0];
+            DataRow dataTypeRow = Assert.Single(dataTypeRows);
             if (providerDbType != SqlDbType.Udt)
             {
                 AssertDataType(dataTypeRow, DbMetaDataColumnNames.TypeName, typeName);
