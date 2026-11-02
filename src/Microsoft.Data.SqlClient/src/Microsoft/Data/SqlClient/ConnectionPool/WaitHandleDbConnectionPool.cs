@@ -1276,7 +1276,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 Metrics.SoftConnectRequest();
                 PrepareConnection(owningObject, newConnection, oldConnection.EnlistedTransaction, timeout);
 
-                if (oldConnection.Pool is { } ownerPool && ownerPool != this)
+                if (oldConnection.Pool is { } ownerPool && !ReferenceEquals(ownerPool, this))
                 {
                     // The factory redirected this replacement because the old connection's pool
                     // was retired. CreateObject only removes connections this pool owns, so doom
@@ -1284,6 +1284,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     // pool's inventory exactly once.
                     oldConnection.DoomThisConnection();
                     ownerPool.ReturnInternalConnection(oldConnection, owningObject);
+                    SqlClientEventSource.Log.TryPoolerTraceEvent(
+                        "<prov.DbConnectionPool.ReplaceConnection|RES|CPOOL> {0}, "
+                            + "Replaced old {1} from pool {2} with new {3}.",
+                        Id,
+                        oldConnection.ObjectID,
+                        ownerPool.Id,
+                        newConnection.ObjectID);
                     return newConnection;
                 }
 

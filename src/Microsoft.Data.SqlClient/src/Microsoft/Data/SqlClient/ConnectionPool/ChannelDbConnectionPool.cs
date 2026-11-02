@@ -431,7 +431,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             SqlClientEventSource.Log.TryPoolerTraceEvent(
                 "ChannelDbConnectionPool.ReplaceConnection | INFO | {0}, replacing connection.", Id);
 
-            if (oldConnection.Pool is { } ownerPool && ownerPool != this)
+            if (oldConnection.Pool is { } ownerPool && !ReferenceEquals(ownerPool, this))
             {
                 return ReplaceForeignConnection(owningObject, oldConnection, ownerPool, timeout);
             }
@@ -593,10 +593,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             ownerPool.ReturnInternalConnection(oldConnection, owningObject);
 
             SqlClientEventSource.Log.TryPoolerTraceEvent(
-                "ChannelDbConnectionPool.ReplaceConnection | INFO | {0}, Replaced {1} of pool {2}.",
+                "ChannelDbConnectionPool.ReplaceConnection | INFO | {0}, "
+                    + "Replaced old {1} from pool {2} with new {3}.",
                 Id,
                 oldConnection.ObjectID,
-                ownerPool.Id);
+                ownerPool.Id,
+                newConnection.ObjectID);
 
             return newConnection;
         }
