@@ -1801,7 +1801,7 @@
     <value>Внутренняя ошибка. При выполнении запроса, требующего вычислений анклава, из SQL Server получен пустой или равный NULL тип.</value>
   </data>
   <data name="TCE_AzureAttestationExtensionNotFound" xml:space="preserve">
-    <value>Attestation protocol 'AAS' requires the Microsoft.Data.SqlClient.Extensions.Azure package, at the same version as Microsoft.Data.SqlClient. Add or update the reference to that package, or specify a different attestation protocol in the connection string.</value>
+    <value>Протокол аттестации "AAS" требует Microsoft.Data.SqlClient.Extensions. Пакет Azure той же версии, что и Microsoft.Data.SqlClient. Добавьте или обновите ссылку на этот пакет либо укажите другой протокол аттестации в строке подключения.</value>
   </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
     <value>Не найден поставщик для анклава типа "{0}" и протокола аттестации "{1}". Укажите корректный протокол аттестации в строке подключения. </value>
@@ -2071,7 +2071,7 @@
     <value>У параметра "{0}" не может быть направления вывода или InputOutput, если EnableOptimizedParameterBinding включен в родительской команде.</value>
   </data>
   <data name="SQL_PrepareNotSupportedForOptimizedBinding" xml:space="preserve">
-    <value>Prepare is not supported when EnableOptimizedParameterBinding is enabled. Create a new SqlCommand and either set EnableOptimizedParameterBinding to false before its first execution or execute it without calling Prepare.</value>
+    <value>Prepare не поддерживается, если включен EnableOptimizedParameterBinding. Создайте новый SqlCommand и установите для EnableOptimizedParameterBinding значение ЛОЖЬ до первого выполнения или выполните его без вызова Prepare.</value>
   </data>
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
     <value>Истекло время ожидания подключения при получении маркера доступа с помощью метода проверки подлинности "{0}". Последняя ошибка: {1}: {2}</value>
@@ -2107,7 +2107,7 @@
     <value>Возникло исключение при попытке настроить параметр AppContext "{0}"={1}.</value>
   </data>
   <data name="SQL_GlobalizationInvariantModeRequiresLcid" xml:space="preserve">
-    <value>When Globalization Invariant Mode is enabled, SqlMetaData instances describing character or text types must specify an LCID.</value>
+    <value>Если включен Globalization Invariant Mode, экземпляры SqlMetaData, описывающие символьные или текстовые типы, должны указывать LCID.</value>
   </data>
   <data name="SQL_GlobalizationInvariantModeNotSupported" xml:space="preserve">
     <value>Инвариантный режим глобализации не поддерживается.</value>
