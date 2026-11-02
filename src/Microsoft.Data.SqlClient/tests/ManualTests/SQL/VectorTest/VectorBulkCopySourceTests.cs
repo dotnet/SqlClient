@@ -191,13 +191,14 @@ public sealed class VectorBulkCopySourceTests
     }
 
     /// <summary>
-    /// Infers native vector dimensions after leading nulls when the destination is text.
-    /// SQL Server, rather than a client-side normalization, produces the JSON representation.
+    /// Rejects native vectors for text destinations rather than inferring dimensions from
+    /// the first value or serializing vectors. Leading nulls and varying dimensions do not
+    /// change the conversion contract.
     /// </summary>
     /// <param name="useHalf">Whether the source contains native float16 values.</param>
     /// <param name="objectColumn">Whether the column declares object instead of its vector type.</param>
     /// <param name="useAsync">Whether to use asynchronous bulk copy.</param>
-    /// <returns>A task that completes after the null and server-produced JSON are verified.</returns>
+    /// <returns>A task that completes after the ordinary conversion error is verified.</returns>
     [ConditionalTheory(nameof(IsSupported))]
     [InlineData(false, false, false)]
     [InlineData(false, false, true)]
@@ -209,7 +210,7 @@ public sealed class VectorBulkCopySourceTests
     [InlineData(true, true, false)]
     [InlineData(true, true, true)]
     #endif
-    public async Task NativeSourceToTextAfterLeadingNull(
+    public async Task NativeSourcesToTextAreRejected(
         bool useHalf, bool objectColumn, bool useAsync)
     {
         using SqlConnection connection = new(DataTestUtility.VectorFloat16ConnectionString);
@@ -223,20 +224,15 @@ public sealed class VectorBulkCopySourceTests
         source.Columns.Add("VectorData", objectColumn ? typeof(object) : vector.GetType());
         source.Rows.Add(0, DBNull.Value);
         source.Rows.Add(1, vector);
+        source.Rows.Add(2, CreateVector(useHalf, new[] { 1.5f, 2.5f }));
         using SqlBulkCopy copy = new(DataTestUtility.VectorFloat16ConnectionString)
         {
             DestinationTableName = target.Name
         };
-        await CopyRows(copy, source, Array.Empty<DataRow>(), 0, useAsync);
-
-        using SqlCommand verify = new(
-            $"SELECT VectorData FROM {target.Name} ORDER BY Id", connection);
-        using SqlDataReader reader = verify.ExecuteReader();
-        Assert.True(reader.Read());
-        Assert.True(reader.IsDBNull(0));
-        Assert.True(reader.Read());
-        Assert.Equal(values, JsonSerializer.Deserialize<float[]>(reader.GetString(0)));
-        Assert.False(reader.Read());
+        Exception error = await Record.ExceptionAsync(
+            () => CopyRows(copy, source, Array.Empty<DataRow>(), 0, useAsync));
+        Assert.NotNull(error);
+        Assert.IsType<InvalidCastException>(error.GetBaseException());
     }
 
     /// <summary>

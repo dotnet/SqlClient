@@ -57,18 +57,19 @@
           The existing JSON-to-<c>float32</c> bulk-copy conversion is unchanged.
         </para>
         <para>
-          For a non-SqlClient reader supplying <c>SqlVector&lt;T&gt;</c> values to unencrypted
-          text incoming columns, bulk copy renders each non-null value as JSON during row copying.
-          This permits <c>DataTableReader</c> and custom typed readers to target
-          <c>varchar</c>, <c>nvarchar</c>, <c>json</c>, and vector columns exposed as text.
-          Null values remain SQL NULL, and native vector incoming columns retain their binary path.
-          This fallback uses the existing vector JSON renderer; it is not a float32-to-float16
-          encoder and does not change text parameter coercion.
+          Bulk copy does not automatically serialize <c>SqlVector&lt;T&gt;</c> values for text
+          or JSON destinations, including vector destinations exposed as text under V1/Off.
+          Supply JSON strings instead. For native vector destinations, custom readers should
+          provide the corresponding CLR type through <c>GetFieldType</c> to support native
+          cross-base conversion. Unavailable reader metadata preserves existing float32 input
+          behavior; JSON strings can be used for float16 input without a native type hint.
         </para>
         <para>
           <c>Vector Type Support</c> selects the requested result representation; it does not
-          add client-side rejection of outgoing vector values under <c>v1</c> or <c>off</c>.
-          Unsupported writes are reported by SQL Server. Native vector columns in table-valued
+          add version-specific client-side rejection of native vector parameters under
+          <c>v1</c> or <c>off</c>. Unsupported parameter writes are reported by SQL Server.
+          Bulk copy also follows the destination metadata as described above.
+          Native vector columns in table-valued
           parameters are not supported by <see cref="T:Microsoft.Data.SqlClient.Server.SqlMetaData" />;
           use individual vector parameters or <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" />
           instead.

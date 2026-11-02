@@ -9211,9 +9211,8 @@ namespace Microsoft.Data.SqlClient.Parser
                 // Feature Data Length
                 WriteInt(1, _physicalStateObj);
 
-                // The version the connection asks for, rather than the highest this client
-                // understands, so that an application opts in to a newer representation
-                // rather than receiving it on upgrade.
+                // Honor the connection's requested version, including an explicit V1 override
+                // of the V2 default.
                 _physicalStateObj.WriteByte(
                     VectorTypeSupportUtilities.ToFeatureExtensionVersion(
                         _connHandler.ConnectionOptions.VectorTypeSupport));

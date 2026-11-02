@@ -150,20 +150,25 @@ Notes:
   copied into a vector column with a `float16` base type is sent as `varchar(max)`, without
   client-side narrowing.
   The existing JSON-to-`float32` bulk-copy path retains its native float32 conversion.
-- Object-typed `DataTable` columns can contain a consistent native vector base type plus nulls.
-  Bulk copy looks ahead only through the selected in-memory rows to find the first non-null
+- Object-typed `DataTable` columns targeting native vectors can contain a consistent base type
+  plus nulls. Bulk copy looks ahead through the selected in-memory rows to find the first non-null
   representation, then validates compatibility as rows are copied. Row-array subsets and row-state
   filters are respected; an all-null column can require examining all selected rows. Native
   float32/float16 values cannot be mixed in one incoming column. Existing float32 JSON coercion
-  is preserved. Reader setup uses schema metadata instead of consuming values.
+  is preserved. Ordinary text destinations do not use this lookahead.
+  Reader setup never consumes values. `SqlDataReader` supplies native metadata; other readers'
+  `GetFieldType` is an optional hint used only for native vector destinations.
+  `NotImplementedException`/`NotSupportedException` are traced as unavailable metadata; other
+  errors propagate. Without a hint, existing float32 input behavior remains available, while
+  JSON strings can be used for float16 input.
 - Synthetic text input for a destination vector column with a `float16` base type uses an explicit
   UTF-8 encoding/collation pair; SQL Server still performs JSON parsing and conversion.
-- Typed non-SqlClient readers, including `DataTableReader`, render native vector values as JSON
-  during row copying when incoming metadata is unencrypted `varchar`, `nvarchar`, or `json`.
-  This also covers float16 destinations exposed as text under V1/Off. No metadata-time value
-  reads occur; nulls remain SQL NULL, and vector fields bypass text-stream/null pre-check accessors.
-  Native vector metadata still selects the binary path. Ordinary parameter coercion and
-  in-memory source policies are unchanged.
+- Bulk copy does not serialize `SqlVector<T>` values for `varchar`, `nvarchar`, or `json`
+  destinations, including vector destinations exposed as text under V1/Off. Supply JSON strings
+  or select an explicit SQL cast to `varchar(max)` instead. Ordinary string-valued sources,
+  including Framework float16 string projections, keep their existing text-conversion path.
+  Native vector reader values bypass the text-stream/null pre-check accessors only when the
+  incoming metadata is a native vector.
 - A column's base type and number of dimensions are available from the column schema:
   `reader.GetColumnSchema()[i]["VectorBaseType"]` and `["VectorDimensions"]`. Both are `null`
   for columns which are not reported as vectors, including float16 under `v1`. These

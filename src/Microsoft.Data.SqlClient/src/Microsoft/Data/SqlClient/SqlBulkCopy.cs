@@ -814,7 +814,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                     TdsColumnMetadata incoming = GetVectorBulkMetadata(
                         metadata, localColumn._internalSourceColumnOrdinal);
                     bool isVectorTextSource =
-                        metadata.DbType is SqlDbTypeExtensions.Vector or SqlDbTypeExtensions.Json
+                        metadata.DbType == SqlDbTypeExtensions.Vector
                         && incoming.DbType == SqlDbType.VarChar;
                     if (!ReferenceEquals(incoming, metadata))
                     {
@@ -1463,8 +1463,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         }
 
         /// <summary>
-        /// The CLR type of a source column, or <see langword="null"/> when the source cannot
-        /// report one.
+        /// Gets an optional CLR type hint for a native vector destination without reading values.
         /// </summary>
         private Type GetSourceColumnType(int sourceOrdinal)
         {
@@ -1472,10 +1471,20 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             {
                 case ValueSourceType.DbDataReader:
                 case ValueSourceType.IDataReader:
-                    // Not _sqlDataReaderRowSource, which is null unless the reader is a
-                    // SqlDataReader. Every reader source implements IDataReader, and
-                    // GetFieldType is declared by IDataRecord.
-                    return (_rowSource as IDataReader)?.GetFieldType(sourceOrdinal);
+                    try
+                    {
+                        return ((IDataReader)_rowSource).GetFieldType(sourceOrdinal);
+                    }
+                    catch (Exception exception) when (
+                        exception is NotImplementedException or NotSupportedException)
+                    {
+                        // Metadata was not required from generic readers before vector support.
+                        SqlClientEventSource.Log.TryTraceEvent(
+                            "<sc.SqlBulkCopy.GetSourceColumnType|INFO> " +
+                            "Source CLR type is unavailable for column {0}: {1}.",
+                            sourceOrdinal, exception.GetType().Name);
+                        return null;
+                    }
 
                 case ValueSourceType.DataTable:
                 case ValueSourceType.RowArray:
@@ -1517,9 +1526,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         private TdsColumnMetadata GetVectorBulkMetadata(
             TdsColumnMetadata destination, int sourceOrdinal)
         {
-            if (destination.IsEncrypted ||
-                !(destination.DbType is SqlDbTypeExtensions.Vector or SqlDbType.VarChar
-                    or SqlDbType.NVarChar or SqlDbTypeExtensions.Json))
+            if (destination.IsEncrypted || destination.DbType != SqlDbTypeExtensions.Vector)
             {
                 return destination;
             }
@@ -1545,7 +1552,6 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             if (isDataRowSource && (isVector || sourceType == typeof(object)))
             {
                 value = sourceType == typeof(object)
-                    || destination.DbType != SqlDbTypeExtensions.Vector
                     ? GetFirstNonNullDataRowValue(sourceOrdinal)
                     : _currentRow[sourceOrdinal];
             }
@@ -1560,12 +1566,6 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 }
                 if (dimensions == 0)
                 {
-                    if (destination.DbType != SqlDbTypeExtensions.Vector)
-                    {
-                        return destination.DbType == SqlDbTypeExtensions.Json && !isDataRowSource
-                            ? GetVectorTextBulkMetadata(destination)
-                            : destination;
-                    }
                     dimensions = MetaType.GetVectorElementCount(destination.length, destination.scale);
                 }
 
@@ -1580,8 +1580,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 return incoming;
             }
 
-            if (destination.DbType != SqlDbTypeExtensions.Vector
-                || (isDataRowSource && sourceType == typeof(object) && value == null))
+            if (isDataRowSource && sourceType == typeof(object) && value == null)
             {
                 return destination;
             }
@@ -1668,12 +1667,10 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             else if (!metadata.IsEncrypted
                 && _sqlDataReaderRowSource == null
                 && _rowSourceType is ValueSourceType.IDataReader or ValueSourceType.DbDataReader
-                && metadata.DbType is SqlDbTypeExtensions.Vector or SqlDbType.VarChar
-                    or SqlDbType.NVarChar or SqlDbTypeExtensions.Json
+                && metadata.DbType == SqlDbTypeExtensions.Vector
                 && MetaType.TryGetVectorElementType(GetSourceColumnType(sourceOrdinal), out _))
             {
                 // Inspect the value for nulls instead of DataTableReader's UDT null accessor.
-                // A native vector is not a text stream, even when its destination is text.
                 isSqlType = false;
                 isDataFeed = false;
                 method = ValueMethod.VectorValue;
@@ -1996,18 +1993,6 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
             try
             {
-                if (!metadata.IsEncrypted
-                    && _sqlDataReaderRowSource == null
-                    && _rowSourceType is ValueSourceType.IDataReader or ValueSourceType.DbDataReader
-                    && metadata.DbType is SqlDbType.VarChar or SqlDbType.NVarChar
-                        or SqlDbTypeExtensions.Json
-                    && value is ISqlVector vector)
-                {
-                    // Generic readers provide no native dimensions for a text declaration.
-                    value = vector.GetString();
-                    isSqlType = false;
-                }
-
                 MetaType mt;
                 switch (type.NullableType)
                 {

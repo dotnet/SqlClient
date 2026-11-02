@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Data;
 using System.Text.Json;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.Parser;
@@ -571,25 +570,6 @@ public class SqlVectorTest
     }
     #endif
 
-    /// <summary>
-    /// Keeps the bulk-reader fallback from changing ordinary text parameter coercion.
-    /// </summary>
-    /// <param name="destination">The text parameter type.</param>
-    [Theory]
-    [InlineData(SqlDbType.VarChar)]
-    [InlineData(SqlDbType.NVarChar)]
-    [InlineData(SqlDbTypeExtensions.Json)]
-    public void TextParameterCoercionDoesNotSerializeVectors(SqlDbType destination)
-    {
-        MetaType type = MetaType.GetMetaTypeFromSqlDbType(destination, false);
-        Assert.Throws<InvalidCastException>(() => SqlParameter.CoerceValue(
-            new SqlVector<float>(new[] { 1.5f }), type, out _, out _, false));
-        #if NET
-        Assert.Throws<InvalidCastException>(() => SqlParameter.CoerceValue(
-            new SqlVector<Half>(new[] { (Half)1.5f }), type, out _, out _, false));
-        #endif
-    }
-
     #region Helpers
 
     /// <summary>
@@ -598,16 +578,7 @@ public class SqlVectorTest
     /// <param name="header">The payload header, which may be deliberately malformed.</param>
     /// <param name="values">The elements to append after the header.</param>
     /// <returns>The assembled payload.</returns>
-    private byte[] MakeTdsPayload(byte[] header, ReadOnlyMemory<float> values) =>
-        MakeTdsPayloadStatic(header, values);
-
-    /// <summary>
-    /// The static form of <see cref="MakeTdsPayload"/>, for callers which have no instance.
-    /// </summary>
-    /// <param name="header">The payload header, which may be deliberately malformed.</param>
-    /// <param name="values">The elements to append after the header.</param>
-    /// <returns>The assembled payload.</returns>
-    private static byte[] MakeTdsPayloadStatic(byte[] header, ReadOnlyMemory<float> values)
+    private static byte[] MakeTdsPayload(byte[] header, ReadOnlyMemory<float> values)
     {
         int length = header.Length + (values.Length * sizeof(float));
         byte[] payload = new byte[length];

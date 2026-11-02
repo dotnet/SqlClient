@@ -660,8 +660,8 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
     }
 
     /// <summary>
-    /// Preserves source vector metadata when SQL Server converts the bulk stream to text,
-    /// without comparing the vector's absent collation to the destination's collation.
+    /// Keeps ordinary text conversion instead of rewriting native vector source metadata.
+    /// Framework's string projection can feed JSON; native Half values cannot.
     /// </summary>
     [ConditionalTheory(nameof(IsSupported))]
     [InlineData("varchar(max)", false)]
@@ -670,7 +670,8 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
     [InlineData("nvarchar(max)", true)]
     [InlineData("json", false)]
     [InlineData("json", true)]
-    public async Task BulkCopiesNativeFloat16ToText(string destinationType, bool useAsync)
+    public async Task BulkCopyFloat16ReaderUsesExistingTextConversions(
+        string destinationType, bool useAsync)
     {
         using Table target = new(_managementConnection, "VectorTextTarget",
             $"(Id int IDENTITY, {ColumnName} {destinationType} NULL)");
@@ -683,15 +684,22 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
         using SqlBulkCopy copy = new(_connectionString) { DestinationTableName = target.Name };
         copy.ColumnMappings.Add(ColumnName, ColumnName);
         copy.EnableStreaming = true;
-        if (useAsync)
+        Exception? error = useAsync
+            ? await Record.ExceptionAsync(() => copy.WriteToServerAsync(source))
+            : Record.Exception(() => copy.WriteToServer(source));
+        if (destinationType != "json")
         {
-            await copy.WriteToServerAsync(source);
-        }
-        else
-        {
-            copy.WriteToServer(source);
+            InvalidOperationException collationError =
+                Assert.IsType<InvalidOperationException>(error);
+            Assert.Contains("locale id", collationError.Message);
+            return;
         }
 
+        #if NET
+        Assert.NotNull(error);
+        Assert.IsType<InvalidCastException>(error.GetBaseException());
+        #else
+        Assert.Null(error);
         using SqlCommand verify = new(
             $"SELECT CAST({ColumnName} AS varchar(max)) FROM {target.Name} ORDER BY Id",
             _managementConnection);
@@ -702,6 +710,7 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
         Assert.True(reader.Read());
         Assert.True(reader.IsDBNull(0));
         Assert.False(reader.Read());
+        #endif
     }
 
     /// <summary>
@@ -749,13 +758,13 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
     }
 
     /// <summary>
-    /// Preserves a v2 reader's native float16 payload when the destination connection
-    /// reports the same SQL column as varchar under v1.
+    /// Preserves Framework's ordinary string input to a V1 float16 destination without
+    /// introducing native Half-to-text conversion on modern .NET.
     /// </summary>
     [ConditionalTheory(nameof(IsSupported))]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task BulkCopiesNativeFloat16ToV1Destination(bool useAsync)
+    public async Task BulkCopyFloat16ReaderToV1UsesExistingRepresentation(bool useAsync)
     {
         using SqlConnection source = new(_connectionString);
         source.Open();
@@ -768,17 +777,18 @@ public sealed class VectorFloat16BehaviourTests : IDisposable
         }.ConnectionString;
         using SqlBulkCopy copy = new(destination) { DestinationTableName = _float16Table.Name };
         copy.ColumnMappings.Add(ColumnName, ColumnName);
-        if (useAsync)
-        {
-            await copy.WriteToServerAsync(reader);
-        }
-        else
-        {
-            copy.WriteToServer(reader);
-        }
+        Exception? error = useAsync
+            ? await Record.ExceptionAsync(() => copy.WriteToServerAsync(reader))
+            : Record.Exception(() => copy.WriteToServer(reader));
+        #if NET
+        Assert.NotNull(error);
+        Assert.IsType<InvalidCastException>(error.GetBaseException());
+        #else
+        Assert.Null(error);
         using SqlDataReader verify = Select(_float16Table);
         Assert.True(verify.Read());
         Assert.Equal([1.5f, 2.5f, 3.5f], verify.GetSqlVector<float>(0).Memory.ToArray());
+        #endif
     }
 
     /// <summary>
