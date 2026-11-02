@@ -69,9 +69,9 @@ namespace Microsoft.Data.SqlClient.UnitTests
             foreach (DataRow row in dataTypes.Rows)
             {
                 Assert.False(row.IsNull(0));
-                Assert.IsType<string>(row[0]);
-                Assert.Equal(row[0] as string, ((string)row[0]).ToUpper()); // Test for uppercase
-                actual.Add((string)row[0]);
+                string word = Assert.IsType<string>(row[0]);
+                Assert.Equal(word, word.ToUpper()); // Test for uppercase
+                actual.Add(word);
             }
 
             IEnumerable<string> absentReserverdWords = expected.Except(actual);
@@ -88,9 +88,8 @@ namespace Microsoft.Data.SqlClient.UnitTests
             connection.Open();
 
             DataTable dataTypes = connection.GetSchema(DbMetaDataCollectionNames.DataSourceInformation);
-            Assert.Single(dataTypes.Rows);
+            DataRow row = (DataRow)Assert.Single(dataTypes.Rows)!;
 
-            DataRow row = dataTypes.Rows[0];
             Assert.True(dataTypes.Columns.Contains("CompositeIdentifierSeparatorPattern"));
             Assert.NotNull(row["CompositeIdentifierSeparatorPattern"]);
             Assert.True(dataTypes.Columns.Contains("DataSourceProductName"));
@@ -279,9 +278,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             DataTable dataTypes = connection.GetSchema(DbMetaDataCollectionNames.DataTypes);
             DataRow[] dataTypeRows = dataTypes.Select($"(ProviderDbType = {SqlDbType.Udt:d} AND TypeName Like '{typeName}%') OR (TypeName = '{typeName}')");
 
-            if ((typeName is "date" or "time" or "datetime2" or "datetimeoffset" && !connection.InnerConnection.Capabilities.ExpandedDateTimeDataTypes) ||
-                (typeName is "xml" && !connection.InnerConnection.Capabilities.XmlDataType) ||
-                (typeName is "json" && !connection.InnerConnection.Capabilities.JsonType))
+            if ((typeName is "json" && !connection.InnerConnection.Capabilities.JsonType))
             {
                 Assert.Empty(dataTypeRows);
                 return;
