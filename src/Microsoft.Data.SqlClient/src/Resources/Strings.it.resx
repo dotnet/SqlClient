@@ -1800,6 +1800,9 @@
   <data name="TCE_EnclaveTypeNullForEnclaveBasedQuery" xml:space="preserve">
     <value>Errore interno. Il tipo di enclave ricevuto da SQL Server è Null o vuoto quando si esegue una query che richiede calcoli enclave.</value>
   </data>
+  <data name="TCE_AzureAttestationExtensionNotFound" xml:space="preserve">
+    <value>Attestation protocol 'AAS' requires the Microsoft.Data.SqlClient.Extensions.Azure package, at the same version as Microsoft.Data.SqlClient. Add or update the reference to that package, or specify a different attestation protocol in the connection string.</value>
+  </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
     <value>Non sono stati trovati provider di enclave per il tipo di enclave '{0}' e il protocollo di attestazione '{1}'. Specificare il protocollo di attestazione corretto nella stringa di connessione. </value>
   </data>
@@ -2067,6 +2070,9 @@
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
     <value>Il parametro '{0}' non può includere Output o InputOutput come valore di Direction quando nel comando padre è abilitato EnableOptimizedParameterBinding.</value>
   </data>
+  <data name="SQL_PrepareNotSupportedForOptimizedBinding" xml:space="preserve">
+    <value>Prepare is not supported when EnableOptimizedParameterBinding is enabled. Create a new SqlCommand and either set EnableOptimizedParameterBinding to false before its first execution or execute it without calling Prepare.</value>
+  </data>
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
     <value>Timeout della connessione durante il recupero di un token di accesso tramite il metodo di autenticazione '{0}'. Ultimo errore: {1}: {2}</value>
   </data>
@@ -2099,6 +2105,9 @@
   </data>
   <data name="SqlAppContextSwitchManager_InvalidValue" xml:space="preserve">
     <value>Si è verificata un'eccezione durante il tentativo di impostazione dell’opzione AppContext '{0}'={1}.</value>
+  </data>
+  <data name="SQL_GlobalizationInvariantModeRequiresLcid" xml:space="preserve">
+    <value>When Globalization Invariant Mode is enabled, SqlMetaData instances describing character or text types must specify an LCID.</value>
   </data>
   <data name="SQL_GlobalizationInvariantModeNotSupported" xml:space="preserve">
     <value>La modalità invariante di globalizzazione non è supportata.</value>

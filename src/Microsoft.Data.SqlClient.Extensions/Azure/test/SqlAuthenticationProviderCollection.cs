@@ -6,9 +6,11 @@ namespace Microsoft.Data.SqlClient.Extensions.Azure.Test;
 
 /// <summary>
 /// Defines a test collection that serializes execution of test classes
-/// which mutate the global <see cref="SqlAuthenticationProvider"/> registry.
+/// which mutate the global <see cref="SqlAuthenticationProvider"/> registry or observe
+/// process-wide authentication EventSource output. Parallelization is disabled so token
+/// acquisitions in other test classes cannot add events to these collectors.
 /// </summary>
-[CollectionDefinition(Name)]
+[CollectionDefinition(Name, DisableParallelization = true)]
 public class SqlAuthenticationProviderCollection
 {
     public const string Name = "SqlAuthenticationProvider";

@@ -33,6 +33,11 @@ Perform the following steps to address the work item. Think step-by-step.
 
 ### 4. Testing and Verification
 - **Mandatory**: All changes must be tested.
+- Read and follow the [test authoring rules](../instructions/testing.instructions.md#writing-tests).
+  They are mandatory for unit tests and strongly recommended for manual and functional tests,
+  including section comments, typed member data, naming, placement, and utility ownership.
+- Split separate behaviors into separate tests instead of using switches. Assert meaningful outcomes
+  that catch regressions, and confirm the intended tests actually ran; report skips or zero matches.
 - Create new unit tests in `src/Microsoft.Data.SqlClient/tests/UnitTests` or functional tests in `src/Microsoft.Data.SqlClient/tests/FunctionalTests` as appropriate.
 - Verify that the tests pass.
 

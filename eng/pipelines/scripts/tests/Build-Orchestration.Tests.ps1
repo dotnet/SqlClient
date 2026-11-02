@@ -146,6 +146,26 @@ printf 'ARG:%s\n' "$@"
     }
 }
 
+Describe 'Azure integration tool bootstrap' {
+    It 'restores local tools after SDK installation and before building in either reference mode' {
+        $template = Get-Content (
+            Join-Path $repoRoot 'eng\pipelines\jobs\test-azure-package-ci-job.yml'
+        ) -Raw
+        $sdk = $template.IndexOf(
+            '- template: /eng/pipelines/common/steps/install-dotnet.yml@self')
+        $restore = $template.IndexOf(
+            '- template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self')
+        $build = $template.IndexOf('- task: DotNetCoreCLI@2')
+
+        # Job-level indentation keeps restore unconditional for both Project and Package builds.
+        $template | Should -Match (
+            '(?m)^      - template: /eng/pipelines/common/steps/restore-dotnet-tools\.yml@self\r?$')
+        $sdk | Should -BeGreaterOrEqual 0
+        $restore | Should -BeGreaterThan $sdk
+        $build | Should -BeGreaterThan $restore
+    }
+}
+
 Describe 'supported target frameworks' {
     # Pipeline matrices and standalone VM installers must agree: a clean benchmark VM
     # should not download retired runtimes just because a script bypasses YAML setup.
