@@ -353,6 +353,15 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and a
       </exception>
       <remarks>
         <para>
+          During federated authentication, SQL Server supplies the security token service URL
+          (STSURL) and target resource identifier (SPN). The driver passes these values to the
+          callback as
+          <see cref="P:Microsoft.Data.SqlClient.SqlAuthenticationParameters.Authority" /> and
+          <see cref="P:Microsoft.Data.SqlClient.SqlAuthenticationParameters.Resource" />, respectively.
+          These values reflect the server's authentication configuration; the callback uses them
+          according to its token acquisition requirements.
+        </para>
+        <para>
           The AccessTokenCallback function itself is a part of the connection
           pool key.  The same callback function should always provide a valid
           access token of the same security context given the same
