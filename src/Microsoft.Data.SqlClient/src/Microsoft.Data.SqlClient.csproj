@@ -74,6 +74,18 @@
     <OutputPath>$(ArtifactPath)$(AssemblyName)/$(ReferenceType)-$(Configuration)/</OutputPath>
   </PropertyGroup>
 
+  <!-- API compatibility / ApiCompat checking. -->
+  <PropertyGroup>
+    <ApiCompatValidateAssemblies>true</ApiCompatValidateAssemblies>
+    <ApiCompatStrictMode>true</ApiCompatStrictMode>
+    <ApiCompatEnableRuleAttributesMustMatch>true</ApiCompatEnableRuleAttributesMustMatch>
+    <ApiCompatEnableRuleCannotChangeParameterName>true</ApiCompatEnableRuleCannotChangeParameterName>
+    <ApiCompatContractAssembly>$(ArtifactPath)$(AssemblyName).ref/$(ReferenceType)-$(Configuration)/$(TargetFramework)/$(AssemblyName).dll</ApiCompatContractAssembly>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(ApiCompatValidateAssemblies)' == 'true'">
+    <ApiCompatExcludeAttributesFile Include="ApiCompatExcludeAttributes.txt" />
+  </ItemGroup>
+
   <!-- NuGet Package Config ============================================ -->
   <PropertyGroup>
 
@@ -83,6 +95,7 @@
 
     <AbstractionsProjectPath>$(RepoRoot)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj</AbstractionsProjectPath>
     <LoggingProjectPath>$(RepoRoot)/src/Microsoft.Data.SqlClient.Internal/Logging/src/Logging.csproj</LoggingProjectPath>
+    <SqlClientRefProjectPath>$(RepoRoot)src/Microsoft.Data.SqlClient/ref/Microsoft.Data.SqlClient.csproj</SqlClientRefProjectPath>
     <SqlServerVersionsPropsPath>$(RepoRoot)/src/Microsoft.SqlServer.Server/Versions.props</SqlServerVersionsPropsPath>
 
     <!-- Properties consumed by the SDK NuGet pack task (NuGet.Build.Tasks.Pack.targets). -->
@@ -243,6 +256,21 @@
   </ItemGroup>
 
   <!-- References ====================================================== -->
+  <!-- Build-time tooling -->
+  <ItemGroup Condition="'$(ApiCompatValidateAssemblies)' == 'true'">
+    <!-- ApiCompat tooling. -->
+    <PackageReference Include="Microsoft.DotNet.ApiCompat.Task"
+                      PrivateAssets="all" />
+
+    <!-- Reference to the SqlClient ref assemblies. This reference is excluded from the resultant
+         assembly - it's used to ensure that the ref assemblies build first when ApiCompat is enabled,
+         so that public API signatures are available at the point of ApiCompat. -->
+    <ProjectReference Include="$(SqlClientRefProjectPath)"
+                      ReferenceOutputAssembly="false"
+                      Private="false"
+                      OutputItemType="None" />
+  </ItemGroup>
+
   <!-- Reference to Abstractions -->
   <ItemGroup>
     <ProjectReference Include="$(AbstractionsProjectPath)"
