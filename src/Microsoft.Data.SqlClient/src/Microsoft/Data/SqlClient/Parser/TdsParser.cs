@@ -13945,7 +13945,8 @@ namespace Microsoft.Data.SqlClient.Parser
 
             bool partialReadInProgress = (startOffsetByteCount & 0x1) == 1;
             bool restartingDataSizeCount = startOffsetByteCount == 0;
-            int currentPacketId = 0;
+            // -1 is never a packet ID, so the first packet the value is read from always counts as new.
+            int currentPacketId = -1;
 
             if (stateObj._longlenleft == 0)
             {
