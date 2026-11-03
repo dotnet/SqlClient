@@ -187,6 +187,7 @@
 
   <!-- Items to include in test set 3 -->
   <ItemGroup Condition="$(NormalizedTestSet.Contains('3'))">
+    <Compile Include="SQL\GlobalizationTest\GlobalizationEncodingTests.cs" />
     <Compile Include="DDBasics\DDAsyncTest\DDAsyncTest.cs" />
     <Compile Include="DDBasics\DDDataTypesTest\DDDataTypesTest.cs" />
     <Compile Include="DDBasics\DDMARSTest\DDMARSTest.cs" />
