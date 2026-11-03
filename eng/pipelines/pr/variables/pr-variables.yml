@@ -28,10 +28,15 @@ variables:
 
   # General Variables ======================================================
 
-  # Name to use for the packaging stage. This is to ensure that the packaging stage and the test
-  # stages (that will depend on the packaging stage passing) use the same name.
-  - name: stageNamePack
-    value: "pack_stage"
+  # Name to use for the packaging stage in debug config. This is to ensure that the packaging stage
+  # and the test stages (that will depend on the packaging stage passing) use the same name.
+  - name: stageNamePackDebug
+    value: "pack_stage_debug"
+
+  # Name to use for the packaging state in release config. This is to ensure that the packaging
+  # stage and the test stages (that will depend on the packaging stage passing) use the same name.
+  - name: stageNamePackRelease
+    value: "pack_stage_release"
 
   # Name to use for the secret generation stage. This is to ensure that the secret generation stage
   # and the test stages (that will depend on the generated secret) use the same name.

@@ -144,6 +144,6 @@ stages:
           # an artifact that already exists and fail with:
           #   "Artifact build_and_pack_projects already exists for build <id>."
           - publish: $(BUILD_OUTPUT)
-            artifact: ${{ parameters.packArtifactBaseName }}_attempt$(System.JobAttempt)
+            artifact: ${{ parameters.packArtifactBaseName }}_${{ parameters.buildConfiguration }}_attempt$(System.JobAttempt)
             displayName: Publish Build Output
             condition: succeededOrFailed()

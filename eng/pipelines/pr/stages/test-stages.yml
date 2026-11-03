@@ -37,8 +37,12 @@ parameters:
   - name: poolName
     type: string
 
-  # Name of the build/pack stage that this stage will depend on.
-  - name: stageNamePack
+  # Name of the build/pack stage in debug config that this stage will depend on.
+  - name: stageNamePackDebug
+    type: string
+
+  # Name of the build/pack stage in release config that this stage will depend on.
+  - name: stageNamePackRelease
     type: string
 
   # Name of the secret generation job used to determine the path to the SA password variable.
@@ -121,8 +125,10 @@ stages:
       - stage: "test_${{ platform.displayName }}"
         displayName: "Test: ${{ platform.displayName }}"
         dependsOn:
-          - ${{ parameters.stageNamePack }}
+          - ${{ parameters.stageNamePackDebug }}
+          - ${{ parameters.stageNamePackRelease }}
           - ${{ parameters.stageNameSecrets }}
+
 
         jobs:
           # TestAbstractions
