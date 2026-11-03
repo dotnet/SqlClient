@@ -545,6 +545,84 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         /// <summary>
+        /// Inline package failures await invalidation before retrying and release command state on either failure path.
+        /// </summary>
+        [Theory]
+        [InlineData(false, false)]
+        [InlineData(false, true)]
+        [InlineData(true, false)]
+        [InlineData(true, true)]
+        public async Task ExecuteReaderAsync_InlineEnclaveRetry_AbortsCleanly(bool retryPreparation, bool cancel)
+        {
+            using Fixture fixture = new Fixture();
+            using SqlCommand command = fixture.CreateCommand();
+            using CancellationTokenSource cancellation = new CancellationTokenSource();
+            command.SetBatchRPCMode(true, 1);
+            command.AddBatchCommand(new SqlBatchCommand("SELECT 1",
+                columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled));
+            command.SetBatchRPCModeReadyToExecute();
+            fixture.Provider.CacheHit = true;
+            fixture.Provider.OnCacheHit = () =>
+            {
+                // Simulate cached key metadata whose session disappears before package generation.
+                command.keysToBeSentToEnclave = new ConcurrentDictionary<int, SqlTceCipherInfoEntry>();
+                Assert.True(command.keysToBeSentToEnclave.TryAdd(0, new SqlTceCipherInfoEntry()));
+                SetField(command, "enclavePackage", new EnclavePackage(Array.Empty<byte>(), fixture.Provider.Session));
+            };
+            SqlConnectionInternal inner = (SqlConnectionInternal)fixture.Connection.InnerConnection;
+            Task<SqlDataReader> operation = command.ExecuteReaderAsync(cancellation.Token);
+
+            Assert.True(fixture.Provider.Entered.Task.IsCompleted);
+            Assert.False(operation.IsCompleted);
+            Assert.Equal(1, fixture.Provider.AsyncCalls);
+            Assert.Equal(1, fixture.Provider.SyncCalls);
+            Assert.Equal(cancellation.Token, fixture.Provider.Token);
+            Assert.False(fixture.Provider.RetryLookupEntered.Task.IsCompleted);
+            Assert.Null(GetField(command, "_stateObj"));
+            Assert.Equal(0, GetAsyncCount(inner));
+
+            if (retryPreparation)
+            {
+                fixture.Provider.CacheHit = false;
+                fixture.Provider.CompleteSessionOperation();
+                await await Task.WhenAny(fixture.Provider.RetryLookupEntered.Task, operation);
+                Assert.False(operation.IsCompleted);
+                Assert.Equal(2, fixture.Provider.AsyncCalls);
+                Assert.Equal(cancellation.Token, fixture.Provider.Token);
+            }
+
+            if (cancel)
+            {
+                cancellation.Cancel();
+                await Assert.ThrowsAnyAsync<OperationCanceledException>(() => operation);
+            }
+            else
+            {
+                if (retryPreparation)
+                {
+                    fixture.Provider.Fail();
+                }
+                else
+                {
+                    fixture.Provider.FailSessionOperation();
+                }
+                Assert.Same(fixture.Provider.Error,
+                    await Assert.ThrowsAsync<InvalidOperationException>(() => operation));
+            }
+
+            Assert.Equal(retryPreparation ? 2 : 1, fixture.Provider.AsyncCalls);
+            Assert.Equal(1, fixture.Provider.SyncCalls);
+            Assert.Null(GetField(command, "_stateObj"));
+            Assert.Null(GetField(command, "_enclaveRetryConnection"));
+            Assert.False((bool)GetField(command, "_enclaveAttestationInProgress"));
+            Assert.False((bool)GetField(command, "_internalEndExecuteInitiated"));
+            Assert.Equal(0, GetAsyncCount(inner));
+            using SqlCommand reusable = new SqlCommand("/* reuse after inline enclave retry */", fixture.Connection);
+            Assert.Equal(-1, await reusable.ExecuteNonQueryAsync());
+            Assert.Equal(0, GetAsyncCount(inner));
+        }
+
+        /// <summary>
         /// The command retry cannot start before invalidation completes, and must not start after failure or cancellation.
         /// </summary>
         [Theory]
@@ -811,12 +889,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             internal bool Attestation;
             internal bool SessionOperation;
             internal bool CacheHit;
+            internal Action OnCacheHit;
             internal readonly SqlEnclaveSession Session = new SqlEnclaveSession(new byte[32], 42);
             internal readonly byte[] CustomData = { 2, 3 };
             internal CancellationToken Token;
             internal int SyncCalls;
             internal int AsyncCalls;
             internal readonly TaskCompletionSource<bool> Entered =
+                new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            internal readonly TaskCompletionSource<bool> RetryLookupEntered =
                 new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
             private TaskCompletionSource<SqlEnclaveAttestationParameters> _pending =
                 new TaskCompletionSource<SqlEnclaveAttestationParameters>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -849,8 +930,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             {
                 AsyncCalls++;
                 Token = cancellationToken;
+                if (isRetry)
+                {
+                    RetryLookupEntered.TrySetResult(true);
+                }
                 if (CacheHit)
                 {
+                    OnCacheHit?.Invoke();
                     return (Session, 42, CustomData, CustomData.Length);
                 }
                 if (!Attestation && !SessionOperation)
