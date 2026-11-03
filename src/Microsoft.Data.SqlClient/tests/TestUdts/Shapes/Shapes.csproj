@@ -4,6 +4,11 @@
     <AssemblyName>Shapes</AssemblyName>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(TestSigningKeyPath)' != ''">
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(TestSigningKeyPath)</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+
   <!-- Target Frameworks =============================================== -->
   <PropertyGroup>
     <TargetFrameworks>net462;net10.0</TargetFrameworks>

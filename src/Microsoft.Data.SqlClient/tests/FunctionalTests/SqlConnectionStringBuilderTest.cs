@@ -15,6 +15,9 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
 {
+    /// <summary>
+    /// Verifies connection string parsing, keyword validation, and builder round-trip behavior.
+    /// </summary>
     public partial class SqlConnectionStringBuilderTest
     {
 
@@ -239,6 +242,134 @@ namespace Microsoft.Data.SqlClient.Tests
             PoolBlockingPeriod invalid = (PoolBlockingPeriod)Enum.GetValues(typeof(PoolBlockingPeriod)).Length + 1;
             ArgumentOutOfRangeException ex = Assert.Throws<ArgumentOutOfRangeException>(() => builder.PoolBlockingPeriod = invalid);
             Assert.Contains("PoolBlockingPeriod", ex.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// Defaults vector support to V2 and restores that default when the setting is removed,
+        /// cleared, or assigned null through the indexer.
+        /// </summary>
+        [Fact]
+        public void VectorTypeSupportDefaultsAndResetsToV2()
+        {
+            SqlConnectionStringBuilder builder = new();
+            Assert.Equal(SqlVectorTypeSupport.V2, builder.VectorTypeSupport);
+            Assert.Equal(SqlVectorTypeSupport.V2, builder["Vector Type Support"]);
+            Assert.Empty(builder.ConnectionString);
+
+            builder.VectorTypeSupport = SqlVectorTypeSupport.V1;
+            Assert.True(builder.Remove("Vector Type Support"));
+            Assert.Equal(SqlVectorTypeSupport.V2, builder.VectorTypeSupport);
+            Assert.Empty(builder.ConnectionString);
+
+            builder.VectorTypeSupport = SqlVectorTypeSupport.Off;
+            builder.Clear();
+            Assert.Equal(SqlVectorTypeSupport.V2, builder.VectorTypeSupport);
+            Assert.Empty(builder.ConnectionString);
+
+            builder.VectorTypeSupport = SqlVectorTypeSupport.V1;
+            builder["Vector Type Support"] = null;
+            Assert.Equal(SqlVectorTypeSupport.V2, builder.VectorTypeSupport);
+            Assert.Empty(builder.ConnectionString);
+        }
+
+        /// <summary>
+        /// Rejects undefined vector support enum values without changing the existing setting.
+        /// </summary>
+        [Theory]
+        [InlineData(-1)]
+        [InlineData(3)]
+        public void SetInvalidVectorTypeSupport_Throws(int invalid)
+        {
+            SqlConnectionStringBuilder builder = new()
+            {
+                VectorTypeSupport = SqlVectorTypeSupport.V2
+            };
+
+            ArgumentOutOfRangeException exception = Assert.Throws<ArgumentOutOfRangeException>(
+                () => builder.VectorTypeSupport = (SqlVectorTypeSupport)invalid);
+
+            Assert.Equal(nameof(SqlVectorTypeSupport), exception.ParamName);
+            Assert.Equal(SqlVectorTypeSupport.V2, builder.VectorTypeSupport);
+            Assert.Equal("Vector Type Support=V2", builder.ToString());
+        }
+
+        /// <summary>
+        /// Rejects invalid vector support conversions with the appropriate exception type,
+        /// preserving the existing setting rather than coercing the input or resetting it.
+        /// </summary>
+        [Theory]
+        [InlineData("v3", typeof(ArgumentException))]
+        [InlineData("0", typeof(ArgumentException))]
+        [InlineData("1", typeof(ArgumentException))]
+        [InlineData("2", typeof(ArgumentException))]
+        [InlineData("+2", typeof(ArgumentException))]
+        [InlineData("Off, V2", typeof(ArgumentException))]
+        [InlineData("off, v2", typeof(ArgumentException))]
+        [InlineData("V1, V1", typeof(ArgumentException))]
+        [InlineData(DayOfWeek.Monday, typeof(ArgumentException))]
+        [InlineData(1.5, typeof(ArgumentException))]
+        [InlineData(1.5f, typeof(ArgumentException))]
+        [InlineData(0.0f, typeof(ArgumentException))]
+        [InlineData(-1, typeof(ArgumentOutOfRangeException))]
+        [InlineData(3, typeof(ArgumentOutOfRangeException))]
+        [InlineData((SqlVectorTypeSupport)3, typeof(ArgumentOutOfRangeException))]
+        public void SetInvalidVectorTypeSupportThroughIndexer_Throws(
+            object invalid, Type expectedExceptionType)
+        {
+            SqlConnectionStringBuilder builder = new()
+            {
+                VectorTypeSupport = SqlVectorTypeSupport.V2
+            };
+
+            Assert.Throws(expectedExceptionType, () => builder["Vector Type Support"] = invalid);
+
+            Assert.Equal(SqlVectorTypeSupport.V2, builder.VectorTypeSupport);
+            Assert.Equal("Vector Type Support=V2", builder.ToString());
+        }
+
+        /// <summary>
+        /// Ensures both parsers reject unsupported names, numeric strings, and enum combinations.
+        /// </summary>
+        [Theory]
+        [InlineData("v3")]
+        [InlineData("0")]
+        [InlineData("1")]
+        [InlineData("2")]
+        [InlineData("+2")]
+        [InlineData("true")]
+        [InlineData("Off, V2")]
+        [InlineData("off, v2")]
+        [InlineData("V1, V1")]
+        public void ParseInvalidVectorTypeSupport_Throws(string invalid)
+        {
+            string connectionString = $"Vector Type Support={invalid}";
+
+            Assert.Throws<ArgumentException>(() => new SqlConnectionStringBuilder(connectionString));
+            Assert.Throws<ArgumentException>(() =>
+            {
+                using SqlConnection connection = new(connectionString);
+            });
+        }
+
+        /// <summary>
+        /// Accepts every supported boxed integer width without treating numbers as string values.
+        /// </summary>
+        [Theory]
+        [InlineData((sbyte)2)]
+        [InlineData((byte)2)]
+        [InlineData((short)2)]
+        [InlineData((ushort)2)]
+        [InlineData(2)]
+        [InlineData(2U)]
+        [InlineData(2L)]
+        [InlineData(2UL)]
+        public void VectorTypeSupportIndexer_AcceptsIntegralTypes(object value)
+        {
+            SqlConnectionStringBuilder builder = new();
+            builder["Vector Type Support"] = value;
+
+            Assert.Equal(SqlVectorTypeSupport.V2, builder.VectorTypeSupport);
+            Assert.Equal("Vector Type Support=V2", builder.ToString());
         }
 
         [Fact]
@@ -1013,6 +1144,70 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectionString);
             Assert.Equal(expected, builder.PacketSize);
+        }
+
+        /// <summary>
+        /// Verifies that vector support keyword aliases, casing, and surrounding value whitespace
+        /// resolve to the expected setting and serialize with canonical keyword and value casing.
+        /// </summary>
+        /// <remarks>
+        /// A connection parses its keywords through a separate table from the builder, so
+        /// both are exercised here; registering the synonym in only one of them would leave
+        /// the other rejecting the keyword outright.
+        /// </remarks>
+        /// <param name="connectionString">A connection string using one accepted spelling.</param>
+        /// <param name="expected">The vector support setting represented by the input.</param>
+        [Theory]
+        [InlineData("Vector Type Support = V2", SqlVectorTypeSupport.V2)]
+        [InlineData("VectorTypeSupport = V2", SqlVectorTypeSupport.V2)]
+        [InlineData("vectortypesupport = V2", SqlVectorTypeSupport.V2)]
+        [InlineData("VECTORTYPESUPPORT = V2", SqlVectorTypeSupport.V2)]
+        [InlineData("vectortypesupport = off", SqlVectorTypeSupport.Off)]
+        [InlineData("VectorTypeSupport = OFF", SqlVectorTypeSupport.Off)]
+        [InlineData("VectorTypeSupport = \" OfF \"", SqlVectorTypeSupport.Off)]
+        [InlineData("VectorTypeSupport = \" v1 \"", SqlVectorTypeSupport.V1)]
+        [InlineData("VECTOR TYPE SUPPORT = \" v2 \"", SqlVectorTypeSupport.V2)]
+        public void VectorTypeSupportSynonymsResolveCorrectly(
+            string connectionString, SqlVectorTypeSupport expected)
+        {
+            SqlConnectionStringBuilder builder = new(connectionString);
+            Assert.Equal(expected, builder.VectorTypeSupport);
+            Assert.Equal($"Vector Type Support={expected}", builder.ToString());
+
+            // A connection parses its keywords separately from the builder, so it is checked
+            // separately too. Constructing it rejects an unrecognised keyword, and the string
+            // it was given is preserved as written.
+            using SqlConnection connection = new(connectionString);
+            Assert.Equal(connectionString, connection.ConnectionString);
+        }
+
+        /// <summary>
+        /// Ensures explicit enum and integral settings serialize canonically and survive parsing
+        /// into a new builder, including an explicitly assigned default value.
+        /// </summary>
+        [Theory]
+        [InlineData(SqlVectorTypeSupport.Off, "Vector Type Support=Off")]
+        [InlineData(SqlVectorTypeSupport.V1, "Vector Type Support=V1")]
+        [InlineData(SqlVectorTypeSupport.V2, "Vector Type Support=V2")]
+        public void VectorTypeSupportToString_RoundTripsCanonicalValue(
+            SqlVectorTypeSupport setting, string expected)
+        {
+            SqlConnectionStringBuilder builder = new()
+            {
+                VectorTypeSupport = setting
+            };
+
+            string connectionString = builder.ToString();
+            Assert.Equal(expected, connectionString);
+
+            SqlConnectionStringBuilder roundTrip = new(connectionString);
+            Assert.Equal(setting, roundTrip.VectorTypeSupport);
+            Assert.Equal(expected, roundTrip.ToString());
+
+            builder.Clear();
+            builder["Vector Type Support"] = (int)setting;
+            Assert.Equal(setting, builder.VectorTypeSupport);
+            Assert.Equal(expected, builder.ToString());
         }
 
         [Theory]

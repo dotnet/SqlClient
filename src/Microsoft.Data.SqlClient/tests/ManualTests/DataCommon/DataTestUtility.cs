@@ -180,13 +180,37 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// recognize <c>float16</c> as a vector base type, if the server does not support the required syntax,
         /// if the current principal lacks permission to change the database scoped configuration, or if another
         /// server-side error occurs while running the probe, this method returns
-        /// <see langword="false"/>. Implies <see cref="IsSqlVectorSupported"/>.
+        /// <see langword="false"/>. SQL failures report the error number, state, and severity
+        /// without connection details. Implies <see cref="IsSqlVectorSupported"/>.
         /// </remarks>
         /// <returns><see langword="true"/> if the 'float16' vector base type is supported; otherwise, <see langword="false"/>.</returns>
         public static bool IsSqlVectorFloat16Supported =>
             s_isVectorFloat16Supported ??= IsTCPConnStringSetup() &&
                 IsSqlVectorSupported &&
-                CheckVectorFloat16Supported();
+                CheckVectorFloat16Supported(reportDiagnostic: message =>
+                {
+                    VectorFloat16ProbeDiagnostic = message;
+                    Console.WriteLine(message);
+                });
+
+        /// <summary>
+        /// Retains the configured capability probe's failure, independently of isolated test probes.
+        /// </summary>
+        internal static string VectorFloat16ProbeDiagnostic { get; private set; }
+
+        /// <summary>
+        /// A TCP connection string which explicitly requests native vector support for the
+        /// <c>float16</c> base type.
+        /// </summary>
+        /// <remarks>
+        /// The explicit V2 setting pins native float16 coverage even when the configured
+        /// connection string selects V1 or Off instead of the driver's V2 default.
+        /// </remarks>
+        public static string VectorFloat16ConnectionString =>
+            new SqlConnectionStringBuilder(TCPConnectionString)
+            {
+                VectorTypeSupport = SqlVectorTypeSupport.V2
+            }.ConnectionString;
 
         public static bool IsDebugBuild
         {
@@ -202,11 +226,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsNotDebugBuild() => !IsDebugBuild;
 
-        private static bool CheckVectorFloat16Supported()
+        /// <summary>
+        /// Probes float16 support using the selected connection without changing the cached result.
+        /// </summary>
+        /// <param name="connectionString">An optional connection override for isolated probe tests.</param>
+        /// <param name="reportDiagnostic">Receives redacted failure details; defaults to console output.</param>
+        /// <returns>Whether the server returned the expected vector value.</returns>
+        internal static bool CheckVectorFloat16Supported(
+            string connectionString = null, Action<string> reportDiagnostic = null)
         {
+            reportDiagnostic ??= Console.WriteLine;
             try
             {
-                using SqlConnection connection = CreateConnection();
+                using SqlConnection connection = CreateConnection(connectionString);
                 // Enable preview features (required while float16 is in preview), then declare a
                 // float16 vector and select it back. Without a negotiated float16 feature extension,
                 // the server returns the value as a varchar(max) JSON string, which the client can
@@ -224,23 +256,38 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using SqlDataReader reader = command.ExecuteReader();
                 if (!reader.Read())
                 {
+                    reportDiagnostic(
+                        "Float16 vector support probe returned no row; float16 tests will be skipped.");
                     return false;
                 }
                 string json = reader.GetString(0);
                 float[] actual = System.Text.Json.JsonSerializer.Deserialize<float[]>(json);
-                return actual != null && actual.Length == expected.Length
+                bool supported = actual != null && actual.Length == expected.Length
                     && actual.AsSpan().SequenceEqual(expected);
+                if (!supported)
+                {
+                    reportDiagnostic(
+                        "Float16 vector support probe returned unexpected values; " +
+                        "float16 tests will be skipped.");
+                }
+                return supported;
             }
-            catch (SqlException)
+            catch (SqlException exception)
             {
                 // Server-side failure (e.g. Msg 195 "'float16' is not a recognized vector base
                 // type.", Msg 102 syntax errors on older servers, lack of permission to set
                 // PREVIEW_FEATURES) — float16 path is unavailable.
+                reportDiagnostic(
+                    $"Float16 vector support probe failed: SQL error {exception.Number} " +
+                    $"(state {exception.State}, class {exception.Class}); " +
+                    "float16 tests will be skipped.");
                 return false;
             }
             catch (System.Text.Json.JsonException)
             {
                 // Server returned a payload we can't parse as a float[] JSON array.
+                reportDiagnostic(
+                    "Float16 vector support probe returned invalid JSON; float16 tests will be skipped.");
                 return false;
             }
         }
