@@ -156,7 +156,7 @@ public class AuthenticationConfigurationBootstrapTest : IDisposable
                 Assert.False(registry.Register(
                     SqlAuthenticationMethod.ActiveDirectoryServicePrincipal, new ConfiguredProvider()));
             }
-            Assert.Equal(!discovery, registry.Register(
+            Assert.Equal(!discovery && failureAt == "read", registry.Register(
                 SqlAuthenticationMethod.ActiveDirectoryInteractive, new ConfiguredProvider(),
                 SqlAuthenticationProviderRegistry.RegistrationTier.Default));
         }

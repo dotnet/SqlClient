@@ -37,17 +37,14 @@ public class AuthenticationFeatureSwitchesTest
         Assert.False(AppContext.TryGetSwitch("Switch.Microsoft.Data.SqlClient.EnableAzureExtensionDiscovery", out _));
         Assert.True(AuthenticationFeatureSwitches.EnableAppConfig);
         Assert.True(AuthenticationFeatureSwitches.EnableAzureExtensionDiscovery);
-        Assert.True(AuthenticationFeatureSwitches.IsAppConfigSupported);
-        Assert.True(AuthenticationFeatureSwitches.IsAzureExtensionDiscoverySupported);
     }
 
-    /// <summary>The app.config switch and guard honor cached overrides without setting the AppContext switch.</summary>
+    /// <summary>The app.config switch honors cached overrides without setting the AppContext switch.</summary>
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public void EnableAppConfigAndGuardHonorCachedValue(bool cachedValue)
+    public void EnableAppConfigHonorsCachedValue(bool cachedValue)
     {
-        // The guard must follow the cached feature switch without publishing an AppContext value.
         using var switches = new AuthenticationFeatureSwitchesHelper();
         const string switchName = "Switch.Microsoft.Data.SqlClient.EnableAppConfig";
         Assert.False(AppContext.TryGetSwitch(switchName, out _));
@@ -55,17 +52,15 @@ public class AuthenticationFeatureSwitchesTest
 
         Assert.Equal(cachedValue, AuthenticationFeatureSwitches.EnableAppConfig);
         Assert.Equal(cachedValue, AuthenticationFeatureSwitches.EnableAppConfig);
-        Assert.Equal(cachedValue, AuthenticationFeatureSwitches.IsAppConfigSupported);
         Assert.False(AppContext.TryGetSwitch(switchName, out _));
     }
 
-    /// <summary>The Azure discovery switch and guard honor cached overrides without setting the AppContext switch.</summary>
+    /// <summary>The discovery switch honors cached overrides without setting the AppContext switch.</summary>
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public void EnableAzureExtensionDiscoveryAndGuardHonorCachedValue(bool cachedValue)
+    public void EnableAzureExtensionDiscoveryHonorsCachedValue(bool cachedValue)
     {
-        // Keep discovery's capability guard and runtime switch consistent for either override.
         using var switches = new AuthenticationFeatureSwitchesHelper();
         const string switchName = "Switch.Microsoft.Data.SqlClient.EnableAzureExtensionDiscovery";
         Assert.False(AppContext.TryGetSwitch(switchName, out _));
@@ -73,7 +68,6 @@ public class AuthenticationFeatureSwitchesTest
 
         Assert.Equal(cachedValue, AuthenticationFeatureSwitches.EnableAzureExtensionDiscovery);
         Assert.Equal(cachedValue, AuthenticationFeatureSwitches.EnableAzureExtensionDiscovery);
-        Assert.Equal(cachedValue, AuthenticationFeatureSwitches.IsAzureExtensionDiscoverySupported);
         Assert.False(AppContext.TryGetSwitch(switchName, out _));
     }
 

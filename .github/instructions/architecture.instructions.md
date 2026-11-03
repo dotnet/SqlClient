@@ -164,8 +164,9 @@ Located in `ConnectionPool/`:
 The provider registry, authentication configuration handlers and `SqlAuthenticationInitializer`
 live in `Microsoft.Data.SqlClient.Extensions/Abstractions`, targeting `net462;netstandard2.0;net10.0`.
 The driver forwards their public types and delegates authentication lookup directly.
-Abstractions' cached feature switches and separate capability guards keep explicit registration
-AOT-safe while removing reflective configuration and Azure discovery from trimmed/AOT publishes.
+Abstractions' cached feature switches keep explicit registration AOT-safe when both reflective
+bootstrap paths are disabled at publish time. Enabled paths remain available to trimmed JIT apps
+that retain the required configuration and Azure contracts, with publish-time warnings.
 Abstractions owns its authentication `AzureExtensionLoader`; it does not include sources from
 SqlClient or Azure. The driver independently loads Azure for attestation, without processing
 authentication configuration or consulting authentication discovery switches. Keep the two

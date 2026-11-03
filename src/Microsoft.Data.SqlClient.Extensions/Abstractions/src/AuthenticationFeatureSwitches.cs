@@ -7,8 +7,8 @@ using System.Diagnostics.CodeAnalysis;
 namespace Microsoft.Data.SqlClient;
 
 /// <summary>
-/// Defines authentication bootstrap switches and capability guards so configuration loading, Azure
-/// extension discovery can be excluded from trimmed or AOT builds.
+/// Defines authentication switches so reflective bootstrap can be retained in trimmed JIT apps
+/// or excluded at publish time for explicit registration in trimmed and AOT applications.
 /// </summary>
 /// <remarks>
 /// Configuration and discovery default to enabled to preserve existing runtime behavior.  Each
@@ -50,42 +50,6 @@ internal static class AuthenticationFeatureSwitches
             "Switch.Microsoft.Data.SqlClient.EnableAzureExtensionDiscovery",
             ref s_enableAzureExtensionDiscovery,
             defaultValue: true);
-
-    #endregion
-
-    #region Trimming Guards
-
-    /// <summary>
-    /// Guards the reflection-based authentication configuration and initializer loading path.
-    /// </summary>
-    /// <remarks>
-    /// Follows EnableAppConfig.
-    /// </remarks>
-    // Marks this property as guarding calls requiring unreferenced code. Keep it separate from the
-    // switch definition so trimming removes the guarded path without a publish-time switch value.
-    [FeatureGuard(typeof(RequiresUnreferencedCodeAttribute))]
-    // Marks this property as guarding calls requiring dynamic code.
-    [FeatureGuard(typeof(RequiresDynamicCodeAttribute))]
-    // Permits a switch-backed guard because trimming replaces this capability guard with false.
-    [UnconditionalSuppressMessage("Trimming", "IL4000",
-        Justification = "The separate AppContext feature switch backs this guard; trimming replaces it with false.")]
-    internal static bool IsAppConfigSupported => EnableAppConfig;
-
-    /// <summary>
-    /// Guards reflection-based Azure extension discovery and provider construction.
-    /// </summary>
-    /// <remarks>
-    /// Follows EnableAzureExtensionDiscovery.
-    /// </remarks>
-    // Marks this property as guarding calls requiring unreferenced code. Keep it separate from the
-    // switch definition so trimming removes the guarded path without a publish-time switch value.
-    [FeatureGuard(typeof(RequiresUnreferencedCodeAttribute))]
-    // Marks this property as guarding calls requiring dynamic code.
-    [FeatureGuard(typeof(RequiresDynamicCodeAttribute))]
-    // Permits a switch-backed guard because trimming replaces this capability guard with false.
-    [UnconditionalSuppressMessage("Trimming", "IL4000",
-        Justification = "The separate AppContext feature switch backs this guard; trimming replaces it with false.")]
-    internal static bool IsAzureExtensionDiscoverySupported => EnableAzureExtensionDiscovery;
 
     #endregion
 

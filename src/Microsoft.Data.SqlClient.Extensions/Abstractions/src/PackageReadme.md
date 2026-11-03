@@ -27,16 +27,20 @@ work directly, including under NativeAOT, without loading SqlClient through refl
 Configuration providers and configured initializers take precedence over application
 registrations; application registrations take precedence over the discovered Azure default.
 Recoverable configuration failures are traced without preventing later configured providers,
-enabled Azure discovery or application registration. Successful configuration registrations
-retain precedence; discovered Azure defaults fill only unregistered methods. Null providers,
+enabled Azure discovery or application registration. A failed explicit provider reserves its
+method: lookup returns `null`, not an earlier provider or an Azure default. An initializer failure
+prevents defaults for otherwise-unregistered methods because its intended methods are unknown.
+Successful configuration registrations retain precedence. An explicit successful application
+registration can recover a failed method. Null providers,
 unsupported methods and throwing registration callbacks return `false`, without replacing
 the existing provider. These failures are traced through `Microsoft.Data.SqlClient.EventSource`
 (Informational level, Trace keyword `0x2`) with corrective guidance.
-Configuration and optional discovery are attempted once. Failed entries are not retried on later
-accesses. Register an application provider as a workaround, or correct the cause and restart the
-application to retry configuration and discovery.
+Configuration and optional discovery are attempted once after normal completion or recoverable
+failure. Fatal bootstrap failures propagate without being cached by the registry; if execution
+continues, a later access can retry bootstrap and repeat earlier side effects. Register an application
+provider as a workaround for a recoverable failure, or correct the cause and restart the application.
 
-Untrimmed applications retain app.config loading and automatic Azure discovery. These switches
+Applications retain app.config loading and automatic Azure discovery when enabled. These switches
 default to `true` and are cached independently on first access for the lifetime of the process:
 
 - `Switch.Microsoft.Data.SqlClient.EnableAppConfig`
@@ -48,28 +52,22 @@ configured. Discovery does not fall back to parameterless or string-based provid
 An extension missing the options contract is traced with upgrade guidance: use version 7.0.2 or
 later with that contract and keep SqlClient family package versions compatible.
 
-### Authentication compatibility considerations
+Set switches before first registry access. For explicit registration in trimmed or NativeAOT apps,
+disable both reflective paths at publish time:
 
-Moving authentication registration from the driver to Abstractions preserves the public method
-signatures, but is not a behavior-neutral change. Compared with the previous driver-owned registry:
+```xml
+<ItemGroup>
+  <RuntimeHostConfigurationOption Include="Switch.Microsoft.Data.SqlClient.EnableAppConfig" Value="false" Trim="true" />
+  <RuntimeHostConfigurationOption Include="Switch.Microsoft.Data.SqlClient.EnableAzureExtensionDiscovery" Value="false" Trim="true" />
+</ItemGroup>
+```
 
-| Area | Compatibility difference |
-|---|---|
-| Configured initializer precedence | Providers registered during a configured initializer's `Initialize()` now receive configuration precedence. Application `SetProvider` calls can no longer replace them; explicit configuration entries were already protected. Change the configuration or initializer instead. |
-| Configuration-provider replacement callbacks | Providers listed in app.config's `<providers>` collection now use the same replacement callbacks as `SetProvider`, including calls made by an initializer. Previously, configuration assignments bypassed these callbacks. Replacing an existing provider for the same authentication method invokes the old provider's `BeforeUnload` and the replacement's `BeforeLoad` before publishing the replacement. Registering for a method with no existing provider invokes neither callback. |
-| Older Azure extensions | Automatic discovery no longer falls back to parameterless or string-based constructors. An older extension without the options-based contract may stop supplying the default provider. Upgrade to a compatible extension with that contract, or explicitly register a provider. This change does not remove those public constructors. |
-| .NET Framework configuration switch | `EnableAppConfig=false` now disables authentication configuration on .NET Framework, where it previously remained enabled. The driver's retry configuration and switch-override readers remain .NET-only. |
-| Lookup synchronization | `GetProvider` now takes the registry lock used by bootstrap and replacement `BeforeLoad`/`BeforeUnload` callbacks. Slow callbacks delay other lookups and connection logins. Keep callbacks short: synchronously waiting for another thread that accesses the registry can deadlock. |
-| Bootstrap failure reporting | Driver access previously could expose the manager's cached type-initialization exception. Now, if no usable provider or access-token callback is available, the driver's `Open` and `OpenAsync` report missing-provider guidance as a `SqlException`, rather than the previous missing-provider `ArgumentException`. Detailed bootstrap and Azure loading causes remain in Abstractions' EventSource traces, not a diagnostic API or the connection exception's inner exception. |
-| Configuration failure handling | A failed manager static initialization previously prevented recovery through that manager. Recoverable initializer and provider failures are now traced and skipped; later configured providers and enabled Azure discovery are still attempted. Successful configuration registrations retain precedence, and application registration and lookup remain usable. Failed configuration is not retried until the application restarts. Fatal activation errors still propagate. |
-
-Strict configuration parsing is not introduced: configuration reading retains the relaxed policy
-described below. New capabilities include registration without loading SqlClient, explicit
-registration under trimming/NativeAOT, and the independent `EnableAzureExtensionDiscovery` switch.
-
-Set switches before first registry access. On .NET 10 trimmed and NativeAOT publishes, both
-reflective paths are removed automatically. Explicitly construct and register a provider for
-each required authentication method before opening connections. The Azure provider is supplied
+Then explicitly construct and register a provider for each required authentication method before
+opening connections. Trimmed JIT apps may instead retain enabled reflection paths, but must
+preserve the configuration infrastructure, handlers, initializer/provider types, constructors,
+and discovered Azure options properties. Enabling a switch does not root those members.
+Enabled paths report trimming warnings; NativeAOT also reports dynamic-code warnings.
+The Azure provider is supplied
 by `Microsoft.Data.SqlClient.Extensions.Azure`. Authentication discovery loads the optional Azure
 assembly within Abstractions. The driver independently loads it for Azure Attestation, without
 processing authentication configuration or consulting the authentication discovery switch.
@@ -147,18 +145,35 @@ preserving existing compiled consumers and initializer declarations.
 
 If an explicitly configured initializer or provider cannot be loaded, instantiated, or applied,
 the recoverable failure is traced and remaining configured providers are still attempted. A failed
-initializer is not resumed, and a failed provider entry is skipped. Valid Azure option overrides
-and successful registrations are retained. Azure discovery runs afterward whenever supported and
-enabled, even after configuration reading or activation fails; it cannot replace an existing
-registration. Fatal activation errors still propagate. Earlier registrations and
+initializer is not resumed. A failed provider entry retains its original exception and makes that
+method unavailable until explicit recovery. Valid Azure option overrides and successful
+registrations are retained. Enabled discovery runs afterward, but cannot fill failed explicit
+methods; after initializer failure it cannot fill otherwise-unregistered methods.
+Fatal activation errors still propagate. Earlier registrations and
 initializer/provider callback side effects are not rolled back.
 
 Missing sections and empty optional settings remain valid.
-Registration errors inside a configured initializer stop that initializer, rather than being
+Registration errors synchronously on the configured initializer's thread stop that initializer,
+instead of being
 converted to an ignorable `false` result. Configuration application traces the failure and continues
 with the configured provider list. Successful registrations are traced
 with their authentication method, provider type and precedence tier; refused registrations are
 traced separately and do not produce success events.
+
+Initializer handling compares the current managed thread ID with the thread running `Initialize()`.
+It is a synchronous execution check, not proof that the initializer caused a call:
+
+- Same-thread `SetProvider` calls while `Initialize()` is running receive configuration precedence
+  and propagate registration errors to the initializer.
+- Queued work (including `Task.Run`) and continuations on another thread use application precedence
+  and normal recoverable-error handling (`SetProvider` returns `false`), even if the initializer
+  synchronously waits for them. Flowing `ExecutionContext` does not transfer initializer status.
+- Same-thread calls before an async operation yields still receive initializer handling while
+  `Initialize()` is running. The thread marker is cleared when `Initialize()` returns or throws.
+  Queued work and async-void continuations are not awaited, and their failures are not automatically
+  captured as initializer failures. Complete required registrations synchronously before returning.
+- `GetProvider` does not use this thread-ID check. Concurrent and reentrant lookups observe providers
+  published so far without waiting for initializer completion.
 
 Merge the following example into the application's app.config, replacing
 `ExampleAuthenticationProvider, ExampleApp` with the assembly-qualified name of an

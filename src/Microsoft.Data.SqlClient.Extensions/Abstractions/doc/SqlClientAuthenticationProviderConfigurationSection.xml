@@ -29,14 +29,19 @@ See the LICENSE file in the project root for more information.
           handler, schema and broker-value errors. Ignoring these errors may select unintended
           providers or provider settings. Recoverable initializer activation or registration
           failures stop that initializer, but later configured providers are still attempted.
-          Recoverable provider-entry failures are traced and skipped without blocking later
-          entries or enabled Azure discovery. Fatal failures propagate.
+          Failed explicit methods retain their activation exceptions and cannot fall back to
+          earlier providers or Azure defaults. Later entries and unrelated defaults remain usable.
+          A failed initializer blocks defaults for otherwise-unregistered methods.
+          Explicit application registration can recover a failed method. Fatal failures propagate.
           Missing sections and empty optional attributes remain valid.
         </para>
         <para>
           Enable tracing before the first registry access to capture configuration and discovery
-          failures. Failed entries are not retried on subsequent accesses.
-          Only unexpected recoverable bootstrap failures are cached and traced again.
+          failures. Recoverable failed entries are not retried after completed bootstrap.
+          Fatal bootstrap failures are not cached; later access can retry and repeat earlier
+          side effects if execution continues.
+          Activation failures are retained and traced again when affected methods are looked up.
+          Unexpected recoverable bootstrap failures are also cached and traced again.
           Subsequent calls to
           <see cref="SqlAuthenticationProvider.GetProvider"/> can still return successfully
           registered providers, and <see cref="SqlAuthenticationProvider.SetProvider"/> can

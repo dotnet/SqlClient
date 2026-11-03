@@ -243,8 +243,8 @@ AppContext switches allow runtime behavior changes without modifying connection 
 | Switch Name | Default | Description |
 |-------------|---------|-------------|
 | `Switch.Microsoft.Data.SqlClient.DisableTNIRByDefaultInConnectionString` | `true` | .NET Framework only. Set to `false` to restore the legacy TNIR default; MSF must also be disabled for TNIR to take effect |
-| `Switch.Microsoft.Data.SqlClient.EnableAppConfig` | `true` | Controls authentication configuration in Abstractions and .NET-only driver retry/switch overrides. Trimmed/AOT authentication paths are removed automatically. See [Trimming](#trimming) |
-| `Switch.Microsoft.Data.SqlClient.EnableAzureExtensionDiscovery` | `true` | Controls reflective Azure authentication discovery; trimmed/AOT .NET 10 publishes remove this guarded path |
+| `Switch.Microsoft.Data.SqlClient.EnableAppConfig` | `true` | Controls authentication configuration in Abstractions on .NET Framework and modern .NET. Separately controls driver retry/switch-override readers on modern .NET only. Publish-time false removes authentication configuration reflection. See [Trimming](#trimming) |
+| `Switch.Microsoft.Data.SqlClient.EnableAzureExtensionDiscovery` | `true` | Controls reflective Azure authentication discovery. Publish-time false removes discovery; enabled trimmed-JIT paths require retained reflection contracts and report warnings |
 | `Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault` | `true` | Sets the default for `MultiSubnetFailover`; set to `false` to restore the legacy default. Explicit connection-string values take precedence |
 | `Switch.Microsoft.Data.SqlClient.EnableTransactionIsolationLevelReset` | `false` | Resets a changed session transaction isolation level to `READ COMMITTED` before a pooled connection is reused |
 | `Switch.Microsoft.Data.SqlClient.EnableUserAgent` | varies | Controls sending user agent information to SQL Server |
@@ -274,11 +274,16 @@ configuration, and may register providers in code instead.
   traced and produce empty settings without trying legacy. Other exception types reach registry
   bootstrap, which traces recoverable failures and continues with enabled Azure discovery.
 - **Activation failures:** recoverable initializer failures are traced without preventing the
-  configured provider list from being applied. Failed provider entries are traced and skipped,
-  and later entries are still attempted. Enabled Azure discovery runs afterward using valid
-  option overrides and fills only unregistered methods. Successful configuration registrations
-  retain precedence. Fatal activation errors propagate. Configuration and discovery are attempted
-  once; restart after correcting configuration to retry failed entries.
+  configured provider list from being applied. Failed explicit methods retain their exceptions
+  and cannot use previous providers or Azure defaults. Later entries and unrelated defaults are
+  still attempted. A failed initializer blocks defaults for otherwise-unregistered methods because
+  its intended methods are unknown. Successful configuration registrations retain precedence;
+  explicit application registration can recover a failed method. Fatal activation errors propagate.
+  Configuration and discovery are attempted once; restart after correcting configuration to retry.
+- **Concurrency:** user callbacks run outside the lookup/publication lock. Concurrent/reentrant
+  access during bootstrap sees published state, possibly null for methods not initialized yet.
+  Replacement callbacks revalidate identity and precedence before publishing and may be retried.
+  Only registrations on the configured initializer's own thread receive configuration precedence.
 - **Internal handler metadata mismatches:** assert in Debug. In Release, treat the affected
   string setting or provider list as empty while retaining other valid settings.
   Omitting an optional XML attribute uses the handler's default and is not a metadata mismatch.
@@ -317,16 +322,23 @@ Setting `EnableAppConfig` to `false` at publish time removes the configuration r
 ```xml
 <ItemGroup>
   <RuntimeHostConfigurationOption Include="Switch.Microsoft.Data.SqlClient.EnableAppConfig" Value="false" Trim="true" />
+  <RuntimeHostConfigurationOption Include="Switch.Microsoft.Data.SqlClient.EnableAzureExtensionDiscovery" Value="false" Trim="true" />
 </ItemGroup>
 ```
 
 Setting it only at run time, with `AppContext.SetSwitch` or `runtimeconfig.json`, stops the reading but cannot remove code at publish time. On .NET Framework, the switch disables authentication configuration loading in Abstractions; the driver's retry configuration and switch-override readers remain .NET-only. Trimming does not apply to .NET Framework.
 
+Trimmed JIT applications may retain enabled reflective paths. They must preserve configuration
+infrastructure, handlers, initializer/provider constructors and discovered Azure option members;
+enabling a switch does not root these contracts. Enabled paths emit trimming warnings and, for
+NativeAOT, dynamic-code warnings. They are not removed automatically. Explicit AOT registration
+requires disabling both reflective paths at publish time.
+
 ### Guidelines for Adding New Switches
 Authentication gates live in Abstractions' `AuthenticationFeatureSwitches.cs`, separately from
 the driver's `LocalAppContextSwitches.cs`. `EnableAppConfig` and `EnableAzureExtensionDiscovery`
-default to `true` and cache their first value. Separate capability guards remove authentication configuration,
-initializer loading and Azure discovery automatically in trimmed/AOT .NET 10 publishes.
+default to `true` and cache their first value. Publish-time false removes the corresponding reflective
+path. Do not use capability guards that unconditionally remove enabled paths in trimmed JIT apps.
 Explicit provider registration remains available. Authentication's EnableAppConfig gate also
 applies on .NET Framework; the driver's retry/switch-override readers remain .NET-only.
 Runtime AppContext changes do not affect publish-time trimming.

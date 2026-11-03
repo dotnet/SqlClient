@@ -156,11 +156,11 @@ public class AuthenticationRegistryTest
             typeof(SqlAuthenticationProviderRegistry).GetField(
                 "Instance", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null));
         FieldInfo invoking = typeof(SqlAuthenticationProviderRegistry).GetField(
-            "_invokingConfiguredInitializer", BindingFlags.Instance | BindingFlags.NonPublic)!;
-        bool original = Assert.IsType<bool>(invoking.GetValue(registry));
+            "_initializerThreadId", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        int original = Assert.IsType<int>(invoking.GetValue(registry));
 
         // Simulate callback context on the shared registry, restoring it even if an assertion fails.
-        invoking.SetValue(registry, true);
+        invoking.SetValue(registry, Environment.CurrentManagedThreadId);
         try
         {
             Exception? failure = Record.Exception(() => SqlAuthenticationProvider.SetProvider(

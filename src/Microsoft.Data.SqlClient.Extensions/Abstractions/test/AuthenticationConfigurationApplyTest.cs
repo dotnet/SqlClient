@@ -2,7 +2,10 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.Collections;
 using System.Configuration;
+using System.Reflection;
+using System.Runtime.ExceptionServices;
 using Tier = Microsoft.Data.SqlClient.SqlAuthenticationProviderRegistry.RegistrationTier;
 
 namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
@@ -258,10 +261,18 @@ public class AuthenticationConfigurationApplyTest : IDisposable
             ? new[] { "construct:second", "unload:first", "construct:third" }
             : new[] { "construct:second", "unload:first", "load:second", "construct:third" },
             _context.Events);
+        var failures = Assert.IsAssignableFrom<IDictionary>(
+            typeof(SqlAuthenticationProviderRegistry).GetField("_configurationFailures",
+                BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(_context.Registry));
+        Assert.Same(_context.Failure, Assert.IsType<ExceptionDispatchInfo>(
+            failures[SqlAuthenticationMethod.ActiveDirectoryIntegrated]).SourceException);
+        Assert.False(_context.Registry.Register(
+            SqlAuthenticationMethod.ActiveDirectoryIntegrated, new ThirdProvider(), Tier.Default));
         _context.FailureAt = null;
         // A successful replacement must still unload the original, proving failed publication.
         Assert.True(_context.Registry.Register(
-            SqlAuthenticationMethod.ActiveDirectoryIntegrated, new ThirdProvider(), Tier.Config));
+            SqlAuthenticationMethod.ActiveDirectoryIntegrated, new ThirdProvider()));
+        Assert.False(failures.Contains(SqlAuthenticationMethod.ActiveDirectoryIntegrated));
         Assert.Equal(new[] { "unload:first", "load:third" },
             _context.Events.Skip(_context.Events.Count - 2));
         Assert.False(_context.Registry.Register(

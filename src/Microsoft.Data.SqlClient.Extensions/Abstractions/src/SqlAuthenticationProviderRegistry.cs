@@ -15,9 +15,9 @@ namespace Microsoft.Data.SqlClient;
 /// registration API can access providers directly, including under NativeAOT.
 /// </summary>
 /// <remarks>
-/// Serializes registry access and gives configuration registrations precedence over application
-/// registrations and discovered Azure defaults. Recoverable configuration failures are traced
-/// without preventing later configured providers, Azure discovery or application registrations.
+/// Synchronizes publication, not user callbacks. Successful configuration registrations take
+/// precedence over application registrations and discovered defaults. Failed explicit methods
+/// remain unavailable until explicitly recovered, without blocking unrelated configured methods.
 /// </remarks>
 internal sealed class SqlAuthenticationProviderRegistry
 {
@@ -26,7 +26,7 @@ internal sealed class SqlAuthenticationProviderRegistry
     #region Private Fields
 
     /// <summary>
-    /// Synchronizes bootstrap, provider lookup, registration and replacement callbacks.
+    /// Synchronizes bootstrap state and provider publication, never user callbacks.
     /// </summary>
     private readonly object _sync = new();
 
@@ -34,9 +34,19 @@ internal sealed class SqlAuthenticationProviderRegistry
     private bool _bootstrapInProgress;
 
     /// <summary>
-    /// Indicates that the configured initializer callback is executing.
+    /// Identifies the thread executing the configured initializer, or zero when none is running.
     /// </summary>
-    private bool _invokingConfiguredInitializer;
+    /// <remarks>
+    /// This is a synchronous execution check, not causal attribution. SetProvider uses it for
+    /// configuration precedence and exception propagation; GetProvider does not use it.
+    /// Queued work or async continuations on another thread use application behavior even while
+    /// Initialize is running. The marker is cleared when Initialize returns or throws; async
+    /// work is not awaited, and ExecutionContext flow does not transfer initializer status.
+    /// </remarks>
+    private int _initializerThreadId;
+
+    private bool IsInvokingConfiguredInitializer =>
+        Volatile.Read(ref _initializerThreadId) == Environment.CurrentManagedThreadId;
 
     /// <summary>Indicates that all enabled bootstrap steps were attempted.</summary>
     private bool _bootstrapCompleted;
@@ -45,6 +55,13 @@ internal sealed class SqlAuthenticationProviderRegistry
     /// Preserves the original bootstrap failure for subsequent registry accesses.
     /// </summary>
     private ExceptionDispatchInfo? _bootstrapFailure;
+
+    /// <summary>Failed explicit methods cannot silently use a previous provider or Azure default.</summary>
+    private readonly Dictionary<SqlAuthenticationMethod, ExceptionDispatchInfo>
+        _configurationFailures = new();
+
+    /// <summary>An initializer's unknown intended methods must not silently use Azure defaults.</summary>
+    private ExceptionDispatchInfo? _initializerFailure;
 
     /// <summary>
     /// The shared registry, available before bootstrap invokes a configured initializer.
@@ -96,29 +113,44 @@ internal sealed class SqlAuthenticationProviderRegistry
     internal static SqlAuthenticationProvider? GetProvider(
         SqlAuthenticationMethod authenticationMethod)
     {
-        // Keep lookup synchronized with bootstrap and replacement callbacks.
+        try
+        {
+            Instance.EnsureBootstrapped();
+        }
+        catch (Exception e) when (ExceptionHelpers.IsRecoverableException(e))
+        {
+            SqlClientEventSource.Log.TryTraceEvent(
+                "SqlAuthenticationProvider.GetProvider bootstrap failed for {0}; checking " +
+                "registered providers. Check " +
+                "app.config provider and initializer type names, public parameterless " +
+                "constructors, initializer implementations and supported authentication " +
+                "methods. Upgrade all SqlClient family packages together to the same " +
+                "version. Bootstrap failures are cached; register an application provider " +
+                "with SetProvider, or correct the cause and restart the application. Error: {1}",
+                authenticationMethod, e);
+        }
+        ExceptionDispatchInfo? configurationFailure;
         lock (Instance._sync)
         {
-            try
+            Instance._configurationFailures.TryGetValue(authenticationMethod,
+                out configurationFailure);
+            Instance._providers.TryGetValue(authenticationMethod, out ProviderRegistration? value);
+            if (configurationFailure is null &&
+                value is not null &&
+                (Instance._initializerFailure is null || value.Tier != RegistrationTier.Default))
             {
-                Instance.EnsureBootstrapped();
+                return value.Provider;
             }
-            catch (Exception e) when (ExceptionHelpers.IsRecoverableException(e))
-            {
-                SqlClientEventSource.Log.TryTraceEvent(
-                    "SqlAuthenticationProvider.GetProvider bootstrap failed for {0}; checking " +
-                    "registered providers. Check " +
-                    "app.config provider and initializer type names, public parameterless " +
-                    "constructors, initializer implementations and supported authentication " +
-                    "methods. Upgrade all SqlClient family packages together to the same " +
-                    "version. Bootstrap failures are cached; register an application provider " +
-                    "with SetProvider, or correct the cause and restart the application. Error: {1}",
-                    authenticationMethod, e);
-            }
-            return Instance._providers.TryGetValue(authenticationMethod, out ProviderRegistration? value)
-                ? value.Provider
-                : null;
+            configurationFailure ??= Instance._initializerFailure;
         }
+        if (configurationFailure is not null)
+        {
+            SqlClientEventSource.Log.TryTraceEvent(
+                "Authentication configuration failed for {0}; no fallback provider will be " +
+                "used. Register a provider explicitly or correct configuration and restart. " +
+                "Error: {1}", authenticationMethod, configurationFailure.SourceException);
+        }
+        return null;
     }
 
     /// <summary>
@@ -132,11 +164,13 @@ internal sealed class SqlAuthenticationProviderRegistry
     /// </returns>
     /// <remarks>
     /// Recoverable failures and precedence refusals emit diagnostic traces. Registrations made
-    /// by a configured initializer receive configuration precedence rather than application
-    /// precedence.
-    /// Registration errors during a configured initializer stop that initializer. Configuration
+    /// synchronously on the configured initializer's thread receive configuration precedence
+    /// rather than application precedence. Only that thread bypasses the recoverable-exception
+    /// catch filters, allowing registration errors to stop the initializer. Configuration
     /// application traces the failure and continues with the remaining configured providers.
-    /// After bootstrap, application-provider support validation runs outside the registry lock.
+    /// Work on other threads uses application precedence and ordinary false-on-error behavior,
+    /// regardless of whether the initializer queued or synchronously waits for that work.
+    /// Provider validation and callbacks run outside the registry lock, including during bootstrap.
     /// </remarks>
     internal static bool SetProvider(
         SqlAuthenticationMethod authenticationMethod,
@@ -144,13 +178,13 @@ internal sealed class SqlAuthenticationProviderRegistry
     {
         try
         {
-            // Establish configuration precedence before registering an application provider.
+            // Start configuration first; concurrent bootstrap may still be publishing providers.
             try
             {
                 Instance.EnsureBootstrapped();
             }
             catch (Exception e)
-            when (!Instance._invokingConfiguredInitializer &&
+            when (!Instance.IsInvokingConfiguredInitializer &&
                   ExceptionHelpers.IsRecoverableException(e))
             {
                 SqlClientEventSource.Log.TryTraceEvent(
@@ -163,11 +197,10 @@ internal sealed class SqlAuthenticationProviderRegistry
             {
                 throw new ArgumentNullException(nameof(provider));
             }
-            // Outside bootstrap, support validation must allow cross-thread registry lookups.
             return Instance.Register(authenticationMethod, provider);
         }
         catch (Exception e)
-        when (!Instance._invokingConfiguredInitializer &&
+        when (!Instance.IsInvokingConfiguredInitializer &&
               ExceptionHelpers.IsRecoverableException(e))
         {
             SqlClientEventSource.Log.TryTraceEvent(
@@ -359,11 +392,14 @@ internal sealed class SqlAuthenticationProviderRegistry
     /// The Azure assembly loader, or null to use the production loader with identity validation.
     /// </param>
     /// <remarks>
-    /// Reentrant initializer registrations can use the registry while bootstrap is in progress.
+    /// Concurrent and reentrant access observes published state while bootstrap is in progress.
     /// Recoverable configuration failures are traced without preventing Azure discovery.
     /// Completed bootstrap does not retry failed configuration or optional discovery.
     /// Unexpected recoverable bootstrap failures are cached and rethrown internally.
     /// </remarks>
+    // Roslyn cannot evaluate publish-time switch values. Keep linker/AOT warnings at publish
+    // time when reflection remains enabled; do not suppress them in the compiled assembly.
+    #pragma warning disable IL2026, IL3050
     internal void EnsureBootstrapped(
         Func<string, object?>? getSection = null,
         Func<Assembly?>? loadAzureAssembly = null)
@@ -372,50 +408,56 @@ internal sealed class SqlAuthenticationProviderRegistry
         {
             // Cached failures take precedence over in-progress or completed bootstrap state.
             _bootstrapFailure?.Throw();
-            // Initializers can reenter on this thread; do not recursively bootstrap the registry.
+            // Waiting here would deadlock callbacks that wait for cross-thread registry access.
             if (_bootstrapCompleted || _bootstrapInProgress)
             {
                 return;
             }
             _bootstrapInProgress = true;
-            try
+        }
+        try
+        {
+            if (AuthenticationFeatureSwitches.EnableAppConfig)
             {
-                // Capability guards let trimming/AOT remove these reflective bootstrap paths.
-                // Load configuration first so Azure discovery receives its option overrides.
-                if (AuthenticationFeatureSwitches.IsAppConfigSupported)
+                try
                 {
-                    try
-                    {
-                        ApplyConfiguration(SqlAuthenticationConfiguration.Load(getSection));
-                    }
-                    catch (Exception e) when (ExceptionHelpers.IsRecoverableException(e))
-                    {
-                        SqlClientEventSource.Log.TryTraceEvent(
-                            "Authentication configuration could not be loaded or applied; " +
-                            "continuing with Azure discovery if enabled. Correct app.config " +
-                            "and restart the application to retry configuration. Error: {0}", e);
-                    }
+                    ApplyConfiguration(SqlAuthenticationConfiguration.Load(getSection));
                 }
-                if (AuthenticationFeatureSwitches.IsAzureExtensionDiscoverySupported)
+                catch (Exception e) when (ExceptionHelpers.IsRecoverableException(e))
                 {
-                    LoadAzureExtension(loadAzureAssembly ?? LoadAzureExtensionAssembly);
+                    SqlClientEventSource.Log.TryTraceEvent(
+                        "Authentication configuration could not be loaded or applied; " +
+                        "continuing with Azure discovery if enabled. Correct app.config " +
+                        "and restart the application to retry configuration. Error: {0}", e);
                 }
+            }
+            if (AuthenticationFeatureSwitches.EnableAzureExtensionDiscovery)
+            {
+                LoadAzureExtension(loadAzureAssembly ?? LoadAzureExtensionAssembly);
+            }
+            lock (_sync)
+            {
                 _bootstrapCompleted = true;
             }
-            catch (Exception e) when (ExceptionHelpers.IsRecoverableException(e))
+        }
+        catch (Exception e) when (ExceptionHelpers.IsRecoverableException(e))
+        {
+            SqlClientEventSource.Log.TryTraceEvent("Authentication bootstrap failed: {0}", e);
+            lock (_sync)
             {
-                // Cache partial-bootstrap failures without losing their original stack.
-                SqlClientEventSource.Log.TryTraceEvent(
-                    "Authentication bootstrap failed: {0}", e);
                 _bootstrapFailure = ExceptionDispatchInfo.Capture(e);
-                throw;
             }
-            finally
+            throw;
+        }
+        finally
+        {
+            lock (_sync)
             {
                 _bootstrapInProgress = false;
             }
         }
     }
+    #pragma warning restore IL2026, IL3050
 
     /// <summary>Loads the Azure extension with the same identity checks as attestation.</summary>
     /// <returns>The trusted Azure assembly, or null if it is unavailable.</returns>
@@ -432,7 +474,9 @@ internal sealed class SqlAuthenticationProviderRegistry
     /// <remarks>
     /// Initializer and provider registrations receive configuration precedence. Recoverable
     /// initializer or provider failures are traced, and remaining entries are still attempted.
-    /// Earlier registrations and callback effects are not rolled back. Fatal errors propagate.
+    /// Failed explicit methods are retained and cannot use defaults or earlier registrations.
+    /// An initializer failure prevents defaults for otherwise-unregistered methods.
+    /// Callback effects are not rolled back. Fatal errors propagate.
     /// </remarks>
     [RequiresUnreferencedCode("Configured initializer and provider types are loaded by name.")]
     [RequiresDynamicCode("Configured initializer and providers are constructed dynamically.")]
@@ -456,14 +500,14 @@ internal sealed class SqlAuthenticationProviderRegistry
                         "SqlAuthenticationInitializer instance.");
 
                 // Only registrations made during this callback inherit Config precedence.
-                _invokingConfiguredInitializer = true;
+                Volatile.Write(ref _initializerThreadId, Environment.CurrentManagedThreadId);
                 try
                 {
                     initializer.Initialize();
                 }
                 finally
                 {
-                    _invokingConfiguredInitializer = false;
+                    Volatile.Write(ref _initializerThreadId, 0);
                 }
                 SqlClientEventSource.Log.TryTraceEvent(
                     "SqlAuthenticationProviderRegistry | Created user-defined " +
@@ -471,6 +515,10 @@ internal sealed class SqlAuthenticationProviderRegistry
             }
             catch (Exception e) when (ExceptionHelpers.IsRecoverableException(e))
             {
+                lock (_sync)
+                {
+                    _initializerFailure = ExceptionDispatchInfo.Capture(e);
+                }
                 SqlClientEventSource.Log.TryTraceEvent(
                     "SqlAuthenticationProviderRegistry | Could not create or run configured " +
                     "authentication initializer '{0}'; continuing with configured providers. " +
@@ -490,9 +538,10 @@ internal sealed class SqlAuthenticationProviderRegistry
         {
             foreach (ProviderSettings providerSettings in providers)
             {
+                SqlAuthenticationMethod? authentication = null;
                 try
                 {
-                    SqlAuthenticationMethod authentication =
+                    authentication =
                         SqlAuthenticationConfiguration.AuthenticationEnumFromString(
                             providerSettings.Name);
                     var providerType = Type.GetType(providerSettings.Type, throwOnError: true)!;
@@ -500,14 +549,7 @@ internal sealed class SqlAuthenticationProviderRegistry
                         ?? throw new InvalidOperationException(
                             "The configured provider must create a non-null " +
                             "SqlAuthenticationProvider instance.");
-                    if (!provider.IsSupported(authentication))
-                    {
-                        throw new NotSupportedException(
-                            $"Configured authentication provider '{providerSettings.Type}' does not " +
-                            $"support method '{providerSettings.Name}'.");
-                    }
-
-                    if (!Register(authentication, provider, RegistrationTier.Config))
+                    if (!Register(authentication.Value, provider, RegistrationTier.Config))
                     {
                         throw new InvalidOperationException(
                             $"Configured authentication provider '{providerSettings.Type}' could not " +
@@ -520,6 +562,14 @@ internal sealed class SqlAuthenticationProviderRegistry
                 }
                 catch (Exception e) when (ExceptionHelpers.IsRecoverableException(e))
                 {
+                    if (authentication.HasValue)
+                    {
+                        lock (_sync)
+                        {
+                            _configurationFailures[authentication.Value] =
+                                ExceptionDispatchInfo.Capture(e);
+                        }
+                    }
                     SqlClientEventSource.Log.TryTraceEvent(
                         "SqlAuthenticationProviderRegistry | Could not apply configured " +
                         "authentication provider '{0}' for method '{1}'; skipping this entry. " +
@@ -543,16 +593,14 @@ internal sealed class SqlAuthenticationProviderRegistry
     /// <param name="provider">The provider that must support the method.</param>
     /// <param name="tier">
     /// The registration precedence; defaults to application precedence, promoted to configuration
-    /// precedence while invoking the configured initializer.
+    /// precedence when checked on the configured initializer's thread while Initialize is running.
     /// </param>
     /// <returns>True if registered; false if precedence prevents replacement.</returns>
     /// <remarks>
-    /// Validates support before acquiring the registry lock; bootstrap may already hold that lock.
-    /// Precedence checks, replacement callbacks and publication remain synchronized. Replacement
-    /// invokes
+    /// Validates support and runs callbacks outside the registry lock. Replacement invokes
     /// the old provider's BeforeUnload and the new provider's BeforeLoad before updating the
     /// registration; first registrations do not invoke these callbacks. Reentrant changes to the
-    /// same method restart precedence checks and callbacks against the current registration.
+    /// same method, including concurrent changes, restart precedence checks and callbacks.
     /// Callback failures do not publish the replacement.
     /// </remarks>
     /// <exception cref="NotSupportedException">
@@ -565,58 +613,81 @@ internal sealed class SqlAuthenticationProviderRegistry
     {
         // Initializers use the public API, but their registrations belong to configuration.
         // Leave explicitly supplied Default and Config tiers unchanged.
-        if (tier == RegistrationTier.Application && _invokingConfiguredInitializer)
+        if (tier == RegistrationTier.Application && IsInvokingConfiguredInitializer)
         {
             tier = RegistrationTier.Config;
         }
 
-        // After bootstrap, validate outside the lock to permit cross-thread registry lookups.
         if (!provider.IsSupported(authenticationMethod))
         {
             throw new NotSupportedException(
                 $"Authentication provider '{provider.GetType().FullName}' does not support " +
                 $"method '{authenticationMethod}'.");
         }
-        lock (_sync)
+        while (true)
         {
-            while (true)
+            ProviderRegistration? registration;
+            ExceptionDispatchInfo? failure;
+            bool failedConfiguration;
+            bool refusedPrecedence;
+            lock (_sync)
             {
-                if (_providers.TryGetValue(authenticationMethod, out ProviderRegistration? registration))
+                _providers.TryGetValue(authenticationMethod, out registration);
+                _configurationFailures.TryGetValue(authenticationMethod, out failure);
+                failedConfiguration = tier == RegistrationTier.Default &&
+                    (failure is not null || _initializerFailure is not null);
+                refusedPrecedence = registration is not null &&
+                    ((failure is null && registration.Tier > tier) ||
+                    (tier == RegistrationTier.Default && registration.Tier == tier));
+            }
+            if (failedConfiguration)
+            {
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "Authentication default registration refused for {0}: configuration " +
+                    "activation failed. Register a provider explicitly to recover this method.",
+                    authenticationMethod);
+                return false;
+            }
+            if (refusedPrecedence)
+            {
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "Authentication registration refused for {0}: existing tier {1} takes " +
+                    "precedence over {2}. To change a configuration-owned provider, update " +
+                    "app.config or its initializer rather than overriding it with an application " +
+                    "registration.",
+                    authenticationMethod, registration!.Tier, tier);
+                return false;
+            }
+            if (registration is not null)
+            {
+                registration.Provider.BeforeUnload(authenticationMethod);
+                lock (_sync)
                 {
-                    // Equal Application/Config tiers may replace; defaults never replace a registration.
-                    if (registration.Tier > tier ||
-                        (tier == RegistrationTier.Default && registration.Tier == tier))
-                    {
-                        SqlClientEventSource.Log.TryTraceEvent(
-                            "Authentication registration refused for {0}: existing tier {1} takes " +
-                            "precedence over {2}. To change a configuration-owned provider, update " +
-                            "app.config or its initializer rather than overriding it with an application " +
-                            "registration.",
-                            authenticationMethod, registration.Tier, tier);
-
-                        return false;
-                    }
-
-                    registration.Provider.BeforeUnload(authenticationMethod);
-                    if (!ReferenceEquals(_providers[authenticationMethod], registration))
-                    {
-                        continue;
-                    }
-
-                    provider.BeforeLoad(authenticationMethod);
-                    // Entry identity also detects re-registration of the same provider instance.
-                    if (!ReferenceEquals(_providers[authenticationMethod], registration))
+                    if (!_providers.TryGetValue(authenticationMethod, out var current) ||
+                        !ReferenceEquals(current, registration))
                     {
                         continue;
                     }
                 }
-                // Publish provider and precedence together only after replacement callbacks succeed.
-                _providers[authenticationMethod] = new ProviderRegistration(provider, tier);
-                SqlClientEventSource.Log.TryTraceEvent(
-                    "Authentication provider registered for {0}: provider {1}, tier {2}.",
-                    authenticationMethod, provider.GetType().FullName, tier);
-                return true;
+                provider.BeforeLoad(authenticationMethod);
             }
+            lock (_sync)
+            {
+                _providers.TryGetValue(authenticationMethod, out var current);
+                _configurationFailures.TryGetValue(authenticationMethod, out var currentFailure);
+                if (!ReferenceEquals(current, registration) ||
+                    !ReferenceEquals(currentFailure, failure) ||
+                    (tier == RegistrationTier.Default && _initializerFailure is not null))
+                {
+                    continue;
+                }
+                _providers[authenticationMethod] = new ProviderRegistration(provider, tier);
+                _configurationFailures.Remove(authenticationMethod);
+            }
+            SqlClientEventSource.Log.TryTraceEvent(
+                "Authentication provider registered for {0}: provider {1}, tier {2}.",
+                authenticationMethod, provider.GetType().FullName, tier);
+            return true;
         }
     }
 
