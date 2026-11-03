@@ -15,7 +15,11 @@ using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.Parser;
+using Microsoft.SqlServer.TDS;
+using Microsoft.SqlServer.TDS.Done;
+using Microsoft.SqlServer.TDS.EndPoint;
 using Microsoft.SqlServer.TDS.Servers;
+using Microsoft.SqlServer.TDS.SQLBatch;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
@@ -172,9 +176,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         [Fact]
         public async Task ExecuteReaderAsync_NonEnclaveWithoutParameters_RejectsImmediateSecondCommand()
         {
-            using Fixture fixture = new Fixture();
+            using ManualResetEventSlim responseGate = new ManualResetEventSlim(false);
+            TdsServerArguments arguments = new TdsServerArguments();
+            using TdsServer server = new TdsServer(new GatedQueryEngine(arguments, responseGate), arguments);
+            server.Start();
+            using Fixture fixture = new Fixture(server);
             using SqlCommand command = fixture.CreateCommand();
-            command.CommandText = "/* no result metadata */";
             typeof(SqlConnectionOptions).GetField("_enclaveAttestationUrl", BindingFlags.Instance | BindingFlags.NonPublic)
                 .SetValue(fixture.Connection.ConnectionOptions, null);
             typeof(SqlConnectionOptions).GetField("_attestationProtocol", BindingFlags.Instance | BindingFlags.NonPublic)
@@ -187,11 +194,22 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 .Invoke(command, preparationArguments);
             Assert.Null(preparationArguments[3]);
             Assert.Equal(false, preparationArguments[5]);
-            Task<SqlDataReader> operation = command.ExecuteReaderAsync();
-            using SqlCommand other = new SqlCommand("/* competing command */", fixture.Connection);
-            Exception overlapFailure = Record.Exception(() => other.ExecuteNonQuery());
+            Task<SqlDataReader> operation;
+            try
+            {
+                operation = command.ExecuteReaderAsync();
+                Assert.False(operation.IsCompleted);
+                Assert.Equal(1, GetAsyncCount((SqlConnectionInternal)fixture.Connection.InnerConnection));
+                using SqlCommand other = new SqlCommand("SELECT 1", fixture.Connection);
+                Assert.Throws<InvalidOperationException>(() => other.ExecuteNonQuery());
+            }
+            finally
+            {
+                responseGate.Set();
+            }
             using SqlDataReader reader = await operation;
-            Assert.IsType<InvalidOperationException>(overlapFailure);
+            Assert.Equal(0, reader.FieldCount);
+            Assert.False(await reader.ReadAsync());
             Assert.Equal(0, fixture.Provider.AsyncCalls);
             Assert.Equal(0, fixture.Provider.SyncCalls);
         }
@@ -819,6 +837,31 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             2 => command.ExecuteScalarAsync(token),
             _ => command.ExecuteXmlReaderAsync(token)
         };
+
+        /// <summary>Withholds query responses so reservation assertions cannot race reader completion.</summary>
+        private sealed class GatedQueryEngine : QueryEngine
+        {
+            private readonly ManualResetEventSlim _responseGate;
+
+            internal GatedQueryEngine(TdsServerArguments arguments, ManualResetEventSlim responseGate)
+                : base(arguments)
+            {
+                _responseGate = responseGate;
+            }
+
+            /// <summary>Waits for the reservation assertion, then returns DONE without unsupported encryption metadata.</summary>
+            /// <param name="session">The connected test session.</param>
+            /// <param name="batchRequest">The batch to execute.</param>
+            /// <returns>A metadata-free response valid for the fixture's negotiated encryption capabilities.</returns>
+            protected override TDSMessageCollection CreateQueryResponse(
+                ITDSServerSession session, TDSSQLBatchToken batchRequest)
+            {
+                _responseGate.Wait();
+                TDSMessage response = new TDSMessage(TDSMessageType.Response);
+                response.Add(new TDSDoneToken(TDSDoneTokenStatusType.Final));
+                return new TDSMessageCollection { response };
+            }
+        }
 
         /// <summary>
         /// Uses an in-process SQL connection with isolated provider registration and negotiated capabilities.
