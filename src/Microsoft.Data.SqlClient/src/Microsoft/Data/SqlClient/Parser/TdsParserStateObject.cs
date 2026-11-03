@@ -214,6 +214,11 @@ namespace Microsoft.Data.SqlClient.Parser
         // Scratch buffer for primitive reads; variable-length operations grow it as needed.
         internal byte[] _bTmp = new byte[sizeof(long)];
         internal int _bTmpRead;                   // Counter for number of temporary bytes read
+
+        // True while TryReadByteArray holds part of a field whose bytes are not counted in the snapshot, such
+        // as a PLP length that spans two packets. The state at that packet boundary cannot represent those
+        // bytes, so it must not be captured as a continue point.
+        private bool _partialFieldRead;
         internal Decoder _plpdecoder;             // Decoder object to process plp character data
         internal bool _accumulateInfoEvents;               // TRUE - accumulate info messages during TdsParser.Run, FALSE - fire them
         internal List<SqlError> _pendingInfoEvents;
@@ -1642,7 +1647,12 @@ namespace Microsoft.Data.SqlClient.Parser
             {
                 if ((_inBytesPacket == 0) || (_inBytesUsed == _inBytesRead))
                 {
+                    // Bytes already copied into buff are only known to the caller unless they are counted in
+                    // the snapshot, so moving to the next packet now is not a point the read can continue from.
+                    bool partialFieldRead = _partialFieldRead;
+                    _partialFieldRead = partialFieldRead || (totalRead > 0 && !writeDataSizeToSnapshot);
                     TdsOperationStatus result = TryPrepareBuffer();
+                    _partialFieldRead = partialFieldRead;
                     if (result != TdsOperationStatus.Done)
                     {
                         return result;
@@ -3417,7 +3427,7 @@ namespace Microsoft.Data.SqlClient.Parser
                     bool capturedAsContinue = false;
                     if (_snapshotStatus == SnapshotStatus.ReplayRunning || _snapshotStatus == SnapshotStatus.ReplayStarting)
                     {
-                        if (_bTmpRead == 0 && _partialHeaderBytesRead == 0 && _longlenleft == 0 && _snapshot.ContinueEnabled)
+                        if (_bTmpRead == 0 && _partialHeaderBytesRead == 0 && !_partialFieldRead && _longlenleft == 0 && _snapshot.ContinueEnabled)
                         {
                             // no temp between packets
                             // mark this point as continue-able
@@ -3444,7 +3454,7 @@ namespace Microsoft.Data.SqlClient.Parser
                             _lastStack = stackTrace;
                         }
 #endif
-                        if (_bTmpRead == 0 && _partialHeaderBytesRead == 0 && _longlenleft == 0 && _snapshot.ContinueEnabled && !capturedAsContinue)
+                        if (_bTmpRead == 0 && _partialHeaderBytesRead == 0 && !_partialFieldRead && _longlenleft == 0 && _snapshot.ContinueEnabled && !capturedAsContinue)
                         {
                             // no temp between packets
                             // mark this point as continue-able
@@ -5190,6 +5200,11 @@ namespace Microsoft.Data.SqlClient.Parser
                     if (_continuePacket != null && _continuePacket != _current)
                     {
                         _continueStateData.Restore(_stateObj);
+                        // The restored state is the state at the end of the continue packet, so the read
+                        // resumes in the packet after it. The packets up to the newest one are replayed
+                        // from there: what they hold besides counted value bytes, such as chunk lengths
+                        // or the start of a chunk not yet complete, is not recorded anywhere else.
+                        _current = _continuePacket.NextPacket;
                         _stateObj.SetBuffer(_current.Buffer, 0, _current.Read);
                         _stateObj._snapshotStatus = SnapshotStatus.ContinueRunning;
                         _stateObj.AssertValidState();
@@ -5259,10 +5274,22 @@ namespace Microsoft.Data.SqlClient.Parser
                 {
                     throw new InvalidOperationException();
                 }
+                // The running size is cumulative, so it never drops back to 0 once data has been counted.
+                // A packet in which no read completed still holds 0: take the total from the nearest
+                // earlier packet that has one, and give it to the packets in between, which add nothing.
                 int total = 0;
-                if (target.PrevPacket != null)
+                PacketData previous = target.PrevPacket;
+                while (previous != null && previous.RunningDataSize == 0)
                 {
-                    total = target.PrevPacket.RunningDataSize;
+                    previous = previous.PrevPacket;
+                }
+                if (previous != null)
+                {
+                    total = previous.RunningDataSize;
+                    for (PacketData gap = target.PrevPacket; gap != previous; gap = gap.PrevPacket)
+                    {
+                        gap.RunningDataSize = total;
+                    }
                 }
                 target.RunningDataSize = total + size;
             }
