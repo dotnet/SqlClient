@@ -574,20 +574,25 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         /// own slot in this pool. The old connection is doomed and returned to its owning pool,
         /// which removes it from that pool's inventory exactly once.
         /// </summary>
+        /// <remarks>
+        /// Replacement is how session recovery reconnects, and only a physical login applies the
+        /// owner's saved session data. The replacement is therefore always a new physical
+        /// connection, never an idle session from this pool. When this pool is full, an idle
+        /// connection is retired to free its slot, so capacity accounting is preserved.
+        /// </remarks>
         private DbConnectionInternal ReplaceForeignConnection(
             DbConnection owningObject,
             DbConnectionInternal oldConnection,
             IDbConnectionPool ownerPool,
             TimeoutTimer timeout)
         {
-            // Synchronous acquisition completes inline. It honors this pool's capacity and
-            // counts the soft connect. On failure the old connection stays with its owner.
-            DbConnectionInternal newConnection = GetInternalConnection(
-                    owningObject,
-                    async: false,
-                    timeout,
-                    oldConnection.EnlistedTransaction)
-                .ConfigureAwait(false).GetAwaiter().GetResult();
+            DbConnectionInternal newConnection = OpenReplacementConnection(owningObject, timeout);
+
+            // Counted before activation: if PrepareConnection fails it returns the connection to
+            // this pool, which emits the matching soft disconnect. On failure the old connection
+            // stays with its owner.
+            Metrics.SoftConnectRequest();
+            PrepareConnection(owningObject, newConnection, oldConnection.EnlistedTransaction, timeout);
 
             oldConnection.DoomThisConnection();
             ownerPool.ReturnInternalConnection(oldConnection, owningObject);
@@ -601,6 +606,72 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 newConnection.ObjectID);
 
             return newConnection;
+        }
+
+        /// <summary>
+        /// Opens a new physical connection for <paramref name="owningObject"/> within this pool's
+        /// capacity, retiring idle connections as needed to free a slot.
+        /// </summary>
+        /// <param name="owningObject">The logical connection whose login data is applied.</param>
+        /// <param name="timeout">The caller's remaining Open budget.</param>
+        /// <returns>A new, not yet activated connection that holds a slot in this pool.</returns>
+        private DbConnectionInternal OpenReplacementConnection(
+            DbConnection owningObject,
+            TimeoutTimer timeout)
+        {
+            using CancellationTokenSource cancellationTokenSource =
+                timeout.CreateCancellationTokenSource();
+            CancellationToken cancellationToken = cancellationTokenSource.Token;
+
+            try
+            {
+                while (true)
+                {
+                    DbConnectionInternal? connection =
+                        OpenNewInternalConnection(owningObject, cancellationToken, timeout);
+                    if (connection is not null)
+                    {
+                        return connection;
+                    }
+
+                    // The pool is full or creation is rate limited. Take an idle connection,
+                    // waiting if none is available, and retire it so its slot can be reused for
+                    // a fresh login. A null read is a wake-up to retry the open.
+                    DbConnectionInternal? idle = GetIdleConnection();
+                    if (idle is null)
+                    {
+                        Reclaimer.EnterParkedWait();
+                        try
+                        {
+                            idle = ReadChannelSyncOverAsync(cancellationToken);
+                        }
+                        finally
+                        {
+                            Reclaimer.ExitParkedWait();
+                        }
+                    }
+
+                    if (idle is not null)
+                    {
+                        RemoveConnection(idle);
+                    }
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "ChannelDbConnectionPool.ReplaceConnection | INFO | {0}, Wait timed out.", Id);
+                throw ADP.PooledOpenTimeout();
+            }
+            catch (ChannelClosedException)
+            {
+                SqlClientEventSource.Log.TryPoolerTraceEvent(
+                    "ChannelDbConnectionPool.ReplaceConnection | INFO | {0}, "
+                        + "Pool is shutting down; abandoning wait.",
+                    Id);
+                throw new InvalidOperationException(
+                    StringsHelper.GetString(Strings.SQL_ConnectionPoolShutDown));
+            }
         }
 
         /// <inheritdoc />

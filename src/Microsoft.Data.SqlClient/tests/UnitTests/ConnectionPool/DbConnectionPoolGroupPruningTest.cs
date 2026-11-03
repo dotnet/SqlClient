@@ -4,12 +4,14 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Data.Common;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Data.SqlClient.Internal;
 using Xunit;
@@ -248,6 +250,69 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         /// <summary>
+        /// A replacement redirected into an already populated, saturated pool must still perform a
+        /// physical login with the owner's session recovery data, rather than reuse an unrelated
+        /// idle session that would skip restoring the original session state.
+        /// </summary>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task Replace_IntoSaturatedPool_LogsInWithRecoveryData(bool channel)
+        {
+            var factory = new PruningConnectionFactory();
+            IDbConnectionPool source = CreatePool(factory, channel);
+            using var owner = new SqlConnection();
+            owner.PoolGroup = source.PoolGroup;
+            DbConnectionInternal oldConnection = (await Acquire(source, owner, async: false))!;
+            DbConnectionInternal? connection = null;
+            try
+            {
+                source.PoolGroup.Clear();
+                IDbConnectionPool destination = CreatePool(factory, channel);
+
+                using var other = new SqlConnection();
+                DbConnectionInternal idle = (await Acquire(destination, other, async: false))!;
+                destination.ReturnInternalConnection(idle, other);
+                Assert.Equal(1, destination.IdleCount);
+
+                var recoveryData = new SessionData();
+                owner._recoverySessionData = recoveryData;
+
+                Assert.True(factory.TryGetConnection(
+                    owner,
+                    null!,
+                    oldConnection,
+                    TimeoutTimer.StartNew(TimeSpan.FromSeconds(10)),
+                    forceNewConnection: true,
+                    out connection));
+
+                Assert.NotNull(connection);
+                Assert.NotSame(idle, connection);
+                Assert.Same(destination, connection!.Pool);
+                Assert.Equal(3, factory.CreateCount);
+                Assert.Same(recoveryData, factory.RecoveryData[2]);
+                Assert.True(oldConnection.IsConnectionDoomed);
+                Assert.Equal(0, source.Count);
+
+                // The Channel pool retires the idle session to stay within Max Pool Size. The
+                // WaitHandle pool's replacement path has always created beyond the limit.
+                Assert.Equal(channel ? 1 : 2, destination.Count);
+
+                destination.ReturnInternalConnection(connection, owner);
+                connection = null;
+            }
+            finally
+            {
+                owner._recoverySessionData = null;
+                if (connection != null)
+                {
+                    connection.Pool!.ReturnInternalConnection(connection, owner);
+                }
+                Drain(factory, source);
+            }
+        }
+
+        /// <summary>
         /// Background minimum-size replenishment must protect its uncounted physical creation,
         /// independently of any user acquisition.
         /// </summary>
@@ -415,6 +480,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             internal Action? Creating { get; set; }
             internal int CreateCount { get; private set; }
 
+            /// <summary>
+            /// The owner's session recovery data passed to each physical login, in creation order.
+            /// </summary>
+            internal List<SessionData?> RecoveryData { get; } = new();
+
             internal PruningConnectionFactory() : base(TimeSpan.FromDays(1), TimeSpan.FromDays(1))
             {
             }
@@ -438,6 +508,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 TimeoutTimer timeout)
             {
                 CreateCount++;
+                RecoveryData.Add((owningConnection as SqlConnection)?._recoverySessionData);
                 Creating?.Invoke();
                 return new WaitHandleDbConnectionPoolTransactionTest.MockDbConnectionInternal();
             }
