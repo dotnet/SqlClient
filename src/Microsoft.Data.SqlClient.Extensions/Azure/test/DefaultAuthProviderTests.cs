@@ -8,6 +8,7 @@ using System.Reflection;
 
 namespace Microsoft.Data.SqlClient.Extensions.Azure.Test;
 
+/// <summary>Verifies optional Azure discovery and configured authentication precedence.</summary>
 [Collection(SqlAuthenticationProviderCollection.Name)]
 public class DefaultAuthProviderTests
 {
@@ -33,15 +34,22 @@ public class DefaultAuthProviderTests
     }
 
     /// <summary>
-    /// The installed Azure package fills unregistered methods after configuration failures
-    /// without replacing a valid later configuration entry.
+    /// Azure discovery respects failed explicit methods and initializer failures without
+    /// replacing a valid later configuration entry.
     /// </summary>
-    [Fact]
-    public void AzureDiscoveryContinuesAfterConfigurationFailures()
+    [Theory]
+    [InlineData(null, typeof(ActiveDirectoryAuthenticationProvider))]
+    [InlineData(typeof(object), null)]
+    public void EnsureBootstrapped_ConfigurationFailures_RespectFallbackRestrictions(
+        Type? initializerType, Type? expectedDefaultProviderType)
     {
+        // Arrange
         var section = new SqlClientAuthenticationProviderConfigurationSection();
-        section.ElementInformation.Properties["initializerType"].Value =
-            typeof(object).AssemblyQualifiedName;
+        if (initializerType is not null)
+        {
+            section.ElementInformation.Properties["initializerType"].Value =
+                initializerType.AssemblyQualifiedName;
+        }
         section.Providers.Add(new ProviderSettings(
             "Active Directory Integrated", typeof(object).AssemblyQualifiedName));
         section.Providers.Add(new ProviderSettings(
@@ -52,22 +60,29 @@ public class DefaultAuthProviderTests
         MethodInfo bootstrap = registryType.GetMethod(
             "EnsureBootstrapped", BindingFlags.Instance | BindingFlags.NonPublic)!;
 
+        // Act
         bootstrap.Invoke(registry, new object?[] { new Func<string, object?>(_ => section), null });
 
+        // Assert
         var providers = Assert.IsAssignableFrom<IDictionary>(
             registryType.GetField("_providers", BindingFlags.Instance | BindingFlags.NonPublic)!
                 .GetValue(registry));
-        foreach (var expected in new[]
+        foreach (var expected in new (SqlAuthenticationMethod Method, Type? ProviderType)[]
         {
             (Method: SqlAuthenticationMethod.ActiveDirectoryIntegrated,
-                ProviderType: typeof(ActiveDirectoryAuthenticationProvider)),
+                ProviderType: null),
             (Method: SqlAuthenticationMethod.ActiveDirectoryServicePrincipal,
                 ProviderType: typeof(ConfiguredProvider)),
             (Method: SqlAuthenticationMethod.ActiveDirectoryDefault,
-                ProviderType: typeof(ActiveDirectoryAuthenticationProvider)),
+                ProviderType: expectedDefaultProviderType),
         })
         {
             object? registration = providers[expected.Method];
+            if (expected.ProviderType is null)
+            {
+                Assert.Null(registration);
+                continue;
+            }
             Assert.NotNull(registration);
             object? provider = registration.GetType()
                 .GetProperty("Provider", BindingFlags.Instance | BindingFlags.NonPublic)!
