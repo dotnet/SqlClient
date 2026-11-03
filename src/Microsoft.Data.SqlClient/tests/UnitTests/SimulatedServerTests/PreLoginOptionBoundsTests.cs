@@ -19,7 +19,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests;
 /// Tests that the client validates every option header in a PRELOGIN response and reports a
 /// parsing error, rather than reading outside the response buffer or across option
 /// boundaries, when an option header or the option data it describes lies beyond the end of
-/// the response, or when an option the client reads declares an unexpected data length.
+/// the response, when an option the client reads declares an unexpected data length, or when
+/// the options and terminator do not describe exactly the bytes of the response.
 /// </summary>
 [Collection(SimulatedServerTestCollection.Name)]
 public class PreLoginOptionBoundsTests : IDisposable
@@ -31,6 +32,9 @@ public class PreLoginOptionBoundsTests : IDisposable
     private const byte Mars = 0x04;
     private const byte TraceId = 0x05;
     private const byte FedAuthRequired = 0x06;
+
+    // An option token the client does not define; such options are validated and skipped.
+    private const byte UnknownOption = 0x10;
     private const byte Terminator = 0xFF;
 
     private readonly PreLoginOverrideTdsServer _server;
@@ -233,21 +237,25 @@ public class PreLoginOptionBoundsTests : IDisposable
     }
 
     /// <summary>
-    /// An option the client does not read (THREADID, TRACEID) is still validated: data that
-    /// starts beyond the end of the response is rejected.
+    /// An option the client does not read (THREADID, TRACEID, or an option the client does
+    /// not recognize) is still validated: data that starts beyond the end of the response is
+    /// rejected.
     /// </summary>
     [Theory]
     [InlineData(ThreadId, false)]
     [InlineData(ThreadId, true)]
     [InlineData(TraceId, false)]
     [InlineData(TraceId, true)]
+    [InlineData(UnknownOption, false)]
+    [InlineData(UnknownOption, true)]
     public async Task UnreadOptionOffsetBeyondResponse_ThrowsParsingError(
         byte option,
         bool useAsync)
     {
         _server.BuildResponse = encryption =>
         {
-            byte[] response = BuildValidResponse(encryption, includeTraceId: true);
+            byte[] response = BuildValidResponse(
+                encryption, includeTraceId: true, includeUnknownOption: true);
             SetOptionOffset(response, option, 0xFFFF);
             return response;
         };
@@ -258,14 +266,17 @@ public class PreLoginOptionBoundsTests : IDisposable
     }
 
     /// <summary>
-    /// An option the client does not read (THREADID, TRACEID) is still validated: a declared
-    /// length that runs past the end of the response is rejected.
+    /// An option the client does not read (THREADID, TRACEID, or an option the client does
+    /// not recognize) is still validated: a declared length that runs past the end of the
+    /// response is rejected.
     /// </summary>
     [Theory]
     [InlineData(ThreadId, false)]
     [InlineData(ThreadId, true)]
     [InlineData(TraceId, false)]
     [InlineData(TraceId, true)]
+    [InlineData(UnknownOption, false)]
+    [InlineData(UnknownOption, true)]
     public async Task UnreadOptionLengthBeyondResponse_ThrowsParsingError(
         byte option,
         bool useAsync)
@@ -273,7 +284,8 @@ public class PreLoginOptionBoundsTests : IDisposable
         int expectedOffset = 0;
         _server.BuildResponse = encryption =>
         {
-            byte[] response = BuildValidResponse(encryption, includeTraceId: true);
+            byte[] response = BuildValidResponse(
+                encryption, includeTraceId: true, includeUnknownOption: true);
             expectedOffset = GetOptionOffset(response, option);
             SetOptionLength(response, option, (ushort)(response.Length - expectedOffset + 1));
             return response;
@@ -285,22 +297,48 @@ public class PreLoginOptionBoundsTests : IDisposable
     }
 
     /// <summary>
-    /// Control: options the client does not read may declare any length that fits within
-    /// the response, and the connection still opens.
+    /// A response that ends in the middle of the header of an option the client does not
+    /// recognize is rejected.
     /// </summary>
     [Theory]
-    [InlineData(ThreadId, false)]
-    [InlineData(ThreadId, true)]
-    [InlineData(TraceId, false)]
-    [InlineData(TraceId, true)]
-    public async Task UnreadOptionAnyLengthWithinResponse_Connects(byte option, bool useAsync)
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task UnknownOptionHeaderTruncated_ThrowsParsingError(bool useAsync)
     {
-        _server.BuildResponse = encryption =>
-        {
-            byte[] response = BuildValidResponse(encryption, includeTraceId: true);
-            SetOptionLength(response, option, 0);
-            return response;
-        };
+        // Option token followed by only 2 of the 4 header bytes.
+        _server.BuildResponse = _ => new byte[] { UnknownOption, 0x00, 0x05 };
+
+        Exception ex = await OpenExpectingFailure(useAsync);
+
+        // The header begins immediately after the option token, at offset 1.
+        AssertCorruptedStream(ex, expectedOffset: 1);
+    }
+
+    /// <summary>
+    /// Control: options the client does not read (THREADID, TRACEID, or an option the client
+    /// does not recognize) may declare any length, provided the data lies within the response
+    /// and the options still describe every byte of the response. The option is skipped and
+    /// the connection opens.
+    /// </summary>
+    [Theory]
+    [InlineData(ThreadId, 0, false)]
+    [InlineData(ThreadId, 0, true)]
+    [InlineData(ThreadId, 7, false)]
+    [InlineData(TraceId, 0, false)]
+    [InlineData(TraceId, 0, true)]
+    [InlineData(TraceId, 40, false)]
+    [InlineData(UnknownOption, 0, false)]
+    [InlineData(UnknownOption, 0, true)]
+    [InlineData(UnknownOption, 3, false)]
+    [InlineData(UnknownOption, 3, true)]
+    public async Task UnreadOptionAnyLengthWithinResponse_Connects(
+        byte option,
+        int dataLength,
+        bool useAsync)
+    {
+        _server.BuildResponse = encryption => BuildResponse(
+            GetValidOptions(encryption, includeTraceId: true, includeUnknownOption: true)
+                .Select(o => o.Option == option ? (o.Option, new byte[dataLength]) : o));
 
         using SqlConnection connection = new(_connectionString);
         if (useAsync)
@@ -313,6 +351,85 @@ public class PreLoginOptionBoundsTests : IDisposable
         }
 
         Assert.Equal(System.Data.ConnectionState.Open, connection.State);
+    }
+
+    /// <summary>
+    /// A response that contains bytes after the data of its last option, which no option
+    /// describes, is rejected.
+    /// </summary>
+    [Theory]
+    [InlineData(1, false)]
+    [InlineData(1, true)]
+    [InlineData(8, false)]
+    public async Task UndescribedTrailingBytes_ThrowsParsingError(int extraBytes, bool useAsync)
+    {
+        int responseLength = 0;
+        _server.BuildResponse = encryption =>
+        {
+            byte[] valid = BuildValidResponse(encryption);
+            byte[] response = new byte[valid.Length + extraBytes];
+            Buffer.BlockCopy(valid, 0, response, 0, valid.Length);
+            responseLength = response.Length;
+            return response;
+        };
+
+        Exception ex = await OpenExpectingFailure(useAsync);
+
+        AssertCorruptedStream(ex);
+        Assert.Contains($"Length: {responseLength}", ex.Message);
+    }
+
+    /// <summary>
+    /// A response in which two options point at the same data byte, so that together the
+    /// options describe more bytes than the response contains, is rejected.
+    /// </summary>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task OptionsShareDataBytes_ThrowsParsingError(bool useAsync)
+    {
+        int responseLength = 0;
+        _server.BuildResponse = encryption =>
+        {
+            // FEDAUTHREQUIRED data is the last byte of the response. Point it at the MARS data
+            // byte instead and drop the now-unused last byte, so every offset and length
+            // stays within the response.
+            byte[] valid = BuildValidResponse(encryption);
+            SetOptionOffset(valid, FedAuthRequired, GetOptionOffset(valid, Mars));
+            byte[] response = valid.Take(valid.Length - 1).ToArray();
+            responseLength = response.Length;
+            return response;
+        };
+
+        Exception ex = await OpenExpectingFailure(useAsync);
+
+        AssertCorruptedStream(ex);
+        Assert.Contains($"Length: {responseLength}", ex.Message);
+    }
+
+    /// <summary>
+    /// A response whose option list is not closed by the terminator before the response
+    /// ends is rejected.
+    /// </summary>
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task MissingTerminator_ThrowsParsingError(bool useAsync)
+    {
+        int responseLength = 0;
+        _server.BuildResponse = _ =>
+        {
+            // A single MARS option whose header is the whole response: the data byte is the
+            // last header byte, and the response ends before any terminator.
+            byte[] response = new byte[] { Mars, 0x00, 0x04, 0x00, 0x01 };
+            responseLength = response.Length;
+            return response;
+        };
+
+        Exception ex = await OpenExpectingFailure(useAsync);
+
+        AssertCorruptedStream(ex);
+        Assert.Contains($"Length: {responseLength}", ex.Message);
     }
 
     private async Task<Exception> OpenExpectingFailure(bool useAsync)
@@ -340,11 +457,23 @@ public class PreLoginOptionBoundsTests : IDisposable
 
     /// <summary>
     /// Builds a well-formed PRELOGIN response containing VERSION, ENCRYPT, INSTANCE,
-    /// THREADID, MARS and FEDAUTHREQUIRED options, and optionally TRACEID.
+    /// THREADID, MARS and FEDAUTHREQUIRED options, and optionally TRACEID and an option the
+    /// client does not recognize.
     /// </summary>
     private static byte[] BuildValidResponse(
         TDSPreLoginTokenEncryptionType encryption,
-        bool includeTraceId = false)
+        bool includeTraceId = false,
+        bool includeUnknownOption = false) =>
+        BuildResponse(GetValidOptions(encryption, includeTraceId, includeUnknownOption));
+
+    /// <summary>
+    /// Returns the options of a well-formed PRELOGIN response, in response order. The
+    /// FEDAUTHREQUIRED data is the last data in the response.
+    /// </summary>
+    private static List<(byte Option, byte[] Data)> GetValidOptions(
+        TDSPreLoginTokenEncryptionType encryption,
+        bool includeTraceId,
+        bool includeUnknownOption)
     {
         // The test server omits ENCRYPT when it has no encryption preference; NOT_SUP is the
         // equivalent wire value and keeps the client in agreement with the server session.
@@ -358,8 +487,6 @@ public class PreLoginOptionBoundsTests : IDisposable
             (Encrypt, new byte[] { encryptValue }),
             (Instance, new byte[] { 0x00 }),
             (ThreadId, new byte[] { 0x00, 0x00, 0x00, 0x00 }),
-            (Mars, new byte[] { 0x00 }),
-            (FedAuthRequired, new byte[] { 0x00 }),
         };
 
         if (includeTraceId)
@@ -367,6 +494,23 @@ public class PreLoginOptionBoundsTests : IDisposable
             options.Add((TraceId, new byte[36]));
         }
 
+        if (includeUnknownOption)
+        {
+            options.Add((UnknownOption, new byte[] { 0x01, 0x02 }));
+        }
+
+        options.Add((Mars, new byte[] { 0x00 }));
+        options.Add((FedAuthRequired, new byte[] { 0x00 }));
+        return options;
+    }
+
+    /// <summary>
+    /// Builds a PRELOGIN response from the given options: one header per option, the
+    /// terminator, then the option data in the same order with no gaps.
+    /// </summary>
+    private static byte[] BuildResponse(IEnumerable<(byte Option, byte[] Data)> optionSequence)
+    {
+        List<(byte Option, byte[] Data)> options = optionSequence.ToList();
         int headerLength = options.Count * 5 + 1;
         byte[] response = new byte[headerLength + options.Sum(o => o.Data.Length)];
 
