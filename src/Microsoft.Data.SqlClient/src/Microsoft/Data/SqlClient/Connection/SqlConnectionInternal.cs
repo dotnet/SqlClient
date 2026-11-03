@@ -13,16 +13,16 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common;
+using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Parser;
+using Microsoft.Data.SqlClient.Parser.Login;
+using Microsoft.Data.SqlClient.Parser.Tokens;
 using Microsoft.Data.SqlClient.Utilities;
 using IsolationLevel = System.Data.IsolationLevel;
-
-#if NETFRAMEWORK
-using Microsoft.Data.Common.ConnectionString;
-#endif
 
 namespace Microsoft.Data.SqlClient.Connection
 {
@@ -388,6 +388,7 @@ namespace Microsoft.Data.SqlClient.Connection
             Debug.Assert(connectionOptions is not null, "null connectionOptions");
 
             ConnectionOptions = connectionOptions;
+            MultiSubnetFailover = connectionOptions.MultiSubnetFailover;
             _registeredApplication = registeredApplication;
 
             #if DEBUG
@@ -542,6 +543,38 @@ namespace Microsoft.Data.SqlClient.Connection
         internal SqlConnectionOptions ConnectionOptions { get; }
 
         /// <summary>
+        /// MultiSubnetFailover in effect for this connection. A default (not explicit) value is
+        /// turned off when the resolved protocol is not TCP, or when the server sends a database
+        /// mirroring failover partner.
+        /// </summary>
+        internal bool MultiSubnetFailover { get; private set; }
+
+        // Turns off MultiSubnetFailover when it came from the default, so database mirroring
+        // keeps working. Returns false when it was set explicitly.
+        private bool TryDisableDefaultMultiSubnetFailover()
+        {
+            if (ConnectionOptions.IsMultiSubnetFailoverExplicit)
+            {
+                return false;
+            }
+
+            MultiSubnetFailover = false;
+            return true;
+        }
+
+        // Turns off a default MultiSubnetFailover when SNI will not use TCP only, e.g. named
+        // pipes, shared memory, LocalDB, or a non-TCP alias. An explicit value is kept, so SNI
+        // still reports its existing error for non-TCP protocols.
+        private void ApplyDefaultMultiSubnetFailoverForProtocol(ServerInfo serverInfo)
+        {
+            if (MultiSubnetFailover &&
+                !SqlConnectionOptions.UsesTcpProtocol(serverInfo.ExtendedServerName, LocalAppContextSwitches.UseManagedNetworking))
+            {
+                TryDisableDefaultMultiSubnetFailover();
+            }
+        }
+
+        /// <summary>
         /// The current database for this connection. Null if the connection is not open yet.
         /// </summary>
         internal string CurrentDatabase { get; private set; }
@@ -620,11 +653,6 @@ namespace Microsoft.Data.SqlClient.Connection
         internal string InstanceName
         {
             get => _instanceName;
-        }
-
-        internal bool Is2008OrNewer
-        {
-            get => _parser.Is2008OrNewer;
         }
 
         /// <summary>
@@ -727,7 +755,7 @@ namespace Microsoft.Data.SqlClient.Connection
 
         internal string RoutingDestination { get; private set; }
 
-        internal RoutingInfo RoutingInfo { get; private set; } = null;
+        internal TdsEnvChangeRoutingInfo RoutingInfo { get; private set; } = null;
 
         internal int ServerProcessId
         {
@@ -1060,9 +1088,9 @@ namespace Microsoft.Data.SqlClient.Connection
                 "unenlisted.",
                 ObjectID);
 
-            // The EnlistTransaction above will return an TransactionEnded event, which causes the
-            // TdsParser to clear the current transaction. In either case, when we're working with
-            // a 2005 or newer server we better not have a current transaction at this point.
+            // The EnlistTransaction above will return a TransactionEnded event, which causes the
+            // TdsParser to clear the current transaction. There must be no current transaction
+            // after unenlisting.
             Debug.Assert(CurrentTransaction == null, "unenlisted transaction with non-null current transaction?");
         }
 
@@ -1097,7 +1125,7 @@ namespace Microsoft.Data.SqlClient.Connection
 
             string transactionName = name ?? string.Empty;
 
-            ExecuteTransaction2005(transactionRequest, transactionName, iso, internalTransaction, isDelegateControlRequest);
+            ExecuteTransactionInternal(transactionRequest, transactionName, iso, internalTransaction, isDelegateControlRequest);
         }
 
         internal SqlDataReader FindLiveReader(SqlCommand command)
@@ -1253,7 +1281,7 @@ namespace Microsoft.Data.SqlClient.Connection
                     break;
 
                 case TdsEnums.ENV_TRANSACTIONMANAGERADDRESS:
-                    // For now, we skip these 2005 only env change notifications
+                    // Ignore transaction manager address notifications.
                     break;
 
                 case TdsEnums.ENV_SPRESETCONNECTIONACK:
@@ -1771,22 +1799,33 @@ namespace Microsoft.Data.SqlClient.Connection
                         throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
                     }
 
+                    // The server is expected to cap its acknowledgement to the version the
+                    // connection asked for. Bound it here as well, so that a server which
+                    // does not cannot raise this connection above the version it opted in
+                    // to: accepting a higher one would return float16 columns in their
+                    // binary form to a connection which asked for v1, which is exactly the
+                    // change the keyword exists to prevent.
+                    byte requestedVersion =
+                        VectorTypeSupportUtilities.ToFeatureExtensionVersion(ConnectionOptions.VectorTypeSupport);
+
                     byte vectorSupportVersion = data[0];
-                    if (vectorSupportVersion == 0 || vectorSupportVersion > TdsEnums.MAX_SUPPORTED_VECTOR_VERSION)
+                    if (vectorSupportVersion == 0 || vectorSupportVersion > requestedVersion)
                     {
                         SqlClientEventSource.Log.TryTraceEvent(
                             "SqlInternalConnectionTds.OnFeatureExtAck | ERR | " +
                             "Object ID {0}, " +
                             "Invalid version number {1} for VECTORSUPPORT, " +
-                            "Max supported version is {2}",
+                            "Requested version is {2}",
                             ObjectID,
                             vectorSupportVersion,
-                            TdsEnums.MAX_SUPPORTED_VECTOR_VERSION);
+                            requestedVersion);
 
                         throw SQL.ParsingError();
                     }
 
-                    Capabilities.Float32VectorType = true;
+                    // Record the negotiated version rather than a simple flag: it determines
+                    // which vector base types the server returns natively.
+                    Capabilities.VectorVersion = vectorSupportVersion;
 
                     break;
                 }
@@ -2036,7 +2075,7 @@ namespace Microsoft.Data.SqlClient.Connection
                 _currentSessionData._tdsVersion = Capabilities.TdsVersion;
             }
         }
-        
+
         /// <summary>
         /// Selects the <see cref="TimeoutTimer"/> that governs the login phase based on
         /// <see cref="LocalAppContextSwitches.UseOverallConnectTimeoutForPoolWait"/>.
@@ -2811,22 +2850,19 @@ namespace Microsoft.Data.SqlClient.Connection
             // Tell the base class about our enlistment
             EnlistedTransaction = transaction;
 
-            // If we're on a 2005 or newer server, and we delegate the transaction successfully, we
-            // will have begun a transaction, which produces a transaction ID that we should
-            // execute all requests on. The TdsParser will store this information as the current
-            // transaction.
+            // If we delegate the transaction successfully, we will have begun a transaction, which
+            // produces a transaction ID that we should execute all requests on. The TdsParser will
+            // store this information as the current transaction.
 
-            // Likewise, propagating a transaction to a 2005 or newer server will produce a
-            // transaction id that The TdsParser will store as the current transaction.
+            // Likewise, propagating a transaction will produce a transaction id that The TdsParser
+            // will store as the current transaction.
 
-            // In either case, when we're working with a 2005 or newer server we better have a
-            // current transaction by now.
+            // In either case, we better have a current transaction by now.
 
             Debug.Assert(CurrentTransaction != null, "delegated/enlisted transaction with null current transaction?");
         }
 
-        // @TODO: Rename to ExecuteTransactionInternal ... we don't have multiple server version implementations of this
-        private void ExecuteTransaction2005(
+        private void ExecuteTransactionInternal(
             TransactionRequest transactionRequest,
             string transactionName,
             System.Data.IsolationLevel iso, // @TODO: We have three different IsolationTypes, maybe we can indicate which one is which a bit better.
@@ -2892,9 +2928,8 @@ namespace Microsoft.Data.SqlClient.Connection
                         requestType = TdsEnums.TransactionManagerRequestType.Commit;
                         break;
                     case TransactionRequest.IfRollback:
-                        // Map IfRollback to Rollback since with 2005 and beyond we should never
-                        // need the "if" since the server will inform us when transactions have
-                        // completed as a result of an error on the server.
+                        // Map IfRollback to Rollback: the server notifies us when a transaction
+                        // completes after an error, so no conditional rollback is needed.
                     case TransactionRequest.Rollback:
                         requestType = TdsEnums.TransactionManagerRequestType.Rollback;
                         break;
@@ -2950,7 +2985,7 @@ namespace Microsoft.Data.SqlClient.Connection
 
                     if (internalTransaction.OpenResultsCount != 0)
                     {
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.ExecuteTransaction2005|DATA|CATCH> {0}, Connection is marked to be doomed when closed. Transaction ended with OpenResultsCount {1} > 0, MARSOn {2}",
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.ExecuteTransactionInternal|DATA|CATCH> {0}, Connection is marked to be doomed when closed. Transaction ended with OpenResultsCount {1} > 0, MARSOn {2}",
                                                                ObjectID,
                                                                internalTransaction.OpenResultsCount,
                                                                _parser.MARSOn);
@@ -3400,7 +3435,17 @@ namespace Microsoft.Data.SqlClient.Connection
             // @TODO: Request all the implicit features in one place (probably at the very top)
             requestedFeatures |= TdsEnums.FeatureExtension.SQLDNSCaching;
             requestedFeatures |= TdsEnums.FeatureExtension.JsonSupport;
-            requestedFeatures |= TdsEnums.FeatureExtension.VectorSupport;
+
+            // The vector feature extension is only requested when the connection asks for a
+            // version of it. Omitting the request leaves vector columns as varchar(max)
+            // containing a JSON array, which is how they were presented before the type
+            // was introduced.
+            if (VectorTypeSupportUtilities.ToFeatureExtensionVersion(ConnectionOptions.VectorTypeSupport)
+                != TdsEnums.VECTOR_VERSION_NOT_SUPPORTED)
+            {
+                requestedFeatures |= TdsEnums.FeatureExtension.VectorSupport;
+            }
+
             requestedFeatures |= TdsEnums.FeatureExtension.EnhancedRoutingSupport;
             requestedFeatures |= TdsEnums.FeatureExtension.UserAgent;
 
@@ -3461,15 +3506,16 @@ namespace Microsoft.Data.SqlClient.Connection
             int sleepInterval = 100;
 
             ResolveExtendedServerName(serverInfo, !redirectedUserInstance, connectionOptions);
+            ApplyDefaultMultiSubnetFailoverForProtocol(serverInfo);
 
             #if NET
-            bool isParallel = connectionOptions.MultiSubnetFailover;
+            bool isParallel = MultiSubnetFailover;
             #else
             bool disableTnir = ShouldDisableTnir(
                 connectionOptions,
                 isAccessTokenProvided: IsAccessTokenProvided);
             TnirDisabledDuringLogin = disableTnir;
-            bool isParallel = connectionOptions.MultiSubnetFailover ||
+            bool isParallel = MultiSubnetFailover ||
                               (connectionOptions.TransparentNetworkIPResolution && !disableTnir);
             #endif
 
@@ -3480,7 +3526,7 @@ namespace Microsoft.Data.SqlClient.Connection
                 #if NET
                 float failoverTimeoutStep = ADP.FailoverTimeoutStep;
                 #else
-                float failoverTimeoutStep = connectionOptions.MultiSubnetFailover
+                float failoverTimeoutStep = MultiSubnetFailover
                     ? ADP.FailoverTimeoutStep
                     : ADP.FailoverTimeoutStepForTnir;
                 #endif
@@ -3579,10 +3625,11 @@ namespace Microsoft.Data.SqlClient.Connection
                         disableTnir: disableTnir);
                     #endif
 
-                    if (connectionOptions.MultiSubnetFailover && ServerProvidedFailoverPartner != null)
+                    if (MultiSubnetFailover && ServerProvidedFailoverPartner != null &&
+                        !TryDisableDefaultMultiSubnetFailover())
                     {
                         // connection succeeded: trigger exception if server sends failover partner
-                        // and MultiSubnetFailover is used
+                        // and MultiSubnetFailover is set explicitly
                         throw SQL.MultiSubnetFailoverWithFailoverPartner(
                             serverProvidedFailoverPartner: true,
                             internalConnection: this);
@@ -3676,7 +3723,7 @@ namespace Microsoft.Data.SqlClient.Connection
                 // Switch to failover logic if the server provided a partner
                 if (ServerProvidedFailoverPartner != null)
                 {
-                    if (connectionOptions.MultiSubnetFailover)
+                    if (MultiSubnetFailover && !TryDisableDefaultMultiSubnetFailover())
                     {
                         // connection failed: do not allow failover to server-provided failover partner if MultiSubnetFailover is set
                         throw SQL.MultiSubnetFailoverWithFailoverPartner(serverProvidedFailoverPartner: true, internalConnection: this);
@@ -3772,7 +3819,9 @@ namespace Microsoft.Data.SqlClient.Connection
             SqlCredential credential, // @TODO: This isn't used anywhere
             TimeoutTimer timeout)
         {
-            Debug.Assert(!connectionOptions.MultiSubnetFailover,
+            // A pool group can also cache a partner learned from an earlier connection.
+            TryDisableDefaultMultiSubnetFailover();
+            Debug.Assert(!MultiSubnetFailover,
                 "MultiSubnetFailover should not be set if failover partner is used");
 
             SqlClientEventSource.Log.TryAdvancedTraceEvent(

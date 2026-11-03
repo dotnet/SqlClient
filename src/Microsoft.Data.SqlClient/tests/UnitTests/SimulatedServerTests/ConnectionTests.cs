@@ -25,11 +25,244 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 {
+    /// <summary>
+    /// Exercises connection establishment and failure handling against simulated TDS servers.
+    /// </summary>
     [Collection(SimulatedServerTestCollection.Name)]
     public class ConnectionTests
     {
-        [Fact]
-        public void ConnectionTest()
+#if NETFRAMEWORK
+        /// <summary>
+        /// Opens with TNIR disabled by default or restored through its legacy switch, with MSF off.
+        /// </summary>
+        [Theory]
+        [InlineData(null, false)]
+        [InlineData(null, true)]
+        [InlineData(false, false)]
+        [InlineData(false, true)]
+        public async Task TransparentNetworkIPResolution_DefaultAndOptIn_OpenSucceeds(bool? disabledAppContext, bool useAsync)
+        {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.DisableTnirByDefault = disabledAppContext;
+            using TdsServer server = new(new TdsServerArguments());
+            server.Start();
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = $"127.0.0.1,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                MultiSubnetFailover = false,
+                Pooling = false
+            };
+            using SqlConnection connection = new(builder.ConnectionString);
+            if (useAsync)
+            {
+                await connection.OpenAsync();
+            }
+            else
+            {
+                connection.Open();
+            }
+
+#pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
+            Assert.Equal(!(disabledAppContext ?? true), builder.TransparentNetworkIPResolution);
+#pragma warning restore 618
+            Assert.False(builder.ShouldSerialize("TransparentNetworkIPResolution"));
+            Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.Equal(1, server.Login7Count);
+        }
+#endif
+
+        /// <summary>
+        /// Opens a TCP connection through both public paths with the new default and compatibility opt-out.
+        /// </summary>
+        [Theory]
+        [InlineData(null, false)]
+        [InlineData(null, true)]
+        [InlineData(false, false)]
+        [InlineData(false, true)]
+        public async Task MultiSubnetFailover_DefaultAndOptOut_OpenSucceeds(bool? enabledAppContext, bool useAsync)
+        {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.EnableMultiSubnetFailoverByDefault = enabledAppContext;
+            using TdsServer server = new(new TdsServerArguments());
+            server.Start();
+            SqlConnectionStringBuilder builder = new()
+            {
+                // tcp: so the default applies to a local server.
+                DataSource = $"tcp:127.0.0.1,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                Pooling = false
+            };
+            using SqlConnection connection = new(builder.ConnectionString);
+            if (useAsync)
+            {
+                await connection.OpenAsync();
+            }
+            else
+            {
+                connection.Open();
+            }
+
+            Assert.Equal(enabledAppContext ?? true, builder.MultiSubnetFailover);
+            Assert.False(builder.ShouldSerialize("MultiSubnetFailover"));
+            Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.Equal(enabledAppContext ?? true, GetEffectiveMultiSubnetFailover(connection));
+            Assert.Equal(1, server.Login7Count);
+        }
+
+        /// <summary>
+        /// Without a protocol prefix, a local server uses TCP with managed SNI and shared memory
+        /// first with native SNI, so the default applies only with managed SNI.
+        /// </summary>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task MultiSubnetFailover_Default_LocalNoPrefix_FollowsSniProtocol(bool useAsync)
+        {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.EnableMultiSubnetFailoverByDefault = true;
+            using TdsServer server = new(new TdsServerArguments());
+            server.Start();
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = $"127.0.0.1,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                Pooling = false
+            };
+            using SqlConnection connection = new(builder.ConnectionString);
+            if (useAsync)
+            {
+                await connection.OpenAsync();
+            }
+            else
+            {
+                connection.Open();
+            }
+
+            Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.Equal(LocalAppContextSwitches.UseManagedNetworking, GetEffectiveMultiSubnetFailover(connection));
+        }
+
+        private static bool GetEffectiveMultiSubnetFailover(SqlConnection connection) =>
+            ((global::Microsoft.Data.SqlClient.Connection.SqlConnectionInternal)connection.InnerConnection).MultiSubnetFailover;
+
+        /// <summary>
+        /// A server-sent mirroring partner turns off the default MultiSubnetFailover instead of failing.
+        /// </summary>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task MultiSubnetFailover_Default_ServerFailoverPartner_OpenSucceeds(bool useAsync)
+        {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.EnableMultiSubnetFailoverByDefault = true;
+            using TdsServer server = new(new TdsServerArguments { FailoverPartner = "localhost,1234" });
+            server.Start();
+            // .NET Framework requires Initial Catalog when the server sends a failover partner.
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = $"tcp:127.0.0.1,{server.EndPoint.Port}",
+                InitialCatalog = "master",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                Pooling = false
+            };
+            using SqlConnection connection = new(builder.ConnectionString);
+            if (useAsync)
+            {
+                await connection.OpenAsync();
+            }
+            else
+            {
+                connection.Open();
+            }
+
+            Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.False(GetEffectiveMultiSubnetFailover(connection));
+        }
+
+        /// <summary>
+        /// Pool expansion disables default MSF when an earlier connection cached a mirroring partner.
+        /// </summary>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task MultiSubnetFailover_Default_CachedFailoverPartner_OpenSucceeds(bool useAsync)
+        {
+            using LocalAppContextSwitchesHelper switchesHelper = new();
+            switchesHelper.EnableMultiSubnetFailoverByDefault = true;
+            using TdsServer server = new(new TdsServerArguments { FailoverPartner = "localhost,1234" });
+            server.Start();
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = $"tcp:127.0.0.1,{server.EndPoint.Port}",
+                InitialCatalog = "master",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                Pooling = true,
+                ApplicationName = Guid.NewGuid().ToString()
+            };
+            using SqlConnection first = new(builder.ConnectionString);
+            using SqlConnection second = new(builder.ConnectionString);
+            try
+            {
+                if (useAsync)
+                {
+                    await first.OpenAsync();
+                    await second.OpenAsync();
+                }
+                else
+                {
+                    first.Open();
+                    second.Open();
+                }
+
+                Assert.Equal(ConnectionState.Open, first.State);
+                Assert.Equal(ConnectionState.Open, second.State);
+                Assert.NotEqual(first.ClientConnectionId, second.ClientConnectionId);
+                Assert.Equal(2, server.Login7Count);
+                Assert.False(GetEffectiveMultiSubnetFailover(first));
+                Assert.False(GetEffectiveMultiSubnetFailover(second));
+            }
+            finally
+            {
+                SqlConnection.ClearPool(first);
+            }
+        }
+
+        /// <summary>
+        /// A server-sent mirroring partner still fails when MultiSubnetFailover is set explicitly.
+        /// </summary>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task MultiSubnetFailover_Explicit_ServerFailoverPartner_Throws(bool useAsync)
+        {
+            using TdsServer server = new(new TdsServerArguments { FailoverPartner = "localhost,1234" });
+            server.Start();
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = $"tcp:127.0.0.1,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                MultiSubnetFailover = true,
+                Pooling = false
+            };
+            using SqlConnection connection = new(builder.ConnectionString);
+            if (useAsync)
+            {
+                await Assert.ThrowsAsync<SqlException>(() => connection.OpenAsync());
+            }
+            else
+            {
+                Assert.Throws<SqlException>(() => connection.Open());
+            }
+        }
+
+        /// <summary>
+        /// Opens a connection through both public entry points, including managed SNI on Unix.
+        /// </summary>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task ConnectionTest(bool useAsync)
         {
             using TdsServer server = new(new TdsServerArguments() { });
             server.Start();
@@ -40,7 +273,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 Pooling = false, // No pooling needed; avoids leaking a pooled connection to this ephemeral port
             }.ConnectionString;
             using SqlConnection connection = new(connStr);
-            connection.Open();
+            if (useAsync)
+            {
+                await connection.OpenAsync();
+            }
+            else
+            {
+                connection.Open();
+            }
+
+            Assert.Equal(ConnectionState.Open, connection.State);
         }
 
         [Fact]
@@ -82,24 +324,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Contains("The instance of SQL Server you attempted to connect to does not support encryption.", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
-
-        // Flaky under CI load only (never reproduces locally): the simulated transient error
-        // occasionally surfaces on the retry login as well, so the async open propagates the
-        // SqlException instead of succeeding. This is the transient-fault retry timing behavior
-        // this test guards, not a harness race, so it cannot be made deterministic here.
-        //
-        //     Failed Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionTests.TransientFault_RetryEnabled_ShouldSucceed_Async(errorCode: 40613)
-        //   Microsoft.Data.SqlClient.SqlException :
-        //     at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.OnError(...)
-        //     at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.CompleteLogin(Boolean enlistOK)
-        //     at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.LoginNoFailover(...)
+        /// <summary>
+        /// Retries one login SQL error on the same server without sharing a pool with another case.
+        /// </summary>
         [Trait("category", "flaky")]
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
-        // Quarantine tracked in https://github.com/dotnet/SqlClient/pull/4344.
-        // The original intermittent async retry failure did not retain assertion/exception details.
         public async Task TransientFault_RetryEnabled_ShouldSucceed_Async(uint errorCode)
         {
             using TransientTdsErrorTdsServer server = new(
@@ -111,7 +343,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             server.Start();
             SqlConnectionStringBuilder builder = new()
             {
-                DataSource = "localhost," + server.EndPoint.Port,
+                DataSource = "127.0.0.1," + server.EndPoint.Port,
+                ConnectRetryInterval = 1,
                 Encrypt = SqlConnectionEncryptOption.Optional,
 #if NETFRAMEWORK
                 #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
@@ -120,10 +353,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 #endif
             };
 
+            using SimulatedServerPoolScope pool = new(builder);
             using SqlConnection connection = new(builder.ConnectionString);
             await connection.OpenAsync();
             Assert.Equal(ConnectionState.Open, connection.State);
-            Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
+            Assert.Equal($"127.0.0.1,{server.EndPoint.Port}", connection.DataSource);
             Assert.Equal(2, server.PreLoginCount - server.AbandonedPreLoginCount);
         }
 
@@ -142,14 +376,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             server.Start();
             SqlConnectionStringBuilder builder = new()
             {
-                DataSource = "localhost," + server.EndPoint.Port,
+                DataSource = "127.0.0.1," + server.EndPoint.Port,
+                ConnectRetryInterval = 1,
                 Encrypt = SqlConnectionEncryptOption.Optional
             };
 
+            using SimulatedServerPoolScope pool = new(builder);
             using SqlConnection connection = new(builder.ConnectionString);
             connection.Open();
             Assert.Equal(ConnectionState.Open, connection.State);
-            Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
+            Assert.Equal($"127.0.0.1,{server.EndPoint.Port}", connection.DataSource);
             Assert.Equal(2, server.PreLoginCount - server.AbandonedPreLoginCount);
         }
 
@@ -168,12 +404,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             server.Start();
             SqlConnectionStringBuilder builder = new()
             {
-                DataSource = "localhost," + server.EndPoint.Port,
+                DataSource = "127.0.0.1," + server.EndPoint.Port,
                 ConnectRetryCount = 0,
                 Encrypt = SqlConnectionEncryptOption.Optional,
                 Pooling = false, // Disable pooling so this expected failure does not poison a shared pool
             };
 
+            using SimulatedServerPoolScope pool = new(builder);
             using SqlConnection connection = new(builder.ConnectionString);
             SqlException e = await Assert.ThrowsAsync<SqlException>(async () => await connection.OpenAsync());
             Assert.Equal((int)errorCode, e.Number);
@@ -181,15 +418,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(1, server.PreLoginCount - server.AbandonedPreLoginCount);
         }
 
+        /// <summary>
+        /// Propagates the configured login error when connect retry is disabled.
+        /// </summary>
+        [Trait("category", "flaky")]
         [Theory]
         [InlineData(40613)]
         [InlineData(42108)]
         [InlineData(42109)]
-        // Quarantined due to intermittent failure:
-        //   Assert.Equal() Failure: Values differ
-        //   Expected: 40613
-        //   Actual:   42108
-        [Trait("Category", "flaky")]
         public void TransientFault_RetryDisabled_ShouldFail(uint errorCode)
         {
             using TransientTdsErrorTdsServer server = new(
@@ -201,12 +437,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             server.Start();
             SqlConnectionStringBuilder builder = new()
             {
-                DataSource = "localhost," + server.EndPoint.Port,
+                DataSource = "127.0.0.1," + server.EndPoint.Port,
                 ConnectRetryCount = 0,
                 Encrypt = SqlConnectionEncryptOption.Optional,
                 Pooling = false, // Disable pooling so this expected failure does not poison a shared pool
             };
 
+            using SimulatedServerPoolScope pool = new(builder);
             using SqlConnection connection = new(builder.ConnectionString);
             SqlException e = Assert.Throws<SqlException>(() => connection.Open());
             Assert.Equal((int)errorCode, e.Number);
@@ -214,51 +451,23 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(1, server.PreLoginCount - server.AbandonedPreLoginCount);
         }
 
-        // Flaky under CI load only (never reproduces locally): the retry login can exhaust
-        // the connect-timeout budget on a slow agent and surface a post-login Connection
-        // Timeout (observed pre-login handshake ~4.4s), so the async open propagates a
-        // SqlException instead of succeeding. Same CI-load post-login timing family as the
-        // already-quarantined sibling TransientFault_RetryEnabled_ShouldSucceed_Async; not a
-        // driver defect.
-        //
-        //     [xUnit.net 00:00:11.76]     Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionTests.NetworkError_RetryEnabled_ShouldSucceed_Async(multiSubnetFailoverEnabled: True) [FAIL]
-        //     Failed Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionTests.NetworkError_RetryEnabled_ShouldSucceed_Async(multiSubnetFailoverEnabled: True) [5 s]
-        //     Microsoft.Data.SqlClient.SqlException : Connection Timeout Expired.  The timeout period elapsed during the post-login phase.  ... The duration spent while attempting to connect to this server was - [Pre-Login] initialization=5; handshake=4393; [Login] initialization=0; authentication=0; [Post-Login] complete=1014;
-        //       ---- System.ComponentModel.Win32Exception : The wait operation timed out.
-        //     Stack Trace:
-        //          at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
-        //        at Microsoft.Data.SqlClient.TdsParser.ThrowExceptionAndWarning(TdsParserStateObject stateObj, SqlCommand command, Boolean callerHasConnectionLock, Boolean asyncClose)
-        //        at Microsoft.Data.SqlClient.TdsParserStateObject.ThrowExceptionAndWarning(Boolean callerHasConnectionLock, Boolean asyncClose)
-        //        at Microsoft.Data.SqlClient.TdsParserStateObject.ReadSniError(TdsParserStateObject stateObj, UInt32 error)
-        //        at Microsoft.Data.SqlClient.TdsParserStateObject.ReadSniSyncOverAsync()
-        //        at Microsoft.Data.SqlClient.TdsParserStateObject.TryReadNetworkPacket()
-        //        at Microsoft.Data.SqlClient.TdsParserStateObject.TryReadByte(Byte& value)
-        //        at Microsoft.Data.SqlClient.TdsParser.TryRun(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj, Boolean& dataReady)
-        //        at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.CompleteLogin(Boolean enlistOK)
-        //        at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.AttemptOneLogin(ServerInfo serverInfo, String newPassword, SecureString newSecurePassword, TimeoutTimer timeout, Boolean withFailover)
-        //        at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.LoginNoFailover(ServerInfo serverInfo, String newPassword, SecureString newSecurePassword, Boolean redirectedUserInstance, SqlConnectionOptions connectionOptions, SqlCredential credential, TimeoutTimer timeout)
-        //        at Microsoft.Data.SqlClient.Connection.SqlConnectionInternal.OpenLoginEnlist(TimeoutTimer timeout, SqlConnectionOptions connectionOptions, SqlCredential credential, String newPassword, SecureString newSecurePassword, Boolean redirectedUserInstance)
-        //        at Microsoft.Data.SqlClient.SqlConnectionFactory.CreateNonPooledConnection(DbConnection owningConnection, DbConnectionPoolGroup poolGroup, TimeoutTimer timeout)
-        //        at Microsoft.Data.SqlClient.SqlConnectionFactory.<>c__DisplayClass41_0.<CreateReplaceConnectionContinuation>b__0(Task`1 _)
-        //        at Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests.ConnectionTests.NetworkError_RetryEnabled_ShouldSucceed_Async(Boolean multiSubnetFailoverEnabled)
+        /// <summary>
+        /// Opens after a blocked pre-login response is released, with either MultiSubnetFailover setting.
+        /// </summary>
         [Trait("category", "flaky")]
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
         public async Task NetworkError_RetryEnabled_ShouldSucceed_Async(bool multiSubnetFailoverEnabled)
         {
-            using TransientDelayTdsServer server = new(
-                new TransientDelayTdsServerArguments()
-                {
-                    IsEnabledTransientDelay = true,
-                    DelayDuration = TimeSpan.FromMilliseconds(1000),
-                });
+            using GatedTdsServer server = new(new TdsServerArguments());
             server.Start();
+            server.WithholdPreLoginResponses();
             SqlConnectionStringBuilder builder = new()
             {
-                DataSource = "localhost," + server.EndPoint.Port,
+                DataSource = "127.0.0.1," + server.EndPoint.Port,
                 Encrypt = SqlConnectionEncryptOption.Optional,
-                ConnectTimeout = 5,
+                ConnectTimeout = 30,
                 Pooling = false, // Disable pooling to ensure a fresh connection attempt is made
                 MultiSubnetFailover = multiSubnetFailoverEnabled,
 #if NETFRAMEWORK
@@ -268,17 +477,23 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 #endif
             };
 
+            using SimulatedServerPoolScope pool = new(builder);
             using SqlConnection connection = new(builder.ConnectionString);
-            await connection.OpenAsync();
+            Task open = connection.OpenAsync();
+            try
+            {
+                Assert.Same(server.PreLoginBlocked, await Task.WhenAny(
+                    server.PreLoginBlocked, open, Task.Delay(TimeSpan.FromSeconds(30))));
+                Assert.False(open.IsCompleted);
+            }
+            finally
+            {
+                server.ReleasePreLoginResponses();
+            }
+            await open;
             Assert.Equal(ConnectionState.Open, connection.State);
-            Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
-            // The transient delay (1s) is shorter than the connect timeout (5s), so the
-            // connection succeeds. With MultiSubnetFailover the driver may fan out parallel
-            // attempts across the dual-stack resolution of localhost, but the exact number
-            // is a DNS/timing-dependent implementation detail, so we only assert that at
-            // least one completed pre-login occurred.
-            Assert.True(server.PreLoginCount - server.AbandonedPreLoginCount >= 1,
-                "Expected at least one completed pre-login.");
+            Assert.Equal($"127.0.0.1,{server.EndPoint.Port}", connection.DataSource);
+            Assert.Equal(1, server.Login7Count);
         }
 
         [Theory]
@@ -296,8 +511,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             server.Start();
             SqlConnectionStringBuilder builder = new()
             {
-                DataSource = "localhost," + server.EndPoint.Port,
-                ConnectTimeout = 5,
+                DataSource = "127.0.0.1," + server.EndPoint.Port,
+                ConnectTimeout = 30,
                 ConnectRetryCount = 0,
                 Encrypt = SqlConnectionEncryptOption.Optional,
                 MultiSubnetFailover = multiSubnetFailoverEnabled,
@@ -308,6 +523,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 #endif
             };
 
+            using SimulatedServerPoolScope pool = new(builder);
             using SqlConnection connection = new(builder.ConnectionString);
 
             // Act
@@ -315,20 +531,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             // Assert
             Assert.Equal(ConnectionState.Open, connection.State);
-            Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
+            Assert.Equal($"127.0.0.1,{server.EndPoint.Port}", connection.DataSource);
 
-            if (multiSubnetFailoverEnabled)
-            {
-                // With MultiSubnetFailover the driver may fan out parallel attempts across
-                // the dual-stack resolution of localhost; the exact count is a DNS/timing-
-                // dependent implementation detail, so only assert a completed pre-login.
-                Assert.True(server.PreLoginCount - server.AbandonedPreLoginCount >= 1,
-                    "Expected at least one completed pre-login.");
-            }
-            else
-            {
-                Assert.Equal(1, server.PreLoginCount - server.AbandonedPreLoginCount);
-            }
+            Assert.Equal(1, server.Login7Count);
         }
 
         [Theory]
@@ -346,10 +551,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             server.Start();
             SqlConnectionStringBuilder builder = new()
             {
-                DataSource = "localhost," + server.EndPoint.Port,
+                DataSource = "127.0.0.1," + server.EndPoint.Port,
                 ConnectRetryCount = 0,
                 Encrypt = SqlConnectionEncryptOption.Optional,
-                ConnectTimeout = 5,
+                ConnectTimeout = 30,
                 MultiSubnetFailover = multiSubnetFailoverEnabled,
 #if NETFRAMEWORK
                 #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
@@ -358,6 +563,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 #endif
             };
 
+            using SimulatedServerPoolScope pool = new(builder);
             using SqlConnection connection = new(builder.ConnectionString);
 
             // Act
@@ -365,20 +571,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             // Assert
             Assert.Equal(ConnectionState.Open, connection.State);
-            Assert.Equal($"localhost,{server.EndPoint.Port}", connection.DataSource);
+            Assert.Equal($"127.0.0.1,{server.EndPoint.Port}", connection.DataSource);
 
-            if (multiSubnetFailoverEnabled)
-            {
-                // With MultiSubnetFailover the driver may fan out parallel attempts across
-                // the dual-stack resolution of localhost; the exact count is a DNS/timing-
-                // dependent implementation detail, so only assert a completed pre-login.
-                Assert.True(server.PreLoginCount - server.AbandonedPreLoginCount >= 1,
-                    "Expected at least one completed pre-login.");
-            }
-            else
-            {
-                Assert.Equal(1, server.PreLoginCount - server.AbandonedPreLoginCount);
-            }
+            Assert.Equal(1, server.Login7Count);
         }
 
         [Fact]
@@ -1025,7 +1220,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         [Theory]
-        [InlineData(9, 0, 2047)] // SQL Server 2005
         [InlineData(10, 0, 2531)] // SQL Server 2008
         [InlineData(10, 50, 2500)] // SQL Server 2008 R2
         [InlineData(11, 0, 3000)] // SQL Server 2012-2022
@@ -1056,15 +1250,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         // Verifies that the client refuses to connect to a SQL Server whose TDS
-        // protocol version predates the minimum supported version (2005). This is
+        // protocol version predates the minimum accepted version (TDS 7.3B). This is
         // genuine client-side coverage: the simulated server emits a real legacy
-        // LOGINACK (TDS 7.0 for SQL Server 7.0, TDS 7.1 for SQL Server 2000), and
-        // the driver rejects the negotiated version in TryProcessLoginAck via
-        // SQL.InvalidTDSVersion(), which surfaces as an InvalidOperationException.
+        // LOGINACK (TDS 7.0 for SQL Server 7.0, TDS 7.1 for SQL Server 2000, or
+        // TDS 7.2 for SQL Server 2005). The driver rejects the negotiated version in
+        // TryProcessLoginAck via SQL.InvalidTDSVersion(), which surfaces as an InvalidOperationException.
         [Theory]
         [InlineData(7, 0, 623)] // SQL Server 7.0
         [InlineData(8, 0, 194)] // SQL Server 2000 RTM
         [InlineData(8, 0, 384)] // SQL Server 2000 SP1
+        [InlineData(9, 0, 2047)] // SQL Server 2005
         public void ConnectionRefusesUnsupportedServerTdsVersion(int major, int minor, int build)
         {
             Version simulatedServerVersion = new(major, minor, build);
@@ -1082,20 +1277,39 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }.ConnectionString;
             using SqlConnection conn = new(connStr);
 
-            // The driver receives a LOGINACK advertising a pre-2005 TDS version and
+            // The driver receives a LOGINACK advertising a pre-2008 TDS version and
             // refuses it, throwing InvalidOperationException (SQL.InvalidTDSVersion).
             Assert.Throws<InvalidOperationException>(() => conn.Open());
         }
 
 
 
+        /// <summary>
+        /// Verifies that the client and server settle on the highest vector feature
+        /// extension version they have in common, and that a server which reports no support
+        /// or does not acknowledge the feature leaves it unnegotiated. Getting this wrong
+        /// would make the driver read vector columns in a layout the server did not send.
+        /// </summary>
+        /// <param name="expectedConnectionResult">Whether the connection is expected to open.</param>
+        /// <param name="serverVersion">The version the simulated server supports, or 0xFF for no acknowledgement.</param>
+        /// <param name="expectedNegotiatedVersion">The version expected on the wire.</param>
         // Test to verify that the server and client negotiate
         // the common feature extension version.
-        // MDS currently supports vector feature ext version 0x1.
+        // The connection requests the version configured by the Vector Type Support
+        // keyword, which defaults to v2 and adds the float16 base type to the
+        // float32 support in v1.
         [Theory]
-        [InlineData(true, 0x2, 0x1)]
-        [InlineData(false, 0x0, 0x0)]
+        // A server which supports the same version as the client negotiates that version.
+        [InlineData(true, 0x2, 0x2)]
+        // A server which supports a later version than the client is capped by the test
+        // harness, so the client still sees its own version on the wire. The client's own
+        // ceiling is exercised by TestConnRejectsVectorFeatExtVersionAboveClientCeiling.
+        [InlineData(true, 0x3, 0x2)]
+        // A server which supports only the earlier version negotiates that instead.
         [InlineData(true, 0x1, 0x1)]
+        // A server which reports no support at all is rejected.
+        [InlineData(false, 0x0, 0x0)]
+        // A server which does not acknowledge the feature at all leaves it unnegotiated.
         [InlineData(true, 0xFF, 0x0)]
         public void TestConnWithVectorFeatExtVersionNegotiation(bool expectedConnectionResult, byte serverVersion, byte expectedNegotiatedVersion)
         {
@@ -1106,7 +1320,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             server.EnableVectorFeatureExt = serverVersion == 0xFF ? false : true;
 
             byte expectedLoginReqFeatureExtId = (byte)TDSFeatureID.VectorSupport;
-            byte expectedLoginReqFeatureExtVersion = 0x1;
+            byte expectedLoginReqFeatureExtVersion = 0x2;
             byte actualLoginReqFeatureExtId = 0;
             byte actualLoginReqFeatureExtVersion = 0;
             byte actualFeatureExtAckId = 0;
@@ -1184,6 +1398,203 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             {
                 Assert.Throws<InvalidOperationException>(() => connection.Open());
             }
+        }
+
+        /// <summary>
+        /// Verifies that the driver refuses a vector feature extension acknowledgement whose
+        /// version it cannot interpret, rather than trusting it. The simulated server
+        /// acknowledges its own version instead of capping it to the client's, which is what
+        /// a future server supporting a later payload layout would do.
+        /// </summary>
+        /// <param name="serverVersion">A version above the client's ceiling.</param>
+        // Test that the driver refuses a vector feature extension ack whose version it
+        // cannot interpret. The server here acknowledges its own version rather than
+        // capping it to the client's, which is what a future server supporting a later
+        // layout would do.
+        [Theory]
+        // One past the client's ceiling.
+        [InlineData(0x3)]
+        // Well past it.
+        [InlineData(0xF)]
+        public void TestConnRejectsVectorFeatExtVersionAboveClientCeiling(byte serverVersion)
+        {
+            using TdsServer server = new();
+            server.Start();
+            server.EnableVectorFeatureExt = true;
+            server.ServerSupportedVectorFeatureExtVersion = serverVersion;
+            server.AcknowledgeRawVectorFeatureExtVersion = true;
+
+            byte acknowledgedVersion = 0;
+
+            server.OnAuthenticationResponseCompleted = response =>
+            {
+                TDSFeatureExtAckGenericOption option = response
+                    .OfType<TDSFeatureExtAckToken>()
+                    .FirstOrDefault()?
+                    .Options
+                    .OfType<TDSFeatureExtAckGenericOption>()
+                    .FirstOrDefault(o => o.FeatureID == TDSFeatureID.VectorSupport)!;
+
+                if (option != null)
+                {
+                    acknowledgedVersion = option.FeatureAckData[0];
+                }
+            };
+
+            string connStr = new SqlConnectionStringBuilder
+            {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                Pooling = false, // Disable pooling so this expected failure does not poison a shared pool
+                // The ceiling being tested is the client's, so request the highest version
+                // the client understands.
+                VectorTypeSupport = SqlVectorTypeSupport.V2,
+            }.ConnectionString;
+
+            using SqlConnection connection = new(connStr);
+
+            Assert.Throws<InvalidOperationException>(() => connection.Open());
+
+            // Confirms the harness really did send the unsupported version, so the failure
+            // above is the client's ceiling rather than an unrelated connection problem.
+            Assert.Equal(serverVersion, acknowledgedVersion);
+        }
+
+        /// <summary>
+        /// Verifies that the driver refuses an acknowledgement above the version this
+        /// connection asked for. An explicit V1 setting must preserve text results for
+        /// vector columns with a float16 base type, even though the default requests V2.
+        /// </summary>
+        /// <param name="setting">The version the connection asks for, or null to leave it at the default.</param>
+        /// <param name="serverVersion">An acknowledgement above the requested version.</param>
+        [Theory]
+        [InlineData(null, 0x3)]
+        [InlineData(SqlVectorTypeSupport.V1, 0x2)]
+        [InlineData(SqlVectorTypeSupport.V2, 0x3)]
+        public void TestConnRejectsVectorFeatExtVersionAboveRequested(
+            SqlVectorTypeSupport? setting, byte serverVersion)
+        {
+            using TdsServer server = new();
+            server.Start();
+            server.EnableVectorFeatureExt = true;
+            // The server acknowledges its own version rather than capping it to the
+            // client's, which is what a server that does not honour the request would do.
+            server.ServerSupportedVectorFeatureExtVersion = serverVersion;
+            server.AcknowledgeRawVectorFeatureExtVersion = true;
+
+            byte acknowledgedVersion = 0;
+
+            server.OnAuthenticationResponseCompleted = response =>
+            {
+                TDSFeatureExtAckGenericOption option = response
+                    .OfType<TDSFeatureExtAckToken>()
+                    .FirstOrDefault()?
+                    .Options
+                    .OfType<TDSFeatureExtAckGenericOption>()
+                    .FirstOrDefault(o => o.FeatureID == TDSFeatureID.VectorSupport)!;
+
+                if (option != null)
+                {
+                    acknowledgedVersion = option.FeatureAckData[0];
+                }
+            };
+
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                Pooling = false, // Disable pooling so this expected failure does not poison a shared pool
+            };
+
+            if (setting.HasValue)
+            {
+                builder.VectorTypeSupport = setting.Value;
+            }
+
+            using SqlConnection connection = new(builder.ConnectionString);
+
+            Assert.Throws<InvalidOperationException>(() => connection.Open());
+
+            // Confirms the server really did acknowledge its version, so the failure above is the
+            // requested version being exceeded rather than an unrelated connection problem.
+            Assert.Equal(serverVersion, acknowledgedVersion);
+        }
+
+        /// <summary>
+        /// Verifies that the version requested at login follows the <c>Vector Type Support</c>
+        /// keyword, and that the request is omitted entirely when the keyword asks for no
+        /// vector support. The default requests V2, while explicit V1 and Off settings
+        /// preserve their compatibility behavior for both synchronous and asynchronous opens.
+        /// </summary>
+        /// <param name="setting">The keyword value, or null to leave it unset.</param>
+        /// <param name="expectRequest">Whether a feature request is expected at login.</param>
+        /// <param name="expectedRequestedVersion">The version expected in that request.</param>
+        /// <param name="useAsync">Whether to open the connection asynchronously.</param>
+        /// <returns>A task that completes after the login request has been verified.</returns>
+        // Test that the vector feature extension version requested at login follows the
+        // Vector Type Support keyword, and that the request is omitted entirely when the
+        // keyword asks for no vector support.
+        [Theory]
+        [InlineData(null, true, 0x2, false)]
+        [InlineData(null, true, 0x2, true)]
+        [InlineData(SqlVectorTypeSupport.V1, true, 0x1, false)]
+        [InlineData(SqlVectorTypeSupport.V1, true, 0x1, true)]
+        [InlineData(SqlVectorTypeSupport.V2, true, 0x2, false)]
+        [InlineData(SqlVectorTypeSupport.V2, true, 0x2, true)]
+        // Off omits the feature request, leaving vector columns as varchar(max).
+        [InlineData(SqlVectorTypeSupport.Off, false, 0x0, false)]
+        [InlineData(SqlVectorTypeSupport.Off, false, 0x0, true)]
+        public async Task TestVectorFeatExtVersionFollowsConnectionString(
+            SqlVectorTypeSupport? setting,
+            bool expectRequest,
+            byte expectedRequestedVersion,
+            bool useAsync)
+        {
+            using TdsServer server = new();
+            server.Start();
+            server.EnableVectorFeatureExt = true;
+            server.ServerSupportedVectorFeatureExtVersion = 0x2;
+
+            bool requestSeen = false;
+            byte requestedVersion = 0;
+
+            server.OnLogin7Validated = loginToken =>
+            {
+                TDSLogin7GenericOptionToken option = loginToken.FeatureExt?
+                    .OfType<TDSLogin7GenericOptionToken>()
+                    .FirstOrDefault(t => t.FeatureID == TDSFeatureID.VectorSupport)!;
+
+                if (option != null)
+                {
+                    requestSeen = true;
+                    requestedVersion = option.Data[0];
+                }
+            };
+
+            SqlConnectionStringBuilder builder = new()
+            {
+                DataSource = $"localhost,{server.EndPoint.Port}",
+                Encrypt = SqlConnectionEncryptOption.Optional,
+                Pooling = false,
+            };
+
+            if (setting.HasValue)
+            {
+                builder.VectorTypeSupport = setting.Value;
+            }
+
+            using SqlConnection connection = new(builder.ConnectionString);
+            if (useAsync)
+            {
+                await connection.OpenAsync();
+            }
+            else
+            {
+                connection.Open();
+            }
+
+            Assert.Equal(expectRequest, requestSeen);
+            Assert.Equal(expectedRequestedVersion, requestedVersion);
         }
 
         /// <summary>

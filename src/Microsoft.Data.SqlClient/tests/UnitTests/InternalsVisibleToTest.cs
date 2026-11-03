@@ -3,10 +3,11 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Linq;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using Microsoft.Data.SqlClient.ConnectionPool;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests
@@ -28,33 +29,73 @@ namespace Microsoft.Data.SqlClient.UnitTests
         }
 
         /// <summary>
-        /// Ensures only UnitTests and ManualTests receive internal access, with their matching keys for signed builds.
+        /// Compares assembly names for equality, ignoring case.
+        /// </summary>
+        private sealed class AssemblyNameComparer : IEqualityComparer<AssemblyName>
+        {
+            public bool Equals(AssemblyName? x, AssemblyName? y)
+            {
+                return ReferenceEquals(x, y) ||
+                        (x is not null &&
+                        y is not null &&
+                        StringComparer.OrdinalIgnoreCase.Equals(x.Name, y.Name));
+            }
+
+            public int GetHashCode(AssemblyName obj)
+            {
+                return StringComparer.OrdinalIgnoreCase.GetHashCode(obj.Name ?? string.Empty);
+            }
+        }
+
+        /// <summary>
+        /// Ensures only the expected test assemblies receive internal access with the expected signing keys.
         /// </summary>
         [Fact]
         public void FriendAssembliesMatchExpectedList()
         {
-            var driverAssembly = typeof(SqlConnection).Assembly;
-            var friends = driverAssembly
-                .GetCustomAttributes<InternalsVisibleToAttribute>()
-                .Select(attribute => attribute.AssemblyName);
+            // The SqlClient assembly.
+            var sqlClientAssembly = typeof(SqlConnection).Assembly;
 
-            string[] expectedFriends = { "UnitTests", "ManualTests" };
-            if (driverAssembly.GetName().GetPublicKey() is { Length: > 0 })
+            // Is the SqlClient assembly signed?
+            bool isSigned = sqlClientAssembly.GetName().GetPublicKey() is { Length: > 0 };
+
+            // The IVT friend assemblies we expect to find listed on the SqlClient assembly.
+            HashSet<AssemblyName> expectedFriends = new(new AssemblyNameComparer());
+
+            var testCommonAssembly = typeof(LocalAppContextSwitchesHelper).Assembly;
+            Assert.Equal("Microsoft.Data.SqlClient.TestCommon", testCommonAssembly.GetName().Name);
+            expectedFriends.Add(testCommonAssembly.GetName());
+
+            var unitTestAssembly = typeof(InternalsVisibleToTest).Assembly;
+            Assert.Equal("UnitTests", unitTestAssembly.GetName().Name);
+            expectedFriends.Add(unitTestAssembly.GetName());
+
+            AssemblyName manualTestAssembly = unitTestAssembly.GetName();
+            manualTestAssembly.Name = "ManualTests";
+            expectedFriends.Add(manualTestAssembly);
+
+            // Inspect the list of friend assemblies declared on the SqlClient assembly.
+            foreach (var actualFriend in
+                     sqlClientAssembly.GetCustomAttributes<InternalsVisibleToAttribute>())
             {
-                byte[]? testPublicKey = typeof(InternalsVisibleToTest).Assembly.GetName().GetPublicKey();
-                Assert.NotNull(testPublicKey);
-                Assert.NotEmpty(testPublicKey);
-                expectedFriends = new[]
+                AssemblyName actualAssembly = new(actualFriend.AssemblyName);
+                // net462 has no API to find and retrieve a HashSet entry, so we use Assert.Single
+                // with a predicate to locate it.
+                AssemblyName expectedAssembly = Assert.Single(
+                    expectedFriends,
+                    candidate => expectedFriends.Comparer.Equals(candidate, actualAssembly));
+                expectedFriends.Remove(actualAssembly);
+
+                if (isSigned)
                 {
-                    "UnitTests, PublicKey=" + BitConverter.ToString(testPublicKey).Replace("-", ""),
-                    "ManualTests, PublicKey=002400000480000094000000060200000024000052534131000400000100010047E9879A6FC243E13F6E33C67B00723CE2CEA1C00ECB8FF1DBF62F5BC60F1A96046E56243238ACE538A06EF320B31D9DAB7A45833F00CDE017418519B0891D36D9E019A88BD9BCA0857DED2BC34BD3270079DFCA6048900739E188A00A0FE8FFDB412EF0482439DC0B514A3D8E9F8D4719B007C82225A53E39BBB06BAB01E7CE"
-                };
+                    byte[]? publicKey = expectedAssembly.GetPublicKey();
+                    Assert.NotNull(publicKey);
+                    Assert.NotEmpty(publicKey);
+                    Assert.Equal(publicKey, actualAssembly.GetPublicKey());
+                }
             }
 
-            Assert.Equal(
-                expectedFriends.OrderBy(name => name),
-                friends.OrderBy(name => name),
-                StringComparer.OrdinalIgnoreCase);
+            Assert.Empty(expectedFriends);
         }
     }
 }

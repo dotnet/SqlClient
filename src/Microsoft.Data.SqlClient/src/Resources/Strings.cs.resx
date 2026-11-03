@@ -1800,6 +1800,9 @@
   <data name="TCE_EnclaveTypeNullForEnclaveBasedQuery" xml:space="preserve">
     <value>Vnitřní chyba. Při spouštění dotazu, který vyžaduje výpočty v enklávě, je typ enklávy přijatý ze systému SQL Server null nebo prázdný.</value>
   </data>
+  <data name="TCE_AzureAttestationExtensionNotFound" xml:space="preserve">
+    <value>Protokol ověření identity AAS vyžaduje Microsoft.Data.SqlClient.Extensions. Balíček Azure ve stejné verzi jako Microsoft.Data.SqlClient. Přidejte nebo aktualizujte odkaz na tento balíček, nebo v připojovací řetězec zadejte jiný protokol ověření identity.</value>
+  </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
     <value>Pro typu enklávy {0} a protokol ověření identity {1} se nenašel žádný zprostředkovatel enklávy. Zadejte prosím v připojovacím řetězci správný protokol ověření identity. </value>
   </data>
@@ -2067,6 +2070,9 @@
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
     <value>Pokud je u nadřazeného příkazu povolena vlastnost EnableOptimizedParameterBinding, parametr {0} nemůže mít hodnotu Direction Output nebo InputOutput.</value>
   </data>
+  <data name="SQL_PrepareNotSupportedForOptimizedBinding" xml:space="preserve">
+    <value>Pokud je povolená možnost EnableOptimizedParameterBinding, Prepare není podporované. Vytvořte nový SqlCommand a buď před jeho prvním provedením nastavte EnableOptimizedParameterBinding na false, nebo ho proveďte bez volání Prepare.</value>
+  </data>
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
     <value>Při načítání přístupového tokenu pomocí metody ověřování {0} vypršel časový limit připojení. Poslední chyba: {1}: {2}</value>
   </data>
@@ -2099,6 +2105,9 @@
   </data>
   <data name="SqlAppContextSwitchManager_InvalidValue" xml:space="preserve">
     <value>Při pokusu o nastavení přepínače AppContext {0}={1} došlo k výjimce.</value>
+  </data>
+  <data name="SQL_GlobalizationInvariantModeRequiresLcid" xml:space="preserve">
+    <value>Když je povolený invariantní režim globalizace, instance SqlMetaData popisující znakové nebo textové typy musí uvádět LCID.</value>
   </data>
   <data name="SQL_GlobalizationInvariantModeNotSupported" xml:space="preserve">
     <value>Invariantní režim globalizace není podporován.</value>

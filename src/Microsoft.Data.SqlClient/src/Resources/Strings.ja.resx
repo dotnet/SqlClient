@@ -1800,6 +1800,9 @@
   <data name="TCE_EnclaveTypeNullForEnclaveBasedQuery" xml:space="preserve">
     <value>内部エラーです。エンクレーブ計算が必要なクエリを実行するときに SQL Server から受信したエンクレーブ型が null または空です。</value>
   </data>
+  <data name="TCE_AzureAttestationExtensionNotFound" xml:space="preserve">
+    <value>構成証明プロトコル 'AAS' には、Microsoft.Data.SqlClient と同じバージョンの Microsoft.Data.SqlClient.Extensions.Azure パッケージが必要です。そのパッケージへの参照を追加または更新するか、接続文字列で別の構成証明プロトコルを指定してください。</value>
+  </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
     <value>エンクレーブの種類 '{0}' および構成証明プロトコル '{1}' に対して、エンクレーブ プロバイダーが見つかりませんでした。接続文字列に正しい構成証明プロトコルを指定してください。</value>
   </data>
@@ -2067,6 +2070,9 @@
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
     <value>親コマンドで EnableOptimizedParameterBinding が有効になっている場合、パラメーター '{0}' に Direction 出力または InputOutput は指定できません。</value>
   </data>
+  <data name="SQL_PrepareNotSupportedForOptimizedBinding" xml:space="preserve">
+    <value>EnableOptimizedParameterBinding が有効な場合、準備はサポートされません。新しい SqlCommand を作成し、最初の実行前に EnableOptimizedParameterBinding を false に設定するか、Prepare を呼び出さずに実行します。</value>
+  </data>
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
     <value>認証方法 '{0}' によるアクセス トークンの取得中に接続がタイムアウトしました。前回のエラー: {1}: {2}</value>
   </data>
@@ -2099,6 +2105,9 @@
   </data>
   <data name="SqlAppContextSwitchManager_InvalidValue" xml:space="preserve">
     <value>AppContext スイッチ '{0}'={1} の設定中に例外が発生しました。</value>
+  </data>
+  <data name="SQL_GlobalizationInvariantModeRequiresLcid" xml:space="preserve">
+    <value>グローバリゼーション インバリアント モードが有効な場合、文字型またはテキスト型を表す SqlMetaData インスタンスでは、LCID を指定する必要があります。</value>
   </data>
   <data name="SQL_GlobalizationInvariantModeNotSupported" xml:space="preserve">
     <value>グローバリゼーション インバリアント モードはサポートされていません。</value>

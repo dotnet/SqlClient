@@ -14,10 +14,11 @@ using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Text;
-using System.Text.Json;
 using System.Threading;
 using System.Xml;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Parser;
+using Microsoft.Data.SqlClient.Parser.Tokens;
 using Microsoft.Data.SqlClient.Server;
 using Microsoft.Data.SqlTypes;
 
@@ -224,7 +225,7 @@ namespace Microsoft.Data.SqlClient
 
         private MetaType _metaType;
         private SqlCollation _collation;
-        private SqlMetaDataXmlSchemaCollection _xmlSchemaCollection;
+        private TdsXmlTypeInfo _xmlTypeInfo;
         private string _udtTypeName;
         private string _typeName;
         private Exception _udtLoadError;
@@ -351,9 +352,9 @@ namespace Microsoft.Data.SqlClient
             if (!string.IsNullOrEmpty(xmlSchemaCollectionDatabase) || !string.IsNullOrEmpty(xmlSchemaCollectionOwningSchema) || !string.IsNullOrEmpty(xmlSchemaCollectionName))
             {
                 EnsureXmlSchemaCollection();
-                _xmlSchemaCollection.Database = xmlSchemaCollectionDatabase;
-                _xmlSchemaCollection.OwningSchema = xmlSchemaCollectionOwningSchema;
-                _xmlSchemaCollection.Name = xmlSchemaCollectionName;
+                _xmlTypeInfo.Database = xmlSchemaCollectionDatabase;
+                _xmlTypeInfo.OwningSchema = xmlSchemaCollectionOwningSchema;
+                _xmlTypeInfo.Name = xmlSchemaCollectionName;
             }
         }
 
@@ -375,7 +376,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <summary>
         /// Indicates if the parameter encryption metadata received by sp_describe_parameter_encryption.
-        /// For unencrypted parameters, the encryption metadata should still be sent (and will indicate 
+        /// For unencrypted parameters, the encryption metadata should still be sent (and will indicate
         /// that no encryption is needed).
         /// </summary>
         internal bool HasReceivedMetadata
@@ -429,7 +430,7 @@ namespace Microsoft.Data.SqlClient
         [ResCategory(nameof(Strings.DataCategory_Xml))]
         public string XmlSchemaCollectionDatabase
         {
-            get => _xmlSchemaCollection?.Database ?? string.Empty;
+            get => _xmlTypeInfo?.Database ?? string.Empty;
             set => EnsureXmlSchemaCollection().Database = value;
         }
 
@@ -437,7 +438,7 @@ namespace Microsoft.Data.SqlClient
         [ResCategory(nameof(Strings.DataCategory_Xml))]
         public string XmlSchemaCollectionOwningSchema
         {
-            get => _xmlSchemaCollection?.OwningSchema ?? string.Empty;
+            get => _xmlTypeInfo?.OwningSchema ?? string.Empty;
             set => EnsureXmlSchemaCollection().OwningSchema = value;
         }
 
@@ -445,7 +446,7 @@ namespace Microsoft.Data.SqlClient
         [ResCategory(nameof(Strings.DataCategory_Xml))]
         public string XmlSchemaCollectionName
         {
-            get => _xmlSchemaCollection?.Name ?? string.Empty;
+            get => _xmlTypeInfo?.Name ?? string.Empty;
             set => EnsureXmlSchemaCollection().Name = value;
         }
 
@@ -610,10 +611,10 @@ namespace Microsoft.Data.SqlClient
             {
                 MetaType metatype = _metaType;
                 // HACK!!!
-                // We didn't want to expose SmallVarBinary on SqlDbType so we 
-                // stuck it at the end of SqlDbType in v1.0, except that now 
+                // We didn't want to expose SmallVarBinary on SqlDbType so we
+                // stuck it at the end of SqlDbType in v1.0, except that now
                 // we have new data types after that and it's smack dab in the
-                // middle of the valid range.  To prevent folks from setting 
+                // middle of the valid range.  To prevent folks from setting
                 // this invalid value we have to have this code here until we
                 // can take the time to fix it later.
                 if (TdsEnums.SmallVarBinary == value)
@@ -773,7 +774,17 @@ namespace Microsoft.Data.SqlClient
                 switch (elementType)
                 {
                     case MetaType.SqlVectorElementType.Float32:
-                        return SqlVector<float>.CreateNull(elementCount);
+                        return SqlVector<float>.CreateNullFromServer(elementCount);
+                    case MetaType.SqlVectorElementType.Float16:
+                        #if NET
+                        return SqlVector<Half>.CreateNullFromServer(elementCount);
+                        #else
+                        // Unlike reader columns, vector-bound output values retain a vector
+                        // representation. Framework widens float16 to SqlVector<float>.
+                        // A float16 column may declare more dimensions than can be sent as
+                        // float32, so the server's count is taken as given.
+                        return SqlVector<float>.CreateNullFromServer(elementCount);
+                        #endif
                     default:
                         throw SQL.VectorTypeNotSupported(elementType.ToString());
                 }
@@ -781,7 +792,16 @@ namespace Microsoft.Data.SqlClient
             switch (elementType)
             {
                 case MetaType.SqlVectorElementType.Float32:
-                    return new SqlVector<float>((byte[])_sqlBufferReturnValue.Value);
+                    return SqlVector<float>.FromTdsPayload(
+                        (byte[])_sqlBufferReturnValue.Value, allowWidening: false);
+                case MetaType.SqlVectorElementType.Float16:
+                    #if NET
+                    return SqlVector<Half>.FromTdsPayload(
+                        (byte[])_sqlBufferReturnValue.Value, allowWidening: false);
+                    #else
+                    // Widening binary16 to binary32 is exact, so no information is lost.
+                    return SqlVector<float>.FromTdsPayload((byte[])_sqlBufferReturnValue.Value);
+                    #endif
                 default:
                     throw SQL.VectorTypeNotSupported(elementType.ToString());
             }
@@ -816,6 +836,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/IsNullable/*' />
+        [DefaultValue(false)]
         public override bool IsNullable
         {
             get => HasFlag(SqlParameterFlags.IsNullable);
@@ -823,6 +844,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Offset/*' />
+        [Browsable(false)]
+        [EditorBrowsable(EditorBrowsableState.Advanced)]
         public int Offset
         {
             get => _offset;
@@ -887,7 +910,7 @@ namespace Microsoft.Data.SqlClient
             set => _sourceColumn = value;
         }
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceColumnNullMapping/*' />   
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceColumnNullMapping/*' />
         [ResCategory(nameof(Strings.DataCategory_Update))]
 #if NET
         [ResDescription(nameof(Strings.SqlParameter_SourceColumnNullMapping))]
@@ -1129,10 +1152,8 @@ namespace Microsoft.Data.SqlClient
             );
             destination._metaType = _metaType;
             destination._collation = _collation;
-            if (_xmlSchemaCollection != null)
-            {
-                destination.EnsureXmlSchemaCollection().CopyFrom(_xmlSchemaCollection);
-            }
+
+            destination._xmlTypeInfo = _xmlTypeInfo?.Clone();
             destination._udtTypeName = _udtTypeName;
             destination._typeName = _typeName;
             destination._udtLoadError = _udtLoadError;
@@ -1166,13 +1187,13 @@ namespace Microsoft.Data.SqlClient
             return parent;
         }
 
-        private SqlMetaDataXmlSchemaCollection EnsureXmlSchemaCollection()
+        private TdsXmlTypeInfo EnsureXmlSchemaCollection()
         {
-            if (_xmlSchemaCollection is null)
+            if (_xmlTypeInfo is null)
             {
-                _xmlSchemaCollection = new SqlMetaDataXmlSchemaCollection();
+                _xmlTypeInfo = new TdsXmlTypeInfo();
             }
-            return _xmlSchemaCollection;
+            return _xmlTypeInfo;
         }
 
         internal void FixStreamDataForNonPLP()
@@ -1742,7 +1763,7 @@ namespace Microsoft.Data.SqlClient
             long actualLen = GetActualSize();
             long maxLen = Size;
 
-            // GetActualSize returns bytes length, but smi expects char length for 
+            // GetActualSize returns bytes length, but smi expects char length for
             //  character types, so adjust
             if (!mt.IsLong)
             {
@@ -2045,7 +2066,7 @@ namespace Microsoft.Data.SqlClient
                 GetCoercedValue();
             }
 
-            if (metaType.SqlDbType == SqlDbTypeExtensions.Vector && 
+            if (metaType.SqlDbType == SqlDbTypeExtensions.Vector &&
                 (_value == null || _value == DBNull.Value) &&
                 (Direction == ParameterDirection.Output || Direction == ParameterDirection.InputOutput))
             {
@@ -2106,15 +2127,16 @@ namespace Microsoft.Data.SqlClient
 
                 // Bug: VSTFDevDiv #636867
                 // Notes:
-                // 'actualSizeInBytes' is the size of value passed; 
+                // 'actualSizeInBytes' is the size of value passed;
                 // 'sizeInCharacters' is the parameter size;
-                // 'actualSizeInBytes' is in bytes; 
-                // 'this.Size' is in charaters; 
-                // 'sizeInCharacters' is in characters; 
+                // 'actualSizeInBytes' is in bytes;
+                // 'this.Size' is in charaters;
+                // 'sizeInCharacters' is in characters;
                 // 'TdsEnums.TYPE_SIZE_LIMIT' is in bytes;
-                // For Non-NCharType and for non-2005 or greater variables, size should be maintained;
+                // Convert Unicode character sizes to bytes before comparing with the byte limit;
+                // other types retain their declared size in bytes.
                 // Reverting changes from bug VSTFDevDiv # 479739 as it caused an regression;
-                // Modifed variable names from 'size' to 'sizeInCharacters', 'actualSize' to 'actualSizeInBytes', and 
+                // Modifed variable names from 'size' to 'sizeInCharacters', 'actualSize' to 'actualSizeInBytes', and
                 // 'maxSize' to 'maxSizeInBytes'
                 // The idea is to
                 //  1) revert the regression from bug 479739
@@ -2385,16 +2407,15 @@ namespace Microsoft.Data.SqlClient
                     {
                         value = ((ISqlVector)value).VectorPayload;
                     }
+                    #if NET
+                    else if (currentType == typeof(SqlVector<Half>))
+                    {
+                        value = ((ISqlVector)value).VectorPayload;
+                    }
+                    #endif
                     else if (currentType == typeof(string) && destinationType.SqlDbType == SqlDbTypeExtensions.Vector)
                     {
-                        try
-                        {
-                            value = ((ISqlVector)new SqlVector<float>(JsonSerializer.Deserialize((string)value, SqlClientJsonSerializerContext.Default.SingleArray))).VectorPayload;
-                        }
-                        catch (Exception ex) when (ex is ArgumentNullException || ex is JsonException)
-                        {
-                            throw ADP.InvalidJsonStringForVector((string)value, ex);
-                        }
+                        value = ((ISqlVector)SqlVector<float>.Parse((string)value)).VectorPayload;
                     }
                     else if (
                         TdsEnums.SQLTABLE == destinationType.TDSType &&

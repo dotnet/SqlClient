@@ -72,7 +72,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.DataCommon
 
                 // Mismatched certificate test
                 new(TDSPreLoginTokenEncryptionType.Off, SqlConnectionEncryptOption.Mandatory, false, s_mismatchedcert, _empty, false),
-                new(TDSPreLoginTokenEncryptionType.Off, SqlConnectionEncryptOption.Mandatory, true, s_mismatchedcert, _empty, false),
+                new(TDSPreLoginTokenEncryptionType.On, SqlConnectionEncryptOption.Optional, false, s_mismatchedcert, _empty, false),
                 new(TDSPreLoginTokenEncryptionType.Off, SqlConnectionEncryptOption.Mandatory, true, s_mismatchedcert, _empty, true),
                 new(TDSPreLoginTokenEncryptionType.On, SqlConnectionEncryptOption.Mandatory, false, s_mismatchedcert, _empty, false),
                 new(TDSPreLoginTokenEncryptionType.On, SqlConnectionEncryptOption.Mandatory, true, s_mismatchedcert, _empty, true),

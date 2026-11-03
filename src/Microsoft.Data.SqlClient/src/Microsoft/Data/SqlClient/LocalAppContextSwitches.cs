@@ -184,119 +184,119 @@ internal static class LocalAppContextSwitches
     /// properties can get out of sync if one thread is writing while another is
     /// reading).
     /// </summary>
-    private enum SwitchValue : byte
+    internal enum SwitchValue : byte
     {
         None = 0,
         True = 1,
         False = 2
     }
 
-    // GOTCHA: These fields are accessed via reflection by the
-    // LocalAppContextSwitchesHelper test helper class.  If you rename them, be
+    // GOTCHA: These fields are internal so that the LocalAppContextSwitchesHelper
+    // test helper class can capture and restore them.  If you rename them, be
     // sure to update the test helper as well.
-    
+
     #if NETFRAMEWORK
     /// <summary>
     /// The cached value of the DisableTnirByDefault switch.
     /// </summary>
-    private static SwitchValue s_disableTnirByDefault = SwitchValue.None;
+    internal static SwitchValue s_disableTnirByDefault = SwitchValue.None;
     #endif
 
     #if NET
     /// <summary>
     /// The cached value of the EnableAppConfig switch.
     /// </summary>
-    private static SwitchValue s_enableAppConfig = SwitchValue.None;
+    internal static SwitchValue s_enableAppConfig = SwitchValue.None;
     #endif
 
     /// <summary>
     /// The cached value of the EnableMultiSubnetFailoverByDefault switch.
     /// </summary>
-    private static SwitchValue s_enableMultiSubnetFailoverByDefault = SwitchValue.None;
+    internal static SwitchValue s_enableMultiSubnetFailoverByDefault = SwitchValue.None;
 
     #if NET
     /// <summary>
     /// The cached value of the GlobalizationInvariantMode switch.
     /// </summary>
-    private static SwitchValue s_globalizationInvariantMode = SwitchValue.None;
+    internal static SwitchValue s_globalizationInvariantMode = SwitchValue.None;
     #endif
 
     /// <summary>
     /// The cached value of the IgnoreServerProvidedFailoverPartner switch.
     /// </summary>
-    private static SwitchValue s_ignoreServerProvidedFailoverPartner = SwitchValue.None;
+    internal static SwitchValue s_ignoreServerProvidedFailoverPartner = SwitchValue.None;
 
     /// <summary>
     /// The cached value of the UseLegacyFailoverAlternationOnLoginSqlErrors switch.
     /// </summary>
-    private static SwitchValue s_useLegacyFailoverAlternationOnLoginSqlErrors = SwitchValue.None;
+    internal static SwitchValue s_useLegacyFailoverAlternationOnLoginSqlErrors = SwitchValue.None;
 
     /// <summary>
     /// The cached value of the EnableTransactionIsolationLevelReset switch.
     /// </summary>
-    private static SwitchValue s_enableTransactionIsolationLevelReset = SwitchValue.None;
+    internal static SwitchValue s_enableTransactionIsolationLevelReset = SwitchValue.None;
 
     /// <summary>
     /// The cached value of the LegacyRowVersionNullBehavior switch.
     /// </summary>
-    private static SwitchValue s_legacyRowVersionNullBehavior = SwitchValue.None;
+    internal static SwitchValue s_legacyRowVersionNullBehavior = SwitchValue.None;
 
     /// <summary>
     /// The cached value of the LegacyVarTimeZeroScaleBehaviour switch.
     /// </summary>
-    private static SwitchValue s_legacyVarTimeZeroScaleBehaviour = SwitchValue.None;
+    internal static SwitchValue s_legacyVarTimeZeroScaleBehaviour = SwitchValue.None;
 
     /// <summary>
     /// The cached value of the MakeReadAsyncBlocking switch.
     /// </summary>
-    private static SwitchValue s_makeReadAsyncBlocking = SwitchValue.None;
+    internal static SwitchValue s_makeReadAsyncBlocking = SwitchValue.None;
 
     /// <summary>
     /// The cached value of the SuppressInsecureTlsWarning switch.
     /// </summary>
-    private static SwitchValue s_suppressInsecureTlsWarning = SwitchValue.None;
+    internal static SwitchValue s_suppressInsecureTlsWarning = SwitchValue.None;
 
     /// <summary>
     /// The cached value of the TruncateScaledDecimal switch.
     /// </summary>
-    private static SwitchValue s_truncateScaledDecimal = SwitchValue.None;
+    internal static SwitchValue s_truncateScaledDecimal = SwitchValue.None;
 
     /// <summary>
     /// The cached value of the UseCompatibilityAsyncBehaviour switch.
     /// </summary>
-    private static SwitchValue s_useCompatibilityAsyncBehaviour = SwitchValue.None;
+    internal static SwitchValue s_useCompatibilityAsyncBehaviour = SwitchValue.None;
 
     /// <summary>
     /// The cached value of the UseCompatibilityProcessSni switch.
     /// </summary>
-    private static SwitchValue s_useCompatibilityProcessSni = SwitchValue.None;
+    internal static SwitchValue s_useCompatibilityProcessSni = SwitchValue.None;
 
     /// <summary>
     /// The cached value of the UseConnectionPoolV2 switch.
     /// </summary>
-    private static SwitchValue s_useConnectionPoolV2 = SwitchValue.None;
+    internal static SwitchValue s_useConnectionPoolV2 = SwitchValue.None;
 
     /// <summary>
     /// The cached value of the UseLegacyIdleTimeoutBehavior switch.
     /// </summary>
-    private static SwitchValue s_useLegacyIdleTimeoutBehavior = SwitchValue.None;
+    internal static SwitchValue s_useLegacyIdleTimeoutBehavior = SwitchValue.None;
 
     /// <summary>
     /// The cached value of the UseOverallConnectTimeoutForPoolWait switch.
     /// </summary>
-    private static SwitchValue s_useOverallConnectTimeoutForPoolWait = SwitchValue.None;
+    internal static SwitchValue s_useOverallConnectTimeoutForPoolWait = SwitchValue.None;
 
     #if NET
     /// <summary>
     /// The cached value of the UseManagedNetworking switch.
     /// </summary>
-    private static SwitchValue s_useManagedNetworking = SwitchValue.None;
+    internal static SwitchValue s_useManagedNetworking = SwitchValue.None;
     #endif
 
     /// <summary>
     /// The cached value of the UseMinimumLoginTimeout switch.
     /// </summary>
-    private static SwitchValue s_useMinimumLoginTimeout = SwitchValue.None;
+    internal static SwitchValue s_useMinimumLoginTimeout = SwitchValue.None;
 
     #endregion
 
@@ -370,16 +370,16 @@ internal static class LocalAppContextSwitches
     ///   1: All IPs are attempted in parallel
     ///   2: All IPs are attempted one after another
     ///
-    /// TransparentNetworkIPResolution is enabled by default.
-    /// MultiSubnetFailover is disabled by default.  To disable TNIR, you can
-    /// enable the app context switch.
+    /// TransparentNetworkIPResolution is disabled by default.
+    /// Set this switch to false to restore its legacy default. TNIR is still
+    /// ignored when MultiSubnetFailover is enabled.
     ///
-    /// The default value of this switch is false.
+    /// The default value of this switch is true.
     /// </summary>
     public static bool DisableTnirByDefault =>
         AcquireAndReturn(
             DisableTnirByDefaultString,
-            defaultValue: false,
+            defaultValue: true,
             ref s_disableTnirByDefault);
     #endif
 
@@ -410,17 +410,18 @@ internal static class LocalAppContextSwitches
     #endif
 
     /// <summary>
-    /// When set to true, the default value for MultiSubnetFailover connection
-    /// string property will be true instead of false. This enables parallel IP
+    /// Controls the default value for the MultiSubnetFailover connection
+    /// string property. When enabled, this allows parallel IP
     /// connection attempts for improved connection times in multi-subnet
     /// environments.
     ///
-    /// The default value of this switch is false.
+    /// The default value of this switch is true. Set it to false to restore
+    /// the legacy default. An explicit connection-string value takes precedence.
     /// </summary>
     public static bool EnableMultiSubnetFailoverByDefault =>
         AcquireAndReturn(
             EnableMultiSubnetFailoverByDefaultString,
-            defaultValue: false,
+            defaultValue: true,
             ref s_enableMultiSubnetFailoverByDefault);
 
     #if NET
@@ -645,12 +646,20 @@ internal static class LocalAppContextSwitches
                 return true;
             }
 
-            return AcquireAndReturn(
-                UseCompatibilityAsyncBehaviourString,
-                defaultValue: true,
-                ref s_useCompatibilityAsyncBehaviour);
+            return UseCompatibilityAsyncBehaviourConfigured;
         }
     }
+
+    /// <summary>
+    /// The configured async compatibility value, before the ProcessSni
+    /// compatibility override. Used to report configuration in user agent telemetry.
+    /// Defaults to true when the switch is unset.
+    /// </summary>
+    internal static bool UseCompatibilityAsyncBehaviourConfigured =>
+        AcquireAndReturn(
+            UseCompatibilityAsyncBehaviourString,
+            defaultValue: true,
+            ref s_useCompatibilityAsyncBehaviour);
 
     /// <summary>
     /// In TdsParser, the ProcessSni function changed significantly when the

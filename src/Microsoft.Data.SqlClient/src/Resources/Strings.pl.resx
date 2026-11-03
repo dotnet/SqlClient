@@ -1800,6 +1800,9 @@
   <data name="TCE_EnclaveTypeNullForEnclaveBasedQuery" xml:space="preserve">
     <value>Błąd wewnętrzny. Typ enklawy odebrany z programu SQL Server ma wartość null lub jest pusty podczas wykonywania zapytania wymagającego obliczeń enklawy.</value>
   </data>
+  <data name="TCE_AzureAttestationExtensionNotFound" xml:space="preserve">
+    <value>Protokół zaświadczania „AAS” wymaga pakietu Microsoft.Data.SqlClient.Extensions.Azure w tej samej wersji co Microsoft.Data.SqlClient. Dodaj lub zaktualizuj odwołanie do tego pakietu lub określ inny protokół zaświadczania w parametrach połączenia.</value>
+  </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
     <value>Nie znaleziono dostawcy enklawy dla typu enklawy „{0}” i protokołu zaświadczania „{1}”. Określ poprawny protokół zaświadczania w parametrach połączenia. </value>
   </data>
@@ -2067,6 +2070,9 @@
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
     <value>Parametr „{0}” nie może mieć wartości Direction Output ani InputOutput, gdy właściwość EnableOptimizedParameterBinding jest włączona w poleceniu nadrzędnym.</value>
   </data>
+  <data name="SQL_PrepareNotSupportedForOptimizedBinding" xml:space="preserve">
+    <value>Przygotowywanie nie jest obsługiwane, gdy włączono funkcję EnableOptimizedParameterBinding. Utwórz nowy element SqlCommand i ustaw parametr EnableOptimizedParameterBinding na wartość false przed jego pierwszym wykonaniem lub wykonaj go bez wywoływania metody Prepare.</value>
+  </data>
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
     <value>Upłynął limit czasu połączenia podczas pobierania tokenu dostępu przy użyciu metody uwierzytelniania „{0}”. Ostatni błąd: {1}: {2}</value>
   </data>
@@ -2099,6 +2105,9 @@
   </data>
   <data name="SqlAppContextSwitchManager_InvalidValue" xml:space="preserve">
     <value>Wystąpił wyjątek podczas próby ustawienia przełącznika AppContext „{0}”={1}.</value>
+  </data>
+  <data name="SQL_GlobalizationInvariantModeRequiresLcid" xml:space="preserve">
+    <value>Po włączeniu trybu niezmiennego globalizacji wystąpienia sqlMetaData opisujące typy znaków lub tekstu muszą określać identyfikator LCID.</value>
   </data>
   <data name="SQL_GlobalizationInvariantModeNotSupported" xml:space="preserve">
     <value>Tryb niezmienny globalizacji nie jest obsługiwany.</value>

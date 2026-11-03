@@ -5,6 +5,8 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -67,6 +69,74 @@ namespace Microsoft.Data.SqlClient
             GetEnclaveSession(attestationProtocol, enclaveType, enclaveSessionParameters, generateCustomData, isRetry, out sqlEnclaveSession, out _, out customData, out customDataLength, throwIfNull: false);
         }
 
+        /// <summary>
+        /// Creates a session asynchronously, unless another caller has already cached one.
+        /// </summary>
+        internal async Task CreateEnclaveSessionAsync(
+            SqlConnectionAttestationProtocol attestationProtocol,
+            string enclaveType,
+            EnclaveSessionParameters enclaveSessionParameters,
+            byte[] attestationInfo,
+            SqlEnclaveAttestationParameters attestationParameters,
+            byte[] customData,
+            int customDataLength,
+            bool isRetry,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            SqlColumnEncryptionEnclaveProvider provider = GetEnclaveProvider(attestationProtocol, enclaveType);
+            var cached = await provider.GetEnclaveSessionAsync(
+                enclaveSessionParameters,
+                generateCustomData: false,
+                isRetry,
+                cancellationToken)
+                .ConfigureAwait(false);
+
+            if (cached.SqlEnclaveSession != null)
+            {
+                return;
+            }
+
+            // The provider owns the async attestation gate and rechecks its cache under that gate.
+            var created = await provider.CreateEnclaveSessionAsync(
+                attestationInfo,
+                attestationParameters.ClientDiffieHellmanKey,
+                enclaveSessionParameters,
+                customData,
+                customDataLength,
+                cancellationToken)
+                .ConfigureAwait(false);
+
+            if (created.SqlEnclaveSession == null)
+            {
+                throw SQL.NullEnclaveSessionReturnedFromProvider(
+                    enclaveType,
+                    enclaveSessionParameters.AttestationUrl);
+            }
+        }
+
+        /// <summary>
+        /// Looks up a session asynchronously, preserving its replay counter and attestation data.
+        /// </summary>
+        internal async Task<(SqlEnclaveSession SqlEnclaveSession, long Counter, byte[] CustomData, int CustomDataLength)>
+            GetEnclaveSessionAsync(
+                SqlConnectionAttestationProtocol attestationProtocol,
+                string enclaveType,
+                EnclaveSessionParameters enclaveSessionParameters,
+                bool generateCustomData,
+                bool isRetry,
+                CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            SqlColumnEncryptionEnclaveProvider provider = GetEnclaveProvider(attestationProtocol, enclaveType);
+            return await provider.GetEnclaveSessionAsync(
+                enclaveSessionParameters,
+                generateCustomData,
+                isRetry,
+                cancellationToken)
+                .ConfigureAwait(false);
+        }
+
         private void GetEnclaveSession(SqlConnectionAttestationProtocol attestationProtocol, string enclaveType, EnclaveSessionParameters enclaveSessionParameters, bool generateCustomData, bool isRetry, out SqlEnclaveSession sqlEnclaveSession, out long counter, out byte[] customData, out int customDataLength, bool throwIfNull)
         {
             SqlColumnEncryptionEnclaveProvider sqlColumnEncryptionEnclaveProvider = GetEnclaveProvider(attestationProtocol, enclaveType);
@@ -84,6 +154,23 @@ namespace Microsoft.Data.SqlClient
             sqlColumnEncryptionEnclaveProvider.InvalidateEnclaveSession(enclaveSessionParameters, enclaveSession);
         }
 
+        /// <summary>
+        /// Invalidates a session through the provider's asynchronous API.
+        /// </summary>
+        internal async Task InvalidateEnclaveSessionAsync(
+            SqlConnectionAttestationProtocol attestationProtocol,
+            string enclaveType,
+            EnclaveSessionParameters enclaveSessionParameters,
+            SqlEnclaveSession enclaveSession,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            SqlColumnEncryptionEnclaveProvider provider = GetEnclaveProvider(attestationProtocol, enclaveType);
+            await provider.InvalidateEnclaveSessionAsync(
+                enclaveSessionParameters,
+                enclaveSession,
+                cancellationToken).ConfigureAwait(false);
+        }
 
         private SqlColumnEncryptionEnclaveProvider GetEnclaveProvider(SqlConnectionAttestationProtocol attestationProtocol, string enclaveType)
         {
@@ -92,6 +179,12 @@ namespace Microsoft.Data.SqlClient
                 switch (attestationProtocol)
                 {
                     case SqlConnectionAttestationProtocol.AAS:
+                        // Validating Azure Attestation tokens requires our Azure extension.
+                        if (AzureAttestationTokenValidatorBinding.Instance is null)
+                        {
+                            throw SQL.AzureAttestationExtensionNotFound();
+                        }
+
                         sqlColumnEncryptionEnclaveProvider = new AzureAttestationEnclaveProvider();
                         s_enclaveProviders[attestationProtocol] = sqlColumnEncryptionEnclaveProvider;
                         break;
@@ -170,6 +263,26 @@ namespace Microsoft.Data.SqlClient
         {
             SqlColumnEncryptionEnclaveProvider sqlColumnEncryptionEnclaveProvider = GetEnclaveProvider(attestationProtocol, enclaveType);
             return sqlColumnEncryptionEnclaveProvider.GetAttestationParameters(attestationUrl, customData, customDataLength);
+        }
+
+        /// <summary>
+        /// Obtains attestation parameters through the provider's asynchronous API.
+        /// </summary>
+        internal async Task<SqlEnclaveAttestationParameters> GetAttestationParametersAsync(
+            SqlConnectionAttestationProtocol attestationProtocol,
+            string enclaveType,
+            string attestationUrl,
+            byte[] customData,
+            int customDataLength,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            SqlColumnEncryptionEnclaveProvider provider = GetEnclaveProvider(attestationProtocol, enclaveType);
+            return await provider.GetAttestationParametersAsync(
+                attestationUrl,
+                customData,
+                customDataLength,
+                cancellationToken).ConfigureAwait(false);
         }
 
         internal byte[] GetSerializedAttestationParameters(SqlEnclaveAttestationParameters sqlEnclaveAttestationParameters, string enclaveType)

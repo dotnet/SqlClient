@@ -292,6 +292,7 @@ stages:
       buildConfiguration: ${{ parameters.buildConfiguration }}
       referenceType: ${{ parameters.referenceType }}
       abstractionsArtifactsName: $(abstractionsArtifactsName)
+      azureArtifactsName: $(azureArtifactsName)
       loggingArtifactsName: $(loggingArtifactsName)
       mdsArtifactsName: $(mdsArtifactsName)
       sqlServerArtifactsName: $(sqlServerArtifactsName)

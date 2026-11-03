@@ -87,6 +87,12 @@ jobs:
       - task: NuGetAuthenticate@1
         displayName: Authenticate NuGet feeds
 
+      - task: DownloadSecureFile@1
+        displayName: Download Test Signing Key
+        name: testKeyFile
+        inputs:
+          secureFile: sqlclient-test-key.snk
+
       - ${{ if eq(parameters.operatingSystem, 'Windows') }}:
         - template: /eng/pipelines/ci/kerberos/windows-setup-step.yml@self
           parameters:
@@ -115,7 +121,7 @@ jobs:
             -p:TestSet=3
             -p:TestFilters="category!=failing&category!=flaky&category!=interactive&(FullyQualifiedName~KerberosTests|FullyQualifiedName~IntegratedAuthenticationTest|FullyQualifiedName~InstanceNameTest)"
             -p:ReferenceType=Package
-            -p:TestSigningKeyPath="$(Build.SourcesDirectory)/src/Microsoft.Data.SqlClient/tests/ManualTests/SQL/TransactionTest/TransactionTest.snk"
+            -p:TestSigningKeyPath="$(testKeyFile.secureFilePath)"
             -p:Configuration=${{ parameters.buildConfiguration }}
             -p:PackageVersionSqlClient=$(sqlClientPackageVersion)
             -p:PackageVersionSqlServer=$(sqlServerPackageVersion)

@@ -123,6 +123,13 @@ See the LICENSE file in the project root for more information.
     <AcquireTokenAsync>
       <summary>Acquires an access token from the authority.</summary>
       <param name="parameters">The parameters passed to the provider by the driver.</param>
+      <remarks>
+        During federated authentication, the driver passes the server-supplied STSURL and SPN as
+        <see cref="P:Microsoft.Data.SqlClient.SqlAuthenticationParameters.Authority" /> and
+        <see cref="P:Microsoft.Data.SqlClient.SqlAuthenticationParameters.Resource" />, respectively.
+        These values reflect the server's authentication configuration; the provider uses them
+        according to its token acquisition requirements.
+      </remarks>
       <throws cref="SqlAuthenticationProviderException">If any errors occur.</throws>
       <returns>Represents an asynchronous operation that returns the AD authentication token.</returns>
     </AcquireTokenAsync>

@@ -39,7 +39,7 @@
   <!-- Strong name signing ============================================= -->
   <!-- Strong naming is being done in Directory.Build.props -->
 
-  <!-- Unsigned: expose internals to UnitTests and ManualTests in any reference mode. -->
+  <!-- Unsigned: expose internals to test assemblies in any reference mode. -->
   <ItemGroup Condition="'$(SigningKeyPath)' == ''">
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
       <_Parameter1>UnitTests</_Parameter1>
@@ -47,11 +47,13 @@
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
       <_Parameter1>ManualTests</_Parameter1>
     </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>Microsoft.Data.SqlClient.TestCommon</_Parameter1>
+    </AssemblyAttribute>
   </ItemGroup>
 
   <!--
-    Signed + Package mode: expose internals to test assemblies signed with their matching keys.
-    ManualTests uses the committed TransactionTest.snk fixture; UnitTests has a separate test key.
+    Signed + Package mode: expose internals to test assemblies signed with the test key.
     Signed + Project mode is intentionally omitted: production-signed assemblies should not
     grant internal access to test assemblies during local development. Tests that need internals
     in Project mode run unsigned; only the CI package-validation pipeline uses signed packages.
@@ -61,7 +63,10 @@
       <_Parameter1>UnitTests, PublicKey=00240000048000001401000006020000002400005253413100080000010001003D19684676DA365F331D00CE7BD4B8EF03E74102F39A5681B40622703D68F0298ECACECC723D3FFC1EA9365AF4958578550EA1EBEEC084B0B3757F3762449F5365E872802A4B548056760764FAD062BFEE81ED26183109AD46810E7E6E965419D0A10473680144D20C1BFE1027A5F586CA987523C06F5C126C44EA7D4F51EB023867A9F294315F95775ACEFD2D678186919458DFCCB4DE2E9F53AEFC766C7CBCEC474ED21C1616E5A9414D366D91D121C39F5FE6641295ADC058EF3FB10593BCDE2E82D9F217C2634909EEF496CD53AE78ABBEA572B871D72EBFC5378205950ABA97C7CCC2B9635D96933D5F9C9624D71FF53EE2094CF3A6BD38534D66E414B7</_Parameter1>
     </AssemblyAttribute>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
-      <_Parameter1>ManualTests, PublicKey=002400000480000094000000060200000024000052534131000400000100010047E9879A6FC243E13F6E33C67B00723CE2CEA1C00ECB8FF1DBF62F5BC60F1A96046E56243238ACE538A06EF320B31D9DAB7A45833F00CDE017418519B0891D36D9E019A88BD9BCA0857DED2BC34BD3270079DFCA6048900739E188A00A0FE8FFDB412EF0482439DC0B514A3D8E9F8D4719B007C82225A53E39BBB06BAB01E7CE</_Parameter1>
+      <_Parameter1>ManualTests, PublicKey=00240000048000001401000006020000002400005253413100080000010001003D19684676DA365F331D00CE7BD4B8EF03E74102F39A5681B40622703D68F0298ECACECC723D3FFC1EA9365AF4958578550EA1EBEEC084B0B3757F3762449F5365E872802A4B548056760764FAD062BFEE81ED26183109AD46810E7E6E965419D0A10473680144D20C1BFE1027A5F586CA987523C06F5C126C44EA7D4F51EB023867A9F294315F95775ACEFD2D678186919458DFCCB4DE2E9F53AEFC766C7CBCEC474ED21C1616E5A9414D366D91D121C39F5FE6641295ADC058EF3FB10593BCDE2E82D9F217C2634909EEF496CD53AE78ABBEA572B871D72EBFC5378205950ABA97C7CCC2B9635D96933D5F9C9624D71FF53EE2094CF3A6BD38534D66E414B7</_Parameter1>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>Microsoft.Data.SqlClient.TestCommon, PublicKey=00240000048000001401000006020000002400005253413100080000010001003D19684676DA365F331D00CE7BD4B8EF03E74102F39A5681B40622703D68F0298ECACECC723D3FFC1EA9365AF4958578550EA1EBEEC084B0B3757F3762449F5365E872802A4B548056760764FAD062BFEE81ED26183109AD46810E7E6E965419D0A10473680144D20C1BFE1027A5F586CA987523C06F5C126C44EA7D4F51EB023867A9F294315F95775ACEFD2D678186919458DFCCB4DE2E9F53AEFC766C7CBCEC474ED21C1616E5A9414D366D91D121C39F5FE6641295ADC058EF3FB10593BCDE2E82D9F217C2634909EEF496CD53AE78ABBEA572B871D72EBFC5378205950ABA97C7CCC2B9635D96933D5F9C9624D71FF53EE2094CF3A6BD38534D66E414B7</_Parameter1>
     </AssemblyAttribute>
   </ItemGroup>
 
@@ -75,6 +80,18 @@
     <OutputPath>$(ArtifactPath)$(AssemblyName)/$(ReferenceType)-$(Configuration)/</OutputPath>
   </PropertyGroup>
 
+  <!-- API compatibility / ApiCompat checking. -->
+  <PropertyGroup>
+    <ApiCompatValidateAssemblies>true</ApiCompatValidateAssemblies>
+    <ApiCompatStrictMode>true</ApiCompatStrictMode>
+    <ApiCompatEnableRuleAttributesMustMatch>true</ApiCompatEnableRuleAttributesMustMatch>
+    <ApiCompatEnableRuleCannotChangeParameterName>true</ApiCompatEnableRuleCannotChangeParameterName>
+    <ApiCompatContractAssembly>$(ArtifactPath)$(AssemblyName).ref/$(ReferenceType)-$(Configuration)/$(TargetFramework)/$(AssemblyName).dll</ApiCompatContractAssembly>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(ApiCompatValidateAssemblies)' == 'true'">
+    <ApiCompatExcludeAttributesFile Include="ApiCompatExcludeAttributes.txt" />
+  </ItemGroup>
+
   <!-- NuGet Package Config ============================================ -->
   <PropertyGroup>
 
@@ -84,6 +101,7 @@
 
     <AbstractionsProjectPath>$(RepoRoot)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj</AbstractionsProjectPath>
     <LoggingProjectPath>$(RepoRoot)/src/Microsoft.Data.SqlClient.Internal/Logging/src/Logging.csproj</LoggingProjectPath>
+    <SqlClientRefProjectPath>$(RepoRoot)src/Microsoft.Data.SqlClient/ref/Microsoft.Data.SqlClient.csproj</SqlClientRefProjectPath>
     <SqlServerVersionsPropsPath>$(RepoRoot)/src/Microsoft.SqlServer.Server/Versions.props</SqlServerVersionsPropsPath>
 
     <!-- Properties consumed by the SDK NuGet pack task (NuGet.Build.Tasks.Pack.targets). -->
@@ -244,6 +262,21 @@
   </ItemGroup>
 
   <!-- References ====================================================== -->
+  <!-- Build-time tooling -->
+  <ItemGroup Condition="'$(ApiCompatValidateAssemblies)' == 'true'">
+    <!-- ApiCompat tooling. -->
+    <PackageReference Include="Microsoft.DotNet.ApiCompat.Task"
+                      PrivateAssets="all" />
+
+    <!-- Reference to the SqlClient ref assemblies. This reference is excluded from the resultant
+         assembly - it's used to ensure that the ref assemblies build first when ApiCompat is enabled,
+         so that public API signatures are available at the point of ApiCompat. -->
+    <ProjectReference Include="$(SqlClientRefProjectPath)"
+                      ReferenceOutputAssembly="false"
+                      Private="false"
+                      OutputItemType="None" />
+  </ItemGroup>
+
   <!-- Reference to Abstractions -->
   <ItemGroup>
     <ProjectReference Include="$(AbstractionsProjectPath)"
@@ -278,8 +311,6 @@
     <PackageReference Include="Microsoft.Bcl.TimeProvider" />
     <PackageReference Include="Microsoft.Data.SqlClient.SNI" ExcludeAssets="compile" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
-    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
-    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
     <PackageReference Include="System.Buffers" />
     <PackageReference Include="System.Data.Common" />
     <PackageReference Include="System.Diagnostics.DiagnosticSource" />
@@ -297,8 +328,6 @@
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
     <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
-    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
-    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
     <PackageReference Include="System.Threading.RateLimiting" />

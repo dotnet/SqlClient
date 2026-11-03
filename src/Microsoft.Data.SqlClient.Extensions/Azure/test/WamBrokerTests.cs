@@ -6,7 +6,7 @@ using System.Reflection;
 
 namespace Microsoft.Data.SqlClient.Extensions.Azure.Test;
 
-[Collection("SqlAuthenticationProvider")]
+[Collection(SqlAuthenticationProviderCollection.Name)]
 public class WamBrokerTests
 {
     // The SqlClient first-party application client id that is hard-coded in the provider.

@@ -15,7 +15,7 @@ This is a comprehensive reference of supported connection string keywords.
 | `Initial Catalog` | Database | Database name |
 | `Failover Partner` | | Mirroring failover partner |
 | `ApplicationIntent` | | ReadWrite (default) or ReadOnly |
-| `MultiSubnetFailover` | | Enable multi-subnet failover |
+| `MultiSubnetFailover` | | Enable multi-subnet failover (default `true` for TCP only; an explicit value is used as-is) |
 
 ### Authentication
 
@@ -75,6 +75,7 @@ This is a comprehensive reference of supported connection string keywords.
 | `Column Encryption Setting` | Disabled | Always Encrypted mode |
 | `Enclave Attestation Url` | | Enclave attestation URL |
 | `Type System Version` | Latest | Type system version |
+| `Vector Type Support` | v2 | Vector base types exchanged in binary form: `off`, `v1`, `v2` |
 | `Replication` | False | Replication support |
 | `User Instance` | False | SQL Express user instance |
 | `ConnectRetryCount` | 1 | Connection retry count |
@@ -122,6 +123,142 @@ This is a comprehensive reference of supported connection string keywords.
 | `DateTimeOffset` | `DateTimeOffset` | SQL Server 2008+ |
 | `Json` | `String` | SQL Server 2025+ |
 | `Vector` | `ISqlVector` | SQL Server 2025+ |
+
+### Vector Base Types
+
+A `vector` column has a base type, which determines how its elements are stored and
+transported. The base type is selected by the type parameter of `SqlVector<T>`.
+
+| SQL Server base type | `SqlVector<T>` | Element size | Max dimensions | Availability |
+|----------------------|----------------|--------------|----------------|--------------|
+| `float32` (default)  | `SqlVector<float>` | 4 bytes | 1998 | SQL Server 2025+ |
+| `float16`            | `SqlVector<Half>`  | 2 bytes | 3996 | SQL Server 2025+ (preview), .NET only |
+
+Notes:
+
+- A vector column with a `float16` base type is returned in binary form when the connection
+  negotiates `v2` through the `Vector Type Support` keyword. See below.
+- `System.Half` does not exist on .NET Framework, so `SqlVector<Half>` cannot be used there.
+  A vector column with a `float16` base type is instead reported as a string, and can be read
+  as a JSON array through `GetString`/`GetSqlString`/`GetFieldValue<string>`, or as a
+  `SqlVector<float>` via `GetSqlVector<float>`, which widens the elements. Widening from `float16` is exact.
+- `float16` requires `ALTER DATABASE SCOPED CONFIGURATION SET PREVIEW_FEATURES = ON` while
+  it is in preview.
+- SQL Server converts between base types for parameters and native vector bulk-copy sources.
+  Bulk copy describes the source vector's base type in both its `INSERT BULK` declaration
+  and binary payload, so the server can convert it to the destination column. JSON text
+  copied into a vector column with a `float16` base type is sent as `varchar(max)`, without
+  client-side narrowing.
+  The existing JSON-to-`float32` bulk-copy path retains its native float32 conversion.
+- Object-typed `DataTable` columns targeting native vectors can contain a consistent base type
+  plus nulls. Bulk copy looks ahead through the selected in-memory rows to find the first non-null
+  representation, then validates compatibility as rows are copied. Row-array subsets and row-state
+  filters are respected; an all-null column can require examining all selected rows. Native
+  float32/float16 values cannot be mixed in one incoming column. Existing float32 JSON coercion
+  is preserved. Ordinary text destinations do not use this lookahead.
+  Reader setup never consumes values. `SqlDataReader` supplies native metadata; other readers'
+  `GetFieldType` is an optional hint used only for native vector destinations.
+  `NotImplementedException`/`NotSupportedException` are traced as unavailable metadata; other
+  errors propagate. Without a hint, existing float32 input behavior remains available, while
+  JSON strings can be used for float16 input.
+- Synthetic text input for a destination vector column with a `float16` base type uses an explicit
+  UTF-8 encoding/collation pair; SQL Server still performs JSON parsing and conversion.
+- Bulk copy does not serialize `SqlVector<T>` values for `varchar`, `nvarchar`, or `json`
+  destinations, including vector destinations exposed as text under V1/Off. Supply JSON strings
+  or select an explicit SQL cast to `varchar(max)` instead. Ordinary string-valued sources,
+  including Framework float16 string projections, keep their existing text-conversion path.
+  Native vector reader values bypass the text-stream/null pre-check accessors only when the
+  incoming metadata is a native vector.
+- A column's base type and number of dimensions are available from the column schema:
+  `reader.GetColumnSchema()[i]["VectorBaseType"]` and `["VectorDimensions"]`. Both are `null`
+  for columns which are not reported as vectors, including float16 under `v1`. These
+  properties distinguish the base types
+  when a vector column with a `float16` base type is surfaced as a JSON string, because
+  `GetFieldType` reports `string` for such a column just as it does for a `varchar` one:
+
+  ```csharp
+  DbColumn column = reader.GetColumnSchema()[0];
+
+  string baseType   = (string)column["VectorBaseType"];    // "float16" | "float32"
+  int    dimensions = (int)   column["VectorDimensions"];  // element count
+
+  // The dimension count is known before any row is read, so a buffer can be sized once.
+  float[] buffer = new float[dimensions];
+
+  while (reader.Read())
+  {
+      // Widening from float16 is exact, so float32 reads either base type
+      // losslessly, and is the only strongly typed option on .NET Framework.
+      reader.GetSqlVector<float>(0).Memory.Span.CopyTo(buffer);
+  }
+  ```
+
+  For table or view columns, the public
+  [sys.columns catalog view](https://learn.microsoft.com/sql/relational-databases/system-catalog-views/sys-columns-transact-sql)
+  provides `vector_dimensions`, `vector_base_type`, and `vector_base_type_desc`, subject to
+  metadata visibility permissions. It is not a substitute for arbitrary query result metadata.
+
+> [!NOTE]
+> On .NET Framework, `float16` workloads do more work per value than they do on .NET.
+> Because `System.Half` isn't available, the driver widens each element to float32
+> when it reads a vector column with a `float16` base type, and renders the result as a JSON
+> array for the string read paths. On .NET, a `SqlVector<Half>` wraps the payload the server sent,
+> so no per-element conversion takes place. Writes differ in the same way: .NET can send a
+> `SqlVector<Half>` unchanged, while .NET Framework sends a JSON string or a
+> `SqlVector<float>`, which SQL Server converts to the column's base type.
+>
+> If you read vector columns with a `float16` base type in bulk on .NET Framework, prefer
+> `GetSqlVector<float>` over the string read paths. Both widen the elements, but only the
+> string paths also serialize the result.
+
+#### Vector Feature Extension Versions
+
+The vector base types available on a connection are negotiated through the `VECTORSUPPORT`
+feature extension (`0x0E`):
+
+| Version | Meaning |
+|---------|---------|
+| `0` | Native vector support was not negotiated. Vector columns are returned as `varchar(max)`. |
+| `1` | `float32` is supported. Columns with any other base type are returned as `varchar(max)`. |
+| `2` | `float16` is supported in addition to `float32`. |
+
+The version requested at login is chosen by the `Vector Type Support` connection string
+keyword, which may also be written `VectorTypeSupport`, and the server acknowledges the
+highest version they have in common:
+
+| Keyword value | Requested version |
+|---------------|-------------------|
+| `off` | The feature extension is not requested at all. |
+| `v1` | `1` |
+| `v2` | `2` — this is the **default** starting with Microsoft.Data.SqlClient 8.0. |
+
+The default is `v2`, so a connection requests native support for both base types. When the
+server negotiates V2, modern .NET returns a `SqlVector<Half>` instead of a JSON string for a
+vector column with a `float16` base type. Applications which need the earlier JSON string
+representation can set `Vector Type Support=v1`; `off` keeps all vector results as text.
+The equivalent property is
+`SqlConnectionStringBuilder.VectorTypeSupport`, of type `SqlVectorTypeSupport`.
+
+The setting is per connection so components in the same .NET process can retain different
+result-type contracts, even against the same database. For example, a legacy reporting component
+may cast float16 `GetValue` results to `string`, while a newer component reads `SqlVector<Half>`.
+Use `Vector Type Support=v1` for the reporting component and `v2` for the newer component.
+A process-wide AppContext switch would force the same choice on both. The requested version is
+negotiated at login; connection strings with different settings use separate connection pools.
+
+The vector row in `GetSchema("DataTypes")` also follows the negotiated version. V1 reports
+`CreateFormat = "vector({0})"` and `CreateParameters = "dimensions"`; V2 reports
+`CreateFormat = "vector({0}, {1})"` and `CreateParameters = "dimensions,base_type"`.
+No vector row is reported without vector negotiation. The driver's own parameter and bulk
+declarations retain `vector(N)` for float32 and use `vector(N, float16)` for float16.
+
+```csharp
+var builder = new SqlConnectionStringBuilder(connectionString)
+{
+    // Preserve JSON string results for vector columns with a float16 base type.
+    VectorTypeSupport = SqlVectorTypeSupport.V1
+};
+```
 
 ## SqlCommand Execution Modes
 
@@ -236,15 +373,15 @@ cmd.Parameters.Add("@id", SqlDbType.Int).Value = userId;
 
 ## AppContext Switches
 
-AppContext switches allow runtime behavior changes without modifying connection strings. They are defined in `LocalAppContextSwitches.cs` and can be set via `AppContext.SetSwitch()` or `runtimeconfig.json`.
+AppContext switches allow runtime behavior changes without modifying connection strings. Driver switches are defined in `LocalAppContextSwitches.cs` and can be set via `AppContext.SetSwitch()` or `runtimeconfig.json`.
 
 ### Available Switches
 
 | Switch Name | Default | Description |
 |-------------|---------|-------------|
-| `Switch.Microsoft.Data.SqlClient.DisableTNIRByDefaultInConnectionString` | `false` | Disables Transparent Network IP Resolution by default |
+| `Switch.Microsoft.Data.SqlClient.DisableTNIRByDefaultInConnectionString` | `true` | .NET Framework only. Set to `false` to restore the legacy TNIR default; MSF must also be disabled for TNIR to take effect |
 | `Switch.Microsoft.Data.SqlClient.EnableAppConfig` | `true` | .NET only. Controls whether SqlClient reads app.config: configurable retry logic, authentication providers and switch overrides. See [Trimming](#trimming) |
-| `Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault` | `false` | Sets `MultiSubnetFailover=true` as the default for all connections |
+| `Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault` | `true` | Sets the default for `MultiSubnetFailover`; set to `false` to restore the legacy default. Explicit connection-string values take precedence |
 | `Switch.Microsoft.Data.SqlClient.EnableTransactionIsolationLevelReset` | `false` | Resets a changed session transaction isolation level to `READ COMMITTED` before a pooled connection is reused |
 | `Switch.Microsoft.Data.SqlClient.EnableUserAgent` | varies | Controls sending user agent information to SQL Server |
 | `Switch.Microsoft.Data.SqlClient.IgnoreServerProvidedFailoverPartner` | `false` | Ignores failover partner information sent by the server |
@@ -259,6 +396,36 @@ AppContext switches allow runtime behavior changes without modifying connection 
 | `Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2` | `false` | Enables the new `ChannelDbConnectionPool` implementation |
 | `Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows` | `false` | Forces managed SNI on Windows (instead of native SNI) |
 | `Switch.Microsoft.Data.SqlClient.UseOneSecFloorInTimeoutCalculationDuringLogin` | `false` | Sets 1-second minimum in login timeout calculations |
+
+### Authentication configuration in app.config
+
+The `SqlClientAuthenticationProviders` (modern) and `SqlAuthenticationProviders`
+(legacy) sections are optional. Applications may provide full, partial, or no
+configuration, and may register providers in code instead.
+
+- **No config file or section:** this is normal. The driver uses its default providers and settings.
+- **Partial configuration:** the driver applies the valid settings and uses defaults for the rest.
+- **Invalid entries:** an invalid `useWamBroker` value is traced and ignored, keeping the default
+  and other valid settings. Configuration-reading errors (`ConfigurationErrorsException`) are
+  traced and produce empty settings without trying legacy. Other exception types propagate;
+  initializer and provider validation or activation can still fail.
+- **Internal handler metadata mismatches:** assert in Debug. In Release, treat the affected
+  string setting or provider list as empty while retaining other valid settings.
+  Omitting an optional XML attribute uses the handler's default and is not a metadata mismatch.
+- **Precedence:** if the modern section is declared, it wins over the legacy section, even when
+  its element is absent. The legacy section is read only when the modern section is missing or
+  its handler type doesn't match.
+- **Config providers take precedence:** a provider listed in app.config for an authentication
+  method can't be replaced by `SqlAuthenticationProvider.SetProvider`.
+
+To diagnose unexpected provider selection, turn on `SqlClientEventSource` tracing.
+Skipped or invalid settings are reported there.
+
+These loading policies apply to the new Abstractions loader; the driver continues using its
+existing reader until the registry migration in #4821.
+
+On .NET, `Switch.Microsoft.Data.SqlClient.EnableAppConfig` controls whether configuration
+is read at all. See [Trimming](#trimming).
 
 ### Usage Example
 ```csharp

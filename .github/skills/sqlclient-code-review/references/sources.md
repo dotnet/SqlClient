@@ -1,6 +1,7 @@
 # Sources and adaptation notes
 
-.NET sources reviewed on 2026-09-22; `microsoft/mssql-rs` sources on 2026-09-23.
+.NET sources reviewed on 2026-09-22; `microsoft/mssql-rs` sources on 2026-09-23 and
+refreshed on 2026-10-20; review-comment style sources on 2026-10-20.
 Upstream links are pinned to the revisions examined so the origin of the guidance
 stays auditable. They are examples of review practice, not authority over
 SqlClient's policy or its current implementation.
@@ -44,8 +45,11 @@ into the workflow, driver checks, and reporting guide rather than a separate rev
 | [ODBC engineering instructions: parity and entry points][mssql-odbc] | Record the intended SqlClient baseline and measurement configuration. Trace caller normalization, settings round trips, public entry points, native ownership, and what a test can actually observe on the wire. |
 | [Repository Copilot instructions][mssql-instructions] | Check existing cross-platform implementations and CI before proposing rejection guards. Verify affected components are actually in the selected build/test scope, and reuse existing fixtures and simulated servers. |
 | [Review posting guide][mssql-posting] | Distinguish a top-level review from inline delivery; verify posted comments with pagination and the review ID, using the host's authorized channel. |
+| [Review skill: thread state and drift capture][mssql-review-latest] | Read resolution state through paginated GraphQL; save feedback and search it by symbol before drafting. End each review with a skill-drift line and route drift to issues, never the PR. Adapted as [posting](posting.md), [verify before you claim](verify-before-claim.md), and [skill drift](skill-drift.md). |
+| [Drift issue form][mssql-drift-form] | Structured drift report with class, evidence, and cost. Adapted to SqlClient priorities and existing labels. |
 
-Do not import Cargo/Tokio commands, Rust future-size budgets, ODBC SQLSTATE or
+Do not import ADO work-item lookups, the `skill:code-review` label, Blocking/Suggestion/Nit
+groups (SqlClient keeps P1-P3), Cargo/Tokio commands, Rust future-size budgets, ODBC SQLSTATE or
 Driver Manager rules, binding-specific FFI macros, coverage percentages, mandatory
 issue-link rules, or unpublished/pre-1.0 compatibility exceptions. SqlClient is a
 shipped ADO.NET provider: its supported contracts and MS-TDS remain authoritative,
@@ -53,6 +57,16 @@ not another driver's behavior. Native SNI ownership must follow its own ABI.
 Do not copy mutation commands into read-only workflows, auto-start SQL Server, or
 require a mutation experiment for every coverage request. Unavailable private
 reference sources do not invalidate a defect independently established in SqlClient.
+
+## Review comment style
+
+| Source | Adaptation |
+| --- | --- |
+| [Conventional Comments][conv-comments] | Label each comment (`issue`, `todo`, `question`, `suggestion`) so intent is clear. SqlClient uses P1-P3 instead of severity words and leaves blocking to human reviewers. |
+| [Google reviewer comment guidance][google-comments] | Comment on code, not people; say why; give a way forward; mark optional items. |
+
+Not adopted: approve/request-changes verdicts, praise in automated runs, and
+nitpicks as inline comments. They conflict with the publication gates or add noise.
 
 ## Official documentation for deeper questions
 
@@ -93,6 +107,10 @@ the reviewed provider/framework before using them as evidence.
 [mssql-odbc]: https://github.com/microsoft/mssql-rs/blob/f64092bf0354ce7ca3603d3145ce03e794311d87/.github/instructions/mssql-odbc.instructions.md
 [mssql-instructions]: https://github.com/microsoft/mssql-rs/blob/f64092bf0354ce7ca3603d3145ce03e794311d87/.github/copilot-instructions.md
 [mssql-posting]: https://github.com/microsoft/mssql-rs/blob/f64092bf0354ce7ca3603d3145ce03e794311d87/.github/skills/code-review/posting.md
+[mssql-review-latest]: https://github.com/microsoft/mssql-rs/blob/98582eae79acaa5dcb6f486822eb6e079ece76a1/.github/skills/code-review/SKILL.md
+[mssql-drift-form]: https://github.com/microsoft/mssql-rs/blob/98582eae79acaa5dcb6f486822eb6e079ece76a1/.github/ISSUE_TEMPLATE/code_review_skill_drift.yml
+[conv-comments]: https://conventionalcomments.org/
+[google-comments]: https://google.github.io/eng-practices/review/reviewer/comments.html
 [pooling]: https://learn.microsoft.com/sql/connect/ado-net/sql-server-connection-pooling
 [async]: https://learn.microsoft.com/sql/connect/ado-net/asynchronous-programming
 [timeout]: https://learn.microsoft.com/dotnet/api/microsoft.data.sqlclient.sqlcommand.commandtimeout

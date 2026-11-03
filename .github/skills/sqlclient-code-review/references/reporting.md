@@ -2,11 +2,32 @@
 
 ## Finding format
 
-One root cause per finding. Use a short imperative title, an exact file/range,
-and two to four plain-language sentences: trigger, consequence, evidence, and
-correction. Anchor to the smallest relevant changed range; cite another location
-in the body when that is needed to establish the call path. Do not invent line
-numbers or attach a comment to unrelated code.
+One root cause per finding. Anchor to the smallest relevant changed range; cite
+another location in the body when needed to show the call path. Do not invent
+line numbers or attach a comment to unrelated code. If the same cause appears in
+several places, comment once and list the other locations.
+
+Every inline comment uses this shape:
+
+```markdown
+**<label> (<decorations>):** <short imperative title>
+
+<trigger and consequence, with evidence: 1-3 short sentences>
+
+<fix or invariant to restore: a direction or a minimal correct snippet>
+```
+
+| Label | Use | Inline? |
+| --- | --- | --- |
+| `issue` | A defect that passes the evidence gate in [SKILL.md](../SKILL.md#3-challenge-each-candidate). Requires a priority. | Yes |
+| `todo` | A specific required addition, usually a named missing regression test or ref/doc update required by policy. Not a proven implementation defect. | Interactive drafts; separate summary section in automated runs |
+| `question` | A concrete concern you could not confirm. Ask; do not assert. | Interactive drafts only; summary in automated runs |
+| `suggestion` | A concrete, non-blocking improvement with a stated reason. | Interactive drafts only, sparingly; omit in unattended runs unless explicitly requested |
+| `nitpick`, `thought` | Preference or later work. | Summary only, or drop |
+
+Decorations: priority `P1`/`P2`/`P3` (only on `issue`, where required), then an optional
+area: `compat`, `api`, `async`, `pool`, `tds`, `security`, `perf`, `tests`,
+`docs`, `build`. Do not add `blocking`; blocking is the human reviewer's call.
 
 | Priority | Meaning |
 | --- | --- |
@@ -26,7 +47,7 @@ Use them only if the actual diff and call path establish the stated facts.
 
 **Useful ownership finding**
 
-> [P1] Retain the buffer until the send completes
+> **issue (P1, tds):** Retain the buffer until the send completes
 >
 > When the send is pending, this return makes the buffer available to another
 > renter while the transport still reads it. That can replace bytes in the
@@ -35,7 +56,7 @@ Use them only if the actual diff and call path establish the stated facts.
 
 **Useful compatibility finding**
 
-> [P2] Keep the existing public overload
+> **issue (P2, compat):** Keep the existing public overload
 >
 > Replacing this method with a signature that adds an optional parameter removes
 > the entry point used by already-compiled callers. Those applications will fail
@@ -44,11 +65,21 @@ Use them only if the actual diff and call path establish the stated facts.
 
 **Useful coverage request, not a proven implementation bug**
 
+> **todo (tests):** Assert the connection state after cancellation
+>
 > The new test checks that cancellation completes, but not what happens to the
 > physical connection afterward. Add a deterministic check that it is either
 > safely reused for a successful command or discarded when unusable. Opening
 > another connection with the same pool key alone can pass by using a different
 > physical connection.
+
+**Useful question, not a finding**
+
+> **question (pool):** Can this run after the connection returns to the pool?
+>
+> The callback captures `_parser` and is not unregistered in `Close`. If it can
+> fire after return, it would act on the next borrower's session. Is the
+> registration disposed before return somewhere I missed?
 
 **Do not publish**
 
@@ -56,7 +87,7 @@ Use them only if the actual diff and call path establish the stated facts.
 
 No interleaving, violated contract, or consequence has been established. Likewise,
 avoid "use Span for performance" without evidence or "add more tests" without a
-specific uncovered behavior.
+specific uncovered behavior. Do not post praise-only comments in automated runs.
 
 ## Review summary
 
@@ -78,11 +109,57 @@ or not run with a reason. Keep unresolved questions and coverage requests separa
 from proven defects. Do not dump internal reasoning, all rejected candidates,
 generic praise, a full risk checklist, or an unsupported merge verdict.
 
+### Summary template
+
+Posted as the review body. Keep it short; details live in inline comments.
+
+```markdown
+## Review summary
+
+**Scope:** <PR head SHA or local base..head>; <full | partial: what was skipped>.
+<"Unattended run; not checked by a human." when applicable>
+
+**What this PR does:** <one sentence in your own words>
+
+### Existing feedback
+| Source | Item | Status |
+| --- | --- | --- |
+| Copilot | [thread](<url>) `<symbol>` concern | unaddressed / addressed, still open / disputed / not verified |
+
+### New findings
+| # | Priority | Label | Location | Summary |
+| --- | --- | --- | --- | --- |
+| 1 | P1 | issue | `src/.../TdsParser.cs:1240` | Buffer returned before send completes |
+
+### Coverage requests
+- **todo (tests):** `tests/.../PoolTests.cs` — Assert physical connection reuse or discard after cancellation.
+
+### Other required updates
+- **todo (docs):** <specific policy-required update, not an implementation defect>
+
+**Not anchorable inline:** <findings on lines outside the diff, if any>
+**Open questions:** <unconfirmed concerns, automated runs only>
+**Tests:** <CI result on head SHA; what was run locally, inspected only, or not run and why>
+```
+
+Rules:
+
+- Order findings by priority, then path. Omit empty sections, but write
+  "No new actionable findings in the reviewed scope" when the findings table
+  would be empty.
+- Only proven defects belong in **New findings**. Coverage requests and other
+  required updates have no defect priority and do not count as new defects.
+- No approve/request-changes verdict and no merge recommendation.
+- Skill drift is not part of the posted summary; it goes to chat. See
+  [skill drift](skill-drift.md).
+
 ## Automated publication gates
 
 1. **Confirm authorization and channel.** Publish only when the user or trusted
    automation configuration requests it and the host grants an appropriate write
-   channel. Otherwise return a draft. Prefer the host's designated review/safe-output
+   channel. Otherwise return a draft. Interactively, show the draft in chat and
+   wait for explicit confirmation; a finished draft is not permission to post,
+   and "looks automated" is not authorization. Prefer the host's designated review/safe-output
    mechanism; do not work around a restricted channel with another API. A tool
    that stages a pending review has not published it.
 2. **Keep execution separate.** Review untrusted PR content read-only. Run builds,
@@ -105,6 +182,7 @@ generic praise, a full risk checklist, or an unsupported merge verdict.
 5. **Publish one coherent review.** Default to a non-approving `COMMENT` review
    through the permitted channel, with substantive inline findings on valid diff
    lines and a compact summary identifying an unattended run when applicable.
+   Request shape, anchoring, and delivery checks are in [posting](posting.md#post-a-review).
    A request-changes event requires explicit configured
    authority; do not submit approvals. If no valid inline anchor exists, put the
    supported finding in the summary rather than inventing one.

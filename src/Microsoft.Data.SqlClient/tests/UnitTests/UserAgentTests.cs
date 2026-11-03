@@ -237,6 +237,38 @@ public sealed class UserAgentTests
     }
 
     /// <summary>
+    /// Configured compatibility flags retain their independent bit positions
+    /// in the serialized user agent, alongside the existing pool V2 bit.
+    /// </summary>
+    [Theory]
+    [InlineData(false, false, false, "0")]
+    [InlineData(true, false, false, "1")]
+    [InlineData(false, true, false, "2")]
+    [InlineData(true, true, false, "3")]
+    [InlineData(false, false, true, "4")]
+    [InlineData(true, false, true, "5")]
+    [InlineData(false, true, true, "6")]
+    [InlineData(true, true, true, "7")]
+    public void Build_Configured_Compatibility_Flags(
+        bool useConnectionPoolV2,
+        bool useCompatibilityAsyncBehaviour,
+        bool useCompatibilityProcessSni,
+        string expected)
+    {
+        // Arrange
+        SqlClientDriverProperties properties = SqlClientDriverPropertiesResolver.Resolve(
+            useConnectionPoolV2, useCompatibilityAsyncBehaviour, useCompatibilityProcessSni);
+        string expectedPayload = $"2|A|B|X64|C|D|E|0|{expected}";
+
+        // Act
+        string value = Build(256, "2", "A", "B", Architecture.X64, "C", "D", "E",
+            driverProperties: (ulong)properties);
+
+        // Assert
+        Assert.Equal(expectedPayload, value);
+    }
+
+    /// <summary>
     /// Calls the payload builder with optional defaults for the version 2 fields.
     /// </summary>
     /// <param name="maxLen">The maximum payload length.</param>

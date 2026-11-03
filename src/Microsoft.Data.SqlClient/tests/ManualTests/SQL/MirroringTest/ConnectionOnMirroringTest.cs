@@ -27,6 +27,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if (isMirroring && isSynchronized && !string.IsNullOrEmpty(failoverPartnerName))
             {
                 SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
+                builder.MultiSubnetFailover = false;
                 builder.ConnectTimeout = 0;
 
                 TestWorker worker = new TestWorker(builder.ConnectionString);
@@ -49,6 +50,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             failoverPartnerName = null;
 
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectionString);
+            builder.MultiSubnetFailover = false;
             string dbname = builder.InitialCatalog;
 
             builder.ConnectTimeout = 5;

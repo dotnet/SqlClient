@@ -7,6 +7,7 @@ using System.Data;
 using System.Data.SqlTypes;
 using System.Globalization;
 using System.Reflection;
+using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 

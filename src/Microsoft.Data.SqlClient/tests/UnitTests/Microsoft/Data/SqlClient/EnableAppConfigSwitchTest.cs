@@ -99,7 +99,7 @@ public class EnableAppConfigSwitchTest
 
         Assert.Equal(
             enabled,
-            SqlAuthenticationProviderManager.TryReadConfigurationSection(out SqlAuthenticationProviderConfigurationSection? section));
+            SqlAuthenticationProviderManager.TryReadConfigurationSection(out SqlAuthenticationProviderManager.AuthenticationConfiguration? section));
 
         // No test host supplies the section, so it is null either way.
         Assert.Null(section);

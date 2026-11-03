@@ -21,6 +21,8 @@
 # whatever result it last recorded. This script closes that gap by re-running
 # every semantic-version-milestoned PR targeting the default branch. That covers
 # both the newly serviced series and any later series whose eligibility changes.
+# Release-notes-only PRs are intentionally included: the replayed workflow
+# applies the shared exception without duplicating file classification here.
 #
 # Re-running is enough because check-milestone-branch.sh queries the live list
 # of release branches. The replayed event payload still carries the correct
@@ -30,8 +32,10 @@
 # LIMITATION
 # ----------
 # A re-run replays the original run's commit, which means it executes the
-# workflow definition and script as they existed then. Only the release branch
-# lookup is evaluated live.
+# workflow definition and script as they existed then. API lookups (including
+# release branches and release-note file classification) are evaluated live.
+# The file classifier rejects stale PR identity but allows the default branch
+# to advance before a re-run; its base SHA must remain stable during retrieval.
 #
 # So a pull request whose most recent milestone check predates the arrival of
 # the target-branch rule will replay the older check, pass it, and keep its
@@ -40,6 +44,9 @@
 # distinguishing a stale replay costs an extra API call per pull request and
 # the window closes on its own. After the first release branch is cut following
 # a change to the check itself, review the affected pull requests by hand.
+# To activate a new exception on an existing PR, first land the workflow change
+# on its base, then update the PR branch with that base and trigger a fresh
+# pull_request run. Re-running an old failed run does not load the new scripts.
 #
 # REQUIRED ENVIRONMENT VARIABLES
 # ------------------------------

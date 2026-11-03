@@ -129,11 +129,18 @@ public class RegisteredApplicationTests
     [InlineData(true)]
     public void DriverProperties_Reports_ConnectionPoolV2(bool useConnectionPoolV2)
     {
+        // Arrange
         SqlClientDriverProperties expected = useConnectionPoolV2
             ? SqlClientDriverProperties.ConnectionPoolV2
             : SqlClientDriverProperties.None;
 
-        Assert.Equal(expected, SqlClientDriverPropertiesResolver.Resolve(useConnectionPoolV2));
+        // Act
+        SqlClientDriverProperties properties = SqlClientDriverPropertiesResolver.Resolve(
+            useConnectionPoolV2, useCompatibilityAsyncBehaviour: false,
+            useCompatibilityProcessSni: false);
+
+        // Assert
+        Assert.Equal(expected, properties);
     }
 
     /// <summary>
@@ -153,9 +160,17 @@ public class RegisteredApplicationTests
     [Fact]
     public void DriverProperties_Current_Matches_Switch()
     {
+        // Arrange
         SqlClientDriverProperties expected =
-            SqlClientDriverPropertiesResolver.Resolve(LocalAppContextSwitches.UseConnectionPoolV2);
+            SqlClientDriverPropertiesResolver.Resolve(
+                LocalAppContextSwitches.UseConnectionPoolV2,
+                LocalAppContextSwitches.UseCompatibilityAsyncBehaviourConfigured,
+                LocalAppContextSwitches.UseCompatibilityProcessSni);
 
-        Assert.Equal(expected, SqlClientDriverPropertiesResolver.Current);
+        // Act
+        SqlClientDriverProperties properties = SqlClientDriverPropertiesResolver.Current;
+
+        // Assert
+        Assert.Equal(expected, properties);
     }
 }

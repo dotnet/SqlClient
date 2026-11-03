@@ -106,7 +106,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (n != 0)
                     {
-                        await Task.Delay(EnclaveRetrySleepInSeconds * 1000, cancellationToken).ConfigureAwait(false);
+                        await Task.Delay(TimeSpan.FromSeconds(EnclaveRetrySleepInSeconds), cancellationToken).ConfigureAwait(false);
                     }
 
 #if NET

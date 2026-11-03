@@ -16,7 +16,9 @@ using System.Threading.Tasks;
 using System.Transactions;
 using Interop.Common.Sni;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.AlwaysEncrypted;
 using Microsoft.Data.SqlClient.Connection;
+using Microsoft.Data.SqlClient.Parser;
 
 #if NET
 using System.Net.Sockets;
@@ -203,6 +205,10 @@ namespace Microsoft.Data.SqlClient
         internal static Exception ChangePasswordUseOfUnallowedKey(string key)
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ChangePasswordUseOfUnallowedKey, key));
+        }
+        internal static Exception GlobalizationInvariantModeRequiresLcid()
+        {
+            return ADP.NotSupported(StringsHelper.GetString(Strings.SQL_GlobalizationInvariantModeRequiresLcid));
         }
         internal static Exception GlobalizationInvariantModeNotSupported()
         {
@@ -1459,7 +1465,7 @@ namespace Microsoft.Data.SqlClient
                                 expectedLength), TdsEnums.TCE_PARAM_ENCRYPTIONKEY);
         }
 
-        internal static Exception InvalidEncryptionType(string algorithmName, SqlClientEncryptionType encryptionType, params SqlClientEncryptionType[] validEncryptionTypes)
+        internal static Exception InvalidEncryptionType(string algorithmName, EncryptionType encryptionType, params EncryptionType[] validEncryptionTypes)
         {
             const string valueSeparator = @", ";
             return ADP.Argument(
@@ -1668,6 +1674,11 @@ namespace Microsoft.Data.SqlClient
         {
             return attestationProtocol != null ? ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_EnclaveProviderNotFound, enclaveType, attestationProtocol))
                                                : ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_EnclaveProviderNotFound, enclaveType));
+        }
+
+        internal static Exception AzureAttestationExtensionNotFound()
+        {
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_AzureAttestationExtensionNotFound));
         }
 
         internal static Exception NullEnclaveSessionReturnedFromProvider(string enclaveType, string attestationUrl)

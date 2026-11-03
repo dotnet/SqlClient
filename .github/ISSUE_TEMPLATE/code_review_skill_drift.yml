@@ -1,0 +1,88 @@
+name: Code Review Skill Drift
+description: Record something a review learned that the sqlclient-code-review skill got wrong, missed, or no longer matches
+title: "[review-skill] "
+labels: ["Area\\Engineering"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For observations about `.github/skills/sqlclient-code-review/` itself, not about the code under review.
+        File one issue per observation so each can be judged on its own evidence.
+
+        **Redact** connection strings, passwords, tokens, customer data, and non-public source from every field, including commands, output, and diff excerpts.
+
+        **Security vulnerabilities:** do not report them here, even redacted. Use the private MSRC process in [SECURITY.md](https://github.com/dotnet/SqlClient/blob/main/SECURITY.md).
+
+  - type: dropdown
+    id: class
+    attributes:
+      label: Drift class
+      options:
+        - Wrong finding - raised, then retracted or downgraded after checking
+        - Missed defect - the skill should have caught it and did not
+        - Stale fact - a path, check, filter, or policy in the skill no longer matches the repo
+        - Wasted step - cost review time without changing the outcome
+        - Mechanizable - a recurring finding a lint, analyzer, test, or CI check could catch
+    validations:
+      required: true
+
+  - type: input
+    id: source
+    attributes:
+      label: Where it happened
+      description: PR, review thread, or comment URL. For a local review, give base and head commit IDs.
+    validations:
+      required: true
+
+  - type: textarea
+    id: says
+    attributes:
+      label: What the skill says today
+      description: Quote the line or section, or say that nothing covers this.
+    validations:
+      required: true
+
+  - type: textarea
+    id: observed
+    attributes:
+      label: What actually turned out to be true
+      description: The observation, in terms a future reviewer would need.
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Redacted `file:line`, command and output, spec section, or the thread where it was settled.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: cost
+    attributes:
+      label: What it cost
+      options:
+        - A retracted P1 or P2 finding
+        - A retracted or downgraded P3 finding or question
+        - A defect reached a shipped branch
+        - Review time only
+        - Nothing yet - noticed before it mattered
+    validations:
+      required: true
+
+  - type: textarea
+    id: recurrence
+    attributes:
+      label: Prior occurrences
+      description: Links to earlier instances, if known. Recurrence is what promotes an entry.
+    validations:
+      required: false
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: Optional. Name the section and what it replaces. If a check would catch it instead, name the check.
+    validations:
+      required: false

@@ -8,6 +8,11 @@ parameters:
   - name: abstractionsArtifactsName
     type: string
 
+  # The name of the Azure pipeline artifact to download when referenceType is 'Package'.
+  - name: azureArtifactsName
+    type: string
+    default: Azure.Artifacts
+
   # The name of the Logging pipeline artifact to download when referenceType is 'Package'.
   - name: loggingArtifactsName
     type: string
@@ -170,13 +175,19 @@ jobs:
 
   steps:
 
-  # If we're testing in Package mode, download the Abstractions and MDS package
-  # artifacts and put them in the packages/ directory in the repo root.
+  # If we're testing in Package mode, download the sibling package artifacts and
+  # put them in the packages/ directory in the repo root.
   - ${{ if eq(parameters.referenceType, 'Package') }}:
     - task: DownloadPipelineArtifact@2
       displayName: Download Abstractions Package Artifacts
       inputs:
         artifactName: ${{ parameters.abstractionsArtifactsName }}
+        targetPath: $(Build.SourcesDirectory)/packages
+
+    - task: DownloadPipelineArtifact@2
+      displayName: Download Azure Package Artifacts
+      inputs:
+        artifactName: ${{ parameters.azureArtifactsName }}
         targetPath: $(Build.SourcesDirectory)/packages
 
     - task: DownloadPipelineArtifact@2
@@ -337,6 +348,11 @@ jobs:
   - pwsh: New-Item -ItemType Directory -Path TestResults -Force | Out-Null
     displayName: 'Create TestResults Directory'
 
+  - ${{ if and(eq(parameters.operatingSystem, 'Windows'), eq(parameters.configSqlFor, 'local'), eq(parameters.testSet, '3'), eq(coalesce(parameters.configProperties.instanceName, 'MSSQLSERVER'), 'MSSQLSERVER')) }}:
+    - template: /eng/pipelines/common/templates/steps/configure-netonly-account-step.yml@self
+      parameters:
+        mode: setup
+
   # Gate: record that all setup steps (SDK install, build, SQL config, x86 SDK
   # install, etc.) completed successfully.  Test steps condition on this variable
   # so they are skipped when setup fails, yet remain independent of each
@@ -355,6 +371,7 @@ jobs:
         operatingSystem: ${{ parameters.operatingSystem }}
         packageVersion: ${{ parameters.packageVersion }}
         sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
+        enableNetOnlyTests: ${{ and(eq(parameters.operatingSystem, 'Windows'), eq(parameters.configSqlFor, 'local'), eq(parameters.testSet, '3'), eq(coalesce(parameters.configProperties.instanceName, 'MSSQLSERVER'), 'MSSQLSERVER')) }}
 
   - ${{ if and(eq(parameters.enableX86Test, true), eq(parameters.operatingSystem, 'Windows')) }}:
     - template: /eng/pipelines/common/templates/steps/run-all-tests-step.yml@self
@@ -369,6 +386,12 @@ jobs:
         operatingSystem: ${{ parameters.operatingSystem }}
         packageVersion: ${{ parameters.packageVersion }}
         sqlServerPackageVersion: ${{ parameters.sqlServerPackageVersion }}
+        enableNetOnlyTests: ${{ and(eq(parameters.operatingSystem, 'Windows'), eq(parameters.configSqlFor, 'local'), eq(parameters.testSet, '3'), eq(coalesce(parameters.configProperties.instanceName, 'MSSQLSERVER'), 'MSSQLSERVER')) }}
+
+  - ${{ if and(eq(parameters.operatingSystem, 'Windows'), eq(parameters.configSqlFor, 'local'), eq(parameters.testSet, '3'), eq(coalesce(parameters.configProperties.instanceName, 'MSSQLSERVER'), 'MSSQLSERVER')) }}:
+    - template: /eng/pipelines/common/templates/steps/configure-netonly-account-step.yml@self
+      parameters:
+        mode: cleanup
 
   - template: /eng/pipelines/common/templates/steps/publish-test-results-step.yml@self
     parameters:

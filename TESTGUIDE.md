@@ -27,8 +27,9 @@ The historical `tools/SniCloseLegacyRepro` test matrix is unchanged.
 
 ## Accessing Driver Internals
 
-The driver grants `InternalsVisibleTo` access to `UnitTests` and `ManualTests` (the assembly names,
-not the project file names). Unsigned driver builds grant access in both `Project` and `Package`
+The driver grants `InternalsVisibleTo` access to `UnitTests`, `ManualTests`, and
+`Microsoft.Data.SqlClient.TestCommon` (the assembly names, not the project file names).
+Unsigned driver builds grant access in both `Project` and `Package`
 reference modes. Manual tests can use internal types and members directly, without reflection.
 The manual-test `InternalsVisibleToTest` verifies this access without SQL Server configuration.
 
@@ -37,18 +38,48 @@ In `Package` mode, tests that use internals must compile against the implementat
 the implementation assembly explicitly.
 
 Signed drivers grant internal access only in `Package` mode, to test assemblies signed with the
-matching test key. Signed `Project` builds do not grant test access. ManualTests uses the existing
-`src/Microsoft.Data.SqlClient/tests/ManualTests/SQL/TransactionTest/TransactionTest.snk` fixture;
-UnitTests retains its separate test key. This is test-only signing, not the production signing key.
+shared test key. Signed `Project` builds do not grant test access. UnitTests, ManualTests, and
+their helpers use the `sqlclient-test-key.snk` secure file. This key is provisioned outside the
+repository and is not the production signing key.
 
-For signed packages, pass `-p:TestSigningKeyPath=<absolute-path-to-TransactionTest.snk>` to
+For signed packages, pass `-p:TestSigningKeyPath=<absolute-path-to-sqlclient-test-key.snk>` to
 `TestSqlClientManual` or `BuildSqlClientTestsManual` in `build.proj`. The property is forwarded to
 the test project and signs its test-helper dependencies too. Package-mode ManualTests consumes
 the packaged AKV provider, so prepare that package alongside the driver. The internal Managed
-Instance and Kerberos package-test jobs supply the fixture path explicitly.
+Instance and Kerberos package-test jobs download the secure file and pass its path explicitly.
 
 FunctionalTests is not a friend assembly. Its linked internal source files are compiled into the
 test assembly; they do not demonstrate access to the driver's internals through `InternalsVisibleTo`.
+
+## Simulated server tests
+
+The unit project's `SimulatedServerTests` use local TDS endpoints, not an installed SQL Server.
+Run this suite with `TestSqlClientUnit` and a `FullyQualifiedName` filter containing
+`SimulatedServerTests`. Validate discovery and the resulting TRX case counts when narrowing a run;
+the default category filter excludes quarantined tests.
+
+For new scenarios, use explicit protocol gates rather than sleeps to decide which login phase
+fails. `GatedTdsServer` can withhold pre-login responses while keeping its port and existing sessions
+alive. This separates failover from post-login failures and allows pool clearing to be verified
+with physical connection identity. Use a numeric loopback address when DNS is not under test.
+
+Declare `SimulatedServerPoolScope` after the servers and before the connections in pooling scenarios.
+It assigns a unique pool identity and clears that pool before the ephemeral servers are disposed.
+Keep retry/error/partner assertions explicit; transport attempt counts are not proof of pool reuse.
+
+The simulator runs blocking handlers on dedicated workers. Fault budgets are reserved before
+response processing, and disposal must finish owned workers and report unexpected handler failures.
+Negative TLS scenarios can set `TdsServerArguments.ExpectTlsHandshakeFailure` to explicitly expect
+authentication failure during TLS negotiation. Missing certificates/private keys and exceptions from
+protocol handlers still fail disposal; the default remains strict. Assert the expected client failure
+as well, and keep success controls so simulator setup errors cannot masquerade as certificate rejection.
+`ServerLifecycleTests` covers these contracts. Validate changes on both supported frameworks and
+on native and managed SNI, including broader simulator consumers before removing a flaky trait.
+
+The manual `CertificateTestWithTdsServer` matrix requires an untrusted self-signed certificate.
+Its setup and cleanup scripts use `-SkipTrust` to leave root trust stores unchanged, and the test
+asserts `UntrustedRoot` before connecting. Installing that certificate as trusted invalidates
+the negative cases; explicit certificate pinning and `TrustServerCertificate` provide the success controls.
 
 ## CI Platform Coverage
 
@@ -169,6 +200,29 @@ The most commonly used test parameters are:
 | `-p:TestFramework=`         | Empty                                                     | Target framework to run. If omitted, all project frameworks are selected, including Windows-only `net462`.                     |
 | `-p:TestResultsFolderPath=` | `test_results` under the repository root                   | Absolute directory where test results are written.                                                                          |
 | `-p:TestSet=`               | Empty                                                     | Selects manual test sets. Supported values include `1`, `2`, `3`, `AE`, and combinations such as `13` or `12AE`.              |
+
+## Sequential Unicode Decoding Regression
+
+`SqlUnicodeEncodingTests` checks raw UTF-16LE code-unit preservation, partial consumption, offsets,
+zero-capacity conversions, and unchanged input bytes. Run it without a database:
+
+```bash
+dotnet test src/Microsoft.Data.SqlClient/tests/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj \
+  --framework net10.0 --filter "FullyQualifiedName~SqlUnicodeEncodingTests" --blame-hang-timeout 10m
+```
+
+With SQL Server test configuration in place, run the Unicode round-trip regression:
+
+```bash
+dotnet build -t:TestSqlClientManual -p:TestFramework=net10.0 \
+  -p:TestFilters=FullyQualifiedName~UnicodeParameterAndReaderRoundTrip_PreservesWorldwideText
+```
+
+The integration test covers buffered and streamed parameters, synchronous and asynchronous readers,
+single-character and mixed-size reads, destination offsets, zero-length reads, and EOF over packet-spanning
+`nvarchar(max)` text. It uses the standard database-object fixtures and skips when connection strings are not configured.
+SQL Server may run remotely; verifying the big-endian decoder path requires running the test client on a real
+big-endian runtime (for example, s390x). Passing on x64 verifies only the little-endian path.
 
 ## Test Filters
 

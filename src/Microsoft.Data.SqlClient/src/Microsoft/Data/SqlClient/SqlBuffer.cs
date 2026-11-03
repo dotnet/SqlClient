@@ -7,6 +7,7 @@ using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
+using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlTypes;
 
 namespace Microsoft.Data.SqlClient
@@ -513,14 +514,7 @@ namespace Microsoft.Data.SqlClient
                 ThrowIfNull();
                 if (_type == StorageType.Vector)
                 {
-                    var elementType = (MetaType.SqlVectorElementType)_value._vectorInfo._elementType;
-                    switch (elementType)
-                    {
-                        case MetaType.SqlVectorElementType.Float32:
-                            return GetSqlVector<float>().GetString();
-                        default:
-                            throw SQL.VectorTypeNotSupported(elementType.ToString());
-                    }
+                    return GetVectorString();
                 }
                 if (StorageType.String == _type || StorageType.Json == _type)
                 {
@@ -535,7 +529,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // use static list of format strings indexed by scale for perf
-        private static readonly string[] s_sql2008DateTimeOffsetFormatByScale = new string[] {
+        private static readonly string[] s_sqlDateTimeOffsetFormatByScale = new string[] {
                 "yyyy-MM-dd HH:mm:ss zzz",
                 "yyyy-MM-dd HH:mm:ss.f zzz",
                 "yyyy-MM-dd HH:mm:ss.ff zzz",
@@ -546,7 +540,7 @@ namespace Microsoft.Data.SqlClient
                 "yyyy-MM-dd HH:mm:ss.fffffff zzz",
         };
 
-        private static readonly string[] s_sql2008DateTime2FormatByScale = new string[] {
+        private static readonly string[] s_sqlDateTime2FormatByScale = new string[] {
                 "yyyy-MM-dd HH:mm:ss",
                 "yyyy-MM-dd HH:mm:ss.f",
                 "yyyy-MM-dd HH:mm:ss.ff",
@@ -557,7 +551,7 @@ namespace Microsoft.Data.SqlClient
                 "yyyy-MM-dd HH:mm:ss.fffffff",
         };
 
-        private static readonly string[] s_sql2008TimeFormatByScale = new string[] {
+        private static readonly string[] s_sqlTimeFormatByScale = new string[] {
                 "HH:mm:ss",
                 "HH:mm:ss.f",
                 "HH:mm:ss.ff",
@@ -568,7 +562,7 @@ namespace Microsoft.Data.SqlClient
                 "HH:mm:ss.fffffff",
         };
 
-        internal string Sql2008DateTimeString
+        internal string SqlDateTimeString
         {
             get
             {
@@ -581,24 +575,24 @@ namespace Microsoft.Data.SqlClient
                 if (StorageType.Time == _type)
                 {
                     byte scale = _value._timeInfo._scale;
-                    return new DateTime(_value._timeInfo._ticks).ToString(s_sql2008TimeFormatByScale[scale], DateTimeFormatInfo.InvariantInfo);
+                    return new DateTime(_value._timeInfo._ticks).ToString(s_sqlTimeFormatByScale[scale], DateTimeFormatInfo.InvariantInfo);
                 }
                 if (StorageType.DateTime2 == _type)
                 {
                     byte scale = _value._dateTime2Info._timeInfo._scale;
-                    return DateTime.ToString(s_sql2008DateTime2FormatByScale[scale], DateTimeFormatInfo.InvariantInfo);
+                    return DateTime.ToString(s_sqlDateTime2FormatByScale[scale], DateTimeFormatInfo.InvariantInfo);
                 }
                 if (StorageType.DateTimeOffset == _type)
                 {
                     DateTimeOffset dto = DateTimeOffset;
                     byte scale = _value._dateTimeOffsetInfo._dateTime2Info._timeInfo._scale;
-                    return dto.ToString(s_sql2008DateTimeOffsetFormatByScale[scale], DateTimeFormatInfo.InvariantInfo);
+                    return dto.ToString(s_sqlDateTimeOffsetFormatByScale[scale], DateTimeFormatInfo.InvariantInfo);
                 }
                 return (string)Value; // anything else we haven't thought of goes through boxing.
             }
         }
 
-        internal SqlString Sql2008DateTimeSqlString
+        internal SqlString SqlDateTimeSqlString
         {
             get
             {
@@ -611,7 +605,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         return SqlString.Null;
                     }
-                    return new SqlString(Sql2008DateTimeString);
+                    return new SqlString(SqlDateTimeString);
                 }
                 return (SqlString)SqlValue; // anything else we haven't thought of goes through boxing.
             }
@@ -922,7 +916,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         return SqlMoney.Null;
                     }
-                    
+
                     #if NET
                     return SqlMoney.FromTdsValue(_value._int64);
                     #else
@@ -959,14 +953,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         return SqlString.Null;
                     }
-                    var elementType = (MetaType.SqlVectorElementType)_value._vectorInfo._elementType;
-                    switch (elementType)
-                    {
-                        case MetaType.SqlVectorElementType.Float32:
-                            return new SqlString(GetSqlVector<float>().GetString());
-                        default:
-                            throw SQL.VectorTypeNotSupported(elementType.ToString());
-                    }
+                    return new SqlString(GetVectorString());
                 }
                 // String and Json storage type are both strings.
                 if (_type is StorageType.String or StorageType.Json)
@@ -996,13 +983,101 @@ namespace Microsoft.Data.SqlClient
         {
             if (_type is StorageType.Vector)
             {
+                // The payload's base type may differ from T: a float16 column can be read as
+                // a vector of single precision values, which is the only strongly typed form
+                // available on .NET Framework. Validate the pairing before considering
+                // nullness, so that the outcome depends on the column's base type rather than
+                // on whether a particular row happens to be null.
+                SqlVector<T>.ThrowIfNotConvertibleFrom(_value._vectorInfo._elementType);
+
                 if (IsNull)
                 {
-                    return SqlVector<T>.CreateNull(_value._vectorInfo._elementCount);
+                    return SqlVector<T>.CreateNullFromServer(_value._vectorInfo._elementCount);
                 }
-                return new SqlVector<T>(SqlBinary.Value);
+
+                return SqlVector<T>.FromTdsPayload(SqlBinary.Value);
             }
             return (SqlVector<T>)SqlValue;
+        }
+
+        /// <summary>
+        /// Renders a vector value as a JSON array.
+        /// </summary>
+        /// <remarks>
+        /// float16 vectors are widened to single precision on .NET Framework, where
+        /// <c>System.Half</c> is unavailable. Widening binary16 to binary32 is exact,
+        /// so both frameworks produce identical output.
+        /// </remarks>
+        private string GetVectorString()
+        {
+            var elementType = (MetaType.SqlVectorElementType)_value._vectorInfo._elementType;
+            switch (elementType)
+            {
+                case MetaType.SqlVectorElementType.Float32:
+                    return GetSqlVector<float>().GetString();
+                case MetaType.SqlVectorElementType.Float16:
+                    #if NET
+                    return GetSqlVector<Half>().GetString();
+                    #else
+                    return GetSqlVector<float>().GetString();
+                    #endif
+                default:
+                    throw SQL.VectorTypeNotSupported(elementType.ToString());
+            }
+        }
+
+        /// <summary>
+        /// Returns a vector value as the type that best represents its base type on the
+        /// current framework.
+        /// </summary>
+        /// <remarks>
+        /// .NET Framework has no <c>System.Half</c>, so there is no faithful strongly
+        /// typed representation of a float16 vector there. Rather than silently
+        /// substituting a different base type, such values are surfaced as their JSON
+        /// rendering, which is how they are already presented when the server does not
+        /// negotiate float16 support. Callers that want a strongly typed value can
+        /// explicitly request one via <see cref="SqlDataReader.GetSqlVector{T}(int)"/>.
+        /// </remarks>
+        internal object GetVectorValue()
+        {
+            var elementType = (MetaType.SqlVectorElementType)_value._vectorInfo._elementType;
+            switch (elementType)
+            {
+                case MetaType.SqlVectorElementType.Float32:
+                    return GetSqlVector<float>();
+                case MetaType.SqlVectorElementType.Float16:
+                    #if NET
+                    return GetSqlVector<Half>();
+                    #else
+                    return GetVectorString();
+                    #endif
+                default:
+                    throw SQL.VectorTypeNotSupported(elementType.ToString());
+            }
+        }
+
+        /// <summary>
+        /// The provider specific counterpart of <see cref="GetVectorValue"/>. It differs
+        /// only where a float16 vector is surfaced as its JSON rendering, which is returned
+        /// as a <see cref="SqlString"/> so that every provider specific value remains a
+        /// type from <c>System.Data.SqlTypes</c>.
+        /// </summary>
+        internal object GetVectorSqlValue()
+        {
+            var elementType = (MetaType.SqlVectorElementType)_value._vectorInfo._elementType;
+            switch (elementType)
+            {
+                case MetaType.SqlVectorElementType.Float32:
+                    return GetSqlVector<float>();
+                case MetaType.SqlVectorElementType.Float16:
+                    #if NET
+                    return GetSqlVector<Half>();
+                    #else
+                    return SqlString;
+                    #endif
+                default:
+                    throw SQL.VectorTypeNotSupported(elementType.ToString());
+            }
         }
 
         internal object SqlValue
@@ -1040,14 +1115,7 @@ namespace Microsoft.Data.SqlClient
                     case StorageType.Json:
                         return SqlJson;
                     case StorageType.Vector:
-                        var elementType = (MetaType.SqlVectorElementType)_value._vectorInfo._elementType;
-                        switch (elementType)
-                        {
-                            case MetaType.SqlVectorElementType.Float32:
-                                return GetSqlVector<float>();
-                            default:
-                                throw SQL.VectorTypeNotSupported(elementType.ToString());
-                        }
+                        return GetVectorSqlValue();
                     case StorageType.SqlCachedBuffer:
                         {
                             SqlCachedBuffer data = (SqlCachedBuffer)(_object);
@@ -1274,7 +1342,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            return null; // need to return the value as an object of some CLS type            
+            return null; // need to return the value as an object of some CLS type
         }
 
         internal static SqlBuffer[] CreateBufferArray(int length)
@@ -1484,7 +1552,7 @@ namespace Microsoft.Data.SqlClient
             }
             timeInfo._ticks = tickUnits * TdsEnums.TICKS_FROM_SCALE[scale];
 
-            // Once the deserialization has been completed using the value scale, we need to set the actual denormalized scale, 
+            // Once the deserialization has been completed using the value scale, we need to set the actual denormalized scale,
             // coming from the data type, on the original result, so that it has the proper scale setting.
             // This only applies for values that got serialized/deserialized for encryption. Otherwise, both scales should be equal.
             timeInfo._scale = denormalizedScale;
@@ -1505,16 +1573,16 @@ namespace Microsoft.Data.SqlClient
         }
         // [Field]As<T> method explanation:
         // these methods are used to bridge generic to non-generic access to value type fields on the storage struct
-        // where typeof(T) == typeof(field) 
-        //   1) RyuJIT will recognize the pattern of (T)(object)T as being redundant and eliminate 
-        //   the T and object casts leaving T, so while this looks like it will put every value type instance in a box the 
+        // where typeof(T) == typeof(field)
+        //   1) RyuJIT will recognize the pattern of (T)(object)T as being redundant and eliminate
+        //   the T and object casts leaving T, so while this looks like it will put every value type instance in a box the
         //   generated assembly will be short and direct
         //   2) another jit may not recognize the pattern and should emit the code as seen. this will box and then unbox the
         //   value type which is no worse than the mechanism that this code replaces
         // where typeof(T) != typeof(field)
         //   the jit will emit all the cast operations as written. this will put the value into a box and then attempt to
-        //   cast it, because it is an object no conversions are used and this will generate the desired InvalidCastException       
-        //   for example users cannot widen a short to an int preserving external expectations 
+        //   cast it, because it is an object no conversions are used and this will generate the desired InvalidCastException
+        //   for example users cannot widen a short to an int preserving external expectations
 
         internal T ByteAs<T>()
         {

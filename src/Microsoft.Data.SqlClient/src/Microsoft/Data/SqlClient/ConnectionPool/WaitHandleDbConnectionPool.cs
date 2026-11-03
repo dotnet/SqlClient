@@ -214,7 +214,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
         {
             Debug.Assert(connectionPoolGroup != null, "null connectionPoolGroup");
 
-            if (identity != null && identity.IsRestricted)
+            if (identity.IsRestricted)
             {
                 throw ADP.InternalError(ADP.InternalErrorCode.AttemptingToPoolOnRestrictedToken);
             }
@@ -353,7 +353,7 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
         public bool UseLoadBalancing => PoolGroupOptions.UseLoadBalancing;
 
-        private bool UsingIntegrateSecurity => _identity != null && DbConnectionPoolIdentity.NoIdentity != _identity;
+        private bool UsingIntegrateSecurity => DbConnectionPoolIdentity.NoIdentity != _identity;
 
         public TransactedConnectionPool TransactedConnectionPool => _transactedConnectionPool;
 

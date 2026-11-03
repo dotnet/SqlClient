@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -9,10 +9,13 @@ using System.Data.SqlTypes;
 using System.Globalization;
 using System.Reflection;
 using Microsoft.Data.SqlClient.Server;
+using Microsoft.Data.SqlClient.Tests.CollectionDefinitions;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
 {
+    [Collection(nameof(GlobalizationInvariantModeTests))]
     public class SqlMetaDataTest
     {
         [Theory]
@@ -228,6 +231,60 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(0, metaData.SortOrdinal);
         }
 
+        #if NET
+        /// <summary>
+        /// Verifies that constructors which do not explicitly specify a string locale throw in
+        /// invariant globalization mode.
+        /// </summary>
+        /// <param name="dbType">The char- or text-based <see cref="SqlDbType"/> to test.</param>
+        [Theory]
+        [MemberData(nameof(ConstructorCharData))]
+        [MemberData(nameof(ConstructorTextData))]
+        public void ConstructorWithDefaultLocale_ThrowsInInvariantGlobalizationMode(SqlDbType dbType)
+        {
+            using LocalAppContextSwitchesHelper helper = new();
+
+            helper.GlobalizationInvariantMode = true;
+
+            Assert.Throws<NotSupportedException>(() => new SqlMetaData("col1", dbType));
+            Assert.Throws<NotSupportedException>(() => new SqlMetaData("col1", dbType, true, true, SortOrder.Ascending, 0));
+            Assert.Throws<NotSupportedException>(() => new SqlMetaData("col1", dbType, 0));
+            Assert.Throws<NotSupportedException>(() => new SqlMetaData("col1", dbType, 0, true, true, SortOrder.Ascending, 0));
+        }
+
+        /// <summary>
+        /// Verifies that constructors which take a maximum length and an explicit locale do not throw
+        /// in invariant globalization mode.
+        /// </summary>
+        /// <param name="dbType">The char-based <see cref="SqlDbType"/> to test.</param>
+        /// <see cref="ConstructorWithMaxLengthTextExplicitLocale_DoesNotThrowInInvariantGlobalizationMode"/>
+        [Theory]
+        [MemberData(nameof(ConstructorCharData))]
+        public void ConstructorWithMaxLengthAndExplicitLocale_DoesNotThrowInInvariantGlobalizationMode(SqlDbType dbType)
+        {
+            using LocalAppContextSwitchesHelper helper = new();
+
+            helper.GlobalizationInvariantMode = true;
+            ConstructorWithMaxLengthAndLocale(dbType);
+        }
+
+        /// <summary>
+        /// Verifies that constructors which take a maximum length and an explicit locale do not throw
+        /// in invariant globalization mode.
+        /// </summary>
+        /// <param name="dbType">The text-based <see cref="SqlDbType"/> to test.</param>
+        /// <see cref="ConstructorWithMaxLengthAndExplicitLocale_DoesNotThrowInInvariantGlobalizationMode"/>
+        [Theory]
+        [MemberData(nameof(ConstructorTextData))]
+        public void ConstructorWithMaxLengthTextExplicitLocale_DoesNotThrowInInvariantGlobalizationMode(SqlDbType dbType)
+        {
+            using LocalAppContextSwitchesHelper helper = new();
+
+            helper.GlobalizationInvariantMode = true;
+            ConstructorWithMaxLengthTextAndLocale(dbType);
+        }
+        #endif
+
         [Fact]
         public void ConstructorWithDefaultLocaleInvalidType_Throws()
         {
@@ -283,6 +340,12 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Contains("dbType", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
+        /// <summary>
+        /// Verifies that the constructors which take a specified length and an explicit locale
+        /// populate all relevant properties. Verifies character-based data.
+        /// </summary>
+        /// <param name="dbType">A character-based <see cref="SqlDbType"/>.</param>
+        /// <see cref="ConstructorWithMaxLengthAndExplicitLocale_DoesNotThrowInInvariantGlobalizationMode"/>
         [Theory]
         [MemberData(
             nameof(ConstructorCharData)
@@ -290,19 +353,8 @@ namespace Microsoft.Data.SqlClient.Tests
             , DisableDiscoveryEnumeration = true
 #endif
             )]
-        public void ConstructorWithMaxLengthAndLocale(SqlDbType dbType)
-        {
-            long maxLength = 5L;
-            long locale = 0L;
-            SqlMetaData metaData = new SqlMetaData("col1", dbType, maxLength, locale, SqlCompareOptions.IgnoreCase, true, true, SortOrder.Ascending, 0);
-            Assert.Equal("col1", metaData.Name);
-            Assert.Equal(locale, metaData.LocaleId);
-            Assert.Equal(maxLength, metaData.MaxLength);
-            Assert.True(metaData.UseServerDefault);
-            Assert.True(metaData.IsUniqueKey);
-            Assert.Equal(SortOrder.Ascending, metaData.SortOrder);
-            Assert.Equal(0, metaData.SortOrdinal);
-        }
+        public void ConstructorWithMaxLengthAndLocale(SqlDbType dbType) =>
+            ConstructorWithLengthAndLocale(dbType, maxLength: 5);
 
         [Fact]
         public void ConstructorWithMaxLengthAndLocaleInvalidType_Throws()
@@ -343,6 +395,12 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(0, metaData.SortOrdinal);
         }
 
+        /// <summary>
+        /// Verifies that the constructors which take an explicit locale populate all relevant
+        /// properties. Verifies text-based data.
+        /// </summary>
+        /// <param name="dbType">A text-based <see cref="SqlDbType"/>.</param>
+        /// <see cref="ConstructorWithMaxLengthTextExplicitLocale_DoesNotThrowInInvariantGlobalizationMode"/>
         [Theory]
         [MemberData(
             nameof(ConstructorTextData)
@@ -350,19 +408,8 @@ namespace Microsoft.Data.SqlClient.Tests
             , DisableDiscoveryEnumeration = true
 #endif
             )]
-        public void ConstructorWithMaxLengthTextAndLocale(SqlDbType dbType)
-        {
-            long maxLength = SqlMetaData.Max;
-            long locale = 0L;
-            SqlMetaData metaData = new SqlMetaData("col1", dbType, maxLength, locale, SqlCompareOptions.IgnoreCase, true, true, SortOrder.Ascending, 0);
-            Assert.Equal("col1", metaData.Name);
-            Assert.Equal(locale, metaData.LocaleId);
-            Assert.Equal(maxLength, metaData.MaxLength);
-            Assert.True(metaData.UseServerDefault);
-            Assert.True(metaData.IsUniqueKey);
-            Assert.Equal(SortOrder.Ascending, metaData.SortOrder);
-            Assert.Equal(0, metaData.SortOrdinal);
-        }
+        public void ConstructorWithMaxLengthTextAndLocale(SqlDbType dbType) =>
+            ConstructorWithLengthAndLocale(dbType, maxLength: SqlMetaData.Max);
 
         [Theory]
         [MemberData(
@@ -399,6 +446,77 @@ namespace Microsoft.Data.SqlClient.Tests
                 SqlMetaData metaData = new SqlMetaData("col1", SqlDbType.NText, maxLength, locale, invalidCompareOptions, true, true, SortOrder.Ascending, 0);
             });
             Assert.Contains("invalid", ex.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static void ConstructorWithLengthAndLocale(SqlDbType dbType, long maxLength)
+        {
+            long locale = 0L;
+            Type userDefinedType = typeof(SqlMetaDataTest);
+            SqlCompareOptions compareOptions = SqlCompareOptions.IgnoreCase;
+            SqlMetaData metaData = new SqlMetaData("col1",
+                dbType,
+                maxLength,
+                locale,
+                compareOptions,
+                useServerDefault: true,
+                isUniqueKey: true,
+                columnSortOrder: SortOrder.Ascending,
+                sortOrdinal: 0);
+            AssertCommonFields(metaData);
+            AssertTvpFields(metaData);
+
+            metaData = new SqlMetaData("col1",
+                dbType,
+                maxLength,
+                precision: 15,
+                scale: 5,
+                locale,
+                compareOptions,
+                userDefinedType,
+                useServerDefault: true,
+                isUniqueKey: true,
+                columnSortOrder: SortOrder.Ascending,
+                sortOrdinal: 0);
+            AssertCommonFields(metaData);
+            AssertTvpFields(metaData);
+            AssertIgnoredFields(metaData);
+
+            metaData = new SqlMetaData("col1", dbType, maxLength, locale, compareOptions);
+            AssertCommonFields(metaData);
+
+            metaData = new SqlMetaData("col1",
+                dbType,
+                maxLength,
+                precision: 15,
+                scale: 5,
+                locale,
+                compareOptions,
+                userDefinedType);
+            AssertCommonFields(metaData);
+            AssertIgnoredFields(metaData);
+
+            static void AssertIgnoredFields(SqlMetaData metaData)
+            {
+                Assert.Null(metaData.Type);
+                Assert.NotEqual(15, metaData.Precision);
+                Assert.NotEqual(5, metaData.Scale);
+            }
+
+            static void AssertTvpFields(SqlMetaData metaData)
+            {
+                Assert.True(metaData.UseServerDefault);
+                Assert.True(metaData.IsUniqueKey);
+                Assert.Equal(SortOrder.Ascending, metaData.SortOrder);
+                Assert.Equal(0, metaData.SortOrdinal);
+            }
+
+            void AssertCommonFields(SqlMetaData metaData)
+            {
+                Assert.Equal(compareOptions, metaData.CompareOptions);
+                Assert.Equal("col1", metaData.Name);
+                Assert.Equal(locale, metaData.LocaleId);
+                Assert.Equal(maxLength, metaData.MaxLength);
+            }
         }
 
         public static IEnumerable<object[]> ConstructorBinaryData()

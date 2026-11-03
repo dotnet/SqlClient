@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Connection;
+using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlClient.Tests.Common;
 using Microsoft.Extensions.Time.Testing;
 using Microsoft.SqlServer.TDS.Servers;
