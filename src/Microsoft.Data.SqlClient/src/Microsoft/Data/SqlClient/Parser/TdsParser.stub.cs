@@ -28,7 +28,7 @@ namespace Microsoft.Data.SqlClient.Parser
 
         internal object EncryptColumnValue(
             object value,
-            SqlMetaDataPriv metadata,
+            TdsTypeInfo metadata,
             string column,
             TdsParserStateObject stateObj,
             bool isDataFeed,
@@ -39,7 +39,7 @@ namespace Microsoft.Data.SqlClient.Parser
             null;
 
         internal void LoadColumnEncryptionKeys(
-            _SqlMetaDataSet metadataCollection,
+            TdsColumnMetadataToken metadataCollection,
             SqlConnection connection,
             SqlCommand command = null)
         {
@@ -82,7 +82,7 @@ namespace Microsoft.Data.SqlClient.Parser
             Task.CompletedTask;
 
         internal void WriteBulkCopyMetaData(
-            _SqlMetaDataSet metadataCollection,
+            TdsColumnMetadataToken metadataCollection,
             int count,
             TdsParserStateObject stateObj)
         {
@@ -90,7 +90,7 @@ namespace Microsoft.Data.SqlClient.Parser
 
         internal Task WriteBulkCopyValue(
             object value,
-            SqlMetaDataPriv metadata,
+            TdsTypeInfo metadata,
             TdsParserStateObject stateObj,
             bool isSqlType,
             bool isDataFeed,

@@ -16,6 +16,39 @@ namespace Microsoft.Data.SqlClient.Tests
 {
     public class SqlParameterTests
     {
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void Clone_PreservesIndependentXmlTypeInfo(bool hasXmlTypeInfo)
+        {
+            SqlParameter original = new SqlParameter("@xml", SqlDbType.Xml);
+            if (hasXmlTypeInfo)
+            {
+                original.XmlSchemaCollectionDatabase = "database";
+                original.XmlSchemaCollectionOwningSchema = "schema";
+                original.XmlSchemaCollectionName = "collection";
+            }
+
+            SqlParameter clone = (SqlParameter)((ICloneable)original).Clone();
+            Assert.Equal(original.XmlSchemaCollectionDatabase, clone.XmlSchemaCollectionDatabase);
+            Assert.Equal(original.XmlSchemaCollectionOwningSchema, clone.XmlSchemaCollectionOwningSchema);
+            Assert.Equal(original.XmlSchemaCollectionName, clone.XmlSchemaCollectionName);
+
+            clone.XmlSchemaCollectionDatabase = "clone_database";
+            clone.XmlSchemaCollectionOwningSchema = "clone_schema";
+            clone.XmlSchemaCollectionName = "clone_collection";
+            Assert.Equal(hasXmlTypeInfo ? "database" : string.Empty, original.XmlSchemaCollectionDatabase);
+            Assert.Equal(hasXmlTypeInfo ? "schema" : string.Empty, original.XmlSchemaCollectionOwningSchema);
+            Assert.Equal(hasXmlTypeInfo ? "collection" : string.Empty, original.XmlSchemaCollectionName);
+
+            original.XmlSchemaCollectionDatabase = "original_database";
+            original.XmlSchemaCollectionOwningSchema = "original_schema";
+            original.XmlSchemaCollectionName = "original_collection";
+            Assert.Equal("clone_database", clone.XmlSchemaCollectionDatabase);
+            Assert.Equal("clone_schema", clone.XmlSchemaCollectionOwningSchema);
+            Assert.Equal("clone_collection", clone.XmlSchemaCollectionName);
+        }
+
         [Fact]
         public void ParameterPrecisionOnInterfaceType()
         {

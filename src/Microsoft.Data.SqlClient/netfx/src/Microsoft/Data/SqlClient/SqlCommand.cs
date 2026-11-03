@@ -206,7 +206,7 @@ namespace Microsoft.Data.SqlClient
 
         // cut down on object creation and cache all these
         // cached metadata
-        private _SqlMetaDataSet _cachedMetaData;
+        private TdsColumnMetadataToken _cachedMetaData;
         internal EnclavePackage enclavePackage = null;
         private SqlEnclaveAttestationParameters enclaveAttestationParameters = null;
         private byte[] customData = null;
@@ -3713,7 +3713,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // get cached metadata
-        internal _SqlMetaDataSet MetaData
+        internal TdsColumnMetadataToken MetaData
         {
             get
             {
@@ -5518,7 +5518,7 @@ namespace Microsoft.Data.SqlClient
                     else
                     {
                         //we need this call to ensure that the datareader is properly intialized, the getter is initializing state in SqlDataReader
-                        _SqlMetaDataSet temp = ds.MetaData;
+                        TdsColumnMetadataToken temp = ds.MetaData;
                     }
                     ds.IsInitialized = true;
                 }
@@ -5893,13 +5893,13 @@ namespace Microsoft.Data.SqlClient
         // If named, match the parameter name, otherwise fill in based on ordinal position.
         // If the parameter is not bound, then ignore the return value.
         //
-        internal void OnReturnValue(SqlReturnValue rec, TdsParserStateObject stateObj)
+        internal void OnReturnValue(TdsReturnValueToken rec, TdsParserStateObject stateObj)
         {
             if (_inPrepare)
             {
-                if (!rec.value.IsNull)
+                if (!rec.Value.IsNull)
                 {
-                    _prepareHandle = rec.value.Int32;
+                    _prepareHandle = rec.Value.Int32;
                 }
                 _inPrepare = false;
                 return;
@@ -5914,15 +5914,15 @@ namespace Microsoft.Data.SqlClient
             {
                 // If the parameter's direction is InputOutput, Output or ReturnValue and it needs to be transparently encrypted/decrypted
                 // then simply decrypt, deserialize and set the value.
-                if (rec.cipherMD != null &&
+                if (rec.CipherMetadata != null &&
                     thisParam.CipherMetadata != null &&
                     (thisParam.Direction == ParameterDirection.Output ||
                     thisParam.Direction == ParameterDirection.InputOutput ||
                     thisParam.Direction == ParameterDirection.ReturnValue))
                 {
-                    if (rec.tdsType != TdsEnums.SQLBIGVARBINARY)
+                    if (rec.TdsType != TdsEnums.SQLBIGVARBINARY)
                     {
-                        throw SQL.InvalidDataTypeForEncryptedParameter(thisParam.GetPrefixedParameterName(), rec.tdsType, TdsEnums.SQLBIGVARBINARY);
+                        throw SQL.InvalidDataTypeForEncryptedParameter(thisParam.GetPrefixedParameterName(), rec.TdsType, TdsEnums.SQLBIGVARBINARY);
                     }
 
                     // Decrypt the ciphertext
@@ -5932,15 +5932,15 @@ namespace Microsoft.Data.SqlClient
                         throw ADP.ClosedConnectionError();
                     }
 
-                    if (!rec.value.IsNull)
+                    if (!rec.Value.IsNull)
                     {
                         try
                         {
                             Debug.Assert(_activeConnection != null, @"_activeConnection should not be null");
 
                             // Get the key information from the parameter and decrypt the value.
-                            rec.cipherMD.EncryptionInfo = thisParam.CipherMetadata.EncryptionInfo;
-                            byte[] unencryptedBytes = SqlSecurityUtility.DecryptWithKey(rec.value.ByteArray, rec.cipherMD, _activeConnection, this);
+                            rec.CipherMetadata.EncryptionInfo = thisParam.CipherMetadata.EncryptionInfo;
+                            byte[] unencryptedBytes = SqlSecurityUtility.DecryptWithKey(rec.Value.ByteArray, rec.CipherMetadata, _activeConnection, this);
 
                             if (unencryptedBytes != null)
                             {
@@ -5984,13 +5984,13 @@ namespace Microsoft.Data.SqlClient
                             Connection.CheckGetExtendedUDTInfo(rec, true);
 
                             //extract the byte array from the param value
-                            if (rec.value.IsNull)
+                            if (rec.Value.IsNull)
                             {
                                 data = DBNull.Value;
                             }
                             else
                             {
-                                data = rec.value.ByteArray; //should work for both sql and non-sql values
+                                data = rec.Value.ByteArray; //should work for both sql and non-sql values
                             }
 
                             //call the connection to instantiate the UDT object
@@ -6013,12 +6013,12 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        thisParam.SetSqlBuffer(rec.value);
+                        thisParam.SetSqlBuffer(rec.Value);
                     }
 
-                    MetaType mt = MetaType.GetMetaTypeFromSqlDbType(rec.type, rec.IsMultiValued);
+                    MetaType mt = MetaType.GetMetaTypeFromSqlDbType(rec.DbType, rec.IsMultiValued);
 
-                    if (rec.type == SqlDbType.Decimal)
+                    if (rec.DbType == SqlDbType.Decimal)
                     {
                         thisParam.ScaleInternal = rec.scale;
                         thisParam.PrecisionInternal = rec.precision;
@@ -6027,7 +6027,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         thisParam.ScaleInternal = rec.scale;
                     }
-                    else if (rec.type == SqlDbType.Xml)
+                    else if (rec.DbType == SqlDbType.Xml)
                     {
                         SqlCachedBuffer cachedBuffer = (thisParam.Value as SqlCachedBuffer);
                         if (cachedBuffer != null)

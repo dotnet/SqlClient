@@ -639,7 +639,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal RoutingInfo RoutingInfo { get; private set; } = null;
+        internal TdsEnvChangeRoutingInfo RoutingInfo { get; private set; } = null;
 
         internal override SqlInternalTransaction CurrentTransaction
         {
@@ -3157,7 +3157,7 @@ namespace Microsoft.Data.SqlClient
 
 
         // Initialize server info from connection options, but override DataSource with given server name
-        internal ServerInfo(SqlConnectionString userOptions, RoutingInfo routing, string preRoutingServerName, string serverSPN)
+        internal ServerInfo(SqlConnectionString userOptions, TdsEnvChangeRoutingInfo routing, string preRoutingServerName, string serverSPN)
         {
             //-----------------
             // Preconditions
