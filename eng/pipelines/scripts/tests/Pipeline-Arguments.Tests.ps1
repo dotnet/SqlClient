@@ -46,6 +46,21 @@ Describe 'PR test result paths in <RelativePath>' -ForEach @(
     }
 }
 
+Describe 'signed-package manual-test jobs in <RelativePath>' -ForEach @(
+    @{ RelativePath = 'ci/managed-instance/sqlclient-ci-managed-instance-job.yml' }
+    @{ RelativePath = 'ci/kerberos/sqlclient-ci-kerberos-job.yml' }
+) {
+    It 'downloads the shared secure test key and provides its path to build.proj' {
+        $pipelineRoot = Join-Path $PSScriptRoot '../..'
+        $template = Get-Content -LiteralPath (Join-Path $pipelineRoot $RelativePath) -Raw
+
+        $template | Should -Match '(?ms)- task: DownloadSecureFile@1\s+displayName: Download Test Signing Key\s+name: testKeyFile\s+inputs:\s+secureFile: sqlclient-test-key\.snk'
+        $template.Contains('-p:TestSigningKeyPath="$(testKeyFile.secureFilePath)"') |
+            Should -BeTrue
+        $template | Should -Not -Match 'TransactionTest\.snk'
+    }
+}
+
 Describe 'CI dotnet argument variables in <RelativePath>' -ForEach @(
     @{ RelativePath = 'jobs/test-abstractions-package-ci-job.yml' }
     @{ RelativePath = 'jobs/test-azure-package-ci-job.yml' }
