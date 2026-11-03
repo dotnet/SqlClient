@@ -64,9 +64,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Directory.CreateDirectory(s_fullPathToClientCert);
             }
 
-            // NOTE: The setup script installs a certificate into the LocalMachine root store and writes
-            //   the scratch files. If it fails part way through, xUnit never calls Dispose, so run the
-            //   cleanup here to avoid leaving the certificate behind.
+            // The certificate must remain untrusted for the negative validation cases.
+            // Clean up partial setup because xUnit does not call Dispose when construction fails.
             try
             {
                 RunPowershellScript(s_fullPathToPowershellScript);
@@ -147,11 +146,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string userId = string.IsNullOrWhiteSpace(builder.UserID) ? "user" : builder.UserID;
             string password = string.IsNullOrWhiteSpace(builder.Password) ? "password" : builder.Password;
 
+            using X509Certificate2 certificate = GetEncryptionCertificate(s_fullPathToPfx, "nopassword", X509KeyStorageFlags.UserKeySet);
+            using (X509Chain chain = new())
+            {
+                chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+                Assert.False(chain.Build(certificate), "The simulated server certificate must remain untrusted.");
+                Assert.Contains(chain.ChainStatus, status => (status.Status & X509ChainStatusFlags.UntrustedRoot) != 0);
+            }
+
             using TdsServer server = new TdsServer(new TdsServerArguments
             {
-                EncryptionCertificate = GetEncryptionCertificate(s_fullPathToPfx, "nopassword", X509KeyStorageFlags.UserKeySet),
+                EncryptionCertificate = certificate,
                 EncryptionProtocols = connectionTestParameters.EncryptionProtocols,
                 Encryption = connectionTestParameters.TdsEncryptionType,
+                ExpectTlsHandshakeFailure = !connectionTestParameters.TestResult,
             });
 
             server.Start();
@@ -176,15 +184,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 builder.HostNameInCertificate = connectionTestParameters.HostNameInCertificate;
             }
 
-            using SqlConnection connection = new(builder.ConnectionString);
-            try
+            using SqlConnection connection = DataTestUtility.CreateConnection(builder.ConnectionString);
+            if (connectionTestParameters.TestResult)
             {
                 connection.Open();
-                Assert.Equal(connectionTestParameters.TestResult, (connection.State == ConnectionState.Open));
+                Assert.Equal(ConnectionState.Open, connection.State);
             }
-            catch (Exception)
+            else
             {
-                Assert.False(connectionTestParameters.TestResult);
+                Assert.Throws<SqlException>(() => connection.Open());
             }
         }
 
@@ -210,7 +218,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     RedirectStandardError = true,
                     RedirectStandardOutput = true,
                     UseShellExecute = false,
-                    Arguments = $"{script} -OutDir {currentDirectory}",
+                    Arguments = $"\"{script}\" -OutDir \"{currentDirectory}\" -SkipTrust",
                     CreateNoWindow = false,
                     Verb = "runas"
                 }
@@ -265,15 +273,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private void RemoveCertificate()
         {
-            // NOTE: Each step is independent. Previously a missing thumbprint file (or a failed store
-            //   removal) aborted the whole cleanup, leaving the certificate in the LocalMachine root
-            //   store and the scratch directory on disk.
+            // Remove the generated certificate from My; setup deliberately does not install it in Root.
+            // File cleanup must still run if store removal fails.
             try
             {
                 if (File.Exists(s_fullPathTothumbprint))
                 {
                     string thumbprint = File.ReadAllText(s_fullPathTothumbprint);
-                    using X509Store certStore = new(StoreName.Root, StoreLocation.LocalMachine);
+                    using X509Store certStore = new(StoreName.My, StoreLocation.LocalMachine);
                     certStore.Open(OpenFlags.ReadWrite);
                     X509Certificate2Collection certCollection = certStore.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
                     if (certCollection.Count > 0)

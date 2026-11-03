@@ -22,6 +22,8 @@ Every data-retrieval step below is described as an **operation**, not a command.
 Perform each operation with whatever Azure DevOps access is available, in this order
 of preference:
 
+0. A **previously established preference** — if the user has already chosen a mechanism in
+   this conversation, in memory/instructions, or by explicit request, keep using it.
 1. An **Azure DevOps MCP server**, if one is connected (preferred — no shell needed).
 2. The **`az` CLI** (`az rest --resource <ADO resource ID> ...`,
    `az pipelines ...`, `az boards ...`).

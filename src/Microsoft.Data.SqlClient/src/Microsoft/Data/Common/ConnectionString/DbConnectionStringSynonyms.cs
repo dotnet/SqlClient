@@ -42,6 +42,7 @@ namespace Microsoft.Data.Common.ConnectionString
         internal const string TrustServerCertificate = "trustservercertificate";
         internal const string Uid = "uid";
         internal const string User = "user";
+        internal const string VectorTypeSupport = "vectortypesupport";
         internal const string WorkstationId = "workstationid";
         internal const string WsId = "wsid";
     }

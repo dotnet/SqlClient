@@ -25,7 +25,8 @@ BeforeAll {
             [string]$SqlClientFileVersion = '7.1.0.26238',
             [string]$SqlServerPackageVersion = '',
             [string]$SqlServerFileVersion = '',
-            [string[]]$FailOn = @('error')
+            [string[]]$FailOn = @('error'),
+            [switch]$ReportOnly
         )
 
         & $scriptPath `
@@ -37,6 +38,7 @@ BeforeAll {
             -SqlServerPackageVersion $SqlServerPackageVersion `
             -SqlServerFileVersion $SqlServerFileVersion `
             -FailOn $FailOn `
+            -ReportOnly:$ReportOnly `
             -DotnetPath 'dotnet' *>&1 | Out-String
     }
 
@@ -160,6 +162,40 @@ Describe 'validate-packages.ps1 Exit Codes' {
 
         # The gating run must not have been reached.
         $global:validatePackagesInvocations.Count | Should -Be 1
+    }
+}
+
+Describe 'validate-packages.ps1 Report-Only Mode' {
+    It 'warns instead of failing when a gate is tripped' {
+        Set-DotnetMock -GateExitCode 2
+
+        $output = Invoke-ValidatePackages -ReportOnly
+        $output | Should -Match 'report-only mode'
+        $output | Should -Match '##vso\[task.logissue type=warning\]'
+        # Without this the step renders as a clean success despite reporting warnings.
+        $output | Should -Match '##vso\[task\.complete result=SucceededWithIssues;\]'
+    }
+
+    It 'still fails when the validator itself fails' {
+        # Report-only suppresses findings, not a broken tool: a validator that could not run
+        # produced nothing to report, so downgrading it would hide a real breakage.
+        Set-DotnetMock -GateExitCode 1
+
+        { Invoke-ValidatePackages -ReportOnly } | Should -Throw '*exited unexpectedly with code 1*'
+    }
+
+    It 'still fails when the reporting run fails' {
+        Set-DotnetMock -ReportExitCode 1
+
+        { Invoke-ValidatePackages -ReportOnly } |
+            Should -Throw '*failed while writing the JSON report (exit code 1)*'
+    }
+
+    It 'does not alter behaviour when there are no findings' {
+        Set-DotnetMock -GateExitCode 0
+
+        $output = Invoke-ValidatePackages -ReportOnly
+        $output | Should -Match 'Package validation passed'
     }
 }
 

@@ -14,6 +14,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Parser;
 
 namespace Microsoft.Data.SqlClient.ManagedSni
 {
@@ -195,7 +196,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                     try
                     {
                         packet = RentPacket(headerSize: 0, dataSize: _bufferSize);
-                        packet.ReadFromStream(_stream);
+                        packet.ReadFromStream(_stream ?? throw new ObjectDisposedException(nameof(SniNpHandle)));
                         SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.INFO, "Connection Id {0}, Rented and read packet, dataLeft {1}", args0: _connectionId, args1: packet?.DataLeft);
 
                         if (packet.Length == 0)
@@ -235,7 +236,9 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 packet.SetAsyncIOCompletionCallback(_receiveCallback);
                 try
                 {
-                    packet.ReadFromStreamAsync(_stream);
+                    // Capture once: Dispose can clear the field while a MARS receive is re-armed.
+                    Stream stream = _stream ?? throw new ObjectDisposedException(nameof(SniNpHandle));
+                    packet.ReadFromStreamAsync(stream);
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.INFO, "Connection Id {0}, Rented and read packet asynchronously, dataLeft {1}", args0: _connectionId, args1: packet?.DataLeft);
                     return TdsEnums.SNI_SUCCESS_IO_PENDING;
                 }
@@ -383,7 +386,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         private bool ValidateServerCertificate(object sender, X509Certificate serverCertificate, X509Chain chain, SslPolicyErrors policyErrors)
         {
             using (SqlClientSNIEventScope.Create(nameof(SniNpHandle)))
-            {			
+            {
                 if (!_validateCert)
                 {
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.INFO, "Connection Id {0}, Certificate validation not requested.", args0: ConnectionId);
@@ -392,7 +395,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.INFO, "Connection Id {0}, Proceeding to SSL certificate validation.", args0: ConnectionId);
                 return SniCommon.ValidateSslServerCertificate(_connectionId, _targetServer, _hostNameInCertificate, serverCertificate, _serverCertificateFilename, policyErrors);
-			}	
+			}
         }
 
         /// <summary>

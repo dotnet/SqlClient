@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using Microsoft.Data.SqlClient.AlwaysEncrypted;
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
@@ -33,7 +34,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Key size in bytes
         /// </summary>
-        private const int _KeySizeInBytes = SqlAeadAes256CbcHmac256EncryptionKey.KeySize / 8;
+        private const int _KeySizeInBytes = AeadAes256CbcHmac256EncryptionKey.KeySizeInBits / 8;
 
         /// <summary>
         /// Block size in bytes. AES uses 16 byte blocks.
@@ -75,7 +76,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Column Encryption Key. This has a root key and three derived keys.
         /// </summary>
-        private readonly SqlAeadAes256CbcHmac256EncryptionKey _columnEncryptionKey;
+        private readonly AeadAes256CbcHmac256EncryptionKey _columnEncryptionKey;
 
         /// <summary>
         /// The pool of crypto providers to use for encrypt/decrypt operations.
@@ -105,7 +106,7 @@ namespace Microsoft.Data.SqlClient
         /// <param name="algorithmVersion">
         /// Algorithm version
         /// </param>
-        internal SqlAeadAes256CbcHmac256Algorithm(SqlAeadAes256CbcHmac256EncryptionKey encryptionKey, SqlClientEncryptionType encryptionType, byte algorithmVersion)
+        internal SqlAeadAes256CbcHmac256Algorithm(AeadAes256CbcHmac256EncryptionKey encryptionKey, EncryptionType encryptionType, byte algorithmVersion)
         {
             _columnEncryptionKey = encryptionKey;
             _algorithmVersion = algorithmVersion;
@@ -116,13 +117,13 @@ namespace Microsoft.Data.SqlClient
 
             // Validate encryption type for this algorithm
             // This algorithm can only provide randomized or deterministic encryption types.
-            if (encryptionType == SqlClientEncryptionType.Deterministic)
+            if (encryptionType == EncryptionType.Deterministic)
             {
                 _isDeterministic = true;
             }
             else
             {
-                Debug.Assert(SqlClientEncryptionType.Randomized == encryptionType, "Invalid Encryption Type detected in SqlAeadAes256CbcHmac256Algorithm, this should've been caught in factory class");
+                Debug.Assert(EncryptionType.Randomized == encryptionType, "Invalid Encryption Type detected in SqlAeadAes256CbcHmac256Algorithm, this should've been caught in factory class");
             }
 
             _cryptoProviderPool = new ConcurrentQueue<Aes>();
@@ -163,7 +164,7 @@ namespace Microsoft.Data.SqlClient
             // Should be 1 single block (16 bytes)
             if (_isDeterministic)
             {
-                SqlSecurityUtility.GetHMACWithSHA256(plainText, _columnEncryptionKey.IVKey, iv);
+                SqlSecurityUtility.GetHMACWithSHA256(plainText, _columnEncryptionKey.IvKey, iv);
             }
             else
             {
@@ -235,7 +236,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (hasAuthenticationTag)
                 {
-                    using (HMACSHA256 hmac = new HMACSHA256(_columnEncryptionKey.MACKey))
+                    using (HMACSHA256 hmac = new HMACSHA256(_columnEncryptionKey.MacKey))
                     {
                         Debug.Assert(hmac.CanTransformMultipleBlocks, "HMAC can't transform multiple blocks");
                         hmac.TransformBlock(_version, 0, _version.Length, _version, 0);
@@ -426,7 +427,7 @@ namespace Microsoft.Data.SqlClient
             //              cipherText.Length
             //              1 byte for version byte length
 
-            using (HMACSHA256 hmac = new HMACSHA256(_columnEncryptionKey.MACKey))
+            using (HMACSHA256 hmac = new HMACSHA256(_columnEncryptionKey.MacKey))
             {
                 int retVal = 0;
                 retVal = hmac.TransformBlock(_version, 0, _version.Length, _version, 0);

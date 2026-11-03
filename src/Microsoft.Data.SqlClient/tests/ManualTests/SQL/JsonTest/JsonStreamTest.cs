@@ -164,7 +164,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             try
             {
                 GenerateJsonFile(1000, _jsonFile);
-                using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+                using SqlConnection connection = DataTestUtility.CreateConnection();
                 connection.Open();
 
                 using Table jsonTable = new(connection, "jsonTab", "(data json)");
@@ -186,7 +186,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             try
             {
                 GenerateJsonFile(1000, _jsonFile);
-                using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+                using SqlConnection connection = DataTestUtility.CreateConnection();
                 await connection.OpenAsync();
 
                 using Table jsonTable = new(connection, "jsonTab", "(data json)");

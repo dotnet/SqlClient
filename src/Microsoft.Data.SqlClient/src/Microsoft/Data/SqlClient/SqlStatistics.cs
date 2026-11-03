@@ -137,9 +137,11 @@ namespace Microsoft.Data.SqlClient
 
         internal void ReleaseAndUpdateExecutionTimer()
         {
-            if (_startExecutionTimestamp.HasValue)
+            // Use one snapshot so a concurrent release cannot invalidate the checked value.
+            long? start = _startExecutionTimestamp;
+            if (start.HasValue)
             {
-                uint elapsed = ADP.CalculateTickCountElapsed(_startExecutionTimestamp.Value, ADP.FastTimerCurrent());
+                uint elapsed = ADP.CalculateTickCountElapsed(start.Value, ADP.FastTimerCurrent());
                 _executionTime += elapsed;
                 _startExecutionTimestamp = null;
             }

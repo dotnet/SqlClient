@@ -14,7 +14,42 @@ This library grew from a union of the two `System.Data.SqlClient` components whi
 This package supports:
 
 - .NET Framework 4.6.2+
-- .NET 8.0+
+- .NET 10.0+
+
+The implementation targets `net462;net10.0`. Reference and unsupported-platform assemblies also
+retain `netstandard2.0`; that target does not extend supported driver runtimes.
+
+### SqlClient family version validation
+
+This package ships a consumer MSBuild target in `build/` and `buildTransitive/`.
+NuGet imports it for direct package consumers and transitive PackageReference
+consumers. After package/reference resolution it compares installed
+`Microsoft.Data.SqlClient.Internal.Logging`, `Microsoft.Data.SqlClient.Extensions.Abstractions`,
+`Microsoft.Data.SqlClient.Extensions.Azure`, and
+`Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider` package versions
+against the **resolved Microsoft.Data.SqlClient package version**. Optional packages are
+not required. `Microsoft.SqlServer.Server` and native SNI packages are excluded.
+
+Versions must match exactly, including prerelease labels; a mismatch emits the
+**SQLCLIENT001** warning rather than failing the build by default. Upgrade all installed
+family packages together.
+Historical extensions numbered `1.0.0` are not mapped to driver `7.0.0`/`7.0.1`.
+The check uses resolved compile/runtime asset metadata for PackageReference and
+installed versions in the active `packages.config` for legacy consumers. A
+`packages.<project-name>.config` file takes precedence over `packages.config`;
+spaces in the project name are replaced with underscores, matching NuGet.
+It does not check assembly versions, restore ranges, or API compatibility. Assets
+missing version metadata and builds without a Microsoft.Data.SqlClient version anchor
+are skipped. Design-time builds are skipped.
+
+To suppress the warning, set `SqlClientEnforceFamilyVersions=false` in the
+consumer project or pass `-p:SqlClientEnforceFamilyVersions=false`. This disables
+only this build check; it does not make mixed versions compatible. Excluding the
+package's build assets also prevents target import. NuGet buildTransitive targets
+can propagate through project-reference chains when a referenced project consumes
+Microsoft.Data.SqlClient as a package. A direct project reference to SqlClient's
+source project does not import its packaged targets, so this check does not enforce
+in-tree Project-mode versions.
 
 ## Installation
 
@@ -58,7 +93,7 @@ Or via the Package Manager Console:
 Install-Package Microsoft.Data.SqlClient.Extensions.Azure
 ```
 
-This package provides the `ActiveDirectoryAuthenticationProvider`, which integrates with [Azure.Identity](https://www.nuget.org/packages/Azure.Identity) to handle token acquisition, caching, and credential management.
+This package provides the `ActiveDirectoryAuthenticationProvider`, which uses `Azure.Identity` credential types supplied by [Azure.Core](https://www.nuget.org/packages/Azure.Core) to handle token acquisition, caching, and credential management.
 
 With this package reference, you can continue to use Entra ID authentication modes directly in your connection string:
 
@@ -219,7 +254,7 @@ This package is licensed under the [MIT License](https://licenses.nuget.org/MIT)
 
 ## Related Packages
 
-- [Microsoft.Data.SqlClient.Extensions.Azure](https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure) - Entra ID authentication provider with Azure.Identity integration
+- [Microsoft.Data.SqlClient.Extensions.Azure](https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure) - Entra ID authentication provider using Azure.Core credentials
 - [Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider](https://www.nuget.org/packages/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider) - Azure Key Vault integration for Always Encrypted
 - [Microsoft.SqlServer.Server](https://www.nuget.org/packages/Microsoft.SqlServer.Server) - SQL CLR UDT support
 - [Microsoft.Data.SqlClient.SNI](https://www.nuget.org/packages/Microsoft.Data.SqlClient.SNI) - Native SNI for .NET Framework

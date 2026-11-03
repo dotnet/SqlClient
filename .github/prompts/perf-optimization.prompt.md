@@ -55,8 +55,8 @@ Before making changes, document:
 
 ## 4. Implement the Optimization
 - Make changes in `src/Microsoft.Data.SqlClient/src/`. Do NOT modify legacy directories.
-- Ensure the optimization compiles for ALL target frameworks (`net462`, `net8.0`, `net9.0`).
-- Use `#if NET` for APIs only available in .NET 8+ (e.g., `SearchValues<T>`, newer `Span` overloads).
+- Ensure the optimization compiles for ALL driver implementation target frameworks (`net462`, `net10.0`).
+- Use `#if NET` for modern .NET APIs available on the `net10.0` target but not .NET Framework (e.g., `SearchValues<T>`, newer `Span` overloads).
 - Preserve exact behavioral semantics — the optimization must be invisible to callers.
 - Pay special attention to thread safety when caching or sharing instances.
 
@@ -67,6 +67,10 @@ Before making changes, document:
 - Review for regressions on other platforms (if using `#if` guards).
 
 ## 6. Write Tests (if needed)
+- Read and follow the [test authoring rules](../instructions/testing.instructions.md#writing-tests).
+  They are mandatory for unit tests and strongly recommended for manual and functional tests.
+- Keep scenarios separate instead of selecting behavior with switches, and use meaningful assertions
+  that detect regressions. Confirm the intended tests actually ran; report skips or zero matches.
 - If the optimization changes internal structure, add unit tests to verify the new code path.
 - For cache/pool implementations, add tests for concurrent access.
 - For `ArrayPool` usage, verify buffers are returned (no leaks).

@@ -8,6 +8,7 @@ using System.Data.Common;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Parser;
 
 #nullable enable
 

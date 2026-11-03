@@ -49,12 +49,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
             s_SQLDNSInfo.GetProperty("Port", BindingFlags.Instance | BindingFlags.Public);
 
         // TdsParser
-        private static readonly Type s_tdsParser = s_MicrosoftDotData.GetType("Microsoft.Data.SqlClient.TdsParser");
+        private static readonly Type s_tdsParser = s_MicrosoftDotData.GetType("Microsoft.Data.SqlClient.Parser.TdsParser");
         private static readonly FieldInfo s_tdsParser_physicalStateObj =
             s_tdsParser.GetField("_physicalStateObj", BindingFlags.Instance | BindingFlags.NonPublic);
 
         // TdsParserStateObject
-        private static readonly Type s_tdsParserStateObject = s_MicrosoftDotData.GetType("Microsoft.Data.SqlClient.TdsParserStateObject");
+        private static readonly Type s_tdsParserStateObject = s_MicrosoftDotData.GetType("Microsoft.Data.SqlClient.Parser.TdsParserStateObject");
         private static readonly FieldInfo s_tdsParserStateObject_enforcedTimeoutDelayInMilliSeconds =
             s_tdsParserStateObject.GetField("_enforcedTimeoutDelayInMilliSeconds", BindingFlags.Instance | BindingFlags.NonPublic);
         private static readonly FieldInfo s_tdsParserStateObject_enforceTimeoutDelay =
@@ -117,7 +117,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
             VerifyObjectIsInternalConnection(internalConnection);
             return (bool)s_dbConnectionInternal_IsTransationRoot.GetValue(internalConnection, null);
         }
-        
+
         public static bool IsTxRootWaitingForTxEnd(object internalConnection)
         {
             VerifyObjectIsInternalConnection(internalConnection);

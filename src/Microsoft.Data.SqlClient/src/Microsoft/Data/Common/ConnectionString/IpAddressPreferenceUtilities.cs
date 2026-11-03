@@ -13,15 +13,12 @@ namespace Microsoft.Data.Common.ConnectionString
         /// <summary>
         /// IP Address Preference.
         /// </summary>
-        private static readonly Dictionary<string, SqlConnectionIPAddressPreference> s_preferenceNames = new(StringComparer.InvariantCultureIgnoreCase);
-
-        static IpAddressPreferenceUtilities()
+        private static readonly Dictionary<string, SqlConnectionIPAddressPreference> s_preferenceNames = new(StringComparer.InvariantCultureIgnoreCase)
         {
-            foreach (SqlConnectionIPAddressPreference item in Enum.GetValues(typeof(SqlConnectionIPAddressPreference)))
-            {
-                s_preferenceNames.Add(item.ToString(), item);
-            }
-        }
+            { nameof(SqlConnectionIPAddressPreference.IPv4First), SqlConnectionIPAddressPreference.IPv4First },
+            { nameof(SqlConnectionIPAddressPreference.IPv6First), SqlConnectionIPAddressPreference.IPv6First },
+            { nameof(SqlConnectionIPAddressPreference.UsePlatformDefault), SqlConnectionIPAddressPreference.UsePlatformDefault },
+        };
 
         /// <summary>
         ///  Convert a string value to the corresponding IPAddressPreference.

@@ -204,6 +204,9 @@
   <data name="ADP_PooledOpenTimeout" xml:space="preserve">
     <value>已超過連接逾時的設定。在取得集區連接之前超過逾時等待的時間，可能的原因為所有的共用連接已在使用中，並已達共用集區大小的最大值。</value>
   </data>
+  <data name="ADP_IsolationLevelResetTimeout" xml:space="preserve">
+    <value>等候逾時已過時。 集區連線的交易隔離層級在連線逾時期間結束前無法重設。</value>
+  </data>
   <data name="ADP_NonPooledOpenTimeout" xml:space="preserve">
     <value>嘗試開啟連線時發生逾時。已超過嘗試開啟連線前所經過的時間。這可能是過多同時非共用連線嘗試所造成。</value>
   </data>
@@ -1779,6 +1782,9 @@
   <data name="TCE_EnclaveTypeNullForEnclaveBasedQuery" xml:space="preserve">
     <value>內部錯誤。執行需要 enclave 計算的查詢時，從 SQL Server 收到了 null 或空白的 enclave 類型。</value>
   </data>
+  <data name="TCE_AzureAttestationExtensionNotFound" xml:space="preserve">
+    <value>證明協定 'AAS' 需要 Microsoft.Data.SqlClient.Extensions.Azure 套件，且版本必須與 Microsoft.Data.SqlClient 相同。請新增或更新此套件參考，或在連接字串中指定其他證明協定。</value>
+  </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
     <value>找不到記憶體保護區類型 '{0}' 和證明通訊協定 '{1}' 的記憶體保護區提供者。請在連接字串中指定正確的證明通訊協定。 </value>
   </data>
@@ -2046,6 +2052,9 @@
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
     <value>在父命令上啟用 EnableOptimizedParameterBinding 時，參數 '{0}' 不能具有方向輸出或 InputOutput。</value>
   </data>
+  <data name="SQL_PrepareNotSupportedForOptimizedBinding" xml:space="preserve">
+    <value>啟用 EnableOptimizedParameterBinding 時不支援準備。建立新的 SqlCommand，並在第一次執行之前將 EnableOptimizedParameterBinding 設定為 false，或執行而不呼叫 Prepare。</value>
+  </data>
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
     <value>使用 '{0}' 驗證方法擷取存取權杖時已逾時。上次錯誤: {1}: {2}</value>
   </data>
@@ -2078,6 +2087,9 @@
   </data>
   <data name="SqlAppContextSwitchManager_InvalidValue" xml:space="preserve">
     <value>嘗試設定 AppCoNtext 切換 '{0}'={1} 時發生例外。</value>
+  </data>
+  <data name="SQL_GlobalizationInvariantModeRequiresLcid" xml:space="preserve">
+    <value>啟用全球化不變模式時，描述字元或文字類型的 SqlMetaData 執行個體必須指定 LCID。</value>
   </data>
   <data name="SQL_GlobalizationInvariantModeNotSupported" xml:space="preserve">
     <value>不支援全域固定模式。</value>

@@ -8,6 +8,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Xml;
+using Microsoft.Data.SqlClient.Parser;
+using Microsoft.Data.SqlClient.Parser.Tokens;
 using Microsoft.Data.SqlTypes;
 
 namespace Microsoft.Data.SqlClient
@@ -35,7 +37,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Reads off from the network buffer and caches bytes. Only reads one column value in the current row.
         /// </summary>
-        internal static TdsOperationStatus TryCreate(SqlMetaDataPriv metadata, TdsParser parser, TdsParserStateObject stateObj, out SqlCachedBuffer buffer)
+        internal static TdsOperationStatus TryCreate(TdsTypeInfo metadata, TdsParser parser, TdsParserStateObject stateObj, out SqlCachedBuffer buffer)
         {
             buffer = null;
 
@@ -65,7 +67,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // For now we  only handle Plp data from the parser directly.
-            Debug.Assert(metadata.metaType.IsPlp, "SqlCachedBuffer call on a non-plp data");
+            Debug.Assert(metadata.MetaType.IsPlp, "SqlCachedBuffer call on a non-plp data");
             do
             {
                 if (plplength == 0)

@@ -35,7 +35,6 @@ parameters:
   # The C# project reference type to use when building and packing the packages.
   - name: referenceType
     type: string
-    default: Package
     values:
       # Reference sibling packages as NuGet packages.
       - Package
@@ -67,6 +66,10 @@ parameters:
   - name: retryCountOnManualTests
     type: number
     default: 2
+
+  - name: enableNetOnlyTests
+    type: boolean
+    default: false
 
 steps:
 - ${{ if parameters.debug }}:
@@ -192,6 +195,15 @@ steps:
   - task: DotNetCoreCLI@2
     displayName: 'Run Manual Tests ${{parameters.msbuildArchitecture }}'
     condition: and(eq(variables['setupSucceeded'], 'true'), succeededOrFailed())
+    ${{ if parameters.enableNetOnlyTests }}:
+      # Configure-NetOnlyAccount.ps1 publishes these job variables during net-only account setup.
+      # Map them explicitly into the test process, including the secret password.
+      env:
+        SQLCLIENT_NETONLY_REQUIRED: 'true'
+        SQLCLIENT_NETONLY_USER: $(netOnlyUser)
+        SQLCLIENT_NETONLY_DOMAIN: $(netOnlyDomain)
+        SQLCLIENT_NETONLY_PASSWORD: $(netOnlyPassword)
+        SQLCLIENT_NETONLY_CONNECTION_STRING: $(netOnlyConnectionString)
     inputs:
       command: build
       projects: build.proj

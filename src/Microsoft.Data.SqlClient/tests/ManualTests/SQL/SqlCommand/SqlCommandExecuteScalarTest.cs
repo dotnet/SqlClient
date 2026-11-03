@@ -22,7 +22,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string tableName = DataTestUtility.GetLongName("GH3736");
 
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             connection.Open();
 
             try
@@ -63,7 +63,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string sourceTable = DataTestUtility.GetLongName("GH3736_Src");
             string targetTable = DataTestUtility.GetLongName("GH3736_Tgt");
 
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             connection.Open();
 
             try
@@ -123,7 +123,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void ExecuteScalar_ShouldWorkCorrectlyWithoutError()
         {
             // Arrange
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             connection.Open();
             using SqlCommand cmd = new("SELECT 42", connection);
 
@@ -141,7 +141,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void ExecuteScalar_ShouldReturnNullWhenNoRows()
         {
             // Arrange
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             connection.Open();
             using SqlCommand cmd = new("SELECT 1 WHERE 1 = 0", connection);
 
@@ -160,7 +160,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string tableName = DataTestUtility.GetLongName("GH3736_Async");
 
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             await connection.OpenAsync();
 
             try
@@ -198,7 +198,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string sourceTable = DataTestUtility.GetLongName("GH3736_AsyncSrc");
             string targetTable = DataTestUtility.GetLongName("GH3736_AsyncTgt");
 
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             await connection.OpenAsync();
 
             try
@@ -258,7 +258,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static async Task ExecuteScalarAsync_ShouldWorkCorrectlyWithoutError()
         {
             // Arrange
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             await connection.OpenAsync();
             using SqlCommand cmd = new("SELECT 42", connection);
 
@@ -276,7 +276,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static async Task ExecuteScalarAsync_ShouldReturnNullWhenNoRows()
         {
             // Arrange
-            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             await connection.OpenAsync();
             using SqlCommand cmd = new("SELECT 1 WHERE 1 = 0", connection);
 

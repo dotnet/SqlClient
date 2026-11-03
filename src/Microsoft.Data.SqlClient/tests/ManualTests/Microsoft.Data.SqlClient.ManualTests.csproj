@@ -8,7 +8,7 @@
 
   <!-- Target Frameworks =============================================== -->
   <PropertyGroup>
-    <TargetFrameworks>net462;net8.0;net9.0;net10.0</TargetFrameworks>
+    <TargetFrameworks>net462;net10.0</TargetFrameworks>
   </PropertyGroup>
 
   <!-- Links to Resources/etc ========================================== -->
@@ -54,11 +54,18 @@
     </None>
   </ItemGroup>
 
+  <!-- Strong name signing ============================================= -->
+  <!-- Signed packages grant ManualTests access using the shared sqlclient-test-key.snk test key. -->
+  <PropertyGroup Condition="'$(TestSigningKeyPath)' != ''">
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(TestSigningKeyPath)</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+
   <!-- References ====================================================== -->
   <!-- Test target references -->
   <ItemGroup>
     <ProjectReference Include="$(RepoRoot)src/Microsoft.SqlServer.Server/Microsoft.SqlServer.Server.csproj"
-                      Condition="'$(ReferenceType)' != 'Package'" />
+                      Condition="'$(ReferenceType)' == 'Project'" />
     <PackageReference Include="Microsoft.SqlServer.Server"
                       Condition="'$(ReferenceType)' == 'Package'" />
   </ItemGroup>
@@ -70,21 +77,37 @@
     <!-- to "Package". If this is not specified, the build will revert to default behavior of     -->
     <!-- referencing MDS via the project.                                                         -->
     <ProjectReference Include="$(RepoRoot)src\Microsoft.Data.SqlClient\src\Microsoft.Data.SqlClient.csproj"
-                      Condition="'$(ReferenceType)' != 'Package'"
+                      Condition="'$(ReferenceType)' == 'Project'"
                       Private="true" />
+    <!-- Internal diagnostics require the implementation assembly, not the public ref asset. -->
     <PackageReference Include="Microsoft.Data.SqlClient"
+                      Condition="'$(ReferenceType)' == 'Package'"
+                      GeneratePathProperty="true"
+                      ExcludeAssets="compile" />
+    <Reference Include="Microsoft.Data.SqlClient"
+               Condition="'$(ReferenceType)' == 'Package'"
+               HintPath="$(PkgMicrosoft_Data_SqlClient)/lib/$(TargetFramework)/Microsoft.Data.SqlClient.dll" />
+
+    <!-- The Azure extension validates Azure Attestation tokens for the AAS enclave tests. -->
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient.Extensions/Azure/src/Azure.csproj"
+                      Condition="'$(ReferenceType)' == 'Project'" />
+    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Azure"
                       Condition="'$(ReferenceType)' == 'Package'" />
 
-    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
-    <!-- @TODO: Should there be a package mode test for AKV? -->
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider/src/Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj"
+                      Condition="'$(ReferenceType)' == 'Project'" />
+    <PackageReference Include="Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider"
+                      Condition="'$(ReferenceType)' == 'Package'" />
   </ItemGroup>
 
   <!-- References for netfx -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
     <Reference Include="System.Transactions" />
 
-    <PackageReference Include="Azure.Identity" />
+    <PackageReference Include="Azure.Core" />
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
+    <!-- The AKV reference assembly graph does not carry the driver's TimeProvider dependency. -->
+    <PackageReference Include="Microsoft.Bcl.TimeProvider" />
     <PackageReference Include="System.Memory" />
     <PackageReference Include="System.ValueTuple" />
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
@@ -101,6 +124,7 @@
 
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/Common/Microsoft.Data.SqlClient.TestCommon.csproj" />
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/CustomConfigurableRetryLogic/CustomRetryLogicProvider.csproj" />
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/UnloadableLibrary/UnloadableLibrary.csproj" />
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/TestUdts/Address/Address.csproj" />
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/TestUdts/Circle/Circle.csproj" />
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/TestUdts/Shapes/Shapes.csproj" />
@@ -113,7 +137,7 @@
 
   <!-- References for netcore -->
   <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
-    <PackageReference Include="Azure.Identity" />
+    <PackageReference Include="Azure.Core" />
     <PackageReference Include="Microsoft.Bcl.Cryptography" />
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
@@ -132,6 +156,7 @@
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/TestUdts/Shapes/Shapes.csproj" />
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/TestUdts/Utf8String/Utf8String.csproj" />
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/CustomConfigurableRetryLogic/CustomRetryLogicProvider.csproj" />
+    <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/UnloadableLibrary/UnloadableLibrary.csproj" />
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj" />
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/TDS/TDS/TDS.csproj" />
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient/tests/tools/TDS/TDS.EndPoint/TDS.EndPoint.csproj" />

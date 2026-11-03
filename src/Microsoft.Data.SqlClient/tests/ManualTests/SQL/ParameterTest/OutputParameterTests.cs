@@ -33,7 +33,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void InvalidValueInOutputParameter_ShouldSucceed()
         {
             // Arrange
-            using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using var connection = DataTestUtility.CreateConnection();
             connection.Open();
 
             // Command simply sets the output param
@@ -72,7 +72,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             const string SampleText = "Text with an accented é varies by encoding";
 
-            using SqlConnection sqlConnection = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection sqlConnection = DataTestUtility.CreateConnection();
             using SqlCommand roundtripCollationCommand = new($"SELECT @Output_Varchar = convert(varchar(max), '{SampleText}') COLLATE {collation}, " +
                 $"@Output_Varbinary = convert(varbinary(max), convert(varchar(max), '{SampleText}') COLLATE {collation})", sqlConnection);
             SqlParameter outputVarcharParameter = new("@Output_Varchar", SqlDbType.VarChar, 8000)

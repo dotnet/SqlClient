@@ -187,7 +187,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 {
                     for (int j = 0; j < iterationsPerTask; j++)
                     {
-                        using var conn = new SqlConnection(_connectionString);
+                        await using var conn = new SqlConnection(_connectionString);
                         await conn.OpenAsync();
                         // immediate return to pool
                     }
@@ -250,13 +250,13 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                     var rng = new Random(seed);
                     for (int j = 0; j < 10; j++)
                     {
-                        using var conn = new SqlConnection(_connectionString);
+                        await using var conn = new SqlConnection(_connectionString);
                         await conn.OpenAsync();
 
                         // ~50% of the time, execute a lightweight query while holding the connection
                         if (rng.Next(2) == 0)
                         {
-                            using var cmd = new SqlCommand($"SELECT TOP 1 Val FROM {_tableName}", conn);
+                            await using var cmd = new SqlCommand($"SELECT TOP 1 Val FROM {_tableName}", conn);
                             _ = await cmd.ExecuteScalarAsync();
                         }
 
@@ -288,17 +288,17 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 {
                     for (int j = 0; j < 10; j++)
                     {
-                        using var conn = new SqlConnection(_connectionString);
+                        await using var conn = new SqlConnection(_connectionString);
                         if (useAsync)
                         {
                             await conn.OpenAsync();
-                            using var cmd = new SqlCommand($"SELECT COUNT(*) FROM {_tableName}", conn);
+                            await using var cmd = new SqlCommand($"SELECT COUNT(*) FROM {_tableName}", conn);
                             _ = await cmd.ExecuteScalarAsync();
                         }
                         else
                         {
                             conn.Open();
-                            using var cmd = new SqlCommand($"SELECT COUNT(*) FROM {_tableName}", conn);
+                            await using var cmd = new SqlCommand($"SELECT COUNT(*) FROM {_tableName}", conn);
                             _ = cmd.ExecuteScalar();
                         }
                     }
@@ -322,16 +322,16 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 tasks[i] = Task.Run(async () =>
                 {
                     var rng = new Random(seed);
-                    using var conn = new SqlConnection(_connectionString);
+                    await using var conn = new SqlConnection(_connectionString);
                     await conn.OpenAsync();
 
                     // Execute a burst of 5-15 commands on the same connection
                     int commandCount = rng.Next(5, 16);
                     for (int c = 0; c < commandCount; c++)
                     {
-                        using var cmd = new SqlCommand($"SELECT Val FROM {_tableName} WHERE Id = @id", conn);
+                        await using var cmd = new SqlCommand($"SELECT Val FROM {_tableName} WHERE Id = @id", conn);
                         cmd.Parameters.AddWithValue("@id", rng.Next(1, 6));
-                        using var reader = await cmd.ExecuteReaderAsync();
+                        await using var reader = await cmd.ExecuteReaderAsync();
                         while (await reader.ReadAsync()) { }
                     }
                 });
@@ -363,11 +363,11 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 tasks[i] = Task.Run(async () =>
                 {
                     var rng = new Random(seed);
-                    using var conn = new SqlConnection(_connectionString);
+                    await using var conn = new SqlConnection(_connectionString);
                     await conn.OpenAsync();
 
                     // Hold the connection for 10-100ms to create pool pressure
-                    using var cmd = new SqlCommand($"SELECT TOP 1 Val FROM {_tableName}", conn);
+                    await using var cmd = new SqlCommand($"SELECT TOP 1 Val FROM {_tableName}", conn);
                     _ = await cmd.ExecuteScalarAsync();
 
                     await Task.Delay(rng.Next(10, 101));
@@ -396,15 +396,15 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                     tasks[i] = Task.Run(async () =>
                     {
                         var rng = new Random(seed);
-                        using var conn = new SqlConnection(_connectionString);
+                        await using var conn = new SqlConnection(_connectionString);
                         await conn.OpenAsync();
 
                         // Each connection in the burst does 1-5 queries
                         int queryCount = rng.Next(1, 6);
                         for (int q = 0; q < queryCount; q++)
                         {
-                            using var cmd = new SqlCommand($"SELECT Val FROM {_tableName}", conn);
-                            using var reader = await cmd.ExecuteReaderAsync();
+                            await using var cmd = new SqlCommand($"SELECT Val FROM {_tableName}", conn);
+                            await using var reader = await cmd.ExecuteReaderAsync();
                             while (await reader.ReadAsync()) { }
                         }
                     });

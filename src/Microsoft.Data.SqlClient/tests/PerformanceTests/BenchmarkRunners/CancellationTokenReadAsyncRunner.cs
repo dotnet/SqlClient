@@ -99,10 +99,10 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         [Benchmark]
         public async Task ReadAsyncWithOrWithoutToken()
         {
-            using var conn = new SqlConnection(_connectionString);
+            await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
-            using var cmd = new SqlCommand(_query, conn);
-            using var reader = await cmd.ExecuteReaderAsync();
+            await using var cmd = new SqlCommand(_query, conn);
+            await using var reader = await cmd.ExecuteReaderAsync();
 
             if (UseCancellationToken)
             {

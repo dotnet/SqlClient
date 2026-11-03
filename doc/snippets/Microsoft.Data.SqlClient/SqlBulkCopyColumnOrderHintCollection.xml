@@ -101,7 +101,7 @@ Transact-SQL `INSERT … SELECT` statement to copy the data.
       <remarks>
         <format type="text/markdown">
           <![CDATA[  
-The <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection.Clear> method is most commonly used when you use a single <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instance to process more than one bulk copy operation. If you create column order hints for one bulk copy operation, you must clear the <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection> after the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer> method and before processing the next bulk copy.  
+The <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection.Clear> method is most commonly used when you use a single <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instance to process more than one bulk copy operation. If you create column order hints for one bulk copy operation, you must clear the <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection> after the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer%2A> method and before processing the next bulk copy.
 
 Performing several bulk copies using the same <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instance will usually be more efficient from a performance point of view than using a separate <xref:Microsoft.Data.SqlClient.SqlBulkCopy> for each operation.  
 
@@ -233,8 +233,8 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
       <remarks>
         <format type="text/markdown">
           <![CDATA[  
-The <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection.RemoveAt> method is most commonly used when you use a single <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instance to process more than one bulk copy operation. If you create column order hints for one bulk copy operation, you must clear the <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection> after the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer> method and before processing the next bulk copy. 
-You can clear the entire collection by using the <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection.Clear> method, or remove hints individually using the <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection.Remove> method or the <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection.RemoveAt> method.  
+The <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection.RemoveAt%2A> method is most commonly used when you use a single <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instance to process more than one bulk copy operation. If you create column order hints for one bulk copy operation, you must clear the <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection> after the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.WriteToServer%2A> method and before processing the next bulk copy.
+You can clear the entire collection by using the <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection.Clear> method, or remove hints individually using the <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection.Remove%2A> method or the <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection.RemoveAt%2A> method.
 
 Performing several bulk copies using the same <xref:Microsoft.Data.SqlClient.SqlBulkCopy> instance will usually be more efficient from a performance point of view than using a separate <xref:Microsoft.Data.SqlClient.SqlBulkCopy> for each operation.  
 

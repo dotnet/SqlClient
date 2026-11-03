@@ -34,7 +34,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         [Benchmark]
         public async Task OpenAsyncConnection()
         {
-            using var sqlConnection = new SqlConnection(s_config.ConnectionString + $";Pooling={Pooling};MultipleActiveResultSets={MARS}");
+            await using var sqlConnection = new SqlConnection(s_config.ConnectionString + $";Pooling={Pooling};MultipleActiveResultSets={MARS}");
             await sqlConnection.OpenAsync();
         }
     }

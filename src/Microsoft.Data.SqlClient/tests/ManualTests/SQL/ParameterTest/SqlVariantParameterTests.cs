@@ -78,14 +78,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             yield return new object[] { new SqlInt64(1), "System.Data.SqlTypes.SqlInt64", "bigint" };
             yield return new object[] { new SqlDecimal(1234.123M), "System.Data.SqlTypes.SqlDecimal", "numeric" };
             yield return new object[] { new SqlDateTime(DateTime.Now), "System.Data.SqlTypes.SqlDateTime", "datetime" };
-            // SqlMoney is coerced to decimal (numeric) by SqlBulkCopy (see https://github.com/dotnet/SqlClient/issues/4040).
-            // ValidateBulkCopyVariant strips all INullable SqlTypes to their CLR equivalents via
-            // MetaType.GetComValueFromSqlVariant, which converts SqlMoney to decimal. For most types
-            // the CLR value maps back to the same TDS type (e.g. SqlInt32 -> int -> SQLINT4), but
-            // decimal maps to SQLNUMERICN instead of SQLMONEY. The normal parameter path works
-            // around this in WriteSqlVariantValue using a length==8 heuristic, but
-            // WriteSqlVariantDataRowValue (used by bulk copy) has no such recovery logic.
-            yield return new object[] { new SqlMoney(123.123M), "System.Data.SqlTypes.SqlDecimal", "numeric" };
+            yield return new object[] { new SqlMoney(123.123M), "System.Data.SqlTypes.SqlMoney", "money" };
         }
 
         /// <summary>

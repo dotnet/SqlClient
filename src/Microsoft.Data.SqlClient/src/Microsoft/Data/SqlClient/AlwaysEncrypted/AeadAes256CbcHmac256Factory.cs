@@ -21,8 +21,10 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
     /// </remarks>
     internal sealed class AeadAes256CbcHmac256Factory : EncryptionAlgorithmFactory
     {
+        private static readonly AeadAes256CbcHmac256Factory s_singletonInstance = new();
+
         /// <summary>
-        /// Factory classes cache the <see cref="SqlAeadAes256CbcHmac256EncryptionKey" /> objects to avoid recomputation of the derived keys.
+        /// Factory classes cache the <see cref="AeadAes256CbcHmac256EncryptionKey" /> objects to avoid recomputation of the derived keys.
         /// </summary>
         private readonly ConcurrentDictionary<string, SqlAeadAes256CbcHmac256Algorithm> _encryptionAlgorithms =
             new(concurrencyLevel: 4 * Environment.ProcessorCount /* default value in ConcurrentDictionary */, capacity: 2);
@@ -32,7 +34,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
         /// <summary>
         /// Access the instance of the factory class for the AEAD_AES_256_CBC_HMAC_SHA256 encryption algorithm.
         /// </summary>
-        public static AeadAes256CbcHmac256Factory Instance => field ??= new();
+        public static AeadAes256CbcHmac256Factory Instance => s_singletonInstance;
 
         /// <summary>
         /// Creates an instance of the <see cref="SqlAeadAes256CbcHmac256Algorithm" /> class with a given root key.
@@ -41,18 +43,18 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
         /// <param name="encryptionType">Encryption type. Expected values are either Deterministic or Randomized.</param>
         /// <param name="encryptionAlgorithm">Cryptographic algorithm.</param>
         /// <returns>An implementation of the AEAD_AES_256_CBC_HMAC_SHA256 cryptographic algorithm.</returns>
-        internal override SqlClientEncryptionAlgorithm Create(SqlClientSymmetricKey encryptionKey, SqlClientEncryptionType encryptionType, string encryptionAlgorithm)
+        internal override SqlClientEncryptionAlgorithm Create(SymmetricKey encryptionKey, EncryptionType encryptionType, string encryptionAlgorithm)
         {
             // Callers should have validated the encryption algorithm and the encryption key
             Debug.Assert(string.Equals(encryptionAlgorithm, SqlAeadAes256CbcHmac256Algorithm.AlgorithmName, StringComparison.OrdinalIgnoreCase));
 
             // Validate encryption type
-            if (encryptionType is not SqlClientEncryptionType.Deterministic and not SqlClientEncryptionType.Randomized)
+            if (encryptionType is not EncryptionType.Deterministic and not EncryptionType.Randomized)
             {
                 throw SQL.InvalidEncryptionType(SqlAeadAes256CbcHmac256Algorithm.AlgorithmName,
                                                 encryptionType,
-                                                SqlClientEncryptionType.Deterministic,
-                                                SqlClientEncryptionType.Randomized);
+                                                EncryptionType.Deterministic,
+                                                EncryptionType.Randomized);
             }
 
             // Get the cached cryptographic algorithm if one exists or create a new one, add it to cache and use it
@@ -70,7 +72,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
 
             if (!_encryptionAlgorithms.TryGetValue(algorithmKey, out SqlAeadAes256CbcHmac256Algorithm? aesAlgorithm))
             {
-                SqlAeadAes256CbcHmac256EncryptionKey encryptedKey = new(encryptionKey.RootKey, SqlAeadAes256CbcHmac256Algorithm.AlgorithmName);
+                AeadAes256CbcHmac256EncryptionKey encryptedKey = new(encryptionKey.RootKey);
                 aesAlgorithm = new SqlAeadAes256CbcHmac256Algorithm(encryptedKey, encryptionType, SqlAeadAes256CbcHmac256Algorithm.CurrentVersion);
 
                 // In case multiple threads reach here at the same time, the first one adds the value

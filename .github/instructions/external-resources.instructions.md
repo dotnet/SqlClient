@@ -50,15 +50,17 @@ When working with Microsoft.Data.SqlClient, reference official documentation for
 
 ## .NET Version Compatibility
 
-> This table describes runtime/test compatibility. The main driver project currently targets `net462`, `net8.0`, and `net9.0`; newer runtimes may be used for testing even if no TFM is shipped for them.
+> The driver implementation targets `net462;net10.0`. Reference and unsupported-platform projects also retain `netstandard2.0`, which does not extend driver runtime support. Existing dual-target tests target `net462;net10.0`; modern-only tests, including performance tests, target `net10.0`.
 
 | .NET Version | Status | Notes |
 |--------------|--------|-------|
-| .NET Framework 4.6.2 | Supported | Minimum for netfx |
+| .NET Framework 4.6.2 | Supported | Minimum for netfx; shipped `net462` TFM |
 | .NET Framework 4.8.1 | Supported | Latest netfx |
-| .NET 8.0 | Supported | LTS; shipped TFM |
-| .NET 9.0 | Supported | STS; shipped TFM |
-| .NET 10.0 | In testing | Runtime/test-only; package does not currently ship a `net10.0` TFM |
+| .NET 8.0 / .NET 9.0 | Not supported by this branch | No shipped or test TFM |
+| .NET 10.0 | Supported | Minimum modern runtime; shipped `net10.0` TFM |
+
+PackageCompatibility tool/tests retain `net481;net10.0` (xUnit v3), and AzureSqlConnector retains
+`net481;net10.0-windows`. The historical SniCloseLegacyRepro matrix is unchanged.
 
 ## Related Projects
 

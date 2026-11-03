@@ -15,8 +15,7 @@ namespace Microsoft.Data.SqlClient.UnitTests;
 
 /// <summary>
 /// Unit tests validating that <see cref="SqlConfigurableRetryLogicLoader"/> never leaves a
-/// process-wide assembly resolving handler attached to
-/// <see cref="AssemblyLoadContext.Default"/>.
+/// process-wide assembly resolving handler attached to the current <see cref="AssemblyLoadContext"/>.
 /// </summary>
 /// <remarks>
 /// A handler left attached there participates in resolution of every assembly the host
@@ -29,7 +28,7 @@ public class SqlConfigurableRetryLogicLoaderTest
 {
     /// <summary>
     /// The default code path: no configuration at all. The loader must not subscribe to the
-    /// default load context.
+    /// current load context.
     /// </summary>
     [Fact]
     public void Constructor_WithNoConfiguration_DoesNotLeaveAssemblyProbingEnabled()
@@ -228,8 +227,8 @@ public class SqlConfigurableRetryLogicLoaderTest
     /// <summary>
     /// Asserts that a failed assembly load is not served out of the loader's probing directory,
     /// which can only happen while a resolving handler installed by
-    /// <see cref="SqlConfigurableRetryLogicLoader"/> is subscribed to
-    /// <see cref="AssemblyLoadContext.Default"/>.
+    /// <see cref="SqlConfigurableRetryLogicLoader"/> is subscribed to the current
+    /// <see cref="AssemblyLoadContext"/>.
     /// </summary>
     /// <remarks>
     /// A file that is not a valid assembly is planted in the probing directory under a name no
@@ -259,7 +258,7 @@ public class SqlConfigurableRetryLogicLoaderTest
 
     /// <summary>
     /// Reports whether a resolving handler that serves assemblies out of the loader's probing
-    /// directory is currently subscribed to <see cref="AssemblyLoadContext.Default"/>.
+    /// directory is currently subscribed to the current <see cref="AssemblyLoadContext"/>.
     /// </summary>
     /// <remarks>
     /// This distinguishes the two states using only public behaviour, which is what actually

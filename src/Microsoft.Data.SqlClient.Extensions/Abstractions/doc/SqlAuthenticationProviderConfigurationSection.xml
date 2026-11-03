@@ -1,0 +1,49 @@
+<!--
+Licensed to the .NET Foundation under one or more agreements.
+The .NET Foundation licenses this file to you under the MIT license.
+See the LICENSE file in the project root for more information.
+-->
+<docs>
+  <members name="SqlAuthenticationProviderConfigurationSection">
+    <SqlAuthenticationProviderConfigurationSection>
+      <summary>
+        The configuration section definition for reading app.config.
+        This infrastructure type is not intended for direct use by application code.
+      </summary>
+      <remarks>
+        <para>Defines the legacy <c>SqlAuthenticationProviders</c> section for authentication configuration.</para>
+        <para>
+          This type is public to support use across SqlClient assemblies and configuration
+          section activation. Applications should not instantiate, derive from, or access
+          this type directly.
+        </para>
+        <para>This sealed handler derives directly from <see cref="T:System.Configuration.ConfigurationSection"/>.</para>
+        <para>Referencing this handler in an app.config section declaration is supported.</para>
+      </remarks>
+    </SqlAuthenticationProviderConfigurationSection>
+    <Name>
+      <summary>The name of the legacy authentication configuration section.</summary>
+    </Name>
+    <Providers>
+      <summary>User-defined auth providers.</summary>
+      <value>The collection of user-defined authentication providers.</value>
+    </Providers>
+    <InitializerType>
+      <summary>User-defined initializer.</summary>
+      <value>The assembly-qualified initializer type name, or an empty string when unset.</value>
+    </InitializerType>
+    <ApplicationClientId>
+      <summary>Application Client Id</summary>
+      <value>The application client ID, or an empty string when unset.</value>
+    </ApplicationClientId>
+    <UseWamBroker>
+      <summary>
+        Forwarded to <c>ActiveDirectoryAuthenticationProviderOptions.UseWamBroker</c>
+        when the Azure extension's default provider is auto-installed. Stored as a string so
+        that an unset attribute can be distinguished from <c>useWamBroker="false"</c>; the
+        runtime parses it with <see cref="M:System.Boolean.TryParse(System.String,System.Boolean@)"/>.
+      </summary>
+      <value>The Web Account Manager broker preference, or an empty string when unset.</value>
+    </UseWamBroker>
+  </members>
+</docs>

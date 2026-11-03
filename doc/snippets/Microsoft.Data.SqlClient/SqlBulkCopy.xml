@@ -6,6 +6,42 @@
       </summary>
       <remarks>
         Microsoft SQL Server includes a popular command-prompt utility named **bcp** for moving data from one table to another, whether on a single server or between servers. The <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> class lets you write managed code solutions that provide similar functionality. There are other ways to load data into a SQL Server table (INSERT statements, for example), but <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> offers a significant performance advantage over them. The <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> class can be used to write data only to SQL Server tables. However, the data source is not limited to SQL Server; any data source can be used, as long as the data can be loaded to a <see cref="T:System.Data.DataTable" /> instance or read with a <see cref="T:System.Data.IDataReader" /> instance. <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> will fail when bulk loading a <see cref="T:System.Data.DataTable" /> column of type <see cref="T:System.Data.SqlTypes.SqlDateTime" /> into a SQL Server column whose type is one of the date/time types added in SQL Server 2008.
+        <para>
+          For an unencrypted native vector destination, bulk copy retains the source base type
+          in the incoming declaration and payload when source type information is available;
+          SQL Server converts to the destination column's base type. For a
+          <see cref="T:System.Data.DataTable" /> column declared as <c>object</c>, the driver
+          examines the selected in-memory rows until the first non-null value identifies the
+          representation. Leading nulls are supported, and row-array subsets and row-state
+          filters are respected. An all-null column can require examining all selected rows.
+          This lookahead is not used for ordinary text destinations.
+        </para>
+        <para>
+          Values are checked against the selected representation as they are copied; the driver
+          does not prevalidate the entire column. Do not mix native <c>SqlVector&lt;float&gt;</c>
+          and <c>SqlVector&lt;Half&gt;</c> values in one column. Existing float32 JSON coercion
+          is preserved. A later conversion failure can leave earlier batches committed;
+          use an explicit transaction when the whole operation must be atomic.
+        </para>
+        <para>
+          Reader metadata analysis does not consume row values. <c>SqlDataReader</c> supplies
+          native metadata directly. For other readers, <c>GetFieldType</c> is an optional hint
+          used only for native vector destinations. A <c>NotImplementedException</c> or
+          <c>NotSupportedException</c> is traced and treated as unavailable type information;
+          other exceptions propagate. Without a type hint, existing float32 coercion is preserved.
+          Supply JSON strings for float16 input when the reader cannot describe a native source.
+          Such strings use explicit UTF-8 text transport, leaving parsing and conversion
+          to SQL Server.
+        </para>
+        <para>
+          Bulk copy does not serialize <c>SqlVector&lt;T&gt;</c> values into JSON for
+          <c>varchar</c>, <c>nvarchar</c>, or <c>json</c> destinations. This also applies when
+          vector destinations are reported as text under <c>Vector Type Support=v1</c> or
+          <c>off</c>. Supply JSON strings instead, or explicitly cast a source SQL column to
+          <c>varchar(max)</c>. Existing string-valued sources, including .NET Framework
+          float16 string projections, continue through ordinary text conversion.
+          Use native vector destinations when binary preservation matters.
+        </para>
       </remarks>
       <example>
         <format type="text/markdown">
@@ -539,7 +575,7 @@ Transact-SQL `INSERT … SELECT` statement to copy the data.
           While the bulk copy operation is in progress, the associated destination <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> is busy serving it, and no other operations can be performed on the connection.
         </para>
         <para>
-          The <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnMappings" /> collection maps from the <see cref="T:System.Data.DataTable" /> columns to the destination database table.
+          The <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnMappings" /> collection maps from the <see cref="T:System.Data.DataTable" /> columns to the destination database table.
         </para>
       </remarks>
       <example>

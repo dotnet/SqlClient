@@ -77,6 +77,11 @@ namespace Microsoft.SqlServer.TDS.Servers
         public SslProtocols EncryptionProtocols { get; set; } = SslProtocols.Tls12;
 
         /// <summary>
+        /// Indicates that the scenario expects authentication to fail during TLS negotiation.
+        /// </summary>
+        public bool ExpectTlsHandshakeFailure { get; set; }
+
+        /// <summary>
         /// Routing destination protocol
         /// </summary>
         public string FailoverPartner { get; set; } = string.Empty;
