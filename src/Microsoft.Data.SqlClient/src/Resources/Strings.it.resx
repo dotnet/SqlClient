@@ -2107,7 +2107,7 @@
     <value>Si è verificata un'eccezione durante il tentativo di impostazione dell’opzione AppContext '{0}'={1}.</value>
   </data>
   <data name="SQL_GlobalizationInvariantModeRequiresLcid" xml:space="preserve">
-    <value>When Globalization Invariant Mode is enabled, SqlMetaData instances describing character or text types must specify an LCID.</value>
+    <value>Quando la modalità Non dipendente dalla globalizzazione è abilitata, le istanze di SqlMetaData che descrivono tipi di carattere o testo devono specificare un identificatore delle impostazioni locali.</value>
   </data>
   <data name="SQL_GlobalizationInvariantModeNotSupported" xml:space="preserve">
     <value>La modalità invariante di globalizzazione non è supportata.</value>
