@@ -279,6 +279,15 @@ fi
 
 dotnet --info
 
+# Restore repository-local build tools before any project builds.
+restore_local_tools() {
+    local source_root="$1"
+    echo "Restoring local .NET tools in ${source_root} ..."
+    (cd -- "${source_root}" && dotnet tool restore)
+}
+
+restore_local_tools "${REPO_ROOT}"
+
 ####################################################################################################
 # 2. Create the perf database on the VM's SQL Server.
 #
@@ -618,6 +627,8 @@ prepare_baseline_source() {
         echo "ERROR: baseline source tree at ${BASELINE_SRC_DIR} has no performance test project (${BASELINE_PERF_PROJECT})." >&2
         exit 1
     fi
+
+    restore_local_tools "${BASELINE_SRC_DIR}"
 
     local sha
     sha="$(git -C "${BASELINE_SRC_DIR}" rev-parse --short HEAD 2>/dev/null || echo unknown)"

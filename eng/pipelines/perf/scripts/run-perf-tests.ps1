@@ -246,6 +246,22 @@ if ($hasNet10Sdk) {
 # Informational only: never let 'dotnet --info' (or its stderr) fail the run.
 try { Invoke-Native { dotnet --info } "dotnet --info failed" } catch { Write-Warning $_.Exception.Message }
 
+# Restore repository-local build tools before any project builds.
+function Restore-LocalTools {
+    param([Parameter(Mandatory)][string]$SourceRoot)
+
+    Write-Host "Restoring local .NET tools in $SourceRoot ..."
+    Push-Location $SourceRoot
+    try {
+        Invoke-Native { dotnet tool restore } "Failed to restore local .NET tools in $SourceRoot" |
+            Out-Host
+    } finally {
+        Pop-Location
+    }
+}
+
+Restore-LocalTools $RepoRoot
+
 ####################################################################################################
 # 2. Create the perf database on the VM's SQL Server.
 #
@@ -611,6 +627,8 @@ function Initialize-BaselineSource {
     if (-not (Test-Path $baselineProject)) {
         throw "Baseline source tree at $BaselineSrcDir has no performance test project ($baselineProject)."
     }
+
+    Restore-LocalTools $BaselineSrcDir
 
     # Label recorded in the comparison output so a run states exactly which baseline commit it used.
     $label = "$Ref@$($sha.Trim())"

@@ -31,7 +31,8 @@ extends: v1/Perf.Test.Job.yml@PerfTemplates
       │   SCPs <testResultsSubDir> back, publishes it, tears the VM down)
       ▼
 ON THE VM  ── run-perf-tests.{sh,ps1}
-      1. Install the .NET SDK pinned by global.json (+ the .NET 10.0 runtime).
+      1. Install the .NET SDK pinned by global.json (+ the .NET 10.0 runtime), then run
+         dotnet tool restore from the repository root before building.
       2. Create the perf database on the VM's SQL Server.
       3. Inject the VM SQL connection string into runnerconfig.
       4. Baseline pass  → MDS <baselineVersion> from the governed feed (Package mode) → results/baseline/
