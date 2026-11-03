@@ -29,7 +29,7 @@
   <!-- References ====================================================== -->
   <!-- Test target reference -->
   <!-- Internal helpers require a driver with matching internals and an InternalsVisibleTo grant. -->
-  <PropertyGroup Condition="'$(ReferenceType)' == 'Package'">
+  <PropertyGroup Condition="'$(ReferenceType)' == 'Package' and '$(MdsPackageVersion)' == ''">
     <!-- Map to the closest TFM shipped in the driver package. -->
     <_SqlClientPackageTfm Condition="'$(TargetFramework)' == 'net462'">net462</_SqlClientPackageTfm>
     <_SqlClientPackageTfm Condition="'$(_SqlClientPackageTfm)' == ''">net10.0</_SqlClientPackageTfm>
@@ -51,15 +51,19 @@
                       ExcludeAssets="compile" />
     <PackageReference Include="Microsoft.Data.SqlClient"
                       Condition="'$(ReferenceType)' == 'Package' and '$(MdsPackageVersion)' != ''"
-                      VersionOverride="$(MdsPackageVersion)"
-                      GeneratePathProperty="true"
-                      ExcludeAssets="compile" />
+                      VersionOverride="$(MdsPackageVersion)" />
     <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Abstractions"
                       Condition="'$(ReferenceType)' == 'Package' and '$(MdsPackageVersion)' == ''" />
     <!-- Compile against the implementation DLL; the package's ref assembly omits internals. -->
     <Reference Include="Microsoft.Data.SqlClient"
-               Condition="'$(ReferenceType)' == 'Package'"
+               Condition="'$(ReferenceType)' == 'Package' and '$(MdsPackageVersion)' == ''"
                HintPath="$(PkgMicrosoft_Data_SqlClient)/lib/$(_SqlClientPackageTfm)/Microsoft.Data.SqlClient.dll" />
+  </ItemGroup>
+
+  <!-- Perf baselines use public APIs; current switch helpers require matching driver internals. -->
+  <ItemGroup Condition="'$(ReferenceType)' == 'Package' and '$(MdsPackageVersion)' != ''">
+    <Compile Remove="LocalAppContextSwitchesHelper.cs" />
+    <Compile Remove="ConnectionPoolVersionScope.cs" />
   </ItemGroup>
 
   <!--

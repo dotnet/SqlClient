@@ -34,7 +34,7 @@ ON THE VM  ── run-perf-tests.{sh,ps1}
       1. Install the .NET SDK pinned by global.json (+ the .NET 10.0 runtime).
       2. Create the perf database on the VM's SQL Server.
       3. Inject the VM SQL connection string into runnerconfig.
-      4. Baseline pass  → MDS <baselineVersion> from NuGet.org (Package mode)   → results/baseline/
+      4. Baseline pass  → MDS <baselineVersion> from the governed feed (Package mode) → results/baseline/
          (PR pipeline: MDS built from the <baselineSourceRef> source tree)
       5. Current  pass  → MDS built from source (ProjectReference)              → results/current/
          (both pinned to PERF_CLIENT_CPUS; interleaved per-unit by default, or two full
@@ -60,7 +60,7 @@ context variables are available (the VM is behind NAT and lacks the pipeline ide
 | `platform` | `linux` | `linux` or `windows` VM + client. |
 | `dotnetFramework` | `net10.0` | TFM the benchmarks run against (`net10.0` only). |
 | `testTimeoutMinutes` | `180` | Template timeout waiting for the VM run. |
-| `baselineVersion` | `7.0.2` | **Baseline Version** — released MDS the branch is compared against. Empty = current-only (no baseline pass / comparison). |
+| `baselineVersion` | `latest` | Highest stable MDS version in the governed feed, resolved at run time. Pin an explicit version to override. Empty = current-only (no baseline pass / comparison). |
 | `regressionThreshold` | `10` | Percent slowdown (current vs baseline mean) flagged as a regression. |
 | `failOnRegression` | `false` | When `true`, a candidate-slower regression **fails** the run (gate). In interleaved mode only **confirmed** regressions (best-of-N majority) fail. Default off. |
 | `benchmarkRunMode` | `interleaved` | `interleaved` (per-unit baseline↔candidate + best-of-N confirmation) or `sequential` (legacy two full passes). |
@@ -93,9 +93,17 @@ cluster/service connection exist.
 
 ### Managing the baseline version
 
-`baselineVersion` is **manually managed**. After each stable release is published to NuGet.org,
-bump the `default` in `sqlclient-perf-pipeline.yml` (e.g. `7.0.2` → the next stable). It can also be
-overridden at queue time without editing the pipeline.
+The **Nightly performance run** schedule runs daily at **06:00 UTC on `main`**,
+even without source changes.
+Manual runs remain available; PRs and commits do not trigger it.
+
+The default `baselineVersion=latest` reads the `governed` source from the repository's `NuGet.config`,
+discovers its NuGet V3 package endpoint, and resolves the highest available stable version once per
+run, excluding prereleases. Baseline restores use the same config and its package source mappings;
+packages must be approved and available in the governed feed. Lookup failures fail the run rather
+than selecting a stale version or skipping comparison. The resolved version is used for the build, comparison,
+baseline build tag, and Kusto metadata, and is saved in `baseline-label.txt`.
+An explicit version can still be supplied at queue time; an empty value runs current-only.
 
 ## PR pipeline (`sqlclient-perf-pr-pipeline.yml`)
 
@@ -107,11 +115,12 @@ pipeline. It differs in exactly two ways:
 | | `sqlclient-perf-pipeline.yml` | `sqlclient-perf-pr-pipeline.yml` |
 | --- | --- | --- |
 | Candidate | branch the run is queued on | branch the run is queued on (unchanged) |
-| Baseline | released NuGet package (`baselineVersion`, default `7.0.2`) | **source of another git ref** (`baselineSourceRef`, default `main`) |
+| Baseline | released NuGet package (`baselineVersion`, default `latest`) | **source of another git ref** (`baselineSourceRef`, default `main`) |
 | Kusto | translates + (optionally) ingests | **never** — no ADX variable group, no translate/ingest steps |
 
-Both pipelines are **manual / queue-time only** (`pr: none`, `trigger: none`): a run occupies a
-dedicated host for hours, so a PR opts into it explicitly.
+The main pipeline is scheduled daily and can also be queued manually. The PR pipeline is
+**manual / queue-time only**: a run occupies a dedicated host for hours, so a PR opts into it
+explicitly. Neither pipeline triggers on PRs or commits (`pr: none`, `trigger: none`).
 
 PR-only parameters (everything else is identical to the table above):
 
@@ -283,9 +292,9 @@ The `PerformanceTests` project references Microsoft.Data.SqlClient two ways, sel
   source tree twice, so the scripts build the `current` variant once and point both passes at it,
   differing only in the runner config each pass is handed. Used by the experiment pipeline.
 
-The VM's `NuGet.config` exposes only the governed feed, and CPM rejects multiple unmapped sources
-(`NU1507`). The baseline pass therefore restores through a **dedicated single-source config**
-(`perf-baseline-nuget.config`, generated at runtime) pointing only at `https://api.nuget.org/v3/index.json`.
+The baseline pass restores through the repository's **`NuGet.config`**, passed explicitly with
+`-p:RestoreConfigFile`. This preserves its governed feed and package source mappings.
+No separate baseline config or direct NuGet.org source is generated.
 
 ### Benchmarks must compile against the oldest baseline
 
@@ -476,8 +485,8 @@ translated NDJSON as the `perf-kusto-payloads` artifact for manual/backfill inge
 
 | Symptom | Likely cause / fix |
 | ------- | ------------------ |
-| `NU1507` during the baseline pass | Multiple NuGet sources under CPM. The baseline uses a single-source config; ensure `perf-baseline-nuget.config` is being passed via `-p:RestoreConfigFile`. |
-| Baseline restore fails to find MDS | `baselineVersion` isn't a published NuGet.org version, or the VM has no outbound access to `api.nuget.org`. |
+| `NU1507` during the baseline pass | Multiple NuGet sources under CPM without package source mappings. Ensure the repository's `NuGet.config` is passed via `-p:RestoreConfigFile` and its mappings are intact. |
+| Baseline restore fails to find MDS | The requested version or one of its dependencies isn't approved and available in the governed feed, or the VM cannot access that feed. |
 | Baseline pass fails to compile: `CS1061 ... does not contain a definition for <member>` | A benchmark calls an MDS API newer than `baselineVersion`. Guard it with the `MDS_GE_<major>` constants and add an older fallback — see [Benchmarks must compile against the oldest baseline](#benchmarks-must-compile-against-the-oldest-baseline). |
 | No comparison / summary | The baseline pass was skipped (empty `baselineVersion` / `baselineSourceRef`) or one pass produced no `*-report-full.json`. |
 | `--switch-under-test is mutually exclusive with --baseline-version and --baseline-source-ref` | A switch experiment was combined with a source baseline. The experiment pipeline never does this; if you are invoking the scripts directly, clear the baseline selector — varying source and config at once makes the delta unattributable. |

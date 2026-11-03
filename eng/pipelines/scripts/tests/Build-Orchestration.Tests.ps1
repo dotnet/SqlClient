@@ -50,7 +50,7 @@ printf 'ARG:%s\n' "$@"
 
         $output = & $dotnet msbuild (Join-Path $repoRoot $Project) -nologo @Properties `
             -getProperty:TargetFramework,TargetFrameworks,_SqlClientPackageTfm `
-            -getItem:PackageReference,PackageVersion,Reference 2>&1
+            -getItem:PackageReference,PackageVersion,Reference,Compile 2>&1
         if ($LASTEXITCODE -ne 0) {
             throw "Project evaluation failed for ${Project}:`n$($output -join [Environment]::NewLine)"
         }
@@ -424,6 +424,54 @@ Describe 'supported target frameworks' {
             $central = @($result.Items.PackageVersion | Where-Object Identity -EQ $dependency.id)
             $central.Count | Should -Be 1
             $central[0].Version | Should -Be $dependency.version
+        }
+    }
+}
+
+Describe 'performance baseline TestCommon references' {
+    It 'uses public package APIs without current switch helpers for baseline <Version>' -ForEach @(
+        @{ Version = '6.1.7' }
+        @{ Version = '7.1.0-preview1.26124.5' }
+    ) {
+        # Act
+        $result = Get-ProjectEvaluation 'src\Microsoft.Data.SqlClient\tests\Common\Microsoft.Data.SqlClient.TestCommon.csproj' @(
+            '-p:TargetFramework=net10.0', '-p:ReferenceType=Package',
+            "-p:MdsPackageVersion=$Version"
+        )
+
+        # Assert
+        $package = @($result.Items.PackageReference | Where-Object Identity -EQ 'Microsoft.Data.SqlClient')
+        $package.Count | Should -Be 1
+        $package[0].VersionOverride | Should -Be $Version
+        $package[0].ExcludeAssets | Should -BeNullOrEmpty
+        @($result.Items.Reference | Where-Object Identity -EQ 'Microsoft.Data.SqlClient').Count |
+            Should -Be 0
+        $sources = @($result.Items.Compile.Identity | ForEach-Object { $_.Replace('\', '/') })
+        $sources | Should -Not -Contain 'LocalAppContextSwitchesHelper.cs'
+        $sources | Should -Not -Contain 'ConnectionPoolVersionScope.cs'
+        $sources | Should -Contain 'Fixtures/DatabaseObjects/Table.cs'
+    }
+
+    It 'retains current switch helpers for ordinary <Mode> builds' -ForEach @(
+        @{ Mode = 'Project' }
+        @{ Mode = 'Package' }
+    ) {
+        # Act
+        $result = Get-ProjectEvaluation 'src\Microsoft.Data.SqlClient\tests\Common\Microsoft.Data.SqlClient.TestCommon.csproj' @(
+            '-p:TargetFramework=net10.0', "-p:ReferenceType=$Mode",
+            "-p:PkgMicrosoft_Data_SqlClient=$TestDrive/package"
+        )
+
+        # Assert
+        $result.Items.Compile.Identity | Should -Contain 'LocalAppContextSwitchesHelper.cs'
+        $result.Items.Compile.Identity | Should -Contain 'ConnectionPoolVersionScope.cs'
+        if ($Mode -eq 'Package') {
+            $package = @($result.Items.PackageReference | Where-Object Identity -EQ 'Microsoft.Data.SqlClient')
+            $package[0].ExcludeAssets | Should -Be 'compile'
+            $reference = @($result.Items.Reference | Where-Object Identity -EQ 'Microsoft.Data.SqlClient')
+            $reference.Count | Should -Be 1
+            $reference[0].HintPath.Replace('\', '/') |
+                Should -Be "$($TestDrive.Replace('\', '/'))/package/lib/net10.0/Microsoft.Data.SqlClient.dll"
         }
     }
 }

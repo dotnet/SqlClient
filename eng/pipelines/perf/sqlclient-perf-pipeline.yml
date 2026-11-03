@@ -34,14 +34,14 @@ name: $(DayOfYear)$(Rev:rr)
 pr: none
 trigger: none
 
-# Uncomment to run nightly.  Times are UTC.
-# schedules:
-#   - cron: "0 6 * * *"
-#     displayName: Nightly performance run
-#     branches:
-#       include:
-#         - main
-#     always: true
+# Times are UTC.
+schedules:
+  - cron: "0 6 * * *"
+    displayName: Nightly performance run
+    branches:
+      include:
+        - main
+    always: true
 
 parameters:
 
@@ -70,12 +70,12 @@ parameters:
     default: 180
 
   # The released Microsoft.Data.SqlClient version the branch under test is benchmarked against.
-  # Manually managed: bump this after each stable release (e.g. to the latest 7.0.x).  Overridable
-  # at queue time.  Set to an empty string to skip the baseline pass and run current-only.
+  # "latest" resolves the highest stable version in the governed feed at run time.
+  # Pin a version at queue time; an empty string skips the baseline pass and runs current-only.
   - name: baselineVersion
     displayName: Baseline Version
     type: string
-    default: 7.0.2
+    default: latest
 
   # Percent slowdown (current vs baseline mean) that the comparison flags as a regression.
   - name: regressionThreshold
@@ -256,9 +256,21 @@ extends:
       # path and a colon trips ADO's "potentially dangerous Request.Path" filter.
       - ${{ if ne(parameters.baselineVersion, '') }}:
         - bash: |
-            echo "##vso[build.addbuildtag]Baseline ${{ parameters.baselineVersion }}"
+            labelFile="$RESULTS_DIR/baseline-label.txt"
+            if [ -f "$labelFile" ]; then
+                label="$(tr -d '\r\n' < "$labelFile")"
+            elif [ "$BASELINE_VERSION" != "latest" ]; then
+                label="$BASELINE_VERSION"
+            else
+                echo "##vso[task.logissue type=warning]Baseline version was not resolved; skipping baseline tag."
+                exit 0
+            fi
+            echo "##vso[build.addbuildtag]Baseline ${label}"
           displayName: 'Tag build with baseline version'
           condition: succeededOrFailed()
+          env:
+            RESULTS_DIR: $(Build.ArtifactStagingDirectory)/results
+            BASELINE_VERSION: ${{ parameters.baselineVersion }}
 
       - task: Bash@3
         displayName: 'Show performance results'
