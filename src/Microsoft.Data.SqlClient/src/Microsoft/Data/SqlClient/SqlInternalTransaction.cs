@@ -314,6 +314,18 @@ namespace Microsoft.Data.SqlClient
             return openResultCount;
         }
 
+        /// <summary>
+        /// Whether <paramref name="innerConnection"/> can no longer send a request: it is doomed, or its
+        /// parser is broken, closed or already released.
+        /// </summary>
+        private static bool IsBrokenOrClosed(SqlConnectionInternal innerConnection)
+        {
+            TdsParser parser = innerConnection.Parser;
+            return innerConnection.IsConnectionDoomed
+                || parser == null
+                || parser.State is TdsParserState.Broken or TdsParserState.Closed;
+        }
+
         internal void InitParent(SqlTransaction transaction)
         {
             Debug.Assert(_parent == null, "Why do we have a parent on InitParent?");
@@ -324,18 +336,35 @@ namespace Microsoft.Data.SqlClient
         {
             using (SqlClientEventScope.Create("SqlInternalTransaction.Rollback | API | Object Id {0}", ObjectID))
             {
-                if (_innerConnection.IsLockedForBulkCopy)
+                // Another thread can zombie this transaction and close its connection at any time: after a
+                // fatal error on an async operation, the operation is faulted first and the connection is
+                // closed afterwards on another thread. Read the connection once.
+                SqlConnectionInternal innerConnection = _innerConnection;
+                if (innerConnection == null)
+                {
+                    // Already zombied, so there is nothing left to roll back.
+                    return;
+                }
+
+                if (_disposing && IsBrokenOrClosed(innerConnection))
+                {
+                    // Nothing can be sent on a broken or closed connection, and the server ends the
+                    // transaction with the session. The connection's own close zombies this transaction.
+                    return;
+                }
+
+                if (innerConnection.IsLockedForBulkCopy)
                 {
                     throw SQL.ConnectionLockedForBcpEvent();
                 }
 
-                _innerConnection.ValidateConnectionForExecute(null);
+                innerConnection.ValidateConnectionForExecute(null);
 
                 try
                 {
                     // If no arg is given to ROLLBACK it will rollback to the outermost begin - rolling back
                     // all nested transactions as well as the outermost transaction.
-                    _innerConnection.ExecuteTransaction(TransactionRequest.IfRollback, null, IsolationLevel.Unspecified, null, false);
+                    innerConnection.ExecuteTransaction(TransactionRequest.IfRollback, null, IsolationLevel.Unspecified, null, false);
 
                     // Since Rollback will rollback to outermost begin, no need to check
                     // server transaction level.  This transaction has been completed.

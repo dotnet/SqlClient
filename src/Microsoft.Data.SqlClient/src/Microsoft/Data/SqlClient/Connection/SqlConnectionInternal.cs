@@ -700,7 +700,12 @@ namespace Microsoft.Data.SqlClient.Connection
         /// </summary>
         internal bool IsLockedForBulkCopy
         {
-            get => !_parser.MARSOn && _parser._physicalStateObj.BcpLock;
+            get
+            {
+                // The parser is released when the connection is disposed, which can happen on another thread.
+                TdsParser parser = _parser;
+                return parser != null && !parser.MARSOn && parser._physicalStateObj.BcpLock;
+            }
         }
 
         /// <summary>
