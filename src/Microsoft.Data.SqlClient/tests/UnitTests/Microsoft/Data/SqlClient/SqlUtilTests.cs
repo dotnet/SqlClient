@@ -7,8 +7,12 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests
 {
+    /// <summary>Verifies authentication error types and actionable provider guidance.</summary>
     public class SqlUtilTests
     {
+        /// <summary>
+        /// Missing Entra providers distinguish publish-time removal from supported trimmed JIT discovery.
+        /// </summary>
         [Theory]
 #pragma warning disable 0618
         [InlineData(SqlAuthenticationMethod.ActiveDirectoryPassword)]
@@ -23,13 +27,21 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [InlineData(SqlAuthenticationMethod.ActiveDirectoryWorkloadIdentity)]
         public void CannotFindAuthProvider_ActiveDirectoryMethod_ContainsPackageGuidance(SqlAuthenticationMethod authMethod)
         {
+            // Act
             Exception exception = SQL.CannotFindAuthProvider(authMethod, internalConnection: null);
 
+            // Assert
             var sqlException = Assert.IsType<SqlException>(exception);
             Assert.Single(sqlException.Errors);
             Assert.Null(sqlException.InnerException);
             Assert.Contains(authMethod.ToString(), exception.Message);
             Assert.Contains("Microsoft.Data.SqlClient.Extensions.Azure", exception.Message);
+            Assert.Contains("unavailable when disabled at publish time", exception.Message);
+            Assert.Contains("Trimmed JIT applications require preserved reflection contracts",
+                exception.Message);
+            Assert.Contains("NativeAOT applications should disable reflective bootstrap paths",
+                exception.Message);
+            Assert.DoesNotContain("unavailable in trimmed", exception.Message);
         }
 
         [Theory]
