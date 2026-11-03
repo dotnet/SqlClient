@@ -759,6 +759,74 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
         }
 
         /// <summary>
+        /// Base async fallback calls remain serialized with synchronous and other fallback loads.
+        /// A caller waiting for the provider gate can cancel without entering the provider.
+        /// </summary>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task GetKeyAsync_BaseFallback_WaitsForProviderGateAndHonorsCancellation(
+            bool asyncOwner)
+        {
+            SymmetricKeyCache cache = SymmetricKeyCache.Instance;
+            TaskCompletionSource<bool> entered = new(TaskCreationOptions.RunContinuationsAsynchronously);
+            using ManualResetEventSlim release = new();
+            int calls = 0;
+            SynchronousKeyStoreProvider provider = new()
+            {
+                DecryptCallback = () =>
+                {
+                    if (Interlocked.Increment(ref calls) == 1)
+                    {
+                        entered.TrySetResult(true);
+                        release.Wait();
+                    }
+                    return NewPlaintextKey(seed: 45);
+                }
+            };
+            using SqlConnection connection = NewConnection((ProviderName, provider));
+            SqlEncryptionKeyInfo ownerInfo = NewKeyInfo();
+            Task<SymmetricKey> owner = Task.Factory.StartNew(
+                () => asyncOwner
+                    ? cache.GetKeyAsync(ownerInfo, connection, null, CancellationToken.None)
+                    : Task.FromResult(cache.GetKey(ownerInfo, connection, null)),
+                CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default).Unwrap();
+            using CancellationTokenSource cts = new();
+            Task<SymmetricKey> waiter = null;
+            SqlEncryptionKeyInfo waiterInfo = NewKeyInfo();
+
+            try
+            {
+                Assert.Same(entered.Task, await Task.WhenAny(
+                    entered.Task, Task.Delay(TimeSpan.FromSeconds(5))));
+                waiter = cache.GetKeyAsync(waiterInfo, connection, null, cts.Token);
+                Assert.False(waiter.IsCompleted);
+                Assert.Equal(1, Volatile.Read(ref calls));
+                cts.Cancel();
+                Assert.Same(waiter, await Task.WhenAny(
+                    waiter, Task.Delay(TimeSpan.FromSeconds(5))));
+                OperationCanceledException error =
+                    await Assert.ThrowsAnyAsync<OperationCanceledException>(() => waiter);
+                Assert.Equal(cts.Token, error.CancellationToken);
+                Assert.True(waiter.IsCanceled);
+                Assert.Equal(1, Volatile.Read(ref calls));
+            }
+            finally
+            {
+                release.Set();
+                await owner;
+                if (waiter is not null)
+                {
+                    try { await waiter; }
+                    catch (OperationCanceledException) { }
+                }
+            }
+
+            await cache.GetKeyAsync(waiterInfo, connection, null, CancellationToken.None);
+            Assert.Equal(2, Volatile.Read(ref calls));
+        }
+
+        /// <summary>
         /// Completed async decryption must not wait for unrelated synchronous provider I/O to publish its key.
         /// </summary>
         [Theory]
@@ -893,6 +961,30 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
         }
 
         #endregion
+
+        /// <summary>
+        /// Exercises the base async implementation without overriding its synchronous fallback.
+        /// </summary>
+        private sealed class SynchronousKeyStoreProvider : SqlColumnEncryptionKeyStoreProvider
+        {
+            internal Func<byte[]> DecryptCallback { get; set; }
+
+            public override byte[] DecryptColumnEncryptionKey(
+                string masterKeyPath, string encryptionAlgorithm, byte[] encryptedColumnEncryptionKey)
+                => DecryptCallback();
+
+            public override byte[] EncryptColumnEncryptionKey(
+                string masterKeyPath, string encryptionAlgorithm, byte[] columnEncryptionKey)
+                => throw new NotSupportedException();
+
+            public override byte[] SignColumnMasterKeyMetadata(
+                string masterKeyPath, bool allowEnclaveComputations)
+                => throw new NotSupportedException();
+
+            public override bool VerifyColumnMasterKeyMetadata(
+                string masterKeyPath, bool allowEnclaveComputations, byte[] signature)
+                => throw new NotSupportedException();
+        }
 
         /// <summary>
         /// A key store provider whose sync and async paths are separately observable, so that tests can

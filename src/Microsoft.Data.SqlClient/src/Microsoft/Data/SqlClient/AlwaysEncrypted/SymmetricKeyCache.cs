@@ -120,7 +120,8 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
         /// Asynchronously retrieves a plaintext key, preserving cancellation and provider error wrapping.
         /// </summary>
         /// <remarks>
-        /// Provider I/O runs outside the process-wide gate so synchronous callers are not blocked by it.
+        /// Provider invocation uses the process-wide gate to serialize synchronous fallbacks.
+        /// The returned task is awaited outside that gate so asynchronous I/O does not hold it.
         /// Async misses for the same key wait for its pending load and recheck the cache.
         /// Different keys load independently; synchronous races retain first-published key identity.
         /// </remarks>
@@ -208,11 +209,21 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
             byte[] plaintextKey;
             try
             {
-                // Global providers must not keep a second CEK cache. Concurrent assignments are idempotent.
-                provider.ColumnEncryptionKeyCacheTtl = TimeSpan.Zero;
-                plaintextKey = await provider
-                    .DecryptColumnEncryptionKeyAsync(keyInfo.keyPath, keyInfo.algorithmName, keyInfo.encryptedKey, cancellationToken)
-                    .ConfigureAwait(false);
+                Task<byte[]> pendingDecryption;
+                await s_cacheLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+                try
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    // The base async implementation invokes the synchronous provider before returning.
+                    provider.ColumnEncryptionKeyCacheTtl = TimeSpan.Zero;
+                    pendingDecryption = provider.DecryptColumnEncryptionKeyAsync(
+                        keyInfo.keyPath, keyInfo.algorithmName, keyInfo.encryptedKey, cancellationToken);
+                }
+                finally
+                {
+                    s_cacheLock.Release();
+                }
+                plaintextKey = await pendingDecryption.ConfigureAwait(false);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
