@@ -1905,6 +1905,9 @@
   <data name="SQLCR_NoCRAckAtReconnection" xml:space="preserve">
     <value>Tentativo di ripristino non riconosciuto dal server. Impossibile eseguire il ripristino della connessione.</value>
   </data>
+  <data name="DbConnectionString_VectorTypeSupport" xml:space="preserve">
+    <value>The level of vector type support to negotiate with the server.</value>
+  </data>
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>Consente di definire il comportamento del periodo di blocco per un pool di connessioni.</value>
   </data>

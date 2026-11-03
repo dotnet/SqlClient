@@ -1905,6 +1905,9 @@
   <data name="SQLCR_NoCRAckAtReconnection" xml:space="preserve">
     <value>서버에서 복구 시도를 인식하지 못해 연결을 복구할 수 없습니다.</value>
   </data>
+  <data name="DbConnectionString_VectorTypeSupport" xml:space="preserve">
+    <value>The level of vector type support to negotiate with the server.</value>
+  </data>
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>연결 풀에 대한 차단 기간 동작을 정의합니다.</value>
   </data>
