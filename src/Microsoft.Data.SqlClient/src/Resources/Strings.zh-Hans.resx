@@ -1905,6 +1905,9 @@
   <data name="SQLCR_NoCRAckAtReconnection" xml:space="preserve">
     <value>服务器未收到恢复尝试，无法恢复连接。</value>
   </data>
+  <data name="DbConnectionString_VectorTypeSupport" xml:space="preserve">
+    <value>The level of vector type support to negotiate with the server.</value>
+  </data>
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>定义针对连接池的暂停时段行为。</value>
   </data>

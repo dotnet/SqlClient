@@ -1905,6 +1905,9 @@
   <data name="SQLCR_NoCRAckAtReconnection" xml:space="preserve">
     <value>Ein Wiederherstellungsversuch wurde vom Server nicht bestätigt; die Verbindung kann nicht wiederhergestellt werden.</value>
   </data>
+  <data name="DbConnectionString_VectorTypeSupport" xml:space="preserve">
+    <value>The level of vector type support to negotiate with the server.</value>
+  </data>
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>Definiert das Verhalten im Blockierungszeitraum für einen Verbindungspool.</value>
   </data>
