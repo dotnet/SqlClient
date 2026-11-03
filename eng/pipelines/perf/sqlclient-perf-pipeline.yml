@@ -147,9 +147,6 @@ parameters:
 # Fixed (non-configurable) constants for this pipeline.  These are intentionally NOT parameters or
 # library variables: they are invariant for the SqlClient perf pipeline.
 #   * buildConfiguration = Release            - perf numbers are only meaningful in Release.
-#   * sourcesSubDir       = dotnet-sqlclient  - folder 'self' checks out into under the template's
-#                                               MULTI-REPO checkout ($(Build.SourcesDirectory)/<repo>);
-#                                               must match the ADO repository name.
 #   * driverName          = Microsoft.Data.SqlClient - recorded on every row (DriverName / DerivedRunId).
 
 # Kusto (Azure Data Explorer) ingestion coordinates come from a pipeline library variable group so
@@ -164,6 +161,14 @@ parameters:
 # service connection are provisioned.
 variables:
   - group: ADX Cluster Variables
+
+  # Multi-repo checkout uses the repository's leaf name, not GitHub's owner/repo name.
+  - ${{ if contains(variables['Build.Repository.Name'], '/') }}:
+    - name: PerfSourceRoot
+      value: $(Build.SourcesDirectory)/${{ split(variables['Build.Repository.Name'], '/')[1] }}
+  - ${{ else }}:
+    - name: PerfSourceRoot
+      value: $(Build.SourcesDirectory)/$(Build.Repository.Name)
 
   # Pre-computed testScriptArgs chunks (paulmedynski's review suggestion).  The Windows entry point
   # is PowerShell and binds '-PascalCase' params, while the Linux one is bash and parses
@@ -221,7 +226,7 @@ extends:
     # The entire driver source tree is copied to the VM so the benchmarks (which reference
     # Microsoft.Data.SqlClient as a project) can be built from source against the current commit.
     # Under the template's multi-repo checkout, 'self' lands in a repo-named subfolder.
-    testRootDir: $(Build.SourcesDirectory)/dotnet-sqlclient
+    testRootDir: $(PerfSourceRoot)
 
     # Entry-point script (relative to testRootDir), selected by platform.  Linux uses bash, Windows
     # uses PowerShell, per the template's .sh/.ps1 convention.
@@ -277,7 +282,7 @@ extends:
         condition: succeededOrFailed()
         inputs:
           targetType: filePath
-          filePath: $(Build.SourcesDirectory)/dotnet-sqlclient/eng/pipelines/perf/scripts/show_perf_results.sh
+          filePath: $(PerfSourceRoot)/eng/pipelines/perf/scripts/show_perf_results.sh
         env:
           RESULTS_DIR: $(Build.ArtifactStagingDirectory)/results
 
@@ -291,9 +296,9 @@ extends:
         condition: succeededOrFailed()
         inputs:
           targetType: filePath
-          filePath: $(Build.SourcesDirectory)/dotnet-sqlclient/eng/pipelines/perf/scripts/translate_results_to_kusto.sh
+          filePath: $(PerfSourceRoot)/eng/pipelines/perf/scripts/translate_results_to_kusto.sh
         env:
-          REPO_DIR: $(Build.SourcesDirectory)/dotnet-sqlclient
+          REPO_DIR: $(PerfSourceRoot)
           RESULTS_DIR: $(Build.ArtifactStagingDirectory)/results
           KUSTO_OUT: $(Build.ArtifactStagingDirectory)/kusto
           COLLECTION_URI: $(System.CollectionUri)
@@ -338,7 +343,7 @@ extends:
           scriptLocation: inlineScript
           inlineScript: |
             set -euo pipefail
-            scriptsDir="$(Build.SourcesDirectory)/dotnet-sqlclient/eng/pipelines/perf/scripts"
+            scriptsDir="$(PerfSourceRoot)/eng/pipelines/perf/scripts"
             kustoOut="$(Build.ArtifactStagingDirectory)/kusto"
 
             # Keep the checkout clean: no __pycache__/*.pyc written into eng/.

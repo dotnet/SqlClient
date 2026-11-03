@@ -71,9 +71,12 @@ context variables are available (the VM is behind NAT and lacks the pipeline ide
 | `enableKustoIngestion` | `true` | **Ingest results into Kusto** — when `false`, the run still benchmarks + compares but skips ingesting into the perf database. When `true`, ingestion additionally requires the `ADX Cluster Variables` group to be populated. |
 
 The following values are **fixed constants** in the pipeline (not parameters or variables), since they
-are invariant for this pipeline: `buildConfiguration = Release`, `sourcesSubDir = dotnet-sqlclient`
-(the multi-repo checkout folder for `self`, which must match the ADO repository name), and
+are invariant for this pipeline: `buildConfiguration = Release` and
 `driverName = Microsoft.Data.SqlClient` (recorded on every row as `DriverName` / `DerivedRunId`).
+
+All three perf pipelines derive `PerfSourceRoot` from `Build.Repository.Name` to match the
+template's multi-repo checkout: `SqlClient` for GitHub's `dotnet/SqlClient`, or `dotnet-sqlclient`
+for Azure Repos. The VM source upload and agent-side post-test scripts use this same root.
 
 ### Kusto (Azure Data Explorer) ingestion variables
 
