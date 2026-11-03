@@ -20,6 +20,15 @@
           <c>float16</c> base type from a JSON string to <c>SqlVector&lt;Half&gt;</c>.
           Set <c>Vector Type Support=v1</c> to preserve the JSON string representation.
         </para>
+        <para>
+          Different components in the same .NET process can need different result representations,
+          even when they connect to the same database. For example, a legacy reporting component
+          may cast <c>GetValue</c> results for <c>float16</c> columns to <c>string</c>, while a
+          newer component reads those columns as <c>SqlVector&lt;Half&gt;</c>. Use <c>v1</c> in
+          the reporting component's connection string and <c>v2</c> in the newer component's
+          connection string. A process-wide switch would apply the same choice to both components;
+          the connection string option lets each retain its own result-type contract.
+        </para>
       </remarks>
     </SqlVectorTypeSupport>
     <Off>

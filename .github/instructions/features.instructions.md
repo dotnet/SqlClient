@@ -239,6 +239,13 @@ representation can set `Vector Type Support=v1`; `off` keeps all vector results 
 The equivalent property is
 `SqlConnectionStringBuilder.VectorTypeSupport`, of type `SqlVectorTypeSupport`.
 
+The setting is per connection so components in the same .NET process can retain different
+result-type contracts, even against the same database. For example, a legacy reporting component
+may cast float16 `GetValue` results to `string`, while a newer component reads `SqlVector<Half>`.
+Use `Vector Type Support=v1` for the reporting component and `v2` for the newer component.
+A process-wide AppContext switch would force the same choice on both. The requested version is
+negotiated at login; connection strings with different settings use separate connection pools.
+
 The vector row in `GetSchema("DataTypes")` also follows the negotiated version. V1 reports
 `CreateFormat = "vector({0})"` and `CreateParameters = "dimensions"`; V2 reports
 `CreateFormat = "vector({0}, {1})"` and `CreateParameters = "dimensions,base_type"`.

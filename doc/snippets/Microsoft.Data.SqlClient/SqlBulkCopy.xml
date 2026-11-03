@@ -9,7 +9,7 @@
         <para>
           For an unencrypted native vector destination, bulk copy retains the source base type
           in the incoming declaration and payload when source type information is available;
-          SQL Server converts to the destination column's base type. For an
+          SQL Server converts to the destination column's base type. For a
           <see cref="T:System.Data.DataTable" /> column declared as <c>object</c>, the driver
           examines the selected in-memory rows until the first non-null value identifies the
           representation. Leading nulls are supported, and row-array subsets and row-state
