@@ -313,6 +313,63 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         /// <summary>
+        /// A replacement redirected into a saturated pool whose only idle connection is dead must
+        /// retry the open on the wake-up written when that connection is retired, rather than park
+        /// until the timeout with a free slot.
+        /// </summary>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task Replace_IntoPoolWithDeadIdle_OpensInFreedSlot(bool channel)
+        {
+            var factory = new PruningConnectionFactory();
+            IDbConnectionPool source = CreatePool(factory, channel);
+            using var owner = new SqlConnection();
+            owner.PoolGroup = source.PoolGroup;
+            DbConnectionInternal oldConnection = (await Acquire(source, owner, async: false))!;
+            DbConnectionInternal? connection = null;
+            try
+            {
+                source.PoolGroup.Clear();
+                IDbConnectionPool destination = CreatePool(factory, channel);
+
+                using var other = new SqlConnection();
+                var idle = (PruningConnection)(await Acquire(destination, other, async: false))!;
+                destination.ReturnInternalConnection(idle, other);
+                Assert.Equal(1, destination.IdleCount);
+                idle.Alive = false;
+
+                // A bug parks until this deadline, so keep it short to fail fast.
+                Assert.True(factory.TryGetConnection(
+                    owner,
+                    null!,
+                    oldConnection,
+                    TimeoutTimer.StartNew(TimeSpan.FromSeconds(5)),
+                    forceNewConnection: true,
+                    out connection));
+
+                Assert.NotNull(connection);
+                Assert.NotSame(idle, connection);
+                Assert.Same(destination, connection!.Pool);
+                Assert.Equal(3, factory.CreateCount);
+                Assert.True(oldConnection.IsConnectionDoomed);
+                Assert.Equal(0, source.Count);
+                Assert.Equal(channel ? 1 : 2, destination.Count);
+
+                destination.ReturnInternalConnection(connection, owner);
+                connection = null;
+            }
+            finally
+            {
+                if (connection != null)
+                {
+                    connection.Pool!.ReturnInternalConnection(connection, owner);
+                }
+                Drain(factory, source);
+            }
+        }
+
+        /// <summary>
         /// Background minimum-size replenishment must protect its uncounted physical creation,
         /// independently of any user acquisition.
         /// </summary>
@@ -510,8 +567,27 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 CreateCount++;
                 RecoveryData.Add((owningConnection as SqlConnection)?._recoverySessionData);
                 Creating?.Invoke();
-                return new WaitHandleDbConnectionPoolTransactionTest.MockDbConnectionInternal();
+                return new PruningConnection();
             }
+        }
+
+        /// <summary>
+        /// A mock physical connection whose liveness a test can change while it sits idle.
+        /// </summary>
+        private sealed class PruningConnection
+            : WaitHandleDbConnectionPoolTransactionTest.MockDbConnectionInternal
+        {
+            /// <summary>
+            /// Whether the liveness probe reports the connection as alive.
+            /// </summary>
+            internal bool Alive { get; set; } = true;
+
+            /// <summary>
+            /// Reports the configured liveness instead of probing a socket.
+            /// </summary>
+            /// <param name="throwOnException">Unused by the mock.</param>
+            /// <returns>The value of <see cref="Alive"/>.</returns>
+            internal override bool IsConnectionAlive(bool throwOnException = false) => Alive;
         }
     }
 }

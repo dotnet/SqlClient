@@ -634,11 +634,12 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         return connection;
                     }
 
-                    // The pool is full or creation is rate limited. Take an idle connection,
-                    // waiting if none is available, and retire it so its slot can be reused for
-                    // a fresh login. A null read is a wake-up to retry the open.
-                    DbConnectionInternal? idle = GetIdleConnection();
-                    if (idle is null)
+                    // The pool is full or creation is rate limited. Read one raw channel item,
+                    // waiting if none is available. A null is a wake-up for a freed slot, so
+                    // retry the open; a connection, live or dead, is retired to free its slot.
+                    // GetIdleConnection is not used because it consumes the null wake-up that
+                    // retiring a dead connection writes, which would park with a free slot.
+                    if (!_idleChannel.TryRead(out DbConnectionInternal? idle))
                     {
                         Reclaimer.EnterParkedWait();
                         try
