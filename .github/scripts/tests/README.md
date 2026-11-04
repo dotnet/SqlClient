@@ -46,8 +46,11 @@ They also reject partial safe-output batches with recorded errors while
 allowing C# generic type syntax in completed summaries. Draft prefixes such as
 `TODO:` and `TBD:` are rejected in required fields and list items; ordinary
 mentions of those markers within completed prose remain valid.
-Coverage also includes multiline template placeholders, label operations queued
-before the summary, and contradictory no-op/incomplete results.
+Coverage also includes multiline template placeholders and contradictory
+no-op/incomplete results. Label operations queued before the summary are moved
+after it, because safe outputs publish in queue order; the reordered batch must
+still pass validation before it is written back to `GH_AW_AGENT_OUTPUT` for
+publication, and the compiled workflow is checked for that wiring.
 Comparison operators in completed prose remain valid; angle-bracket detection
 targets known template fields and instructions rather than arbitrary bracketed text.
 Generic arguments such as `Task<Result>` and `List<Item>`, including nested

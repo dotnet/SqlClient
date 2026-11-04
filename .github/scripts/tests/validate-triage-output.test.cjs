@@ -3,8 +3,16 @@
 // See the LICENSE file in the project root for more information.
 
 const assert = require('node:assert/strict');
+const { spawnSync } = require('node:child_process');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
 const { test } = require('node:test');
-const { validateTriageOutput } = require('../validate-triage-output.cjs');
+const {
+    normalizeTriageOutput,
+    validateTriageOutput,
+    validateTriageOutputFile,
+} = require('../validate-triage-output.cjs');
 
 const summary = `## \u{1F50D} Triage Summary
 
@@ -59,6 +67,146 @@ test('rejects label operations before the summary', () => {
         value.items.unshift({ type, labels: ['Auto-Triage: Waiting for Author'] });
         assert.throws(() => validateTriageOutput(value), /before/);
     }
+});
+
+// The agent queued its label change first in the failed runs for #4855, #4879, #4904, #4940,
+// #4953, #4965, and #4969, so the gate rejected otherwise complete summaries.
+const labelFirst = (type) => {
+    const body = type === 'add_labels' ? summary :
+        summary.replace('Missing: SQL Server version', 'All required environment details provided');
+    return {
+        items: [{ type, labels: [waitingLabel] }, { type: 'add_comment', body }],
+        errors: [],
+    };
+};
+
+test('queues a label operation recorded before the summary after it', () => {
+    for (const type of ['add_labels', 'remove_labels']) {
+        // Arrange
+        const value = labelFirst(type);
+        const queued = structuredClone(value);
+
+        // Act
+        const normalized = normalizeTriageOutput(value);
+
+        // Assert
+        // The summary is published first, and the reordered batch passes the gate.
+        assert.deepEqual(normalized.items, [queued.items[1], queued.items[0]]);
+        assert.deepEqual(normalized.errors, []);
+        validateTriageOutput(normalized);
+        // The queued batch is not mutated.
+        assert.deepEqual(value, queued);
+    }
+});
+
+test('leaves batches without one summary or an early label operation unchanged', () => {
+    const label = { type: 'add_labels', labels: [waitingLabel] };
+    const comment = output(summary).items[0];
+    for (const value of [
+        null,
+        {},
+        { items: null },
+        { items: [null, comment] },
+        output(summary),
+        { items: [{ type: 'noop', reason: 'No new information' }] },
+        { items: [label] },
+        { items: [label, comment, comment] },
+    ]) {
+        // Act
+        const normalized = normalizeTriageOutput(value);
+
+        // Assert
+        assert.equal(normalized, value);
+    }
+});
+
+test('still rejects invalid batches after queueing labels after the summary', () => {
+    const label = { type: 'add_labels', labels: [waitingLabel] };
+    const comment = output(summary).items[0];
+    for (const [items, message] of [
+        [[label, label, comment], /exactly one/],
+        [[label, { type: 'add_comment', body: 'test simple body' }], /Triage Summary/],
+        [[{ type: 'remove_labels', labels: [waitingLabel] }, comment], /add_labels/],
+        [[{ ...label, labels: ['Unrelated label'] }, comment], /label/i],
+    ]) {
+        // Act and Assert
+        assert.throws(() => validateTriageOutput(normalizeTriageOutput({ items })), message);
+    }
+});
+
+test('rewrites the queued batch file only after a reordered batch passes validation', () => {
+    // Arrange
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'triage-output-'));
+    const filename = path.join(directory, 'agent_output.json');
+    try {
+        for (const type of ['add_labels', 'remove_labels']) {
+            // Act
+            const value = labelFirst(type);
+            fs.writeFileSync(filename, JSON.stringify(value));
+            const reordered = validateTriageOutputFile(filename);
+
+            // Assert
+            assert.equal(reordered, true);
+            assert.deepEqual(JSON.parse(fs.readFileSync(filename, 'utf8')).items,
+                [value.items[1], value.items[0]]);
+        }
+
+        // An already ordered batch is validated without rewriting the file.
+        const ordered = JSON.stringify(output(summary), null, 2);
+        fs.writeFileSync(filename, ordered);
+        assert.equal(validateTriageOutputFile(filename), false);
+        assert.equal(fs.readFileSync(filename, 'utf8'), ordered);
+
+        // A rejected batch leaves the queued file unchanged.
+        const invalid = JSON.stringify({
+            items: [{ type: 'add_labels', labels: [waitingLabel] },
+                { type: 'add_comment', body: 'test simple body' }],
+        });
+        fs.writeFileSync(filename, invalid);
+        assert.throws(() => validateTriageOutputFile(filename), /Triage Summary/);
+        assert.equal(fs.readFileSync(filename, 'utf8'), invalid);
+    } finally {
+        // Cleanup
+        fs.rmSync(directory, { recursive: true, force: true });
+    }
+});
+
+test('command line validation rewrites the batch that safe outputs publish', () => {
+    // Arrange
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'triage-output-'));
+    const filename = path.join(directory, 'agent_output.json');
+    const value = labelFirst('add_labels');
+    fs.writeFileSync(filename, JSON.stringify(value));
+    try {
+        // Act
+        const result = spawnSync(process.execPath,
+            [path.join(__dirname, '..', 'validate-triage-output.cjs')],
+            { env: { ...process.env, GH_AW_AGENT_OUTPUT: filename }, encoding: 'utf8' });
+
+        // Assert
+        assert.equal(result.status, 0, result.stderr);
+        assert.match(result.stdout, /Queued label changes after the triage summary/);
+        assert.deepEqual(JSON.parse(fs.readFileSync(filename, 'utf8')).items,
+            [value.items[1], value.items[0]]);
+    } finally {
+        // Cleanup
+        fs.rmSync(directory, { recursive: true, force: true });
+    }
+});
+
+test('the compiled workflow validates and rewrites the batch before publishing it', () => {
+    // Arrange
+    const workflow = fs.readFileSync(
+        path.join(__dirname, '..', '..', 'workflows', 'issue-triage.lock.yml'), 'utf8');
+
+    // Act
+    const validate = workflow.indexOf('name: Validate triage output before publishing');
+    const rewrite = workflow.indexOf('validateTriageOutputFile(filename)', validate);
+    const publish = workflow.indexOf('name: Process Safe Outputs', validate);
+
+    // Assert
+    assert.ok(validate >= 0 && rewrite > validate && publish > rewrite);
+    assert.doesNotMatch(workflow.slice(validate, publish), /validateTriageOutput\(JSON\.parse/);
 });
 
 test('preserves explicit no-op and failure reporting without a comment', () => {
