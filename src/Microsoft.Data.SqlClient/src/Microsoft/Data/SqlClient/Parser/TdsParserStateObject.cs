@@ -292,15 +292,6 @@ namespace Microsoft.Data.SqlClient.Parser
         // This is a test hook to enable testing of the retry paths.
         // When set to true, almost every possible retry point will be attempted.
         // This will drastically impact performance.
-        //
-        // Sample code to enable:
-        //
-        //    Type type = typeof(SqlDataReader).Assembly.GetType("Microsoft.Data.SqlClient.Parser.TdsParserStateObject");
-        //    System.Reflection.FieldInfo field = type.GetField("_forceAllPends", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-        //    if (field != null) {
-        //        field.SetValue(null, true);
-        //    }
-        //
         internal static bool s_forceAllPends = false;
 
         // set this while making a call that should not block.
