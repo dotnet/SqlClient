@@ -67,11 +67,10 @@ internal sealed partial class SqlMetaDataFactory
             if (collection == null)
             {
                 throw ADP.UnsupportedVersion(collectionName);
-                //throw ADP.UndefinedCollection(collectionName);
-                //throw ADP.UnableToBuildCollection(collectionName);
             }
 
             DataTable table = await collection.GetMetadata(context);
+            table.AcceptChanges();
             return table;
         }
     }
