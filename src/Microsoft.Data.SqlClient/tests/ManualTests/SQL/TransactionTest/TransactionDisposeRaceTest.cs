@@ -32,6 +32,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     /// <c>Microsoft.Data.SqlClient.EventSource</c> scope trace, and is then allowed to finish before the
     /// rollback continues.
     /// </para>
+    /// <para>
+    /// The tests connect through <see cref="ProxyServer"/> at 127.0.0.1, which never matches the server
+    /// certificate name, so like the other proxy tests they skip Azure SQL and named instances.
+    /// </para>
     /// </summary>
     [Trait("Set", "3")]
     public class TransactionDisposeRaceTest
@@ -51,7 +55,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// Disposes the transaction while SqlClient closes the connection after a command timeout that the
         /// server never acknowledged: the shape of an unresponsive server.
         /// </summary>
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotNamedInstance))]
         public void Dispose_ConnectionClosedAfterUnacknowledgedTimeout_DoesNotThrow()
         {
             // Arrange
@@ -82,7 +86,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// Disposes the transaction while SqlClient closes the connection after the network dropped under a
         /// pending async command.
         /// </summary>
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotNamedInstance))]
         public void Dispose_ConnectionClosedAfterNetworkFailure_DoesNotThrow()
         {
             // Arrange
@@ -111,7 +115,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// Disposes the transaction after a command timeout that the server never acknowledged, while the
         /// driver's close of the broken connection has not run yet.
         /// </summary>
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotNamedInstance))]
         public void Dispose_CloseStillPendingAfterUnacknowledgedTimeout_DoesNotThrow()
         {
             // Arrange
@@ -141,7 +145,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// Disposes the transaction after the network dropped under a pending async command, while the
         /// driver's close of the broken connection has not run yet.
         /// </summary>
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsNotNamedInstance))]
         public void Dispose_CloseStillPendingAfterNetworkFailure_DoesNotThrow()
         {
             // Arrange
