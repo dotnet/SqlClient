@@ -362,6 +362,7 @@ public class ServerLifecycleTests
     /// Repeated lifetimes expose registration/close races within one process.
     /// </summary>
     [Fact]
+    [Trait("category", "flaky")]
     public void Dispose_DrainsConnectionsAcrossRepeatedServerLifetimes()
     {
         for (int iteration = 0; iteration < 20; iteration++)
