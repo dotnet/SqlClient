@@ -30,11 +30,16 @@ internal sealed class SqlAuthenticationConfiguration
     /// </summary>
     internal IReadOnlyList<ProviderSettings> Providers { get; } = Array.Empty<ProviderSettings>();
 
+    /// <summary>Creates empty settings without retaining configuration reflection in AOT bootstrap.</summary>
+    internal SqlAuthenticationConfiguration()
+    {
+    }
+
     /// <summary>
     /// Reads either supported handler's metadata, or creates empty settings when no section is supplied.
     /// </summary>
     /// <param name="section">The selected section, or null for no authentication overrides.</param>
-    internal SqlAuthenticationConfiguration(ConfigurationSection? section = null)
+    internal SqlAuthenticationConfiguration(ConfigurationSection? section)
     {
         if (section is null)
         {
@@ -83,7 +88,7 @@ internal sealed class SqlAuthenticationConfiguration
         if (section.ElementInformation.Properties["providers"]?.Value
             is ProviderSettingsCollection providers)
         {
-            // Snapshot entries, but defer method validation and activation to preserve fail-fast order.
+            // Snapshot entries, but defer method validation and activation to the registry.
             Providers = providers.Cast<ProviderSettings>()
                 .Select(provider => new ProviderSettings(provider.Name, provider.Type)).ToArray();
         }
