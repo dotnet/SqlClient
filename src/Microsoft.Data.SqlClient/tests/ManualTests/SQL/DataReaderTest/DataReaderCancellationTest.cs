@@ -8,82 +8,50 @@ using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals;
 using Xunit;
 
+using static Microsoft.Data.SqlClient.ManualTesting.Tests.CancellationTestHelper;
+
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    /// <summary>
+    /// Verifies async cancellation aborts pending reads and leaves connections usable.
+    /// </summary>
     [Trait("Set", "2")]
     public class DataReaderCancellationTest
     {
         /// <summary>
-        /// Upper bound for any single blocking step in these tests. A cancellation that works
-        /// completes in well under a second, so this only ever elapses when the driver regresses.
+        /// The watchdog helper must propagate cancellation callback failures instead of hiding them.
         /// </summary>
-        private static readonly System.TimeSpan WatchdogTimeout = System.TimeSpan.FromSeconds(45);
-
-        /// <summary>
-        /// Requests cancellation without ever blocking the calling thread indefinitely.
-        ///
-        /// SqlCommand registers a *synchronous* cancellation callback that sends the TDS attention
-        /// signal, so CancellationTokenSource.Cancel() runs that work on whichever thread calls it.
-        /// When attention cannot be sent (the regression these tests cover) Cancel() never returns.
-        /// A test must therefore never call Cancel() on its own thread: doing so hangs the xUnit
-        /// host, which aborts the entire run and reports every remaining test in the leg as an
-        /// error instead of surfacing one clear failure.
-        /// </summary>
-        private static async Task CancelWithoutBlockingAsync(CancellationTokenSource cts, string context)
+        [Fact]
+        public static async Task CancellationCallbackFailuresAreReported()
         {
-            Task cancelTask = Task.Run(() => cts.Cancel());
+            using var cts = new CancellationTokenSource();
+            using var registration = cts.Token.Register(
+                () => throw new System.InvalidOperationException("callback failure"));
 
-            if (await Task.WhenAny(cancelTask, Task.Delay(WatchdogTimeout)) != cancelTask)
-            {
-                // Abandon the stuck call, but observe it so its fault cannot resurface later.
-                ObserveWhenComplete(cancelTask);
-                Assert.Fail(
-                    $"CancellationTokenSource.Cancel() did not return within {WatchdogTimeout.TotalSeconds}s ({context}). " +
-                    "The attention signal could not be sent, so Cancel() blocked its caller.");
-            }
-
-            await cancelTask;
+            var exception = await Assert.ThrowsAsync<System.AggregateException>(
+                () => CancelWithoutBlockingAsync(cts, "throwing callback"));
+            Assert.IsType<System.InvalidOperationException>(exception.InnerException);
         }
 
         /// <summary>
-        /// Disposes an object on a background thread and waits only up to the watchdog. Close/Dispose
-        /// drain the connection, which blocks for as long as the server stays busy when cancellation
-        /// has regressed, so cleanup must never be allowed to hang the host either.
+        /// Cleanup must fail the test when disposal throws, not silently report successful cleanup.
         /// </summary>
-        private static async Task DisposeWithoutBlockingAsync(System.IDisposable disposable)
+        [Fact]
+        public static async Task DisposalFailuresAreReported()
         {
-            Task disposeTask = Task.Run(() =>
-            {
-                try
-                {
-                    disposable.Dispose();
-                }
-                catch
-                {
-                    // Cleanup failures must not mask the assertion that is being reported.
-                }
-            });
-
-            if (await Task.WhenAny(disposeTask, Task.Delay(WatchdogTimeout)) != disposeTask)
-            {
-                ObserveWhenComplete(disposeTask);
-            }
+            await Assert.ThrowsAsync<System.InvalidOperationException>(
+                () => DisposeWithoutBlockingAsync(new ThrowingDisposable()));
         }
 
         /// <summary>
-        /// Observes a task's exception once it eventually completes, so an abandoned task cannot
-        /// surface as an unobserved task exception inside an unrelated test.
+        /// Supplies a deterministic cleanup failure without requiring a SQL Server connection.
         /// </summary>
-        private static void ObserveWhenComplete(Task task)
+        private sealed class ThrowingDisposable : System.IDisposable
         {
-            if (task.IsCompleted)
-            {
-                _ = task.Exception;
-            }
-            else
-            {
-                _ = task.ContinueWith(static t => _ = t.Exception, TaskScheduler.Default);
-            }
+            /// <summary>
+            /// Throws so the watchdog's exception propagation can be asserted.
+            /// </summary>
+            public void Dispose() => throw new System.InvalidOperationException("dispose failure");
         }
 
         /// <summary>
@@ -428,8 +396,8 @@ END";
         }
 
         /// <summary>
-        /// Regression test for the CreateLocalCompletionTask "internal end" path, which still
-        /// takes lock (_stateObj) while calling endFunc. That continuation fires as soon as the
+        /// Regression test for the CreateLocalCompletionTask "internal end" path, which previously
+        /// took lock (_stateObj) while calling endFunc. That continuation fires as soon as the
         /// first packet arrives, not once the whole result is buffered, so when a query flushes
         /// partial results (RAISERROR WITH NOWAIT) and then blocks (WAITFOR), endFunc performs a
         /// blocking read while holding the monitor. TdsParserStateObject.Cancel() needs the same

@@ -19,6 +19,8 @@ using Xunit;
 
 using CommonObjects = Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 
+using static Microsoft.Data.SqlClient.ManualTesting.Tests.CancellationTestHelper;
+
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     /// <summary>
@@ -2303,7 +2305,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             int rowsAffected = InsertRows(tableName: _tableName, numberofRows: numberOfRows, values: values, connection: connection);
             Assert.True(rowsAffected == numberOfRows, "number of rows affected is unexpected.");
 
-            using (SqlConnection sqlConnection = new SqlConnection(connection))
+            SqlConnection sqlConnection = new SqlConnection(connection);
+            Task<SqlDataReader> execTask = null;
+            Task cancelTask = null;
+            try
             {
                 await sqlConnection.OpenAsync();
 
@@ -2350,21 +2355,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         // cancellation from a separate thread once the query is in flight.
                         // The 60-second WAITFOR gives a wide window during which
                         // cancellation must send a TDS attention signal to the server.
-                        Task<SqlDataReader> execTask = sqlCommand.ExecuteReaderAsync(cts.Token);
+                        execTask = sqlCommand.ExecuteReaderAsync(cts.Token);
 
                         // Cancel from another thread after briefly yielding to ensure the
                         // async operation has been dispatched and reached the server-side
                         // WAITFOR. This avoids the flakiness of a preemptive timer that
                         // could fire before the query is actually in flight.
-                        Task cancelTask = Task.Run(async () =>
+                        cancelTask = Task.Run(async () =>
                         {
                             await Task.Delay(TimeSpan.FromMilliseconds(500));
-                            cts.Cancel();
+                            await CancelWithoutBlockingAsync(cts, "Always Encrypted WAITFOR");
                         });
 
                         Exception caughtException = null;
                         try
                         {
+                            await WaitWithoutBlockingAsync(execTask, "Always Encrypted execution");
                             using (SqlDataReader reader = await execTask)
                             {
                                 // If we reach here, cancellation failed during EndExecuteReaderInternal.
@@ -2401,6 +2407,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     Assert.Equal(numberOfRows, (int)result);
                 }
             }
+            finally
+            {
+                if (execTask is not null)
+                {
+                    ObserveWhenComplete(execTask);
+                }
+                if (cancelTask is not null)
+                {
+                    ObserveWhenComplete(cancelTask);
+                }
+
+                await DisposeWithoutBlockingAsync(sqlConnection);
+            }
         }
 
         /// <summary>
@@ -2428,7 +2447,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             int rowsAffected = InsertRows(tableName: _tableName, numberofRows: numberOfRows, values: values, connection: connection);
             Assert.True(rowsAffected == numberOfRows, "number of rows affected is unexpected.");
 
-            using (SqlConnection sqlConnection = new SqlConnection(connection))
+            SqlConnection sqlConnection = new SqlConnection(connection);
+            Task<SqlDataReader> execTask = null;
+            try
             {
                 await sqlConnection.OpenAsync();
 
@@ -2467,19 +2488,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         sqlConnection.InfoMessage += (_, __) => infoMessageReceived.TrySetResult(true);
 
                         System.Diagnostics.Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
-                        Task<SqlDataReader> execTask = sqlCommand.ExecuteReaderAsync(cts.Token);
+                        execTask = sqlCommand.ExecuteReaderAsync(cts.Token);
 
                         // Wait for the RAISERROR NOWAIT packet so we know the continuation is
                         // inside endFunc before cancelling.
                         await Task.WhenAny(infoMessageReceived.Task, Task.Delay(TimeSpan.FromSeconds(10)));
 
                         long cancelledAtMs = stopwatch.ElapsedMilliseconds;
-                        cts.Cancel();
+                        await CancelWithoutBlockingAsync(cts, "Always Encrypted partial results");
 
                         Exception caughtException = null;
                         bool readerReturned = false;
                         try
                         {
+                            await WaitWithoutBlockingAsync(execTask, "Always Encrypted execution");
                             using (SqlDataReader reader = await execTask)
                             {
                                 readerReturned = true;
@@ -2521,6 +2543,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     object result = await verifyCmd.ExecuteScalarAsync();
                     Assert.Equal(numberOfRows, (int)result);
                 }
+            }
+            finally
+            {
+                if (execTask is not null)
+                {
+                    ObserveWhenComplete(execTask);
+                }
+
+                await DisposeWithoutBlockingAsync(sqlConnection);
             }
         }
 
