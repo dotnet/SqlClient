@@ -781,6 +781,22 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             }
         }
 
+        internal static object GetColumnCollation(
+            Result collations, string columnName, ref int collationIndex)
+        {
+            // Both results follow column order, but SELECT * omits hidden columns.
+            while (collationIndex < collations.Count)
+            {
+                Row row = collations[collationIndex++];
+                if (((SqlString)row[1]).Value == columnName)
+                {
+                    return row[CollationId];
+                }
+            }
+
+            throw SQL.BulkLoadNoCollation();
+        }
+
         // Matches associated columns with metadata from initial query.
         // Builds and executes the update bulk command.
         // metaDataSet is passed in by the caller so that when CacheMetadata is enabled, the
@@ -885,6 +901,8 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             // columns. metaDataSet is safe to mutate here — see the call site for clone logic.
             _operationMetaData = metaDataSet;
             _sortedColumnMappings = new List<_ColumnMapping>(metaDataSet.Length);
+            Result collations = internalResults[CollationResultId];
+            int collationIndex = 0;
             for (int i = 0; i < metaDataSet.Length; i++)
             {
                 TdsColumnMetadata metadata = metaDataSet[i];
@@ -1044,9 +1062,9 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                             }
                     }
 
-                    // Get collation for column i
-                    Result rowset = internalResults[CollationResultId];
-                    object rowvalue = rowset[i][CollationId];
+                    object rowvalue = collations.Count == metaDataSet.Length
+                        ? collations[i][CollationId]
+                        : GetColumnCollation(collations, metadata.column, ref collationIndex);
 
                     bool shouldSendCollation;
                     switch (metadata.DbType)

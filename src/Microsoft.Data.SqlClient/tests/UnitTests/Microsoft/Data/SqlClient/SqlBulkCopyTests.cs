@@ -24,6 +24,48 @@ namespace Microsoft.Data.SqlClient.UnitTests;
 [Collection(AppContextSwitchTestCollection.Name)]
 public sealed class SqlBulkCopyTests
 {
+    /// <summary>Skips hidden and unmapped rows without losing the text column's collation.</summary>
+    [Fact]
+    public void GetColumnCollation_HiddenAndUnmappedColumns_ReturnsMatchingCollation()
+    {
+        // Arrange
+        Result collations = new(new TdsColumnMetadataToken(4));
+        foreach (string name in new[] { "Id", "ValidFrom", "ValidTo", "Unmapped", "TextValue" })
+        {
+            Row row = new(4);
+            row.DataFields[1] = new SqlString(name);
+            row.DataFields[3] = name == "TextValue"
+                ? new SqlString("Japanese_XJIS_100_CI_AS")
+                : SqlString.Null;
+            collations.AddRow(row);
+        }
+        int index = 0;
+
+        // Act
+        object idCollation = SqlBulkCopy.GetColumnCollation(collations, "Id", ref index);
+        object textCollation = SqlBulkCopy.GetColumnCollation(collations, "TextValue", ref index);
+
+        // Assert
+        Assert.Equal(SqlString.Null, idCollation);
+        Assert.Equal(new SqlString("Japanese_XJIS_100_CI_AS"), textCollation);
+        Assert.Equal(collations.Count, index);
+    }
+
+    /// <summary>Reports inconsistent server metadata instead of using another column's collation.</summary>
+    [Fact]
+    public void GetColumnCollation_MissingColumn_ThrowsInvalidOperation()
+    {
+        // Arrange
+        Result collations = new(new TdsColumnMetadataToken(4));
+        int index = 0;
+
+        // Act
+        Action lookup = () => SqlBulkCopy.GetColumnCollation(collations, "Missing", ref index);
+
+        // Assert
+        Assert.Throws<InvalidOperationException>(lookup);
+    }
+
     /// <summary>Supplies native vectors with both reader SQL-type classifications.</summary>
     public static TheoryData<object, bool> NativeVectorJsonInputs
     {
