@@ -157,6 +157,8 @@ jobs:
       # Restore dotnet tools
       - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
 
+      - template: /eng/pipelines/common/steps/restore-powershell-modules.yml@self
+
       # Configure the local SQL Server instance
       - ${{ if eq(parameters.isLocalServer, true) }}:
         - template: /eng/pipelines/pr/steps/configure-sqlserver-step.yml@self

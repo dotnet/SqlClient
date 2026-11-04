@@ -7,32 +7,48 @@ Pester tests for PowerShell scripts used by OneBranch pipeline steps.
 - PowerShell 7+, as restored by `dotnet tool restore` from `dotnet-tools.json`. Windows
   PowerShell 5.1 is not supported: these scripts and tests use types that exist only in
   PowerShell Core, such as `Microsoft.PowerShell.Commands.HttpResponseException`.
-- [Pester v5](https://pester.dev/) (`Install-Module Pester -MinimumVersion 5.0 -Scope CurrentUser`)
+- [Pester](https://pester.dev/), pinned in the root `powershell-modules.json`.
 
-## Running the Tests
+From the repository root, restore tools and modules using anonymous feed access:
 
-Restore the repository-pinned PowerShell first:
+Run `dotnet tool restore` first to install the pinned `pwsh` tool, including on Linux;
+the module-restore target uses that tool, so no globally installed PowerShell is required.
 
 ```console
 dotnet tool restore
+dotnet build build.proj -t:RestorePowerShellModules
+```
+
+## Running the Tests
+
+Start a PowerShell session with the restored tool:
+
+```console
+dotnet tool run pwsh -NoProfile
+```
+
+Import Pester once in that session before running any of the test commands below:
+
+```powershell
+Import-Module Pester
 ```
 
 From this directory:
 
-```console
-dotnet tool run pwsh -NoProfile -Command "Invoke-Pester ./publish-symbols.Tests.ps1"
+```powershell
+Invoke-Pester ./publish-symbols.Tests.ps1
 ```
 
 Or from the repository root:
 
-```console
-dotnet tool run pwsh -NoProfile -Command "Invoke-Pester ./eng/pipelines/onebranch/scripts/tests/"
+```powershell
+Invoke-Pester ./eng/pipelines/onebranch/scripts/tests/
 ```
 
 For detailed output:
 
-```console
-dotnet tool run pwsh -NoProfile -Command "Invoke-Pester ./publish-symbols.Tests.ps1 -Output Detailed"
+```powershell
+Invoke-Pester ./publish-symbols.Tests.ps1 -Output Detailed
 ```
 
 ## Test Coverage
