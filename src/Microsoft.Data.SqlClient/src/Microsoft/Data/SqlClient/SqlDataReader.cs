@@ -1225,7 +1225,7 @@ namespace Microsoft.Data.SqlClient
             }
             else if (metaData.DbType == SqlDbTypeExtensions.Vector)
             {
-                fieldType = GetVectorFieldType(metaData.scale);
+                fieldType = MetaType.GetVectorFieldType(metaData.scale, providerSpecific: false);
             }
             else
             { // For all other types, including Xml - use data in MetaType.
@@ -1241,19 +1241,6 @@ namespace Microsoft.Data.SqlClient
             }
 
             return fieldType;
-        }
-
-#if !NETFRAMEWORK
-        [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
-#endif
-        private static Type GetVectorFieldType(byte vectorElementType)
-        {
-            MetaType.SqlVectorElementType elementType = (MetaType.SqlVectorElementType)vectorElementType;
-            return elementType switch
-            {
-                MetaType.SqlVectorElementType.Float32 => typeof(SqlVector<float>),
-                _ => throw SQL.VectorTypeNotSupported(elementType.ToString()),
-            };
         }
 
         internal virtual int GetLocaleId(int i)
@@ -1332,7 +1319,8 @@ namespace Microsoft.Data.SqlClient
             }
             else if (metaData.DbType == SqlDbTypeExtensions.Vector)
             {
-                providerSpecificFieldType = GetVectorFieldType(metaData.scale);
+                providerSpecificFieldType = MetaType.GetVectorFieldType(
+                    metaData.scale, providerSpecific: true);
             }
             else
             {
@@ -2449,7 +2437,11 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlVector/*' />
         public virtual SqlVector<T> GetSqlVector<T>(int i) where T : unmanaged
         {
-            if (typeof(T) != typeof(float))
+            if (typeof(T) != typeof(float)
+                #if NET
+                && typeof(T) != typeof(Half)
+                #endif
+                )
             {
                 throw SQL.VectorTypeNotSupported(typeof(T).FullName);
             }
@@ -2633,13 +2625,9 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    switch (metaData.scale)
-                    {
-                        case (byte)MetaType.SqlVectorElementType.Float32:
-                            return data.GetSqlVector<float>();
-                        default:
-                            throw SQL.VectorTypeNotSupported(metaData.scale.ToString());
-                    }
+                    // SqlBuffer selects the representation that best matches the vector's
+                    // base type on the current framework.
+                    return data.GetVectorValue();
                 }
             }
             else if (metaData.DbType == SqlDbType.Udt)
@@ -2748,6 +2736,17 @@ namespace Microsoft.Data.SqlClient
                 }
                 return (T)(object)data.GetSqlVector<float>();
             }
+            #if NET
+            else if (typeof(T) == typeof(SqlVector<Half>))
+            {
+                MetaType metaType = metaData.MetaType;
+                if (metaType.SqlDbType != SqlDbTypeExtensions.Vector)
+                {
+                    throw SQL.VectorNotSupportedOnColumnType(metaData.column);
+                }
+                return (T)(object)data.GetSqlVector<Half>();
+            }
+            #endif
             else if (typeof(T) == typeof(XmlReader))
             {
                 // XmlReader only allowed on XML types
@@ -3024,6 +3023,11 @@ namespace Microsoft.Data.SqlClient
 
                         // deprecated
                         case TdsEnums.SQLALTROW:
+                            if (_altMetaDataSetCollection == null)
+                            {
+                                _parser.ThrowCorruptedTdsStream();
+                            }
+
                             if (_altRowStatus == ALTROWSTATUS.Null)
                             {
                                 // cache the regular metadata
@@ -3281,6 +3285,11 @@ namespace Microsoft.Data.SqlClient
                             switch (_altRowStatus)
                             {
                                 case ALTROWSTATUS.AltRow:
+                                    if (_altMetaDataSetCollection == null)
+                                    {
+                                        _parser.ThrowCorruptedTdsStream();
+                                    }
+
                                     int altRowId;
                                     result = _parser.TryGetAltRowId(_stateObj, out altRowId);
                                     if (result != TdsOperationStatus.Done)
@@ -3289,11 +3298,11 @@ namespace Microsoft.Data.SqlClient
                                         return result;
                                     }
                                     TdsColumnMetadataToken altMetaDataSet = _altMetaDataSetCollection.GetAltMetadata(altRowId);
-                                    if (altMetaDataSet != null)
+                                    if (altMetaDataSet == null)
                                     {
-                                        _metaData = altMetaDataSet;
+                                        _parser.ThrowCorruptedTdsStream();
                                     }
-                                    Debug.Assert((_metaData != null), "Can't match up altrowmetadata");
+                                    _metaData = altMetaDataSet;
                                     break;
                                 case ALTROWSTATUS.Done:
                                     // restore the row-metaData

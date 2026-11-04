@@ -1800,6 +1800,9 @@
   <data name="TCE_EnclaveTypeNullForEnclaveBasedQuery" xml:space="preserve">
     <value>İç Hata. Kapanım hesaplamaları gerektiren bir sorgu yürütülürken SQL Server'dan alınan kapanım türü null veya boş.</value>
   </data>
+  <data name="TCE_AzureAttestationExtensionNotFound" xml:space="preserve">
+    <value>'AAS' kanıtlama protokolü Microsoft.Data.SqlClient.Extensions gerektirir. AzureAzure paketi, Microsoft.Data.SqlClient ile aynı sürümde. Bu pakete başvuru ekleyin veya güncelleştirin ya da bağlantı dizesi farklı bir kanıtlama protokolü belirtin.</value>
+  </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
     <value>Kapanım türü '{0}' ve kanıtlama protokolü '{1}' için kapanım sağlayıcısı bulunamadı. Lütfen bağlantı dizesinde doğru kanıtlama protokolünü belirtin. </value>
   </data>
@@ -1901,6 +1904,9 @@
   </data>
   <data name="SQLCR_NoCRAckAtReconnection" xml:space="preserve">
     <value>Sunucu, geri yükleme denemesini onaylamadı; bağlantı geri yüklemesi mümkün değil.</value>
+  </data>
+  <data name="DbConnectionString_VectorTypeSupport" xml:space="preserve">
+    <value>The level of vector type support to negotiate with the server.</value>
   </data>
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>Bir bağlantı havuzundaki bağlantılar için engelleme dönemi davranışını tanımlar.</value>
@@ -2067,6 +2073,9 @@
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
     <value>Üst komutta EnableOptimizedParameterBinding etkinleştirildiğinde '{0}' parametresinin Yön Çıkışı veya InputOutput’u olamaz.</value>
   </data>
+  <data name="SQL_PrepareNotSupportedForOptimizedBinding" xml:space="preserve">
+    <value>EnableOptimizedParameterBinding etkinleştirildiğinde Prepare desteklenmez. Yeni bir SqlCommand oluşturun ve ilk yürütmesinden önce EnableOptimizedParameterBinding özelliğini false olarak ayarlayın veya Prepare çağrısı yapmadan yürütün.</value>
+  </data>
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
     <value>'{0}' kimlik doğrulama yöntemi kullanılarak bir erişim belirteci alınırken bağlantı zaman aşımına uğradı. Son Hata: {1}: {2}</value>
   </data>
@@ -2099,6 +2108,9 @@
   </data>
   <data name="SqlAppContextSwitchManager_InvalidValue" xml:space="preserve">
     <value>AppContext Switch '{0}'={1} ayarlanırken özel durum oluştu.</value>
+  </data>
+  <data name="SQL_GlobalizationInvariantModeRequiresLcid" xml:space="preserve">
+    <value>Globalleştirme Değişmez Modu etkinleştirildiğinde karakter ya da metin türlerini açıklayan SqlMetaData örnekleri bir LCID belirtmelidir.</value>
   </data>
   <data name="SQL_GlobalizationInvariantModeNotSupported" xml:space="preserve">
     <value>Küreselleşme Değişmez Modu desteklenmiyor.</value>

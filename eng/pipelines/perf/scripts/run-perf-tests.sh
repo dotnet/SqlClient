@@ -279,6 +279,15 @@ fi
 
 dotnet --info
 
+# Restore repository-local build tools before any project builds.
+restore_local_tools() {
+    local source_root="$1"
+    echo "Restoring local .NET tools in ${source_root} ..."
+    (cd -- "${source_root}" && dotnet tool restore)
+}
+
+restore_local_tools "${REPO_ROOT}"
+
 ####################################################################################################
 # 2. Create the perf database on the VM's SQL Server.
 #
@@ -495,7 +504,7 @@ prepare_runner_config() {
 # 4 & 5. Run the benchmarks, pinned to the reserved client CPU set.
 #
 # Two passes are executed so the pipeline can compare the branch under test against a baseline:
-#   * baseline  -> either Microsoft.Data.SqlClient restored from NuGet.org at ${baselineVersion}
+#   * baseline  -> either Microsoft.Data.SqlClient restored from the governed feed at ${baselineVersion}
 #                  (ReferenceType=Package + CPM VersionOverride), or - when ${baselineSourceRef} is
 #                  given instead - the driver built from another git ref of this repository (e.g.
 #                  'main', used by the PR perf pipeline).  Skipped when neither is given.
@@ -506,21 +515,8 @@ prepare_runner_config() {
 # results/<label>/.
 ####################################################################################################
 
-# NuGet.config on the VM exposes only the governed feed; the baseline package (and its public deps)
-# live on NuGet.org.  Central Package Management rejects multiple unmapped sources (NU1507), so the
-# baseline restore uses a dedicated single-source config pointing only at NuGet.org.
-BASELINE_NUGET_CONFIG="${REPO_ROOT}/perf-baseline-nuget.config"
-write_baseline_nuget_config() {
-    cat > "${BASELINE_NUGET_CONFIG}" <<'XML'
-<?xml version="1.0" encoding="utf-8"?>
-<configuration>
-  <packageSources>
-    <clear />
-    <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
-  </packageSources>
-</configuration>
-XML
-}
+# Use the repository's governed feed and package source mappings for baseline restores.
+BASELINE_NUGET_CONFIG="${REPO_ROOT}/NuGet.config"
 
 # --- Source baseline (--baseline-source-ref) ------------------------------------------------------
 # Materialises another git ref of THIS repository (e.g. 'main') next to the checkout so the baseline
@@ -631,6 +627,8 @@ prepare_baseline_source() {
         echo "ERROR: baseline source tree at ${BASELINE_SRC_DIR} has no performance test project (${BASELINE_PERF_PROJECT})." >&2
         exit 1
     fi
+
+    restore_local_tools "${BASELINE_SRC_DIR}"
 
     local sha
     sha="$(git -C "${BASELINE_SRC_DIR}" rev-parse --short HEAD 2>/dev/null || echo unknown)"
@@ -784,7 +782,10 @@ baselineBuildArgs=()
 
 if [[ -n "${baselineVersion}" ]]; then
     # Released package baseline: candidate's perf project, MDS swapped to a NuGet package reference.
-    write_baseline_nuget_config
+    if [[ "${baselineVersion}" == "latest" ]]; then
+        baselineVersion="$(python3 "${SCRIPT_DIR}/resolve_baseline.py")"
+        echo "Resolved latest stable baseline: ${baselineVersion}"
+    fi
     baselineLabel="${baselineVersion}"
     baselineBuildArgs=(
         -p:ReferenceType=Package

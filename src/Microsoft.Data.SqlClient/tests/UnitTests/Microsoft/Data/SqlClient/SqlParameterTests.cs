@@ -8,12 +8,13 @@ using System.Reflection;
 using System.Text;
 using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlClient.Server;
+using Microsoft.Data.SqlTypes;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests;
 
-/// <summary>Verifies ANSI metadata sizing for SqlParameter output directions.</summary>
-public class SqlParameterTests
+/// <summary>Verifies parameter metadata sizing and value coercion.</summary>
+public sealed class SqlParameterTests
 {
     /// <summary>
     /// Input/output values can promote metadata; output-only metadata keeps its capacity.
@@ -73,5 +74,43 @@ public class SqlParameterTests
         Assert.Equal(size, metadata.MaxLength);
         Assert.Equal(size == -1, parameter.InternalMetaType.IsPlp);
         Assert.Equal(size, parameter.Size);
+    }
+
+    /// <summary>Supplies each native vector type and unsupported text parameter destination.</summary>
+    public static TheoryData<SqlDbType, object> NativeVectorTextInputs
+    {
+        get
+        {
+            TheoryData<SqlDbType, object> data = new();
+            foreach (SqlDbType destination in new[]
+            {
+                SqlDbType.VarChar, SqlDbType.NVarChar, SqlDbTypeExtensions.Json
+            })
+            {
+                data.Add(destination, new SqlVector<float>(new[] { 1.5f }));
+                #if NET
+                data.Add(destination, new SqlVector<Half>(new[] { (Half)1.5f }));
+                #endif
+            }
+            return data;
+        }
+    }
+
+    /// <summary>Rejects typed vectors instead of implicitly serializing them for text parameters.</summary>
+    /// <param name="destination">The text parameter type.</param>
+    /// <param name="value">The native vector value.</param>
+    [Theory]
+    [MemberData(nameof(NativeVectorTextInputs))]
+    public void CoerceValue_NativeVectorToText_ThrowsInvalidCastException(
+        SqlDbType destination, object value)
+    {
+        // Arrange
+        MetaType type = MetaType.GetMetaTypeFromSqlDbType(destination, false);
+
+        // Act
+        Action action = () => SqlParameter.CoerceValue(value, type, out _, out _, false);
+
+        // Assert
+        Assert.Throws<InvalidCastException>(action);
     }
 }

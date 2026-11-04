@@ -1800,6 +1800,9 @@
   <data name="TCE_EnclaveTypeNullForEnclaveBasedQuery" xml:space="preserve">
     <value>Erreur interne. Le type d'enclave reçu de la part de SQL Server a une valeur null ou est vide durant l'exécution d'une requête qui nécessite des calculs d'enclave.</value>
   </data>
+  <data name="TCE_AzureAttestationExtensionNotFound" xml:space="preserve">
+    <value>Le protocole d’attestation « AAS » nécessite Microsoft.Data.SqlClient.Extensions. Package Azure, avec la même version que Microsoft.Data.SqlClient. Ajoutez ou mettez à jour la référence à ce package, ou spécifiez un autre protocole d’attestation dans la chaîne de connexion.</value>
+  </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
     <value>Aucun fournisseur d'enclave pour le type d'enclave « {0} » et le protocole d'attestation « {1} ». Spécifiez le protocole d'attestation approprié dans la chaîne de connexion. </value>
   </data>
@@ -1901,6 +1904,9 @@
   </data>
   <data name="SQLCR_NoCRAckAtReconnection" xml:space="preserve">
     <value>Le serveur n'a pas accepté une tentative de récupération. La récupération de la connexion est impossible.</value>
+  </data>
+  <data name="DbConnectionString_VectorTypeSupport" xml:space="preserve">
+    <value>The level of vector type support to negotiate with the server.</value>
   </data>
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>Définit le comportement de la période de blocage pour un pool de connexions.</value>
@@ -2067,6 +2073,9 @@
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
     <value>Le paramètre « {0} » ne peut pas avoir Direction Output ou InputOutput lorsque EnableOptimizedParameterBinding est activé sur la commande parente.</value>
   </data>
+  <data name="SQL_PrepareNotSupportedForOptimizedBinding" xml:space="preserve">
+    <value>La préparation n’est pas prise en charge lorsque EnableOptimizedParameterBinding est activé. Créez un SqlCommand et définissez EnableOptimizedParameterBinding sur false avant sa première exécution ou exécutez-le sans appeler Prepare.</value>
+  </data>
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
     <value>La connexion a expiré lors de la récupération d’un jeton d’accès à l’aide de '{0}' méthode d’authentification. Dernière erreur : {1} : {2}</value>
   </data>
@@ -2099,6 +2108,9 @@
   </data>
   <data name="SqlAppContextSwitchManager_InvalidValue" xml:space="preserve">
     <value>Une exception s’est produite lors de la tentative de définition du commutateur AppContext '{0}'={1}.</value>
+  </data>
+  <data name="SQL_GlobalizationInvariantModeRequiresLcid" xml:space="preserve">
+    <value>Quand le mode invariant de globalisation est activé, les instances de SqlMetaData qui décrivent des types de caractères ou de texte doivent spécifier un LCID.</value>
   </data>
   <data name="SQL_GlobalizationInvariantModeNotSupported" xml:space="preserve">
     <value>Le mode invariant de la globalisation n’est pas pris en charge.</value>

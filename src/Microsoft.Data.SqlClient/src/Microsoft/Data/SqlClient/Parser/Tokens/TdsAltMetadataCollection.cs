@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace Microsoft.Data.SqlClient.Parser.Tokens;
 
@@ -57,8 +56,6 @@ internal sealed class TdsAltMetadataCollection
             }
         }
 
-        // @TODO: Debug fail usage here isn't ideal.
-        Debug.Fail("Can't match up altMetaDataSet with given id");
         return null;
     }
 

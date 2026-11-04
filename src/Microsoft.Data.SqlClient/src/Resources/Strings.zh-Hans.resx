@@ -1800,6 +1800,9 @@
   <data name="TCE_EnclaveTypeNullForEnclaveBasedQuery" xml:space="preserve">
     <value>出现内部错误。执行需要 enclave 计算的查询时，接收自 SQL Server 的 enclave 类型为 null 或为空。</value>
   </data>
+  <data name="TCE_AzureAttestationExtensionNotFound" xml:space="preserve">
+    <value>证明协议 "AAS" 要求使用与 Microsoft.Data.SqlClient 版本相同的 Microsoft.Data.SqlClient.Extensions.Azure 包。请添加或更新对该包的引用，或在连接字符串中指定其他证明协议。</value>
+  </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
     <value>未找到 enclave 类型“{0}”和证明协议“{1}”的 enclave 提供程序。请在连接字符串中指定正确的证明协议。</value>
   </data>
@@ -1901,6 +1904,9 @@
   </data>
   <data name="SQLCR_NoCRAckAtReconnection" xml:space="preserve">
     <value>服务器未收到恢复尝试，无法恢复连接。</value>
+  </data>
+  <data name="DbConnectionString_VectorTypeSupport" xml:space="preserve">
+    <value>The level of vector type support to negotiate with the server.</value>
   </data>
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>定义针对连接池的暂停时段行为。</value>
@@ -2067,6 +2073,9 @@
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
     <value>当在父命令上启用 EnableOptimizedParameterBinding 时，参数“{0}”不能具有 Direction Output 或 InputOutput。</value>
   </data>
+  <data name="SQL_PrepareNotSupportedForOptimizedBinding" xml:space="preserve">
+    <value>启用 EnableOptimizedParameterBinding 时不支持准备。创建新的 SqlCommand，并在首次执行前将 EnableOptimizedParameterBinding 设置为 false，或者在不调用 Prepare 的情况下执行它。</value>
+  </data>
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
     <value>使用“{0}”身份验证方法检索访问令牌时连接超时。最后一个错误: {1}: {2}</value>
   </data>
@@ -2099,6 +2108,9 @@
   </data>
   <data name="SqlAppContextSwitchManager_InvalidValue" xml:space="preserve">
     <value>尝试设置 AppContext 交换机“{0}”={1} 时发生异常。</value>
+  </data>
+  <data name="SQL_GlobalizationInvariantModeRequiresLcid" xml:space="preserve">
+    <value>启用全球化固定模式后，描述字符或文本类型的 SqlMetaData 实例必须指定 LCID。</value>
   </data>
   <data name="SQL_GlobalizationInvariantModeNotSupported" xml:space="preserve">
     <value>不支持全球化固定模式。</value>

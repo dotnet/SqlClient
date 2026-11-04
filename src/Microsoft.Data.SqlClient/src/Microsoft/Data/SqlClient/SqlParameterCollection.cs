@@ -35,6 +35,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/ItemIndex/*' />
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public new SqlParameter this[int index]
         {
             get => (SqlParameter)GetParameter(index);

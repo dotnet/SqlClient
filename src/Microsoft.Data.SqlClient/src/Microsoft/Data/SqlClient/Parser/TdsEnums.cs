@@ -659,8 +659,20 @@ internal static class TdsEnums
     internal const byte MAX_SUPPORTED_JSON_VERSION = 0x01;
 
     // Vector Support constants
-    internal const byte MAX_SUPPORTED_VECTOR_VERSION = 0x01;
+    //
+    // The version negotiated via the VECTORSUPPORT feature extension determines which
+    // vector base types the server returns in their native binary form:
+    //
+    //   0 - Native vector support was not negotiated. Vector columns are returned
+    //       as varchar(max) containing a JSON array.
+    //   1 - The server supports vector columns with a float32 base type. Columns with
+    //       any other base type are returned as varchar(max) containing a JSON array.
+    //   2 - The server additionally supports vector columns with a float16 base type.
+    internal const byte VECTOR_VERSION_NOT_SUPPORTED = 0x00;
+    internal const byte VECTOR_VERSION_FLOAT32 = 0x01;
+    internal const byte VECTOR_VERSION_FLOAT16 = 0x02;
     internal const int VECTOR_HEADER_SIZE = 8;
+    internal const int VECTOR_ELEMENT_TYPE_OFFSET = 4;
 
     // TCE Related constants
     internal const byte TCE_NOT_ENABLED = 0x00;

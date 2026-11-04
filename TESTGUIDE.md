@@ -25,6 +25,32 @@ tests, use only `net10.0`. Stress projects use `net462;net10.0`. PackageCompatib
 `net481;net10.0` with xUnit v3, and their Framework target requires Windows and .NET Framework 4.8.1.
 The historical `tools/SniCloseLegacyRepro` test matrix is unchanged.
 
+## Accessing Driver Internals
+
+The driver grants `InternalsVisibleTo` access to `UnitTests`, `ManualTests`, and
+`Microsoft.Data.SqlClient.TestCommon` (the assembly names, not the project file names).
+Unsigned driver builds grant access in both `Project` and `Package`
+reference modes. Manual tests can use internal types and members directly, without reflection.
+The manual-test `InternalsVisibleToTest` verifies this access without SQL Server configuration.
+
+In `Package` mode, tests that use internals must compile against the implementation assembly in
+`lib/<tfm>/`, not the public reference assembly in `ref/<tfm>/`. The manual-test project selects
+the implementation assembly explicitly.
+
+Signed drivers grant internal access only in `Package` mode, to test assemblies signed with the
+shared test key. Signed `Project` builds do not grant test access. UnitTests, ManualTests, and
+their helpers use the `sqlclient-test-key.snk` secure file. This key is provisioned outside the
+repository and is not the production signing key.
+
+For signed packages, pass `-p:TestSigningKeyPath=<absolute-path-to-sqlclient-test-key.snk>` to
+`TestSqlClientManual` or `BuildSqlClientTestsManual` in `build.proj`. The property is forwarded to
+the test project and signs its test-helper dependencies too. Package-mode ManualTests consumes
+the packaged AKV provider, so prepare that package alongside the driver. The internal Managed
+Instance and Kerberos package-test jobs download the secure file and pass its path explicitly.
+
+FunctionalTests is not a friend assembly. Its linked internal source files are compiled into the
+test assembly; they do not demonstrate access to the driver's internals through `InternalsVisibleTo`.
+
 ## Simulated server tests
 
 The unit project's `SimulatedServerTests` use local TDS endpoints, not an installed SQL Server.
@@ -174,6 +200,29 @@ The most commonly used test parameters are:
 | `-p:TestFramework=`         | Empty                                                     | Target framework to run. If omitted, all project frameworks are selected, including Windows-only `net462`.                     |
 | `-p:TestResultsFolderPath=` | `test_results` under the repository root                   | Absolute directory where test results are written.                                                                          |
 | `-p:TestSet=`               | Empty                                                     | Selects manual test sets. Supported values include `1`, `2`, `3`, `AE`, and combinations such as `13` or `12AE`.              |
+
+## Sequential Unicode Decoding Regression
+
+`SqlUnicodeEncodingTests` checks raw UTF-16LE code-unit preservation, partial consumption, offsets,
+zero-capacity conversions, and unchanged input bytes. Run it without a database:
+
+```bash
+dotnet test src/Microsoft.Data.SqlClient/tests/UnitTests/Microsoft.Data.SqlClient.UnitTests.csproj \
+  --framework net10.0 --filter "FullyQualifiedName~SqlUnicodeEncodingTests" --blame-hang-timeout 10m
+```
+
+With SQL Server test configuration in place, run the Unicode round-trip regression:
+
+```bash
+dotnet build -t:TestSqlClientManual -p:TestFramework=net10.0 \
+  -p:TestFilters=FullyQualifiedName~UnicodeParameterAndReaderRoundTrip_PreservesWorldwideText
+```
+
+The integration test covers buffered and streamed parameters, synchronous and asynchronous readers,
+single-character and mixed-size reads, destination offsets, zero-length reads, and EOF over packet-spanning
+`nvarchar(max)` text. It uses the standard database-object fixtures and skips when connection strings are not configured.
+SQL Server may run remotely; verifying the big-endian decoder path requires running the test client on a real
+big-endian runtime (for example, s390x). Passing on x64 verifies only the little-endian path.
 
 ## Test Filters
 
