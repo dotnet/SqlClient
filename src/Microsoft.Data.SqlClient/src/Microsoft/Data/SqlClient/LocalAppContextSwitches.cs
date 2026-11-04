@@ -42,8 +42,8 @@ internal static class LocalAppContextSwitches
     /// The name of the app context switch that controls whether SqlBulkCopy
     /// discovers destination metadata from catalog views.
     /// </summary>
-    private const string EnableBulkCopyCatalogMetadataDiscoveryString =
-        "Switch.Microsoft.Data.SqlClient.EnableBulkCopyCatalogMetadataDiscovery";
+    private const string UseBulkCopyCatalogMetadataDiscoveryString =
+        "Switch.Microsoft.Data.SqlClient.UseBulkCopyCatalogMetadataDiscovery";
 
     /// <summary>
     /// The name of the app context switch that controls whether
@@ -195,7 +195,8 @@ internal static class LocalAppContextSwitches
     {
         None = 0,
         True = 1,
-        False = 2
+        False = 2,
+        Automatic = 3
     }
 
     // GOTCHA: These fields are internal so that the LocalAppContextSwitchesHelper
@@ -284,9 +285,9 @@ internal static class LocalAppContextSwitches
     internal static SwitchValue s_useConnectionPoolV2 = SwitchValue.None;
 
     /// <summary>
-    /// The cached value of the EnableBulkCopyCatalogMetadataDiscovery switch.
+    /// The cached value of the UseBulkCopyCatalogMetadataDiscovery switch.
     /// </summary>
-    internal static SwitchValue s_enableBulkCopyCatalogMetadataDiscovery = SwitchValue.None;
+    internal static SwitchValue s_useBulkCopyCatalogMetadataDiscovery = SwitchValue.None;
 
     /// <summary>
     /// The cached value of the UseLegacyIdleTimeoutBehavior switch.
@@ -703,22 +704,30 @@ internal static class LocalAppContextSwitches
             ref s_useConnectionPoolV2);
 
     /// <summary>
-    /// When set to true, SqlBulkCopy discovers destination metadata from
-    /// sys.all_columns. This allows mapping to hidden columns (e.g. temporal
-    /// period columns) and SQL Graph aliases ($node_id, $edge_id, $from_id,
-    /// $to_id), at a higher server CPU cost.
+    /// When true, SqlBulkCopy always discovers destination metadata from sys.all_columns.
+    /// When false, it never uses catalog discovery, so hidden columns and SQL Graph aliases
+    /// cannot be mapped.
     ///
-    /// When set to false, SqlBulkCopy uses SET FMTONLY ON and SELECT *, as in
-    /// releases before 6.0, and does not read catalog views. Hidden columns and
-    /// SQL Graph aliases cannot be mapped.
-    ///
-    /// The default value of this switch is false.
+    /// When unset, it uses SELECT * first and falls back to catalog discovery for missing
+    /// destination names. SQL Graph alias mappings use catalog discovery immediately.
     /// </summary>
-    public static bool EnableBulkCopyCatalogMetadataDiscovery =>
-        AcquireAndReturn(
-            EnableBulkCopyCatalogMetadataDiscoveryString,
-            defaultValue: false,
-            ref s_enableBulkCopyCatalogMetadataDiscovery);
+    public static bool? UseBulkCopyCatalogMetadataDiscovery
+    {
+        get
+        {
+            SwitchValue value = s_useBulkCopyCatalogMetadataDiscovery;
+            if (value == SwitchValue.None)
+            {
+                value = AppContext.TryGetSwitch(
+                    UseBulkCopyCatalogMetadataDiscoveryString, out bool enabled)
+                    ? (enabled ? SwitchValue.True : SwitchValue.False)
+                    : SwitchValue.Automatic;
+                s_useBulkCopyCatalogMetadataDiscovery = value;
+            }
+
+            return value == SwitchValue.Automatic ? null : value == SwitchValue.True;
+        }
+    }
 
     /// <summary>
     /// When set to true (the default), pooling preserves historical idle-timeout behavior.

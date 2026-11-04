@@ -17,7 +17,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         // SQL Graph aliases are only resolved when catalog discovery is enabled.
         private readonly LocalAppContextSwitchesHelper _switches = new()
         {
-            EnableBulkCopyCatalogMetadataDiscovery = true
+            UseBulkCopyCatalogMetadataDiscovery = true
         };
 
         /// <summary>Restores the AppContext switches changed by this test class.</summary>

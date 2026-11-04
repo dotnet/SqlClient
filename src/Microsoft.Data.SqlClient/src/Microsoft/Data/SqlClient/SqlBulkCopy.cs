@@ -86,6 +86,8 @@ namespace Microsoft.Data.SqlClient
 
         internal int Count => _results.Count;
 
+        internal bool UsesCatalogMetadata { get; set; }
+
         internal Result this[int idx] => _results[idx];
 
         // Callback function for the tdsparser
@@ -440,7 +442,7 @@ namespace Microsoft.Data.SqlClient
         private bool IsCopyOption(SqlBulkCopyOptions copyOption) => ((_copyOptions & copyOption) == copyOption);
 
         //Creates the initial query string, but does not execute it.
-        internal string CreateInitialQuery()
+        internal string CreateInitialQuery(bool? useCatalog = null)
         {
             string[] parts;
             try
@@ -489,7 +491,9 @@ namespace Microsoft.Data.SqlClient
 
             string objectName = ADP.BuildMultiPartName(parts);
 
-            if (!LocalAppContextSwitches.EnableBulkCopyCatalogMetadataDiscovery)
+            bool? mode = LocalAppContextSwitches.UseBulkCopyCatalogMetadataDiscovery;
+            useCatalog ??= mode == true || (mode is null && _localColumnMappingsResolveAliases);
+            if (!useCatalog.Value)
             {
                 // Return only the visible columns without querying catalog views. Hidden columns
                 // and SQL Graph aliases are not discoverable.
@@ -653,14 +657,36 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         // Creates and then executes initial query to get information about the target table
         private async Task<BulkCopySimpleResultSet> CreateAndExecuteInitialQueryAsync()
         {
-            // Check if we have valid cached metadata for the current destination table
+            BulkCopySimpleResultSet result;
             if (IsCachedMetadataValid())
             {
                 SqlClientEventSource.Log.TryTraceEvent("SqlBulkCopy.CreateAndExecuteInitialQueryAsync | Info | Using cached metadata for table '{0}'", _destinationTableName);
-                return CachedMetadata;
+                result = CachedMetadata;
+            }
+            else
+            {
+                bool useCatalog = LocalAppContextSwitches.UseBulkCopyCatalogMetadataDiscovery
+                    == true || _localColumnMappingsResolveAliases;
+                result = await ExecuteInitialQueryAsync(useCatalog).ConfigureAwait(false);
             }
 
-            string TDSCommand = CreateInitialQuery();
+            if (!result.UsesCatalogMetadata
+                && ShouldUseCatalogMetadataFallback(result[MetaDataResultId].MetaData))
+            {
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "SqlBulkCopy.CreateAndExecuteInitialQueryAsync | Info | " +
+                    "Retrying metadata discovery with catalog views for table '{0}' " +
+                    "because a destination column name was not found.", _destinationTableName);
+                result = await ExecuteInitialQueryAsync(useCatalog: true).ConfigureAwait(false);
+            }
+
+            CacheMetadataIfEnabled(result);
+            return result;
+        }
+
+        private async Task<BulkCopySimpleResultSet> ExecuteInitialQueryAsync(bool useCatalog)
+        {
+            string TDSCommand = CreateInitialQuery(useCatalog);
             SqlClientEventSource.Log.TryTraceEvent("SqlBulkCopy.CreateAndExecuteInitialQueryAsync | Info | Initial Query: '{0}'", TDSCommand);
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlBulkCopy.CreateAndExecuteInitialQueryAsync | Info | Correlation | Object Id {0}, Activity Id {1}", ObjectID, ActivityCorrelator.Current);
             Task executeTask = _parser.TdsExecuteSQLBatch(TDSCommand, BulkCopyTimeout, null, _stateObj, sync: !_isAsyncBulkCopy, callerHasConnectionLock: true);
@@ -671,15 +697,51 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 await executeTask.ConfigureAwait(false);
             }
 
-            BulkCopySimpleResultSet result = new();
+            BulkCopySimpleResultSet result = new() { UsesCatalogMetadata = useCatalog };
             RunParser(result);
-            CacheMetadataIfEnabled(result);
             return result;
+        }
+
+        internal bool ShouldUseCatalogMetadataFallback(TdsColumnMetadataToken metadata)
+        {
+            if (LocalAppContextSwitches.UseBulkCopyCatalogMetadataDiscovery.HasValue)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < _localColumnMappings.Count; i++)
+            {
+                SqlBulkCopyColumnMapping mapping = _localColumnMappings[i];
+                if (mapping._destinationColumnOrdinal >= 0)
+                {
+                    continue;
+                }
+
+                string destination = UnquotedName(mapping.DestinationColumn);
+                bool found = false;
+                for (int j = 0; j < metadata.Length; j++)
+                {
+                    if (metadata[j].column == destination)
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         internal bool IsCachedMetadataValid()
         {
+            bool? mode = LocalAppContextSwitches.UseBulkCopyCatalogMetadataDiscovery;
             return CachedMetadata != null
+                && (!mode.HasValue || CachedMetadata.UsesCatalogMetadata == mode.Value)
                 && (!_localColumnMappingsResolveAliases || _cachedMetadataResolveAliases);
         }
 
@@ -1903,7 +1965,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         {
             // SQL Graph aliases are only resolved by catalog metadata discovery.
             if (_localColumnMappings is null
-                || !LocalAppContextSwitches.EnableBulkCopyCatalogMetadataDiscovery)
+                || LocalAppContextSwitches.UseBulkCopyCatalogMetadataDiscovery == false)
             {
                 return false;
             }

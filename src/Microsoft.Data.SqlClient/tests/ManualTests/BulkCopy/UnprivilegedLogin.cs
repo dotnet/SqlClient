@@ -31,7 +31,7 @@ public sealed class UnprivilegedLogin : IDisposable
     // These tests cover the sys.all_columns query, which runs only with catalog discovery enabled.
     private readonly LocalAppContextSwitchesHelper _switches = new()
     {
-        EnableBulkCopyCatalogMetadataDiscovery = true
+        UseBulkCopyCatalogMetadataDiscovery = true
     };
 
     public static bool CanRunTests =>

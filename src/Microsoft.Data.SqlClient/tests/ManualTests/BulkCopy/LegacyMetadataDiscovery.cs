@@ -14,7 +14,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
 {
     /// <summary>
     /// Verifies SqlBulkCopy with the pre-6.0 destination metadata query, used when the
-    /// EnableBulkCopyCatalogMetadataDiscovery switch is disabled.
+    /// UseBulkCopyCatalogMetadataDiscovery switch is disabled.
     /// </summary>
     [Trait("Set", "2")]
     public class LegacyMetadataDiscovery
@@ -28,14 +28,17 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         private const string EdgeDefinition = "([Description] VARCHAR(100)) AS EDGE";
 
         /// <summary>
-        /// Verifies that the legacy query discovers metadata and copies rows into a regular table.
+        /// Verifies that each discovery mode copies rows into a regular table.
         /// </summary>
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public void WriteToServer_LegacyDiscovery_CopiesRows()
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [InlineData(null)]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void WriteToServer_DiscoveryMode_CopiesRows(bool? mode)
         {
             // Arrange
             using LocalAppContextSwitchesHelper switches = new();
-            switches.EnableBulkCopyCatalogMetadataDiscovery = false;
+            switches.UseBulkCopyCatalogMetadataDiscovery = mode;
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
             connection.Open();
             using Table table = new(connection, "LegacyMetadataDiscovery", TableDefinition);
@@ -50,14 +53,17 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         }
 
         /// <summary>
-        /// Verifies that the legacy query discovers metadata and copies rows asynchronously.
+        /// Verifies that each discovery mode copies rows asynchronously.
         /// </summary>
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public async Task WriteToServerAsync_LegacyDiscovery_CopiesRows()
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [InlineData(null)]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task WriteToServerAsync_DiscoveryMode_CopiesRows(bool? mode)
         {
             // Arrange
             using LocalAppContextSwitchesHelper switches = new();
-            switches.EnableBulkCopyCatalogMetadataDiscovery = false;
+            switches.UseBulkCopyCatalogMetadataDiscovery = mode;
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
             await connection.OpenAsync();
             using Table table = new(connection, "LegacyMetadataDiscoveryAsync", TableDefinition);
@@ -79,7 +85,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         {
             // Arrange
             using LocalAppContextSwitchesHelper switches = new();
-            switches.EnableBulkCopyCatalogMetadataDiscovery = false;
+            switches.UseBulkCopyCatalogMetadataDiscovery = false;
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
             connection.Open();
             string tableName = "#LegacyMetadataDiscovery";
@@ -110,7 +116,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         {
             // Arrange
             using LocalAppContextSwitchesHelper switches = new();
-            switches.EnableBulkCopyCatalogMetadataDiscovery = false;
+            switches.UseBulkCopyCatalogMetadataDiscovery = false;
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
             connection.Open();
             using TemporalTable table = CreateTemporalTable(connection, "LegacyHidden");
@@ -137,7 +143,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         {
             // Arrange
             using LocalAppContextSwitchesHelper switches = new();
-            switches.EnableBulkCopyCatalogMetadataDiscovery = false;
+            switches.UseBulkCopyCatalogMetadataDiscovery = false;
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
             await connection.OpenAsync();
             using TemporalTable table = CreateTemporalTable(connection, "LegacyHiddenAsync");
@@ -164,7 +170,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         {
             // Arrange
             using LocalAppContextSwitchesHelper switches = new();
-            switches.EnableBulkCopyCatalogMetadataDiscovery = true;
+            switches.UseBulkCopyCatalogMetadataDiscovery = true;
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
             connection.Open();
             using TemporalTable table = CreateTemporalTable(connection, "CatalogHidden");
@@ -176,6 +182,141 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
 
             // Assert
             Assert.Equal(13536, ex.Number);
+        }
+
+        /// <summary>Verifies automatic fallback copies writable hidden columns.</summary>
+        [ConditionalFact(
+            typeof(DataTestUtility),
+            nameof(DataTestUtility.AreConnStringsSetup),
+            nameof(DataTestUtility.IsNotAzureSynapse))]
+        public void WriteToServer_AutomaticHiddenColumns_CopiesRows()
+        {
+            // Arrange
+            using LocalAppContextSwitchesHelper switches = new();
+            switches.UseBulkCopyCatalogMetadataDiscovery = null;
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            connection.Open();
+            using Table table = CreateWritableHiddenTable(connection, "AutomaticHidden");
+            using DataTable source = CreateWritableHiddenSource();
+            using SqlBulkCopy copy = CreateWritableHiddenCopy(connection, table.Name);
+
+            // Act
+            copy.WriteToServer(source);
+
+            // Assert
+            AssertHiddenValues(connection, table.Name, source);
+        }
+
+        /// <summary>Verifies automatic fallback copies writable hidden columns asynchronously.</summary>
+        [ConditionalFact(
+            typeof(DataTestUtility),
+            nameof(DataTestUtility.AreConnStringsSetup),
+            nameof(DataTestUtility.IsNotAzureSynapse))]
+        public async Task WriteToServerAsync_AutomaticHiddenColumns_CopiesRows()
+        {
+            // Arrange
+            using LocalAppContextSwitchesHelper switches = new();
+            switches.UseBulkCopyCatalogMetadataDiscovery = null;
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            await connection.OpenAsync();
+            using Table table = CreateWritableHiddenTable(connection, "AutomaticHiddenAsync");
+            using DataTable source = CreateWritableHiddenSource();
+            using SqlBulkCopy copy = CreateWritableHiddenCopy(connection, table.Name);
+
+            // Act
+            await copy.WriteToServerAsync(source);
+
+            // Assert
+            AssertHiddenValues(connection, table.Name, source);
+        }
+
+        /// <summary>Verifies fallback replaces a visible-column cache and reuses catalog metadata.</summary>
+        [ConditionalFact(
+            typeof(DataTestUtility),
+            nameof(DataTestUtility.AreConnStringsSetup),
+            nameof(DataTestUtility.IsNotAzureSynapse))]
+        public void WriteToServer_AutomaticHiddenMappingAfterCache_ReplacesCachedMetadata()
+        {
+            // Arrange
+            using LocalAppContextSwitchesHelper switches = new();
+            switches.UseBulkCopyCatalogMetadataDiscovery = null;
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            connection.Open();
+            using Table table = CreateWritableHiddenTable(connection, "AutomaticHiddenCache");
+            using DataTable source = CreateWritableHiddenSource();
+            using SqlBulkCopy copy = new(connection, SqlBulkCopyOptions.CacheMetadata, null)
+            {
+                DestinationTableName = table.Name
+            };
+            copy.ColumnMappings.Add("Id", "Id");
+            copy.WriteToServer(source);
+            Assert.False(copy.CachedMetadata.UsesCatalogMetadata);
+            copy.ColumnMappings.Add("ValidFrom", "ValidFrom");
+            copy.ColumnMappings.Add("ValidTo", "ValidTo");
+
+            // Act
+            copy.WriteToServer(source);
+            BulkCopySimpleResultSet catalogMetadata = copy.CachedMetadata;
+            copy.WriteToServer(source);
+
+            // Assert
+            Assert.True(catalogMetadata.UsesCatalogMetadata);
+            Assert.Same(catalogMetadata, copy.CachedMetadata);
+            AssertRows(connection, table.Name, 3);
+        }
+
+        /// <summary>Verifies graph aliases work in automatic and forced catalog modes.</summary>
+        [ConditionalTheory(
+            typeof(DataTestUtility),
+            nameof(DataTestUtility.AreConnStringsSetup),
+            nameof(DataTestUtility.IsNotAzureSynapse),
+            nameof(DataTestUtility.IsAtLeastSQL2017))]
+        [InlineData(null)]
+        [InlineData(true)]
+        public void WriteToServer_CatalogGraphAliases_CopiesRows(bool? mode)
+        {
+            // Arrange
+            using LocalAppContextSwitchesHelper switches = new();
+            switches.UseBulkCopyCatalogMetadataDiscovery = mode;
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            connection.Open();
+            using Table node = new(connection, "CatalogGraphNode", NodeDefinition);
+            using Table edge = new(connection, "CatalogGraphEdge", EdgeDefinition);
+            using DataTable source = CreateEdgeSource(connection, node.Name);
+            using SqlBulkCopy copy = CreateEdgeCopy(connection, edge.Name);
+
+            // Act
+            copy.WriteToServer(source);
+
+            // Assert
+            AssertRows(connection, edge.Name, 1);
+        }
+
+        /// <summary>Verifies graph aliases work asynchronously in both catalog modes.</summary>
+        [ConditionalTheory(
+            typeof(DataTestUtility),
+            nameof(DataTestUtility.AreConnStringsSetup),
+            nameof(DataTestUtility.IsNotAzureSynapse),
+            nameof(DataTestUtility.IsAtLeastSQL2017))]
+        [InlineData(null)]
+        [InlineData(true)]
+        public async Task WriteToServerAsync_CatalogGraphAliases_CopiesRows(bool? mode)
+        {
+            // Arrange
+            using LocalAppContextSwitchesHelper switches = new();
+            switches.UseBulkCopyCatalogMetadataDiscovery = mode;
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            await connection.OpenAsync();
+            using Table node = new(connection, "CatalogGraphNodeAsync", NodeDefinition);
+            using Table edge = new(connection, "CatalogGraphEdgeAsync", EdgeDefinition);
+            using DataTable source = CreateEdgeSource(connection, node.Name);
+            using SqlBulkCopy copy = CreateEdgeCopy(connection, edge.Name);
+
+            // Act
+            await copy.WriteToServerAsync(source);
+
+            // Assert
+            AssertRows(connection, edge.Name, 1);
         }
 
         /// <summary>
@@ -191,7 +332,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         {
             // Arrange
             using LocalAppContextSwitchesHelper switches = new();
-            switches.EnableBulkCopyCatalogMetadataDiscovery = false;
+            switches.UseBulkCopyCatalogMetadataDiscovery = false;
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
             connection.Open();
             using Table node = new(connection, "LegacyGraphNode", NodeDefinition);
@@ -221,7 +362,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         {
             // Arrange
             using LocalAppContextSwitchesHelper switches = new();
-            switches.EnableBulkCopyCatalogMetadataDiscovery = false;
+            switches.UseBulkCopyCatalogMetadataDiscovery = false;
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
             await connection.OpenAsync();
             using Table node = new(connection, "LegacyGraphNodeAsync", NodeDefinition);
@@ -246,7 +387,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         {
             // Arrange
             using LocalAppContextSwitchesHelper switches = new();
-            switches.EnableBulkCopyCatalogMetadataDiscovery = false;
+            switches.UseBulkCopyCatalogMetadataDiscovery = false;
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
             connection.Open();
             using Table table = new(connection, "LegacyMetadataDiscoveryCache", TableDefinition);
@@ -313,6 +454,59 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
             copy.ColumnMappings.Add("Id", "Id");
             copy.ColumnMappings.Add("ValidFrom", "ValidFrom");
             return copy;
+        }
+
+        private static Table CreateWritableHiddenTable(SqlConnection connection, string prefix)
+        {
+            Table table = new(connection, prefix, """
+(
+    Id int not null,
+    ValidFrom datetime2 generated always as row start hidden not null
+        default '2000-01-01',
+    ValidTo datetime2 generated always as row end hidden not null
+        default '9999-12-31',
+    period for system_time (ValidFrom, ValidTo)
+)
+""");
+            try
+            {
+                using SqlCommand command = new(
+                    $"ALTER TABLE {table.Name} DROP PERIOD FOR SYSTEM_TIME", connection);
+                command.ExecuteNonQuery();
+                return table;
+            }
+            catch
+            {
+                table.Dispose();
+                throw;
+            }
+        }
+
+        private static DataTable CreateWritableHiddenSource()
+        {
+            DataTable source = CreateTemporalSource();
+            source.Columns.Add("ValidTo", typeof(DateTime));
+            source.Rows[0]["ValidTo"] = new DateTime(2099, 1, 1);
+            return source;
+        }
+
+        private static SqlBulkCopy CreateWritableHiddenCopy(
+            SqlConnection connection, string tableName)
+        {
+            SqlBulkCopy copy = CreateTemporalCopy(connection, tableName);
+            copy.ColumnMappings.Add("ValidTo", "ValidTo");
+            return copy;
+        }
+
+        private static void AssertHiddenValues(
+            SqlConnection connection, string tableName, DataTable source)
+        {
+            using SqlCommand command = new($"SELECT ValidFrom, ValidTo FROM {tableName}", connection);
+            using SqlDataReader reader = command.ExecuteReader();
+            Assert.True(reader.Read());
+            Assert.Equal((DateTime)source.Rows[0]["ValidFrom"], reader.GetDateTime(0));
+            Assert.Equal((DateTime)source.Rows[0]["ValidTo"], reader.GetDateTime(1));
+            Assert.False(reader.Read());
         }
 
         private static DataTable CreateEdgeSource(SqlConnection connection, string nodeTable)

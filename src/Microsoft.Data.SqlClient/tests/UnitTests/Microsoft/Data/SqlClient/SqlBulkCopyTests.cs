@@ -18,7 +18,7 @@ namespace Microsoft.Data.SqlClient.UnitTests;
 
 /// <summary>Verifies bulk-copy metadata boundaries without a SQL Server.</summary>
 /// <remarks>
-/// Some tests change the cached EnableBulkCopyCatalogMetadataDiscovery switch, so this class
+/// Some tests change the cached UseBulkCopyCatalogMetadataDiscovery switch, so this class
 /// runs in the serialized AppContext switch collection.
 /// </remarks>
 [Collection(AppContextSwitchTestCollection.Name)]
@@ -181,7 +181,7 @@ public sealed class SqlBulkCopyTests
     {
         // Arrange
         using LocalAppContextSwitchesHelper switches = new();
-        switches.EnableBulkCopyCatalogMetadataDiscovery = true;
+        switches.UseBulkCopyCatalogMetadataDiscovery = true;
         using SqlBulkCopy copy = CreateBulkCopy("dbo.T", resolveAliases: false);
 
         // Act
@@ -203,7 +203,7 @@ public sealed class SqlBulkCopyTests
     {
         // Arrange
         using LocalAppContextSwitchesHelper switches = new();
-        switches.EnableBulkCopyCatalogMetadataDiscovery = true;
+        switches.UseBulkCopyCatalogMetadataDiscovery = true;
         using SqlBulkCopy copy = CreateBulkCopy("dbo.T", resolveAliases: true);
 
         // Act
@@ -229,7 +229,7 @@ public sealed class SqlBulkCopyTests
     {
         // Arrange
         using LocalAppContextSwitchesHelper switches = new();
-        switches.EnableBulkCopyCatalogMetadataDiscovery = switchValue;
+        switches.UseBulkCopyCatalogMetadataDiscovery = switchValue;
         using SqlBulkCopy copy = CreateBulkCopy("dbo.T", resolveAliases: false);
 
         // Act
@@ -254,7 +254,7 @@ public sealed class SqlBulkCopyTests
     {
         // Arrange
         using LocalAppContextSwitchesHelper switches = new();
-        switches.EnableBulkCopyCatalogMetadataDiscovery = false;
+        switches.UseBulkCopyCatalogMetadataDiscovery = false;
         using SqlBulkCopy copy = CreateBulkCopy("dbo.T", resolveAliases: true);
 
         // Act
@@ -267,19 +267,19 @@ public sealed class SqlBulkCopyTests
     }
 
     /// <summary>
-    /// Verifies that SQL Graph alias mappings request alias resolution only when catalog
-    /// discovery is enabled.
+    /// Verifies that SQL Graph alias mappings request alias resolution in automatic and forced
+    /// catalog modes, but not when catalog discovery is disabled.
     /// </summary>
     [Theory]
     [InlineData(true, true)]
     [InlineData(false, false)]
-    [InlineData(null, false)]
+    [InlineData(null, true)]
     public void ShouldResolveColumnAliases_GraphAliasMapping_DependsOnSwitch(
         bool? switchValue, bool expected)
     {
         // Arrange
         using LocalAppContextSwitchesHelper switches = new();
-        switches.EnableBulkCopyCatalogMetadataDiscovery = switchValue;
+        switches.UseBulkCopyCatalogMetadataDiscovery = switchValue;
         using SqlBulkCopy copy = CreateBulkCopy("dbo.T", resolveAliases: false);
         copy.ColumnMappings.Add("ToId", "$to_id");
         FieldInfo? field = typeof(SqlBulkCopy).GetField(
@@ -292,6 +292,122 @@ public sealed class SqlBulkCopyTests
 
         // Assert
         Assert.Equal(expected, result);
+    }
+
+    /// <summary>Verifies automatic discovery selects catalog metadata up front for aliases.</summary>
+    [Fact]
+    public void CreateInitialQuery_AutomaticWithAliases_ReturnsCatalogQuery()
+    {
+        // Arrange
+        using LocalAppContextSwitchesHelper switches = new();
+        switches.UseBulkCopyCatalogMetadataDiscovery = null;
+        using SqlBulkCopy copy = CreateBulkCopy("dbo.T", resolveAliases: true);
+
+        // Act
+        string query = copy.CreateInitialQuery();
+
+        // Assert
+        Assert.Contains("[sys].[all_columns]", query);
+        Assert.Contains("CREATE TABLE #Column_Aliases", query);
+    }
+
+    /// <summary>Verifies only automatic discovery retries missing destination names.</summary>
+    [Theory]
+    [InlineData(null, true)]
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    public void ShouldUseCatalogMetadataFallback_MissingDestination_DependsOnMode(
+        bool? mode, bool expected)
+    {
+        // Arrange
+        using LocalAppContextSwitchesHelper switches = new();
+        switches.UseBulkCopyCatalogMetadataDiscovery = mode;
+        using SqlBulkCopy copy = CreateBulkCopy("dbo.T", resolveAliases: false);
+        copy.ColumnMappings.Add("Source", "Hidden");
+        SetLocalColumnMappings(copy);
+        TdsColumnMetadataToken metadata = new(1);
+        metadata[0].column = "Visible";
+
+        // Act
+        bool result = copy.ShouldUseCatalogMetadataFallback(metadata);
+
+        // Assert
+        Assert.Equal(expected, result);
+    }
+
+    /// <summary>Verifies visible destination names, including quoted names, need no retry.</summary>
+    [Theory]
+    [InlineData("Visible")]
+    [InlineData("[Visible]")]
+    public void ShouldUseCatalogMetadataFallback_MatchingDestination_ReturnsFalse(string destination)
+    {
+        // Arrange
+        using LocalAppContextSwitchesHelper switches = new();
+        switches.UseBulkCopyCatalogMetadataDiscovery = null;
+        using SqlBulkCopy copy = CreateBulkCopy("dbo.T", resolveAliases: false);
+        copy.ColumnMappings.Add("MissingSource", destination);
+        SetLocalColumnMappings(copy);
+        TdsColumnMetadataToken metadata = new(1);
+        metadata[0].column = "Visible";
+
+        // Act
+        bool result = copy.ShouldUseCatalogMetadataFallback(metadata);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    /// <summary>Verifies ordinal mappings do not request catalog fallback.</summary>
+    [Fact]
+    public void ShouldUseCatalogMetadataFallback_OrdinalMapping_ReturnsFalse()
+    {
+        // Arrange
+        using LocalAppContextSwitchesHelper switches = new();
+        switches.UseBulkCopyCatalogMetadataDiscovery = null;
+        using SqlBulkCopy copy = CreateBulkCopy("dbo.T", resolveAliases: false);
+        copy.ColumnMappings.Add(0, 0);
+        SetLocalColumnMappings(copy);
+
+        // Act
+        bool result = copy.ShouldUseCatalogMetadataFallback(new TdsColumnMetadataToken(1));
+
+        // Assert
+        Assert.False(result);
+    }
+
+    /// <summary>Verifies cached discovery matches forced modes and either automatic path.</summary>
+    [Theory]
+    [InlineData(null, false, true)]
+    [InlineData(null, true, true)]
+    [InlineData(false, false, true)]
+    [InlineData(false, true, false)]
+    [InlineData(true, false, false)]
+    [InlineData(true, true, true)]
+    public void IsCachedMetadataValid_DiscoveryMode_DependsOnCachedQuery(
+        bool? mode, bool usesCatalog, bool expected)
+    {
+        // Arrange
+        using LocalAppContextSwitchesHelper switches = new();
+        switches.UseBulkCopyCatalogMetadataDiscovery = mode;
+        using SqlBulkCopy copy = CreateBulkCopy("dbo.T", resolveAliases: false);
+        PropertyInfo? property = typeof(SqlBulkCopy).GetProperty(nameof(SqlBulkCopy.CachedMetadata),
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(property);
+        property.SetValue(copy, new BulkCopySimpleResultSet { UsesCatalogMetadata = usesCatalog });
+
+        // Act
+        bool result = copy.IsCachedMetadataValid();
+
+        // Assert
+        Assert.Equal(expected, result);
+    }
+
+    private static void SetLocalColumnMappings(SqlBulkCopy copy)
+    {
+        FieldInfo? field = typeof(SqlBulkCopy).GetField(
+            "_localColumnMappings", BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(field);
+        field.SetValue(copy, copy.ColumnMappings);
     }
 
     /// <summary>Supplies destination names and the legacy query lines they produce.</summary>
@@ -321,7 +437,7 @@ public sealed class SqlBulkCopyTests
     {
         // Arrange
         using LocalAppContextSwitchesHelper switches = new();
-        switches.EnableBulkCopyCatalogMetadataDiscovery = false;
+        switches.UseBulkCopyCatalogMetadataDiscovery = false;
         using SqlBulkCopy copy = CreateBulkCopy(destination, resolveAliases: false);
 
         // Act

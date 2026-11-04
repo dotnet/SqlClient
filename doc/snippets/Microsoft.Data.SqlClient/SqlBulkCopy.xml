@@ -7,6 +7,25 @@
       <remarks>
         Microsoft SQL Server includes a popular command-prompt utility named **bcp** for moving data from one table to another, whether on a single server or between servers. The <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> class lets you write managed code solutions that provide similar functionality. There are other ways to load data into a SQL Server table (INSERT statements, for example), but <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> offers a significant performance advantage over them. The <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> class can be used to write data only to SQL Server tables. However, the data source is not limited to SQL Server; any data source can be used, as long as the data can be loaded to a <see cref="T:System.Data.DataTable" /> instance or read with a <see cref="T:System.Data.IDataReader" /> instance. <see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" /> will fail when bulk loading a <see cref="T:System.Data.DataTable" /> column of type <see cref="T:System.Data.SqlTypes.SqlDateTime" /> into a SQL Server column whose type is one of the date/time types added in SQL Server 2008.
         <para>
+          Destination metadata discovery is controlled by the AppContext switch
+          <c>Switch.Microsoft.Data.SqlClient.UseBulkCopyCatalogMetadataDiscovery</c>.
+          When unset, bulk copy uses <c>SET FMTONLY ON; SELECT *</c> first and retries metadata
+          discovery once through <c>sys.all_columns</c> if a destination column name is missing.
+          SQL Graph alias mappings use catalog discovery immediately. The retry occurs before
+          any rows are sent and adds one metadata round trip.
+        </para>
+        <para>
+          Set the switch to <c>true</c> before the first bulk copy to always use catalog discovery,
+          avoiding the retry for hidden-column workloads. Set it to <c>false</c> to never use
+          catalog discovery; hidden-column and SQL Graph alias mappings then fail on the client.
+          SQL Server restrictions on writing generated columns still apply in every mode.
+          For example:
+        </para>
+        <code language="csharp">
+AppContext.SetSwitch(
+    "Switch.Microsoft.Data.SqlClient.UseBulkCopyCatalogMetadataDiscovery", true);
+        </code>
+        <para>
           For an unencrypted native vector destination, bulk copy retains the source base type
           in the incoming declaration and payload when source type information is available;
           SQL Server converts to the destination column's base type. For a

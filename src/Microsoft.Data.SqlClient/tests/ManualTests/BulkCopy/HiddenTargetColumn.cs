@@ -18,7 +18,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         {
             // Hidden columns are only discoverable by the catalog-based metadata query.
             using LocalAppContextSwitchesHelper switches = new();
-            switches.EnableBulkCopyCatalogMetadataDiscovery = true;
+            switches.UseBulkCopyCatalogMetadataDiscovery = true;
             string connectionString = DataTestUtility.TCPConnectionString;
 
             using (SqlConnection dstConn = new SqlConnection(connectionString))
