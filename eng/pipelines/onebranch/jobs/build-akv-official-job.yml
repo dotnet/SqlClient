@@ -10,6 +10,10 @@ parameters:
       
     - name: apiScanPdbPath
       type: string
+
+    # Registered APIScan major.minor version, supplied as a runtime $(...) reference.
+    - name: apiScanSoftwareVersion
+      type: string
     
     - name: assemblyFileVersion
       type: string
@@ -97,6 +101,11 @@ jobs:
 
       variables:
           ob_outputDirectory: '$(artifactDirectory)'
+          ob_sdl_apiscan_enabled: true
+          ob_sdl_apiscan_softwareFolder: ${{ parameters.apiScanDllPath }}
+          ob_sdl_apiscan_symbolsFolder: ${{ parameters.apiScanPdbPath }}
+          ob_sdl_apiscan_softwareName: Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
+          ob_sdl_apiscan_versionNumber: ${{ parameters.apiScanSoftwareVersion }}
 
       steps:
           - template: /eng/pipelines/onebranch/steps/script-output-environment-variables-step.yml@self

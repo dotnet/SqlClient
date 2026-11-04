@@ -12,6 +12,10 @@ parameters:
     type: string
     default: software
 
+  # Registered APIScan major.minor version, supplied as a runtime $(...) reference.
+  - name: apiScanSoftwareVersion
+    type: string
+
   - name: publishSymbols
     type: boolean
 
@@ -38,6 +42,17 @@ jobs:
     
   variables:
   - template: /eng/pipelines/onebranch/variables/variables.yml@self
+  - name: ob_sdl_apiscan_enabled
+    value: true
+  - name: ob_sdl_apiscan_softwareFolder
+    value: ${{ parameters.softwareFolder }}
+  - name: ob_sdl_apiscan_symbolsFolder
+    value: ${{ parameters.symbolsFolder }}
+  - name: ob_sdl_apiscan_softwareName
+    value: Microsoft.Data.SqlClient
+  - name: ob_sdl_apiscan_versionNumber
+    value: ${{ parameters.apiScanSoftwareVersion }}
+
   - ${{ if parameters.isPreview }}:
     - name: NugetPackageVersion
       value: $(PreviewNugetPackageVersion)
