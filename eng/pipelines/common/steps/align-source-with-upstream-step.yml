@@ -57,7 +57,7 @@ steps:
       git checkout --force $sha
       if ($LASTEXITCODE -ne 0) { throw "Failed to check out upstream commit $sha." }
       Write-Host "Restoring pipeline definitions and module-restore files from queued pipeline commit $pipelineSourceSha"
-      git checkout --force $pipelineSourceSha -- eng/pipelines eng/scripts/Register-SqlClientPSRepository.ps1 eng/scripts/Restore-PowerShellModules.ps1 PowerShell.config powershell-modules.json tools/targets/RestorePowerShellModules.targets
+      git checkout --force $pipelineSourceSha -- eng/pipelines eng/scripts/Register-SqlClientPowerShellRepository.ps1 eng/scripts/Restore-PowerShellModules.ps1 PowerShell.config powershell-modules.json tools/targets/RestorePowerShellModules.targets
       if ($LASTEXITCODE -ne 0) { throw "Failed to restore pipeline definitions and module-restore files from $pipelineSourceSha." }
     displayName: Align Source With Upstream Commit
     condition: ne(variables['resources.pipeline.${{ parameters.upstreamPipeline }}.sourceCommit'], '')

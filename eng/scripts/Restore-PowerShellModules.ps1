@@ -57,7 +57,7 @@ foreach ($resource in $resources) {
         continue
     }
     if (-not $repositoryName) {
-        $repositoryName = & (Join-Path $PSScriptRoot 'Register-SqlClientPSRepository.ps1') `
+        $repositoryName = & (Join-Path $PSScriptRoot 'Register-SqlClientPowerShellRepository.ps1') `
             -RepositoryName SqlClient
     }
     Write-Host "Restoring $($resource.Name) $($resource.Version) from $repositoryName."

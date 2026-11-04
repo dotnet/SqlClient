@@ -7,6 +7,6 @@
 # Call after restoring the .NET tools. The standalone target also works when an
 # upstream package commit's build.proj predates the PowerShell restore hook.
 steps:
-  - script: dotnet msbuild tools/targets/RestorePowerShellModules.targets -t:RestorePowerShellModules -nologo -v:minimal
+  - script: dotnet build tools/targets/RestorePowerShellModules.targets -t:RestorePowerShellModules -nologo -v:minimal
     displayName: Restore PowerShell Modules
     workingDirectory: $(Build.SourcesDirectory)

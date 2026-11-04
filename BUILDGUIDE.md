@@ -64,7 +64,7 @@ Pipelines run the same restore after .NET tool restore through
 `eng/pipelines/common/steps/restore-powershell-modules.yml`:
 
 ```console
-dotnet msbuild tools/targets/RestorePowerShellModules.targets -t:RestorePowerShellModules
+dotnet build tools/targets/RestorePowerShellModules.targets -t:RestorePowerShellModules
 ```
 
 The standalone entry point also works locally and with older package-producing commits.

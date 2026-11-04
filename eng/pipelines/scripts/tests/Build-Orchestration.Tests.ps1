@@ -511,7 +511,7 @@ Describe 'build.proj PowerShell module restore' {
         $target = Join-Path $repoRoot 'tools\targets\RestorePowerShellModules.targets'
         Push-Location $TestDrive
         try {
-            $output = & $dotnet msbuild $target -nologo -v:normal -t:RestorePowerShellModules `
+            $output = & $dotnet build $target -nologo -v:normal -t:RestorePowerShellModules `
                 "-p:DotnetPath=$stubDirectory/" 2>&1
             $LASTEXITCODE | Should -Be 0
         }
