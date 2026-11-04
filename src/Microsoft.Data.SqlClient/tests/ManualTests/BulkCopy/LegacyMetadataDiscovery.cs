@@ -367,7 +367,9 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
             AssertHiddenOrdinalValues(connection, table.Name, source);
         }
 
-        /// <summary>Verifies fallback replaces a visible-column cache and reuses catalog metadata.</summary>
+        /// <summary>
+        /// Verifies fallback upgrades the cache before SQL Server rejects generated-column writes.
+        /// </summary>
         [ConditionalFact(
             typeof(DataTestUtility),
             nameof(DataTestUtility.AreConnStringsSetup),
@@ -379,7 +381,8 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
             switches.UseBulkCopyCatalogMetadataDiscovery = null;
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
             connection.Open();
-            using Table table = CreateWritableHiddenTable(connection, "AutomaticHiddenCache");
+            // Keep the period: dropping it can make the former hidden columns visible.
+            using TemporalTable table = CreateTemporalTable(connection, "AutomaticHiddenCache");
             using DataTable source = CreateWritableHiddenSource();
             using SqlBulkCopy copy = new(connection, SqlBulkCopyOptions.CacheMetadata, null)
             {
@@ -388,18 +391,66 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
             copy.ColumnMappings.Add("Id", "Id");
             copy.WriteToServer(source);
             Assert.False(copy.CachedMetadata.UsesCatalogMetadata);
+            Assert.Equal(1, copy.CachedMetadata[1].MetaData.Length);
             copy.ColumnMappings.Add("ValidFrom", "ValidFrom");
             copy.ColumnMappings.Add("ValidTo", "ValidTo");
 
             // Act
-            copy.WriteToServer(source);
+            SqlException first = Assert.Throws<SqlException>(() => copy.WriteToServer(source));
             BulkCopySimpleResultSet catalogMetadata = copy.CachedMetadata;
-            copy.WriteToServer(source);
+            SqlException second = Assert.Throws<SqlException>(() => copy.WriteToServer(source));
 
             // Assert
+            Assert.Equal(13536, first.Number);
+            Assert.Equal(13536, second.Number);
             Assert.True(catalogMetadata.UsesCatalogMetadata);
+            Assert.Equal(3, catalogMetadata[1].MetaData.Length);
             Assert.Same(catalogMetadata, copy.CachedMetadata);
-            AssertRows(connection, table.Name, 3);
+            AssertRows(connection, table.Name, 1);
+        }
+
+        /// <summary>
+        /// Verifies async fallback upgrades the cache before generated-column write rejection.
+        /// </summary>
+        [ConditionalFact(
+            typeof(DataTestUtility),
+            nameof(DataTestUtility.AreConnStringsSetup),
+            nameof(DataTestUtility.IsNotAzureSynapse))]
+        public async Task WriteToServerAsync_AutomaticHiddenMappingAfterCache_ReplacesCachedMetadata()
+        {
+            // Arrange
+            using LocalAppContextSwitchesHelper switches = new();
+            switches.UseBulkCopyCatalogMetadataDiscovery = null;
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            await connection.OpenAsync();
+            // Keep the period so SELECT * omits the generated columns.
+            using TemporalTable table = CreateTemporalTable(connection, "AutomaticHiddenCacheAsync");
+            using DataTable source = CreateWritableHiddenSource();
+            using SqlBulkCopy copy = new(connection, SqlBulkCopyOptions.CacheMetadata, null)
+            {
+                DestinationTableName = table.Name
+            };
+            copy.ColumnMappings.Add("Id", "Id");
+            await copy.WriteToServerAsync(source);
+            Assert.False(copy.CachedMetadata.UsesCatalogMetadata);
+            Assert.Equal(1, copy.CachedMetadata[1].MetaData.Length);
+            copy.ColumnMappings.Add("ValidFrom", "ValidFrom");
+            copy.ColumnMappings.Add("ValidTo", "ValidTo");
+
+            // Act
+            SqlException first = await Assert.ThrowsAsync<SqlException>(
+                () => copy.WriteToServerAsync(source));
+            BulkCopySimpleResultSet catalogMetadata = copy.CachedMetadata;
+            SqlException second = await Assert.ThrowsAsync<SqlException>(
+                () => copy.WriteToServerAsync(source));
+
+            // Assert
+            Assert.Equal(13536, first.Number);
+            Assert.Equal(13536, second.Number);
+            Assert.True(catalogMetadata.UsesCatalogMetadata);
+            Assert.Equal(3, catalogMetadata[1].MetaData.Length);
+            Assert.Same(catalogMetadata, copy.CachedMetadata);
+            AssertRows(connection, table.Name, 1);
         }
 
         /// <summary>Verifies graph aliases work in automatic and forced catalog modes.</summary>
