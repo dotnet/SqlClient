@@ -2,6 +2,19 @@
 
 This document provides all the necessary details to build the driver and run tests present in the repository.
 
+## OneBranch APIScan registration
+
+The official and non-official OneBranch pipelines register scans separately for
+`Microsoft.Data.SqlClient` and `Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider`.
+Both use the registered major.minor version `6.1`, defined by `ApiScanVersionSqlClient` in
+[variables.yml](eng/pipelines/onebranch/variables/variables.yml), rather than assembly or build versions.
+
+Both build job templates require `apiScanSoftwareVersion`, passed as the runtime reference
+`$(ApiScanVersionSqlClient)` to preserve the version as a string. Preview and servicing builds use
+the same registration. Register new name/version pairs with APIScan before changing major.minor.
+Each build job supplies its package name and existing DLL/PDB folders; package validation disables
+APIScan because it produces no assemblies. The existing scan failure policies are unchanged.
+
 ## .NET SDK
 
 The projects in this repo require the .NET 9.0 SDK to build.  Please ensure you

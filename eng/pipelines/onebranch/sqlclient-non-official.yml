@@ -115,10 +115,6 @@ extends:
       apiscan:
         enabled: true
         break: false
-        softwareFolder: $(softwareFolder)
-        symbolsFolder: $(symbolsFolder)
-        softwarename: Microsoft.Data.SqlClient
-        versionNumber: $(AssemblyFileVersion)
       codeql:
         compiled:
         enabled: ${{ not(parameters['isPreview']) }}
@@ -157,6 +153,7 @@ extends:
         parameters:
           symbolsFolder: $(symbolsFolder)
           softwareFolder: $(softwareFolder)
+          apiScanSoftwareVersion: $(ApiScanVersionSqlClient)
           publishSymbols: ${{ parameters['publishSymbols'] }}
           symbolServer: $(SymbolsPublishServerPpe)
           symbolTokenUri: $(SymbolsPublishTokenUriPpe)
@@ -196,6 +193,7 @@ extends:
             parameters:
               apiScanDllPath: $(softwareFolder)
               apiScanPdbPath: $(symbolsFolder)
+              apiScanSoftwareVersion: $(ApiScanVersionSqlClient)
               assemblyFileVersion: $(akvAssemblyFileVersion)
               nugetPackageVersion: $(effectiveAkvPackageVersion)
               mdsPackageVersion: $(akvMdsPackageVersion)
