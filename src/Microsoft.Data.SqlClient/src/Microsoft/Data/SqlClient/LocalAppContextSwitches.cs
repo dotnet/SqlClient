@@ -36,6 +36,7 @@ internal static class LocalAppContextSwitches
     /// </summary>
     private const string EnableAppConfigString =
         "Switch.Microsoft.Data.SqlClient.EnableAppConfig";
+    #endif
 
     /// <summary>
     /// The name of the app context switch that controls whether SqlBulkCopy
@@ -43,7 +44,6 @@ internal static class LocalAppContextSwitches
     /// </summary>
     private const string EnableBulkCopyCatalogMetadataDiscoveryString =
         "Switch.Microsoft.Data.SqlClient.EnableBulkCopyCatalogMetadataDiscovery";
-    #endif
 
     /// <summary>
     /// The name of the app context switch that controls whether
