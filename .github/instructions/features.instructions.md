@@ -381,11 +381,11 @@ AppContext switches allow runtime behavior changes without modifying connection 
 |-------------|---------|-------------|
 | `Switch.Microsoft.Data.SqlClient.DisableTNIRByDefaultInConnectionString` | `true` | .NET Framework only. Set to `false` to restore the legacy TNIR default; MSF must also be disabled for TNIR to take effect |
 | `Switch.Microsoft.Data.SqlClient.EnableAppConfig` | `true` | .NET only. Controls whether SqlClient reads app.config: configurable retry logic, authentication providers and switch overrides. See [Trimming](#trimming) |
+| `Switch.Microsoft.Data.SqlClient.EnableBulkCopyCatalogMetadataDiscovery` | `false` | When `true`, `SqlBulkCopy` reads destination metadata from `sys.all_columns`, allowing mappings to hidden columns (e.g. temporal period columns) and SQL Graph aliases (`$node_id`, `$edge_id`, `$from_id`, `$to_id`) at a higher server CPU cost. By default, it uses the pre-6.0 `SET FMTONLY ON; SELECT *` query |
 | `Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault` | `true` | Sets the default for `MultiSubnetFailover`; set to `false` to restore the legacy default. Explicit connection-string values take precedence |
 | `Switch.Microsoft.Data.SqlClient.EnableTransactionIsolationLevelReset` | `false` | Resets a changed session transaction isolation level to `READ COMMITTED` before a pooled connection is reused |
 | `Switch.Microsoft.Data.SqlClient.EnableUserAgent` | varies | Controls sending user agent information to SQL Server |
 | `Switch.Microsoft.Data.SqlClient.IgnoreServerProvidedFailoverPartner` | `false` | Ignores failover partner information sent by the server |
-| `Switch.Microsoft.Data.SqlClient.UseLegacyBulkCopyMetadataDiscovery` | `false` | `SqlBulkCopy` discovers destination metadata with the pre-6.0 `SET FMTONLY ON; SELECT *` query instead of reading `sys.all_columns`, lowering server CPU. Hidden columns (e.g. temporal period columns) can't be mapped; mappings to SQL Graph aliases still use the catalog query |
 | `Switch.Microsoft.Data.SqlClient.UseLegacyFailoverAlternationOnLoginSqlErrors` | `false` | Restores legacy `LoginWithFailover` alternation for login-phase SQL errors when parser state is not `Closed` |
 | `Switch.Microsoft.Data.SqlClient.LegacyRowVersionNullBehavior` | `false` | Restores legacy null handling for rowversion columns |
 | `Switch.Microsoft.Data.SqlClient.LegacyVarTimeZeroScaleBehaviour` | `false` | Restores legacy zero-scale behavior for time/datetime2/datetimeoffset |

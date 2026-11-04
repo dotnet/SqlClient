@@ -46,7 +46,7 @@ public class LocalAppContextSwitchesTest
         switchesHelper.UseConnectionPoolV2 = null;
         switchesHelper.UseOverallConnectTimeoutForPoolWait = null;
         switchesHelper.UseLegacyIdleTimeoutBehavior = null;
-        switchesHelper.UseLegacyBulkCopyMetadataDiscovery = null;
+        switchesHelper.EnableBulkCopyCatalogMetadataDiscovery = null;
         switchesHelper.UseMinimumLoginTimeout = null;
         #if NET
         switchesHelper.EnableAppConfig = null;
@@ -68,7 +68,7 @@ public class LocalAppContextSwitchesTest
         Assert.True(switchesHelper.UseCompatibilityProcessSni);
         Assert.True(switchesHelper.UseCompatibilityAsyncBehaviour);
         Assert.True(switchesHelper.UseLegacyIdleTimeoutBehavior);
-        Assert.False(switchesHelper.UseLegacyBulkCopyMetadataDiscovery);
+        Assert.False(switchesHelper.EnableBulkCopyCatalogMetadataDiscovery);
         Assert.False(switchesHelper.UseConnectionPoolV2);
         Assert.False(switchesHelper.UseOverallConnectTimeoutForPoolWait);
         Assert.False(switchesHelper.TruncateScaledDecimal);

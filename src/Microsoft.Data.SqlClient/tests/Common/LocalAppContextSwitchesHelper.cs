@@ -61,7 +61,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     private readonly bool? _useCompatibilityAsyncBehaviourOriginal;
     private readonly bool? _useCompatibilityProcessSniOriginal;
     private readonly bool? _useConnectionPoolV2Original;
-    private readonly bool? _useLegacyBulkCopyMetadataDiscoveryOriginal;
+    private readonly bool? _enableBulkCopyCatalogMetadataDiscoveryOriginal;
     private readonly bool? _useLegacyIdleTimeoutBehaviorOriginal;
     private readonly bool? _useOverallConnectTimeoutForPoolWaitOriginal;
     #if NET
@@ -134,8 +134,8 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
                 ToBool(LocalAppContextSwitches.s_useCompatibilityProcessSni);
             _useConnectionPoolV2Original =
                 ToBool(LocalAppContextSwitches.s_useConnectionPoolV2);
-            _useLegacyBulkCopyMetadataDiscoveryOriginal =
-                ToBool(LocalAppContextSwitches.s_useLegacyBulkCopyMetadataDiscovery);
+            _enableBulkCopyCatalogMetadataDiscoveryOriginal =
+                ToBool(LocalAppContextSwitches.s_enableBulkCopyCatalogMetadataDiscovery);
             _useLegacyIdleTimeoutBehaviorOriginal =
                 ToBool(LocalAppContextSwitches.s_useLegacyIdleTimeoutBehavior);
             _useOverallConnectTimeoutForPoolWaitOriginal =
@@ -203,8 +203,8 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
                 ToSwitchValue(_useCompatibilityProcessSniOriginal);
             LocalAppContextSwitches.s_useConnectionPoolV2 =
                 ToSwitchValue(_useConnectionPoolV2Original);
-            LocalAppContextSwitches.s_useLegacyBulkCopyMetadataDiscovery =
-                ToSwitchValue(_useLegacyBulkCopyMetadataDiscoveryOriginal);
+            LocalAppContextSwitches.s_enableBulkCopyCatalogMetadataDiscovery =
+                ToSwitchValue(_enableBulkCopyCatalogMetadataDiscoveryOriginal);
             LocalAppContextSwitches.s_useLegacyIdleTimeoutBehavior =
                 ToSwitchValue(_useLegacyIdleTimeoutBehaviorOriginal);
             LocalAppContextSwitches.s_useOverallConnectTimeoutForPoolWait =
@@ -375,12 +375,12 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     }
 
     /// <summary>
-    /// Get or set the UseLegacyBulkCopyMetadataDiscovery switch value.
+    /// Get or set the EnableBulkCopyCatalogMetadataDiscovery switch value.
     /// </summary>
-    public bool? UseLegacyBulkCopyMetadataDiscovery
+    public bool? EnableBulkCopyCatalogMetadataDiscovery
     {
-        get => LocalAppContextSwitches.UseLegacyBulkCopyMetadataDiscovery;
-        set => LocalAppContextSwitches.s_useLegacyBulkCopyMetadataDiscovery = ToSwitchValue(value);
+        get => LocalAppContextSwitches.EnableBulkCopyCatalogMetadataDiscovery;
+        set => LocalAppContextSwitches.s_enableBulkCopyCatalogMetadataDiscovery = ToSwitchValue(value);
     }
 
     /// <summary>

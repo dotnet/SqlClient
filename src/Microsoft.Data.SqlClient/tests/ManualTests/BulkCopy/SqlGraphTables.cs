@@ -2,16 +2,27 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Data;
 using Microsoft.Data.SqlClient.ManualTesting.Tests;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
 {
     [Trait("Set", "2")]
-    public class SqlGraphTables
+    public class SqlGraphTables : IDisposable
     {
+        // SQL Graph aliases are only resolved when catalog discovery is enabled.
+        private readonly LocalAppContextSwitchesHelper _switches = new()
+        {
+            EnableBulkCopyCatalogMetadataDiscovery = true
+        };
+
+        /// <summary>Restores the AppContext switches changed by this test class.</summary>
+        public void Dispose() => _switches.Dispose();
+
         /// <summary>
         /// Verifies that copying to a SQL Graph table without graph aliases in the mappings does not
         /// require alias resolution.

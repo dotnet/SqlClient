@@ -489,26 +489,17 @@ namespace Microsoft.Data.SqlClient
 
             string objectName = ADP.BuildMultiPartName(parts);
 
-            if (LocalAppContextSwitches.UseLegacyBulkCopyMetadataDiscovery)
+            if (!LocalAppContextSwitches.EnableBulkCopyCatalogMetadataDiscovery)
             {
-                if (!_localColumnMappingsResolveAliases)
-                {
-                    // Legacy discovery returns only the visible columns and does not query the
-                    // catalog views. Hidden columns and graph aliases are not discoverable.
-                    return $"""
+                // Return only the visible columns without querying catalog views. Hidden columns
+                // and SQL Graph aliases are not discoverable.
+                return $"""
 SELECT @@TRANCOUNT;
 SET FMTONLY ON;
 SELECT * FROM {objectName};
 SET FMTONLY OFF;
 EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 """;
-                }
-
-                // Graph aliases can only be resolved by the catalog-based query.
-                SqlClientEventSource.Log.TryTraceEvent(
-                    "SqlBulkCopy.CreateInitialQuery | Info | Legacy metadata discovery skipped " +
-                    "for table '{0}' because column mappings use SQL Graph aliases.",
-                    _destinationTableName);
             }
 
             string escapedObjectName = SqlServerEscapeHelper.EscapeStringAsLiteral(objectName);
@@ -1908,9 +1899,11 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             _localColumnMappingsResolveAliases = false;
         }
 
-        private bool ShouldResolveColumnAliases()
+        internal bool ShouldResolveColumnAliases()
         {
-            if (_localColumnMappings is null)
+            // SQL Graph aliases are only resolved by catalog metadata discovery.
+            if (_localColumnMappings is null
+                || !LocalAppContextSwitches.EnableBulkCopyCatalogMetadataDiscovery)
             {
                 return false;
             }

@@ -5,6 +5,7 @@
 using System;
 using System.Data;
 using System.Diagnostics.CodeAnalysis;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 using Xunit;
 
@@ -26,6 +27,12 @@ public sealed class UnprivilegedLogin : IDisposable
     private readonly DatabaseUser? _unprivilegedAppUser;
 
     private readonly string? _unprivilegedConnectionString;
+
+    // These tests cover the sys.all_columns query, which runs only with catalog discovery enabled.
+    private readonly LocalAppContextSwitchesHelper _switches = new()
+    {
+        EnableBulkCopyCatalogMetadataDiscovery = true
+    };
 
     public static bool CanRunTests =>
         DataTestUtility.AreConnStringsSetup() && DataTestUtility.IsNotAzureServer()
@@ -219,6 +226,8 @@ public sealed class UnprivilegedLogin : IDisposable
 
     public void Dispose()
     {
+        _switches.Dispose();
+
         // Each drop is best-effort: a failure to remove one object must not prevent the others (in
         // particular the instance-wide server login) from being removed.
         DisposeSafely(_unprivilegedAppUser);

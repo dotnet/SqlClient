@@ -18,8 +18,8 @@ namespace Microsoft.Data.SqlClient.UnitTests;
 
 /// <summary>Verifies bulk-copy metadata boundaries without a SQL Server.</summary>
 /// <remarks>
-/// Some tests change the cached UseLegacyBulkCopyMetadataDiscovery switch, so this class runs in
-/// the serialized AppContext switch collection.
+/// Some tests change the cached EnableBulkCopyCatalogMetadataDiscovery switch, so this class
+/// runs in the serialized AppContext switch collection.
 /// </remarks>
 [Collection(AppContextSwitchTestCollection.Name)]
 public sealed class SqlBulkCopyTests
@@ -173,15 +173,15 @@ public sealed class SqlBulkCopyTests
     }
 
     /// <summary>
-    /// Verifies that the default metadata query reads catalog views but omits the column alias
-    /// temp table when no mapping uses SQL Graph aliases.
+    /// Verifies that catalog discovery reads catalog views but omits the column alias temp table
+    /// when no mapping uses SQL Graph aliases.
     /// </summary>
     [Fact]
-    public void CreateInitialQuery_DefaultWithoutAliases_OmitsColumnAliases()
+    public void CreateInitialQuery_CatalogWithoutAliases_OmitsColumnAliases()
     {
         // Arrange
         using LocalAppContextSwitchesHelper switches = new();
-        switches.UseLegacyBulkCopyMetadataDiscovery = false;
+        switches.EnableBulkCopyCatalogMetadataDiscovery = true;
         using SqlBulkCopy copy = CreateBulkCopy("dbo.T", resolveAliases: false);
 
         // Act
@@ -195,15 +195,15 @@ public sealed class SqlBulkCopyTests
     }
 
     /// <summary>
-    /// Verifies that the default metadata query creates, reads and drops the column alias temp
-    /// table when a mapping uses SQL Graph aliases.
+    /// Verifies that catalog discovery creates, reads and drops the column alias temp table when
+    /// a mapping uses SQL Graph aliases.
     /// </summary>
     [Fact]
-    public void CreateInitialQuery_DefaultWithAliases_IncludesColumnAliases()
+    public void CreateInitialQuery_CatalogWithAliases_IncludesColumnAliases()
     {
         // Arrange
         using LocalAppContextSwitchesHelper switches = new();
-        switches.UseLegacyBulkCopyMetadataDiscovery = false;
+        switches.EnableBulkCopyCatalogMetadataDiscovery = true;
         using SqlBulkCopy copy = CreateBulkCopy("dbo.T", resolveAliases: true);
 
         // Act
@@ -219,15 +219,17 @@ public sealed class SqlBulkCopyTests
     }
 
     /// <summary>
-    /// Verifies that the legacy switch produces the pre-6.0 query, which does not read catalog
-    /// views or create temp tables.
+    /// Verifies that the pre-6.0 query, which does not read catalog views or create temp tables,
+    /// is used by default and when catalog discovery is disabled.
     /// </summary>
-    [Fact]
-    public void CreateInitialQuery_LegacyWithoutAliases_ReturnsLegacyQuery()
+    [Theory]
+    [InlineData(null)]
+    [InlineData(false)]
+    public void CreateInitialQuery_CatalogDisabled_ReturnsLegacyQuery(bool? switchValue)
     {
         // Arrange
         using LocalAppContextSwitchesHelper switches = new();
-        switches.UseLegacyBulkCopyMetadataDiscovery = true;
+        switches.EnableBulkCopyCatalogMetadataDiscovery = switchValue;
         using SqlBulkCopy copy = CreateBulkCopy("dbo.T", resolveAliases: false);
 
         // Act
@@ -244,25 +246,52 @@ public sealed class SqlBulkCopyTests
     }
 
     /// <summary>
-    /// Verifies that the legacy switch falls back to the catalog-based query when a mapping uses
-    /// SQL Graph aliases, since only that query can resolve them.
+    /// Verifies that disabled catalog discovery never reads sys.all_columns, even when alias
+    /// resolution is requested.
     /// </summary>
     [Fact]
-    public void CreateInitialQuery_LegacyWithAliases_ReturnsCatalogQuery()
+    public void CreateInitialQuery_CatalogDisabledWithAliases_ReturnsLegacyQuery()
     {
         // Arrange
         using LocalAppContextSwitchesHelper switches = new();
-        switches.UseLegacyBulkCopyMetadataDiscovery = true;
+        switches.EnableBulkCopyCatalogMetadataDiscovery = false;
         using SqlBulkCopy copy = CreateBulkCopy("dbo.T", resolveAliases: true);
 
         // Act
         string query = copy.CreateInitialQuery();
 
         // Assert
-        Assert.Contains("[sys].[all_columns]", query);
-        Assert.Contains("CREATE TABLE #Column_Aliases", query);
-        Assert.Contains("DROP TABLE #Column_Aliases", query);
-        Assert.DoesNotContain("SELECT * FROM", query);
+        Assert.Contains("SELECT * FROM [dbo].[T];", query);
+        Assert.DoesNotContain("all_columns", query);
+        Assert.DoesNotContain("#Column_Aliases", query);
+    }
+
+    /// <summary>
+    /// Verifies that SQL Graph alias mappings request alias resolution only when catalog
+    /// discovery is enabled.
+    /// </summary>
+    [Theory]
+    [InlineData(true, true)]
+    [InlineData(false, false)]
+    [InlineData(null, false)]
+    public void ShouldResolveColumnAliases_GraphAliasMapping_DependsOnSwitch(
+        bool? switchValue, bool expected)
+    {
+        // Arrange
+        using LocalAppContextSwitchesHelper switches = new();
+        switches.EnableBulkCopyCatalogMetadataDiscovery = switchValue;
+        using SqlBulkCopy copy = CreateBulkCopy("dbo.T", resolveAliases: false);
+        copy.ColumnMappings.Add("ToId", "$to_id");
+        FieldInfo? field = typeof(SqlBulkCopy).GetField(
+            "_localColumnMappings", BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(field);
+        field.SetValue(copy, copy.ColumnMappings);
+
+        // Act
+        bool result = copy.ShouldResolveColumnAliases();
+
+        // Assert
+        Assert.Equal(expected, result);
     }
 
     /// <summary>Supplies destination names and the legacy query lines they produce.</summary>
@@ -292,7 +321,7 @@ public sealed class SqlBulkCopyTests
     {
         // Arrange
         using LocalAppContextSwitchesHelper switches = new();
-        switches.UseLegacyBulkCopyMetadataDiscovery = true;
+        switches.EnableBulkCopyCatalogMetadataDiscovery = false;
         using SqlBulkCopy copy = CreateBulkCopy(destination, resolveAliases: false);
 
         // Act

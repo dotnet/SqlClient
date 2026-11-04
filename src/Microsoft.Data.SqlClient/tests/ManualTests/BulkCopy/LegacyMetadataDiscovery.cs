@@ -13,8 +13,8 @@ using Xunit;
 namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
 {
     /// <summary>
-    /// Verifies SqlBulkCopy when the UseLegacyBulkCopyMetadataDiscovery switch selects the pre-6.0
-    /// destination metadata query.
+    /// Verifies SqlBulkCopy with the pre-6.0 destination metadata query, used when the
+    /// EnableBulkCopyCatalogMetadataDiscovery switch is disabled.
     /// </summary>
     [Trait("Set", "2")]
     public class LegacyMetadataDiscovery
@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         {
             // Arrange
             using LocalAppContextSwitchesHelper switches = new();
-            switches.UseLegacyBulkCopyMetadataDiscovery = true;
+            switches.EnableBulkCopyCatalogMetadataDiscovery = false;
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
             connection.Open();
             using Table table = new(connection, "LegacyMetadataDiscovery", TableDefinition);
@@ -57,7 +57,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         {
             // Arrange
             using LocalAppContextSwitchesHelper switches = new();
-            switches.UseLegacyBulkCopyMetadataDiscovery = true;
+            switches.EnableBulkCopyCatalogMetadataDiscovery = false;
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
             await connection.OpenAsync();
             using Table table = new(connection, "LegacyMetadataDiscoveryAsync", TableDefinition);
@@ -79,7 +79,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         {
             // Arrange
             using LocalAppContextSwitchesHelper switches = new();
-            switches.UseLegacyBulkCopyMetadataDiscovery = true;
+            switches.EnableBulkCopyCatalogMetadataDiscovery = false;
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
             connection.Open();
             string tableName = "#LegacyMetadataDiscovery";
@@ -110,7 +110,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         {
             // Arrange
             using LocalAppContextSwitchesHelper switches = new();
-            switches.UseLegacyBulkCopyMetadataDiscovery = true;
+            switches.EnableBulkCopyCatalogMetadataDiscovery = false;
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
             connection.Open();
             using TemporalTable table = CreateTemporalTable(connection, "LegacyHidden");
@@ -137,7 +137,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         {
             // Arrange
             using LocalAppContextSwitchesHelper switches = new();
-            switches.UseLegacyBulkCopyMetadataDiscovery = true;
+            switches.EnableBulkCopyCatalogMetadataDiscovery = false;
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
             await connection.OpenAsync();
             using TemporalTable table = CreateTemporalTable(connection, "LegacyHiddenAsync");
@@ -153,21 +153,21 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         }
 
         /// <summary>
-        /// Verifies that the default query still discovers hidden temporal columns, so the server
-        /// rejects the mapping instead of the client.
+        /// Verifies that catalog discovery finds hidden temporal columns, so the server rejects
+        /// the mapping instead of the client.
         /// </summary>
         [ConditionalFact(
             typeof(DataTestUtility),
             nameof(DataTestUtility.AreConnStringsSetup),
             nameof(DataTestUtility.IsNotAzureSynapse))]
-        public void WriteToServer_DefaultDiscoveryHiddenColumn_ThrowsSqlException()
+        public void WriteToServer_CatalogDiscoveryHiddenColumn_ThrowsSqlException()
         {
             // Arrange
             using LocalAppContextSwitchesHelper switches = new();
-            switches.UseLegacyBulkCopyMetadataDiscovery = false;
+            switches.EnableBulkCopyCatalogMetadataDiscovery = true;
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
             connection.Open();
-            using TemporalTable table = CreateTemporalTable(connection, "DefaultHidden");
+            using TemporalTable table = CreateTemporalTable(connection, "CatalogHidden");
             using DataTable source = CreateTemporalSource();
             using SqlBulkCopy copy = CreateTemporalCopy(connection, table.Name);
 
@@ -179,19 +179,19 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         }
 
         /// <summary>
-        /// Verifies that graph alias mappings fall back to the catalog-based query when the
-        /// legacy switch is enabled.
+        /// Verifies that the legacy query cannot resolve SQL Graph aliases, so mapping to one fails
+        /// on the client.
         /// </summary>
         [ConditionalFact(
             typeof(DataTestUtility),
             nameof(DataTestUtility.AreConnStringsSetup),
             nameof(DataTestUtility.IsNotAzureSynapse),
             nameof(DataTestUtility.IsAtLeastSQL2017))]
-        public void WriteToServer_LegacyDiscoveryGraphAlias_CopiesRows()
+        public void WriteToServer_LegacyDiscoveryGraphAlias_ThrowsInvalidOperation()
         {
             // Arrange
             using LocalAppContextSwitchesHelper switches = new();
-            switches.UseLegacyBulkCopyMetadataDiscovery = true;
+            switches.EnableBulkCopyCatalogMetadataDiscovery = false;
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
             connection.Open();
             using Table node = new(connection, "LegacyGraphNode", NodeDefinition);
@@ -200,26 +200,28 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
             using SqlBulkCopy copy = CreateEdgeCopy(connection, edge.Name);
 
             // Act
-            copy.WriteToServer(source);
+            InvalidOperationException ex = Assert.Throws<InvalidOperationException>(
+                () => copy.WriteToServer(source));
 
             // Assert
-            AssertRows(connection, edge.Name, 1);
+            Assert.Contains("$from_id", ex.Message);
+            AssertRows(connection, edge.Name, 0);
         }
 
         /// <summary>
-        /// Verifies that graph alias mappings fall back to the catalog-based query when copying
-        /// asynchronously with the legacy switch enabled.
+        /// Verifies that the legacy query cannot resolve SQL Graph aliases when copying
+        /// asynchronously.
         /// </summary>
         [ConditionalFact(
             typeof(DataTestUtility),
             nameof(DataTestUtility.AreConnStringsSetup),
             nameof(DataTestUtility.IsNotAzureSynapse),
             nameof(DataTestUtility.IsAtLeastSQL2017))]
-        public async Task WriteToServerAsync_LegacyDiscoveryGraphAlias_CopiesRows()
+        public async Task WriteToServerAsync_LegacyDiscoveryGraphAlias_ThrowsInvalidOperation()
         {
             // Arrange
             using LocalAppContextSwitchesHelper switches = new();
-            switches.UseLegacyBulkCopyMetadataDiscovery = true;
+            switches.EnableBulkCopyCatalogMetadataDiscovery = false;
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
             await connection.OpenAsync();
             using Table node = new(connection, "LegacyGraphNodeAsync", NodeDefinition);
@@ -228,10 +230,12 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
             using SqlBulkCopy copy = CreateEdgeCopy(connection, edge.Name);
 
             // Act
-            await copy.WriteToServerAsync(source);
+            InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(
+                () => copy.WriteToServerAsync(source));
 
             // Assert
-            AssertRows(connection, edge.Name, 1);
+            Assert.Contains("$from_id", ex.Message);
+            AssertRows(connection, edge.Name, 0);
         }
 
         /// <summary>
@@ -242,7 +246,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         {
             // Arrange
             using LocalAppContextSwitchesHelper switches = new();
-            switches.UseLegacyBulkCopyMetadataDiscovery = true;
+            switches.EnableBulkCopyCatalogMetadataDiscovery = false;
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
             connection.Open();
             using Table table = new(connection, "LegacyMetadataDiscoveryCache", TableDefinition);
