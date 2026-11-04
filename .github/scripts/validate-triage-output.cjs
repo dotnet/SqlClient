@@ -2,9 +2,12 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-// Pre-publication gate for issue-triage safe outputs: reject incomplete summaries
-// and partial batches before any queued comment or label change reaches GitHub.
+// Pre-publication gate for issue-triage safe outputs: queue label changes after the
+// summary, then reject incomplete summaries and partial batches before any queued
+// comment or label change reaches GitHub.
 const fs = require('node:fs');
+
+const LABEL_TYPES = ['add_labels', 'remove_labels'];
 
 const TEMPLATE_PLACEHOLDER_PATTERN = /<([^<>]+)>/g;
 const TEMPLATE_FIELD_PATTERN =
@@ -49,6 +52,35 @@ function meaningful(value) {
         !hasTemplatePlaceholder(text) &&
         !/^\s*(?:(?:[-+]|\d+[.)])\s+)?(?:todo|tbd|placeholder)\b/im.test(text) &&
         !/^(?:todo|tbd|test(?: message| simple body)?(?: please ignore)?|placeholder)$/i.test(text);
+}
+
+// gh-aw publishes safe outputs in queue order, and the agent may queue its label change before
+// the summary. Move label changes after a single summary so validation judges the batch that
+// will be published; other batches are returned unchanged for validation to judge.
+function normalizeTriageOutput(output) {
+    const items = output?.items;
+    if (!Array.isArray(items) || items.some(item => !item || typeof item.type !== 'string')) {
+        return output;
+    }
+    const comments = items.filter(item => item.type === 'add_comment');
+    if (comments.length !== 1) {
+        return output;
+    }
+    const commentIndex = items.indexOf(comments[0]);
+    const before = items.slice(0, commentIndex);
+    const labels = before.filter(item => LABEL_TYPES.includes(item.type));
+    if (labels.length === 0) {
+        return output;
+    }
+    return {
+        ...output,
+        items: [
+            ...before.filter(item => !LABEL_TYPES.includes(item.type)),
+            comments[0],
+            ...labels,
+            ...items.slice(commentIndex + 1),
+        ],
+    };
 }
 
 function validateTriageOutput(output) {
@@ -148,14 +180,29 @@ function validateTriageOutput(output) {
     }
 }
 
+// Validates the queued batch in place. Safe-output publication reads the same file, so a
+// reordered batch is written back only after it passes validation. Returns true if reordered.
+function validateTriageOutputFile(filename) {
+    const queued = JSON.parse(fs.readFileSync(filename, 'utf8'));
+    const output = normalizeTriageOutput(queued);
+    validateTriageOutput(output);
+    if (output === queued) {
+        return false;
+    }
+    fs.writeFileSync(filename, JSON.stringify(output));
+    return true;
+}
+
 if (require.main === module) {
     // gh-aw supplies the complete queued batch here; throwing blocks safe-output publication.
     const filename = process.env.GH_AW_AGENT_OUTPUT;
     if (!filename) {
         throw new Error('GH_AW_AGENT_OUTPUT is required; refusing to publish unvalidated triage output.');
     }
-    validateTriageOutput(JSON.parse(fs.readFileSync(filename, 'utf8')));
+    if (validateTriageOutputFile(filename)) {
+        console.log('Queued label changes after the triage summary.');
+    }
     console.log('Triage output validated before safe-output publication.');
 }
 
-module.exports = { validateTriageOutput };
+module.exports = { normalizeTriageOutput, validateTriageOutput, validateTriageOutputFile };

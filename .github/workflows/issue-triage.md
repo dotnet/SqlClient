@@ -71,14 +71,16 @@ safe-outputs:
       with:
         script: |
           const path = require('node:path');
-          const fs = require('node:fs');
-          const { validateTriageOutput } = require(path.join(process.env.GITHUB_WORKSPACE,
+          const { validateTriageOutputFile } = require(path.join(process.env.GITHUB_WORKSPACE,
             'triage-validator', '.github', 'scripts', 'validate-triage-output.cjs'));
           const filename = process.env.GH_AW_AGENT_OUTPUT;
           if (!filename) {
             throw new Error('Missing agent output; refusing to publish unvalidated triage output.');
           }
-          validateTriageOutput(JSON.parse(fs.readFileSync(filename, 'utf8')));
+          // Publication reads this file in queue order; labels must follow the summary.
+          if (validateTriageOutputFile(filename)) {
+            core.info('Queued label changes after the triage summary.');
+          }
           core.info('Triage output validated before safe-output publication.');
   # One triage summary per run. `hide-older-comments` collapses previous
   # summaries so only the latest is visible.
