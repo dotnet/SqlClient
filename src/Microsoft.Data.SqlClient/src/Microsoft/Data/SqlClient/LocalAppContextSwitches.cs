@@ -142,6 +142,14 @@ internal static class LocalAppContextSwitches
         "Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2";
 
     /// <summary>
+    /// The name of the app context switch that controls whether SqlBulkCopy
+    /// uses the legacy destination metadata query, which does not read
+    /// catalog views.
+    /// </summary>
+    private const string UseLegacyBulkCopyMetadataDiscoveryString =
+        "Switch.Microsoft.Data.SqlClient.UseLegacyBulkCopyMetadataDiscovery";
+
+    /// <summary>
     /// The name of the app context switch that controls whether to preserve
     /// legacy idle-timeout behavior in connection pooling.
     /// </summary>
@@ -275,6 +283,11 @@ internal static class LocalAppContextSwitches
     /// The cached value of the UseConnectionPoolV2 switch.
     /// </summary>
     internal static SwitchValue s_useConnectionPoolV2 = SwitchValue.None;
+
+    /// <summary>
+    /// The cached value of the UseLegacyBulkCopyMetadataDiscovery switch.
+    /// </summary>
+    internal static SwitchValue s_useLegacyBulkCopyMetadataDiscovery = SwitchValue.None;
 
     /// <summary>
     /// The cached value of the UseLegacyIdleTimeoutBehavior switch.
@@ -689,6 +702,22 @@ internal static class LocalAppContextSwitches
             UseConnectionPoolV2String,
             defaultValue: false,
             ref s_useConnectionPoolV2);
+
+    /// <summary>
+    /// When set to true, SqlBulkCopy discovers destination metadata with
+    /// SET FMTONLY ON and SELECT *, as in releases before 6.0, instead of
+    /// reading sys.all_columns. This lowers server CPU, but hidden columns
+    /// (e.g. temporal period columns) cannot be mapped. Mappings that use SQL
+    /// Graph aliases ($node_id, $edge_id, $from_id, $to_id) still use the
+    /// catalog-based query.
+    ///
+    /// The default value of this switch is false.
+    /// </summary>
+    public static bool UseLegacyBulkCopyMetadataDiscovery =>
+        AcquireAndReturn(
+            UseLegacyBulkCopyMetadataDiscoveryString,
+            defaultValue: false,
+            ref s_useLegacyBulkCopyMetadataDiscovery);
 
     /// <summary>
     /// When set to true (the default), pooling preserves historical idle-timeout behavior.

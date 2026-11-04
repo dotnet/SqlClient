@@ -157,8 +157,8 @@ namespace Microsoft.Data.SqlClient
             public readonly bool IsDataFeed;
         }
 
-        // The initial query will return four result sets, but the column aliases result set will
-        // be empty when not required.
+        // The initial query returns three result sets, plus a fourth column aliases result set
+        // only when the column mappings reference SQL Graph pseudo-columns.
         // Transaction count has only one value in one column and one row
         // MetaData has n columns but no rows
         // Collation has 4 columns and n rows
@@ -440,7 +440,7 @@ namespace Microsoft.Data.SqlClient
         private bool IsCopyOption(SqlBulkCopyOptions copyOption) => ((_copyOptions & copyOption) == copyOption);
 
         //Creates the initial query string, but does not execute it.
-        private string CreateInitialQuery()
+        internal string CreateInitialQuery()
         {
             string[] parts;
             try
@@ -488,9 +488,36 @@ namespace Microsoft.Data.SqlClient
             }
 
             string objectName = ADP.BuildMultiPartName(parts);
+
+            if (LocalAppContextSwitches.UseLegacyBulkCopyMetadataDiscovery)
+            {
+                if (!_localColumnMappingsResolveAliases)
+                {
+                    // Legacy discovery returns only the visible columns and does not query the
+                    // catalog views. Hidden columns and graph aliases are not discoverable.
+                    return $"""
+SELECT @@TRANCOUNT;
+SET FMTONLY ON;
+SELECT * FROM {objectName};
+SET FMTONLY OFF;
+EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
+""";
+                }
+
+                // Graph aliases can only be resolved by the catalog-based query.
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "SqlBulkCopy.CreateInitialQuery | Info | Legacy metadata discovery skipped " +
+                    "for table '{0}' because column mappings use SQL Graph aliases.",
+                    _destinationTableName);
+            }
+
             string escapedObjectName = SqlServerEscapeHelper.EscapeStringAsLiteral(objectName);
             string catalogNameStringLiteral = CatalogName is null ? null : SqlServerEscapeHelper.EscapeStringAsLiteral(CatalogName);
-            string createColumnAliasesTableQuery = """
+
+            // The column aliases temp table is only needed when mappings reference SQL Graph
+            // aliases. Skipping it otherwise avoids tempdb DDL and recompiles on every call.
+            string createColumnAliasesTableQuery = _localColumnMappingsResolveAliases
+                ? """
 
 CREATE TABLE #Column_Aliases
 (
@@ -498,7 +525,8 @@ CREATE TABLE #Column_Aliases
     [Canonical_Column_Id] INT,
     [Aliased_Column_Name] SYSNAME
 )
-""";
+"""
+                : string.Empty;
             string populateColumnAliasesQuery = _localColumnMappingsResolveAliases
                 ? $"""
 
@@ -521,14 +549,16 @@ CREATE TABLE #Column_Aliases
     WHERE [Aliased_Column_Name] IN (SELECT [name] FROM {CatalogName}.[sys].[all_columns] WHERE [object_id] = @Object_ID)
 """
                 : string.Empty;
-            string selectColumnAliasesQuery = """
+            string selectColumnAliasesQuery = _localColumnMappingsResolveAliases
+                ? """
 
 SELECT [Canonical_Column_Name], [Aliased_Column_Name]
 FROM #Column_Aliases
 ORDER BY [Canonical_Column_Id] ASC
 
 DROP TABLE #Column_Aliases
-""";
+"""
+                : string.Empty;
             // Specify the column names explicitly. This is to ensure that we can map to hidden
             // columns (e.g. columns in temporal tables.) If the target table doesn't exist,
             // OBJECT_ID will return NULL and @Column_Names will remain non-null. The subsequent
@@ -722,8 +752,12 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
             // Apply any necessary column aliases. If an aliased name exists in the
             // local column mappings but the canonical name does not, update them.
-            Result columnAliasResults = internalResults[ColumnAliasesResultId];
-            for (int i = 0; i < columnAliasResults.Count; i++)
+            // The aliases result set is only returned when alias resolution was requested.
+            Result columnAliasResults = internalResults.Count > ColumnAliasesResultId
+                ? internalResults[ColumnAliasesResultId]
+                : null;
+            int columnAliasCount = columnAliasResults?.Count ?? 0;
+            for (int i = 0; i < columnAliasCount; i++)
             {
                 Row aliasRow = columnAliasResults[i];
                 SqlString canonicalName = (SqlString)aliasRow[ColumnCanonicalNameColumnId];

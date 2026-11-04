@@ -8,6 +8,7 @@ using System.Data.SqlTypes;
 using System.Reflection;
 using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlClient.Parser.Tokens;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Microsoft.Data.SqlTypes;
 using Xunit;
 
@@ -16,6 +17,11 @@ using Xunit;
 namespace Microsoft.Data.SqlClient.UnitTests;
 
 /// <summary>Verifies bulk-copy metadata boundaries without a SQL Server.</summary>
+/// <remarks>
+/// Some tests change the cached UseLegacyBulkCopyMetadataDiscovery switch, so this class runs in
+/// the serialized AppContext switch collection.
+/// </remarks>
+[Collection(AppContextSwitchTestCollection.Name)]
 public sealed class SqlBulkCopyTests
 {
     /// <summary>Supplies native vectors with both reader SQL-type classifications.</summary>
@@ -165,4 +171,155 @@ public sealed class SqlBulkCopyTests
         Assert.True(reader.Read());
         Assert.False(reader.Read());
     }
+
+    /// <summary>
+    /// Verifies that the default metadata query reads catalog views but omits the column alias
+    /// temp table when no mapping uses SQL Graph aliases.
+    /// </summary>
+    [Fact]
+    public void CreateInitialQuery_DefaultWithoutAliases_OmitsColumnAliases()
+    {
+        // Arrange
+        using LocalAppContextSwitchesHelper switches = new();
+        switches.UseLegacyBulkCopyMetadataDiscovery = false;
+        using SqlBulkCopy copy = CreateBulkCopy("dbo.T", resolveAliases: false);
+
+        // Act
+        string query = copy.CreateInitialQuery();
+
+        // Assert
+        Assert.Contains("[sys].[all_columns]", query);
+        Assert.Contains("EXEC(N'SELECT ' + @Column_Names", query);
+        Assert.Contains("EXEC ..sp_tablecollations_100 N'[dbo].[T]';", query);
+        Assert.DoesNotContain("#Column_Aliases", query);
+    }
+
+    /// <summary>
+    /// Verifies that the default metadata query creates, reads and drops the column alias temp
+    /// table when a mapping uses SQL Graph aliases.
+    /// </summary>
+    [Fact]
+    public void CreateInitialQuery_DefaultWithAliases_IncludesColumnAliases()
+    {
+        // Arrange
+        using LocalAppContextSwitchesHelper switches = new();
+        switches.UseLegacyBulkCopyMetadataDiscovery = false;
+        using SqlBulkCopy copy = CreateBulkCopy("dbo.T", resolveAliases: true);
+
+        // Act
+        string query = copy.CreateInitialQuery();
+
+        // Assert
+        Assert.Contains("CREATE TABLE #Column_Aliases", query);
+        Assert.Contains("INSERT INTO #Column_Aliases", query);
+        Assert.Contains("DELETE FROM #Column_Aliases", query);
+        Assert.Contains("FROM #Column_Aliases", query);
+        Assert.Contains("DROP TABLE #Column_Aliases", query);
+        Assert.Contains("[sys].[all_columns]", query);
+    }
+
+    /// <summary>
+    /// Verifies that the legacy switch produces the pre-6.0 query, which does not read catalog
+    /// views or create temp tables.
+    /// </summary>
+    [Fact]
+    public void CreateInitialQuery_LegacyWithoutAliases_ReturnsLegacyQuery()
+    {
+        // Arrange
+        using LocalAppContextSwitchesHelper switches = new();
+        switches.UseLegacyBulkCopyMetadataDiscovery = true;
+        using SqlBulkCopy copy = CreateBulkCopy("dbo.T", resolveAliases: false);
+
+        // Act
+        string query = copy.CreateInitialQuery();
+
+        // Assert
+        string expected =
+            "SELECT @@TRANCOUNT;" + Environment.NewLine +
+            "SET FMTONLY ON;" + Environment.NewLine +
+            "SELECT * FROM [dbo].[T];" + Environment.NewLine +
+            "SET FMTONLY OFF;" + Environment.NewLine +
+            "EXEC ..sp_tablecollations_100 N'[dbo].[T]';";
+        Assert.Equal(expected, NormalizeNewLines(query));
+    }
+
+    /// <summary>
+    /// Verifies that the legacy switch falls back to the catalog-based query when a mapping uses
+    /// SQL Graph aliases, since only that query can resolve them.
+    /// </summary>
+    [Fact]
+    public void CreateInitialQuery_LegacyWithAliases_ReturnsCatalogQuery()
+    {
+        // Arrange
+        using LocalAppContextSwitchesHelper switches = new();
+        switches.UseLegacyBulkCopyMetadataDiscovery = true;
+        using SqlBulkCopy copy = CreateBulkCopy("dbo.T", resolveAliases: true);
+
+        // Act
+        string query = copy.CreateInitialQuery();
+
+        // Assert
+        Assert.Contains("[sys].[all_columns]", query);
+        Assert.Contains("CREATE TABLE #Column_Aliases", query);
+        Assert.Contains("DROP TABLE #Column_Aliases", query);
+        Assert.DoesNotContain("SELECT * FROM", query);
+    }
+
+    /// <summary>Supplies destination names and the legacy query lines they produce.</summary>
+    public static TheoryData<string, string, string> LegacyDestinationNames => new()
+    {
+        { "#T", "SELECT * FROM [#T];", "EXEC tempdb..sp_tablecollations_100 N'.[#T]';" },
+        {
+            "Db.dbo.T",
+            "SELECT * FROM [Db].[dbo].[T];",
+            "EXEC [Db]..sp_tablecollations_100 N'[dbo].[T]';"
+        },
+        {
+            "[My]]Db].[my'schema].[my'table]",
+            "SELECT * FROM [My]]Db].[my'schema].[my'table];",
+            "EXEC [My]]Db]..sp_tablecollations_100 N'[my''schema].[my''table]';"
+        }
+    };
+
+    /// <summary>
+    /// Verifies that the legacy query quotes and escapes destination names and targets the
+    /// right database for the collation lookup.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(LegacyDestinationNames))]
+    public void CreateInitialQuery_LegacyDestinationName_QuotesNames(
+        string destination, string expectedSelect, string expectedCollations)
+    {
+        // Arrange
+        using LocalAppContextSwitchesHelper switches = new();
+        switches.UseLegacyBulkCopyMetadataDiscovery = true;
+        using SqlBulkCopy copy = CreateBulkCopy(destination, resolveAliases: false);
+
+        // Act
+        string query = copy.CreateInitialQuery();
+
+        // Assert
+        string[] lines = NormalizeNewLines(query).Split(
+            new[] { Environment.NewLine }, StringSplitOptions.None);
+        Assert.Equal(5, lines.Length);
+        Assert.Equal(expectedSelect, lines[2]);
+        Assert.Equal(expectedCollations, lines[4]);
+    }
+
+    private static SqlBulkCopy CreateBulkCopy(string destination, bool resolveAliases)
+    {
+        SqlBulkCopy copy = new(new SqlConnection(), SqlBulkCopyOptions.Default, null)
+        {
+            DestinationTableName = destination
+        };
+        FieldInfo? field = typeof(SqlBulkCopy).GetField(
+            "_localColumnMappingsResolveAliases", BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(field);
+        field.SetValue(copy, resolveAliases);
+        return copy;
+    }
+
+    // Raw string literals use the source file's line endings, which may differ from the host's.
+    private static string NormalizeNewLines(string value) =>
+        value.Replace("\r\n", "\n").Replace("\n", Environment.NewLine);
 }
