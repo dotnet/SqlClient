@@ -2504,6 +2504,13 @@ namespace Microsoft.Data.SqlClient.Parser
                 return TdsOperationStatus.Done; // Just in case this is called in a loop, expecting data to be returned.
             }
 
+            // A synchronous parse must wait for a read posted ahead of the request before it
+            // looks at the buffer, so the SNI callback and this thread never touch it together.
+            if (stateObj._syncOverAsync && stateObj.HasEarlyReadPending)
+            {
+                stateObj.AdoptEarlyReadSync();
+            }
+
             TdsOperationStatus result;
             dataReady = false;
 
