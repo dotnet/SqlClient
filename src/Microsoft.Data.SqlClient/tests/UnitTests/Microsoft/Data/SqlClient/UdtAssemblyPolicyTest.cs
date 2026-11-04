@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 #if NET
+using System.Runtime.CompilerServices;
 using System.Runtime.Loader;
 #endif
 using Microsoft.Data.SqlClient.Tests.Common;
@@ -436,6 +437,53 @@ public class UdtAssemblyPolicyTest
     #region Identity enforcement
 
     #if NET
+    /// <summary>
+    /// Ensures using the policy does not pin a collectible context that loaded the driver.
+    /// </summary>
+    [Fact]
+    public void IsPermitted_CollectibleDriverContext_CanUnload()
+    {
+        // Act
+        WeakReference context = InitializeAndUnloadDriverContext();
+
+        for (int attempt = 0; attempt < 10 && context.IsAlive; attempt++)
+        {
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+        }
+
+        // Assert
+        Assert.False(context.IsAlive);
+    }
+
+    /// <summary>
+    /// Initializes a separate copy of the policy, then requests unloading outside the caller's
+    /// stack so local reflection references cannot keep the context alive during collection.
+    /// </summary>
+    /// <returns>A weak reference used to observe completion of the context's unload.</returns>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static WeakReference InitializeAndUnloadDriverContext()
+    {
+        AssemblyLoadContext context = new("UdtPolicyDriver", isCollectible: true);
+
+        try
+        {
+            Assembly driver = context.LoadFromAssemblyPath(typeof(UdtAssemblyPolicy).Assembly.Location);
+            Type policy = driver.GetType(typeof(UdtAssemblyPolicy).FullName!, throwOnError: true)!;
+            MethodInfo method = policy.GetMethod(
+                nameof(UdtAssemblyPolicy.IsPermitted), BindingFlags.Static | BindingFlags.NonPublic)!;
+
+            Assert.False((bool)method.Invoke(
+                null, new object?[] { new AssemblyName(UnknownAssemblyName), null, null })!);
+
+            return new WeakReference(context);
+        }
+        finally
+        {
+            context.Unload();
+        }
+    }
+
     /// <summary>
     /// Verifies that the initial snapshot does not trust assemblies held only by another ALC.
     /// </summary>

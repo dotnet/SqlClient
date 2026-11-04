@@ -3124,7 +3124,7 @@ namespace Microsoft.Data.SqlClient
 
                     try
                     {
-                        isUserDefinedType = SqlUdtInfo.TryGetFromType(metaData.UdtTypeInfo.Type) != null;
+                        isUserDefinedType = SqlUdtInfo.TryGetFromTypeOrBase(metaData.UdtTypeInfo.Type) != null;
                     }
                     catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                     {
@@ -3211,20 +3211,13 @@ namespace Microsoft.Data.SqlClient
         private SqlUdtInfo GetInfoFromType(Type t)
         {
             Debug.Assert(t != null, "Type object can't be NULL");
-            Type orig = t;
-            do
+            SqlUdtInfo attr = SqlUdtInfo.TryGetFromTypeOrBase(t);
+            if (attr != null)
             {
-                SqlUdtInfo attr = SqlUdtInfo.TryGetFromType(t);
-                if (attr != null)
-                {
-                    return attr;
-                }
-
-                t = t.BaseType;
+                return attr;
             }
-            while (t != null);
 
-            throw SQL.UDTInvalidSqlType(orig.AssemblyQualifiedName);
+            throw SQL.UDTInvalidSqlType(t.AssemblyQualifiedName);
         }
     }
 }

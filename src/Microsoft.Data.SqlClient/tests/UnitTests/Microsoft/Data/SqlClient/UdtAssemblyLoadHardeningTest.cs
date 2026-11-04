@@ -119,6 +119,24 @@ public class UdtAssemblyLoadHardeningTest
     }
 
     /// <summary>
+    /// Preserves resolution of UDTs whose attribute is declared on a base type.
+    /// </summary>
+    [Fact]
+    public void CheckGetExtendedUDTInfo_InheritedUdtAttribute_Resolves()
+    {
+        // Arrange
+        using PolicyScope scope = new();
+        using SqlConnection connection = new(ConnectionString);
+        TdsTypeInfo metaData = CreateUdtMetaData(typeof(DerivedUserDefinedType).AssemblyQualifiedName!);
+
+        // Act
+        connection.CheckGetExtendedUDTInfo(metaData, fThrow: true);
+
+        // Assert
+        Assert.Equal(typeof(DerivedUserDefinedType), metaData.UdtTypeInfo.Type);
+    }
+
+    /// <summary>
     /// Verifies that the non-throwing call sites (for example
     /// SqlDataReader.GetFieldType) still tolerate a denied assembly, leaving the
     /// resolved type null instead of faulting the read.
@@ -349,6 +367,24 @@ public class UdtAssemblyLoadHardeningTest
         Assert.Equal(typeof(AUserDefinedType), metaData.Type);
     }
 
+    /// <summary>
+    /// Preserves SMI resolution of UDTs that inherit their UDT attribute.
+    /// </summary>
+    [Fact]
+    public void SmiMetaData_InheritedUdtAttribute_Resolves()
+    {
+        // Arrange
+        using PolicyScope scope = new();
+        SmiMetaData metaData = CreateSmiUdtMetaData(
+            typeof(DerivedUserDefinedType).AssemblyQualifiedName!);
+
+        // Act
+        Type resolved = metaData.Type;
+
+        // Assert
+        Assert.Equal(typeof(DerivedUserDefinedType), resolved);
+    }
+
     #endregion
 
     #region Helpers
@@ -490,7 +526,14 @@ public class UdtAssemblyLoadHardeningTest
     /// reject legitimate types.
     /// </summary>
     [SqlUserDefinedType(Format.UserDefined, MaxByteSize = 8)]
-    private sealed class AUserDefinedType
+    private class AUserDefinedType
+    {
+    }
+
+    /// <summary>
+    /// A UDT that relies on the inherited attribute rather than declaring it again.
+    /// </summary>
+    private sealed class DerivedUserDefinedType : AUserDefinedType
     {
     }
 

@@ -441,7 +441,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             try
             {
-                return SqlUdtInfo.TryGetFromType(type) != null;
+                return SqlUdtInfo.TryGetFromTypeOrBase(type) != null;
             }
             catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {

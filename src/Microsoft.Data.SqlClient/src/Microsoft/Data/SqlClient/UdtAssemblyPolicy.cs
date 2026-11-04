@@ -877,7 +877,7 @@ internal static class UdtAssemblyPolicy
             return;
         }
 
-        AppDomain.CurrentDomain.AssemblyLoad += static (_, args) =>
+        AssemblyLoadEventHandler handler = static (_, args) =>
         {
             // A load the policy itself triggered brings in the permitted
             // assembly's dependencies. Those must not enter the already-loaded
@@ -897,6 +897,12 @@ internal static class UdtAssemblyPolicy
                 }
             }
         };
+
+        AppDomain.CurrentDomain.AssemblyLoad += handler;
+        #if NET
+        // The AppDomain must not keep the driver's collectible context alive.
+        s_driverLoadContext!.Unloading += _ => AppDomain.CurrentDomain.AssemblyLoad -= handler;
+        #endif
 
         s_assemblyLoadHandlerAttached = true;
     }
