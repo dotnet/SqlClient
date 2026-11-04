@@ -7,6 +7,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+#if NET
+using System.Runtime.Loader;
+#endif
 using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 
@@ -431,6 +434,71 @@ public class UdtAssemblyPolicyTest
     #endregion
 
     #region Identity enforcement
+
+    #if NET
+    /// <summary>
+    /// Verifies that the initial snapshot does not trust assemblies held only by another ALC.
+    /// </summary>
+    [Fact]
+    public void IsPermitted_AssemblyInAnotherContextBeforeSnapshot_IsDenied()
+    {
+        // Arrange
+        using PolicyScope scope = new();
+        AssemblyLoadContext context = new("UdtPolicySnapshot", isCollectible: true);
+
+        try
+        {
+            string? path = FindUnloadedFrameworkAssembly(out _);
+            Assert.NotNull(path);
+            Assembly assembly = context.LoadFromAssemblyPath(path!);
+
+            // Act
+            bool permitted = UdtAssemblyPolicy.IsPermitted(
+                assembly.GetName(), null, out Assembly? loaded);
+
+            // Assert
+            Assert.False(permitted);
+            Assert.Null(loaded);
+        }
+        finally
+        {
+            // Cleanup
+            context.Unload();
+        }
+    }
+
+    /// <summary>
+    /// Verifies that load events from another ALC do not widen an existing trust snapshot.
+    /// </summary>
+    [Fact]
+    public void IsPermitted_AssemblyInAnotherContextAfterSnapshot_IsDenied()
+    {
+        // Arrange
+        using PolicyScope scope = new();
+        AssemblyLoadContext context = new("UdtPolicyLoadEvent", isCollectible: true);
+        Assert.False(IsAllowed(new AssemblyName(UnknownAssemblyName), null));
+
+        try
+        {
+            string? path = FindUnloadedFrameworkAssembly(out _);
+            Assert.NotNull(path);
+            Assembly assembly = context.LoadFromAssemblyPath(path!);
+
+            // Act
+            bool permitted = UdtAssemblyPolicy.IsPermitted(
+                assembly.GetName(), null, out Assembly? loaded);
+
+            // Assert
+            Assert.False(permitted);
+            Assert.Null(loaded);
+        }
+        finally
+        {
+            // Cleanup
+            context.Unload();
+        }
+    }
+    #endif
 
     /// <summary>
     /// Verifies that an assembly whose simple name differs from the one the

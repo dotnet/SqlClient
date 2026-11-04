@@ -113,8 +113,9 @@ internal static class UdtAssemblyPolicy
     private static bool s_assemblyLoadHandlerAttached;
 
     /// <summary>
-    /// Maps the simple name of every assembly loaded into the process to the
-    /// loaded instance.  Null when it has not been built yet.
+    /// Maps the simple name of every assembly loaded into the driver's load
+    /// context (or AppDomain on .NET Framework) to the loaded instance.
+    /// Null when it has not been built yet.
     ///
     /// The instance is retained, not just the name, so that a reference which
     /// is permitted because the process has already loaded that simple name is
@@ -780,7 +781,13 @@ internal static class UdtAssemblyPolicy
 
         Dictionary<string, WeakReference<Assembly>> loaded = new(StringComparer.OrdinalIgnoreCase);
 
-        foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+        #if NET
+        IEnumerable<Assembly> assemblies = s_driverLoadContext!.Assemblies;
+        #else
+        IEnumerable<Assembly> assemblies = AppDomain.CurrentDomain.GetAssemblies();
+        #endif
+
+        foreach (Assembly assembly in assemblies)
         {
             Remember(loaded, assembly);
         }
@@ -875,7 +882,7 @@ internal static class UdtAssemblyPolicy
             // A load the policy itself triggered brings in the permitted
             // assembly's dependencies. Those must not enter the already-loaded
             // tier, or permission would spread along the reference closure.
-            if (t_insidePolicyLoad > 0)
+            if (t_insidePolicyLoad > 0 || !IsInDriverLoadContext(args.LoadedAssembly))
             {
                 return;
             }
