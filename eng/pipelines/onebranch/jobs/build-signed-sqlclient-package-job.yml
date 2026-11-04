@@ -16,6 +16,10 @@ parameters:
   - name: isPreview
     type: boolean
 
+  # Registered APIScan major.minor version, supplied as a runtime $(...) reference.
+  - name: apiScanSoftwareVersion
+    type: string
+
 jobs:
 - job: build_package_SqlClient
   displayName: 'Build Microsoft.Data.SqlClient'
@@ -24,12 +28,12 @@ jobs:
 
   variables:
     ob_outputDirectory: $(PACK_OUTPUT)
-    # APIScan configuration for this Extension package
+    # APIScan configuration for this package
     ob_sdl_apiscan_enabled: true
     ob_sdl_apiscan_softwareFolder: $(Build.SourcesDirectory)/apiScan/SqlClient/dlls
     ob_sdl_apiscan_symbolsFolder: $(Build.SourcesDirectory)/apiScan/SqlClient/pdbs
-    ob_sdl_apiscan_softwarename: Microsoft.Data.SqlClient
-    ob_sdl_apiscan_versionNumber: $(assemblyBuildNumber)
+    ob_sdl_apiscan_softwareName: Microsoft.Data.SqlClient
+    ob_sdl_apiscan_versionNumber: ${{ parameters.apiScanSoftwareVersion }}
 
     ${{ if parameters.isPreview }}:
       abstractionsPackageVersion: $(abstractionsPackagePreviewVersion)

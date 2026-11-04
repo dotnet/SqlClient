@@ -68,7 +68,7 @@ stages:
             versionProperties: >-
               -p:LoggingPackageVersion=$(effectiveLoggingVersion)
               -p:LoggingAssemblyFileVersion=$(loggingAssemblyFileVersion)
-            assemblyFileVersion: $(loggingAssemblyFileVersion)
+            apiScanSoftwareVersion: $(ApiScanVersionSqlClient)
             publishSymbols: ${{ parameters.publishSymbols }}
             esrpConnectedServiceName: $(ESRPConnectedServiceName)
             esrpClientId: $(ESRPClientId)
@@ -86,7 +86,7 @@ stages:
             versionProperties: >-
               -p:SqlServerAssemblyFileVersion=$(sqlServerAssemblyFileVersion)
               -p:SqlServerPackageVersion=$(effectiveSqlServerVersion)
-            assemblyFileVersion: $(sqlServerAssemblyFileVersion)
+            apiScanSoftwareVersion: $(ApiScanVersionSqlServer)
             publishSymbols: ${{ parameters.publishSymbols }}
             esrpConnectedServiceName: $(ESRPConnectedServiceName)
             esrpClientId: $(ESRPClientId)
@@ -115,7 +115,7 @@ stages:
               -p:AbstractionsPackageVersion=$(effectiveAbstractionsVersion)
               -p:AbstractionsAssemblyFileVersion=$(abstractionsAssemblyFileVersion)
               -p:LoggingPackageVersion=$(effectiveLoggingVersion)
-            assemblyFileVersion: $(abstractionsAssemblyFileVersion)
+            apiScanSoftwareVersion: $(ApiScanVersionSqlClient)
             publishSymbols: ${{ parameters.publishSymbols }}
             esrpConnectedServiceName: $(ESRPConnectedServiceName)
             esrpClientId: $(ESRPClientId)
@@ -140,6 +140,7 @@ stages:
       jobs:
         - template: /eng/pipelines/onebranch/jobs/build-signed-sqlclient-package-job.yml@self
           parameters:
+            apiScanSoftwareVersion: $(ApiScanVersionSqlClient)
             publishSymbols: ${{ parameters.publishSymbols }}
             isPreview: ${{ parameters.isPreview }}
             # TODO: This job should use the effective versions for Abstractions, Logging,
@@ -155,7 +156,7 @@ stages:
               -p:AzureAssemblyFileVersion=$(azureAssemblyFileVersion)
               -p:AbstractionsPackageVersion=$(effectiveAbstractionsVersion)
               -p:LoggingPackageVersion=$(effectiveLoggingVersion)
-            assemblyFileVersion: $(azureAssemblyFileVersion)
+            apiScanSoftwareVersion: $(ApiScanVersionSqlClient)
             publishSymbols: ${{ parameters.publishSymbols }}
             esrpConnectedServiceName: $(ESRPConnectedServiceName)
             esrpClientId: $(ESRPClientId)
@@ -190,7 +191,7 @@ stages:
               -p:MdsPackageVersion=$(effectiveSqlClientVersion)
               -p:LoggingPackageVersion=$(effectiveLoggingVersion)
               -p:AbstractionsPackageVersion=$(effectiveAbstractionsVersion)
-            assemblyFileVersion: $(akvAssemblyFileVersion)
+            apiScanSoftwareVersion: $(ApiScanVersionSqlClient)
             publishSymbols: ${{ parameters.publishSymbols }}
             esrpConnectedServiceName: $(ESRPConnectedServiceName)
             esrpClientId: $(ESRPClientId)

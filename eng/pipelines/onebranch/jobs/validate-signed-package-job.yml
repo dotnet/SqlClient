@@ -26,6 +26,10 @@ jobs:
   variables: # More settings at https://aka.ms/obpipelines/yaml/jobs
   - template: /eng/pipelines/onebranch/variables/sqlclient-validation-variables.yml@self
 
+  # This job validates an existing package and produces no assemblies to scan.
+  - name: ob_sdl_apiscan_enabled
+    value: false
+
   - name: pathToDownloadedNuget # path to the downloaded nuget files
     value: $(Pipeline.Workspace)\${{parameters.artifactName }}
 

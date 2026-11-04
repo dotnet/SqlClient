@@ -421,7 +421,7 @@ Both pipelines use **OneBranch governed templates** for 1ES compliance. The SDL 
 | SDL Tool | Official | Non-Official | Purpose |
 |----------|----------|--------------|---------|
 | **TSA** | ✅ `enabled: true` | ❌ `enabled: false` | Uploads SDL results to TSA for downstream analysis |
-| **ApiScan** | ✅ `enabled: true`, `break: true` | ✅ `enabled: true`, `break: true` | Scans APIs for compliance issues |
+| **ApiScan** | ✅ `enabled: true`, `break: false` | ✅ `enabled: true`, `break: false` | Scans APIs for compliance issues |
 | **CodeQL** | ✅ (non-preview) | ✅ (non-preview) | Static analysis for security vulnerabilities |
 | **SBOM** | ✅ (non-preview) | ✅ (non-preview) | Software Bill of Materials generation |
 | **Policheck** | ✅ `break: true` | ✅ `break: true` | Scans for policy-violating content |
@@ -434,17 +434,36 @@ Both pipelines use **OneBranch governed templates** for 1ES compliance. The SDL 
 
 APIScan is configured at **both pipeline level and job level**:
 
-**Pipeline-level** (`globalSdl:apiscan:`): Sets default configuration inherited by all jobs. This is configured for MDS (Microsoft.Data.SqlClient) as the primary product.
+**Pipeline-level** (`globalSdl:apiscan:`): Enables scanning with `break: false` in both
+pipelines. It does not specify a default software name or version. Registration changes
+do not change the existing scan failure policy.
 
-**Job-level** (`ob_sdl_apiscan_*` variables): Each build job overrides the pipeline defaults with package-specific settings:
+**Job-level** (`ob_sdl_apiscan_*` variables): Each package build job supplies its own
+registered software name/version pair and scan folders:
 
 | Variable | Purpose |
 |----------|---------|
 | `ob_sdl_apiscan_enabled` | Enable/disable APIScan for this job (`true`) |
 | `ob_sdl_apiscan_softwareFolder` | Path to signed DLLs for scanning |
 | `ob_sdl_apiscan_symbolsFolder` | Path to PDBs for scanning |
-| `ob_sdl_apiscan_softwarename` | Package name (e.g., `Microsoft.Data.SqlClient.Internal.Logging`) |
-| `ob_sdl_apiscan_versionNumber` | Assembly file version |
+| `ob_sdl_apiscan_softwareName` | Package name (e.g., `Microsoft.Data.SqlClient.Internal.Logging`) |
+| `ob_sdl_apiscan_versionNumber` | Registered package major.minor version, not an assembly or build version |
+
+The registration versions are defined in `variables/onebranch-variables.yml`:
+
+| Packages | Variable | APIScan Version |
+|----------|----------|-----------------|
+| SqlClient, Internal.Logging, Extensions.Abstractions, Extensions.Azure, AKV Provider | `ApiScanVersionSqlClient` | `7.0` |
+| Microsoft.SqlServer.Server | `ApiScanVersionSqlServer` | `1.0` |
+
+`stages/build-stages.yml` passes these values as runtime `$(...)` references through
+the required `apiScanSoftwareVersion` parameter on both build job templates. Do not
+substitute the version value with a template expression: numeric coercion can turn
+`'1.0'` into `1`. Preview and servicing builds use the same registered major.minor.
+Register a new name/version pair with APIScan before changing a package's major.minor.
+
+The package validation job sets `ob_sdl_apiscan_enabled: false` because it validates
+an existing package rather than producing assemblies to scan.
 
 Each job copies its signed DLLs and PDBs to a package-specific folder under `$(Build.SourcesDirectory)/apiScan/<PackageName>/` after ESRP DLL signing, ensuring APIScan analyzes the correct signed binaries for each package.
 

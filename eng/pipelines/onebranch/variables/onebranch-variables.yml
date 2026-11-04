@@ -9,6 +9,13 @@
 variables:
   - template: /eng/pipelines/onebranch/variables/common-variables.yml@self
 
+  # Registered APIScan major.minor versions, independent of assembly and build versions.
+  # Pass these via runtime $(...) references so values such as '1.0' remain strings.
+  - name: ApiScanVersionSqlClient
+    value: '7.0'
+  - name: ApiScanVersionSqlServer
+    value: '1.0'
+
   # onebranch template variables
   - name: ob_sdl_binskim_break
     value: true # https://aka.ms/obpipelines/sdl
