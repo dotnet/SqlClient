@@ -20,7 +20,10 @@
         <para>
           Set the switch to <c>true</c> before the first bulk copy to always use catalog discovery,
           avoiding the retry for hidden-column workloads. Set it to <c>false</c> to never use
-          catalog discovery; hidden-column and SQL Graph alias mappings then fail on the client.
+          catalog discovery. Unresolved hidden-column names and SQL Graph aliases then fail
+          on the client. Destination-ordinal and implicit/default mappings instead use
+          visible-column positions, which can target different columns when hidden columns
+          precede visible ones.
           SQL Server restrictions on writing generated columns still apply in every mode.
           For example:
         </para>

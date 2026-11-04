@@ -29,6 +29,84 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         private const string EdgeDefinition = "([Description] VARCHAR(100)) AS EDGE";
 
         /// <summary>
+        /// Verifies name-mapped text after hidden columns retains its collation on cache reuse.
+        /// </summary>
+        [ConditionalTheory(
+            typeof(DataTestUtility),
+            nameof(DataTestUtility.AreConnStringsSetup),
+            nameof(DataTestUtility.IsNotAzureSynapse))]
+        [InlineData("Japanese_XJIS_100_CI_AS", "\u65e5\u672c\u8a9e")]
+        [InlineData("Cyrillic_General_100_CI_AS", "\u041f\u0440\u0438\u0432\u0435\u0442")]
+        public void WriteToServer_AutomaticTextAfterHiddenColumns_PreservesValues(
+            string collation, string value)
+        {
+            // Arrange
+            using LocalAppContextSwitchesHelper switches = new();
+            switches.UseBulkCopyCatalogMetadataDiscovery = null;
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            connection.Open();
+            using TemporalTable table = CreateTextAfterHiddenTable(connection, collation);
+            using DataTable source = CreateTextAfterHiddenSource(value);
+            using SqlBulkCopy copy = new(connection, SqlBulkCopyOptions.CacheMetadata, null)
+            {
+                DestinationTableName = table.Name
+            };
+            copy.ColumnMappings.Add("Id", "Id");
+            copy.ColumnMappings.Add("TextValue", "TextValue");
+
+            // Act
+            copy.WriteToServer(source);
+            BulkCopySimpleResultSet metadata = copy.CachedMetadata;
+            source.Rows[0]["Id"] = 2;
+            copy.WriteToServer(source);
+
+            // Assert
+            Assert.False(metadata.UsesCatalogMetadata);
+            Assert.Same(metadata, copy.CachedMetadata);
+            Assert.Equal(2, metadata[1].MetaData.Length);
+            AssertTextAfterHiddenValues(connection, table.Name, collation, value);
+        }
+
+        /// <summary>
+        /// Verifies async name-mapped text retains its collation after hidden columns and cache reuse.
+        /// </summary>
+        [ConditionalTheory(
+            typeof(DataTestUtility),
+            nameof(DataTestUtility.AreConnStringsSetup),
+            nameof(DataTestUtility.IsNotAzureSynapse))]
+        [InlineData("Japanese_XJIS_100_CI_AS", "\u65e5\u672c\u8a9e")]
+        [InlineData("Cyrillic_General_100_CI_AS", "\u041f\u0440\u0438\u0432\u0435\u0442")]
+        public async Task WriteToServerAsync_AutomaticTextAfterHiddenColumns_PreservesValues(
+            string collation, string value)
+        {
+            // Arrange
+            using LocalAppContextSwitchesHelper switches = new();
+            switches.UseBulkCopyCatalogMetadataDiscovery = null;
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            await connection.OpenAsync();
+            using TemporalTable table = CreateTextAfterHiddenTable(connection, collation);
+            using DataTable source = CreateTextAfterHiddenSource(value);
+            using SqlBulkCopy copy = new(connection, SqlBulkCopyOptions.CacheMetadata, null)
+            {
+                DestinationTableName = table.Name
+            };
+            copy.ColumnMappings.Add("Id", "Id");
+            copy.ColumnMappings.Add("TextValue", "TextValue");
+
+            // Act
+            await copy.WriteToServerAsync(source);
+            BulkCopySimpleResultSet metadata = copy.CachedMetadata;
+            source.Rows[0]["Id"] = 2;
+            await copy.WriteToServerAsync(source);
+
+            // Assert
+            Assert.False(metadata.UsesCatalogMetadata);
+            Assert.Same(metadata, copy.CachedMetadata);
+            Assert.Equal(2, metadata[1].MetaData.Length);
+            AssertTextAfterHiddenValues(connection, table.Name, collation, value);
+        }
+
+        /// <summary>
         /// Verifies that each discovery mode copies rows into a regular table.
         /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
@@ -610,6 +688,54 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
                 table.Rows.Add(i, $"Name {i}", i * 1.5m);
             }
             return table;
+        }
+
+        /// <summary>Creates an active temporal table with code-page-sensitive text after its period.</summary>
+        private static TemporalTable CreateTextAfterHiddenTable(
+            SqlConnection connection, string collation) =>
+            new(connection, "TextAfterHidden", "TextAfterHiddenHistory", $"""
+(
+    Id int primary key not null,
+    ValidFrom datetime2 generated always as row start hidden not null,
+    ValidTo datetime2 generated always as row end hidden not null,
+    TextValue varchar(50) collate {collation} not null,
+    period for system_time (ValidFrom, ValidTo)
+)
+""");
+
+        /// <summary>Creates a named text source without generated period values.</summary>
+        private static DataTable CreateTextAfterHiddenSource(string value)
+        {
+            DataTable source = new();
+            source.Columns.Add("Id", typeof(int));
+            source.Columns.Add("TextValue", typeof(string));
+            source.Rows.Add(1, value);
+            return source;
+        }
+
+        /// <summary>Checks exact text round-trips and the destination column's explicit collation.</summary>
+        private static void AssertTextAfterHiddenValues(
+            SqlConnection connection, string tableName, string collation, string value)
+        {
+            using SqlCommand command = new(
+                $"SELECT Id, TextValue FROM {tableName} ORDER BY Id", connection);
+            using (SqlDataReader reader = command.ExecuteReader())
+            {
+                for (int id = 1; id <= 2; id++)
+                {
+                    Assert.True(reader.Read());
+                    Assert.Equal(id, reader.GetInt32(0));
+                    Assert.Equal(value, reader.GetString(1));
+                }
+                Assert.False(reader.Read());
+            }
+
+            command.CommandText = """
+SELECT collation_name FROM sys.columns
+WHERE object_id = OBJECT_ID(@table) AND name = 'TextValue'
+""";
+            command.Parameters.AddWithValue("@table", tableName);
+            Assert.Equal(collation, command.ExecuteScalar());
         }
 
         private static TemporalTable CreateTemporalTable(SqlConnection connection, string prefix) =>
