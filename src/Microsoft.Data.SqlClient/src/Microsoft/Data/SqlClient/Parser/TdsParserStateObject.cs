@@ -327,6 +327,12 @@ namespace Microsoft.Data.SqlClient.Parser
         // This is useful to simulate circumstances where timeouts do not recover.
         internal static bool s_skipSendAttention = false;
 
+        // Invoked just before a read is posted on demand, i.e. not for a read posted ahead of a
+        // request by PostEarlyRead. Tests use it to hold the read back until the server has
+        // answered and aborted the connection, standing in for a cold reader that is still being
+        // compiled when the response arrives.
+        internal static Action s_beforeReadPost = null;
+
         // Prevents any pending read from completing until the user signals it using
         // CompletePendingReadWithSuccess() or CompletePendingReadWithFailure(int errorCode) in SqlCommand\SqlDataReader
         internal static bool s_forcePendingReadsToWaitForUser = false;
@@ -3554,6 +3560,9 @@ namespace Microsoft.Data.SqlClient.Parser
 
                 if (readFromNetwork)
                 {
+#if DEBUG
+                    s_beforeReadPost?.Invoke();
+#endif
                     readPacket = ReadSyncOverAsync(GetTimeoutRemaining(), out error);
                 }
                 else
@@ -4132,6 +4141,12 @@ namespace Microsoft.Data.SqlClient.Parser
                         {
                             IncrementPendingCallbacks();
 
+#if DEBUG
+                            if (!_postingEarlyRead)
+                            {
+                                s_beforeReadPost?.Invoke();
+                            }
+#endif
                             readPacket = ReadAsync(handle, out error);
 
                             if (!(TdsEnums.SNI_SUCCESS == error || TdsEnums.SNI_SUCCESS_IO_PENDING == error))

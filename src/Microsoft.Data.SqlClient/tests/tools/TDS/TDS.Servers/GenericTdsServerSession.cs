@@ -130,6 +130,16 @@ namespace Microsoft.SqlServer.TDS.Servers
         public bool IsUserAgentSupportEnabled { get; set; }
 
         /// <summary>
+        /// Close the connection abortively after the next response (see ITDSServerSession)
+        /// </summary>
+        public bool AbortConnectionAfterResponse { get; set; }
+
+        /// <summary>
+        /// Invoked after the connection was closed abortively (see ITDSServerSession)
+        /// </summary>
+        public Action ConnectionAborted { get; set; }
+
+        /// <summary>
         /// Indicates whether this session supports enhanced routing
         /// </summary>
         public bool IsEnhancedRoutingSupportRequested { get; set; }

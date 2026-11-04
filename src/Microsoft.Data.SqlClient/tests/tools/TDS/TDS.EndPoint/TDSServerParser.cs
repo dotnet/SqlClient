@@ -19,6 +19,12 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         private ITDSServer Server { get; set; }
 
         /// <summary>
+        /// Closes the client connection abortively; set by the owning connection. Invoked
+        /// after a response when the session asked for it (AbortConnectionAfterResponse).
+        /// </summary>
+        public Action AbortConnection { get; set; }
+
+        /// <summary>
         /// TDS server session
         /// </summary>
         private ITDSServerSession Session { get; set; }
@@ -138,6 +144,16 @@ namespace Microsoft.SqlServer.TDS.EndPoint
 
                 // Send all messages to the client
                 responseMessages.Deflate(Transport);
+
+                if (Session.AbortConnectionAfterResponse)
+                {
+                    // The response is on the wire; now end the connection the abortive way
+                    // (RST), which discards whatever the client has not read yet.
+                    Session.AbortConnectionAfterResponse = false;
+                    AbortConnection?.Invoke();
+                    Session.ConnectionAborted?.Invoke();
+                    return;
+                }
 
                 // Check the type of message just sent
                 if (MessageBeingReceived.MessageType == TDSMessageType.PreLogin)
