@@ -40,6 +40,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [InlineData(true)]
         public void PoolDiagnostics_UnchangedPool_HasStableIdentity(bool poolV2)
         {
+            // Arrange
             using LocalAppContextSwitchesHelper switches = new() { UseConnectionPoolV2 = poolV2 };
             using SqlConnection connection = new(
                 $"Data Source=localhost;Min Pool Size=0;Application Name=PoolDiagnostics-{Guid.NewGuid():N}");
@@ -56,14 +57,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     Assert.IsType<WaitHandleDbConnectionPool>(pool);
                 }
 
+                // Act
                 string snapshot = IsolationLevelLeakTest.DescribePool(pool);
+
+                // Assert
                 Assert.Contains($"poolType={pool.GetType().Name}, poolIdentityHash=", snapshot);
+                Assert.Contains("isRunning=True, count=0, idle=0", snapshot);
                 Assert.Equal(snapshot, IsolationLevelLeakTest.DescribePool(pool));
                 Assert.Equal(0, pool.Count);
                 Assert.Equal(0, pool.IdleCount);
             }
             finally
             {
+                // Cleanup
                 SqlConnection.ClearPool(connection);
             }
         }
