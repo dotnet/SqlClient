@@ -65,6 +65,11 @@ builds that older ref's own benchmark sources.
 
 ## Running and configuration
 
+Package baselines can be built with `-p:ReferenceType=Package -p:MdsPackageVersion=6.1.7`.
+TestCommon uses the baseline package's public reference assemblies and excludes helpers that
+access current driver switch internals. Normal project and current-package test builds retain
+those helpers and their implementation-assembly reference.
+
 Build in Release and run from the output directory so `datatypes.json` can be found:
 
 ```powershell
