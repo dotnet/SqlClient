@@ -46,6 +46,14 @@ namespace Microsoft.Data.SqlClient
         private static int s_objectTypeCount; // EventSource counter
         internal readonly int _objectID = Interlocked.Increment(ref s_objectTypeCount);
 
+#if DEBUG
+        /// <summary>
+        /// Test hook: called by <see cref="Rollback()"/> after it has checked that the connection can still send a
+        /// request and before it validates the connection, the window in which another thread can break it.
+        /// </summary>
+        internal static Action s_afterRollbackConnectionCheck;
+#endif
+
         internal bool RestoreBrokenConnection { get; set; }
         internal bool ConnectionHasBeenRestored { get; set; }
 
@@ -352,6 +360,10 @@ namespace Microsoft.Data.SqlClient
                     // transaction with the session. The connection's own close zombies this transaction.
                     return;
                 }
+
+#if DEBUG
+                s_afterRollbackConnectionCheck?.Invoke();
+#endif
 
                 if (innerConnection.IsLockedForBulkCopy)
                 {

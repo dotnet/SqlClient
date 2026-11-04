@@ -5,6 +5,7 @@
 using System;
 using System.Data;
 using System.Diagnostics.Tracing;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals;
@@ -170,10 +171,78 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.True(gate.ClosedAfterDispose, "The background close did not finish after the dispose.");
         }
 
+#if DEBUG
+        /// <summary>
+        /// Disposes the transaction when the connection breaks after the dispose has checked it and before it
+        /// validates it for the rollback. After an unacknowledged timeout the driver faults the command first and
+        /// marks the parser broken a few instructions later on its own thread, so a dispose started by the fault
+        /// can land in between. The driver's debug test hook marks the parser broken at that point.
+        /// </summary>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        public void Dispose_ConnectionBrokenAfterCheck_DoesNotThrow()
+        {
+            // Arrange
+            using SqlConnection connection = OpenUnpooled(DataTestUtility.TCPConnectionString);
+            using SqlTransaction transaction = connection.BeginTransaction();
+            object parser = ConnectionHelper.GetParser(connection.GetInternalConnection());
+            int disposingThreadId = Environment.CurrentManagedThreadId;
+            bool brokeConnection = false;
+            using RollbackConnectionCheckHook hook = new(() =>
+            {
+                if (Environment.CurrentManagedThreadId == disposingThreadId)
+                {
+                    SetParserState(parser, "Broken");
+                    brokeConnection = true;
+                }
+            });
+
+            // Act
+            Exception exception = Record.Exception(transaction.Dispose);
+
+            // Assert
+            Assert.True(brokeConnection, "The rollback did not reach the point between its connection check and validation.");
+            Assert.Null(exception);
+        }
+
+        /// <summary>
+        /// Sets the state of the driver's internal TDS parser.
+        /// </summary>
+        /// <param name="parser">The parser, from <see cref="ConnectionHelper.GetParser"/>.</param>
+        /// <param name="state">The name of the <c>TdsParserState</c> member to set.</param>
+        private static void SetParserState(object parser, string state)
+        {
+            PropertyInfo property = parser.GetType().GetProperty("State", BindingFlags.Instance | BindingFlags.NonPublic);
+            property.SetValue(parser, Enum.Parse(property.PropertyType, state));
+        }
+
+        /// <summary>
+        /// Installs the driver's debug-only <c>SqlInternalTransaction.s_afterRollbackConnectionCheck</c> test hook
+        /// and removes it on dispose. The hook is process-wide, so the callback must filter on its own thread.
+        /// </summary>
+        private sealed class RollbackConnectionCheckHook : IDisposable
+        {
+            private static readonly FieldInfo s_hook = typeof(SqlConnection).Assembly
+                .GetType("Microsoft.Data.SqlClient.SqlInternalTransaction")
+                .GetField("s_afterRollbackConnectionCheck", BindingFlags.Static | BindingFlags.NonPublic);
+
+            /// <summary>
+            /// Installs <paramref name="callback"/> as the hook.
+            /// </summary>
+            /// <param name="callback">Called on every rollback between its connection check and validation.</param>
+            public RollbackConnectionCheckHook(Action callback)
+            {
+                Assert.NotNull(s_hook);
+                s_hook.SetValue(null, callback);
+            }
+
+            public void Dispose() => s_hook.SetValue(null, null);
+        }
+#endif
+
         /// <summary>
         /// Opens a connection that is not pooled, so its close disposes the internal connection.
         /// </summary>
-        /// <param name="connectionString">The connection string to the proxy.</param>
+        /// <param name="connectionString">The connection string.</param>
         /// <returns>The open connection.</returns>
         private static SqlConnection OpenUnpooled(string connectionString)
         {
@@ -206,6 +275,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             private const string RollbackScope = "SqlInternalTransaction.Rollback | API";
 
             private readonly object _closeLock;
+            private readonly SqlConnection _connection;
+            private readonly StateChangeEventHandler _onStateChange;
             private readonly ManualResetEventSlim _closed = new(false);
             private int _holdingThreadId;
             private bool _lockTaken;
@@ -217,13 +288,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             /// <param name="connection">The open connection whose background close is gated.</param>
             public BackgroundCloseGate(SqlConnection connection)
             {
-                connection.StateChange += (_, e) =>
+                _connection = connection;
+                _onStateChange = (_, e) =>
                 {
                     if (e.CurrentState == ConnectionState.Closed)
                     {
                         _closed.Set();
                     }
                 };
+                connection.StateChange += _onStateChange;
                 _closeLock = connection.GetInternalConnection();
                 Monitor.Enter(_closeLock, ref _lockTaken);
                 _holdingThreadId = Environment.CurrentManagedThreadId;
@@ -295,6 +368,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             public override void Dispose()
             {
                 base.Dispose();
+                _connection.StateChange -= _onStateChange;
                 ReleaseLock();
                 _closed.Dispose();
             }
