@@ -4,6 +4,7 @@
 
 using System;
 using System.Data;
+using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.ManualTesting.Tests;
 using Microsoft.Data.SqlClient.Tests.Common;
@@ -248,14 +249,18 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
             {
                 DestinationTableName = table.Name
             };
-            copy.ColumnMappings.Add("Id", "Id");
-            copy.WriteToServer(source);
-            BulkCopySimpleResultSet fastMetadata = copy.CachedMetadata;
+            using SqlBulkCopy seed = new(connection, SqlBulkCopyOptions.CacheMetadata, null)
+            {
+                DestinationTableName = table.Name
+            };
+            seed.ColumnMappings.Add("Id", "Id");
+            seed.WriteToServer(source);
+            BulkCopySimpleResultSet fastMetadata = seed.CachedMetadata;
+            SeedCachedMetadata(copy, fastMetadata);
             using (SqlCommand clear = new($"DELETE FROM {table.Name}", connection))
             {
                 clear.ExecuteNonQuery();
             }
-            copy.ColumnMappings.Clear();
             for (int i = 0; i < source.Columns.Count; i++)
             {
                 copy.ColumnMappings.Add(i, i);
@@ -289,14 +294,18 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
             {
                 DestinationTableName = table.Name
             };
-            copy.ColumnMappings.Add("Id", "Id");
-            await copy.WriteToServerAsync(source);
-            BulkCopySimpleResultSet fastMetadata = copy.CachedMetadata;
+            using SqlBulkCopy seed = new(connection, SqlBulkCopyOptions.CacheMetadata, null)
+            {
+                DestinationTableName = table.Name
+            };
+            seed.ColumnMappings.Add("Id", "Id");
+            await seed.WriteToServerAsync(source);
+            BulkCopySimpleResultSet fastMetadata = seed.CachedMetadata;
+            SeedCachedMetadata(copy, fastMetadata);
             using (SqlCommand clear = new($"DELETE FROM {table.Name}", connection))
             {
                 await clear.ExecuteNonQueryAsync();
             }
-            copy.ColumnMappings.Clear();
             for (int i = 0; i < source.Columns.Count; i++)
             {
                 copy.ColumnMappings.Add(i, i);
@@ -625,6 +634,15 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
             SqlBulkCopy copy = CreateTemporalCopy(connection, tableName);
             copy.ColumnMappings.Add("ValidTo", "ValidTo");
             return copy;
+        }
+
+        /// <summary>Seeds fast metadata without changing the new instance's mapping schema.</summary>
+        private static void SeedCachedMetadata(SqlBulkCopy copy, BulkCopySimpleResultSet metadata)
+        {
+            PropertyInfo property = typeof(SqlBulkCopy).GetProperty(
+                nameof(SqlBulkCopy.CachedMetadata), BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.NotNull(property);
+            property.SetValue(copy, metadata);
         }
 
         /// <summary>Creates distinct values for hidden columns and the following visible column.</summary>
