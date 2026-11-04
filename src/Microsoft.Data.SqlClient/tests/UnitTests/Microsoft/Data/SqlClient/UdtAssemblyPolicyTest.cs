@@ -520,6 +520,7 @@ public class UdtAssemblyPolicyTest
         try
         {
             Assembly driver = context.LoadFromAssemblyPath(typeof(UdtAssemblyPolicy).Assembly.Location);
+            Assert.Same(context, AssemblyLoadContext.GetLoadContext(driver));
             Type policy = driver.GetType(typeof(UdtAssemblyPolicy).FullName!, throwOnError: true)!;
             MethodInfo method = policy.GetMethod(
                 nameof(UdtAssemblyPolicy.IsPermitted), BindingFlags.Static | BindingFlags.NonPublic)!;
