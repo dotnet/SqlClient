@@ -13,6 +13,7 @@ using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlClient.Utilities;
 
 #if NETFRAMEWORK
@@ -32,14 +33,14 @@ namespace Microsoft.Data.SqlClient
         public IAsyncResult BeginExecuteReader() =>
             BeginExecuteReader(callback: null, stateObject: null, CommandBehavior.Default);
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteReader[@name="AsyncCallbackAndstateObject"]/*'/>
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteReader[@name="AsyncCallbackAndStateObject"]/*'/>
         #if NETFRAMEWORK
         [HostProtection(ExternalThreading = true)]
         #endif
         public IAsyncResult BeginExecuteReader(AsyncCallback callback, object stateObject) =>
             BeginExecuteReader(callback, stateObject, CommandBehavior.Default);
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteReader[@name="AsyncCallbackAndstateObjectAndCommandBehavior"]/*'/>
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteReader[@name="AsyncCallbackAndStateObjectAndCommandBehavior"]/*'/>
         #if NETFRAMEWORK
         [HostProtection(ExternalThreading = true)]
         #endif
@@ -60,7 +61,7 @@ namespace Microsoft.Data.SqlClient
         public IAsyncResult BeginExecuteReader(CommandBehavior behavior) =>
             BeginExecuteReader(callback: null, stateObject: null, behavior);
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/EndExecuteReader[@name="IAsyncResult2"]/*'/>
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/EndExecuteReader[@name="IAsyncResult"]/*'/>
         public SqlDataReader EndExecuteReader(IAsyncResult asyncResult)
         {
             try

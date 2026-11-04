@@ -14,8 +14,10 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
+using System.Text;
 using System.Xml;
 using Microsoft.Data.Common;
+using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlTypes;
 using Microsoft.SqlServer.Server;
 
@@ -55,13 +57,8 @@ namespace Microsoft.Data.SqlClient
         internal readonly bool IsCharType;
         internal readonly bool IsNCharType;
         internal readonly bool IsSizeInCharacters;
-        internal readonly bool Is2008Type;
+        internal readonly bool IsStructuredType;
         internal readonly bool IsVarTime;
-
-        internal readonly bool Is70Supported;
-        internal readonly bool Is80Supported;
-        internal readonly bool Is90Supported;
-        internal readonly bool Is100Supported;
 
         // SqlVector Element Types
         //
@@ -69,7 +66,8 @@ namespace Microsoft.Data.SqlClient
         // in the TDS protocol.
         internal enum SqlVectorElementType : byte
         {
-            Float32 = 0x00
+            Float32 = 0x00,
+            Float16 = 0x01
         }
 
         public MetaType(byte precision, byte scale, int fixedLength, bool isFixed, bool isLong, bool isPlp, byte tdsType, byte nullableTdsType, string typeName,
@@ -104,13 +102,8 @@ namespace Microsoft.Data.SqlClient
             IsCharType = _IsCharType(sqldbType);
             IsNCharType = _IsNCharType(sqldbType);
             IsSizeInCharacters = _IsSizeInCharacters(sqldbType);
-            Is2008Type = _Is2008Type(sqldbType);
+            IsStructuredType = _IsStructuredType(sqldbType);
             IsVarTime = _IsVarTime(sqldbType);
-
-            Is70Supported = _Is70Supported(SqlDbType);
-            Is80Supported = _Is80Supported(SqlDbType);
-            Is90Supported = _Is90Supported(SqlDbType);
-            Is100Supported = _Is100Supported(SqlDbType);
         }
 
         // properties should be inlined so there should be no perf penalty for using these accessor functions
@@ -120,7 +113,7 @@ namespace Microsoft.Data.SqlClient
             type == SqlDbType.Char || type == SqlDbType.VarChar || type == SqlDbType.Text;
 
         // is this type size expressed as count of characters or bytes?
-        private static bool _IsSizeInCharacters(SqlDbType type) => 
+        private static bool _IsSizeInCharacters(SqlDbType type) =>
             type == SqlDbType.NChar ||
             type == SqlDbType.NVarChar ||
             type == SqlDbType.Xml ||
@@ -151,28 +144,7 @@ namespace Microsoft.Data.SqlClient
             type == SqlDbTypeExtensions.Vector ||
             (int)type == 24 /*SqlSmallVarBinary*/;
 
-        private static bool _Is70Supported(SqlDbType type) =>
-            type != SqlDbType.BigInt &&
-            (int)type > 0 &&
-            (int)type <= (int)SqlDbType.VarChar;
-
-        private static bool _Is80Supported(SqlDbType type) =>
-            (int)type >= 0 &&
-            (int)type <= (int)SqlDbType.Variant;
-
-        private static bool _Is90Supported(SqlDbType type) =>
-            _Is80Supported(type) ||
-            SqlDbType.Xml == type ||
-            SqlDbType.Udt == type;
-
-        private static bool _Is100Supported(SqlDbType type) =>
-            _Is90Supported(type) ||
-            SqlDbType.Date == type ||
-            SqlDbType.Time == type ||
-            SqlDbType.DateTime2 == type ||
-            SqlDbType.DateTimeOffset == type;
-
-        private static bool _Is2008Type(SqlDbType type) => SqlDbType.Structured == type;
+        private static bool _IsStructuredType(SqlDbType type) => SqlDbType.Structured == type;
 
         internal static bool _IsVarTime(SqlDbType type) =>
             type == SqlDbType.Time || type == SqlDbType.DateTime2 || type == SqlDbType.DateTimeOffset;
@@ -317,7 +289,7 @@ namespace Microsoft.Data.SqlClient
         //
         internal static MetaType GetMetaTypeFromType(Type dataType) => GetMetaTypeFromValue(dataType, null, false, true);
 
-        internal static MetaType GetMetaTypeFromValue(object value, bool streamAllowed = true) => 
+        internal static MetaType GetMetaTypeFromValue(object value, bool streamAllowed = true) =>
             GetMetaTypeFromValue(value.GetType(), value, true, streamAllowed);
 
         private static MetaType GetMetaTypeFromValue(Type dataType, object value, bool inferLen, bool streamAllowed)
@@ -416,6 +388,12 @@ namespace Microsoft.Data.SqlClient
                     {
                         return s_MetaVector;
                     }
+                    #if NET
+                    else if (dataType == typeof(SqlVector<Half>))
+                    {
+                        return s_MetaVector;
+                    }
+                    #endif
                     else if (dataType == typeof(SqlString))
                     {
                         return ((inferLen && !((SqlString)value).IsNull)
@@ -694,7 +672,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(attributes.Length > 0, failedAssertMessage);
         }
 
-        // devnote: This method should not be used with SqlDbType.Date and SqlDbType.DateTime2. 
+        // devnote: This method should not be used with SqlDbType.Date and SqlDbType.DateTime2.
         //          With these types the values should be used directly as CLR types instead of being converted to a SqlValue
         internal static object GetSqlValueFromComVariant(object comVal)
         {
@@ -1125,11 +1103,77 @@ namespace Microsoft.Data.SqlClient
             return 5;
         }
 
+        /// <summary>
+        /// Returns the native vector CLR type, or null when the framework cannot represent it.
+        /// </summary>
+#if NET
+        [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
+#endif
+        private static Type GetNativeVectorType(byte elementType) =>
+            (SqlVectorElementType)elementType switch
+            {
+                SqlVectorElementType.Float32 => typeof(SqlVector<float>),
+                #if NET
+                SqlVectorElementType.Float16 => typeof(SqlVector<Half>),
+                #else
+                SqlVectorElementType.Float16 => null,
+                #endif
+                _ => throw SQL.VectorTypeNotSupported(elementType.ToString()),
+            };
+
+        internal static bool TryGetVectorElementType(Type vectorType, out byte elementType)
+        {
+            if (vectorType != null)
+            {
+                if (vectorType == GetNativeVectorType((byte)SqlVectorElementType.Float32))
+                {
+                    elementType = (byte)SqlVectorElementType.Float32;
+                    return true;
+                }
+                if (vectorType == GetNativeVectorType((byte)SqlVectorElementType.Float16))
+                {
+                    elementType = (byte)SqlVectorElementType.Float16;
+                    return true;
+                }
+            }
+
+            elementType = (byte)SqlVectorElementType.Float32;
+            return false;
+        }
+
+#if NET
+        [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
+#endif
+        internal static Type GetVectorFieldType(byte elementType, bool providerSpecific) =>
+            GetNativeVectorType(elementType)
+                ?? (providerSpecific ? typeof(SqlString) : typeof(string));
+
+        internal static void AppendVectorTypeArguments(
+            StringBuilder builder, int dimensions, byte elementType)
+        {
+            switch ((SqlVectorElementType)elementType)
+            {
+                case SqlVectorElementType.Float32:
+                    builder.AppendFormat((IFormatProvider)null, "({0})", dimensions);
+                    break;
+                case SqlVectorElementType.Float16:
+                    builder.AppendFormat((IFormatProvider)null, "({0}, float16)", dimensions);
+                    break;
+                default:
+                    throw SQL.VectorTypeNotSupported(elementType.ToString());
+            }
+        }
+
         internal static int GetVectorElementSize(byte type)
         {
-            switch (type)
+            switch ((SqlVectorElementType)type)
             {
-                case 0: return sizeof(float);
+                case SqlVectorElementType.Float32:
+                    return sizeof(float);
+                case SqlVectorElementType.Float16:
+                    // System.Half is not available on all target frameworks, so the
+                    // binary16 element size is stated explicitly.
+                    return 2;
                 default:
                     throw SQL.VectorTypeNotSupported(type.ToString());
             }
@@ -1193,4 +1237,3 @@ namespace Microsoft.Data.SqlClient
         public int time;
     }
 }
-

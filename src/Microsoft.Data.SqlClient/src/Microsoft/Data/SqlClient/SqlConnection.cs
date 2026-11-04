@@ -24,20 +24,19 @@ using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.Data.SqlClient.Internal;
+using Microsoft.Data.SqlClient.Parser;
+using Microsoft.Data.SqlClient.Parser.Tokens;
 using Microsoft.Data.SqlClient.Utilities;
 using Microsoft.SqlServer.Server;
 
 #if NETFRAMEWORK
-using System.Runtime.CompilerServices;
 using System.Security.Permissions;
 using System.Security.Principal;
 #endif
 
-#if NETFRAMEWORK
-[assembly: InternalsVisibleTo("System.Data.DataSetExtensions, PublicKey=" + Microsoft.Data.SqlClient.AssemblyRef.EcmaPublicKeyFull)] // DevDiv Bugs 92166
 // NOTE: The current Microsoft.VSDesigner editor attributes are implemented for System.Data.SqlClient, and are not publicly available.
 // New attributes that are designed to work with Microsoft.Data.SqlClient and are publicly documented should be included in future.
-#endif
+
 namespace Microsoft.Data.SqlClient
 {
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/SqlConnection/*' />
@@ -153,7 +152,9 @@ namespace Microsoft.Data.SqlClient
             {
                 if (_retryLogicProvider == null)
                 {
-                    _retryLogicProvider = SqlConfigurableRetryLogicManager.ConnectionProvider;
+                    _retryLogicProvider = LocalAppContextSwitches.EnableAppConfig
+                        ? SqlConfigurableRetryLogicManager.ConnectionProvider
+                        : SqlConfigurableRetryFactory.NoneRetryProvider;
                 }
                 return _retryLogicProvider;
             }
@@ -262,6 +263,7 @@ namespace Microsoft.Data.SqlClient
 
             _accessToken = connection._accessToken;
             _accessTokenCallback = connection._accessTokenCallback;
+            RegisteredApplication = connection.RegisteredApplication;
 
             // CopyFrom retains the source PoolGroup, and therefore the source ConnectionPoolKey.
             // The provider must be copied along with it, otherwise the clone would authenticate
@@ -378,6 +380,34 @@ namespace Microsoft.Data.SqlClient
 
                 // Set the dictionary to the ReadOnly dictionary.
                 s_globalCustomColumnEncryptionKeyStoreProviders = customColumnEncryptionKeyStoreProviders;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RegisteredApplication/*' />
+        [CLSCompliant(false)]
+        public RegisteredApplication RegisteredApplication
+        {
+            get;
+            set
+            {
+                DbConnectionInternal connectionInternal = InnerConnection;
+                bool canSet = connectionInternal.AllowSetConnectionString;
+                if (canSet)
+                {
+                    // Reserve the closed state so Open cannot read the old value while this setter
+                    // publishes the new one.
+                    canSet = SetInnerConnectionFrom(DbConnectionClosedBusy.SingletonInstance, connectionInternal);
+                    if (canSet)
+                    {
+                        field = value;
+                        SetInnerConnectionTo(connectionInternal);
+                    }
+                }
+
+                if (!canSet)
+                {
+                    throw ADP.OpenConnectionPropertySet(nameof(RegisteredApplication), connectionInternal.State);
+                }
             }
         }
 
@@ -1199,7 +1229,7 @@ namespace Microsoft.Data.SqlClient
 
             if (_sspiContextProvider != null)
             {
-                throw ADP.InvalidMixedUsageOfAccessTokenAndSspiContextProvider();
+                throw ADP.InvalidMixedUsageOfAccessTokenProperties();
             }
         }
 
@@ -1226,7 +1256,7 @@ namespace Microsoft.Data.SqlClient
 
             if (_sspiContextProvider != null)
             {
-                throw ADP.InvalidMixedUsageOfAccessTokenAndSspiContextProvider();
+                throw ADP.InvalidMixedUsageOfAccessTokenProperties();
             }
         }
 
@@ -1238,7 +1268,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (_accessToken != null || _accessTokenCallback != null)
             {
-                throw ADP.InvalidMixedUsageOfSspiContextProviderAndAccessToken();
+                throw ADP.InvalidMixedUsageOfAccessTokenProperties();
             }
         }
 
@@ -2467,18 +2497,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal bool Is2008OrNewer
-        {
-            get
-            {
-                if (_currentReconnectionTask != null)
-                { // holds true even if task is completed
-                    return true; // if CR is enabled, connection, if established, will be 2008+
-                }
-                return GetOpenTdsConnection().Is2008OrNewer;
-            }
-        }
-
         internal TdsParser Parser
         {
             get
@@ -3080,14 +3098,14 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal void CheckGetExtendedUDTInfo(SqlMetaDataPriv metaData, bool fThrow)
+        internal void CheckGetExtendedUDTInfo(TdsTypeInfo metaData, bool fThrow)
         {
-            if (metaData.udt?.Type == null)
+            if (metaData.UdtTypeInfo?.Type == null)
             { // If null, we have not obtained extended info.
-                Debug.Assert(!string.IsNullOrEmpty(metaData.udt?.AssemblyQualifiedName), "Unexpected state on GetUDTInfo");
+                Debug.Assert(!string.IsNullOrEmpty(metaData.UdtTypeInfo?.AssemblyQualifiedName), "Unexpected state on GetUDTInfo");
                 // Parameter throwOnError determines whether exception from Assembly.Load is thrown.
-                metaData.udt.Type =
-                    Type.GetType(typeName: metaData.udt.AssemblyQualifiedName, assemblyResolver: asmRef => ResolveTypeAssembly(asmRef, fThrow), typeResolver: null, throwOnError: fThrow);
+                metaData.UdtTypeInfo.Type =
+                    Type.GetType(typeName: metaData.UdtTypeInfo.AssemblyQualifiedName, assemblyResolver: asmRef => ResolveTypeAssembly(asmRef, fThrow), typeResolver: null, throwOnError: fThrow);
 
                 // Nothing has executed any of the resolved type's code yet:
                 // reading its custom attributes does not run its static
@@ -3100,13 +3118,13 @@ namespace Microsoft.Data.SqlClient
                 // that carries no assembly part is resolved without ever
                 // consulting the assembly resolver, so this is the only gate a
                 // name such as "System.String" passes through.
-                if (metaData.udt.Type != null && !UdtAssemblyPolicy.LegacyBehaviorEnabled)
+                if (metaData.UdtTypeInfo.Type != null && !UdtAssemblyPolicy.LegacyBehaviorEnabled)
                 {
                     bool isUserDefinedType;
 
                     try
                     {
-                        isUserDefinedType = SqlUdtInfo.TryGetFromType(metaData.udt.Type) != null;
+                        isUserDefinedType = SqlUdtInfo.TryGetFromType(metaData.UdtTypeInfo.Type) != null;
                     }
                     catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                     {
@@ -3115,32 +3133,32 @@ namespace Microsoft.Data.SqlClient
                         // be loaded. Treat that as "not a user-defined type"
                         // rather than letting it escape, so that callers that
                         // pass fThrow: false keep tolerating an unusable type.
-                        SqlClientEventSource.Log.TryTraceEvent("SqlConnection.CheckGetExtendedUDTInfo | ERR | Unable to read the attributes of type '{0}'.", metaData.udt.AssemblyQualifiedName);
+                        SqlClientEventSource.Log.TryTraceEvent("SqlConnection.CheckGetExtendedUDTInfo | ERR | Unable to read the attributes of type '{0}'.", metaData.UdtTypeInfo.AssemblyQualifiedName);
 
                         isUserDefinedType = false;
                     }
 
                     if (!isUserDefinedType)
                     {
-                        SqlClientEventSource.Log.TryTraceEvent("SqlConnection.CheckGetExtendedUDTInfo | ERR | Type '{0}' is not annotated with SqlUserDefinedTypeAttribute and will not be used.", metaData.udt.AssemblyQualifiedName);
+                        SqlClientEventSource.Log.TryTraceEvent("SqlConnection.CheckGetExtendedUDTInfo | ERR | Type '{0}' is not annotated with SqlUserDefinedTypeAttribute and will not be used.", metaData.UdtTypeInfo.AssemblyQualifiedName);
 
-                        metaData.udt.Type = null;
+                        metaData.UdtTypeInfo.Type = null;
 
                         if (fThrow)
                         {
-                            throw SQL.UdtTypeNotUserDefined(metaData.udt.AssemblyQualifiedName);
+                            throw SQL.UdtTypeNotUserDefined(metaData.UdtTypeInfo.AssemblyQualifiedName);
                         }
                     }
                 }
 
-                if (fThrow && metaData.udt.Type == null)
+                if (fThrow && metaData.UdtTypeInfo.Type == null)
                 {
-                    throw SQL.UDTUnexpectedResult(metaData.udt.AssemblyQualifiedName);
+                    throw SQL.UDTUnexpectedResult(metaData.UdtTypeInfo.AssemblyQualifiedName);
                 }
             }
         }
 
-        internal object GetUdtValue(object value, SqlMetaDataPriv metaData, bool returnDBNull)
+        internal object GetUdtValue(object value, TdsTypeInfo metaData, bool returnDBNull)
         {
             if (returnDBNull && ADP.IsNull(value))
             {
@@ -3152,7 +3170,7 @@ namespace Microsoft.Data.SqlClient
             // Since the serializer doesn't handle nulls...
             if (ADP.IsNull(value))
             {
-                Type t = metaData.udt?.Type;
+                Type t = metaData.UdtTypeInfo?.Type;
                 Debug.Assert(t != null, "Unexpected null of udtType on GetUdtValue!");
                 o = t.InvokeMember("Null", BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.Static, null, null, Array.Empty<object>(), CultureInfo.InvariantCulture);
                 Debug.Assert(o != null);
@@ -3163,7 +3181,7 @@ namespace Microsoft.Data.SqlClient
 
                 MemoryStream stm = new MemoryStream((byte[])value);
 
-                o = Server.SerializationHelperSql9.Deserialize(stm, metaData.udt?.Type);
+                o = Server.SerializationHelperSql9.Deserialize(stm, metaData.UdtTypeInfo?.Type);
 
                 Debug.Assert(o != null, "object could NOT be created");
                 return o;

@@ -31,6 +31,19 @@ parameters:
     - name: azureSubscription
       type: string
 
+    # True to enable diagnostic output.  Gates the reachability probe step below, and is
+    # passed to publish-symbols.ps1 as -VerboseDiagnostics, which that script documents.
+    - name: debug
+      type: boolean
+      default: false
+
+    # Hosts probed for reachability when debug is enabled.  Both symbol servers are probed
+    # from the same agent under the same identity, so a difference between them narrows the
+    # cause to something specific to the host that failed.
+    - name: reachabilityProbeHosts
+      type: string
+      default: 'symbolrequestppe.trafficmanager.net,symbolrequestprod.trafficmanager.net'
+
     # Package name, typically the name of the nuget package being built
     - name: packageName
       type: string
@@ -135,6 +148,24 @@ steps:
           SymbolsProduct: '${{ parameters.packageName }}'
           SymbolsVersion: '${{ parameters.version }}'
 
+    # Probe reachability before attempting the publish request, so that a failure can be
+    # diagnosed from evidence rather than guessed at.  This runs inside the same container
+    # as the publish request, which is the environment that matters.
+    #
+    # Gated on debug: the probe is diagnostic rather than operational, and it adds network
+    # round trips to every symbols job, so it is opt-in.
+    - ${{ if eq(parameters.debug, true) }}:
+      - task: PowerShell@2
+        displayName: 'Probe symbol server reachability'
+        # An unreachable endpoint is a finding to report, not a reason to skip the publish
+        # attempt -- the two results are read together.
+        continueOnError: true
+        inputs:
+          targetType: filePath
+          filePath: '$(Build.SourcesDirectory)/eng/pipelines/onebranch/scripts/test-endpoint-reachability.ps1'
+          arguments: '-HostName "${{ parameters.reachabilityProbeHosts }}"'
+          pwsh: true
+
     # Step 2 - Publish: Request the Symbols Publishing Pipeline to publish the uploaded
     # symbols to SymWeb and/or MSDL. The -ArtifactName argument must match the
     # SymbolsArtifactName from Step 1.
@@ -152,3 +183,4 @@ steps:
           -ArtifactName "${{ parameters.artifactName }}"
           -PublishToInternal $${{ parameters.publishToInternal }}
           -PublishToPublic $${{ parameters.publishToPublic }}
+          -VerboseDiagnostics:$${{ parameters.debug }}

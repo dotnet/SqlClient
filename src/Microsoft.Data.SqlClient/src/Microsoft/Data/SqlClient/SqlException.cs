@@ -49,9 +49,7 @@ namespace Microsoft.Data.SqlClient
 #endif
         private SqlException(SerializationInfo si, StreamingContext sc) : base(si, sc)
         {
-#if NETFRAMEWORK
             _errors = (SqlErrorCollection)si.GetValue("Errors", typeof(SqlErrorCollection));
-#endif
             HResult = SqlExceptionHResult;
             foreach (SerializationEntry siEntry in si)
             {
@@ -70,7 +68,7 @@ namespace Microsoft.Data.SqlClient
         public override void GetObjectData(SerializationInfo si, StreamingContext context)
         {
             base.GetObjectData(si, context);
-            si.AddValue("Errors", null); // Not specifying type to enable serialization of null value of non-serializable type
+            si.AddValue("Errors", _errors, typeof(SqlErrorCollection));
             si.AddValue("ClientConnectionId", _clientConnectionId, typeof(object));
 
             // Writing sqlerrors to base exception data table
@@ -87,9 +85,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Errors/*' />
         // runtime will call even if private...
-#if NETFRAMEWORK
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
-#endif
         public SqlErrorCollection Errors => _errors ?? new SqlErrorCollection();
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/ClientConnectionId/*' />

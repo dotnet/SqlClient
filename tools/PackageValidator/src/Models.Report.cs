@@ -221,6 +221,9 @@ internal sealed class BinaryReport
     /// <summary>Gets the matching PDB's path within the symbol package, if any.</summary>
     public string? SymbolPackageFile { get; set; }
 
+    /// <summary>Gets source coverage for embedded and matched portable PDBs, or null when none were inspected.</summary>
+    public List<PdbSourceCoverage>? SourceCoverage { get; set; }
+
     /// <summary>
     /// Creates a report for a native or non-assembly DLL, recording its path, native version info,
     /// and marking it as unmanaged.
@@ -235,4 +238,23 @@ internal sealed class BinaryReport
         IsManagedAssembly = false,
         NativeVersion = nativeVersion,
     };
+}
+
+/// <summary>Offline source coverage and deterministic path checks for one portable PDB.</summary>
+internal sealed class PdbSourceCoverage
+{
+    /// <summary>Gets the symbol-package entry path, or <c>"embedded"</c> for an embedded portable PDB.</summary>
+    public required string Pdb { get; init; }
+
+    /// <summary>Gets the number of complete document records inspected, including embedded sources.</summary>
+    public required int DocumentCount { get; init; }
+
+    /// <summary>Gets documents neither embedded nor covered by a Source Link mapping.</summary>
+    public required List<string> MissingSourceLinkDocuments { get; init; }
+
+    /// <summary>Gets unembedded documents without a mapping or containing an obj, temp, or tmp segment even if mapped.</summary>
+    public required List<string> UntrackedDocuments { get; init; }
+
+    /// <summary>Gets document paths that do not begin with the deterministic <c>/_</c> prefix.</summary>
+    public required List<string> NonNormalizedDocuments { get; init; }
 }

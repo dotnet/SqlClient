@@ -27,32 +27,9 @@ namespace Microsoft.Data.SqlClient
         private const string ActiveDirectoryDefault = "active directory default";
         private const string ActiveDirectoryWorkloadIdentity = "active directory workload identity";
 
-        // The name of our Azure extension assembly.
-        private const string azureAssemblyName = "Microsoft.Data.SqlClient.Extensions.Azure";
-
-        // The public key token of our Azure extension assembly, used to avoid loading imposter
-        // assemblies.
-        private static readonly byte[] s_azurePublicKeyToken = [ 0x23, 0xec, 0x7f, 0xc2, 0xd6, 0xea, 0xa4, 0xa5 ];
-
         static SqlAuthenticationProviderManager()
         {
-            SqlAuthenticationProviderConfigurationSection? configurationSection = null;
-
-            try
-            {
-                // New configuration section "SqlClientAuthenticationProviders" for Microsoft.Data.SqlClient accepted to avoid conflicts with older one.
-                configurationSection = FetchConfigurationSection<SqlClientAuthenticationProviderConfigurationSection>(SqlClientAuthenticationProviderConfigurationSection.Name);
-                if (configurationSection == null)
-                {
-                    // If configuration section is not yet found, try with old Configuration Section name for backwards compatibility
-                    configurationSection = FetchConfigurationSection<SqlAuthenticationProviderConfigurationSection>(SqlAuthenticationProviderConfigurationSection.Name);
-                }
-            }
-            catch (ConfigurationErrorsException e)
-            {
-                // Don't throw an error for invalid config files
-                SqlClientEventSource.Log.TryTraceEvent("static SqlAuthenticationProviderManager: Unable to load custom SqlAuthenticationProviders or SqlClientAuthenticationProviders. ConfigurationManager failed to load due to configuration errors: {0}", e);
-            }
+            TryReadConfigurationSection(out AuthenticationConfiguration? configurationSection);
 
             Instance = new SqlAuthenticationProviderManager(configurationSection);
 
@@ -61,70 +38,15 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 // Try to load our Azure extension.
-                #if STRONG_NAME_SIGNING
-
-                // When strong-name signing is enabled, build a fully-qualified AssemblyName
-                // that includes the expected public key token.
-
-                SqlClientEventSource.Log.TryTraceEvent(
-                    nameof(SqlAuthenticationProviderManager) +
-                    ": Attempting to load Azure extension assembly={0} with " +
-                    "expected public key token={1}",
-                    azureAssemblyName,
-                    BitConverter.ToString(s_azurePublicKeyToken).Replace("-", ""));
-
-                var qualifiedName = new AssemblyName(azureAssemblyName);
-                qualifiedName.SetPublicKeyToken(s_azurePublicKeyToken);
-
-                // The .NET Framework runtime will enforce the token during binding, causing Load()
-                // to throw.  This prevents an untrusted assembly from being loaded and having its
-                // module initializers run.  This will throw if the public key token doesn't match.
-                //
-                // The .NET runtime ignores the public key token and will happily load any assembly
-                // with the same simple name.
-                //
-                var assembly = Assembly.Load(qualifiedName);
-
-                #if NET
-                // For the .NET runtime, we will check the public key token ourselves.
-                //
-                // Note that a null assembly is handled below.
-                if (assembly is not null)
-                {
-                    byte[]? actualToken = assembly.GetName().GetPublicKeyToken();
-
-                    if (actualToken is null || !actualToken.AsSpan().SequenceEqual(s_azurePublicKeyToken))
-                    {
-                        SqlClientEventSource.Log.TryTraceEvent(
-                            nameof(SqlAuthenticationProviderManager) +
-                            ": Azure extension assembly={0} has an " +
-                            "unexpected public key token; " +
-                            "no default Active Directory provider installed",
-                            assembly.GetName());
-                        return;
-                    }
-                }
-                #endif
-
-                #else
-
-                SqlClientEventSource.Log.TryTraceEvent(
-                    nameof(SqlAuthenticationProviderManager) +
-                    ": Attempting to load Azure extension assembly={0} without " +
-                    "strong name verification; ensure this assembly is from a trusted source",
-                    azureAssemblyName);
-
-                var assembly = Assembly.Load(azureAssemblyName);
-
-                #endif
+                var assembly = AzureExtensionLoader.Load(nameof(SqlAuthenticationProviderManager));
 
                 if (assembly is null)
                 {
                     SqlClientEventSource.Log.TryTraceEvent(
                         nameof(SqlAuthenticationProviderManager) +
-                        ": Azure extension assembly={0} not found; " +
+                        ": Azure extension assembly={0} not usable; " +
                         "no default Active Directory provider installed",
-                        azureAssemblyName);
+                        AzureExtensionLoader.AssemblyName);
                     return;
                 }
 
@@ -232,7 +154,7 @@ namespace Microsoft.Data.SqlClient
                     ": Azure extension assembly={0} not found or " +
                     "not usable; no default provider installed; " +
                     "{1}: {2}",
-                    azureAssemblyName,
+                    AzureExtensionLoader.AssemblyName,
                     ex.GetType().Name,
                     ex.Message);
             }
@@ -256,7 +178,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Constructor.
         /// </summary>
-        private SqlAuthenticationProviderManager(SqlAuthenticationProviderConfigurationSection? configSection)
+        private SqlAuthenticationProviderManager(AuthenticationConfiguration? configSection)
         {
             var methodName = "Ctor";
 
@@ -486,18 +408,74 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
+        /// Reads the authentication provider configuration section from app.config,
+        /// unless app.config reading is disabled.
+        /// </summary>
+        /// <param name="configurationSection">
+        /// The section that was found, or null if there is none or app.config was not read.
+        /// </param>
+        /// <returns>
+        /// True when app.config was read, false when the EnableAppConfig switch is
+        /// disabled and it was not.
+        /// </returns>
+        /// <remarks>
+        /// Separated from the static constructor so that it can be tested: the
+        /// constructor runs once per process, before any test can observe it.
+        /// </remarks>
+        internal static bool TryReadConfigurationSection(out AuthenticationConfiguration? configurationSection)
+        {
+            configurationSection = null;
+
+            if (!LocalAppContextSwitches.EnableAppConfig)
+            {
+                return false;
+            }
+
+            try
+            {
+                configurationSection = ReadConfigurationSection(ConfigurationManager.GetSection);
+            }
+            catch (ConfigurationErrorsException e)
+            {
+                // Don't throw an error for invalid config files
+                SqlClientEventSource.Log.TryTraceEvent("static SqlAuthenticationProviderManager: Unable to load custom SqlAuthenticationProviders or SqlClientAuthenticationProviders. ConfigurationManager failed to load due to configuration errors: {0}", e);
+            }
+
+            return true;
+        }
+
+        internal static AuthenticationConfiguration? ReadConfigurationSection(Func<string, object?> getSection)
+        {
+            var current = FetchConfigurationSection<SqlClientAuthenticationProviderConfigurationSection>(
+                SqlClientAuthenticationProviderConfigurationSection.Name, getSection);
+            if (current is not null)
+            {
+                return new AuthenticationConfiguration(
+                    current.ApplicationClientId, current.InitializerType, current.UseWamBroker, current.Providers);
+            }
+
+            var legacy = FetchConfigurationSection<SqlAuthenticationProviderConfigurationSection>(
+                SqlAuthenticationProviderConfigurationSection.Name, getSection);
+            return legacy is null
+                ? null
+                : new AuthenticationConfiguration(
+                    legacy.ApplicationClientId, legacy.InitializerType, legacy.UseWamBroker, legacy.Providers);
+        }
+
+        /// <summary>
         /// Fetches provided configuration section from app.config file.
         /// Does not support reading from appsettings.json yet.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="name"></param>
+        /// <param name="getSection">Reads a section from the application or an isolated configuration file.</param>
         /// <returns></returns>
-        private static T? FetchConfigurationSection<T>(string name) where T : class
+        private static T? FetchConfigurationSection<T>(string name, Func<string, object?> getSection) where T : class
         {
             Type t = typeof(T);
 
             // TODO: Support reading configuration from appsettings.json for .NET runtime applications.
-            object section = ConfigurationManager.GetSection(name);
+            object? section = getSection(name);
             if (section != null)
             {
                 if (section is ConfigurationSection configSection && configSection.GetType() == t)
@@ -549,49 +527,28 @@ namespace Microsoft.Data.SqlClient
             }
             return provider.GetType().FullName ?? "unknown";
         }
-    }
 
-    /// <summary>
-    /// The configuration section definition for reading app.config.
-    /// </summary>
-    internal class SqlAuthenticationProviderConfigurationSection : ConfigurationSection
-    {
-        public const string Name = "SqlAuthenticationProviders";
+        // Temporary bridge for the current driver reader. Remove with this manager in #4821,
+        // when the Abstractions registry takes over using SqlAuthenticationConfiguration.
+        internal sealed class AuthenticationConfiguration
+        {
+            internal AuthenticationConfiguration(
+                string applicationClientId,
+                string initializerType,
+                string useWamBroker,
+                ProviderSettingsCollection providers)
+            {
+                ApplicationClientId = applicationClientId;
+                InitializerType = initializerType;
+                UseWamBroker = useWamBroker;
+                Providers = providers;
+            }
 
-        /// <summary>
-        /// User-defined auth providers.
-        /// </summary>
-        [ConfigurationProperty("providers")]
-        public ProviderSettingsCollection Providers => (ProviderSettingsCollection)this["providers"];
-
-        /// <summary>
-        /// User-defined initializer.
-        /// </summary>
-        [ConfigurationProperty("initializerType")]
-        public string InitializerType => this["initializerType"] as string ?? string.Empty;
-
-        /// <summary>
-        /// Application Client Id
-        /// </summary>
-        [ConfigurationProperty("applicationClientId", IsRequired = false)]
-        public string ApplicationClientId => this["applicationClientId"] as string ?? string.Empty;
-
-        /// <summary>
-        /// Forwarded to <c>ActiveDirectoryAuthenticationProviderOptions.UseWamBroker</c>
-        /// when the Azure extension's default provider is auto-installed. Stored as a string so
-        /// that an unset attribute can be distinguished from <c>useWamBroker="false"</c>; the
-        /// runtime parses it with <see cref="bool.TryParse(string, out bool)"/>.
-        /// </summary>
-        [ConfigurationProperty("useWamBroker", IsRequired = false)]
-        public string UseWamBroker => this["useWamBroker"] as string ?? string.Empty;
-    }
-
-    /// <summary>
-    /// The configuration section definition for reading app.config.
-    /// </summary>
-    internal class SqlClientAuthenticationProviderConfigurationSection : SqlAuthenticationProviderConfigurationSection
-    {
-        public new const string Name = "SqlClientAuthenticationProviders";
+            internal string ApplicationClientId { get; }
+            internal string InitializerType { get; }
+            internal string UseWamBroker { get; }
+            internal ProviderSettingsCollection Providers { get; }
+        }
     }
 
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationInitializer.xml' path='docs/members[@name="SqlAuthenticationInitializer"]/SqlAuthenticationInitializer/*'/>

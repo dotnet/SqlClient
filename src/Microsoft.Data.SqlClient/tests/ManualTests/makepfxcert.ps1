@@ -7,7 +7,7 @@
 # Comments: This scripts creates SSL Self-Signed Certificate for TestTdsServer in pfx format.
 # This script is not intended to be used in any production environments.
 
-param ($OutDir)
+param ($OutDir, [switch] $SkipTrust)
 
 function Invoke-SqlServerCertificateCommand {
   [CmdletBinding()]
@@ -65,6 +65,7 @@ function Invoke-SqlServerCertificateCommand {
         chmod 777 $OutDir/localhostcert.key $OutDir/localhostcert.cer
         # Copy the certificate to the clientcert folder
         cp $OutDir/localhostcert.cer $OutDir/clientcert/
+        cp $OutDir/mismatchedcert.cer $OutDir/clientcert/
         # Export the certificate to pfx
         Write-Output "Exporting certificate to pfx..."
         openssl pkcs12 -export -in $OutDir/localhostcert.cer -inkey $OutDir/localhostcert.key -out $OutDir/localhostcert.pfx -password pass:nopassword
@@ -75,31 +76,24 @@ function Invoke-SqlServerCertificateCommand {
         cp $OutDir/localhostcert.cer $OutDir/localhostcert.pem
         chmod 777 $OutDir/localhostcert.pem
 
-        # Add trust to the pem certificate
-        Write-Output "Adding trust to pem certificate..."
-        openssl x509 -trustout -addtrust "serverAuth" -in $OutDir/localhostcert.pem
+        if (-not $SkipTrust) {
+            # Add trust to the pem certificate
+            Write-Output "Adding trust to pem certificate..."
+            openssl x509 -trustout -addtrust "serverAuth" -in $OutDir/localhostcert.pem
 
-        # Import the certificate to the Root store ------------------------------------------------------------------------------
-        # NOTE:  The process must have root privileges to add the certificate to the Root store. If not, then use
-        #        "chmod 777 /usr/local/share/ca-certificates" to give read, write and execute privileges to anyone on that folder
-        # Copy the certificate to /usr/local/share/ca-certificates folder while changing the extension to "crt".
-        # Only certificates with extension "crt" gets added for some reason.
-        Write-Output "Copy the pem certificate to /usr/local/share/ca-certificates folder..."
-        cp $OutDir/localhostcert.pem /usr/local/share/ca-certificates/localhostcert.crt
+            # Only certificates with extension "crt" are added to the Root store.
+            Write-Output "Copy the pem certificate to /usr/local/share/ca-certificates folder..."
+            cp $OutDir/localhostcert.pem /usr/local/share/ca-certificates/localhostcert.crt
 
-        # Add trust to the mismatched certificate as well
-        $ openssl x509 -in $OutDir/mismatchedcert.cer -inform der -out $OutDir/mismatchedcert.pem
-        # Copy the mismatched certificate to the clientcert folder
-        cp $OutDir/mismatchedcert.cer $OutDir/clientcert/
-        openssl x509 -trustout -addtrust "serverAuth" -in $OutDir/mismatchedcert.pem
-        cp $OutDir/mismatchedcert.pem /usr/local/share/ca-certificates/mismatchedcert.crt
+            # Add trust to the mismatched certificate as well
+            openssl x509 -in $OutDir/mismatchedcert.cer -inform der -out $OutDir/mismatchedcert.pem
+            openssl x509 -trustout -addtrust "serverAuth" -in $OutDir/mismatchedcert.pem
+            cp $OutDir/mismatchedcert.pem /usr/local/share/ca-certificates/mismatchedcert.crt
 
-        # enable certificate as CA certificate
-        dpkg-reconfigure ca-certificates -f noninteractive -p critical
-
-        # Update the certificates store
-        Write-Output "Updating the certificates store..."
-        update-ca-certificates -v
+            dpkg-reconfigure ca-certificates -f noninteractive -p critical
+            Write-Output "Updating the certificates store..."
+            update-ca-certificates -v
+        }
     } else {
         Write-Output "Creating a self-signed certificate..."
         $params = @{
@@ -128,13 +122,14 @@ function Invoke-SqlServerCertificateCommand {
         copy $OutDir/$certificateName $OutDir/clientcert/
         copy $OutDir/mismatchedcert.cer $OutDir/clientcert/
 
-        # Import the certificate to the Root store
-        Write-Output "Importing the certificate to the Root store..."
-        $params = @{
-          FilePath          = "$OutDir/$certificateName"
-          CertStoreLocation = $rootCertStoreLocation
+        if (-not $SkipTrust) {
+            Write-Output "Importing the certificate to the Root store..."
+            $params = @{
+              FilePath          = "$OutDir/$certificateName"
+              CertStoreLocation = $rootCertStoreLocation
+            }
+            Import-Certificate @params
         }
-        Import-Certificate @params
 
         Write-Output "Converting certificate to pfx..."
         Write-Output "Cert:\LocalMachine\my\$($certificate.Thumbprint)"

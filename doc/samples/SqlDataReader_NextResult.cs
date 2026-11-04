@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Microsoft.Data.SqlClient;
 using System.Data;
+using System.Threading.Tasks;
+using Microsoft.Data.SqlClient;
 
 namespace SqlDataReader_NextResult
 {
@@ -21,36 +20,53 @@ namespace SqlDataReader_NextResult
         {
             using (connection)
             {
-                SqlCommand command = new SqlCommand(
+                using SqlCommand command = new SqlCommand(
                   "SELECT CategoryID, CategoryName FROM dbo.Categories;" +
                   "SELECT EmployeeID, LastName FROM dbo.Employees",
                   connection);
                 connection.Open();
 
-                SqlDataReader reader = command.ExecuteReader();
-
-                // Check if the DataReader has any row.
-                while (reader.HasRows)
-                {
-                    Console.WriteLine("\t{0}\t{1}", reader.GetName(0),
-                        reader.GetName(1));
-
-                    // Obtain a row from the query result.
-                    while (reader.Read())
-                    {
-                        Console.WriteLine("\t{0}\t{1}", reader.GetInt32(0),
-                            reader.GetString(1));
-                    }
-
-                    // Hop to the next result-set.
-                    reader.NextResult();
-                }
-                // Always call the Close method when you have finished using the DataReader object.
-                reader.Close();
+                ReadAllResults(command);
             }
         }
 
+        static void ReadAllResults(SqlCommand command)
+        {
+            using SqlDataReader reader = command.ExecuteReader(CommandBehavior.Default);
+            do
+            {
+                while (reader.Read())
+                {
+                    for (int column = 0; column < reader.FieldCount; column++)
+                    {
+                        Console.WriteLine(reader.GetValue(column));
+                    }
+                }
+            }
+            // Advance even if the current result is empty or no further rows are expected.
+            // A trailing server error can throw here instead of during Read.
+            while (reader.NextResult());
+        }
         // </Snippet1>
+
+        // <Snippet2>
+        static async Task ReadAllResultsAsync(SqlCommand command)
+        {
+            using SqlDataReader reader =
+                await command.ExecuteReaderAsync(CommandBehavior.Default);
+            do
+            {
+                while (await reader.ReadAsync())
+                {
+                    for (int column = 0; column < reader.FieldCount; column++)
+                    {
+                        Console.WriteLine(reader.GetValue(column));
+                    }
+                }
+            }
+            while (await reader.NextResultAsync());
+        }
+        // </Snippet2>
         static private string GetConnectionString()
         {
             // To avoid storing the connection string in your code,

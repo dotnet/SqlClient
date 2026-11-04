@@ -11,6 +11,11 @@ parameters:
   - name: abstractionsArtifactsName
     type: string
 
+  # The name of the Azure pipeline artifacts to download.
+  - name: azureArtifactsName
+    type: string
+    default: Azure.Artifacts
+
   # Additional stages we depend on, if any.
   - name: additionalDependsOn
     type: object
@@ -56,7 +61,6 @@ parameters:
   # The C# project reference type to use when building and packing the packages.
   - name: referenceType
     type: string
-    default: Project
     values:
       # Reference sibling packages as NuGet packages.
       - Package
@@ -106,11 +110,11 @@ stages:
                   referenceType: ${{ parameters.referenceType }}
                   timeout: ${{ parameters.testJobTimeout }}
                   poolName: ${{ config.value.pool }}
-                  hostedPool: ${{ eq(config.value.hostedPool, true) }}
-                  image: ${{ image.value }}
+                  poolImage: ${{ image.value }}
                   jobDisplayName: ${{ format('{0}_{1}_{2}', replace(targetFramework, '.', '_'), platform, testSet) }}
                   configProperties: ${{ config.value.configProperties }}
                   abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
+                  azureArtifactsName: ${{ parameters.azureArtifactsName }}
                   packageVersion: $(packageVersion)
                   loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
                   mdsArtifactsName: ${{ parameters.mdsArtifactsName }}
@@ -137,8 +141,7 @@ stages:
                     referenceType: ${{ parameters.referenceType }}
                     timeout: ${{ parameters.testJobTimeout }}
                     poolName: ${{ config.value.pool }}
-                    hostedPool: ${{ eq(config.value.hostedPool, true) }}
-                    image: ${{ image.value }}
+                    poolImage: ${{ image.value }}
                     ${{if eq(usemanagedSNI, 'true') }}:
                       jobDisplayName: ${{ format('{0}_{1}_{2}_{3}', replace(targetFramework, '.', '_'), platform, 'ManagedSNI', testSet) }}
                     ${{ else }}:
@@ -146,6 +149,7 @@ stages:
                     configProperties: ${{ config.value.configProperties }}
                     useManagedSNI: ${{ useManagedSNI }}
                     abstractionsArtifactsName: ${{ parameters.abstractionsArtifactsName }}
+                    azureArtifactsName: ${{ parameters.azureArtifactsName }}
                     packageVersion: $(packageVersion)
                     loggingArtifactsName: ${{ parameters.loggingArtifactsName }}
                     mdsArtifactsName: ${{ parameters.mdsArtifactsName }}

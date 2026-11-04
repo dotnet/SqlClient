@@ -6,6 +6,7 @@ using Xunit.Abstractions;
 
 namespace Microsoft.Data.SqlClient.Extensions.Azure.Test;
 
+[Collection(SqlAuthenticationProviderCollection.Name)]
 public class ActiveDirectoryInteractiveTests
 {
     private readonly ITestOutputHelper _output;
@@ -16,7 +17,7 @@ public class ActiveDirectoryInteractiveTests
     }
 
     [Fact]
-    [Trait("Category", "Interactive")]
+    [Trait("category", "interactive")]
     public async Task TestConnection()
     {
         string connectionString = new SqlConnectionStringBuilder()

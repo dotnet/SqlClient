@@ -16,6 +16,11 @@ namespace Microsoft.SqlServer.TDS.EndPoint
     /// </summary>
     public class TDSServerEndPoint : ServerEndPointHandler<TDSServerEndPointConnection>
     {
+        /// <summary>
+        /// Indicates that the scenario expects authentication to fail during TLS negotiation.
+        /// </summary>
+        public bool ExpectTlsHandshakeFailure { get; set; }
+
         public TDSServerEndPoint(ITDSServer server)
             : base(server)
         {
@@ -23,7 +28,10 @@ namespace Microsoft.SqlServer.TDS.EndPoint
 
         public override TDSServerEndPointConnection CreateConnection(TcpClient newConnection)
         {
-            return new TDSServerEndPointConnection(TDSServer, newConnection);
+            return new TDSServerEndPointConnection(TDSServer, newConnection)
+            {
+                ExpectTlsHandshakeFailure = ExpectTlsHandshakeFailure
+            };
         }
     }
 
@@ -48,6 +56,8 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         /// </summary>
         internal IList<T> Connections { get; set; }
 
+        private readonly List<Exception> _errors = new List<Exception>();
+
         /// <summary>
         /// End-point which TDS server is listening on
         /// </summary>
@@ -66,7 +76,7 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         /// <summary>
         /// Gets/Sets the flag whether the stop is requested
         /// </summary>
-        internal bool StopRequested { get; set; }
+        internal volatile bool _stopRequested;
 
 
         /// <summary>
@@ -92,7 +102,7 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         /// </summary>
         public void Start()
         {
-            StopRequested = false;
+            _stopRequested = false;
 
             // Start the server synchronously to ensure that instantiation exception is thrown (if any)
             ListenerSocket = new TcpListener(ServerEndPoint);
@@ -110,12 +120,32 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         }
 
         /// <summary>
+        /// Forcibly close every active client connection without
+        /// stopping the TCP listener.  The server continues to
+        /// accept new connections (e.g. reconnection attempts).
+        /// </summary>
+        public void DisconnectAll()
+        {
+            IList<T> snapshot;
+
+            lock (Connections)
+            {
+                snapshot = new List<T>(Connections);
+            }
+
+            foreach (T connection in snapshot)
+            {
+                connection.Dispose();
+            }
+        }
+
+        /// <summary>
         /// Stop the listener thread
         /// </summary>
         public void Stop()
         {
             // Request the listener thread to stop
-            StopRequested = true;
+            _stopRequested = true;
 
             // Stop the listener socket first so the blocking AcceptTcpClient call
             // in the listener thread is interrupted and the thread can exit.
@@ -147,12 +177,31 @@ namespace Microsoft.SqlServer.TDS.EndPoint
             // Iterate over all connections and request each one to stop
             foreach (T connection in unlockedConnections)
             {
-                // Request to stop
-                connection.Dispose();
+                try
+                {
+                    connection.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    lock (Connections)
+                    {
+                        _errors.Add(ex);
+                    }
+                }
             }
 
             // Release the listener socket reference
             ListenerSocket = null;
+
+            lock (Connections)
+            {
+                if (_errors.Count != 0)
+                {
+                    Exception[] errors = _errors.ToArray();
+                    _errors.Clear();
+                    throw new AggregateException("TDS server failed.", errors);
+                }
+            }
         }
 
         public void Dispose()
@@ -169,7 +218,7 @@ namespace Microsoft.SqlServer.TDS.EndPoint
             try
             {
                 // Accept connections as long as a stop request is not posted
-                while (!StopRequested)
+                while (!_stopRequested)
                 {
                     TcpClient newConnection;
 
@@ -183,7 +232,7 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                     {
                         // AcceptTcpClient throws when the listener is stopped during
                         // shutdown; exit the loop in that case.
-                        if (StopRequested)
+                        if (_stopRequested)
                         {
                             break;
                         }
@@ -202,22 +251,24 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                         // Subscribe for notifications
                         connection.OnConnectionClosed += new ConnectionClosedEventHandler(_OnConnectionClosed);
 
-                        // Start a connection
-                        connection.Start();
-
                         // Synchronize access to connections collection
                         lock (Connections)
                         {
                             // Register a new connection
                             Connections.Add(connection);
                         }
+
+                        connection.Start();
                     }
                     catch (Exception ex)
                     {
                         Log(ex.ToString());
+                        lock (Connections)
+                        {
+                            _errors.Add(ex);
+                        }
 
-                        // Setup failed, so this connection was never registered and will not be
-                        // torn down by Stop(); dispose the accepted socket to avoid leaking it.
+                        // Construction may have failed before registration.
                         try
                         {
                             newConnection?.Dispose();
@@ -225,6 +276,10 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                         catch (Exception disposeEx)
                         {
                             Log(disposeEx.ToString());
+                            lock (Connections)
+                            {
+                                _errors.Add(disposeEx);
+                            }
                         }
                     }
                 }
@@ -232,6 +287,10 @@ namespace Microsoft.SqlServer.TDS.EndPoint
             catch (Exception ex)
             {
                 Log(ex.ToString());
+                lock (Connections)
+                {
+                    _errors.Add(ex);
+                }
             }
         }
 
@@ -248,8 +307,13 @@ namespace Microsoft.SqlServer.TDS.EndPoint
             // Synchronize access to connection collection
             lock (Connections)
             {
+                T connection = (T)sender;
+                if (connection.ProcessingException != null)
+                {
+                    _errors.Add(connection.ProcessingException);
+                }
                 // Remove the existing connection from the list
-                Connections.Remove(sender as T);
+                Connections.Remove(connection);
                 Log($"{GetType().Name} {EndpointName} Connection Closed");
             }
         }

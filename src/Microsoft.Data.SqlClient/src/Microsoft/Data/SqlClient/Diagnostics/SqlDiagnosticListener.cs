@@ -5,6 +5,7 @@
 using System;
 using System.Data;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 #if NET
 using System.Reflection;
@@ -77,7 +78,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
                 return;
             }
 
-            Write(
+            WriteEvent(
                 SqlClientCommandAfter.Name,
                 new SqlClientCommandAfter(
                     operationId,
@@ -104,7 +105,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
 
             Guid operationId = Guid.NewGuid();
 
-            Write(
+            WriteEvent(
                 SqlClientCommandBefore.Name,
                 new SqlClientCommandBefore(
                     operationId,
@@ -132,7 +133,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
                 return;
             }
 
-            Write(
+            WriteEvent(
                 SqlClientCommandError.Name,
                 new SqlClientCommandError
                 (
@@ -159,7 +160,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
                 return;
             }
 
-            Write(
+            WriteEvent(
                 SqlClientConnectionCloseAfter.Name,
                 new SqlClientConnectionCloseAfter
                 (
@@ -182,7 +183,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
 
             Guid operationId = Guid.NewGuid();
 
-            Write(
+            WriteEvent(
                 SqlClientConnectionCloseBefore.Name,
                 new SqlClientConnectionCloseBefore
                 (
@@ -211,7 +212,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
                 return;
             }
 
-            Write(
+            WriteEvent(
                 SqlClientConnectionCloseError.Name,
                 new SqlClientConnectionCloseError
                 (
@@ -237,7 +238,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
                 return;
             }
 
-            Write(
+            WriteEvent(
                 SqlClientConnectionOpenAfter.Name,
                 new SqlClientConnectionOpenAfter
                 (
@@ -261,7 +262,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
 
             Guid operationId = Guid.NewGuid();
 
-            Write(
+            WriteEvent(
                 SqlClientConnectionOpenBefore.Name,
                 new SqlClientConnectionOpenBefore
                 (
@@ -288,7 +289,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
                 return;
             }
 
-            Write(
+            WriteEvent(
                 SqlClientConnectionOpenError.Name,
                 new SqlClientConnectionOpenError
                 (
@@ -316,7 +317,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
                 return;
             }
 
-            Write(
+            WriteEvent(
                 SqlClientTransactionCommitAfter.Name,
                 new SqlClientTransactionCommitAfter
                 (
@@ -344,7 +345,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
 
             Guid operationId = Guid.NewGuid();
 
-            Write(
+            WriteEvent(
                 SqlClientTransactionCommitBefore.Name,
                 new SqlClientTransactionCommitBefore
                 (
@@ -374,7 +375,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
                 return;
             }
 
-            Write(
+            WriteEvent(
                 SqlClientTransactionCommitError.Name,
                 new SqlClientTransactionCommitError
                 (
@@ -403,7 +404,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
                 return;
             }
 
-            Write(
+            WriteEvent(
                 SqlClientTransactionRollbackAfter.Name,
                 new SqlClientTransactionRollbackAfter
                 (
@@ -433,7 +434,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
 
             Guid operationId = Guid.NewGuid();
 
-            Write(
+            WriteEvent(
                 SqlClientTransactionRollbackBefore.Name,
                 new SqlClientTransactionRollbackBefore
                 (
@@ -465,7 +466,7 @@ namespace Microsoft.Data.SqlClient.Diagnostics
                 return;
             }
 
-            Write(
+            WriteEvent(
                 SqlClientTransactionRollbackError.Name,
                 new SqlClientTransactionRollbackError
                 (
@@ -480,6 +481,17 @@ namespace Microsoft.Data.SqlClient.Diagnostics
                 )
             );
         }
+
+#if NET
+        [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2026",
+            Justification = "SqlClient does no reflection here; subscribers that reflect over payloads are responsible for their own reflection.")]
+        // The annotation on T is required by Write<T> and keeps payload public properties for subscribers that reflect.
+        private void WriteEvent<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] T>(string name, T payload) =>
+            Write(name, payload);
+#else
+        private void WriteEvent<T>(string name, T payload) =>
+            Write(name, payload);
+#endif
 
 #if NET
         private void SqlDiagnosticListener_UnloadingAssemblyLoadContext(AssemblyLoadContext obj) =>

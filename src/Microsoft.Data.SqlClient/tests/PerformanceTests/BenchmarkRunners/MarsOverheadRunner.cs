@@ -63,10 +63,10 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         [Benchmark]
         public async Task ExecuteReaderAsyncWithMars()
         {
-            using var conn = new SqlConnection(ConnectionString);
+            await using var conn = new SqlConnection(ConnectionString);
             await conn.OpenAsync();
-            using var cmd = new SqlCommand(_query, conn);
-            using var reader = await cmd.ExecuteReaderAsync();
+            await using var cmd = new SqlCommand(_query, conn);
+            await using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             { }
         }

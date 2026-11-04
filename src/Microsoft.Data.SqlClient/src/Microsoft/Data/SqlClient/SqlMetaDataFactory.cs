@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Text;
@@ -47,8 +48,7 @@ namespace Microsoft.Data.SqlClient
             ADP.CheckArgumentNull(connectionCapabilities.ServerVersion, nameof(connectionCapabilities.ServerVersion));
 
             _serverVersion = connectionCapabilities.ServerVersion;
-
-            _collectionDataSet = LoadDataSetFromXml(xmlStream);
+            _collectionDataSet = LoadDataSetFromXml(xmlStream, connectionCapabilities);
         }
 
         private bool SupportedByCurrentVersion(DataRow requestedCollectionRow)
@@ -443,7 +443,7 @@ namespace Microsoft.Data.SqlClient
 
                 foreach (DbColumn col in colSchema)
                 {
-                    resultTable.Columns.Add(col.ColumnName, col.DataType);
+                    AddColumn(resultTable, col);
                 }
 
                 if (firstResultAvailable)
@@ -462,6 +462,13 @@ namespace Microsoft.Data.SqlClient
             }
             return resultTable;
         }
+
+#if NET
+        [UnconditionalSuppressMessage("ReflectionAnalysis", "IL2072",
+            Justification = "DataColumn only reflects over INullable column types, and no schema collection columns are INullable.")]
+#endif
+        private static void AddColumn(DataTable table, DbColumn column) =>
+            table.Columns.Add(column.ColumnName, column.DataType);
         #endregion
 
         #region GetSchema Helpers: PrepareCollection Population Method
@@ -495,7 +502,7 @@ namespace Microsoft.Data.SqlClient
             const int IsFixedLengthSqlIndex = 9;
             const int ColumnSizeSqlIndex = 10;
 
-            // pre 9.0/2005 servers do not have UDTs
+            // UDT metadata requires SQL Server 2005 (9.0) or later.
             if (0 > string.Compare(serverVersion, ServerVersionNormalized90, StringComparison.OrdinalIgnoreCase))
             {
                 return;
@@ -612,8 +619,7 @@ namespace Microsoft.Data.SqlClient
             const int IsNullableSqlIndex = 1;
             const int ColumnSizeSqlIndex = 2;
 
-            // TODO: update this check once the server upgrades major version number!!!
-            // pre 9.0/2005 servers do not have Table types
+            // Table type metadata requires SQL Server 2008 (10.0) or later.
             if (0 > string.Compare(serverVersion, ServerVersionNormalized10, StringComparison.OrdinalIgnoreCase))
             {
                 return;
@@ -704,14 +710,15 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Create MetaDataCollections DataSet from XML
-        private DataSet LoadDataSetFromXml(Stream XmlStream)
+        private DataSet LoadDataSetFromXml(
+            Stream XmlStream, ConnectionCapabilities connectionCapabilities)
         {
             DataSet metaDataCollectionsDataSet = new("NewDataSet")
             {
                 Locale = CultureInfo.InvariantCulture
             };
 
-            LoadDataTypesDataTables(metaDataCollectionsDataSet);
+            LoadDataTypesDataTables(metaDataCollectionsDataSet, connectionCapabilities);
 
             XmlReaderSettings settings = new()
             {

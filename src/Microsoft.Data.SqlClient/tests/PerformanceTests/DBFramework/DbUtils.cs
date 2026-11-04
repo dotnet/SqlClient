@@ -23,9 +23,13 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 .Append('_').Append(RandomString(10))
                 .Append("]").ToString();
 
-        public static void ExecuteNonQuery(string query, SqlConnection sqlConnection)
+        /// <summary>Executes fixture SQL using the specified timeout.</summary>
+        /// <param name="query">Setup or cleanup SQL.</param>
+        /// <param name="sqlConnection">Open fixture connection.</param>
+        /// <param name="commandTimeoutSeconds">SQL command timeout in seconds.</param>
+        public static void ExecuteNonQuery(string query, SqlConnection sqlConnection, int commandTimeoutSeconds = 30)
         {
-            using SqlCommand sqlCommand = new(query, sqlConnection);
+            using SqlCommand sqlCommand = new(query, sqlConnection) { CommandTimeout = commandTimeoutSeconds };
             sqlCommand.ExecuteNonQuery();
         }
     }

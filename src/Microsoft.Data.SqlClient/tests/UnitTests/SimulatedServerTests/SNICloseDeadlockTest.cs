@@ -119,7 +119,9 @@ public class SNICloseDeadlockTest
             // pool.
             Pooling = false,
 #if NETFRAMEWORK
+            #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
             TransparentNetworkIPResolution = false,
+            #pragma warning restore 618
 #endif
         };
 
@@ -292,7 +294,9 @@ public class SNICloseDeadlockTest
             ConnectRetryCount = 0,
             Pooling = false,
 #if NETFRAMEWORK
+            #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
             TransparentNetworkIPResolution = false,
+            #pragma warning restore 618
 #endif
         };
 
@@ -502,7 +506,9 @@ public class SNICloseDeadlockTest
             ConnectRetryCount = 0,
             Pooling = false,
 #if NETFRAMEWORK
+            #pragma warning disable 618 // TransparentNetworkIPResolution is obsolete
             TransparentNetworkIPResolution = false,
+            #pragma warning restore 618
 #endif
         };
 

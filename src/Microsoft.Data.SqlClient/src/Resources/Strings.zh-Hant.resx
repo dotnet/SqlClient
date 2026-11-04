@@ -204,6 +204,9 @@
   <data name="ADP_PooledOpenTimeout" xml:space="preserve">
     <value>已超過連接逾時的設定。在取得集區連接之前超過逾時等待的時間，可能的原因為所有的共用連接已在使用中，並已達共用集區大小的最大值。</value>
   </data>
+  <data name="ADP_IsolationLevelResetTimeout" xml:space="preserve">
+    <value>等候逾時已過時。 集區連線的交易隔離層級在連線逾時期間結束前無法重設。</value>
+  </data>
   <data name="ADP_NonPooledOpenTimeout" xml:space="preserve">
     <value>嘗試開啟連線時發生逾時。已超過嘗試開啟連線前所經過的時間。這可能是過多同時非共用連線嘗試所造成。</value>
   </data>
@@ -1797,6 +1800,9 @@
   <data name="TCE_EnclaveTypeNullForEnclaveBasedQuery" xml:space="preserve">
     <value>內部錯誤。執行需要 enclave 計算的查詢時，從 SQL Server 收到了 null 或空白的 enclave 類型。</value>
   </data>
+  <data name="TCE_AzureAttestationExtensionNotFound" xml:space="preserve">
+    <value>證明協定 'AAS' 需要 Microsoft.Data.SqlClient.Extensions.Azure 套件，且版本必須與 Microsoft.Data.SqlClient 相同。請新增或更新此套件參考，或在連接字串中指定其他證明協定。</value>
+  </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
     <value>找不到記憶體保護區類型 '{0}' 和證明通訊協定 '{1}' 的記憶體保護區提供者。請在連接字串中指定正確的證明通訊協定。 </value>
   </data>
@@ -1899,6 +1905,9 @@
   <data name="SQLCR_NoCRAckAtReconnection" xml:space="preserve">
     <value>伺服器未認可復原嘗試，無法進行連接復原。</value>
   </data>
+  <data name="DbConnectionString_VectorTypeSupport" xml:space="preserve">
+    <value>The level of vector type support to negotiate with the server.</value>
+  </data>
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>為連接集區定義封鎖期間行為。</value>
   </data>
@@ -1969,7 +1978,7 @@
     <value>驗證記憶體保護區報表的簽章失敗。報表的簽章與使用 HGS 根憑證計算所得的簽章不符。請驗證端點的 DNS 對應 - 請參閱 https://go.microsoft.com/fwlink/?linkid=2160553 尋求 詳細 資訊。若其正確，請連絡客戶支援服務。</value>
   </data>
   <data name="VerifyEnclaveKeyBindingFailed" xml:space="preserve">
-    <value>Enclave attestation failed because the signed enclave report did not bind to the enclave public key used to establish the session. The enclave public key must match the value committed to by the signed report - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If correct, contact Customer Support Services.</value>
+    <value>記憶體保護區證明失敗，因為已簽署的記憶體保護區報表未繫結至用來建立工作階段的記憶體保護區公開金鑰。記憶體保護區公開金鑰必須符合已簽署報表所認可的值 - 如需詳細資料，請參閱 https://go.microsoft.com/fwlink/?linkid=2160553。若其正確，請連絡客戶支援服務。</value>
   </data>
   <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
     <value>從 SQL Server 收到的記憶體保護區報表的格式不正確。請連絡客戶支援服務。</value>
@@ -2064,6 +2073,9 @@
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
     <value>在父命令上啟用 EnableOptimizedParameterBinding 時，參數 '{0}' 不能具有方向輸出或 InputOutput。</value>
   </data>
+  <data name="SQL_PrepareNotSupportedForOptimizedBinding" xml:space="preserve">
+    <value>啟用 EnableOptimizedParameterBinding 時不支援準備。建立新的 SqlCommand，並在第一次執行之前將 EnableOptimizedParameterBinding 設定為 false，或執行而不呼叫 Prepare。</value>
+  </data>
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
     <value>使用 '{0}' 驗證方法擷取存取權杖時已逾時。上次錯誤: {1}: {2}</value>
   </data>
@@ -2082,11 +2094,8 @@
   <data name="ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity" xml:space="preserve">
     <value>如果 'Integrated Security' 連接字串關鍵字已設定為 'true' 或 'SSPI'，就不能設定 AccessTokenCallback 屬性。</value>
   </data>
-  <data name="ADP_InvalidMixedUsageOfAccessTokenAndSspiContextProvider" xml:space="preserve">
-    <value>Cannot set the AccessToken or AccessTokenCallback property if the SspiContextProvider property has been set.</value>
-  </data>
-  <data name="ADP_InvalidMixedUsageOfSspiContextProviderAndAccessToken" xml:space="preserve">
-    <value>Cannot set the SspiContextProvider property if the AccessToken or AccessTokenCallback property has been set.</value>
+  <data name="ADP_InvalidMixedUsageOfAccessTokenProperties" xml:space="preserve">
+    <value>AccessToken、AccessTokenCallback 或 SspiContextProvider 這些屬性中，不能設定超過一個。</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
     <value>如果已在連接字串中指定 'Authentication=Active Directory Default'，就不能設定 AccessTokenCallback 屬性。</value>
@@ -2099,6 +2108,9 @@
   </data>
   <data name="SqlAppContextSwitchManager_InvalidValue" xml:space="preserve">
     <value>嘗試設定 AppCoNtext 切換 '{0}'={1} 時發生例外。</value>
+  </data>
+  <data name="SQL_GlobalizationInvariantModeRequiresLcid" xml:space="preserve">
+    <value>啟用全球化不變模式時，描述字元或文字類型的 SqlMetaData 執行個體必須指定 LCID。</value>
   </data>
   <data name="SQL_GlobalizationInvariantModeNotSupported" xml:space="preserve">
     <value>不支援全域固定模式。</value>
@@ -2135,6 +2147,12 @@
   </data>
   <data name="SQL_RemoteCertificateDoesNotMatchServerCertificate" xml:space="preserve">
     <value>伺服器提供的憑證不符合 ServerCertificate 選項所提供的憑證。</value>
+  </data>
+  <data name="SQL_ServerCertificateFileLoadFailed" xml:space="preserve">
+    <value>無法載入或剖析 'ServerCertificate' 選項所指定的憑證檔案: '{0}'。</value>
+  </data>
+  <data name="SQL_ServerCertificateNotAvailable" xml:space="preserve">
+    <value>已指定 'ServerCertificate' 選項，但伺服器未提供可與其比對的憑證。</value>
   </data>
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>在資料行 '{0}' 上取得 JsonDocument 的嘗試無效。JsonDocument 僅支援 JSON 類型的資料行。</value>

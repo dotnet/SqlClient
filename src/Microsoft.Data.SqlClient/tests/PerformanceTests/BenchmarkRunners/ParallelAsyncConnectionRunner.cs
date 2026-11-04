@@ -47,7 +47,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
 
         private async Task OpenAndCloseConnectionAsync()
         {
-            using var conn = new SqlConnection(ConnectionString);
+            await using var conn = new SqlConnection(ConnectionString);
             await conn.OpenAsync();
         }
     }

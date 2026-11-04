@@ -13,14 +13,14 @@ Follow this workflow step-by-step:
 ## 1. Understand the Bug
 - If a GitHub issue number is provided, fetch the issue details from `dotnet/SqlClient`.
 - Identify the repro steps, expected behavior, and actual behavior.
-- Determine which platforms are affected (.NET Framework, .NET 8+, Windows, Unix).
+- Determine which platforms are affected (.NET Framework 4.6.2+, .NET 10+, Windows, Unix).
 - If the issue lacks sufficient detail, note what information is missing.
 
 ## 2. Locate the Relevant Code
 - All source code lives in `src/Microsoft.Data.SqlClient/src/`. Do NOT modify files in the legacy `netcore/src/` or `netfx/src/` directories.
 - Search for related classes, methods, or keywords in `src/Microsoft.Data.SqlClient/src/Microsoft/Data/SqlClient/`.
 - Check for platform-specific files (`.netfx.cs`, `.netcore.cs`, `.windows.cs`, `.unix.cs`) that may contain the affected code path.
-- Understand conditional compilation: use `#if NETFRAMEWORK` for net462, `#if NET` for net8.0+, `#if _WINDOWS` / `#if _UNIX` for OS-specific code.
+- Understand conditional compilation: use `#if NETFRAMEWORK` for net462, `#if NET` for net10.0, `#if _WINDOWS` / `#if _UNIX` for OS-specific code.
 
 ## 3. Write a Failing Test
 - Create a test that reproduces the bug BEFORE implementing the fix.
@@ -28,19 +28,27 @@ Follow this workflow step-by-step:
   - `src/Microsoft.Data.SqlClient/tests/UnitTests/` — for isolated logic tests (no SQL Server needed)
   - `src/Microsoft.Data.SqlClient/tests/FunctionalTests/` — for API behavior tests (no SQL Server needed)
   - `src/Microsoft.Data.SqlClient/tests/ManualTests/` — for integration tests (requires SQL Server)
-- Follow existing naming conventions: `{ClassName}Tests.cs` with methods named `{MethodName}_{Scenario}_{ExpectedResult}`.
+- Read and follow the [test authoring rules](../instructions/testing.instructions.md#writing-tests).
+  They are mandatory for unit tests and strongly recommended for manual and functional tests.
+- Keep unit tests focused on their named class, mirror its source folders, and name methods
+  `{MethodName}_{Input}_{ExpectedOutput}` without the tested class name.
+- Use commented Arrange, Act, Assert, Cleanup sections (Act and Assert required), typed
+  `TheoryData<...>` with `[MemberData]` for non-constant data, and separate tests for separate
+  behaviors instead of switches. Place utilities according to the guide's project ownership rules.
 - If the bug is platform-specific, add appropriate `[ConditionalFact]` or `[ConditionalTheory]` attributes with `[PlatformSpecific]`.
 - **Cover both sync and async code paths** if the affected API has both variants (e.g., `Open`/`OpenAsync`, `ExecuteReader`/`ExecuteReaderAsync`). Sync and async paths often have different internal implementations and a bug may manifest in only one.
 
 ## 4. Implement the Fix
 - Make the minimal change needed to fix the bug.
-- Ensure the fix compiles for ALL target frameworks: `net462`, `net8.0`, `net9.0`.
+- Ensure the fix compiles for ALL driver implementation target frameworks: `net462`, `net10.0`.
 - If the fix requires platform-specific code, use the appropriate conditional compilation directives.
 - Do NOT introduce breaking changes to public APIs.
-- If a public API must change, update the reference assemblies in `netcore/ref/` and `netfx/ref/`.
+- If a public API must change, update the corresponding sources under `src/Microsoft.Data.SqlClient/ref/`, including conditional declarations for each affected framework.
 
 ## 5. Validate
 - Verify the failing test now passes with the fix applied.
+- Confirm the intended tests actually ran and their assertions detect the reported regression;
+  zero matches or skipped tests do not establish coverage. Report tests that could not run and why.
 - Check that existing tests in the affected area still pass.
 - Review that no new compiler warnings or errors are introduced.
 

@@ -16,6 +16,7 @@ using System.Globalization;
 using System.Reflection;
 using Microsoft.Data.Common;
 using Microsoft.Data.Common.ConnectionString;
+using Microsoft.Data.SqlClient.Parser;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -71,6 +72,7 @@ namespace Microsoft.Data.SqlClient
             ServerSPN,
             FailoverPartnerSPN,
             ContextConnection,
+            VectorTypeSupport,
 #if NETFRAMEWORK
             ConnectionReset,
             NetworkLibrary,
@@ -119,6 +121,7 @@ namespace Microsoft.Data.SqlClient
 
         private bool _persistSecurityInfo = DbConnectionStringDefaults.PersistSecurityInfo;
         private PoolBlockingPeriod _poolBlockingPeriod = DbConnectionStringDefaults.PoolBlockingPeriod;
+        private SqlVectorTypeSupport _vectorTypeSupport = DbConnectionStringDefaults.VectorTypeSupport;
         private bool _pooling = DbConnectionStringDefaults.Pooling;
         private bool _replication = DbConnectionStringDefaults.Replication;
         private bool _userInstance = DbConnectionStringDefaults.UserInstance;
@@ -172,6 +175,7 @@ namespace Microsoft.Data.SqlClient
             validKeywords[(int)Keywords.TypeSystemVersion] = DbConnectionStringKeywords.TypeSystemVersion;
             validKeywords[(int)Keywords.UserID] = DbConnectionStringKeywords.UserId;
             validKeywords[(int)Keywords.UserInstance] = DbConnectionStringKeywords.UserInstance;
+            validKeywords[(int)Keywords.VectorTypeSupport] = DbConnectionStringKeywords.VectorTypeSupport;
             validKeywords[(int)Keywords.WorkstationID] = DbConnectionStringKeywords.WorkstationId;
             validKeywords[(int)Keywords.ConnectRetryCount] = DbConnectionStringKeywords.ConnectRetryCount;
             validKeywords[(int)Keywords.ConnectRetryInterval] = DbConnectionStringKeywords.ConnectRetryInterval;
@@ -230,6 +234,7 @@ namespace Microsoft.Data.SqlClient
                 { DbConnectionStringKeywords.TypeSystemVersion, Keywords.TypeSystemVersion },
                 { DbConnectionStringKeywords.UserId, Keywords.UserID },
                 { DbConnectionStringKeywords.UserInstance, Keywords.UserInstance },
+                { DbConnectionStringKeywords.VectorTypeSupport, Keywords.VectorTypeSupport },
                 { DbConnectionStringKeywords.WorkstationId, Keywords.WorkstationID },
                 { DbConnectionStringKeywords.ConnectRetryCount, Keywords.ConnectRetryCount },
                 { DbConnectionStringKeywords.ConnectRetryInterval, Keywords.ConnectRetryInterval },
@@ -284,6 +289,7 @@ namespace Microsoft.Data.SqlClient
                 { DbConnectionStringSynonyms.ConnectTimeout, Keywords.ConnectTimeout },
                 { DbConnectionStringSynonyms.FailoverPartner, Keywords.FailoverPartner },
                 { DbConnectionStringSynonyms.PacketSize, Keywords.PacketSize },
+                { DbConnectionStringSynonyms.VectorTypeSupport, Keywords.VectorTypeSupport },
             };
             return pairs;
         }
@@ -317,6 +323,9 @@ namespace Microsoft.Data.SqlClient
         private static PoolBlockingPeriod ConvertToPoolBlockingPeriod(string keyword, object value)
             => PoolBlockingUtilities.ConvertToPoolBlockingPeriod(keyword, value);
 
+        private static SqlVectorTypeSupport ConvertToVectorTypeSupport(string keyword, object value)
+            => VectorTypeSupportUtilities.ConvertToVectorTypeSupport(keyword, value);
+
         private object GetAt(Keywords index)
         {
             switch (index)
@@ -329,6 +338,8 @@ namespace Microsoft.Data.SqlClient
                     return AttachDBFilename;
                 case Keywords.PoolBlockingPeriod:
                     return PoolBlockingPeriod;
+                case Keywords.VectorTypeSupport:
+                    return VectorTypeSupport;
                 case Keywords.CommandTimeout:
                     return CommandTimeout;
                 case Keywords.ConnectTimeout:
@@ -411,7 +422,9 @@ namespace Microsoft.Data.SqlClient
                     return ConnectionReset;
 #pragma warning restore 618
                 case Keywords.TransparentNetworkIPResolution:
+#pragma warning disable 618 // Obsolete properties
                     return TransparentNetworkIPResolution;
+#pragma warning restore 618
                 case Keywords.NetworkLibrary:
                     return NetworkLibrary;
 #endif
@@ -450,6 +463,9 @@ namespace Microsoft.Data.SqlClient
                     break;
                 case Keywords.PoolBlockingPeriod:
                     _poolBlockingPeriod = DbConnectionStringDefaults.PoolBlockingPeriod;
+                    break;
+                case Keywords.VectorTypeSupport:
+                    _vectorTypeSupport = DbConnectionStringDefaults.VectorTypeSupport;
                     break;
                 case Keywords.CommandTimeout:
                     _commandTimeout = DbConnectionStringDefaults.CommandTimeout;
@@ -629,6 +645,12 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(PoolBlockingUtilities.IsValidPoolBlockingPeriodValue(value), "Invalid value for PoolBlockingPeriod");
             base[DbConnectionStringKeywords.PoolBlockingPeriod] = PoolBlockingUtilities.PoolBlockingPeriodToString(value);
+        }
+
+        private void SetVectorTypeSupportValue(SqlVectorTypeSupport value)
+        {
+            Debug.Assert(VectorTypeSupportUtilities.IsValidVectorTypeSupportValue(value), "Invalid value for VectorTypeSupport");
+            base[DbConnectionStringKeywords.VectorTypeSupport] = VectorTypeSupportUtilities.VectorTypeSupportToString(value);
         }
 
         private Exception UnsupportedKeyword(string keyword)
@@ -1022,6 +1044,9 @@ namespace Microsoft.Data.SqlClient
                         case Keywords.PoolBlockingPeriod:
                             PoolBlockingPeriod = ConvertToPoolBlockingPeriod(keyword, value);
                             break;
+                        case Keywords.VectorTypeSupport:
+                            VectorTypeSupport = ConvertToVectorTypeSupport(keyword, value);
+                            break;
                         case Keywords.Encrypt:
                             Encrypt = ConvertToSqlConnectionEncryptOption(keyword, value);
                             break;
@@ -1083,7 +1108,9 @@ namespace Microsoft.Data.SqlClient
                             NetworkLibrary = ConvertToString(value);
                             break;
                         case Keywords.TransparentNetworkIPResolution:
+#pragma warning disable 618 // Obsolete properties
                             TransparentNetworkIPResolution = ConvertToBoolean(value);
+#pragma warning restore 618
                             break;
 #endif
                         default:
@@ -1682,6 +1709,26 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/VectorTypeSupport/*' />
+        [DisplayName(DbConnectionStringKeywords.VectorTypeSupport)]
+        [ResCategory(nameof(Strings.DataCategory_Advanced))]
+        [ResDescription(nameof(Strings.DbConnectionString_VectorTypeSupport))]
+        [RefreshProperties(RefreshProperties.All)]
+        public SqlVectorTypeSupport VectorTypeSupport
+        {
+            get => _vectorTypeSupport;
+            set
+            {
+                if (!VectorTypeSupportUtilities.IsValidVectorTypeSupportValue(value))
+                {
+                    throw ADP.InvalidEnumerationValue(typeof(SqlVectorTypeSupport), (int)value);
+                }
+
+                SetVectorTypeSupportValue(value);
+                _vectorTypeSupport = value;
+            }
+        }
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Pooling/*' />
         [DisplayName(DbConnectionStringKeywords.Pooling)]
         [ResCategory(nameof(Strings.DataCategory_Pooling))]
@@ -1879,6 +1926,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TransparentNetworkIPResolution/*' />
+        [Obsolete("TransparentNetworkIPResolution has been deprecated and is only supported on .NET Framework. Use MultiSubnetFailover instead.")]
         [DisplayName(DbConnectionStringKeywords.TransparentNetworkIpResolution)]
         [ResCategory(nameof(Strings.DataCategory_Source))]
         [ResDescription(nameof(Strings.DbConnectionString_TransparentNetworkIPResolution))]

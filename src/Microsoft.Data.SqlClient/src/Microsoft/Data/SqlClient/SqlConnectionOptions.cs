@@ -17,6 +17,7 @@ using System.Security.Permissions;
 using Microsoft.Data.Common;
 using Microsoft.Data.Common.ConnectionString;
 using Microsoft.Data.SqlClient.LocalDb;
+using Microsoft.Data.SqlClient.Parser;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -27,17 +28,14 @@ namespace Microsoft.Data.SqlClient
         // when not worried about the class being modified during execution
 
         #region DbConnectionOptions fields
-
-        private const string ConnectionStringValidKeyPattern = "^(?![;\\s])[^\\p{Cc}]+(?<!\\s)$"; // key not allowed to start with semi-colon or space or contain non-visible characters or end with space
-        private const string ConnectionStringValidValuePattern = "^[^\u0000]*$";                    // value not allowed to contain embedded null
-        private const string ConnectionStringQuoteValuePattern = "^[^\"'=;\\s\\p{Cc}]*$";           // generally do not quote the value if it matches the pattern
-        private const string ConnectionStringQuoteOdbcValuePattern = "^\\{([^\\}\u0000]|\\}\\})*\\}$"; // do not quote odbc value if it matches this pattern
         internal const string DataDirectory = "|datadirectory|";
 
-        private static readonly Regex s_connectionStringValidKeyRegex = new Regex(ConnectionStringValidKeyPattern, RegexOptions.Compiled);
-        private static readonly Regex s_connectionStringValidValueRegex = new Regex(ConnectionStringValidValuePattern, RegexOptions.Compiled);
-        private static readonly Regex s_connectionStringQuoteValueRegex = new Regex(ConnectionStringQuoteValuePattern, RegexOptions.Compiled);
-        private static readonly Regex s_connectionStringQuoteOdbcValueRegex = new Regex(ConnectionStringQuoteOdbcValuePattern, RegexOptions.ExplicitCapture | RegexOptions.Compiled);
+        #if NETFRAMEWORK
+        private static readonly Regex s_connectionStringQuoteValueRegex = new Regex(
+            // Generally, do not quote the value if it matches the pattern
+            "^[^\"'=;\\s\\p{Cc}]*$",
+            RegexOptions.Compiled);
+        #endif
 
         internal readonly bool _hasPasswordKeyword;
         internal readonly bool _hasUserIdKeyword;
@@ -53,7 +51,6 @@ namespace Microsoft.Data.SqlClient
 
         internal enum TypeSystem
         {
-            SQLServer2005 = 2005,
             SQLServer2008 = 2008,
             SQLServer2012 = 2012,
         }
@@ -69,7 +66,6 @@ namespace Microsoft.Data.SqlClient
             // sentinel value that the connection string accepts for historical/compatibility
             // reasons. The actual type system it resolves to is decided where "Latest" is parsed.
             internal const string Latest = "Latest";
-            internal const string SQL_Server_2005 = "SQL Server 2005";
             internal const string SQL_Server_2008 = "SQL Server 2008";
             internal const string SQL_Server_2012 = "SQL Server 2012";
         }
@@ -97,6 +93,7 @@ namespace Microsoft.Data.SqlClient
         private readonly bool _mars;
         private readonly bool _persistSecurityInfo;
         private readonly PoolBlockingPeriod _poolBlockingPeriod;
+        private readonly SqlVectorTypeSupport _vectorTypeSupport;
         private readonly bool _pooling;
         private readonly bool _replication;
         private readonly bool _userInstance;
@@ -230,6 +227,8 @@ namespace Microsoft.Data.SqlClient
                             DbConnectionStringSynonyms.Uid,
                             DbConnectionStringSynonyms.User);
             AddKeywordToMap(DbConnectionStringKeywords.UserInstance);
+            AddKeywordToMap(DbConnectionStringKeywords.VectorTypeSupport,
+                            DbConnectionStringSynonyms.VectorTypeSupport);
             AddKeywordToMap(DbConnectionStringKeywords.WorkstationId,
                             DbConnectionStringSynonyms.WorkstationId,
                             DbConnectionStringSynonyms.WsId);
@@ -251,7 +250,7 @@ namespace Microsoft.Data.SqlClient
             _usersConnectionString = connectionString ?? "";
             if (_usersConnectionString.Length > 0)
             {
-                _keyChain = ParseInternal(_parsetable, _usersConnectionString, true, s_keywordMap, false);
+                _keyChain = ParseInternal(_parsetable, _usersConnectionString, s_keywordMap);
                 _hasPasswordKeyword = _parsetable.ContainsKey(DbConnectionStringKeywords.Password) ||
                                       _parsetable.ContainsKey(DbConnectionStringSynonyms.Pwd);
                 _hasUserIdKeyword = _parsetable.ContainsKey(DbConnectionStringKeywords.UserId) ||
@@ -269,6 +268,7 @@ namespace Microsoft.Data.SqlClient
 
             _integratedSecurity = ConvertValueToIntegratedSecurity();
             _poolBlockingPeriod = ConvertValueToPoolBlockingPeriod();
+            _vectorTypeSupport = ConvertValueToVectorTypeSupport();
             _encrypt = ConvertValueToSqlConnectionEncrypt();
             _enlist = ConvertValueToBoolean(DbConnectionStringKeywords.Enlist, DbConnectionStringDefaults.Enlist);
             _mars = ConvertValueToBoolean(DbConnectionStringKeywords.MultipleActiveResultSets, DbConnectionStringDefaults.MultipleActiveResultSets);
@@ -382,6 +382,12 @@ namespace Microsoft.Data.SqlClient
             }
 #endif // NETFRAMEWORK
 
+            // The MultiSubnetFailover default does not apply with a failover partner.
+            if (_multiSubnetFailover && !IsMultiSubnetFailoverExplicit && !string.IsNullOrEmpty(_failoverPartner))
+            {
+                _multiSubnetFailover = false;
+            }
+
             if (_encrypt == SqlConnectionEncryptOption.Optional)
             {    // Support legacy registry encryption settings
                 const string folder = "Software\\Microsoft\\MSSQLServer\\Client\\SuperSocketNetLib";
@@ -439,7 +445,7 @@ namespace Microsoft.Data.SqlClient
                     string protocol = _networkLibrary;
                     TdsParserStaticMethods.AliasRegistryLookup(ref host, ref protocol);
 #endif
-                    VerifyLocalHostAndFixup(ref host, true, false /*don't fix-up*/);
+                    VerifyLocalHostAndFixup(ref host, fixup: false);
                 }
             }
             else if (0 <= _attachDBFileName.IndexOf('|'))
@@ -470,10 +476,6 @@ namespace Microsoft.Data.SqlClient
                 // down-level types are surfaced) for existing applications that rely on the default,
                 // which would be a breaking change. Newer type systems must be requested explicitly.
                 _typeSystemVersion = TypeSystem.SQLServer2008;
-            }
-            else if (typeSystemVersionString.Equals(TYPESYSTEMVERSION.SQL_Server_2005, StringComparison.OrdinalIgnoreCase))
-            {
-                _typeSystemVersion = TypeSystem.SQLServer2005;
             }
             else if (typeSystemVersionString.Equals(TYPESYSTEMVERSION.SQL_Server_2008, StringComparison.OrdinalIgnoreCase))
             {
@@ -623,6 +625,7 @@ namespace Microsoft.Data.SqlClient
             _serverSPN = connectionOptions._serverSPN;
             _failoverPartnerSPN = connectionOptions._failoverPartnerSPN;
             _hostNameInCertificate = connectionOptions._hostNameInCertificate;
+            _vectorTypeSupport = connectionOptions._vectorTypeSupport;
 #if NETFRAMEWORK
             _connectionReset = connectionOptions._connectionReset;
             _transparentNetworkIPResolution = connectionOptions._transparentNetworkIPResolution;
@@ -652,6 +655,13 @@ namespace Microsoft.Data.SqlClient
         internal bool Enlist => _enlist;
         internal bool MARS => _mars;
         internal bool MultiSubnetFailover => _multiSubnetFailover;
+
+        /// <summary>
+        /// True when MultiSubnetFailover is set in the connection string. When false, the
+        /// value comes from the default, and the connection turns it off when the resolved
+        /// protocol is not TCP.
+        /// </summary>
+        internal bool IsMultiSubnetFailoverExplicit => ContainsKey(DbConnectionStringKeywords.MultiSubnetFailover);
         internal SqlAuthenticationMethod Authentication => _authType;
         internal SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting => _columnEncryptionSetting;
         internal string EnclaveAttestationUrl => _enclaveAttestationUrl;
@@ -686,6 +696,8 @@ namespace Microsoft.Data.SqlClient
         internal string UserID => _userID;
         internal string WorkstationId => _workstationId;
         internal PoolBlockingPeriod PoolBlockingPeriod => _poolBlockingPeriod;
+
+        internal SqlVectorTypeSupport VectorTypeSupport => _vectorTypeSupport;
         internal string ServerSPN => _serverSPN;
         internal string FailoverPartnerSPN => _failoverPartnerSPN;
 
@@ -769,7 +781,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal static void VerifyLocalHostAndFixup(ref string host, bool enforceLocalHost, bool fixup)
+        internal static void VerifyLocalHostAndFixup(ref string host, bool fixup)
         {
             if (string.IsNullOrEmpty(host))
             {
@@ -788,14 +800,94 @@ namespace Microsoft.Data.SqlClient
                     int separatorPos = name.IndexOf('.'); // to compare just 'machine' part
                     if ((separatorPos <= 0) || !CompareHostName(ref host, name.Substring(0, separatorPos), fixup))
                     {
-                        if (enforceLocalHost)
-                        {
-                            throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.AttachDbFilename);
-                        }
+                        throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.AttachDbFilename);
                     }
                 }
             }
         }
+
+        private static readonly char[] s_hostSeparators = { '\\', ',' };
+
+        /// <summary>
+        /// Returns true when SNI connects to the server name over TCP only. The server name must
+        /// already include any protocol from Network Library or a client alias.
+        /// </summary>
+        /// <param name="serverName">Server name, with an optional protocol prefix.</param>
+        /// <param name="useManagedNetworking">True for managed SNI, false for native SNI.</param>
+        internal static bool UsesTcpProtocol(string serverName, bool useManagedNetworking)
+        {
+            string value = serverName?.Trim() ?? string.Empty;
+
+            // Named pipe path, e.g. \\server\pipe\sql\query, or LocalDB (named pipes).
+            if (value.StartsWith(@"\\", StringComparison.Ordinal) ||
+                value.StartsWith(@"(localdb)\", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            int colon = value.IndexOf(':');
+            if (colon > 0)
+            {
+                string protocol = value.Substring(0, colon).Trim();
+                if (string.Equals(protocol, TdsEnums.TCP, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+
+                if (string.Equals(protocol, TdsEnums.NP, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(protocol, TdsEnums.LPC, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(protocol, TdsEnums.VIA, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(protocol, TdsEnums.ADMIN, StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+
+                // Not a protocol prefix, e.g. an IPv6 address.
+            }
+
+            // Without a prefix, managed SNI uses TCP. Native SNI uses shared memory first for
+            // the local machine, and TCP for other servers when MultiSubnetFailover is on.
+            if (useManagedNetworking)
+            {
+                return true;
+            }
+
+            string host = value;
+            if (!host.StartsWith("[", StringComparison.Ordinal))
+            {
+                int separator = host.IndexOfAny(s_hostSeparators);
+                if (separator >= 0)
+                {
+                    host = host.Substring(0, separator);
+                }
+            }
+            else
+            {
+                int end = host.IndexOf(']');
+                host = end > 0 ? host.Substring(1, end - 1) : host;
+            }
+
+            return !IsLocalHostName(host.Trim());
+        }
+
+        private static bool IsLocalHostName(string host)
+        {
+            if (host.Length == 0 ||
+                host == "." ||
+                string.Equals(host, "(local)", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(host, "localhost", StringComparison.OrdinalIgnoreCase) ||
+                host == "127.0.0.1" ||
+                host == "::1")
+            {
+                return true;
+            }
+
+            // Match the full name only; a remote host can share the short machine name.
+            return string.Equals(host, Environment.MachineName, StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(host.TrimEnd('.'), s_localFullyQualifiedName.Value, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static readonly Lazy<string> s_localFullyQualifiedName = new(GetComputerNameDnsFullyQualified);
 
         private static string GetComputerNameDnsFullyQualified()
         {
@@ -960,6 +1052,23 @@ namespace Microsoft.Data.SqlClient
             catch (Exception e) when (e is FormatException || e is OverflowException)
             {
                 throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.PoolBlockingPeriod, e);
+            }
+        }
+
+        internal SqlVectorTypeSupport ConvertValueToVectorTypeSupport()
+        {
+            if (!TryGetParsetableValue(DbConnectionStringKeywords.VectorTypeSupport, out string value))
+            {
+                return DbConnectionStringDefaults.VectorTypeSupport;
+            }
+
+            try
+            {
+                return VectorTypeSupportUtilities.ConvertToVectorTypeSupport(DbConnectionStringKeywords.VectorTypeSupport, value);
+            }
+            catch (Exception e) when (e is FormatException || e is OverflowException)
+            {
+                throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.VectorTypeSupport, e);
             }
         }
 
@@ -1231,14 +1340,12 @@ namespace Microsoft.Data.SqlClient
             DoubleQuoteValueQuote,
             SingleQuoteValue,
             SingleQuoteValueQuote,
-            BraceQuoteValue,
-            BraceQuoteValueQuote,
             QuotedValueEnd,
             NullTermination,
         };
 
         // @TODO: This should probably be extracted into its own parser class
-        internal static int GetKeyValuePair(string connectionString, int currentPosition, StringBuilder buffer, bool useOdbcRules, out string keyname, out string keyvalue)
+        internal static int GetKeyValuePair(string connectionString, int currentPosition, StringBuilder buffer, out string keyname, out string keyvalue)
         {
             int startposition = currentPosition;
 
@@ -1287,7 +1394,7 @@ namespace Microsoft.Data.SqlClient
                         break;
 
                     case ParserState.KeyEqual: // \\s*=(?!=)\\s*
-                        if (!useOdbcRules && '=' == currentChar)
+                        if ('=' == currentChar)
                         { parserState = ParserState.Key; break; }
                         keyname = GetKeyName(buffer);
                         if (string.IsNullOrEmpty(keyname))
@@ -1299,18 +1406,10 @@ namespace Microsoft.Data.SqlClient
                     case ParserState.KeyEnd:
                         if (char.IsWhiteSpace(currentChar))
                         { continue; }
-                        if (useOdbcRules)
-                        {
-                            if ('{' == currentChar)
-                            { parserState = ParserState.BraceQuoteValue; break; }
-                        }
-                        else
-                        {
-                            if ('\'' == currentChar)
-                            { parserState = ParserState.SingleQuoteValue; continue; }
-                            if ('"' == currentChar)
-                            { parserState = ParserState.DoubleQuoteValue; continue; }
-                        }
+                        if ('\'' == currentChar)
+                        { parserState = ParserState.SingleQuoteValue; continue; }
+                        if ('"' == currentChar)
+                        { parserState = ParserState.DoubleQuoteValue; continue; }
                         if (';' == currentChar)
                         { goto ParserExit; }
                         if ('\0' == currentChar)
@@ -1355,20 +1454,6 @@ namespace Microsoft.Data.SqlClient
                         parserState = ParserState.QuotedValueEnd;
                         goto case ParserState.QuotedValueEnd;
 
-                    case ParserState.BraceQuoteValue: // "(\\{([^\\}\\u0000]|\\}\\})*\\})"
-                        if ('}' == currentChar)
-                        { parserState = ParserState.BraceQuoteValueQuote; break; }
-                        if ('\0' == currentChar)
-                        { throw ADP.ConnectionStringSyntax(startposition); }
-                        break;
-
-                    case ParserState.BraceQuoteValueQuote:
-                        if ('}' == currentChar)
-                        { parserState = ParserState.BraceQuoteValue; break; }
-                        keyvalue = GetKeyValue(buffer, false);
-                        parserState = ParserState.QuotedValueEnd;
-                        goto case ParserState.QuotedValueEnd;
-
                     case ParserState.QuotedValueEnd:
                         if (char.IsWhiteSpace(currentChar))
                         { continue; }
@@ -1396,7 +1481,6 @@ namespace Microsoft.Data.SqlClient
                 case ParserState.Key:
                 case ParserState.DoubleQuoteValue:
                 case ParserState.SingleQuoteValue:
-                case ParserState.BraceQuoteValue:
                     // keyword not found/unbalanced double/single quote
                     throw ADP.ConnectionStringSyntax(startposition);
 
@@ -1412,7 +1496,7 @@ namespace Microsoft.Data.SqlClient
                     keyvalue = GetKeyValue(buffer, true);
 
                     char tmpChar = keyvalue[keyvalue.Length - 1];
-                    if (!useOdbcRules && (('\'' == tmpChar) || ('"' == tmpChar)))
+                    if (('\'' == tmpChar) || ('"' == tmpChar))
                     {
                         throw ADP.ConnectionStringSyntax(startposition);    // unquoted value must not end in quote, except for odbc
                     }
@@ -1420,7 +1504,6 @@ namespace Microsoft.Data.SqlClient
 
                 case ParserState.DoubleQuoteValueQuote:
                 case ParserState.SingleQuoteValueQuote:
-                case ParserState.BraceQuoteValueQuote:
                 case ParserState.QuotedValueEnd:
                     // quoted value at end of line
                     keyvalue = GetKeyValue(buffer, false);
@@ -1461,7 +1544,7 @@ namespace Microsoft.Data.SqlClient
             {
 #if DEBUG
                 bool compValue = s_connectionStringValidKeyRegex.IsMatch(keyname);
-                Debug.Assert(((0 < keyname.Length) && (';' != keyname[0]) && !char.IsWhiteSpace(keyname[0]) && (-1 == keyname.IndexOf('\u0000'))) == compValue, "IsValueValid mismatch with regex");
+                Debug.Assert(((0 < keyname.Length) && (';' != keyname[0]) && !char.IsWhiteSpace(keyname[0]) && (-1 == keyname.IndexOf('\u0000'))) == compValue, "IsKeyNameValid mismatch with regex");
 #endif
                 return ((0 < keyname.Length) && (';' != keyname[0]) && !char.IsWhiteSpace(keyname[0]) && (-1 == keyname.IndexOf('\u0000')));
             }
@@ -1471,9 +1554,7 @@ namespace Microsoft.Data.SqlClient
         private static NameValuePair ParseInternal(
             Dictionary<string, string> parsetable,
             string connectionString,
-            bool buildChain,
-            IReadOnlyDictionary<string, string> synonyms,
-            bool firstKey)
+            IReadOnlyDictionary<string, string> synonyms)
         {
             Debug.Assert(connectionString != null, "null connectionstring");
             StringBuilder buffer = new StringBuilder();
@@ -1490,7 +1571,7 @@ namespace Microsoft.Data.SqlClient
                     int startPosition = nextStartPosition;
 
                     string keyname, keyvalue;
-                    nextStartPosition = GetKeyValuePair(connectionString, startPosition, buffer, firstKey, out keyname, out keyvalue);
+                    nextStartPosition = GetKeyValuePair(connectionString, startPosition, buffer, out keyname, out keyvalue);
                     if (string.IsNullOrEmpty(keyname))
                     {
                         // if (nextStartPosition != endPosition) { throw; }
@@ -1509,17 +1590,16 @@ namespace Microsoft.Data.SqlClient
                     {
                         throw ADP.KeywordNotSupported(keyname);
                     }
-                    if (!firstKey || !parsetable.ContainsKey(realkeyname))
-                    {
-                        parsetable[realkeyname] = keyvalue; // last key-value pair wins (or first)
-                    }
+                    // Last key-value pair wins
+                    parsetable[realkeyname] = keyvalue;
 
                     if (localKeychain != null)
                     {
                         localKeychain = localKeychain.Next = new NameValuePair(realkeyname, keyvalue, nextStartPosition - startPosition);
                     }
-                    else if (buildChain)
-                    { // first time only - don't contain modified chain from UDL file
+                    else
+                    {
+                        // first time only - don't contain modified chain from UDL file
                         keychain = localKeychain = new NameValuePair(realkeyname, keyvalue, nextStartPosition - startPosition);
                     }
                 }
@@ -1527,10 +1607,10 @@ namespace Microsoft.Data.SqlClient
             }
             catch (ArgumentException e)
             {
-                ParseComparison(parsetable, connectionString, synonyms, firstKey, e);
+                ParseComparison(parsetable, connectionString, synonyms, e);
                 throw;
             }
-            ParseComparison(parsetable, connectionString, synonyms, firstKey, null);
+            ParseComparison(parsetable, connectionString, synonyms, null);
             #endif
 
             return keychain;
@@ -1728,7 +1808,7 @@ namespace Microsoft.Data.SqlClient
             ADP.CheckArgumentNull(builder, nameof(builder));
             ADP.CheckArgumentLength(keyName, nameof(keyName));
 
-            if (keyName == null || !s_connectionStringValidKeyRegex.IsMatch(keyName))
+            if (keyName == null || !IsKeyNameValid(keyName))
             {
                 throw ADP.InvalidKeyname(keyName);
             }

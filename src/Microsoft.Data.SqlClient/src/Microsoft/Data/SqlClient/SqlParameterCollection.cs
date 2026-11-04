@@ -35,6 +35,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/ItemIndex/*' />
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public new SqlParameter this[int index]
         {
             get => (SqlParameter)GetParameter(index);
@@ -51,6 +53,13 @@ namespace Microsoft.Data.SqlClient
             get => (SqlParameter)GetParameter(parameterName);
             set => SetParameter(parameterName, value);
         }
+
+        #if NETFRAMEWORK
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/AddParameterNameValue/*'/>
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        [Obsolete("Add(String parameterName, Object value) has been deprecated.  Use AddWithValue(String parameterName, Object value).  http://go.microsoft.com/fwlink/?linkid=14202", false)]
+        public SqlParameter Add(string parameterName, object value) => AddWithValue(parameterName, value);
+        #endif
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/AddValue1/*' />
         public SqlParameter Add(SqlParameter value)
@@ -246,7 +255,16 @@ namespace Microsoft.Data.SqlClient
         public override void RemoveAt(int index)
         {
             IsDirty = true;
-            RangeCheck(index);
+
+            // IList.RemoveAt documents ArgumentOutOfRangeException when "index is not a valid index in the IList";
+            // the indexer keeps the IndexOutOfRangeException that SqlParameterCollection.Item[Int32] documents.
+            if ((index < 0) || (Count <= index))
+            {
+                throw ADP.ArgumentOutOfRange(
+                    StringsHelper.GetString(Strings.ADP_CollectionIndexInt32, index.ToString(CultureInfo.InvariantCulture), GetType().Name, Count.ToString(CultureInfo.InvariantCulture)),
+                    nameof(index));
+            }
+
             RemoveIndex(index);
         }
 

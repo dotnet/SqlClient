@@ -19,7 +19,6 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
             string dstConstr = DataTestUtility.TCPConnectionString;
             string targetTable = DataTestUtility.GetShortName("@SqlBulkCopyTest_MissingTargetTable", false);
             using (SqlConnection dstConn = new SqlConnection(dstConstr))
-            using (SqlCommand dstCmd = dstConn.CreateCommand())
             {
                 dstConn.Open();
 

@@ -235,11 +235,16 @@
     <ExecuteReader name="BehaviorParameter">
       <param name="behavior">
         An instance of <see cref="T:System.Data.CommandBehavior" />, specifying options for batch execution and data retrieval.
-        Only <see cref="F:System.Data.CommandBehavior.SequentialAccess"/> and <see cref="F:System.Data.CommandBehavior.CloseConnection"/> are supported at the batch level.
+        Supported values at the batch level are <see cref="F:System.Data.CommandBehavior.Default"/>,
+        <see cref="F:System.Data.CommandBehavior.SequentialAccess"/>, <see cref="F:System.Data.CommandBehavior.CloseConnection"/>,
+        or a bitwise combination of <see cref="F:System.Data.CommandBehavior.SequentialAccess"/> and <see cref="F:System.Data.CommandBehavior.CloseConnection"/>.
       </param>
       <summary>
         Sends the <see cref="P:Microsoft.Data.SqlClient.SqlBatch.Commands" /> to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Connection" /> and builds a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />.
       </summary>
+      <exception cref="T:System.ArgumentOutOfRangeException">
+        The <paramref name="behavior" /> value is invalid or is not supported at the batch level.
+      </exception>
       <example>
         <para>
           The following example creates a <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> and a <see cref="T:Microsoft.Data.SqlClient.SqlBatch" />, then adds multiple <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> objects to the batch. It then executes the batch, creating a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />. The example reads through the results of the batch commands, writing them to the console. Finally, the example closes the <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> and then the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> as the <c>using</c> blocks fall out of scope.
@@ -293,14 +298,11 @@
       <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
       <summary>
         An asynchronous version of <see cref="M:Microsoft.Data.SqlClient.SqlBatch.ExecuteReader" />, which sends the <see cref="P:Microsoft.Data.SqlClient.SqlBatch.Commands" /> to the <see cref="P:Microsoft.Data.SqlClient.SqlBatch.Connection" /> and builds a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />.
-        Exceptions will be reported via the returned Task object.
+        Operational exceptions are reported via the returned task; usage exceptions are thrown synchronously.
       </summary>
       <returns>A task representing the asynchronous operation.</returns>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
         An error occurred while executing the batch.
-      </exception>
-      <exception cref="T:System.ArgumentException">
-        The <see cref="T:System.Data.CommandBehavior" /> value is invalid.
       </exception>
       <exception cref="T:System.OperationCanceledException">
         The cancellation token was canceled. This exception is stored into the returned task.
@@ -309,19 +311,21 @@
     <ExecuteReaderAsync name="BehaviorParameter">
       <param name="behavior">
         An instance of <see cref="T:System.Data.CommandBehavior" />, specifying options for batch execution and data retrieval.
-        Only <see cref="F:System.Data.CommandBehavior.SequentialAccess"/> and <see cref="F:System.Data.CommandBehavior.CloseConnection"/> are supported at the batch level.
+        Supported values at the batch level are <see cref="F:System.Data.CommandBehavior.Default"/>,
+        <see cref="F:System.Data.CommandBehavior.SequentialAccess"/>, <see cref="F:System.Data.CommandBehavior.CloseConnection"/>,
+        or a bitwise combination of <see cref="F:System.Data.CommandBehavior.SequentialAccess"/> and <see cref="F:System.Data.CommandBehavior.CloseConnection"/>.
       </param>
       <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
       <summary>
         An asynchronous version of <see cref="M:Microsoft.Data.SqlClient.SqlBatch.ExecuteReader" />, which sends the <see cref="P:Microsoft.Data.SqlClient.SqlBatch.Commands" /> to the <see cref="P:Microsoft.Data.SqlClient.SqlBatch.Connection" /> and builds a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" />.
-        Exceptions will be reported via the returned Task object.
+        Operational exceptions are reported via the returned task; usage exceptions are thrown synchronously.
       </summary>
       <returns>A task representing the asynchronous operation.</returns>
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
         An error occurred while executing the batch.
       </exception>
-      <exception cref="T:System.ArgumentException">
-        The <see cref="T:System.Data.CommandBehavior" /> value is invalid.
+      <exception cref="T:System.ArgumentOutOfRangeException">
+        The <paramref name="behavior" /> value is invalid or is not supported at the batch level. This exception is thrown synchronously.
       </exception>
       <exception cref="T:System.OperationCanceledException">
         The cancellation token was canceled. This exception is stored into the returned task.
@@ -381,7 +385,9 @@
     <ExecuteDbDataReader>
       <param name="behavior">
         An instance of <see cref="T:System.Data.CommandBehavior" />, specifying options for batch execution and data retrieval.
-        Only <see cref="F:System.Data.CommandBehavior.SequentialAccess"/> and <see cref="F:System.Data.CommandBehavior.CloseConnection"/> are supported at the batch level.
+        Supported values at the batch level are <see cref="F:System.Data.CommandBehavior.Default"/>,
+        <see cref="F:System.Data.CommandBehavior.SequentialAccess"/>, <see cref="F:System.Data.CommandBehavior.CloseConnection"/>,
+        or a bitwise combination of <see cref="F:System.Data.CommandBehavior.SequentialAccess"/> and <see cref="F:System.Data.CommandBehavior.CloseConnection"/>.
       </param>
       <summary>
         Executes the batch against its connection, returning a <see cref="T:Microsoft.Data.SqlClient.SqlDataReader" /> which can be used to access the results.
@@ -400,14 +406,16 @@ When the batch returns multiple result sets from different commands, <xref:Micro
       <exception cref="T:Microsoft.Data.SqlClient.SqlException">
         An error occurred while executing the batch.
       </exception>
-      <exception cref="T:System.ArgumentException">
-        The <see cref="T:System.Data.CommandBehavior" /> value is invalid.
+      <exception cref="T:System.ArgumentOutOfRangeException">
+        The <paramref name="behavior" /> value is invalid or is not supported at the batch level.
       </exception>
     </ExecuteDbDataReader>
     <ExecuteDbDataReaderAsync>
       <param name="behavior">
         An instance of <see cref="T:System.Data.CommandBehavior" />, specifying options for batch execution and data retrieval.
-        Only <see cref="F:System.Data.CommandBehavior.SequentialAccess"/> and <see cref="F:System.Data.CommandBehavior.CloseConnection"/> are supported at the batch level.
+        Supported values at the batch level are <see cref="F:System.Data.CommandBehavior.Default"/>,
+        <see cref="F:System.Data.CommandBehavior.SequentialAccess"/>, <see cref="F:System.Data.CommandBehavior.CloseConnection"/>,
+        or a bitwise combination of <see cref="F:System.Data.CommandBehavior.SequentialAccess"/> and <see cref="F:System.Data.CommandBehavior.CloseConnection"/>.
       </param>
       <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
       <summary>
@@ -419,13 +427,16 @@ When the batch returns multiple result sets from different commands, <xref:Micro
           <![CDATA[
 For more information about asynchronous programming, see [Asynchronous Programming](https://learn.microsoft.com/sql/connect/ado-net/asynchronous-programming).
 
-This method stores in the task it returns all non-usage exceptions that the method's synchronous counterpart can throw. If an exception is stored into the returned task, that exception will be thrown when the task is awaited. Usage exceptions, such as <xref:System.ArgumentException>, are still thrown synchronously. For the stored exceptions, see the exceptions thrown by <xref:System.Data.Common.DbBatch.ExecuteDbDataReader(System.Data.CommandBehavior)>.
+This method stores exceptions in the task it returns, including exceptions for invalid or unsupported behavior values. These exceptions are thrown when the task is awaited. For possible exceptions, see <xref:Microsoft.Data.SqlClient.SqlBatch.ExecuteReader(System.Data.CommandBehavior)>.
 
 > [!NOTE]
 > This method benefits from <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteReaderAsync(System.Threading.CancellationToken)>, and all the expected exceptions of that method also apply here.
           ]]>
         </format>
       </remarks>
+      <exception cref="T:System.ArgumentOutOfRangeException">
+        The <paramref name="behavior" /> value is invalid or is not supported at the batch level. This exception is stored in the returned task.
+      </exception>
       <exception cref="T:System.OperationCanceledException">
         The cancellation token was canceled. This exception is stored into the returned task.
       </exception>

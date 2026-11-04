@@ -5,6 +5,9 @@ on:
     paths:
       - '.github/workflows/**/*.md'
       - '.github/workflows/**/*.lock.yml'
+      - '.github/workflows/verify-aw-lock.yml'
+      - '.github/scripts/validate-triage-output.cjs'
+      - '.github/scripts/tests/validate-triage-output.test.cjs'
 
 permissions:
   contents: read
@@ -13,12 +16,15 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+
+      - name: Test triage output validation
+        run: node --test .github/scripts/tests/validate-triage-output.test.cjs
 
       - name: Install gh-aw extension
-        uses: github/gh-aw-actions/setup-cli@8c7d04ebf1ece56cd381446125da3e0f6896294a # v0.80.9
+        uses: github/gh-aw-actions/setup-cli@9271a1804551c0dc4fb0085a97979950aa2f8489 # v0.88.2
         with:
-          version: v0.80.9
+          version: v0.88.2
 
       - name: Recompile agentic workflows
         run: gh aw compile

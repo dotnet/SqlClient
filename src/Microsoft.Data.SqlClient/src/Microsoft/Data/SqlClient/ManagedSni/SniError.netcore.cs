@@ -7,6 +7,7 @@
 using System;
 using System.ComponentModel;
 using System.Net.Sockets;
+using Microsoft.Data.SqlClient.Parser;
 
 namespace Microsoft.Data.SqlClient.ManagedSni
 {
@@ -16,7 +17,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
     internal class SniError
     {
         // Error numbers from native SNI implementation
-        // This is signed int representation of the error code 0x80090325 
+        // This is signed int representation of the error code 0x80090325
         internal const int CertificateValidationErrorCode = -2146893019;
 
         public readonly SniProviders provider;

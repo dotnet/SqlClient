@@ -35,8 +35,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             {
                 RegisterGlobalProviders(AkvStoreProvider);
             }
-            SetupAzureKeyVault();
-            SetupDatabase();
+
+            SetupOrCleanUp(() =>
+            {
+                SetupAzureKeyVault();
+                SetupDatabase();
+            });
         }
 
         public static void RegisterGlobalProviders(SqlColumnEncryptionAzureKeyVaultProvider akvProvider)
@@ -109,18 +113,39 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         protected override void Dispose(bool disposing)
         {
-            base.Dispose(disposing);
-
-            foreach (string keyName in _akvKeyNames)
+            try
             {
-                try
+                base.Dispose(disposing);
+            }
+            finally
+            {
+                foreach (string keyName in _akvKeyNames)
                 {
-                    _keyClient.StartDeleteKey(keyName);
+                    try
+                    {
+                        // NOTE: The deletion is awaited so that the key is actually removed before the
+                        //   process exits; StartDeleteKey only begins the (long running) operation.
+                        _keyClient.StartDeleteKey(keyName).WaitForCompletion();
+
+                        // A deleted key stays soft-deleted (still consuming its name and vault quota)
+                        // until purged. Purging is best-effort: the principal may lack permission, or
+                        // the vault may have purge protection enabled.
+                        try
+                        {
+                            _keyClient.PurgeDeletedKey(keyName);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"{nameof(SQLSetupStrategyAzureKeyVault)}: failed to purge AKV key '{keyName}': {ex.Message}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"{nameof(SQLSetupStrategyAzureKeyVault)}: failed to delete AKV key '{keyName}': {ex.Message}");
+                    }
                 }
-                catch (Exception)
-                {
-                    continue;
-                }
+
+                _akvKeyNames.Clear();
             }
         }
     }

@@ -4,7 +4,12 @@
 
 using System;
 using System.Diagnostics;
+using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.Common.SystemDataInternals;
+using Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -20,26 +25,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             _testOutputHelper = testOutputHelper;
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAADPasswordConnStrSetup))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAzureConnStringSetup), nameof(DataTestUtility.IsUserManagedIdentitySupported))]
         public void FedAuthTokenRefreshTest()
         {
-            #pragma warning disable 0618 // Type or member is obsolete
-            SqlAuthenticationProvider original = SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword);
-            #pragma warning restore 0618 // Type or member is obsolete
+            SqlAuthenticationProvider original = SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity);
 
             try
             {
-                #pragma warning disable 0618 // Type or member is obsolete
-                SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, new UsernamePasswordProvider(DataTestUtility.ApplicationClientId));
-                #pragma warning restore 0618 // Type or member is obsolete
+                SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity, new UserAssignedManagedIdentityProvider());
 
-                string connectionString = DataTestUtility.AADPasswordConnectionString;
+                string connectionString = DataTestUtility.GetUserIdentityConnectionString();
 
-                using SqlConnection connection = new SqlConnection(connectionString);
+                using SqlConnection connection = new(connectionString);
                 connection.Open();
 
-                string oldTokenHash = "";
-                DateTime? oldExpiryDateTime = FedAuthTokenHelper.SetTokenExpiryDateTime(connection, minutesToExpire: 1, out oldTokenHash);
+                DateTime? oldExpiryDateTime = FedAuthTokenHelper.SetTokenExpiryDateTime(connection, minutesToExpire: 1, out string oldTokenHash);
                 Assert.True(oldExpiryDateTime != null, "Failed to make token expiry to expire in one minute.");
 
                 // Convert and display the old expiry into local time which should be in 1 minute from now
@@ -56,7 +56,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.True(result != string.Empty, "The connection's command must return a value");
 
                 // The new connection will use the same FedAuthToken but will refresh it first as it will expire in 1 minute.
-                using (SqlConnection connection2 = new SqlConnection(connectionString))
+                using (SqlConnection connection2 = new(connectionString))
                 {
                     connection2.Open();
 
@@ -80,11 +80,109 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 if (original is not null)
                 {
                     // Reset to driver internal provider.
-                    #pragma warning disable 0618 // Type or member is obsolete
-                    SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, original);
-                    #pragma warning restore 0618 // Type or member is obsolete
+                    SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity, original);
                 }
             }
+        }
+
+        /// <summary>
+        /// Verifies both pools replace connections with expired or nearly expired tokens and
+        /// invoke the callback when the cached token also needs refreshing, for Open and OpenAsync.
+        /// </summary>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsManagedIdentitySetup))]
+        [InlineData(false, false, -1)]
+        [InlineData(false, true, -1)]
+        [InlineData(true, false, -1)]
+        [InlineData(true, true, -1)]
+        [InlineData(false, false, 5)]
+        [InlineData(false, true, 5)]
+        [InlineData(true, false, 5)]
+        [InlineData(true, true, 5)]
+        public async Task AccessTokenCallback_PooledConnectionIsReplacedOnExpiry(bool usePoolV2, bool async, int expiresInSeconds)
+        {
+            using var poolVersion = new ConnectionPoolVersionScope(usePoolV2);
+            string[] credentialKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
+            var builder = new SqlConnectionStringBuilder(
+                DataTestUtility.TCPConnectionString.RemoveKeysInConnStr(credentialKeys))
+            {
+                Pooling = true,
+                MinPoolSize = 0,
+                MaxPoolSize = 1,
+                ConnectTimeout = 30,
+                Enlist = false
+            };
+            SqlAuthenticationToken callbackToken = null;
+            int callbackInvocations = 0;
+            using var connection = new SqlConnection(builder.ConnectionString)
+            {
+                AccessTokenCallback = async (parameters, cancellationToken) =>
+                {
+                    Interlocked.Increment(ref callbackInvocations);
+                    cancellationToken.ThrowIfCancellationRequested();
+                    SqlAuthenticationToken token = await DataTestUtility.GetSqlAuthenticationTokenAsync();
+                    cancellationToken.ThrowIfCancellationRequested();
+                    callbackToken = token;
+                    return callbackToken;
+                }
+            };
+
+            Task OpenConnection()
+            {
+                if (async)
+                {
+                    return connection.OpenAsync();
+                }
+                connection.Open();
+                return Task.CompletedTask;
+            }
+
+            // The empty pool requires a physical login, which invokes the callback and caches its token.
+            await OpenConnection();
+            object original = connection.GetInternalConnection();
+            Assert.NotNull(callbackToken);
+            int callbackCountAfterLogin = callbackInvocations;
+            Assert.True(callbackCountAfterLogin > 0);
+            // Close returns the physical connection to the pool; reopening reuses it without authentication.
+            connection.Close();
+            await OpenConnection();
+            Assert.Same(original, connection.GetInternalConnection());
+            Assert.Equal(callbackCountAfterLogin, callbackInvocations);
+
+            // The connection's expiry controls eviction; the cached token's expiry controls callback refresh.
+            // Age both without changing the real token or waiting. Five seconds is within the 30-second
+            // checkout buffer; minus one second covers an already expired token.
+            DateTimeOffset expiry = DateTimeOffset.UtcNow.AddSeconds(expiresInSeconds);
+            object cachedContext = FedAuthTokenHelper.GetAuthenticationContextValue(connection);
+            FieldInfo cacheExpiryField = cachedContext.GetType().GetField("_expirationTime", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.NotNull(cacheExpiryField);
+            cacheExpiryField.SetValue(cachedContext, expiry.UtcDateTime);
+            FieldInfo tokenField = original.GetType().GetField("_fedAuthToken", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.NotNull(tokenField);
+            object expiringToken = Activator.CreateInstance(tokenField.FieldType,
+                BindingFlags.Instance | BindingFlags.NonPublic, binder: null,
+                args: new object[] { new SqlAuthenticationToken(callbackToken.AccessToken, expiry) },
+                culture: null);
+            tokenField.SetValue(original, expiringToken);
+            // Expiry is checked on checkout, not return, so Close does not invoke the callback.
+            connection.Close();
+            Assert.Equal(callbackCountAfterLogin, callbackInvocations);
+
+            // Checkout discards the expired physical connection rather than reauthenticating it.
+            // Its replacement needs a login, and the expiring cache entry forces another callback.
+            // The credential may still return the same valid token; callback invocation is what matters.
+            await OpenConnection();
+            Assert.NotSame(original, connection.GetInternalConnection());
+            Assert.True(callbackInvocations > callbackCountAfterLogin);
+            object replacement = connection.GetInternalConnection();
+            int callbackCountAfterRefresh = callbackInvocations;
+            // The replacement now has a valid token, so another reopen reuses it without another callback.
+            connection.Close();
+            await OpenConnection();
+            Assert.Same(replacement, connection.GetInternalConnection());
+            Assert.Equal(callbackCountAfterRefresh, callbackInvocations);
+            using SqlCommand command = connection.CreateCommand();
+            command.CommandText = "SELECT 1";
+            Assert.Equal(1, async ? await command.ExecuteScalarAsync() : command.ExecuteScalar());
         }
 
         [Conditional("DEBUG")]

@@ -23,7 +23,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     // TODO(ADO-39873): Re-enable these tests after addressing their flakiness.
     [Trait("Set", "3")]
-    [Trait("Category", "flaky")]
+    [Trait("category", "flaky")]
     // Serialized execution: DiagnosticListener is global state, so these tests
     // must not run in parallel with each other.
     [Collection("DiagnosticTests")]

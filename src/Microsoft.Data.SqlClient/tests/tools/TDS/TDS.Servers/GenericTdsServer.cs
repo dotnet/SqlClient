@@ -71,6 +71,15 @@ namespace Microsoft.SqlServer.TDS.Servers
         public byte ServerSupportedVectorFeatureExtVersion { get; set; } = DefaultSupportedVectorFeatureExtVersion;
 
         /// <summary>
+        /// When true, the vector feature extension is acknowledged with
+        /// <see cref="ServerSupportedVectorFeatureExtVersion"/> as-is, rather than capped to
+        /// the version the client requested. This models a server which acknowledges a
+        /// version the client cannot interpret, so that the client's own ceiling can be
+        /// exercised.
+        /// </summary>
+        public bool AcknowledgeRawVectorFeatureExtVersion { get; set; }
+
+        /// <summary>
         /// Property for setting server version for user agent feature extension.
         /// </summary>
         public byte ServerSupportedUserAgentFeatureExtVersion { get; set; } = DefaultSupportedUserAgentFeatureExtVersion;
@@ -176,7 +185,8 @@ namespace Microsoft.SqlServer.TDS.Servers
             {
                 ServerEndPoint = new IPEndPoint(IPAddress.Any, 0),
                 EndpointName = methodName,
-                EventLog = Arguments.Log
+                EventLog = Arguments.Log,
+                ExpectTlsHandshakeFailure = Arguments.ExpectTlsHandshakeFailure
             };
             _endpoint.Start();
         }
@@ -785,7 +795,9 @@ namespace Microsoft.SqlServer.TDS.Servers
             {
                 // Create ack data (1 byte: Version number)
                 byte[] data = new byte[1];
-                data[0] = ServerSupportedVectorFeatureExtVersion > _clientSupportedVectorFeatureExtVersion ? _clientSupportedVectorFeatureExtVersion : ServerSupportedVectorFeatureExtVersion;
+                data[0] = AcknowledgeRawVectorFeatureExtVersion || ServerSupportedVectorFeatureExtVersion <= _clientSupportedVectorFeatureExtVersion
+                    ? ServerSupportedVectorFeatureExtVersion
+                    : _clientSupportedVectorFeatureExtVersion;
 
                 // Create vector support as a generic feature extension option
                 TDSFeatureExtAckGenericOption vectorSupportOption = new TDSFeatureExtAckGenericOption(TDSFeatureID.VectorSupport, (uint)data.Length, data);
@@ -1063,7 +1075,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             {
                 rng.GetBytes(randomBytes);
             }
-            
+
             return randomBytes;
         }
 
@@ -1086,6 +1098,16 @@ namespace Microsoft.SqlServer.TDS.Servers
             }
 
             return left.SequenceEqual<byte>(right);
+        }
+
+        /// <summary>
+        /// Forcibly close every active client connection without stopping
+        /// the TCP listener. The server continues to accept new
+        /// connections (e.g. reconnection attempts).
+        /// </summary>
+        protected void DisconnectAllClients()
+        {
+            _endpoint?.DisconnectAll();
         }
 
         public virtual void Dispose()

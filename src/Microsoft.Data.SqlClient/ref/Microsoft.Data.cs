@@ -5,26 +5,24 @@
 namespace Microsoft.Data;
 
 /// <include file='../../../doc/snippets/Microsoft.Data/OperationAbortedException.xml' path='docs/members[@name="OperationAbortedException"]/OperationAbortedException/*' />
-#if NETFRAMEWORK
-[System.Serializable]
-#endif
+[System.SerializableAttribute]
+[System.Runtime.CompilerServices.TypeForwardedFromAttribute("System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089")]
 public sealed class OperationAbortedException : System.SystemException
 {
-    // Included to hide the default public constructor. 
-    internal OperationAbortedException() { }
+    private OperationAbortedException(string message, System.Exception innerException) { }
 
-    #if NETFRAMEWORK
-    private OperationAbortedException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) { }
+    #if NET
+    [System.ObsoleteAttribute]
     #endif
+    private OperationAbortedException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) { }
 }
 
 /// <include file='../../../doc/snippets/Microsoft.Data/SqlDbTypeExtensions.xml' path='docs/members[@name="SqlDbTypeExtensions"]/SqlDbTypeExtensions/*' />
 public static class SqlDbTypeExtensions
 {
-    /// <include file='../../../doc/snippets/Microsoft.Data/SqlDbTypeExtensions.xml' path='docs/members[@name="SqlDbTypeExtensions"]/SqlJson[@name="default"]' />
+    /// <include file='../../../doc/snippets/Microsoft.Data/SqlDbTypeExtensions.xml' path='docs/members[@name="SqlDbTypeExtensions"]/SqlJson[@name="default"]/*' />
     public const System.Data.SqlDbType Json = (System.Data.SqlDbType)35;
-    /// <include file='../../../doc/snippets/Microsoft.Data/SqlDbTypeExtensions.xml' path='docs/members[@name="SqlDbTypeExtensions"]/SqlVector[@name="default"]' />
+    /// <include file='../../../doc/snippets/Microsoft.Data/SqlDbTypeExtensions.xml' path='docs/members[@name="SqlDbTypeExtensions"]/SqlVector[@name="default"]/*' />
     public const System.Data.SqlDbType Vector = (System.Data.SqlDbType)36;
 }
-
 

@@ -40,14 +40,12 @@ parameters:
       - windows
 
   # The .NET runtime the benchmarks are executed against.  Must be one of the target frameworks of
-  # the PerformanceTests project (net8.0/net9.0/net10.0).
+  # the PerformanceTests project (net10.0).
   - name: dotnetFramework
     displayName: .NET Framework (TFM)
     type: string
-    default: net9.0
+    default: net10.0
     values:
-      - net8.0
-      - net9.0
       - net10.0
 
   # Maximum time (minutes) the template waits for the benchmark run on the VM before timing out.
@@ -110,7 +108,7 @@ parameters:
 
   # Optional SqlClient behaviour flags. These are applied to the benchmark runner config used by
   # BOTH the baseline and candidate passes on the VM.  Defaults match the checked-in
-  # runnerconfig.jsonc, so leaving them untouched preserves the default behaviour.
+  # runnerconfig.default.jsonc, so leaving them untouched preserves the default behaviour.
   - name: useManagedSniOnWindows
     displayName: UseManagedSniOnWindows
     type: boolean
@@ -129,20 +127,25 @@ parameters:
 # Fixed (non-configurable) constants for this pipeline.  These are intentionally NOT parameters or
 # library variables: they are invariant for the SqlClient perf pipelines.
 #   * buildConfiguration = Release            - perf numbers are only meaningful in Release.
-#   * sourcesSubDir       = dotnet-sqlclient  - folder 'self' checks out into under the template's
-#                                               MULTI-REPO checkout ($(Build.SourcesDirectory)/<repo>);
-#                                               must match the ADO repository name.
 #
 # NOTE: unlike sqlclient-perf-pipeline.yml, this pipeline does NOT reference the 'ADX Cluster
 # Variables' group and has no translate/ingest steps: PR results are never written to Kusto.
 variables:
+
+  # Multi-repo checkout uses the repository's leaf name, not GitHub's owner/repo name.
+  - ${{ if contains(variables['Build.Repository.Name'], '/') }}:
+    - name: PerfSourceRoot
+      value: $(Build.SourcesDirectory)/${{ split(variables['Build.Repository.Name'], '/')[1] }}
+  - ${{ else }}:
+    - name: PerfSourceRoot
+      value: $(Build.SourcesDirectory)/$(Build.Repository.Name)
 
   # Pre-computed testScriptArgs chunks.  The Windows entry point is PowerShell and binds
   # '-PascalCase' params, while the Linux one is bash and parses '--kebab-case' flags, so the
   # argument STYLE differs by platform.  Assembling the final args from these per-platform chunks
   # keeps the single testScriptArgs below readable instead of duplicating a full arg string across
   # the whole platform x baseline x fail-gate matrix.  Config flags are always passed (their
-  # defaults match runnerconfig.jsonc), so they live in the common chunk.
+  # defaults match runnerconfig.default.jsonc), so they live in the common chunk.
   - ${{ if eq(parameters.platform, 'windows') }}:
     - name: PerfArgsCommon
       value: '-Configuration Release -Framework ${{ parameters.dotnetFramework }} -ResultsSubdir perf-results -RegressionThreshold ${{ parameters.regressionThreshold }} -RunMode ${{ parameters.benchmarkRunMode }} -ConfirmationRuns ${{ parameters.confirmationRuns }} -UseManagedSniOnWindows ${{ lower(parameters.useManagedSniOnWindows) }} -UseOptimizedAsyncBehaviour ${{ lower(parameters.useOptimizedAsyncBehaviour) }} -UseConnectionPoolV2 ${{ lower(parameters.useConnectionPoolV2) }}'
@@ -193,7 +196,7 @@ extends:
     # The entire driver source tree is copied to the VM so the benchmarks (which reference
     # Microsoft.Data.SqlClient as a project) can be built from source against the current commit.
     # Under the template's multi-repo checkout, 'self' lands in a repo-named subfolder.
-    testRootDir: $(Build.SourcesDirectory)/dotnet-sqlclient
+    testRootDir: $(PerfSourceRoot)
 
     # Entry-point script (relative to testRootDir), selected by platform.  Linux uses bash, Windows
     # uses PowerShell, per the template's .sh/.ps1 convention.  Same scripts as the nightly perf
@@ -254,6 +257,6 @@ extends:
         condition: succeededOrFailed()
         inputs:
           targetType: filePath
-          filePath: $(Build.SourcesDirectory)/dotnet-sqlclient/eng/pipelines/perf/scripts/show_perf_results.sh
+          filePath: $(PerfSourceRoot)/eng/pipelines/perf/scripts/show_perf_results.sh
         env:
           RESULTS_DIR: $(Build.ArtifactStagingDirectory)/results

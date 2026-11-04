@@ -42,7 +42,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void SQLBU503290Test()
         {
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection conn = DataTestUtility.CreateConnection())
             {
                 conn.Open();
                 SqlParameter p = new SqlParameter("@p", SqlDbType.DateTimeOffset);
@@ -89,7 +89,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             createProcN += " SET @p3 = NULL";
             createProcN += " SET @p4 = NULL";
 
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection conn = DataTestUtility.CreateConnection())
             {
                 try
                 {
@@ -548,7 +548,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             createProcN += " SET @p1 = NULL";
             createProcN += " SET @p2 = NULL";
 
-            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection conn = DataTestUtility.CreateConnection())
             {
                 try
                 {
@@ -779,7 +779,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 "'9999-12-31 15:59:59.997 -08:00')";
             string tableInsert2 = "INSERT INTO " + tableName + " VALUES (NULL, NULL, NULL, NULL, NULL, NULL)";
 
-            using (SqlConnection conn = new SqlConnection(new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+            using (SqlConnection conn = DataTestUtility.CreateConnection(new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
             {
                 TypeSystemVersion = "SQL Server 2008"
             }.ConnectionString))
@@ -811,47 +811,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }
             }
+        }
 
-            using (SqlConnection conn = new SqlConnection(new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+        [Fact]
+        public static void TypeVersionKnobRejectsSqlServer2005()
+        {
+            string connectionString = new SqlConnectionStringBuilder
             {
+                DataSource = "localhost",
                 TypeSystemVersion = "SQL Server 2005"
-            }.ConnectionString))
-            {
-                conn.Open();
-                using (SqlCommand cmd = conn.CreateCommand())
-                {
-                    try
-                    {
-                        cmd.CommandText = tableCreate;
-                        cmd.ExecuteNonQuery();
-                        cmd.CommandText = tableInsert1;
-                        cmd.ExecuteNonQuery();
-                        cmd.CommandText = tableInsert2;
-                        cmd.ExecuteNonQuery();
+            }.ConnectionString;
 
-                        cmd.CommandText = "SELECT * FROM " + tableName;
-                        using (SqlDataReader rdr = cmd.ExecuteReader())
-                        {
-                            while (rdr.Read())
-                            {
-                                for (int i = 2; i < rdr.FieldCount; ++i)
-                                {
-                                    Assert.True(IsString(rdr, i), string.Format("FAILED: IsString failed for column: {0}", i));
-                                }
-                                for (int i = 2; i < rdr.FieldCount; ++i)
-                                {
-                                    ValidateReader(rdr, i);
-                                }
-                            }
-                        }
-                    }
-                    finally
-                    {
-                        cmd.CommandText = "DROP TABLE " + tableName;
-                        cmd.ExecuteNonQuery();
-                    }
-                }
-            }
+            // Validation happens during construction, without contacting a server.
+            Assert.Throws<ArgumentException>(() => new SqlConnection(connectionString));
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
@@ -870,7 +842,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 "'9999-12-31 15:59:59.997 -08:00')";
             string prepTableDst3 = "CREATE TABLE " + tempTableDst + " (ci int, c0 dateTime, c1 date, c2 time(7), c3 datetime2(3), c4 datetimeoffset)";
 
-            using SqlConnection conn = new(DataTestUtility.TCPConnectionString);
+            using SqlConnection conn = DataTestUtility.CreateConnection();
             conn.Open();
             using SqlCommand cmd = conn.CreateCommand();
             cmd.CommandText = prepTableSrc1;
@@ -881,7 +853,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             try
             {
-                using SqlConnection connDst = new(DataTestUtility.TCPConnectionString);
+                using SqlConnection connDst = DataTestUtility.CreateConnection();
                 connDst.Open();
                 using SqlCommand cmd2 = connDst.CreateCommand();
                 cmd2.CommandText = prepTableDst3;

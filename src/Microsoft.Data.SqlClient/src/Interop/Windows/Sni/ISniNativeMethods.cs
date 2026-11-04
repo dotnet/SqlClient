@@ -6,6 +6,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Text;
 using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient.NativeSni;
 
 namespace Interop.Windows.Sni
 {
@@ -34,8 +35,6 @@ namespace Interop.Windows.Sni
         uint SniGetPeerAddrStrWrapper(SNIHandle pConn, int bufferSize, StringBuilder addrBuffer, out uint addrLength);
 
         uint SniInitialize(IntPtr pmo);
-
-        uint SniIsTokenRestricted(IntPtr token, out bool isRestricted);
 
         uint SniOpenSyncExWrapper(ref SniClientConsumerInfo pClientConsumerInfo, out IntPtr ppConn);
 

@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlTypes;
 using System.Reflection;
+using Microsoft.Data.SqlClient.Parser.Tokens;
 using Microsoft.Data.SqlClient.Server;
 using Microsoft.Data.SqlClient.Tests.Common;
 using Microsoft.SqlServer.Server;
@@ -77,13 +78,13 @@ public class UdtAssemblyLoadHardeningTest
         using AssemblyLoadRecorder recorder = new();
 
         SqlConnection connection = new(ConnectionString);
-        SqlMetaDataPriv metaData = CreateUdtMetaData(HostileAssemblyQualifiedName);
+        TdsTypeInfo metaData = CreateUdtMetaData(HostileAssemblyQualifiedName);
 
         Exception exception = Record.Exception(
             () => connection.CheckGetExtendedUDTInfo(metaData, fThrow: true));
 
         Assert.NotNull(exception);
-        Assert.Null(metaData.udt.Type);
+        Assert.Null(metaData.UdtTypeInfo.Type);
         Assert.DoesNotContain("Contoso.Evil", recorder.LoadedNames);
 
         // The failure must be the policy's denial, not a loader miss.
@@ -110,11 +111,11 @@ public class UdtAssemblyLoadHardeningTest
         using PolicyScope scope = new();
 
         SqlConnection connection = new(ConnectionString);
-        SqlMetaDataPriv metaData = CreateUdtMetaData(qualifiedName);
+        TdsTypeInfo metaData = CreateUdtMetaData(qualifiedName);
 
         connection.CheckGetExtendedUDTInfo(metaData, fThrow: true);
 
-        Assert.Equal(typeof(AUserDefinedType), metaData.udt.Type);
+        Assert.Equal(typeof(AUserDefinedType), metaData.UdtTypeInfo.Type);
     }
 
     /// <summary>
@@ -129,11 +130,11 @@ public class UdtAssemblyLoadHardeningTest
         using AssemblyLoadRecorder recorder = new();
 
         SqlConnection connection = new(ConnectionString);
-        SqlMetaDataPriv metaData = CreateUdtMetaData(HostileAssemblyQualifiedName);
+        TdsTypeInfo metaData = CreateUdtMetaData(HostileAssemblyQualifiedName);
 
         connection.CheckGetExtendedUDTInfo(metaData, fThrow: false);
 
-        Assert.Null(metaData.udt.Type);
+        Assert.Null(metaData.UdtTypeInfo.Type);
         Assert.DoesNotContain("Contoso.Evil", recorder.LoadedNames);
     }
 
@@ -149,7 +150,7 @@ public class UdtAssemblyLoadHardeningTest
         using PolicyScope scope = new(legacy: true);
 
         SqlConnection connection = new(ConnectionString);
-        SqlMetaDataPriv metaData = CreateUdtMetaData(HostileAssemblyQualifiedName);
+        TdsTypeInfo metaData = CreateUdtMetaData(HostileAssemblyQualifiedName);
 
         Exception exception = Record.Exception(
             () => connection.CheckGetExtendedUDTInfo(metaData, fThrow: true));
@@ -184,14 +185,14 @@ public class UdtAssemblyLoadHardeningTest
         // in the default Restricted mode; only the attribute check stands
         // between the server-supplied name and the type's code.
         SqlConnection connection = new(ConnectionString);
-        SqlMetaDataPriv metaData = CreateUdtMetaData(
+        TdsTypeInfo metaData = CreateUdtMetaData(
             typeof(NotAUserDefinedType).AssemblyQualifiedName!);
 
         Exception exception = Record.Exception(
             () => connection.CheckGetExtendedUDTInfo(metaData, fThrow: true));
 
         Assert.NotNull(exception);
-        Assert.Null(metaData.udt.Type);
+        Assert.Null(metaData.UdtTypeInfo.Type);
         Assert.False(
             StaticConstructorMarker.Ran,
             "The type's static constructor must not have been triggered.");
@@ -207,12 +208,12 @@ public class UdtAssemblyLoadHardeningTest
         using PolicyScope scope = new();
 
         SqlConnection connection = new(ConnectionString);
-        SqlMetaDataPriv metaData = CreateUdtMetaData(
+        TdsTypeInfo metaData = CreateUdtMetaData(
             typeof(AUserDefinedType).AssemblyQualifiedName!);
 
         connection.CheckGetExtendedUDTInfo(metaData, fThrow: true);
 
-        Assert.Equal(typeof(AUserDefinedType), metaData.udt.Type);
+        Assert.Equal(typeof(AUserDefinedType), metaData.UdtTypeInfo.Type);
     }
 
     /// <summary>
@@ -225,12 +226,12 @@ public class UdtAssemblyLoadHardeningTest
         using PolicyScope scope = new(legacy: true);
 
         SqlConnection connection = new(ConnectionString);
-        SqlMetaDataPriv metaData = CreateUdtMetaData(
+        TdsTypeInfo metaData = CreateUdtMetaData(
             typeof(NotAUserDefinedType).AssemblyQualifiedName!);
 
         connection.CheckGetExtendedUDTInfo(metaData, fThrow: true);
 
-        Assert.Equal(typeof(NotAUserDefinedType), metaData.udt.Type);
+        Assert.Equal(typeof(NotAUserDefinedType), metaData.UdtTypeInfo.Type);
     }
 
     /// <summary>
@@ -252,13 +253,13 @@ public class UdtAssemblyLoadHardeningTest
         using PolicyScope scope = new();
 
         SqlConnection connection = new(ConnectionString);
-        SqlMetaDataPriv metaData = CreateUdtMetaData(typeName);
+        TdsTypeInfo metaData = CreateUdtMetaData(typeName);
 
         Exception exception = Record.Exception(
             () => connection.CheckGetExtendedUDTInfo(metaData, fThrow: true));
 
         Assert.NotNull(exception);
-        Assert.Null(metaData.udt.Type);
+        Assert.Null(metaData.UdtTypeInfo.Type);
     }
 
     /// <summary>
@@ -272,11 +273,11 @@ public class UdtAssemblyLoadHardeningTest
         using PolicyScope scope = new();
 
         SqlConnection connection = new(ConnectionString);
-        SqlMetaDataPriv metaData = CreateUdtMetaData("System.String");
+        TdsTypeInfo metaData = CreateUdtMetaData("System.String");
 
         connection.CheckGetExtendedUDTInfo(metaData, fThrow: false);
 
-        Assert.Null(metaData.udt.Type);
+        Assert.Null(metaData.UdtTypeInfo.Type);
     }
 
     #endregion
@@ -371,10 +372,10 @@ public class UdtAssemblyLoadHardeningTest
             fieldTypes: null,
             extendedProperties: null);
 
-    private static SqlMetaDataPriv CreateUdtMetaData(string assemblyQualifiedName) =>
+    private static TdsTypeInfo CreateUdtMetaData(string assemblyQualifiedName) =>
         new()
         {
-            udt = new SqlMetaDataUdt
+            UdtTypeInfo = new TdsUdtTypeInfo
             {
                 DatabaseName = "db",
                 SchemaName = "dbo",

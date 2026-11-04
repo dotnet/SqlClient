@@ -34,6 +34,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
         public abstract string SqlServerTypeName { get; }
 
+        /// <summary>
+        /// Whether <typeparamref name="TElement"/> is how the driver represents the column
+        /// by default. This is false when the column's base type is narrower than
+        /// <typeparamref name="TElement"/>, so that reads are widening conversions which
+        /// the caller has to ask for explicitly.
+        /// </summary>
+        public virtual bool IsDefaultRepresentation => true;
+
+        /// <summary>
+        /// The connection string the suite runs against. Suites for vector columns with a
+        /// float16 base type explicitly select V2 so configured compatibility overrides do not
+        /// change the native representation they exercise.
+        /// </summary>
+        public virtual string ConnectionString => DataTestUtility.TCPConnectionString;
+
         public int ValidSampleScalarDataLength => SampleScalarData.Length;
 
         public IEnumerable<object?[]> TestData =>
@@ -108,13 +123,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             int vectorDimensions = TestDataInstance.ValidSampleScalarDataLength;
             string tableDefinition = $@"(Id INT PRIMARY KEY IDENTITY, {VectorColumnName} vector({vectorDimensions}, {TestDataInstance.SqlServerTypeName}) NULL)";
 
-            _connectionString = DataTestUtility.TCPConnectionString;
+            _connectionString = TestDataInstance.ConnectionString;
             _managementConnection = new SqlConnection(_connectionString);
-            _vectorTable = new Table(_managementConnection, "VectorTestTable", tableDefinition);
-            _bulkCopySourceTable = new Table(_managementConnection, "VectorBulkCopyTestTable", tableDefinition);
-            _vectorProcedure = new StoredProcedure(_managementConnection,
-                prefix: "VectorsAsVarcharSp",
-                definition: $@"
+
+            // NOTE: If this constructor throws, xUnit never calls Dispose, so any object already created
+            //   (each of which has a GUID-based name) would be left in the database permanently.
+            try
+            {
+                _vectorTable = new Table(_managementConnection, "VectorTestTable", tableDefinition);
+                _bulkCopySourceTable = new Table(_managementConnection, "VectorBulkCopyTestTable", tableDefinition);
+                _vectorProcedure = new StoredProcedure(_managementConnection,
+                    prefix: "VectorsAsVarcharSp",
+                    definition: $@"
                 {VectorParameterName} vector({vectorDimensions}, {TestDataInstance.SqlServerTypeName}),   -- Input: Serialized TElement[] as JSON string
                 {VectorOutputParameterName} vector({vectorDimensions}, {TestDataInstance.SqlServerTypeName}) OUTPUT  -- Output: Echoed back from latest inserted row
                 AS
@@ -130,6 +150,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
                 FROM {_vectorTable.Name}
                 ORDER BY Id DESC;
                 END;");
+            }
+            catch
+            {
+                Dispose();
+                throw;
+            }
 
             _selectCommand = $"SELECT {VectorColumnName} FROM {_vectorTable.Name} ORDER BY Id DESC";
             _insertCommand = $"INSERT INTO {_vectorTable.Name} ({VectorColumnName}) VALUES ({VectorParameterName})";
@@ -150,13 +176,26 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
 
             if (disposing)
             {
-                _vectorProcedure?.Dispose();
-                _bulkCopySourceTable?.Dispose();
-                _vectorTable?.Dispose();
+                // Each drop is best-effort: failing to drop one object must not leak the others.
+                DisposeSafely(_vectorProcedure);
+                DisposeSafely(_bulkCopySourceTable);
+                DisposeSafely(_vectorTable);
                 _managementConnection?.Dispose();
             }
 
             _disposed = true;
+        }
+
+        private static void DisposeSafely(IDisposable? disposable)
+        {
+            try
+            {
+                disposable?.Dispose();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"{nameof(NativeVectorTestsBase<TElement, TTestData>)}: cleanup failed: {ex.Message}");
+            }
         }
 
         ~NativeVectorTestsBase() =>
@@ -222,13 +261,23 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             // For both null and non-null cases, validate the SqlVector<TElement> object
             ValidateSqlVectorObject(reader.IsDBNull(0), (SqlVector<TElement>)reader.GetSqlVector<TElement>(0), expectedData, expectedLength);
             ValidateSqlVectorObject(reader.IsDBNull(0), reader.GetFieldValue<SqlVector<TElement>>(0), expectedData, expectedLength);
-            ValidateSqlVectorObject(reader.IsDBNull(0), (SqlVector<TElement>)reader.GetSqlValue(0), expectedData, expectedLength);
+
+            if (TestDataInstance.IsDefaultRepresentation)
+            {
+                ValidateSqlVectorObject(reader.IsDBNull(0), (SqlVector<TElement>)reader.GetSqlValue(0), expectedData, expectedLength);
+            }
 
             if (!reader.IsDBNull(0))
             {
-                ValidateSqlVectorObject(reader.IsDBNull(0), (SqlVector<TElement>)reader.GetValue(0), expectedData, expectedLength);
-                ValidateSqlVectorObject(reader.IsDBNull(0), (SqlVector<TElement>)reader[0], expectedData, expectedLength);
-                ValidateSqlVectorObject(reader.IsDBNull(0), (SqlVector<TElement>)reader[VectorColumnName], expectedData, expectedLength);
+                if (TestDataInstance.IsDefaultRepresentation)
+                {
+                    // The untyped accessors return the column's default representation, which
+                    // is only a SqlVector<TElement> when TElement is the column's base type.
+                    ValidateSqlVectorObject(reader.IsDBNull(0), (SqlVector<TElement>)reader.GetValue(0), expectedData, expectedLength);
+                    ValidateSqlVectorObject(reader.IsDBNull(0), (SqlVector<TElement>)reader[0], expectedData, expectedLength);
+                    ValidateSqlVectorObject(reader.IsDBNull(0), (SqlVector<TElement>)reader[VectorColumnName], expectedData, expectedLength);
+                }
+
                 Assert.Equal(expectedData, JsonSerializer.Deserialize<TElement[]>(reader.GetString(0)));
                 Assert.Equal(expectedData, JsonSerializer.Deserialize<TElement[]>(reader.GetSqlString(0).Value));
                 Assert.Equal(expectedData, JsonSerializer.Deserialize<TElement[]>(reader.GetFieldValue<string>(0)));
@@ -274,13 +323,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             // For both null and non-null cases, validate the SqlVector<TElement> object
             ValidateSqlVectorObject(await reader.IsDBNullAsync(0), (SqlVector<TElement>)reader.GetSqlVector<TElement>(0), expectedData, expectedLength);
             ValidateSqlVectorObject(await reader.IsDBNullAsync(0), await reader.GetFieldValueAsync<SqlVector<TElement>>(0), expectedData, expectedLength);
-            ValidateSqlVectorObject(await reader.IsDBNullAsync(0), (SqlVector<TElement>)reader.GetSqlValue(0), expectedData, expectedLength);
+
+            if (TestDataInstance.IsDefaultRepresentation)
+            {
+                ValidateSqlVectorObject(await reader.IsDBNullAsync(0), (SqlVector<TElement>)reader.GetSqlValue(0), expectedData, expectedLength);
+            }
 
             if (!await reader.IsDBNullAsync(0))
             {
-                ValidateSqlVectorObject(await reader.IsDBNullAsync(0), (SqlVector<TElement>)reader.GetValue(0), expectedData, expectedLength);
-                ValidateSqlVectorObject(await reader.IsDBNullAsync(0), (SqlVector<TElement>)reader[0], expectedData, expectedLength);
-                ValidateSqlVectorObject(await reader.IsDBNullAsync(0), (SqlVector<TElement>)reader[VectorColumnName], expectedData, expectedLength);
+                if (TestDataInstance.IsDefaultRepresentation)
+                {
+                    ValidateSqlVectorObject(await reader.IsDBNullAsync(0), (SqlVector<TElement>)reader.GetValue(0), expectedData, expectedLength);
+                    ValidateSqlVectorObject(await reader.IsDBNullAsync(0), (SqlVector<TElement>)reader[0], expectedData, expectedLength);
+                    ValidateSqlVectorObject(await reader.IsDBNullAsync(0), (SqlVector<TElement>)reader[VectorColumnName], expectedData, expectedLength);
+                }
+
                 Assert.Equal(expectedData, JsonSerializer.Deserialize<TElement[]>(reader.GetString(0)));
                 Assert.Equal(expectedData, JsonSerializer.Deserialize<TElement[]>(reader.GetSqlString(0).Value));
                 Assert.Equal(expectedData, JsonSerializer.Deserialize<TElement[]>(await reader.GetFieldValueAsync<string>(0)));
@@ -403,6 +460,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             await Assert.ThrowsAsync<InvalidOperationException>(async () => await command.ExecuteNonQueryAsync());
         }
 
+        /// <summary>
+        /// Copies native reader and typed DataTable values, leaving base-type conversion
+        /// to SQL Server and preserving nulls.
+        /// </summary>
         [ConditionalTheory(nameof(IsSupported))]
         [InlineData(1)]
         [InlineData(2)]
@@ -499,6 +560,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             Assert.Equal(TestDataInstance.SampleScalarData.Length, ((SqlVector<TElement>)verifyReader.GetSqlVector<TElement>(0)).Length);
         }
 
+        /// <summary>
+        /// Exercises the same reader and typed DataTable bulk-copy contract asynchronously.
+        /// </summary>
         [ConditionalTheory(nameof(IsSupported))]
         [InlineData(1)]
         [InlineData(2)]
@@ -615,17 +679,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.VectorTest
             using SqlCommand selectCmd = new(_selectCommand, connection);
             using SqlDataReader reader = selectCmd.ExecuteReader();
 
-            // Verify GetFieldType returns SqlVector<TElement> for the vector column
-            Assert.Equal(typeof(SqlVector<TElement>), reader.GetFieldType(0));
+            if (TestDataInstance.IsDefaultRepresentation)
+            {
+                // Verify GetFieldType returns SqlVector<TElement> for the vector column
+                Assert.Equal(typeof(SqlVector<TElement>), reader.GetFieldType(0));
 
-            // Verify GetProviderSpecificFieldType also returns SqlVector<TElement>
-            Assert.Equal(typeof(SqlVector<TElement>), reader.GetProviderSpecificFieldType(0));
+                // Verify GetProviderSpecificFieldType also returns SqlVector<TElement>
+                Assert.Equal(typeof(SqlVector<TElement>), reader.GetProviderSpecificFieldType(0));
 
-            // Verify that GetValue returns an instance consistent with GetFieldType
-            Assert.True(reader.Read(), "No data found in the table.");
-            object value = reader.GetValue(0);
-            Assert.IsType<SqlVector<TElement>>(value);
-            Assert.Equal(TestDataInstance.SampleScalarData, ((SqlVector<TElement>)value).Memory.ToArray());
+                // Verify that GetValue returns an instance consistent with GetFieldType
+                Assert.True(reader.Read(), "No data found in the table.");
+                object value = reader.GetValue(0);
+                Assert.IsType<SqlVector<TElement>>(value);
+                Assert.Equal(TestDataInstance.SampleScalarData, ((SqlVector<TElement>)value).Memory.ToArray());
+            }
+            else
+            {
+                // The column's default representation is not SqlVector<TElement>, but the
+                // caller can still ask for one, so only the explicit accessor is checked.
+                Assert.True(reader.Read(), "No data found in the table.");
+                Assert.NotEqual(typeof(SqlVector<TElement>), reader.GetFieldType(0));
+            }
 
             // Verify GetFieldValue<SqlVector<TElement>> returns the correct typed value
             SqlVector<TElement> typedValue = reader.GetFieldValue<SqlVector<TElement>>(0);

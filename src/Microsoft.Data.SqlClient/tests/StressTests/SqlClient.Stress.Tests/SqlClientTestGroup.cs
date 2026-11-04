@@ -15,7 +15,7 @@ using System.IO;
 
 namespace Microsoft.Data.SqlClient.Test.Stress
 {
-    public class SqlClientTestGroup : DataTestGroup
+    public partial class SqlClientTestGroup : DataTestGroup
     {
         /// <summary>
         /// SqlNotificationRequest options string

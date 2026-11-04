@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -9,6 +9,34 @@ namespace Microsoft.Data.SqlClient.Tests
 {
     public class SqlParameterCollectionTest
     {
+        // DbParameterCollection.RemoveAt(int) implements IList.RemoveAt, which documents ArgumentOutOfRangeException when
+        // "index is not a valid index in the IList": https://learn.microsoft.com/dotnet/api/system.collections.ilist.removeat
+        [Theory]
+        [InlineData(-1)]
+        [InlineData(0)]
+        [InlineData(1)]
+        public void CollectionRemoveAtInvalidIndex_ThrowsArgumentOutOfRange(int index)
+        {
+            SqlCommand command = new SqlCommand();
+            SqlParameterCollection collection = command.Parameters;
+            if (index == 1)
+            {
+                collection.Add(new SqlParameter("Test1", 1));
+            }
+
+            ArgumentOutOfRangeException ex = Assert.Throws<ArgumentOutOfRangeException>(() => collection.RemoveAt(index));
+            Assert.Equal("index", ex.ParamName);
+            Assert.Equal(index == 1 ? 1 : 0, collection.Count);
+        }
+
+        [Fact]
+        public void CollectionIndexerInvalidIndex_ThrowsIndexOutOfRange()
+        {
+            // SqlParameterCollection.Item[Int32] documents IndexOutOfRangeException: "The specified index does not exist."
+            SqlCommand command = new SqlCommand();
+            Assert.Throws<IndexOutOfRangeException>(() => command.Parameters[0]);
+        }
+
         [Fact]
         public void CollectionAddInvalidRange_Throws()
         {
@@ -120,5 +148,20 @@ namespace Microsoft.Data.SqlClient.Tests
             InvalidCastException ex = Assert.Throws<InvalidCastException>(() => collection.Add(new SqlCommand()));
             Assert.Contains("Microsoft.Data.SqlClient.SqlCommand", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
+
+        #if NETFRAMEWORK
+        [Fact]
+        public void CollectionObsoleteAdd_Succeeds()
+        {
+            SqlCommand command = new();
+            SqlParameterCollection collection = command.Parameters;
+
+            #pragma warning disable CS0618 // Type or member is obsolete
+            collection.Add("@Test", 1);
+            #pragma warning restore CS0618
+            Assert.Equal(1, collection.Count);
+            Assert.Equal("@Test", collection[0].ParameterName);
+        }
+        #endif
     }
 }

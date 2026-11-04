@@ -204,6 +204,9 @@
   <data name="ADP_PooledOpenTimeout" xml:space="preserve">
     <value>Timeout scaduto. Il tempo disponibile è scaduto prima di aver ottenuto la connessione dal pool.  Ciò potrebbe essere accaduto perché tutte le connessioni dal pool erano in uso ed era già stata raggiunta la dimensione massima del pool.</value>
   </data>
+  <data name="ADP_IsolationLevelResetTimeout" xml:space="preserve">
+    <value>Timeout scaduto.  Il periodo di timeout della connessione è trascorso prima che fosse possibile reimpostare il livello di isolamento della transazione della connessione in pool.</value>
+  </data>
   <data name="ADP_NonPooledOpenTimeout" xml:space="preserve">
     <value>Timeout durante il tentativo di aprire la connessione. È stato superato il periodo di tempo trascorso prima del tentativo di apertura della connessione. È possibile che si siano verificati troppi tentativi di connessione simultanei non in pool.</value>
   </data>
@@ -1797,6 +1800,9 @@
   <data name="TCE_EnclaveTypeNullForEnclaveBasedQuery" xml:space="preserve">
     <value>Errore interno. Il tipo di enclave ricevuto da SQL Server è Null o vuoto quando si esegue una query che richiede calcoli enclave.</value>
   </data>
+  <data name="TCE_AzureAttestationExtensionNotFound" xml:space="preserve">
+    <value>Il protocollo di attestazione 'AAS' richiede Microsoft.Data.SqlClient.Extensions. Pacchetto di Azure, con la stessa versione di Microsoft.Data.SqlClient. Aggiungere o aggiornare il riferimento a tale pacchetto oppure specificare un protocollo di attestazione diverso nella stringa di connessione.</value>
+  </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
     <value>Non sono stati trovati provider di enclave per il tipo di enclave '{0}' e il protocollo di attestazione '{1}'. Specificare il protocollo di attestazione corretto nella stringa di connessione. </value>
   </data>
@@ -1899,6 +1905,9 @@
   <data name="SQLCR_NoCRAckAtReconnection" xml:space="preserve">
     <value>Tentativo di ripristino non riconosciuto dal server. Impossibile eseguire il ripristino della connessione.</value>
   </data>
+  <data name="DbConnectionString_VectorTypeSupport" xml:space="preserve">
+    <value>The level of vector type support to negotiate with the server.</value>
+  </data>
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>Consente di definire il comportamento del periodo di blocco per un pool di connessioni.</value>
   </data>
@@ -1969,7 +1978,7 @@
     <value>La verifica della firma del report dell'enclave non è riuscita. La firma del report non corrisponde alla firma calcolata usando il certificato radice HGS. Verificare il mapping DNS per l'endpoint - vedere https://go.microsoft.com/fwlink/?linkid=2160553 per altri dettagli. Se è corretto, contattare il Servizio Supporto Tecnico Clienti.</value>
   </data>
   <data name="VerifyEnclaveKeyBindingFailed" xml:space="preserve">
-    <value>Enclave attestation failed because the signed enclave report did not bind to the enclave public key used to establish the session. The enclave public key must match the value committed to by the signed report - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If correct, contact Customer Support Services.</value>
+    <value>L'attestazione dell'enclave non è riuscita perché il report firmato dell'enclave non è stato vincolato alla chiave pubblica dell'enclave usata per stabilire la sessione. La chiave pubblica dell'enclave deve corrispondere al valore a cui fa riferimento il report firmato: per altri dettagli, vedere https://go.microsoft.com/fwlink/?linkid=2160553. Se è corretto, contattare il Servizio Supporto Tecnico Clienti.</value>
   </data>
   <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
     <value>Il formato del report dell'enclave ricevuto da SQL Server non è corretto. Contattare il Servizio Supporto Tecnico Clienti.</value>
@@ -2064,6 +2073,9 @@
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
     <value>Il parametro '{0}' non può includere Output o InputOutput come valore di Direction quando nel comando padre è abilitato EnableOptimizedParameterBinding.</value>
   </data>
+  <data name="SQL_PrepareNotSupportedForOptimizedBinding" xml:space="preserve">
+    <value>Prepare non è supportato quando EnableOptimizedParameterBinding è abilitato. Creare un nuovo SqlCommand e impostare EnableOptimizedParameterBinding su false prima della prima esecuzione oppure eseguirlo senza chiamare Prepare.</value>
+  </data>
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
     <value>Timeout della connessione durante il recupero di un token di accesso tramite il metodo di autenticazione '{0}'. Ultimo errore: {1}: {2}</value>
   </data>
@@ -2082,11 +2094,8 @@
   <data name="ADP_InvalidMixedUsageOfAccessTokenCallbackAndIntegratedSecurity" xml:space="preserve">
     <value>Non è possibile impostare la proprietà AccessTokenCallback se la parola chiave della stringa di connessione 'Integrated Security' è stata impostata su 'true' o 'SSPI'.</value>
   </data>
-  <data name="ADP_InvalidMixedUsageOfAccessTokenAndSspiContextProvider" xml:space="preserve">
-    <value>Cannot set the AccessToken or AccessTokenCallback property if the SspiContextProvider property has been set.</value>
-  </data>
-  <data name="ADP_InvalidMixedUsageOfSspiContextProviderAndAccessToken" xml:space="preserve">
-    <value>Cannot set the SspiContextProvider property if the AccessToken or AccessTokenCallback property has been set.</value>
+  <data name="ADP_InvalidMixedUsageOfAccessTokenProperties" xml:space="preserve">
+    <value>Non è possibile impostare più di una delle proprietà AccessToken, AccessTokenCallback o SspiContextProvider.</value>
   </data>
   <data name="ADP_InvalidMixedUsageOfAuthenticationAndTokenCallback" xml:space="preserve">
     <value>Impossibile impostare la proprietà AccessTokenCallback se nella stringa di connessione è stato specificato 'Authentication=Active Directory Default'.</value>
@@ -2099,6 +2108,9 @@
   </data>
   <data name="SqlAppContextSwitchManager_InvalidValue" xml:space="preserve">
     <value>Si è verificata un'eccezione durante il tentativo di impostazione dell’opzione AppContext '{0}'={1}.</value>
+  </data>
+  <data name="SQL_GlobalizationInvariantModeRequiresLcid" xml:space="preserve">
+    <value>Quando la modalità Non dipendente dalla globalizzazione è abilitata, le istanze di SqlMetaData che descrivono tipi di carattere o testo devono specificare un identificatore delle impostazioni locali.</value>
   </data>
   <data name="SQL_GlobalizationInvariantModeNotSupported" xml:space="preserve">
     <value>La modalità invariante di globalizzazione non è supportata.</value>
@@ -2135,6 +2147,12 @@
   </data>
   <data name="SQL_RemoteCertificateDoesNotMatchServerCertificate" xml:space="preserve">
     <value>Il certificato fornito dal server non corrisponde al certificato fornito dall'opzione ServerCertificate.</value>
+  </data>
+  <data name="SQL_ServerCertificateFileLoadFailed" xml:space="preserve">
+    <value>Non è possibile caricare o analizzare il file del certificato specificato dall'opzione 'ServerCertificate: '{0}'.</value>
+  </data>
+  <data name="SQL_ServerCertificateNotAvailable" xml:space="preserve">
+    <value>È stata specificata l'opzione 'ServerCertificate', ma il server non ha presentato un certificato confrontabile con essa.</value>
   </data>
   <data name="SQL_JsonDocumentNotSupportedOnColumnType" xml:space="preserve">
     <value>Tentativo non valido di ottenere JsonDocument nella colonna '{0}'. JsonDocument è supportato solo per colonne di tipo JSON.</value>

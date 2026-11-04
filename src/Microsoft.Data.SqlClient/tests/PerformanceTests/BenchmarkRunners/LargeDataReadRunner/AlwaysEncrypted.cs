@@ -9,6 +9,7 @@ using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 
 namespace Microsoft.Data.SqlClient.PerformanceTests.BenchmarkRunners.LargeDataReadRunner;
 
+/// <summary>Compares encrypted binary materialization without unsupported sequential/streaming modes.</summary>
 public class AlwaysEncrypted : LargeDataReadRunnerBase
 {
     private ColumnMasterKeyCertificateFixture _cmkCertificate;
@@ -17,25 +18,24 @@ public class AlwaysEncrypted : LargeDataReadRunnerBase
 
     public override IEnumerable<CommandBehavior> ExecutedCommandBehaviors => [CommandBehavior.Default];
 
-    protected override SqlConnection OpenConnection()
+    protected override CommandRunnerJob Configuration => s_config.Benchmarks.AlwaysEncryptedLargeDataReadRunnerConfig;
+
+    protected override SqlConnectionStringBuilder CreateConnectionStringBuilder()
     {
         SqlConnectionStringBuilder builder = new(s_config.ConnectionString)
         {
             ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Enabled
         };
-        SqlConnection conn = new(builder.ToString());
-
-        conn.Open();
-        return conn;
+        return builder;
     }
 
     protected override Tests.Common.Fixtures.DatabaseObjects.Table CreateTable()
     {
         _cmkCertificate = new ColumnMasterKeyCertificateFixture();
-        _masterKey = new CertificateBackedColumnMasterKey(_connection, nameof(_masterKey), _cmkCertificate, false);
-        _encryptionKey = new ColumnEncryptionKey(_connection, nameof(AlwaysEncrypted), _masterKey);
+        _masterKey = new CertificateBackedColumnMasterKey(Connection, nameof(_masterKey), _cmkCertificate, false);
+        _encryptionKey = new ColumnEncryptionKey(Connection, nameof(AlwaysEncrypted), _masterKey);
 
-        return new Tests.Common.Fixtures.DatabaseObjects.Table(_connection, nameof(AlwaysEncrypted),
+        return new Tests.Common.Fixtures.DatabaseObjects.Table(Connection, nameof(AlwaysEncrypted),
             "(" +
             "Id INT IDENTITY PRIMARY KEY," +
             "Data VARBINARY(MAX) ENCRYPTED WITH" +

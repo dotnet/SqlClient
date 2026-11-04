@@ -28,29 +28,41 @@ public sealed class ColumnEncryptionCertificateFixture : CertificateFixtureBase
 
     public ColumnEncryptionCertificateFixture()
     {
-        PrimaryColumnEncryptionCertificate = CreateCertificate(nameof(PrimaryColumnEncryptionCertificate), Array.Empty<string>(), Array.Empty<string>());
-        SecondaryColumnEncryptionCertificate = CreateCertificate(nameof(SecondaryColumnEncryptionCertificate), Array.Empty<string>(), Array.Empty<string>());
-        _currentUserCertificate = CreateCertificate(nameof(_currentUserCertificate), Array.Empty<string>(), Array.Empty<string>());
-        using (X509Certificate2 createdCertificate = CreateCertificate(nameof(CertificateWithoutPrivateKey), Array.Empty<string>(), Array.Empty<string>()))
+        // NOTE: If this constructor throws, xUnit never calls Dispose, so any certificate already
+        //   placed in a store (and its persisted key container) would be leaked.
+        try
         {
+            PrimaryColumnEncryptionCertificate = CreateCertificate(nameof(PrimaryColumnEncryptionCertificate), Array.Empty<string>(), Array.Empty<string>());
+            SecondaryColumnEncryptionCertificate = CreateCertificate(nameof(SecondaryColumnEncryptionCertificate), Array.Empty<string>(), Array.Empty<string>());
+            _currentUserCertificate = CreateCertificate(nameof(_currentUserCertificate), Array.Empty<string>(), Array.Empty<string>());
+
+            // NOTE: The source certificate is intentionally not disposed here; it is tracked by the base
+            //   fixture, which deletes its persisted key container and disposes it on cleanup.
+            X509Certificate2 createdCertificate = CreateCertificate(nameof(CertificateWithoutPrivateKey), Array.Empty<string>(), Array.Empty<string>());
+
             // This will strip the private key away from the created certificate
 #if NET9_0_OR_GREATER
-                CertificateWithoutPrivateKey = X509CertificateLoader.LoadCertificate(createdCertificate.Export(X509ContentType.Cert));
+            CertificateWithoutPrivateKey = X509CertificateLoader.LoadCertificate(createdCertificate.Export(X509ContentType.Cert));
 #else
             CertificateWithoutPrivateKey = new X509Certificate2(createdCertificate.Export(X509ContentType.Cert));
 #endif
             AddToStore(CertificateWithoutPrivateKey, StoreLocation.CurrentUser, StoreName.My);
+
+            AddToStore(PrimaryColumnEncryptionCertificate, StoreLocation.CurrentUser, StoreName.My);
+            AddToStore(SecondaryColumnEncryptionCertificate, StoreLocation.CurrentUser, StoreName.My);
+            AddToStore(_currentUserCertificate, StoreLocation.CurrentUser, StoreName.My);
+
+            if (IsAdmin)
+            {
+                _localMachineCertificate = CreateCertificate(nameof(_localMachineCertificate), Array.Empty<string>(), Array.Empty<string>());
+
+                AddToStore(_localMachineCertificate, StoreLocation.LocalMachine, StoreName.My);
+            }
         }
-
-        AddToStore(PrimaryColumnEncryptionCertificate, StoreLocation.CurrentUser, StoreName.My);
-        AddToStore(SecondaryColumnEncryptionCertificate, StoreLocation.CurrentUser, StoreName.My);
-        AddToStore(_currentUserCertificate, StoreLocation.CurrentUser, StoreName.My);
-
-        if (IsAdmin)
+        catch
         {
-            _localMachineCertificate = CreateCertificate(nameof(_localMachineCertificate), Array.Empty<string>(), Array.Empty<string>());
-
-            AddToStore(_localMachineCertificate, StoreLocation.LocalMachine, StoreName.My);
+            Dispose();
+            throw;
         }
     }
 
