@@ -124,6 +124,57 @@ public class UdtAssemblyPolicyTest
 
     #region SqlServerTypes
 
+    #if NET
+    /// <summary>
+    /// Allows the application's newer Microsoft-signed spatial package for an older type system.
+    /// </summary>
+    [Fact]
+    public void TryLoad_SqlServerTypesWithNewerVersion_IsPermitted()
+    {
+        // Arrange
+        using PolicyScope scope = new();
+        Assembly spatial = typeof(global::Microsoft.SqlServer.Types.SqlHierarchyId).Assembly;
+        Version requested = new(10, 0, 0, 0);
+        Assert.True(spatial.GetName().Version! > requested);
+
+        // Act
+        bool permitted = UdtAssemblyPolicy.TryLoad(
+            new AssemblyName(UdtAssemblyPolicy.SqlServerTypesAssemblyName),
+            requested,
+            out Assembly? loaded);
+
+        // Assert
+        Assert.True(permitted);
+        Assert.Same(spatial, loaded);
+    }
+
+    /// <summary>
+    /// Rejects a spatial assembly older than the negotiated type-system version.
+    /// </summary>
+    [Fact]
+    public void TryLoad_SqlServerTypesWithOlderVersion_IsRefused()
+    {
+        // Arrange
+        using PolicyScope scope = new();
+        Version actual = typeof(global::Microsoft.SqlServer.Types.SqlHierarchyId).Assembly.GetName().Version!;
+        Version requested = new(actual.Major + 1, 0, 0, 0);
+        Assembly? loaded = null;
+        bool permitted = false;
+
+        // Act
+        Exception? error = Record.Exception(() => permitted = UdtAssemblyPolicy.TryLoad(
+            new AssemblyName(UdtAssemblyPolicy.SqlServerTypesAssemblyName), requested, out loaded));
+
+        // Assert
+        Assert.False(permitted);
+        Assert.Null(loaded);
+        if (error is not null)
+        {
+            Assert.True(error is FileNotFoundException or FileLoadException);
+        }
+    }
+    #endif
+
     /// <summary>
     /// Verifies that the built-in SQL Server CLR types assembly is recognized
     /// case-insensitively and is permitted in every non-legacy mode.

@@ -406,7 +406,7 @@ There is a single enforcing behavior, which permits:
 
 | Permitted | Notes |
 |-----------|-------|
-| `Microsoft.SqlServer.Types` | Identity pinned: the version is normalized to the connection's negotiated type system version, the culture to neutral, and the public key token to the one Microsoft signs with |
+| `Microsoft.SqlServer.Types` | The requested version is normalized to the connection's negotiated type system version; a newer version selected by the application's loader is accepted. The culture must be neutral and the public key token must be Microsoft's |
 | Assemblies on the allow list | The application explicitly naming what it is willing to have loaded |
 | Assemblies already loaded into the process | Resolved to the instance the process already holds; the server-supplied version, culture and public key token are discarded |
 
@@ -425,6 +425,12 @@ assembly the loader actually hands back against every component the decision
 relied on, including the simple name that the permission was granted to, and
 refuses it on any mismatch. This mirrors what the driver already does for the
 Azure authentication extension assembly.
+
+The built-in spatial exception treats the negotiated version as a minimum, not
+an exact match. This preserves application binding to newer Microsoft-signed
+spatial packages while still verifying their name, token, culture, and minimum
+version. Custom-assembly versions specified in the application allow list remain
+exact matches.
 
 On .NET, the already-loaded tier is scoped to the `AssemblyLoadContext` that
 loaded the driver, since that is the context its `Assembly.Load` calls resolve

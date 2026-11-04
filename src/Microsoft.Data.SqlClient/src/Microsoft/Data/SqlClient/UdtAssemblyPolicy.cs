@@ -317,6 +317,12 @@ internal static class UdtAssemblyPolicy
         internal Version? RequiredVersion { get; init; }
 
         /// <summary>
+        /// The oldest permitted built-in spatial version. The application's
+        /// loader may bind the negotiated type-system version to a newer signed release.
+        /// </summary>
+        internal Version? MinimumVersion { get; init; }
+
+        /// <summary>
         /// The culture name the loaded assembly must carry, or null when the
         /// basis for permitting it placed no constraint on the culture.  The
         /// empty string means the neutral culture.
@@ -426,9 +432,9 @@ internal static class UdtAssemblyPolicy
                 RequiredPublicKeyToken = s_sqlServerTypesPublicKeyToken,
                 // The culture was just pinned to neutral, so require that back.
                 RequiredCultureName = string.Empty,
-                // The version is only constrained when the connection supplied
-                // one; otherwise the loader is free to pick.
-                RequiredVersion = typeSystemAssemblyVersion,
+                // Preserve application binding to newer Microsoft-signed
+                // spatial packages without allowing an older type system.
+                MinimumVersion = typeSystemAssemblyVersion,
             };
 
             return true;
@@ -530,6 +536,12 @@ internal static class UdtAssemblyPolicy
             return false;
         }
 
+        if (decision.MinimumVersion is not null &&
+            (actual.Version is null || actual.Version < decision.MinimumVersion))
+        {
+            return false;
+        }
+
         if (decision.RequiredCultureName is not null &&
             !string.Equals(
                 decision.RequiredCultureName,
@@ -561,7 +573,8 @@ internal static class UdtAssemblyPolicy
     ///
     /// Normalizing the reference is necessary but not sufficient, because on
     /// .NET the loader ignores the requested token.  <see cref="TryLoad"/>
-    /// verifies the identity of whatever the loader actually returns.
+    /// verifies the identity of whatever the loader actually returns, permitting
+    /// a newer Microsoft-signed version selected by the application's loader.
     /// </summary>
     /// <param name="asmRef">The assembly reference to normalize, in place.</param>
     /// <param name="typeSystemAssemblyVersion">
