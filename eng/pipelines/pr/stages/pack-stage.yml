@@ -66,14 +66,19 @@ stages:
             - imageOverride -equals ${{ parameters.poolImage }}
 
         steps:
-          # Install dotnet
+          ##################################################################
+          # 1) Setup for build/pack
+
+          # 1a) Install dotnet
           - template: /eng/pipelines/common/steps/install-dotnet.yml@self
 
-          # Restore dotnet tools
+          # 1b) Restore dotnet tools
           - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
 
           # ################################################################
-          # Build/Pack Microsoft.Data.SqlClient
+          # 2) Build and pack
+
+          # 2a) Build/Pack Microsoft.Data.SqlClient
           - template: /eng/pipelines/pr/steps/pack-buildproj-step.yml
             parameters:
               condition: succeeded() # Only run if dotnet was installed successfully
@@ -82,8 +87,7 @@ stages:
               buildSuffix: ${{ parameters.buildSuffix }}
               packageShortName: SqlClient
 
-          # ################################################################
-          # Build/Pack Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
+          # 2b) Build/Pack Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
           - template: /eng/pipelines/pr/steps/pack-buildproj-step.yml
             parameters:
               condition: succeededOrFailed()
@@ -92,8 +96,7 @@ stages:
               buildSuffix: ${{ parameters.buildSuffix }}
               packageShortName: AkvProvider
 
-          # ################################################################
-          # Build/Pack Microsoft.Data.SqlClient.Extensions.Abstractions
+          # 2c) Build/Pack Microsoft.Data.SqlClient.Extensions.Abstractions
           - template: /eng/pipelines/pr/steps/pack-buildproj-step.yml
             parameters:
               condition: succeededOrFailed()
@@ -102,8 +105,7 @@ stages:
               buildSuffix: ${{ parameters.buildSuffix }}
               packageShortName: Abstractions
 
-          # ################################################################
-          # Build/Pack Microsoft.Data.SqlClient.Extensions.Azure
+          # 2d) Build/Pack Microsoft.Data.SqlClient.Extensions.Azure
           - template: /eng/pipelines/pr/steps/pack-buildproj-step.yml
             parameters:
               condition: succeededOrFailed()
@@ -112,8 +114,7 @@ stages:
               buildSuffix: ${{ parameters.buildSuffix }}
               packageShortName: Azure
 
-          # ################################################################
-          # Build/Pack Microsoft.Data.SqlClient.Internal.Logging
+          # 2e) Build/Pack Microsoft.Data.SqlClient.Internal.Logging
           - template: /eng/pipelines/pr/steps/pack-buildproj-step.yml
             parameters:
               condition: succeededOrFailed()
@@ -122,8 +123,7 @@ stages:
               buildSuffix: ${{ parameters.buildSuffix }}
               packageShortName: Logging
 
-          # ################################################################
-          # Build/Pack Microsoft.SqlServer.Server
+          # 2f) Build/Pack Microsoft.SqlServer.Server
           - template: /eng/pipelines/pr/steps/pack-buildproj-step.yml
             parameters:
               condition: succeededOrFailed()
@@ -132,12 +132,17 @@ stages:
               buildSuffix: ${{ parameters.buildSuffix }}
               packageShortName: SqlServer
 
-          # Emit the build output
-          - script: tree -a $(BUILD_OUTPUT)
+          ##################################################################
+          # 3) Log the build output
+
+          # 3a) Emit the build output
+          # Note: This command is specific to Windows, and therefore this job should only run with
+          #    Windows VM images.
+          - script: tree /A /F $(BUILD_OUTPUT)
             displayName: Output Build Output Tree
             condition: succeededOrFailed()
 
-          # Upload the build output as the artifact of the job.
+          # 3b) Upload the build output as the artifact of the job.
           #
           # The artifact name includes the job attempt number because pipeline artifact names must
           # be unique within a build. Re-running a failed job would otherwise attempt to publish
@@ -147,3 +152,9 @@ stages:
             artifact: ${{ parameters.packArtifactBaseName }}_${{ parameters.buildConfiguration }}_attempt$(System.JobAttempt)
             displayName: Publish Build Output
             condition: succeededOrFailed()
+
+          ##################################################################
+          # 4) Verify the nuget packages
+          - template: /eng/pipelines/common/templates/steps/verify-nuget-package-step.yml
+            parameters:
+              packagePath: $(BUILD_OUTPUT)

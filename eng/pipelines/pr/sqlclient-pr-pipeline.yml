@@ -88,6 +88,8 @@ variables:
 
 stages:
   # Stage 1a: Build and pack all projects in the repository in debug config
+  # Note: The package verification tool only works with Windows (as of 2026-11) and the output
+  #    logging step is tailored to Windows, so only Windows VM images should be used for these.
   - template: /eng/pipelines/pr/stages/pack-stage.yml@self
     parameters:
       buildConfiguration: Debug
@@ -95,7 +97,7 @@ stages:
       stageName: ${{ variables.stageNamePackDebug }}
       packArtifactBaseName: ${{ variables.packArtifactBaseName }}
       poolName: $(general_purpose_pool_name)
-      poolImage: ADO-UB24
+      poolImage: ADO-Win25
 
   # Stage 1b: Build and pack all projects in the repository in release config
   # Note: Tests will still be run in debug mode, this is just a fail-fast way to catch any
@@ -107,7 +109,7 @@ stages:
       stageName: ${{ variables.stageNamePackRelease }}
       packArtifactBaseName: ${{ variables.packArtifactBaseName }}
       poolName: $(general_purpose_pool_name)
-      poolImage: ADO-UB24
+      poolImage: ADO-Win25
 
   # Stage 1b: Generate secrets
   - template: /eng/pipelines/pr/stages/generate-secrets-stage.yml@self
