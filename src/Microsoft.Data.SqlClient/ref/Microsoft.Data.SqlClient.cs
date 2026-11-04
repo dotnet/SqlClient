@@ -1309,21 +1309,21 @@ public sealed class SqlConnectionEncryptOption
 public sealed class SqlConnectionEncryptionInfo
 {
     internal SqlConnectionEncryptionInfo() { }
-    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/NegotiatedEncryptionMode/*'/>
-    public Microsoft.Data.SqlClient.SqlConnectionEncryptionMode? NegotiatedEncryptionMode { get { throw null; } }
-    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/NegotiatedEncryptionProtocol/*'/>
-    public System.Security.Authentication.SslProtocols? NegotiatedEncryptionProtocol { get { throw null; } }
-    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/NegotiatedCipherSuiteId/*'/>
-    public int? NegotiatedCipherSuiteId { get { throw null; } }
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/ChainStatus/*'/>
+    public System.Security.Cryptography.X509Certificates.X509ChainStatusFlags? ChainStatus { get { throw null; } }
 #if NET
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/NegotiatedCipherSuite/*'/>
     [System.CLSCompliantAttribute(false)]
     public System.Net.Security.TlsCipherSuite? NegotiatedCipherSuite { get { throw null; } }
 #endif
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/NegotiatedCipherSuiteId/*'/>
+    public int? NegotiatedCipherSuiteId { get { throw null; } }
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/NegotiatedEncryptionMode/*'/>
+    public Microsoft.Data.SqlClient.SqlConnectionEncryptionMode? NegotiatedEncryptionMode { get { throw null; } }
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/NegotiatedEncryptionProtocol/*'/>
+    public System.Security.Authentication.SslProtocols? NegotiatedEncryptionProtocol { get { throw null; } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/ValidationErrors/*'/>
     public Microsoft.Data.SqlClient.SqlServerCertificateValidationErrors? ValidationErrors { get { throw null; } }
-    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/ChainStatus/*'/>
-    public System.Security.Cryptography.X509Certificates.X509ChainStatusFlags? ChainStatus { get { throw null; } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/GetServerCertificate/*'/>
     public System.Security.Cryptography.X509Certificates.X509Certificate2 GetServerCertificate() { throw null; }
 }

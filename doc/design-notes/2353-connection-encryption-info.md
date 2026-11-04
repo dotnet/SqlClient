@@ -44,12 +44,12 @@ applicable.
 
 | Property on `SqlConnectionEncryptionInfo` | Type | Meaning |
 | --- | --- | --- |
+| `ChainStatus` | `X509ChainStatusFlags?` | Applicable chain-validation flags, such as `UntrustedRoot`, `NotTimeValid`, or `Revoked`. |
+| `NegotiatedCipherSuite` | `TlsCipherSuite?`; .NET only; not CLS-compliant | The same value as `NegotiatedCipherSuiteId`, typed as `System.Net.Security.TlsCipherSuite`. *Needs API review.* |
+| `NegotiatedCipherSuiteId` | `int?` on every target framework; CLS-compliant | IANA TLS cipher suite identifier selected by the server, such as `0x1302` (`TLS_AES_256_GCM_SHA384`). *Needs API review.* |
 | `NegotiatedEncryptionMode` | `SqlConnectionEncryptionMode?` | Actual encryption outcome, not the requested `Encrypt` setting. |
 | `NegotiatedEncryptionProtocol` | `SslProtocols?` | Negotiated TLS version, such as TLS 1.2 or TLS 1.3. |
-| `NegotiatedCipherSuiteId` | `int?` on every target framework; CLS-compliant | IANA TLS cipher suite identifier selected by the server, such as `0x1302` (`TLS_AES_256_GCM_SHA384`). *Needs API review.* |
-| `NegotiatedCipherSuite` | `TlsCipherSuite?`; .NET only; not CLS-compliant | The same value as `NegotiatedCipherSuiteId`, typed as `System.Net.Security.TlsCipherSuite`. *Needs API review.* |
 | `ValidationErrors` | `SqlServerCertificateValidationErrors?` | Effective certificate-validation result under the connection's configured rules. |
-| `ChainStatus` | `X509ChainStatusFlags?` | Applicable chain-validation flags, such as `UntrustedRoot`, `NotTimeValid`, or `Revoked`. |
 
 | Method on `SqlConnectionEncryptionInfo` | Return type | Meaning |
 | --- | --- | --- |
@@ -78,15 +78,15 @@ namespace Microsoft.Data.SqlClient
 
     public sealed class SqlConnectionEncryptionInfo
     {
-        public SqlConnectionEncryptionMode? NegotiatedEncryptionMode { get; }
-        public SslProtocols? NegotiatedEncryptionProtocol { get; }
-        public int? NegotiatedCipherSuiteId { get; }
+        public X509ChainStatusFlags? ChainStatus { get; }
 #if NET
         [CLSCompliant(false)]
         public System.Net.Security.TlsCipherSuite? NegotiatedCipherSuite { get; }
 #endif
+        public int? NegotiatedCipherSuiteId { get; }
+        public SqlConnectionEncryptionMode? NegotiatedEncryptionMode { get; }
+        public SslProtocols? NegotiatedEncryptionProtocol { get; }
         public SqlServerCertificateValidationErrors? ValidationErrors { get; }
-        public X509ChainStatusFlags? ChainStatus { get; }
 
         // New instance on every call; the caller owns and disposes it.
         public X509Certificate2? GetServerCertificate();
@@ -114,6 +114,21 @@ namespace Microsoft.Data.SqlClient
 
 Applications cannot construct `SqlConnectionEncryptionInfo`; the driver creates the
 snapshots.
+
+### How the encryption mode is negotiated
+
+`NegotiatedEncryptionMode` reports both how encryption was negotiated and how much of the
+connection it covers, so callers do not need to infer it from the TDS version:
+
+| Value | How it is negotiated | Traffic covered by TLS |
+| --- | --- | --- |
+| `None` | TDS 7.x PRELOGIN; neither side requested encryption and no login TLS was set up. | None. |
+| `LoginOnly` | TDS 7.x PRELOGIN `ENCRYPT_OFF` from both sides; TLS protects only the login. | The LOGIN7 packet only; later session traffic is plaintext. |
+| `Full` | TDS 7.x PRELOGIN `ENCRYPT_ON`/`ENCRYPT_REQ`; TLS is set up after PRELOGIN. | Everything after PRELOGIN, including login and session traffic. PRELOGIN itself is plaintext. |
+| `Strict` | TDS 8.0 (`Encrypt=Strict`); TLS is set up before any TDS packet. | All TDS traffic, including PRELOGIN. |
+
+The requested `Encrypt` setting is not echoed back; the value reflects the outcome the
+driver observed.
 
 ### Negotiated cipher suite
 

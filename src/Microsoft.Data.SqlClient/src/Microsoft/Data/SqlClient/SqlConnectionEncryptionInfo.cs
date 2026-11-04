@@ -68,14 +68,8 @@ namespace Microsoft.Data.SqlClient
             ChainStatus = chainStatus;
         }
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/NegotiatedEncryptionMode/*' />
-        public SqlConnectionEncryptionMode? NegotiatedEncryptionMode { get; }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/NegotiatedEncryptionProtocol/*' />
-        public SslProtocols? NegotiatedEncryptionProtocol { get; }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/NegotiatedCipherSuiteId/*' />
-        public int? NegotiatedCipherSuiteId { get; }
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/ChainStatus/*' />
+        public X509ChainStatusFlags? ChainStatus { get; }
 
 #if NET
         // Strongly typed view of NegotiatedCipherSuiteId. TlsCipherSuite is ushort-backed, matching
@@ -88,6 +82,18 @@ namespace Microsoft.Data.SqlClient
                 ? (System.Net.Security.TlsCipherSuite)value
                 : null;
 #endif
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/NegotiatedCipherSuiteId/*' />
+        public int? NegotiatedCipherSuiteId { get; }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/NegotiatedEncryptionMode/*' />
+        public SqlConnectionEncryptionMode? NegotiatedEncryptionMode { get; }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/NegotiatedEncryptionProtocol/*' />
+        public SslProtocols? NegotiatedEncryptionProtocol { get; }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/ValidationErrors/*' />
+        public SqlServerCertificateValidationErrors? ValidationErrors { get; }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/GetServerCertificate/*' />
         public X509Certificate2? GetServerCertificate()
@@ -110,19 +116,14 @@ namespace Microsoft.Data.SqlClient
 
         /// <summary>
         /// Gets the captured DER encoding of the server-presented leaf certificate, or
-        /// <see langword="null"/> if none was captured. The memory is read-only and owned by
-        /// the snapshot.
+        /// <see langword="null"/> if none was captured. The memory wraps the snapshot's private
+        /// copy without allocating; internal callers must not mutate it. Public callers only
+        /// receive a newly parsed certificate from <see cref="GetServerCertificate"/>.
         /// </summary>
         internal ReadOnlyMemory<byte>? PresentedServerCertificateRawData =>
             _presentedServerCertificate is null
                 ? (ReadOnlyMemory<byte>?)null
                 : new ReadOnlyMemory<byte>(_presentedServerCertificate);
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/ValidationErrors/*' />
-        public SqlServerCertificateValidationErrors? ValidationErrors { get; }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/ChainStatus/*' />
-        public X509ChainStatusFlags? ChainStatus { get; }
 
         /// <summary>
         /// Gets a value indicating whether every field is unavailable.

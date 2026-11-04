@@ -19,23 +19,44 @@ namespace Microsoft.Data.SqlClient
     /// </summary>
     public class SqlConnectionEncryptionInfoTests
     {
+        /// <summary>
+        /// Server version reported by exceptions created through the internal factories.
+        /// </summary>
         private const string ServerVersion = "16.00.1000";
 
-        // Public-only, self-signed ECDSA P-256 test certificate (CN=encryption-info.test). It has
-        // no private key and is used only to verify DER round-tripping.
+        /// <summary>
+        /// Base64 DER encoding of a public-only, self-signed ECDSA P-256 test certificate
+        /// (CN=encryption-info.test). It has no private key and is used only to verify DER
+        /// round-tripping.
+        /// </summary>
         private const string SampleCertificateBase64 =
             "MIIBNDCB2qADAgECAggohG/gEdxs1TAKBggqhkjOPQQDAjAfMR0wGwYDVQQDExRlbmNyeXB0aW9uLWluZm8u" +
             "dGVzdDAgFw0yNjAxMDEwMDAwMDBaGA8yMTI2MDEwMTAwMDAwMFowHzEdMBsGA1UEAxMUZW5jcnlwdGlvbi1p" +
             "bmZvLnRlc3QwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAATKtC9pE1F5JC1ciq1W/ANr5OBPgXrlvMpmPXMr" +
             "ectPyl630QJbCUT640lSLXUfdF3/8iTglUTiCyxg7SNUztJKMAoGCCqGSM49BAMCA0kAMEYCIQDoHA2MzlvfTWHm" +
             "n8Iioi8sMoKAnV/DcSrw50GwJf+fGAIhAPCezMdXBEwwpf4MU2fkmifrj36YES+JJM49BDRItkIl";
+
+        /// <summary>
+        /// SHA-1 thumbprint of the sample certificate, used to confirm the round-tripped identity.
+        /// </summary>
         private const string SampleCertificateThumbprint = "60820F552FF4F3CAAEC10B18EB468A16F01D7313";
+
+        /// <summary>
+        /// Subject distinguished name of the sample certificate.
+        /// </summary>
         private const string SampleCertificateSubject = "CN=encryption-info.test";
 
-        // IANA identifier for TLS_AES_256_GCM_SHA384.
+        /// <summary>
+        /// IANA identifier for TLS_AES_256_GCM_SHA384.
+        /// </summary>
         private const int SampleCipherSuite = 0x1302;
 
-        private static byte[] CreateSampleCertificate() => Convert.FromBase64String(SampleCertificateBase64);
+        /// <summary>
+        /// Creates a new array holding the DER encoding of the sample certificate.
+        /// </summary>
+        /// <returns>A new array that the caller may mutate.</returns>
+        private static byte[] CreateSampleCertificate() =>
+            Convert.FromBase64String(SampleCertificateBase64);
 
         #region Empty snapshot
 
@@ -800,6 +821,10 @@ namespace Microsoft.Data.SqlClient
 
         #region Helpers
 
+        /// <summary>
+        /// Asserts that a snapshot is non-null and that every field is unavailable.
+        /// </summary>
+        /// <param name="info">The snapshot to check.</param>
         private static void AssertEmpty(SqlConnectionEncryptionInfo? info)
         {
             Assert.NotNull(info);
@@ -815,6 +840,10 @@ namespace Microsoft.Data.SqlClient
             Assert.Null(info.ChainStatus);
         }
 
+        /// <summary>
+        /// Creates a snapshot with every field populated with a distinct non-default value.
+        /// </summary>
+        /// <returns>The populated snapshot.</returns>
         private static SqlConnectionEncryptionInfo CreatePopulated() =>
             new(
                 SqlConnectionEncryptionMode.Strict,
@@ -824,6 +853,10 @@ namespace Microsoft.Data.SqlClient
                 X509ChainStatusFlags.UntrustedRoot,
                 SampleCipherSuite);
 
+        /// <summary>
+        /// Creates a server error used to build exceptions through the internal factories.
+        /// </summary>
+        /// <returns>The error.</returns>
         private static SqlError CreateError() =>
             new(
                 infoNumber: 50000,
@@ -836,6 +869,10 @@ namespace Microsoft.Data.SqlClient
                 exception: null,
                 batchIndex: -1);
 
+        /// <summary>
+        /// Creates an error collection holding a single error from <see cref="CreateError"/>.
+        /// </summary>
+        /// <returns>The error collection.</returns>
         private static SqlErrorCollection CreateErrorCollection() => new() { CreateError() };
 
         #endregion
