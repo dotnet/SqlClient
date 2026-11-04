@@ -20,7 +20,7 @@ internal sealed partial class SqlMetaDataFactory
     /// Returns <see href="https://learn.microsoft.com/en-us/dotnet/framework/data/adonet/common-schema-collections#datatypes">DataTypes</see>
     /// schema collection.
     /// </summary>
-    private sealed class DataTypesCollection : MetaDataCollectionBase
+    internal sealed class DataTypesCollection : MetaDataCollectionBase
     {
         #pragma warning disable format
 
@@ -48,18 +48,22 @@ internal sealed partial class SqlMetaDataFactory
             new (SqlDbType.DateTime        ,null                        /*,"datetime"           */,false  ,true   ,false  ,true   ,false  ,false  ,true   ,true   ,true   ,null   ,-1     ,-1     ,false  ,null   ,"{ts '","'}"   ,null                                   ,null),
             new (SqlDbType.SmallDateTime   ,null                        /*,"smalldatetime"      */,false  ,true   ,false  ,true   ,false  ,false  ,true   ,true   ,true   ,null   ,-1     ,-1     ,false  ,null   ,"{ts '","'}"   ,null                                   ,null),
             new (SqlDbType.Variant         ,-1                          /*,"sql_variant"        */,false  ,true   ,false  ,false  ,false  ,false  ,true   ,true   ,false  ,null   ,-1     ,-1     ,false  ,false  ,null   ,null   ,null                                   ,null),
-            new (SqlDbType.Xml             ,int.MaxValue                /*,"xml"                */,false  ,false  ,false  ,false  ,false  ,true   ,true   ,false  ,false  ,null   ,-1     ,-1     ,false  ,false  ,null   ,null   ,caps => caps.XmlDataType               ,null),
+            new (SqlDbType.Xml             ,int.MaxValue                /*,"xml"                */,false  ,false  ,false  ,false  ,false  ,true   ,true   ,false  ,false  ,null   ,-1     ,-1     ,false  ,false  ,null   ,null   ,null                                   ,null),
             new (SqlDbType.VarChar         ,int.MaxValue                /*,"varchar({0})"       */,false  ,true   ,false  ,false  ,false  ,false  ,true   ,true   ,true   ,null   ,-1     ,-1     ,false  ,null   ,"'"    ,"'"    ,null                                   ,["max length"]),
             new (SqlDbType.Char            ,int.MaxValue                /*,"char({0})"          */,false  ,true   ,false  ,true   ,false  ,false  ,true   ,true   ,true   ,null   ,-1     ,-1     ,false  ,null   ,"'"    ,"'"    ,null                                   ,["length"]),
             new (SqlDbType.NChar           ,int.MaxValue / ADP.CharSize /*,"nchar({0})"         */,false  ,true   ,false  ,true   ,false  ,false  ,true   ,true   ,true   ,null   ,-1     ,-1     ,false  ,null   ,"N'"   ,"'"    ,null                                   ,["length"]),
             new (SqlDbType.NVarChar        ,int.MaxValue / ADP.CharSize /*,"nvarchar({0})"      */,false  ,true   ,false  ,false  ,false  ,false  ,true   ,true   ,true   ,null   ,-1     ,-1     ,false  ,null   ,"N'"   ,"'"    ,null                                   ,["max length"]),
             new (SqlDbType.VarBinary       ,int.MaxValue / ADP.CharSize /*,"varbinary({0})"     */,false  ,true   ,false  ,false  ,false  ,false  ,true   ,true   ,false  ,null   ,-1     ,-1     ,false  ,null   ,"0x"   ,null   ,null                                   ,["max length"]),
             new (SqlDbType.UniqueIdentifier,null                        /*,"uniqueidentifier"   */,false  ,true   ,false  ,true   ,false  ,false  ,true   ,true   ,false  ,null   ,-1     ,-1     ,false  ,null   ,"'"    ,"'"    ,null                                   ,null),
-            new (SqlDbType.Date            ,null                        /*,"date"               */,false  ,false  ,false  ,true   ,true   ,false  ,true   ,true   ,true   ,null   ,-1     ,-1     ,false  ,null   ,"{ts '","'}"   ,caps => caps.ExpandedDateTimeDataTypes ,null),
-            new (SqlDbType.Time            ,5                           /*,"time({0})"          */,false  ,false  ,false  ,false  ,false  ,false  ,true   ,true   ,true   ,null   ,7      ,0      ,false  ,null   ,"{ts '","'}"   ,caps => caps.ExpandedDateTimeDataTypes ,["scale"]),
-            new (SqlDbType.DateTime2       ,8                           /*,"datetime2({0})"     */,false  ,true   ,false  ,false  ,false  ,false  ,true   ,true   ,true   ,null   ,7      ,0      ,false  ,null   ,"{ts '","'}"   ,caps => caps.ExpandedDateTimeDataTypes ,["scale"]),
-            new (SqlDbType.DateTimeOffset  ,10                          /*,"datetimeoffset({0})"*/,false  ,true   ,false  ,false  ,false  ,false  ,true   ,true   ,true   ,null   ,7      ,0      ,false  ,null   ,"{ts '","'}"   ,caps => caps.ExpandedDateTimeDataTypes ,["scale"]),
+            new (SqlDbType.Date            ,null                        /*,"date"               */,false  ,false  ,false  ,true   ,true   ,false  ,true   ,true   ,true   ,null   ,-1     ,-1     ,false  ,null   ,"{ts '","'}"   ,null                                   ,null),
+            new (SqlDbType.Time            ,5                           /*,"time({0})"          */,false  ,false  ,false  ,false  ,false  ,false  ,true   ,true   ,true   ,null   ,7      ,0      ,false  ,null   ,"{ts '","'}"   ,null                                   ,["scale"]),
+            new (SqlDbType.DateTime2       ,8                           /*,"datetime2({0})"     */,false  ,true   ,false  ,false  ,false  ,false  ,true   ,true   ,true   ,null   ,7      ,0      ,false  ,null   ,"{ts '","'}"   ,null                                   ,["scale"]),
+            new (SqlDbType.DateTimeOffset  ,10                          /*,"datetimeoffset({0})"*/,false  ,true   ,false  ,false  ,false  ,false  ,true   ,true   ,true   ,null   ,7      ,0      ,false  ,null   ,"{ts '","'}"   ,null                                   ,["scale"]),
             new (SqlDbTypeExtensions.Json  ,int.MaxValue                /*,"json"               */,false  ,false  ,false  ,false  ,false  ,true   ,true   ,false  ,false  ,null   ,-1     ,-1     ,false  ,false  ,"'"    ,"'"    ,caps => caps.JsonType                  ,null),
+            new (SqlDbTypeExtensions.Vector,TdsEnums.MAXSIZE            /**/                      ,false  ,false  ,false  ,false  ,false  ,false  ,true   ,false  ,false  ,null   ,-1     ,-1     ,false  ,null   ,"'"    ,"'"    ,caps => caps.VectorVersion != TdsEnums.VECTOR_VERSION_NOT_SUPPORTED && caps.VectorVersion >= TdsEnums.VECTOR_VERSION_FLOAT16
+                                                                                                                                                                                                                                                                          ,["dimensions,base_type"]),
+            new (SqlDbTypeExtensions.Vector,TdsEnums.MAXSIZE            /**/                      ,false  ,false  ,false  ,false  ,false  ,false  ,true   ,false  ,false  ,null   ,-1     ,-1     ,false  ,null   ,"'"    ,"'"    ,caps => caps.VectorVersion != TdsEnums.VECTOR_VERSION_NOT_SUPPORTED && caps.VectorVersion < TdsEnums.VECTOR_VERSION_FLOAT16
+                                                                                                                                                                                                                                                                          ,["dimensions"]),
             ];
         // * - CreateFormat value, that supposed to be produced
 
@@ -84,18 +88,20 @@ internal sealed partial class SqlMetaDataFactory
             TypeMetaData.CreateFixedPrecisionDateTimeType(SqlDbType.DateTime, isBestMatch: true),
             TypeMetaData.CreateFixedPrecisionDateTimeType(SqlDbType.SmallDateTime, isBestMatch: true),
             TypeMetaData.CreateSqlVariantType(),
-            TypeMetaData.CreateLongStringOrBinaryType(SqlDbType.Xml, isSupported: caps => caps.XmlDataType),
+            TypeMetaData.CreateLongStringOrBinaryType(SqlDbType.Xml),
             TypeMetaData.CreateVariableLengthStringOrBinaryType(SqlDbType.VarChar, literalPrefix: "'", literalSuffix: "'"),
             TypeMetaData.CreateFixedLengthStringOrBinaryType(SqlDbType.Char, literalPrefix: "'", literalSuffix: "'"),
             TypeMetaData.CreateFixedLengthStringOrBinaryType(SqlDbType.NChar, literalPrefix: "N'", literalSuffix: "'"),
             TypeMetaData.CreateVariableLengthStringOrBinaryType(SqlDbType.NVarChar, literalPrefix: "N'", literalSuffix: "'"),
             TypeMetaData.CreateVariableLengthStringOrBinaryType(SqlDbType.VarBinary, literalPrefix: "0x"),
             TypeMetaData.CreateUniqueIdentifierType(),
-            TypeMetaData.CreateFixedPrecisionDateTimeType(SqlDbType.Date, isBestMatch: false, isSupported: caps => caps.ExpandedDateTimeDataTypes),
-            TypeMetaData.CreateVariablePrecisionDateTimeType(SqlDbType.Time, columnSize: 5, isBestMatch: false, isSupported: caps => caps.ExpandedDateTimeDataTypes),
-            TypeMetaData.CreateVariablePrecisionDateTimeType(SqlDbType.DateTime2, columnSize: 8, isSupported: caps => caps.ExpandedDateTimeDataTypes),
-            TypeMetaData.CreateVariablePrecisionDateTimeType(SqlDbType.DateTimeOffset, columnSize: 10, isSupported: caps => caps.ExpandedDateTimeDataTypes),
+            TypeMetaData.CreateFixedPrecisionDateTimeType(SqlDbType.Date, isBestMatch: false),
+            TypeMetaData.CreateVariablePrecisionDateTimeType(SqlDbType.Time, columnSize: 5, isBestMatch: false),
+            TypeMetaData.CreateVariablePrecisionDateTimeType(SqlDbType.DateTime2, columnSize: 8),
+            TypeMetaData.CreateVariablePrecisionDateTimeType(SqlDbType.DateTimeOffset, columnSize: 10),
             TypeMetaData.CreateLongStringOrBinaryType(SqlDbTypeExtensions.Json, literalPrefix: "'", literalSuffix: "'",isSupported: caps => caps.JsonType),
+            TypeMetaData.CreateVectorType(caps => caps.VectorVersion != TdsEnums.VECTOR_VERSION_NOT_SUPPORTED && caps.VectorVersion < TdsEnums.VECTOR_VERSION_FLOAT16, "dimensions"),
+            TypeMetaData.CreateVectorType(caps => caps.VectorVersion != TdsEnums.VECTOR_VERSION_NOT_SUPPORTED && caps.VectorVersion >= TdsEnums.VECTOR_VERSION_FLOAT16, "dimensions,base_type"),
         ];
 
         #pragma warning restore format
@@ -198,7 +204,7 @@ internal sealed partial class SqlMetaDataFactory
 
             // 2. Add UDTs from the server if supported
             MetaDataCollectionBase? udtCollection = FindMetaDataCollection("_UDTs", context);
-            if (udtCollection != null && context.Caps.UserDefinedTypes)
+            if (udtCollection != null)
             {
                 const string GetEngineEditionSqlCommand = "SELECT SERVERPROPERTY('EngineEdition');";
                 using SqlCommand command = ((SqlConnection)context.Connection).CreateCommand();
@@ -504,5 +510,20 @@ internal sealed partial class SqlMetaDataFactory
             LiteralPrefix = "'",
             LiteralSuffix = "'",
         };
+
+        internal static TypeMetaData CreateVectorType(Predicate<ConnectionCapabilities>? isSupported, string parameters)
+        {
+            MetaType metaType = MetaType.GetMetaTypeFromSqlDbType(SqlDbTypeExtensions.Vector, isMultiValued: false);
+            return new TypeMetaData(SqlDbTypeExtensions.Vector)
+            {
+                IsFixedLength = false,
+                IsSearchable = false,
+                LiteralPrefix = "'",
+                LiteralSuffix = "'",
+                CreateFormat = parameters.Split(',').Length == 2 ? $"{metaType.TypeName}({{0}}, {{1}})" : $"{metaType.TypeName}({{0}})",
+                CreateParameters = parameters,
+                IsSupported = isSupported
+            };
+        }
     }
 }
