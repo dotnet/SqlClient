@@ -370,7 +370,15 @@ namespace Microsoft.Data.SqlClient
                     throw SQL.ConnectionLockedForBcpEvent();
                 }
 
-                innerConnection.ValidateConnectionForExecute(null);
+                try
+                {
+                    innerConnection.ValidateConnectionForExecute(null);
+                }
+                catch (Exception e) when (_disposing && ADP.IsCatchableExceptionType(e) && IsBrokenOrClosed(innerConnection))
+                {
+                    // The connection broke after the check above, so the same reasoning applies.
+                    return;
+                }
 
                 try
                 {
