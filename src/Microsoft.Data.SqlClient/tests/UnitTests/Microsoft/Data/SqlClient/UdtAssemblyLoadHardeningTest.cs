@@ -372,6 +372,11 @@ public class UdtAssemblyLoadHardeningTest
             fieldTypes: null,
             extendedProperties: null);
 
+    /// <summary>
+    /// Builds unresolved UDT metadata to exercise connection-level type resolution.
+    /// </summary>
+    /// <param name="assemblyQualifiedName">The type name supplied by the server.</param>
+    /// <returns>UDT metadata with no resolved CLR type.</returns>
     private static TdsTypeInfo CreateUdtMetaData(string assemblyQualifiedName) =>
         new()
         {
