@@ -375,6 +375,98 @@ public sealed class SqlBulkCopyTests
         Assert.False(result);
     }
 
+    /// <summary>Verifies ordinal mappings use catalog discovery unless explicitly disabled.</summary>
+    [Theory]
+    [InlineData(null, true)]
+    [InlineData(true, true)]
+    [InlineData(false, false)]
+    public void CreateInitialQuery_OrdinalMapping_RespectsDiscoveryMode(
+        bool? mode, bool expectedCatalog)
+    {
+        // Arrange
+        using LocalAppContextSwitchesHelper switches = new();
+        switches.UseBulkCopyCatalogMetadataDiscovery = mode;
+        using SqlBulkCopy copy = CreateBulkCopy("dbo.T", resolveAliases: false);
+        copy.ColumnMappings.Clear();
+        copy.ColumnMappings.Add(0, 1);
+        SetLocalColumnMappings(copy);
+
+        // Act
+        string query = copy.CreateInitialQuery();
+
+        // Assert
+        Assert.Equal(expectedCatalog, query.Contains("[sys].[all_columns]"));
+    }
+
+    /// <summary>Verifies automatic default mappings preserve catalog destination positions.</summary>
+    [Fact]
+    public void CreateInitialQuery_AutomaticDefaultMappings_UsesCatalog()
+    {
+        // Arrange
+        using LocalAppContextSwitchesHelper switches = new();
+        switches.UseBulkCopyCatalogMetadataDiscovery = null;
+        using SqlBulkCopy copy = CreateBulkCopy("dbo.T", resolveAliases: false);
+        copy.ColumnMappings.Clear();
+        SetLocalColumnMappings(copy);
+
+        // Act
+        string query = copy.CreateInitialQuery();
+
+        // Assert
+        Assert.Contains("[sys].[all_columns]", query);
+    }
+
+    /// <summary>Verifies a named-mapping cache is replaced before using destination ordinals.</summary>
+    [Fact]
+    public void IsCachedMetadataValid_AutomaticOrdinalMapping_RejectsFastCache()
+    {
+        // Arrange
+        using LocalAppContextSwitchesHelper switches = new();
+        switches.UseBulkCopyCatalogMetadataDiscovery = null;
+        using SqlBulkCopy copy = CreateBulkCopy("dbo.T", resolveAliases: false);
+        copy.ColumnMappings.Clear();
+        copy.ColumnMappings.Add(0, 1);
+        SetLocalColumnMappings(copy);
+        typeof(SqlBulkCopy).GetProperty(nameof(SqlBulkCopy.CachedMetadata),
+            BindingFlags.Instance | BindingFlags.NonPublic)!
+            .SetValue(copy, new BulkCopySimpleResultSet { UsesCatalogMetadata = false });
+
+        // Act
+        bool result = copy.IsCachedMetadataValid();
+
+        // Assert
+        Assert.False(result);
+    }
+
+    /// <summary>Verifies cache reuse retains alias results for subsequent alias mappings.</summary>
+    [Fact]
+    public void CacheMetadataIfEnabled_ReusedAliasCache_RetainsAliasCapability()
+    {
+        // Arrange
+        using LocalAppContextSwitchesHelper switches = new();
+        switches.UseBulkCopyCatalogMetadataDiscovery = null;
+        using SqlBulkCopy copy = new(new SqlConnection(), SqlBulkCopyOptions.CacheMetadata, null);
+        copy.ColumnMappings.Add("Source", "Visible");
+        SetLocalColumnMappings(copy);
+        BulkCopySimpleResultSet metadata = new() { UsesCatalogMetadata = true };
+        BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        MethodInfo cache = typeof(SqlBulkCopy).GetMethod("CacheMetadataIfEnabled", flags)!;
+        FieldInfo aliases = typeof(SqlBulkCopy).GetField("_localColumnMappingsResolveAliases",
+            flags)!;
+        aliases.SetValue(copy, true);
+        cache.Invoke(copy, new object[] { metadata });
+
+        // Act
+        aliases.SetValue(copy, false);
+        cache.Invoke(copy, new object[] { metadata });
+        aliases.SetValue(copy, true);
+        bool result = copy.IsCachedMetadataValid();
+
+        // Assert
+        Assert.True(result);
+        Assert.Same(metadata, copy.CachedMetadata);
+    }
+
     /// <summary>Verifies cached discovery matches forced modes and either automatic path.</summary>
     [Theory]
     [InlineData(null, false, true)]
@@ -402,6 +494,7 @@ public sealed class SqlBulkCopyTests
         Assert.Equal(expected, result);
     }
 
+    /// <summary>Sets the operation mappings normally initialized before metadata discovery.</summary>
     private static void SetLocalColumnMappings(SqlBulkCopy copy)
     {
         FieldInfo? field = typeof(SqlBulkCopy).GetField(
@@ -457,6 +550,8 @@ public sealed class SqlBulkCopyTests
         {
             DestinationTableName = destination
         };
+        copy.ColumnMappings.Add("Source", "Visible");
+        SetLocalColumnMappings(copy);
         FieldInfo? field = typeof(SqlBulkCopy).GetField(
             "_localColumnMappingsResolveAliases", BindingFlags.Instance | BindingFlags.NonPublic);
         Assert.NotNull(field);

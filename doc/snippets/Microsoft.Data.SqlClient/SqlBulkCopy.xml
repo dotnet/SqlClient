@@ -9,10 +9,13 @@
         <para>
           Destination metadata discovery is controlled by the AppContext switch
           <c>Switch.Microsoft.Data.SqlClient.UseBulkCopyCatalogMetadataDiscovery</c>.
-          When unset, bulk copy uses <c>SET FMTONLY ON; SELECT *</c> first and retries metadata
-          discovery once through <c>sys.all_columns</c> if a destination column name is missing.
-          SQL Graph alias mappings use catalog discovery immediately. The retry occurs before
-          any rows are sent and adds one metadata round trip.
+          When unset, mappings by destination name use <c>SET FMTONLY ON; SELECT *</c> first
+          and retry metadata discovery once through <c>sys.all_columns</c> if a destination
+          column name is missing. Mappings by destination ordinal, implicit default mappings,
+          and SQL Graph aliases use catalog discovery directly. This preserves destination
+          positions when hidden columns exist, but retains catalog query cost for ordinal
+          and default mappings even on ordinary tables. Only the name-based fallback adds
+          a metadata round trip, before any rows are sent.
         </para>
         <para>
           Set the switch to <c>true</c> before the first bulk copy to always use catalog discovery,

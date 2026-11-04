@@ -193,9 +193,13 @@ internal static class LocalAppContextSwitches
     /// </summary>
     internal enum SwitchValue : byte
     {
+        // The switch has not been read yet.
         None = 0,
+        // The cached Boolean value is true, whether configured or supplied by a default.
         True = 1,
+        // The cached Boolean value is false, whether configured or supplied by a default.
         False = 2,
+        // The switch was read but is unset; tri-state switches use automatic behavior.
         Automatic = 3
     }
 

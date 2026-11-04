@@ -230,6 +230,134 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
             AssertHiddenValues(connection, table.Name, source);
         }
 
+        /// <summary>Verifies ordinal mappings preserve hidden-column positions.</summary>
+        [ConditionalFact(
+            typeof(DataTestUtility),
+            nameof(DataTestUtility.AreConnStringsSetup),
+            nameof(DataTestUtility.IsNotAzureSynapse))]
+        public void WriteToServer_AutomaticOrdinalMappings_PreservesHiddenPositions()
+        {
+            // Arrange
+            using LocalAppContextSwitchesHelper switches = new();
+            switches.UseBulkCopyCatalogMetadataDiscovery = null;
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            connection.Open();
+            using Table table = CreateWritableHiddenTable(connection, "AutomaticOrdinals");
+            using DataTable source = CreateHiddenOrdinalSource();
+            using SqlBulkCopy copy = new(connection, SqlBulkCopyOptions.CacheMetadata, null)
+            {
+                DestinationTableName = table.Name
+            };
+            copy.ColumnMappings.Add("Id", "Id");
+            copy.WriteToServer(source);
+            BulkCopySimpleResultSet fastMetadata = copy.CachedMetadata;
+            using (SqlCommand clear = new($"DELETE FROM {table.Name}", connection))
+            {
+                clear.ExecuteNonQuery();
+            }
+            copy.ColumnMappings.Clear();
+            for (int i = 0; i < source.Columns.Count; i++)
+            {
+                copy.ColumnMappings.Add(i, i);
+            }
+
+            // Act
+            copy.WriteToServer(source);
+
+            // Assert
+            Assert.False(fastMetadata.UsesCatalogMetadata);
+            Assert.NotSame(fastMetadata, copy.CachedMetadata);
+            Assert.True(copy.CachedMetadata.UsesCatalogMetadata);
+            AssertHiddenOrdinalValues(connection, table.Name, source);
+        }
+
+        /// <summary>Verifies async ordinal mappings preserve hidden-column positions.</summary>
+        [ConditionalFact(
+            typeof(DataTestUtility),
+            nameof(DataTestUtility.AreConnStringsSetup),
+            nameof(DataTestUtility.IsNotAzureSynapse))]
+        public async Task WriteToServerAsync_AutomaticOrdinalMappings_PreservesHiddenPositions()
+        {
+            // Arrange
+            using LocalAppContextSwitchesHelper switches = new();
+            switches.UseBulkCopyCatalogMetadataDiscovery = null;
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            await connection.OpenAsync();
+            using Table table = CreateWritableHiddenTable(connection, "AutomaticOrdinalsAsync");
+            using DataTable source = CreateHiddenOrdinalSource();
+            using SqlBulkCopy copy = new(connection, SqlBulkCopyOptions.CacheMetadata, null)
+            {
+                DestinationTableName = table.Name
+            };
+            copy.ColumnMappings.Add("Id", "Id");
+            await copy.WriteToServerAsync(source);
+            BulkCopySimpleResultSet fastMetadata = copy.CachedMetadata;
+            using (SqlCommand clear = new($"DELETE FROM {table.Name}", connection))
+            {
+                await clear.ExecuteNonQueryAsync();
+            }
+            copy.ColumnMappings.Clear();
+            for (int i = 0; i < source.Columns.Count; i++)
+            {
+                copy.ColumnMappings.Add(i, i);
+            }
+
+            // Act
+            await copy.WriteToServerAsync(source);
+
+            // Assert
+            Assert.False(fastMetadata.UsesCatalogMetadata);
+            Assert.NotSame(fastMetadata, copy.CachedMetadata);
+            Assert.True(copy.CachedMetadata.UsesCatalogMetadata);
+            AssertHiddenOrdinalValues(connection, table.Name, source);
+        }
+
+        /// <summary>Verifies default mappings preserve hidden-column positions.</summary>
+        [ConditionalFact(
+            typeof(DataTestUtility),
+            nameof(DataTestUtility.AreConnStringsSetup),
+            nameof(DataTestUtility.IsNotAzureSynapse))]
+        public void WriteToServer_AutomaticDefaultMappings_PreservesHiddenPositions()
+        {
+            // Arrange
+            using LocalAppContextSwitchesHelper switches = new();
+            switches.UseBulkCopyCatalogMetadataDiscovery = null;
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            connection.Open();
+            using Table table = CreateWritableHiddenTable(connection, "AutomaticDefault");
+            using DataTable source = CreateHiddenOrdinalSource();
+            using SqlBulkCopy copy = new(connection) { DestinationTableName = table.Name };
+
+            // Act
+            copy.WriteToServer(source);
+
+            // Assert
+            AssertHiddenOrdinalValues(connection, table.Name, source);
+        }
+
+        /// <summary>Verifies async default mappings preserve hidden-column positions.</summary>
+        [ConditionalFact(
+            typeof(DataTestUtility),
+            nameof(DataTestUtility.AreConnStringsSetup),
+            nameof(DataTestUtility.IsNotAzureSynapse))]
+        public async Task WriteToServerAsync_AutomaticDefaultMappings_PreservesHiddenPositions()
+        {
+            // Arrange
+            using LocalAppContextSwitchesHelper switches = new();
+            switches.UseBulkCopyCatalogMetadataDiscovery = null;
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            await connection.OpenAsync();
+            using Table table = CreateWritableHiddenTable(connection, "AutomaticDefaultAsync");
+            using DataTable source = CreateHiddenOrdinalSource();
+            using SqlBulkCopy copy = new(connection) { DestinationTableName = table.Name };
+
+            // Act
+            await copy.WriteToServerAsync(source);
+
+            // Assert
+            AssertHiddenOrdinalValues(connection, table.Name, source);
+        }
+
         /// <summary>Verifies fallback replaces a visible-column cache and reuses catalog metadata.</summary>
         [ConditionalFact(
             typeof(DataTestUtility),
@@ -465,6 +593,7 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         default '2000-01-01',
     ValidTo datetime2 generated always as row end hidden not null
         default '9999-12-31',
+    OtherDate datetime2 null,
     period for system_time (ValidFrom, ValidTo)
 )
 """);
@@ -496,6 +625,30 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
             SqlBulkCopy copy = CreateTemporalCopy(connection, tableName);
             copy.ColumnMappings.Add("ValidTo", "ValidTo");
             return copy;
+        }
+
+        /// <summary>Creates distinct values for hidden columns and the following visible column.</summary>
+        private static DataTable CreateHiddenOrdinalSource()
+        {
+            DataTable source = CreateWritableHiddenSource();
+            source.Columns.Add("OtherDate", typeof(DateTime));
+            source.Rows[0]["OtherDate"] = new DateTime(2040, 6, 15);
+            return source;
+        }
+
+        /// <summary>Checks every destination position, including the visible column after hidden ones.</summary>
+        private static void AssertHiddenOrdinalValues(
+            SqlConnection connection, string tableName, DataTable source)
+        {
+            using SqlCommand command = new(
+                $"SELECT Id, ValidFrom, ValidTo, OtherDate FROM {tableName}", connection);
+            using SqlDataReader reader = command.ExecuteReader();
+            Assert.True(reader.Read());
+            for (int i = 0; i < source.Columns.Count; i++)
+            {
+                Assert.Equal(source.Rows[0][i], reader.GetValue(i));
+            }
+            Assert.False(reader.Read());
         }
 
         private static void AssertHiddenValues(

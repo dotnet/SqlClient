@@ -491,8 +491,7 @@ namespace Microsoft.Data.SqlClient
 
             string objectName = ADP.BuildMultiPartName(parts);
 
-            bool? mode = LocalAppContextSwitches.UseBulkCopyCatalogMetadataDiscovery;
-            useCatalog ??= mode == true || (mode is null && _localColumnMappingsResolveAliases);
+            useCatalog ??= UseCatalogMetadataForMappings();
             if (!useCatalog.Value)
             {
                 // Return only the visible columns without querying catalog views. Hidden columns
@@ -665,8 +664,7 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             }
             else
             {
-                bool useCatalog = LocalAppContextSwitches.UseBulkCopyCatalogMetadataDiscovery
-                    == true || _localColumnMappingsResolveAliases;
+                bool useCatalog = UseCatalogMetadataForMappings();
                 result = await ExecuteInitialQueryAsync(useCatalog).ConfigureAwait(false);
             }
 
@@ -704,7 +702,8 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
         internal bool ShouldUseCatalogMetadataFallback(TdsColumnMetadataToken metadata)
         {
-            if (LocalAppContextSwitches.UseBulkCopyCatalogMetadataDiscovery.HasValue)
+            if (LocalAppContextSwitches.UseBulkCopyCatalogMetadataDiscovery.HasValue
+                || UseCatalogMetadataForMappings())
             {
                 return false;
             }
@@ -742,12 +741,39 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             bool? mode = LocalAppContextSwitches.UseBulkCopyCatalogMetadataDiscovery;
             return CachedMetadata != null
                 && (!mode.HasValue || CachedMetadata.UsesCatalogMetadata == mode.Value)
+                && (!UseCatalogMetadataForMappings() || CachedMetadata.UsesCatalogMetadata)
                 && (!_localColumnMappingsResolveAliases || _cachedMetadataResolveAliases);
+        }
+
+        private bool UseCatalogMetadataForMappings()
+        {
+            if (LocalAppContextSwitches.UseBulkCopyCatalogMetadataDiscovery is bool useCatalog)
+            {
+                return useCatalog;
+            }
+
+            SqlBulkCopyColumnMappingCollection mappings = _localColumnMappings ?? ColumnMappings;
+            if (_localColumnMappingsResolveAliases || mappings.Count == 0)
+            {
+                return true;
+            }
+
+            // SELECT * omits hidden columns, so its positions cannot preserve catalog ordinals.
+            for (int i = 0; i < mappings.Count; i++)
+            {
+                if (mappings[i]._destinationColumnOrdinal >= 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void CacheMetadataIfEnabled(BulkCopySimpleResultSet result)
         {
-            if (IsCopyOption(SqlBulkCopyOptions.CacheMetadata))
+            if (IsCopyOption(SqlBulkCopyOptions.CacheMetadata)
+                && !ReferenceEquals(CachedMetadata, result))
             {
                 CachedMetadata = result;
                 _cachedMetadataResolveAliases = _localColumnMappingsResolveAliases;
