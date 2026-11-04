@@ -192,36 +192,105 @@ stages:
               testDisplayName: "sqlclient_functional"
               testProject: "Functional"
 
-          # TestSqlClientManual - Localhost
-          - template: /eng/pipelines/pr/jobs/test-sqlclientmanual-job.yml@self
-            parameters:
-              buildConfiguration: ${{ parameters.buildConfiguration }}
-              buildSuffix: ${{ parameters.buildSuffix }}
-              dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
-              stageNameSecrets: ${{ parameters.stageNameSecrets }}
-              testResultsArtifactBaseName: ${{ parameters.testResultsArtifactBaseName }}
+          # TestSqlClientManual - Localhost, managed SNI (Linux and Windows netcore only)
+          - ${{ if or(eq(platform.operatingSystem, 'Linux'), not(startsWith(platform.dotnet, 'net4'))) }}:
+            - template: /eng/pipelines/pr/jobs/test-sqlclientmanual-job.yml@self
+              parameters:
+                buildConfiguration: ${{ parameters.buildConfiguration }}
+                buildSuffix: ${{ parameters.buildSuffix }}
+                dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+                stageNameSecrets: ${{ parameters.stageNameSecrets }}
+                testResultsArtifactBaseName: ${{ parameters.testResultsArtifactBaseName }}
 
-              platformDisplayName: ${{ platform.displayName }}
-              platformDotnet: ${{ platform.dotnet }}
-              poolImage: ${{ platform.image }}
-              platformOperatingSystem: ${{ platform.operatingSystem }}
-              poolName: ${{ parameters.poolName }}
+                platformDisplayName: ${{ platform.DisplayName }}
+                platformDotNet: ${{ platform.dotnet }}
+                poolImage: ${{ platform.image }}
+                platformOperatingSystem: ${{ platform.operatingSystem }}
+                poolName: ${{ parameters.poolName }}
 
-              azureKeyVaultTenantId: ${{ parameters.manualTestAzureKeyVaultTenantId }}
-              azureKeyVaultUrl: ${{ parameters.manualTestAzureKeyVaultUrl }}
-              configDisplayName: "localhost"
-              connectionStringNp: ${{ parameters.manualTestConnectionStringNpLocalhost }}
-              connectionStringTcp: ${{ parameters.manualTestConnectionStringTcpLocalhost }}
-              enableLocalDB: false
-              fileStreamDirectory: ${{ parameters.manualTestFileStreamDirectory }}
-              isLocalServer: true
-              localDbAppName: ${{ parameters.manualTestLocalDbAppName }}
-              localDbSharedInstanceName: ${{ parameters.manualTestLocalDbSharedInstanceName }}
-              supportsIntegratedSecurity: false
-              testSet: "123"
-              userManagedIdentityClientId: ${{ parameters.manualTestUserManagedIdentityClientId }}
+                azureKeyVaultTenantId: ${{ parameters.manualTestAzureKeyVaultTenantId }}
+                azureKeyVaultUrl: ${{ parameters.manualTestAzureKeyVaultUrl }}
+                configDisplayName: "localhost_managedSni"
+                connectionStringNp: ${{ parameters.manualTestConnectionStringNpLocalhost }}
+                connectionStringTcp: ${{ parameters.manualTestConnectionStringTcpLocalhost }}
+                enableLocalDB: false
+                fileStreamDirectory: ${{ parameters.manualTestFileStreamDirectory }}
+                isLocalServer: true
+                localDbAppName: ${{ parameters.manualTestLocalDbAppName }}
+                localDbSharedInstanceName: ${{ parameters.manualTestLocalDbSharedInstanceName }}
+                supportsIntegratedSecurity: false
+                useManagedSni: true
+                testSet: "123"
+                userManagedIdentityClientId: ${{ parameters.manualTestUserManagedIdentityClientId }}
 
-          # TestSqlClientManual - LocalDB
+          # TestSqlClientManual - Localhost, native SNI (Windows only)
+          - ${{ if eq(platform.operatingSystem, 'Windows') }}:
+            - template: /eng/pipelines/pr/jobs/test-sqlclientmanual-job.yml@self
+              parameters:
+                buildConfiguration: ${{ parameters.buildConfiguration }}
+                buildSuffix: ${{ parameters.buildSuffix }}
+                dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+                stageNameSecrets: ${{ parameters.stageNameSecrets }}
+                testResultsArtifactBaseName: ${{ parameters.testResultsArtifactBaseName }}
+
+                platformDisplayName: ${{ platform.DisplayName }}
+                platformDotNet: ${{ platform.dotnet }}
+                poolImage: ${{ platform.image }}
+                platformOperatingSystem: ${{ platform.operatingSystem }}
+                poolName: ${{ parameters.poolName }}
+
+                azureKeyVaultTenantId: ${{ parameters.manualTestAzureKeyVaultTenantId }}
+                azureKeyVaultUrl: ${{ parameters.manualTestAzureKeyVaultUrl }}
+                configDisplayName: "localhost_nativeSni"
+                connectionStringNp: ${{ parameters.manualTestConnectionStringNpLocalhost }}
+                connectionStringTcp: ${{ parameters.manualTestConnectionStringTcpLocalhost }}
+                enableLocalDB: false
+                fileStreamDirectory: ${{ parameters.manualTestFileStreamDirectory }}
+                isLocalServer: true
+                localDbAppName: ${{ parameters.manualTestLocalDbAppName }}
+                localDbSharedInstanceName: ${{ parameters.manualTestLocalDbSharedInstanceName }}
+                supportsIntegratedSecurity: false
+                useManagedSni: false
+                testSet: "123"
+                userManagedIdentityClientId: ${{ parameters.manualTestUserManagedIdentityClientId }}
+
+          # TestSqlClientManual - LocalDB, managed SNI (Windows, netcore only)
+          # Note: connection strings are explicitly set to empty to only allow the localDB tests to
+          # run. LocalDB tests require the localdb app name to be provided and supportsIntegratedSecurity
+          # to be true. If the connection strings (from the library, which as of 7/26 does not use
+          # integrated auth) are provided with supportsIntegratedSecurity set to true, other tests
+          # will fail.
+          - ${{ if and(eq(platform.operatingSystem, 'Windows'), not(startsWith(platform.dotnet, 'net4'))) }}:
+              - template: /eng/pipelines/pr/jobs/test-sqlclientmanual-job.yml@self
+                parameters:
+                  buildConfiguration: ${{ parameters.buildConfiguration }}
+                  buildSuffix: ${{ parameters.buildSuffix }}
+                  dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
+                  stageNameSecrets: ${{ parameters.stageNameSecrets }}
+                  testResultsArtifactBaseName: ${{ parameters.testResultsArtifactBaseName }}
+
+                  platformDisplayName: ${{ platform.displayName }}
+                  platformDotnet: ${{ platform.dotnet }}
+                  poolImage: ${{ platform.image }}
+                  platformOperatingSystem: ${{ platform.operatingSystem }}
+                  poolName: ${{ parameters.poolName }}
+
+                  azureKeyVaultTenantId: ${{ parameters.manualTestAzureKeyVaultTenantId }}
+                  azureKeyVaultUrl: ${{ parameters.manualTestAzureKeyVaultUrl }}
+                  configDisplayName: "localdb_managedSni"
+                  connectionStringNp: ""
+                  connectionStringTcp: ""
+                  enableLocalDB: true
+                  fileStreamDirectory: ${{ parameters.manualTestFileStreamDirectory }}
+                  isLocalServer: true
+                  localDbAppName: ${{ parameters.manualTestLocalDbAppName }}
+                  localDbSharedInstanceName: ${{ parameters.manualTestLocalDbSharedInstanceName }}
+                  supportsIntegratedSecurity: true
+                  useManagedSni: true
+                  testSet: "123"
+                  userManagedIdentityClientId: ${{ parameters.manualTestUserManagedIdentityClientId }}
+
+          # TestSqlClientManual - LocalDB, native SNI (Windows only)
           # Note: connection strings are explicitly set to empty to only allow the localDB tests to
           # run. LocalDB tests require the localdb app name to be provided and supportsIntegratedSecurity
           # to be true. If the connection strings (from the library, which as of 7/26 does not use
@@ -244,7 +313,7 @@ stages:
 
                 azureKeyVaultTenantId: ${{ parameters.manualTestAzureKeyVaultTenantId }}
                 azureKeyVaultUrl: ${{ parameters.manualTestAzureKeyVaultUrl }}
-                configDisplayName: "localdb"
+                configDisplayName: "localdb_nativeSni"
                 connectionStringNp: ""
                 connectionStringTcp: ""
                 enableLocalDB: true
@@ -253,6 +322,7 @@ stages:
                 localDbAppName: ${{ parameters.manualTestLocalDbAppName }}
                 localDbSharedInstanceName: ${{ parameters.manualTestLocalDbSharedInstanceName }}
                 supportsIntegratedSecurity: true
+                useManagedSni: false
                 testSet: "123"
                 userManagedIdentityClientId: ${{ parameters.manualTestUserManagedIdentityClientId }}
 
@@ -283,6 +353,7 @@ stages:
               localDbSharedInstanceName: ${{ parameters.manualTestLocalDbSharedInstanceName }}
               supportsIntegratedSecurity: false
               testSet: "123"
+              useManagedSni: false
               userManagedIdentityClientId: ${{ parameters.manualTestUserManagedIdentityClientId }}
 
           # TestSqlClientManual - Localhost Always Encrypted
@@ -312,6 +383,7 @@ stages:
               localDbSharedInstanceName: ${{ parameters.manualTestLocalDbSharedInstanceName }}
               supportsIntegratedSecurity: false
               testSet: "AE"
+              useManagedSni: false
               userManagedIdentityClientId: ${{ parameters.manualTestUserManagedIdentityClientId }}
 
           # TestSqlClientUnit

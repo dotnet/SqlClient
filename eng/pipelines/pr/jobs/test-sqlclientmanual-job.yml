@@ -120,6 +120,11 @@ parameters:
   - name: supportsIntegratedSecurity
     type: boolean
 
+  # Whether to use managed SNI. This is written to the "UseManagedSNIOnWindows" config property; it
+  # will have no effect on Linux test runs.
+  - name: useManagedSni
+    type: boolean
+
   # Name of the user managed identity client ID. This value will be stored in config.jsonc for use
   # in AKV tests and substituted in for Azure connection string user IDs.
   - name: userManagedIdentityClientId
@@ -192,6 +197,7 @@ jobs:
           $config.LocalDbSharedInstanceName = "${{ parameters.localDbSharedInstanceName }}"
           $config.ManagedIdentitySupported = $true
           $config.SupportsIntegratedSecurity = [System.Convert]::ToBoolean("${{ parameters.supportsIntegratedSecurity }}")
+          $config.UseManagedSNIOnWindows = [System.Convert]::ToBoolean("${{ parameters.useManagedSni }}")
           $config.UserManagedIdentityClientId = "${{ parameters.userManagedIdentityClientId }}"
 
           if ("${{ parameters.platformOperatingSystem  }}" -eq "Windows") {
@@ -208,7 +214,7 @@ jobs:
           Write-Host "##vso[task.setvariable variable=TEST_MDS_CONFIG]$configPath"
         displayName: 'Generate manual test config'
 
-      - ${{ if and(eq(parameters.platformOperatingSystem, 'Windows'), parameters.isLocalServer, eq(parameters.configDisplayName, 'localhost'), contains(parameters.testSet, '3')) }}:
+      - ${{ if and(eq(parameters.platformOperatingSystem, 'Windows'), parameters.isLocalServer, startsWith(parameters.configDisplayName, 'localhost'), contains(parameters.testSet, '3')) }}:
         - template: /eng/pipelines/common/templates/steps/configure-netonly-account-step.yml@self
           parameters:
             mode: setup
@@ -216,7 +222,7 @@ jobs:
       # Execute TestSqlClientManual target from build.proj
       - task: DotNetCoreCLI@2
         displayName: 'Test: SqlClientManual ${{ parameters.testSet }}'
-        ${{ if and(eq(parameters.platformOperatingSystem, 'Windows'), parameters.isLocalServer, eq(parameters.configDisplayName, 'localhost'), contains(parameters.testSet, '3')) }}:
+        ${{ if and(eq(parameters.platformOperatingSystem, 'Windows'), parameters.isLocalServer, startsWith(parameters.configDisplayName, 'localhost'), contains(parameters.testSet, '3')) }}:
           # Configure-NetOnlyAccount.ps1 publishes these job variables in the preceding setup step.
           # Map them explicitly into the test process, including the secret password.
           env:
@@ -238,7 +244,7 @@ jobs:
             -p:TestSet=${{ parameters.testSet }}
             -p:TestResultsFolderPath="${{ variables.testResultsPath }}"
 
-      - ${{ if and(eq(parameters.platformOperatingSystem, 'Windows'), parameters.isLocalServer, eq(parameters.configDisplayName, 'localhost'), contains(parameters.testSet, '3')) }}:
+      - ${{ if and(eq(parameters.platformOperatingSystem, 'Windows'), parameters.isLocalServer, startsWith(parameters.configDisplayName, 'localhost'), contains(parameters.testSet, '3')) }}:
         - template: /eng/pipelines/common/templates/steps/configure-netonly-account-step.yml@self
           parameters:
             mode: cleanup
