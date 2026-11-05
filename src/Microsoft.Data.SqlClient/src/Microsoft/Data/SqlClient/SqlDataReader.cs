@@ -17,7 +17,6 @@ using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Runtime.ExceptionServices;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -953,76 +952,13 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <summary>
-        /// Uses normal disposal for recoverable errors. For an unrecoverable error, abandons
-        /// protocol cleanup and rethrows the original failure even if session teardown fails.
-        /// </summary>
-        internal void CloseOnError(Exception exception)
-        {
-            if (!ADP.IsUnrecoverableException(exception))
-            {
-                Dispose();
-                return;
-            }
-
-            ExceptionDispatchInfo failure = ExceptionDispatchInfo.Capture(exception);
-            TdsParser parser = _parser;
-            TdsParserStateObject stateObj = _stateObj;
-            // Breaking a MARS parser disables cancellation on every session; close the connection
-            // to notify pending peers rather than leaving them waiting on the shared transport.
-            SqlConnection connectionToClose =
-                IsCommandBehavior(CommandBehavior.CloseConnection) || parser?.MARSOn == true ? _connection : null;
-
-            // Do not attempt normal draining or server-setting restoration on this reader.
-            _isClosed = true;
-            _parser = null;
-            _stateObj = null;
-            _command = null;
-            _connection = null;
-            _statistics = null;
-            _data = null;
-            _snapshot = null;
-
-            if (parser != null)
-            {
-                parser.State = TdsParserState.Broken;
-            }
-
-            try
-            {
-                parser?.Connection?.DoomThisConnection();
-                if (parser != null && stateObj != null)
-                {
-                    // Wait for in-flight cancellation before retiring its transport resources.
-                    lock (stateObj)
-                    {
-                        // Returning to a broken parser retires the session without protocol I/O.
-                        parser.PutSession(stateObj);
-                    }
-                }
-            }
-            finally
-            {
-                try
-                {
-                    // Preserve reader ownership even when retiring the session fails.
-                    connectionToClose?.CloseOnError();
-                }
-                finally
-                {
-                    // Neither session teardown nor connection closure may replace the fatal error.
-                    failure.Throw();
-                }
-            }
-        }
-
         private TdsOperationStatus TryCloseInternal(bool closeReader)
         {
             TdsParser parser = _parser;
             TdsParserStateObject stateObj = _stateObj;
             bool closeConnection = (IsCommandBehavior(CommandBehavior.CloseConnection));
             bool cleanDataFailed = false;
-            Exception closeFailure = null;
+            Exception failure = null;
             TdsOperationStatus result;
 
             try
@@ -1082,89 +1018,88 @@ namespace Microsoft.Data.SqlClient
                 RestoreServerSettings(parser, stateObj);
                 return TdsOperationStatus.Done;
             }
-            catch (Exception e) when (ADP.IsUnrecoverableException(e))
+            catch (Exception e)
             {
-                closeFailure = e;
+                failure = e;
                 throw;
             }
             finally
             {
-                if (closeFailure != null)
+                BestEffortCleanup.RunCleanup(() =>
                 {
-                    CloseOnError(closeFailure);
-                }
-                else if (closeReader)
-                {
-                    bool wasClosed = _isClosed;
-                    _isClosed = true;
-                    _parser = null;
-                    _stateObj = null;
-                    _data = null;
-
-                    if (_snapshot != null)
+                    if (closeReader)
                     {
-                        CleanupAfterAsyncInvocationInternal(stateObj);
-                    }
+                        bool wasClosed = _isClosed;
+                        _isClosed = true;
+                        _parser = null;
+                        _stateObj = null;
+                        _data = null;
 
-                    // Note the order here is extremely important:
-                    //
-                    // (1) First, we remove the reader from the reference collection
-                    //     to prevent it from being forced closed by the parser if
-                    //     any future work occurs.
-                    //
-                    // (2) Next, we ensure that cancellation can no longer happen by
-                    //     calling CloseSession.
-
-                    if (Connection != null)
-                    {
-                        Connection.RemoveWeakReference(this);  // This doesn't catch everything -- the connection may be closed, but it prevents dead readers from clogging the collection
-                    }
-
-                    // IsClosed may be true if CloseReaderFromConnection was called - in which case, the session has already been closed
-                    if (!wasClosed && stateObj != null)
-                    {
-                        if (!cleanDataFailed)
+                        if (_snapshot != null)
                         {
-                            stateObj.CloseSession();
+                            CleanupAfterAsyncInvocationInternal(stateObj);
                         }
-                        else
-                        {
-                            if (parser != null)
-                            {
-                                parser.State = TdsParserState.Broken; // We failed while draining data, so TDS pointer can be between tokens - cannot recover
-                                parser.PutSession(stateObj);
-                                parser.Connection.BreakConnection();
-                            }
-                        }
-                    }
-                    // @TODO: CER Exception Handling was removed here (see GH#3581)
 
-                    // DO NOT USE stateObj after this point - it has been returned to the TdsParser's session pool and potentially handed out to another thread
+                        // Note the order here is extremely important:
+                        //
+                        // (1) First, we remove the reader from the reference collection
+                        //     to prevent it from being forced closed by the parser if
+                        //     any future work occurs.
+                        //
+                        // (2) Next, we ensure that cancellation can no longer happen by
+                        //     calling CloseSession.
 
-                    // do not retry here
-                    result = TrySetMetaData(null, false);
-                    Debug.Assert(result == TdsOperationStatus.Done, "Should not pend a synchronous request");
-                    _fieldNameLookup = null;
-
-                    // if the user calls ExecuteReader(CommandBehavior.CloseConnection)
-                    // then we close down the connection when we are done reading results
-                    if (closeConnection)
-                    {
                         if (Connection != null)
                         {
-                            Connection.Close();
+                            Connection.RemoveWeakReference(this);  // This doesn't catch everything -- the connection may be closed, but it prevents dead readers from clogging the collection
                         }
-                    }
-                    if (_command != null)
-                    {
-                        // cache recordsaffected to be returnable after DataReader.Close();
-                        _recordsAffected = _command.InternalRecordsAffected;
-                    }
 
-                    _command = null; // we are done at this point, don't allow navigation to the connection
-                    _connection = null;
-                    _statistics = null;
-                }
+                        // IsClosed may be true if CloseReaderFromConnection was called - in which case, the session has already been closed
+                        if (!wasClosed && stateObj != null)
+                        {
+                            if (!cleanDataFailed)
+                            {
+                                stateObj.CloseSession();
+                            }
+                            else
+                            {
+                                if (parser != null)
+                                {
+                                    parser.State = TdsParserState.Broken; // We failed while draining data, so TDS pointer can be between tokens - cannot recover
+                                    parser.PutSession(stateObj);
+                                    parser.Connection.BreakConnection();
+                                }
+                            }
+                        }
+                        // @TODO: CER Exception Handling was removed here (see GH#3581)
+
+                        // DO NOT USE stateObj after this point - it has been returned to the TdsParser's session pool and potentially handed out to another thread
+
+                        // do not retry here
+                        result = TrySetMetaData(null, false);
+                        Debug.Assert(result == TdsOperationStatus.Done, "Should not pend a synchronous request");
+                        _fieldNameLookup = null;
+
+                        // if the user calls ExecuteReader(CommandBehavior.CloseConnection)
+                        // then we close down the connection when we are done reading results
+                        if (closeConnection)
+                        {
+                            if (Connection != null)
+                            {
+                                Connection.Close();
+                            }
+                        }
+                        if (_command != null)
+                        {
+                            // cache recordsaffected to be returnable after DataReader.Close();
+                            _recordsAffected = _command.InternalRecordsAffected;
+                        }
+
+                        _command = null; // we are done at this point, don't allow navigation to the connection
+                        _connection = null;
+                        _statistics = null;
+                    }
+                }, failure);
             }
         }
 

@@ -2481,7 +2481,6 @@ namespace Microsoft.Data.SqlClient
                         return;
                     }
 
-                    SqlConnectionInternal completionConnection = null;
                     try
                     {
                         // Mark that we initiated the internal EndExecute. This should always be false
@@ -2492,7 +2491,6 @@ namespace Microsoft.Data.SqlClient
                         // Lock on _stateObj prevents races with close/cancel
                         lock (_stateObj)
                         {
-                            completionConnection = _stateObj.Parser.Connection;
                             endFunc(this, task, /*isInternal:*/ true, endMethod);
                         }
 
@@ -2503,8 +2501,7 @@ namespace Microsoft.Data.SqlClient
                         // Put the state object back in the cache.
                         // Do not reset the async state, since this is managed by the user Begin/End,
                         // not internally.
-                        bool unrecoverable = ADP.IsUnrecoverableException(e);
-                        if (!unrecoverable && ADP.IsCatchableExceptionType(e))
+                        if (ADP.IsCatchableExceptionType(e))
                         {
                             ReliablePutStateObject();
                         }
@@ -2533,23 +2530,16 @@ namespace Microsoft.Data.SqlClient
                         {
                             // If we cannot retry, reset the async state to make sure we leave a
                             // clean state
+                            CachedAsyncState?.ResetAsyncState();
+
                             try
                             {
-                                CachedAsyncState?.ResetAsyncState();
-                                // Fatal reader cleanup may have closed the outer connection.
-                                if (unrecoverable)
-                                {
-                                    completionConnection?.DecrementAsyncCount();
-                                }
-                                else
-                                {
-                                    _activeConnection.GetOpenTdsConnection().DecrementAsyncCount();
-                                }
+                                _activeConnection.GetOpenTdsConnection().DecrementAsyncCount();
                                 globalCompletion.TrySetException(e);
                             }
                             catch (Exception e2)
                             {
-                                globalCompletion.TrySetException(unrecoverable ? e : e2);
+                                globalCompletion.TrySetException(e2);
                             }
 
                             return;

@@ -413,11 +413,6 @@ namespace Microsoft.Data.Common
             }
         }
 
-        // These exceptions may interrupt a protocol operation before its state is consistent.
-        // This is the legacy cleanup set, not the inverse of IsCatchableExceptionType.
-        internal static bool IsUnrecoverableException(Exception e) =>
-            e is OutOfMemoryException || e is StackOverflowException || e is ThreadAbortException;
-
         internal static bool IsCatchableExceptionType(Exception e)
         {
             // only StackOverflowException & ThreadAbortException are sealed classes
