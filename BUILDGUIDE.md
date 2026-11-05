@@ -461,6 +461,24 @@ turns missing or malformed validation inputs into success. Localization report-o
 mode marks findings as `SucceededWithIssues`; it does not claim that translations
 passed validation.
 
+## OneBranch Symbol Publishing
+
+Both OneBranch pipelines expose **Skip symbol publishing polling**
+(`skipSymbolPublishingPolling`), defaulting to `false` to preserve the existing
+status check. It has no effect unless **Publish symbols** (`publishSymbols`) is enabled.
+
+When enabled, symbols are still uploaded and publishing requests are submitted to
+the selected internal and public symbol servers for every built package. Token,
+registration, and submission errors still fail the job. The script skips the
+subsequent status query and logs a warning that publishing completion and results
+have not been verified.
+
+Package release still depends on the symbol-publishing stage when `publishSymbols`
+is enabled. With polling skipped, that dependency waits only for successful
+request submission, not symbol availability. With the default setting, the
+existing status check rejects terminal failures but does not wait for pending
+requests to complete.
+
 ## Versioning
 
 Versioning can be accomplished by using a mix of different parameters to the `build.proj` targets:
