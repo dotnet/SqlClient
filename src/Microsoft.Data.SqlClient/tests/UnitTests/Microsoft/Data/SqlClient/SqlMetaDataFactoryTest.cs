@@ -25,9 +25,9 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
         public static IEnumerable<object[]> SchemaCollectionsWithColumns =>
         [
-            [DbMetaDataCollectionNames.ReservedWords, (string[])[
+            [DbMetaDataCollectionNames.ReservedWords, -1, (string[])[
                 DbMetaDataColumnNames.ReservedWord] ],
-            [DbMetaDataCollectionNames.DataTypes, (string[])[
+            [DbMetaDataCollectionNames.DataTypes, -1, (string[])[
                 DbMetaDataColumnNames.TypeName,
                 DbMetaDataColumnNames.ProviderDbType,
                 DbMetaDataColumnNames.ColumnSize,
@@ -50,7 +50,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
                 DbMetaDataColumnNames.IsLiteralSupported,
                 DbMetaDataColumnNames.LiteralPrefix,
                 DbMetaDataColumnNames.LiteralSuffix] ],
-            [DbMetaDataCollectionNames.DataSourceInformation, (string[])[
+            [DbMetaDataCollectionNames.DataSourceInformation, 1, (string[])[
                 DbMetaDataColumnNames.CompositeIdentifierSeparatorPattern,
                 DbMetaDataColumnNames.DataSourceProductName,
                 DbMetaDataColumnNames.DataSourceProductVersion,
@@ -68,11 +68,11 @@ namespace Microsoft.Data.SqlClient.UnitTests
                 DbMetaDataColumnNames.StatementSeparatorPattern,
                 DbMetaDataColumnNames.StringLiteralPattern,
                 DbMetaDataColumnNames.SupportedJoinOperators]],
-             [DbMetaDataCollectionNames.MetaDataCollections, (string[])[
+             [DbMetaDataCollectionNames.MetaDataCollections, 20, (string[])[
                 DbMetaDataColumnNames.CollectionName,
                 DbMetaDataColumnNames.NumberOfRestrictions,
                 DbMetaDataColumnNames.NumberOfIdentifierParts]],
-             [DbMetaDataCollectionNames.Restrictions, (string[])[
+             [DbMetaDataCollectionNames.Restrictions, 51, (string[])[
                 DbMetaDataColumnNames.CollectionName,
                 "RestrictionName",
                 "ParameterName",
@@ -83,15 +83,20 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
         [Theory]
         [MemberData(nameof(SchemaCollectionsWithColumns))]
-        public void SchemaColumns(string collectionName, string[] columnsNames)
+        public void SchemaColumns(string collectionName, int expectedRowCount, string[] expectedColumnsNames)
         {
             using SqlConnection connection = new(_connectionString);
             connection.Open();
 
             DataTable dataTypes = connection.GetSchema(collectionName);
 
-            IEnumerable<string> absentColumns = columnsNames.Except(dataTypes.Columns.OfType<DataColumn>().Select(c => c.ColumnName));
-            IEnumerable<string> unexpectedColumns = dataTypes.Columns.OfType<DataColumn>().Select(c => c.ColumnName).Except(columnsNames);
+            if (expectedRowCount > -1)
+            {
+                Assert.Equal(expectedRowCount, dataTypes.Rows.Count);
+            }
+
+            IEnumerable<string> absentColumns = expectedColumnsNames.Except(dataTypes.Columns.OfType<DataColumn>().Select(c => c.ColumnName));
+            IEnumerable<string> unexpectedColumns = dataTypes.Columns.OfType<DataColumn>().Select(c => c.ColumnName).Except(expectedColumnsNames);
             Assert.Empty(absentColumns);
             Assert.Empty(unexpectedColumns);
         }
