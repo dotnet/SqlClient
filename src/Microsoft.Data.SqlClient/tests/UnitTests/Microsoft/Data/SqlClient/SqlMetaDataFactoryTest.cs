@@ -168,44 +168,22 @@ namespace Microsoft.Data.SqlClient.UnitTests
             DataTable dataTypes = connection.GetSchema(DbMetaDataCollectionNames.DataSourceInformation);
             DataRow row = (DataRow)Assert.Single(dataTypes.Rows)!;
 
-            Assert.True(dataTypes.Columns.Contains("CompositeIdentifierSeparatorPattern"));
-            Assert.NotNull(row["CompositeIdentifierSeparatorPattern"]);
-            Assert.True(dataTypes.Columns.Contains("DataSourceProductName"));
-            Assert.NotNull(row["DataSourceProductName"]);
-            Assert.True(dataTypes.Columns.Contains("DataSourceProductVersion"));
-            Assert.Matches(@"^\d+\.\d+\.\d+$", (string)row["DataSourceProductVersion"]);
-            Assert.True(dataTypes.Columns.Contains("DataSourceProductVersionNormalized"));
-            Assert.Matches(@"^\d+\.\d+\.\d+$", (string)row["DataSourceProductVersionNormalized"]);
-            Assert.True(dataTypes.Columns.Contains("GroupByBehavior"));
-            Assert.Equal(typeof(GroupByBehavior), dataTypes.Columns["GroupByBehavior"]!.DataType);
-            Assert.IsType<int>(row["GroupByBehavior"]);
-            Assert.True(dataTypes.Columns.Contains("IdentifierPattern"));
-            Assert.NotNull(row["IdentifierPattern"]);
-            Assert.True(dataTypes.Columns.Contains("IdentifierCase"));
-            Assert.Equal(typeof(IdentifierCase), dataTypes.Columns["IdentifierCase"]!.DataType);
-            Assert.IsType<int>(row["IdentifierCase"]);
-            Assert.True(dataTypes.Columns.Contains("OrderByColumnsInSelect"));
-            Assert.IsType<bool>(row["OrderByColumnsInSelect"]);
-            Assert.True(dataTypes.Columns.Contains("ParameterMarkerFormat"));
-            Assert.NotNull(row["ParameterMarkerFormat"]);
-            Assert.True(dataTypes.Columns.Contains("ParameterMarkerPattern"));
-            Assert.NotNull(row["ParameterMarkerPattern"]);
-            Assert.True(dataTypes.Columns.Contains("ParameterNameMaxLength"));
-            Assert.IsType<int>(row["ParameterNameMaxLength"]);
-            Assert.InRange((int)row["ParameterNameMaxLength"], 0, short.MaxValue);
-            Assert.True(dataTypes.Columns.Contains("ParameterNamePattern"));
-            Assert.NotNull(row["ParameterNamePattern"]);
-            Assert.True(dataTypes.Columns.Contains("QuotedIdentifierPattern"));
-            Assert.NotNull(row["QuotedIdentifierPattern"]);
-            Assert.True(dataTypes.Columns.Contains("QuotedIdentifierCase"));
-            Assert.Equal(typeof(IdentifierCase), dataTypes.Columns["QuotedIdentifierCase"]!.DataType);
-            Assert.IsType<int>(row["QuotedIdentifierCase"]);
-            Assert.True(dataTypes.Columns.Contains("StatementSeparatorPattern"));
-            Assert.NotNull(row["StatementSeparatorPattern"]);
-            Assert.True(dataTypes.Columns.Contains("StringLiteralPattern"));
-            Assert.NotNull(row["StringLiteralPattern"]);
-            Assert.True(dataTypes.Columns.Contains("SupportedJoinOperators"));
-            Assert.IsType<int>(row["SupportedJoinOperators"]);
+            Assert.Equal(@"\.", row["CompositeIdentifierSeparatorPattern"]);
+            Assert.Equal("Microsoft SQL Server", row["DataSourceProductName"]);
+            Assert.Equal((int)GroupByBehavior.Unrelated, row["GroupByBehavior"]);
+            Assert.Equal(@"(^\[\p{Lo}\p{Lu}\p{Ll}_@#][\p{Lo}\p{Lu}\p{Ll}\p{Nd}@$#_]*$)|(^\[[^\]\0]|\]\]+\]$)|(^\""[^\""\0]|\""\""+\""$)", row["IdentifierPattern"]);
+            Assert.Equal((int)IdentifierCase.Insensitive, row["IdentifierCase"]);
+            Assert.Equal(false, row["OrderByColumnsInSelect"]);
+            Assert.Equal("{0}", row["ParameterMarkerFormat"]);
+            Assert.Equal(@"@[\p{Lo}\p{Lu}\p{Ll}\p{Lm}_@#][\p{Lo}\p{Lu}\p{Ll}\p{Lm}\p{Nd}\uff3f_@#\$]*(?=\s+|$)", row["ParameterMarkerPattern"]);
+            Assert.Equal(128, row["ParameterNameMaxLength"]);
+            Assert.Equal(@"^[\p{Lo}\p{Lu}\p{Ll}\p{Lm}_@#][\p{Lo}\p{Lu}\p{Ll}\p{Lm}\p{Nd}\uff3f_@#\$]*(?=\s+|$)", row["ParameterNamePattern"]);
+            Assert.Equal(@"(([^\[]|\]\])*)", row["QuotedIdentifierPattern"]);
+            Assert.Equal((int)IdentifierCase.Insensitive, row["QuotedIdentifierCase"]);
+            Assert.Equal(";", row["StatementSeparatorPattern"]);
+            Assert.Equal("'(([^']|'')*)'", row["StringLiteralPattern"]);
+            Assert.Equal((int)(SupportedJoinOperators.Inner | SupportedJoinOperators.LeftOuter | SupportedJoinOperators.RightOuter | SupportedJoinOperators.FullOuter),
+                row["SupportedJoinOperators"]);
         }
 
         [Theory]
