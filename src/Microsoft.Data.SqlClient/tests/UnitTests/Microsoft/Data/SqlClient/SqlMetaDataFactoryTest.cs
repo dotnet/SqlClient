@@ -23,6 +23,79 @@ namespace Microsoft.Data.SqlClient.UnitTests
             }.ConnectionString;
         }
 
+        public static IEnumerable<object[]> SchemaCollectionsWithColumns =>
+        [
+            [DbMetaDataCollectionNames.ReservedWords, (string[])[
+                DbMetaDataColumnNames.ReservedWord] ],
+            [DbMetaDataCollectionNames.DataTypes, (string[])[
+                DbMetaDataColumnNames.TypeName,
+                DbMetaDataColumnNames.ProviderDbType,
+                DbMetaDataColumnNames.ColumnSize,
+                DbMetaDataColumnNames.CreateFormat,
+                DbMetaDataColumnNames.CreateParameters,
+                DbMetaDataColumnNames.DataType,
+                DbMetaDataColumnNames.IsAutoIncrementable,
+                DbMetaDataColumnNames.IsBestMatch,
+                DbMetaDataColumnNames.IsCaseSensitive,
+                DbMetaDataColumnNames.IsFixedLength,
+                DbMetaDataColumnNames.IsFixedPrecisionScale,
+                DbMetaDataColumnNames.IsLong,
+                DbMetaDataColumnNames.IsNullable,
+                DbMetaDataColumnNames.IsSearchable,
+                DbMetaDataColumnNames.IsSearchableWithLike,
+                DbMetaDataColumnNames.IsUnsigned,
+                DbMetaDataColumnNames.MaximumScale,
+                DbMetaDataColumnNames.MinimumScale,
+                DbMetaDataColumnNames.IsConcurrencyType,
+                DbMetaDataColumnNames.IsLiteralSupported,
+                DbMetaDataColumnNames.LiteralPrefix,
+                DbMetaDataColumnNames.LiteralSuffix] ],
+            [DbMetaDataCollectionNames.DataSourceInformation, (string[])[
+                DbMetaDataColumnNames.CompositeIdentifierSeparatorPattern,
+                DbMetaDataColumnNames.DataSourceProductName,
+                DbMetaDataColumnNames.DataSourceProductVersion,
+                DbMetaDataColumnNames.DataSourceProductVersionNormalized,
+                DbMetaDataColumnNames.GroupByBehavior,
+                DbMetaDataColumnNames.IdentifierPattern,
+                DbMetaDataColumnNames.IdentifierCase,
+                DbMetaDataColumnNames.OrderByColumnsInSelect,
+                DbMetaDataColumnNames.ParameterMarkerFormat,
+                DbMetaDataColumnNames.ParameterMarkerPattern,
+                DbMetaDataColumnNames.ParameterNameMaxLength,
+                DbMetaDataColumnNames.ParameterNamePattern,
+                DbMetaDataColumnNames.QuotedIdentifierPattern,
+                DbMetaDataColumnNames.QuotedIdentifierCase,
+                DbMetaDataColumnNames.StatementSeparatorPattern,
+                DbMetaDataColumnNames.StringLiteralPattern,
+                DbMetaDataColumnNames.SupportedJoinOperators]],
+             [DbMetaDataCollectionNames.MetaDataCollections, (string[])[
+                DbMetaDataColumnNames.CollectionName,
+                DbMetaDataColumnNames.NumberOfRestrictions,
+                DbMetaDataColumnNames.NumberOfIdentifierParts]],
+             [DbMetaDataCollectionNames.Restrictions, (string[])[
+                DbMetaDataColumnNames.CollectionName,
+                "RestrictionName",
+                "ParameterName",
+                "RestrictionDefault",
+                "RestrictionNumber"
+             ]]
+        ];
+
+        [Theory]
+        [MemberData(nameof(SchemaCollectionsWithColumns))]
+        public void SchemaColumns(string collectionName, string[] columnsNames)
+        {
+            using SqlConnection connection = new(_connectionString);
+            connection.Open();
+
+            DataTable dataTypes = connection.GetSchema(collectionName);
+
+            IEnumerable<string> absentColumns = columnsNames.Except(dataTypes.Columns.OfType<DataColumn>().Select(c => c.ColumnName));
+            IEnumerable<string> unexpectedColumns = dataTypes.Columns.OfType<DataColumn>().Select(c => c.ColumnName).Except(columnsNames);
+            Assert.Empty(absentColumns);
+            Assert.Empty(unexpectedColumns);
+        }
+
         [Fact]
         public void ReservedWords_Values()
         {
