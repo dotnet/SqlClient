@@ -1,0 +1,36 @@
+﻿################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                #
+# The .NET Foundation licenses this file to you under the MIT license.         #
+# See the LICENSE file in the project root for more information.               #
+################################################################################
+
+# This template emulates the `tree` command on any OS that has pwsh
+
+parameters:
+  # Optional, display name for the tree command
+  - name: displayName
+    type: string
+    default: "Output Tree"
+
+  # The path to emit the tree for
+  - name: path
+    type: string
+
+steps:
+
+  - pwsh: |
+      function Show-Tree {
+        param([string]$Path, [string]$Indent = '')
+
+        Get-ChildItem -LiteralPath $Path -Force -ErrorAction Stop |
+          Sort-Object Name |
+          ForEach-Object {
+            Write-Host "$Indent$($_.Name)"
+            if ($_.PSIsContainer -and -not $_.LinkType) {
+              Show-Tree -Path $_.FullName -Indent "$Indent  "
+            }
+          }
+      }
+
+      Show-Tree -Path '${{ parameters.path }}'
+    displayName: ${{ parameters.displayName }}

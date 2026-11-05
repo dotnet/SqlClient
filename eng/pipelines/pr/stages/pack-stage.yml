@@ -136,11 +136,11 @@ stages:
           # 3) Log the build output
 
           # 3a) Emit the build output
-          # Note: This command is specific to Windows, and therefore this job should only run with
-          #    Windows VM images.
-          - script: tree /A /F $(BUILD_OUTPUT)
-            displayName: Output Build Output Tree
-            condition: succeededOrFailed()
+          - template: /eng/pipelines/common/templates/steps/output-tree-step.yml@self
+            parameters:
+              condition: succeededOrFailed()
+
+              path: $(BUILD_OUTPUT)
 
           # 3b) Upload the build output as the artifact of the job.
           #
@@ -155,6 +155,6 @@ stages:
 
           ##################################################################
           # 4) Verify the nuget packages
-          - template: /eng/pipelines/common/templates/steps/verify-nuget-package-step.yml
+          - template: /eng/pipelines/common/templates/steps/verify-nuget-package-step.yml@self
             parameters:
               packagePath: $(BUILD_OUTPUT)
