@@ -681,7 +681,6 @@ public class TransactedConnectionPoolTest
         public DbConnectionPoolGroup PoolGroup => throw new NotImplementedException();
         public DbConnectionPoolGroupOptions PoolGroupOptions => throw new NotImplementedException();
         public DbConnectionPoolProviderInfo ProviderInfo => throw new NotImplementedException();
-        public DbConnectionPoolState State => throw new NotImplementedException();
         public TransactedConnectionPool TransactedConnectionPool => throw new NotImplementedException();
         public bool UseLoadBalancing => throw new NotImplementedException();
 
@@ -712,6 +711,8 @@ public class TransactedConnectionPoolTest
         public void Startup() => throw new NotImplementedException();
 
         public void Shutdown() => throw new NotImplementedException();
+
+        public bool TryPrune() => throw new NotImplementedException();
 
         public void TransactionEnded(Transaction transaction, DbConnectionInternal transactedObject)
         {
