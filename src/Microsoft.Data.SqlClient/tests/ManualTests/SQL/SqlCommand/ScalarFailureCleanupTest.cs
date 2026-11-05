@@ -8,17 +8,105 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals;
 using Xunit;
+using DiagnosticListener = System.Diagnostics.DiagnosticListener;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    /// <summary>Isolates diagnostic subscribers from concurrent test collections.</summary>
+    [CollectionDefinition(nameof(ScalarFailureCleanupTest), DisableParallelization = true)]
+    public sealed class ScalarFailureCleanupCollection
+    {
+    }
+
     /// <summary>
     /// Verifies driver-owned cleanup reports both failures when operation and cleanup fail,
     /// and preserves the existing exception when only one fails.
     /// </summary>
     [Trait("Set", "3")]
+    [Collection(nameof(ScalarFailureCleanupTest))]
     public sealed class ScalarFailureCleanupTest
     {
         private const BindingFlags InstanceNonPublic = BindingFlags.Instance | BindingFlags.NonPublic;
+
+        /// <summary>
+        /// Fatal batch disposal and scalar draining failures must not be replaced by a
+        /// catchable exception from the error diagnostic subscriber.
+        /// </summary>
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup),
+            nameof(DataTestUtility.IsNotAzureSynapse))]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task FatalFailure_DiagnosticSubscriberDoesNotReplaceException(bool batch)
+        {
+            var builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+            {
+                Pooling = false,
+                Enlist = false
+            };
+            using SqlConnection connection = new(builder.ConnectionString);
+            await connection.OpenAsync();
+            const string query = "SELECT 1; RAISERROR ('Configure failure', 10, 1); SELECT 2;";
+            using SqlCommand command = new(query, connection);
+            using SqlBatch commands = new(connection);
+            commands.Commands.Add(new SqlBatchCommand(query));
+            var failure = new OutOfMemoryException("Original fatal failure");
+            SqlInfoMessageEventHandler onMessage = (_, _) =>
+            {
+                if (!batch)
+                {
+                    throw failure;
+                }
+                object inner = connection.GetInternalConnection();
+                var reader = (SqlDataReader)inner.GetType().GetMethod("FindLiveReader", InstanceNonPublic)
+                    .Invoke(inner, new object[] { null });
+                FieldInfo behavior = typeof(SqlDataReader).GetField("_commandBehavior", InstanceNonPublic);
+                behavior.SetValue(reader, (CommandBehavior)behavior.GetValue(reader) | CommandBehavior.CloseConnection);
+            };
+            StateChangeEventHandler onClose = (_, args) =>
+            {
+                if (batch && args.CurrentState == ConnectionState.Closed)
+                {
+                    throw failure;
+                }
+            };
+            int errors = 0;
+            var observer = new FakeDiagnosticListenerObserver(value =>
+            {
+                if (value.Key == "Microsoft.Data.SqlClient.WriteCommandError" &&
+                    ReferenceEquals(connection,
+                        ((SqlCommand)value.Value.GetType().GetProperty("Command").GetValue(value.Value)).Connection))
+                {
+                    errors++;
+                    throw new InvalidOperationException("Secondary diagnostic failure");
+                }
+            });
+            connection.InfoMessage += onMessage;
+            connection.StateChange += onClose;
+            observer.Enable();
+            try
+            {
+                using var subscription = DiagnosticListener.AllListeners.Subscribe(observer);
+                Exception actual = await Record.ExceptionAsync(async () =>
+                {
+                    if (batch)
+                    {
+                        await commands.ExecuteScalarAsync();
+                    }
+                    else
+                    {
+                        await command.ExecuteScalarAsync();
+                    }
+                });
+                Assert.Same(failure, actual);
+                Assert.Equal(1, errors);
+            }
+            finally
+            {
+                observer.Disable();
+                connection.InfoMessage -= onMessage;
+                connection.StateChange -= onClose;
+            }
+        }
 
         /// <summary>
         /// Uncatchable operation failures skip reader cleanup. Uncatchable cleanup failures
@@ -113,10 +201,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup),
             nameof(DataTestUtility.IsNotAzureSynapse))]
-        [InlineData(0)]
-        [InlineData(1)]
-        [InlineData(2)]
-        public void ReaderClose_PreservesOriginalDuringCleanup(int failureKind)
+        [InlineData(0, false)]
+        [InlineData(1, false)]
+        [InlineData(2, false)]
+        [InlineData(0, true)]
+        [InlineData(1, true)]
+        [InlineData(2, true)]
+        [InlineData(3, false)]
+        [InlineData(3, true)]
+        public void ReaderClose_PreservesOriginalDuringCleanup(int failureKind, bool dispose)
         {
             var builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
             {
@@ -140,7 +233,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 if (args.CurrentState == ConnectionState.Closed)
                 {
                     closeCalls++;
-                    throw secondary;
+                    if (failureKind != 3)
+                    {
+                        throw secondary;
+                    }
                 }
             };
             connection.StateChange += onClose;
@@ -152,8 +248,29 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             try
             {
-                Exception actual = Record.Exception(() => reader.Close());
-                if (failureKind == 0)
+                Exception actual = Record.Exception(() =>
+                {
+                    if (dispose)
+                    {
+                        reader.Dispose();
+                    }
+                    else
+                    {
+                        reader.Close();
+                    }
+                });
+                if (failureKind == 3)
+                {
+                    if (dispose)
+                    {
+                        Assert.Null(actual);
+                    }
+                    else
+                    {
+                        Assert.Contains("Original SQL failure", Assert.IsType<SqlException>(actual).Message);
+                    }
+                }
+                else if (failureKind == 0)
                 {
                     Assert.Same(secondary, actual);
                 }

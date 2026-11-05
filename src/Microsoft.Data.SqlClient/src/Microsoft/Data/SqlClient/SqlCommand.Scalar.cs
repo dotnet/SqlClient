@@ -150,7 +150,7 @@ namespace Microsoft.Data.SqlClient
 
                                 if (exception is not null)
                                 {
-                                    s_diagnosticListener.WriteCommandError(operationId, this, _transaction, exception);
+                                    WriteScalarError(operationId, exception);
                                     source.SetException(exception);
                                 }
                                 else
@@ -179,6 +179,20 @@ namespace Microsoft.Data.SqlClient
 
         #region Private Methods
 
+        private void WriteScalarError(Guid operationId, Exception exception,
+            [CallerMemberName] string operation = "")
+        {
+            try
+            {
+                s_diagnosticListener.WriteCommandError(operationId, this, _transaction, exception, operation);
+            }
+            catch (Exception diagnosticException) when (
+                !ADP.IsCatchableExceptionType(exception) && ADP.IsCatchableExceptionType(diagnosticException))
+            {
+                ADP.TraceExceptionWithoutRethrow(diagnosticException);
+            }
+        }
+
         private Exception CloseScalarReaderOnError(SqlDataReader reader, Exception exception, Guid operationId,
             [CallerMemberName] string operation = "")
         {
@@ -190,7 +204,7 @@ namespace Microsoft.Data.SqlClient
             {
                 exception = cleanupException;
             }
-            s_diagnosticListener.WriteCommandError(operationId, this, _transaction, exception, operation);
+            WriteScalarError(operationId, exception, operation);
             return exception;
         }
 
@@ -328,7 +342,7 @@ namespace Microsoft.Data.SqlClient
 
                                 if (exception is not null)
                                 {
-                                    s_diagnosticListener.WriteCommandError(operationId, this, _transaction, exception);
+                                    WriteScalarError(operationId, exception);
 
                                     source.SetException(exception);
                                 }

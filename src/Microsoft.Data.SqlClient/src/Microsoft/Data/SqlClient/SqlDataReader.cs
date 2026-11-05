@@ -850,7 +850,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 base.Dispose(disposing);
             }
-            catch (SqlException ex)
+            catch (SqlException ex) when (ex.InnerException is not AggregateException)
             {
                 SqlClientEventSource.Log.TryTraceEvent("SqlDataReader.Dispose | ERR | Error Message: {0}, Stack Trace: {1}", ex.Message, ex.StackTrace);
             }
