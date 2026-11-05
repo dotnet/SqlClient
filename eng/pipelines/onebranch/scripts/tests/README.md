@@ -62,6 +62,7 @@ Invoke-Pester ./publish-symbols.Tests.ps1 -Output Detailed
 | Request bodies        | Registration body, default publish flags, flag overrides         |
 | Error handling        | Token failure, registration failure, publish failure, status failure — all verify expanded URI in error message |
 | Status validation     | Detects Failed/Cancelled results, respects PublishToInternal/PublishToPublic flags, passes on Succeeded/Pending |
+| Skip polling          | Both publishing targets submitted without a status query, unverified-results warning, explicit false retains status checks, token/registration/submission errors still fail |
 | Package validation    | Wildcard vs per-id version expectations, SqlServer omitted when unbuilt, gate tokens, report written before gating, exit-code handling, report-only mode suppressing the gate but not a broken validator |
 | XML docs validation   | Every documentation-ID defect form reported by the API Docs build (array `T:` UIDs, empty parentheses, C# aliases, embedded whitespace, misspelled namespace roots) plus valid controls, compiler-unresolved `!:` crefs, local UID and wrong-prefix resolution, package expansion, allowlisting and staleness, report-only mode |
 | XML docs lib/ref layout | Full `lib/` XML paired with trimmed `ref/` XML accepted; trimmed `lib/`, untrimmed `ref/`, and byte-identical `lib`/`ref` rejected; per-target-framework isolation; packages without a `ref/` folder ignored |

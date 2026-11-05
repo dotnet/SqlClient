@@ -47,6 +47,12 @@ parameters:
     type: boolean
     default: false
 
+  # Submit symbol publishing requests without checking their final results.
+  - name: skipSymbolPublishingPolling
+    displayName: Skip symbol publishing polling
+    type: boolean
+    default: false
+
   # Build parameters — select which packages to build.
 
   # Build the Microsoft.SqlServer.Server package.  The SqlClient family is always built; SqlServer
@@ -332,6 +338,7 @@ extends:
       - template: /eng/pipelines/onebranch/stages/publish-symbols-stage.yml@self
         parameters:
           publishSymbols: ${{ parameters.publishSymbols }}
+          skipSymbolPublishingPolling: ${{ parameters.skipSymbolPublishingPolling }}
           buildSqlServer: ${{ parameters.buildSqlServer }}
           debug: ${{ parameters.debug }}
 

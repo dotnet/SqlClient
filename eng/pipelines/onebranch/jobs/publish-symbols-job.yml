@@ -23,6 +23,11 @@ parameters:
     type: boolean
     default: false
 
+  # Submit publishing requests without querying their status.
+  - name: skipSymbolPublishingPolling
+    type: boolean
+    default: false
+
   # The full NuGet package name (e.g. Microsoft.Data.SqlClient.Internal.Logging).
   - name: packageFullName
     type: string
@@ -105,6 +110,7 @@ jobs:
           artifactName: '${{ parameters.packageFullName }}_symbols_$(System.TeamProject)_$(Build.Repository.Name)_$(Build.SourceBranchName)_${{ parameters.packageVersion }}_$(System.TimelineId)_$(System.JobAttempt)'
           azureSubscription: '${{ parameters.symbolsAzureSubscription }}'
           debug: ${{ parameters.debug }}
+          skipSymbolPublishingPolling: ${{ parameters.skipSymbolPublishingPolling }}
           packageName: '${{ parameters.packageFullName }}'
           publishProjectName: '${{ parameters.symbolsPublishProjectName }}'
           publishServer: '${{ parameters.symbolsPublishServer }}'
