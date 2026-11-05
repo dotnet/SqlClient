@@ -607,10 +607,10 @@
     <value>'{0}'에 대한 인증 공급자를 찾을 수 없습니다.</value>
   </data>
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
-    <value>'{0}'에 대한 인증 공급자를 찾을 수 없습니다. Active Directory(Entra ID) 인증 방법을 사용하려면 'Microsoft.Data.SqlClient.Extensions.Azure' NuGet 패키지(https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure)를 설치하세요.</value>
+    <value>Cannot find an authentication provider for '{0}'. Register a provider with SqlAuthenticationProvider.SetProvider, or use a compatible 'Microsoft.Data.SqlClient.Extensions.Azure' NuGet package with automatic discovery enabled. Automatic discovery is unavailable when disabled at publish time. Trimmed JIT applications require preserved reflection contracts; NativeAOT applications should disable reflective bootstrap paths at publish time and register providers explicitly. Check Microsoft.Data.SqlClient.EventSource traces (Informational level, Trace keyword 0x2) for configuration or Azure extension loading failures.</value>
   </data>
   <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>'useWamBroker'를 설정하려면 'Microsoft.Data.SqlClient.Extensions.Azure' 패키지가 'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions'를 노출해야 합니다. 이 형식을 포함하는 'Microsoft.Data.SqlClient.Extensions.Azure' 패키지를 v1.1.0 이상으로 업그레이드하세요.</value>
+    <value>Setting 'useWamBroker' requires the 'Microsoft.Data.SqlClient.Extensions.Azure' package to expose 'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions'. Upgrade the 'Microsoft.Data.SqlClient.Extensions.Azure' package to at least v7.0.2 that includes this type.</value>
   </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>'{0}' 매개 변수는 null이거나 비워 둘 수 없습니다.</value>
