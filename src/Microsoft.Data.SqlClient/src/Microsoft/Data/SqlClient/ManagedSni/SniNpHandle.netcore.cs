@@ -13,6 +13,7 @@ using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using Microsoft.Data.ProviderBase;
+using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.Internal;
 using Microsoft.Data.SqlClient.Parser;
 
@@ -40,6 +41,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         private SniAsyncCallback _sendCallback;
 
         private bool _validateCert = true;
+        private ServerCertificateCapture _serverCertificateCapture;
         private readonly uint _status = TdsEnums.SNI_UNINITIALIZED;
         private int _bufferSize = TdsEnums.DEFAULT_LOGIN_PACKET_SIZE;
         private readonly Guid _connectionId = Guid.NewGuid();
@@ -139,6 +141,8 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 }
             }
         }
+
+        public override int? NegotiatedCipherSuite => SniCommon.GetNegotiatedCipherSuite(_sslStream);
 
         public override uint CheckConnection()
         {
@@ -334,6 +338,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             using (SqlClientSNIEventScope.Create(nameof(SniNpHandle)))
             {
                 _validateCert = (options & TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE) != 0;
+                Volatile.Write(ref _serverCertificateCapture, null);
                 try
                 {
                     if (_tlsFirst)
@@ -385,18 +390,31 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <returns>true if valid</returns>
         private bool ValidateServerCertificate(object sender, X509Certificate serverCertificate, X509Chain chain, SslPolicyErrors policyErrors)
         {
+            ServerCertificateVerdict verdict = default;
             using (SqlClientSNIEventScope.Create(nameof(SniNpHandle)))
             {
-                if (!_validateCert)
+                try
                 {
-                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.INFO, "Connection Id {0}, Certificate validation not requested.", args0: ConnectionId);
-                    return true;
-                }
+                    if (!_validateCert)
+                    {
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.INFO, "Connection Id {0}, Certificate validation not requested.", args0: ConnectionId);
+                        return true;
+                    }
 
-                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.INFO, "Connection Id {0}, Proceeding to SSL certificate validation.", args0: ConnectionId);
-                return SniCommon.ValidateSslServerCertificate(_connectionId, _targetServer, _hostNameInCertificate, serverCertificate, _serverCertificateFilename, policyErrors);
-			}
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.INFO, "Connection Id {0}, Proceeding to SSL certificate validation.", args0: ConnectionId);
+                    return SniCommon.ValidateSslServerCertificate(_connectionId, _targetServer, _hostNameInCertificate, serverCertificate, _serverCertificateFilename, policyErrors, chain, ref verdict);
+                }
+                finally
+                {
+                    // Recorded for both outcomes (including when validation is bypassed) so that a failed
+                    // handshake still reports what was observed. The first certificate of the attempt is kept.
+                    Volatile.Write(ref _serverCertificateCapture, SniCommon.CreateServerCertificateCapture(serverCertificate, verdict, sender, Volatile.Read(ref _serverCertificateCapture)));
+                }
+            }
         }
+
+        /// <inheritdoc/>
+        public override ServerCertificateCapture ServerCertificateCapture => Volatile.Read(ref _serverCertificateCapture);
 
         /// <summary>
         /// Set buffer size
