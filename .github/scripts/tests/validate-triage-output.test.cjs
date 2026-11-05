@@ -9,7 +9,6 @@ const os = require('node:os');
 const path = require('node:path');
 const { test } = require('node:test');
 const {
-    normalizeTriageOutput,
     validateTriageOutput,
     validateTriageOutputFile,
 } = require('../validate-triage-output.cjs');
@@ -33,15 +32,8 @@ Cancellation leaves the operation running. Investigate the async cancellation pa
 - Ask the author for their SQL Server version.
 `;
 
-const waitingLabel = 'Auto-Triage: Waiting for Author';
 const output = (body) => ({
-    items: [
-        { type: 'add_comment', body },
-        ...(!body.includes('Triage Summary (on-demand re-triage)') ? [{
-            type: /\| Environment \| (?:Missing:|.*Partial:)/.test(body) ? 'add_labels' : 'remove_labels',
-            labels: [waitingLabel],
-        }] : []),
-    ],
+    items: [{ type: 'add_comment', body }],
     errors: [],
 });
 
@@ -52,115 +44,41 @@ test('accepts initial, follow-up, and on-demand summaries with multiline content
     validateTriageOutput(output(summary.replaceAll('\n', '\r\n')));
 });
 
-test('accepts a summary followed by an allowed label operation', () => {
-    for (const type of ['add_labels', 'remove_labels']) {
-        const body = type === 'add_labels' ? summary :
-            summary.replace('Missing: SQL Server version', 'All required environment details provided');
-        const value = output(body);
-        validateTriageOutput(value);
-    }
-});
-
-test('rejects label operations before the summary', () => {
-    for (const type of ['add_labels', 'remove_labels']) {
-        const value = output(summary);
-        value.items.unshift({ type, labels: ['Auto-Triage: Waiting for Author'] });
-        assert.throws(() => validateTriageOutput(value), /before/);
-    }
-});
-
-// The agent queued its label change first in the failed runs for #4855, #4879, #4904, #4940,
-// #4953, #4965, and #4969, so the gate rejected otherwise complete summaries.
-const labelFirst = (type) => {
-    const body = type === 'add_labels' ? summary :
-        summary.replace('Missing: SQL Server version', 'All required environment details provided');
-    return {
-        items: [{ type, labels: [waitingLabel] }, { type: 'add_comment', body }],
-        errors: [],
-    };
-};
-
-test('queues a label operation recorded before the summary after it', () => {
-    for (const type of ['add_labels', 'remove_labels']) {
-        // Arrange
-        const value = labelFirst(type);
-        const queued = structuredClone(value);
-
-        // Act
-        const normalized = normalizeTriageOutput(value);
-
-        // Assert
-        // The summary is published first, and the reordered batch passes the gate.
-        assert.deepEqual(normalized.items, [queued.items[1], queued.items[0]]);
-        assert.deepEqual(normalized.errors, []);
-        validateTriageOutput(normalized);
-        // The queued batch is not mutated.
-        assert.deepEqual(value, queued);
-    }
-});
-
-test('leaves batches without one summary or an early label operation unchanged', () => {
-    const label = { type: 'add_labels', labels: [waitingLabel] };
+test('rejects label operations before or after a summary and without one', () => {
+    // Arrange
     const comment = output(summary).items[0];
-    for (const value of [
-        null,
-        {},
-        { items: null },
-        { items: [null, comment] },
-        output(summary),
-        { items: [{ type: 'noop', reason: 'No new information' }] },
-        { items: [label] },
-        { items: [label, comment, comment] },
-    ]) {
-        // Act
-        const normalized = normalizeTriageOutput(value);
-
-        // Assert
-        assert.equal(normalized, value);
+    for (const type of ['add_labels', 'remove_labels']) {
+        const label = { type, labels: ['Any label'] };
+        for (const items of [
+            [label, comment],
+            [comment, label],
+            [label],
+            [{ type: 'noop', reason: 'No new information' }, label],
+            [{ type: 'report_incomplete', reason: 'Context unavailable' }, label],
+        ]) {
+            // Act and Assert
+            assert.throws(() => validateTriageOutput({ items }), /cannot change issue labels/);
+        }
     }
 });
 
-test('still rejects invalid batches after queueing labels after the summary', () => {
-    const label = { type: 'add_labels', labels: [waitingLabel] };
-    const comment = output(summary).items[0];
-    for (const [items, message] of [
-        [[label, label, comment], /exactly one/],
-        [[label, { type: 'add_comment', body: 'test simple body' }], /Triage Summary/],
-        [[{ type: 'remove_labels', labels: [waitingLabel] }, comment], /add_labels/],
-        [[{ ...label, labels: ['Unrelated label'] }, comment], /label/i],
-    ]) {
-        // Act and Assert
-        assert.throws(() => validateTriageOutput(normalizeTriageOutput({ items })), message);
-    }
-});
-
-test('rewrites the queued batch file only after a reordered batch passes validation', () => {
+test('validates the queued batch without rewriting its file', () => {
     // Arrange
     const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'triage-output-'));
     const filename = path.join(directory, 'agent_output.json');
     try {
-        for (const type of ['add_labels', 'remove_labels']) {
-            // Act
-            const value = labelFirst(type);
-            fs.writeFileSync(filename, JSON.stringify(value));
-            const reordered = validateTriageOutputFile(filename);
+        const queued = JSON.stringify(output(summary), null, 2);
+        fs.writeFileSync(filename, queued);
 
-            // Assert
-            assert.equal(reordered, true);
-            assert.deepEqual(JSON.parse(fs.readFileSync(filename, 'utf8')).items,
-                [value.items[1], value.items[0]]);
-        }
+        // Act
+        validateTriageOutputFile(filename);
 
-        // An already ordered batch is validated without rewriting the file.
-        const ordered = JSON.stringify(output(summary), null, 2);
-        fs.writeFileSync(filename, ordered);
-        assert.equal(validateTriageOutputFile(filename), false);
-        assert.equal(fs.readFileSync(filename, 'utf8'), ordered);
+        // Assert
+        assert.equal(fs.readFileSync(filename, 'utf8'), queued);
 
         // A rejected batch leaves the queued file unchanged.
         const invalid = JSON.stringify({
-            items: [{ type: 'add_labels', labels: [waitingLabel] },
-                { type: 'add_comment', body: 'test simple body' }],
+            items: [{ type: 'add_comment', body: 'test simple body' }],
         });
         fs.writeFileSync(filename, invalid);
         assert.throws(() => validateTriageOutputFile(filename), /Triage Summary/);
@@ -171,12 +89,12 @@ test('rewrites the queued batch file only after a reordered batch passes validat
     }
 });
 
-test('command line validation rewrites the batch that safe outputs publish', () => {
+test('command line validation accepts a comment-only batch without rewriting it', () => {
     // Arrange
     const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'triage-output-'));
     const filename = path.join(directory, 'agent_output.json');
-    const value = labelFirst('add_labels');
-    fs.writeFileSync(filename, JSON.stringify(value));
+    const queued = JSON.stringify(output(summary), null, 2);
+    fs.writeFileSync(filename, queued);
     try {
         // Act
         const result = spawnSync(process.execPath,
@@ -185,28 +103,28 @@ test('command line validation rewrites the batch that safe outputs publish', () 
 
         // Assert
         assert.equal(result.status, 0, result.stderr);
-        assert.match(result.stdout, /Queued label changes after the triage summary/);
-        assert.deepEqual(JSON.parse(fs.readFileSync(filename, 'utf8')).items,
-            [value.items[1], value.items[0]]);
+        assert.match(result.stdout, /Triage output validated before safe-output publication/);
+        assert.equal(fs.readFileSync(filename, 'utf8'), queued);
     } finally {
         // Cleanup
         fs.rmSync(directory, { recursive: true, force: true });
     }
 });
 
-test('the compiled workflow validates and rewrites the batch before publishing it', () => {
+test('the compiled workflow validates the batch before publishing without label tools', () => {
     // Arrange
     const workflow = fs.readFileSync(
         path.join(__dirname, '..', '..', 'workflows', 'issue-triage.lock.yml'), 'utf8');
 
     // Act
     const validate = workflow.indexOf('name: Validate triage output before publishing');
-    const rewrite = workflow.indexOf('validateTriageOutputFile(filename)', validate);
+    const validationCall = workflow.indexOf('validateTriageOutputFile(filename)', validate);
     const publish = workflow.indexOf('name: Process Safe Outputs', validate);
 
     // Assert
-    assert.ok(validate >= 0 && rewrite > validate && publish > rewrite);
+    assert.ok(validate >= 0 && validationCall > validate && publish > validationCall);
     assert.doesNotMatch(workflow.slice(validate, publish), /validateTriageOutput\(JSON\.parse/);
+    assert.doesNotMatch(workflow, /add_labels|remove_labels|Auto-Triage: Waiting for Author/);
 });
 
 test('preserves explicit no-op and failure reporting without a comment', () => {
@@ -215,7 +133,7 @@ test('preserves explicit no-op and failure reporting without a comment', () => {
     }
 });
 
-test('enforces label state for initial, follow-up, and on-demand summaries', () => {
+test('accepts all environment states without labels for each triage scenario', () => {
     for (const suffix of ['', ' (updated after author response)', ' (on-demand re-triage)']) {
         for (const environment of [
             'Missing: SQL Server version',
@@ -225,25 +143,9 @@ test('enforces label state for initial, follow-up, and on-demand summaries', () 
         ]) {
             const body = summary.replace('Triage Summary', `Triage Summary${suffix}`)
                 .replace('Missing: SQL Server version', environment);
-            const onDemand = suffix.includes('on-demand');
-            const expected = /Missing:|Partial:/.test(environment) ? 'add_labels' : 'remove_labels';
-            const comment = { type: 'add_comment', body };
-            const label = { type: expected, labels: [waitingLabel] };
-            validateTriageOutput({ items: onDemand ? [comment] : [comment, label] });
-            const invalid = onDemand ? [
-                [comment, label],
-                [comment, { ...label, type: expected === 'add_labels' ? 'remove_labels' : 'add_labels' }],
-            ] : [
-                [comment],
-                [comment, { ...label, type: expected === 'add_labels' ? 'remove_labels' : 'add_labels' }],
-                [comment, label, label],
-                [comment, { ...label, labels: [] }],
-                [comment, { ...label, labels: ['Unrelated label'] }],
-                [comment, { ...label, labels: [waitingLabel, 'Unrelated label'] }],
-            ];
-            for (const items of invalid) {
-                assert.throws(() => validateTriageOutput({ items }), /label/i);
-            }
+
+            // Act and Assert
+            assert.doesNotThrow(() => validateTriageOutput(output(body)));
         }
     }
 });
@@ -502,8 +404,7 @@ test('rejects multiple comments and mixed success/incomplete outcomes', () => {
 
 test('rejects output errors even when a complete summary is queued', () => {
     const value = output(summary);
-    value.items.push({ type: 'add_labels', labels: ['Auto-Triage: Waiting for Author'] });
-    value.errors.push({ type: 'remove_labels', message: 'Label operation exceeded quota' });
+    value.errors.push({ type: 'add_comment', message: 'Comment operation exceeded quota' });
     assert.throws(() => validateTriageOutput(value), /errors/);
     assert.throws(() => validateTriageOutput({
         items: [{ type: 'noop', reason: 'No new information' }],
@@ -517,6 +418,6 @@ test('rejects missing output, empty results, and label-only results', () => {
         assert.throws(() => validateTriageOutput(value), /output|result/);
     }
     assert.throws(() => validateTriageOutput({
-        items: [{ type: 'add_labels', labels: ['Auto-Triage: Waiting for Author'] }],
-    }), /summary/);
+        items: [{ type: 'add_labels', labels: ['Any label'] }],
+    }), /cannot change issue labels/);
 });
