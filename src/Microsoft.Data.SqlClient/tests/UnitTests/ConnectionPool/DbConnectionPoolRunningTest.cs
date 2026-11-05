@@ -87,6 +87,113 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             }
         }
 
+        /// <summary>
+        /// A sync caller that fetched a pool before pruning retired it must be redirected with a
+        /// null connection, without starting a physical open on the retired pool.
+        /// </summary>
+        /// <param name="useChannelPool">Selects the channel rather than wait-handle implementation.</param>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void TryGetConnection_SyncAfterPrune_ReturnsNullWithoutOpening(bool useChannelPool)
+        {
+            // Arrange
+            IDbConnectionPool pool = CreatePool(useChannelPool);
+            using var owner = new SqlConnection();
+            Assert.True(pool.TryPrune());
+            try
+            {
+                // Act
+                bool completed = pool.TryGetConnection(
+                    owner, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(10)),
+                    out DbConnectionInternal? connection);
+
+                // Assert
+                Assert.True(completed);
+                Assert.Null(connection);
+                Assert.False(pool.IsRunning);
+                Assert.Equal(0, pool.Count);
+            }
+            finally
+            {
+                // Cleanup
+                pool.Shutdown();
+                pool.Clear();
+            }
+        }
+
+        /// <summary>
+        /// An async caller that fetched a pool before pruning retired it must be redirected with a
+        /// null connection, without queuing an open on the retired pool or completing its task.
+        /// </summary>
+        /// <param name="useChannelPool">Selects the channel rather than wait-handle implementation.</param>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void TryGetConnection_AsyncAfterPrune_ReturnsNullWithoutQueuing(bool useChannelPool)
+        {
+            // Arrange
+            IDbConnectionPool pool = CreatePool(useChannelPool);
+            using var owner = new SqlConnection();
+            var completion = new TaskCompletionSource<DbConnectionInternal>();
+            Assert.True(pool.TryPrune());
+            try
+            {
+                // Act
+                bool completed = pool.TryGetConnection(
+                    owner, completion, TimeoutTimer.StartNew(TimeSpan.FromSeconds(10)),
+                    out DbConnectionInternal? connection);
+
+                // Assert
+                Assert.True(completed);
+                Assert.Null(connection);
+                Assert.False(completion.Task.IsCompleted);
+                Assert.False(pool.IsRunning);
+                Assert.Equal(0, pool.Count);
+            }
+            finally
+            {
+                // Cleanup
+                pool.Shutdown();
+                pool.Clear();
+            }
+        }
+
+        /// <summary>
+        /// A replacement request on a pool retired by pruning must return null, so the factory
+        /// selects a live pool instead of creating on one already queued for release.
+        /// </summary>
+        /// <param name="useChannelPool">Selects the channel rather than wait-handle implementation.</param>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void ReplaceConnection_AfterPrune_ReturnsNull(bool useChannelPool)
+        {
+            // Arrange
+            IDbConnectionPool pool = CreatePool(useChannelPool);
+            using var owner = new SqlConnection();
+            var oldConnection = new WaitHandleDbConnectionPoolTransactionTest.MockDbConnectionInternal();
+            Assert.True(pool.TryPrune());
+            try
+            {
+                // Act
+                DbConnectionInternal? connection = pool.ReplaceConnection(
+                    owner, oldConnection, TimeoutTimer.StartNew(TimeSpan.FromSeconds(10)));
+
+                // Assert
+                Assert.Null(connection);
+                Assert.False(pool.IsRunning);
+                Assert.Equal(0, pool.Count);
+            }
+            finally
+            {
+                // Cleanup
+                oldConnection.Dispose();
+                pool.Shutdown();
+                pool.Clear();
+            }
+        }
+
         /// <summary>Creates a pool without starting maintenance or requiring a SQL Server.</summary>
         /// <param name="useChannelPool">Selects the channel rather than wait-handle implementation.</param>
         /// <returns>A newly constructed pool with no background warmup or idle pruning.</returns>
