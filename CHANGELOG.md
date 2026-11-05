@@ -8,9 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Preview Release 8.0.0-preview1] - Unreleased
 
-> **Draft, not a release announcement.** This snapshot was prepared on 2026-11-04 from
+> **Draft, not a release announcement.** This snapshot was refreshed on 2026-11-05 from
 > `main` at
-> [`f8ededdbe683156de864619ca5f24ef8e3f7e1ed`](https://github.com/dotnet/SqlClient/commit/f8ededdbe683156de864619ca5f24ef8e3f7e1ed).
+> [`b87ca6e7643611ddc3273324de346d09e8ff2c43`](https://github.com/dotnet/SqlClient/commit/b87ca6e7643611ddc3273324de346d09e8ff2c43).
 > It also includes planned work from the
 > [8.0.0-preview1 milestone](https://github.com/dotnet/SqlClient/milestone/101),
 > explicitly separated below. Unmerged work is not available in this source snapshot.
@@ -19,8 +19,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 This draft uses the `release/7.1` branch point as its baseline,
 [`92f220956b07328054701a869f452cade51830c1`](https://github.com/dotnet/SqlClient/commit/92f220956b07328054701a869f452cade51830c1)
-(2026-09-15), **not** the later 7.1.1 release. All 119 subsequent `main` commits and all
-142 milestone PRs are accounted for in the [scope appendix](release-notes/8.0/8.0.0-preview1-scope.md),
+(2026-09-15), **not** the later 7.1.1 release. All 128 subsequent `main` commits and all
+146 milestone PRs are accounted for in the [scope appendix](release-notes/8.0/8.0.0-preview1-scope.md),
 including engineering/test-only work, closed-unmerged proposals, and a PR merged only
 to a development branch. Changes already shipped in 7.1.1 are identified below.
 
@@ -271,20 +271,41 @@ var builder = new SqlConnectionStringBuilder(connectionString)
 
 #### Trimming and authentication configuration
 
-- Added `Switch.Microsoft.Data.SqlClient.EnableAppConfig`, default `true` (net10.0 only).
-  Set it to `false` to disable app.config retry configuration, authentication-provider
-  configuration, and switch overrides. To remove these paths during trimming, fix the
-  value at publish time; runtime configuration alone does not remove trim warnings.
-  .NET Framework continues to read app.config.
-  ([#4697](https://github.com/dotnet/SqlClient/pull/4697))
+- Moved authentication registration/bootstrap into Abstractions. The driver now uses its
+  shared registry directly, and `SqlAuthenticationProvider.GetProvider`/`SetProvider`
+  no longer load the driver through reflection. `SqlAuthenticationInitializer` also
+  lives in Abstractions, with a type forward preserving its driver-qualified identity.
+  Abstractions adds a trim/AOT-analyzed `net10.0` asset.
+  ([#4821](https://github.com/dotnet/SqlClient/pull/4821))
+- `Switch.Microsoft.Data.SqlClient.EnableAppConfig` controls authentication configuration
+  on both .NET Framework and modern .NET. The driver's separate retry-configuration and
+  switch-override readers use this switch on modern .NET only; they remain unchanged on
+  .NET Framework.
+  ([#4697](https://github.com/dotnet/SqlClient/pull/4697),
+  [#4821](https://github.com/dotnet/SqlClient/pull/4821))
+- Added `Switch.Microsoft.Data.SqlClient.EnableAzureExtensionDiscovery` for reflective
+  authentication-provider discovery. Both authentication switches default to `true`
+  and cache their first value. Explicit provider registration remains available when
+  discovery is disabled. Authentication discovery does not control the driver's separate
+  Azure Attestation loader.
+- For explicit registration in trimmed/Native AOT applications, disable **both**
+  reflective paths at publish time, then explicitly construct/register a provider for
+  every required method before opening connections. Runtime switch values alone cannot
+  remove code during publication.
 
   ```xml
   <ItemGroup>
     <RuntimeHostConfigurationOption Include="Switch.Microsoft.Data.SqlClient.EnableAppConfig"
                                     Value="false" Trim="true" />
+    <RuntimeHostConfigurationOption Include="Switch.Microsoft.Data.SqlClient.EnableAzureExtensionDiscovery"
+                                    Value="false" Trim="true" />
   </ItemGroup>
   ```
 
+- Trimmed JIT applications can retain enabled reflective paths if they preserve the
+  configuration infrastructure, handlers, provider/initializer constructors, and Azure
+  discovery contracts. Enabling a switch does not root these members. Enabled paths
+  report trimming warnings and, for Native AOT, dynamic-code warnings.
 - Source-generated JSON serialization and diagnostic annotations reduce trim/AOT warnings
   (net10.0 only). These are incremental improvements, not complete Native AOT support.
   ([#4683](https://github.com/dotnet/SqlClient/pull/4683),
@@ -293,11 +314,15 @@ var builder = new SqlConnectionStringBuilder(connectionString)
   [#4703](https://github.com/dotnet/SqlClient/pull/4703),
   [#4801](https://github.com/dotnet/SqlClient/pull/4801))
 - Authentication section handlers are public in Abstractions, with type forwards
-  preserving existing driver-qualified app.config declarations. A separate internal
-  configuration loader has also merged, but the driver retains its existing reader
-  until the pending registry integration.
+  preserving existing driver-qualified app.config declarations. The shared registry now
+  consumes the internal configuration loader. Configured providers/initializers take
+  precedence over application registrations, which take precedence over Azure defaults.
+  Failed explicit configuration does not silently select an earlier/default provider;
+  failures are traced, and explicit successful application registration can recover a
+  failed method. Check `SetProvider`'s return value and trace diagnostics when registering.
   ([#4816](https://github.com/dotnet/SqlClient/pull/4816),
-  [#4860](https://github.com/dotnet/SqlClient/pull/4860))
+  [#4860](https://github.com/dotnet/SqlClient/pull/4860),
+  [#4821](https://github.com/dotnet/SqlClient/pull/4821))
 
 #### Other changes
 
@@ -335,13 +360,17 @@ var builder = new SqlConnectionStringBuilder(connectionString)
   direct dependency floors are listed below and in the companion notes.
   ([#4848](https://github.com/dotnet/SqlClient/pull/4848),
   [#4880](https://github.com/dotnet/SqlClient/pull/4880))
+- Updated `Microsoft.Data.SqlClient.SNI` and `Microsoft.Data.SqlClient.SNI.runtime`
+  from 7.1.0 to 8.0.0-preview1.26309.4 (Windows native SNI only).
+  ([#5011](https://github.com/dotnet/SqlClient/pull/5011))
 - Updated localized resource translations.
   ([#4803](https://github.com/dotnet/SqlClient/pull/4803),
   [#4825](https://github.com/dotnet/SqlClient/pull/4825),
   [#4944](https://github.com/dotnet/SqlClient/pull/4944),
   [#4955](https://github.com/dotnet/SqlClient/pull/4955),
   [#4964](https://github.com/dotnet/SqlClient/pull/4964),
-  [#4984](https://github.com/dotnet/SqlClient/pull/4984))
+  [#4984](https://github.com/dotnet/SqlClient/pull/4984),
+  [#5004](https://github.com/dotnet/SqlClient/pull/5004))
 
 ### Fixed
 
@@ -378,6 +407,11 @@ var builder = new SqlConnectionStringBuilder(connectionString)
   same ambient transaction with a pending reset. This unconditional correctness fix can
   add a round trip and is separate from the opt-in reset switch.
   ([#4335](https://github.com/dotnet/SqlClient/pull/4335))
+- Prevent V1/V2 pool pruning from retiring pools with in-flight acquisition, physical
+  creation, or background replenishment, preserving transaction-affine reuse and avoiding
+  unintended transaction promotion. Explicit clear/shutdown semantics are unchanged.
+  ([#4755](https://github.com/dotnet/SqlClient/issues/4755),
+  [#4754](https://github.com/dotnet/SqlClient/pull/4754))
 - Isolate cached enclave sessions by attestation protocol, server, database, and URL.
   ([#4829](https://github.com/dotnet/SqlClient/pull/4829))
 - Retry providers load/resolve in SqlClient's current `AssemblyLoadContext`, rather than
@@ -440,36 +474,34 @@ they are not new fixes for applications already using that release.
 
 ### Planned milestone work - not in the source snapshot
 
-The following entries describe open proposals, **not implemented release guarantees**:
+The remaining open milestone entries are non-product work, **not implemented release
+guarantees**:
 
-- **Authentication registry/AOT integration:** move provider registration into Abstractions,
-  add its `net10.0` asset, and gate reflective configuration/discovery for explicitly
-  registered trimmed/Native AOT applications. This is the pending integration for the
-  configuration groundwork above, not a claim that full Native AOT support is complete.
-  ([#4821](https://github.com/dotnet/SqlClient/pull/4821))
-- **Multibyte ANSI parameter sizing:** use encoded byte lengths consistently for RPC,
-  declarations, and encrypted metadata, while preserving character-based `Size` semantics
-  and respecting `Offset`.
-  ([#2035](https://github.com/dotnet/SqlClient/issues/2035),
-  [#4906](https://github.com/dotnet/SqlClient/pull/4906))
-- **Pool pruning during acquisition/creation:** avoid retiring active V1/V2 pools and losing
-  transaction-affine reuse, which can cause unintended transaction promotion.
-  ([#4754](https://github.com/dotnet/SqlClient/pull/4754))
-- Open non-product work covers schema-transition tests
-  ([#4751](https://github.com/dotnet/SqlClient/pull/4751)), the earlier release-notes draft
-  used as inspiration ([#4915](https://github.com/dotnet/SqlClient/pull/4915)),
-  governed PowerShell feeds ([#4932](https://github.com/dotnet/SqlClient/pull/4932)),
-  auto-triage summaries ([#4992](https://github.com/dotnet/SqlClient/pull/4992)), and simulator
-  test quarantine ([#4996](https://github.com/dotnet/SqlClient/pull/4996)).
+- This release-notes PR ([#4999](https://github.com/dotnet/SqlClient/pull/4999)) and
+  issue-triage label-management changes
+  ([#5013](https://github.com/dotnet/SqlClient/pull/5013)).
+- Governed PowerShell feeds, auto-triage summaries, and simulator test quarantine have
+  merged and are recorded as engineering/test work in the scope appendix.
+  ([#4932](https://github.com/dotnet/SqlClient/pull/4932),
+  [#4992](https://github.com/dotnet/SqlClient/pull/4992),
+  [#4996](https://github.com/dotnet/SqlClient/pull/4996))
+- The earlier release-notes draft used as inspiration is closed without merging.
+  ([#4915](https://github.com/dotnet/SqlClient/pull/4915))
 - Abstractions localization validation
   ([#4819](https://github.com/dotnet/SqlClient/pull/4819)) is marked merged in the milestone,
   but targets `dev/paul/aot/phase-1.4` and is not reachable from this `main` snapshot.
   Its presence in the milestone does not establish release inclusion.
-- All 17 closed-unmerged milestone PRs are inventoried in the
+- All 18 closed-unmerged milestone PRs are inventoried in the
   [scope appendix](release-notes/8.0/8.0.0-preview1-scope.md), not represented as delivered changes.
 
 ### Known limitations
 
+- Multibyte ANSI parameter sizing remains open and has moved to 8.1.0-preview1; it is
+  not included in this preview's source. Schema-transition tests moved to 8.0.0.
+  Both were present in the previous preview1 inventory and remain explicitly tracked
+  in the scope appendix's milestone-transition section.
+  ([#4906](https://github.com/dotnet/SqlClient/pull/4906),
+  [#4751](https://github.com/dotnet/SqlClient/pull/4751))
 - Native AOT work remains incremental; warning-free publication is not guaranteed.
   ([#1947](https://github.com/dotnet/SqlClient/issues/1947))
 - Internal async enclave-provider/delegate groundwork is merged, including shared VBS
