@@ -246,6 +246,7 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
             nameof(DataTestUtility.IsNotAzureSynapse))]
         [InlineData(false)]
         [InlineData(true)]
+        [Trait("category", "flaky")]
         public static async Task TransactionScope_SecondConnectionInSameScopeKeepsIsolationLevel(bool async)
         {
             using LocalAppContextSwitchesHelper switchesHelper = new();
