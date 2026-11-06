@@ -1,13 +1,14 @@
 # Pipeline Script Tests
 
-Pester tests for the PowerShell helpers under `eng/pipelines/scripts/`.
+Pester tests for pipeline helpers and build orchestration.
 
 ## Prerequisites
 
-These tests require **Pester v5 or later**:
+Restore the pinned Pester module from the governed feed using the
+[PowerShell module setup](../../../../BUILDGUIDE.md#powershell-modules):
 
 ```powershell
-Install-Module Pester -MinimumVersion 5.0 -Scope CurrentUser -Force -SkipPublisherCheck
+dotnet build build.proj -t:RestorePowerShellModules --no-restore
 ```
 
 The Docker CLI tests require an x64 host; they are skipped on ARM64.
@@ -15,7 +16,7 @@ The Docker CLI tests require an x64 host; they are skipped on ARM64.
 ## Running the tests
 
 ```powershell
-Import-Module Pester -MinimumVersion 5.0
+Import-Module Pester
 Invoke-Pester ./eng/pipelines/scripts/tests/
 ```
 
@@ -26,6 +27,8 @@ Add `-Output Detailed` to see per-test results.
 | File | Covers |
 | ---- | ------ |
 | `Install-DockerCli.macos.Tests.ps1` | `Install-DockerCli.macos.ps1` — Homebrew bottle selection for the macOS docker CLI. |
+| `Build-Orchestration.Tests.ps1` | Standalone/root module restore targets, failure propagation, and release pipeline wiring. |
 
 `tar`, `Invoke-RestMethod` and `Invoke-WebRequest` are mocked, so the
-tests never touch the network or a real repository.
+Docker tests never touch the network or a real repository. The module orchestration tests
+require this release's .NET SDK and substitute a local `pwsh` stub; they do not install modules.

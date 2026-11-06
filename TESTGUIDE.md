@@ -2,6 +2,13 @@
 
 See [BUILDGUIDE.md](BUILDGUIDE.md) for this release's SDK, build, and SQL Server test setup.
 
+For PowerShell-based setup and pipeline-script tests, first run
+`dotnet build build.proj -t:RestorePowerShellModules --no-restore` from the repository root.
+This explicitly restores the versions in `powershell-modules.json` for the current user.
+Test targets do not install modules automatically. Unix certificate setup also requires
+the native `openssl` CLI on `PATH`.
+See [PowerShell module setup](BUILDGUIDE.md#powershell-modules) for prerequisites and feed details.
+
 `SqlUnicodeEncodingTests` checks raw UTF-16LE code-unit preservation, partial consumption,
 offsets, zero-capacity conversions, and unchanged input bytes. Run it without a database:
 

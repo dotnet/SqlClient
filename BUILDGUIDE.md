@@ -34,6 +34,36 @@ This project should be built with Visual Studio 2019+ for the best compatibility
 
 Once the environment is setup properly, execute the desired set of commands below from the _root_ folder to perform the respective operations:
 
+## PowerShell Modules
+
+Before using scripts or tests that need PowerShell modules, run from the repository root:
+
+```powershell
+dotnet build build.proj -t:RestorePowerShellModules --no-restore
+```
+
+This release uses `pwsh` from `PATH`, not a .NET local tool. Install PowerShell 7.4 or later
+with its bundled PSResourceGet before restoring modules.
+[`powershell-modules.json`](powershell-modules.json) pins SqlServer and Pester versions.
+The restore uses the anonymous governed feed in [`PowerShell.config`](PowerShell.config),
+reuses exact installed versions, and installs missing versions for the current user with
+`-NoClobber`. It never falls back to PowerShell Gallery. Automatic credential providers are
+disabled on PSResourceGet versions that support them; older versions have no such feature.
+
+Restore and consumption must use the same user. Consumers import modules normally; the manifest
+pins installation, not runtime resolution. Run restore explicitly after manifest changes or
+on a new machine/user. It does not build the driver, run tests, or install OS-level tools.
+`--no-restore` skips the unrelated NuGet restore that `dotnet build` normally performs.
+The Unix certificate script uses the native `openssl` CLI, which must already be on `PATH`.
+
+The existing CI test and Kerberos jobs use the shared
+`eng/pipelines/common/steps/restore-powershell-modules.yml` step after SDK installation.
+Its standalone entry point also works locally:
+
+```powershell
+dotnet build tools\targets\RestorePowerShellModules.targets -t:RestorePowerShellModules
+```
+
 ## MSBuild Reference
 
 ### Targets
@@ -49,6 +79,7 @@ Once the environment is setup properly, execute the desired set of commands belo
 |`BuildTestsNetFx`|Builds tests for the .NET Framework driver.|
 |`Clean`|Cleans generated files.|
 |`Restore`|Restores Nuget packages.|
+|`RestorePowerShellModules`|Explicitly restores pinned PowerShell modules from the governed feed.|
 |`RunTests`|Runs the functional and manual tests for the .NET Framework and .NET drivers|
 |`RunFunctionalTests`|Runs just the functional tests for the .NET Framework and .NET drivers|
 |`RunManualTests`|Runs just the manual tests for the .NET Framework and .NET drivers|
