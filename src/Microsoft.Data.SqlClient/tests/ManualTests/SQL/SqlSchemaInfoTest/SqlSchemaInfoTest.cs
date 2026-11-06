@@ -17,6 +17,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public static class SqlSchemaInfoTest
     {
         #region TestMethods
+        /// <summary>
+        /// Verifies that synchronous GetSchema returns the Databases, MetaDataCollections,
+        /// DataSourceInformation, and DataTypes collections, with or without an open transaction.
+        /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [InlineData(true)]
         [InlineData(false)]
@@ -59,8 +63,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 DataTable metaDataSourceInfo = conn.GetSchema(DbMetaDataCollectionNames.DataSourceInformation);
                 Assert.True(metaDataSourceInfo != null && metaDataSourceInfo.Rows.Count > 0);
 
-                //TODO: lots of contention on data types. need to fix locking in other tests to make this more reliable
-                DataTable metaDataTypes = conn.GetSchema(DbMetaDataCollectionNames.DataTypes);
+                // Act: Read the DataTypes collection, retrying only on deadlocks (see helper).
+                DataTable metaDataTypes = GetDataTypesSchemaWithDeadlockRetry(conn);
+
+                // Assert: The DataTypes collection is populated and maps tinyint correctly.
                 Assert.True(metaDataTypes != null && metaDataTypes.Rows.Count > 0);
 
                 var tinyintRow = metaDataTypes.Rows.OfType<DataRow>().Where(p => (string)p["TypeName"] == "tinyint");
@@ -71,6 +77,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        /// <summary>
+        /// Verifies that asynchronous GetSchemaAsync returns the Databases, MetaDataCollections,
+        /// DataSourceInformation, and DataTypes collections, with or without an open transaction.
+        /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [InlineData(true)]
         [InlineData(false)]
@@ -113,7 +123,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 DataTable metaDataSourceInfo = await conn.GetSchemaAsync(DbMetaDataCollectionNames.DataSourceInformation);
                 Assert.True(metaDataSourceInfo != null && metaDataSourceInfo.Rows.Count > 0);
 
-                DataTable metaDataTypes = await conn.GetSchemaAsync(DbMetaDataCollectionNames.DataTypes);
+                // Act: Read the DataTypes collection, retrying only on deadlocks (see helper).
+                DataTable metaDataTypes = await GetDataTypesSchemaWithDeadlockRetryAsync(conn);
+
+                // Assert: The DataTypes collection is populated and maps tinyint correctly.
                 Assert.True(metaDataTypes != null && metaDataTypes.Rows.Count > 0);
 
                 var tinyintRow = metaDataTypes.Rows.OfType<DataRow>().Where(p => (string)p["TypeName"] == "tinyint");
@@ -192,6 +205,71 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         #endregion
 
         #region UtilityMethodsClasses
+        // SQL Server error number for "Transaction ... chosen as the deadlock victim".
+        private const int DeadlockVictimErrorNumber = 1205;
+
+        // Total attempts (initial call plus retries) for the DataTypes schema read.
+        private const int DataTypesSchemaMaxAttempts = 3;
+
+        // Delay between DataTypes schema read attempts.
+        private static readonly TimeSpan s_dataTypesSchemaRetryDelay =
+            TimeSpan.FromMilliseconds(500);
+
+        /// <summary>
+        /// Reads the DataTypes schema collection synchronously, retrying only when the read is
+        /// chosen as a deadlock victim (error 1205).
+        /// </summary>
+        /// <remarks>
+        /// GetSchema(DataTypes) queries sys.types for table types. CI jobs targeting Azure SQL
+        /// share one database and concurrently run CREATE/DROP TYPE from other tests, so this
+        /// catalog read can be chosen as the deadlock victim. That is environmental contention,
+        /// not a driver defect. Any other error, or a deadlock on the last attempt, propagates.
+        /// </remarks>
+        /// <param name="connection">An open connection.</param>
+        /// <returns>The DataTypes schema collection.</returns>
+        private static DataTable GetDataTypesSchemaWithDeadlockRetry(SqlConnection connection)
+        {
+            for (int attempt = 1; ; attempt++)
+            {
+                try
+                {
+                    return connection.GetSchema(DbMetaDataCollectionNames.DataTypes);
+                }
+                catch (SqlException ex) when (
+                    ex.Number == DeadlockVictimErrorNumber && attempt < DataTypesSchemaMaxAttempts)
+                {
+                    System.Threading.Thread.Sleep(s_dataTypesSchemaRetryDelay);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Reads the DataTypes schema collection asynchronously, retrying only when the read is
+        /// chosen as a deadlock victim (error 1205).
+        /// </summary>
+        /// <remarks>
+        /// See <see cref="GetDataTypesSchemaWithDeadlockRetry(SqlConnection)"/> for why the
+        /// retry exists. Any other error, or a deadlock on the last attempt, propagates.
+        /// </remarks>
+        /// <param name="connection">An open connection.</param>
+        /// <returns>The DataTypes schema collection.</returns>
+        private static async Task<DataTable> GetDataTypesSchemaWithDeadlockRetryAsync(
+            SqlConnection connection)
+        {
+            for (int attempt = 1; ; attempt++)
+            {
+                try
+                {
+                    return await connection.GetSchemaAsync(DbMetaDataCollectionNames.DataTypes);
+                }
+                catch (SqlException ex) when (
+                    ex.Number == DeadlockVictimErrorNumber && attempt < DataTypesSchemaMaxAttempts)
+                {
+                    await Task.Delay(s_dataTypesSchemaRetryDelay);
+                }
+            }
+        }
+
         // primitive implementation of ITypeDescriptorContext to be used with component model APIs
         private class DescriptorContext : ITypeDescriptorContext
         {
