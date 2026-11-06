@@ -30,6 +30,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
 
         public bool WaitForProfiler;
         public bool UseNativeMemoryAndETWProfiler;
+        public AsyncHealthOptions AsyncHealth = new AsyncHealthOptions();
         public Benchmarks Benchmarks;
 
         /// <summary>
@@ -50,8 +51,9 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         ///
         public static Config Load()
         {
-            return Loader.FromJsonFile<Config>(
+            Config config = Loader.FromJsonFile<Config>(
                 "runnerconfig.jsonc", "RUNNER_CONFIG");
+            return config;
         }
     }
 
@@ -76,6 +78,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         public RunnerJob ConnectionPoolChurnRunnerConfig;
         public RunnerJob ConnectionPoolRampRunnerConfig;
         public RunnerJob ConnectionPoolThreadPoolPressureRunnerConfig;
+        public RunnerJob AsyncHealthCalibrationRunnerConfig;
     }
 
     public class RunnerJob

@@ -19,6 +19,252 @@ database.
 | `scripts/compare_perf.py` | Compares baseline vs current BenchmarkDotNet JSON → delta (md + json). Reused by the orchestrator. |
 | `scripts/perf_to_kusto.py` | Translates BenchmarkDotNet "full" JSON → Kusto `PerfRun` + `PerfBenchmarkResult` NDJSON. |
 | `scripts/ingest_kusto.py` | Queued Kusto ingestion (az CLI auth, runs on the agent). |
+| `scripts/async_health_report.py` | Validated, versioned async-health JSON/Markdown; no timing regression gates or Kusto ingestion. |
+
+## Async-health diagnoser
+
+Add `[AsyncHealthDiagnoser]` to benchmark methods or classes to select them for diagnosis.
+Unmarked cases run without async-health observation. Existing `PERF_BENCHMARK`, BDN `--filter`,
+parameters, invocation counts, and setup/cleanup still select and execute the same workloads.
+`AsyncHealthDiagnoser` requests one extra diagnostic iteration per marked case: normal iterations
+collect timing results without probes or a grace-period delay, and only the extra iteration
+collects an async-health window. Memory and threading diagnosers remain enabled.
+Diagnostic-iteration durations are not performance measurements. No measurement-mode flag,
+environment variable or pipeline parameter is required.
+
+This diagnoser answers "how well can unrelated ThreadPool work run while this workload executes?"
+It does **not** prove that an API never blocks, that async code is correct, or that synchronous
+completion is bad. CPU saturation, GC, locks, OS scheduling and the observer itself also affect
+results. Existing sync/async variants retain their original schedulers: for example, cold-ramp
+sync uses dedicated threads while async uses ThreadPool tasks. They are not scheduler-matched.
+
+### Execution boundary and coverage
+
+The suite uses BDN **0.16.0-preview.1 InProcessEmitToolchain** in the `PerformanceTests` process spawned by
+`interleave_perf.py`, not in the Python orchestrator. `AsyncHealthDiagnoser` implements
+`IInProcessDiagnoser` with `RunMode.ExtraIteration`, following `ThreadingDiagnoser`.
+Its in-process handler starts observation at `BeforeExtraIteration` and completes it at
+`AfterExtraIteration`. No custom engine factory or workload-delegate wrapper is used.
+Global/iteration setup and cleanup, JIT/pilot/warmup stages, overhead iterations, and normal
+timing iterations are excluded. BDN performs forced GC and a possible background-JIT delay
+after the start hook, so this diagnostic window includes that preparation as well as workload
+execution. BDN awaits Task/ValueTask completion on its dedicated benchmark thread.
+No arbitrary workload is fanned out, and ThreadPool limits/minima are unchanged.
+
+Verified upstream contracts:
+[IDiagnoser](https://github.com/dotnet/BenchmarkDotNet/blob/dde87a16370686adf5b33e63eafae0fb5d32374c/src/BenchmarkDotNet/Diagnosers/IDiagnoser.cs),
+[Engine](https://github.com/dotnet/BenchmarkDotNet/blob/dde87a16370686adf5b33e63eafae0fb5d32374c/src/BenchmarkDotNet/Engines/Engine.cs),
+[ThreadingDiagnoser](https://github.com/dotnet/BenchmarkDotNet/blob/dde87a16370686adf5b33e63eafae0fb5d32374c/src/BenchmarkDotNet/Diagnosers/ThreadingDiagnoser.cs).
+Revalidate this contract and the real-process smoke test when upgrading BDN. An out-of-process
+BDN toolchain is not supported by this integration.
+
+The diagnostic iteration is one **configured invocation batch** (`UnrollFactor=1`).
+There is no automatic duration extension, invocation multiplier, or workload retry to
+manufacture coverage. BDN retains the configured normal warmup and iteration counts, then runs
+one extra diagnostic iteration with its own setup and cleanup. Stateful/cold tests keep their
+existing per-iteration reset boundaries. `TimeoutMinutes` bounds the complete case execution;
+a timeout stops the process's benchmark sequence, including non-cooperative invocation batches.
+For a repeatable steady-state microbenchmark, choose an explicit `InvocationCount` *before*
+running; it must be the same in baseline and candidate. Very short tests will legitimately
+produce `Insufficient` results. Do not increase cold/stateful invocation counts to get a p99.
+
+A dedicated observer thread posts tiny timestamped callbacks, default every **25 ms**, with at
+most **64 outstanding**. Missed producer deadlines are counted as producer-missed ticks rather than
+being replayed as a burst. At workload completion the observer is stopped and joined; an
+in-flight observation may finish during shutdown, but no recovery sampling phase is run.
+The existing **500 ms** grace period (`RecoveryMilliseconds`) lets accepted callbacks finish
+before iteration cleanup. Producer shutdown counts toward this deadline, and no new probes
+or resource samples are produced after the observer has joined. Outstanding callbacks at its
+end remain explicitly outstanding in a frozen snapshot, even if they execute later. An undrained
+window fails the process rather than allowing those probes to contaminate another window. Retained
+probe/resource samples are capped at 100,000 each; exceeding the probe budget counts as skipped probes.
+No SQL diagnostics, stacks, external collectors, or ThreadPool timers are started.
+
+Raw JSON includes total/posted/executed/dropped/rejected/skipped/producer-missed/outstanding counts, all
+retained timestamps, outstanding work at workload end, and a resource timeline (pool thread
+count, OS process-thread count, busy-worker proxy, queue depth, completed items, allocated
+bytes and Gen2 collections). Pool `Threads` excludes dedicated `LongRunning` and other
+non-pool threads. Each window records `ProcessThreadsAtStart` after the observer starts but
+before the workload. Summaries show `PeakProcessThreads` during the workload and
+`ProcessThreadIncrease`, the nonnegative increase over that baseline, alongside peak pool
+threads and busy workers. Absolute totals matter: workload warmup can leave many pool
+threads alive before the baseline, so a zero increase does not mean low thread usage.
+
+The probe count `Total` includes all cadence slots, including missed ones:
+`Total = ProducerMissed + Dropped + Rejected + Skipped + Outstanding + Executed`, where
+`Posted = Outstanding + Executed`. `ProducerMissed` counts skipped cadence slots after a
+delayed producer wake; `Dropped` counts probes not dispatched because outstanding capacity is full.
+`Rejected` counts dispatch exceptions: the sample and posted count are rolled back, and the
+exception still propagates to fail the observer rather than being swallowed.
+`Skipped` counts probes not dispatched because sample retention is full, even if outstanding
+capacity is also full. Window exports and summaries use schema version 4.
+The reporter converts version-1 combined drops into separate missed/drop counts and accepts
+the former `Scheduled` count. Version-1/2 drops still include sample-limit rejections:
+their skipped counts are unavailable (`N/A`), not inferred as zero. Version-1/2/3 drops still
+include dispatch exceptions, so their rejected counts are also unavailable (`N/A`). Comparisons require matching
+accounting versions; legacy windows in summaries retain version 2 after missed-count conversion.
+Per-probe `ScheduledMilliseconds` timestamps are unchanged.
+
+Process-thread counts include managed, native, runtime, benchmark and observer threads,
+including idle threads. They measure existing OS threads, not runnable threads, CPU usage,
+thread creation totals, or exact user-thread attribution. Snapshot peaks can miss brief
+threads between samples. Enumerating process threads adds observer cost and allocations;
+compare matching instrumentation rather than treating older pool-only runs as equivalent.
+Older artifacts have no process-thread counts and display `N/A`, never zero, for these fields.
+
+The summary reports posted-to-executed dispatch, scheduled-to-executed delay and producer
+lateness distributions separately. Work-posted callbacks that execute during the grace period
+remain **late work**, not workload samples. The reporter retains a separate recovery-posted
+cohort for older artifacts that collected recovery samples.
+Counts cover the complete observation; raw timestamps identify posted/executed cohorts.
+An offered probe retains the original due time before missed intervals are skipped. For
+example, a 100 ms deadline offered at 160 ms with a 25 ms cadence records 60 ms producer
+lateness, two missed intervals, and a next deadline of 175 ms; no catch-up burst is queued.
+Scheduled-to-executed delay includes that full producer lateness; posted-to-executed dispatch
+delay is unchanged. Older artifacts used the adjusted slot's due time, so their producer
+lateness and scheduled-to-executed metrics are not directly comparable after missed intervals.
+
+`Supported` requires the declared minimum duration (default 1 second), the configured
+`MinimumSamples` callbacks (default 1) both posted and executed inside the workload window,
+no outstanding/late-work probes or dropped resource samples, and no failure. Dropped probes
+and missed or skipped probes do not disqualify a window: `DroppedProbes`, `SkippedProbes`, and `ProducerMissedProbes`
+(missed posting deadlines) are reported separately. `AdmissionDroppedProbes` remains a
+compatibility alias for `DroppedProbes`.
+Dispatch exceptions remain failures; their `RejectedProbes` count is reported separately.
+The Markdown report shows drops, rejections, skips, producer-missed ticks and outstanding probes;
+comparison rows include separate dropped, rejected, skipped, and producer-missed count deltas. Percentiles describe only executed
+probes and can be biased when observations are dropped, skipped, or missed. `Supported` does not mean loss-free.
+Any positive sample threshold up to
+100,000 is accepted; there is no fixed 100-probe floor. Existing explicit thresholds still apply.
+`Insufficient`, `Incomplete` (outstanding/late work or lost resource samples), and `Failed` have **null percentiles**, never
+zero. Coverage is an accounting check, not a statistical confidence guarantee. Percentiles use
+nearest rank: below 100 samples, p99 equals the observed maximum. Use the reported counts and
+independent process repetitions to assess variability before interpreting small differences.
+Legacy recovery cohorts retain their own duration and sample-support checks. No recovery
+sampling phase is performed in current runs. The existing JSON `Recovery` field remains false,
+and `RecoveryEndMilliseconds` records the end of the grace period for format compatibility.
+Raw data and counts remain available when percentiles are suppressed.
+
+### Configuration and commands
+
+Use the `AsyncHealth` section in `runnerconfig.jsonc` to configure the observer. Select cases
+with the attribute from `Microsoft.Data.SqlClient.PerformanceTests`:
+
+```csharp
+[Benchmark]
+[AsyncHealthDiagnoser]
+public Task ReadAsync() => ReadWorkloadAsync();
+```
+
+Marked cases require one launch, positive explicit invocation/iteration counts and nonnegative
+warmup. Profiler attachment is rejected for marked cases. Sequential/interleaved orchestration,
+normal timing comparisons and Kusto ingestion remain available; health sidecars are not timing
+rows and are not ingested. There is no dependency on experimental OpenAsync diagnostics or profiles.
+
+For a selected existing unit, from the repository root:
+
+```powershell
+dotnet build .\src\Microsoft.Data.SqlClient\tests\PerformanceTests\Microsoft.Data.SqlClient.PerformanceTests.csproj -c Release -f net10.0
+$env:RUNNER_CONFIG = (Resolve-Path .\my-runner.json).Path
+$env:DATATYPES_CONFIG = (Resolve-Path .\src\Microsoft.Data.SqlClient\tests\PerformanceTests\datatypes.json).Path
+$env:PERF_BENCHMARK = 'SqlConnection'
+dotnet .\src\Microsoft.Data.SqlClient\tests\PerformanceTests\bin\Release\net10.0\PerformanceTests.dll --filter '*OpenAsyncConnection*'
+```
+
+Direct execution writes schema-v4 `BenchmarkDotNet.Artifacts\async-health\async-health-*.json`.
+BDN's full JSON and Markdown timing reports describe the normal execution without observation.
+The extra-iteration measurement is diagnostic, not a workload performance measurement.
+Async-health observations
+remain separate from performance ingestion in the pipeline. Their configuration identifies
+`AsyncHealthDiagnoser` and `DiagnosticRunMode=ExtraIteration` so comparisons do not mix
+the former single-run or extra-run harnesses with the extra-iteration lifecycle.
+
+To run enabled units in separate processes and collect timing reports plus diagnostic sidecars:
+
+```powershell
+python -B .\eng\pipelines\perf\scripts\interleave_perf.py --current-exe-dir .\src\Microsoft.Data.SqlClient\tests\PerformanceTests\bin\Release\net10.0 --current-runner-config C:\perf\runner.json --results-dir C:\perf\health-results --work-dir C:\perf\health-work
+```
+
+Use fresh result/work paths, a dedicated idle host, and absolute config paths.
+The orchestrator supplies the built `datatypes.json` unless `DATATYPES_CONFIG` overrides it.
+Health sidecars are preserved under each timing pass's `async-health` directory. A current-only
+run executes each enabled unit once and makes no baseline comparison. Add `--baseline-exe-dir`
+and optionally `--baseline-runner-config` for ordinary timing comparisons. Their confirmation
+runs are selected by timing regressions, not an independent health sampling plan. Iterations
+within a process are not independent replicates. Use separate declared process runs when
+assessing health variability; do not pool window percentiles. Older baseline binaries may
+produce only timing reports. Matching workload, invocation count, observer options and runtime
+configuration are required before interpreting health differences.
+
+`TimeoutMinutes` retains the per-case watchdog. The orchestrator's optional
+`--unit-timeout-minutes` adds a process watchdog. Nonzero process exit codes and timeouts fail
+the run; available sidecars from nonzero exits are retained. Durations/completed work/error
+types are context, not an async-health score.
+
+For a bounded PR-pipeline run, select `platform=windows`, `currentOnly=true`,
+`runnerConfigFile=runnerconfig.connection-smoke.jsonc` and `failOnRegression=false`.
+Current-only suppresses source-baseline checkout and tagging without claiming a candidate-vs-main
+verdict. Only cases carrying `[AsyncHealthDiagnoser]` emit health sidecars; choosing a workload config
+does not attach the diagnoser to additional cases.
+It keeps the existing `SqlConnection` parameter matrix with short one-invocation windows and the
+existing `ConnectionPoolContention` matrix with a predeclared 100-invocation steady-state batch.
+Both use two actual iterations and one warmup. No cold/stateful benchmark is repeated to manufacture
+coverage. The shell entry points accept `-RunnerConfigFile` / `--runner-config-file` as a filename
+under `PerformanceTests`; the default remains the existing `runnerconfig.jsonc`.
+
+### SQL-free calibration and validation
+
+Enable only the opt-in `AsyncHealthCalibrationRunnerConfig` in a separate config:
+
+```json
+{
+  "Benchmarks": {
+    "AsyncHealthCalibrationRunnerConfig": {
+      "Enabled": true, "LaunchCount": 1, "IterationCount": 2,
+      "InvocationCount": 1, "WarmupCount": 1, "RunStrategy": "Monitoring"
+    }
+  }
+}
+```
+
+Run it with the orchestrator command above. The calibration runner carries `[AsyncHealthDiagnoser]`
+at class level, so every calibration benchmark is diagnosed. `ProbeOnly` sleeps the dedicated benchmark thread
+for 3 seconds; `AsyncWait` starts 32 three-second async waits; `Blocking` queues 32 pool work
+items that each sleep for 1.5 seconds. `AsyncWaitAwaited` explicitly awaits each delay;
+`BlockingLongRunning` uses 32 dedicated long-running tasks instead of pool tasks.
+
+Additional opt-in controls retain the same lifecycle and do not change ThreadPool settings:
+
+| Control | Workload |
+|---|---|
+| `SyncOverAsync` | 32 pool tasks synchronously waiting on 1.5-second `Task.Delay` tasks. |
+| `BoundedBlockingFour` / `BoundedBlockingEight` | The same 32 1.5-second sleeps, with async semaphore admission limiting occupied workers to 4 or 8. Expected minimum durations are 12 or 6 seconds. |
+| `LockContention` | 32 pool tasks each holding the same lock while sleeping for 100 ms. |
+| `MixedOneBlocking` / `MixedFourBlocking` | 32 concurrent three-second waits, with 1 or 4 implemented as pool-thread sleeps and the remainder as async delays. |
+
+Use a separate process and an exact BDN filter such as `--filter '*Runner.SyncOverAsync'`
+for each case when studying isolation. To compare fresh-process and workload-warmed pool
+behavior, run `Blocking` in separate processes with `WarmupCount=0` versus `WarmupCount=1`.
+Even the no-warmup case includes runtime/harness initialization; it is not a guaranteed empty
+ThreadPool. Later iterations retain state from earlier ones. No setting forces the pool size.
+
+Expect sensitivity, not a universal latency threshold: hardware, existing pool state and
+background activity vary. The controls' lifecycle counters verify that setup/cleanup do not
+overlap measurement. A SQL-free real-process test also verifies that normal mode creates no
+health probes/artifacts and that warmup is excluded:
+
+```powershell
+python -B -m unittest discover -s eng\pipelines\perf\scripts\tests -p 'test_*.py' -q
+dotnet test src\Microsoft.Data.SqlClient\tests\UnitTests\Microsoft.Data.SqlClient.UnitTests.csproj -c Release -f net10.0 --filter 'FullyQualifiedName~AsyncHealthTests' --blame-hang-timeout 10m
+$env:PERF_HEALTH_TEST_BINARY = (Resolve-Path src\Microsoft.Data.SqlClient\tests\PerformanceTests\bin\Release\net10.0\PerformanceTests.dll).Path
+python -B -m unittest discover -s eng\pipelines\perf\scripts\tests -p 'test_async_health.py' -v
+```
+
+For read-only local smoke testing, use `Server=localhost;Database=master;Integrated Security=true;TrustServerCertificate=true`
+and select only existing connection, contention (`SELECT 1`) or cold-ramp benchmarks with bounded
+parameters. Do not run the lab provisioning entry points against a developer SQL installation.
+Other enabled suite workloads may create fixtures; the mode does not change their permissions
+or SQL behavior.
 
 ## Architecture
 

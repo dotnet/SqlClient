@@ -30,14 +30,19 @@ import argparse
 import glob
 import json
 import os
+from pathlib import Path
+import re
 import shutil
+import signal
 import subprocess
 import sys
+import uuid
 
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, SCRIPT_DIR)
 import compare_perf  # noqa: E402  (local module, sits next to this script)
+import async_health_report  # noqa: E402
 
 
 # --------------------------------------------------------------------------------------------------
@@ -109,7 +114,12 @@ def apply_affinity(proc, cpus):
 # --------------------------------------------------------------------------------------------------
 # Running one unit and collecting its artifacts.
 # --------------------------------------------------------------------------------------------------
-def run_unit_process(exe_dir, assembly, unit, cwd, cpus, log_path, env_overrides=None):
+class ProcessTerminationError(RuntimeError):
+    """The host is unsafe for another measurement until the owned process stops."""
+
+
+def run_unit_process(exe_dir, assembly, unit, cwd, cpus, log_path, env_overrides=None,
+                     timeout_seconds=None):
     """Run one benchmark *unit* from the build at *exe_dir* in *cwd*.
 
     Returns the subprocess return code.  Kept as a small seam so tests can substitute
@@ -125,12 +135,25 @@ def run_unit_process(exe_dir, assembly, unit, cwd, cpus, log_path, env_overrides
     env.pop("PERF_LIST_BENCHMARKS", None)
     if env_overrides:
         env.update(env_overrides)
-
+    env.setdefault("DATATYPES_CONFIG", os.path.join(exe_dir, "datatypes.json"))
     with open(log_path, "w", encoding="utf-8") as log:
         proc = subprocess.Popen(cmd, cwd=cwd, env=env, stdout=log,
-                                stderr=subprocess.STDOUT)
+                                stderr=subprocess.STDOUT, start_new_session=os.name != "nt")
         apply_affinity(proc, cpus)
-        return proc.wait()
+        try:
+            return proc.wait(timeout=timeout_seconds)
+        except subprocess.TimeoutExpired:
+            try:
+                if os.name == "nt":
+                    subprocess.run(["taskkill", "/PID", str(proc.pid), "/T", "/F"],
+                                   stdout=log, stderr=log, check=True, timeout=30)
+                else:
+                    os.killpg(proc.pid, signal.SIGKILL)
+                proc.wait(timeout=30)
+            except (OSError, subprocess.SubprocessError) as error:
+                raise ProcessTerminationError("Owned benchmark process shutdown could not be confirmed; "
+                                              "do not start another measurement.") from error
+            raise
 
 
 def _report_files(root):
@@ -158,6 +181,7 @@ def collect_results(cwd, dest):
     # Also keep the human-readable GitHub markdown reports alongside, best effort.
     for md in glob.glob(os.path.join(artifacts, "**", "*-report-github.md"), recursive=True):
         shutil.copy2(md, os.path.join(dest, os.path.basename(md)))
+    async_health_report.collect(cwd, Path(dest, "async-health"))
     return types
 
 
@@ -168,7 +192,8 @@ class Runner:
     """Holds the invariant run parameters and performs interleaved unit passes."""
 
     def __init__(self, baseline_dir, current_dir, assembly, work_dir, cpus,
-                 baseline_runner_config=None, current_runner_config=None):
+                 baseline_runner_config=None, current_runner_config=None,
+                 unit_timeout_seconds=None):
         self.baseline_dir = baseline_dir
         self.current_dir = current_dir
         self.assembly = assembly
@@ -179,16 +204,23 @@ class Runner:
         # same build). None means "no override" -> both variants use the ambient RUNNER_CONFIG.
         self.baseline_runner_config = baseline_runner_config
         self.current_runner_config = current_runner_config
+        self.unit_timeout_seconds = unit_timeout_seconds
 
-    def list_units(self):
-        cmd = ["dotnet", os.path.join(self.current_dir, self.assembly)]
+    def list_units(self, variant="current"):
+        exe_dir = self.baseline_dir if variant == "baseline" else self.current_dir
+        config = self.baseline_runner_config if variant == "baseline" else self.current_runner_config
+        cmd = ["dotnet", os.path.join(exe_dir, self.assembly)]
         env = dict(os.environ)
         env["PERF_LIST_BENCHMARKS"] = "1"
         env.pop("PERF_BENCHMARK", None)
+        if config:
+            env["RUNNER_CONFIG"] = config
         out = subprocess.check_output(cmd, cwd=self.work_dir, env=env, text=True)
         return [line.strip() for line in out.splitlines() if line.strip()]
 
     def _run_one(self, variant, exe_dir, unit, rep, agg_dir):
+        if not re.fullmatch(r"[A-Za-z0-9_-]+", unit):
+            raise ValueError("Unsafe benchmark unit name")
         cwd = os.path.join(self.work_dir, f"rep{rep}", variant, unit)
         if os.path.isdir(cwd):
             shutil.rmtree(cwd)
@@ -196,13 +228,14 @@ class Runner:
         log_path = os.path.join(cwd, "run.log")
         runner_config = (self.baseline_runner_config if variant == "baseline"
                          else self.current_runner_config)
-        env_overrides = {"RUNNER_CONFIG": runner_config} if runner_config else None
+        env_overrides = {"RUNNER_CONFIG": runner_config} if runner_config else {}
+        env_overrides.update(PERF_RUN_ID=str(uuid.uuid4()), PERF_PROCESS_REPETITION=str(rep))
         rc = run_unit_process(exe_dir, self.assembly, unit, cwd, self.cpus, log_path,
-                              env_overrides=env_overrides)
+                              env_overrides=env_overrides, timeout_seconds=self.unit_timeout_seconds)
+        types = collect_results(cwd, agg_dir)
         if rc != 0:
             _tail(log_path)
             raise RuntimeError(f"benchmark unit '{unit}' ({variant}, rep {rep}) failed (exit {rc}).")
-        types = collect_results(cwd, agg_dir)
         if not types:
             _tail(log_path)
             raise RuntimeError(
@@ -364,11 +397,13 @@ def render_markdown(entries, confirmed, unconfirmed, baseline_version, threshold
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--baseline-exe-dir", required=True,
+    parser.add_argument("--baseline-exe-dir",
                         help="Directory of the baseline (released package) build.")
     parser.add_argument("--current-exe-dir", required=True,
                         help="Directory of the candidate (from-source) build.")
     parser.add_argument("--assembly", default="PerformanceTests.dll")
+    parser.add_argument("--unit-timeout-minutes", type=float,
+                        help="Optional benchmark process-tree watchdog.")
     parser.add_argument("--results-dir", required=True)
     parser.add_argument("--work-dir", default=None,
                         help="Scratch directory for per-unit run dirs (default: <results>/../perf-interleave-work).")
@@ -390,6 +425,8 @@ def main(argv=None):
                         help="Exit non-zero if any CONFIRMED regression is detected.")
     args = parser.parse_args(argv)
 
+    if args.unit_timeout_minutes is not None and not 0 < args.unit_timeout_minutes <= 1440:
+        parser.error("Timeout must be in (0, 1440] minutes")
     if args.reps < 1:
         parser.error("--reps must be >= 1")
 
@@ -398,24 +435,30 @@ def main(argv=None):
         else os.path.join(os.path.dirname(results_dir), "perf-interleave-work")
     os.makedirs(work_dir, exist_ok=True)
     os.makedirs(results_dir, exist_ok=True)
-
     cpus = parse_cpus(args.client_cpus)
     if cpus:
         print(f"Pinning benchmark client to CPUs {args.client_cpus} ({len(cpus)} core(s)).")
     else:
         print("PERF_CLIENT_CPUS not set; running without CPU pinning.", file=sys.stderr)
 
-    runner = Runner(os.path.abspath(args.baseline_exe_dir),
+    runner = Runner(os.path.abspath(args.baseline_exe_dir) if args.baseline_exe_dir else None,
                     os.path.abspath(args.current_exe_dir),
                     args.assembly, work_dir, cpus,
                     baseline_runner_config=args.baseline_runner_config,
-                    current_runner_config=args.current_runner_config)
+                    current_runner_config=args.current_runner_config,
+                    unit_timeout_seconds=args.unit_timeout_minutes * 60 if args.unit_timeout_minutes else None)
 
     units = runner.list_units()
     if not units:
         print("ERROR: no enabled benchmark units were reported by the current build.", file=sys.stderr)
         return 1
     print(f"Enabled units ({len(units)}): {', '.join(units)}")
+    if not runner.baseline_dir:
+        for unit in units:
+            runner._run_one("current", runner.current_dir, unit, 1, os.path.join(results_dir, "current"))
+        Path(results_dir, "summary.md").write_text("# Current benchmark results\n\nNo baseline comparison.\n",
+                                                encoding="utf-8")
+        return 0
 
     entries, confirmed, unconfirmed = orchestrate(
         runner, units, results_dir, args.threshold, args.reps)

@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using BenchmarkDotNet.ConsoleArguments;
 using BenchmarkDotNet.ConsoleArguments.ListBenchmarks;
 using BenchmarkDotNet.Loggers;
@@ -62,6 +63,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             new BenchmarkUnit("ConnectionPoolChurn", b => b.ConnectionPoolChurnRunnerConfig, typeof(ConnectionPoolChurnRunner)),
             new BenchmarkUnit("ConnectionPoolRamp", b => b.ConnectionPoolRampRunnerConfig, typeof(ConnectionPoolRampRunner)),
             new BenchmarkUnit("ConnectionPoolThreadPoolPressure", b => b.ConnectionPoolThreadPoolPressureRunnerConfig, typeof(ConnectionPoolThreadPoolPressureRunner)),
+            new BenchmarkUnit("AsyncHealthCalibration", b => b.AsyncHealthCalibrationRunnerConfig, typeof(AsyncHealthCalibrationRunner)),
         };
 
         /// <summary>
@@ -125,7 +127,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             foreach (BenchmarkUnit unit in toRun)
             {
                 RunnerJob job = unit.Selector(_config.Benchmarks);
-                var config = BenchmarkConfig.s_instance(job);
+                var config = BenchmarkConfig.s_instance(job, _config);
                 // Match across all enabled units before treating an empty selection as a failure.
                 // Keep the unit's job settings when executing the selected benchmarks.
                 using BenchmarkRunInfo benchmarks = BenchmarkConverter.TypeToBenchmarks(unit.RunnerType, config);
@@ -142,8 +144,14 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 }
                 // Execute the selected cases with the validated unit job. Passing args here
                 // would parse them again and allow CLI job settings to override that job.
-                var selectedBenchmarks = new BenchmarkRunInfo(selectedCases, benchmarks.Type, benchmarks.Config);
-                Summary summary = BenchmarkRunner.Run(selectedBenchmarks);
+                var selectedBenchmarks = new BenchmarkRunInfo(selectedCases, benchmarks.Type, benchmarks.Config,
+                    benchmarks.CompositeInProcessDiagnoser);
+                Summary summary = RunBenchmark(selectedBenchmarks);
+                if (summary == null)
+                {
+                    return;
+                }
+
                 if (summary.HasCriticalValidationErrors || !summary.Reports.Any() ||
                     summary.Reports.Any(report => !report.Success))
                 {
@@ -161,6 +169,43 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             // TODOs:
             // Explicitly prepared commands
             // Always Encrypted
+        }
+
+        /// <summary>
+        /// Bounds execution even when an in-process workload does not cooperate with cancellation.
+        /// A timeout ends this process's benchmark sequence to prevent overlapping workloads.
+        /// </summary>
+        private static Summary RunBenchmark(BenchmarkRunInfo benchmarks)
+        {
+            using var timeout = new CancellationTokenSource();
+            BenchmarkConfig.ExecutionTimeout budget = benchmarks.Config.GetEventProcessors()
+                .OfType<BenchmarkConfig.ExecutionTimeout>().Single();
+            AsyncHealthDiagnoser diagnoser = benchmarks.Config.GetDiagnosers()
+                .OfType<AsyncHealthDiagnoser>().Single();
+            budget.Source = timeout;
+
+            try
+            {
+                return BenchmarkRunner.RunAsync(new[] { benchmarks }, timeout.Token).AsTask()
+                    .WaitAsync(timeout.Token).GetAwaiter().GetResult().Single();
+            }
+            catch (OperationCanceledException) when (timeout.IsCancellationRequested)
+            {
+                Console.Error.WriteLine("Benchmark execution timed out; stopping this process.");
+                Environment.ExitCode = 1;
+                return null;
+            }
+            catch (Exception) when (diagnoser.HasFailed)
+            {
+                Console.Error.WriteLine("Async-health diagnosis failed; stopping this process.");
+                Environment.ExitCode = 1;
+                return null;
+            }
+            finally
+            {
+                budget.Source = null;
+                diagnoser.FinishRun();
+            }
         }
 
         /// <summary>
@@ -237,6 +282,9 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         /// <summary>
         /// The main entry point for the performance tests program.
         /// </summary>
-        public static void Main(string[] args) => _ = new Program(args);
+        public static void Main(string[] args)
+        {
+            _ = new Program(args);
+        }
     }
 }
