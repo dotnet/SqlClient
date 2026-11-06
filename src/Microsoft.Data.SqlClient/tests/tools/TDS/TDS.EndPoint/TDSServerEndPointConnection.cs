@@ -37,8 +37,24 @@ namespace Microsoft.SqlServer.TDS.EndPoint
             Debug.Assert(_parser == null, "PrepareForProcessingData should not be called twice");
             _parser = new TDSServerParser(Server, Session, rawStream)
             {
-                ExpectTlsHandshakeFailure = ExpectTlsHandshakeFailure
+                ExpectTlsHandshakeFailure = ExpectTlsHandshakeFailure,
+                AbortConnection = AbortConnection
             };
+        }
+
+        /// <summary>
+        /// Closes the client socket with an RST instead of a FIN. Unread data on the client
+        /// side is discarded, as it is when SQL Server ends a killed session.
+        /// </summary>
+        private void AbortConnection()
+        {
+            Socket socket = Connection?.Client;
+            if (socket == null)
+            {
+                return;
+            }
+            socket.LingerState = new LingerOption(true, 0);
+            socket.Close();
         }
 
         public override void ProcessData(Stream rawStream)
