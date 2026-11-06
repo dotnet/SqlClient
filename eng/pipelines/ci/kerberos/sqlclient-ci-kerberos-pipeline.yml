@@ -142,6 +142,8 @@ stages:
                   $p.SupportsIntegratedSecurity = $true
                   $p.UseManagedSNIOnWindows    = $managedSni
               }
+              $jdata | Add-Member -NotePropertyName "KerberosDomainUser"     -NotePropertyValue $env:KERBEROS_DOMAIN_USER     -Force
+              $jdata | Add-Member -NotePropertyName "KerberosDomainPassword" -NotePropertyValue $env:KERBEROS_DOMAIN_PASSWORD -Force
               $jdata | ConvertTo-Json | Set-Content "config.json"
             workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities
             displayName: Update test config.json
@@ -149,6 +151,8 @@ stages:
               REMOTE_TCP_CONN_STRING: $(REMOTE_TCP_CONN_STRING)
               REMOTE_NP_CONN_STRING: $(REMOTE_NP_CONN_STRING)
               MANAGED_SNI: $(managedSNI)
+              KERBEROS_DOMAIN_USER: $(KerberosDomainUser)
+              KERBEROS_DOMAIN_PASSWORD: $(KerberosDomainPassword)
 
           # --- Prepare Windows services ---
           - powershell: |
@@ -226,12 +230,16 @@ stages:
                   $p.SupportsIntegratedSecurity = $true
                   $p.UseManagedSNIOnWindows    = $false
               }
+              $jdata | Add-Member -NotePropertyName "KerberosDomainUser"     -NotePropertyValue $env:KERBEROS_DOMAIN_USER     -Force
+              $jdata | Add-Member -NotePropertyName "KerberosDomainPassword" -NotePropertyValue $env:KERBEROS_DOMAIN_PASSWORD -Force
               $jdata | ConvertTo-Json | Set-Content "config.json"
             workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities
             displayName: Update test config.json
             env:
               REMOTE_TCP_CONN_STRING: $(REMOTE_TCP_CONN_STRING)
               REMOTE_NP_CONN_STRING: $(REMOTE_NP_CONN_STRING)
+              KERBEROS_DOMAIN_USER: $(KerberosDomainUser)
+              KERBEROS_DOMAIN_PASSWORD: $(KerberosDomainPassword)
 
           # --- Prepare Windows services ---
           - powershell: |

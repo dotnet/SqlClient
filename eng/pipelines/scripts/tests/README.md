@@ -29,7 +29,7 @@ Add `-Output Detailed` to see per-test results.
 
 | File | Covers |
 | ---- | ------ |
-| `Build-Orchestration.Tests.ps1` | Explicit root/standalone PowerShell restore, release pipeline wiring, and dynamic credential-provider parameter discovery. |
+| `Build-Orchestration.Tests.ps1` | Explicit root/standalone PowerShell restore, release pipeline wiring, dynamic credential-provider parameter discovery, and Windows/Linux Kerberos configuration. |
 | `Install-DockerCli.macos.Tests.ps1` | `Install-DockerCli.macos.ps1` — Homebrew bottle selection for the macOS docker CLI. |
 
 `tar`, `Invoke-RestMethod` and `Invoke-WebRequest` are mocked, so the

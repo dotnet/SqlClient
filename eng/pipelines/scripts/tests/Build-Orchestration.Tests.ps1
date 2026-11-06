@@ -57,6 +57,67 @@ Describe 'PowerShell repository dynamic parameter binding' {
     }
 }
 
+Describe 'Kerberos pipeline test configuration' {
+    It 'preserves Kerberos credentials and SNI selection for <JobName> (managed SNI: <ManagedSni>)' -ForEach @(
+        @{ JobName = 'windows_netcore'; ManagedSni = $true }
+        @{ JobName = 'windows_netcore'; ManagedSni = $false }
+        @{ JobName = 'windows_netfx'; ManagedSni = $false }
+        @{ JobName = 'linux'; ManagedSni = $false }
+    ) {
+        $pipeline = Get-Content `
+            (Join-Path $repoRoot 'eng/pipelines/ci/kerberos/sqlclient-ci-kerberos-pipeline.yml') -Raw
+        $jobs = $pipeline -split '(?m)^      - job: '
+        $job = @($jobs | Where-Object { $_ -match "^$JobName\r?\n" })
+        $job.Count | Should -Be 1
+        $configuration = [regex]::Match($job[0],
+            '(?ms)^          - pwsh: \|\r?\n(?<script>.*?)^            workingDirectory:')
+        $configuration.Success | Should -BeTrue
+
+        $fixture = Join-Path $TestDrive ([guid]::NewGuid().ToString())
+        New-Item -ItemType Directory -Path $fixture | Out-Null
+        Copy-Item (Join-Path $repoRoot `
+            'src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.default.json') `
+            (Join-Path $fixture 'config.default.json')
+
+        $environment = @{
+            REMOTE_TCP_CONN_STRING = 'Server=tcp:test.invalid;Integrated Security=true'
+            REMOTE_NP_CONN_STRING = 'Server=np:test.invalid;Integrated Security=true'
+            KERBEROS_DOMAIN_USER = 'fixture-user'
+            KERBEROS_DOMAIN_PASSWORD = [guid]::NewGuid().ToString()
+            MANAGED_SNI = [string] $ManagedSni
+        }
+        $originalEnvironment = @{}
+        foreach ($name in $environment.Keys) {
+            $originalEnvironment[$name] = [Environment]::GetEnvironmentVariable($name, 'Process')
+        }
+
+        Push-Location $fixture
+        try {
+            foreach ($name in $environment.Keys) {
+                [Environment]::SetEnvironmentVariable($name, $environment[$name], 'Process')
+            }
+
+            & ([scriptblock]::Create($configuration.Groups['script'].Value))
+            $config = Get-Content 'config.json' -Raw | ConvertFrom-Json
+            $config.KerberosDomainUser | Should -Be $environment.KERBEROS_DOMAIN_USER
+            $config.KerberosDomainPassword | Should -Be $environment.KERBEROS_DOMAIN_PASSWORD
+            $config.TCPConnectionString | Should -Be $environment.REMOTE_TCP_CONN_STRING
+            $config.NPConnectionString | Should -Be $environment.REMOTE_NP_CONN_STRING
+            $config.SupportsIntegratedSecurity | Should -BeTrue
+            $config.UseManagedSNIOnWindows | Should -Be $ManagedSni
+        }
+        finally {
+            Pop-Location
+            foreach ($name in $originalEnvironment.Keys) {
+                [Environment]::SetEnvironmentVariable($name, $originalEnvironment[$name], 'Process')
+            }
+        }
+
+        $job[0] | Should -Match '(?m)^\s+KERBEROS_DOMAIN_USER: \$\(KerberosDomainUser\)\s*$'
+        $job[0] | Should -Match '(?m)^\s+KERBEROS_DOMAIN_PASSWORD: \$\(KerberosDomainPassword\)\s*$'
+    }
+}
+
 Describe 'PowerShell module restore wiring' {
     It 'validates manifest-only changes in the <Reference> PR pipeline' -ForEach @(
         @{ Reference = 'project' }
