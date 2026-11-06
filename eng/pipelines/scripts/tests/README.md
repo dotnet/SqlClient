@@ -4,18 +4,22 @@ Pester tests for the PowerShell helpers under `eng/pipelines/scripts/`.
 
 ## Prerequisites
 
-These tests require **Pester v5 or later**:
+These tests require **PowerShell 7.4 or later**. Restore the pinned modules from
+the repository root:
 
-```powershell
-Install-Module Pester -MinimumVersion 5.0 -Scope CurrentUser -Force -SkipPublisherCheck
+```console
+dotnet build build.proj -t:RestorePowerShellModules --no-restore
 ```
+
+The target restores `powershell-modules.json` from the anonymous public SqlClient feed in
+`PowerShell.config`; see [module setup](../../../../BUILDGUIDE.md#powershell-modules).
 
 The Docker CLI tests require an x64 host; they are skipped on ARM64.
 
 ## Running the tests
 
 ```powershell
-Import-Module Pester -MinimumVersion 5.0
+Import-Module Pester
 Invoke-Pester ./eng/pipelines/scripts/tests/
 ```
 
@@ -25,6 +29,7 @@ Add `-Output Detailed` to see per-test results.
 
 | File | Covers |
 | ---- | ------ |
+| `Build-Orchestration.Tests.ps1` | Explicit root/standalone PowerShell restore, release pipeline wiring, dynamic credential-provider parameter discovery, and Windows/Linux Kerberos configuration. |
 | `Install-DockerCli.macos.Tests.ps1` | `Install-DockerCli.macos.ps1` — Homebrew bottle selection for the macOS docker CLI. |
 
 `tar`, `Invoke-RestMethod` and `Invoke-WebRequest` are mocked, so the
