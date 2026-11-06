@@ -11,8 +11,23 @@ name: $(Year:YY)$(DayOfYear)$(Rev:.r)
 pr: none
 trigger: none
 
-# These parameters are visible in the Azure DevOps pipeline UI when a new run is queued.
+# These parameters are visible in the Azure DevOps pipeline UI when a new run is queued.  Ordered
+# logically since that dictates UI display order.
 parameters:
+
+  # Release the SqlClient family (Internal.Logging, Extensions.Abstractions,
+  # Microsoft.Data.SqlClient, Extensions.Azure, and the AlwaysEncrypted AzureKeyVaultProvider).
+  # The family is always released together at the shared SqlClient version.
+  - name: releaseSqlClient
+    displayName: Release SqlClient family
+    type: boolean
+    default: false
+
+  # True to publish symbols to private and public servers.
+  - name: publishSymbols
+    displayName: Publish symbols
+    type: boolean
+    default: false
 
   # When true, any SDL errors will break the build.  When false, SDL errors will be logged but
   # will not break the build.  TSA bug filing is always disabled in the non-official pipeline
@@ -21,12 +36,6 @@ parameters:
     displayName: Fail on SDL errors
     type: boolean
     default: true
-
-  # True to enable debug information and steps.
-  - name: debug
-    displayName: Enable debug output
-    type: boolean
-    default: false
 
   # When true, validation findings fail the build.  When false, they are reported as warnings and
   # the build continues.
@@ -41,19 +50,11 @@ parameters:
     type: boolean
     default: true
 
-  # True to publish symbols to private and public servers.
-  - name: publishSymbols
-    displayName: Publish symbols
-    type: boolean
-    default: false
-
   # Submit symbol publishing requests without checking their final results.
   - name: skipSymbolPublishingPolling
     displayName: Skip symbol publishing polling
     type: boolean
     default: false
-
-  # Build parameters — select which packages to build.
 
   # Build the Microsoft.SqlServer.Server package.  The SqlClient family is always built; SqlServer
   # is optional.  When built, the SqlClient family depends on the freshly-built SqlServer package;
@@ -63,20 +64,15 @@ parameters:
     type: boolean
     default: true
 
-  # Release parameters — select which packages to publish to NuGet.
-  # All default to false; toggle at queue time for on-demand selective release.
-
   # Release the Microsoft.SqlServer.Server package (versioned separately).
   - name: releaseSqlServer
     displayName: Release Microsoft.SqlServer.Server
     type: boolean
     default: false
 
-  # Release the SqlClient family (Internal.Logging, Extensions.Abstractions,
-  # Microsoft.Data.SqlClient, Extensions.Azure, and the AlwaysEncrypted AzureKeyVaultProvider).
-  # The family is always released together at the shared SqlClient version.
-  - name: releaseSqlClient
-    displayName: Release SqlClient family
+  # True to enable debug information and steps.
+  - name: debug
+    displayName: Enable debug output
     type: boolean
     default: false
 
