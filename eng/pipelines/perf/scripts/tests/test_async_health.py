@@ -2,9 +2,11 @@
 
 import json
 import io
+import csv
 from contextlib import redirect_stderr, redirect_stdout
 from collections import defaultdict
 import os
+import re
 from pathlib import Path
 import subprocess
 import sys
@@ -35,6 +37,49 @@ def sample_row():
 
 
 class AsyncHealthTests(unittest.TestCase):
+    def test_invalid_diagnostic_repetition_is_rejected(self):
+        """Invalid or out-of-range repetition identity cannot enter the report."""
+        for repetition in (0, -1, True, 1.5, 4):
+            with self.subTest(repetition=repetition):
+                # Arrange
+                row = sample_row()
+                row["DiagnosticRepetition"] = repetition
+                row["Options"]["DiagnosticRuns"] = 3
+
+                # Act / Assert
+                with self.assertRaisesRegex(ValueError, "diagnostic repetition"):
+                    health.summarize(row)
+
+    def test_repeated_diagnostics_are_preserved_and_compared_by_repetition(self):
+        """Each diagnostic repetition keeps its own report row and baseline pairing."""
+        # Arrange
+        with tempfile.TemporaryDirectory() as root:
+            for variant in ("baseline", "current"):
+                directory = Path(root, "repetitions", "rep1", variant, "Unit")
+                directory.mkdir(parents=True)
+                (directory / "async-health-process.json").write_text(
+                    json.dumps(dict(Status="Completed", Error=None, RunId="run")))
+                for repetition in range(1, 4):
+                    row = sample_row()
+                    row.update(CaseId=f"case-{repetition}", DiagnosticRepetition=repetition)
+                    row["Options"]["DiagnosticRuns"] = 3
+                    (directory / f"async-health-{repetition}.json").write_text(json.dumps(row))
+
+            # Act
+            comparisons = health.write_summary(root, ["Unit"], True, 1)["Comparisons"]
+            count = health.write_collected_summary(root)
+            with Path(root, "async-health-summary.csv").open(newline="") as source:
+                rows = list(csv.DictReader(source))
+
+            # Assert
+            self.assertEqual(count, 6)
+            self.assertEqual(len(rows), 6)
+            self.assertEqual({row["DiagnosticRepetition"] for row in rows}, {"1", "2", "3"})
+            self.assertEqual(len(comparisons), 3)
+            self.assertTrue(all(row["Comparable"] for row in comparisons))
+            text = Path(root, "async-health-summary.md").read_text()
+            self.assertIn("diagnostic repetition: 3", text)
+
     def test_collected_report_exports_all_available_statistics(self):
         """Pipeline artifacts expose diagnostics without replacing normal timing results."""
         # Arrange
@@ -645,15 +690,99 @@ class AsyncHealthTests(unittest.TestCase):
         self.assertEqual(pr.count("eq(parameters.currentOnly, false)"), 3)
 
     @unittest.skipUnless(os.environ.get("PERF_HEALTH_TEST_BINARY"), "Set PERF_HEALTH_TEST_BINARY for real BDN lifecycle smoke")
+    def test_real_benchmark_repeated_diagnostics(self):
+        """Repeated sync/async diagnostics retain fixture boundaries and one timing export."""
+        # Arrange
+        binary = str(Path(os.environ["PERF_HEALTH_TEST_BINARY"]).resolve())
+        with tempfile.TemporaryDirectory() as root:
+            config = Path(root, "runner.json")
+            config.write_text(json.dumps(dict(
+                AsyncHealth=dict(DiagnosticRuns=3),
+                Benchmarks=dict(AsyncHealthCalibrationRunnerConfig=dict(
+                    Enabled=True, LaunchCount=1, IterationCount=2, InvocationCount=1,
+                    WarmupCount=1, RunStrategy="Monitoring")))))
+            env = dict(os.environ, RUNNER_CONFIG=str(config), PERF_BENCHMARK="AsyncHealthCalibration")
+            env.pop("PERF_LIST_BENCHMARKS", None)
+
+            # Act
+            output = subprocess.run(
+                ["dotnet", binary, "--filter", "*Runner.ProbeOnly", "*Runner.AsyncWait",
+                 "*Runner.AsyncWaitAwaited"],
+                cwd=root, env=env, text=True, capture_output=True, timeout=180)
+
+            # Assert
+            self.assertEqual(output.returncode, 0, output.stdout + output.stderr)
+            rows = [json.loads(path.read_text()) for path in Path(root).rglob("async-health-*.json")]
+            self.assertEqual(len(rows), 9)
+            self.assertEqual(len({row["CaseId"] for row in rows}), 9)
+            self.assertEqual(len({row["ProcessId"] for row in rows}), 1)
+            by_case = defaultdict(list)
+            for row in rows:
+                by_case[row["Benchmark"]].append(row["DiagnosticRepetition"])
+                self.assertEqual(row["Options"]["DiagnosticRuns"], 3)
+                self.assertEqual(row["Invocations"], 1)
+                self.assertEqual(row["Window"], 1)
+                self.assertEqual(health.summarize(row)["Coverage"], "Supported")
+            self.assertEqual(len(by_case), 3)
+            for repetitions in by_case.values():
+                self.assertEqual(sorted(repetitions), [1, 2, 3])
+            self.assertEqual(output.stdout.count("AsyncHealthLifecycle observed=1 "), 9)
+            self.assertNotIn("AsyncHealthLifecycle observed=0 ", output.stdout)
+            lifecycle = re.findall(
+                r"AsyncHealthLifecycle observed=(\d+) unobserved=(\d+) setups=(\d+) cleanups=(\d+)",
+                output.stdout)
+            self.assertEqual(len(lifecycle), 9)
+            for observed, unobserved, setups, cleanups in lifecycle:
+                self.assertEqual(int(observed), 1)
+                self.assertGreaterEqual(int(unobserved), 3)
+                self.assertEqual(int(setups), int(cleanups))
+                self.assertGreaterEqual(int(setups), 4)
+            reports = list(Path(root).rglob("*-report-full.json"))
+            self.assertEqual(len(reports), 1)
+            report = json.loads(reports[0].read_text(encoding="utf-8-sig"))
+            self.assertEqual(len(report["Benchmarks"]), 3)
+            self.assertTrue(all(len(row["Statistics"]["OriginalValues"]) == 2
+                                for row in report["Benchmarks"]))
+            _, timing_rows = perf_to_kusto.translate(root, defaultdict(str))
+            self.assertEqual(len(timing_rows), 3)
+            self.assertEqual(health.write_collected_summary(root), 9)
+
+    @unittest.skipUnless(os.environ.get("PERF_HEALTH_TEST_BINARY"), "Set PERF_HEALTH_TEST_BINARY for real BDN lifecycle smoke")
+    def test_real_benchmark_invalid_diagnostic_runs(self):
+        """Invalid repetition counts fail before executing a workload."""
+        binary = str(Path(os.environ["PERF_HEALTH_TEST_BINARY"]).resolve())
+        for count in (0, -1):
+            with self.subTest(count=count), tempfile.TemporaryDirectory() as root:
+                # Arrange
+                config = Path(root, "runner.json")
+                config.write_text(json.dumps(dict(
+                    AsyncHealth=dict(DiagnosticRuns=count),
+                    Benchmarks=dict(AsyncHealthCalibrationRunnerConfig=dict(Enabled=True)))))
+                env = dict(os.environ, RUNNER_CONFIG=str(config),
+                           PERF_BENCHMARK="AsyncHealthCalibration")
+                env.pop("PERF_LIST_BENCHMARKS", None)
+
+                # Act
+                output = subprocess.run(["dotnet", binary, "--filter", "*Runner.ProbeOnly"],
+                                        cwd=root, env=env, text=True, capture_output=True, timeout=30)
+
+                # Assert
+                self.assertNotEqual(output.returncode, 0, output.stdout + output.stderr)
+                self.assertIn("DiagnosticRuns", output.stdout + output.stderr)
+                self.assertNotIn("AsyncHealthLifecycle", output.stdout)
+
+    @unittest.skipUnless(os.environ.get("PERF_HEALTH_TEST_BINARY"), "Set PERF_HEALTH_TEST_BINARY for real BDN lifecycle smoke")
     def test_real_benchmark_process_timeout(self):
         """The configured timeout stops a non-cooperative invocation batch without reporting success."""
         # Arrange
         binary = str(Path(os.environ["PERF_HEALTH_TEST_BINARY"]).resolve())
         with tempfile.TemporaryDirectory() as root:
             config = Path(root, "runner.json")
-            config.write_text(json.dumps(dict(Benchmarks=dict(AsyncHealthCalibrationRunnerConfig=dict(
-                Enabled=True, LaunchCount=1, IterationCount=1, InvocationCount=30,
-                WarmupCount=0, RunStrategy="Monitoring", TimeoutMinutes=1)))))
+            config.write_text(json.dumps(dict(
+                AsyncHealth=dict(DiagnosticRuns=3),
+                Benchmarks=dict(AsyncHealthCalibrationRunnerConfig=dict(
+                    Enabled=True, LaunchCount=1, IterationCount=1, InvocationCount=30,
+                    WarmupCount=0, RunStrategy="Monitoring", TimeoutMinutes=1)))))
             env = dict(os.environ, RUNNER_CONFIG=str(config), PERF_BENCHMARK="AsyncHealthCalibration")
             env.pop("PERF_LIST_BENCHMARKS", None)
 
@@ -667,6 +796,8 @@ class AsyncHealthTests(unittest.TestCase):
             rows = [json.loads(path.read_text()) for path in Path(root).rglob("async-health-*.json")]
             self.assertEqual(len(rows), 1)
             self.assertEqual(rows[0]["Status"], "Failed")
+            self.assertEqual(rows[0]["DiagnosticRepetition"], 1)
+            self.assertNotIn("diagnostic repetition 2/", output.stdout)
 
     @unittest.skipUnless(os.environ.get("PERF_HEALTH_TEST_BINARY"), "Set PERF_HEALTH_TEST_BINARY for real BDN lifecycle smoke")
     def test_real_benchmark_process_lifecycle(self):

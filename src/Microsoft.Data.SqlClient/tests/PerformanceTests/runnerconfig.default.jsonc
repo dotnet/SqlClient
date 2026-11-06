@@ -20,6 +20,8 @@
     // Note: This flag cannot be enabled on non-Windows OSes as the NativeMemoryProfiler is not supported on non-Windows OSes.
     "UseNativeMemoryAndETWProfiler": false,
     "AsyncHealth": {
+        // Each repetition reruns the tagged case's BDN lifecycle in the same process.
+        "DiagnosticRuns": 1,
         "CadenceMilliseconds": 25,
         "ProbeCapacity": 64,
         "RecoveryMilliseconds": 500,

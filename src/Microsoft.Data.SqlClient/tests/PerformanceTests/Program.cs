@@ -127,37 +127,64 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             foreach (BenchmarkUnit unit in toRun)
             {
                 RunnerJob job = unit.Selector(_config.Benchmarks);
-                var config = BenchmarkConfig.s_instance(job, _config);
-                // Match across all enabled units before treating an empty selection as a failure.
-                // Keep the unit's job settings when executing the selected benchmarks.
-                using BenchmarkRunInfo benchmarks = BenchmarkConverter.TypeToBenchmarks(unit.RunnerType, config);
-                var selectedCases = benchmarks.BenchmarksCases.Where(benchmark =>
-                    argumentConfig.GetFilters().All(filter => filter.Predicate(benchmark))).ToArray();
-                if (selectedCases.Length == 0)
+                int diagnosticRuns = 1;
+                for (int repetition = 0; repetition < diagnosticRuns; repetition++)
                 {
-                    continue;
-                }
-                matched = true;
-                if (job is CommandRunnerJob commandJob)
-                {
-                    commandJob.Validate();
-                }
-                // Execute the selected cases with the validated unit job. Passing args here
-                // would parse them again and allow CLI job settings to override that job.
-                var selectedBenchmarks = new BenchmarkRunInfo(selectedCases, benchmarks.Type, benchmarks.Config,
-                    benchmarks.CompositeInProcessDiagnoser);
-                Summary summary = RunBenchmark(selectedBenchmarks);
-                if (summary == null)
-                {
-                    return;
-                }
+                    var config = BenchmarkConfig.s_instance(job, _config, repetition + 1);
+                    // Match across all enabled units before treating an empty selection as a failure.
+                    using BenchmarkRunInfo benchmarks =
+                        BenchmarkConverter.TypeToBenchmarks(unit.RunnerType, config);
+                    var selectedCases = benchmarks.BenchmarksCases.Where(benchmark =>
+                        argumentConfig.GetFilters().All(filter => filter.Predicate(benchmark)) &&
+                        (repetition == 0 || AsyncHealthDiagnoser.IsMarked(benchmark))).ToArray();
+                    if (selectedCases.Length == 0)
+                    {
+                        break;
+                    }
 
-                if (summary.HasCriticalValidationErrors || !summary.Reports.Any() ||
-                    summary.Reports.Any(report => !report.Success))
-                {
-                    Console.Error.WriteLine($"Benchmark unit '{unit.Name}' failed; results are incomplete.");
-                    Environment.ExitCode = 1;
-                    // Retain the failing exit code while allowing later units to report results.
+                    matched = true;
+                    if (selectedCases.Any(AsyncHealthDiagnoser.IsMarked))
+                    {
+                        _config.AsyncHealth.Validate();
+                        diagnosticRuns = _config.AsyncHealth.DiagnosticRuns;
+                        Console.WriteLine(
+                            $"Async-health diagnostic repetition {repetition + 1}/{diagnosticRuns}: {unit.Name}");
+                    }
+                    if (job is CommandRunnerJob commandJob)
+                    {
+                        commandJob.Validate();
+                    }
+
+                    // Repetitions retain BDN's lifecycle, but must not replace the timing baseline
+                    // or contribute duplicate timing rows to comparison/Kusto consumers.
+                    var executionConfig = benchmarks.Config;
+                    if (repetition > 0)
+                    {
+                        executionConfig = BenchmarkConfig.WithoutTimingExporters(executionConfig);
+                        selectedCases = selectedCases.Select(benchmark => BenchmarkCase.Create(
+                            benchmark.Descriptor, benchmark.Job, benchmark.Parameters,
+                            BenchmarkConfig.WithoutTimingExporters(benchmark.Config))).ToArray();
+                    }
+
+                    // Do not pass args again: CLI job settings must not override the validated job.
+                    var selectedBenchmarks = new BenchmarkRunInfo(
+                        selectedCases, benchmarks.Type, executionConfig,
+                        benchmarks.CompositeInProcessDiagnoser);
+                    Summary summary = RunBenchmark(selectedBenchmarks);
+                    if (summary == null)
+                    {
+                        return;
+                    }
+
+                    if (summary.HasCriticalValidationErrors || !summary.Reports.Any() ||
+                        summary.Reports.Any(report => !report.Success))
+                    {
+                        Console.Error.WriteLine(
+                            $"Benchmark unit '{unit.Name}' failed; results are incomplete.");
+                        Environment.ExitCode = 1;
+                        // Do not retry a failed execution to manufacture diagnostic coverage.
+                        break;
+                    }
                 }
             }
             if (!matched)

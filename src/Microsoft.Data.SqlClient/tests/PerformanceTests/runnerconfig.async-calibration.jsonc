@@ -3,6 +3,7 @@
     "UseConnectionPoolV2": false,
     "UseOptimizedAsyncBehaviour": true,
     "AsyncHealth": {
+        "DiagnosticRuns": 3,
         "CadenceMilliseconds": 25,
         "ProbeCapacity": 64,
         "RecoveryMilliseconds": 500,

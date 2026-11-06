@@ -26,7 +26,7 @@ database.
 Add `[AsyncHealthDiagnoser]` to benchmark methods or classes to select them for diagnosis.
 Unmarked cases run without async-health observation. Existing `PERF_BENCHMARK`, BDN `--filter`,
 parameters, invocation counts, and setup/cleanup still select and execute the same workloads.
-`AsyncHealthDiagnoser` requests one extra diagnostic iteration per marked case: normal iterations
+`AsyncHealthDiagnoser` requests one extra diagnostic iteration per marked case execution: normal iterations
 collect timing results without probes or a grace-period delay, and only the extra iteration
 collects an async-health window. Memory and threading diagnosers remain enabled.
 Their extra-iteration counters can include observer allocations, probe callbacks and runtime
@@ -66,7 +66,9 @@ The diagnostic iteration is one **configured invocation batch** (`UnrollFactor=1
 There is no automatic duration extension, invocation multiplier, or workload retry to
 manufacture coverage. BDN retains the configured normal warmup and iteration counts, then runs
 one extra diagnostic iteration with its own setup and cleanup. Stateful/cold tests keep their
-existing per-iteration reset boundaries. `TimeoutMinutes` bounds the complete case execution;
+existing per-iteration reset boundaries. `AsyncHealth.DiagnosticRuns` repeats that complete BDN
+lifecycle for tagged cases, with one diagnostic window per repetition. `TimeoutMinutes` bounds
+each complete case execution, not the sum of all repetitions;
 a timeout stops the process's benchmark sequence, including non-cooperative invocation batches.
 For a repeatable steady-state microbenchmark, choose an explicit `InvocationCount` *before*
 running; it must be the same in baseline and candidate. Very short tests will legitimately
@@ -165,6 +167,31 @@ warmup. Profiler attachment is rejected for marked cases. Sequential/interleaved
 normal timing comparisons and Kusto ingestion remain available; health sidecars are not timing
 rows and are not ingested. There is no dependency on experimental OpenAsync diagnostics or profiles.
 
+Set `AsyncHealth.DiagnosticRuns` to a positive integer to collect multiple observations per case:
+
+```json
+{
+  "AsyncHealth": {
+    "DiagnosticRuns": 3
+  }
+}
+```
+
+The default is **1**. The first pass runs all selected cases and exports the normal BDN reports.
+Additional passes within the same unit run only selected, tagged cases, retaining their configured
+setup, warmup, timing and extra-iteration lifecycle. Additional passes do not export timing reports,
+so they neither overwrite the first pass nor add duplicate rows to timing comparisons or Kusto.
+The extra normal iterations in those passes are preparation, not additional published timing samples.
+This increases runtime by approximately the number of requested diagnostic runs for tagged cases.
+A failed pass is not retried, and a diagnostic failure or timeout stops the benchmark sequence.
+
+Each observation has a distinct `CaseId` and a one-based `DiagnosticRepetition`; `Window` remains
+one for each case execution. JSON, CSV and Markdown retain every repetition separately, and
+baseline comparisons pair the same diagnostic repetition. Historical sidecars without that field
+are treated as repetition one. `ProcessRepetition` remains the orchestrator's separate process-pass
+identity. These are **same-process observations**, not independent process replicates: there is no
+cooldown or ThreadPool reset, and later cases/repetitions inherit process state.
+
 For a selected existing unit, from the repository root:
 
 ```powershell
@@ -202,7 +229,8 @@ counters remain unavailable, not zero. Raw timelines remain in the JSON sidecars
 BenchmarkDotNet timing, memory and threading reports are retained alongside the health report;
 the extra-iteration attribution caveat above applies to memory and threading counters.
 
-A current-only run executes each enabled unit once and makes no baseline comparison.
+A current-only run launches each enabled unit once and makes no baseline comparison; the benchmark
+process performs the configured diagnostic repetitions internally.
 Add `--baseline-exe-dir`
 and optionally `--baseline-runner-config` for ordinary timing comparisons. Their confirmation
 runs are selected by timing regressions, not an independent health sampling plan. Iterations
@@ -223,8 +251,9 @@ verdict. Only cases carrying `[AsyncHealthDiagnoser]` emit health sidecars; choo
 does not attach the diagnoser to additional cases.
 It keeps the existing `SqlConnection` parameter matrix with short one-invocation windows and the
 existing `ConnectionPoolContention` matrix with a predeclared 100-invocation steady-state batch.
-Both use two actual iterations and one warmup. No cold/stateful benchmark is repeated to manufacture
-coverage. The shell entry points accept `-RunnerConfigFile` / `--runner-config-file` as a filename
+Both use two actual iterations and one warmup. No cold/stateful benchmark is automatically retried to
+manufacture coverage; extra observations require an explicit `DiagnosticRuns` setting.
+The shell entry points accept `-RunnerConfigFile` / `--runner-config-file` as a filename
 under `PerformanceTests`; the default remains the existing `runnerconfig.jsonc`.
 
 ### SQL-free calibration and validation
@@ -233,6 +262,9 @@ Enable only the opt-in `AsyncHealthCalibrationRunnerConfig` in a separate config
 
 ```json
 {
+  "AsyncHealth": {
+    "DiagnosticRuns": 3
+  },
   "Benchmarks": {
     "AsyncHealthCalibrationRunnerConfig": {
       "Enabled": true, "LaunchCount": 1, "IterationCount": 2,
@@ -244,7 +276,9 @@ Enable only the opt-in `AsyncHealthCalibrationRunnerConfig` in a separate config
 
 For the PR pipeline, select `runnerConfigFile=runnerconfig.async-calibration.jsonc`,
 `currentOnly=true`, and `platform=windows` to use the checked-in calibration-only configuration.
-It enables exactly these 11 SQL-free controls with the settings above and default observer options.
+It enables exactly these 11 SQL-free controls with the settings above: three diagnostic runs per
+case (**33 diagnostic windows**) and default probe options. Normal BDN exports still contain
+11 timing cases from the first pass.
 The perf-lab template still provisions its usual SQL Server environment, but the controls do not
 connect to it.
 

@@ -14,16 +14,19 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         private readonly string _id = Guid.NewGuid().ToString("N");
         private readonly string _runId = Environment.GetEnvironmentVariable("PERF_RUN_ID") ?? Guid.NewGuid().ToString("N");
         private readonly int _repetition;
+        private readonly int _diagnosticRepetition;
         public int Windows { get; private set; }
         public bool HarnessFailed { get; set; }
         public long Invocations => _job.InvocationCount;
         public long OperationsPerInvoke => _benchmark.Descriptor.OperationsPerInvoke;
 
-        public AsyncHealthCase(BenchmarkCase benchmark, Config config, RunnerJob job)
+        public AsyncHealthCase(BenchmarkCase benchmark, Config config, RunnerJob job,
+            int diagnosticRepetition)
         {
             _benchmark = benchmark;
             _config = config;
             _job = job;
+            _diagnosticRepetition = diagnosticRepetition;
             Options = config.AsyncHealth;
             string repetition = Environment.GetEnvironmentVariable("PERF_PROCESS_REPETITION") ?? "1";
             if (!int.TryParse(repetition, out _repetition) || _repetition < 1)
@@ -41,6 +44,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 Parameters = _benchmark.Parameters.DisplayInfo,
                 Unit = Environment.GetEnvironmentVariable("PERF_BENCHMARK") ?? _benchmark.Descriptor.Type.Name,
                 RunId = _runId, ProcessId = Environment.ProcessId, ProcessRepetition = _repetition,
+                DiagnosticRepetition = _diagnosticRepetition,
                 CaseId = _id, Window = window, Invocations = invocations,
                 CompletedInvocations = completed ? (long?)invocations : null, OperationsPerInvoke = operationsPerInvoke,
                 Error = error, Policy = "ConfiguredInvocationBatch", Options,
@@ -67,6 +71,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 Benchmark = _benchmark.Descriptor.Type.FullName + "." + _benchmark.Descriptor.WorkloadMethod.Name,
                 Parameters = _benchmark.Parameters.DisplayInfo, CaseId = _id, RunId = _runId,
                 ProcessId = Environment.ProcessId, ProcessRepetition = _repetition,
+                DiagnosticRepetition = _diagnosticRepetition, Options,
                 Error = "Benchmark execution failed or produced no diagnostic window; see run log."
             });
         }

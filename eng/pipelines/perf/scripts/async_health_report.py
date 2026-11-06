@@ -41,7 +41,13 @@ def summarize(row):
     for key in ("ProcessId", "ProcessRepetition"):
         if type(row.get(key)) is not int or row[key] < 1:
             raise ValueError(f"Invalid identity field {key}")
-    result = dict(row, SchemaVersion=max(2, row["SchemaVersion"]))
+    repetition = row.get("DiagnosticRepetition", 1)
+    diagnostic_runs = row.get("Options", {}).get("DiagnosticRuns", 1)
+    if (type(repetition) is not int or type(diagnostic_runs) is not int
+            or not 1 <= repetition <= diagnostic_runs):
+        raise ValueError("Invalid diagnostic repetition")
+    result = dict(row, SchemaVersion=max(2, row["SchemaVersion"]),
+                  DiagnosticRepetition=repetition)
     if "Measurement" not in row:
         if row["Status"] != "Failed":
             raise ValueError("Completed result is missing its measurement")
@@ -195,7 +201,8 @@ def write_collected_summary(root):
 
     rows = sorted((window["result"] for window in windows.values()),
                   key=lambda row: (row["Variant"], row["ProcessRepetition"],
-                                   row["Benchmark"], row["Parameters"], row.get("Window", 0)))
+                                   row["Benchmark"], row["Parameters"],
+                                   row["DiagnosticRepetition"], row.get("Window", 0)))
     notice = (
         NOTICE + " Sampled resource deltas cover only the first-to-last workload resource "
         "sample, not exact invocation boundaries; they include observer/runtime activity. "
@@ -244,6 +251,7 @@ def write_collected_summary(root):
     for row in rows:
         lines += [f'## {display(row["Benchmark"])} {display(row["Parameters"])}', "",
                   f'Variant: {row["Variant"]}; process repetition: {row["ProcessRepetition"]}; '
+                  f'diagnostic repetition: {row["DiagnosticRepetition"]}; '
                   f'coverage: **{row["Coverage"]}**; '
                   f'duration: {display(row.get("DurationMilliseconds"))} ms; '
                   f'completed invocations: {display(row.get("CompletedInvocations"))}.', ""]
@@ -315,13 +323,15 @@ def write_summary(root, units, baseline, repetitions, comparison_switch=None):
                         raise ValueError("Mismatched process repetition")
                     rows.append(dict(row, Variant=variant, Unit=unit))
     rows.sort(key=lambda row: (row["ProcessRepetition"], row["Variant"], row["Unit"],
-                              row["Benchmark"], row["Parameters"], row.get("Window", 0)))
+                              row["Benchmark"], row["Parameters"],
+                              row["DiagnosticRepetition"], row.get("Window", 0)))
     comparisons = []
     indexed = {}
     for row in rows:
         if "Window" not in row:
             continue
-        key = (row["Unit"], row["Benchmark"], row["Parameters"], row["ProcessRepetition"], row["Window"])
+        key = (row["Unit"], row["Benchmark"], row["Parameters"], row["ProcessRepetition"],
+               row["DiagnosticRepetition"], row["Window"])
         by_variant = indexed.setdefault(key, {})
         if row["Variant"] in by_variant:
             raise ValueError("Duplicate async-health window identity")
@@ -360,7 +370,7 @@ def write_summary(root, units, baseline, repetitions, comparison_switch=None):
                    Processes=processes, Windows=rows, Comparisons=comparisons)
     (root / "async-health-summary.json").write_text(json.dumps(summary, indent=2, allow_nan=False), encoding="utf-8")
     lines = ["# Async-health measurement", "", NOTICE, "",
-             "| Variant / repetition | Benchmark / parameters | Window | Coverage | Duration ms / completed invocations | Work samples | Dropped / rejected / skipped / producer-missed / outstanding | Observed dispatch / scheduled / producer p99 ms | Peak busy workers | Peak pool threads | Process threads start / peak / increase |",
+             "| Variant / process / diagnostic repetition | Benchmark / parameters | Window | Coverage | Duration ms / completed invocations | Work samples | Dropped / rejected / skipped / producer-missed / outstanding | Observed dispatch / scheduled / producer p99 ms | Peak busy workers | Peak pool threads | Process threads start / peak / increase |",
              "|---|---|---:|---|---|---:|---|---|---:|---:|---|"]
     def display(value):
         if value is None:
@@ -371,7 +381,7 @@ def write_summary(root, units, baseline, repetitions, comparison_switch=None):
     for row in rows:
         probes = row.get("Measurement", {}).get("Probes", {})
         values = [
-            f'{row["Variant"]} / {row["ProcessRepetition"]}',
+            f'{row["Variant"]} / {row["ProcessRepetition"]} / {row["DiagnosticRepetition"]}',
             row["Benchmark"] + " " + row["Parameters"], row.get("Window"), row["Coverage"],
             f'{display(row.get("DurationMilliseconds"))} / {display(row.get("CompletedInvocations"))}',
             row.get("WorkExecuted"), (f'{probes.get("Dropped", "N/A")} / '

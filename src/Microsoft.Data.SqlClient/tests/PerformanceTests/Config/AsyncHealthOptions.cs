@@ -7,6 +7,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
 {
     public sealed class AsyncHealthOptions
     {
+        public int DiagnosticRuns { get; set; } = 1;
         public int CadenceMilliseconds { get; set; } = 25;
         public int ProbeCapacity { get; set; } = 64;
         public int RecoveryMilliseconds { get; set; } = 500;
@@ -15,6 +16,12 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
 
         public void Validate()
         {
+            if (DiagnosticRuns < 1)
+            {
+                throw new ArgumentException(
+                    "Diagnostic run count must be positive.", nameof(DiagnosticRuns));
+            }
+
             if (CadenceMilliseconds < 1)
             {
                 throw new ArgumentException(

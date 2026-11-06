@@ -28,13 +28,15 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         private int _window;
         private readonly Config _config;
         private readonly RunnerJob _job;
+        private readonly int _diagnosticRepetition;
 
         internal bool HasFailed { get; private set; }
 
-        public AsyncHealthDiagnoser(Config config, RunnerJob job)
+        public AsyncHealthDiagnoser(Config config, RunnerJob job, int diagnosticRepetition = 1)
         {
             _config = config;
             _job = job;
+            _diagnosticRepetition = diagnosticRepetition;
         }
 
         internal static volatile bool IsObservingWorkload;
@@ -43,10 +45,12 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         public IEnumerable<IExporter> Exporters => Array.Empty<IExporter>();
         public IEnumerable<IAnalyser> Analysers => Array.Empty<IAnalyser>();
 
-        public RunMode GetRunMode(BenchmarkCase benchmarkCase) =>
+        internal static bool IsMarked(BenchmarkCase benchmarkCase) =>
             Attribute.IsDefined(benchmarkCase.Descriptor.WorkloadMethod, typeof(AsyncHealthDiagnoserAttribute), true) ||
-            Attribute.IsDefined(benchmarkCase.Descriptor.Type, typeof(AsyncHealthDiagnoserAttribute), true)
-                ? RunMode.ExtraIteration : RunMode.None;
+            Attribute.IsDefined(benchmarkCase.Descriptor.Type, typeof(AsyncHealthDiagnoserAttribute), true);
+
+        public RunMode GetRunMode(BenchmarkCase benchmarkCase) =>
+            IsMarked(benchmarkCase) ? RunMode.ExtraIteration : RunMode.None;
 
         public override void OnStartRunBenchmark(BenchmarkCase benchmarkCase)
         {
@@ -57,7 +61,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
 
             if (GetRunMode(benchmarkCase) != RunMode.None)
             {
-                BeginCase(new AsyncHealthCase(benchmarkCase, _config, _job));
+                BeginCase(new AsyncHealthCase(benchmarkCase, _config, _job, _diagnosticRepetition));
             }
         }
 

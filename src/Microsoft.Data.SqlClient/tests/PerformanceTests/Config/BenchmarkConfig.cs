@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Diagnosers;
@@ -53,7 +54,8 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 ? strategy
                 : RunStrategy.Throughput;
 
-        public static ManualConfig s_instance(RunnerJob runnerJob, Config suiteConfig = null)
+        public static ManualConfig s_instance(RunnerJob runnerJob, Config suiteConfig = null,
+            int diagnosticRepetition = 1)
         {
             Job job = Job.MediumRun.WithToolchain(BuildToolchain())
                 .WithLaunchCount(runnerJob.LaunchCount)
@@ -63,7 +65,8 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 .WithUnrollFactor(1)
                 .WithStrategy(ResolveRunStrategy(runnerJob))
                 .WithEnvironmentVariable("COMPlus_gcServer", "1");
-            var diagnoser = new AsyncHealthDiagnoser(suiteConfig ?? new Config(), runnerJob);
+            var diagnoser = new AsyncHealthDiagnoser(
+                suiteConfig ?? new Config(), runnerJob, diagnosticRepetition);
             ManualConfig config = DefaultConfig.Instance
                 .WithOption(ConfigOptions.DisableOptimizationsValidator, true)
                 .WithOption(ConfigOptions.DontOverwriteResults, true)
@@ -89,6 +92,16 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
 #endif
 
             return config;
+        }
+
+        internal static ImmutableConfig WithoutTimingExporters(IConfig config) =>
+            new DiagnosticOnlyConfig(config).CreateImmutableConfig();
+
+        private sealed class DiagnosticOnlyConfig : ManualConfig, IConfig
+        {
+            internal DiagnosticOnlyConfig(IConfig config) => Add(config);
+
+            IEnumerable<IExporter> IConfig.GetExporters() => Array.Empty<IExporter>();
         }
 
         internal sealed class ExecutionTimeout : EventProcessor
