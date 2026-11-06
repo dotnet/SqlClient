@@ -651,7 +651,7 @@ function Get-AffinityMask([string]$cpuSpec) {
     # A single-word ProcessorAffinity mask only addresses CPUs 0-63; higher indices require
     # processor-group APIs, so skip pinning rather than build a mask that silently targets the
     # wrong CPUs.
-    if (($cpus | Where-Object { $_ -ge 64 }).Count -gt 0) {
+    if (@($cpus | Where-Object { $_ -ge 64 }).Count -gt 0) {
         Write-Warning "PERF_CLIENT_CPUS contains a CPU index >= 64; ProcessorAffinity cannot address processor groups, so running without CPU pinning."
         return $null
     }

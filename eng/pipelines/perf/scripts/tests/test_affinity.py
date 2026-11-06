@@ -9,6 +9,8 @@ import ctypes
 from ctypes import wintypes
 import io
 import os
+from pathlib import Path
+import shutil
 import subprocess
 import sys
 from types import SimpleNamespace
@@ -111,6 +113,38 @@ class AffinityTests(unittest.TestCase):
         self.assertIn("WARNING: could not pin pid 123", self.stderr.getvalue())
         self.assertIn("not permitted", self.stderr.getvalue())
         self.loader.assert_not_called()
+
+
+class PowerShellAffinityTests(unittest.TestCase):
+    """Exercise the actual on-VM affinity helper without changing host affinity."""
+
+    def test_lab_cpu_range_produces_a_mask_under_strict_mode(self):
+        """A valid lab CPU range must not fail when no indices exceed the mask width."""
+        # Arrange
+        path = Path(__file__).resolve().parents[1] / "run-perf-tests.ps1"
+        script = path.read_text(encoding="utf-8-sig")
+        function = script[script.index("function Get-AffinityMask"):
+                          script.index("# Save-CpuTelemetry")]
+        command = '''
+$ErrorActionPreference = "Stop"
+Set-StrictMode -Version Latest
+''' + function + '''
+$mask = Get-AffinityMask "16-31"
+if ($mask -ne 4294901760) { throw "Incorrect lab CPU mask: $mask" }
+'''
+        executables = [shutil.which(name) for name in ("powershell", "pwsh")]
+        if not any(executables):
+            self.skipTest("PowerShell is unavailable")
+
+        # Act
+        for executable in filter(None, executables):
+            with self.subTest(shell=executable):
+                result = subprocess.run(
+                    [executable, "-NoProfile", "-Command", command],
+                    capture_output=True, text=True, timeout=30)
+
+                # Assert
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
 
 @unittest.skipUnless(os.name == "nt", "Requires the Windows affinity APIs")
