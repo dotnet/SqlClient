@@ -22,7 +22,7 @@ class RunnerConfigTests(unittest.TestCase):
     """Exercise authentication and per-pass configs without real SQL commands or builds."""
 
     def check_config(self, shell, switch, local=False, sql_failure="",
-                     config_file="runnerconfig.jsonc"):
+                     config_file="runnerconfig.jsonc", source_config=None):
         """Run isolated runner sections with captured SQL calls and temporary config files."""
         if local and os.name != "nt":
             self.skipTest("Local Windows authentication requires Windows")
@@ -34,8 +34,9 @@ class RunnerConfigTests(unittest.TestCase):
             (root / "results").mkdir()
             source = root / config_file
             # Include a local tuning value to prove we use the live config, not the default.
-            config = {"ConnectionString": "local", "Iterations": 17,
-                      **dict.fromkeys(SWITCHES, False)}
+            config = (source_config if source_config is not None else
+                      {"ConnectionString": "local", "Iterations": 17,
+                       **dict.fromkeys(SWITCHES, False)})
             (root / "template.jsonc").write_text(
                 "// local settings\n" + json.dumps(config), encoding="utf-8")
             env = dict(os.environ, TEST_ROOT=root.as_posix(), SQL_PASSWORD=PASSWORD,
@@ -180,6 +181,21 @@ prepare_runner_config || exit 6
             with self.subTest(shell=shell):
                 self.check_config(shell, "",
                                   config_file="runnerconfig.connection-smoke.jsonc")
+
+    def test_calibration_config_without_connection_string(self):
+        """SQL-free configs can be prepared by either runner without declaring a connection."""
+        # Arrange
+        path = (SCRIPTS.parents[3] / "src" / "Microsoft.Data.SqlClient" / "tests" /
+                "PerformanceTests" / "runnerconfig.async-calibration.jsonc")
+        config = json.loads(path.read_text(encoding="utf-8"))
+
+        # Act
+        for shell in ("bash", "pwsh"):
+            with self.subTest(shell=shell):
+                self.check_config(shell, "", config_file=path.name, source_config=config)
+
+        # Assert
+        self.assertNotIn("ConnectionString", config)
 
     def test_powershell_local_endpoint_classification(self):
         """Only loopback or local-interface addresses qualify for Windows authentication."""

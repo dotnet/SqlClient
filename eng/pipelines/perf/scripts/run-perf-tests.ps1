@@ -425,7 +425,8 @@ function Write-RunnerConfig {
     $rawConfig = ($rawConfig -split "`n" | ForEach-Object { $_ -replace '(?m)^\s*//.*$', '' }) -join "`n"
     $cfg = ConvertFrom-Json $rawConfig
 
-    $cfg.ConnectionString = $BenchmarkConnectionString
+    Add-Member -InputObject $cfg -NotePropertyName ConnectionString `
+        -NotePropertyValue $BenchmarkConnectionString -Force
     # Apply the optional SqlClient behaviour overrides supplied by the pipeline.  An empty value
     # leaves the checked-in default untouched; otherwise the flag is forced to the requested boolean
     # so the benchmarks run with (and PerfRun.Config records) exactly the requested behaviour. The
