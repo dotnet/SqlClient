@@ -9,9 +9,12 @@ using System.Data.SqlTypes;
 using System.IO;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlTypes;
+using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
+using static Microsoft.Data.SqlClient.SqlMetaDataFactory;
 
 #nullable enable
 
@@ -123,26 +126,20 @@ public sealed class VectorMetadataTests
     public void MetadataFactoryCapturesCapabilities(
         byte version, string? format, string? parameters)
     {
-        ConnectionCapabilities capabilities = new()
+        using TdsServer server = new();
+        server.Start();
+        SqlConnectionStringBuilder builder = new()
         {
-            ServerMajorVersion = 17,
-            ServerBuildNumber = 123,
-            JsonType = true,
-            VectorVersion = version
+            DataSource = $"localhost,{server.EndPoint.Port}",
+            Encrypt = SqlConnectionEncryptOption.Optional
         };
-        string serverVersion = capabilities.ServerVersion;
-        using Stream? stream = typeof(SqlConnection).Assembly.GetManifestResourceStream(
-            "Microsoft.Data.SqlClient.SqlMetaData.xml");
-        Assert.NotNull(stream);
-        using SqlMetaDataFactory factory = new(stream, capabilities);
-        capabilities.Reset();
+        using SqlConnection connection = new(builder.ConnectionString);
+        connection.Open();
+        connection.InnerConnection.Capabilities.VectorVersion = version;
 
-        FieldInfo? field = typeof(SqlMetaDataFactory)
-            .GetField("_collectionDataSet", BindingFlags.Instance | BindingFlags.NonPublic);
-        Assert.NotNull(field);
-        DataSet data = Assert.IsType<DataSet>(field.GetValue(factory));
-        DataTable dataTypes = Assert.IsType<DataTable>(
-            data.Tables[DbMetaDataCollectionNames.DataTypes]);
+        DataTable dataTypes = connection.GetSchema(DbMetaDataCollectionNames.DataTypes);
+        connection.InnerConnection.Capabilities.Reset();
+
         DataRow[] rows = dataTypes.Select("TypeName = 'vector'");
         if (format == null)
         {
@@ -156,9 +153,7 @@ public sealed class VectorMetadataTests
         }
         Assert.Single(dataTypes.Select("TypeName = 'json'"));
 
-        using SqlConnection connection = new();
-        using DataTable information = factory.GetSchema(
-            connection, DbMetaDataCollectionNames.DataSourceInformation, null);
-        Assert.Equal(serverVersion, information.Rows[0][DbMetaDataColumnNames.DataSourceProductVersion]);
+        using DataTable information = connection.GetSchema(DbMetaDataCollectionNames.DataSourceInformation);
+        Assert.Equal(connection.InnerConnection.Capabilities.ServerVersion, information.Rows[0][DbMetaDataColumnNames.DataSourceProductVersion]);
     }
 }
