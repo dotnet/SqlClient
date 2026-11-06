@@ -19,15 +19,20 @@
     // This is useful for capturing native memory allocation traces when running a performance test on Windows.
     // Note: This flag cannot be enabled on non-Windows OSes as the NativeMemoryProfiler is not supported on non-Windows OSes.
     "UseNativeMemoryAndETWProfiler": false,
+    "AsyncHealth": {
+        "CadenceMilliseconds": 25,
+        "ProbeCapacity": 64,
+        "RecoveryMilliseconds": 500,
+        "MinimumWindowMilliseconds": 1000,
+        "MinimumSamples": 1
+    },
     // This section contains the configuration for each benchmark.
     // You can enable/disable benchmarks and configure the number of iterations, invocations,
     // warmup runs, and row count for each benchmark.
     //
     // Two optional per-benchmark settings are available for slow benchmarks:
-    //   "TimeoutMinutes" - overrides BenchmarkDotNet's 5 minute in-process execution timeout.
-    //                      Omit (or set 0) to keep the default. Benchmarks that exceed it fail
-    //                      with "takes too long to run. Prefer to use out-of-process
-    //                      toolchains for long-running benchmarks." Note that switching to an
+    //   "TimeoutMinutes" - overrides the suite's 5 minute per-case execution timeout.
+    //                      Omit (or set 0) to keep the default. Note that switching to an
     //                      out-of-process toolchain is NOT viable for this suite, because the
     //                      AppContext switches above only apply to the process running Main.
     //   "RunStrategy"    - "Throughput" (default) or "Monitoring". Use "Monitoring" when a

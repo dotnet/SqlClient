@@ -25,11 +25,11 @@ if [ ! -d "$resultsDir" ]; then
 fi
 find "$resultsDir" -type f | sort
 echo
-# Print every BenchmarkDotNet GitHub-markdown report that was produced.
+# Print the mode-specific reports; health results never have BDN timing exports.
 while IFS= read -r report; do
     echo "----------------------------------------------------------------"
     echo "### $report"
     echo "----------------------------------------------------------------"
     cat "$report"
     echo
-done < <(find "$resultsDir" -type f -name '*-report-github.md' | sort)
+done < <(find "$resultsDir" -type f \( -name '*-report-github.md' -o -name 'async-health-summary.md' \) | sort)

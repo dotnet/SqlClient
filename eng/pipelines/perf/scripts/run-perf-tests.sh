@@ -58,6 +58,7 @@ failOnRegression="false"
 runMode="interleaved"
 # Best-of-N: total interleaved passes for a flagged unit before a regression is confirmed (1 disables).
 confirmationRuns="3"
+runnerConfigFile="runnerconfig.jsonc"
 # Optional SqlClient behaviour flags (true/false).  Empty means "leave the checked-in runnerconfig
 # default untouched".  These are written into the runner config the benchmarks run against AND, via
 # the pipeline's Kusto translation (--config-override), recorded in PerfRun.Config so a run's
@@ -83,6 +84,7 @@ usage() {
          "--switch-under-test <${SUPPORTED_SWITCHES[*]}>]" \
          "[--regression-threshold <pct>] [--fail-on-regression]" \
          "[--run-mode interleaved|sequential] [--confirmation-runs <N>]" \
+         "[--runner-config-file <filename.jsonc>]" \
          "[--use-managed-sni-on-windows true|false] [--use-optimized-async-behaviour true|false]" \
          "[--use-connection-pool-v2 true|false]" >&2
 }
@@ -100,6 +102,7 @@ while [[ $# -gt 0 ]]; do
         --fail-on-regression) failOnRegression="true"; shift 1 ;;
         --run-mode) runMode="$2"; shift 2 ;;
         --confirmation-runs) confirmationRuns="$2"; shift 2 ;;
+        --runner-config-file) runnerConfigFile="$2"; shift 2 ;;
         --use-managed-sni-on-windows) useManagedSniOnWindows="$2"; shift 2 ;;
         --use-optimized-async-behaviour) useOptimizedAsyncBehaviour="$2"; shift 2 ;;
         --use-connection-pool-v2) useConnectionPoolV2="$2"; shift 2 ;;
@@ -107,6 +110,10 @@ while [[ $# -gt 0 ]]; do
         *) echo "Unknown argument: $1" >&2; usage; exit 2 ;;
     esac
 done
+
+if ! [[ "${runnerConfigFile}" =~ ^[A-Za-z0-9_.-]+\.jsonc?$ ]]; then
+    echo "ERROR: --runner-config-file must be a JSON filename in PerformanceTests." >&2; exit 2
+fi
 
 # Validate queue-time inputs up front so a typo fails fast with a clear message instead of silently
 # falling back to a different code path (e.g. '--run-mode interleave' would otherwise run sequentially)
@@ -389,7 +396,7 @@ echo "Preflight: SQL Server ${SQL_SERVER} (db ${DB_NAME}) is reachable and warme
 RUNNER_CONFIG="${REPO_ROOT}/perf-runnerconfig.json"
 export RUNNER_CONFIG
 RESULTS_RUNNER_CONFIG="${RESULTS_DIR}/runnerconfig.json"
-SOURCE_RUNNER_CONFIG="${PERF_DIR}/runnerconfig.jsonc"
+SOURCE_RUNNER_CONFIG="${PERF_DIR}/${runnerConfigFile}"
 
 # The perf app also loads datatypes.json via the DATATYPES_CONFIG env var, falling back to
 # "datatypes.json" in the working directory.  Each pass runs from an otherwise-empty
@@ -460,7 +467,6 @@ for env_name, cfg_key in (
 
 with open(dst, "w", encoding="utf-8") as fh:
     json.dump(cfg, fh, indent=2)
-
 results_cfg = dict(cfg)
 results_cfg["ConnectionString"] = "<redacted>"
 with open(results_dst, "w", encoding="utf-8") as fh:
@@ -827,17 +833,20 @@ if [[ -n "${baselineLabel}" && "${runMode}" == "interleaved" ]]; then
         build_variant "current" "${PERF_PROJECT}"
         baselineExeDir="${REPO_ROOT}/perf-build-current"
         currentExeDir="${REPO_ROOT}/perf-build-current"
-    else
+    elif [[ -n "${baselineLabel}" ]]; then
         build_variant "baseline" "${baselineProject}" ${baselineBuildArgs[@]+"${baselineBuildArgs[@]}"}
         build_variant "current" "${PERF_PROJECT}"
         baselineExeDir="${REPO_ROOT}/perf-build-baseline"
+        currentExeDir="${REPO_ROOT}/perf-build-current"
+    else
+        build_variant "current" "${PERF_PROJECT}"
+        baselineExeDir=""
         currentExeDir="${REPO_ROOT}/perf-build-current"
     fi
 
     prepare_runner_config
 
     interleave_args=(
-        --baseline-exe-dir "${baselineExeDir}"
         --current-exe-dir "${currentExeDir}"
         --assembly "PerformanceTests.dll"
         --results-dir "${RESULTS_DIR}"
@@ -846,6 +855,9 @@ if [[ -n "${baselineLabel}" && "${runMode}" == "interleaved" ]]; then
         --baseline-version "${baselineLabel}"
         --client-cpus "${PERF_CLIENT_CPUS:-}"
     )
+    if [[ -n "${baselineExeDir}" ]]; then
+        interleave_args+=(--baseline-exe-dir "${baselineExeDir}")
+    fi
     # --switch-under-test: baseline and current subprocesses need DIFFERENT RUNNER_CONFIG values (the
     # switch off vs on), even though both are otherwise the same build/env; every other baseline
     # flavour keeps sharing the single ambient RUNNER_CONFIG set above.

@@ -4,6 +4,12 @@ The command/parser coverage lives in the existing benchmark units. Select a unit
 `PERF_BENCHMARK`; the performance pipeline continues to discover enabled units through
 `PERF_LIST_BENCHMARKS`. There are no separate command-execution or smoke-test runners.
 
+Add `[AsyncHealthDiagnoser]` to a benchmark class or method to observe unrelated ThreadPool work in one
+extra diagnostic iteration. Normal timing, memory and threading reports remain enabled.
+Async-health preserves invocation counts and setup/cleanup and reports short windows as insufficient.
+See the [async-health diagnoser guide](../../../../eng/pipelines/perf/README.md#async-health-diagnoser)
+for commands, calibration controls, metrics and coverage rules.
+
 | Unit | Coverage |
 | --- | --- |
 | `SqlCommand` | ExecuteNonQuery, ExecuteScalar, ExecuteReader, and ExecuteXmlReader, sync and async; stable one-row UPDATE/SELECT/XML workloads; SQL text, parameterized SQL, and stored-procedure RPCs |

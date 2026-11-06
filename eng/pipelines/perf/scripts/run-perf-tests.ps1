@@ -46,6 +46,8 @@ param(
     # Best-of-N: total interleaved passes for a flagged unit before a regression is confirmed.
     [ValidateRange(1, [int]::MaxValue)]
     [int]$ConfirmationRuns = 3,
+    [ValidatePattern('^[A-Za-z0-9_.-]+\.jsonc?$')]
+    [string]$RunnerConfigFile = "runnerconfig.jsonc",
     # Optional SqlClient behaviour flags (true/false, or empty to leave the checked-in
     # runnerconfig.default.jsonc default untouched).  Written into the runner config the benchmarks run
     # against and, via the pipeline's Kusto translation, recorded in PerfRun.Config.
@@ -392,7 +394,7 @@ Write-Host "Preflight: SQL Server $SqlServer (db $DbName) is reachable and warme
 $RunnerConfig = Join-Path $RepoRoot "perf-runnerconfig.json"
 $env:RUNNER_CONFIG = $RunnerConfig
 $ResultsRunnerConfig = Join-Path $ResultsDir "runnerconfig.json"
-$SourceRunnerConfig = Join-Path $PerfDir "runnerconfig.jsonc"
+$SourceRunnerConfig = Join-Path $PerfDir $RunnerConfigFile
 
 # The perf app also loads datatypes.json via the DATATYPES_CONFIG env var, falling back to
 # "datatypes.json" in the working directory.  Each pass runs from an otherwise-empty
@@ -867,23 +869,28 @@ if ((-not [string]::IsNullOrEmpty($BaselineLabel)) -and ($RunMode -eq "interleav
         # (rep<N>/<variant>/<unit>), so a shared exe dir cannot cross-contaminate their artifacts.
         $currentExeDir = Build-Variant "current" $PerfProject @()
         $baselineExeDir = $currentExeDir
-    } else {
+    } elseif (-not [string]::IsNullOrEmpty($BaselineLabel)) {
         $baselineExeDir = Build-Variant "baseline" $BaselineProject $BaselineBuildArgs
+        $currentExeDir = Build-Variant "current" $PerfProject @()
+    } else {
+        $baselineExeDir = ""
         $currentExeDir = Build-Variant "current" $PerfProject @()
     }
 
     Prepare-RunnerConfig
 
     $interleaveArgs = @(
-        "--baseline-exe-dir", $baselineExeDir,
         "--current-exe-dir", $currentExeDir,
         "--assembly", "PerformanceTests.dll",
         "--results-dir", $ResultsDir,
         "--threshold", $RegressionThreshold,
         "--reps", $ConfirmationRuns,
-        "--baseline-version", $BaselineLabel,
-        "--client-cpus", "$($env:PERF_CLIENT_CPUS)"
+        "--baseline-version=$BaselineLabel",
+        "--client-cpus=$($env:PERF_CLIENT_CPUS)"
     )
+    if (-not [string]::IsNullOrEmpty($baselineExeDir)) {
+        $interleaveArgs += @("--baseline-exe-dir", $baselineExeDir)
+    }
     # -SwitchUnderTest: baseline and current subprocesses need DIFFERENT RUNNER_CONFIG values (the
     # switch off vs on), even though both are otherwise the same build/env; every other baseline
     # flavour keeps sharing the single ambient RUNNER_CONFIG set above.

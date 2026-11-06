@@ -46,6 +46,12 @@ trigger: none
 
 parameters:
 
+  - name: runnerConfigFile
+    displayName: Workload configuration
+    type: string
+    default: runnerconfig.jsonc
+    values: [runnerconfig.jsonc, runnerconfig.connection-smoke.jsonc]
+
   # The single runner-config switch under test.  Baseline runs it false, current runs it true, so the
   # reported delta is "what turning this switch ON does".  Restricted to the switches the run scripts
   # know how to stamp into the runner config; the scripts re-validate and fail fast on anything else.
@@ -153,10 +159,10 @@ variables:
   # being combined with --baseline-version / --baseline-source-ref.
   - ${{ if eq(parameters.platform, 'windows') }}:
     - name: PerfArgsCommon
-      value: '-Configuration Release -Framework ${{ parameters.dotnetFramework }} -ResultsSubdir perf-results -RegressionThreshold ${{ parameters.regressionThreshold }} -RunMode ${{ parameters.benchmarkRunMode }} -ConfirmationRuns ${{ parameters.confirmationRuns }} -SwitchUnderTest ${{ parameters.switchUnderTest }}'
+      value: '-Configuration Release -Framework ${{ parameters.dotnetFramework }} -ResultsSubdir perf-results -RegressionThreshold ${{ parameters.regressionThreshold }} -RunMode ${{ parameters.benchmarkRunMode }} -ConfirmationRuns ${{ parameters.confirmationRuns }} -RunnerConfigFile ${{ parameters.runnerConfigFile }} -SwitchUnderTest ${{ parameters.switchUnderTest }}'
   - ${{ else }}:
     - name: PerfArgsCommon
-      value: '--configuration Release --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }} --switch-under-test ${{ parameters.switchUnderTest }}'
+      value: '--configuration Release --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }} --runner-config-file ${{ parameters.runnerConfigFile }} --switch-under-test ${{ parameters.switchUnderTest }}'
 
   # Gate flag, only when the run is asserting the switch must not be a slowdown.
   - ${{ if and(eq(parameters.platform, 'windows'), eq(parameters.failIfSwitchSlower, true)) }}:
