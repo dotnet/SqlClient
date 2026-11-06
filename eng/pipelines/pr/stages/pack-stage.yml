@@ -17,6 +17,8 @@
 # * Although theoretically in package build we could arrange build steps to minimize re-building,
 #   build.proj isn't properly aware of how to do this. So, instead, arranging the build steps
 #   alphabetically is the best way to arrange for now.
+# * The nuget verification step at the end only runs on Windows. So as of writing (2026-11) this
+#   stage must run on a Windows VM. If they ever release a version for linux, update this (@TODO:)!
 
 parameters:
 

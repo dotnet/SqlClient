@@ -28,7 +28,7 @@ steps:
       curl -o "$(Agent.TempDirectory)/codecov" https://cli.codecov.io/latest/linux/codecov
       chmod +x "$(Agent.TempDirectory)/codecov"
     displayName: Download CodeCov CLI
-    condition: and(succeeded(), neq(variables['Agent.OS'], 'Windows_NT'))
+    condition: and(succeeded(), not(eq(variables['Agent.OS'], 'Windows_NT')))
 
   - powershell: |
       Invoke-WebRequest -Uri "https://cli.codecov.io/latest/windows/codecov.exe" -OutFile "$(Agent.TempDirectory)\codecov.exe"
@@ -47,7 +47,7 @@ steps:
       -f "${{ parameters.mergedCoveragePath }}"
       -F $(Build.DefinitionName)
     displayName: Upload to CodeCov
-    condition: and(succeeded(), neq(variables['Agent.OS'], 'Windows_NT'))
+    condition: and(succeeded(), not(eq(variables['Agent.OS'], 'Windows_NT')))
     env:
       CODECOV_TOKEN: $(codecov_token)
 

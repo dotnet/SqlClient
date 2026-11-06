@@ -88,8 +88,8 @@ variables:
 
 stages:
   # Stage 1a: Build and pack all projects in the repository in debug config
-  # Note: The package verification tool only works with Windows (as of 2026-11) and the output
-  #    logging step is tailored to Windows, so only Windows VM images should be used for these.
+  # Note: The package verification tool only works with Windows (as of 2026-11), so only Windows VM
+  #    images should be used for these.
   - template: /eng/pipelines/pr/stages/pack-stage.yml@self
     parameters:
       buildConfiguration: Debug
