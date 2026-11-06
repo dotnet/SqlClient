@@ -1,0 +1,22 @@
+{
+    "UseManagedSniOnWindows": false,
+    "UseConnectionPoolV2": false,
+    "UseOptimizedAsyncBehaviour": true,
+    "AsyncHealth": {
+        "CadenceMilliseconds": 25,
+        "ProbeCapacity": 64,
+        "RecoveryMilliseconds": 500,
+        "MinimumWindowMilliseconds": 1000,
+        "MinimumSamples": 1
+    },
+    "Benchmarks": {
+        "AsyncHealthCalibrationRunnerConfig": {
+            "Enabled": true,
+            "LaunchCount": 1,
+            "IterationCount": 2,
+            "InvocationCount": 1,
+            "WarmupCount": 1,
+            "RunStrategy": "Monitoring"
+        }
+    }
+}
