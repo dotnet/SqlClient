@@ -607,10 +607,10 @@
     <value>Не удается найти поставщик проверки подлинности для "{0}".</value>
   </data>
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
-    <value>Cannot find an authentication provider for '{0}'. Register a provider with SqlAuthenticationProvider.SetProvider, or use a compatible 'Microsoft.Data.SqlClient.Extensions.Azure' NuGet package with automatic discovery enabled. Automatic discovery is unavailable when disabled at publish time. Trimmed JIT applications require preserved reflection contracts; NativeAOT applications should disable reflective bootstrap paths at publish time and register providers explicitly. Check Microsoft.Data.SqlClient.EventSource traces (Informational level, Trace keyword 0x2) for configuration or Azure extension loading failures.</value>
+    <value>Не удается найти поставщик проверки подлинности для "{0}". Зарегистрируйте поставщик с помощью SqlAuthenticationProvider.SetProvider или используйте совместимый пакет NuGet Microsoft.Data.SqlClient.Extensions.Azure с включенным автоматическим обнаружением. Автоматическое обнаружение недоступно, если оно отключено во время публикации. Приложения JIT с удалением неиспользуемого кода требуют сохраненных контрактов рефлексии. Приложения NativeAOT должны отключать пути начальной загрузки на основе рефлексии во время публикации и явно регистрировать поставщики. Проверьте трассировки Microsoft.Data.SqlClient.EventSource (уровень Informational, ключевое слово Trace — 0x2) на наличие сбоев конфигурации или загрузки расширений Azure.</value>
   </data>
   <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>Setting 'useWamBroker' requires the 'Microsoft.Data.SqlClient.Extensions.Azure' package to expose 'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions'. Upgrade the 'Microsoft.Data.SqlClient.Extensions.Azure' package to at least v7.0.2 that includes this type.</value>
+    <value>Для установки параметра "useWamBroker" требуется, чтобы пакет "Microsoft.Data.SqlClient.Extensions.Azure" предоставлял доступ к "Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions". Обновите пакет "Microsoft.Data.SqlClient.Extensions.Azure" как минимум до версии v7.0.2, в которую входит этот тип.</value>
   </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>Параметр «{0}» не может иметь значение NULL или быть пустым.</value>
@@ -1906,7 +1906,7 @@
     <value>Сервер не подтвердил попытку восстановления, восстановление соединения невозможно.</value>
   </data>
   <data name="DbConnectionString_VectorTypeSupport" xml:space="preserve">
-    <value>The level of vector type support to negotiate with the server.</value>
+    <value>Уровень поддержки векторного типа для согласований с сервером.</value>
   </data>
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>Задает поведение периода блокировки для пула подключений.</value>

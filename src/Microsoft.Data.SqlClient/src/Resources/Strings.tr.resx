@@ -607,10 +607,10 @@
     <value>'{0}' için kimlik doğrulama sağlayıcısı bulunamıyor.</value>
   </data>
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
-    <value>Cannot find an authentication provider for '{0}'. Register a provider with SqlAuthenticationProvider.SetProvider, or use a compatible 'Microsoft.Data.SqlClient.Extensions.Azure' NuGet package with automatic discovery enabled. Automatic discovery is unavailable when disabled at publish time. Trimmed JIT applications require preserved reflection contracts; NativeAOT applications should disable reflective bootstrap paths at publish time and register providers explicitly. Check Microsoft.Data.SqlClient.EventSource traces (Informational level, Trace keyword 0x2) for configuration or Azure extension loading failures.</value>
+    <value>'{0}' için kimlik doğrulaması sağlayıcısı bulunamıyor. SqlAuthenticationProvider.SetProvider ile bir sağlayıcı kaydedin veya otomatik keşif etkinleştirilmiş uyumlu bir 'Microsoft.Data.SqlClient.Extensions.Azure' NuGet paketi kullanın. Otomatik keşif, yayımlama sırasında devre dışı bırakıldığında kullanılamaz. Kırpılmış JIT uygulamaları, korunan yansıma sözleşmeleri gerektirir; NativeAOT uygulamaları, yayımlama zamanında yansıtıcı önyükleme yollarını devre dışı bırakmalı ve sağlayıcıları açıkça kaydetmelisiniz. Yapılandırma veya Azure uzantısının yüklenmesiyle ilgili hatalar için Microsoft.Data.SqlClient.EventSource izlemelerini (Bilgi düzeyi, 0x2 izleme anahtar sözcüğü) denetleyin.</value>
   </data>
   <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>Setting 'useWamBroker' requires the 'Microsoft.Data.SqlClient.Extensions.Azure' package to expose 'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions'. Upgrade the 'Microsoft.Data.SqlClient.Extensions.Azure' package to at least v7.0.2 that includes this type.</value>
+    <value>'useWamBroker' ayarı, 'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions' türünü kullanıma sunmak için 'Microsoft.Data.SqlClient.Extensions.Azure' paketini gerektirir. 'Microsoft.Data.SqlClient.Extensions.Azure' paketini en az v7.0.2 sürümüne (bu türü içerir) yükseltin.</value>
   </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>'{0}' parametresi null veya boş olamaz.</value>
@@ -1906,7 +1906,7 @@
     <value>Sunucu, geri yükleme denemesini onaylamadı; bağlantı geri yüklemesi mümkün değil.</value>
   </data>
   <data name="DbConnectionString_VectorTypeSupport" xml:space="preserve">
-    <value>The level of vector type support to negotiate with the server.</value>
+    <value>Sunucuyla anlaşmaya varılacak vektör türü desteği düzeyi.</value>
   </data>
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>Bir bağlantı havuzundaki bağlantılar için engelleme dönemi davranışını tanımlar.</value>

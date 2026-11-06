@@ -607,10 +607,10 @@
     <value>Não é possível localizar um provedor de autenticação para '{0}'.</value>
   </data>
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
-    <value>Cannot find an authentication provider for '{0}'. Register a provider with SqlAuthenticationProvider.SetProvider, or use a compatible 'Microsoft.Data.SqlClient.Extensions.Azure' NuGet package with automatic discovery enabled. Automatic discovery is unavailable when disabled at publish time. Trimmed JIT applications require preserved reflection contracts; NativeAOT applications should disable reflective bootstrap paths at publish time and register providers explicitly. Check Microsoft.Data.SqlClient.EventSource traces (Informational level, Trace keyword 0x2) for configuration or Azure extension loading failures.</value>
+    <value>Não é possível localizar um provedor de autenticação para '{0}'. Registre um provedor com SqlAuthenticationProvider.SetProvider ou use um pacote NuGet compatível, como 'Microsoft.Data.SqlClient.Extensions.Azure', com a descoberta automática habilitada. A descoberta automática não fica disponível quando é desabilitada no momento da publicação. Os aplicativos JIT cortados exigem contratos de reflexão preservados; os aplicativos NativeAOT devem desabilitar caminhos de inicialização reflexivos no momento da publicação e registrar provedores explicitamente. Verifique os rastreamentos microsoft.Data.SqlClient.EventSource (nível informativo, 0x2 de palavra-chave de rastreamento) para verificar se há falhas de configuração ou de carregamento de extensão do Azure.</value>
   </data>
   <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>Setting 'useWamBroker' requires the 'Microsoft.Data.SqlClient.Extensions.Azure' package to expose 'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions'. Upgrade the 'Microsoft.Data.SqlClient.Extensions.Azure' package to at least v7.0.2 that includes this type.</value>
+    <value>A definição ''useWamBroker'' exige que o pacote ''Microsoft.Data.SqlClient.Extensions.Azure'' exponha ''Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions''. Atualize o pacote 'Microsoft.Data.SqlClient.Extensions.Azure' para pelo menos v7.0.2 que inclui esse tipo.</value>
   </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>O parâmetro '{0}' não pode ser nulo ou vazio.</value>
@@ -1906,7 +1906,7 @@
     <value>O servidor não reconheceu uma tentativa de recuperação; a recuperação da conexão não é possível.</value>
   </data>
   <data name="DbConnectionString_VectorTypeSupport" xml:space="preserve">
-    <value>The level of vector type support to negotiate with the server.</value>
+    <value>O nível de suporte a tipos de vetor a ser negociado com o servidor.</value>
   </data>
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>Define o comportamento de período de bloqueio para um pool de conexões.</value>

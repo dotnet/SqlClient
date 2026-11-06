@@ -607,10 +607,10 @@
     <value>找不到“{0}”的身份验证提供程序。</value>
   </data>
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
-    <value>Cannot find an authentication provider for '{0}'. Register a provider with SqlAuthenticationProvider.SetProvider, or use a compatible 'Microsoft.Data.SqlClient.Extensions.Azure' NuGet package with automatic discovery enabled. Automatic discovery is unavailable when disabled at publish time. Trimmed JIT applications require preserved reflection contracts; NativeAOT applications should disable reflective bootstrap paths at publish time and register providers explicitly. Check Microsoft.Data.SqlClient.EventSource traces (Informational level, Trace keyword 0x2) for configuration or Azure extension loading failures.</value>
+    <value>找不到“{0}”的身份验证提供程序。使用 SqlAuthenticationProvider.SetProvider 注册提供程序，或使用兼容的“Microsoft.Data.SqlClient.Extensions.Azure”NuGet 包并启用自动发现。在发布时禁用自动发现则该功能不可用。精简的 JIT 应用程序需要保留的反射协议；NativeAOT 应用程序应在发布时禁用反射式启动并显式注册提供程序。检查 Microsoft.Data.SqlClient.EventSource 跟踪（信息级别、跟踪关键字 0x2）是否存在配置问题或 Azure 扩展加载失败。</value>
   </data>
   <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>Setting 'useWamBroker' requires the 'Microsoft.Data.SqlClient.Extensions.Azure' package to expose 'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions'. Upgrade the 'Microsoft.Data.SqlClient.Extensions.Azure' package to at least v7.0.2 that includes this type.</value>
+    <value>要设置 "useWamBroker"，需要 "Microsoft.Data.SqlClient.Extensions.Azure" 包公开 "Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions"。将 "Microsoft.Data.SqlClient.Extensions.Azure" 包升级到至少 v7.0.2，该版本包含此类型。</value>
   </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>参数“{0}”不能为 null 或为空。</value>
@@ -1906,7 +1906,7 @@
     <value>服务器未收到恢复尝试，无法恢复连接。</value>
   </data>
   <data name="DbConnectionString_VectorTypeSupport" xml:space="preserve">
-    <value>The level of vector type support to negotiate with the server.</value>
+    <value>与服务器协商时使用的矢量类型支持级别。</value>
   </data>
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>定义针对连接池的暂停时段行为。</value>
