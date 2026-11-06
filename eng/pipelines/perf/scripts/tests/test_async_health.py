@@ -35,6 +35,136 @@ def sample_row():
 
 
 class AsyncHealthTests(unittest.TestCase):
+    def test_collected_report_exports_all_available_statistics(self):
+        """Pipeline artifacts expose diagnostics without replacing normal timing results."""
+        # Arrange
+        with tempfile.TemporaryDirectory() as root:
+            directory = Path(root, "current", "BenchmarkDotNet.Artifacts", "async-health")
+            directory.mkdir(parents=True)
+            row = sample_row()
+            row["Measurement"]["ProcessThreadsAtStart"] = 12
+            row["Measurement"]["OutstandingAtWorkloadEnd"] = 0
+            row["Measurement"]["ResourceSamplesDropped"] = 0
+            row["Measurement"]["Resources"] = [
+                dict(TimestampMilliseconds=5, BusyWorkerProxy=2, Threads=8,
+                     ProcessThreads=20, QueueDepth=1, CompletedWorkItems=100,
+                     AllocatedBytes=1000, Gen2Collections=2),
+                dict(TimestampMilliseconds=500, BusyWorkerProxy=4, Threads=10,
+                     ProcessThreads=44, QueueDepth=3, CompletedWorkItems=140,
+                     AllocatedBytes=9000, Gen2Collections=3),
+            ]
+            (directory / "async-health-window.json").write_text(json.dumps(row))
+            timing = Path(root, "summary.md")
+            timing.write_text("Existing timing comparison")
+
+            # Act
+            output = subprocess.run(
+                [sys.executable, str(Path(health.__file__)), "--results-dir", root],
+                capture_output=True, text=True, timeout=30)
+
+            # Assert
+            self.assertEqual(output.returncode, 0, output.stdout + output.stderr)
+            report = json.loads(Path(root, "async-health-summary.json").read_text())
+            self.assertEqual(len(report["Windows"]), 1)
+            result = report["Windows"][0]
+            self.assertEqual(result["Variant"], "current")
+            self.assertEqual(result["PeakQueueDepth"], 3)
+            self.assertEqual(result["ResourceSampleCount"], 2)
+            self.assertEqual(result["SampledCompletedWorkItemsDelta"], 40)
+            self.assertEqual(result["SampledAllocatedBytesDelta"], 8000)
+            self.assertEqual(result["SampledGen2CollectionsDelta"], 1)
+            self.assertEqual(result["Work"]["DispatchMilliseconds"]["P50"], 2)
+            self.assertEqual(timing.read_text(), "Existing timing comparison")
+            text = Path(root, "async-health-summary.md").read_text()
+            for label in ("P50", "P95", "P99", "Max", "Queue", "Allocated",
+                          "Gen2", "Rejected", "Producer-missed", "Process threads"):
+                self.assertIn(label, text)
+            self.assertTrue(Path(root, "async-health-summary.csv").is_file())
+
+    def test_collected_report_rejects_conflicting_window_copies(self):
+        """Duplicate collection paths cannot silently select different versions of one window."""
+        # Arrange
+        with tempfile.TemporaryDirectory() as root:
+            directory = Path(root, "current", "async-health")
+            directory.mkdir(parents=True)
+            row = sample_row()
+            (directory / "async-health-one.json").write_text(json.dumps(row))
+            row["Measurement"]["Resources"][0]["QueueDepth"] = 99
+            (directory / "async-health-two.json").write_text(json.dumps(row))
+
+            # Act
+            output = subprocess.run(
+                [sys.executable, str(Path(health.__file__)), "--results-dir", root],
+                capture_output=True, text=True, timeout=30)
+
+            # Assert
+            self.assertNotEqual(output.returncode, 0)
+            self.assertIn("Conflicting", output.stderr)
+
+    def test_collected_report_deduplicates_identical_artifacts_and_can_be_regenerated(self):
+        """Repeated collection and report generation retain exactly one row per window."""
+        # Arrange
+        with tempfile.TemporaryDirectory() as root:
+            for name in ("async-health-one.json", "async-health-two.json"):
+                directory = Path(root, "current", "async-health")
+                directory.mkdir(parents=True, exist_ok=True)
+                (directory / name).write_text(json.dumps(sample_row()))
+
+            # Act
+            first = health.write_collected_summary(root)
+            second = health.write_collected_summary(root)
+
+            # Assert
+            self.assertEqual(first, 1)
+            self.assertEqual(second, 1)
+            self.assertEqual(
+                len(json.loads(Path(root, "async-health-summary.json").read_text())["Windows"]), 1)
+
+    def test_timing_only_collection_does_not_create_health_reports(self):
+        """Unmarked timing-only workloads have no health observations to report."""
+        # Arrange
+        with tempfile.TemporaryDirectory() as root:
+            timing = Path(root, "summary.md")
+            timing.write_text("Timing comparison")
+
+            # Act
+            count = health.write_collected_summary(root)
+
+            # Assert
+            self.assertEqual(count, 0)
+            self.assertEqual(timing.read_text(), "Timing comparison")
+            self.assertFalse(Path(root, "async-health-summary.json").exists())
+
+    def test_failed_window_without_measurement_is_reported_as_failed(self):
+        """Failure sidecars remain visible even if the observer could not start."""
+        # Arrange
+        with tempfile.TemporaryDirectory() as root:
+            directory = Path(root, "current", "async-health")
+            directory.mkdir(parents=True)
+            row = sample_row()
+            row.update(Status="Failed", Error="No diagnostic window")
+            del row["Measurement"]
+            (directory / "async-health-failure.json").write_text(json.dumps(row))
+
+            # Act
+            count = health.write_collected_summary(root)
+
+            # Assert
+            self.assertEqual(count, 1)
+            result = json.loads(Path(root, "async-health-summary.json").read_text())["Windows"][0]
+            self.assertEqual(result["Coverage"], "Failed")
+            self.assertIn("N/A", Path(root, "async-health-summary.md").read_text())
+
+    def test_legacy_sampled_counters_remain_unavailable(self):
+        """Missing historical counters must not be presented as zero activity."""
+        # Act
+        result = health.summarize(sample_row())
+
+        # Assert
+        self.assertIsNone(result["SampledCompletedWorkItemsDelta"])
+        self.assertIsNone(result["SampledAllocatedBytesDelta"])
+        self.assertIsNone(result["SampledGen2CollectionsDelta"])
+
     def test_legacy_scheduled_count_is_accepted(self):
         """Existing artifacts remain readable after renaming the total probe count."""
         # Arrange
@@ -499,6 +629,10 @@ class AsyncHealthTests(unittest.TestCase):
         scripts = Path(__file__).resolve().parents[1]
         self.assertNotIn("MeasurementMode", (scripts / "run-perf-tests.ps1").read_text())
         self.assertNotIn("measurement-mode", (scripts / "run-perf-tests.sh").read_text())
+        self.assertIn('"async_health_report.py") --results-dir $ResultsDir',
+                      (scripts / "run-perf-tests.ps1").read_text())
+        self.assertIn('async_health_report.py" --results-dir "${RESULTS_DIR}"',
+                      (scripts / "run-perf-tests.sh").read_text())
         for pipeline in scripts.parent.glob("sqlclient-perf-*.yml"):
             text = pipeline.read_text()
             self.assertNotIn("measurementMode", text)

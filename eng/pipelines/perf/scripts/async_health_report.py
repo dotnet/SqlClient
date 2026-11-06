@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Versioned, report-only async-health results. Never consumes BDN time statistics."""
 
+import argparse
+import csv
 import json
 import math
 from pathlib import Path
@@ -123,6 +125,19 @@ def summarize(row):
         if type(count) is not int or count < 1:
             raise ValueError("Invalid process thread count")
     process_peak = max(process_samples, default=None)
+    resource_work.sort(key=lambda sample: sample["TimestampMilliseconds"])
+    def sampled_delta(field):
+        if not resource_work or any(field not in sample for sample in resource_work):
+            return None
+        values = [sample[field] for sample in resource_work]
+        for value in values:
+            number(value, field)
+            if type(value) is not int:
+                raise ValueError(f"Invalid resource counter {field}")
+        if any(right < left for left, right in zip(values, values[1:])):
+            raise ValueError(f"Decreasing resource counter {field}")
+        return values[-1] - values[0]
+
     result.update(
         Coverage=coverage, DurationMilliseconds=end - start, WorkExecuted=len(work),
         DroppedProbes=probes["Dropped"], ProducerMissedProbes=probes["ProducerMissed"],
@@ -144,8 +159,130 @@ def summarize(row):
         PeakProcessThreads=process_peak,
         ProcessThreadIncrease=(max(0, process_peak - process_baseline)
                        if process_peak is not None and process_baseline is not None else None),
-        PeakQueueDepth=max((s["QueueDepth"] for s in resource_work), default=None))
+        PeakQueueDepth=max((s["QueueDepth"] for s in resource_work), default=None),
+        ResourceSampleCount=len(resource_work),
+        ResourceSampleSpanMilliseconds=(
+            resource_work[-1]["TimestampMilliseconds"] - resource_work[0]["TimestampMilliseconds"]
+            if resource_work else None),
+        SampledCompletedWorkItemsDelta=sampled_delta("CompletedWorkItems"),
+        SampledAllocatedBytesDelta=sampled_delta("AllocatedBytes"),
+        SampledGen2CollectionsDelta=sampled_delta("Gen2Collections"))
     return result
+
+
+def write_collected_summary(root):
+    """Report sidecars from either pipeline layout without changing timing summaries."""
+    root = Path(root)
+    if not root.is_dir():
+        raise FileNotFoundError(f"Results directory does not exist: {root}")
+
+    windows = {}
+    for path in sorted(root.rglob("async-health-*.json")):
+        if path.name in ("async-health-summary.json", "async-health-process.json"):
+            continue
+        row = json.loads(path.read_text(encoding="utf-8-sig"))
+        parts = path.relative_to(root).parts
+        variant = next((part for part in parts if part in ("baseline", "current")), "unknown")
+        key = (variant, row["RunId"], row["CaseId"], row.get("Window"), row["Status"])
+        if key in windows:
+            if windows[key]["raw"] != row:
+                raise ValueError(f"Conflicting copies of async-health window: {path}")
+            continue
+        windows[key] = dict(raw=row, result=dict(summarize(row), Variant=variant,
+                                               Source=str(path.relative_to(root))))
+    if not windows:
+        return 0
+
+    rows = sorted((window["result"] for window in windows.values()),
+                  key=lambda row: (row["Variant"], row["ProcessRepetition"],
+                                   row["Benchmark"], row["Parameters"], row.get("Window", 0)))
+    notice = (
+        NOTICE + " Sampled resource deltas cover only the first-to-last workload resource "
+        "sample, not exact invocation boundaries; they include observer/runtime activity. "
+        "Process-thread peaks can miss short-lived threads. No recovery sampling phase is run."
+    )
+    summary = dict(SchemaVersion=4, MeasurementMode="async-health", Notice=notice, Windows=rows)
+    (root / "async-health-summary.json").write_text(
+        json.dumps(summary, indent=2, allow_nan=False), encoding="utf-8")
+
+    flat_rows = []
+    for row in rows:
+        flat = {key: value for key, value in row.items()
+                if value is None or isinstance(value, (str, int, float, bool))}
+        for key, value in row.get("Measurement", {}).get("Probes", {}).items():
+            if key != "Samples":
+                flat[f"Probes.{key}"] = value
+        for key in ("OutstandingAtWorkloadEnd", "ResourceSamplesDropped", "ObserverError"):
+            flat[key] = row.get("Measurement", {}).get(key)
+        for cohort in ("Work", "Recovery", "LateWork"):
+            for metric, distribution_values in row.get(cohort, {}).items():
+                for statistic, value in distribution_values.items():
+                    flat[f"{cohort}.{metric}.{statistic}"] = value
+        flat_rows.append(flat)
+    fields = list(dict.fromkeys(key for row in flat_rows for key in row))
+    with (root / "async-health-summary.csv").open("w", newline="", encoding="utf-8") as output:
+        writer = csv.DictWriter(output, fieldnames=fields)
+        writer.writeheader()
+        writer.writerows(flat_rows)
+
+    def display(value):
+        if value is None:
+            return "N/A"
+        if isinstance(value, float):
+            return f"{value:.3f}"
+        return str(value).replace("|", "\\|").replace("\n", " ")
+
+    def table(headers, values):
+        return ["| " + " | ".join(headers) + " |",
+                "| " + " | ".join("---" for _ in headers) + " |"] + [
+                    "| " + " | ".join(display(value) for value in record) + " |"
+                    for record in values]
+
+    lines = ["# Async-health diagnostic statistics", "", notice, "",
+             "Timing statistics remain in the BenchmarkDotNet reports. "
+             "These are diagnostic windows, not a timing regression verdict.", ""]
+    for row in rows:
+        lines += [f'## {display(row["Benchmark"])} {display(row["Parameters"])}', "",
+                  f'Variant: {row["Variant"]}; process repetition: {row["ProcessRepetition"]}; '
+                  f'coverage: **{row["Coverage"]}**; '
+                  f'duration: {display(row.get("DurationMilliseconds"))} ms; '
+                  f'completed invocations: {display(row.get("CompletedInvocations"))}.', ""]
+        probes = row.get("Measurement", {}).get("Probes", {})
+        lines += table(
+            ["Total", "Posted", "Executed", "Dropped", "Rejected", "Skipped",
+             "Producer-missed", "Outstanding", "Late/outstanding work"],
+            [[probes.get(key) for key in ("Total", "Posted", "Executed", "Dropped",
+                                         "Rejected", "Skipped", "ProducerMissed", "Outstanding")]
+             + [row.get("WorkLateOrOutstanding")]])
+        lines += [""]
+        distributions = []
+        for cohort in ("Work", "Recovery", "LateWork"):
+            for metric, values in row.get(cohort, {}).items():
+                distributions.append([cohort, metric] + [
+                    values.get(key) for key in ("Count", "P50", "P95", "P99", "Max")])
+        lines += table(["Cohort", "Delay (ms)", "Count", "P50", "P95", "P99", "Max"],
+                       distributions)
+        lines += [""]
+        metrics = [
+            ("Peak busy worker proxy", row.get("PeakBusyWorkerProxy")),
+            ("Peak pool threads", row.get("PeakThreads")),
+            ("Process threads at start", row.get("ProcessThreadsAtStart")),
+            ("Peak process threads", row.get("PeakProcessThreads")),
+            ("Process thread increase", row.get("ProcessThreadIncrease")),
+            ("Peak Queue depth", row.get("PeakQueueDepth")),
+            ("Resource samples", row.get("ResourceSampleCount")),
+            ("Resource sample span (ms)", row.get("ResourceSampleSpanMilliseconds")),
+            ("Sampled completed work items delta", row.get("SampledCompletedWorkItemsDelta")),
+            ("Sampled Allocated bytes delta", row.get("SampledAllocatedBytesDelta")),
+            ("Sampled Gen2 collections delta", row.get("SampledGen2CollectionsDelta")),
+        ]
+        measurement = row.get("Measurement", {})
+        metrics += [(key, measurement.get(key)) for key in (
+            "OutstandingAtWorkloadEnd", "ResourceSamplesDropped", "ObserverError")]
+        lines += table(["Resource / observer statistic", "Value"], metrics)
+        lines += ["", f'Source: `{row["Source"]}`', ""]
+    (root / "async-health-summary.md").write_text("\n".join(lines), encoding="utf-8")
+    return len(rows)
 
 
 def collect(cwd, destination):
@@ -267,3 +404,11 @@ def write_summary(root, units, baseline, repetitions, comparison_switch=None):
     (root / "async-health-summary.md").write_text(text, encoding="utf-8")
     (root / "summary.md").write_text(text, encoding="utf-8")
     return summary
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--results-dir", required=True)
+    args = parser.parse_args()
+    count = write_collected_summary(args.results_dir)
+    print(f"Async-health diagnostic report: {count} window(s).")

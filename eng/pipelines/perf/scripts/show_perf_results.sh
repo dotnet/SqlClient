@@ -25,7 +25,7 @@ if [ ! -d "$resultsDir" ]; then
 fi
 find "$resultsDir" -type f | sort
 echo
-# Print the mode-specific reports; health results never have BDN timing exports.
+# Print timing reports and the separate diagnostic report.
 while IFS= read -r report; do
     echo "----------------------------------------------------------------"
     echo "### $report"

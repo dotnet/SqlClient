@@ -187,8 +187,18 @@ python -B .\eng\pipelines\perf\scripts\interleave_perf.py --current-exe-dir .\sr
 
 Use fresh result/work paths, a dedicated idle host, and absolute config paths.
 The orchestrator supplies the built `datatypes.json` unless `DATATYPES_CONFIG` overrides it.
-Health sidecars are preserved under each timing pass's `async-health` directory. A current-only
-run executes each enabled unit once and makes no baseline comparison. Add `--baseline-exe-dir`
+Health sidecars are preserved under each timing pass's `async-health` directory. The
+pipeline writes `async-health-summary.json`, `.csv`, and `.md` at the results root before
+artifact collection. The separate health report includes all three delay distributions
+(count, p50, p95, p99, maximum), probe accounting, queue/busy-worker/pool/process-thread peaks,
+resource-sample coverage, and sampled completed-work-item, allocation-byte and Gen2-collection
+deltas. Sampled deltas span the first through last resource samples inside the workload,
+not exact invocation boundaries, and include observer/runtime activity. Missing historical
+counters remain unavailable, not zero. Raw timelines remain in the JSON sidecars. Normal
+BenchmarkDotNet timing, memory and threading reports are unchanged.
+
+A current-only run executes each enabled unit once and makes no baseline comparison.
+Add `--baseline-exe-dir`
 and optionally `--baseline-runner-config` for ordinary timing comparisons. Their confirmation
 runs are selected by timing regressions, not an independent health sampling plan. Iterations
 within a process are not independent replicates. Use separate declared process runs when
@@ -226,6 +236,12 @@ Enable only the opt-in `AsyncHealthCalibrationRunnerConfig` in a separate config
   }
 }
 ```
+
+For the PR pipeline, select `runnerConfigFile=runnerconfig.async-calibration.jsonc`,
+`currentOnly=true`, and `platform=windows` to use the checked-in calibration-only configuration.
+It enables exactly these 11 SQL-free controls with the settings above and default observer options.
+The perf-lab template still provisions its usual SQL Server environment, but the controls do not
+connect to it.
 
 Run it with the orchestrator command above. The calibration runner carries `[AsyncHealthDiagnoser]`
 at class level, so every calibration benchmark is diagnosed. `ProbeOnly` sleeps the dedicated benchmark thread

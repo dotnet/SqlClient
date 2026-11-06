@@ -943,6 +943,10 @@ if ((-not [string]::IsNullOrEmpty($BaselineLabel)) -and ($RunMode -eq "interleav
     Invoke-PerfPass "current" $PerfProject @()
 }
 
+Invoke-Native {
+    python3 (Join-Path $ScriptDir "async_health_report.py") --results-dir $ResultsDir
+} "Async-health reporting failed"
+
 Write-Host "Collected results:"
 Get-ChildItem -Recurse -File $ResultsDir | ForEach-Object { $_.FullName } | Sort-Object
 
