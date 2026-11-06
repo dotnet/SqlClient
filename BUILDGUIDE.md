@@ -34,6 +34,38 @@ This project should be built with Visual Studio 2019+ for the best compatibility
 
 Once the environment is setup properly, execute the desired set of commands below from the _root_ folder to perform the respective operations:
 
+### PowerShell Modules
+
+Before using scripts or tests that need PowerShell modules, install PowerShell 7.4 or later
+(including its bundled PSResourceGet module), then run from the repository root:
+
+```console
+dotnet build build.proj -t:RestorePowerShellModules
+```
+
+Add or update exact versions in [`powershell-modules.json`](powershell-modules.json).
+The target uses the installed `pwsh` and the anonymous governed feed in
+[`PowerShell.config`](PowerShell.config). It reuses exact installed versions and installs
+missing resources for the current user, without clobbering existing commands or falling
+back to PowerShell Gallery. Newer PSResourceGet versions have automatic credential-provider
+selection explicitly disabled; older versions bundled with PowerShell 7.4 do not have that feature.
+Restore and consumption must use the same user. Consumers import modules normally;
+the manifest pins installation, not runtime resolution.
+
+Run restore explicitly after manifest changes or on a new machine/user. It does not build
+the driver, run tests, or install OS-level tools. In particular,
+[`makepfxcert.ps1`](src/Microsoft.Data.SqlClient/tests/ManualTests/makepfxcert.ps1)
+uses the native `openssl` executable on Unix and built-in PKI cmdlets on Windows,
+not the OpenSSL PowerShell module.
+
+CI and Kerberos test jobs run the same restore after SDK installation through
+`eng/pipelines/common/steps/restore-powershell-modules.yml`. The standalone entry point
+also works locally:
+
+```console
+dotnet build tools/targets/RestorePowerShellModules.targets -t:RestorePowerShellModules
+```
+
 ## MSBuild Reference
 
 ### Targets
@@ -49,6 +81,7 @@ Once the environment is setup properly, execute the desired set of commands belo
 |`BuildTestsNetFx`|Builds tests for the .NET Framework driver.|
 |`Clean`|Cleans generated files.|
 |`Restore`|Restores Nuget packages.|
+|`RestorePowerShellModules`|Restores pinned PowerShell modules from the governed feed.|
 |`RunTests`|Runs the functional and manual tests for the .NET Framework and .NET drivers|
 |`RunFunctionalTests`|Runs just the functional tests for the .NET Framework and .NET drivers|
 |`RunManualTests`|Runs just the manual tests for the .NET Framework and .NET drivers|

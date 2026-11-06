@@ -119,6 +119,8 @@ jobs:
       ${{ else }}:
         runtimes: [8.x, 9.x]
 
+  - template: /eng/pipelines/common/steps/restore-powershell-modules.yml@self
+
   - ${{ if ne(parameters.prebuildSteps, '') }}:
     - ${{ parameters.prebuildSteps }} # extra steps to run before the build like downloading sni and the required configuration
 
