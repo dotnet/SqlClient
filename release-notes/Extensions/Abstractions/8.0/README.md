@@ -1,7 +1,7 @@
 # Microsoft.Data.SqlClient.Extensions.Abstractions 8.0 Releases
 
-The following `Microsoft.Data.SqlClient.Extensions.Abstractions` 8.0 release is in preparation:
+The following `Microsoft.Data.SqlClient.Extensions.Abstractions` 8.0 release is available:
 
 | Release Date | Description | Notes |
 | :-- | :-- | :--: |
-| Unreleased | 8.0.0-preview1 (draft) | [Release Notes](8.0.0-preview1.md) |
+| 2026-11-06 | 8.0.0-preview1 | [Release Notes](8.0.0-preview1.md) |
