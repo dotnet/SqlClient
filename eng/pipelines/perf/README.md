@@ -29,6 +29,10 @@ parameters, invocation counts, and setup/cleanup still select and execute the sa
 `AsyncHealthDiagnoser` requests one extra diagnostic iteration per marked case: normal iterations
 collect timing results without probes or a grace-period delay, and only the extra iteration
 collects an async-health window. Memory and threading diagnosers remain enabled.
+Their extra-iteration counters can include observer allocations, probe callbacks and runtime
+activity. They are not observer-free workload allocation or work-item counts. For example,
+`ProbeOnly` sleeps the dedicated benchmark thread but still reports the observer's completed
+ThreadPool probes. Normal timing iterations remain unobserved.
 Diagnostic-iteration durations are not performance measurements. No measurement-mode flag,
 environment variable or pipeline parameter is required.
 
@@ -194,8 +198,9 @@ artifact collection. The separate health report includes all three delay distrib
 resource-sample coverage, and sampled completed-work-item, allocation-byte and Gen2-collection
 deltas. Sampled deltas span the first through last resource samples inside the workload,
 not exact invocation boundaries, and include observer/runtime activity. Missing historical
-counters remain unavailable, not zero. Raw timelines remain in the JSON sidecars. Normal
-BenchmarkDotNet timing, memory and threading reports are unchanged.
+counters remain unavailable, not zero. Raw timelines remain in the JSON sidecars.
+BenchmarkDotNet timing, memory and threading reports are retained alongside the health report;
+the extra-iteration attribution caveat above applies to memory and threading counters.
 
 A current-only run executes each enabled unit once and makes no baseline comparison.
 Add `--baseline-exe-dir`
