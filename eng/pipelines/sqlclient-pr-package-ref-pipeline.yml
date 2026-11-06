@@ -39,6 +39,7 @@ pr:
       - .config/*
       - doc/*
       - eng/pipelines/*
+      - eng/scripts/*
       - src/*
       - tools/*
       - azurepipelines-coverage.yml
@@ -47,6 +48,8 @@ pr:
       - dotnet-tools.json
       - global.json
       - NuGet.config
+      - PowerShell.config
+      - powershell-modules.json
     exclude:
       - eng/pipelines/ci/*
       - eng/pipelines/onebranch/*

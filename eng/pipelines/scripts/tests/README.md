@@ -1,21 +1,28 @@
 # Pipeline Script Tests
 
-Pester tests for the PowerShell helpers under `eng/pipelines/scripts/`.
+Pester tests for pipeline helpers and build orchestration.
 
 ## Prerequisites
 
-These tests require **PowerShell 7+** and **Pester v5 or later**.
+Restore the pinned PowerShell tool and Pester module from the governed feed.
 The Docker bottle tests run only in an Intel (x64) process.
 
-```powershell
-Install-Module Pester -MinimumVersion 5.0 -Scope CurrentUser -Force -SkipPublisherCheck
+Run from the repository root:
+
+```console
+dotnet tool restore
+dotnet build build.proj -t:RestorePowerShellModules --no-restore
 ```
+
+See [PowerShell module setup](../../../../BUILDGUIDE.md#powershell-modules) for feed details.
 
 ## Running the tests
 
 ```powershell
-Import-Module Pester -MinimumVersion 5.0
-Invoke-Pester ./eng/pipelines/scripts/tests/
+dotnet tool run pwsh -- -NoProfile -Command '
+    Import-Module Pester
+    Invoke-Pester ./eng/pipelines/scripts/tests/ -CI
+'
 ```
 
 Add `-Output Detailed` to see per-test results.
@@ -24,7 +31,8 @@ Add `-Output Detailed` to see per-test results.
 
 | File | Covers |
 | ---- | ------ |
+| `Build-Orchestration.Tests.ps1` | Explicit module restore, tool exit propagation, and release-branch pipeline wiring. |
 | `Install-DockerCli.macos.Tests.ps1` | `Install-DockerCli.macos.ps1` — Homebrew bottle selection for the macOS docker CLI. |
 
-`tar`, `Invoke-RestMethod` and `Invoke-WebRequest` are mocked, so the
-tests never touch the network or a real repository.
+`tar`, `Invoke-RestMethod` and `Invoke-WebRequest` are mocked, and module restore
+uses a stub `dotnet` command, so the tests never install modules or access the network.

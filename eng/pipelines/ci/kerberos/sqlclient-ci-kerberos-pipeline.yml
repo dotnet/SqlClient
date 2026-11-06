@@ -224,6 +224,8 @@ stages:
             parameters:
               runtimes: [8.x, 9.x]
 
+          - template: /eng/pipelines/common/templates/steps/restore-powershell-modules-step.yml@self
+
           # --- Update test configuration (with Kerberos credentials) ---
           - pwsh: |
               $jdata = Get-Content -Raw "config.default.json" | ConvertFrom-Json
@@ -253,7 +255,6 @@ stages:
 
           # --- Verify SQL connectivity ---
           - pwsh: |
-              Install-Module -Name SqlServer -Force -Confirm:$false
               Import-Module SqlServer
               Invoke-Sqlcmd -Query "SELECT @@VERSION, @@SERVERNAME" -ConnectionString $env:REMOTE_TCP_CONN_STRING
             displayName: Verify SQL connectivity
