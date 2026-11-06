@@ -4,16 +4,28 @@ Pester tests for the PowerShell helpers under `eng/pipelines/scripts/`.
 
 ## Prerequisites
 
-These tests require **Pester v5 or later**:
+Restore the pinned PowerShell tool and module versions from the repository root:
 
-```powershell
-Install-Module Pester -MinimumVersion 5.0 -Scope CurrentUser -Force -SkipPublisherCheck
+```console
+dotnet tool restore
+dotnet build build.proj -t:RestorePowerShellModules
 ```
+
+The target restores `powershell-modules.json` from the anonymous public SqlClient feed in
+`PowerShell.config`; see [module setup](../../../../BUILDGUIDE.md#powershell-modules).
 
 ## Running the tests
 
+Run from the repository root:
+
+```console
+dotnet tool run pwsh -- -NoProfile
+```
+
+In that PowerShell session:
+
 ```powershell
-Import-Module Pester -MinimumVersion 5.0
+Import-Module Pester
 Invoke-Pester ./eng/pipelines/scripts/tests/
 ```
 
@@ -23,6 +35,7 @@ Add `-Output Detailed` to see per-test results.
 
 | File | Covers |
 | ---- | ------ |
+| `Build-Orchestration.Tests.ps1` | Explicit root/standalone PowerShell module restore, failure propagation, and pipeline prerequisite ordering. |
 | `Open-LocalizationPr.Tests.ps1` | `Open-LocalizationPr.ps1` — de-duplication of the scheduled localization pull request. |
 | `Install-DockerCli.macos.Tests.ps1` | `Install-DockerCli.macos.ps1` — Homebrew bottle selection for the macOS docker CLI. |
 

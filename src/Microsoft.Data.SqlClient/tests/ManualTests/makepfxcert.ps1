@@ -45,11 +45,6 @@ function Invoke-SqlServerCertificateCommand {
     # Create a self-signed certificate
     if ($OS -eq "Unix") {
         chmod 777 $OutDir
-        # Install OpenSSL module if not already installed
-        if (-not (Get-Module -ListAvailable -Name OpenSSL))
-        {
-            Install-Module -Name OpenSSL -Repository PSGallery -Force
-        }
         # Show version of OpenSSL just to make sure it is installed
         openssl version
 
