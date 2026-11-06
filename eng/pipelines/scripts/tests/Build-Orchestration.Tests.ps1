@@ -12,6 +12,17 @@ BeforeAll {
 }
 
 Describe 'PowerShell module restore wiring' {
+    It 'validates manifest-only changes in the <Reference> PR pipeline' -ForEach @(
+        @{ Reference = 'project' }
+        @{ Reference = 'package' }
+    ) {
+        $pipeline = Get-Content `
+            (Join-Path $repoRoot "eng/pipelines/dotnet-sqlclient-ci-$Reference-reference-pipeline.yml") -Raw
+        $prIncludes = [regex]::Match($pipeline, '(?s)pr:.*?paths:\s+include:(.*?)exclude:').Groups[1].Value
+        $prIncludes | Should -Match '(?m)^\s+- PowerShell\.config\s*$'
+        $prIncludes | Should -Match '(?m)^\s+- powershell-modules\.json\s*$'
+    }
+
     It 'exposes restore without adding it to ordinary driver build dependencies' {
         [xml] $build = Get-Content (Join-Path $repoRoot 'build.proj') -Raw
         @($build.Project.Import.Project) | Should -Contain `

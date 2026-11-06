@@ -8,7 +8,7 @@ These tests require **PowerShell 7.4 or later**. Restore the pinned modules from
 the repository root:
 
 ```console
-dotnet build build.proj -t:RestorePowerShellModules
+dotnet build build.proj -t:RestorePowerShellModules --no-restore
 ```
 
 The target restores `powershell-modules.json` from the anonymous public SqlClient feed in

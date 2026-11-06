@@ -40,7 +40,7 @@ Before using scripts or tests that need PowerShell modules, install PowerShell 7
 (including its bundled PSResourceGet module), then run from the repository root:
 
 ```console
-dotnet build build.proj -t:RestorePowerShellModules
+dotnet build build.proj -t:RestorePowerShellModules --no-restore
 ```
 
 Add or update exact versions in [`powershell-modules.json`](powershell-modules.json).
