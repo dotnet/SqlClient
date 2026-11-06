@@ -4,6 +4,7 @@
 
 using System;
 using System.Data;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
@@ -124,13 +125,8 @@ namespace Microsoft.Data.SqlClient
                             }
                             else if (readTask.IsFaulted)
                             {
-                                reader.Dispose();
-                                s_diagnosticListener.WriteCommandError(
-                                    operationId,
-                                    this,
-                                    _transaction,
-                                    readTask.Exception.InnerException);
-                                source.SetException(readTask.Exception.InnerException);
+                                source.SetException(CloseScalarReaderOnError(
+                                    reader, readTask.Exception.InnerException, operationId));
                             }
                             else
                             {
@@ -142,12 +138,19 @@ namespace Microsoft.Data.SqlClient
                                 }
                                 finally
                                 {
-                                    reader.Dispose();
+                                    try
+                                    {
+                                        reader.Dispose();
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        exception = e;
+                                    }
                                 }
 
                                 if (exception is not null)
                                 {
-                                    s_diagnosticListener.WriteCommandError(operationId, this, _transaction, exception);
+                                    WriteScalarError(operationId, exception);
                                     source.SetException(exception);
                                 }
                                 else
@@ -176,11 +179,40 @@ namespace Microsoft.Data.SqlClient
 
         #region Private Methods
 
-        private static object CompleteExecuteScalar(SqlDataReader reader, bool returnLastResult)
+        private void WriteScalarError(Guid operationId, Exception exception,
+            [CallerMemberName] string operation = "")
         {
-            object result = null;
             try
             {
+                s_diagnosticListener.WriteCommandError(operationId, this, _transaction, exception, operation);
+            }
+            catch (Exception diagnosticException) when (
+                !ADP.IsCatchableExceptionType(exception) && ADP.IsCatchableExceptionType(diagnosticException))
+            {
+                ADP.TraceExceptionWithoutRethrow(diagnosticException);
+            }
+        }
+
+        private Exception CloseScalarReaderOnError(SqlDataReader reader, Exception exception, Guid operationId,
+            [CallerMemberName] string operation = "")
+        {
+            try
+            {
+                BestEffortCleanup.RunCleanup(reader.Dispose, exception);
+            }
+            catch (Exception cleanupException) when (ADP.IsCatchableExceptionType(cleanupException))
+            {
+                exception = cleanupException;
+            }
+            WriteScalarError(operationId, exception, operation);
+            return exception;
+        }
+
+        private static object CompleteExecuteScalar(SqlDataReader reader, bool returnLastResult)
+        {
+            return BestEffortCleanup.Run(() =>
+            {
+                object result = null;
                 do
                 {
                     if (reader.Read() && reader.FieldCount > 0)
@@ -193,14 +225,8 @@ namespace Microsoft.Data.SqlClient
                 // before returning the result (fix for GH issue #3736).
                 while (reader.NextResult())
                 { }
-            }
-            finally
-            {
-                // Clean off the wire
-                reader.Close();
-            }
-
-            return result;
+                return result;
+            }, reader.Close);
         }
 
         private async Task<object> ExecuteScalarUntilEndAsync(
@@ -285,15 +311,8 @@ namespace Microsoft.Data.SqlClient
                             }
                             else if (readTask.IsFaulted)
                             {
-                                reader.Dispose();
-
-                                s_diagnosticListener.WriteCommandError(
-                                    operationId,
-                                    this,
-                                    _transaction,
-                                    readTask.Exception.InnerException);
-
-                                source.SetException(readTask.Exception.InnerException);
+                                source.SetException(CloseScalarReaderOnError(
+                                    reader, readTask.Exception.InnerException, operationId));
                             }
                             else
                             {
@@ -301,33 +320,29 @@ namespace Microsoft.Data.SqlClient
                                 object result = null;
                                 try
                                 {
-                                    bool more = readTask.Result;
-                                    if (more && reader.FieldCount > 0)
+                                    result = await BestEffortCleanup.RunAsync(async () =>
                                     {
-                                        try
+                                        object value = null;
+                                        bool more = readTask.Result;
+                                        if (more && reader.FieldCount > 0)
                                         {
-                                            result = reader.GetValue(0);
+                                            value = reader.GetValue(0);
                                         }
-                                        catch (Exception e)
-                                        {
-                                            // @TODO: Yeah, this code doesn't understand how finally blocks work.
-                                            exception = e;
-                                        }
-                                    }
 
-                                    // Drain remaining results to ensure all error tokens are processed
-                                    // before returning the result (fix for GH issue #3736).
-                                    while (await reader.NextResultAsync(cancellationToken).ConfigureAwait(false))
-                                    { }
+                                        // Drain remaining results to process all error tokens (GH #3736).
+                                        while (await reader.NextResultAsync(cancellationToken).ConfigureAwait(false))
+                                        { }
+                                        return value;
+                                    }, reader.Dispose).ConfigureAwait(false);
                                 }
-                                finally
+                                catch (Exception e)
                                 {
-                                    reader.Dispose();
+                                    exception = e;
                                 }
 
                                 if (exception is not null)
                                 {
-                                    s_diagnosticListener.WriteCommandError(operationId, this, _transaction, exception);
+                                    WriteScalarError(operationId, exception);
 
                                     source.SetException(exception);
                                 }
