@@ -249,10 +249,30 @@ For a bounded PR-pipeline run, select `platform=windows`, `currentOnly=true`,
 Current-only suppresses source-baseline checkout and tagging without claiming a candidate-vs-main
 verdict. Only cases carrying `[AsyncHealthDiagnoser]` emit health sidecars; choosing a workload config
 does not attach the diagnoser to additional cases.
-It keeps the existing `SqlConnection` parameter matrix with short one-invocation windows and the
-existing `ConnectionPoolContention` matrix with a predeclared 100-invocation steady-state batch.
-Both use two actual iterations and one warmup. No cold/stateful benchmark is automatically retried to
-manufacture coverage; extra observations require an explicit `DiagnosticRuns` setting.
+It keeps the existing `SqlConnection` and `ParallelAsyncConnection` parameter matrices with short
+one-invocation windows and the existing `ConnectionPoolContention` matrix with a predeclared
+100-invocation steady-state batch. All use two actual iterations and one warmup.
+The config explicitly selects three diagnostic runs per tagged case; additional passes rerun the
+normal lifecycle only for tagged cases and do not replace the first pass's timing exports.
+
+| Workload | Tagged method | Cases | Invocations per iteration |
+|---|---|---:|---:|
+| Single open, pooling/MARS on and off | `OpenAsyncConnection` | 4 | 1 |
+| Concurrent opens, 10/50/100 callers, pooling on and off | `OpenConnectionsConcurrently` | 6 | 1 |
+| Steady-state open/query/close, 50 workers, five pool capacities | `SteadyStateOpenQueryCloseAsync` | 5 | 100 |
+
+This produces **45 diagnostic windows across 15 async cases** and **29 first-pass timing cases**.
+The 14 synchronous cases remain timing-only controls. Only these three methods are newly tagged;
+OpenAsync calls in fixture setup or unrelated benchmarks do not opt those cases into diagnosis.
+The concurrent runner still clears pools after each iteration, and contention still warms its
+pool before each iteration. A contention invocation is 50 workers times 20 open/`SELECT 1`/close
+operations; its diagnostic batch therefore performs 100,000 such operations, not one OpenAsync.
+Single and concurrent opens are not padded or multiplied to manufacture coverage. Their short
+windows can legitimately report `Insufficient` with N/A percentiles even when the SQL work succeeds.
+Interpret them using coverage, duration, probe counts, and the available resource observations.
+The normal timing measures the original workload without the separate observer iteration; observer
+overhead can dominate a short diagnostic window. Do not compare these three workload shapes as if
+they did equal work, or interpret repetitions in the shared process as independent fresh processes.
 The shell entry points accept `-RunnerConfigFile` / `--runner-config-file` as a filename
 under `PerformanceTests`; the default remains the existing `runnerconfig.jsonc`.
 

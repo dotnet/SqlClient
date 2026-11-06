@@ -35,6 +35,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         }
 
         [Benchmark]
+        [AsyncHealthDiagnoser]
         public async Task OpenConnectionsConcurrently()
         {
             var tasks = new Task[Concurrency];

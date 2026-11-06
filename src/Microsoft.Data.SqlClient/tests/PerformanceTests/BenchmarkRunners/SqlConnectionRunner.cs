@@ -32,6 +32,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         }
 
         [Benchmark]
+        [AsyncHealthDiagnoser]
         public async Task OpenAsyncConnection()
         {
             await using var sqlConnection = new SqlConnection(s_config.ConnectionString + $";Pooling={Pooling};MultipleActiveResultSets={MARS}");

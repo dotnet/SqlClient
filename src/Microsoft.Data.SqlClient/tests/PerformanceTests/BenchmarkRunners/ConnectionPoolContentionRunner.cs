@@ -178,6 +178,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         }
 
         [Benchmark]
+        [AsyncHealthDiagnoser]
         public Task SteadyStateOpenQueryCloseAsync()
         {
             var tasks = new Task[Parallelism];

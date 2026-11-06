@@ -690,6 +690,39 @@ class AsyncHealthTests(unittest.TestCase):
         self.assertEqual(pr.count("eq(parameters.currentOnly, false)"), 3)
 
     @unittest.skipUnless(os.environ.get("PERF_HEALTH_TEST_BINARY"), "Set PERF_HEALTH_TEST_BINARY for real BDN lifecycle smoke")
+    def test_openasync_benchmarks_opt_into_diagnoser_validation(self):
+        """SQL-backed async cases reject incompatible diagnosis before attempting database work."""
+        binary = Path(os.environ["PERF_HEALTH_TEST_BINARY"]).resolve()
+        cases = (
+            ("SqlConnection", "SqlConnectionRunner", "OpenAsyncConnection"),
+            ("ParallelAsyncConnection", "ParallelAsyncConnectionRunner", "OpenConnectionsConcurrently"),
+            ("ConnectionPoolContention", "ConnectionPoolContentionRunner", "SteadyStateOpenQueryCloseAsync"),
+        )
+        for unit, runner, method in cases:
+            with self.subTest(method=method), tempfile.TemporaryDirectory() as root:
+                # Arrange
+                config = Path(root, "runner.json")
+                config.write_text(json.dumps(dict(
+                    ConnectionString="not-a-valid-connection-string",
+                    AsyncHealth=dict(DiagnosticRuns=3),
+                    Benchmarks={f"{runner}Config": dict(
+                        Enabled=True, LaunchCount=2, IterationCount=1, InvocationCount=1,
+                        WarmupCount=0, RunStrategy="Monitoring")})))
+                env = dict(os.environ, RUNNER_CONFIG=str(config), PERF_BENCHMARK=unit,
+                           DATATYPES_CONFIG=str(binary.parent / "datatypes.json"))
+                env.pop("PERF_LIST_BENCHMARKS", None)
+
+                # Act
+                output = subprocess.run(
+                    ["dotnet", str(binary), "--filter", f"*{runner}.{method}"],
+                    cwd=root, env=env, text=True, capture_output=True, timeout=60)
+
+                # Assert
+                self.assertNotEqual(output.returncode, 0)
+                self.assertIn("Async-health requires one launch", output.stdout + output.stderr)
+                self.assertFalse(list(Path(root).rglob("async-health-*.json")))
+
+    @unittest.skipUnless(os.environ.get("PERF_HEALTH_TEST_BINARY"), "Set PERF_HEALTH_TEST_BINARY for real BDN lifecycle smoke")
     def test_real_calibration_cases_complete_equal_work(self):
         """All scheduling controls complete the same wait budget without normalizing elapsed time."""
         # Arrange

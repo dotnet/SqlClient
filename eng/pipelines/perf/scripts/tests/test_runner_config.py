@@ -197,6 +197,30 @@ prepare_runner_config || exit 6
         # Assert
         self.assertNotIn("ConnectionString", config)
 
+    def test_connection_smoke_preserves_openasync_diagnostic_plan(self):
+        """Both shell entrypoints retain three repetitions and the declared open/steady-state batches."""
+        # Arrange
+        path = (SCRIPTS.parents[3] / "src" / "Microsoft.Data.SqlClient" / "tests" /
+                "PerformanceTests" / "runnerconfig.connection-smoke.jsonc")
+        text = "\n".join(line for line in path.read_text().splitlines()
+                         if not line.lstrip().startswith("//"))
+        config = json.loads(text)
+
+        # Act
+        for shell in ("bash", "pwsh"):
+            with self.subTest(shell=shell):
+                self.check_config(shell, "", config_file=path.name, source_config=config)
+
+        # Assert
+        self.assertEqual(config["AsyncHealth"]["DiagnosticRuns"], 3)
+        jobs = config["Benchmarks"]
+        self.assertEqual(set(jobs), {
+            "SqlConnectionRunnerConfig", "ParallelAsyncConnectionRunnerConfig",
+            "ConnectionPoolContentionRunnerConfig"})
+        self.assertEqual(jobs["SqlConnectionRunnerConfig"]["InvocationCount"], 1)
+        self.assertEqual(jobs["ParallelAsyncConnectionRunnerConfig"]["InvocationCount"], 1)
+        self.assertEqual(jobs["ConnectionPoolContentionRunnerConfig"]["InvocationCount"], 100)
+
     def test_powershell_local_endpoint_classification(self):
         """Only loopback or local-interface addresses qualify for Windows authentication."""
         executable = os.environ.get("PWSH") or shutil.which("pwsh")
