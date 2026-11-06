@@ -33,6 +33,9 @@ Add `-Output Detailed` to see per-test results.
 | ---- | ------ |
 | `Build-Orchestration.Tests.ps1` | Explicit module restore, tool exit propagation, and release-branch pipeline wiring. |
 | `Install-DockerCli.macos.Tests.ps1` | `Install-DockerCli.macos.ps1` — Homebrew bottle selection for the macOS docker CLI. |
+| `Kerberos-Configuration.Tests.ps1` | Executes Windows and Linux config generation with placeholders; checks Kerberos markers, SNI selection, connection strings, and unchanged defaults. |
 
 `tar`, `Invoke-RestMethod` and `Invoke-WebRequest` are mocked, and module restore
 uses a stub `dotnet` command, so the tests never install modules or access the network.
+Kerberos configuration tests use temporary files and placeholder environment variables only,
+restore the environment afterward, and require no domain credentials or SQL Server.

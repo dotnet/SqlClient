@@ -135,6 +135,7 @@ stages:
           # Uses runtime variables from the matrix ($(managedSNI)) so we use
           # inline PowerShell instead of the shared config template which
           # requires compile-time parameters.
+          # Kerberos markers enable the existing environment-specific test guards on Windows too.
           - pwsh: |
               $managedSni = [System.Convert]::ToBoolean($env:MANAGED_SNI)
               $jdata = Get-Content -Raw "config.default.json" | ConvertFrom-Json
@@ -144,6 +145,8 @@ stages:
                   $p.SupportsIntegratedSecurity = $true
                   $p.UseManagedSNIOnWindows    = $managedSni
               }
+              $jdata | Add-Member -NotePropertyName "KerberosDomainUser"     -NotePropertyValue $env:KERBEROS_DOMAIN_USER     -Force
+              $jdata | Add-Member -NotePropertyName "KerberosDomainPassword" -NotePropertyValue $env:KERBEROS_DOMAIN_PASSWORD -Force
               $jdata | ConvertTo-Json | Set-Content "config.json"
             workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities
             displayName: Update test config.json
@@ -151,6 +154,8 @@ stages:
               REMOTE_TCP_CONN_STRING: $(REMOTE_TCP_CONN_STRING)
               REMOTE_NP_CONN_STRING: $(REMOTE_NP_CONN_STRING)
               MANAGED_SNI: $(managedSNI)
+              KERBEROS_DOMAIN_USER: $(KerberosDomainUser)
+              KERBEROS_DOMAIN_PASSWORD: $(KerberosDomainPassword)
 
           # --- Prepare Windows services ---
           - powershell: |
