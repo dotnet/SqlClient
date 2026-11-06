@@ -607,10 +607,10 @@
     <value>'{0}' の認証プロバイダーが見つかりません。</value>
   </data>
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
-    <value>Cannot find an authentication provider for '{0}'. Register a provider with SqlAuthenticationProvider.SetProvider, or use a compatible 'Microsoft.Data.SqlClient.Extensions.Azure' NuGet package with automatic discovery enabled. Automatic discovery is unavailable when disabled at publish time. Trimmed JIT applications require preserved reflection contracts; NativeAOT applications should disable reflective bootstrap paths at publish time and register providers explicitly. Check Microsoft.Data.SqlClient.EventSource traces (Informational level, Trace keyword 0x2) for configuration or Azure extension loading failures.</value>
+    <value>'{0}' の認証プロバイダーが見つかりません。SqlAuthenticationProvider.SetProvider を使用してプロバイダーを登録するか、自動検出を有効にした互換性のある 'Microsoft.Data.SqlClient.Extensions.Azure' NuGet パッケージを使用してください。発行時に自動検出を無効にすると、自動検出は使用できません。トリミングされた JIT アプリケーションでは、リフレクション コントラクトを保持する必要があります。NativeAOT アプリケーションでは、発行時にリフレクションによるブートストラップ パスを無効にし、プロバイダーを明示的に登録する必要があります。Microsoft.Data.SqlClient.EventSource のトレース (情報レベル、トレース キーワード 0x2) を確認し、構成または Azure 拡張機能の読み込みに関するエラーを調べてください。</value>
   </data>
   <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>Setting 'useWamBroker' requires the 'Microsoft.Data.SqlClient.Extensions.Azure' package to expose 'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions'. Upgrade the 'Microsoft.Data.SqlClient.Extensions.Azure' package to at least v7.0.2 that includes this type.</value>
+    <value>'useWamBroker' を設定するには、'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions' を公開する 'Microsoft.Data.SqlClient.Extensions.Azure' パッケージが必要です。この型を含む v7.0.2 以降の 'Microsoft.Data.SqlClient.Extensions.Azure' パッケージにアップグレードしてください。</value>
   </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>パラメーター '{0}' を null や空にすることはできません。</value>
@@ -1906,7 +1906,7 @@
     <value>サーバーが回復の試行を認めませんでした。接続を回復できません。</value>
   </data>
   <data name="DbConnectionString_VectorTypeSupport" xml:space="preserve">
-    <value>The level of vector type support to negotiate with the server.</value>
+    <value>サーバーとネゴシエートするベクター型サポートのレベル。</value>
   </data>
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>接続プールのためのブロック期間ビヘイビアーを定義します。</value>
