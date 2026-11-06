@@ -1239,7 +1239,9 @@ namespace Microsoft.Data.SqlClient.Parser
         {
             lock (this)
             {
-                if (_cancelled && 1 == _outputPacketNumber)
+                // Only abandon the request locally if none of it was sent. Use the non-wrapping
+                // packet count, because the one-byte packet number is 1 again after 256 packets.
+                if (_cancelled && _outputPacketCount == 0)
                 {
                     ResetBuffer();
                     _cancelled = false;

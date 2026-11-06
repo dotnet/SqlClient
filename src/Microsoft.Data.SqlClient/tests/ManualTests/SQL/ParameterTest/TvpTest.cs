@@ -16,6 +16,8 @@ using System.Globalization;
 using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.SqlClient.Server;
+using Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals;
+using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 using Xunit;
 using System.Linq;
 
@@ -141,6 +143,193 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 Assert.Fail($"Unexpected error occurred: {e.Message}");
             }
+        }
+
+        /// <summary>
+        /// Number of packets sent before the streamed TVP row source fails. The packet being
+        /// filled at that point has the wrapped one-byte TDS packet number 1.
+        /// </summary>
+        private const uint WrappedPacketCount = 256;
+
+        /// <summary>
+        /// A synchronous command whose streamed TVP row source throws while the 257th packet is
+        /// being filled must surface the row source's exception and leave the connection usable.
+        /// </summary>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        public void ExecuteNonQuery_StreamedTvpThrowsInWrappedPacket_ConnectionRemainsUsable()
+        {
+            // Arrange
+            using SqlConnection setupConnection = DataTestUtility.CreateConnection();
+            using UserDefinedType tableType = CreateStreamedTvpType(setupConnection);
+            using SqlConnection connection = OpenSmallPacketConnection();
+            StreamedTvpRowSource rows = new(
+                connection,
+                WrappedPacketCount,
+                () => throw new InvalidOperationException(StreamedTvpFailureMessage));
+            using SqlCommand command = CreateStreamedTvpCommand(connection, tableType, rows);
+
+            // Act
+            InvalidOperationException exception =
+                Assert.Throws<InvalidOperationException>(() => command.ExecuteNonQuery());
+
+            // Assert
+            Assert.Equal(StreamedTvpFailureMessage, exception.Message);
+            Assert.True(rows.PacketCountReached);
+            AssertConnectionUsable(connection);
+        }
+
+        /// <summary>
+        /// An asynchronous command whose streamed TVP row source throws while the 257th packet is
+        /// being filled must surface the row source's exception and leave the connection usable.
+        /// </summary>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        public async Task ExecuteNonQueryAsync_StreamedTvpThrowsInWrappedPacket_ConnectionRemainsUsable()
+        {
+            // Arrange
+            using SqlConnection setupConnection = DataTestUtility.CreateConnection();
+            using UserDefinedType tableType = CreateStreamedTvpType(setupConnection);
+            using SqlConnection connection = OpenSmallPacketConnection();
+            StreamedTvpRowSource rows = new(
+                connection,
+                WrappedPacketCount,
+                () => throw new InvalidOperationException(StreamedTvpFailureMessage));
+            using SqlCommand command = CreateStreamedTvpCommand(connection, tableType, rows);
+
+            // Act
+            InvalidOperationException exception = await Assert.ThrowsAsync<InvalidOperationException>(
+                () => command.ExecuteNonQueryAsync());
+
+            // Assert
+            Assert.Equal(StreamedTvpFailureMessage, exception.Message);
+            Assert.True(rows.PacketCountReached);
+            AssertConnectionUsable(connection);
+        }
+
+        /// <summary>
+        /// A command cancelled while its streamed TVP is filling the 257th packet must leave the
+        /// connection usable, because part of the request was already sent to the server.
+        /// </summary>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        public void ExecuteNonQuery_StreamedTvpCancelledInWrappedPacket_ConnectionRemainsUsable()
+        {
+            // Arrange
+            using SqlConnection setupConnection = DataTestUtility.CreateConnection();
+            using UserDefinedType tableType = CreateStreamedTvpType(setupConnection);
+            using SqlConnection connection = OpenSmallPacketConnection();
+            SqlCommand command = null;
+            StreamedTvpRowSource rows = new(connection, WrappedPacketCount, () => command.Cancel());
+            command = CreateStreamedTvpCommand(connection, tableType, rows);
+
+            // Act
+            Exception exception = Record.Exception(() => command.ExecuteNonQuery());
+
+            // Assert
+            Assert.True(rows.PacketCountReached);
+            Assert.True(
+                exception is null || exception is SqlException,
+                $"Unexpected exception: {exception}");
+            AssertConnectionUsable(connection);
+
+            // Cleanup
+            command.Dispose();
+        }
+
+        private const string StreamedTvpFailureMessage = "Streamed TVP row source failed.";
+
+        /// <summary>Creates the table type used by the streamed TVP tests.</summary>
+        private static UserDefinedType CreateStreamedTvpType(SqlConnection connection) =>
+            new(connection, "StreamedTvp", "TABLE (Id int NOT NULL, Flag bit NOT NULL)");
+
+        /// <summary>Creates a command that streams <paramref name="rows"/> as a TVP.</summary>
+        private static SqlCommand CreateStreamedTvpCommand(
+            SqlConnection connection,
+            UserDefinedType tableType,
+            IEnumerable<SqlDataRecord> rows)
+        {
+            SqlCommand command = new("SELECT COUNT(*) FROM @rows", connection);
+            command.Parameters.Add(new SqlParameter("@rows", SqlDbType.Structured)
+            {
+                TypeName = tableType.Name,
+                Value = rows
+            });
+            return command;
+        }
+
+        /// <summary>
+        /// Opens a connection with the smallest packet size, so that the wrapped packet number is
+        /// reached after little data. Larger requests can delay the server's attention
+        /// acknowledgement beyond the driver's fixed attention timeout.
+        /// </summary>
+        private static SqlConnection OpenSmallPacketConnection()
+        {
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
+            {
+                PacketSize = 512
+            };
+            SqlConnection connection = new(builder.ConnectionString);
+            connection.Open();
+            return connection;
+        }
+        /// <summary>
+        /// Verifies that the next request on <paramref name="connection"/> is not treated as part
+        /// of an unfinished earlier request.
+        /// </summary>
+        private static void AssertConnectionUsable(SqlConnection connection)
+        {
+            Assert.Equal(ConnectionState.Open, connection.State);
+            using SqlCommand followUp = new("SELECT 1", connection);
+            Assert.Equal(1, followUp.ExecuteScalar());
+        }
+
+        /// <summary>
+        /// Streams (int, bit) rows and invokes a callback once the connection has sent the
+        /// requested number of packets for the current request. If the callback returns, a few
+        /// more rows are streamed and the sequence ends.
+        /// </summary>
+        private sealed class StreamedTvpRowSource : IEnumerable<SqlDataRecord>
+        {
+            private static readonly SqlMetaData[] s_metaData =
+            {
+                new("Id", SqlDbType.Int),
+                new("Flag", SqlDbType.Bit)
+            };
+
+            private readonly SqlConnection _connection;
+            private readonly uint _packetCount;
+            private readonly Action _onPacketCountReached;
+
+            internal StreamedTvpRowSource(
+                SqlConnection connection,
+                uint packetCount,
+                Action onPacketCountReached)
+            {
+                _connection = connection;
+                _packetCount = packetCount;
+                _onPacketCountReached = onPacketCountReached;
+            }
+
+            /// <summary>Whether the requested packet count was reached.</summary>
+            internal bool PacketCountReached { get; private set; }
+
+            public IEnumerator<SqlDataRecord> GetEnumerator()
+            {
+                int remainingRows = 10;
+                for (int row = 0; !PacketCountReached || remainingRows-- > 0; row++)
+                {
+                    if (!PacketCountReached && _connection.GetOutputPacketCount() >= _packetCount)
+                    {
+                        PacketCountReached = true;
+                        _onPacketCountReached();
+                    }
+
+                    SqlDataRecord record = new(s_metaData);
+                    record.SetInt32(0, row);
+                    record.SetBoolean(1, row % 2 == 0);
+                    yield return record;
+                }
+            }
+
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         }
 
         private class Item
