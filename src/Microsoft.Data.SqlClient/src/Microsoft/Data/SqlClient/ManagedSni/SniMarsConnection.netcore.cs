@@ -37,6 +37,10 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         public SslProtocols ProtocolVersion => _lowerHandle.ProtocolVersion;
 
+        public int? NegotiatedCipherSuite => _lowerHandle.NegotiatedCipherSuite;
+
+        public Connection.ServerCertificateCapture ServerCertificateCapture => _lowerHandle.ServerCertificateCapture;
+
         internal object DemuxerSync => _sync;
 
         /// <summary>
