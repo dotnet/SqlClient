@@ -31,7 +31,10 @@ if ($sources.Count -ne 1 -or
 $sourceLocation = $sources[0].GetAttribute('sourceLocation')
 # Older PSResourceGet versions bundled with PowerShell 7.4 have no automatic credential provider.
 $credentialProviderParameters = @{}
-if ((Get-Command Register-PSResourceRepository -ErrorAction Stop).Parameters.ContainsKey('CredentialProvider')) {
+# CredentialProvider is dynamic and requires the repository URI to discover it.
+$registerCommand = Get-Command Register-PSResourceRepository `
+    -ArgumentList $RepositoryName, $sourceLocation -ErrorAction Stop
+if ($registerCommand.Parameters.ContainsKey('CredentialProvider')) {
     $credentialProviderParameters.CredentialProvider = 'None'
 }
 

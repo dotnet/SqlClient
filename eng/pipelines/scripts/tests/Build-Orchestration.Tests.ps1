@@ -11,6 +11,52 @@ BeforeAll {
     $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../../..')).Path
 }
 
+Describe 'PowerShell repository dynamic parameter binding' {
+    BeforeAll {
+        function Get-PSResourceRepository {
+            [CmdletBinding()]
+            param()
+        }
+
+        function Register-PSResourceRepository {
+            [CmdletBinding()]
+            param(
+                [Parameter(Position = 0)]
+                [string] $Name,
+                [Parameter(Position = 1)]
+                [uri] $Uri,
+                [switch] $Trusted
+            )
+
+            dynamicparam {
+                $parameters = [System.Management.Automation.RuntimeDefinedParameterDictionary]::new()
+                if ($Uri) {
+                    $attributes = [System.Collections.ObjectModel.Collection[System.Attribute]]::new()
+                    $attributes.Add([System.Management.Automation.ParameterAttribute]::new())
+                    $parameter = [System.Management.Automation.RuntimeDefinedParameter]::new(
+                        'CredentialProvider', [string], $attributes)
+                    $parameters.Add('CredentialProvider', $parameter)
+                }
+
+                $parameters
+            }
+
+            process {
+                if ($PSBoundParameters.CredentialProvider -ne 'None') {
+                    throw 'Anonymous registration must explicitly disable the credential provider.'
+                }
+            }
+        }
+    }
+
+    It 'binds Name and Uri before discovering the dynamic CredentialProvider parameter' {
+        $result = @(& (Join-Path $repoRoot 'eng/scripts/Register-SqlClientPowerShellRepository.ps1') `
+            -RepositoryName SqlClient)
+        $result.Count | Should -Be 1
+        $result[0] | Should -Be 'SqlClient'
+    }
+}
+
 Describe 'PowerShell module restore wiring' {
     It 'validates manifest-only changes in the <Reference> PR pipeline' -ForEach @(
         @{ Reference = 'project' }
