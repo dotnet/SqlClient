@@ -555,6 +555,12 @@ namespace Microsoft.Data.SqlClient
             sqlParam.Direction = ParameterDirection.Input;
 
             SetUpRPCParameters(rpc, inSchema: false, _parameters);
+            _pendingParameterByteCapacities = new int[_parameters.Count];
+            for (int i = 0; i < _parameters.Count; i++)
+            {
+                _pendingParameterByteCapacities[i] = GetAnsiParameterByteCapacity(
+                    _parameters[i], _stateObj.Parser);
+            }
             return rpc;
         }
 
@@ -779,6 +785,9 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
+            // OnReturnValue clears _inPrepare even when preparation returns a null handle.
+            // A committed capacity snapshot distinguishes a valid handle from failed preparation.
+            bool wasInPrepare = _inPrepare;
             if (runBehavior is RunBehavior.UntilDone)
             {
                 try
@@ -801,12 +810,14 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (ADP.IsCatchableExceptionType(e))
                     {
-                        if (_inPrepare)
+                        if (wasInPrepare && _preparedParameterByteCapacities == null)
                         {
-                            // The flag is expected to be reset by OnReturnValue. We should receive
-                            // the handle unless command execution failed. If it fails, move back
-                            // to pending state.
+                            // Preparation failed without returning a handle. A returned handle and
+                            // its capacity snapshot remain reusable after an execution error.
                             _inPrepare = false;                  // reset the flag
+                            _prepareHandle = s_cachedInvalidPrepareHandle;
+                            _preparedParameterByteCapacities = null;
+                            _pendingParameterByteCapacities = null;
                             IsDirty = true;                      // mark command as dirty so it will be
                                                                  // prepared next time we're coming through
                             _execType = EXECTYPE.PREPAREPENDING; // reset execution type to pending
@@ -868,12 +879,14 @@ namespace Microsoft.Data.SqlClient
                 }
                 catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                 {
-                    if (_inPrepare)
+                    if (wasInPrepare && _preparedParameterByteCapacities == null)
                     {
-                        // The flag is expected to be reset by OnReturnValue. We should receive
-                        // the handle unless command execution failed. If it fails, move back
-                        // to pending state.
+                        // Preparation failed without returning a handle. A returned handle and
+                        // its capacity snapshot remain reusable after an execution error.
                         _inPrepare = false;                  // reset the flag
+                        _prepareHandle = s_cachedInvalidPrepareHandle;
+                        _preparedParameterByteCapacities = null;
+                        _pendingParameterByteCapacities = null;
                         IsDirty = true;                      // mark command as dirty so it will be prepared next time we're coming through
                         _execType = EXECTYPE.PREPAREPENDING; // reset execution type to pending
                     }
@@ -1449,6 +1462,11 @@ namespace Microsoft.Data.SqlClient
                 else if (CommandType is CommandType.Text)
                 {
                     // @TODO: Execute as RPC (or text with parameters)
+                    if (_execType is EXECTYPE.PREPARED && !IsDirty &&
+                        PreparedParametersRequireReprepare())
+                    {
+                        IsDirty = true;
+                    }
                     if (IsDirty)
                     {
                         // Can have cached metadata if dirty because of parameters
