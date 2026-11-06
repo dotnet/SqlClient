@@ -35,7 +35,7 @@ Before using scripts or tests that need PowerShell modules, run from the reposit
 
 ```console
 dotnet tool restore
-dotnet build build.proj -t:RestorePowerShellModules
+dotnet build build.proj -t:RestorePowerShellModules --no-restore
 ```
 
 Add or update resource versions in [`powershell-modules.json`](powershell-modules.json).
@@ -50,6 +50,7 @@ Restore and consumption must use the same user. Consumers import modules normall
 the manifest pins installation, not runtime resolution. Run restore explicitly after
 manifest changes or on a new machine/user. It does not build the driver, run tests,
 or install OS-level tools.
+The `--no-restore` option skips the release branch's implicit driver NuGet restore.
 
 The shared test job and Linux Kerberos job run the same restore after SDK installation through
 `eng/pipelines/common/templates/steps/restore-powershell-modules-step.yml`:

@@ -11,7 +11,7 @@ Run from the repository root:
 
 ```console
 dotnet tool restore
-dotnet build build.proj -t:RestorePowerShellModules
+dotnet build build.proj -t:RestorePowerShellModules --no-restore
 ```
 
 See [PowerShell module setup](../../../../BUILDGUIDE.md#powershell-modules) for feed details.

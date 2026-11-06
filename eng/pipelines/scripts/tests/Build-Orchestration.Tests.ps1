@@ -36,7 +36,7 @@ Describe 'PowerShell module restore orchestration' {
     ) {
         Push-Location $TestDrive
         try {
-            $output = & $dotnet msbuild (Join-Path $repoRoot $Project) -nologo -v:normal `
+            $output = & $dotnet build (Join-Path $repoRoot $Project) --no-restore -nologo -v:normal `
                 -t:RestorePowerShellModules "-p:DotnetPath=$stubDirectory/" 2>&1
             $LASTEXITCODE | Should -Be 0 -Because ($output -join "`n")
         }
