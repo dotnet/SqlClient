@@ -7,6 +7,11 @@
 # This template emulates the `tree` command on any OS that has pwsh
 
 parameters:
+  # Optional, condition in which the step executes. Defaults to succeeded() if not provided.
+  - name: condition
+    type: string
+    default: succeeded()
+
   # Optional, display name for the tree command
   - name: displayName
     type: string
@@ -34,3 +39,4 @@ steps:
 
       Show-Tree -Path '${{ parameters.path }}'
     displayName: ${{ parameters.displayName }}
+    condition: ${{ parameters.condition }}

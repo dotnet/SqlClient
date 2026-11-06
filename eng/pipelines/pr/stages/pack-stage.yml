@@ -138,7 +138,7 @@ stages:
           # 3) Log the build output
 
           # 3a) Emit the build output
-          - template: /eng/pipelines/common/templates/steps/output-tree-step.yml@self
+          - template: /eng/pipelines/common/steps/output-tree-step.yml@self
             parameters:
               condition: succeededOrFailed()
 
