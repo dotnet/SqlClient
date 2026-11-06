@@ -35,6 +35,23 @@ namespace Microsoft.Data.SqlClient
         [ThreadStatic]
         private static Dictionary<Type, SqlUdtInfo> s_types2UdtInfo;
 
+        /// <summary>
+        /// Finds the UDT attribute on a type or its base types, matching connection serialization.
+        /// </summary>
+        internal static SqlUdtInfo TryGetFromTypeOrBase(Type target)
+        {
+            for (Type type = target; type != null; type = type.BaseType)
+            {
+                SqlUdtInfo info = TryGetFromType(type);
+                if (info != null)
+                {
+                    return info;
+                }
+            }
+
+            return null;
+        }
+
         internal static SqlUdtInfo TryGetFromType(Type target)
         {
             if (s_types2UdtInfo == null)
