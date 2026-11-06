@@ -607,10 +607,10 @@
     <value>Non è possibile trovare un provider di autenticazione per '{0}'.</value>
   </data>
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
-    <value>Non è possibile trovare un provider di autenticazione per '{0}'. Installare il pacchetto NuGet 'Microsoft.Data.SqlClient.Extensions.Azure' (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure) per usare i metodi di autenticazione di Active Directory (Entra ID).</value>
+    <value>Cannot find an authentication provider for '{0}'. Register a provider with SqlAuthenticationProvider.SetProvider, or use a compatible 'Microsoft.Data.SqlClient.Extensions.Azure' NuGet package with automatic discovery enabled. Automatic discovery is unavailable when disabled at publish time. Trimmed JIT applications require preserved reflection contracts; NativeAOT applications should disable reflective bootstrap paths at publish time and register providers explicitly. Check Microsoft.Data.SqlClient.EventSource traces (Informational level, Trace keyword 0x2) for configuration or Azure extension loading failures.</value>
   </data>
   <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>L'impostazione ''useWamBroker'' richiede che il pacchetto ''Microsoft.Data.SqlClient.Extensions.Azure'' esponga ''Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions''. Aggiorna il pacchetto ''Microsoft.Data.SqlClient.Extensions.Azure'' almeno alla versione 1.1.0, che include questo tipo.</value>
+    <value>Setting 'useWamBroker' requires the 'Microsoft.Data.SqlClient.Extensions.Azure' package to expose 'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions'. Upgrade the 'Microsoft.Data.SqlClient.Extensions.Azure' package to at least v7.0.2 that includes this type.</value>
   </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>Il parametro '{0}' non può essere Null o vuoto.</value>
@@ -1906,7 +1906,7 @@
     <value>Tentativo di ripristino non riconosciuto dal server. Impossibile eseguire il ripristino della connessione.</value>
   </data>
   <data name="DbConnectionString_VectorTypeSupport" xml:space="preserve">
-    <value>The level of vector type support to negotiate with the server.</value>
+    <value>Livello di supporto del tipo di vettore da negoziare con il server.</value>
   </data>
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>Consente di definire il comportamento del periodo di blocco per un pool di connessioni.</value>

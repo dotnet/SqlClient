@@ -84,6 +84,8 @@ jobs:
 
       - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
 
+      - template: /eng/pipelines/common/steps/restore-powershell-modules.yml@self
+
       - task: NuGetAuthenticate@1
         displayName: Authenticate NuGet feeds
 

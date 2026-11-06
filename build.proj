@@ -7,6 +7,7 @@
   <!-- Imports ========================================================= -->
   <Import Project="src/Directory.Build.props" />
   <Import Project="tools/targets/ValidateReferenceType.targets" />
+  <Import Project="tools/targets/RestorePowerShellModules.targets" />
 
   <!-- Build Parameters ================================================ -->
   <!-- @TODO: Add a Help target that lists targets and these descriptions of the parameters -->

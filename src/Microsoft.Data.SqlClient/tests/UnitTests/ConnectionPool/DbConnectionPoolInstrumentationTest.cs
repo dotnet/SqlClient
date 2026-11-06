@@ -258,11 +258,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             Assert.NotNull(oldConnection);
 
             // Act
-            DbConnectionInternal newConnection = pool.ReplaceConnection(owner, oldConnection!, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)));
+            DbConnectionInternal? newConnection = pool.ReplaceConnection(owner, oldConnection!, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)));
 
             // Assert - two physical connections were opened and one was retired. The caller still
             // holds exactly one connection, so the soft connect for the replacement is balanced by
             // a soft disconnect for the connection it displaced.
+            Assert.NotNull(newConnection);
             Assert.NotSame(oldConnection, newConnection);
             AssertCounters(
                 metrics,

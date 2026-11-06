@@ -100,6 +100,16 @@ DbConnectionPoolGroup
 
 ## Pool Health
 
+### Pool Group Pruning
+
+An empty inventory is not necessarily an idle pool: physical creation and queued
+acquisitions may not yet appear in `Count`. Both implementations use `PoolPruningGuard`
+to serialize request admission with `TryPrune` retirement. Async admission remains
+held until the worker exits, even if the caller cancels. Background creation and
+replacement must participate too. Explicit `Clear`/`Shutdown` remain independent
+and may retire pools with admitted work; do not replace this guard with a count-only
+check or hold its lock across network operations.
+
 ### Connection Validation
 - Connections validated before reuse
 - Broken connections removed automatically

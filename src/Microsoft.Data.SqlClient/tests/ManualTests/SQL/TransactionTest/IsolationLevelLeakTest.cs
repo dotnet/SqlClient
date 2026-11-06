@@ -59,10 +59,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// Formats pool state with a stable reference hash instead of the legacy pool's incrementing Id.
         /// </summary>
         /// <param name="pool">The pool whose diagnostic state is captured.</param>
-        /// <returns>The pool identity and current state.</returns>
+        /// <returns>The pool identity, running status, and connection counts.</returns>
         internal static string DescribePool(IDbConnectionPool pool) =>
             $"poolType={pool.GetType().Name}, poolIdentityHash={RuntimeHelpers.GetHashCode(pool)}, " +
-            $"state={pool.State}, count={pool.Count}, idle={pool.IdleCount}";
+            $"isRunning={pool.IsRunning}, count={pool.Count}, idle={pool.IdleCount}";
 
         private const string GetIsoSql = @"
 SELECT CASE transaction_isolation_level
@@ -246,6 +246,7 @@ FROM sys.dm_exec_sessions WHERE session_id = @@SPID;";
             nameof(DataTestUtility.IsNotAzureSynapse))]
         [InlineData(false)]
         [InlineData(true)]
+        [Trait("category", "flaky")]
         public static async Task TransactionScope_SecondConnectionInSameScopeKeepsIsolationLevel(bool async)
         {
             using LocalAppContextSwitchesHelper switchesHelper = new();

@@ -31,6 +31,7 @@ setup() {
   export MERGE_COMMIT_SHA="abc123def456"
   export PR_NUMBER="42"
   export PR_TITLE="Fix connection timeout"
+  export PR_AUTHOR="original-author"
   export GH_TOKEN="fake-token"
   export GITHUB_REPOSITORY="dotnet/SqlClient"
   export GITHUB_OUTPUT="$(mktemp)"
@@ -109,6 +110,25 @@ STUB
   [[ "$output" == *"PR_TITLE"* ]]
 }
 
+@test "fails when PR_AUTHOR is unset" {
+  unset PR_AUTHOR
+  run bash "${SCRIPT}"
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"PR_AUTHOR"* ]]
+}
+
+@test "fails when PR_AUTHOR is empty" {
+  export PR_AUTHOR=""
+  run bash "${SCRIPT}"
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"PR_AUTHOR"* ]]
+}
+
+@test "workflow passes the original PR author to the script" {
+  grep -Fq 'PR_AUTHOR: ${{ github.event.pull_request.user.login }}' \
+    .github/workflows/cherry-pick-hotfix.yml
+}
+
 @test "fails when GITHUB_REPOSITORY is unset" {
   unset GITHUB_REPOSITORY
   run bash "${SCRIPT}"
@@ -140,6 +160,8 @@ STUB
   grep -q "GIT: fetch origin release/7.0" "${STUB_DIR}/git.log"
   # Milestone lookup must use GET to avoid accidentally POSTing to the create endpoint.
   grep "GH: api repos/dotnet/SqlClient/milestones" "${STUB_DIR}/gh.log" | grep -q "\-\-method GET"
+  # The original author owns the backport, not the workflow actor.
+  grep "GH: pr create" "${STUB_DIR}/gh.log" | grep -q -- "--assignee original-author"
 }
 
 @test "derives release/8.0 from version 8.0.0" {
@@ -295,6 +317,9 @@ STUB
   grep -q "GIT: cherry-pick --abort" "${STUB_DIR}/git.log"
   # Should have created an empty commit.
   grep -q "GIT: commit --allow-empty" "${STUB_DIR}/git.log"
+  # Conflict drafts are also assigned to the original author for resolution.
+  grep "GH: pr create --draft" "${STUB_DIR}/gh.log" \
+    | grep -q -- "--assignee original-author"
 }
 
 @test "conflict PR body contains real newlines, not literal backslash-n" {
