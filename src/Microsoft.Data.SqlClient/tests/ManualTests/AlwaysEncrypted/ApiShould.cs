@@ -2632,6 +2632,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             return session;
         }
 
+        /// <summary>
+        /// Sync and async enclave queries must retry stale cached sessions, including retryable
+        /// package-generation failures on warmed metadata cache entries in debug builds.
+        /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.EnclaveEnabled))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestRetryWhenAEEnclaveCacheIsStale(string connectionString)
@@ -2692,21 +2696,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Task readAsyncTask = ReadAsync(cmd, values, CommandBehavior.Default);
             readAsyncTask.GetAwaiter().GetResult();
 
-            // TODO(GH-3604): This section fails on Linux:
-            //
-            // Failed Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.ApiShould.TestRetryWhenAEEnclaveCacheIsStale(connectionString: "Data Source=tcp:10.0.0.4;Database=NORTHWIND;UID=sa"···) [45 s]
-            // EXEC : error Message:  [/mnt/vss/_work/1/s/build.proj]
-            //     Microsoft.Data.SqlClient.EnclaveDelegate+RetryableEnclaveQueryExecutionException : testing
-            //     Stack Trace:
-            //     at Microsoft.Data.SqlClient.SqlCommand.EndExecuteReaderAsync(IAsyncResult asyncResult) in /_/src/Microsoft.Data.SqlClient/netcore/src/Microsoft/Data/SqlClient/SqlCommand.netcore.cs:line 1025
-            //     at Microsoft.Data.SqlClient.SqlCommand.<>c.<InternalExecuteReaderAsync>b__233_1(IAsyncResult asyncResult) in /_/src/Microsoft.Data.SqlClient/netcore/src/Microsoft/Data/SqlClient/SqlCommand.netcore.cs:line 1569
-            //     at System.Threading.Tasks.TaskFactory`1.FromAsyncCoreLogic(IAsyncResult iar, Func`2 endFunction, Action`1 endAction, Task`1 promise, Boolean requiresSynchronization)
-            // --- End of stack trace from previous location ---
-            //     at Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.ApiShould.ReadAsync(SqlCommand sqlCommand, IList`1 values, CommandBehavior commandBehavior) in /_/src/Microsoft.Data.SqlClient/tests/ManualTests/AlwaysEncrypted/ApiShould.cs:line 2776
-            //     at Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.ApiShould.TestRetryWhenAEEnclaveCacheIsStale(String connectionString) in /_/src/Microsoft.Data.SqlClient/tests/ManualTests/AlwaysEncrypted/ApiShould.cs:line 2563
-            //     at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
-            //     at System.Reflection.MethodBaseInvoker.InvokeDirectByRefWithFewArgs(Object obj, Span`1 copyOfArgs, BindingFlags invokeAttr)
-            /*
 #if DEBUG
             CommandHelper.ForceThrowDuringGenerateEnclavePackage(cmd);
 
@@ -2726,7 +2715,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Task readAsyncTask2 = ReadAsync(cmd, values, CommandBehavior.Default);
             readAsyncTask2.GetAwaiter().GetResult();
 #endif
-            */
 
             // revert the CEK change to the CustomerId column
             cmd.Parameters.Clear();
