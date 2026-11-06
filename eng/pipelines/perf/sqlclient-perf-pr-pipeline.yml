@@ -34,7 +34,10 @@ parameters:
     displayName: Workload configuration
     type: string
     default: runnerconfig.jsonc
-    values: [runnerconfig.jsonc, runnerconfig.connection-smoke.jsonc]
+    values:
+      - runnerconfig.jsonc
+      - runnerconfig.connection-smoke.jsonc
+      - runnerconfig.async-calibration.jsonc
 
   - name: currentOnly
     displayName: Current only (no baseline or comparison verdict)
