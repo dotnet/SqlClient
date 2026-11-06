@@ -52,6 +52,20 @@ Test targets build the projects they depend on, so a separate build step is not 
 
 ## Test Targets
 
+Before manual tests or their certificate setup, explicitly restore PowerShell modules
+from the repository root:
+
+```console
+dotnet tool restore
+dotnet build build.proj -t:RestorePowerShellModules --no-restore
+```
+
+This restores all versions in `powershell-modules.json` for the current user and reuses
+matching installed versions. Test targets do not install modules automatically.
+The [Unix certificate script](src/Microsoft.Data.SqlClient/tests/ManualTests/makepfxcert.ps1)
+calls the native `openssl` CLI; ensure it is available on `PATH` before certificate tests.
+See [PowerShell module setup](BUILDGUIDE.md#powershell-modules) for feed and pipeline details.
+
 | Target                    | Description                                                                                                              |
 |---------------------------|--------------------------------------------------------------------------------------------------------------------------|
 | `Test`                    | Runs all test targets in the repository. This can take a long time and is not recommended for routine local development. |
