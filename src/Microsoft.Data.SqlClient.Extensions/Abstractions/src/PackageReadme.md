@@ -40,6 +40,14 @@ failure. Fatal bootstrap failures propagate without being cached by the registry
 continues, a later access can retry bootstrap and repeat earlier side effects. Register an application
 provider as a workaround for a recoverable failure, or correct the cause and restart the application.
 
+Authentication configuration, activation and registration exception messages use this package's
+resources. Messages without a satellite translation fall back to neutral English. Standard
+framework exceptions retain their framework-provided messages.
+
+Recoverable resource lookup or formatting failures fall back to the resource key and
+culture-formatted argument values, identifying unformattable arguments by type and preserving
+the original exception cause. Fatal runtime errors propagate instead of being masked.
+
 Applications retain app.config loading and automatic Azure discovery when enabled. These switches
 default to `true` and are cached independently on first access for the lifetime of the process:
 
