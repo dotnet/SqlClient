@@ -36,6 +36,70 @@ BeforeAll {
 }
 
 Describe 'validate-localization.ps1' {
+    It 'accepts JSON comments in the <Owner> allowlist' -ForEach @(
+        @{ Owner = 'SqlClient' }
+        @{ Owner = 'Abstractions' }
+    ) {
+        $resources = New-ResourcesDirectory
+        Set-ResourceFile (Join-Path $resources 'Strings.resx') @{ Greeting = 'Hello' }
+        Set-ResourceFile (Join-Path $resources 'Strings.fr.resx') @{ Greeting = 'Hello' }
+        $allowlist = Join-Path $resources 'allowlist.jsonc'
+        @'
+{
+  // Approved English matches, isolated by resource owner.
+  "SqlClient": { "Strings.fr.resx": ["Greeting"] },
+  /* Abstractions has an independent set of approved matches. */
+  "Abstractions": { "Strings.fr.resx": ["Greeting"] }
+}
+'@ | Set-Content -LiteralPath $allowlist
+
+        { & $scriptPath -ResourcesDirectory $resources -AllowlistPath $allowlist `
+            -AllowlistSection $Owner } | Should -Not -Throw
+    }
+
+    It 'selects an independent allowlist for a second resource assembly' {
+        $resources = New-ResourcesDirectory
+        Set-ResourceFile (Join-Path $resources 'Strings.resx') @{ Greeting = 'Hello' }
+        Set-ResourceFile (Join-Path $resources 'Strings.fr.resx') @{ Greeting = 'Bonjour' }
+        $allowlist = Join-Path $resources 'allowlist.json'
+        @{
+            SqlClient = @{ 'Strings.fr.resx' = @('UnrelatedDriverKey') }
+            Abstractions = @{}
+        } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $allowlist
+        { & $scriptPath -ResourcesDirectory $resources -AllowlistPath $allowlist `
+            -AllowlistSection Abstractions } | Should -Not -Throw
+        { & $scriptPath -ResourcesDirectory $resources -AllowlistPath $allowlist `
+            -AllowlistSection SqlClient } |
+            Should -Throw '*Localization validation failed with 1 error*'
+    }
+
+    It 'rejects a missing resource-set allowlist section rather than borrowing another assembly allowlist' {
+        $resources = New-ResourcesDirectory
+        Set-ResourceFile (Join-Path $resources 'Strings.resx') @{ Greeting = 'Hello' }
+        Set-ResourceFile (Join-Path $resources 'Strings.fr.resx') @{ Greeting = 'Bonjour' }
+        $allowlist = Join-Path $resources 'allowlist.json'
+        @{ SqlClient = @{} } | ConvertTo-Json | Set-Content -LiteralPath $allowlist
+        { & $scriptPath -ResourcesDirectory $resources -AllowlistPath $allowlist `
+            -AllowlistSection Abstractions } |
+            Should -Throw "*must define 'Abstractions'*"
+    }
+
+    It 'honors an English-match exception only in the selected resource-set section' {
+        $resources = New-ResourcesDirectory
+        Set-ResourceFile (Join-Path $resources 'Strings.resx') @{ Greeting = 'Hello' }
+        Set-ResourceFile (Join-Path $resources 'Strings.fr.resx') @{ Greeting = 'Hello' }
+        $allowlist = Join-Path $resources 'allowlist.json'
+        @{
+            SqlClient = @{}
+            Abstractions = @{ 'Strings.fr.resx' = @('Greeting') }
+        } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $allowlist
+
+        { & $scriptPath -ResourcesDirectory $resources -AllowlistPath $allowlist `
+            -AllowlistSection Abstractions } | Should -Not -Throw
+        { & $scriptPath -ResourcesDirectory $resources -AllowlistPath $allowlist } |
+            Should -Throw '*Localization validation failed with 1 error*'
+    }
+
     It 'accepts complete localized files with translated values' {
         $resources = New-ResourcesDirectory
         Set-ResourceFile (Join-Path $resources 'Strings.resx') @{ Greeting = 'Hello'; Farewell = 'Goodbye' }
@@ -105,7 +169,7 @@ Describe 'validate-localization.ps1' {
         $allowlist = Join-Path $resources 'allowlist.json'
         Set-ResourceFile (Join-Path $resources 'Strings.resx') @{ Greeting = 'Hello' }
         Set-ResourceFile (Join-Path $resources 'Strings.fr.resx') @{ Greeting = 'Hello' }
-        @{ AllowedEnglishValueMatches = @{ 'Strings.fr.resx' = @('Greeting') } } |
+        @{ SqlClient = @{ 'Strings.fr.resx' = @('Greeting') } } |
             ConvertTo-Json -Depth 5 |
             Set-Content -LiteralPath $allowlist
 
@@ -118,7 +182,7 @@ Describe 'validate-localization.ps1' {
         $allowlist = Join-Path $resources 'allowlist.json'
         Set-ResourceFile (Join-Path $resources 'Strings.resx') @{ Greeting = 'Hello'; Farewell = 'Goodbye' }
         Set-ResourceFile (Join-Path $resources 'Strings.fr.resx') @{ Greeting = 'Bonjour' }
-        @{ AllowedEnglishValueMatches = @{ 'Strings.fr.resx' = @('Farewell') } } |
+        @{ SqlClient = @{ 'Strings.fr.resx' = @('Farewell') } } |
             ConvertTo-Json -Depth 5 |
             Set-Content -LiteralPath $allowlist
 
@@ -131,7 +195,7 @@ Describe 'validate-localization.ps1' {
         $allowlist = Join-Path $resources 'allowlist.json'
         Set-ResourceFile (Join-Path $resources 'Strings.resx') @{ Greeting = 'Hello' }
         Set-ResourceFile (Join-Path $resources 'Strings.fr.resx') @{ Greeting = 'Bonjour' }
-        @{ AllowedEnglishValueMatches = @{ 'Strings.fr.resx' = @('Unknown') } } |
+        @{ SqlClient = @{ 'Strings.fr.resx' = @('Unknown') } } |
             ConvertTo-Json -Depth 5 |
             Set-Content -LiteralPath $allowlist
 
@@ -145,7 +209,7 @@ Describe 'validate-localization.ps1' {
         Set-ResourceFile (Join-Path $resources 'Strings.resx') @{ Greeting = 'Hello' }
         Set-ResourceFile (Join-Path $resources 'Strings.de.resx') @{ Greeting = 'Hello' }
         Set-ResourceFile (Join-Path $resources 'Strings.fr.resx') @{ Greeting = 'Hello' }
-        @{ AllowedEnglishValueMatches = @{ 'Strings.de.resx' = @('Greeting') } } |
+        @{ SqlClient = @{ 'Strings.de.resx' = @('Greeting') } } |
             ConvertTo-Json -Depth 5 |
             Set-Content -LiteralPath $allowlist
 
@@ -167,7 +231,7 @@ Describe 'validate-localization.ps1' {
         $allowlist = Join-Path $resources 'allowlist.json'
         Set-ResourceFile (Join-Path $resources 'Strings.resx') @{ Greeting = 'Hello' }
         Set-ResourceFile (Join-Path $resources 'Strings.fr.resx') @{ Greeting = 'Bonjour' }
-        @{ AllowedEnglishValueMatches = @{ 'Strings.fr.resx' = @('Greeting') } } |
+        @{ SqlClient = @{ 'Strings.fr.resx' = @('Greeting') } } |
             ConvertTo-Json -Depth 5 |
             Set-Content -LiteralPath $allowlist
 
@@ -180,7 +244,7 @@ Describe 'validate-localization.ps1' {
         $allowlist = Join-Path $resources 'allowlist.json'
         Set-ResourceFile (Join-Path $resources 'Strings.resx') @{ Unused = '' }
         Set-ResourceFile (Join-Path $resources 'Strings.fr.resx') @{ Unused = '' }
-        @{ AllowedEnglishValueMatches = @{ 'Strings.fr.resx' = @('Unused') } } |
+        @{ SqlClient = @{ 'Strings.fr.resx' = @('Unused') } } |
             ConvertTo-Json -Depth 5 |
             Set-Content -LiteralPath $allowlist
 
