@@ -3328,6 +3328,11 @@ namespace Microsoft.Data.SqlClient
 
                         // deprecated
                         case TdsEnums.SQLALTROW:
+                            if (_altMetaDataSetCollection == null)
+                            {
+                                _parser.ThrowCorruptedTdsStream();
+                            }
+
                             if (_altRowStatus == ALTROWSTATUS.Null)
                             {
                                 // cache the regular metadata
@@ -3585,6 +3590,11 @@ namespace Microsoft.Data.SqlClient
                             switch (_altRowStatus)
                             {
                                 case ALTROWSTATUS.AltRow:
+                                    if (_altMetaDataSetCollection == null)
+                                    {
+                                        _parser.ThrowCorruptedTdsStream();
+                                    }
+
                                     int altRowId;
                                     result = _parser.TryGetAltRowId(_stateObj, out altRowId);
                                     if (result != TdsOperationStatus.Done)
@@ -3593,11 +3603,11 @@ namespace Microsoft.Data.SqlClient
                                         return result;
                                     }
                                     TdsColumnMetadataToken altMetaDataSet = _altMetaDataSetCollection.GetAltMetadata(altRowId);
-                                    if (altMetaDataSet != null)
+                                    if (altMetaDataSet == null)
                                     {
-                                        _metaData = altMetaDataSet;
+                                        _parser.ThrowCorruptedTdsStream();
                                     }
-                                    Debug.Assert((_metaData != null), "Can't match up altrowmetadata");
+                                    _metaData = altMetaDataSet;
                                     break;
                                 case ALTROWSTATUS.Done:
                                     // restore the row-metaData
