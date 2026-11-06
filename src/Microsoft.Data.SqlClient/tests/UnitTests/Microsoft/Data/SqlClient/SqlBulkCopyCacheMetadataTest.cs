@@ -131,6 +131,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Null(bulkCopy.CachedMetadata);
         }
 
+        /// <summary>Verifies alias capability independently of the catalog metadata requirement.</summary>
         [Theory]
         [InlineData(false, false, true)]
         [InlineData(false, true, true)]
@@ -138,13 +139,18 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [InlineData(true, true, true)]
         public void IsCachedMetadataValid_DependsOnOperationAndCachedAliasResolution(bool resolveAliases, bool cachedMetadataResolveAliases, bool expected)
         {
+            // Arrange
             using SqlBulkCopy bulkCopy = new(new SqlConnection(), SqlBulkCopyOptions.CacheMetadata, null);
 
-            SetCachedMetadata(bulkCopy, new BulkCopySimpleResultSet());
+            SetCachedMetadata(bulkCopy, new BulkCopySimpleResultSet { UsesCatalogMetadata = true });
             SetCachedMetadataResolveAliases(bulkCopy, cachedMetadataResolveAliases);
             SetResolveColumnAliases(bulkCopy, resolveAliases);
 
-            Assert.Equal(expected, bulkCopy.IsCachedMetadataValid());
+            // Act
+            bool result = bulkCopy.IsCachedMetadataValid();
+
+            // Assert
+            Assert.Equal(expected, result);
         }
 
         [Fact]

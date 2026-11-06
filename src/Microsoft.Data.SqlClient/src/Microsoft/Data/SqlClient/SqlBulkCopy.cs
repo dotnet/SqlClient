@@ -86,6 +86,8 @@ namespace Microsoft.Data.SqlClient
 
         internal int Count => _results.Count;
 
+        internal bool UsesCatalogMetadata { get; set; }
+
         internal Result this[int idx] => _results[idx];
 
         // Callback function for the tdsparser
@@ -157,8 +159,8 @@ namespace Microsoft.Data.SqlClient
             public readonly bool IsDataFeed;
         }
 
-        // The initial query will return four result sets, but the column aliases result set will
-        // be empty when not required.
+        // The initial query returns three result sets, plus a fourth column aliases result set
+        // only when the column mappings reference SQL Graph pseudo-columns.
         // Transaction count has only one value in one column and one row
         // MetaData has n columns but no rows
         // Collation has 4 columns and n rows
@@ -440,7 +442,7 @@ namespace Microsoft.Data.SqlClient
         private bool IsCopyOption(SqlBulkCopyOptions copyOption) => ((_copyOptions & copyOption) == copyOption);
 
         //Creates the initial query string, but does not execute it.
-        private string CreateInitialQuery()
+        internal string CreateInitialQuery(bool? useCatalog = null)
         {
             string[] parts;
             try
@@ -488,9 +490,28 @@ namespace Microsoft.Data.SqlClient
             }
 
             string objectName = ADP.BuildMultiPartName(parts);
+
+            useCatalog ??= UseCatalogMetadataForMappings();
+            if (!useCatalog.Value)
+            {
+                // Return only the visible columns without querying catalog views. Hidden columns
+                // and SQL Graph aliases are not discoverable.
+                return $"""
+SELECT @@TRANCOUNT;
+SET FMTONLY ON;
+SELECT * FROM {objectName};
+SET FMTONLY OFF;
+EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
+""";
+            }
+
             string escapedObjectName = SqlServerEscapeHelper.EscapeStringAsLiteral(objectName);
             string catalogNameStringLiteral = CatalogName is null ? null : SqlServerEscapeHelper.EscapeStringAsLiteral(CatalogName);
-            string createColumnAliasesTableQuery = """
+
+            // The column aliases temp table is only needed when mappings reference SQL Graph
+            // aliases. Skipping it otherwise avoids tempdb DDL and recompiles on every call.
+            string createColumnAliasesTableQuery = _localColumnMappingsResolveAliases
+                ? """
 
 CREATE TABLE #Column_Aliases
 (
@@ -498,7 +519,8 @@ CREATE TABLE #Column_Aliases
     [Canonical_Column_Id] INT,
     [Aliased_Column_Name] SYSNAME
 )
-""";
+"""
+                : string.Empty;
             string populateColumnAliasesQuery = _localColumnMappingsResolveAliases
                 ? $"""
 
@@ -521,14 +543,16 @@ CREATE TABLE #Column_Aliases
     WHERE [Aliased_Column_Name] IN (SELECT [name] FROM {CatalogName}.[sys].[all_columns] WHERE [object_id] = @Object_ID)
 """
                 : string.Empty;
-            string selectColumnAliasesQuery = """
+            string selectColumnAliasesQuery = _localColumnMappingsResolveAliases
+                ? """
 
 SELECT [Canonical_Column_Name], [Aliased_Column_Name]
 FROM #Column_Aliases
 ORDER BY [Canonical_Column_Id] ASC
 
 DROP TABLE #Column_Aliases
-""";
+"""
+                : string.Empty;
             // Specify the column names explicitly. This is to ensure that we can map to hidden
             // columns (e.g. columns in temporal tables.) If the target table doesn't exist,
             // OBJECT_ID will return NULL and @Column_Names will remain non-null. The subsequent
@@ -632,14 +656,35 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
         // Creates and then executes initial query to get information about the target table
         private async Task<BulkCopySimpleResultSet> CreateAndExecuteInitialQueryAsync()
         {
-            // Check if we have valid cached metadata for the current destination table
+            BulkCopySimpleResultSet result;
             if (IsCachedMetadataValid())
             {
                 SqlClientEventSource.Log.TryTraceEvent("SqlBulkCopy.CreateAndExecuteInitialQueryAsync | Info | Using cached metadata for table '{0}'", _destinationTableName);
-                return CachedMetadata;
+                result = CachedMetadata;
+            }
+            else
+            {
+                bool useCatalog = UseCatalogMetadataForMappings();
+                result = await ExecuteInitialQueryAsync(useCatalog).ConfigureAwait(false);
             }
 
-            string TDSCommand = CreateInitialQuery();
+            if (!result.UsesCatalogMetadata
+                && ShouldUseCatalogMetadataFallback(result[MetaDataResultId].MetaData))
+            {
+                SqlClientEventSource.Log.TryTraceEvent(
+                    "SqlBulkCopy.CreateAndExecuteInitialQueryAsync | Info | " +
+                    "Retrying metadata discovery with catalog views for table '{0}' " +
+                    "because a destination column name was not found.", _destinationTableName);
+                result = await ExecuteInitialQueryAsync(useCatalog: true).ConfigureAwait(false);
+            }
+
+            CacheMetadataIfEnabled(result);
+            return result;
+        }
+
+        private async Task<BulkCopySimpleResultSet> ExecuteInitialQueryAsync(bool useCatalog)
+        {
+            string TDSCommand = CreateInitialQuery(useCatalog);
             SqlClientEventSource.Log.TryTraceEvent("SqlBulkCopy.CreateAndExecuteInitialQueryAsync | Info | Initial Query: '{0}'", TDSCommand);
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlBulkCopy.CreateAndExecuteInitialQueryAsync | Info | Correlation | Object Id {0}, Activity Id {1}", ObjectID, ActivityCorrelator.Current);
             Task executeTask = _parser.TdsExecuteSQLBatch(TDSCommand, BulkCopyTimeout, null, _stateObj, sync: !_isAsyncBulkCopy, callerHasConnectionLock: true);
@@ -650,26 +695,106 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                 await executeTask.ConfigureAwait(false);
             }
 
-            BulkCopySimpleResultSet result = new();
+            BulkCopySimpleResultSet result = new() { UsesCatalogMetadata = useCatalog };
             RunParser(result);
-            CacheMetadataIfEnabled(result);
             return result;
+        }
+
+        internal bool ShouldUseCatalogMetadataFallback(TdsColumnMetadataToken metadata)
+        {
+            if (LocalAppContextSwitches.UseBulkCopyCatalogMetadataDiscovery.HasValue
+                || UseCatalogMetadataForMappings())
+            {
+                return false;
+            }
+
+            for (int i = 0; i < _localColumnMappings.Count; i++)
+            {
+                SqlBulkCopyColumnMapping mapping = _localColumnMappings[i];
+                if (mapping._destinationColumnOrdinal >= 0)
+                {
+                    continue;
+                }
+
+                string destination = UnquotedName(mapping.DestinationColumn);
+                bool found = false;
+                for (int j = 0; j < metadata.Length; j++)
+                {
+                    if (metadata[j].column == destination)
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         internal bool IsCachedMetadataValid()
         {
+            bool? mode = LocalAppContextSwitches.UseBulkCopyCatalogMetadataDiscovery;
             return CachedMetadata != null
+                && (!mode.HasValue || CachedMetadata.UsesCatalogMetadata == mode.Value)
+                && (!UseCatalogMetadataForMappings() || CachedMetadata.UsesCatalogMetadata)
                 && (!_localColumnMappingsResolveAliases || _cachedMetadataResolveAliases);
+        }
+
+        private bool UseCatalogMetadataForMappings()
+        {
+            if (LocalAppContextSwitches.UseBulkCopyCatalogMetadataDiscovery is bool useCatalog)
+            {
+                return useCatalog;
+            }
+
+            SqlBulkCopyColumnMappingCollection mappings = _localColumnMappings ?? ColumnMappings;
+            if (_localColumnMappingsResolveAliases || mappings.Count == 0)
+            {
+                return true;
+            }
+
+            // SELECT * omits hidden columns, so its positions cannot preserve catalog ordinals.
+            for (int i = 0; i < mappings.Count; i++)
+            {
+                if (mappings[i]._destinationColumnOrdinal >= 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void CacheMetadataIfEnabled(BulkCopySimpleResultSet result)
         {
-            if (IsCopyOption(SqlBulkCopyOptions.CacheMetadata))
+            if (IsCopyOption(SqlBulkCopyOptions.CacheMetadata)
+                && !ReferenceEquals(CachedMetadata, result))
             {
                 CachedMetadata = result;
                 _cachedMetadataResolveAliases = _localColumnMappingsResolveAliases;
                 SqlClientEventSource.Log.TryTraceEvent("SqlBulkCopy.CacheMetadataIfEnabled | Info | Cached metadata for table '{0}'", _destinationTableName);
             }
+        }
+
+        internal static object GetColumnCollation(
+            Result collations, string columnName, ref int collationIndex)
+        {
+            // Both results follow column order, but SELECT * omits hidden columns.
+            while (collationIndex < collations.Count)
+            {
+                Row row = collations[collationIndex++];
+                if (((SqlString)row[1]).Value == columnName)
+                {
+                    return row[CollationId];
+                }
+            }
+
+            throw SQL.BulkLoadNoCollation();
         }
 
         // Matches associated columns with metadata from initial query.
@@ -722,8 +847,12 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
 
             // Apply any necessary column aliases. If an aliased name exists in the
             // local column mappings but the canonical name does not, update them.
-            Result columnAliasResults = internalResults[ColumnAliasesResultId];
-            for (int i = 0; i < columnAliasResults.Count; i++)
+            // The aliases result set is only returned when alias resolution was requested.
+            Result columnAliasResults = internalResults.Count > ColumnAliasesResultId
+                ? internalResults[ColumnAliasesResultId]
+                : null;
+            int columnAliasCount = columnAliasResults?.Count ?? 0;
+            for (int i = 0; i < columnAliasCount; i++)
             {
                 Row aliasRow = columnAliasResults[i];
                 SqlString canonicalName = (SqlString)aliasRow[ColumnCanonicalNameColumnId];
@@ -772,6 +901,8 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             // columns. metaDataSet is safe to mutate here — see the call site for clone logic.
             _operationMetaData = metaDataSet;
             _sortedColumnMappings = new List<_ColumnMapping>(metaDataSet.Length);
+            Result collations = internalResults[CollationResultId];
+            int collationIndex = 0;
             for (int i = 0; i < metaDataSet.Length; i++)
             {
                 TdsColumnMetadata metadata = metaDataSet[i];
@@ -931,9 +1062,9 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
                             }
                     }
 
-                    // Get collation for column i
-                    Result rowset = internalResults[CollationResultId];
-                    object rowvalue = rowset[i][CollationId];
+                    object rowvalue = collations.Count == metaDataSet.Length
+                        ? collations[i][CollationId]
+                        : GetColumnCollation(collations, metadata.column, ref collationIndex);
 
                     bool shouldSendCollation;
                     switch (metadata.DbType)
@@ -1874,9 +2005,11 @@ EXEC {CatalogName}..{TableCollationsStoredProc} N'{SchemaName}.{TableName}';
             _localColumnMappingsResolveAliases = false;
         }
 
-        private bool ShouldResolveColumnAliases()
+        internal bool ShouldResolveColumnAliases()
         {
-            if (_localColumnMappings is null)
+            // SQL Graph aliases are only resolved by catalog metadata discovery.
+            if (_localColumnMappings is null
+                || LocalAppContextSwitches.UseBulkCopyCatalogMetadataDiscovery == false)
             {
                 return false;
             }
