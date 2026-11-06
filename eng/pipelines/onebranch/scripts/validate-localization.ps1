@@ -6,14 +6,16 @@
     Directory containing the English and localized Strings.resx files.
 
 .PARAMETER AllowlistPath
-    Optional JSON file containing approved English-value matches grouped by localized filename.
+    Optional JSONC file containing approved English-value matches grouped by resource owner,
+    localized filename, and resource key.
 
 .PARAMETER ReportOnly
     Report validation findings as warnings without failing. Malformed or missing inputs still fail,
     because a run that could not examine the resources has produced no result to report.
 
 .PARAMETER AllowlistSection
-    Property containing the allowlist for the resource set being validated.
+    Resource owner containing the allowlist for the resource set being validated.
+    Defaults to SqlClient.
 #>
 
 # Licensed to the .NET Foundation under one or more agreements.
@@ -30,7 +32,7 @@ param(
 
     [switch]$ReportOnly,
 
-    [string]$AllowlistSection = 'AllowedEnglishValueMatches'
+    [string]$AllowlistSection = 'SqlClient'
 )
 
 Set-StrictMode -Version Latest

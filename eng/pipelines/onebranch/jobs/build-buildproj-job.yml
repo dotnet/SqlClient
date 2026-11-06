@@ -158,14 +158,14 @@ jobs:
         - template: /eng/pipelines/onebranch/steps/validate-localization-step.yml@self
           parameters:
             resourcesDirectory: src/Microsoft.Data.SqlClient/src/Resources
-            allowlistSection: AllowedEnglishValueMatches
+            allowlistSection: SqlClient
             failOnValidationError: ${{ parameters.failOnValidationError }}
 
       - ${{ if eq(parameters.packageShortName, 'Abstractions') }}:
         - template: /eng/pipelines/onebranch/steps/validate-localization-step.yml@self
           parameters:
             resourcesDirectory: src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Resources
-            allowlistSection: AbstractionsAllowedEnglishValueMatches
+            allowlistSection: Abstractions
             failOnValidationError: ${{ parameters.failOnValidationError }}
 
       # Validate the documentation snippet sources.  This requires no build, so a malformed
