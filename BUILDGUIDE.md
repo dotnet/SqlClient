@@ -27,7 +27,41 @@ This project should be built with Visual Studio 2019+ for the best compatibility
 
 - **Visual Studio 2019** with imported components: [VS19Components](/tools/vsconfig/VS19Components.vsconfig)
 
-- **Powershell**: To build SqlClient on Linux, powershell is needed as well. Follow the distro specific instructions at [Install Powershell on Linux](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-linux?view=powershell-7.4)
+- **PowerShell**: To build SqlClient on Linux, PowerShell is needed as well. Follow the distro specific instructions at [Install PowerShell on Linux](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell-on-linux?view=powershell-7.4).
+
+### PowerShell Modules
+
+Before using scripts or tests that need PowerShell modules, run from the repository root:
+
+```console
+dotnet tool restore
+dotnet build build.proj -t:RestorePowerShellModules
+```
+
+Add or update resource versions in [`powershell-modules.json`](powershell-modules.json).
+The target uses PSResourceGet from the pinned PowerShell local tool and the anonymous feed in
+[`PowerShell.config`](PowerShell.config). It reuses exact installed versions and installs
+missing resources for the current user, without clobbering existing commands or falling
+back to other sources. Automatic credential-provider selection is disabled for anonymous access.
+Use the restored tool for module setup: older system PowerShell versions can ship a
+PSResourceGet version without the required credential-provider option.
+
+Restore and consumption must use the same user. Consumers import modules normally;
+the manifest pins installation, not runtime resolution. Run restore explicitly after
+manifest changes or on a new machine/user. It does not build the driver, run tests,
+or install OS-level tools.
+
+The shared test job and Linux Kerberos job run the same restore after SDK installation through
+`eng/pipelines/common/templates/steps/restore-powershell-modules-step.yml`:
+
+```console
+dotnet build tools/targets/RestorePowerShellModules.targets -t:RestorePowerShellModules
+```
+
+The standalone entry point also works locally. The
+[Unix certificate script](src/Microsoft.Data.SqlClient/tests/ManualTests/makepfxcert.ps1)
+uses the native `openssl` CLI, which must already be on `PATH`; it does not need
+the OpenSSL PowerShell module. Test targets and certificate scripts do not install modules.
 
 Once the environment is setup properly, execute the desired set of commands below from the _root_ folder to perform the respective operations:
 
@@ -99,6 +133,7 @@ The following build targets are defined in `build.proj`:
 |`PackAzure`|Pack the Azure NuGet package into `packages/`. Requires `BuildAzure` first.|
 |`PackLogging`|Pack the Logging NuGet package into `packages/`. Requires `BuildLogging` first.|
 |`Restore`|Restores NuGet packages.|
+|`RestorePowerShellModules`|Restores pinned PowerShell module prerequisites from the governed feed without building the driver.|
 |`RunTests`|Runs the unit, functional, and manual tests for the .NET Framework and .NET drivers|
 |`RunUnitTests`|Runs just the unit tests for the .NET Framework and .NET drivers|
 |`RunFunctionalTests`|Runs just the functional tests for the .NET Framework and .NET drivers|
