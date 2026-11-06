@@ -283,19 +283,42 @@ The perf-lab template still provisions its usual SQL Server environment, but the
 connect to it.
 
 Run it with the orchestrator command above. The calibration runner carries `[AsyncHealthDiagnoser]`
-at class level, so every calibration benchmark is diagnosed. `ProbeOnly` sleeps the dedicated benchmark thread
-for 3 seconds; `AsyncWait` starts 32 three-second async waits; `Blocking` queues 32 pool work
-items that each sleep for 1.5 seconds. `AsyncWaitAwaited` explicitly awaits each delay;
-`BlockingLongRunning` uses 32 dedicated long-running tasks instead of pool tasks.
+at class level, so every calibration benchmark is diagnosed.
 
-Additional opt-in controls retain the same lifecycle and do not change ThreadPool settings:
+Every case completes **32 logical operations with a 1,500 ms requested wait per operation**:
+48,000 operation-milliseconds per benchmark invocation. BDN parameters `OperationCount=32` and
+`WaitMilliseconds=1500` record this workload in timing reports and health sidecars. One invocation
+remains one complete batch (`OperationsPerInvoke=1`); BDN times are not divided by 32.
+The controls deliberately differ in scheduling and concurrency, not requested work:
 
-| Control | Workload |
+| Control | Scheduling of the same 32 waits |
 |---|---|
-| `SyncOverAsync` | 32 pool tasks synchronously waiting on 1.5-second `Task.Delay` tasks. |
-| `BoundedBlockingFour` / `BoundedBlockingEight` | The same 32 1.5-second sleeps, with async semaphore admission limiting occupied workers to 4 or 8. Expected minimum durations are 12 or 6 seconds. |
-| `LockContention` | 32 pool tasks each holding the same lock while sleeping for 100 ms. |
-| `MixedOneBlocking` / `MixedFourBlocking` | 32 concurrent three-second waits, with 1 or 4 implemented as pool-thread sleeps and the remainder as async delays. |
+| `ProbeOnly` | Serial sleeps on the dedicated benchmark thread; no competing workload workers. Approximately 48 seconds per invocation. |
+| `AsyncWait` / `AsyncWaitAwaited` | Concurrent async delays, returning or explicitly awaiting the aggregate task. Approximately 1.5 seconds without interference. |
+| `Blocking` | Concurrent pool tasks using blocking sleeps; elapsed time depends on available workers. |
+| `BlockingLongRunning` | Blocking sleeps on 32 dedicated long-running task threads instead of pool workers. |
+| `SyncOverAsync` | Pool tasks synchronously waiting for async delays to complete. |
+| `BoundedBlockingFour` / `BoundedBlockingEight` | Async semaphore admission limits blocking workers to 4 or 8. Ideal elapsed times are 12 or 6 seconds. |
+| `LockContention` | Pool tasks hold the same lock while sleeping, serializing the waits. Approximately 48 seconds per invocation. |
+| `MixedOneBlocking` / `MixedFourBlocking` | Concurrent waits with 1 or 4 pool-thread sleeps and the remainder async delays. |
+
+Equal requested waits do **not** mean equal CPU work, thread cost, elapsed time or probe counts.
+Timer/scheduler overhead can extend waits; shorter windows also offer fewer health probes.
+Do not pad concurrent cases to match the serial duration: that would hide the throughput difference.
+`ProbeOnly` is an idle-pool reference, not a concurrent-workload throughput target.
+These synthetic waits demonstrate scheduler interference, not a prediction of SQL workload speedups.
+
+Each operation records completion after its wait with the same atomic increment. Iteration cleanup
+checks completed operations against invocation count times `OperationCount`, and logs completed
+operations plus requested aggregate wait outside the observation window. This small accounting
+cost is included in workload measurements. Setup/cleanup and scheduler policies are otherwise
+unchanged; no ThreadPool minima/limits or cooldowns are added.
+
+The longer serial controls increase a full three-repetition calibration run to roughly 25 minutes
+before lab provisioning and teardown, with actual time depending on contention and harness overhead.
+The previous calibration results and presentation used unequal wait budgets and are historical,
+not directly comparable timing baselines. Their missing workload parameters distinguish them from
+these equal-work cases.
 
 Use a separate process and an exact BDN filter such as `--filter '*Runner.SyncOverAsync'`
 for each case when studying isolation. To compare fresh-process and workload-warmed pool

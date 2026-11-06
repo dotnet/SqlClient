@@ -9,20 +9,45 @@ using BenchmarkDotNet.Attributes;
 
 namespace Microsoft.Data.SqlClient.PerformanceTests
 {
-    /// <summary>SQL-free interference controls; only these opt-in controls create synthetic competing work.</summary>
+    /// <summary>
+    /// SQL-free controls with equal requested wait work and different scheduling/concurrency policies.
+    /// </summary>
     [AsyncHealthDiagnoser]
     public class AsyncHealthCalibrationRunner
     {
         private int _observed, _unobserved, _setups, _cleanups;
+        private int _iterationInvocations;
+        private long _completedOperations;
         private readonly object _contentionLock = new object();
 
+        [Params(32)]
+        public int OperationCount { get; set; }
+
+        [Params(1500)]
+        public int WaitMilliseconds { get; set; }
+
         [GlobalSetup]
-        public void Setup() => VerifyOutsideWindow();
+        public void Setup()
+        {
+            VerifyOutsideWindow();
+
+            if (OperationCount <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(OperationCount));
+            }
+
+            if (WaitMilliseconds <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(WaitMilliseconds));
+            }
+        }
 
         [IterationSetup]
         public void IterationSetup()
         {
             VerifyOutsideWindow();
+            _iterationInvocations = 0;
+            _completedOperations = 0;
             _setups++;
         }
 
@@ -30,6 +55,18 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         public void IterationCleanup()
         {
             VerifyOutsideWindow();
+            long expectedOperations = (long)_iterationInvocations * OperationCount;
+            if (_completedOperations != expectedOperations)
+            {
+                throw new InvalidOperationException(
+                    $"Calibration completed {_completedOperations} operations; " +
+                    $"expected {expectedOperations}.");
+            }
+
+            Console.WriteLine(
+                $"AsyncHealthWorkload invocations={_iterationInvocations} " +
+                $"completedOperations={_completedOperations} " +
+                $"requestedWaitMilliseconds={_completedOperations * WaitMilliseconds}");
             _cleanups++;
         }
 
@@ -48,52 +85,73 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
 
         private void RecordInvocation()
         {
+            _iterationInvocations++;
             if (AsyncHealthDiagnoser.IsObservingWorkload) _observed++;
             else _unobserved++;
+        }
+
+        private void SleepOperation()
+        {
+            Thread.Sleep(WaitMilliseconds);
+            Interlocked.Increment(ref _completedOperations);
+        }
+
+        private async Task DelayOperationAsync()
+        {
+            await Task.Delay(WaitMilliseconds);
+            Interlocked.Increment(ref _completedOperations);
         }
 
         [Benchmark]
         public void ProbeOnly()
         {
             RecordInvocation();
-            Thread.Sleep(3000);
+
+            // Keep the no-competing-worker control on the dedicated benchmark thread.
+            for (int i = 0; i < OperationCount; i++)
+            {
+                SleepOperation();
+            }
         }
 
         [Benchmark]
         public Task AsyncWait()
         {
             RecordInvocation();
-            return Task.WhenAll(Enumerable.Range(0, 32).Select(_ => Task.Delay(3000)));
+            return Task.WhenAll(Enumerable.Range(0, OperationCount).Select(_ => DelayOperationAsync()));
         }
 
         [Benchmark]
         public async Task AsyncWaitAwaited()
         {
             RecordInvocation();
-            await Task.WhenAll(Enumerable.Range(0, 32).Select(async _ => await Task.Delay(3000)));
+            await Task.WhenAll(Enumerable.Range(0, OperationCount).Select(
+                async _ => await DelayOperationAsync()));
         }
 
         [Benchmark]
         public Task Blocking()
         {
             RecordInvocation();
-            return Task.WhenAll(Enumerable.Range(0, 32).Select(_ => Task.Run(() => Thread.Sleep(1500))));
+            return Task.WhenAll(Enumerable.Range(0, OperationCount).Select(
+                _ => Task.Run(SleepOperation)));
         }
 
         [Benchmark]
         public Task BlockingLongRunning()
         {
             RecordInvocation();
-            return Task.WhenAll(Enumerable.Range(0, 32).Select(_ => Task.Factory.StartNew(
-                () => Thread.Sleep(1500), CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default)));
+            return Task.WhenAll(Enumerable.Range(0, OperationCount).Select(_ => Task.Factory.StartNew(
+                SleepOperation, CancellationToken.None, TaskCreationOptions.LongRunning,
+                TaskScheduler.Default)));
         }
 
         [Benchmark]
         public Task SyncOverAsync()
         {
             RecordInvocation();
-            return Task.WhenAll(Enumerable.Range(0, 32).Select(_ => Task.Run(
-                () => Task.Delay(1500).GetAwaiter().GetResult())));
+            return Task.WhenAll(Enumerable.Range(0, OperationCount).Select(_ => Task.Run(
+                () => DelayOperationAsync().GetAwaiter().GetResult())));
         }
 
         [Benchmark]
@@ -110,15 +168,15 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             return RunBoundedBlocking(8);
         }
 
-        private static async Task RunBoundedBlocking(int concurrency)
+        private async Task RunBoundedBlocking(int concurrency)
         {
             using var admission = new SemaphoreSlim(concurrency);
-            await Task.WhenAll(Enumerable.Range(0, 32).Select(async _ =>
+            await Task.WhenAll(Enumerable.Range(0, OperationCount).Select(async _ =>
             {
                 await admission.WaitAsync();
                 try
                 {
-                    await Task.Run(() => Thread.Sleep(1500));
+                    await Task.Run(SleepOperation);
                 }
                 finally
                 {
@@ -131,11 +189,11 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         public Task LockContention()
         {
             RecordInvocation();
-            return Task.WhenAll(Enumerable.Range(0, 32).Select(_ => Task.Run(() =>
+            return Task.WhenAll(Enumerable.Range(0, OperationCount).Select(_ => Task.Run(() =>
             {
                 lock (_contentionLock)
                 {
-                    Thread.Sleep(100);
+                    SleepOperation();
                 }
             })));
         }
@@ -154,9 +212,9 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             return RunMixedWaits(4);
         }
 
-        private static Task RunMixedWaits(int blockingCount) => Task.WhenAll(
-            Enumerable.Range(0, 32).Select(index => index < blockingCount
-                ? Task.Run(() => Thread.Sleep(3000))
-                : Task.Delay(3000)));
+        private Task RunMixedWaits(int blockingCount) => Task.WhenAll(
+            Enumerable.Range(0, OperationCount).Select(index => index < blockingCount
+                ? Task.Run(SleepOperation)
+                : DelayOperationAsync()));
     }
 }

@@ -690,6 +690,96 @@ class AsyncHealthTests(unittest.TestCase):
         self.assertEqual(pr.count("eq(parameters.currentOnly, false)"), 3)
 
     @unittest.skipUnless(os.environ.get("PERF_HEALTH_TEST_BINARY"), "Set PERF_HEALTH_TEST_BINARY for real BDN lifecycle smoke")
+    def test_real_calibration_cases_complete_equal_work(self):
+        """All scheduling controls complete the same wait budget without normalizing elapsed time."""
+        # Arrange
+        binary = str(Path(os.environ["PERF_HEALTH_TEST_BINARY"]).resolve())
+        minimum_seconds = dict(
+            ProbeOnly=48, AsyncWait=1.5, AsyncWaitAwaited=1.5, Blocking=1.5,
+            BlockingLongRunning=1.5, SyncOverAsync=1.5, BoundedBlockingFour=12,
+            BoundedBlockingEight=6, LockContention=48, MixedOneBlocking=1.5,
+            MixedFourBlocking=1.5)
+        with tempfile.TemporaryDirectory() as root:
+            config = Path(root, "runner.json")
+            config.write_text(json.dumps(dict(
+                AsyncHealth=dict(DiagnosticRuns=1),
+                Benchmarks=dict(AsyncHealthCalibrationRunnerConfig=dict(
+                    Enabled=True, LaunchCount=1, IterationCount=1, InvocationCount=1,
+                    WarmupCount=0, RunStrategy="Monitoring")))))
+            env = dict(os.environ, RUNNER_CONFIG=str(config), PERF_BENCHMARK="AsyncHealthCalibration")
+            env.pop("PERF_LIST_BENCHMARKS", None)
+
+            # Act
+            output = subprocess.run(["dotnet", binary], cwd=root, env=env, text=True,
+                                    capture_output=True, timeout=600)
+
+            # Assert
+            self.assertEqual(output.returncode, 0, output.stdout + output.stderr)
+            rows = [json.loads(path.read_text()) for path in Path(root).rglob("async-health-*.json")]
+            self.assertEqual(len(rows), 11)
+            self.assertEqual({row["Benchmark"].rsplit(".", 1)[-1] for row in rows},
+                             set(minimum_seconds))
+            for row in rows:
+                self.assertIn("OperationCount=32", row["Parameters"])
+                self.assertIn("WaitMilliseconds=1500", row["Parameters"])
+                self.assertEqual(row["Invocations"], 1)
+                self.assertEqual(row["OperationsPerInvoke"], 1)
+                result = health.summarize(row)
+                self.assertEqual(result["Coverage"], "Supported")
+                name = row["Benchmark"].rsplit(".", 1)[-1]
+                self.assertGreaterEqual(
+                    result["DurationMilliseconds"], minimum_seconds[name] * 1000 - 50, name)
+            accounting = re.findall(
+                r"AsyncHealthWorkload invocations=(\d+) completedOperations=(\d+) "
+                r"requestedWaitMilliseconds=(\d+)", output.stdout)
+            # One actual and one diagnostic iteration per case; setup/cleanup enforce completion.
+            self.assertEqual(len(accounting), 22)
+            self.assertTrue(all(tuple(map(int, row)) == (1, 32, 48000) for row in accounting))
+            self.assertEqual(output.stdout.count("AsyncHealthLifecycle observed=1 "), 11)
+            reports = list(Path(root).rglob("*-report-full.json"))
+            self.assertEqual(len(reports), 1)
+            timing = json.loads(reports[0].read_text(encoding="utf-8-sig"))["Benchmarks"]
+            self.assertEqual(len(timing), 11)
+            for row in timing:
+                self.assertGreaterEqual(row["Statistics"]["Mean"] / 1e9,
+                                        minimum_seconds[row["Method"]] - .05, row["Method"])
+            self.assertEqual(health.write_collected_summary(root), 11)
+
+    @unittest.skipUnless(os.environ.get("PERF_HEALTH_TEST_BINARY"), "Set PERF_HEALTH_TEST_BINARY for real BDN lifecycle smoke")
+    def test_real_calibration_invocation_batch_scales_work(self):
+        """Multiple invocations multiply completed work without changing the per-invocation budget."""
+        # Arrange
+        binary = str(Path(os.environ["PERF_HEALTH_TEST_BINARY"]).resolve())
+        with tempfile.TemporaryDirectory() as root:
+            config = Path(root, "runner.json")
+            config.write_text(json.dumps(dict(
+                Benchmarks=dict(AsyncHealthCalibrationRunnerConfig=dict(
+                    Enabled=True, LaunchCount=1, IterationCount=1, InvocationCount=2,
+                    WarmupCount=0, RunStrategy="Monitoring")))))
+            env = dict(os.environ, RUNNER_CONFIG=str(config), PERF_BENCHMARK="AsyncHealthCalibration")
+            env.pop("PERF_LIST_BENCHMARKS", None)
+
+            # Act
+            output = subprocess.run(["dotnet", binary, "--filter", "*Runner.AsyncWait"],
+                                    cwd=root, env=env, text=True, capture_output=True, timeout=60)
+
+            # Assert
+            self.assertEqual(output.returncode, 0, output.stdout + output.stderr)
+            accounting = re.findall(
+                r"AsyncHealthWorkload invocations=(\d+) completedOperations=(\d+) "
+                r"requestedWaitMilliseconds=(\d+)", output.stdout)
+            self.assertEqual([tuple(map(int, row)) for row in accounting],
+                             [(2, 64, 96000), (2, 64, 96000)])
+            rows = [json.loads(path.read_text()) for path in Path(root).rglob("async-health-*.json")]
+            self.assertEqual(len(rows), 1)
+            self.assertEqual(rows[0]["Invocations"], 2)
+            self.assertEqual(rows[0]["CompletedInvocations"], 2)
+            self.assertEqual(rows[0]["OperationsPerInvoke"], 1)
+            result = health.summarize(rows[0])
+            self.assertEqual(result["Coverage"], "Supported")
+            self.assertGreaterEqual(result["DurationMilliseconds"], 2950)
+
+    @unittest.skipUnless(os.environ.get("PERF_HEALTH_TEST_BINARY"), "Set PERF_HEALTH_TEST_BINARY for real BDN lifecycle smoke")
     def test_real_benchmark_repeated_diagnostics(self):
         """Repeated sync/async diagnostics retain fixture boundaries and one timing export."""
         # Arrange
@@ -706,7 +796,7 @@ class AsyncHealthTests(unittest.TestCase):
 
             # Act
             output = subprocess.run(
-                ["dotnet", binary, "--filter", "*Runner.ProbeOnly", "*Runner.AsyncWait",
+                ["dotnet", binary, "--filter", "*Runner.BlockingLongRunning", "*Runner.AsyncWait",
                  "*Runner.AsyncWaitAwaited"],
                 cwd=root, env=env, text=True, capture_output=True, timeout=180)
 
@@ -811,7 +901,7 @@ class AsyncHealthTests(unittest.TestCase):
             env = dict(os.environ, RUNNER_CONFIG=str(config), PERF_BENCHMARK="AsyncHealthCalibration")
             env.pop("PERF_LIST_BENCHMARKS", None)
             output = subprocess.run(["dotnet", binary, "--filter", "*Runner.AsyncWait",
-                                     "*Runner.ProbeOnly", "*Runner.AsyncWaitAwaited"],
+                                     "*Runner.BlockingLongRunning", "*Runner.AsyncWaitAwaited"],
                                     cwd=root, env=env, text=True, capture_output=True, timeout=120)
             self.assertEqual(output.returncode, 0, output.stdout + output.stderr)
             rows = [json.loads(path.read_text()) for path in Path(root).rglob("async-health-*.json")]
@@ -825,7 +915,7 @@ class AsyncHealthTests(unittest.TestCase):
                 self.assertEqual(row["Configuration"]["Instrumentation"], "AsyncHealthDiagnoser")
                 self.assertEqual(row["Configuration"]["DiagnosticRunMode"], "ExtraIteration")
                 self.assertEqual(row["Invocations"], 1)
-                self.assertGreater(result["DurationMilliseconds"], 2500)
+                self.assertGreater(result["DurationMilliseconds"], 1450)
                 self.assertGreater(result["WorkExecuted"], 0)
                 self.assertGreater(result["ProcessThreadsAtStart"], 0)
                 self.assertGreater(result["PeakProcessThreads"], 0)
