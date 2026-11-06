@@ -450,11 +450,12 @@ sources are embedded and the compiler's deterministic flag is enabled.
 
 ## OneBranch Validation
 
-The non-official OneBranch pipeline defaults **Fail on validation errors**
+Both OneBranch pipelines default **Fail on validation errors**
 (`failOnValidationError`) to `true`. Localization, XML documentation, and package
 validation findings fail the build by default. Select `false` at queue time to
 report findings as warnings so pending translations do not block the rest of a
-development build. Official builds always use `true`.
+build. Official builds also support this report-only mode, including release runs;
+keep the default `true` when validation findings must block publication.
 
 This flag is independent of **Fail on SDL errors** (`failOnSdlError`). Neither flag
 turns missing or malformed validation inputs into success. Localization report-only
