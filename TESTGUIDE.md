@@ -57,7 +57,7 @@ from the repository root:
 
 ```console
 dotnet tool restore
-dotnet build build.proj -t:RestorePowerShellModules
+dotnet build build.proj -t:RestorePowerShellModules --no-restore
 ```
 
 This restores all versions in `powershell-modules.json` for the current user and reuses

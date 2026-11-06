@@ -41,7 +41,7 @@ Before using scripts or tests that need PowerShell resources, run from the repos
 
 ```console
 dotnet tool restore
-dotnet build build.proj -t:RestorePowerShellModules
+dotnet build build.proj -t:RestorePowerShellModules --no-restore
 ```
 
 Add or update resource versions in [`powershell-modules.json`](powershell-modules.json).
@@ -53,7 +53,8 @@ Automatic credential-provider selection is disabled for anonymous feed access.
 Restore and consumption must use the same user.
 Consumers import modules normally; the manifest pins installation, not runtime resolution.
 Run restore explicitly after manifest changes or on a new machine/user. It does not build
-the driver, run tests, or install OS-level tools.
+the driver, run tests, or install OS-level tools. `--no-restore` prevents an implicit
+NuGet restore of driver projects; it does not skip the PowerShell module restore target.
 
 Pipelines run the same restore after .NET tool restore through
 `eng/pipelines/common/steps/restore-powershell-modules.yml`:

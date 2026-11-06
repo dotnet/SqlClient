@@ -103,6 +103,27 @@ Describe 'build.proj PowerShell module restore' {
 }
 
 Describe 'PowerShell pipeline prerequisites' {
+    It 'includes module configuration and helpers in <Pipeline> PR path filters' -ForEach @(
+        @{ Pipeline = 'eng/pipelines/sqlclient-pr-project-ref-pipeline.yml'; Disabled = $false }
+        @{ Pipeline = 'eng/pipelines/sqlclient-pr-package-ref-pipeline.yml'; Disabled = $true }
+        @{ Pipeline = 'eng/pipelines/pr/sqlclient-pr-pipeline.yml'; Disabled = $false }
+    ) {
+        $content = Get-Content (Join-Path $repoRoot $Pipeline) -Raw
+        if ($Disabled) {
+            $content | Should -Match '(?m)^pr: none\s*$'
+            $content = $content -replace '(?m)^# ?', ''
+        }
+        $includePattern = '(?ms)^pr:\r?\n.*?^  paths:\r?\n    include:\r?\n' +
+            '(?<paths>(?:      - [^\r\n]+\r?\n)+)'
+        $content | Should -Match $includePattern
+        $includedPaths = [regex]::Match($content, $includePattern).Groups['paths'].Value `
+            -split '\r?\n' | ForEach-Object { $_ -replace '^      - ', '' }
+
+        foreach ($path in @('PowerShell.config', 'powershell-modules.json', 'eng/scripts/*')) {
+            $includedPaths | Should -Contain $path
+        }
+    }
+
     It 'restores modules after tools and before setup in <Job>' -ForEach @(
         @{
             Job = 'eng/pipelines/common/templates/jobs/ci-run-tests-job.yml'

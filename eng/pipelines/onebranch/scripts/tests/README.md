@@ -16,7 +16,7 @@ the module-restore target uses that tool, so no globally installed PowerShell is
 
 ```console
 dotnet tool restore
-dotnet build build.proj -t:RestorePowerShellModules
+dotnet build build.proj -t:RestorePowerShellModules --no-restore
 ```
 
 ## Running the Tests
