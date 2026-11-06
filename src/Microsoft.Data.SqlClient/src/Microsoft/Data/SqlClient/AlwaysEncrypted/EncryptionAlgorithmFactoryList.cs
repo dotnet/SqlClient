@@ -15,7 +15,7 @@ internal static class EncryptionAlgorithmFactoryList
     /// Get the available list of algorithms as a comma separated list with algorithm names
     /// wrapped in single quotes.
     /// </summary>
-    public const string RegisteredCipherAlgorithmNames = $"'{SqlAeadAes256CbcHmac256Algorithm.AlgorithmName}'";
+    public const string RegisteredCipherAlgorithmNames = $"'{AeadAes256CbcHmac256Algorithm.AlgorithmName}'";
 
     /// <summary>
     /// Gets the implementation for a given algorithm and instantiates it using the provided root key and the encryption type.
@@ -24,11 +24,11 @@ internal static class EncryptionAlgorithmFactoryList
     /// <param name="type">Encryption type (read from SQL Server.)</param>
     /// <param name="algorithmName">Name of the cryptographic algorithm.</param>
     /// <param name="encryptionAlgorithm">Specified cryptographic algorithm's implementation.</param>
-    public static void GetAlgorithm(SymmetricKey key, byte type, string algorithmName, out SqlClientEncryptionAlgorithm encryptionAlgorithm)
+    public static void GetAlgorithm(SymmetricKey key, byte type, string algorithmName, out EncryptionAlgorithm encryptionAlgorithm)
     {
         EncryptionAlgorithmFactory factory = algorithmName switch
         {
-            SqlAeadAes256CbcHmac256Algorithm.AlgorithmName => AeadAes256CbcHmac256Factory.Instance,
+            AeadAes256CbcHmac256Algorithm.AlgorithmName => AeadAes256CbcHmac256Factory.Instance,
             _ => throw SQL.UnknownColumnEncryptionAlgorithm(algorithmName, RegisteredCipherAlgorithmNames)
         };
 

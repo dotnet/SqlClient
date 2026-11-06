@@ -113,7 +113,7 @@ public class NativeAeadBaseline
     {
         SymmetricKey cek = new(rootKey);
         AeadAes256CbcHmac256Factory aeadFactory = AeadAes256CbcHmac256Factory.Instance;
-        SqlClientEncryptionAlgorithm aeadAlgorithm = aeadFactory.Create(cek, EncryptionType.Deterministic, SqlAeadAes256CbcHmac256Algorithm.AlgorithmName);
+        EncryptionAlgorithm aeadAlgorithm = aeadFactory.Create(cek, EncryptionType.Deterministic, AeadAes256CbcHmac256Algorithm.AlgorithmName);
 
         byte[] encryptedData = aeadAlgorithm.EncryptData(plainText);
         Assert.Equal(expectedFinalCell, encryptedData);
@@ -132,7 +132,7 @@ public class NativeAeadBaseline
     {
         SymmetricKey cek = new(rootKey);
         AeadAes256CbcHmac256Factory aeadFactory = AeadAes256CbcHmac256Factory.Instance;
-        SqlClientEncryptionAlgorithm aeadAlgorithm = aeadFactory.Create(cek, EncryptionType.Deterministic, SqlAeadAes256CbcHmac256Algorithm.AlgorithmName);
+        EncryptionAlgorithm aeadAlgorithm = aeadFactory.Create(cek, EncryptionType.Deterministic, AeadAes256CbcHmac256Algorithm.AlgorithmName);
 
         byte[] decryptedData = aeadAlgorithm.DecryptData(finalCell);
         Assert.Equal(expectedPlaintext, decryptedData);
