@@ -483,9 +483,44 @@ requests to complete.
 
 OneBranch validates localized resources before building the SqlClient and Abstractions
 assemblies. Each caller explicitly supplies its resource directory and isolated allowlist
-section in [LocalizationValidationAllowlist.json](.config/LocalizationValidationAllowlist.json):
-`AllowedEnglishValueMatches` for SqlClient and `AbstractionsAllowedEnglishValueMatches`
-for Abstractions. The script defaults to the driver's section for direct callers.
+section in [LocalizationValidationAllowlist.jsonc](.config/LocalizationValidationAllowlist.jsonc):
+`SqlClient` for the driver and `Abstractions` for Abstractions. Each owner contains
+localized filenames mapped to lists of resource keys approved to match English.
+The script defaults to `SqlClient` for direct callers.
+The JSONC file supports comments for documenting approved exceptions.
+
+### Allowlist schema
+
+The file is a JSON object with three levels:
+
+1. **Resource owner**: `SqlClient` or `Abstractions`, selecting an independent exception set.
+2. **Localized resource filename**: `Strings.<culture>.resx`, relative to that owner's
+   resource directory. Filenames are case-sensitive.
+3. **Resource keys**: an array of case-sensitive key names approved to have localized
+   values exactly equal to their non-empty English values in `Strings.resx`.
+
+For example, this abbreviated configuration permits `DataCategory_Xml` to remain
+identical to English in the driver's French resources, but grants no Abstractions exceptions:
+
+```jsonc
+{
+  "SqlClient": {
+    // Approved for this resource owner and culture only.
+    "Strings.fr.resx": ["DataCategory_Xml"]
+  },
+  "Abstractions": {}
+}
+```
+
+Use an empty object (`{}`) for an owner with no exceptions, and omit filenames that need
+none. The selected owner section must exist; the validator never borrows another owner's
+exceptions. Each filename must exist in the selected resource directory. Each listed key
+must be non-empty, unique within its array, and present with a non-empty English value.
+
+Exceptions permit English-value matches only: they do not excuse missing resource keys,
+empty translations, or keys absent from the English resource file. Remove an exception
+when its localized value changes; stale exceptions are reported as validation findings.
+Only add verified, intentional English matches, not strings still awaiting translation.
 
 The existing `failOnValidationError` flag controls whether findings fail the build or
 are reported as warnings. Missing or malformed validator inputs always fail. Do not

@@ -27,7 +27,7 @@ steps:
   # silently downgrade validation to warnings.
   - pwsh: |
       $arguments = '-ResourcesDirectory "$(Build.SourcesDirectory)/${{ parameters.resourcesDirectory }}"' +
-                   ' -AllowlistPath "$(Build.SourcesDirectory)/.config/LocalizationValidationAllowlist.json"' +
+                   ' -AllowlistPath "$(Build.SourcesDirectory)/.config/LocalizationValidationAllowlist.jsonc"' +
                    ' -AllowlistSection "${{ parameters.allowlistSection }}"'
 
       $failOnValidationError = '${{ parameters.failOnValidationError }}'

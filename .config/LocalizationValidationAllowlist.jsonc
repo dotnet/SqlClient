@@ -1,10 +1,19 @@
 {
-  "_comment": [
-    "These culture/key pairs intentionally match the English source text.",
-    "Each pair was verified in the internal LCL source as localized (Stat=Loc, Orig=New). Remove an entry when its localized value changes."
-  ],
-  "AbstractionsAllowedEnglishValueMatches": {},
-  "AllowedEnglishValueMatches": {
+  // Schema: { "<resource owner>": { "<localized filename>": ["<resource key>", ...] } }
+  // Owners: SqlClient (driver resources) and Abstractions (authentication resources).
+  // Each owner maps Strings.<culture>.resx filenames to arrays of approved resource keys.
+  // An empty owner object means no exceptions. Omit files that need no exceptions.
+  // The validator reads only the selected owner; a missing owner section is an error.
+  // Filenames and keys are case-sensitive and must exist in the selected resource set.
+  // Keys must be non-empty, unique within each file's array, and have non-empty English values.
+  // An exception permits only an exact English-value match in that one owner and culture.
+  // It cannot exempt missing keys, empty translations, or keys absent from Strings.resx.
+  //
+  // These culture/key pairs intentionally match the English source text.
+  // Each pair was verified in the internal LCL source as localized (Stat=Loc, Orig=New).
+  // Remove an entry when its localized value changes.
+  "Abstractions": {},
+  "SqlClient": {
     "Strings.cs.resx": [
       "ADP_InvalidMultipartName",
       "DataCategory_Data",

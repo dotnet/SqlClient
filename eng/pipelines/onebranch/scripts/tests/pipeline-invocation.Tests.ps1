@@ -48,6 +48,24 @@ BeforeAll {
 }
 
 Describe 'Validation step templates' {
+    It 'selects the resource owner allowlist for <Owner>' -ForEach @(
+        @{ Owner = 'SqlClient'; Directory = 'src/Microsoft.Data.SqlClient/src/Resources' }
+        @{ Owner = 'Abstractions'; Directory = 'src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Resources' }
+    ) {
+        $content = Get-Content -LiteralPath (Join-Path $script:jobsPath 'build-buildproj-job.yml') -Raw
+        $allowlistPath = Join-Path $script:repoRoot '.config/LocalizationValidationAllowlist.jsonc'
+        $allowlist = Get-Content -LiteralPath $allowlistPath -Raw | ConvertFrom-Json
+        $step = Get-Content -LiteralPath (
+            Join-Path $script:stepsPath 'validate-localization-step.yml') -Raw
+
+        $step | Should -Match '\.config/LocalizationValidationAllowlist\.jsonc"'
+        $content | Should -Match (
+            'resourcesDirectory: ' + [regex]::Escape($Directory) +
+            '\r?\n\s+allowlistSection: ' + [regex]::Escape($Owner) + '\r?\n')
+        $allowlist.PSObject.Properties.Name | Should -Contain $Owner
+        Test-Path -LiteralPath (Join-Path $script:repoRoot $Directory) | Should -BeTrue
+    }
+
     It 'never passes a switch using the -Switch:Value form' -ForEach @(
         @{ Template = 'validate-xml-docs-step.yml' }
         @{ Template = 'validate-localization-step.yml' }
