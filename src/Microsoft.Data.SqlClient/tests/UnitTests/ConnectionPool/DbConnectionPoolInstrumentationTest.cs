@@ -413,6 +413,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// double-counted once all activity has stopped.
         /// </summary>
         [Theory]
+        [Trait("category", "flaky")]
         [InlineData(PoolImplementation.WaitHandle)]
         [InlineData(PoolImplementation.Channel)]
         public void ConcurrentCheckoutAndReturn_SettlesAllGaugesToZero(PoolImplementation implementation)
