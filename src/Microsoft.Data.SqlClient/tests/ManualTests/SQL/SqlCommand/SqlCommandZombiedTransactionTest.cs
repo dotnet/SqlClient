@@ -42,6 +42,77 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         /// <summary>
+        /// After the server aborts a transaction, an async execute must throw and must not commit a row.
+        /// </summary>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public async Task ExecuteNonQuery_AfterAssigningSameConnection_DoesNotAutocommitAsync()
+        {
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            await connection.OpenAsync();
+
+            using SqlCommand setup = connection.CreateCommand();
+            setup.CommandText = "SET XACT_ABORT ON; CREATE TABLE #ZombiedTransactionAsync (Id int NOT NULL);";
+            await setup.ExecuteNonQueryAsync();
+
+            using SqlTransaction transaction = connection.BeginTransaction();
+            using SqlCommand command = new SqlCommand("INSERT INTO #ZombiedTransactionAsync (Id) VALUES (1)", connection, transaction);
+            using SqlCommand abort = new SqlCommand("SELECT CAST('n/a' AS int)", connection, transaction);
+            Assert.Throws<SqlException>(() => abort.ExecuteScalar());
+
+            command.Connection = connection;
+
+            InvalidOperationException exception = await Assert.ThrowsAsync<InvalidOperationException>(() => command.ExecuteNonQueryAsync());
+            Assert.Contains("no longer usable", exception.Message);
+
+            using SqlCommand count = new SqlCommand("SELECT COUNT(*) FROM #ZombiedTransactionAsync", connection);
+            Assert.Equal(0, (int)await count.ExecuteScalarAsync());
+        }
+
+        /// <summary>
+        /// After the server aborts a transaction, an async reader must throw and must not commit a row.
+        /// </summary>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public async Task ExecuteReader_AfterAssigningSameConnection_DoesNotAutocommitAsync()
+        {
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            await connection.OpenAsync();
+
+            using SqlCommand setup = connection.CreateCommand();
+            setup.CommandText = "SET XACT_ABORT ON; CREATE TABLE #ZombiedTransactionReader (Id int NOT NULL);";
+            await setup.ExecuteNonQueryAsync();
+
+            using SqlTransaction transaction = connection.BeginTransaction();
+            using SqlCommand command = new SqlCommand("INSERT INTO #ZombiedTransactionReader (Id) VALUES (1)", connection, transaction);
+            using SqlCommand abort = new SqlCommand("SELECT CAST('n/a' AS int)", connection, transaction);
+            Assert.Throws<SqlException>(() => abort.ExecuteScalar());
+
+            command.Connection = connection;
+
+            InvalidOperationException exception = await Assert.ThrowsAsync<InvalidOperationException>(() => command.ExecuteReaderAsync());
+            Assert.Contains("no longer usable", exception.Message);
+
+            using SqlCommand count = new SqlCommand("SELECT COUNT(*) FROM #ZombiedTransactionReader", connection);
+            Assert.Equal(0, (int)await count.ExecuteScalarAsync());
+        }
+
+        /// <summary>
+        /// Disposing a live transaction leaves a partial zombie. A later rollback is a no-op.
+        /// </summary>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public void Rollback_AfterDisposingLiveTransaction_DoesNotThrow()
+        {
+            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            connection.Open();
+
+            SqlTransaction transaction = connection.BeginTransaction();
+            using SqlCommand command = new SqlCommand("SELECT 1", connection, transaction);
+            command.ExecuteScalar();
+            transaction.Dispose();
+
+            transaction.Rollback();
+        }
+
+        /// <summary>
         /// Disposing a live transaction rolls it back. The command that was bound to it must still run.
         /// </summary>
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]

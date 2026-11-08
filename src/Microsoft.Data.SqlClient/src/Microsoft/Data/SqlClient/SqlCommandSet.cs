@@ -24,7 +24,11 @@ namespace Microsoft.Data.SqlClient
 
         private SqlCommand _batchCommand;
         private List<SqlBatchCommand> _commandList;
-        private List<SqlTransaction> _batchTransactions;
+
+        // Null after Dispose. Append rejects that. Clear ignores it.
+#nullable enable
+        private List<SqlTransaction>? _batchTransactions;
+#nullable restore
 
         internal SqlCommandSet() : base()
         {
@@ -182,10 +186,17 @@ namespace Microsoft.Data.SqlClient
 
             SqlBatchCommand cmd = new SqlBatchCommand(cmdText, parameters, command.CommandType, command.ColumnEncryptionSetting);
 
+            // A disposed set has no list. Do not skip the add: that would hide the bug.
+            List<SqlTransaction> transactions = _batchTransactions;
+            if (transactions == null)
+            {
+                throw ADP.ObjectDisposed(this);
+            }
+
             CommandList.Add(cmd);
             // The batch command copies text and parameters only. Keep this transaction so
             // the batch can reject a server abort found while it drains.
-            _batchTransactions.Add(command.BoundTransaction);
+            transactions.Add(command.BoundTransaction);
         }
 
         internal static void BuildStoredProcedureName(StringBuilder builder, string part)
@@ -228,11 +239,7 @@ namespace Microsoft.Data.SqlClient
             {
                 commandList.Clear();
             }
-            List<SqlTransaction> transactions = _batchTransactions;
-            if (transactions != null)
-            {
-                transactions.Clear();
-            }
+            _batchTransactions?.Clear();
         }
 
         internal void Dispose()

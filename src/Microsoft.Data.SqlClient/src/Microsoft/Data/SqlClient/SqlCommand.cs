@@ -348,8 +348,12 @@ namespace Microsoft.Data.SqlClient
         private SqlTransaction _transaction;
 
         // Transactions from commands copied into a batch. The batch command itself may have
-        // none. ValidateCommand rechecks these after a drain and before the write is sent.
-        private List<SqlTransaction> _retainedBatchTransactions;
+        // none. This is a copy: a later clear of the caller's list must not change the check
+        // or throw while it is walked. Null means this command is not checking a batch.
+        // ValidateCommand rechecks the copy after a drain and before the write is sent.
+#nullable enable
+        private List<SqlTransaction>? _retainedBatchTransactions;
+#nullable restore
 
         /// <summary>
         /// How command results are applied to a DataRow when used by the update method of
@@ -840,10 +844,18 @@ namespace Microsoft.Data.SqlClient
         // field stays set so the next execute is rejected. Copies have to use the field.
         internal SqlTransaction BoundTransaction => _transaction;
 
-        internal void RetainBatchTransactions(List<SqlTransaction> transactions)
+        /// <summary>
+        /// Keeps the transactions a batch must recheck after a drain. The list is copied so the
+        /// check stays stable if the caller later clears or mutates its own list, and so walking
+        /// the copy cannot throw <see cref="ArgumentOutOfRangeException"/>. Null means this
+        /// command is not checking a batch. The copy is not mutated while it is walked.
+        /// </summary>
+#nullable enable
+        internal void RetainBatchTransactions(List<SqlTransaction>? transactions)
         {
-            _retainedBatchTransactions = transactions;
+            _retainedBatchTransactions = transactions is null ? null : new List<SqlTransaction>(transactions);
         }
+#nullable restore
 
         // @TODO: Rename RowsAffectedInternal or
         // @TODO: Make `int?`
@@ -2992,9 +3004,9 @@ namespace Microsoft.Data.SqlClient
                 _transaction = null;
             }
 
-            // A batch copies each command's text without its transaction. Recheck those after
-            // the drain above, before a write is sent. A transaction the caller already finished
-            // is left alone.
+            // A batch copies each command's text without its transaction. Recheck the snapshot
+            // taken above, after the drain and before a write is sent. A transaction the caller
+            // already finished is left alone. The snapshot is not mutated here.
             List<SqlTransaction> retainedTransactions = _retainedBatchTransactions;
             if (retainedTransactions is not null)
             {

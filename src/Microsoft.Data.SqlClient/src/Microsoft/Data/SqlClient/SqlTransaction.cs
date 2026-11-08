@@ -119,8 +119,9 @@ namespace Microsoft.Data.SqlClient
                     statistics = SqlStatistics.StartTimer(Statistics);
 
                     // Validation drains an abandoned reader before the commit is sent. Leave
-                    // _isFromApi clear so a rollback found there stays attached. Rollback and
-                    // disposal still set the flag around the request the caller made.
+                    // _isFromApi clear so a rollback found there stays attached. Rollback
+                    // sets the flag around the request the caller made. Disposal does not:
+                    // that rollback has to leave a partial zombie so a later Rollback() is a no-op.
                     // A bulk copy locks the connection between packets. Check that before
                     // the drain, or the drain consumes the bulk-copy state.
                     if (_connection.InnerConnection is SqlConnectionInternal openConnection)
@@ -174,31 +175,25 @@ namespace Microsoft.Data.SqlClient
         {
             if (disposing)
             {
-                if (IsPartialZombie)
+                if (IsPartialZombie || CompletedByServer)
                 {
-                    // The server already finished this transaction. Rollback clears the abort
-                    // mark. Disposal has to do the same or the bound command stays rejected.
-                    InternalTransaction = null;
-                    CompletedByServer = false;
-                }
-                else if (CompletedByServer)
-                {
-                    // ZombieCheck already dropped InternalTransaction while throwing. Clear the
-                    // abort mark too, or the bound command stays rejected.
+                    // Leave InternalTransaction when it is still a partial zombie. A later
+                    // Rollback() stays the no-op it is on main. Clear only the abort mark, or
+                    // the bound command stays rejected.
                     CompletedByServer = false;
                 }
                 else if (!IsZombied)
                 {
-                    // Disposal rolls back through InternalTransaction, not Rollback(), so mark it
-                    // as an API completion. Otherwise Zombie treats the disposal as a server abort.
+                    // Do not set _isFromApi. The internal rollback leaves a partial zombie and
+                    // sets the abort mark. Clear only the mark so the bound command can run and
+                    // a later Rollback() does not throw.
                     try
                     {
-                        _isFromApi = true;
                         InternalTransaction.Dispose();
                     }
                     finally
                     {
-                        _isFromApi = false;
+                        CompletedByServer = false;
                     }
                 }
                 // @TODO: CER Exception Handling was removed here (see GH#3581)
