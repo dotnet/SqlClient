@@ -4,7 +4,7 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# Runs eng/pipelines/onebranch/scripts/validate-xml-docs.ps1 over XML documentation cross-references.
+# Runs eng/pipelines/common/scripts/validate-xml-docs.ps1 over XML documentation cross-references.
 #
 # Open Publishing resolves every cref in our XML documentation against the Learn xref map when the
 # API docs are ingested into dotnet/sqlclient-api-docs.  A malformed documentation ID cannot
@@ -139,5 +139,5 @@ steps:
     inputs:
       targetType: filePath
       pwsh: true
-      filePath: $(REPO_ROOT)/eng/pipelines/onebranch/scripts/validate-xml-docs.ps1
+      filePath: $(REPO_ROOT)/eng/pipelines/common/scripts/validate-xml-docs.ps1
       arguments: $(validateXmlDocsArguments)

@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Validates the XML documentation cross-references that feed dotnet/sqlclient-api-docs.
+    Shared validation of XML documentation cross-references that feed dotnet/sqlclient-api-docs.
 
 .DESCRIPTION
     Open Publishing resolves every <see>/<seealso>/<exception> cref in our XML documentation

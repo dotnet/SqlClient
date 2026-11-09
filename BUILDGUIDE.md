@@ -448,6 +448,20 @@ while Source Link only maps `/_/`. NuGet Package Explorer reports this as
 **Contains untracked sources (obj)** for both Source Link and Deterministic, even when all `obj`
 sources are embedded and the compiler's deterministic flag is enabled.
 
+## PR XML Documentation Validation
+
+The `sqlclient-pr` pipeline validates documentation snippets and XML documentation inside all
+produced NuGet packages using the shared offline validator at
+[`eng/pipelines/common/scripts/validate-xml-docs.ps1`](eng/pipelines/common/scripts/validate-xml-docs.ps1).
+The validation stage
+depends only on packing, so it can run in parallel with tests without waiting for test secrets.
+It takes the successful pack job's artifact name as a parameter rather than rebuilding.
+The caller supplies the pack output expression, preserving the correct artifact across job retries.
+
+Error-severity findings fail PR validation, including malformed cross-references, missing package
+documentation, and incorrect `lib/` versus `ref/` documentation trimming. The JSON report is
+published as `xml_docs_validation_attempt<N>` even when documentation validation fails.
+
 ## OneBranch Validation
 
 Both OneBranch pipelines default **Fail on validation errors**

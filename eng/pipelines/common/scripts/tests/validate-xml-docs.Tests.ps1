@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Pester tests for validate-xml-docs.ps1.
+    Pester tests for the shared validate-xml-docs.ps1 script.
 
 .DESCRIPTION
     Every cross-reference form that produced an xref-not-found warning against
@@ -1811,7 +1811,7 @@ Describe 'validate-xml-docs.ps1' {
         The step template documents which categories the default 'error' gate covers, and nothing
         else ties that prose to this table, so a severity changed here would silently leave the
         documented contract wrong. Failing this test is the prompt to update
-        eng/pipelines/onebranch/steps/validate-xml-docs-step.yml alongside the change.
+        eng/pipelines/common/steps/validate-xml-docs-step.yml alongside the change.
     #>
     Context 'severity contract' {
 
