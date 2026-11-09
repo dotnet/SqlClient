@@ -381,8 +381,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
             using X509Certificate2 generatedCert = CreateSelfSignedCertificate(
                 certificateName, certificateName);
             // Schannel needs an imported private key rather than the generated ephemeral key.
+#if NET9_0_OR_GREATER
             using X509Certificate2 serverCert = X509CertificateLoader.LoadPkcs12(
                 generatedCert.Export(X509ContentType.Pfx), password: null);
+#else
+            using X509Certificate2 serverCert = new(generatedCert.Export(X509ContentType.Pfx));
+#endif
             using CancellationTokenSource timeout = new(TimeSpan.FromSeconds(30));
             using TcpListener listener = new(IPAddress.Loopback, 0);
             listener.Start();
