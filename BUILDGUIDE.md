@@ -35,6 +35,37 @@ This repository uses .NET local tools (e.g. PowerShell) that must be restored be
 dotnet tool restore
 ```
 
+### PowerShell Modules
+
+Before using scripts or tests that need PowerShell resources, run from the repository root:
+
+```console
+dotnet tool restore
+dotnet build build.proj -t:RestorePowerShellModules --no-restore
+```
+
+Add or update resource versions in [`powershell-modules.json`](powershell-modules.json).
+The target uses PSResourceGet from the restored PowerShell tool and the anonymous feed in
+[`PowerShell.config`](PowerShell.config). It reuses exact installed versions and installs
+missing resources for the current user, without clobbering existing commands or falling
+back to other sources.
+Automatic credential-provider selection is disabled for anonymous feed access.
+Restore and consumption must use the same user.
+Consumers import modules normally; the manifest pins installation, not runtime resolution.
+Run restore explicitly after manifest changes or on a new machine/user. It does not build
+the driver, run tests, or install OS-level tools. `--no-restore` prevents an implicit
+NuGet restore of driver projects; it does not skip the PowerShell module restore target.
+
+Pipelines run the same restore after .NET tool restore through
+`eng/pipelines/common/steps/restore-powershell-modules.yml`:
+
+```console
+dotnet build tools/targets/RestorePowerShellModules.targets -t:RestorePowerShellModules
+```
+
+The standalone entry point also works locally and with older package-producing commits.
+Certificate scripts only consume prerequisites; they never install modules.
+
 ## Developer Workflow
 
 Once you've cloned the repository and made your changes to the codebase, it is time to build, test, and optionally

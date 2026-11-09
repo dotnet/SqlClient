@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <_PowerShellModulesRepoRoot>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)', '..', '..'))</_PowerShellModulesRepoRoot>
+  </PropertyGroup>
+
+  <Target Name="RestorePowerShellModules">
+    <Message Importance="High" Text="Restoring PowerShell modules from powershell-modules.json" />
+    <Exec WorkingDirectory="$(_PowerShellModulesRepoRoot)"
+          Command="&quot;$(DotnetPath)dotnet&quot; tool run pwsh -- -NoProfile -NonInteractive -File &quot;$(_PowerShellModulesRepoRoot)eng/scripts/Restore-PowerShellModules.ps1&quot;" />
+  </Target>
+</Project>
