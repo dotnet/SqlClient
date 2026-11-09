@@ -47,7 +47,6 @@ internal sealed partial class SqlMetaDataFactory
             {
                 if (mdc.SupportedByCurrentVersion(context) && mdc.CollectionName[0] != '_')
                 {
-                    DataRow row = table.NewRow();
                     table.Rows.Add([mdc.CollectionName, mdc.NumberOfRestrictions, mdc.NumberOfIdentifierParts]);
                 }
             }
@@ -69,7 +68,7 @@ internal sealed partial class SqlMetaDataFactory
                 throw ADP.UnsupportedVersion(collectionName);
             }
 
-            DataTable table = await collection.GetMetadata(context);
+            DataTable table = await collection.GetMetadata(context).ConfigureAwait(false);
             table.AcceptChanges();
             return table;
         }

@@ -151,7 +151,7 @@ internal sealed partial class SqlMetaDataFactory
             result.BeginLoadData();
             foreach(TypeMetaData t in s_types)
             {
-                if (t.IsSupported == null || t.IsSupported(context.Caps))
+                if (t.IsSupported == null || t.IsSupported(context.Capabilities))
                 {
                     DataRow row = result.NewRow();
                     row[DbMetaDataColumnNames.TypeName] = t.TypeName;
@@ -216,7 +216,7 @@ internal sealed partial class SqlMetaDataFactory
                 // do not support ASSEMBLYPROPERTY
                 if (!s_assemblyPropertyUnsupportedEngines.Contains(engineEdition))
                 {
-                    await udtCollection.GetMetadata(context, result);
+                    await udtCollection.GetMetadata(context, result).ConfigureAwait(false);
                 }
             }
 
@@ -224,7 +224,7 @@ internal sealed partial class SqlMetaDataFactory
             MetaDataCollectionBase? tvpCollection = FindMetaDataCollection("_TVPs", context);
             if (tvpCollection != null)
             {
-                await tvpCollection.GetMetadata(context, result);
+                await tvpCollection.GetMetadata(context, result).ConfigureAwait(false);
             }
 
             return result;
@@ -233,29 +233,29 @@ internal sealed partial class SqlMetaDataFactory
 
     private sealed class TypeMetaData
     {
-        public string TypeName{ get; init; }
-        public int ProviderDbType{ get; init; }
-        public int ColumnSize{ get; init; }
-        public string CreateFormat{ get; init; }
-        public string? CreateParameters{ get; init; }
-        public string DataType{ get; init; }
-        public bool IsAutoIncrementable{ get; init; }
-        public bool IsBestMatch{ get; init; }
-        public bool IsCaseSensitive{ get; init; }
-        public bool IsFixedLength{ get; init; }
-        public bool IsFixedPrecisionScale{ get; init; }
-        public bool IsLong{ get; init; }
-        public bool IsNullable{ get; init; }
-        public bool IsSearchable{ get; init; }
-        public bool IsSearchableWithLike{ get; init; }
-        public bool? IsUnsigned{ get; init; }
-        public short MaximumScale{ get; init; }
-        public short MinimumScale{ get; init; }
-        public bool IsConcurrencyType{ get; init; }
-        public Predicate<ConnectionCapabilities>? IsSupported { get; init; }
-        public bool? IsLiteralSupported{ get; init; }
-        public string? LiteralPrefix{ get; init; }
-        public string? LiteralSuffix{ get; init; }
+        public string TypeName { get; init; }
+        public int ProviderDbType { get; init; }
+        public int ColumnSize { get; init; }
+        public string CreateFormat { get; init; }
+        public string? CreateParameters { get; init; }
+        public string DataType { get; init; }
+        public bool IsAutoIncrementable { get; init; }
+        public bool IsBestMatch { get; init; }
+        public bool IsCaseSensitive { get; init; }
+        public bool IsFixedLength { get; init; }
+        public bool IsFixedPrecisionScale { get; init; }
+        public bool IsLong { get; init; }
+        public bool IsNullable { get; init; }
+        public bool IsSearchable { get; init; }
+        public bool IsSearchableWithLike { get; init; }
+        public bool? IsUnsigned { get; init; }
+        public short MaximumScale { get; init; }
+        public short MinimumScale { get; init; }
+        public bool IsConcurrencyType { get; init; }
+        public Predicate<ConnectionCapabilities>? IsSupported  { get; init; }
+        public bool? IsLiteralSupported { get; init; }
+        public string? LiteralPrefix { get; init; }
+        public string? LiteralSuffix { get; init; }
 
         /// <summary>
         /// Fills main values from the <see cref="MetaType"/> specified by <paramref name="dbType"/> and sets reasonable default values for the rest of the properties.
@@ -291,12 +291,29 @@ internal sealed partial class SqlMetaDataFactory
             LiteralSuffix = null;
         }
 
-        public TypeMetaData(SqlDbType dbType, int? columnSize,
-            bool isAutoIncrementable, bool isBestMatch, bool isCaseSensitive, bool isFixedLength,
-            bool isFixedPrecisionScale, bool isLong, bool isNullable, bool isSearchable, bool isSearchableWithLike,
-            bool? isUnsigned, short maximumScale, short minimumScale, bool isConcurrencyType,
-            bool? isLiteralSupported, string? literalPrefix, string? literalSuffix,
-            Predicate<ConnectionCapabilities>? isSupported, string[]? createParameters, string? alias = null)
+        public TypeMetaData(
+            SqlDbType dbType,
+            int? columnSize,
+            bool isAutoIncrementable,
+            bool isBestMatch,
+            bool isCaseSensitive,
+            bool isFixedLength,
+            bool isFixedPrecisionScale,
+            bool isLong,
+            bool isNullable,
+            bool isSearchable,
+            bool isSearchableWithLike,
+            bool? isUnsigned,
+            short maximumScale,
+            short minimumScale,
+            bool isConcurrencyType,
+            bool? isLiteralSupported,
+            string? literalPrefix,
+            string? literalSuffix,
+            Predicate<ConnectionCapabilities>? isSupported,
+            string[]? createParameters,
+            string? alias = null
+        )
         {
             // Shared type properties
             MetaType metaType = MetaType.GetMetaTypeFromSqlDbType(dbType, isMultiValued: false);
@@ -364,8 +381,11 @@ internal sealed partial class SqlMetaDataFactory
                 IsUnsigned = integerDbType is SqlDbType.Bit ? null : integerDbType is SqlDbType.TinyInt,
             };
 
-        internal static TypeMetaData CreateVariablePrecisionNumericType(SqlDbType numericDbType, int columnSize,
-                                                                            string? aliasType = null)
+        internal static TypeMetaData CreateVariablePrecisionNumericType(
+            SqlDbType numericDbType,
+            int columnSize,
+            string? aliasType = null
+        )
         {
             MetaType metaType = MetaType.GetMetaTypeFromSqlDbType(numericDbType, isMultiValued: false);
             bool variableScale = numericDbType is SqlDbType.Decimal;
@@ -387,8 +407,11 @@ internal sealed partial class SqlMetaDataFactory
             };
         }
 
-        internal static TypeMetaData CreateFixedPrecisionDateTimeType(SqlDbType dateTimeDbType, bool isBestMatch,
-            Predicate<ConnectionCapabilities>? isSupported = null) => new TypeMetaData(dateTimeDbType)
+        internal static TypeMetaData CreateFixedPrecisionDateTimeType(
+            SqlDbType dateTimeDbType,
+            bool isBestMatch,
+            Predicate<ConnectionCapabilities>? isSupported = null
+         ) => new TypeMetaData(dateTimeDbType)
             {
                 IsBestMatch = isBestMatch,
                 IsFixedPrecisionScale = dateTimeDbType is SqlDbType.Date,
@@ -398,7 +421,9 @@ internal sealed partial class SqlMetaDataFactory
                 IsSupported = isSupported
             };
 
-        internal static TypeMetaData CreateVariablePrecisionDateTimeType(SqlDbType dateTimeDbType, int columnSize,
+        internal static TypeMetaData CreateVariablePrecisionDateTimeType(
+            SqlDbType dateTimeDbType,
+            int columnSize,
             bool isBestMatch = true,
             Predicate<ConnectionCapabilities>? isSupported = null)
         {
@@ -421,10 +446,16 @@ internal sealed partial class SqlMetaDataFactory
             };
         }
 
-        internal static TypeMetaData CreateStringOrBinaryType(SqlDbType sqlDbType, int columnSize, bool isLong,
-            bool isFixedLength, bool isSearchable,
-            string? literalPrefix = null, string? literalSuffix = null,
-            Predicate<ConnectionCapabilities>? isSupported = null)
+        internal static TypeMetaData CreateStringOrBinaryType(
+            SqlDbType sqlDbType,
+            int columnSize,
+            bool isLong,
+            bool isFixedLength,
+            bool isSearchable,
+            string? literalPrefix = null,
+            string? literalSuffix = null,
+            Predicate<ConnectionCapabilities>? isSupported = null
+        )
         {
             MetaType metaType = MetaType.GetMetaTypeFromSqlDbType(sqlDbType, isMultiValued: false);
             bool hasLengthSpecifier = sqlDbType is SqlDbType.Char or SqlDbType.NChar or SqlDbType.Binary
@@ -456,9 +487,12 @@ internal sealed partial class SqlMetaDataFactory
             };
         }
 
-        internal static TypeMetaData CreateLongStringOrBinaryType(SqlDbType longDbType,
-            string? literalPrefix = null, string? literalSuffix = null,
-            Predicate<ConnectionCapabilities>? isSupported = null) =>
+        internal static TypeMetaData CreateLongStringOrBinaryType(
+            SqlDbType longDbType,
+            string? literalPrefix = null,
+            string? literalSuffix = null,
+            Predicate<ConnectionCapabilities>? isSupported = null
+        ) =>
             CreateStringOrBinaryType(longDbType,
                 // The column size is measured in elements, not bytes. For ntext, each element is a 2 byte Unicode character.
                 columnSize: longDbType is SqlDbType.NText ? int.MaxValue / ADP.CharSize : int.MaxValue,
@@ -467,8 +501,11 @@ internal sealed partial class SqlMetaDataFactory
                 literalPrefix: literalPrefix, literalSuffix: literalSuffix,
                 isSupported: isSupported);
 
-        internal static TypeMetaData CreateFixedLengthStringOrBinaryType(SqlDbType fixedLengthDbType,
-            string? literalPrefix = null, string? literalSuffix = null) =>
+        internal static TypeMetaData CreateFixedLengthStringOrBinaryType(
+            SqlDbType fixedLengthDbType,
+            string? literalPrefix = null,
+            string? literalSuffix = null
+        ) =>
             CreateStringOrBinaryType(fixedLengthDbType,
                 // See the comment on AddLongStringOrBinary regarding column sizes. To add: the "binary" type can be up to 8000 bytes.
                 columnSize: fixedLengthDbType switch
@@ -481,8 +518,11 @@ internal sealed partial class SqlMetaDataFactory
                 isSearchable: true,
                 literalPrefix: literalPrefix, literalSuffix: literalSuffix);
 
-        internal static TypeMetaData CreateVariableLengthStringOrBinaryType(SqlDbType variableLengthDbType,
-            string? literalPrefix = null, string? literalSuffix = null) =>
+        internal static TypeMetaData CreateVariableLengthStringOrBinaryType(
+            SqlDbType variableLengthDbType,
+            string? literalPrefix = null,
+            string? literalSuffix = null
+        ) =>
             CreateStringOrBinaryType(variableLengthDbType,
                 // See the comment on AddLongStringOrBinary regarding column sizes. Unlike the "binary" type, varbinary is reported to
                 // have a maximum column size of (2^32-1) / 2 elements, just as nvarchar does.

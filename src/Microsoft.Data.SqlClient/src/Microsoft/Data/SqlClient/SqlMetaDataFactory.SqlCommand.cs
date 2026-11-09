@@ -7,6 +7,7 @@ using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
 using System.Globalization;
+using System.Security.Policy;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
 
@@ -18,9 +19,9 @@ namespace Microsoft.Data.SqlClient
     {
         private sealed class SupportedQuery
         {
-            public string? MinimumVersion { get; init; }
-            public string? MaximumVersion { get; init; }
-            public string Query { get; init; }
+            public readonly string? MinimumVersion;
+            public readonly string? MaximumVersion;
+            public readonly string Query;
 
             public SupportedQuery(string? minimumVersion, string? maximumVersion, string query)
             {
@@ -55,12 +56,12 @@ namespace Microsoft.Data.SqlClient
                 foreach (SupportedQuery query in Queries)
                 {
                     // Since Azure DB always has latest stable version of SQL Server engine, take latest query 
-                    if ((context.Caps.IsAzureSql && query.MaximumVersion == null) ||
+                    if ((context.Capabilities.IsAzureSql && query.MaximumVersion == null) ||
                         // ..or if it's not Azure, check if the current version is within the supported range
-                        (query.MinimumVersion == null || string.Compare(context.Caps.ServerVersion, query.MinimumVersion, StringComparison.OrdinalIgnoreCase) >= 0) &&
-                        (query.MaximumVersion == null || string.Compare(context.Caps.ServerVersion, query.MaximumVersion, StringComparison.OrdinalIgnoreCase) <= 0))
+                        (query.MinimumVersion == null || string.Compare(context.Capabilities.ServerVersion, query.MinimumVersion, StringComparison.OrdinalIgnoreCase) >= 0) &&
+                        (query.MaximumVersion == null || string.Compare(context.Capabilities.ServerVersion, query.MaximumVersion, StringComparison.OrdinalIgnoreCase) <= 0))
                     {
-                        Debug.Assert(validQuery == null, $"Two queries matches current version {context.Caps.ServerVersion} in collection {CollectionName}");
+                        Debug.Assert(validQuery == null, $"Two queries matches current version {context.Capabilities.ServerVersion} in collection {CollectionName}");
                         validQuery = query;
                     }
                 }

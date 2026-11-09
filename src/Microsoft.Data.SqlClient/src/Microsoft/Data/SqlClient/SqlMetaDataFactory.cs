@@ -28,9 +28,12 @@ namespace Microsoft.Data.SqlClient
             new SqlCommandCollection("Users",                  1, 
                     [new SupportedQuery(null,          null, "select uid, name as user_name, createdate, updatedate from sysusers where (name = @Name or (@Name is null))")],
                     [new Restriction("User_Name", "@Name", "name")]),
+                                  //  CollectionName           NumberOfIdentifierParts   
             new SqlCommandCollection("Databases",              1,
+                    // Set of queries to read given metadata collection, because different server versions might require different queries.
                     [new SupportedQuery(null, "09.99.999.9", "select name as database_name, dbid, crdate as create_date from master..sysdatabases where (name = @Name or (@Name is null))"),
                      new SupportedQuery("10.00.000.0", null, "IF OBJECT_ID('master..sysdatabases') IS NULL EXEC sp_executesql N'select name as database_name, dbid, crdate as create_date from sysdatabases where (name = @Name or (@Name is null))',N'@Name NVARCHAR(128)',@Name=@Name ELSE EXEC sp_executesql N'select name as database_name, dbid, crdate as create_date from master..sysdatabases where (name = @Name or (@Name is null))',N'@Name NVARCHAR(128)',@Name=@Name")],
+                    // Set of parameters for queries (queries for all versions must have the same set of parameters)
                     [new Restriction("Name", "@Name", "Name")]),
             new SqlCommandCollection("Tables",                 3,
                     [new SupportedQuery(null,          null, "select TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, TABLE_TYPE from INFORMATION_SCHEMA.TABLES where (TABLE_CATALOG = @Catalog or (@Catalog is null)) and (TABLE_SCHEMA = @Owner or (@Owner is null)) and (TABLE_NAME = @Name or (@Name is null)) and (TABLE_TYPE = @TableType or (@TableType is null))")],
@@ -140,23 +143,23 @@ namespace Microsoft.Data.SqlClient
 
         public async ValueTask<DataTable> GetSchemaCore(DbConnection connection, string collectionName, string[] restrictions, bool isAsync, CancellationToken cancellationToken)
         {
+            // We expect first element of s_metaDataCollection to be an instance of MetaDataCollection
+            Debug.Assert(s_metaDataCollection[0] is MetaDataCollection);
             cancellationToken.ThrowIfCancellationRequested();
 
-            MetaDataCollection? metadataRoot = s_metaDataCollection[0] as MetaDataCollection;
-            // We expect first element of s_metaDataCollection to be an instance of MetaDataCollection
-            Debug.Assert(metadataRoot != null);
-            DataTable schema = await metadataRoot!.GetMetadata(collectionName, new MetaDataContext(restrictions, connection, isAsync, cancellationToken));
+            MetaDataCollection metadataRoot = (MetaDataCollection)s_metaDataCollection[0];
+            DataTable schema = await metadataRoot.GetMetadata(collectionName, new MetaDataContext(restrictions, connection, isAsync, cancellationToken));
 
             return schema;
         }
 
         internal sealed class MetaDataContext
         {
-            public ConnectionCapabilities Caps { get; init; }
-            public string[] RestrictionValues { get; init; }
-            public DbConnection Connection { get; init; }
-            public bool IsAsync { get; init; }
-            public CancellationToken CancellationToken { get; init; }
+            public readonly ConnectionCapabilities Capabilities;
+            public readonly string[] RestrictionValues;
+            public readonly DbConnection Connection;
+            public readonly bool IsAsync;
+            public readonly CancellationToken CancellationToken;
 
             internal MetaDataContext(string[] restrictions, DbConnection connection, bool isAsync, CancellationToken cancellationToken)
             {
@@ -164,7 +167,7 @@ namespace Microsoft.Data.SqlClient
 
                 RestrictionValues = restrictions;
                 Connection = connection;
-                Caps = ((SqlConnection)connection).InnerConnection.Capabilities;
+                Capabilities = ((SqlConnection)connection).InnerConnection.Capabilities;
                 IsAsync = isAsync;
                 CancellationToken = cancellationToken;
             }
@@ -172,9 +175,9 @@ namespace Microsoft.Data.SqlClient
 
         internal sealed class Restriction
         {
-            public string RestrictionName { get; init; }
-            public string ParameterName { get; init; }
-            public string RestrictionDefault { get; init; }
+            public readonly string RestrictionName;
+            public readonly string ParameterName;
+            public readonly string RestrictionDefault;
 
             internal Restriction(string restrictionName, string parameterName,string restrictionDefault)
             {
@@ -186,9 +189,9 @@ namespace Microsoft.Data.SqlClient
 
         internal abstract class MetaDataCollectionBase
         {
-            public string CollectionName { get; init; }
+            public readonly string CollectionName;
+            public readonly int NumberOfIdentifierParts;
             public virtual int NumberOfRestrictions => 0;
-            public int NumberOfIdentifierParts { get; init; }
 
             internal MetaDataCollectionBase(string collectionName, int numberOfIdentifierParts)
             {

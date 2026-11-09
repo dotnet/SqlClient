@@ -77,8 +77,8 @@ internal sealed partial class SqlMetaDataFactory
             table.Rows.Add([
                 CompositeIdentifierSeparatorPattern,
                 DataSourceProductName,
-                context.Caps.ServerVersion,
-                context.Caps.ServerVersion,
+                context.Capabilities.ServerVersion,
+                context.Capabilities.ServerVersion,
                 GroupByBehavior,
                 IdentifierPattern,
                 IdentifierCase,

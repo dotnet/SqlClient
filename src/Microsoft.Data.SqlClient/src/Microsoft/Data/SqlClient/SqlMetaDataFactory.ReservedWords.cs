@@ -150,9 +150,7 @@ internal sealed partial class SqlMetaDataFactory
 
             foreach (string reservedWord in s_reservedWords)
             {
-                DataRow row = table.NewRow();
-                row[DbMetaDataColumnNames.ReservedWord] = reservedWord;
-                table.Rows.Add(row);
+                table.Rows.Add([reservedWord]);
             }
 
             return new ValueTask<DataTable>(table);
