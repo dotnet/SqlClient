@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 > **Note:** Releases are sorted in reverse chronological order (newest first).
 
-## [Preview Release 8.0.0-preview1] - 2026-11-06
+## [Preview Release 8.0.0-preview1] - 2026-11-09
 
 This first 8.0 preview includes changes since the `release/7.1` branch point,
 [`92f220956b07328054701a869f452cade51830c1`](https://github.com/dotnet/SqlClient/commit/92f220956b07328054701a869f452cade51830c1)
