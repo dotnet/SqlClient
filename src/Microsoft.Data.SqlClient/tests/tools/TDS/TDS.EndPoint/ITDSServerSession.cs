@@ -103,5 +103,18 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         /// Indicates whether the client supports Enhanced Routing
         /// </summary>
         bool IsEnhancedRoutingSupportRequested { get; set; }
+
+        /// <summary>
+        /// When set, the connection is closed abortively (TCP RST) right after the next
+        /// response has been written, the way SQL Server ends a session it has killed.
+        /// Cleared once acted on.
+        /// </summary>
+        bool AbortConnectionAfterResponse { get; set; }
+
+        /// <summary>
+        /// Invoked once the connection has been closed abortively because of
+        /// AbortConnectionAfterResponse, so a test can sequence its next step after the abort.
+        /// </summary>
+        Action ConnectionAborted { get; set; }
     }
 }
