@@ -1,0 +1,65 @@
+﻿#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+# This step downloads the codecov CLI tool and uploads the merged cobertura results to codecov.
+
+# IMPORTANT:
+#    This step depends on the $(codecov_token) variable to be present in the
+#    sqlclient-pipeline-config-v1 library. It is secret, so this step should only be executed if
+#    the pipeline is not running on a fork.
+
+# @TODO: This step is generic and intended to be used for any pipeline that includes codecov upload
+#    at some point, this file should be moved to the common folder and other code that uploads to
+#    codecov should be migrated to this compound step.
+
+parameters:
+
+  # Path to the merged coverage report in covertura format.
+  - name: mergedCoveragePath
+    type: string
+
+steps:
+
+  # 1) Download the codecov command line tool
+  - script: |
+      curl -o "$(Agent.TempDirectory)/codecov" https://cli.codecov.io/latest/linux/codecov
+      chmod +x "$(Agent.TempDirectory)/codecov"
+    displayName: Download CodeCov CLI
+    condition: and(succeeded(), not(eq(variables['Agent.OS'], 'Windows_NT')))
+
+  - powershell: |
+      Invoke-WebRequest -Uri "https://cli.codecov.io/latest/windows/codecov.exe" -OutFile "$(Agent.TempDirectory)\codecov.exe"
+    displayName: Download CodeCov CLI
+    condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
+
+  # 2) Upload the report
+  # Note: We use the pipeline name as the "flag" to help distinguish reports uploaded from
+  #    different pipelines
+  - script: >-
+      "$(Agent.TempDirectory)/codecov"
+      --verbose
+      upload-process
+      --fail-on-error
+      --disable-search
+      -f "${{ parameters.mergedCoveragePath }}"
+      -F $(Build.DefinitionName)
+    displayName: Upload to CodeCov
+    condition: and(succeeded(), not(eq(variables['Agent.OS'], 'Windows_NT')))
+    env:
+      CODECOV_TOKEN: $(codecov_token)
+
+  - powershell: >-
+      & "$(Agent.TempDirectory)/codecov.exe"
+      --verbose
+      upload-process
+      --fail-on-error
+      --disable-search
+      -f "${{ parameters.mergedCoveragePath }}"
+      -F $(Build.DefinitionName)
+    displayName: Upload to CodeCov
+    condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
+    env:
+      CODECOV_TOKEN: $(codecov_token)
