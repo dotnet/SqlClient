@@ -38,14 +38,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
-        // This validates client-side managed-SNI enumeration behavior and the agent's SQL Browser
-        // environment; it does not connect to or discover the configured Managed Instance.
+        // Managed enumeration throws before attempting discovery and does not require SQL Browser.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsUsingManagedSNI), nameof(DataTestUtility.IsNotManagedInstance))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void SqlDataSourceEnumerator_ManagedSNI()
         {
-            // After adding the managed SNI support, this test should have the same result as SqlDataSourceEnumerator_NativeSNI
-            Assert.Throws<NotImplementedException>(() => GetDSEnumerator().GetDataSources());
+            // Act
+            Exception exception = Record.Exception(() => SqlDataSourceEnumerator.Instance.GetDataSources());
+
+            // Assert
+            Assert.IsType<NotImplementedException>(exception);
         }
 
         // This test validates behavior of SqlDataSourceConverter used to present instance names in PropertyGrid
