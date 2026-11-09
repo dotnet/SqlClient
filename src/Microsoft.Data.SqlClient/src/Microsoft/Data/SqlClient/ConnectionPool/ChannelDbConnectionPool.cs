@@ -954,9 +954,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                         currentTransaction);
 
                 // When running synchronously, we are guaranteed that the task is already completed.
-                // We don't need to guard the managed threadpool at this spot because we pass the async flag as false
-                // to GetInternalConnection, which means it will not use Task.Run or any async-await logic that would
-                // schedule tasks on the managed threadpool.
+                // Passing async: false to GetInternalConnection avoids task dispatch and awaits
+                // that would schedule work on the managed ThreadPool.
                 connection = task.ConfigureAwait(false).GetAwaiter().GetResult();
                 return connection is not null;
             }
@@ -972,9 +971,9 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             // created. Ideally we would just return the Task from GetInternalConnection and let the caller await
             // it as needed, but instead we need to signal to the provided TaskCompletionSource when the connection
             // is established. This pattern has implications for connection open retry logic that are intricate
-            // enough to merit dedicated work. For now, callers that need to open many connections asynchronously
-            // and in parallel *must* pre-prevision threads in the managed thread pool to avoid exhaustion and
-            // timeouts.
+            // enough to merit dedicated work. The experimental LongRunning option moves initial
+            // blocking creation off the ThreadPool. After an incomplete await, continuations can
+            // still use the ThreadPool.
             //
             // Also note that we don't have access to the cancellation token passed by the caller to the original
             // OpenAsync call. This means that we cannot cancel the connection open operation if the caller's token
@@ -983,8 +982,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
             //
             // The ambient transaction is captured by the caller, on the caller's thread, and handed
             // to us in the TaskCompletionSource's AsyncState (see SqlConnection.InternalOpenAsync).
-            // Do not read Transaction.Current in the Task.Run below: a plain TransactionScope keeps
-            // the transaction in thread-static storage, which does not flow to the worker, so the
+            // Do not read Transaction.Current in the dispatched task below: a plain TransactionScope
+            // keeps the transaction in thread-static storage, which does not flow to the worker, so the
             // enlistment would silently be skipped. Do not assign Transaction.Current there either;
             // that storage is not unwound afterwards and would leak into later work on that thread.
             Transaction? ambientTransaction = taskCompletionSource.Task.AsyncState as Transaction;
@@ -998,7 +997,13 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                 return true;
             }
 
-            Task.Run(async () =>
+            TaskCreationOptions creationOptions = TaskCreationOptions.DenyChildAttach;
+            if (LocalAppContextSwitches.UseLongRunningPoolV2Open)
+            {
+                creationOptions |= TaskCreationOptions.LongRunning;
+            }
+
+            Task.Factory.StartNew(async () =>
             {
                 if (taskCompletionSource.Task.IsCompleted)
                 {
@@ -1036,7 +1041,8 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
                     // task.
                     taskCompletionSource.TrySetException(e);
                 }
-            });
+            }, CancellationToken.None, creationOptions,
+                TaskScheduler.Default).Unwrap();
 
             connection = null;
             return false;
@@ -1126,12 +1132,10 @@ namespace Microsoft.Data.SqlClient.ConnectionPool
 
                             // https://github.com/dotnet/SqlClient/issues/3459
                             // TODO: This blocks the thread for several network calls!
-                            // When running async, the blocked thread is one allocated from the managed thread pool (due to 
-                            // use of Task.Run in TryGetConnection). This is why it's critical for async callers to 
-                            // pre-provision threads in the managed thread pool. Our options are limited because 
-                            // DbConnectionInternal doesn't support an async open. It's better to block this thread and keep
-                            // throughput high than to queue all of our opens onto a single worker thread. Add an async path 
-                            // when this support is added to DbConnectionInternal.
+                            // Async acquisition normally blocks a ThreadPool worker here. The
+                            // experimental LongRunning dispatch moves initial creation off that pool,
+                            // but creation after an incomplete await can still block a continuation.
+                            // Add an async path when DbConnectionInternal supports it.
                             // TODO: ultimately, the connection factory should also accept our cancellation token.
                             var newConnection = ConnectionFactory.CreatePooledConnection(
                                 owningConnection,

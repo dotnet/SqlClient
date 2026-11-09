@@ -92,6 +92,11 @@ if [ -f "$resultsDir/runnerconfig-baseline.json" ]; then
 fi
 
 # --- current (branch under test) ---
+networkConfigArgs=()
+if [ -f "$resultsDir/network-latency.json" ]; then
+    networkConfigArgs=(--network-config "$resultsDir/network-latency.json")
+fi
+
 python3 "$scriptsDir/perf_to_kusto.py" \
     --input-dir "$resultsDir/current" \
     --out-run "$kustoOut/current.PerfRun.ndjson" \
@@ -108,6 +113,7 @@ python3 "$scriptsDir/perf_to_kusto.py" \
     --commit-hash "$commitHash" \
     --commit-date "$commitDate" \
     "${currentConfigArgs[@]}" \
+    "${networkConfigArgs[@]}" \
     --is-comparable-base false
 
 # --- baseline (released NuGet package), when a baseline pass ran ---
@@ -128,6 +134,7 @@ if [ -d "$resultsDir/baseline" ]; then
         --version-string "$baseVer" \
         --commit-hash "v$baseVer" \
         "${baselineConfigArgs[@]}" \
+        "${networkConfigArgs[@]}" \
         --is-comparable-base true
 fi
 

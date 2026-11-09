@@ -257,6 +257,7 @@ AppContext switches allow runtime behavior changes without modifying connection 
 | `Switch.Microsoft.Data.SqlClient.UseCompatibilityAsyncBehaviour` | `false` | Uses legacy async behavior for compatibility |
 | `Switch.Microsoft.Data.SqlClient.UseCompatibilityProcessSni` | `false` | Uses legacy SNI processing path |
 | `Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2` | `false` | Enables the new `ChannelDbConnectionPool` implementation |
+| `Switch.Microsoft.Data.SqlClient.UseLongRunningPoolV2Open` | `false` | Experimental live switch: dispatches new V2 slow-path acquisitions as LongRunning tasks; V1 and non-pooled opens are unchanged |
 | `Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows` | `false` | Forces managed SNI on Windows (instead of native SNI) |
 | `Switch.Microsoft.Data.SqlClient.UseOneSecFloorInTimeoutCalculationDuringLogin` | `false` | Sets 1-second minimum in login timeout calculations |
 
@@ -318,6 +319,11 @@ Setting `EnableAppConfig` to `false` at publish time removes the configuration r
 Setting it only at run time, with `AppContext.SetSwitch` or `runtimeconfig.json`, stops the reading but leaves the trim warnings. On .NET Framework the switch has no effect, since trimming does not apply there.
 
 ### Guidelines for Adding New Switches
+The experimental `UseLongRunningPoolV2Open` switch is an explicit exception to caching:
+it reads AppContext on every dispatch so OpenAsyncLab can compare scheduling without a restart.
+Already-dispatched work is unaffected. LongRunning moves initial blocking work to a dedicated
+thread, but continuations after incomplete awaits can still run on the ThreadPool.
+
 1. Define the switch name constant in `LocalAppContextSwitches.cs`
 2. Add a cached property with lazy evaluation pattern (see existing switches)
 3. Default to `false` — the switch should opt-in to the new behavior

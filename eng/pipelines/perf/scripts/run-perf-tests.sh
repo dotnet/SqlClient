@@ -59,6 +59,7 @@ runMode="interleaved"
 # Best-of-N: total interleaved passes for a flagged unit before a regression is confirmed (1 disables).
 confirmationRuns="3"
 runnerConfigFile="runnerconfig.jsonc"
+networkLatencyMilliseconds="0"
 # Optional SqlClient behaviour flags (true/false).  Empty means "leave the checked-in runnerconfig
 # default untouched".  These are written into the runner config the benchmarks run against AND, via
 # the pipeline's Kusto translation (--config-override), recorded in PerfRun.Config so a run's
@@ -85,6 +86,7 @@ usage() {
          "[--regression-threshold <pct>] [--fail-on-regression]" \
          "[--run-mode interleaved|sequential] [--confirmation-runs <N>]" \
          "[--runner-config-file <filename.jsonc>]" \
+         "[--network-latency-ms <nonnegative integer, per direction, Linux local SQL only>]" \
          "[--use-managed-sni-on-windows true|false] [--use-optimized-async-behaviour true|false]" \
          "[--use-connection-pool-v2 true|false]" >&2
 }
@@ -103,6 +105,7 @@ while [[ $# -gt 0 ]]; do
         --run-mode) runMode="$2"; shift 2 ;;
         --confirmation-runs) confirmationRuns="$2"; shift 2 ;;
         --runner-config-file) runnerConfigFile="$2"; shift 2 ;;
+        --network-latency-ms) networkLatencyMilliseconds="$2"; shift 2 ;;
         --use-managed-sni-on-windows) useManagedSniOnWindows="$2"; shift 2 ;;
         --use-optimized-async-behaviour) useOptimizedAsyncBehaviour="$2"; shift 2 ;;
         --use-connection-pool-v2) useConnectionPoolV2="$2"; shift 2 ;;
@@ -110,6 +113,10 @@ while [[ $# -gt 0 ]]; do
         *) echo "Unknown argument: $1" >&2; usage; exit 2 ;;
     esac
 done
+
+if ! [[ "${networkLatencyMilliseconds}" =~ ^[0-9]+$ ]]; then
+    echo "ERROR: --network-latency-ms must be nonnegative integer milliseconds." >&2; exit 2
+fi
 
 if ! [[ "${runnerConfigFile}" =~ ^[A-Za-z0-9_.-]+\.jsonc?$ ]]; then
     echo "ERROR: --runner-config-file must be a JSON filename in PerformanceTests." >&2; exit 2
@@ -511,6 +518,27 @@ prepare_runner_config() {
 # directory, so each pass runs from its own directory and its artifacts are collected into
 # results/<label>/.
 ####################################################################################################
+
+# One network condition covers every pass, including fixture setup and warmup. Keep the state
+# private to this invocation so cleanup never acts on another run's artifact.
+NETEM_STATE="$(mktemp "${DIAG_DIR}/netem-state.XXXXXX")"
+cleanup_network_latency() {
+    local status=$?
+    trap - EXIT INT TERM
+    if ! python3 "${SCRIPT_DIR}/netem.py" stop --state "${NETEM_STATE}" \
+            --output "${RESULTS_DIR}/network-latency.json"; then
+        echo "ERROR: network latency cleanup/validation failed." >&2
+        status=1
+    fi
+    rm -f "${NETEM_STATE}"
+    exit "${status}"
+}
+trap cleanup_network_latency EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+python3 "${SCRIPT_DIR}/netem.py" start --delay-ms "${networkLatencyMilliseconds}" \
+    --server "${SQL_SERVER}" --state "${NETEM_STATE}" \
+    --output "${RESULTS_DIR}/network-latency.json"
 
 # NuGet.config on the VM exposes only the governed feed; the baseline package (and its public deps)
 # live on NuGet.org.  Central Package Management rejects multiple unmapped sources (NU1507), so the

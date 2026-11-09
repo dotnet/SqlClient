@@ -253,6 +253,10 @@ foreach ($server in @("192.0.2.1", "2001:db8::1")) {
                 names = ("runnerconfig.json", "runnerconfig-baseline.json", "runnerconfig-current.json")
                 for name in names if separate else names[:1]:
                     (root / name).write_text('{}', encoding="utf-8")
+                (root / "network-latency.json").write_text(json.dumps({
+                    "SchemaVersion": 1, "NetworkLatencyMilliseconds": 25, "Status": "Cleaned",
+                    "Applied": True, "Interface": "lo", "TcpPort": 1433,
+                    "Direction": "EachDirection"}), encoding="utf-8")
                 # Capture translator arguments without needing BenchmarkDotNet result fixtures.
                 capture = root / "capture.py"
                 capture.write_text(
@@ -278,6 +282,8 @@ foreach ($server in @("192.0.2.1", "2001:db8::1")) {
                     name = f"runnerconfig-{variant}.json" if separate else "runnerconfig.json"
                     self.assertEqual(call[call.index("--runner-config") + 1], (root / name).as_posix())
                     self.assertNotIn("--config-override", call)
+                    self.assertEqual(call[call.index("--network-config") + 1],
+                                     (root / "network-latency.json").as_posix())
 
 
 if __name__ == "__main__":

@@ -48,6 +48,8 @@ param(
     [int]$ConfirmationRuns = 3,
     [ValidatePattern('^[A-Za-z0-9_.-]+\.jsonc?$')]
     [string]$RunnerConfigFile = "runnerconfig.jsonc",
+    [ValidatePattern('^[0-9]+$')]
+    [string]$NetworkLatencyMilliseconds = "0",
     # Optional SqlClient behaviour flags (true/false, or empty to leave the checked-in
     # runnerconfig.default.jsonc default untouched).  Written into the runner config the benchmarks run
     # against and, via the pipeline's Kusto translation, recorded in PerfRun.Config.
@@ -71,6 +73,10 @@ param(
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
+
+if ($NetworkLatencyMilliseconds -notmatch '^0+$') {
+    throw "Network latency injection is Linux-only; select platform=linux or use zero latency."
+}
 
 ####################################################################################################
 # Native-command error handling
@@ -185,6 +191,11 @@ if ([string]::IsNullOrEmpty($SqlPassword)) {
 }
 
 New-Item -ItemType Directory -Force -Path $ResultsDir | Out-Null
+@{
+    SchemaVersion = 1
+    NetworkLatencyMilliseconds = 0
+    Status = "Disabled"
+} | ConvertTo-Json | Set-Content -Path (Join-Path $ResultsDir "network-latency.json") -Encoding UTF8
 
 # Record VM-side run metadata (e.g. the perf VM hostname) for the agent-side Kusto translation.
 "MACHINE_NAME=$env:COMPUTERNAME" | Set-Content -Path (Join-Path $ResultsDir "runinfo.env") -Encoding ASCII

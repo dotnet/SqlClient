@@ -10,9 +10,9 @@ using Microsoft.Data.SqlClient.Internal;
 namespace Microsoft.Data.SqlClient;
 
 /// <summary>
-/// This class provides immutable access to the app context switches used
-/// throughout the codebase.  Each switch value is read once (on first access)
-/// and cached for future access.  Most switch values are obtained solely from
+/// This class provides access to the app context switches used throughout the
+/// codebase. Switch values are cached unless explicitly documented as live.
+/// Most switch values are obtained solely from
 /// the AppContext, but some switches may use other mechanisms to determine
 /// their values as well (e.g. environment variables).
 /// </summary>
@@ -140,6 +140,10 @@ internal static class LocalAppContextSwitches
     /// </summary>
     private const string UseConnectionPoolV2String =
         "Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2";
+
+    /// <summary>The live experimental V2 acquisition scheduling switch.</summary>
+    private const string UseLongRunningPoolV2OpenString =
+        "Switch.Microsoft.Data.SqlClient.UseLongRunningPoolV2Open";
 
     /// <summary>
     /// The name of the app context switch that controls whether to preserve
@@ -688,6 +692,14 @@ internal static class LocalAppContextSwitches
             UseConnectionPoolV2String,
             defaultValue: false,
             ref s_useConnectionPoolV2);
+
+    /// <summary>
+    /// Opts new V2 acquisition dispatches into LongRunning scheduling. Defaults to false.
+    /// Intentionally not cached so diagnostic tools can compare scheduling in one process.
+    /// Already-dispatched work and continuations after incomplete awaits are unaffected.
+    /// </summary>
+    public static bool UseLongRunningPoolV2Open =>
+        AppContext.TryGetSwitch(UseLongRunningPoolV2OpenString, out bool enabled) && enabled;
 
     /// <summary>
     /// When set to true (the default), pooling preserves historical idle-timeout behavior.

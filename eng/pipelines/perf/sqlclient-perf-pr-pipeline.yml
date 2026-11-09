@@ -30,6 +30,11 @@ trigger: none
 
 parameters:
 
+  - name: networkLatencyMilliseconds
+    displayName: Linux SQL latency per direction (ms; 0 disables)
+    type: number
+    default: 0
+
   - name: runnerConfigFile
     displayName: Workload configuration
     type: string
@@ -149,6 +154,13 @@ parameters:
 # Variables' group and has no translate/ingest steps: PR results are never written to Kusto.
 variables:
 
+  - ${{ if eq(parameters.platform, 'windows') }}:
+    - name: PerfArgsNetwork
+      value: '-NetworkLatencyMilliseconds ${{ parameters.networkLatencyMilliseconds }}'
+  - ${{ else }}:
+    - name: PerfArgsNetwork
+      value: '--network-latency-ms ${{ parameters.networkLatencyMilliseconds }}'
+
   # Pre-computed testScriptArgs chunks.  The Windows entry point is PowerShell and binds
   # '-PascalCase' params, while the Linux one is bash and parses '--kebab-case' flags, so the
   # argument STYLE differs by platform.  Assembling the final args from these per-platform chunks
@@ -220,7 +232,7 @@ extends:
     # per-platform / baseline / fail-gate argument chunks are pre-computed in the 'variables' block
     # above (PerfArgsCommon / PerfArgsBaseline / PerfArgsFail); assemble them here.  Empty chunks
     # collapse to harmless extra spaces that both PowerShell and bash arg parsing ignore.
-    testScriptArgs: '$(PerfArgsCommon) $(PerfArgsBaseline) $(PerfArgsFail)'
+    testScriptArgs: '$(PerfArgsCommon) $(PerfArgsBaseline) $(PerfArgsFail) $(PerfArgsNetwork)'
 
     # Subfolder (relative to testRootDir on the VM) the script writes results into.  The template
     # copies this VM folder back to the agent, but always lands it at a fixed location:

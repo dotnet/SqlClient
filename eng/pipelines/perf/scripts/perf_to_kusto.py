@@ -74,6 +74,27 @@ def _load_runner_config(path):
             if key not in _CONFIG_EXCLUDED_KEYS and isinstance(value, bool)}
 
 
+def _load_network_config(path):
+    """Keep run-wide latency provenance separate from benchmark/driver feature flags."""
+    if not path:
+        return {}
+    with open(path, encoding="utf-8-sig") as source:
+        data = json.load(source)
+    delay = data.get("NetworkLatencyMilliseconds")
+    if data.get("SchemaVersion") != 1 or type(delay) is not int or delay < 0:
+        raise ValueError("Invalid network latency metadata")
+    expected = "Disabled" if delay == 0 else "Cleaned"
+    if data.get("Status") != expected:
+        raise ValueError("Network latency was not successfully applied/cleaned up")
+    if delay and (not data.get("Applied") or data.get("Interface") != "lo"
+                  or data.get("TcpPort") != 1433 or data.get("Direction") != "EachDirection"):
+        raise ValueError("Unexpected network latency scope")
+    return {
+        "NetworkLatencyMilliseconds": delay,
+        "NetworkLatencyScope": "SqlLoopbackTcp1433" if delay else "Disabled",
+    }
+
+
 def _parse_config_overrides(pairs):
     """Parse repeated ``--config-override NAME=VALUE`` items into a ``{flag: bool}`` dict.
 
@@ -81,7 +102,7 @@ def _parse_config_overrides(pairs):
     at queue time. These overrides are a compatibility fallback for older result artifacts that do
     not contain the generated runner config used by the benchmark process.
 
-    Only boolean values are accepted (Config is a flat ``{flag: bool}`` map); a non-boolean value
+    Only boolean feature-flag overrides are accepted; a non-boolean value
     is warned about and skipped so a typo never injects a non-bool. Later duplicates win."""
     overrides = {}
     for item in pairs or []:
@@ -339,10 +360,13 @@ def main(argv=None):
                         metavar="NAME=BOOL",
                         help="Override or add a PerfRun.Config boolean flag (repeatable). Values "
                              "supplied here win over those read from --runner-config.")
+    parser.add_argument("--network-config", default="",
+                        help="Run-wide netem metadata; adds typed latency fields to PerfRun.Config.")
     args = parser.parse_args(argv)
 
     config = _load_runner_config(args.runner_config)
     config.update(_parse_config_overrides(args.config_override))
+    config.update(_load_network_config(args.network_config))
 
     ctx = {
         "driver_name": args.driver_name,

@@ -20,6 +20,73 @@ database.
 | `scripts/perf_to_kusto.py` | Translates BenchmarkDotNet "full" JSON → Kusto `PerfRun` + `PerfBenchmarkResult` NDJSON. |
 | `scripts/ingest_kusto.py` | Queued Kusto ingestion (az CLI auth, runs on the agent). |
 | `scripts/async_health_report.py` | Validated, versioned async-health JSON/Markdown; no timing regression gates or Kusto ingestion. |
+| `scripts/netem.py` | Run-owned Linux SQL packet delay, safe cleanup, and network-condition metadata. |
+
+## Linux network latency
+
+All three pipelines expose **`networkLatencyMilliseconds`**, a nonnegative integer with default
+**0** (disabled). It is an environment condition for the entire run, not a BenchmarkDotNet
+parameter or a per-benchmark setting. For example, queue with `platform=linux` and
+`networkLatencyMilliseconds=25` to add **25 ms per direction**, approximately 50 ms per network
+request/response round trip. Connection establishment and SQL operations may involve multiple
+round trips; this is not a fixed extra duration per OpenAsync or command.
+
+The Linux entrypoint accepts the equivalent `--network-latency-ms 25`. The Windows entrypoint
+accepts only zero and fails explicitly for a positive value. Negative or fractional values are
+rejected rather than rounded. Zero does not inspect or modify traffic-control rules and requires
+no network administration privilege.
+
+### Scope and prerequisites
+
+The perf lab co-locates SQL Server and the client. With latency enabled, every address resolved
+from `SQL_SERVER` must route through Linux loopback (`lo`). **Remote SQL endpoints are rejected**:
+shaping only client egress would not provide the promised bidirectional condition.
+The existing runner already forces TCP port 1433. IPv4 and IPv6 filters match only TCP packets
+addressed to that server/port or returning from that server/port; other ports, SSH, package
+downloads, and non-SQL traffic do not enter the delayed band.
+
+The VM needs `ip` and `tc` from `iproute2`, kernel netem/priority-queue/flower-filter support,
+and root or noninteractive permission to run `sudo -n tc`. Missing tooling, privilege, kernel
+support, and conflicting pre-existing root queues fail the run; nothing is silently skipped or
+overwritten. The harness does not install kernel packages or alter remote-host networking.
+
+The delay applies before benchmark setup/warmup and remains unchanged for baseline, candidate,
+switch A/B passes, diagnostic repetitions, and confirmation runs. Database provisioning and the
+initial harness connectivity check happen before shaping. A prewarmed pooled open may not do
+network I/O at all; use nonpooled/cold opens to study connection establishment and query workloads
+to study response waits. SQL-free calibration controls are not slowed by this setting.
+Existing invocation counts and timeouts are not automatically changed. In particular, the
+connection-smoke contention workload performs 100,000 operations per iteration; added latency
+can exceed its per-case or pipeline timeout. Choose the workload budget and timeouts before
+the experiment, identically for baseline and candidate.
+
+### Cleanup and evidence
+
+The harness exclusively adds a run-owned root queue, never replaces an existing custom root,
+and removes only its own handle. Exit, setup failure, and normal SIGINT/SIGTERM cancellation
+invoke cleanup. SIGKILL, host failure, or forced termination cannot guarantee a shell trap;
+the lab's VM teardown remains the final isolation boundary. Do not use this runner on a shared
+SQL host: other clients of the same local SQL endpoint also receive the delay.
+
+`network-latency.json` records the requested per-direction delay, resolved endpoints, applied
+configuration, packet counters, and cleanup outcome. The delay queue has a 10,000-packet limit;
+observed drops fail the run rather than turning a latency experiment into an undocumented
+packet-loss experiment. No matching packets emits a warning. A changed/missing owned queue or
+changed netem settings also fails final verification. Do not change settings while a run is active.
+
+Kusto translation adds `NetworkLatencyMilliseconds` and `NetworkLatencyScope` to `PerfRun.Config`
+for **both** passes from this artifact, independently of driver feature flags. Missing historical
+metadata remains unknown, not inferred as zero. Filter by this environment condition when comparing
+historical results; zero-delay and delayed runs are not interchangeable baselines.
+
+Run the privileged integration checks only on Linux; they create disposable network namespaces,
+measure delayed IPv4/IPv6 SQL-port echo against an undelayed control port, and verify failure and
+cancellation cleanup without shaping the host's interfaces:
+
+```bash
+PERF_NETEM_TESTS=1 python3 -B -m unittest discover \
+  -s eng/pipelines/perf/scripts/tests -p test_netem.py -v
+```
 
 ## Async-health diagnoser
 

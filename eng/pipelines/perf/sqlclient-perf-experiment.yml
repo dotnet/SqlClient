@@ -46,6 +46,11 @@ trigger: none
 
 parameters:
 
+  - name: networkLatencyMilliseconds
+    displayName: Linux SQL latency per direction (ms; 0 disables)
+    type: number
+    default: 0
+
   - name: runnerConfigFile
     displayName: Workload configuration
     type: string
@@ -151,6 +156,13 @@ parameters:
 # structural here rather than conditional.
 variables:
 
+  - ${{ if eq(parameters.platform, 'windows') }}:
+    - name: PerfArgsNetwork
+      value: '-NetworkLatencyMilliseconds ${{ parameters.networkLatencyMilliseconds }}'
+  - ${{ else }}:
+    - name: PerfArgsNetwork
+      value: '--network-latency-ms ${{ parameters.networkLatencyMilliseconds }}'
+
   # Pre-computed testScriptArgs chunks.  The Windows entry point is PowerShell and binds
   # '-PascalCase' params, while the Linux one is bash and parses '--kebab-case' flags, so the
   # argument STYLE differs by platform.  Assembling the final args from these per-platform chunks
@@ -207,7 +219,7 @@ extends:
     # Arguments forwarded to the script.  The script also reads SQL_SERVER, SQL_PASSWORD and
     # PERF_CLIENT_CPUS directly from the VM session environment (injected by the template).  Empty
     # chunks collapse to harmless extra spaces that both PowerShell and bash arg parsing ignore.
-    testScriptArgs: '$(PerfArgsCommon) $(PerfArgsFail)'
+    testScriptArgs: '$(PerfArgsCommon) $(PerfArgsFail) $(PerfArgsNetwork)'
 
     # Subfolder (relative to testRootDir on the VM) the script writes results into.  The template
     # copies this VM folder back to the agent, but always lands it at a fixed location:

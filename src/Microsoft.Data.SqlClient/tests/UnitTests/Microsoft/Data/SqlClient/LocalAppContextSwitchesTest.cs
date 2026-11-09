@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using Microsoft.Data.SqlClient.Tests.Common;
 #if NET
 using System.Runtime.InteropServices;
@@ -17,6 +18,33 @@ namespace Microsoft.Data.SqlClient.UnitTests;
 [Collection(AppContextSwitchTestCollection.Name)]
 public class LocalAppContextSwitchesTest
 {
+    /// <summary>The experimental scheduling switch is read live, not cached on first use.</summary>
+    [Fact]
+    public void UseLongRunningPoolV2Open_ChangedValue_UpdatesWithoutCacheReset()
+    {
+        // Arrange
+        const string SwitchName = "Switch.Microsoft.Data.SqlClient.UseLongRunningPoolV2Open";
+        AppContext.TryGetSwitch(SwitchName, out bool original);
+
+        try
+        {
+            foreach (bool enabled in new[] { false, true, false })
+            {
+                // Act
+                AppContext.SetSwitch(SwitchName, enabled);
+                bool actual = LocalAppContextSwitches.UseLongRunningPoolV2Open;
+
+                // Assert
+                Assert.Equal(enabled, actual);
+            }
+        }
+        finally
+        {
+            // Cleanup
+            AppContext.SetSwitch(SwitchName, original);
+        }
+    }
+
     /// <summary>
     /// Tests the default values of every AppContext switch used by SqlClient.
     /// </summary>
@@ -68,6 +96,7 @@ public class LocalAppContextSwitchesTest
         Assert.True(switchesHelper.UseCompatibilityAsyncBehaviour);
         Assert.True(switchesHelper.UseLegacyIdleTimeoutBehavior);
         Assert.False(switchesHelper.UseConnectionPoolV2);
+        Assert.False(LocalAppContextSwitches.UseLongRunningPoolV2Open);
         Assert.False(switchesHelper.UseOverallConnectTimeoutForPoolWait);
         Assert.False(switchesHelper.TruncateScaledDecimal);
         Assert.False(switchesHelper.IgnoreServerProvidedFailoverPartner);

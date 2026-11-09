@@ -76,6 +76,54 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         }
 
         /// <summary>
+        /// Live scheduling changes affect subsequent cold acquisitions on the same pool,
+        /// including switching back to ThreadPool dispatch.
+        /// </summary>
+        [Fact]
+        public async Task TryGetConnection_DispatchSwitchChanges_UsesSelectedThreadKind()
+        {
+            // Arrange
+            const string SwitchName = "Switch.Microsoft.Data.SqlClient.UseLongRunningPoolV2Open";
+            AppContext.TryGetSwitch(SwitchName, out bool original);
+            var factory = new SuccessfulSqlConnectionFactory();
+            var pool = ConstructPool(factory);
+
+            try
+            {
+                foreach (bool longRunning in new[] { false, true, false })
+                {
+                    // Act
+                    AppContext.SetSwitch(SwitchName, longRunning);
+                    using var owner = new SqlConnection();
+                    var completion = new TaskCompletionSource<DbConnectionInternal>(
+                        TaskCreationOptions.RunContinuationsAsynchronously);
+                    bool completedInline = pool.TryGetConnection(
+                        owner, completion, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                        out DbConnectionInternal? inlineConnection);
+                    Task completed = await Task.WhenAny(completion.Task, Task.Delay(30000));
+
+                    // Assert
+                    Assert.False(completedInline);
+                    Assert.Null(inlineConnection);
+                    Assert.Same(completion.Task, completed);
+                    DbConnectionInternal connection = await completion.Task;
+                    pool.ReturnInternalConnection(connection, owner);
+                    Assert.Equal(!longRunning, factory.CreationUsedThreadPool);
+
+                    // Clear idle connections so the next dispatch must create a physical connection.
+                    pool.Clear();
+                }
+            }
+            finally
+            {
+                // Cleanup
+                pool.Shutdown();
+                pool.Clear();
+                AppContext.SetSwitch(SwitchName, original);
+            }
+        }
+
+        /// <summary>
         /// Verifies that requesting connections from an empty pool causes the pool to create new
         /// physical connections until the requested count is reached.
         /// </summary>
@@ -1514,6 +1562,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             /// </summary>
             internal TimeoutTimer? CapturedTimeout { get; private set; }
 
+            /// <summary>Records whether physical creation occupied a ThreadPool worker.</summary>
+            internal bool? CreationUsedThreadPool { get; private set; }
+
             /// <summary>
             /// Creates a successful stub internal connection and records the timeout budget used for
             /// the creation attempt.
@@ -1527,6 +1578,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 TimeoutTimer timeout)
             {
                 CapturedTimeout = timeout;
+                CreationUsedThreadPool = Thread.CurrentThread.IsThreadPoolThread;
                 return new StubDbConnectionInternal(Metrics);
             }
         }
