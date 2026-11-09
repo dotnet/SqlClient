@@ -77,6 +77,8 @@
                               the published documentation but do appear in the lib/ XML.
       LocalNamespacePrefixes  Namespaces owned by this repository, which must resolve against the
                               documentation being validated. Default: Microsoft.Data, Microsoft.SqlServer.
+                              Framework-owned SqlTriggerContext and its members are external
+                              despite sharing the Microsoft.SqlServer.Server namespace.
       IgnoredCrefs            Exact cref values to exempt from all cref rules.
 
     Ignored crefs that no longer appear are reported as stale, so an obsolete exception cannot
@@ -795,6 +797,13 @@ function Test-Cref {
                 $isLocal = $true
                 break
             }
+        }
+
+        # System.Data.dll owns SqlTriggerContext, not our Microsoft.SqlServer.Server package.
+        $frameworkTriggerContext = 'Microsoft.SqlServer.Server.SqlTriggerContext'
+        if ($namePart -eq $frameworkTriggerContext -or
+            $namePart.StartsWith("$frameworkTriggerContext.", [System.StringComparison]::Ordinal)) {
+            $isLocal = $false
         }
 
         if ($isLocal) {

@@ -62,4 +62,25 @@ Describe 'PR XML documentation validation' {
         $validation | Should -Match "itemPattern: '\*\*/\*\.nupkg'"
         $validation | Should -Match 'targetPath: \$\(xmlDocsPackagesRoot\)'
     }
+
+    It 'validates every snippet directory configured by OneBranch' {
+        # Arrange
+        $oneBranch = Get-Content (
+            Join-Path $pipelineRoot 'onebranch/stages/build-stages.yml'
+        ) -Raw
+        $expected = @([regex]::Matches($oneBranch, "documentationSnippetsPath: '([^']+)'") |
+            ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique)
+
+        # Act
+        $snippetBlock = [regex]::Match(
+            $validation, '(?ms)^              snippetsDirectory:\r?\n(.*?)(?=^              \w)'
+        ).Groups[1].Value
+        $actual = @([regex]::Matches($snippetBlock, '(?m)^                - (.+)\r?$') |
+            ForEach-Object { $_.Groups[1].Value.Trim() } | Sort-Object -Unique)
+
+        # Assert
+        $expected.Count | Should -Be 3
+        $actual.Count | Should -Be $expected.Count
+        Compare-Object $actual $expected | Should -BeNullOrEmpty
+    }
 }

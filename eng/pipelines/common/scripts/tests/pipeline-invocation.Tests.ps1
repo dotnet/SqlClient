@@ -47,6 +47,51 @@ Describe 'Shared XML validation step' {
     It 'rejects an unexpected failOnValidationError value rather than assuming report-only' {
         $step | Should -Match 'Unexpected failOnValidationError value'
     }
+
+    It 'validates multiple snippet directories from the composed task arguments: <InvalidIndex>' `
+        -ForEach @(@{ InvalidIndex = 1 }, @{ InvalidIndex = 2 }) {
+        # Arrange
+        $directories = @(0..2 | ForEach-Object {
+            $directory = Join-Path $TestDrive "snippets $_"
+            New-Item -ItemType Directory -Path $directory -Force | Out-Null
+            $cref = if ($_ -eq $InvalidIndex) { 'T:System.Byte[]' } else { 'T:System.String' }
+            "<docs><members name=`"S`"><S><see cref=`"$cref`" /></S></members></docs>" |
+                Set-Content -LiteralPath (Join-Path $directory 'Sample.xml') -Encoding utf8
+            $directory
+        })
+        $report = Join-Path $TestDrive 'multiple-snippets.json'
+        $compose = [regex]::Match(
+            $step, '(?ms)^  - pwsh: \|\r?\n(.*?)(?=^    displayName:)'
+        ).Groups[1].Value
+        $values = @{
+            '${{ parameters.reportPath }}' = $report
+            '${{ join('','', parameters.failOn) }}' = 'error'
+            '${{ join(''","'', parameters.snippetsDirectory) }}' = $directories -join '","'
+            '${{ parameters.documentationPath }}' = ''
+            '${{ parameters.packagesPath }}' = ''
+            '${{ parameters.extractPath }}' = ''
+            '${{ parameters.dependencyDocumentationPath }}' = ''
+            '${{ parameters.projectPath }}' = ''
+            '${{ parameters.projectSearchRoot }}' = ''
+            '${{ parameters.failOnValidationError }}' = 'False'
+        }
+        foreach ($entry in $values.GetEnumerator()) {
+            $compose = $compose.Replace($entry.Key, $entry.Value)
+        }
+
+        # Act
+        $output = & ([scriptblock]::Create($compose)) 6>&1
+        $arguments = $output -replace '^##vso\[task.setvariable variable=validateXmlDocsArguments\]', ''
+        $exitCode = Invoke-AsPipelineTask -CommandLine ". '$scriptPath' $arguments"
+
+        # Assert
+        $exitCode | Should -Be 0
+        $result = Get-Content -LiteralPath $report -Raw | ConvertFrom-Json
+        $result.FilesValidated | Should -Be 3
+        $result.Findings.Count | Should -Be 1
+        $result.Findings[0].Category | Should -Be 'invalid-docid'
+        $result.Findings[0].Path | Should -Be (Join-Path $directories[$InvalidIndex] 'Sample.xml')
+    }
 }
 
 Describe 'Shared XML validator under the pipeline invocation form' {

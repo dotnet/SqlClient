@@ -52,7 +52,10 @@ stages:
           - template: /eng/pipelines/common/steps/validate-xml-docs-step.yml@self
             parameters:
               displayName: Validate documentation snippets and packaged XML documentation
-              snippetsDirectory: $(REPO_ROOT)/doc/snippets
+              snippetsDirectory:
+                - $(REPO_ROOT)/doc/snippets
+                - $(REPO_ROOT)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/doc
+                - $(REPO_ROOT)/src/Microsoft.Data.SqlClient.Extensions/Azure/doc
               documentationPath: ''
               packagesPath: $(xmlDocsPackagesRoot)
               extractPath: $(Pipeline.Workspace)/xml-docs-extract

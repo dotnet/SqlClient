@@ -1134,6 +1134,53 @@ Describe 'validate-xml-docs.ps1' {
             { & $scriptPath -PackagesPath $packages -ExtractPath (New-TestDirectory) } | Should -Not -Throw
         }
 
+        It 'accepts a framework-owned SQLCLR reference from a public member: <Cref>' -ForEach @(
+            @{ Cref = 'T:Microsoft.SqlServer.Server.SqlTriggerContext' }
+            @{ Cref = 'P:Microsoft.SqlServer.Server.SqlTriggerContext.TriggerAction' }
+        ) {
+            # Arrange
+            $reference = "</summary><see cref=`"$Cref`" />"
+            $packages = New-LayoutPackage -Files @{
+                'lib/net462/Microsoft.Data.SqlClient.xml' =
+                    $script:FullXml.Replace('</summary>', $reference)
+                'ref/net462/Microsoft.Data.SqlClient.xml' =
+                    $script:TrimmedXml.Replace('</summary>', $reference)
+            }
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            # Act
+            { & $scriptPath -PackagesPath $packages -ExtractPath (New-TestDirectory) `
+                    -ReportPath $report } | Should -Not -Throw
+
+            # Assert
+            @((Get-Report -Path $report).Findings).Count | Should -Be 0
+        }
+
+        It 'still rejects a missing type in the shared SQLCLR namespace: <Cref>' -ForEach @(
+            @{ Cref = 'T:Microsoft.SqlServer.Server.SqlTriggerContextTypo' }
+            @{ Cref = 'T:Microsoft.SqlServer.Server.Missing' }
+        ) {
+            # Arrange
+            $reference = "</summary><see cref=`"$Cref`" />"
+            $packages = New-LayoutPackage -Files @{
+                'lib/net462/Microsoft.Data.SqlClient.xml' =
+                    $script:FullXml.Replace('</summary>', $reference)
+                'ref/net462/Microsoft.Data.SqlClient.xml' =
+                    $script:TrimmedXml.Replace('</summary>', $reference)
+            }
+            $report = Join-Path (New-TestDirectory) 'report.json'
+
+            # Act
+            { & $scriptPath -PackagesPath $packages -ExtractPath (New-TestDirectory) `
+                    -ReportPath $report } | Should -Throw '*failed with 2 issue*'
+
+            # Assert
+            $findings = @((Get-Report -Path $report).Findings)
+            $findings.Count | Should -Be 2
+            $findings.Category | Should -Not -Contain 'missing-external-uid'
+            @($findings | Where-Object Category -eq 'missing-public-uid').Count | Should -Be 2
+        }
+
         It 'rejects a lib/ XML that has been trimmed' {
             $packages = New-LayoutPackage -Files @{
                 'lib/net8.0/Microsoft.Data.SqlClient.xml' = $script:TrimmedXml
