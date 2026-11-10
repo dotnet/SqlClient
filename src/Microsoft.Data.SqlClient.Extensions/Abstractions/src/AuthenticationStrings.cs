@@ -136,14 +136,6 @@ internal static class AuthenticationStrings
     internal static NotSupportedException UnsupportedAuthentication(string authentication) =>
         new NotSupportedException(Format("SQL_UnsupportedAuthentication", authentication));
 
-    /// <summary>
-    /// Creates an invalid-operation exception when the loaded Azure extension cannot support
-    /// the requested Web Account Manager (WAM) broker option.
-    /// </summary>
-    /// <returns>An exception explaining that the Azure extension must be upgraded.</returns>
-    internal static InvalidOperationException UseWamBrokerRequiresAzureExtensionUpgrade() =>
-        new InvalidOperationException(Format("SQL_UseWamBrokerRequiresAzureExtensionUpgrade"));
-
     /// <summary>Creates an error for an incompatible authentication provider collection.</summary>
     /// <returns>A localized configuration error.</returns>
     internal static ConfigurationErrorsException InvalidAuthenticationProviderCollection() =>

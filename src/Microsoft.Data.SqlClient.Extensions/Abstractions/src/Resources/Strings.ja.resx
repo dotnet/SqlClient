@@ -24,7 +24,4 @@
   <data name="SQL_UnsupportedAuthentication" xml:space="preserve">
     <value>認証 '{0}' はサポートされていません。</value>
   </data>
-  <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>'useWamBroker' を設定するには、'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions' を公開する 'Microsoft.Data.SqlClient.Extensions.Azure' パッケージが必要です。この型を含む v7.0.2 以降の 'Microsoft.Data.SqlClient.Extensions.Azure' パッケージにアップグレードしてください。</value>
-  </data>
 </root>

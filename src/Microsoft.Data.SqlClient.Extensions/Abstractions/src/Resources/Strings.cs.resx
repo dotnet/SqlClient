@@ -24,7 +24,4 @@
   <data name="SQL_UnsupportedAuthentication" xml:space="preserve">
     <value>Ověřování {0} není podporované.</value>
   </data>
-  <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>Nastavení useWamBroker vyžaduje Microsoft.Data.SqlClient.Extensions. Balíček Azure pro zveřejnění Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions. Upgradujte Microsoft.Data.SqlClient.Extensions. Balíček služby Azure alespoň na verzi 7.0.2, která obsahuje tento typ.</value>
-  </data>
 </root>

@@ -24,7 +24,4 @@
   <data name="SQL_UnsupportedAuthentication" xml:space="preserve">
     <value>'{0}' 인증을 사용할 수 없습니다.</value>
   </data>
-  <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>'useWamBroker'를 설정하려면 'Microsoft.Data.SqlClient.Extensions.Azure' 패키지가 'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions'를 노출해야 합니다. 이 형식을 포함하는 'Microsoft.Data.SqlClient.Extensions.Azure' 패키지를 v7.0.2 이상으로 업그레이드하세요.</value>
-  </data>
 </root>

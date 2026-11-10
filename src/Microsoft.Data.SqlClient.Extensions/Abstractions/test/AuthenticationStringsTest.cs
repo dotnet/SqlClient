@@ -12,74 +12,183 @@ namespace Microsoft.Data.SqlClient.Extensions.Abstractions.Test;
 /// <summary>Verifies authentication exception factories, resource lookup and safe formatting.</summary>
 public class AuthenticationStringsTest
 {
-    /// <summary>
-    /// Exception factories preserve their types and causes and forward arguments to the formatter
-    /// without depending on resource availability or translated wording.
-    /// </summary>
-    [Theory]
-    [InlineData("SQL_InvalidAuthenticationProviderCollection",
-        typeof(ConfigurationErrorsException))]
-    [InlineData("SQL_InvalidAuthenticationBrokerValue",
-        typeof(ConfigurationErrorsException), "invalid-value")]
-    [InlineData("SQL_MissingAuthenticationConfigurationProperty",
-        typeof(ConfigurationErrorsException), "property-name")]
-    [InlineData("SQL_InvalidAuthenticationConfigurationPropertyType",
-        typeof(ConfigurationErrorsException), "property-name")]
-    [InlineData("SQL_InvalidAuthenticationConfigurationHandler",
-        typeof(ConfigurationErrorsException), "section-name", "expected-type", "actual-type")]
-    [InlineData("SQL_InvalidAuthenticationInitializerInstance",
-        typeof(InvalidOperationException))]
-    [InlineData("SQL_InvalidAuthenticationProviderInstance",
-        typeof(InvalidOperationException))]
-    [InlineData("SQL_CannotRegisterAuthProvider",
-        typeof(InvalidOperationException), "authentication", "provider-type")]
-    [InlineData("SQL_CannotCreateAuthProvider",
-        typeof(ArgumentException), "authentication", "provider-type")]
-    [InlineData("SQL_CannotCreateAuthInitializer",
-        typeof(ArgumentException), "initializer-type")]
-    [InlineData("SQL_UnsupportedAuthenticationByProvider",
-        typeof(NotSupportedException), "provider-type", "authentication")]
-    [InlineData("SQL_UnsupportedAuthentication", typeof(NotSupportedException), "authentication")]
-    [InlineData("SQL_UseWamBrokerRequiresAzureExtensionUpgrade", typeof(InvalidOperationException))]
-    public void ExceptionFactoriesPreserveTypeArgumentsAndCause(
-        string key, Type expectedType, params string[] args)
+    /// <summary>Invalid provider collections produce a localized configuration error.</summary>
+    [Fact]
+    public void InvalidAuthenticationProviderCollection_InvalidCollection_ReturnsConfigurationError()
     {
-        var cause = new InvalidOperationException("Construction failed.");
-        Exception error = key switch
-        {
-            "SQL_InvalidAuthenticationProviderCollection" =>
-                AuthenticationStrings.InvalidAuthenticationProviderCollection(),
-            "SQL_InvalidAuthenticationBrokerValue" =>
-                AuthenticationStrings.InvalidAuthenticationBrokerValue(args[0]),
-            "SQL_MissingAuthenticationConfigurationProperty" =>
-                AuthenticationStrings.MissingAuthenticationConfigurationProperty(args[0]),
-            "SQL_InvalidAuthenticationConfigurationPropertyType" =>
-                AuthenticationStrings.InvalidAuthenticationConfigurationPropertyType(args[0]),
-            "SQL_InvalidAuthenticationConfigurationHandler" =>
-                AuthenticationStrings.InvalidAuthenticationConfigurationHandler(args[0], args[1], args[2]),
-            "SQL_InvalidAuthenticationInitializerInstance" =>
-                AuthenticationStrings.InvalidAuthenticationInitializerInstance(),
-            "SQL_InvalidAuthenticationProviderInstance" =>
-                AuthenticationStrings.InvalidAuthenticationProviderInstance(),
-            "SQL_CannotRegisterAuthProvider" =>
-                AuthenticationStrings.CannotRegisterAuthProvider(args[0], args[1]),
-            "SQL_CannotCreateAuthProvider" =>
-                AuthenticationStrings.CannotCreateAuthProvider(args[0], args[1], cause),
-            "SQL_CannotCreateAuthInitializer" =>
-                AuthenticationStrings.CannotCreateSqlAuthInitializer(args[0], cause),
-            "SQL_UnsupportedAuthenticationByProvider" =>
-                AuthenticationStrings.UnsupportedAuthenticationByProvider(args[1], args[0]),
-            "SQL_UnsupportedAuthentication" =>
-                AuthenticationStrings.UnsupportedAuthentication(args[0]),
-            "SQL_UseWamBrokerRequiresAzureExtensionUpgrade" =>
-                AuthenticationStrings.UseWamBrokerRequiresAzureExtensionUpgrade(),
-            _ => throw new ArgumentOutOfRangeException(nameof(key))
-        };
+        // Act
+        var error = AuthenticationStrings.InvalidAuthenticationProviderCollection();
 
-        Assert.Equal(expectedType, error.GetType());
-        Assert.Equal(AuthenticationStrings.Format(key, args), error.Message);
-        Assert.Same(key is "SQL_CannotCreateAuthProvider" or "SQL_CannotCreateAuthInitializer"
-            ? cause : null, error.InnerException);
+        // Assert
+        Assert.IsType<ConfigurationErrorsException>(error);
+        Assert.Equal(AuthenticationStrings.Format("SQL_InvalidAuthenticationProviderCollection"),
+            error.Message);
+        Assert.Null(error.InnerException);
+    }
+
+    /// <summary>Invalid broker values appear in the localized configuration error.</summary>
+    [Fact]
+    public void InvalidAuthenticationBrokerValue_InvalidValue_ReturnsConfigurationError()
+    {
+        // Act
+        var error = AuthenticationStrings.InvalidAuthenticationBrokerValue("invalid-value");
+
+        // Assert
+        Assert.IsType<ConfigurationErrorsException>(error);
+        Assert.Equal(AuthenticationStrings.Format(
+            "SQL_InvalidAuthenticationBrokerValue", "invalid-value"), error.Message);
+        Assert.Null(error.InnerException);
+    }
+
+    /// <summary>Missing configuration properties are identified in the localized error.</summary>
+    [Fact]
+    public void MissingAuthenticationConfigurationProperty_MissingProperty_ReturnsConfigurationError()
+    {
+        // Act
+        var error = AuthenticationStrings.MissingAuthenticationConfigurationProperty("property-name");
+
+        // Assert
+        Assert.IsType<ConfigurationErrorsException>(error);
+        Assert.Equal(AuthenticationStrings.Format(
+            "SQL_MissingAuthenticationConfigurationProperty", "property-name"), error.Message);
+        Assert.Null(error.InnerException);
+    }
+
+    /// <summary>Incorrect property types produce a localized error identifying the property.</summary>
+    [Fact]
+    public void InvalidAuthenticationConfigurationPropertyType_InvalidType_ReturnsConfigurationError()
+    {
+        // Act
+        var error = AuthenticationStrings.InvalidAuthenticationConfigurationPropertyType(
+            "property-name");
+
+        // Assert
+        Assert.IsType<ConfigurationErrorsException>(error);
+        Assert.Equal(AuthenticationStrings.Format(
+            "SQL_InvalidAuthenticationConfigurationPropertyType", "property-name"), error.Message);
+        Assert.Null(error.InnerException);
+    }
+
+    /// <summary>Handler errors retain the section and both type names in their original order.</summary>
+    [Fact]
+    public void InvalidAuthenticationConfigurationHandler_InvalidHandler_ReturnsConfigurationError()
+    {
+        // Act
+        var error = AuthenticationStrings.InvalidAuthenticationConfigurationHandler(
+            "section-name", "expected-type", "actual-type");
+
+        // Assert
+        Assert.IsType<ConfigurationErrorsException>(error);
+        Assert.Equal(AuthenticationStrings.Format("SQL_InvalidAuthenticationConfigurationHandler",
+            "section-name", "expected-type", "actual-type"), error.Message);
+        Assert.Null(error.InnerException);
+    }
+
+    /// <summary>Invalid initializer instances produce a localized activation error.</summary>
+    [Fact]
+    public void InvalidAuthenticationInitializerInstance_InvalidInstance_ReturnsActivationError()
+    {
+        // Act
+        var error = AuthenticationStrings.InvalidAuthenticationInitializerInstance();
+
+        // Assert
+        Assert.IsType<InvalidOperationException>(error);
+        Assert.Equal(AuthenticationStrings.Format("SQL_InvalidAuthenticationInitializerInstance"),
+            error.Message);
+        Assert.Null(error.InnerException);
+    }
+
+    /// <summary>Invalid provider instances produce a localized activation error.</summary>
+    [Fact]
+    public void InvalidAuthenticationProviderInstance_InvalidInstance_ReturnsActivationError()
+    {
+        // Act
+        var error = AuthenticationStrings.InvalidAuthenticationProviderInstance();
+
+        // Assert
+        Assert.IsType<InvalidOperationException>(error);
+        Assert.Equal(AuthenticationStrings.Format("SQL_InvalidAuthenticationProviderInstance"),
+            error.Message);
+        Assert.Null(error.InnerException);
+    }
+
+    /// <summary>Registration errors identify the configured authentication method and provider.</summary>
+    [Fact]
+    public void CannotRegisterAuthProvider_RejectedProvider_ReturnsRegistrationError()
+    {
+        // Act
+        var error = AuthenticationStrings.CannotRegisterAuthProvider("authentication", "provider-type");
+
+        // Assert
+        Assert.IsType<InvalidOperationException>(error);
+        Assert.Equal(AuthenticationStrings.Format(
+            "SQL_CannotRegisterAuthProvider", "authentication", "provider-type"), error.Message);
+        Assert.Null(error.InnerException);
+    }
+
+    /// <summary>Provider construction errors retain their cause and format both identifiers.</summary>
+    [Fact]
+    public void CannotCreateAuthProvider_ConstructionFailure_PreservesCause()
+    {
+        // Arrange
+        var cause = new InvalidOperationException("Construction failed.");
+
+        // Act
+        var error = AuthenticationStrings.CannotCreateAuthProvider(
+            "authentication", "provider-type", cause);
+
+        // Assert
+        Assert.IsType<ArgumentException>(error);
+        Assert.Equal(AuthenticationStrings.Format(
+            "SQL_CannotCreateAuthProvider", "authentication", "provider-type"), error.Message);
+        Assert.Same(cause, error.InnerException);
+    }
+
+    /// <summary>Initializer construction errors retain their cause and configured type name.</summary>
+    [Fact]
+    public void CannotCreateSqlAuthInitializer_ConstructionFailure_PreservesCause()
+    {
+        // Arrange
+        var cause = new InvalidOperationException("Construction failed.");
+
+        // Act
+        var error = AuthenticationStrings.CannotCreateSqlAuthInitializer("initializer-type", cause);
+
+        // Assert
+        Assert.IsType<ArgumentException>(error);
+        Assert.Equal(AuthenticationStrings.Format(
+            "SQL_CannotCreateAuthInitializer", "initializer-type"), error.Message);
+        Assert.Same(cause, error.InnerException);
+    }
+
+    /// <summary>Unsupported provider errors format the provider before the authentication method.</summary>
+    [Fact]
+    public void UnsupportedAuthenticationByProvider_UnsupportedMethod_ReturnsNotSupportedError()
+    {
+        // Act
+        var error = AuthenticationStrings.UnsupportedAuthenticationByProvider(
+            "authentication", "provider-type");
+
+        // Assert
+        Assert.IsType<NotSupportedException>(error);
+        Assert.Equal(AuthenticationStrings.Format(
+            "SQL_UnsupportedAuthenticationByProvider", "provider-type", "authentication"),
+            error.Message);
+        Assert.Null(error.InnerException);
+    }
+
+    /// <summary>Unsupported authentication errors identify the unrecognized method.</summary>
+    [Fact]
+    public void UnsupportedAuthentication_UnsupportedMethod_ReturnsNotSupportedError()
+    {
+        // Act
+        var error = AuthenticationStrings.UnsupportedAuthentication("authentication");
+
+        // Assert
+        Assert.IsType<NotSupportedException>(error);
+        Assert.Equal(AuthenticationStrings.Format(
+            "SQL_UnsupportedAuthentication", "authentication"), error.Message);
+        Assert.Null(error.InnerException);
     }
 
     /// <summary>
@@ -104,51 +213,6 @@ public class AuthenticationStringsTest
         }
         finally
         {
-            CultureInfo.CurrentUICulture = originalCulture;
-        }
-    }
-
-    /// <summary>
-    /// WAM upgrade errors use each supported satellite and retain the minimum Azure package version.
-    /// </summary>
-    [Theory]
-    [InlineData("cs")]
-    [InlineData("de")]
-    [InlineData("es")]
-    [InlineData("fr")]
-    [InlineData("it")]
-    [InlineData("ja")]
-    [InlineData("ko")]
-    [InlineData("pl")]
-    [InlineData("pt-BR")]
-    [InlineData("ru")]
-    [InlineData("tr")]
-    [InlineData("zh-Hans")]
-    [InlineData("zh-Hant")]
-    public void UseWamBrokerRequiresAzureExtensionUpgrade_LocalizedCulture_ReturnsTranslation(
-        string cultureName)
-    {
-        // Arrange
-        CultureInfo originalCulture = CultureInfo.CurrentUICulture;
-        try
-        {
-            CultureInfo.CurrentUICulture = CultureInfo.InvariantCulture;
-            string neutralMessage =
-                AuthenticationStrings.UseWamBrokerRequiresAzureExtensionUpgrade().Message;
-            CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo(cultureName);
-
-            // Act
-            string message =
-                AuthenticationStrings.UseWamBrokerRequiresAzureExtensionUpgrade().Message;
-
-            // Assert
-            Assert.NotEqual(neutralMessage, message);
-            Assert.Contains("7.0.2", message);
-            Assert.Contains("7.0.2", neutralMessage);
-        }
-        finally
-        {
-            // Cleanup
             CultureInfo.CurrentUICulture = originalCulture;
         }
     }
