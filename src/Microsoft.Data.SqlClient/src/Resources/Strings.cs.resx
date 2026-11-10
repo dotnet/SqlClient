@@ -595,7 +595,7 @@
     <value>Pro {0} nelze najít zprostředkovatele ověřování.</value>
   </data>
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
-    <value>Cannot find an authentication provider for '{0}'. Register a provider with SqlAuthenticationProvider.SetProvider, or use a compatible 'Microsoft.Data.SqlClient.Extensions.Azure' NuGet package with automatic discovery enabled. Automatic discovery is unavailable when disabled at publish time. Trimmed JIT applications require preserved reflection contracts; NativeAOT applications should disable reflective bootstrap paths at publish time and register providers explicitly. Check Microsoft.Data.SqlClient.EventSource traces (Informational level, Trace keyword 0x2) for configuration or Azure extension loading failures.</value>
+    <value>Pro {0} nelze najít zprostředkovatele ověřování. Zaregistrujte poskytovatele pomocí metody SqlAuthenticationProvider.SetProvider nebo použijte kompatibilní balíček NuGet Microsoft.Data.SqlClient.Extensions.Azure s povoleným automatickým zjišťováním. Automatické zjišťování není dostupné, pokud je při publikování zakázané. Aplikace JIT s oříznutým kódem vyžadují zachované kontrakty reflexe. Aplikace NativeAOT by měly při publikování zakázat cesty spuštění využívající reflexi a explicitně zaregistrovat poskytovatele. V trasování Microsoft.Data.SqlClient.EventSource (úroveň Informational, klíčové slovo Trace 0x2) zkontrolujte selhání konfigurace nebo načítání rozšíření Azure.</value>
   </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>Parametr {0} nesmí obsahovat hodnotu Null ani nesmí být prázdný.</value>
@@ -1891,7 +1891,7 @@
     <value>Server neuznal pokus o obnovení. Připojení nelze obnovit.</value>
   </data>
   <data name="DbConnectionString_VectorTypeSupport" xml:space="preserve">
-    <value>The level of vector type support to negotiate with the server.</value>
+    <value>Úroveň podpory vektorového typu, která se má vyjednat se serverem</value>
   </data>
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>Definuje chování v období blokování pro fond připojení.</value>

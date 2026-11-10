@@ -109,6 +109,51 @@ public class AuthenticationStringsTest
     }
 
     /// <summary>
+    /// WAM upgrade errors use each supported satellite and retain the minimum Azure package version.
+    /// </summary>
+    [Theory]
+    [InlineData("cs")]
+    [InlineData("de")]
+    [InlineData("es")]
+    [InlineData("fr")]
+    [InlineData("it")]
+    [InlineData("ja")]
+    [InlineData("ko")]
+    [InlineData("pl")]
+    [InlineData("pt-BR")]
+    [InlineData("ru")]
+    [InlineData("tr")]
+    [InlineData("zh-Hans")]
+    [InlineData("zh-Hant")]
+    public void UseWamBrokerRequiresAzureExtensionUpgrade_LocalizedCulture_ReturnsTranslation(
+        string cultureName)
+    {
+        // Arrange
+        CultureInfo originalCulture = CultureInfo.CurrentUICulture;
+        try
+        {
+            CultureInfo.CurrentUICulture = CultureInfo.InvariantCulture;
+            string neutralMessage =
+                AuthenticationStrings.UseWamBrokerRequiresAzureExtensionUpgrade().Message;
+            CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo(cultureName);
+
+            // Act
+            string message =
+                AuthenticationStrings.UseWamBrokerRequiresAzureExtensionUpgrade().Message;
+
+            // Assert
+            Assert.NotEqual(neutralMessage, message);
+            Assert.Contains("7.0.2", message);
+            Assert.Contains("7.0.2", neutralMessage);
+        }
+        finally
+        {
+            // Cleanup
+            CultureInfo.CurrentUICulture = originalCulture;
+        }
+    }
+
+    /// <summary>
     /// Resource selection follows the French UI culture while numeric formatting follows the
     /// distinct current culture, with both cultures restored after the assertion.
     /// </summary>

@@ -169,6 +169,7 @@ public sealed class VectorColumnMetadataTests
     /// use to declare a column.
     /// </summary>
     [ConditionalFact(nameof(IsSupported))]
+    [Trait("category", "flaky")]
     public void SchemaCollectionIncludesVectorType()
     {
         string connectionString = new SqlConnectionStringBuilder(_connectionString)
@@ -193,6 +194,7 @@ public sealed class VectorColumnMetadataTests
     [ConditionalTheory(nameof(IsFloat16Supported))]
     [InlineData("float32")]
     [InlineData("float16")]
+    [Trait("category", "flaky")]
     public void V2CreationFormatIncludesBaseType(string baseType)
     {
         using SqlConnection connection = new(DataTestUtility.VectorFloat16ConnectionString);
@@ -218,6 +220,7 @@ public sealed class VectorColumnMetadataTests
     /// makes it correct on Azure SQL.
     /// </summary>
     [ConditionalFact(nameof(IsSupported))]
+    [Trait("category", "flaky")]
     public void SchemaCollectionOmitsVectorTypeWhenItIsNotNegotiated()
     {
         // The type is reported according to what the connection negotiated, not according

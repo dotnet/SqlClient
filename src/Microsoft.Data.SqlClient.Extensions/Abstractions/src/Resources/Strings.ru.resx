@@ -25,6 +25,6 @@
     <value>Проверка подлинности "{0}" не поддерживается.</value>
   </data>
   <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>Для установки параметра "useWamBroker" требуется, чтобы пакет "Microsoft.Data.SqlClient.Extensions.Azure" предоставлял доступ к "Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions". Обновите пакет "Microsoft.Data.SqlClient.Extensions.Azure" как минимум до версии v1.1.0, в которую входит этот тип.</value>
+    <value>Для установки параметра "useWamBroker" требуется, чтобы пакет "Microsoft.Data.SqlClient.Extensions.Azure" предоставлял доступ к "Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions". Обновите пакет "Microsoft.Data.SqlClient.Extensions.Azure" как минимум до версии v7.0.2, в которую входит этот тип.</value>
   </data>
 </root>

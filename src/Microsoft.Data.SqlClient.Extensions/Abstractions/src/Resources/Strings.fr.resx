@@ -25,6 +25,6 @@
     <value>L'authentification '{0}' n'est pas prise en charge.</value>
   </data>
   <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>Le paramètre « useWamBroker » nécessite le package « Microsoft.Data.SqlClient.Extensions.Azure » pour exposer « Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions ». Mettez à niveau le package « Microsoft.Data.SqlClient.Extensions.Azure » vers la version 1.1.0 ou ultérieure, qui inclut ce type.</value>
+    <value>Le paramètre « useWamBroker » nécessite le package « Microsoft.Data.SqlClient.Extensions.Azure » pour exposer « Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions ». Mettez à niveau le package « Microsoft.Data.SqlClient.Extensions.Azure » vers la version 7.0.2 qui inclut ce type.</value>
   </data>
 </root>

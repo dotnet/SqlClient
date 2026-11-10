@@ -595,7 +595,7 @@
     <value>No se encuentra ningún proveedor de autenticación para "{0}".</value>
   </data>
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
-    <value>Cannot find an authentication provider for '{0}'. Register a provider with SqlAuthenticationProvider.SetProvider, or use a compatible 'Microsoft.Data.SqlClient.Extensions.Azure' NuGet package with automatic discovery enabled. Automatic discovery is unavailable when disabled at publish time. Trimmed JIT applications require preserved reflection contracts; NativeAOT applications should disable reflective bootstrap paths at publish time and register providers explicitly. Check Microsoft.Data.SqlClient.EventSource traces (Informational level, Trace keyword 0x2) for configuration or Azure extension loading failures.</value>
+    <value>No se encuentra un proveedor de autenticación para ''{0}''. Registre un proveedor con SqlAuthenticationProvider.SetProvider o use un paquete NuGet "Microsoft.Data.SqlClient.Extensions.Azure" compatible con la detección automática habilitada. La detección automática no está disponible si se deshabilita durante la publicación. Las aplicaciones JIT recortadas requieren conservar los contratos de reflexión; las aplicaciones NativeAOT deberían deshabilitar las rutas de arranque en reflexión durante la publicación y registra los proveedores explícitamente. Compruebe los seguimientos de Microsoft.Data.SqlClient.EventSource (nivel Informativo, palabra clave de seguimiento 0x2) para detectar errores de configuración o de carga de las extensiones de Azure.</value>
   </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>El parámetro "{0}" no puede ser nulo ni estar vacío.</value>
@@ -1891,7 +1891,7 @@
     <value>El servidor no reconoció un intento de recuperación; no es posible recuperar la conexión.</value>
   </data>
   <data name="DbConnectionString_VectorTypeSupport" xml:space="preserve">
-    <value>The level of vector type support to negotiate with the server.</value>
+    <value>Nivel de compatibilidad con tipos de vectores que se negociará con el servidor.</value>
   </data>
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>Define el comportamiento del período de bloqueo para un grupo de conexiones.</value>

@@ -81,6 +81,7 @@ Use `[Trait("category", "...")]` (xUnit, used in both ManualTests and UnitTests)
 | `nonuaptests` | UAP/UWP | Not applicable for UAP |
 | `failing` | All platforms | Known permanent failures |
 | `flaky` | All platforms (quarantine) | Intermittently failing tests (see Quarantine Zone below) |
+| `probation` | With `flaky` (quarantine) | Fixed tests being monitored before leaving quarantine |
 
 ### Flaky Test Quarantine Zone
 Tests that intermittently fail are quarantined with `[Trait("category", "flaky")]`. Quarantined tests:
@@ -107,6 +108,27 @@ public async Task OpenAsync_TimingDependent_MayFail() { ... }
 ```
 
 **How to un-quarantine:** Remove the `[Trait("category", "flaky")]` attribute once the root cause is fixed and the test passes consistently.
+
+#### Automated maintenance probation
+
+After fixing a quarantined test, retain `flaky` and add a second category:
+
+```csharp
+[Trait("category", "flaky")]
+[Trait("category", "probation")]
+```
+
+`probation` is tracking metadata, not a separate execution category. Never replace `flaky`
+with `probation`: existing regular-suite filters exclude `flaky`, and quarantine steps select
+`flaky`. Keeping both traits preserves that routing without pipeline changes.
+
+Record the fully qualified test/case identities and the effective fix merge in the maintenance
+PR. Probation begins when the fix and both traits become effective on the upstream branch;
+a retry or re-fix starts a new interval. If an observed execution fails, remove only `probation`.
+Remove both traits only after seven full days, observed post-fix passes, and complete available
+pipeline test-result coverage since that merge with no observed failures, including quarantine
+jobs. Missing, inaccessible, expired, skipped, or aborted results are not passes; incomplete
+coverage cannot justify promotion. Do not infer a probation start from an unmerged PR.
 
 ### Test Timeout Enforcement
 All test runs use `--blame-hang-timeout 10m` to kill tests that hang for more than 10 minutes. This is configured in `build.proj` and applied to all test targets. If a test is expected to run longer than 10 minutes, it must be restructured or split.

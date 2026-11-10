@@ -595,7 +595,7 @@
     <value>Nie można odnaleźć dostawcy uwierzytelniania elementu {0}.</value>
   </data>
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
-    <value>Cannot find an authentication provider for '{0}'. Register a provider with SqlAuthenticationProvider.SetProvider, or use a compatible 'Microsoft.Data.SqlClient.Extensions.Azure' NuGet package with automatic discovery enabled. Automatic discovery is unavailable when disabled at publish time. Trimmed JIT applications require preserved reflection contracts; NativeAOT applications should disable reflective bootstrap paths at publish time and register providers explicitly. Check Microsoft.Data.SqlClient.EventSource traces (Informational level, Trace keyword 0x2) for configuration or Azure extension loading failures.</value>
+    <value>Nie można odnaleźć dostawcy uwierzytelniania dla elementu „{0}”. Zarejestruj dostawcę za pomocą elementu SqlAuthenticationProvider.SetProvider lub użyj zgodnego pakietu NuGet „Microsoft.Data.SqlClient.Extensions.Azure” z włączonym automatycznym odnajdowaniem. Automatyczne odnajdowanie jest niedostępne, gdy jest wyłączone w czasie publikowania. Przycięte aplikacje JIT wymagają zachowanych kontraktów odbicia; Aplikacje NativeAOT powinny wyłączać refleksyjne ścieżki uruchamiania w czasie publikowania i jawnie rejestrować dostawców. Sprawdź ślady Microsoft.Data.SqlClient.EventSource (poziom informacyjny, słowo kluczowe trace 0x2) pod kątem błędów ładowania konfiguracji lub rozszerzenia platformy Azure.</value>
   </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>Parametr „{0}” nie może mieć wartości null ani być pusty.</value>
@@ -1891,7 +1891,7 @@
     <value>Serwer nie potwierdził próby odzyskiwania połączenia. Nie jest możliwe odzyskanie połączenia.</value>
   </data>
   <data name="DbConnectionString_VectorTypeSupport" xml:space="preserve">
-    <value>The level of vector type support to negotiate with the server.</value>
+    <value>Poziom obsługi typów wektorowych do uzgodnienia z serwerem.</value>
   </data>
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>Definiuje zachowanie okresu blokowania dla puli połączeń.</value>

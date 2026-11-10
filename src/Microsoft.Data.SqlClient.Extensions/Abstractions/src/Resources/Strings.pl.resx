@@ -25,6 +25,6 @@
     <value>Uwierzytelnianie „{0}” nie jest obsługiwane.</value>
   </data>
   <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>Ustawienie „useWamBroker” wymaga pakietu „Microsoft.Data.SqlClient.Extensions.Azure”, aby uwidoczniono element „Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions”. Uaktualnij pakiet „Microsoft.Data.SqlClient.Extensions.Azure” do wersji co najmniej 1.1.0, która zawiera ten typ.</value>
+    <value>Ustawienie „useWamBroker” wymaga pakietu „Microsoft.Data.SqlClient.Extensions.Azure”, aby uwidocznić element „Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions”. Uaktualnij pakiet „Microsoft.Data.SqlClient.Extensions.Azure” do wersji co najmniej v7.0.2, która zawiera ten typ.</value>
   </data>
 </root>

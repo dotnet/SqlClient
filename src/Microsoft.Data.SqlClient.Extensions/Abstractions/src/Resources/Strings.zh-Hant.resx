@@ -25,6 +25,6 @@
     <value>不支援驗證 '{0}'。</value>
   </data>
   <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>設定 'useWamBroker' 需要 'Microsoft.Data.SqlClient.Extensions.Azure' 套件以公開 'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions'。請將 'Microsoft.Data.SqlClient.Extensions.Azure' 套件升級至至少 v1.1.0，其中包含此類型。</value>
+    <value>設定 'useWamBroker' 需要 'Microsoft.Data.SqlClient.Extensions.Azure' 套件以公開 'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions'。將 'Microsoft.Data.SqlClient.Extensions.Azure' 套件升級至至少 v7.0.2，其中包含此類型。</value>
   </data>
 </root>
