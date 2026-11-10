@@ -3502,6 +3502,10 @@ namespace Microsoft.Data.SqlClient.Connection
         /// This is the only place that sets <see cref="SqlException.EncryptionInfo"/>. It runs once
         /// per failed open and releases the capture, so the exception always arrives here with
         /// <see cref="SqlConnectionEncryptionInfo.Empty"/>.
+        /// Failures after login completes are intentionally out of scope and keep
+        /// <see cref="SqlConnectionEncryptionInfo.Empty"/>. That includes automatic transaction
+        /// enlistment in <see cref="Activate"/> on pooled checkout, explicit enlistment, and
+        /// command execution. They are not connection-establishment failures.
         /// </remarks>
         private void AttachEncryptionInfo(Exception e)
         {

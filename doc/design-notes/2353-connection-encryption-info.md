@@ -273,6 +273,18 @@ and protocol. Values are captured per physical login attempt and reset for every
 and failover attempt, and for the reconnect `TdsParser.Connect` makes when the server reports an
 instance failure in its PRELOGIN response.
 
+**Failure scope.** `SqlException.EncryptionInfo` is attached only to failures of physical
+connection establishment. In practice that means exceptions thrown from the login sequence in
+`SqlConnectionInternal.OpenLoginEnlist`, which includes PRELOGIN, TLS, LOGIN7, routing, and
+failover. Some failures happen after login has completed, even when they surface from `Open` or
+`OpenAsync`. One example is automatic `System.Transactions` enlistment while a pooled connection
+is activated (`Activate` → `Enlist` → `GetDTCAddress`/propagation). Others are session-reset
+errors on pooled checkout, explicit `EnlistTransaction` calls, and command execution. These are
+not connection-establishment failures, so their exceptions keep `Empty`. For a pooled connection,
+the negotiated values belong to an earlier, successful physical login and remain unchanged on that
+physical connection. Attaching them to a transaction error would describe a different operation
+than the one that failed. This also keeps implicit and explicit enlistment failures consistent.
+
 - **Managed SNI** validates the server certificate inside the handshake, so a validation
   failure fails `EnableSsl`. In this slice Managed SNI does not capture the negotiated protocol
   on a failed handshake, so `TdsParser.EnableSsl` records no mode and both stay `null`. Slice C
