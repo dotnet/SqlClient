@@ -19,18 +19,15 @@ namespace Microsoft.Data.SqlClient
     {
         private sealed class SupportedQuery
         {
-            public readonly string? MinimumVersion;
-            public readonly string? MaximumVersion;
             public readonly string Query;
+            public readonly Predicate<ConnectionCapabilities>? IsSupported;
 
-            public SupportedQuery(string? minimumVersion, string? maximumVersion, string query)
+            public SupportedQuery(string query, Predicate<ConnectionCapabilities>? isSupported = null)
             {
-                MinimumVersion = minimumVersion;
-                MaximumVersion = maximumVersion;
                 Query = query;
+                IsSupported = isSupported;
             }
         }
-
 
         /// <summary>
         /// Returns one of the <see href="https://learn.microsoft.com/en-us/dotnet/framework/data/adonet/sql-server-schema-collections">SQL Server Schema collections</see>
@@ -55,11 +52,7 @@ namespace Microsoft.Data.SqlClient
                 SupportedQuery? validQuery = null;
                 foreach (SupportedQuery query in Queries)
                 {
-                    // Since Azure DB always has latest stable version of SQL Server engine, take latest query 
-                    if ((context.Capabilities.IsAzureSql && query.MaximumVersion == null) ||
-                        // ..or if it's not Azure, check if the current version is within the supported range
-                        (query.MinimumVersion == null || string.Compare(context.Capabilities.ServerVersion, query.MinimumVersion, StringComparison.OrdinalIgnoreCase) >= 0) &&
-                        (query.MaximumVersion == null || string.Compare(context.Capabilities.ServerVersion, query.MaximumVersion, StringComparison.OrdinalIgnoreCase) <= 0))
+                    if (query.IsSupported == null || query.IsSupported(context.Capabilities))
                     {
                         Debug.Assert(validQuery == null, $"Two queries matches current version {context.Capabilities.ServerVersion} in collection {CollectionName}");
                         validQuery = query;
