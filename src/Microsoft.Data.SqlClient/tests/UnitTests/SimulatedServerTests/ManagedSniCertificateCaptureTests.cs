@@ -26,10 +26,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
     /// </summary>
     public sealed class ManagedSniCaptureCertificateFixture : CertificateFixtureBase
     {
+        /// <summary>
+        /// Creates the "localhost" certificate and a certificate for an unrelated host name.
+        /// </summary>
         public ManagedSniCaptureCertificateFixture()
         {
-            Localhost = CreateCertificate("localhost", new[] { "localhost" }, new[] { "127.0.0.1" });
-            OtherHost = CreateCertificate("other.contoso.com", Array.Empty<string>(), Array.Empty<string>());
+            Localhost = CreateCertificate(
+                "localhost", new[] { "localhost" }, new[] { "127.0.0.1" });
+            OtherHost = CreateCertificate(
+                "other.contoso.com", Array.Empty<string>(), Array.Empty<string>());
         }
 
         /// <summary>A certificate whose names match the "localhost" data source.</summary>
@@ -50,22 +55,32 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
     {
         private readonly ManagedSniCaptureCertificateFixture _fixture;
 
+        /// <summary>Receives the shared server certificates.</summary>
         public ManagedSniCertificateCaptureTests(ManagedSniCaptureCertificateFixture fixture)
         {
             _fixture = fixture;
         }
 
+        /// <summary>
+        /// With TrustServerCertificate, the presented certificate, mode, protocol and the
+        /// SslStream's cipher suite are published, but no verdict or chain status, because
+        /// SqlClient did not evaluate the certificate.
+        /// </summary>
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
         public async Task Open_TrustServerCertificate_PublishesCertificateWithoutVerdict(bool async)
         {
+            // Arrange
             using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
             using TdsServer server = StartServer(_fixture.Localhost);
+            using SqlConnection connection = new(
+                BuildConnectionString(server.EndPoint.Port, trustServerCertificate: true));
 
-            using SqlConnection connection = new(BuildConnectionString(server.EndPoint.Port, trustServerCertificate: true));
+            // Act
             await OpenAsync(connection, async);
 
+            // Assert
             SqlConnectionEncryptionInfo info = connection.EncryptionInfo;
             Assert.Equal(SqlConnectionEncryptionMode.Full, info.NegotiatedEncryptionMode);
             Assert.Equal(SslProtocols.Tls12, info.NegotiatedEncryptionProtocol);
@@ -78,18 +93,26 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(GetClientSslStreamCipherSuite(connection), info.NegotiatedCipherSuiteId);
         }
 
+        /// <summary>
+        /// A matching ServerCertificate pin publishes the certificate with no validation errors
+        /// and no chain status, because the pin, not the chain, decides trust.
+        /// </summary>
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
         public async Task Open_MatchingServerCertificate_PublishesCertificateAndNoErrors(bool async)
         {
+            // Arrange
             using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
             using TdsServer server = StartServer(_fixture.Localhost);
             using TempCertFile pin = new(_fixture.Localhost);
+            using SqlConnection connection = new(
+                BuildConnectionString(server.EndPoint.Port, serverCertificate: pin.Path));
 
-            using SqlConnection connection = new(BuildConnectionString(server.EndPoint.Port, serverCertificate: pin.Path));
+            // Act
             await OpenAsync(connection, async);
 
+            // Assert
             SqlConnectionEncryptionInfo info = connection.EncryptionInfo;
             Assert.Equal(SqlConnectionEncryptionMode.Full, info.NegotiatedEncryptionMode);
             Assert.Equal(SslProtocols.Tls12, info.NegotiatedEncryptionProtocol);
@@ -99,111 +122,260 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Null(info.ChainStatus);
         }
 
+        /// <summary>
+        /// An untrusted self-signed certificate fails the open; the exception carries the
+        /// certificate, ChainError, a non-clean chain status and the observed negotiation, the
+        /// connection itself stays empty, and nothing leaks into the message.
+        /// </summary>
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
         public async Task Open_UntrustedCertificate_ExceptionCarriesChainErrorAndCertificate(bool async)
         {
+            // Arrange
             using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
             using TdsServer server = StartServer(_fixture.Localhost, expectTlsHandshakeFailure: true);
-
             using SqlConnection connection = new(BuildConnectionString(server.EndPoint.Port));
-            SqlException ex = await Assert.ThrowsAsync<SqlException>(() => OpenAsync(connection, async));
 
+            // Act
+            SqlException ex = await Assert.ThrowsAsync<SqlException>(
+                () => OpenAsync(connection, async));
+
+            // Assert
             SqlConnectionEncryptionInfo info = ex.EncryptionInfo;
             AssertCertificate(_fixture.Localhost, info);
             Assert.Equal(SqlServerCertificateValidationErrors.ChainError, info.ValidationErrors);
             Assert.NotNull(info.ChainStatus);
             Assert.NotEqual(X509ChainStatusFlags.NoError, info.ChainStatus);
-            // Certificate validation failed after the protocol was agreed; the observed values are kept.
+            // Certificate validation failed after the protocol was agreed; the observed values
+            // are kept.
             AssertObservedNegotiation(info);
             Assert.True(connection.EncryptionInfo.IsEmpty);
             AssertNoLeak(ex, info);
 
-            // The suite read inside the validation callback is the real one: a trusted handshake with the
-            // same server and protocol negotiates the same suite.
-            using SqlConnection trusted = new(BuildConnectionString(server.EndPoint.Port, trustServerCertificate: true));
+            // The suite read inside the validation callback is the real one: a trusted handshake
+            // with the same server and protocol negotiates the same suite.
+            using SqlConnection trusted = new(
+                BuildConnectionString(server.EndPoint.Port, trustServerCertificate: true));
             await OpenAsync(trusted, async);
             Assert.Equal(GetClientSslStreamCipherSuite(trusted), info.NegotiatedCipherSuiteId);
         }
 
+        /// <summary>
+        /// A certificate whose names do not match the data source fails the open with both
+        /// ChainError and HostNameMismatch in the exception's verdict.
+        /// </summary>
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
         public async Task Open_HostNameMismatch_ExceptionCarriesHostNameMismatch(bool async)
         {
+            // Arrange
             using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
             using TdsServer server = StartServer(_fixture.OtherHost, expectTlsHandshakeFailure: true);
-
             using SqlConnection connection = new(BuildConnectionString(server.EndPoint.Port));
-            SqlException ex = await Assert.ThrowsAsync<SqlException>(() => OpenAsync(connection, async));
 
+            // Act
+            SqlException ex = await Assert.ThrowsAsync<SqlException>(
+                () => OpenAsync(connection, async));
+
+            // Assert
             SqlConnectionEncryptionInfo info = ex.EncryptionInfo;
             AssertCertificate(_fixture.OtherHost, info);
             Assert.Equal(
-                SqlServerCertificateValidationErrors.ChainError | SqlServerCertificateValidationErrors.HostNameMismatch,
+                SqlServerCertificateValidationErrors.ChainError
+                    | SqlServerCertificateValidationErrors.HostNameMismatch,
                 info.ValidationErrors);
             Assert.NotNull(info.ChainStatus);
             AssertObservedNegotiation(info);
             AssertNoLeak(ex, info);
         }
 
+        /// <summary>
+        /// A HostNameInCertificate matching the certificate removes HostNameMismatch from the
+        /// effective verdict, leaving only ChainError.
+        /// </summary>
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
         public async Task Open_HostNameInCertificateOverride_ReportsEffectiveVerdict(bool async)
         {
+            // Arrange
             using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
             using TdsServer server = StartServer(_fixture.OtherHost, expectTlsHandshakeFailure: true);
+            using SqlConnection connection = new(BuildConnectionString(
+                server.EndPoint.Port, hostNameInCertificate: "other.contoso.com"));
 
-            using SqlConnection connection = new(BuildConnectionString(server.EndPoint.Port, hostNameInCertificate: "other.contoso.com"));
-            SqlException ex = await Assert.ThrowsAsync<SqlException>(() => OpenAsync(connection, async));
+            // Act
+            SqlException ex = await Assert.ThrowsAsync<SqlException>(
+                () => OpenAsync(connection, async));
 
-            // The platform reported a name mismatch, but HostNameInCertificate resolves it; only the
-            // untrusted chain remains in SqlClient's effective verdict.
-            Assert.Equal(SqlServerCertificateValidationErrors.ChainError, ex.EncryptionInfo.ValidationErrors);
+            // Assert
+            // The platform reported a name mismatch, but HostNameInCertificate resolves it; only
+            // the untrusted chain remains in SqlClient's effective verdict.
+            Assert.Equal(SqlServerCertificateValidationErrors.ChainError,
+                ex.EncryptionInfo.ValidationErrors);
             AssertCertificate(_fixture.OtherHost, ex.EncryptionInfo);
             AssertObservedNegotiation(ex.EncryptionInfo);
         }
 
+        /// <summary>
+        /// A ServerCertificate pin that does not match the presented certificate fails the open
+        /// with PinnedCertificateMismatch and no chain status.
+        /// </summary>
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
         public async Task Open_ServerCertificateMismatch_ExceptionCarriesPinnedMismatch(bool async)
         {
+            // Arrange
             using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
             using TdsServer server = StartServer(_fixture.Localhost, expectTlsHandshakeFailure: true);
             using TempCertFile pin = new(_fixture.OtherHost);
+            using SqlConnection connection = new(
+                BuildConnectionString(server.EndPoint.Port, serverCertificate: pin.Path));
 
-            using SqlConnection connection = new(BuildConnectionString(server.EndPoint.Port, serverCertificate: pin.Path));
-            SqlException ex = await Assert.ThrowsAsync<SqlException>(() => OpenAsync(connection, async));
+            // Act
+            SqlException ex = await Assert.ThrowsAsync<SqlException>(
+                () => OpenAsync(connection, async));
 
+            // Assert
             SqlConnectionEncryptionInfo info = ex.EncryptionInfo;
             AssertCertificate(_fixture.Localhost, info);
-            Assert.Equal(SqlServerCertificateValidationErrors.PinnedCertificateMismatch, info.ValidationErrors);
+            Assert.Equal(SqlServerCertificateValidationErrors.PinnedCertificateMismatch,
+                info.ValidationErrors);
             Assert.Null(info.ChainStatus);
             AssertObservedNegotiation(info);
             AssertNoLeak(ex, info);
         }
 
+        /// <summary>
+        /// Within one login, a routed connection is a new attempt: the routing server's
+        /// certificate, presented first, is not published, and the terminal attempt's certificate
+        /// is.
+        /// </summary>
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
-        public async Task Open_FailureThenSuccess_DoesNotCarryPreviousAttemptCertificate(bool async)
+        public async Task Open_Routed_PublishesOnlyTerminalAttemptCertificate(bool async)
         {
+            // Arrange
             using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
-            using TdsServer otherServer = StartServer(_fixture.OtherHost, expectTlsHandshakeFailure: true);
+            using TdsServer server = StartServer(_fixture.Localhost);
+            using RoutingTdsServer router = StartRouter(_fixture.OtherHost, server.EndPoint.Port);
+            using SqlConnection connection = new(
+                BuildConnectionString(router.EndPoint.Port, trustServerCertificate: true));
+
+            // Act
+            await OpenAsync(connection, async);
+
+            // Assert
+            SqlConnectionEncryptionInfo info = connection.EncryptionInfo;
+            AssertCertificate(_fixture.Localhost, info);
+            Assert.Equal(SqlConnectionEncryptionMode.Full, info.NegotiatedEncryptionMode);
+            Assert.Null(info.ValidationErrors);
+            Assert.Null(info.ChainStatus);
+        }
+
+        /// <summary>
+        /// Within one login, when the routing server's certificate passes validation and the
+        /// routed server's certificate fails it, the exception reports only the terminal
+        /// attempt's certificate and verdict.
+        /// </summary>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task Open_RoutedTerminalAttemptFails_ExceptionCarriesOnlyTerminalAttempt(
+            bool async)
+        {
+            // Arrange
+            using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
+            using TdsServer server = StartServer(_fixture.Localhost, expectTlsHandshakeFailure: true);
+            using RoutingTdsServer router = StartRouter(_fixture.OtherHost, server.EndPoint.Port);
+            // The pin matches the routing server's certificate only.
+            using TempCertFile pin = new(_fixture.OtherHost);
+            using SqlConnection connection = new(
+                BuildConnectionString(router.EndPoint.Port, serverCertificate: pin.Path));
+
+            // Act
+            SqlException ex = await Assert.ThrowsAsync<SqlException>(
+                () => OpenAsync(connection, async));
+
+            // Assert
+            SqlConnectionEncryptionInfo info = ex.EncryptionInfo;
+            AssertCertificate(_fixture.Localhost, info);
+            Assert.Equal(SqlServerCertificateValidationErrors.PinnedCertificateMismatch,
+                info.ValidationErrors);
+            Assert.Null(info.ChainStatus);
+            AssertObservedNegotiation(info);
+        }
+
+        /// <summary>
+        /// Within one login, when the routed attempt fails in pre-login, before any certificate
+        /// is presented, the exception carries nothing from the routing server's completed
+        /// handshake: each attempt starts with a clean capture.
+        /// </summary>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task Open_RoutedTerminalAttemptFailsBeforeTls_ExceptionCarriesNoCertificate(
+            bool async)
+        {
+            // Arrange
+            using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
+            // The routed server omits encryption support from its pre-login response while the
+            // client demands encryption, so the routed attempt fails before TLS starts.
+            using TdsServer server = new(new TdsServerArguments
+            {
+                Encryption = TDSPreLoginTokenEncryptionType.None,
+            });
+            server.Start();
+            using RoutingTdsServer router = StartRouter(_fixture.OtherHost, server.EndPoint.Port);
+            using SqlConnection connection = new(
+                BuildConnectionString(router.EndPoint.Port, trustServerCertificate: true));
+
+            // Act
+            SqlException ex = await Assert.ThrowsAsync<SqlException>(
+                () => OpenAsync(connection, async));
+
+            // Assert
+            SqlConnectionEncryptionInfo info = ex.EncryptionInfo;
+            Assert.Null(info.PresentedServerCertificateRawData);
+            Assert.Null(info.GetServerCertificate());
+            Assert.True(info.IsEmpty);
+        }
+
+        /// <summary>
+        /// A failed open on one connection does not leak its certificate into a later open on a
+        /// different connection: each connection publishes only its own certificate.
+        /// </summary>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task Open_FailureThenSuccessOnNewConnection_DoesNotCarryPreviousCertificate(
+            bool async)
+        {
+            // Arrange
+            using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
+            using TdsServer otherServer = StartServer(_fixture.OtherHost,
+                expectTlsHandshakeFailure: true);
             using TdsServer server = StartServer(_fixture.Localhost);
             using TempCertFile pin = new(_fixture.Localhost);
+            using SqlConnection failing = new(
+                BuildConnectionString(otherServer.EndPoint.Port, serverCertificate: pin.Path));
+            using SqlConnection connection = new(
+                BuildConnectionString(server.EndPoint.Port, serverCertificate: pin.Path));
 
-            using SqlConnection failing = new(BuildConnectionString(otherServer.EndPoint.Port, serverCertificate: pin.Path));
-            SqlException ex = await Assert.ThrowsAsync<SqlException>(() => OpenAsync(failing, async));
-            AssertCertificate(_fixture.OtherHost, ex.EncryptionInfo);
-
-            using SqlConnection connection = new(BuildConnectionString(server.EndPoint.Port, serverCertificate: pin.Path));
+            // Act
+            SqlException ex = await Assert.ThrowsAsync<SqlException>(
+                () => OpenAsync(failing, async));
             await OpenAsync(connection, async);
+
+            // Assert
+            AssertCertificate(_fixture.OtherHost, ex.EncryptionInfo);
             AssertCertificate(_fixture.Localhost, connection.EncryptionInfo);
-            Assert.Equal(SqlServerCertificateValidationErrors.None, connection.EncryptionInfo.ValidationErrors);
+            Assert.Equal(SqlServerCertificateValidationErrors.None,
+                connection.EncryptionInfo.ValidationErrors);
         }
 
         #region Helpers
@@ -226,15 +398,21 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// </summary>
         private static int GetClientSslStreamCipherSuite(SqlConnection connection)
         {
-            global::Microsoft.Data.SqlClient.ManagedSni.SniHandle handle = connection.Parser._physicalStateObj.SessionHandle.ManagedHandle;
+            global::Microsoft.Data.SqlClient.ManagedSni.SniHandle handle =
+                connection.Parser._physicalStateObj.SessionHandle.ManagedHandle;
             Assert.NotNull(handle);
-            FieldInfo? field = handle.GetType().GetField("_sslStream", BindingFlags.Instance | BindingFlags.NonPublic);
+            FieldInfo? field = handle.GetType().GetField(
+                "_sslStream", BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.NotNull(field);
             SslStream? sslStream = field.GetValue(handle) as SslStream;
             Assert.NotNull(sslStream);
             return (int)sslStream.NegotiatedCipherSuite;
         }
 
+        /// <summary>
+        /// Forces managed SNI on Windows for the lifetime of the returned helper; returns null
+        /// elsewhere, where managed SNI is already the only implementation.
+        /// </summary>
         private static LocalAppContextSwitchesHelper? ForceManagedSni()
         {
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -269,6 +447,31 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             return server;
         }
 
+        /// <summary>
+        /// Starts a TLS 1.2 simulated routing server that requires encryption and, after login,
+        /// routes every connection to the given local port.
+        /// </summary>
+        /// <param name="certificate">The certificate the routing server presents.</param>
+        /// <param name="routedPort">The local port of the server to route to.</param>
+        private static RoutingTdsServer StartRouter(X509Certificate2 certificate, int routedPort)
+        {
+            RoutingTdsServer router = new(new RoutingTdsServerArguments
+            {
+                Encryption = TDSPreLoginTokenEncryptionType.Required,
+                EncryptionCertificate = certificate,
+                EncryptionProtocols = SslProtocols.Tls12,
+                RoutingTCPHost = "localhost",
+                RoutingTCPPort = (ushort)routedPort,
+                RequireReadOnly = false,
+            });
+            router.Start();
+            return router;
+        }
+
+        /// <summary>
+        /// Builds a non-pooled, Encrypt=Mandatory connection string for a local simulated server,
+        /// with connection retry disabled so each test observes a single login.
+        /// </summary>
         private static string BuildConnectionString(
             int port,
             bool trustServerCertificate = false,
@@ -295,6 +498,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             return builder.ConnectionString;
         }
 
+        /// <summary>
+        /// Opens the connection with <see cref="SqlConnection.OpenAsync()"/> when
+        /// <paramref name="async"/> is true, otherwise with <see cref="SqlConnection.Open()"/>.
+        /// </summary>
         private static Task OpenAsync(SqlConnection connection, bool async)
         {
             if (async)
@@ -306,6 +513,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             return Task.CompletedTask;
         }
 
+        /// <summary>
+        /// Asserts that the published certificate is exactly the expected certificate's DER, both
+        /// as raw data and as a reconstructed certificate without a private key.
+        /// </summary>
         private static void AssertCertificate(X509Certificate2 expected, SqlConnectionEncryptionInfo info)
         {
             Assert.NotNull(info.PresentedServerCertificateRawData);
@@ -317,10 +528,20 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.False(certificate.HasPrivateKey);
         }
 
+        /// <summary>
+        /// Asserts that neither the exception message nor its string form contains the captured
+        /// certificate in hexadecimal, Base64, dashed hexadecimal, or SHA-256 thumbprint form.
+        /// </summary>
         private static void AssertNoLeak(SqlException ex, SqlConnectionEncryptionInfo info)
         {
             byte[] der = info.PresentedServerCertificateRawData!.Value.ToArray();
-            string[] encodings = { Convert.ToHexString(der), Convert.ToBase64String(der), BitConverter.ToString(der), Convert.ToHexString(SHA256.HashData(der)) };
+            string[] encodings =
+            {
+                Convert.ToHexString(der),
+                Convert.ToBase64String(der),
+                BitConverter.ToString(der),
+                Convert.ToHexString(SHA256.HashData(der)),
+            };
             foreach (string encoding in encodings)
             {
                 Assert.DoesNotContain(encoding, ex.Message, StringComparison.OrdinalIgnoreCase);
@@ -328,16 +549,27 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }
         }
 
+        /// <summary>
+        /// A temporary DER certificate file usable as a <c>ServerCertificate</c> pin; deleted on
+        /// dispose.
+        /// </summary>
         private sealed class TempCertFile : IDisposable
         {
+            /// <summary>
+            /// Writes the public part of <paramref name="certificate"/> to a new temporary file.
+            /// </summary>
             public TempCertFile(X509Certificate2 certificate)
             {
-                Path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "SqlClient_CapturePin_" + Guid.NewGuid().ToString("N") + ".cer");
+                Path = System.IO.Path.Combine(
+                    System.IO.Path.GetTempPath(),
+                    "SqlClient_CapturePin_" + Guid.NewGuid().ToString("N") + ".cer");
                 File.WriteAllBytes(Path, certificate.Export(X509ContentType.Cert));
             }
 
+            /// <summary>The full path of the temporary certificate file.</summary>
             public string Path { get; }
 
+            /// <summary>Deletes the file, ignoring failures.</summary>
             public void Dispose()
             {
                 try
