@@ -197,10 +197,17 @@ namespace Microsoft.Data.SqlClient
                 ? (SqlServerCertificateValidationErrors)info.dwValidationErrors
                 : null;
 
-            X509ChainStatusFlags? chainStatus = (available & SniCertInfoAvailability.ChainStatus) != 0
+            // ChainStatusLeafTimeOnly means only the pinned leaf's validity period was checked and no
+            // chain was built. ChainStatus describes a built chain, so it stays unknown, as with
+            // Managed SNI for a pinned certificate.
+            X509ChainStatusFlags? chainStatus =
+                (available & SniCertInfoAvailability.ChainStatus) != 0 &&
+                (available & SniCertInfoAvailability.ChainStatusLeafTimeOnly) == 0
                 ? (X509ChainStatusFlags)info.dwChainStatus
                 : null;
 
+            // Native SNI reads the protocol from the Schannel connection info after the server's
+            // ServerHello, so this is the version the server selected, not merely the one offered.
             SslProtocols? protocol = null;
             if ((available & SniCertInfoAvailability.Protocol) != 0)
             {
