@@ -15,7 +15,7 @@
           This type is intended for diagnostics only. It must not be used to make security decisions; the driver's own validation is authoritative.
         </para>
         <para>
-          In the current release, the driver does not yet populate this information: every property returns <see langword="null" />, and <see cref="M:Microsoft.Data.SqlClient.SqlConnectionEncryptionInfo.GetServerCertificate" /> returns <see langword="null" />.
+          Which values are populated depends on the operation that produced the snapshot and on the network implementation in use. See <see cref="P:Microsoft.Data.SqlClient.SqlConnection.EncryptionInfo" /> and <see cref="P:Microsoft.Data.SqlClient.SqlException.EncryptionInfo" /> for when each snapshot is captured.
         </para>
       </remarks>
     </SqlConnectionEncryptionInfo>
