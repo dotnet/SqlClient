@@ -72,6 +72,11 @@ namespace Interop.Windows.Sni
         ValidationErrors = 0x8,
         ChainStatus = 0x10,
         HandshakeCompleted = 0x20,
+
+        /// <summary>
+        /// <see cref="SniCertValidationInfo.dwChainStatus"/> reflects only a leaf validity-period check
+        /// for a pinned certificate; no chain was built, so the chain status is not reported.
+        /// </summary>
         ChainStatusLeafTimeOnly = 0x40,
         CipherSuite = 0x80,
     }

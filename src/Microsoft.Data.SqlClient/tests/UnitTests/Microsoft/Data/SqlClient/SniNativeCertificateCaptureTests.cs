@@ -32,6 +32,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
         #region Layout
 
+        /// <summary>Verifies the managed structure matches the 32-byte native v1 size.</summary>
         [Fact]
         public void Struct_IsThirtyTwoBytes()
         {
@@ -40,6 +41,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(1u, SniCertValidationInfo.CurrentVersion);
         }
 
+        /// <summary>Verifies each field sits at the offset defined by the native contract.</summary>
         [Theory]
         [InlineData(nameof(SniCertValidationInfo.cbSize), 0)]
         [InlineData(nameof(SniCertValidationInfo.dwVersion), 4)]
@@ -54,6 +56,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(expectedOffset, Marshal.OffsetOf<SniCertValidationInfo>(field).ToInt32());
         }
 
+        /// <summary>Verifies a structure created for native code requests the v1 size.</summary>
         [Fact]
         public void Create_InitializesSize()
         {
@@ -63,6 +66,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(0u, info.dwCipherSuite);
         }
 
+        /// <summary>Verifies the availability flag values match the native contract.</summary>
         [Fact]
         public void AvailabilityFlags_MatchNativeContract()
         {
@@ -76,6 +80,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(0x80u, (uint)SniCertInfoAvailability.CipherSuite);
         }
 
+        /// <summary>Verifies the validation mode values match the native contract.</summary>
         [Fact]
         public void ValidationModes_MatchNativeContract()
         {
@@ -86,6 +91,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(4u, (uint)SniCertValidationMode.PinnedCertificate);
         }
 
+        /// <summary>Verifies native validation error bits equal the public enum values.</summary>
         [Fact]
         public void ValidationErrorBits_MatchManagedEnum()
         {
@@ -95,6 +101,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(8, (int)SqlServerCertificateValidationErrors.PinnedCertificateMismatch);
         }
 
+        /// <summary>Verifies a structure read from native-layout bytes exposes every field.</summary>
         [Fact]
         public void Struct_ReadFromNativeBytes_RoundTripsFields()
         {
@@ -114,9 +121,11 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
         #region Availability
 
+        /// <summary>Provides every combination of the eight availability flags.</summary>
         public static IEnumerable<object[]> AvailabilityCombinations() =>
             Enumerable.Range(0, 0x100).Select(i => new object[] { (uint)i });
 
+        /// <summary>Verifies only fields whose availability flag is set are reported.</summary>
         [Theory]
         [MemberData(nameof(AvailabilityCombinations))]
         public void Map_PopulatesOnlyAvailableFields(uint available)
@@ -128,7 +137,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
             bool hasCertificate = (available & 0x4) != 0;
             bool hasErrors = (available & 0x8) != 0;
-            bool hasChain = (available & 0x10) != 0;
+            bool hasChain = (available & 0x10) != 0 && (available & 0x40) == 0;
             bool hasProtocol = (available & 0x2) != 0;
             bool hasCipherSuite = (available & 0x80) != 0;
 
@@ -147,6 +156,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(hasCipherSuite ? 0xC030 : null, capture.CipherSuite);
         }
 
+        /// <summary>Verifies a certificate flag without certificate bytes leaves the certificate unknown.</summary>
         [Fact]
         public void Map_CertificateFlagWithoutBytes_LeavesCertificateNull()
         {
@@ -159,6 +169,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Null(SniNativeCertificateCapture.Map(Build(available: CertificateAvailable, mode: 3, protocol: 0, errors: 0, chain: 0)));
         }
 
+        /// <summary>Verifies available zero bitmasks are reported as no error rather than unknown.</summary>
         [Fact]
         public void Map_ZeroBitmasksWithAvailability_AreReportedAsNoErrorNotNull()
         {
@@ -172,6 +183,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Null(capture.Protocol);
         }
 
+        /// <summary>Verifies bitmask values without availability flags are not reported.</summary>
         [Fact]
         public void Map_ValidationFieldsWithoutAvailability_LeaveValidationFieldsNull()
         {
@@ -193,6 +205,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(SslProtocols.Tls12, capture.Protocol);
         }
 
+        /// <summary>Verifies a deferred validation failure reports the verdict, chain status, and certificate.</summary>
         [Theory]
         [InlineData((uint)SniCertValidationMode.SchannelAutomatic, 0x4u)]
         [InlineData((uint)SniCertValidationMode.ChainPolicy, 0x2u | 0x4u)]
@@ -216,6 +229,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(SslProtocols.Tls12, capture.Protocol);
         }
 
+        /// <summary>Verifies no details are reported without data flags, in every validation mode.</summary>
         [Theory]
         [InlineData(0u)]
         [InlineData(1u)]
@@ -234,6 +248,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
         #region Validation errors and chain status
 
+        /// <summary>Verifies validation error bits, including unknown ones, are preserved.</summary>
         [Theory]
         [InlineData(0x0u)]
         [InlineData(0x1u)]
@@ -251,6 +266,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(unchecked((SqlServerCertificateValidationErrors)(int)errors), SniNativeCertificateCapture.Map(info)!.ValidationErrors);
         }
 
+        /// <summary>Provides every known chain status flag, all of them combined, and unknown bits.</summary>
         public static IEnumerable<object[]> ChainStatusValues()
         {
             foreach (X509ChainStatusFlags flag in Enum.GetValues(typeof(X509ChainStatusFlags)))
@@ -272,6 +288,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             yield return new object[] { all | 0xC0000000u };
         }
 
+        /// <summary>Verifies chain status bits, including unknown ones, are preserved.</summary>
         [Theory]
         [MemberData(nameof(ChainStatusValues))]
         public void Map_ChainStatus_PreservesEveryBit(uint chain)
@@ -284,18 +301,59 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(chain, unchecked((uint)mapped!.Value));
         }
 
-        [Fact]
-        public void Map_ChainStatusLeafTimeOnly_StillReportsChainStatusWhenAvailable()
+        /// <summary>Verifies a leaf-time-only status leaves chain status unknown and keeps other fields.</summary>
+        [Theory]
+        [InlineData((uint)X509ChainStatusFlags.NotTimeValid)]
+        [InlineData(0u)]
+        public void Map_ChainStatusLeafTimeOnly_LeavesChainStatusNullAndKeepsOtherFields(uint chain)
         {
-            SniCertValidationInfo info = Build(available: 0x10 | 0x40, mode: (uint)SniCertValidationMode.PinnedCertificate, protocol: 0, errors: 0, chain: (uint)X509ChainStatusFlags.NotTimeValid);
+            // Arrange
+            // Pinned-certificate expiry: native checks only the leaf validity period and builds no
+            // chain, so a NotTimeValid or zero status must not be reported as a chain status.
+            byte[] certificate = Certificate(0x55);
+            SniCertValidationInfo info = Build(
+                available: 0x2 | 0x4 | 0x8 | 0x10 | 0x40 | CipherSuiteAvailable,
+                mode: (uint)SniCertValidationMode.PinnedCertificate,
+                protocol: TlsClient12,
+                errors: (uint)SqlServerCertificateValidationErrors.ChainError,
+                chain: chain,
+                cipherSuite: 0xC030);
 
-            Assert.Equal(X509ChainStatusFlags.NotTimeValid, SniNativeCertificateCapture.Map(info)!.ChainStatus);
+            // Act
+            ServerCertificateCapture capture = SniNativeCertificateCapture.Map(info, certificate)!;
+
+            // Assert
+            Assert.Null(capture.ChainStatus);
+            Assert.Equal(SqlServerCertificateValidationErrors.ChainError, capture.ValidationErrors);
+            Assert.Equal(certificate, capture.RawCertificate);
+            Assert.Equal(SslProtocols.Tls12, capture.Protocol);
+            Assert.Equal(0xC030, capture.CipherSuite);
+        }
+
+        /// <summary>Verifies a leaf-time-only status with no other data reports nothing.</summary>
+        [Fact]
+        public void Map_ChainStatusLeafTimeOnlyWithoutOtherFields_IsUnavailable()
+        {
+            // Arrange
+            SniCertValidationInfo info = Build(
+                available: 0x10 | 0x40,
+                mode: (uint)SniCertValidationMode.PinnedCertificate,
+                protocol: 0,
+                errors: 0,
+                chain: (uint)X509ChainStatusFlags.NotTimeValid);
+
+            // Act
+            ServerCertificateCapture? capture = SniNativeCertificateCapture.Map(info);
+
+            // Assert
+            Assert.Null(capture);
         }
 
         #endregion
 
         #region Protocol
 
+        /// <summary>Verifies native client protocol bits map to the matching protocol.</summary>
         [Theory]
         [InlineData(0x00000800u, (int)SslProtocols.Tls12)]
         [InlineData(0x00000400u, (int)SslProtocols.Tls12)]
@@ -322,6 +380,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
 #endif
         }
 
+        /// <summary>Verifies protocol bits with no mapping are not reported.</summary>
         [Theory]
         [InlineData(0x0u)]
         [InlineData(0x00040000u)]
@@ -332,6 +391,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Null(SniNativeCertificateCapture.Map(info));
         }
 
+        /// <summary>Verifies the shared protocol mapping used by the handshake path.</summary>
         [Fact]
         public void ToSslProtocols_MatchesHandshakeMapping()
         {
@@ -344,6 +404,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
         #region Certificate size and structure validation
 
+        /// <summary>Verifies certificates within the size limit are kept.</summary>
         [Theory]
         [InlineData(1)]
         [InlineData(ServerCertificateCapture.MaxRawCertificateSize)]
@@ -355,6 +416,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Same(certificate, SniNativeCertificateCapture.Map(info, certificate)!.RawCertificate);
         }
 
+        /// <summary>Verifies empty or oversized certificates are not reported.</summary>
         [Theory]
         [InlineData(0)]
         [InlineData(ServerCertificateCapture.MaxRawCertificateSize + 1)]
@@ -365,6 +427,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Null(SniNativeCertificateCapture.Map(info, new byte[length]));
         }
 
+        /// <summary>Verifies a structure with a short size or zero version is ignored.</summary>
         [Theory]
         [InlineData(0u, 1u)]
         [InlineData(16u, 1u)]
@@ -377,6 +440,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Null(SniNativeCertificateCapture.Map(info, Certificate(9)));
         }
 
+        /// <summary>Verifies newer versions and larger sizes are accepted for forward compatibility.</summary>
         [Theory]
         [InlineData(32u, 2u)]
         [InlineData(128u, 7u)]
@@ -391,6 +455,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
         #region Cipher suite
 
+        /// <summary>Verifies the cipher suite is reported when its flag is set.</summary>
         [Fact]
         public void Map_CipherSuiteFlag_ReportsCipherSuite()
         {
@@ -402,6 +467,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(SslProtocols.Tls12, capture.Protocol);
         }
 
+        /// <summary>Verifies a cipher suite alone is enough to report details.</summary>
         [Fact]
         public void Map_CipherSuiteOnly_IsNotDiscarded()
         {
@@ -410,6 +476,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(0xC030, SniNativeCertificateCapture.Map(info)!.CipherSuite);
         }
 
+        /// <summary>Verifies the cipher suite is not reported without its flag.</summary>
         [Fact]
         public void Map_WithoutCipherSuiteFlag_LeavesCipherSuiteNull()
         {
@@ -418,6 +485,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Null(SniNativeCertificateCapture.Map(info, Certificate(2))!.CipherSuite);
         }
 
+        /// <summary>Verifies zero or out-of-range cipher suite values are not reported.</summary>
         [Theory]
         [InlineData(0u)]
         [InlineData(0x10000u)]
@@ -429,6 +497,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Null(SniNativeCertificateCapture.Map(info)!.CipherSuite);
         }
 
+        /// <summary>Verifies the largest valid cipher suite value is reported.</summary>
         [Fact]
         public void Map_MaximumCipherSuite_IsReported()
         {
@@ -437,6 +506,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(0xFFFF, SniNativeCertificateCapture.Map(info)!.CipherSuite);
         }
 
+        /// <summary>Verifies a native cipher suite survives a deferred validation failure.</summary>
         [Fact]
         public void EncryptionInfoCapture_DeferredValidationFailure_KeepsCipherSuite()
         {
@@ -472,6 +542,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(Certificate(8), snapshot.PresentedServerCertificateRawData!.Value.ToArray());
         }
 
+        /// <summary>Verifies a reset clears a native cipher suite.</summary>
         [Fact]
         public void EncryptionInfoCapture_ResetClearsNativeCipherSuite()
         {
@@ -487,6 +558,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
         #region Query, error codes, and degradation
 
+        /// <summary>Verifies a successful query passes an initialized structure and reads the certificate.</summary>
         [Fact]
         public void TryCapture_Success_PassesInitializedStructAndReadsCertificate()
         {
@@ -512,23 +584,27 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(0xC02F, result.CipherSuite);
         }
 
+        /// <summary>Verifies the certificate is not queried when it is not available.</summary>
         [Fact]
         public void TryCapture_CertificateNotAvailable_DoesNotReadCertificate()
         {
+            var certificateQuery = new FakeCertificateQuery(Certificate(0x77));
             var capture = new SniNativeCertificateCapture(
                 (SNIHandle? _, ref SniCertValidationInfo info) =>
                 {
                     info = Build(available: 0x2 | 0x8, mode: 2, protocol: TlsClient12, errors: 0, chain: 0);
                     return 0;
                 },
-                ThrowingCertificateQuery);
+                certificateQuery.Query);
 
             ServerCertificateCapture result = capture.TryCapture(null)!;
 
             Assert.Null(result.RawCertificate);
             Assert.Equal(SslProtocols.Tls12, result.Protocol);
+            Assert.Empty(certificateQuery.BufferLengths);
         }
 
+        /// <summary>Verifies error codes from the validation info query report nothing and skip the certificate query.</summary>
         [Theory]
         [InlineData(SniNativeCertificateCapture.ERROR_INVALID_PARAMETER)] // Includes earlier preview libraries that reject cbSize = 32.
         [InlineData(SniNativeCertificateCapture.ERROR_INSUFFICIENT_BUFFER)]
@@ -536,6 +612,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [InlineData(5u)]
         public void TryCapture_ValidationInfoErrorCode_LeavesFieldsNull(uint errorCode)
         {
+            var certificateQuery = new FakeCertificateQuery(Certificate(0x77));
             var capture = new SniNativeCertificateCapture(
                 (SNIHandle? _, ref SniCertValidationInfo info) =>
                 {
@@ -543,37 +620,43 @@ namespace Microsoft.Data.SqlClient.UnitTests
                     info = Build(available: AllAvailable, mode: 3, protocol: TlsClient12, errors: 4, chain: 0x20, cipherSuite: 0xC030);
                     return errorCode;
                 },
-                ThrowingCertificateQuery);
+                certificateQuery.Query);
 
             Assert.Null(capture.TryCapture(null));
             Assert.False(capture.IsValidationInfoUnavailable);
+            Assert.Empty(certificateQuery.BufferLengths);
         }
 
+        /// <summary>Verifies a malformed structure reports nothing and skips the certificate query.</summary>
         [Fact]
         public void TryCapture_MalformedValidationInfo_DoesNotReadCertificate()
         {
+            var certificateQuery = new FakeCertificateQuery(Certificate(0x77));
             var capture = new SniNativeCertificateCapture(
                 (SNIHandle? _, ref SniCertValidationInfo info) =>
                 {
                     info = Build(available: AllAvailable, mode: 3, protocol: TlsClient12, errors: 4, chain: 0x20, version: 0);
                     return 0;
                 },
-                ThrowingCertificateQuery);
+                certificateQuery.Query);
 
             Assert.Null(capture.TryCapture(null));
+            Assert.Empty(certificateQuery.BufferLengths);
         }
 
+        /// <summary>Verifies a missing validation info export is detected once, with no certificate fallback.</summary>
         [Fact]
         public void TryCapture_MissingValidationInfoExport_DegradesOnceWithoutCertificateFallback()
         {
             int infoCalls = 0;
+            var certificateQuery = new FakeCertificateQuery(Certificate(0x77));
             var capture = new SniNativeCertificateCapture(
                 (SNIHandle? _, ref SniCertValidationInfo info) =>
                 {
                     infoCalls++;
                     throw new EntryPointNotFoundException("SNIGetCertValidationInfoWrapper");
                 },
-                ThrowingCertificateQuery);
+                certificateQuery.Query);
 
             for (int i = 0; i < 3; i++)
             {
@@ -583,8 +666,10 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.True(capture.IsValidationInfoUnavailable);
             Assert.False(capture.IsCertificateUnavailable);
             Assert.Equal(1, infoCalls);
+            Assert.Empty(certificateQuery.BufferLengths);
         }
 
+        /// <summary>Verifies a missing certificate export is detected once and keeps the other fields.</summary>
         [Fact]
         public void TryCapture_MissingCertificateExport_KeepsOtherFieldsAndDegradesOnce()
         {
@@ -616,6 +701,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             }
         }
 
+        /// <summary>Verifies an unusable size query leaves the certificate unknown and skips the read.</summary>
         [Theory]
         [InlineData(SniNativeCertificateCapture.ERROR_INVALID_PARAMETER, 0u)]
         [InlineData(SniNativeCertificateCapture.ERROR_NOT_FOUND, 0u)]
@@ -647,6 +733,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.False(capture.IsCertificateUnavailable);
         }
 
+        /// <summary>Verifies a certificate at the size limit is read.</summary>
         [Fact]
         public void TryCapture_MaximumCertificateSize_IsRead()
         {
@@ -665,6 +752,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(certificate, capture.TryCapture(null)!.RawCertificate);
         }
 
+        /// <summary>Verifies a failed certificate read leaves the certificate unknown.</summary>
         [Theory]
         [InlineData(SniNativeCertificateCapture.ERROR_INSUFFICIENT_BUFFER, 200u)] // A new attempt replaced the certificate.
         [InlineData(SniNativeCertificateCapture.ERROR_NOT_FOUND, 0u)]
@@ -699,6 +787,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(SqlServerCertificateValidationErrors.ChainError, capturedDetails.ValidationErrors);
         }
 
+        /// <summary>Provides exception types that native queries might raise.</summary>
         public static IEnumerable<object[]> CaptureExceptions() => new[]
         {
             new object[] { typeof(InvalidOperationException) },
@@ -711,31 +800,38 @@ namespace Microsoft.Data.SqlClient.UnitTests
             new object[] { typeof(OutOfMemoryException) },
         };
 
+        /// <summary>Creates an instance of the given exception type.</summary>
+        /// <param name="exceptionType">The exception type to create.</param>
+        /// <returns>The new exception.</returns>
         private static Exception CreateException(Type exceptionType) =>
             exceptionType == typeof(ObjectDisposedException)
                 ? new ObjectDisposedException("handle")
                 : (Exception)Activator.CreateInstance(exceptionType)!;
 
+        /// <summary>Verifies exceptions from the validation info query are swallowed, not cached, and skip the certificate query.</summary>
         [Theory]
         [MemberData(nameof(CaptureExceptions))]
         public void TryCapture_QueryThrows_IsSwallowedAndNotCached(Type exceptionType)
         {
             Exception exception = CreateException(exceptionType);
             int infoCalls = 0;
+            var certificateQuery = new FakeCertificateQuery(Certificate(0x77));
             var capture = new SniNativeCertificateCapture(
                 (SNIHandle? _, ref SniCertValidationInfo info) =>
                 {
                     infoCalls++;
                     throw exception;
                 },
-                ThrowingCertificateQuery);
+                certificateQuery.Query);
 
             Assert.Null(capture.TryCapture(null));
             Assert.Null(capture.TryCapture(null));
             Assert.Equal(2, infoCalls);
             Assert.False(capture.IsValidationInfoUnavailable);
+            Assert.Empty(certificateQuery.BufferLengths);
         }
 
+        /// <summary>Verifies exceptions from the certificate query keep the other fields and are not cached.</summary>
         [Theory]
         [MemberData(nameof(CaptureExceptions))]
         public void TryCapture_CertificateQueryThrows_KeepsOtherFieldsAndIsNotCached(Type exceptionType)
@@ -764,6 +860,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.False(capture.IsCertificateUnavailable);
         }
 
+        /// <summary>Verifies the real P/Invoke binding degrades to no details without a usable handle.</summary>
         [Fact]
         public void Default_WithoutUsableHandle_NeverThrows()
         {
@@ -777,6 +874,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
         #region Capture context integration
 
+        /// <summary>Verifies the native protocol is used when no other protocol was recorded.</summary>
         [Fact]
         public void EncryptionInfoCapture_TransportProtocol_UsedWhenNotOtherwiseRecorded()
         {
@@ -792,6 +890,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(X509ChainStatusFlags.UntrustedRoot, snapshot.ChainStatus);
         }
 
+        /// <summary>Verifies the protocol from the handshake takes precedence over the native one.</summary>
         [Fact]
         public void EncryptionInfoCapture_HandshakeProtocol_TakesPrecedence()
         {
@@ -802,6 +901,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(SslProtocols.Tls12, capture.Protocol);
         }
 
+        /// <summary>Verifies an unreported handshake protocol keeps the native protocol.</summary>
         [Fact]
         public void EncryptionInfoCapture_UnreportedHandshakeProtocol_KeepsTransportProtocol()
         {
@@ -812,6 +912,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(SslProtocols.Tls12, capture.Protocol);
         }
 
+        /// <summary>Verifies the native protocol does not override an already recorded protocol.</summary>
         [Fact]
         public void EncryptionInfoCapture_TransportProtocol_DoesNotOverrideRecordedProtocol()
         {
@@ -822,6 +923,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(SslProtocols.Tls12, capture.Protocol);
         }
 
+        /// <summary>Verifies a deferred validation failure keeps the observed negotiation and certificate fields.</summary>
         [Fact]
         public void EncryptionInfoCapture_DeferredValidationFailure_KeepsObservedNegotiationAndCertificateFields()
         {
@@ -856,6 +958,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(X509ChainStatusFlags.UntrustedRoot, snapshot.ChainStatus);
         }
 
+        /// <summary>Verifies a failure without an observed protocol discards the mode.</summary>
         [Fact]
         public void EncryptionInfoCapture_FailureWithoutObservedProtocol_DiscardsMode()
         {
@@ -873,6 +976,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(SqlServerCertificateValidationErrors.ChainError, snapshot.ValidationErrors);
         }
 
+        /// <summary>Verifies the mode is recorded only when a protocol was observed.</summary>
         [Fact]
         public void EncryptionInfoCapture_RecordModeIfProtocolObserved_RequiresProtocol()
         {
@@ -888,6 +992,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(SslProtocols.Tls12, withProtocol.Protocol);
         }
 
+        /// <summary>Verifies a reset clears the native protocol.</summary>
         [Fact]
         public void EncryptionInfoCapture_ResetClearsTransportProtocol()
         {
@@ -902,9 +1007,6 @@ namespace Microsoft.Data.SqlClient.UnitTests
         #endregion
 
         #region Helpers
-
-        private static uint ThrowingCertificateQuery(SNIHandle? handle, Span<byte> certificate, out uint certificateSize) =>
-            throw new InvalidOperationException("Certificate query should not be called.");
 
         /// <summary>
         /// Arbitrary bytes standing in for a DER-encoded certificate; the interop layer does not parse them.
