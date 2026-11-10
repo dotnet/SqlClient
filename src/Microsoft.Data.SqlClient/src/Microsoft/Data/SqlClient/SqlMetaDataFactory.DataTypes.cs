@@ -22,51 +22,6 @@ internal sealed partial class SqlMetaDataFactory
     /// </summary>
     internal sealed class DataTypesCollection : MetaDataCollectionBase
     {
-        #pragma warning disable format
-
-        private static readonly TypeMetaData[] s_flat_types = [             
-            //                                                                                             IsBestMatch             isFixedPrecisionScale   IsSearchable           MaximumScale             IsLiteralSupported      IsSupported
-            //                                                                                                     IsCaseSensitive         IsLong                  IsSearchableWithLike    MinimumScale            LiteralPrefix                                           CreateParameters
-            //                              ColumnSize                     (CreateFormat)*         IsAutoIncrementable     IsFixedLength           IsNullable              isUnsigned              IsConcurrencyType       LiteralSuffix              
-            new (SqlDbType.SmallInt        ,null                        /*,"smallint"           */,true   ,true   ,false  ,true   ,true   ,false  ,true   ,true   ,false  ,false  ,-1     ,-1     ,false  ,null   ,null   ,null   ,null                                   ,null),
-            new (SqlDbType.Int             ,null                        /*,"int"                */,true   ,true   ,false  ,true   ,true   ,false  ,true   ,true   ,false  ,false  ,-1     ,-1     ,false  ,null   ,null   ,null   ,null                                   ,null),
-            new (SqlDbType.Real            ,null                        /*,"real"               */,false  ,true   ,false  ,true   ,false  ,false  ,true   ,true   ,false  ,false  ,-1     ,-1     ,false  ,null   ,null   ,null   ,null                                   ,null),
-            new (SqlDbType.Float           ,53                          /*,"float({0})"         */,false  ,true   ,false  ,true   ,false  ,false  ,true   ,true   ,false  ,false  ,-1     ,-1     ,false  ,null   ,null   ,null   ,null                                   ,["number of bits used to store the mantissa"]),
-            new (SqlDbType.Money           ,null                        /*,"money"              */,false  ,false  ,false  ,true   ,true   ,false  ,true   ,true   ,false  ,false  ,-1     ,-1     ,false  ,null   ,null   ,null   ,null                                   ,null),
-            new (SqlDbType.SmallMoney      ,null                        /*,"smallmoney"         */,false  ,false  ,false  ,true   ,true   ,false  ,true   ,true   ,false  ,false  ,-1     ,-1     ,false  ,null   ,null   ,null   ,null                                   ,null),
-            new (SqlDbType.Bit             ,null                        /*,"bit"                */,false  ,false  ,false  ,true   ,false  ,false  ,true   ,true   ,false  ,null   ,-1     ,-1     ,false  ,null   ,null   ,null   ,null                                   ,null),
-            new (SqlDbType.TinyInt         ,null                        /*,"tinyint"            */,true   ,true   ,false  ,true   ,true   ,false  ,true   ,true   ,false  ,true   ,-1     ,-1     ,false  ,null   ,null   ,null   ,null                                   ,null),
-            new (SqlDbType.BigInt          ,null                        /*,"bigint"             */,true   ,true   ,false  ,true   ,true   ,false  ,true   ,true   ,false  ,false  ,-1     ,-1     ,false  ,null   ,null   ,null   ,null                                   ,null),
-            new (SqlDbType.Timestamp       ,TdsEnums.TEXT_TIME_STAMP_LEN/*,"timestamp"          */,false  ,false  ,false  ,true   ,false  ,false  ,false  ,true   ,false  ,null   ,-1     ,-1     ,true   ,null   ,"0x"   ,null   ,null                                   ,null),
-            new (SqlDbType.Binary          ,8000                        /*,"binary({0})"        */,false  ,true   ,false  ,true   ,false  ,false  ,true   ,true   ,false  ,null   ,-1     ,-1     ,false  ,null   ,"0x"   ,null   ,null                                   ,["length"]),
-            new (SqlDbType.Image           ,int.MaxValue                /*,"image"              */,false  ,true   ,false  ,false  ,false  ,true   ,true   ,false  ,false  ,null   ,-1     ,-1     ,false  ,null   ,"0x"   ,null   ,null                                   ,null),
-            new (SqlDbType.Text            ,int.MaxValue                /*,"text"               */,false  ,true   ,false  ,false  ,false  ,true   ,true   ,false  ,true   ,null   ,-1     ,-1     ,false  ,null   ,"'"    ,"'"    ,null                                   ,null),
-            new (SqlDbType.NText           ,int.MaxValue / ADP.CharSize /*,"ntext"              */,false  ,true   ,false  ,false  ,false  ,true   ,true   ,false  ,true   ,null   ,-1     ,-1     ,false  ,null   ,"N'"   ,"'"    ,null                                   ,null),
-            new (SqlDbType.Decimal         ,38                          /*,"decimal({0}, {1})"  */,true   ,true   ,false  ,true   ,false  ,false  ,true   ,true   ,false  ,false  ,38     ,0      ,false  ,null   ,null   ,null   ,null                                   ,["precision","scale"]),
-            new (SqlDbType.Decimal         ,38                          /*,"numeric({0}, {1})"  */,true   ,true   ,false  ,true   ,false  ,false  ,true   ,true   ,false  ,false  ,38     ,0      ,false  ,null   ,null   ,null   ,null                                   ,["precision","scale"],
-                   alias: "numeric"),                                                                                                                                                                                                                                     
-            new (SqlDbType.DateTime        ,null                        /*,"datetime"           */,false  ,true   ,false  ,true   ,false  ,false  ,true   ,true   ,true   ,null   ,-1     ,-1     ,false  ,null   ,"{ts '","'}"   ,null                                   ,null),
-            new (SqlDbType.SmallDateTime   ,null                        /*,"smalldatetime"      */,false  ,true   ,false  ,true   ,false  ,false  ,true   ,true   ,true   ,null   ,-1     ,-1     ,false  ,null   ,"{ts '","'}"   ,null                                   ,null),
-            new (SqlDbType.Variant         ,-1                          /*,"sql_variant"        */,false  ,true   ,false  ,false  ,false  ,false  ,true   ,true   ,false  ,null   ,-1     ,-1     ,false  ,false  ,null   ,null   ,null                                   ,null),
-            new (SqlDbType.Xml             ,int.MaxValue                /*,"xml"                */,false  ,false  ,false  ,false  ,false  ,true   ,true   ,false  ,false  ,null   ,-1     ,-1     ,false  ,false  ,null   ,null   ,null                                   ,null),
-            new (SqlDbType.VarChar         ,int.MaxValue                /*,"varchar({0})"       */,false  ,true   ,false  ,false  ,false  ,false  ,true   ,true   ,true   ,null   ,-1     ,-1     ,false  ,null   ,"'"    ,"'"    ,null                                   ,["max length"]),
-            new (SqlDbType.Char            ,int.MaxValue                /*,"char({0})"          */,false  ,true   ,false  ,true   ,false  ,false  ,true   ,true   ,true   ,null   ,-1     ,-1     ,false  ,null   ,"'"    ,"'"    ,null                                   ,["length"]),
-            new (SqlDbType.NChar           ,int.MaxValue / ADP.CharSize /*,"nchar({0})"         */,false  ,true   ,false  ,true   ,false  ,false  ,true   ,true   ,true   ,null   ,-1     ,-1     ,false  ,null   ,"N'"   ,"'"    ,null                                   ,["length"]),
-            new (SqlDbType.NVarChar        ,int.MaxValue / ADP.CharSize /*,"nvarchar({0})"      */,false  ,true   ,false  ,false  ,false  ,false  ,true   ,true   ,true   ,null   ,-1     ,-1     ,false  ,null   ,"N'"   ,"'"    ,null                                   ,["max length"]),
-            new (SqlDbType.VarBinary       ,int.MaxValue / ADP.CharSize /*,"varbinary({0})"     */,false  ,true   ,false  ,false  ,false  ,false  ,true   ,true   ,false  ,null   ,-1     ,-1     ,false  ,null   ,"0x"   ,null   ,null                                   ,["max length"]),
-            new (SqlDbType.UniqueIdentifier,null                        /*,"uniqueidentifier"   */,false  ,true   ,false  ,true   ,false  ,false  ,true   ,true   ,false  ,null   ,-1     ,-1     ,false  ,null   ,"'"    ,"'"    ,null                                   ,null),
-            new (SqlDbType.Date            ,null                        /*,"date"               */,false  ,false  ,false  ,true   ,true   ,false  ,true   ,true   ,true   ,null   ,-1     ,-1     ,false  ,null   ,"{ts '","'}"   ,null                                   ,null),
-            new (SqlDbType.Time            ,5                           /*,"time({0})"          */,false  ,false  ,false  ,false  ,false  ,false  ,true   ,true   ,true   ,null   ,7      ,0      ,false  ,null   ,"{ts '","'}"   ,null                                   ,["scale"]),
-            new (SqlDbType.DateTime2       ,8                           /*,"datetime2({0})"     */,false  ,true   ,false  ,false  ,false  ,false  ,true   ,true   ,true   ,null   ,7      ,0      ,false  ,null   ,"{ts '","'}"   ,null                                   ,["scale"]),
-            new (SqlDbType.DateTimeOffset  ,10                          /*,"datetimeoffset({0})"*/,false  ,true   ,false  ,false  ,false  ,false  ,true   ,true   ,true   ,null   ,7      ,0      ,false  ,null   ,"{ts '","'}"   ,null                                   ,["scale"]),
-            new (SqlDbTypeExtensions.Json  ,int.MaxValue                /*,"json"               */,false  ,false  ,false  ,false  ,false  ,true   ,true   ,false  ,false  ,null   ,-1     ,-1     ,false  ,false  ,"'"    ,"'"    ,caps => caps.JsonType                  ,null),
-            new (SqlDbTypeExtensions.Vector,TdsEnums.MAXSIZE            /**/                      ,false  ,false  ,false  ,false  ,false  ,false  ,true   ,false  ,false  ,null   ,-1     ,-1     ,false  ,null   ,"'"    ,"'"    ,caps => caps.VectorVersion != TdsEnums.VECTOR_VERSION_NOT_SUPPORTED && caps.VectorVersion >= TdsEnums.VECTOR_VERSION_FLOAT16
-                                                                                                                                                                                                                                                                          ,["dimensions,base_type"]),
-            new (SqlDbTypeExtensions.Vector,TdsEnums.MAXSIZE            /**/                      ,false  ,false  ,false  ,false  ,false  ,false  ,true   ,false  ,false  ,null   ,-1     ,-1     ,false  ,null   ,"'"    ,"'"    ,caps => caps.VectorVersion != TdsEnums.VECTOR_VERSION_NOT_SUPPORTED && caps.VectorVersion < TdsEnums.VECTOR_VERSION_FLOAT16
-                                                                                                                                                                                                                                                                          ,["dimensions"]),
-            ];
-        // * - CreateFormat value, that supposed to be produced
-
         // Type order follows the order from SqlMetaData.xml  
         private static readonly TypeMetaData[] s_types = [
             TypeMetaData.CreateFixedNumericType(SqlDbType.SmallInt, isBestMatch: true),
@@ -289,83 +244,6 @@ internal sealed partial class SqlMetaDataFactory
             IsLiteralSupported = null;
             LiteralPrefix = null;
             LiteralSuffix = null;
-        }
-
-        public TypeMetaData(
-            SqlDbType dbType,
-            int? columnSize,
-            bool isAutoIncrementable,
-            bool isBestMatch,
-            bool isCaseSensitive,
-            bool isFixedLength,
-            bool isFixedPrecisionScale,
-            bool isLong,
-            bool isNullable,
-            bool isSearchable,
-            bool isSearchableWithLike,
-            bool? isUnsigned,
-            short maximumScale,
-            short minimumScale,
-            bool isConcurrencyType,
-            bool? isLiteralSupported,
-            string? literalPrefix,
-            string? literalSuffix,
-            Predicate<ConnectionCapabilities>? isSupported,
-            string[]? createParameters,
-            string? alias = null
-        )
-        {
-            // Shared type properties
-            MetaType metaType = MetaType.GetMetaTypeFromSqlDbType(dbType, isMultiValued: false);
-            TypeName = alias ?? metaType.TypeName;
-            ProviderDbType = (int)metaType.SqlDbType;
-            DataType = metaType.ClassType.FullName!;
-            ColumnSize = columnSize ?? (metaType.Precision == TdsEnums.UNKNOWN_PRECISION_SCALE
-                                            ? metaType.FixedLength
-                                            : metaType.Precision);
-            if (ADP.IsEmptyArray(createParameters))
-            {
-                CreateFormat = metaType.TypeName;
-                CreateParameters = null;
-            }
-            else
-            {
-                StringBuilder sbFormat = new StringBuilder(alias ?? metaType.TypeName);
-                StringBuilder sbParams = new StringBuilder();
-                sbFormat.Append('(');
-                for (int i = 0; i < createParameters!.Length; i++)
-                {
-                    if (i > 0)
-                    {
-                        sbFormat.Append(',');
-                        sbParams.Append(',');
-                    }
-                    sbFormat.AppendFormat("{{{0}}}", i);
-                    sbParams.Append(createParameters[i]);
-                }
-                sbFormat.Append(')');
-                CreateFormat = sbFormat.ToString();
-                CreateParameters = sbParams.ToString();
-            }
-
-            // Schema specific type properties
-            IsAutoIncrementable = isAutoIncrementable;
-            IsBestMatch = isBestMatch;
-            IsCaseSensitive = isCaseSensitive;
-            IsFixedLength = isFixedLength;
-            IsFixedPrecisionScale = isFixedPrecisionScale;
-            IsLong = isLong;
-            IsNullable = isNullable;
-            IsSearchable = isSearchable;
-            IsSearchableWithLike = isSearchableWithLike;
-            IsUnsigned = isUnsigned;
-            MaximumScale = maximumScale;
-            MinimumScale = minimumScale;
-            IsConcurrencyType = isConcurrencyType;
-            IsSupported = isSupported;
-            IsLiteralSupported = isLiteralSupported;
-            LiteralPrefix = literalPrefix;
-            LiteralSuffix = literalSuffix;
         }
 
         internal static TypeMetaData CreateFixedNumericType(SqlDbType integerDbType, bool isBestMatch) =>
