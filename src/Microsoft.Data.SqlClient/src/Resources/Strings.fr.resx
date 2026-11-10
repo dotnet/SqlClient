@@ -589,10 +589,10 @@
     <value>Le fournisseur d'authentification est introuvable pour '{0}'.</value>
   </data>
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
-    <value>Impossible de trouver un fournisseur d'authentification pour « {0} ». Installez le package NuGet « Microsoft.Data.SqlClient.Extensions.Azure » (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure) pour utiliser les méthodes d'authentification Active Directory Domain Services (Entra ID).</value>
+    <value>Nous ne pouvons pas trouver un fournisseur d’authentification pour « {0} ». Inscrivez un fournisseur avec SqlAuthenticationProvider.SetProvider ou utilisez un package NuGet « Microsoft.Data.SqlClient.Extensions.Azure » compatible avec la découverte automatique, en activant cette dernière. La découverte automatique n’est pas disponible lorsqu’elle est désactivée au moment de la publication. Les applications JAT dont le code a été réduit nécessitent la préservation des contrats de réflexion. Les applications NativeAOT doivent désactiver les chemins d’amorçage basés sur la réflexion lors de la publication et inscrire explicitement les fournisseurs. Consultez les traces de Microsoft.Data.SqlClient.EventSource (niveau Informations, Mot clé de trace 0x2) pour identifier les échecs de configuration ou de chargement de l’extension Azure.</value>
   </data>
   <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>Le paramètre « useWamBroker » nécessite le package « Microsoft.Data.SqlClient.Extensions.Azure » pour exposer « Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions ». Mettez à niveau le package « Microsoft.Data.SqlClient.Extensions.Azure » vers la version 1.1.0 ou ultérieure, qui inclut ce type.</value>
+    <value>Le paramètre « useWamBroker » nécessite le package « Microsoft.Data.SqlClient.Extensions.Azure » pour exposer « Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions ». Mettez à niveau le package « Microsoft.Data.SqlClient.Extensions.Azure » vers la version 7.0.2 qui inclut ce type.</value>
   </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>Le paramètre « {0} » ne peut pas être Null ou vide.</value>
@@ -1886,6 +1886,9 @@
   </data>
   <data name="SQLCR_NoCRAckAtReconnection" xml:space="preserve">
     <value>Le serveur n'a pas accepté une tentative de récupération. La récupération de la connexion est impossible.</value>
+  </data>
+  <data name="DbConnectionString_VectorTypeSupport" xml:space="preserve">
+    <value>Niveau de prise en charge du type de vecteur à négocier avec le serveur.</value>
   </data>
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>Définit le comportement de la période de blocage pour un pool de connexions.</value>

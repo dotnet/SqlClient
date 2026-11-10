@@ -19,14 +19,23 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     [Collection("ParameterBaselineTests")]
     public class TvpColumnBoundariesTests
     {
+        /// <summary>
+        /// Verifies that TVP column boundary output matches the baseline for the target server.
+        /// </summary>
         [Trait("category", "flaky")]
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void TvpColumnBoundariesTest()
         {
-            Assert.True(RunTestAndCompareWithBaseline());
+            // Act
+            string comparisonResult = RunTestAndCompareWithBaseline();
+
+            // Assert
+            Assert.True(
+                string.IsNullOrEmpty(comparisonResult),
+                $"TVP column boundary output differs from the baseline:\n{comparisonResult}");
         }
 
-        private bool RunTestAndCompareWithBaseline()
+        private string RunTestAndCompareWithBaseline()
         {
             CultureInfo previousCulture = Thread.CurrentThread.CurrentCulture;
             Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
@@ -65,14 +74,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             if (string.IsNullOrEmpty(comparisonResult))
             {
-                return true;
+                return comparisonResult;
             }
 
-            Console.WriteLine("TvpColumnBoundariesTest Failed!");
-            Console.WriteLine("Please compare baseline: {0} with output: {1}", Path.GetFullPath(baselinePath), Path.GetFullPath(outputPath));
-            Console.WriteLine("Comparison Results:");
-            Console.WriteLine(comparisonResult);
-            return false;
+            return string.Format(
+                "Baseline: {0}\nOutput: {1}\n{2}",
+                Path.GetFullPath(baselinePath),
+                Path.GetFullPath(outputPath),
+                comparisonResult);
             }
             finally
             {

@@ -12,8 +12,9 @@ BeforeAll {
     if ($IsWindows) {
         @'
 @echo off
+echo CWD:"%CD%"
 :next
-if "%~1"=="" exit /b 0
+if [%1]==[] exit /b 0
 echo ARG:"%~1"
 shift
 goto next
@@ -22,6 +23,7 @@ goto next
     else {
         @'
 #!/bin/sh
+printf 'CWD:%s\n' "$PWD"
 printf 'ARG:%s\n' "$@"
 '@ | Set-Content (Join-Path $stubDirectory 'dotnet')
         & chmod +x (Join-Path $stubDirectory 'dotnet')
@@ -50,7 +52,7 @@ printf 'ARG:%s\n' "$@"
 
         $output = & $dotnet msbuild (Join-Path $repoRoot $Project) -nologo @Properties `
             -getProperty:TargetFramework,TargetFrameworks,_SqlClientPackageTfm,SignAssembly,AssemblyOriginatorKeyFile `
-            -getItem:PackageReference,PackageVersion,Reference,ProjectReference 2>&1
+            -getItem:PackageReference,PackageVersion,Reference,ProjectReference,Compile 2>&1
         if ($LASTEXITCODE -ne 0) {
             throw "Project evaluation failed for ${Project}:`n$($output -join [Environment]::NewLine)"
         }
@@ -234,10 +236,13 @@ Describe 'supported target frameworks' {
                 Projects = @('src\Microsoft.SqlServer.Server\Microsoft.SqlServer.Server.csproj')
             }
             @{
+                Frameworks = 'net462;netstandard2.0;net10.0'
+                Projects = @('src\Microsoft.Data.SqlClient.Extensions\Abstractions\src\Abstractions.csproj')
+            }
+            @{
                 Frameworks = 'netstandard2.0'
                 Projects = @(
                     'src\Microsoft.Data.SqlClient.Internal\Logging\src\Logging.csproj'
-                    'src\Microsoft.Data.SqlClient.Extensions\Abstractions\src\Abstractions.csproj'
                     'src\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider\src\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj'
                     'src\Microsoft.Data.SqlClient\tests\tools\Microsoft.Data.SqlClient.TestUtilities\Microsoft.Data.SqlClient.TestUtilities.csproj'
                     'src\Microsoft.Data.SqlClient\tests\tools\TDS\TDS\TDS.csproj'
@@ -428,6 +433,54 @@ Describe 'supported target frameworks' {
     }
 }
 
+Describe 'performance baseline TestCommon references' {
+    It 'uses public package APIs without current switch helpers for baseline <Version>' -ForEach @(
+        @{ Version = '6.1.7' }
+        @{ Version = '7.1.0-preview1.26124.5' }
+    ) {
+        # Act
+        $result = Get-ProjectEvaluation 'src\Microsoft.Data.SqlClient\tests\Common\Microsoft.Data.SqlClient.TestCommon.csproj' @(
+            '-p:TargetFramework=net10.0', '-p:ReferenceType=Package',
+            "-p:MdsPackageVersion=$Version"
+        )
+
+        # Assert
+        $package = @($result.Items.PackageReference | Where-Object Identity -EQ 'Microsoft.Data.SqlClient')
+        $package.Count | Should -Be 1
+        $package[0].VersionOverride | Should -Be $Version
+        $package[0].ExcludeAssets | Should -BeNullOrEmpty
+        @($result.Items.Reference | Where-Object Identity -EQ 'Microsoft.Data.SqlClient').Count |
+            Should -Be 0
+        $sources = @($result.Items.Compile.Identity | ForEach-Object { $_.Replace('\', '/') })
+        $sources | Should -Not -Contain 'LocalAppContextSwitchesHelper.cs'
+        $sources | Should -Not -Contain 'ConnectionPoolVersionScope.cs'
+        $sources | Should -Contain 'Fixtures/DatabaseObjects/Table.cs'
+    }
+
+    It 'retains current switch helpers for ordinary <Mode> builds' -ForEach @(
+        @{ Mode = 'Project' }
+        @{ Mode = 'Package' }
+    ) {
+        # Act
+        $result = Get-ProjectEvaluation 'src\Microsoft.Data.SqlClient\tests\Common\Microsoft.Data.SqlClient.TestCommon.csproj' @(
+            '-p:TargetFramework=net10.0', "-p:ReferenceType=$Mode",
+            "-p:PkgMicrosoft_Data_SqlClient=$TestDrive/package"
+        )
+
+        # Assert
+        $result.Items.Compile.Identity | Should -Contain 'LocalAppContextSwitchesHelper.cs'
+        $result.Items.Compile.Identity | Should -Contain 'ConnectionPoolVersionScope.cs'
+        if ($Mode -eq 'Package') {
+            $package = @($result.Items.PackageReference | Where-Object Identity -EQ 'Microsoft.Data.SqlClient')
+            $package[0].ExcludeAssets | Should -Be 'compile'
+            $reference = @($result.Items.Reference | Where-Object Identity -EQ 'Microsoft.Data.SqlClient')
+            $reference.Count | Should -Be 1
+            $reference[0].HintPath.Replace('\', '/') |
+                Should -Be "$($TestDrive.Replace('\', '/'))/package/lib/net10.0/Microsoft.Data.SqlClient.dll"
+        }
+    }
+}
+
 Describe 'reference assembly baseline framework resolution' {
     # Prefer exact baseline assets, then exercise both previous modern target layouts.
     # Overrides must take precedence even when the baseline also contains exact matches.
@@ -512,6 +565,61 @@ Describe 'reference assembly baseline framework resolution' {
         $result = Invoke-RefBaselineProbe $Available $Properties
         $result.ExitCode | Should -Not -Be 0
         $result.Output | Should -Match ([regex]::Escape("has no ref/$Missing/Microsoft.Data.SqlClient.dll for local $Local"))
+    }
+}
+
+Describe 'build.proj PowerShell module restore' {
+    It 'runs the restored PowerShell tool without building or testing any projects' {
+        $arguments = Get-ChildArguments 'RestorePowerShellModules'
+
+        $arguments[0..6] -join '|' | Should -Be 'tool|run|pwsh|--|-NoProfile|-NonInteractive|-File'
+        [IO.Path]::GetFullPath($arguments[7]) |
+            Should -Be (Join-Path $repoRoot 'eng\scripts\Restore-PowerShellModules.ps1')
+        $arguments.Count | Should -Be 8
+    }
+
+    It 'runs the standalone target from another working directory' {
+        $target = Join-Path $repoRoot 'tools\targets\RestorePowerShellModules.targets'
+        Push-Location $TestDrive
+        try {
+            $output = & $dotnet build $target -nologo -v:normal -t:RestorePowerShellModules `
+                "-p:DotnetPath=$stubDirectory/" 2>&1
+            $LASTEXITCODE | Should -Be 0
+        }
+        finally {
+            Pop-Location
+        }
+        $workingDirectory = @($output | ForEach-Object {
+            if ("$_".Trim() -match '^CWD:(.*)$') { $Matches[1].Trim('"') }
+        })
+        $workingDirectory.Count | Should -Be 1
+        $workingDirectory[0].TrimEnd('\', '/') | Should -Be $repoRoot.TrimEnd('\', '/')
+    }
+
+    It 'does not restore modules implicitly during manual tests' {
+        $arguments = Get-ChildArguments 'TestSqlClientManual' @('-p:TestFramework=net10.0')
+
+        $arguments | Should -Not -Contain 'tool'
+        $arguments | Should -Not -Contain 'pwsh'
+        $arguments | Should -Contain 'test'
+    }
+
+    It 'propagates a failed restore tool exit code' {
+        $directory = Join-Path $TestDrive 'failed module restore'
+        New-Item -ItemType Directory -Path $directory -Force | Out-Null
+        if ($IsWindows) {
+            "@echo off`nexit /b 17" | Set-Content (Join-Path $directory 'dotnet.cmd')
+        }
+        else {
+            "#!/bin/sh`nexit 17" | Set-Content (Join-Path $directory 'dotnet')
+            & chmod +x (Join-Path $directory 'dotnet')
+            $LASTEXITCODE | Should -Be 0
+        }
+        $output = & $dotnet msbuild $buildProject -nologo -v:quiet -t:RestorePowerShellModules `
+            "-p:DotnetPath=$directory/" 2>&1
+
+        $LASTEXITCODE | Should -Not -Be 0
+        $output -join "`n" | Should -Match 'exited with code 17'
     }
 }
 
@@ -695,6 +803,65 @@ Describe 'build.proj dependency packing' {
         $arguments | Should -Not -Contain 'build'
         if ($Property -eq '-p:PackBuild=false') {
             $arguments | Should -Contain '--no-build'
+        }
+    }
+}
+
+Describe 'Abstractions test orchestration' {
+    It 'forwards Package mode, versions and signing keys to the test command' {
+        $arguments = Get-ChildArguments 'TestAbstractions' @(
+            '-p:ReferenceType=Package',
+            '-p:PackageVersionSqlClient=8.1.2-review',
+            '-p:FileVersionSqlClient=8.1.2.42',
+            '-p:BuildNumber=42',
+            '-p:BuildSuffix=ci',
+            '-p:SigningKeyPath=driver-key.snk',
+            '-p:TestSigningKeyPath=test-key.snk'
+        )
+        $testStart = [Array]::IndexOf($arguments, 'test')
+        $testStart | Should -BeGreaterOrEqual 0
+        $testArguments = $arguments[$testStart..($arguments.Count - 1)]
+
+        $testArguments | Should -Contain '-p:ReferenceType=Package'
+        $testArguments | Should -Contain '-p:SqlClientPackageVersion=8.1.2-review'
+        $testArguments | Should -Contain '-p:SqlClientFileVersion=8.1.2.42'
+        $testArguments | Should -Contain '-p:BuildNumber=42'
+        $testArguments | Should -Contain '-p:BuildSuffix=ci'
+        $testArguments | Should -Contain '-p:SigningKeyPath=driver-key.snk'
+        $testArguments | Should -Contain '-p:TestSigningKeyPath=test-key.snk'
+    }
+
+    It 'packs Logging before testing in Package mode with the same version and signing key' {
+        $arguments = Get-ChildArguments 'TestAbstractions' @(
+            '-p:ReferenceType=Package',
+            '-p:PackageVersionSqlClient=8.1.2-review',
+            '-p:SigningKeyPath=driver-key.snk'
+        )
+        $packStart = [Array]::IndexOf($arguments, 'pack')
+        $testStart = [Array]::IndexOf($arguments, 'test')
+        $packStart | Should -BeGreaterOrEqual 0
+        $testStart | Should -BeGreaterThan $packStart
+        $packArguments = $arguments[$packStart..($testStart - 1)]
+
+        (Split-Path $packArguments[1] -Leaf) | Should -Be 'Logging.csproj'
+        $packArguments | Should -Contain '-p:SqlClientPackageVersion=8.1.2-review'
+        $packArguments | Should -Contain '-p:SigningKeyPath=driver-key.snk'
+    }
+
+    It 'does not pack Logging with <Property>' -ForEach @(
+        @{ Property = '-p:ReferenceType=Project' }
+        @{ Property = '-p:SkipDependencyPack=true' }
+    ) {
+        $properties = @($Property)
+        if ($Property -eq '-p:SkipDependencyPack=true') {
+            $properties += '-p:ReferenceType=Package'
+        }
+        $arguments = Get-ChildArguments 'TestAbstractions' $properties
+
+        $arguments | Should -Contain 'test'
+        $arguments | Should -Not -Contain 'pack'
+        if ($Property -eq '-p:SkipDependencyPack=true') {
+            $arguments | Should -Contain '-p:ReferenceType=Package'
         }
     }
 }

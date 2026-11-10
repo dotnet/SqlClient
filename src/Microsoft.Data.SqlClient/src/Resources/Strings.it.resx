@@ -589,10 +589,10 @@
     <value>Non è possibile trovare un provider di autenticazione per '{0}'.</value>
   </data>
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
-    <value>Non è possibile trovare un provider di autenticazione per '{0}'. Installare il pacchetto NuGet 'Microsoft.Data.SqlClient.Extensions.Azure' (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure) per usare i metodi di autenticazione di Active Directory (Entra ID).</value>
+    <value>Non è possibile trovare un provider di autenticazione per '{0}'. Registrare un provider con SqlAuthenticationProvider.SetProvider oppure usare un pacchetto NuGet 'Microsoft.Data.SqlClient.Extensions.Azure' compatibile con l'individuazione automatica abilitata. L'individuazione automatica non è disponibile se è stata disabilitata in fase di pubblicazione. Le applicazioni JIT con trimming richiedono contratti basati su riflessione conservati; le applicazioni NativeAOT devono disabilitare i percorsi di bootstrap basati su riflessione in fase di pubblicazione e registrare i provider in modo esplicito. Esaminare le tracce di Microsoft.Data.SqlClient.EventSource (livello Informational, parola chiave Trace 0x2) per individuare errori di configurazione o di caricamento dell'estensione di Azure.</value>
   </data>
   <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>L'impostazione ''useWamBroker'' richiede che il pacchetto ''Microsoft.Data.SqlClient.Extensions.Azure'' esponga ''Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions''. Aggiorna il pacchetto ''Microsoft.Data.SqlClient.Extensions.Azure'' almeno alla versione 1.1.0, che include questo tipo.</value>
+    <value>L'impostazione 'useWamBroker' richiede 'Microsoft.Data.SqlClient.Extensions. Pacchetto di Azure per esporre 'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions'. Aggiornare 'Microsoft.Data.SqlClient.Extensions. pacchetto di Azure almeno alla versione v7.0.2 che include questo tipo.</value>
   </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>Il parametro '{0}' non può essere Null o vuoto.</value>
@@ -1886,6 +1886,9 @@
   </data>
   <data name="SQLCR_NoCRAckAtReconnection" xml:space="preserve">
     <value>Tentativo di ripristino non riconosciuto dal server. Impossibile eseguire il ripristino della connessione.</value>
+  </data>
+  <data name="DbConnectionString_VectorTypeSupport" xml:space="preserve">
+    <value>Livello di supporto del tipo di vettore da negoziare con il server.</value>
   </data>
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>Consente di definire il comportamento del periodo di blocco per un pool di connessioni.</value>

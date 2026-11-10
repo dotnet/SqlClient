@@ -75,3 +75,40 @@ Describe 'CI dotnet argument variables in <RelativePath>' -ForEach @(
         ([regex]::Matches($template, '\$\(dotnetBuildOpts\)')).Count | Should -Be 5
     }
 }
+
+Describe 'perf checkout paths in <RelativePath>' -ForEach @(
+    @{ RelativePath = 'perf/sqlclient-perf-pipeline.yml' }
+    @{ RelativePath = 'perf/sqlclient-perf-pr-pipeline.yml' }
+    @{ RelativePath = 'perf/sqlclient-perf-experiment.yml' }
+) {
+    BeforeAll {
+        $pipelineRoot = Join-Path $PSScriptRoot '../..'
+        $template = Get-Content -LiteralPath (Join-Path $pipelineRoot $RelativePath) -Raw
+    }
+
+    It 'handles both owner-qualified GitHub names and Azure Repos names' {
+        # Act / Assert
+        $template.Contains("`${{ if contains(variables['Build.Repository.Name'], '/') }}:") |
+            Should -BeTrue
+        $template.Contains("value: `$(Build.SourcesDirectory)/`${{ split(variables['Build.Repository.Name'], '/')[1] }}") |
+            Should -BeTrue
+        $template.Contains('value: $(Build.SourcesDirectory)/$(Build.Repository.Name)') |
+            Should -BeTrue
+        ([regex]::Matches($template, 'name: PerfSourceRoot')).Count | Should -Be 2
+    }
+
+    It 'uses the resolved checkout for the VM source and post-test scripts' {
+        # Act / Assert
+        $template.Contains('testRootDir: $(PerfSourceRoot)') | Should -BeTrue
+        $template.Contains('filePath: $(PerfSourceRoot)/eng/pipelines/perf/scripts/show_perf_results.sh') |
+            Should -BeTrue
+        $template | Should -Not -Match '\$\(Build\.SourcesDirectory\)/dotnet-sqlclient'
+        if ($RelativePath -eq 'perf/sqlclient-perf-pipeline.yml') {
+            $template.Contains('filePath: $(PerfSourceRoot)/eng/pipelines/perf/scripts/translate_results_to_kusto.sh') |
+                Should -BeTrue
+            $template.Contains('REPO_DIR: $(PerfSourceRoot)') | Should -BeTrue
+            $template.Contains('scriptsDir="$(PerfSourceRoot)/eng/pipelines/perf/scripts"') |
+                Should -BeTrue
+        }
+    }
+}

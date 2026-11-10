@@ -589,10 +589,10 @@
     <value>Nie można odnaleźć dostawcy uwierzytelniania elementu {0}.</value>
   </data>
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
-    <value>Nie można odnaleźć dostawcy uwierzytelniania dla elementu „{0}”. Zainstaluj pakiet NuGet „Microsoft.Data.SqlClient.Extensions.Azure” (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure), aby korzystać z metod uwierzytelniania usługi Active Directory (Entra ID).</value>
+    <value>Nie można odnaleźć dostawcy uwierzytelniania dla elementu „{0}”. Zarejestruj dostawcę za pomocą elementu SqlAuthenticationProvider.SetProvider lub użyj zgodnego pakietu NuGet „Microsoft.Data.SqlClient.Extensions.Azure” z włączonym automatycznym odnajdowaniem. Automatyczne odnajdowanie jest niedostępne, gdy jest wyłączone w czasie publikowania. Przycięte aplikacje JIT wymagają zachowanych kontraktów odbicia; Aplikacje NativeAOT powinny wyłączać refleksyjne ścieżki uruchamiania w czasie publikowania i jawnie rejestrować dostawców. Sprawdź ślady Microsoft.Data.SqlClient.EventSource (poziom informacyjny, słowo kluczowe trace 0x2) pod kątem błędów ładowania konfiguracji lub rozszerzenia platformy Azure.</value>
   </data>
   <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>Ustawienie „useWamBroker” wymaga pakietu „Microsoft.Data.SqlClient.Extensions.Azure”, aby uwidoczniono element „Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions”. Uaktualnij pakiet „Microsoft.Data.SqlClient.Extensions.Azure” do wersji co najmniej 1.1.0, która zawiera ten typ.</value>
+    <value>Ustawienie „useWamBroker” wymaga pakietu „Microsoft.Data.SqlClient.Extensions.Azure”, aby uwidocznić element „Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions”. Uaktualnij pakiet „Microsoft.Data.SqlClient.Extensions.Azure” do wersji co najmniej v7.0.2, która zawiera ten typ.</value>
   </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>Parametr „{0}” nie może mieć wartości null ani być pusty.</value>
@@ -1886,6 +1886,9 @@
   </data>
   <data name="SQLCR_NoCRAckAtReconnection" xml:space="preserve">
     <value>Serwer nie potwierdził próby odzyskiwania połączenia. Nie jest możliwe odzyskanie połączenia.</value>
+  </data>
+  <data name="DbConnectionString_VectorTypeSupport" xml:space="preserve">
+    <value>Poziom obsługi typów wektorowych do uzgodnienia z serwerem.</value>
   </data>
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>Definiuje zachowanie okresu blokowania dla puli połączeń.</value>

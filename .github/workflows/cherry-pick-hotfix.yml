@@ -20,6 +20,7 @@
 #      PR prefixed with "[<version> Cherry-pick]".
 #   4. If the cherry-pick has conflicts, a placeholder PR is opened with
 #      "[<version> Cherry-pick - CONFLICTS]" and manual resolution steps.
+#   Both PR types are assigned to the original PR author.
 #
 #################################################################################
 
@@ -109,5 +110,6 @@ jobs:
           MERGE_COMMIT_SHA: ${{ github.event.pull_request.merge_commit_sha }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
           VERSION: ${{ matrix.version }}
         run: bash "${GITHUB_WORKSPACE}/.github/scripts/cherry-pick-to-release.sh"

@@ -589,10 +589,10 @@
     <value>Für "{0}" wurde kein Authentifizierungsanbieter gefunden.</value>
   </data>
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
-    <value>Für „{0}“ wurde kein Authentifizierungsanbieter gefunden. Installieren Sie das NuGet-Paket „Microsoft.Data.SqlClient.Extensions.Azure“ (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure), um Active Directory (Entra ID)-Authentifizierungsmethoden zu verwenden.</value>
+    <value>Für „{0}“ wurde kein Authentifizierungsanbieter gefunden. Registrieren Sie einen Anbieter mit SqlAuthenticationProvider.SetProvider, oder verwenden Sie ein kompatibles NuGet-Paket „Microsoft.Data.SqlClient.Extensions.Azure“ mit aktivierter automatischer Erkennung. Die automatische Erkennung ist nicht verfügbar, wenn sie beim Veröffentlichen deaktiviert wurde. Für getrimmte JIT-Anwendungen müssen die Reflexionsverträge erhalten bleiben; bei NativeAOT-Anwendungen sollten Sie reflektionsbasierte Bootstrappfade beim Veröffentlichen deaktivieren und Anbieter explizit registrieren. Überprüfen Sie die Microsoft.Data.SqlClient.EventSource-Ablaufverfolgungen (Informationsebene, Trace-Schlüsselwort 0x2), um Fehler bei der Konfiguration oder beim Laden von Azure-Erweiterungen zu finden.</value>
   </data>
   <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>Die Einstellung „useWamBroker“ erfordert das Paket „Microsoft.Data.SqlClient.Extensions.Azure“, um „Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions“ bereitzustellen. Aktualisieren Sie das Paket „Microsoft.Data.SqlClient.Extensions.Azure“ auf mindestens Version 1.1.0, die diesen Typ enthält.</value>
+    <value>Zum Festlegen von "useWamBroker" ist "Microsoft.Data.SqlClient.Extensions" erforderlich. "Azure"-Paket, um "Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions" verfügbar zu machen. Aktualisieren Sie "Microsoft.Data.SqlClient.Extensions". Das Paket von Azure auf Version 7.0.2 oder höher, das diesen Typ enthält.</value>
   </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>Der Parameter "{0}" darf nicht NULL oder leer sein.</value>
@@ -1886,6 +1886,9 @@
   </data>
   <data name="SQLCR_NoCRAckAtReconnection" xml:space="preserve">
     <value>Ein Wiederherstellungsversuch wurde vom Server nicht bestätigt; die Verbindung kann nicht wiederhergestellt werden.</value>
+  </data>
+  <data name="DbConnectionString_VectorTypeSupport" xml:space="preserve">
+    <value>Der Grad der Unterstützung für Vektortypen, der mit dem Server ausgehandelt werden soll.</value>
   </data>
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>Definiert das Verhalten im Blockierungszeitraum für einen Verbindungspool.</value>

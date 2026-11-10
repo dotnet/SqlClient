@@ -74,23 +74,18 @@
             "WarmupCount": 1,
             "RowCount": 1000
         },
-        // Plaintext large-data reads include 128 MiB per operation, so a single
-        // operation takes seconds rather than microseconds. Three settings account for that:
-        //   IterationCount is reduced (20 network-bound iterations add little statistical
-        //     value over 5, but cost 4x the wall time);
-        //   RunStrategy is "Monitoring" so BenchmarkDotNet skips the harness-overhead
-        //     measurement that "Throughput" performs, which is meaningless at this scale;
-        //   TimeoutMinutes raises the in-process executor's 5 minute default, which these
-        //     benchmarks otherwise exceed and fail with "takes too long to run".
+        // Keep default LOB runs bounded with 1 and 5 MiB payloads and three iterations.
+        // Override PayloadSizesBytes for larger workloads. Monitoring skips harness-overhead
+        // measurements; TimeoutMinutes remains a per-case limit for slower transfers.
         "LargeDataReadRunnerConfig": {
             "Enabled": true,
             "LaunchCount": 1,
-            "IterationCount": 5,
+            "IterationCount": 3,
             "InvocationCount": 1,
             "WarmupCount": 1,
             "RowCount": 0,
             // Byte-valued sizes apply to binary and UTF-16 text, across all accessor paths.
-            "PayloadSizesBytes": [1048576, 5242880, 10485760, 20971520, 134217728],
+            "PayloadSizesBytes": [1048576, 5242880],
             "CommandTimeoutSeconds": 1800,
             "RunStrategy": "Monitoring",
             "TimeoutMinutes": 120
@@ -98,10 +93,11 @@
         "AlwaysEncryptedLargeDataReadRunnerConfig": {
             "Enabled": true,
             "LaunchCount": 1,
-            "IterationCount": 5,
+            "IterationCount": 3,
             "InvocationCount": 1,
             "WarmupCount": 1,
             "RowCount": 0,
+            "PayloadSizesBytes": [1048576, 5242880],
             "RunStrategy": "Monitoring",
             "TimeoutMinutes": 30
         },

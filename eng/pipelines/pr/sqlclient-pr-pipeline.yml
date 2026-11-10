@@ -87,25 +87,29 @@ variables:
   - template: /eng/pipelines/pr/variables/pr-variables.yml@self
 
 stages:
-  # NOTE: '$(general_purpose_pool_name)' comes from the 'sqlclient-pipeline-config-v1'
-  # variable group, which is imported by
-  # /eng/pipelines/pr/variables/pr-variables.yml (included above).  It is
-  # referenced here, at the pipeline root, and passed down to every stage as a
-  # parameter, so that no template reads the pool name from a variable group
-  # directly.
-  #
-  # The same variable group and variable are used by the CI pipelines; see
-  # /eng/pipelines/dotnet-sqlclient-ci-core.yml.
-
-  # Stage 1a: Build and pack all projects in the repository
+  # Stage 1a: Build and pack all projects in the repository in debug config
+  # Note: The package verification tool only works with Windows (as of 2026-11), so only Windows VM
+  #    images should be used for these.
   - template: /eng/pipelines/pr/stages/pack-stage.yml@self
     parameters:
       buildConfiguration: Debug
       buildSuffix: pr
-      stageName: ${{ variables.stageNamePack }}
+      stageName: ${{ variables.stageNamePackDebug }}
       packArtifactBaseName: ${{ variables.packArtifactBaseName }}
       poolName: $(general_purpose_pool_name)
-      poolImage: ADO-UB24
+      poolImage: ADO-Win25
+
+  # Stage 1b: Build and pack all projects in the repository in release config
+  # Note: Tests will still be run in debug mode, this is just a fail-fast way to catch any
+  #    compilation errors in release mode.
+  - template: /eng/pipelines/pr/stages/pack-stage.yml@self
+    parameters:
+      buildConfiguration: Release
+      buildSuffix: pr
+      stageName: ${{ variables.stageNamePackRelease }}
+      packArtifactBaseName: ${{ variables.packArtifactBaseName }}
+      poolName: $(general_purpose_pool_name)
+      poolImage: ADO-Win25
 
   # Stage 1b: Generate secrets
   - template: /eng/pipelines/pr/stages/generate-secrets-stage.yml@self
@@ -121,7 +125,8 @@ stages:
       buildSuffix: pr
       dotnetVerbosity: ${{ parameters.dotnetVerbosity }}
       poolName: $(general_purpose_pool_name)
-      stageNamePack: ${{ variables.stageNamePack }}
+      stageNamePackDebug: ${{ variables.stageNamePackDebug }}
+      stageNamePackRelease: ${{ variables.stageNamePackRelease }}
       stageNameSecrets: ${{ variables.stageNameSecrets }}
       testResultsArtifactBaseName: ${{ variables.testResultsArtifactBaseName }}
 

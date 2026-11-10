@@ -160,6 +160,118 @@ Describe 'publish-symbols.ps1 Request Bodies' {
     }
 }
 
+Describe 'publish-symbols.ps1 Skip Polling' {
+
+    BeforeEach {
+        $publishParameters = @{
+            PublishServer      = 'srv'
+            PublishTokenUri    = 'https://token-uri'
+            PublishProjectName = 'proj'
+            ArtifactName       = 'art'
+        }
+        Mock -CommandName 'az' -MockWith {
+            $global:LASTEXITCODE = 0
+            return 'fake-token'
+        }
+        Mock -CommandName 'Invoke-RestMethod' -MockWith {
+            return @{
+                publishToInternalServerResult = 1
+                publishToPublicServerResult   = 1
+            }
+        }
+        Mock -CommandName 'Write-Warning'
+    }
+
+    It 'Should submit both publishing targets without querying status when polling is skipped' {
+        # Act
+        & $scriptPath @publishParameters -SkipPolling $true
+
+        # Assert
+        Should -Invoke 'Invoke-RestMethod' -Times 1 -Exactly -ParameterFilter {
+            $Method -eq 'POST' -and $Uri -eq (
+                'https://srv.trafficmanager.net/projects/proj/requests'
+            ) -and ($Body | ConvertFrom-Json).requestName -eq 'art'
+        }
+        Should -Invoke 'Invoke-RestMethod' -Times 1 -Exactly -ParameterFilter {
+            $request = $Body | ConvertFrom-Json
+            $Method -eq 'POST' -and $Uri -eq (
+                'https://srv.trafficmanager.net/projects/proj/requests/art'
+            ) -and $request.publishToInternalServer -and $request.publishToPublicServer
+        }
+        Should -Invoke 'Invoke-RestMethod' -Times 2 -Exactly
+        Should -Invoke 'Invoke-RestMethod' -Times 0 -Exactly -ParameterFilter {
+            $Method -eq 'GET'
+        }
+        Should -Invoke 'Write-Warning' -Times 1 -Exactly -ParameterFilter {
+            $Message -like '*submitted*not been verified*'
+        }
+    }
+
+    It 'Should query status when SkipPolling is explicitly false' {
+        # Act
+        & $scriptPath @publishParameters -SkipPolling $false
+
+        # Assert
+        Should -Invoke 'Invoke-RestMethod' -Times 1 -Exactly -ParameterFilter {
+            $Method -eq 'GET'
+        }
+        Should -Invoke 'Write-Warning' -Times 0 -Exactly
+    }
+
+    It 'Should fail token acquisition even when polling is skipped' {
+        # Arrange
+        Mock -CommandName 'az' -MockWith { $global:LASTEXITCODE = 1; return '' }
+
+        # Act
+        $act = { & $scriptPath @publishParameters -SkipPolling $true }
+
+        # Assert
+        $act | Should -Throw '*Failed to acquire*'
+        Should -Invoke 'Invoke-RestMethod' -Times 0 -Exactly
+        Should -Invoke 'Write-Warning' -Times 0 -Exactly
+    }
+
+    It 'Should reject an empty token even when polling is skipped' {
+        # Arrange
+        Mock -CommandName 'az' -MockWith { $global:LASTEXITCODE = 0; return ' ' }
+
+        # Act
+        $act = { & $scriptPath @publishParameters -SkipPolling $true }
+
+        # Assert
+        $act | Should -Throw '*empty*'
+        Should -Invoke 'Invoke-RestMethod' -Times 0 -Exactly
+        Should -Invoke 'Write-Warning' -Times 0 -Exactly
+    }
+
+    It 'Should fail registration even when polling is skipped' {
+        # Arrange
+        Mock -CommandName 'Invoke-RestMethod' -MockWith { throw 'Registration failed' }
+
+        # Act
+        $act = { & $scriptPath @publishParameters -SkipPolling $true }
+
+        # Assert
+        $act | Should -Throw '*Failed to register*'
+        Should -Invoke 'Invoke-RestMethod' -Times 1 -Exactly
+        Should -Invoke 'Write-Warning' -Times 0 -Exactly
+    }
+
+    It 'Should fail submission even when polling is skipped' {
+        # Arrange
+        Mock -CommandName 'Invoke-RestMethod' -MockWith { throw 'Submission failed' } `
+            -ParameterFilter { $Uri -like '*/requests/art' }
+
+        # Act
+        $act = { & $scriptPath @publishParameters -SkipPolling $true }
+
+        # Assert
+        $act | Should -Throw '*Failed to publish*'
+        Should -Invoke 'Invoke-RestMethod' -Times 2 -Exactly
+        Should -Invoke 'Write-Warning' -Times 0 -Exactly
+    }
+}
+
 Describe 'publish-symbols.ps1 Error Handling' {
 
     It 'Should throw when token acquisition fails' {

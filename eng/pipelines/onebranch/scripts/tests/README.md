@@ -7,32 +7,48 @@ Pester tests for PowerShell scripts used by OneBranch pipeline steps.
 - PowerShell 7+, as restored by `dotnet tool restore` from `dotnet-tools.json`. Windows
   PowerShell 5.1 is not supported: these scripts and tests use types that exist only in
   PowerShell Core, such as `Microsoft.PowerShell.Commands.HttpResponseException`.
-- [Pester v5](https://pester.dev/) (`Install-Module Pester -MinimumVersion 5.0 -Scope CurrentUser`)
+- [Pester](https://pester.dev/), pinned in the root `powershell-modules.json`.
 
-## Running the Tests
+From the repository root, restore tools and modules using anonymous feed access:
 
-Restore the repository-pinned PowerShell first:
+Run `dotnet tool restore` first to install the pinned `pwsh` tool, including on Linux;
+the module-restore target uses that tool, so no globally installed PowerShell is required.
 
 ```console
 dotnet tool restore
+dotnet build build.proj -t:RestorePowerShellModules
+```
+
+## Running the Tests
+
+Start a PowerShell session with the restored tool:
+
+```console
+dotnet tool run pwsh -NoProfile
+```
+
+Import Pester once in that session before running any of the test commands below:
+
+```powershell
+Import-Module Pester
 ```
 
 From this directory:
 
-```console
-dotnet tool run pwsh -NoProfile -Command "Invoke-Pester ./publish-symbols.Tests.ps1"
+```powershell
+Invoke-Pester ./publish-symbols.Tests.ps1
 ```
 
 Or from the repository root:
 
-```console
-dotnet tool run pwsh -NoProfile -Command "Invoke-Pester ./eng/pipelines/onebranch/scripts/tests/"
+```powershell
+Invoke-Pester ./eng/pipelines/onebranch/scripts/tests/
 ```
 
 For detailed output:
 
-```console
-dotnet tool run pwsh -NoProfile -Command "Invoke-Pester ./publish-symbols.Tests.ps1 -Output Detailed"
+```powershell
+Invoke-Pester ./publish-symbols.Tests.ps1 -Output Detailed
 ```
 
 ## Test Coverage
@@ -46,6 +62,7 @@ dotnet tool run pwsh -NoProfile -Command "Invoke-Pester ./publish-symbols.Tests.
 | Request bodies        | Registration body, default publish flags, flag overrides         |
 | Error handling        | Token failure, registration failure, publish failure, status failure — all verify expanded URI in error message |
 | Status validation     | Detects Failed/Cancelled results, respects PublishToInternal/PublishToPublic flags, passes on Succeeded/Pending |
+| Skip polling          | Both publishing targets submitted without a status query, unverified-results warning, explicit false retains status checks, token/registration/submission errors still fail |
 | Package validation    | Wildcard vs per-id version expectations, SqlServer omitted when unbuilt, gate tokens, report written before gating, exit-code handling, report-only mode suppressing the gate but not a broken validator |
 | XML docs validation   | Every documentation-ID defect form reported by the API Docs build (array `T:` UIDs, empty parentheses, C# aliases, embedded whitespace, misspelled namespace roots) plus valid controls, compiler-unresolved `!:` crefs, local UID and wrong-prefix resolution, package expansion, allowlisting and staleness, report-only mode |
 | XML docs lib/ref layout | Full `lib/` XML paired with trimmed `ref/` XML accepted; trimmed `lib/`, untrimmed `ref/`, and byte-identical `lib`/`ref` rejected; per-target-framework isolation; packages without a `ref/` folder ignored |
