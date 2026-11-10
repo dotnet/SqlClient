@@ -556,6 +556,8 @@ internal sealed partial class SqlMetaDataFactory
             MetaType metaType = MetaType.GetMetaTypeFromSqlDbType(SqlDbTypeExtensions.Vector, isMultiValued: false);
             return new TypeMetaData(SqlDbTypeExtensions.Vector)
             {
+                ColumnSize = TdsEnums.MAXSIZE,
+                IsBestMatch = false,
                 IsFixedLength = false,
                 IsSearchable = false,
                 LiteralPrefix = "'",
