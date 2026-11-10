@@ -21,11 +21,17 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
     /// </summary>
     public sealed class EncryptionInfoCertificateFixture : CertificateFixtureBase
     {
+        /// <summary>
+        /// Creates a self-signed certificate for <c>localhost</c> and <c>127.0.0.1</c>.
+        /// </summary>
         public EncryptionInfoCertificateFixture()
         {
             Certificate = CreateCertificate("localhost", new[] { "localhost" }, new[] { "127.0.0.1" });
         }
 
+        /// <summary>
+        /// Gets the self-signed certificate. It is not installed in any trusted store.
+        /// </summary>
         public X509Certificate2 Certificate { get; }
     }
 
@@ -38,148 +44,294 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
     {
         private readonly X509Certificate2 _certificate;
 
+        /// <summary>
+        /// Creates the test class with the shared server certificate.
+        /// </summary>
         public ConnectionEncryptionInfoTests(EncryptionInfoCertificateFixture fixture)
         {
             _certificate = fixture.Certificate;
         }
 
+        /// <summary>
+        /// The encryption setting the simulated server advertises in its pre-login response.
+        /// </summary>
         public enum ServerEncryption
         {
-            // Server does not support encryption: no TLS at all.
+            /// <summary>The server does not support encryption: no TLS at all.</summary>
             NotSupported,
-            // Server supports encryption but does not require it: login-only TLS.
+
+            /// <summary>The server supports encryption but does not require it: login-only TLS.</summary>
             Off,
-            // Server requires encryption: full TLS.
+
+            /// <summary>The server requires encryption: full TLS.</summary>
             Required,
         }
 
         #region Success
 
+        /// <summary>
+        /// A successful synchronous open publishes the mode and protocol that match the server's
+        /// encryption setting.
+        /// </summary>
         [Theory]
-        [InlineData(ServerEncryption.NotSupported, false)]
-        [InlineData(ServerEncryption.NotSupported, true)]
-        [InlineData(ServerEncryption.Off, false)]
-        [InlineData(ServerEncryption.Off, true)]
-        [InlineData(ServerEncryption.Required, false)]
-        [InlineData(ServerEncryption.Required, true)]
-        public async Task Open_Success_PublishesNegotiatedModeAndProtocol(ServerEncryption serverEncryption, bool async)
+        [InlineData(ServerEncryption.NotSupported)]
+        [InlineData(ServerEncryption.Off)]
+        [InlineData(ServerEncryption.Required)]
+        public void Open_Success_PublishesNegotiatedModeAndProtocol(ServerEncryption serverEncryption)
         {
-            using TdsServer server = new(CreateArguments<TdsServerArguments>(serverEncryption));
-            server.Start();
-
+            // Arrange
+            using TdsServer server = StartServer(serverEncryption);
             using SqlConnection connection = new(BuildConnectionString(server.EndPoint.Port));
             Assert.True(connection.EncryptionInfo.IsEmpty);
 
-            await OpenAsync(connection, async);
+            // Act
+            connection.Open();
 
+            // Assert
             Assert.Equal(ConnectionState.Open, connection.State);
             AssertNegotiated(connection.EncryptionInfo, serverEncryption);
             AssertCertificateFieldsNull(connection.EncryptionInfo);
         }
 
+        /// <summary>
+        /// A successful asynchronous open publishes the mode and protocol that match the server's
+        /// encryption setting.
+        /// </summary>
         [Theory]
-        [InlineData(false)]
-        [InlineData(true)]
-        public async Task Open_EncryptMandatory_ServerOff_PublishesFull(bool async)
+        [InlineData(ServerEncryption.NotSupported)]
+        [InlineData(ServerEncryption.Off)]
+        [InlineData(ServerEncryption.Required)]
+        public async Task OpenAsync_Success_PublishesNegotiatedModeAndProtocol(ServerEncryption serverEncryption)
         {
-            using TdsServer server = new(CreateArguments<TdsServerArguments>(ServerEncryption.Off));
-            server.Start();
+            // Arrange
+            using TdsServer server = StartServer(serverEncryption);
+            using SqlConnection connection = new(BuildConnectionString(server.EndPoint.Port));
+            Assert.True(connection.EncryptionInfo.IsEmpty);
 
-            using SqlConnection connection = new(BuildConnectionString(server.EndPoint.Port, SqlConnectionEncryptOption.Mandatory));
+            // Act
+            await connection.OpenAsync();
 
-            await OpenAsync(connection, async);
-
-            Assert.Equal(SqlConnectionEncryptionMode.Full, connection.EncryptionInfo.NegotiatedEncryptionMode);
-            Assert.Equal(SslProtocols.Tls12, connection.EncryptionInfo.NegotiatedEncryptionProtocol);
+            // Assert
+            Assert.Equal(ConnectionState.Open, connection.State);
+            AssertNegotiated(connection.EncryptionInfo, serverEncryption);
             AssertCertificateFieldsNull(connection.EncryptionInfo);
         }
 
-        [Theory]
-        [InlineData(false)]
-        [InlineData(true)]
-        public async Task Close_ResetsToEmpty_HeldSnapshotUnchanged_ReopenPublishesAgain(bool async)
+        /// <summary>
+        /// With <c>Encrypt=Mandatory</c>, the client keeps TLS for the whole session even when the
+        /// server only offers login encryption, so a synchronous open publishes <c>Full</c>.
+        /// </summary>
+        [Fact]
+        public void Open_EncryptMandatoryServerOff_PublishesFull()
         {
-            using TdsServer server = new(CreateArguments<TdsServerArguments>(ServerEncryption.Off));
-            server.Start();
+            // Arrange
+            using TdsServer server = StartServer(ServerEncryption.Off);
+            using SqlConnection connection = new(BuildConnectionString(server.EndPoint.Port, SqlConnectionEncryptOption.Mandatory));
 
+            // Act
+            connection.Open();
+
+            // Assert
+            AssertNegotiated(connection.EncryptionInfo, ServerEncryption.Required);
+            AssertCertificateFieldsNull(connection.EncryptionInfo);
+        }
+
+        /// <summary>
+        /// With <c>Encrypt=Mandatory</c>, the client keeps TLS for the whole session even when the
+        /// server only offers login encryption, so an asynchronous open publishes <c>Full</c>.
+        /// </summary>
+        [Fact]
+        public async Task OpenAsync_EncryptMandatoryServerOff_PublishesFull()
+        {
+            // Arrange
+            using TdsServer server = StartServer(ServerEncryption.Off);
+            using SqlConnection connection = new(BuildConnectionString(server.EndPoint.Port, SqlConnectionEncryptOption.Mandatory));
+
+            // Act
+            await connection.OpenAsync();
+
+            // Assert
+            AssertNegotiated(connection.EncryptionInfo, ServerEncryption.Required);
+            AssertCertificateFieldsNull(connection.EncryptionInfo);
+        }
+
+        /// <summary>
+        /// Closing and disposing reset the connection to <see cref="SqlConnectionEncryptionInfo.Empty"/>
+        /// without changing a snapshot the caller holds, and a synchronous reopen publishes values again.
+        /// </summary>
+        [Fact]
+        public void Open_AfterClose_PublishesAgainAndHeldSnapshotUnchanged()
+        {
+            // Arrange
+            using TdsServer server = StartServer(ServerEncryption.Off);
             using SqlConnection connection = new(BuildConnectionString(server.EndPoint.Port));
-            await OpenAsync(connection, async);
-
+            connection.Open();
             SqlConnectionEncryptionInfo held = connection.EncryptionInfo;
             AssertNegotiated(held, ServerEncryption.Off);
 
+            // Act
             connection.Close();
-
-            Assert.True(connection.EncryptionInfo.IsEmpty);
-            Assert.Same(SqlConnectionEncryptionInfo.Empty, connection.EncryptionInfo);
-            // The snapshot the caller already holds is immutable.
-            AssertNegotiated(held, ServerEncryption.Off);
-
-            await OpenAsync(connection, async);
-
-            AssertNegotiated(connection.EncryptionInfo, ServerEncryption.Off);
-
+            SqlConnectionEncryptionInfo afterClose = connection.EncryptionInfo;
+            connection.Open();
+            SqlConnectionEncryptionInfo afterReopen = connection.EncryptionInfo;
             connection.Dispose();
-            Assert.True(connection.EncryptionInfo.IsEmpty);
+            SqlConnectionEncryptionInfo afterDispose = connection.EncryptionInfo;
+
+            // Assert
+            Assert.Same(SqlConnectionEncryptionInfo.Empty, afterClose);
+            AssertNegotiated(afterReopen, ServerEncryption.Off);
+            Assert.True(afterDispose.IsEmpty);
+            // The snapshot the caller already holds is immutable.
             AssertNegotiated(held, ServerEncryption.Off);
         }
 
-        [Theory]
-        [InlineData(false)]
-        [InlineData(true)]
-        public async Task PooledReuse_PublishesPhysicalConnectionSnapshot(bool async)
+        /// <summary>
+        /// Closing and disposing reset the connection to <see cref="SqlConnectionEncryptionInfo.Empty"/>
+        /// without changing a snapshot the caller holds, and an asynchronous reopen publishes values again.
+        /// </summary>
+        [Fact]
+        public async Task OpenAsync_AfterClose_PublishesAgainAndHeldSnapshotUnchanged()
         {
-            using TdsServer server = new(CreateArguments<TdsServerArguments>(ServerEncryption.Off));
-            server.Start();
+            // Arrange
+            using TdsServer server = StartServer(ServerEncryption.Off);
+            using SqlConnection connection = new(BuildConnectionString(server.EndPoint.Port));
+            await connection.OpenAsync();
+            SqlConnectionEncryptionInfo held = connection.EncryptionInfo;
+            AssertNegotiated(held, ServerEncryption.Off);
 
-            string connectionString = BuildConnectionString(
-                server.EndPoint.Port,
-                pooling: true,
-                applicationName: $"EncryptionInfoPool_{Guid.NewGuid():N}");
+            // Act
+            connection.Close();
+            SqlConnectionEncryptionInfo afterClose = connection.EncryptionInfo;
+            await connection.OpenAsync();
+            SqlConnectionEncryptionInfo afterReopen = connection.EncryptionInfo;
+            connection.Dispose();
+            SqlConnectionEncryptionInfo afterDispose = connection.EncryptionInfo;
 
+            // Assert
+            Assert.Same(SqlConnectionEncryptionInfo.Empty, afterClose);
+            AssertNegotiated(afterReopen, ServerEncryption.Off);
+            Assert.True(afterDispose.IsEmpty);
+            // The snapshot the caller already holds is immutable.
+            AssertNegotiated(held, ServerEncryption.Off);
+        }
+
+        /// <summary>
+        /// A synchronous open that reuses a pooled physical connection publishes that connection's
+        /// saved snapshot without a new login.
+        /// </summary>
+        [Fact]
+        public void Open_PooledReuse_PublishesPhysicalConnectionSnapshot()
+        {
+            // Arrange
+            // Pool a physical connection under a unique pool key.
+            using TdsServer server = StartServer(ServerEncryption.Off);
+            string connectionString = BuildPooledConnectionString(server.EndPoint.Port);
             SqlConnectionEncryptionInfo first;
             using (SqlConnection connection = new(connectionString))
             {
-                await OpenAsync(connection, async);
+                connection.Open();
                 first = connection.EncryptionInfo;
-                AssertNegotiated(first, ServerEncryption.Off);
             }
-
             int preLoginCount = server.PreLoginCount;
+            using SqlConnection reused = new(connectionString);
 
             try
             {
-                using SqlConnection reused = new(connectionString);
-                Assert.True(reused.EncryptionInfo.IsEmpty);
-
-                await OpenAsync(reused, async);
-
-                // The physical connection came from the pool; no new login took place.
-                Assert.Equal(preLoginCount, server.PreLoginCount);
-                Assert.Same(first, reused.EncryptionInfo);
-
+                // Act
+                reused.Open();
+                SqlConnectionEncryptionInfo published = reused.EncryptionInfo;
                 reused.Close();
-                Assert.True(reused.EncryptionInfo.IsEmpty);
+
+                // Assert
+                // No new login took place, and the saved snapshot was published unchanged.
+                Assert.Equal(preLoginCount, server.PreLoginCount);
                 AssertNegotiated(first, ServerEncryption.Off);
+                Assert.Same(first, published);
+                Assert.True(reused.EncryptionInfo.IsEmpty);
             }
             finally
             {
-                SqlConnection.ClearPool(new SqlConnection(connectionString));
+                // Cleanup
+                SqlConnection.ClearPool(reused);
             }
         }
 
-        [Theory]
-        [InlineData(false)]
-        [InlineData(true)]
-        public async Task Mars_SurfacesPhysicalConnectionValues(bool async)
+        /// <summary>
+        /// An asynchronous open that reuses a pooled physical connection publishes that connection's
+        /// saved snapshot without a new login.
+        /// </summary>
+        [Fact]
+        public async Task OpenAsync_PooledReuse_PublishesPhysicalConnectionSnapshot()
         {
-            using TdsServer server = new(CreateArguments<TdsServerArguments>(ServerEncryption.Required));
-            server.Start();
+            // Arrange
+            // Pool a physical connection under a unique pool key.
+            using TdsServer server = StartServer(ServerEncryption.Off);
+            string connectionString = BuildPooledConnectionString(server.EndPoint.Port);
+            SqlConnectionEncryptionInfo first;
+            using (SqlConnection connection = new(connectionString))
+            {
+                await connection.OpenAsync();
+                first = connection.EncryptionInfo;
+            }
+            int preLoginCount = server.PreLoginCount;
+            using SqlConnection reused = new(connectionString);
 
+            try
+            {
+                // Act
+                await reused.OpenAsync();
+                SqlConnectionEncryptionInfo published = reused.EncryptionInfo;
+                reused.Close();
+
+                // Assert
+                // No new login took place, and the saved snapshot was published unchanged.
+                Assert.Equal(preLoginCount, server.PreLoginCount);
+                AssertNegotiated(first, ServerEncryption.Off);
+                Assert.Same(first, published);
+                Assert.True(reused.EncryptionInfo.IsEmpty);
+            }
+            finally
+            {
+                // Cleanup
+                SqlConnection.ClearPool(reused);
+            }
+        }
+
+        /// <summary>
+        /// A synchronous open that requests MARS publishes the physical connection's values. The
+        /// simulated server does not enable MARS, so this covers the MARS request path only; the
+        /// values belong to the physical connection, so a MARS session would surface the same ones.
+        /// </summary>
+        [Fact]
+        public void Open_MarsRequestedServerWithoutMars_PublishesPhysicalConnectionValues()
+        {
+            // Arrange
+            using TdsServer server = StartServer(ServerEncryption.Required);
             using SqlConnection connection = new(BuildConnectionString(server.EndPoint.Port, mars: true));
 
-            await OpenAsync(connection, async);
+            // Act
+            connection.Open();
 
+            // Assert
+            AssertNegotiated(connection.EncryptionInfo, ServerEncryption.Required);
+        }
+
+        /// <summary>
+        /// An asynchronous open that requests MARS publishes the physical connection's values. The
+        /// simulated server does not enable MARS, so this covers the MARS request path only; the
+        /// values belong to the physical connection, so a MARS session would surface the same ones.
+        /// </summary>
+        [Fact]
+        public async Task OpenAsync_MarsRequestedServerWithoutMars_PublishesPhysicalConnectionValues()
+        {
+            // Arrange
+            using TdsServer server = StartServer(ServerEncryption.Required);
+            using SqlConnection connection = new(BuildConnectionString(server.EndPoint.Port, mars: true));
+
+            // Act
+            await connection.OpenAsync();
+
+            // Assert
             AssertNegotiated(connection.EncryptionInfo, ServerEncryption.Required);
         }
 
@@ -187,171 +339,278 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
         #region Failure
 
+        /// <summary>
+        /// A login rejected after pre-login, during a synchronous open, attaches the negotiated mode
+        /// and protocol to the exception without adding them to its message.
+        /// </summary>
         [Theory]
-        [InlineData(ServerEncryption.NotSupported, false)]
-        [InlineData(ServerEncryption.NotSupported, true)]
-        [InlineData(ServerEncryption.Off, false)]
-        [InlineData(ServerEncryption.Off, true)]
-        [InlineData(ServerEncryption.Required, false)]
-        [InlineData(ServerEncryption.Required, true)]
-        public async Task Open_LoginFailureAfterPreLogin_AttachesNegotiatedValuesToException(ServerEncryption serverEncryption, bool async)
+        [InlineData(ServerEncryption.NotSupported)]
+        [InlineData(ServerEncryption.Off)]
+        [InlineData(ServerEncryption.Required)]
+        public void Open_LoginFailureAfterPreLogin_AttachesNegotiatedValuesToException(ServerEncryption serverEncryption)
         {
-            // A routing server that requires read-only intent rejects a read-write login with error 18456
-            // after pre-login (and any TLS handshake) has completed.
-            RoutingTdsServerArguments arguments = CreateArguments<RoutingTdsServerArguments>(serverEncryption);
-            arguments.RequireReadOnly = true;
-            arguments.RoutingTCPHost = "localhost";
-            arguments.RoutingTCPPort = 1;
-            using RoutingTdsServer server = new(arguments);
-            server.Start();
-
+            // Arrange
+            using RoutingTdsServer server = StartReadOnlyRequiredServer(serverEncryption);
             using SqlConnection connection = new(BuildConnectionString(server.EndPoint.Port));
 
-            SqlException ex = await Assert.ThrowsAsync<SqlException>(() => OpenAsync(connection, async));
+            // Act
+            SqlException ex = Assert.Throws<SqlException>(() => connection.Open());
 
-            Assert.Equal(18456, ex.Number);
-            AssertNegotiated(ex.EncryptionInfo, serverEncryption);
-            AssertCertificateFieldsNull(ex.EncryptionInfo);
-            Assert.True(connection.EncryptionInfo.IsEmpty);
-
-            // Values are not surfaced through message text.
-            Assert.DoesNotContain("Tls12", ex.Message);
-            Assert.DoesNotContain("LoginOnly", ex.Message);
+            // Assert
+            AssertLoginFailureCarriesNegotiatedValues(ex, connection, serverEncryption);
         }
 
+        /// <summary>
+        /// A login rejected after pre-login, during an asynchronous open, attaches the negotiated mode
+        /// and protocol to the exception without adding them to its message.
+        /// </summary>
         [Theory]
-        [InlineData(false)]
-        [InlineData(true)]
-        public async Task Open_FailureBeforePreLogin_ExceptionEncryptionInfoIsEmpty(bool async)
+        [InlineData(ServerEncryption.NotSupported)]
+        [InlineData(ServerEncryption.Off)]
+        [InlineData(ServerEncryption.Required)]
+        public async Task OpenAsync_LoginFailureAfterPreLogin_AttachesNegotiatedValuesToException(ServerEncryption serverEncryption)
         {
-            int port = GetUnusedPort();
+            // Arrange
+            using RoutingTdsServer server = StartReadOnlyRequiredServer(serverEncryption);
+            using SqlConnection connection = new(BuildConnectionString(server.EndPoint.Port));
 
-            using SqlConnection connection = new(BuildConnectionString(port, connectTimeout: 2));
+            // Act
+            SqlException ex = await Assert.ThrowsAsync<SqlException>(() => connection.OpenAsync());
 
-            SqlException ex = await Assert.ThrowsAsync<SqlException>(() => OpenAsync(connection, async));
+            // Assert
+            AssertLoginFailureCarriesNegotiatedValues(ex, connection, serverEncryption);
+        }
 
+        /// <summary>
+        /// A synchronous open that fails before pre-login leaves the exception's info empty.
+        /// </summary>
+        [Fact]
+        public void Open_FailureBeforePreLogin_ExceptionEncryptionInfoIsEmpty()
+        {
+            // Arrange
+            using SqlConnection connection = new(BuildConnectionString(GetUnusedPort(), connectTimeout: 2));
+
+            // Act
+            SqlException ex = Assert.Throws<SqlException>(() => connection.Open());
+
+            // Assert
             Assert.True(ex.EncryptionInfo.IsEmpty);
             Assert.True(connection.EncryptionInfo.IsEmpty);
         }
 
-        [Theory]
-        [InlineData(false)]
-        [InlineData(true)]
-        public async Task Open_ServerRejectsEncryptionInPreLogin_ExceptionEncryptionInfoIsEmpty(bool async)
+        /// <summary>
+        /// An asynchronous open that fails before pre-login leaves the exception's info empty.
+        /// </summary>
+        [Fact]
+        public async Task OpenAsync_FailureBeforePreLogin_ExceptionEncryptionInfoIsEmpty()
         {
-            // The server omits encryption support from its pre-login response while the client demands
-            // encryption, so pre-login fails before an encryption mode is negotiated. (A server configured
-            // with NotSupported would itself fault on the client's encryption request.)
-            using TdsServer server = new(new TdsServerArguments { Encryption = TDSPreLoginTokenEncryptionType.None });
-            server.Start();
+            // Arrange
+            using SqlConnection connection = new(BuildConnectionString(GetUnusedPort(), connectTimeout: 2));
 
+            // Act
+            SqlException ex = await Assert.ThrowsAsync<SqlException>(() => connection.OpenAsync());
+
+            // Assert
+            Assert.True(ex.EncryptionInfo.IsEmpty);
+            Assert.True(connection.EncryptionInfo.IsEmpty);
+        }
+
+        /// <summary>
+        /// A synchronous open whose pre-login fails because the server offers no encryption while the
+        /// client requires it leaves the exception's info empty.
+        /// </summary>
+        [Fact]
+        public void Open_ServerRejectsEncryptionInPreLogin_ExceptionEncryptionInfoIsEmpty()
+        {
+            // Arrange
+            using TdsServer server = StartServerWithoutEncryptionOption();
             using SqlConnection connection = new(BuildConnectionString(server.EndPoint.Port, SqlConnectionEncryptOption.Mandatory));
 
-            SqlException ex = await Assert.ThrowsAsync<SqlException>(() => OpenAsync(connection, async));
+            // Act
+            SqlException ex = Assert.Throws<SqlException>(() => connection.Open());
 
+            // Assert
             Assert.True(ex.EncryptionInfo.IsEmpty);
         }
 
-        [Theory]
-        [InlineData(ServerEncryption.Off, false)]
-        [InlineData(ServerEncryption.Off, true)]
-        [InlineData(ServerEncryption.Required, false)]
-        [InlineData(ServerEncryption.Required, true)]
-        public async Task Open_UntrustedServerCertificate_ExceptionReportsOnlyObservedModeAndProtocol(ServerEncryption serverEncryption, bool async)
+        /// <summary>
+        /// An asynchronous open whose pre-login fails because the server offers no encryption while the
+        /// client requires it leaves the exception's info empty.
+        /// </summary>
+        [Fact]
+        public async Task OpenAsync_ServerRejectsEncryptionInPreLogin_ExceptionEncryptionInfoIsEmpty()
         {
-            // The fixture certificate is self-signed and not installed in any trusted store, so
-            // certificate validation fails. Native SNI (Schannel) defers that verdict until the LOGIN7
-            // write and keeps the mode and protocol observed during the completed handshake. Managed SNI
-            // fails inside the handshake and, in this slice, observes no protocol. The mode is never
-            // reported without an observed protocol. Certificate fields are not asserted here.
-            TdsServerArguments arguments = CreateArguments<TdsServerArguments>(serverEncryption);
-            arguments.ExpectTlsHandshakeFailure = true;
-            using TdsServer server = new(arguments);
-            server.Start();
+            // Arrange
+            using TdsServer server = StartServerWithoutEncryptionOption();
+            using SqlConnection connection = new(BuildConnectionString(server.EndPoint.Port, SqlConnectionEncryptOption.Mandatory));
 
+            // Act
+            SqlException ex = await Assert.ThrowsAsync<SqlException>(() => connection.OpenAsync());
+
+            // Assert
+            Assert.True(ex.EncryptionInfo.IsEmpty);
+        }
+
+        /// <summary>
+        /// A synchronous open that fails certificate validation inside the TLS handshake reports no
+        /// mode or protocol, because none was observed.
+        /// </summary>
+        [Theory]
+        [InlineData(ServerEncryption.Off)]
+        [InlineData(ServerEncryption.Required)]
+        public void Open_UntrustedServerCertificate_ExceptionDoesNotInferModeOrProtocol(ServerEncryption serverEncryption)
+        {
+            // Arrange
+            using TdsServer server = StartUntrustedCertificateServer(serverEncryption);
             using SqlConnection connection = new(BuildConnectionString(
                 server.EndPoint.Port,
                 SqlConnectionEncryptOption.Mandatory,
                 trustServerCertificate: false));
 
-            SqlException ex = await Assert.ThrowsAsync<SqlException>(() => OpenAsync(connection, async));
+            // Act
+            SqlException ex = Assert.Throws<SqlException>(() => connection.Open());
 
-            Assert.True(server.PreLoginCount >= 1);
-            if (ex.EncryptionInfo.NegotiatedEncryptionProtocol is null)
-            {
-                Assert.Null(ex.EncryptionInfo.NegotiatedEncryptionMode);
-            }
-            else
-            {
-                Assert.Equal(SqlConnectionEncryptionMode.Full, ex.EncryptionInfo.NegotiatedEncryptionMode);
-            }
-            Assert.True(connection.EncryptionInfo.IsEmpty);
+            // Assert
+            AssertUntrustedCertificateFailure(ex, connection, server);
+        }
+
+        /// <summary>
+        /// An asynchronous open that fails certificate validation inside the TLS handshake reports no
+        /// mode or protocol, because none was observed.
+        /// </summary>
+        [Theory]
+        [InlineData(ServerEncryption.Off)]
+        [InlineData(ServerEncryption.Required)]
+        public async Task OpenAsync_UntrustedServerCertificate_ExceptionDoesNotInferModeOrProtocol(ServerEncryption serverEncryption)
+        {
+            // Arrange
+            using TdsServer server = StartUntrustedCertificateServer(serverEncryption);
+            using SqlConnection connection = new(BuildConnectionString(
+                server.EndPoint.Port,
+                SqlConnectionEncryptOption.Mandatory,
+                trustServerCertificate: false));
+
+            // Act
+            SqlException ex = await Assert.ThrowsAsync<SqlException>(() => connection.OpenAsync());
+
+            // Assert
+            AssertUntrustedCertificateFailure(ex, connection, server);
         }
 
         #endregion
 
         #region Attempt isolation
 
-        [Theory]
-        [InlineData(false)]
-        [InlineData(true)]
-        public async Task Routing_PublishesTerminalAttemptValuesOnly(bool async)
+        /// <summary>
+        /// After routing, a synchronous open publishes only the routed (terminal) attempt's values:
+        /// the gateway negotiates login-only TLS and the target negotiates none.
+        /// </summary>
+        [Fact]
+        public void Open_Routed_PublishesTerminalAttemptValuesOnly()
         {
-            // Gateway negotiates login-only TLS, the routed target negotiates no TLS. Only the
-            // terminal (routed) attempt's values may be published.
-            using TdsServer target = new(CreateArguments<TdsServerArguments>(ServerEncryption.NotSupported));
-            target.Start();
-
-            RoutingTdsServerArguments routerArguments = CreateArguments<RoutingTdsServerArguments>(ServerEncryption.Off);
-            routerArguments.RoutingTCPHost = "localhost";
-            routerArguments.RoutingTCPPort = (ushort)target.EndPoint.Port;
-            using RoutingTdsServer router = new(routerArguments);
-            router.Start();
-
+            // Arrange
+            using TdsServer target = StartServer(ServerEncryption.NotSupported);
+            using RoutingTdsServer router = StartRouter(target.EndPoint.Port);
             using SqlConnection connection = new(BuildConnectionString(router.EndPoint.Port, readOnlyIntent: true));
 
-            await OpenAsync(connection, async);
+            // Act
+            connection.Open();
 
+            // Assert
             Assert.Equal(1, target.PreLoginCount);
             AssertNegotiated(connection.EncryptionInfo, ServerEncryption.NotSupported);
         }
 
-        [Theory]
-        [InlineData(false)]
-        [InlineData(true)]
-        public async Task Routing_TargetUnreachable_ExceptionDoesNotCarryGatewayValues(bool async)
+        /// <summary>
+        /// After routing, an asynchronous open publishes only the routed (terminal) attempt's values:
+        /// the gateway negotiates login-only TLS and the target negotiates none.
+        /// </summary>
+        [Fact]
+        public async Task OpenAsync_Routed_PublishesTerminalAttemptValuesOnly()
         {
-            // The gateway attempt negotiated login-only TLS, but the terminal (routed) attempt fails
-            // before pre-login, so nothing is known about the terminal attempt.
-            RoutingTdsServerArguments routerArguments = CreateArguments<RoutingTdsServerArguments>(ServerEncryption.Off);
-            routerArguments.RoutingTCPHost = "localhost";
-            routerArguments.RoutingTCPPort = (ushort)GetUnusedPort();
-            using RoutingTdsServer router = new(routerArguments);
-            router.Start();
+            // Arrange
+            using TdsServer target = StartServer(ServerEncryption.NotSupported);
+            using RoutingTdsServer router = StartRouter(target.EndPoint.Port);
+            using SqlConnection connection = new(BuildConnectionString(router.EndPoint.Port, readOnlyIntent: true));
 
+            // Act
+            await connection.OpenAsync();
+
+            // Assert
+            Assert.Equal(1, target.PreLoginCount);
+            AssertNegotiated(connection.EncryptionInfo, ServerEncryption.NotSupported);
+        }
+
+        /// <summary>
+        /// When the routed target is unreachable during a synchronous open, the exception does not
+        /// carry the gateway attempt's values.
+        /// </summary>
+        [Fact]
+        public void Open_RoutedTargetUnreachable_ExceptionDoesNotCarryGatewayValues()
+        {
+            // Arrange
+            using RoutingTdsServer router = StartRouter(GetUnusedPort());
             using SqlConnection connection = new(BuildConnectionString(router.EndPoint.Port, readOnlyIntent: true, connectTimeout: 5));
 
-            SqlException ex = await Assert.ThrowsAsync<SqlException>(() => OpenAsync(connection, async));
+            // Act
+            SqlException ex = Assert.Throws<SqlException>(() => connection.Open());
 
+            // Assert
             Assert.True(router.PreLoginCount >= 1);
             Assert.True(ex.EncryptionInfo.IsEmpty);
         }
 
-        [Theory]
-        [InlineData(false)]
-        [InlineData(true)]
-        public async Task TransientRetry_PublishesSuccessfulAttemptValues(bool async)
+        /// <summary>
+        /// When the routed target is unreachable during an asynchronous open, the exception does not
+        /// carry the gateway attempt's values.
+        /// </summary>
+        [Fact]
+        public async Task OpenAsync_RoutedTargetUnreachable_ExceptionDoesNotCarryGatewayValues()
         {
-            TransientTdsErrorTdsServerArguments arguments = CreateArguments<TransientTdsErrorTdsServerArguments>(ServerEncryption.Off);
-            arguments.IsEnabledTransientError = true;
-            arguments.Number = 40613;
-            using TransientTdsErrorTdsServer server = new(arguments);
-            server.Start();
+            // Arrange
+            using RoutingTdsServer router = StartRouter(GetUnusedPort());
+            using SqlConnection connection = new(BuildConnectionString(router.EndPoint.Port, readOnlyIntent: true, connectTimeout: 5));
 
+            // Act
+            SqlException ex = await Assert.ThrowsAsync<SqlException>(() => connection.OpenAsync());
+
+            // Assert
+            Assert.True(router.PreLoginCount >= 1);
+            Assert.True(ex.EncryptionInfo.IsEmpty);
+        }
+
+        /// <summary>
+        /// After a transient login error, a synchronous open publishes the successful retry's values.
+        /// </summary>
+        [Fact]
+        public void Open_TransientErrorRetried_PublishesSuccessfulAttemptValues()
+        {
+            // Arrange
+            using TransientTdsErrorTdsServer server = StartTransientErrorServer();
             using SqlConnection connection = new(BuildConnectionString(server.EndPoint.Port, connectRetryCount: 1));
 
-            await OpenAsync(connection, async);
+            // Act
+            connection.Open();
 
+            // Assert
+            Assert.Equal(2, server.PreLoginCount);
+            AssertNegotiated(connection.EncryptionInfo, ServerEncryption.Off);
+        }
+
+        /// <summary>
+        /// After a transient login error, an asynchronous open publishes the successful retry's values.
+        /// </summary>
+        [Fact]
+        public async Task OpenAsync_TransientErrorRetried_PublishesSuccessfulAttemptValues()
+        {
+            // Arrange
+            using TransientTdsErrorTdsServer server = StartTransientErrorServer();
+            using SqlConnection connection = new(BuildConnectionString(server.EndPoint.Port, connectRetryCount: 1));
+
+            // Act
+            await connection.OpenAsync();
+
+            // Assert
             Assert.Equal(2, server.PreLoginCount);
             AssertNegotiated(connection.EncryptionInfo, ServerEncryption.Off);
         }
@@ -360,6 +619,85 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
         #region Helpers
 
+        /// <summary>
+        /// Starts a simulated server with the given encryption setting.
+        /// </summary>
+        private TdsServer StartServer(ServerEncryption serverEncryption)
+        {
+            TdsServer server = new(CreateArguments<TdsServerArguments>(serverEncryption));
+            server.Start();
+            return server;
+        }
+
+        /// <summary>
+        /// Starts a server that omits encryption support from its pre-login response. A server
+        /// configured with <c>NotSupported</c> would itself fault on the client's encryption request.
+        /// </summary>
+        private static TdsServer StartServerWithoutEncryptionOption()
+        {
+            TdsServer server = new(new TdsServerArguments { Encryption = TDSPreLoginTokenEncryptionType.None });
+            server.Start();
+            return server;
+        }
+
+        /// <summary>
+        /// Starts a server whose certificate the client cannot trust, and which expects the TLS
+        /// handshake to fail.
+        /// </summary>
+        private TdsServer StartUntrustedCertificateServer(ServerEncryption serverEncryption)
+        {
+            TdsServerArguments arguments = CreateArguments<TdsServerArguments>(serverEncryption);
+            arguments.ExpectTlsHandshakeFailure = true;
+            TdsServer server = new(arguments);
+            server.Start();
+            return server;
+        }
+
+        /// <summary>
+        /// Starts a server that requires read-only intent, so it rejects a read-write login with
+        /// error 18456 after pre-login and any TLS handshake have completed.
+        /// </summary>
+        private RoutingTdsServer StartReadOnlyRequiredServer(ServerEncryption serverEncryption)
+        {
+            RoutingTdsServerArguments arguments = CreateArguments<RoutingTdsServerArguments>(serverEncryption);
+            arguments.RequireReadOnly = true;
+            arguments.RoutingTCPHost = "localhost";
+            arguments.RoutingTCPPort = 1;
+            RoutingTdsServer server = new(arguments);
+            server.Start();
+            return server;
+        }
+
+        /// <summary>
+        /// Starts a gateway that negotiates login-only TLS and routes read-only logins to the given port.
+        /// </summary>
+        private RoutingTdsServer StartRouter(int targetPort)
+        {
+            RoutingTdsServerArguments arguments = CreateArguments<RoutingTdsServerArguments>(ServerEncryption.Off);
+            arguments.RoutingTCPHost = "localhost";
+            arguments.RoutingTCPPort = (ushort)targetPort;
+            RoutingTdsServer router = new(arguments);
+            router.Start();
+            return router;
+        }
+
+        /// <summary>
+        /// Starts a server, negotiating login-only TLS, that fails the first login with transient
+        /// error 40613.
+        /// </summary>
+        private TransientTdsErrorTdsServer StartTransientErrorServer()
+        {
+            TransientTdsErrorTdsServerArguments arguments = CreateArguments<TransientTdsErrorTdsServerArguments>(ServerEncryption.Off);
+            arguments.IsEnabledTransientError = true;
+            arguments.Number = 40613;
+            TransientTdsErrorTdsServer server = new(arguments);
+            server.Start();
+            return server;
+        }
+
+        /// <summary>
+        /// Creates server arguments for the given encryption setting, limited to TLS 1.2.
+        /// </summary>
         private T CreateArguments<T>(ServerEncryption serverEncryption)
             where T : TdsServerArguments, new()
         {
@@ -382,6 +720,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             return arguments;
         }
 
+        /// <summary>
+        /// Builds a pooled connection string with a unique application name, so each test gets its
+        /// own pool.
+        /// </summary>
+        private static string BuildPooledConnectionString(int port) =>
+            BuildConnectionString(port, pooling: true, applicationName: $"EncryptionInfoPool_{Guid.NewGuid():N}");
+
+        /// <summary>
+        /// Builds a connection string for the simulated server.
+        /// </summary>
         private static string BuildConnectionString(
             int port,
             SqlConnectionEncryptOption? encrypt = null,
@@ -417,17 +765,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             return builder.ConnectionString;
         }
 
-        private static Task OpenAsync(SqlConnection connection, bool async)
-        {
-            if (async)
-            {
-                return connection.OpenAsync();
-            }
-
-            connection.Open();
-            return Task.CompletedTask;
-        }
-
+        /// <summary>
+        /// Asserts the mode and protocol expected for the given server encryption setting.
+        /// </summary>
         private static void AssertNegotiated(SqlConnectionEncryptionInfo info, ServerEncryption serverEncryption)
         {
             Assert.False(info.IsEmpty);
@@ -448,6 +788,43 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }
         }
 
+        /// <summary>
+        /// Asserts that a login rejected after pre-login carries the negotiated values on the
+        /// exception only, and not in its message.
+        /// </summary>
+        private static void AssertLoginFailureCarriesNegotiatedValues(
+            SqlException ex,
+            SqlConnection connection,
+            ServerEncryption serverEncryption)
+        {
+            Assert.Equal(18456, ex.Number);
+            AssertNegotiated(ex.EncryptionInfo, serverEncryption);
+            AssertCertificateFieldsNull(ex.EncryptionInfo);
+            Assert.True(connection.EncryptionInfo.IsEmpty);
+            Assert.DoesNotContain("Tls12", ex.Message);
+            Assert.DoesNotContain("LoginOnly", ex.Message);
+        }
+
+        /// <summary>
+        /// Asserts the values reported for a certificate-validation failure. The fixture certificate is
+        /// self-signed and untrusted, and the server allows only TLS 1.2. Both the managed and native
+        /// SNI implementations reject the certificate inside the TLS handshake, before a protocol is
+        /// reported to this slice, so no protocol is observed and the mode must not be inferred from
+        /// the requested or pre-login settings. Certificate fields are owned by later slices and are
+        /// not asserted here.
+        /// </summary>
+        private static void AssertUntrustedCertificateFailure(SqlException ex, SqlConnection connection, TdsServer server)
+        {
+            Assert.True(server.PreLoginCount >= 1);
+            Assert.Null(ex.EncryptionInfo.NegotiatedEncryptionMode);
+            Assert.Null(ex.EncryptionInfo.NegotiatedEncryptionProtocol);
+            Assert.Null(ex.EncryptionInfo.NegotiatedCipherSuiteId);
+            Assert.True(connection.EncryptionInfo.IsEmpty);
+        }
+
+        /// <summary>
+        /// Asserts that no certificate field is populated.
+        /// </summary>
         private static void AssertCertificateFieldsNull(SqlConnectionEncryptionInfo info)
         {
             Assert.Null(info.PresentedServerCertificateRawData);
@@ -456,6 +833,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Null(info.ChainStatus);
         }
 
+        /// <summary>
+        /// Returns a loopback port with no listener.
+        /// </summary>
         private static int GetUnusedPort()
         {
             TcpListener listener = new(IPAddress.Loopback, 0);

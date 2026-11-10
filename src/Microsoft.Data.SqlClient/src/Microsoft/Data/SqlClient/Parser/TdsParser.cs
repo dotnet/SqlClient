@@ -577,6 +577,9 @@ namespace Microsoft.Data.SqlClient.Parser
                 SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Prelogin handshake unsuccessful. Reattempting prelogin handshake");
                 _physicalStateObj.Dispose(); // Close previous connection
 
+                // The retry is a new physical connection: discard anything the failed connection
+                // recorded (for example, Strict mode and protocol from a TLS-first handshake).
+                _connHandler?.EncryptionInfoCapture?.Reset();
                 // On Instance failure re-connect and flush SNI named instance cache.
                 _physicalStateObj.SniContext = SniContext.Snix_Connect;
                 _physicalStateObj.CreatePhysicalSNIHandle(
@@ -933,10 +936,6 @@ namespace Microsoft.Data.SqlClient.Parser
             _physicalStateObj.WritePacket(TdsEnums.HARDFLUSH);
         }
 
-        // SSL provider identifier reported in SNI error details; equal to SSL_PROV in both the
-        // native (Interop.Windows.Sni.Provider) and managed (ManagedSni.SniProviders) enums.
-        private const int SslProviderId = 6;
-
         private void EnableSsl(uint info, SqlConnectionEncryptOption encrypt, bool integratedSecurity, string serverCertificateFilename)
         {
             uint error = 0;
@@ -1089,9 +1088,9 @@ namespace Microsoft.Data.SqlClient.Parser
         /// <remarks>
         /// Mode mapping (final state after login):
         /// <list type="bullet">
-        /// <item><description><see cref="SqlConnectionEncryptOption.Strict"/> (TDS 8, TLS before pre-login) → <see cref="SqlConnectionEncryptionMode.Strict"/>.</description></item>
-        /// <item><description><see cref="EncryptionOptions.LOGIN"/> (TLS removed after LOGIN7) → <see cref="SqlConnectionEncryptionMode.LoginOnly"/>.</description></item>
-        /// <item><description><see cref="EncryptionOptions.ON"/> (all traffic encrypted) → <see cref="SqlConnectionEncryptionMode.Full"/>.</description></item>
+        /// <item><description><see cref="SqlConnectionEncryptOption.Strict"/> (TDS 8, TLS before pre-login) maps to <see cref="SqlConnectionEncryptionMode.Strict"/>.</description></item>
+        /// <item><description><see cref="EncryptionOptions.LOGIN"/> (TLS removed after LOGIN7) maps to <see cref="SqlConnectionEncryptionMode.LoginOnly"/>.</description></item>
+        /// <item><description><see cref="EncryptionOptions.ON"/> (all traffic encrypted) maps to <see cref="SqlConnectionEncryptionMode.Full"/>.</description></item>
         /// </list>
         /// The no-TLS case (<see cref="SqlConnectionEncryptionMode.None"/>) is recorded by
         /// <see cref="ConsumePreLoginHandshake"/>.
@@ -1912,7 +1911,7 @@ namespace Microsoft.Data.SqlClient.Parser
 #endif
             TdsParserStateObject.SniErrorDetails details = stateObj.GetErrorDetails();
 
-            if (details.Provider == SslProviderId)
+            if (details.Provider == TdsEnums.SNI_SSL_PROVIDER)
             {
                 // Native SNI (Schannel) defers server certificate verification, so EnableSsl can
                 // report success and the verdict only surfaces as an SSL provider error on the first

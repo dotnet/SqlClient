@@ -253,18 +253,6 @@ namespace Microsoft.Data.SqlClient.Connection
         /// </remarks>
         private bool _databaseEnvChangeReceived;
 
-        /// <summary>
-        /// Per-attempt collector for encryption details. Allocated on the first login attempt,
-        /// reset at the start of each physical attempt, and released once login completes.
-        /// </summary>
-        private EncryptionInfoCapture _encryptionInfoCapture;
-
-        /// <summary>
-        /// Immutable encryption snapshot published after a successful login. Remains
-        /// <see cref="SqlConnectionEncryptionInfo.Empty"/> until then.
-        /// </summary>
-        private SqlConnectionEncryptionInfo _encryptionInfo = SqlConnectionEncryptionInfo.Empty;
-
         private readonly SqlCredential _credential;
 
         private string _currentLanguage;
@@ -646,19 +634,23 @@ namespace Microsoft.Data.SqlClient.Connection
             get => CurrentTransaction?.HasParentTransaction == true;
         }
 
+        #nullable enable
         /// <summary>
-        /// Gets the collector for the in-progress physical login attempt, or <see langword="null"/>
-        /// when no login is in progress. Written by <see cref="TdsParser"/> during the pre-login
-        /// handshake.
+        /// Gets the mutable collector for the in-progress physical login attempt, or
+        /// <see langword="null"/> when no login is in progress. Allocated on the first login
+        /// attempt, reset at the start of each physical attempt, written by
+        /// <see cref="TdsParser"/> during the handshake, and released once login completes.
         /// </summary>
-        internal EncryptionInfoCapture EncryptionInfoCapture => _encryptionInfoCapture;
+        internal EncryptionInfoCapture? EncryptionInfoCapture { get; private set; }
+        #nullable restore
 
         /// <summary>
-        /// Gets the immutable encryption snapshot for this physical connection. Populated once
-        /// login succeeds and shared by every <see cref="SqlConnection"/> that later uses this
-        /// physical connection (including pooled reuse and MARS sessions).
+        /// Gets the immutable encryption snapshot for this physical connection. Remains
+        /// <see cref="SqlConnectionEncryptionInfo.Empty"/> until login succeeds, then is shared by
+        /// every <see cref="SqlConnection"/> that later uses this physical connection (including
+        /// pooled reuse and MARS sessions).
         /// </summary>
-        internal SqlConnectionEncryptionInfo EncryptionInfo => _encryptionInfo;
+        internal SqlConnectionEncryptionInfo EncryptionInfo { get; private set; } = SqlConnectionEncryptionInfo.Empty;
 
         // @TODO: Make auto-property
         internal DbConnectionPoolIdentity Identity
@@ -2373,7 +2365,7 @@ namespace Microsoft.Data.SqlClient.Connection
 
             // Each physical attempt (retry, redirect, routing, failover) starts with a clean capture
             // so only the terminal attempt's values are published.
-            (_encryptionInfoCapture ??= new EncryptionInfoCapture()).Reset();
+            (EncryptionInfoCapture ??= new EncryptionInfoCapture()).Reset();
 
             _parser._physicalStateObj.SniContext = SniContext.Snix_Connect;
 
@@ -3506,13 +3498,19 @@ namespace Microsoft.Data.SqlClient.Connection
         /// exceptions raised before any value was captured, and non-<see cref="SqlException"/>
         /// exceptions, are left unchanged.
         /// </summary>
+        /// <remarks>
+        /// This is the only place that sets <see cref="SqlException.EncryptionInfo"/>. It runs once
+        /// per failed open and releases the capture, so the exception always arrives here with
+        /// <see cref="SqlConnectionEncryptionInfo.Empty"/>.
+        /// </remarks>
         private void AttachEncryptionInfo(Exception e)
         {
-            EncryptionInfoCapture capture = _encryptionInfoCapture;
-            _encryptionInfoCapture = null;
+            EncryptionInfoCapture capture = EncryptionInfoCapture;
+            EncryptionInfoCapture = null;
 
-            if (capture is { HasValues: true } && e is SqlException sqlException && sqlException.EncryptionInfo.IsEmpty)
+            if (capture is { HasValues: true } && e is SqlException sqlException)
             {
+                Debug.Assert(sqlException.EncryptionInfo.IsEmpty, "Encryption info is attached only once, by the failed open.");
                 sqlException.EncryptionInfo = capture.ToSnapshot();
             }
         }
@@ -4296,8 +4294,8 @@ namespace Microsoft.Data.SqlClient.Connection
 
             _timeoutErrorInternal.SetAllCompleteMarker();
 
-            _encryptionInfo = _encryptionInfoCapture?.ToSnapshot() ?? SqlConnectionEncryptionInfo.Empty;
-            _encryptionInfoCapture = null;
+            EncryptionInfo = EncryptionInfoCapture?.ToSnapshot() ?? SqlConnectionEncryptionInfo.Empty;
+            EncryptionInfoCapture = null;
 
             #if DEBUG
             _parser._physicalStateObj.InvalidateDebugOnlyCopyOfSniContext();
