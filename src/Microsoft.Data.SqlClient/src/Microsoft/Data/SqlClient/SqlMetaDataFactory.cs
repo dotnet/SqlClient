@@ -28,14 +28,14 @@ namespace Microsoft.Data.SqlClient
             new SqlCommandCollection("Users",                  1, 
                     [new SupportedQuery("select uid, name as user_name, createdate, updatedate from sysusers where (name = @Name or (@Name is null))")],
                     [new Restriction("User_Name", "@Name", "name")]),
-                                  //  CollectionName           NumberOfIdentifierParts   
             new SqlCommandCollection("Databases",              1,
-                    // Set of queries to read given metadata collection, because different server versions might require different queries.
                     [new SupportedQuery("IF OBJECT_ID('master..sysdatabases') IS NULL EXEC sp_executesql N'select name as database_name, dbid, crdate as create_date from sysdatabases where (name = @Name or (@Name is null))',N'@Name NVARCHAR(128)',@Name=@Name ELSE EXEC sp_executesql N'select name as database_name, dbid, crdate as create_date from master..sysdatabases where (name = @Name or (@Name is null))',N'@Name NVARCHAR(128)',@Name=@Name")],
-                    // Set of parameters for queries (queries for all versions must have the same set of parameters)
                     [new Restriction("Name", "@Name", "Name")]),
+                                  //  CollectionName           NumberOfIdentifierParts (for table it will be: <db>.<schema>.<table>) 
             new SqlCommandCollection("Tables",                 3,
+                    // Set of queries to read given metadata collection, because different server versions might require different queries.
                     [new SupportedQuery("select TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, TABLE_TYPE from INFORMATION_SCHEMA.TABLES where (TABLE_CATALOG = @Catalog or (@Catalog is null)) and (TABLE_SCHEMA = @Owner or (@Owner is null)) and (TABLE_NAME = @Name or (@Name is null)) and (TABLE_TYPE = @TableType or (@TableType is null))")],
+                    // Set of parameters for queries (queries for all versions must have the same set of parameters)
                     [new Restriction("Catalog", "@Catalog", "TABLE_CATALOG"),
                      new Restriction("Owner", "@Owner", "TABLE_SCHEMA"),
                      new Restriction("Table", "@Name", "TABLE_NAME"),
