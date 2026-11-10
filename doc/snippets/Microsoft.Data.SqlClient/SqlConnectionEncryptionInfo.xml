@@ -87,9 +87,13 @@
         Gets the TLS protocol version that was negotiated for the encrypted channel.
       </summary>
       <value>
-        A <see cref="T:System.Security.Authentication.SslProtocols" /> value, or <see langword="null" /> if no TLS handshake completed or the protocol is not available.
+        A <see cref="T:System.Security.Authentication.SslProtocols" /> value, or <see langword="null" /> if the protocol is not available.
       </value>
       <remarks>
+        A protocol value observed before a later handshake or connection failure, such as a
+        certificate-validation failure, is retained in the snapshot. A <see langword="null" />
+        value means the driver could not obtain the protocol; it does not indicate whether a
+        handshake was attempted.
         On runtimes where <see cref="T:System.Security.Authentication.SslProtocols" /> does not define a named member for the negotiated version (for example, TLS 1.3 on .NET Framework), the numeric protocol value is preserved.
       </remarks>
     </NegotiatedEncryptionProtocol>
