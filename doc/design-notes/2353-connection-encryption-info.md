@@ -265,9 +265,12 @@ login, derived from the client `Encrypt` setting and the server's PRELOGIN respo
 settings and the server's PRELOGIN response are never used as substitutes. On success the mode
 is recorded once the TLS handshake (if any) completes. When TLS fails after a protocol was
 observed, the attempt reports that protocol and the mode that was being negotiated, matching
-the design-review rule that observed values are kept on certificate-validation failures. The
-mode is never reported on a failed attempt without an observed protocol, so a TDS 7.x PRELOGIN
-failure or an early handshake failure leaves both `null`. With `Strict`, TLS completes before
+the design-review rule that observed values are kept on certificate-validation failures. On a
+TLS failure the mode is never reported without an observed protocol, so an early handshake
+failure leaves both `null`, and so does a TDS 7.x PRELOGIN failure that happens before any mode is
+known. When no TLS is negotiated (`Optional` against a server that replies `ENCRYPT_NOT_SUP`), the
+mode `None` is recorded at PRELOGIN with a `null` protocol, so a later LOGIN7 failure (for example
+error 18456) on that attempt reports mode `None` and a `null` protocol. With `Strict`, TLS completes before
 PRELOGIN, so a later PRELOGIN or login failure on that attempt reports the observed `Strict` mode
 and protocol. Values are captured per physical login attempt and reset for every routing, retry,
 and failover attempt, and for the reconnect `TdsParser.Connect` makes when the server reports an
@@ -277,8 +280,9 @@ instance failure in its PRELOGIN response.
 connection establishment. In practice that means exceptions thrown from the login sequence in
 `SqlConnectionInternal.OpenLoginEnlist`, which includes PRELOGIN, TLS, LOGIN7, routing, and
 failover. Some failures happen after login has completed, even when they surface from `Open` or
-`OpenAsync`. One example is automatic `System.Transactions` enlistment while a pooled connection
-is activated (`Activate` → `Enlist` → `GetDTCAddress`/propagation). Others are session-reset
+`OpenAsync`. Examples are automatic `System.Transactions` enlistment, both at the end of a
+non-pooled login and while a pooled connection is activated (`Activate` → `Enlist` →
+`GetDTCAddress`/propagation). Others are session-reset
 errors on pooled checkout, explicit `EnlistTransaction` calls, and command execution. These are
 not connection-establishment failures, so their exceptions keep `Empty`. For a pooled connection,
 the negotiated values belong to an earlier, successful physical login and remain unchanged on that
@@ -290,12 +294,14 @@ than the one that failed. This also keeps implicit and explicit enlistment failu
   on a failed handshake, so `TdsParser.EnableSsl` records no mode and both stay `null`. Slice C
   adds capture of `SslStream.SslProtocol` from the validation callback; after that, the failure
   path records the mode through `EncryptionInfoCapture.RecordModeIfProtocolObserved`.
-- **Native SNI** (Schannel) defers server certificate verification: `EnableSsl` reports
-  success with the negotiated protocol, and an untrusted or mismatched certificate only surfaces
-  as an SSL-provider SNI error on the first post-handshake I/O (the LOGIN7 write). The mode and
-  protocol from the completed handshake are kept. `TdsParser.ProcessSNIError`, the single place
-  every SNI error becomes a `SqlError`, calls `EncryptionInfoCapture.DiscardUnobservedNegotiation`
-  on SSL-provider errors during login, which drops the mode only when no protocol was observed.
+- **Native SNI.** With the current SNI package, native SNI also rejects an untrusted server
+  certificate during the handshake, so this slice reports neither mode nor protocol for that
+  failure (the tests assert this for both SNI implementations). The rule that covers a deferred
+  validation failure is conditional: if an SSL-provider SNI error occurs during login after a
+  protocol was observed, `TdsParser.ProcessSNIError`, the single place every SNI error becomes a
+  `SqlError`, calls `EncryptionInfoCapture.DiscardUnobservedNegotiation`, which keeps the observed
+  mode and protocol and drops the mode only when no protocol was observed. Populated values are
+  not promised for an untrusted-certificate failure.
 
 These rules only touch mode and protocol; certificate fields are never affected. Once login
 completes the capture is released, so SSL errors on an open connection never alter a published

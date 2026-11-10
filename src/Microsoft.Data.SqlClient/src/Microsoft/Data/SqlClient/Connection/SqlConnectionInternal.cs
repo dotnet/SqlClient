@@ -2562,7 +2562,17 @@ namespace Microsoft.Data.SqlClient.Connection
             {
                 _parser._physicalStateObj.SniContext = SniContext.Snix_AutoEnlist;
                 Transaction tx = ADP.GetCurrentTransaction();
-                Enlist(tx, ConnectionOptions.ConnectTimeout);
+                try
+                {
+                    Enlist(tx, ConnectionOptions.ConnectTimeout);
+                }
+                catch
+                {
+                    // Login has completed, so an enlistment failure is not a
+                    // connection-establishment failure and must not carry encryption info.
+                    EncryptionInfoCapture = null;
+                    throw;
+                }
             }
 
             _parser._physicalStateObj.SniContext = SniContext.Snix_Login;
@@ -3504,7 +3514,8 @@ namespace Microsoft.Data.SqlClient.Connection
         /// <see cref="SqlConnectionEncryptionInfo.Empty"/>.
         /// Failures after login completes are intentionally out of scope and keep
         /// <see cref="SqlConnectionEncryptionInfo.Empty"/>. That includes automatic transaction
-        /// enlistment in <see cref="Activate"/> on pooled checkout, explicit enlistment, and
+        /// enlistment, both at the end of a non-pooled login (which releases the capture before
+        /// rethrowing) and in <see cref="Activate"/> on pooled checkout, explicit enlistment, and
         /// command execution. They are not connection-establishment failures.
         /// </remarks>
         private void AttachEncryptionInfo(Exception e)
