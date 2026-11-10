@@ -1102,8 +1102,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// Asserts the certificate fields for tests that use <c>TrustServerCertificate=true</c>.
         /// SqlClient never evaluates the certificate, so the verdict and chain status are always
         /// unavailable. Managed SNI still records the presented certificate and cipher suite whenever
-        /// a TLS handshake took place; native SNI records them only when sni.dll provides the
-        /// certificate capture exports.
+        /// a TLS handshake took place. Native SNI records the cipher suite only when sni.dll provides
+        /// <c>SNIGetCertValidationInfoWrapper</c>, and the certificate only when it also provides
+        /// <c>SNIGetServerCertificateWrapper</c>.
         /// </summary>
         private void AssertBypassedCertificateFields(SqlConnectionEncryptionInfo info, ServerEncryption serverEncryption)
         {
@@ -1149,11 +1150,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }
             else if (info.NegotiatedCipherSuiteId is int cipherSuite)
             {
-                // Native SNI reports the cipher suite only with an sni.dll that has the certificate
-                // capture exports; a reported value implies those exports, so the presented
-                // certificate must be present too.
+                // Native SNI reports the cipher suite through SNIGetCertValidationInfoWrapper, while
+                // the certificate comes from the separate SNIGetServerCertificateWrapper export. A
+                // cipher suite therefore implies a certificate only when that export is present.
                 Assert.InRange(cipherSuite, 1, 0xFFFF);
-                Assert.NotNull(info.PresentedServerCertificateRawData);
+                if (!SniNativeCertificateCapture.Default.IsCertificateUnavailable)
+                {
+                    Assert.NotNull(info.PresentedServerCertificateRawData);
+                }
             }
         }
 
