@@ -396,7 +396,20 @@ AppContext switches allow runtime behavior changes without modifying connection 
 | `Switch.Microsoft.Data.SqlClient.UseCompatibilityProcessSni` | `false` | Uses legacy SNI processing path |
 | `Switch.Microsoft.Data.SqlClient.UseConnectionPoolV2` | `false` | Enables the new `ChannelDbConnectionPool` implementation |
 | `Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows` | `false` | Forces managed SNI on Windows (instead of native SNI) |
+| `Switch.Microsoft.Data.SqlClient.UseOverallConnectTimeoutForPoolWait` | `true` | Counts pool waits against the caller's `Connect Timeout` budget for `Open` and `OpenAsync`; set to `false` to restore separate pool-wait and login budgets |
 | `Switch.Microsoft.Data.SqlClient.UseOneSecFloorInTimeoutCalculationDuringLogin` | `false` | Sets 1-second minimum in login timeout calculations |
+
+### Pool-wait timeout budget
+
+`UseOverallConnectTimeoutForPoolWait` defaults to `true`. `SqlConnection.Open` and
+`OpenAsync` propagate the caller's remaining `Connect Timeout` budget through pool
+acquisition and login, for both pool implementations. Setting the switch to `false`
+restores a fresh login timeout after pool acquisition; the legacy wait-handle pool
+also starts a fresh pool-wait timeout. `Connect Timeout=0` remains infinite.
+
+Set the switch before using SqlClient because its value is cached on first use.
+See [Migrating connection networking defaults](../../doc/networking-defaults.md#pool-wait-timeout-budget)
+for the compatibility opt-out example.
 
 ### Authentication configuration in app.config
 
