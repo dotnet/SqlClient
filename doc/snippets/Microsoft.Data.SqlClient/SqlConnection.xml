@@ -1389,7 +1389,7 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> an
           This property never returns <see langword="null" /> and never throws, regardless of whether the connection has been opened, closed, or disposed. A <see langword="null" /> property value on the returned snapshot means the information is not available; it does not indicate that encryption or certificate validation succeeded.
         </para>
         <para>
-          In the current release, the driver does not yet populate this information and the returned snapshot has all properties set to <see langword="null" />.
+          After the connection opens successfully, the snapshot describes the physical connection in use, including a connection returned from the pool. Before opening and after the connection is closed or disposed, the snapshot has all properties set to <see langword="null" />. Closing the connection does not change a snapshot that was already obtained.
         </para>
       </remarks>
     </EncryptionInfo>

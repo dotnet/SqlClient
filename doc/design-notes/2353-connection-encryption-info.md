@@ -3,14 +3,14 @@
 | | |
 |---|---|
 | **Issue** | [#2353](https://github.com/dotnet/SqlClient/issues/2353) |
-| **Status** | API proposal under review; delivered in slices (see [Implementation plan](#6-implementation-plan)) |
+| **Status** | Public API approved; implementation in progress in slices (see [Implementation plan](#6-implementation-plan)) |
 | **Primary consumer** | SQL Server Management Studio (SSMS); the API is general-purpose |
 | **Public surface** | `SqlConnection.EncryptionInfo`, `SqlException.EncryptionInfo`, `SqlConnectionEncryptionInfo`, `SqlConnectionEncryptionMode`, `SqlServerCertificateValidationErrors` |
 
-This note describes the proposed API for exposing the encryption that a connection
-actually negotiated and the outcome of server certificate validation. It is a summary of
-the proposal reviewed with the SSMS team and is intended to help reviewers of the
-implementation pull requests.
+This note describes the approved API for exposing the encryption that a connection
+actually negotiated and the outcome of server certificate validation. Its public API
+shape was reviewed with the SSMS team. The implementation is being delivered in slices, as
+listed in the implementation plan.
 
 ---
 
@@ -21,7 +21,7 @@ Today an application can only see the encryption it *requested* (`Encrypt`,
 what was actually negotiated, and when certificate validation fails the only information
 available is the localized exception message.
 
-The proposal brings the negotiated encryption mode, TLS version, the server-presented
+The API brings the negotiated encryption mode, TLS version, the server-presented
 certificate, and structured validation results into one model that is available for both
 successful and failed connection attempts. Tools such as SSMS can then show connection
 security properties and build actionable failure messages from the driver's own
@@ -35,7 +35,7 @@ observations, without a second handshake.
 | Explain a failed certificate validation | Read typed validation errors, applicable chain-status flags, and the presented certificate from `exception.EncryptionInfo`, when captured. | Build user-facing messages from structured results rather than localized exception text. |
 | Identify the certificate involved in the attempt | Call `GetServerCertificate()` to get the leaf certificate captured from that attempt. | Show subject, issuer, validity, SANs, and thumbprint of the certificate observed on that same connection attempt. |
 
-## 3. Proposed API
+## 3. Approved API
 
 Both `SqlConnection.EncryptionInfo` and `SqlException.EncryptionInfo` expose the same
 `SqlConnectionEncryptionInfo` snapshot, which is read-only to the caller. The object is
@@ -45,8 +45,8 @@ applicable.
 | Property on `SqlConnectionEncryptionInfo` | Type | Meaning |
 | --- | --- | --- |
 | `ChainStatus` | `X509ChainStatusFlags?` | Applicable chain-validation flags, such as `UntrustedRoot`, `NotTimeValid`, or `Revoked`. |
-| `NegotiatedCipherSuite` | `TlsCipherSuite?`; .NET only; not CLS-compliant | The same value as `NegotiatedCipherSuiteId`, typed as `System.Net.Security.TlsCipherSuite`. *Needs API review.* |
-| `NegotiatedCipherSuiteId` | `int?` on every target framework; CLS-compliant | IANA TLS cipher suite identifier selected by the server, such as `0x1302` (`TLS_AES_256_GCM_SHA384`). *Needs API review.* |
+| `NegotiatedCipherSuite` | `TlsCipherSuite?`; .NET only; not CLS-compliant | The same value as `NegotiatedCipherSuiteId`, typed as `System.Net.Security.TlsCipherSuite`. |
+| `NegotiatedCipherSuiteId` | `int?` on every target framework; CLS-compliant | IANA TLS cipher suite identifier selected by the server, such as `0x1302` (`TLS_AES_256_GCM_SHA384`). |
 | `NegotiatedEncryptionMode` | `SqlConnectionEncryptionMode?` | Actual encryption outcome, not the requested `Encrypt` setting. |
 | `NegotiatedEncryptionProtocol` | `SslProtocols?` | Negotiated TLS version, such as TLS 1.2 or TLS 1.3. |
 | `ValidationErrors` | `SqlServerCertificateValidationErrors?` | Effective certificate-validation result under the connection's configured rules. |
@@ -132,8 +132,6 @@ driver observed.
 
 ### Negotiated cipher suite
 
-> **Needs API review.** This property is a proposal and has not yet been reviewed by the team.
-
 `NegotiatedCipherSuiteId` is the 16-bit identifier from the IANA TLS Cipher Suites
 registry for the suite the server selected in its ServerHello, for example `0x1302` for
 `TLS_AES_256_GCM_SHA384`. It is not a Windows `ALG_ID`.
@@ -217,8 +215,8 @@ validity, subject alternative names, and any thumbprint the caller wants to comp
 | `PinnedCertificateMismatch = 8` | The presented certificate did not match the certificate configured through `ServerCertificate`. |
 
 A pin mismatch is distinct from a chain error: the existing pin check compares
-certificate bytes, and this proposal does not change that comparison. A missing or unreadable configured file is not a completed pin
-comparison and is not reported as a mismatch.
+certificate bytes, and this API does not change that comparison. A missing or unreadable
+configured file is not a completed pin comparison and is not reported as a mismatch.
 
 ## 4. Behavior
 

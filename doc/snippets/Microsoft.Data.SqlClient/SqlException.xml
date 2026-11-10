@@ -753,7 +753,7 @@
           The snapshot is not serialized with the exception; a deserialized <see cref="T:Microsoft.Data.SqlClient.SqlException" /> returns a snapshot with all properties set to <see langword="null" />. The snapshot is not included in <see cref="P:System.Exception.Message" /> or in the output of <see cref="M:Microsoft.Data.SqlClient.SqlException.ToString" />.
         </para>
         <para>
-          In the current release, the driver does not yet populate this information and the returned snapshot has all properties set to <see langword="null" />.
+          When opening a connection fails, the snapshot describes values observed during the final connection attempt. Exceptions unrelated to opening a connection return a snapshot with all properties set to <see langword="null" />. A deserialized exception also returns an empty snapshot.
         </para>
       </remarks>
     </EncryptionInfo>
