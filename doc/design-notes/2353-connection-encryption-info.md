@@ -297,8 +297,9 @@ non-`SqlException` failures, keep `Empty`.
   .NET (`net10.0`).
 - **Native SNI.** With the current SNI package, native SNI also rejects an untrusted server
   certificate during the handshake, so this slice reports the mode but no protocol for that
-  failure (the tests assert this for both SNI implementations). If a deferred validation
-  failure surfaces after a successful `EnableSsl`, the protocol recorded by `EnableSsl` is kept.
+  failure (the tests assert this for native SNI; Managed SNI also reports the protocol, as
+  described above). If a deferred validation failure surfaces after a successful `EnableSsl`, the
+  protocol recorded by `EnableSsl` is kept.
 These rules only touch mode and protocol; certificate fields are never affected. Once login
 completes the accumulator is released, so SSL errors on an open connection never alter a published
 snapshot.
