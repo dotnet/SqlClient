@@ -266,9 +266,12 @@ settings and the server's PRELOGIN response are never used as substitutes. On su
 is recorded once the TLS handshake (if any) completes. When TLS fails after a protocol was
 observed, the attempt reports that protocol and the mode that was being negotiated, matching
 the design-review rule that observed values are kept on certificate-validation failures. The
-mode is never reported on a failed attempt without an observed protocol, so a PRELOGIN failure
-or an early handshake failure leaves both `null`. Values are captured per physical login
-attempt and reset for every routing, retry, and failover attempt.
+mode is never reported on a failed attempt without an observed protocol, so a TDS 7.x PRELOGIN
+failure or an early handshake failure leaves both `null`. With `Strict`, TLS completes before
+PRELOGIN, so a later PRELOGIN or login failure on that attempt reports the observed `Strict` mode
+and protocol. Values are captured per physical login attempt and reset for every routing, retry,
+and failover attempt, and for the reconnect `TdsParser.Connect` makes when the server reports an
+instance failure in its PRELOGIN response.
 
 - **Managed SNI** validates the server certificate inside the handshake, so a validation
   failure fails `EnableSsl`. In this slice Managed SNI does not capture the negotiated protocol
