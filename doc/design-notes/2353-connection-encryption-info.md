@@ -297,9 +297,9 @@ than the one that failed. This also keeps implicit and explicit enlistment failu
   captured. A protocol already determined for the attempt takes precedence over the one
   reported with the certificate details. Managed SNI is used only on .NET (`net10.0`).
 - **Native SNI.** With the current SNI package, native SNI also rejects an untrusted server
-  certificate during the handshake, so this slice reports neither mode nor protocol for that
-  failure (the tests assert this for both SNI implementations). The rule that covers a deferred
-  validation failure is conditional: if an SSL-provider SNI error occurs during login after a
+  certificate during the handshake, so neither mode nor protocol is reported for that failure
+  (the tests assert this for native SNI; Managed SNI reports both, as described above). The
+  rule that covers a deferred validation failure is conditional: if an SSL-provider SNI error occurs during login after a
   protocol was observed, `TdsParser.ProcessSNIError`, the single place every SNI error becomes a
   `SqlError`, calls `EncryptionInfoCapture.DiscardUnobservedNegotiation`, which keeps the observed
   mode and protocol and drops the mode only when no protocol was observed. Populated values are
