@@ -18,11 +18,6 @@ namespace Microsoft.Data.SqlClient.Test.Stress
     public partial class SqlClientTestGroup : DataTestGroup
     {
         /// <summary>
-        /// SqlNotificationRequest options string
-        /// </summary>
-        private static string s_notificationOptions;
-
-        /// <summary>
         /// Connection string for SqlDependency.Start()/Stop()
         /// 
         /// The connection string used for SqlDependency.Start() must always be exactly the same every time 
@@ -82,10 +77,6 @@ namespace Microsoft.Data.SqlClient.Test.Stress
 
             s_clearAllPoolsThread = new Thread(ClearAllPoolsThreadFunc);
             s_clearAllPoolsThread.Start();
-
-            // set the notification options for SqlNotificationRequest tests
-            var source = Source as SqlServerDataSource;
-            s_notificationOptions = "service=StressNotifications;local database=" + source.Database;
 
             s_sqlDependencyConnString = Factory.CreateBaseConnectionString(
                 null, DataStressFactory.ConnectionStringOptions.DisableMultiSubnetFailover);

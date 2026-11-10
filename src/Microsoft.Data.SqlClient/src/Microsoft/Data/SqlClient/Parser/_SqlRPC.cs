@@ -8,7 +8,6 @@ internal sealed class _SqlRPC
 {
     internal string rpcName;
     internal ushort ProcID;       // Used instead of name
-    internal ushort options;
 
     internal SqlParameter[] systemParams;
     internal byte[] systemParamOptions;

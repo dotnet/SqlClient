@@ -12,8 +12,6 @@ namespace Microsoft.Data.SqlClient
     /// </summary>
     internal class ColumnEncryptionKeyInfo
     {
-        internal readonly int KeyId;
-        internal readonly int DatabaseId;
         internal readonly byte[] DecryptedKeyBytes;
         internal readonly byte[] KeyIdBytes;
         internal readonly byte[] DatabaseIdBytes;
@@ -34,7 +32,6 @@ namespace Microsoft.Data.SqlClient
         /// <param name="keyid">key id for this column encryption key</param>
         internal ColumnEncryptionKeyInfo(byte[] decryptedKey, int databaseId, ulong keyMetadataVersion, int keyid)
         {
-
             if (decryptedKey == null)
             {
                 throw SQL.NullArgumentInConstructorInternal(_decryptedKeyName, _className);
@@ -44,8 +41,6 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.EmptyArgumentInConstructorInternal(_decryptedKeyName, _className);
             }
 
-            KeyId = keyid;
-            DatabaseId = databaseId;
             DecryptedKeyBytes = decryptedKey;
             KeyMetadataVersion = keyMetadataVersion;
 
@@ -101,7 +96,6 @@ namespace Microsoft.Data.SqlClient
         /// <returns>next available offset</returns>
         internal int SerializeToBuffer(byte[] bytePackage, int startOffset)
         {
-
             if (null == bytePackage)
             {
                 throw SQL.NullArgumentInternal(_bytePackageName, _className, _serializeToBufferMethodName);
