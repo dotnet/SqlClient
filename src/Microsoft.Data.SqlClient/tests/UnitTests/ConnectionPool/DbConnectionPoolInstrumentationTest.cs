@@ -33,6 +33,26 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
     /// </summary>
     public class DbConnectionPoolInstrumentationTest
     {
+        private static readonly TimeSpan CheckoutTimeout = TimeSpan.FromSeconds(30);
+
+        /// <summary>
+        /// Constructs the pool shared by the concurrent checkout test and its contention regression.
+        /// </summary>
+        /// <remarks>
+        /// The legacy pool wait is configured in milliseconds, independently of the caller timer.
+        /// Both budgets must cover the same checkout instead of inheriting the harness's 15 ms default.
+        /// </remarks>
+        private static IDbConnectionPool ConstructCheckoutPool(
+            PoolImplementation implementation,
+            FakeSqlClientMetrics metrics,
+            int maxPoolSize)
+            => ConstructPool(
+                implementation,
+                metrics,
+                new SuccessfulSqlConnectionFactory(metrics),
+                maxPoolSize: maxPoolSize,
+                creationTimeout: (int)CheckoutTimeout.TotalMilliseconds);
+
         /// <summary>
         /// Builds the requested pool implementation behind the shared pool interface, reporting to
         /// the supplied metrics instance. Keeps this class's argument order over
@@ -46,7 +66,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             int maxPoolSize = 50,
             int minPoolSize = 0,
             int idleTimeout = 0,
-            FakeTimeProvider? timeProvider = null)
+            FakeTimeProvider? timeProvider = null,
+            int creationTimeout = 15)
             => PoolTestHarness.ConstructPool(
                 implementation,
                 connectionFactory,
@@ -55,7 +76,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 connectionString,
                 maxPoolSize,
                 minPoolSize,
-                idleTimeout);
+                idleTimeout,
+                creationTimeout);
 
         /// <summary>
         /// Asserts the exact value of every counter a pool is responsible for. Any counter not named
@@ -414,6 +436,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// </summary>
         [Theory]
         [Trait("category", "flaky")]
+        [Trait("category", "probation")]
         [InlineData(PoolImplementation.WaitHandle)]
         [InlineData(PoolImplementation.Channel)]
         public void ConcurrentCheckoutAndReturn_SettlesAllGaugesToZero(PoolImplementation implementation)
@@ -424,11 +447,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             const int MaxPoolSize = 4;
 
             FakeSqlClientMetrics metrics = new();
-            IDbConnectionPool pool = ConstructPool(
-                implementation,
-                metrics,
-                new SuccessfulSqlConnectionFactory(metrics),
-                maxPoolSize: MaxPoolSize);
+            IDbConnectionPool pool = ConstructCheckoutPool(implementation, metrics, MaxPoolSize);
 
             // Act
             Task[] workers = Enumerable.Range(0, Threads).Select(_ => Task.Run(() =>
@@ -436,7 +455,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 for (int i = 0; i < IterationsPerThread; i++)
                 {
                     SqlConnection owner = new();
-                    Assert.True(pool.TryGetConnection(owner, null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(30)), out DbConnectionInternal? connection));
+                    Assert.True(pool.TryGetConnection(owner, null, TimeoutTimer.StartNew(CheckoutTimeout), out DbConnectionInternal? connection));
                     Assert.NotNull(connection);
                     pool.ReturnInternalConnection(connection!, owner);
                 }
@@ -458,6 +477,78 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
 
             // The pool never grew past its configured ceiling.
             Assert.InRange(metrics.PooledConnections, 0, MaxPoolSize);
+        }
+
+        /// <summary>
+        /// Holds the only pool slot while a concurrent checkout waits, then verifies that its
+        /// return satisfies the checkout and leaves every instrumentation counter balanced.
+        /// </summary>
+        [Theory]
+        [InlineData(PoolImplementation.WaitHandle)]
+        [InlineData(PoolImplementation.Channel)]
+        public void ConcurrentCheckoutAndReturn_HeldSlot_WaitsAndBalancesCounters(
+            PoolImplementation implementation)
+        {
+            // Arrange
+            FakeSqlClientMetrics metrics = new();
+            IDbConnectionPool pool = ConstructCheckoutPool(implementation, metrics, maxPoolSize: 1);
+            using SqlConnection owner = new();
+            using SqlConnection waitingOwner = new();
+            using ManualResetEventSlim started = new();
+            Assert.True(pool.TryGetConnection(
+                owner, null, TimeoutTimer.StartNew(CheckoutTimeout), out DbConnectionInternal? held));
+            Assert.NotNull(held);
+
+            // Act
+            // A dedicated worker avoids starving the checkout behind unrelated thread-pool work.
+            Task<DbConnectionInternal?> checkout = Task.Factory.StartNew(() =>
+            {
+                started.Set();
+                Assert.True(pool.TryGetConnection(
+                    waitingOwner, null, TimeoutTimer.StartNew(CheckoutTimeout),
+                    out DbConnectionInternal? connection));
+                return connection;
+            }, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+
+            try
+            {
+                // Assert
+                try
+                {
+                    Assert.True(started.Wait(TimeSpan.FromSeconds(10)),
+                        "Checkout worker did not start.");
+
+                    // Hold the slot beyond the harness's default 15-millisecond pool wait.
+                    Assert.False(checkout.Wait(TimeSpan.FromMilliseconds(100)),
+                        "The contended checkout completed before its connection was returned.");
+                }
+                finally
+                {
+                    // Release and drain even when the premature-completion assertion fails.
+                    pool.ReturnInternalConnection(held!, owner);
+                    Assert.True(checkout.Wait(TimeSpan.FromSeconds(35)),
+                        "Checkout worker did not finish after the connection was returned.");
+                    if (checkout.Result is DbConnectionInternal connection)
+                    {
+                        pool.ReturnInternalConnection(connection, waitingOwner);
+                    }
+                }
+
+                Assert.NotNull(checkout.Result);
+                pool.Clear();
+                AssertCounters(
+                    metrics,
+                    hardConnects: 1,
+                    hardDisconnects: 1,
+                    softConnects: 2,
+                    softDisconnects: 2);
+            }
+            finally
+            {
+                // Cleanup
+                pool.Shutdown();
+                pool.Clear();
+            }
         }
 
         /// <summary>
