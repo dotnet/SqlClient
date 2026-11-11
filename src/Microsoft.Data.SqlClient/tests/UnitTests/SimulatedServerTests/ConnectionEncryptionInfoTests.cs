@@ -4,11 +4,14 @@
 
 using System;
 using System.Data;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Transactions;
 using Microsoft.Data.SqlClient.Tests.Common.Fixtures;
 using Microsoft.SqlServer.TDS.PreLogin;
 using Microsoft.SqlServer.TDS.Servers;
@@ -617,7 +620,264 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
         #endregion
 
+        #region Post-login paths
+
+        /// <summary>
+        /// When a synchronous command transparently reconnects after the server drops the
+        /// connection, the reconnected login publishes a new snapshot, and the snapshot the caller
+        /// held from the original login is unchanged. Recovery requires the reconnected login to
+        /// preserve the original encryption, so both logins negotiate the same values.
+        /// </summary>
+        [Fact]
+        public void ExecuteNonQuery_ReconnectAfterServerDrop_PublishesNewSnapshot()
+        {
+            // Arrange
+            TdsServerArguments arguments = CreateArguments<TdsServerArguments>(ServerEncryption.Required);
+            using DisconnectableTdsServer server = new(arguments);
+            using SqlConnection connection = new(BuildConnectionString(server.EndPoint.Port, connectRetryCount: 2));
+            connection.Open();
+            SqlConnectionEncryptionInfo held = connection.EncryptionInfo;
+
+            // Act
+            DisconnectAndExecute(server, connection);
+
+            // Assert
+            Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.NotSame(held, connection.EncryptionInfo);
+            AssertNegotiated(connection.EncryptionInfo, ServerEncryption.Required);
+            AssertCertificateFieldsNull(connection.EncryptionInfo);
+            AssertNegotiated(held, ServerEncryption.Required);
+        }
+
+        /// <summary>
+        /// When an asynchronous command transparently reconnects after the server drops the
+        /// connection, the reconnected login publishes a new snapshot, and the snapshot the caller
+        /// held from the original login is unchanged. Recovery requires the reconnected login to
+        /// preserve the original encryption, so both logins negotiate the same values.
+        /// </summary>
+        [Fact]
+        public async Task ExecuteNonQueryAsync_ReconnectAfterServerDrop_PublishesNewSnapshot()
+        {
+            // Arrange
+            TdsServerArguments arguments = CreateArguments<TdsServerArguments>(ServerEncryption.Required);
+            using DisconnectableTdsServer server = new(arguments);
+            using SqlConnection connection = new(BuildConnectionString(server.EndPoint.Port, connectRetryCount: 2));
+            await connection.OpenAsync();
+            SqlConnectionEncryptionInfo held = connection.EncryptionInfo;
+
+            // Act
+            await DisconnectAndExecuteAsync(server, connection);
+
+            // Assert
+            Assert.Equal(ConnectionState.Open, connection.State);
+            Assert.NotSame(held, connection.EncryptionInfo);
+            AssertNegotiated(connection.EncryptionInfo, ServerEncryption.Required);
+            AssertCertificateFieldsNull(connection.EncryptionInfo);
+            AssertNegotiated(held, ServerEncryption.Required);
+        }
+
+        /// <summary>
+        /// A synchronous non-pooled open that logs in successfully but then fails to enlist in the
+        /// ambient transaction throws an exception without encryption info, because enlistment is
+        /// not part of establishing the connection.
+        /// </summary>
+        [Fact]
+        public void Open_AmbientTransactionEnlistmentFails_ExceptionEncryptionInfoIsEmpty()
+        {
+            // Arrange
+            // The simulated server cannot process transaction manager requests, so enlistment fails.
+            using TdsServer server = StartServer(ServerEncryption.Required);
+            using SqlConnection connection = new(BuildConnectionString(server.EndPoint.Port));
+            using TransactionScope scope = new();
+
+            // Act
+            SqlException ex = Assert.Throws<SqlException>(connection.Open);
+
+            // Assert
+            AssertEnlistmentFailure(ex, connection, server, expectedLogins: 1);
+        }
+
+        /// <summary>
+        /// An asynchronous non-pooled open that logs in successfully but then fails to enlist in the
+        /// ambient transaction throws an exception without encryption info, because enlistment is
+        /// not part of establishing the connection.
+        /// </summary>
+        [Fact]
+        public async Task OpenAsync_AmbientTransactionEnlistmentFails_ExceptionEncryptionInfoIsEmpty()
+        {
+            // Arrange
+            // The simulated server cannot process transaction manager requests, so enlistment fails.
+            using TdsServer server = StartServer(ServerEncryption.Required);
+            using SqlConnection connection = new(BuildConnectionString(server.EndPoint.Port));
+            using TransactionScope scope = new(TransactionScopeAsyncFlowOption.Enabled);
+
+            // Act
+            SqlException ex = await Assert.ThrowsAsync<SqlException>(connection.OpenAsync);
+
+            // Assert
+            AssertEnlistmentFailure(ex, connection, server, expectedLogins: 1);
+        }
+
+        /// <summary>
+        /// A synchronous pooled checkout that fails to enlist the idle physical connection in the
+        /// ambient transaction throws an exception without encryption info, and performs no login.
+        /// </summary>
+        [Fact]
+        public void Open_PooledCheckoutEnlistmentFails_ExceptionEncryptionInfoIsEmpty()
+        {
+            // Arrange
+            // Pool an idle physical connection, then check it out inside a transaction scope.
+            using TdsServer server = StartServer(ServerEncryption.Required);
+            string connectionString = BuildPooledConnectionString(server.EndPoint.Port);
+            using (SqlConnection pooled = new(connectionString))
+            {
+                pooled.Open();
+            }
+            using SqlConnection connection = new(connectionString);
+
+            try
+            {
+                using TransactionScope scope = new();
+
+                // Act
+                SqlException ex = Assert.Throws<SqlException>(connection.Open);
+
+                // Assert
+                AssertEnlistmentFailure(ex, connection, server, expectedLogins: 1);
+            }
+            finally
+            {
+                // Cleanup
+                SqlConnection.ClearPool(connection);
+            }
+        }
+
+        /// <summary>
+        /// An asynchronous pooled checkout that fails to enlist the idle physical connection in the
+        /// ambient transaction throws an exception without encryption info, and performs no login.
+        /// </summary>
+        [Fact]
+        public async Task OpenAsync_PooledCheckoutEnlistmentFails_ExceptionEncryptionInfoIsEmpty()
+        {
+            // Arrange
+            // Pool an idle physical connection, then check it out inside a transaction scope.
+            using TdsServer server = StartServer(ServerEncryption.Required);
+            string connectionString = BuildPooledConnectionString(server.EndPoint.Port);
+            using (SqlConnection pooled = new(connectionString))
+            {
+                await pooled.OpenAsync();
+            }
+            using SqlConnection connection = new(connectionString);
+
+            try
+            {
+                using TransactionScope scope = new(TransactionScopeAsyncFlowOption.Enabled);
+
+                // Act
+                SqlException ex = await Assert.ThrowsAsync<SqlException>(connection.OpenAsync);
+
+                // Assert
+                AssertEnlistmentFailure(ex, connection, server, expectedLogins: 1);
+            }
+            finally
+            {
+                // Cleanup
+                SqlConnection.ClearPool(connection);
+            }
+        }
+
+        #endregion
+
         #region Helpers
+
+        /// <summary>
+        /// A simulated server that can drop every connected client while it keeps listening, so
+        /// a connection with retries enabled reconnects transparently.
+        /// </summary>
+        private sealed class DisconnectableTdsServer : TdsServer
+        {
+            /// <summary>
+            /// Starts the server with the given arguments. The server reads the arguments for each
+            /// pre-login, so later changes apply to the next login.
+            /// </summary>
+            public DisconnectableTdsServer(TdsServerArguments arguments) : base(arguments)
+            {
+                Start();
+            }
+
+            /// <summary>
+            /// Drops every connected client.
+            /// </summary>
+            public new void DisconnectAllClients() => base.DisconnectAllClients();
+        }
+
+        /// <summary>
+        /// Drops all clients, then runs a synchronous command until the client detects the drop
+        /// and a new login reaches the server. A command can succeed on the stale socket before
+        /// the drop is observed, so the server is dropped again until a new login is seen.
+        /// </summary>
+        private static void DisconnectAndExecute(DisconnectableTdsServer server, SqlConnection connection)
+        {
+            int loginsBefore = server.Login7Count;
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            while (server.Login7Count == loginsBefore)
+            {
+                Assert.True(stopwatch.Elapsed < ReconnectTimeout, "The connection did not reconnect.");
+                server.DisconnectAllClients();
+                Thread.Sleep(50);
+                using SqlCommand command = new("SELECT 1", connection);
+                command.ExecuteNonQuery();
+            }
+        }
+
+        /// <summary>
+        /// Drops all clients, then runs an asynchronous command until the client detects the drop
+        /// and a new login reaches the server. A command can succeed on the stale socket before
+        /// the drop is observed, so the server is dropped again until a new login is seen.
+        /// </summary>
+        private static async Task DisconnectAndExecuteAsync(DisconnectableTdsServer server, SqlConnection connection)
+        {
+            int loginsBefore = server.Login7Count;
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            while (server.Login7Count == loginsBefore)
+            {
+                Assert.True(stopwatch.Elapsed < ReconnectTimeout, "The connection did not reconnect.");
+                server.DisconnectAllClients();
+                await Task.Delay(50);
+                using SqlCommand command = new("SELECT 1", connection);
+                await command.ExecuteNonQueryAsync();
+            }
+        }
+
+        /// <summary>
+        /// The maximum time allowed for a dropped connection to reconnect.
+        /// </summary>
+        private static readonly TimeSpan ReconnectTimeout = TimeSpan.FromSeconds(10);
+
+        /// <summary>
+        /// Asserts that a failure to enlist after a completed login carries no encryption info,
+        /// leaves the connection without a snapshot, and did not cause an additional login. Then
+        /// stops the server and asserts that it failed only because it cannot process the
+        /// client's transaction manager request, which is what made enlistment fail.
+        /// </summary>
+        private static void AssertEnlistmentFailure(
+            SqlException ex,
+            SqlConnection connection,
+            TdsServer server,
+            int expectedLogins)
+        {
+            Assert.Equal(expectedLogins, server.Login7Count);
+            Assert.True(ex.EncryptionInfo.IsEmpty);
+            Assert.True(connection.EncryptionInfo.IsEmpty);
+            Assert.NotEqual(ConnectionState.Open, connection.State);
+
+            AggregateException serverFailure = Assert.Throws<AggregateException>(server.Dispose);
+            Assert.All(serverFailure.InnerExceptions, inner =>
+            {
+                NotImplementedException notImplemented = Assert.IsType<NotImplementedException>(inner);
+                Assert.Contains("TransactionManager", notImplemented.Message);
+            });
+        }
 
         /// <summary>
         /// Starts a simulated server with the given encryption setting.
