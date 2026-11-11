@@ -65,7 +65,9 @@ against the last published SqlClient release?"* without modifying any source fil
 
 You can drop pre-release `.nupkg` files in `tools/PackageCompatibility/packages/` and reference them
 immediately — even before they have been published. NuGet can resolve the SqlClient package IDs from
-either that local feed or NuGet.org; source order does not guarantee preference for a local copy.
+either that local feed or the repository's governed feed; source order does not guarantee preference
+for a local copy. Published package versions must be approved and ingested into the governed feed
+before this tool can restore them. The tool does not restore packages directly from NuGet.org.
 Use a unique package version to distinguish local builds. The main test suite also supports local
 packages through `ReferenceType=Package`; this tool is useful for independently selecting versions.
 
