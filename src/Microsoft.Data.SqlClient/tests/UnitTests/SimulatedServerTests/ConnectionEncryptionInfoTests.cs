@@ -646,7 +646,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.NotSame(held, connection.EncryptionInfo);
             AssertNegotiated(connection.EncryptionInfo, ServerEncryption.Required);
-            AssertCertificateFieldsNull(connection.EncryptionInfo);
+            AssertBypassedCertificateFields(connection.EncryptionInfo, ServerEncryption.Required);
             AssertNegotiated(held, ServerEncryption.Required);
         }
 
@@ -673,7 +673,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(ConnectionState.Open, connection.State);
             Assert.NotSame(held, connection.EncryptionInfo);
             AssertNegotiated(connection.EncryptionInfo, ServerEncryption.Required);
-            AssertCertificateFieldsNull(connection.EncryptionInfo);
+            AssertBypassedCertificateFields(connection.EncryptionInfo, ServerEncryption.Required);
             AssertNegotiated(held, ServerEncryption.Required);
         }
 
