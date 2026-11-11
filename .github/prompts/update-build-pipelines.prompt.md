@@ -15,11 +15,10 @@ Follow this workflow step-by-step:
 ## 1. Understand the Pipeline Architecture
 - Read the relevant pipeline file(s) in `eng/pipelines/`.
 - Key pipelines:
-  - `dotnet-sqlclient-ci-core.yml` — Core CI pipeline template used by CI and PR definitions
+  - `dotnet-sqlclient-ci-core.yml` — Core CI pipeline template used by Package/Project reference CI definitions
   - `dotnet-sqlclient-ci-project-reference-pipeline.yml` — CI with project references
   - `dotnet-sqlclient-ci-package-reference-pipeline.yml` — CI with package references
-  - `sqlclient-pr-project-ref-pipeline.yml` — PR validation (project references)
-  - `sqlclient-pr-package-ref-pipeline.yml` — PR validation (package references)
+  - `pr/sqlclient-pr-pipeline.yml` — PR validation
   - `onebranch/sqlclient-official.yml` — official OneBranch build/release pipeline
   - `onebranch/sqlclient-non-official.yml` — non-official OneBranch build/release pipeline
   - `ci/stress/sqlclient-ci-stress-pipeline.yml` — stress test pipeline
