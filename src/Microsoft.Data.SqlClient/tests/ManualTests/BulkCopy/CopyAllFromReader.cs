@@ -11,15 +11,18 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
 {
+    /// <summary>Verifies reader bulk copy and its connection statistics.</summary>
     [Trait("Set", "2")]
     public class CopyAllFromReader
     {
         private static readonly string sourceTable = "employees";
         private const string TableDefinition = "(col1 int, col2 nvarchar(20), col3 nvarchar(10))";
         private static readonly string sourceQueryTemplate = "select top 5 EmployeeID, LastName, FirstName from {0}";
+        /// <summary>Verifies default mappings omit the unused alias query on both server types.</summary>
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Test()
         {
+            // Arrange
             string srcConstr = DataTestUtility.TCPConnectionString;
             string dstConstr = DataTestUtility.TCPConnectionString;
             Debug.Assert((int)SqlBulkCopyOptions.UseInternalTransaction == 1 << 5, "Compiler screwed up the options");
@@ -39,16 +42,19 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
                     using (DbDataReader reader = srcCmd.ExecuteReader())
                     {
                         IDictionary stats;
-                        long expectedSelectCount = DataTestUtility.IsAzureSynapse ? 4 : 13;
+                        // Synapse and SQL Server both omit the empty alias SELECT.
+                        long expectedSelectCount = DataTestUtility.IsAzureSynapse ? 3 : 12;
                         long expectedSelectRows = DataTestUtility.IsAzureSynapse ? 4 : 15;
                         using (SqlBulkCopy bulkcopy = new SqlBulkCopy(dstConn))
                         {
                             bulkcopy.DestinationTableName = dstTable.Name;
                             dstConn.StatisticsEnabled = true;
+                            // Act
                             bulkcopy.WriteToServer(reader);
                             dstConn.StatisticsEnabled = false;
                             stats = dstConn.RetrieveStatistics();
                         }
+                        // Assert
                         Helpers.VerifyResults(dstConn, dstTable.Name, 3, 5);
 
                         Assert.True(0 < (long)stats["BytesReceived"], "BytesReceived is non-positive.");
