@@ -871,10 +871,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.True(connection.EncryptionInfo.IsEmpty);
             Assert.NotEqual(ConnectionState.Open, connection.State);
 
+            // Depending on teardown ordering, the server may report the failure wrapped by the
+            // connection's disposal, so assert on the base exception.
             AggregateException serverFailure = Assert.Throws<AggregateException>(server.Dispose);
             Assert.All(serverFailure.InnerExceptions, inner =>
             {
-                NotImplementedException notImplemented = Assert.IsType<NotImplementedException>(inner);
+                NotImplementedException notImplemented = Assert.IsType<NotImplementedException>(inner.GetBaseException());
                 Assert.Contains("TransactionManager", notImplemented.Message);
             });
         }

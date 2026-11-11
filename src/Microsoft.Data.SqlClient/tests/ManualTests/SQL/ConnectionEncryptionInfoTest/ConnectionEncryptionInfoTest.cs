@@ -14,6 +14,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     /// <see cref="SqlConnection.EncryptionInfo"/> and <see cref="SqlException.EncryptionInfo"/>
     /// report against a real SQL Server.
     /// </summary>
+    [Trait("Set", "1")]
     public class ConnectionEncryptionInfoTest
     {
         /// <summary>
