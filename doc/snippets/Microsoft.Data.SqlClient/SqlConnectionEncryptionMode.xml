@@ -1,0 +1,32 @@
+<docs>
+  <members name="SqlConnectionEncryptionMode">
+    <SqlConnectionEncryptionMode>
+      <summary>
+        Specifies the encryption mode that was negotiated between the client and SQL Server for a connection.
+      </summary>
+      <remarks>
+        This type describes the negotiated outcome reported by <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptionInfo.NegotiatedEncryptionMode" />. It is distinct from <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption" />, which describes the requested setting.
+      </remarks>
+    </SqlConnectionEncryptionMode>
+    <None>
+      <summary>
+        No encryption was negotiated for the connection.
+      </summary>
+    </None>
+    <LoginOnly>
+      <summary>
+        Only the login packet was encrypted; subsequent traffic was not encrypted.
+      </summary>
+    </LoginOnly>
+    <Full>
+      <summary>
+        The TDS session was encrypted after the pre-login exchange (TDS 7.x encryption).
+      </summary>
+    </Full>
+    <Strict>
+      <summary>
+        TDS 8.0 strict encryption was used: the TLS handshake occurred before any TDS traffic was exchanged.
+      </summary>
+    </Strict>
+  </members>
+</docs>

@@ -17,6 +17,24 @@ namespace Microsoft.Data.SqlClient.UnitTests;
 [Collection(AppContextSwitchTestCollection.Name)]
 public class LocalAppContextSwitchesTest
 {
+    /// <summary>Verifies automatic discovery is cached separately from an unread switch.</summary>
+    [Fact]
+    public void UseBulkCopyCatalogMetadataDiscovery_Unset_CachesAutomaticMode()
+    {
+        // Arrange
+        using LocalAppContextSwitchesHelper switches = new();
+        switches.UseBulkCopyCatalogMetadataDiscovery = null;
+
+        // Act
+        bool? mode = LocalAppContextSwitches.UseBulkCopyCatalogMetadataDiscovery;
+
+        // Assert
+        Assert.Null(mode);
+        Assert.Equal(LocalAppContextSwitches.SwitchValue.Automatic,
+            LocalAppContextSwitches.s_useBulkCopyCatalogMetadataDiscovery);
+        Assert.Null(LocalAppContextSwitches.UseBulkCopyCatalogMetadataDiscovery);
+    }
+
     /// <summary>
     /// Tests the default values of every AppContext switch used by SqlClient.
     /// </summary>
@@ -46,6 +64,7 @@ public class LocalAppContextSwitchesTest
         switchesHelper.UseConnectionPoolV2 = null;
         switchesHelper.UseOverallConnectTimeoutForPoolWait = null;
         switchesHelper.UseLegacyIdleTimeoutBehavior = null;
+        switchesHelper.UseBulkCopyCatalogMetadataDiscovery = null;
         switchesHelper.UseMinimumLoginTimeout = null;
         #if NET
         switchesHelper.EnableAppConfig = null;
@@ -67,6 +86,7 @@ public class LocalAppContextSwitchesTest
         Assert.True(switchesHelper.UseCompatibilityProcessSni);
         Assert.True(switchesHelper.UseCompatibilityAsyncBehaviour);
         Assert.True(switchesHelper.UseLegacyIdleTimeoutBehavior);
+        Assert.Null(switchesHelper.UseBulkCopyCatalogMetadataDiscovery);
         Assert.False(switchesHelper.UseConnectionPoolV2);
         Assert.False(switchesHelper.UseOverallConnectTimeoutForPoolWait);
         Assert.False(switchesHelper.TruncateScaledDecimal);
