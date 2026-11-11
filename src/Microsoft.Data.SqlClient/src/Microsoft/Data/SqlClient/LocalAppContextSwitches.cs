@@ -39,6 +39,13 @@ internal static class LocalAppContextSwitches
     #endif
 
     /// <summary>
+    /// The name of the app context switch that controls whether SqlBulkCopy
+    /// discovers destination metadata from catalog views.
+    /// </summary>
+    private const string UseBulkCopyCatalogMetadataDiscoveryString =
+        "Switch.Microsoft.Data.SqlClient.UseBulkCopyCatalogMetadataDiscovery";
+
+    /// <summary>
     /// The name of the app context switch that controls whether
     /// MultiSubnetFailover is enabled by default in the connection string.
     /// </summary>
@@ -186,9 +193,14 @@ internal static class LocalAppContextSwitches
     /// </summary>
     internal enum SwitchValue : byte
     {
+        // The switch has not been read yet.
         None = 0,
+        // The cached Boolean value is true, whether configured or supplied by a default.
         True = 1,
-        False = 2
+        // The cached Boolean value is false, whether configured or supplied by a default.
+        False = 2,
+        // The switch was read but is unset; tri-state switches use automatic behavior.
+        Automatic = 3
     }
 
     // GOTCHA: These fields are internal so that the LocalAppContextSwitchesHelper
@@ -275,6 +287,11 @@ internal static class LocalAppContextSwitches
     /// The cached value of the UseConnectionPoolV2 switch.
     /// </summary>
     internal static SwitchValue s_useConnectionPoolV2 = SwitchValue.None;
+
+    /// <summary>
+    /// The cached value of the UseBulkCopyCatalogMetadataDiscovery switch.
+    /// </summary>
+    internal static SwitchValue s_useBulkCopyCatalogMetadataDiscovery = SwitchValue.None;
 
     /// <summary>
     /// The cached value of the UseLegacyIdleTimeoutBehavior switch.
@@ -689,6 +706,32 @@ internal static class LocalAppContextSwitches
             UseConnectionPoolV2String,
             defaultValue: false,
             ref s_useConnectionPoolV2);
+
+    /// <summary>
+    /// When true, SqlBulkCopy always discovers destination metadata from sys.all_columns.
+    /// When false, it never uses catalog discovery, so hidden columns and SQL Graph aliases
+    /// cannot be mapped.
+    ///
+    /// When unset, it uses SELECT * first and falls back to catalog discovery for missing
+    /// destination names. SQL Graph alias mappings use catalog discovery immediately.
+    /// </summary>
+    public static bool? UseBulkCopyCatalogMetadataDiscovery
+    {
+        get
+        {
+            SwitchValue value = s_useBulkCopyCatalogMetadataDiscovery;
+            if (value == SwitchValue.None)
+            {
+                value = AppContext.TryGetSwitch(
+                    UseBulkCopyCatalogMetadataDiscoveryString, out bool enabled)
+                    ? (enabled ? SwitchValue.True : SwitchValue.False)
+                    : SwitchValue.Automatic;
+                s_useBulkCopyCatalogMetadataDiscovery = value;
+            }
+
+            return value == SwitchValue.Automatic ? null : value == SwitchValue.True;
+        }
+    }
 
     /// <summary>
     /// When set to true (the default), pooling preserves historical idle-timeout behavior.
