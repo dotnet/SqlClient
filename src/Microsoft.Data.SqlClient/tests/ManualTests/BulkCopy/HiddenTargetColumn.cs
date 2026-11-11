@@ -4,6 +4,7 @@
 
 using System.Data.Common;
 using Microsoft.Data.SqlClient.ManualTesting.Tests;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 using Xunit;
 
@@ -15,6 +16,9 @@ namespace Microsoft.Data.SqlClient.ManualTests.BulkCopy
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void WriteToServer_CopyToHiddenTargetColumn_ThrowsSqlException()
         {
+            // Hidden columns are only discoverable by the catalog-based metadata query.
+            using LocalAppContextSwitchesHelper switches = new();
+            switches.UseBulkCopyCatalogMetadataDiscovery = true;
             string connectionString = DataTestUtility.TCPConnectionString;
 
             using (SqlConnection dstConn = new SqlConnection(connectionString))

@@ -69,6 +69,9 @@ Keep retry/error/partner assertions explicit; transport attempt counts are not p
 
 The simulator runs blocking handlers on dedicated workers. Fault budgets are reserved before
 response processing, and disposal must finish owned workers and report unexpected handler failures.
+Transport initialization and socket closure share a lock so shutdown cannot invalidate a
+`TcpClient` while its worker acquires the stream or initializes the parser. The worker-drain
+wait stays outside that lock, allowing a stopped worker to finish its cleanup.
 Negative TLS scenarios can set `TdsServerArguments.ExpectTlsHandshakeFailure` to explicitly expect
 authentication failure during TLS negotiation. Missing certificates/private keys and exceptions from
 protocol handlers still fail disposal; the default remains strict. Assert the expected client failure
