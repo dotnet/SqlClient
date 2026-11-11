@@ -342,7 +342,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12;
 #endif
 
-            if(IsAzureSqlConnectionString(TCPConnectionString))
+            if (IsManagedInstance)
+            {
+                // The primary connection carries its own identity, independently of optional
+                // identity-test settings such as ManagedIdentitySupported.
+                if (new SqlConnectionStringBuilder(TCPConnectionString).Authentication
+                    == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity)
+                {
+                    SqlAuthenticationProvider.SetProvider(
+                        SqlAuthenticationMethod.ActiveDirectoryManagedIdentity,
+                        new UserAssignedManagedIdentityProvider());
+                }
+            }
+            else if (IsAzureSqlConnectionString(TCPConnectionString))
             {
                 TCPConnectionString = TCPConnectionString
                     .RemoveAuthAndCredsProperties()
