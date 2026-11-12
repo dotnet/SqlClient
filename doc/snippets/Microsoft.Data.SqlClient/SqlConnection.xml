@@ -1377,6 +1377,22 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> an
         You can use the <see cref="M:Microsoft.Data.SqlClient.SqlConnection.EnlistTransaction(System.Transactions.Transaction)" /> method to enlist in a distributed transaction. Because it enlists a connection in a <see cref="T:System.Transactions.Transaction" /> instance, <see cref="M:Microsoft.Data.SqlClient.SqlConnection.EnlistTransaction(System.Transactions.Transaction)" /> takes advantage of functionality available in the <see cref="T:System.Transactions" /> namespace for managing distributed transactions, making it preferable to <see cref="M:Microsoft.Data.SqlClient.SqlConnection.EnlistDistributedTransaction(System.EnterpriseServices.ITransaction)" />, which uses a <see cref="T:System.EnterpriseServices.ITransaction" /> object (from <see cref="T:System.EnterpriseServices" /> namespace). It also has slightly different semantics: once a connection is explicitly enlisted on a transaction, it cannot be unenlisted or enlisted in another transaction until the first transaction finishes. For more information about distributed transactions, see <see href="https://learn.microsoft.com/sql/connect/ado-net/distributed-transactions">Distributed Transactions</see>.
       </remarks>
     </EnlistTransaction>
+    <EncryptionInfo>
+      <summary>
+        Gets a diagnostic snapshot describing the encryption that was negotiated for this connection and the outcome of server certificate validation.
+      </summary>
+      <value>
+        A non-null <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptionInfo" />. Individual properties of the snapshot are <see langword="null" /> when the corresponding information is not available.
+      </value>
+      <remarks>
+        <para>
+          This property never returns <see langword="null" /> and never throws, regardless of whether the connection has been opened, closed, or disposed. A <see langword="null" /> property value on the returned snapshot means the information was not available at the time the snapshot was obtained. Any snapshot may have any combination of <see langword="null" /> and non-null property values depending on the state of the underlying connection. The presence or absence of <see langword="null" /> property values does not indicate that encryption or certificate validation succeeded or failed.
+        </para>
+        <para>
+          Before the connection opens successfully, the snapshot is empty (all <see langword="null" /> properties) because it has no physical connection associated. Once opened, the snapshot describes the physical connection in use, including an existing physical connection obtained from a pool. Closing or disposing a connection resets this property to its initial empty snapshot. Snapshots are immutable, so a snapshot that was already obtained does not change.
+        </para>
+      </remarks>
+    </EncryptionInfo>
     <FireInfoMessageEventOnUserErrors>
       <summary>
         Gets or sets the <see cref="P:Microsoft.Data.SqlClient.SqlConnection.FireInfoMessageEventOnUserErrors" /> property.
