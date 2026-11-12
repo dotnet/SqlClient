@@ -595,7 +595,7 @@
     <value>找不到 '{0}' 的驗證提供者。</value>
   </data>
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
-    <value>找不到 '{0}' 的驗證提供者。向 SqlAuthenticationProvider.SetProvider 註冊提供者，或使用相容的 'Microsoft.Data.SqlClient.Extensions。已啟用自動探索的 Azure NuGet 套件。自動探索在發佈時停用時無法使用。修剪過的 JIT 應用程式需要保留反射合約;NativeAOT 應用程式應在發佈時停用反射啟動程序路徑，並明確地註冊提供者。請檢查 Microsoft.Data.SqlClient.EventSource 追蹤 (資訊層級、Trace 關鍵字0x2)，以找出設定或Azure延伸模組載入失敗。</value>
+    <value>找不到 '{0}' 的驗證提供者。向 SqlAuthenticationProvider.SetProvider 註冊提供者，或使用相容的 'Microsoft.Data.SqlClient.Extensions.Azure' NuGet 套件，並啟用自動探索。自動探索在發佈時停用時無法使用。修剪過的 JIT 應用程式需要保留反射合約;NativeAOT 應用程式應在發佈時停用反射啟動程序路徑，並明確地註冊提供者。請檢查 Microsoft.Data.SqlClient.EventSource 追蹤 (資訊層級、Trace 關鍵字0x2)，以找出設定或Azure延伸模組載入失敗。</value>
   </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>參數 '{0}' 不能是 Null 或空白。</value>
