@@ -744,17 +744,17 @@ internal static class LocalAppContextSwitches
             ref s_useLegacyIdleTimeoutBehavior);
 
     /// <summary>
-    /// When set to true, pool operations count against the
+    /// When set to true (the default), pool operations count against the
     /// caller's ConnectTimeout budget. This includes waits and async operations.
-    /// When false, pool operations receive a full ConnectTimeout and
-    /// network calls receive a further full ConnectTimeout.
+    /// When false, login receives a fresh ConnectTimeout after pool acquisition.
+    /// The legacy pool also starts a fresh pool-wait timeout.
     ///
-    /// The default value of this switch is false.
+    /// The default value of this switch is true.
     /// </summary>
     public static bool UseOverallConnectTimeoutForPoolWait =>
         AcquireAndReturn(
             UseOverallConnectTimeoutForPoolWaitString,
-            defaultValue: false,
+            defaultValue: true,
             ref s_useOverallConnectTimeoutForPoolWait);
 
     #if NET
