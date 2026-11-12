@@ -1321,8 +1321,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             if (LocalAppContextSwitches.UseManagedNetworking)
             {
                 Assert.Equal(SslProtocols.Tls12, ex.EncryptionInfo.NegotiatedEncryptionProtocol);
-                Assert.NotNull(ex.EncryptionInfo.NegotiatedCipherSuiteId);
-                Assert.InRange(ex.EncryptionInfo.NegotiatedCipherSuiteId!.Value, 1, 0xFFFF);
+                Assert.InRange(Assert.NotNull(ex.EncryptionInfo.NegotiatedCipherSuiteId), 1, 0xFFFF);
             }
             else
             {
@@ -1407,8 +1406,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }
             else if (LocalAppContextSwitches.UseManagedNetworking)
             {
-                Assert.NotNull(info.NegotiatedCipherSuiteId);
-                Assert.InRange(info.NegotiatedCipherSuiteId!.Value, 1, 0xFFFF);
+                Assert.InRange(Assert.NotNull(info.NegotiatedCipherSuiteId), 1, 0xFFFF);
             }
         }
 
