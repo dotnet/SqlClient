@@ -247,18 +247,18 @@ namespace Microsoft.Data.SqlClient
         /// A value of zero (TLS_NULL_WITH_NULL_NULL) is distinct from null.
         /// </summary>
         [Theory]
-        [InlineData(0x0000)]
-        [InlineData(0x1301)]
-        [InlineData(0x1302)]
-        [InlineData(0xC030)]
-        [InlineData(0xFFFF)]
-        public void NegotiatedCipherSuite_Value_RoundTrips(int cipherSuite)
+        [InlineData((ushort)0x0000)]
+        [InlineData((ushort)0x1301)]
+        [InlineData((ushort)0x1302)]
+        [InlineData((ushort)0xC030)]
+        [InlineData((ushort)0xFFFF)]
+        public void NegotiatedCipherSuite_Value_RoundTrips(ushort cipherSuite)
         {
             // Act
             SqlConnectionEncryptionInfo info = CreateWithCipherSuite(cipherSuite);
 
             // Assert
-            Assert.Equal(cipherSuite, info.NegotiatedCipherSuiteId);
+            Assert.Equal((int)cipherSuite, info.NegotiatedCipherSuiteId);
 #if NET
             Assert.Equal((System.Net.Security.TlsCipherSuite)cipherSuite, info.NegotiatedCipherSuite);
 #endif
@@ -291,18 +291,18 @@ namespace Microsoft.Data.SqlClient
         /// and not filtered out.
         /// </summary>
         [Theory]
-        [InlineData(0x0A0A)]
-        [InlineData(0xF00F)]
-        [InlineData(0xFAFA)]
-        public void NegotiatedCipherSuite_UnknownIdentifier_IsPreserved(int cipherSuite)
+        [InlineData((ushort)0x0A0A)]
+        [InlineData((ushort)0xF00F)]
+        [InlineData((ushort)0xFAFA)]
+        public void NegotiatedCipherSuite_UnknownIdentifier_IsPreserved(ushort cipherSuite)
         {
             // Act
             SqlConnectionEncryptionInfo info = CreateWithCipherSuite(cipherSuite);
 
             // Assert
-            Assert.Equal(cipherSuite, info.NegotiatedCipherSuiteId);
+            Assert.Equal((int)cipherSuite, info.NegotiatedCipherSuiteId);
 #if NET
-            Assert.False(Enum.IsDefined(typeof(System.Net.Security.TlsCipherSuite), (ushort)cipherSuite));
+            Assert.False(Enum.IsDefined(typeof(System.Net.Security.TlsCipherSuite), cipherSuite));
             Assert.Equal((System.Net.Security.TlsCipherSuite)cipherSuite, info.NegotiatedCipherSuite);
 #endif
         }

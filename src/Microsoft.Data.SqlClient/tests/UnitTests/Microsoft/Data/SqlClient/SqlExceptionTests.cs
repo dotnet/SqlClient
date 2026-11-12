@@ -21,6 +21,7 @@ namespace Microsoft.Data.SqlClient.UnitTests;
 /// </summary>
 public class SqlExceptionTests
 {
+    // These tests use BinaryFormatter, which only exists on .NET Framework; it was removed from .NET.
 #if NETFRAMEWORK
     private static SqlError ExampleSqlError =>
         new(infoNumber: 123,
@@ -244,6 +245,7 @@ public class SqlExceptionTests
         AssertEmpty(roundTripped.EncryptionInfo);
     }
 
+    // BinaryFormatter only exists on .NET Framework.
 #if NETFRAMEWORK
     /// <summary>
     /// Verifies BinaryFormatter serialization is unaffected by the non-serialized snapshot field
