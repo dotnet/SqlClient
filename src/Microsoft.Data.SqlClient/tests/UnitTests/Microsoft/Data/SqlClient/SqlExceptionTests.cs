@@ -2,23 +2,26 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#if NETFRAMEWORK
-
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
+using System.Runtime.Serialization;
+using System.Security.Cryptography.X509Certificates;
+#if NETFRAMEWORK
 using System.Runtime.Serialization.Formatters.Binary;
 using Microsoft.Data.Common.ConnectionString;
+#endif
 using Xunit;
+using static Microsoft.Data.SqlClient.UnitTests.Utilities.EncryptionInfoTestData;
 
 namespace Microsoft.Data.SqlClient.UnitTests;
 
 /// <summary>
-/// Tests that <see cref="SqlException"/> instances correctly roundtrip when serialized.
+/// Unit tests for <see cref="SqlException"/>.
 /// </summary>
 public class SqlExceptionTests
 {
+#if NETFRAMEWORK
     private static SqlError ExampleSqlError =>
         new(infoNumber: 123,
             errorState: 2,
@@ -91,6 +94,236 @@ public class SqlExceptionTests
         Assert.Null(actualException.BatchCommand);
         Assert.False(actualException._doNotReconnect);
     }
-}
-
 #endif
+
+    #region EncryptionInfo
+
+    /// <summary>
+    /// Verifies exceptions created via the error-collection factory return an empty snapshot.
+    /// </summary>
+    [Fact]
+    public void EncryptionInfo_CreateFromCollection_ReturnsEmptySnapshot()
+    {
+        // Act
+        SqlException exception = SqlException.CreateException(CreateErrorCollection(), ServerVersion);
+
+        // Assert
+        AssertEmpty(exception.EncryptionInfo);
+    }
+
+    /// <summary>
+    /// Verifies exceptions created via the single-error factory return an empty snapshot.
+    /// </summary>
+    [Fact]
+    public void EncryptionInfo_CreateFromError_ReturnsEmptySnapshot()
+    {
+        // Act
+        SqlException exception = SqlException.CreateException(
+            CreateError(),
+            ServerVersion,
+            internalConnection: null,
+            innerException: new InvalidOperationException("inner"));
+
+        // Assert
+        AssertEmpty(exception.EncryptionInfo);
+    }
+
+    /// <summary>
+    /// Verifies exceptions created via the connection-id factory return an empty snapshot.
+    /// </summary>
+    [Fact]
+    public void EncryptionInfo_CreateWithConnectionId_ReturnsEmptySnapshot()
+    {
+        // Act
+        SqlException exception = SqlException.CreateException(
+            CreateErrorCollection(),
+            ServerVersion,
+            Guid.NewGuid(),
+            innerException: null);
+
+        // Assert
+        AssertEmpty(exception.EncryptionInfo);
+    }
+
+    /// <summary>
+    /// Verifies exceptions created via the batch-command factory return an empty snapshot.
+    /// </summary>
+    [Fact]
+    public void EncryptionInfo_CreateWithBatchCommand_ReturnsEmptySnapshot()
+    {
+        // Act
+        SqlException exception = SqlException.CreateException(
+            CreateErrorCollection(),
+            ServerVersion,
+            new SqlBatchCommand("SELECT 1"));
+
+        // Assert
+        AssertEmpty(exception.EncryptionInfo);
+    }
+
+    /// <summary>
+    /// Verifies that a populated snapshot set internally is returned by the getter and is
+    /// preserved by <see cref="SqlException.InternalClone"/>.
+    /// </summary>
+    [Fact]
+    public void EncryptionInfo_PopulatedSnapshot_PreservedByInternalClone()
+    {
+        // Arrange
+        SqlConnectionEncryptionInfo info = CreatePopulated();
+        SqlException exception = SqlException.CreateException(CreateErrorCollection(), ServerVersion);
+        exception.EncryptionInfo = info;
+
+        // Act
+        SqlException clone = exception.InternalClone();
+
+        // Assert
+        Assert.Same(info, exception.EncryptionInfo);
+        Assert.Same(info, clone.EncryptionInfo);
+        Assert.Equal(SampleCipherSuite, clone.EncryptionInfo.NegotiatedCipherSuiteId);
+    }
+
+    /// <summary>
+    /// Verifies that clearing the snapshot internally falls back to the empty snapshot.
+    /// </summary>
+    [Fact]
+    public void EncryptionInfo_SetNull_ReturnsEmptySnapshot()
+    {
+        // Arrange
+        SqlException exception = SqlException.CreateException(CreateErrorCollection(), ServerVersion);
+        exception.EncryptionInfo = CreatePopulated();
+
+        // Act
+        // The internal setter accepts null to clear the snapshot.
+        exception.EncryptionInfo = null!;
+
+        // Assert
+        AssertEmpty(exception.EncryptionInfo);
+    }
+
+    /// <summary>
+    /// Verifies that a deserialized exception returns a non-null empty snapshot and that the
+    /// snapshot is not written to the serialized payload.
+    /// </summary>
+    [Fact]
+    public void EncryptionInfo_DataContractRoundTrip_ReturnsEmptySnapshot()
+    {
+        // Arrange
+        SqlException original = SqlException.CreateException(CreateErrorCollection(), ServerVersion);
+        original.EncryptionInfo = CreatePopulated();
+
+        // Exception.Data is backed by an internal dictionary type, and GetObjectData writes the
+        // error collection, so these types must be known to the serializer.
+        DataContractSerializer serializer = new(
+            typeof(SqlException),
+            new[]
+            {
+                original.Data.GetType(),
+                typeof(SqlErrorCollection),
+                typeof(SqlError),
+                typeof(List<object>),
+            });
+        using MemoryStream stream = new();
+
+        // Act
+        serializer.WriteObject(stream, original);
+        stream.Position = 0;
+        string payload = new StreamReader(stream).ReadToEnd();
+        stream.Position = 0;
+        SqlException? roundTripped = serializer.ReadObject(stream) as SqlException;
+
+        // Assert
+        // The snapshot, including the certificate, is not written to the payload.
+        Assert.DoesNotContain(nameof(SqlException.EncryptionInfo), payload);
+        Assert.DoesNotContain(SampleCertificateThumbprint, payload, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(SampleCertificateBase64.Substring(0, 24), payload);
+        Assert.DoesNotContain("encryption-info.test", payload);
+
+        // The deserialized exception reports an empty snapshot.
+        Assert.NotNull(roundTripped);
+        Assert.Equal(original.Message, roundTripped.Message);
+        AssertEmpty(roundTripped.EncryptionInfo);
+    }
+
+#if NETFRAMEWORK
+    /// <summary>
+    /// Verifies BinaryFormatter serialization is unaffected by the non-serialized snapshot field
+    /// and that the deserialized exception returns a non-null empty snapshot.
+    /// </summary>
+    [Fact]
+    public void EncryptionInfo_BinaryFormatterRoundTrip_ReturnsEmptySnapshot()
+    {
+        // Arrange
+        SqlException original = SqlException.CreateException(CreateErrorCollection(), ServerVersion);
+        original.EncryptionInfo = CreatePopulated();
+        BinaryFormatter formatter = new();
+        using MemoryStream stream = new();
+
+        // Act
+        formatter.Serialize(stream, original);
+        stream.Position = 0;
+        SqlException roundTripped = (SqlException)formatter.Deserialize(stream);
+
+        // Assert
+        Assert.Equal(original.Message, roundTripped.Message);
+        AssertEmpty(roundTripped.EncryptionInfo);
+    }
+#endif
+
+    /// <summary>
+    /// Verifies that <see cref="Exception.Message"/> and <see cref="SqlException.ToString"/> do
+    /// not change when a populated snapshot is attached, and that no snapshot value leaks into
+    /// them.
+    /// </summary>
+    [Fact]
+    public void EncryptionInfo_PopulatedSnapshot_MessageAndToStringUnchanged()
+    {
+        // Arrange
+        Guid connectionId = Guid.NewGuid();
+        SqlException withoutInfo = SqlException.CreateException(CreateErrorCollection(), ServerVersion, connectionId, null);
+        SqlException withInfo = SqlException.CreateException(CreateErrorCollection(), ServerVersion, connectionId, null);
+
+        // Act
+        withInfo.EncryptionInfo = CreatePopulated();
+
+        // Assert
+        Assert.Equal(withoutInfo.Message, withInfo.Message);
+        Assert.Equal(withoutInfo.ToString(), withInfo.ToString());
+        Assert.DoesNotContain(SampleCertificateThumbprint, withInfo.ToString(), StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(SampleCertificateThumbprint, withInfo.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(SampleCertificateBase64.Substring(0, 24), withInfo.ToString());
+        Assert.DoesNotContain("encryption-info.test", withInfo.ToString());
+        Assert.DoesNotContain(nameof(SqlConnectionEncryptionInfo.GetServerCertificate), withInfo.ToString());
+        Assert.DoesNotContain(nameof(SqlConnectionEncryptionMode.Strict), withInfo.Message);
+        Assert.DoesNotContain("NegotiatedCipherSuite", withInfo.ToString());
+        Assert.DoesNotContain("TLS_AES_256_GCM_SHA384", withInfo.ToString());
+    }
+
+    /// <summary>
+    /// Verifies that a cloned exception exposes an equivalent certificate, and that disposing a
+    /// certificate returned from one exception does not affect the other.
+    /// </summary>
+    [Fact]
+    public void EncryptionInfo_InternalClone_ServerCertificateIsIsolated()
+    {
+        // Arrange
+        SqlException exception = SqlException.CreateException(CreateErrorCollection(), ServerVersion);
+        exception.EncryptionInfo = CreatePopulated();
+        SqlException clone = exception.InternalClone();
+
+        // Act
+        X509Certificate2? fromOriginal = exception.EncryptionInfo.GetServerCertificate();
+        using X509Certificate2? fromClone = clone.EncryptionInfo.GetServerCertificate();
+        Assert.NotNull(fromOriginal);
+        fromOriginal.Dispose();
+        using X509Certificate2? again = exception.EncryptionInfo.GetServerCertificate();
+
+        // Assert
+        Assert.NotNull(fromClone);
+        Assert.NotNull(again);
+        Assert.NotSame(fromOriginal, fromClone);
+        Assert.Equal(SampleCertificateThumbprint, fromClone.Thumbprint);
+        Assert.Equal(SampleCertificateThumbprint, again.Thumbprint);
+    }
+
+    #endregion
+}

@@ -1386,10 +1386,10 @@ The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> an
       </value>
       <remarks>
         <para>
-          This property never returns <see langword="null" /> and never throws, regardless of whether the connection has been opened, closed, or disposed. A <see langword="null" /> property value on the returned snapshot means the information is not available; it does not indicate that encryption or certificate validation succeeded.
+          This property never returns <see langword="null" /> and never throws, regardless of whether the connection has been opened, closed, or disposed. A <see langword="null" /> property value on the returned snapshot means the information was not available at the time the snapshot was obtained. Any snapshot may have any combination of <see langword="null" /> and non-null property values depending on the state of the underlying connection. The presence or absence of <see langword="null" /> property values does not indicate that encryption or certificate validation succeeded or failed.
         </para>
         <para>
-          After the connection opens successfully, the snapshot describes the physical connection in use, including a connection returned from the pool. Before opening and after the connection is closed or disposed, the snapshot has all properties set to <see langword="null" />. Closing the connection does not change a snapshot that was already obtained.
+          Before the connection opens successfully, the snapshot is empty (all <see langword="null" /> properties) because it has no physical connection associated. Once opened, the snapshot describes the physical connection in use, including an existing physical connection obtained from a pool. Closing or disposing a connection resets this property to its initial empty snapshot. Snapshots are immutable, so a snapshot that was already obtained does not change.
         </para>
       </remarks>
     </EncryptionInfo>

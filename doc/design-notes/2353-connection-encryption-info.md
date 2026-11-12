@@ -92,7 +92,7 @@ namespace Microsoft.Data.SqlClient
         public X509Certificate2? GetServerCertificate();
     }
 
-    public enum SqlConnectionEncryptionMode
+    public enum SqlConnectionEncryptionMode : byte
     {
         None = 0,      // Unencrypted connection.
         LoginOnly = 1, // Login is protected; subsequent session traffic is unencrypted.
@@ -151,12 +151,13 @@ registry for the suite the server selected in its ServerHello, for example `0x13
   attribute. `TlsCipherSuite` is backed by `ushort`, so `NegotiatedCipherSuite` is marked
   `[CLSCompliant(false)]`, as `SslStream.NegotiatedCipherSuite` is. The assembly stays
   `[CLSCompliant(true)]`.
-- **Unknown identifiers are preserved:** `NegotiatedCipherSuiteId` returns the captured
-  identifier unchanged, and `NegotiatedCipherSuite` casts it without `Enum.IsDefined`
-  filtering, so newly registered or GREASE values are not dropped.
-- **Internal contract:** the internal constructor and capture paths use `int?` (0 to
-  0xFFFF) on every target, so the network-layer plumbing does not depend on the target
-  framework.
+- **Unknown identifiers are preserved:** both properties return the captured identifier
+  unchanged, without `Enum.IsDefined` filtering, so newly registered or GREASE values are
+  not dropped.
+- **Internal contract:** on .NET, the internal constructor takes `TlsCipherSuite?`, so the
+  value stays strongly typed from `SslStream` to the public API; both properties are
+  assigned from it. On .NET Framework, it takes an `int?` that must be in the range 0 to
+  0xFFFF.
 - **`null` means unavailable:** no TLS, the value was not captured on the current code
   path, the network layer (for example, an older native SNI) does not report it, or the
   attempt failed before the value was known. It does not mean the server selected no
@@ -185,8 +186,8 @@ validity, subject alternative names, and any thumbprint the caller wants to comp
   not use the certificate to override or bypass the driver's validation.
 - **Storage:** the snapshot keeps a private copy of the DER bytes. Each call parses them
   with `X509CertificateLoader.LoadCertificate` (from `Microsoft.Bcl.Cryptography` on .NET
-  Framework). Bytes that cannot be parsed are reported as `null`; the method does not
-  throw. The bytes are never written to `ToString()`, exception messages, traces, or
+  Framework). Bytes that cannot be decoded are reported as `null`. The bytes are never
+  written to `ToString()`, exception messages, traces, or
   serialization.
 - **Capture limit:** certificates larger than 64 KiB (DER) are not captured; the method
   returns `null` and the connection is unaffected.
