@@ -21,8 +21,6 @@ namespace Microsoft.Data.SqlClient;
 /// </remarks>
 internal sealed class SqlAuthenticationProviderRegistry
 {
-    // TODO: Localize exception messages in a later PR.
-
     #region Private Fields
 
     /// <summary>
@@ -495,9 +493,7 @@ internal sealed class SqlAuthenticationProviderRegistry
                 var initializerType = Type.GetType(initializerTypeName, throwOnError: true)!;
                 var initializer = Activator.CreateInstance(initializerType)
                     as SqlAuthenticationInitializer
-                    ?? throw new InvalidOperationException(
-                        "The configured initializer must create a non-null " +
-                        "SqlAuthenticationInitializer instance.");
+                    ?? throw AuthenticationStrings.InvalidAuthenticationInitializerInstance();
 
                 // Only registrations made during this callback inherit Config precedence.
                 Volatile.Write(ref _initializerThreadId, Environment.CurrentManagedThreadId);
@@ -546,14 +542,11 @@ internal sealed class SqlAuthenticationProviderRegistry
                             providerSettings.Name);
                     var providerType = Type.GetType(providerSettings.Type, throwOnError: true)!;
                     var provider = Activator.CreateInstance(providerType) as SqlAuthenticationProvider
-                        ?? throw new InvalidOperationException(
-                            "The configured provider must create a non-null " +
-                            "SqlAuthenticationProvider instance.");
+                        ?? throw AuthenticationStrings.InvalidAuthenticationProviderInstance();
                     if (!Register(authentication.Value, provider, RegistrationTier.Config))
                     {
-                        throw new InvalidOperationException(
-                            $"Configured authentication provider '{providerSettings.Type}' could not " +
-                            $"be registered for method '{providerSettings.Name}'.");
+                        throw AuthenticationStrings.CannotRegisterAuthProvider(
+                            providerSettings.Name, providerSettings.Type);
                     }
                     SqlClientEventSource.Log.TryTraceEvent(
                         "SqlAuthenticationProviderRegistry | Added user-defined auth provider: {0} " +
@@ -620,9 +613,8 @@ internal sealed class SqlAuthenticationProviderRegistry
 
         if (!provider.IsSupported(authenticationMethod))
         {
-            throw new NotSupportedException(
-                $"Authentication provider '{provider.GetType().FullName}' does not support " +
-                $"method '{authenticationMethod}'.");
+            throw AuthenticationStrings.UnsupportedAuthenticationByProvider(
+                authenticationMethod.ToString(), provider.GetType().FullName!);
         }
         while (true)
         {

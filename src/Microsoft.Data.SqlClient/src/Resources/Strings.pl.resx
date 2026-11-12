@@ -591,26 +591,11 @@
   <data name="SQL_NonLocalSSEInstance" xml:space="preserve">
     <value>Przekierowywanie wystąpienia SSE nie jest obsługiwane dla wystąpień użytkowników nielokalnych.</value>
   </data>
-  <data name="SQL_UnsupportedAuthentication" xml:space="preserve">
-    <value>Uwierzytelnianie „{0}” nie jest obsługiwane.</value>
-  </data>
-  <data name="SQL_CannotCreateAuthProvider" xml:space="preserve">
-    <value>Nie można utworzyć wystąpienia dostawcy uwierzytelniania typu {1} dla elementu {0}.</value>
-  </data>
-  <data name="SQL_CannotCreateAuthInitializer" xml:space="preserve">
-    <value>Nie można utworzyć wystąpienia elementu SqlAuthenticationInitializer typu {0}.</value>
-  </data>
-  <data name="SQL_UnsupportedAuthenticationByProvider" xml:space="preserve">
-    <value>Dostawca „{0}” nie obsługuje uwierzytelniania „{1}”.</value>
-  </data>
   <data name="SQL_CannotFindAuthProvider" xml:space="preserve">
     <value>Nie można odnaleźć dostawcy uwierzytelniania elementu {0}.</value>
   </data>
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
     <value>Nie można odnaleźć dostawcy uwierzytelniania dla elementu „{0}”. Zarejestruj dostawcę za pomocą elementu SqlAuthenticationProvider.SetProvider lub użyj zgodnego pakietu NuGet „Microsoft.Data.SqlClient.Extensions.Azure” z włączonym automatycznym odnajdowaniem. Automatyczne odnajdowanie jest niedostępne, gdy jest wyłączone w czasie publikowania. Przycięte aplikacje JIT wymagają zachowanych kontraktów odbicia; Aplikacje NativeAOT powinny wyłączać refleksyjne ścieżki uruchamiania w czasie publikowania i jawnie rejestrować dostawców. Sprawdź ślady Microsoft.Data.SqlClient.EventSource (poziom informacyjny, słowo kluczowe trace 0x2) pod kątem błędów ładowania konfiguracji lub rozszerzenia platformy Azure.</value>
-  </data>
-  <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>Ustawienie „useWamBroker” wymaga pakietu „Microsoft.Data.SqlClient.Extensions.Azure”, aby uwidocznić element „Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions”. Uaktualnij pakiet „Microsoft.Data.SqlClient.Extensions.Azure” do wersji co najmniej v7.0.2, która zawiera ten typ.</value>
   </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>Parametr „{0}” nie może mieć wartości null ani być pusty.</value>
