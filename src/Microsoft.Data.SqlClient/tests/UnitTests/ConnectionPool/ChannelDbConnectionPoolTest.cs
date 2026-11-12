@@ -2563,26 +2563,67 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// <see cref="FakeTimeProvider"/> so the test does not depend on real
         /// wall-clock waits or thread sleeps.
         /// </remarks>
-        [Fact]
-        public void GetConnection_TimeoutTimerReflectsPoolWaitTime()
+        [Theory]
+        [InlineData(null)]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void TryGetConnection_ConsumedBudget_ForwardsRemainingTime(bool? switchEnabled)
         {
-            // Arrange: a capturing factory and a fake-time-backed timer with a
-            // 30-second budget anchored at virtual time t = 0.
+            // Arrange
+            using LocalAppContextSwitchesHelper switches = new()
+            {
+                UseOverallConnectTimeoutForPoolWait = switchEnabled,
+            };
             var factory = new SuccessfulSqlConnectionFactory();
             var pool = ConstructPool(factory);
-            var owner = new SqlConnection("Timeout=30");
+            using var owner = new SqlConnection("Timeout=30");
             var fakeTime = new FakeTimeProvider();
             TimeoutTimer timer = TimeoutTimer.StartNew(TimeSpan.FromSeconds(30), fakeTime);
-
-            // Act: advance virtual time by 5 seconds before invoking the pool,
-            // simulating budget that was consumed elsewhere (e.g., waiting on a
-            // pool slot) before the factory was called.
             fakeTime.Advance(TimeSpan.FromSeconds(5));
-            pool.TryGetConnection(owner, taskCompletionSource: null, timer, out DbConnectionInternal? connection);
 
-            // Assert: factory received the same timer, and it reports the
-            // reduced 25-second remaining budget.
+            // Act
+            bool completed = pool.TryGetConnection(
+                owner, taskCompletionSource: null, timer, out DbConnectionInternal? connection);
+
+            // Assert
+            Assert.True(completed);
             Assert.NotNull(connection);
+            Assert.Same(timer, factory.CapturedTimeout);
+            Assert.Equal(25_000, factory.CapturedTimeout!.MillisecondsRemainingInt);
+        }
+
+        /// <summary>
+        /// Ensures asynchronous acquisition forwards the remaining budget to physical creation
+        /// regardless of whether login will honor it or use the compatibility opt-out.
+        /// </summary>
+        [Theory]
+        [InlineData(null)]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task TryGetConnectionAsync_ConsumedBudget_ForwardsRemainingTime(
+            bool? switchEnabled)
+        {
+            // Arrange
+            using LocalAppContextSwitchesHelper switches = new()
+            {
+                UseOverallConnectTimeoutForPoolWait = switchEnabled,
+            };
+            var factory = new SuccessfulSqlConnectionFactory();
+            var pool = ConstructPool(factory);
+            using var owner = new SqlConnection("Timeout=30");
+            var fakeTime = new FakeTimeProvider();
+            TimeoutTimer timer = TimeoutTimer.StartNew(TimeSpan.FromSeconds(30), fakeTime);
+            fakeTime.Advance(TimeSpan.FromSeconds(5));
+            var completion = new TaskCompletionSource<DbConnectionInternal>();
+
+            // Act
+            bool completed = pool.TryGetConnection(owner, completion, timer, out _);
+            Task winner = await Task.WhenAny(completion.Task, Task.Delay(TimeSpan.FromSeconds(30)));
+
+            // Assert
+            Assert.False(completed);
+            Assert.Same(completion.Task, winner);
+            Assert.NotNull(await completion.Task);
             Assert.Same(timer, factory.CapturedTimeout);
             Assert.Equal(25_000, factory.CapturedTimeout!.MillisecondsRemainingInt);
         }
