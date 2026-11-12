@@ -21,6 +21,11 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         /// </summary>
         public bool ExpectTlsHandshakeFailure { get; set; }
 
+        /// <summary>
+        /// Runs the TLS handshake before any TDS traffic, as TDS 8 strict encryption does.
+        /// </summary>
+        public bool TlsFirst { get; set; }
+
         public TDSServerEndPoint(ITDSServer server)
             : base(server)
         {
@@ -30,7 +35,8 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         {
             return new TDSServerEndPointConnection(TDSServer, newConnection)
             {
-                ExpectTlsHandshakeFailure = ExpectTlsHandshakeFailure
+                ExpectTlsHandshakeFailure = ExpectTlsHandshakeFailure,
+                TlsFirst = TlsFirst
             };
         }
     }

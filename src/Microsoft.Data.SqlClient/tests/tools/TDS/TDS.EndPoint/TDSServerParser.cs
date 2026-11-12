@@ -4,6 +4,7 @@
 
 using System;
 using System.IO;
+using System.Net.Security;
 using Microsoft.SqlServer.TDS.PreLogin;
 
 namespace Microsoft.SqlServer.TDS.EndPoint
@@ -29,6 +30,11 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         private TDSMessage MessageBeingReceived { get; set; }
 
         /// <summary>
+        /// Runs the TLS handshake before any TDS traffic, as TDS 8 strict encryption does
+        /// </summary>
+        internal bool TlsFirst { get; set; }
+
+        /// <summary>
         /// Server TDS parser initialization constructor
         /// </summary>
         public TDSServerParser(ITDSServer server, ITDSServerSession session, Stream stream) :
@@ -50,6 +56,12 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         /// </summary>
         public void Run()
         {
+            // With TLS first the client's first bytes are a TLS ClientHello, not a TDS packet
+            if (TlsFirst)
+            {
+                StartTransportEncryption();
+            }
+
             // Check if there's a message being inflated
             if (MessageBeingReceived == null)
             {
@@ -77,7 +89,7 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                             // Call into the subscriber to process the packet
                             responseMessages = Server.OnPreLoginRequest(Session, MessageBeingReceived);
 
-                            if (Session.Encryption == TDSEncryptionType.None)
+                            if (Session.Encryption == TDSEncryptionType.None && !TlsFirst)
                             {
                                 DisableTransportEncryption();
                             }
@@ -90,7 +102,7 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                             responseMessages = Server.OnLogin7Request(Session, MessageBeingReceived);
 
                             // Check if encryption needs to be turned off
-                            if (Session.Encryption == TDSEncryptionType.LoginOnly)
+                            if (Session.Encryption == TDSEncryptionType.LoginOnly && !TlsFirst)
                             {
                                 // Disable transport encryption
                                 DisableTransportEncryption();
@@ -146,7 +158,7 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                     if (Session.Encryption == TDSEncryptionType.LoginOnly || Session.Encryption == TDSEncryptionType.Full)
                     {
                         // Enable server side encryption
-                        EnableServerTransportEncryption(Session.EncryptionCertificate, Session.EncryptionProtocols);
+                        StartTransportEncryption();
                     }
                 }
 
@@ -154,6 +166,20 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                 // It would also trigger creation of the next message during the next cycle
                 MessageBeingReceived = null;
             }
+        }
+
+        /// <summary>
+        /// Notify the server and run the TLS handshake, unless the transport is already encrypted
+        /// </summary>
+        private void StartTransportEncryption()
+        {
+            if (Transport.InnerStream is SslStream)
+            {
+                return;
+            }
+
+            Server.OnTlsHandshakeStarting(Session, Transport.InnerStream);
+            EnableServerTransportEncryption(Session.EncryptionCertificate, Session.EncryptionProtocols, TlsFirst);
         }
     }
 }

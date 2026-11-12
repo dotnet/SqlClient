@@ -7,24 +7,21 @@
 #nullable enable
 
 using System;
-using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.IO;
-using System.Net;
-using System.Net.Sockets;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlClient.Tests.Common;
+using Microsoft.SqlServer.TDS.PreLogin;
+using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests;
 
 /// <summary>
 /// Verifies that Connect Timeout bounds the TLS handshake of a new connection on managed SNI
-/// (GitHub issues #4834 and #5045). A bare TCP listener stands in for a server whose network
-/// path stalls right after the TCP connect: it accepts the client's TLS ClientHello and never
-/// answers it. Without a bound, the open blocks until the operating system gives up on the
+/// (GitHub issues #4834 and #5045). A <see cref="TlsHandshakeStallingTdsServer"/> stands in for a
+/// server whose network path stalls right after the TCP connect: it never answers the client's TLS
+/// ClientHello. Without a bound, the open blocks until the operating system gives up on the
 /// socket (about 15 minutes on Linux by default), and with pooling every other open on the
 /// pool waits behind it. The open must instead fail like native SNI does: with a wait timeout
 /// once the whole Connect Timeout has elapsed, including when MultiSubnetFailover splits the
@@ -52,28 +49,6 @@ public sealed class TlsHandshakeTimeoutTests
     private static readonly TimeSpan OpenBudget = TimeSpan.FromSeconds(30);
 
     /// <summary>
-    /// A minimal, protocol-valid TDS PRELOGIN response advertising ENCRYPT_ON, so a client that
-    /// requested encryption proceeds into the TLS handshake.
-    /// </summary>
-    private static readonly byte[] s_preLoginEncryptOnResponse =
-    {
-        // ---- TDS packet header (8 bytes) ----
-        0x12,       // Type: PRELOGIN
-        0x01,       // Status: EOM
-        0x00, 0x1A, // Length: 26 (8 header + 18 payload), big-endian
-        0x00, 0x00, // SPID
-        0x01,       // PacketID
-        0x00,       // Window
-        // ---- PRELOGIN option table ----
-        0x00, 0x00, 0x0B, 0x00, 0x06, // VERSION: offset 11, length 6
-        0x01, 0x00, 0x11, 0x00, 0x01, // ENCRYPTION: offset 17, length 1
-        0xFF,                         // TERMINATOR
-        // ---- Option data ----
-        0x11, 0x00, 0x00, 0x00, 0x00, 0x00, // VERSION 17.0.0.0
-        0x01,                               // ENCRYPTION = ENCRYPT_ON
-    };
-
-    /// <summary>
     /// A synchronous open whose TLS handshake (negotiated after PRELOGIN) gets no answer must
     /// fail with a wait timeout once Connect Timeout elapses, with and without the
     /// per-attempt timeout slices of MultiSubnetFailover.
@@ -85,7 +60,8 @@ public sealed class TlsHandshakeTimeoutTests
     public void Open_ServerStallsTlsHandshake_ThrowsTimeoutAtConnectTimeout(bool multiSubnetFailover)
     {
         // Arrange
-        using StallingServer server = new(answerPreLogin: true);
+        using TlsHandshakeStallingTdsServer server = new(new TdsServerArguments { Encryption = TDSPreLoginTokenEncryptionType.On });
+        server.Start();
         using SqlConnection connection = new(ConnectionString(server, SqlConnectionEncryptOption.Mandatory, multiSubnetFailover));
 
         // Act
@@ -103,7 +79,8 @@ public sealed class TlsHandshakeTimeoutTests
     public void OpenAsync_ServerStallsTlsHandshake_ThrowsTimeoutAtConnectTimeout()
     {
         // Arrange
-        using StallingServer server = new(answerPreLogin: true);
+        using TlsHandshakeStallingTdsServer server = new(new TdsServerArguments { Encryption = TDSPreLoginTokenEncryptionType.On });
+        server.Start();
         using SqlConnection connection = new(ConnectionString(server, SqlConnectionEncryptOption.Mandatory, multiSubnetFailover: false));
 
         // Act
@@ -121,7 +98,8 @@ public sealed class TlsHandshakeTimeoutTests
     public void Open_StrictEncryptionServerStallsTlsHandshake_ThrowsTimeoutAtConnectTimeout()
     {
         // Arrange
-        using StallingServer server = new(answerPreLogin: false);
+        using TlsHandshakeStallingTdsServer server = new(new TdsServerArguments { TlsFirst = true });
+        server.Start();
         using SqlConnection connection = new(ConnectionString(server, SqlConnectionEncryptOption.Strict, multiSubnetFailover: false));
 
         // Act
@@ -132,16 +110,16 @@ public sealed class TlsHandshakeTimeoutTests
     }
 
     /// <summary>
-    /// Builds a non-pooled connection string pointing at the stalling server.
+    /// Builds a non-pooled connection string pointing at the server.
     /// </summary>
     /// <param name="server">The server to connect to.</param>
     /// <param name="encrypt">The encryption mode.</param>
     /// <param name="multiSubnetFailover">The MultiSubnetFailover connection option.</param>
     /// <returns>The connection string.</returns>
-    private static string ConnectionString(StallingServer server, SqlConnectionEncryptOption encrypt, bool multiSubnetFailover) =>
+    private static string ConnectionString(TdsServer server, SqlConnectionEncryptOption encrypt, bool multiSubnetFailover) =>
         new SqlConnectionStringBuilder
         {
-            DataSource = $"127.0.0.1,{server.Port}",
+            DataSource = $"127.0.0.1,{server.EndPoint.Port}",
             Encrypt = encrypt,
             ConnectTimeout = ConnectTimeoutSeconds,
             ConnectRetryCount = 0,
@@ -179,9 +157,9 @@ public sealed class TlsHandshakeTimeoutTests
     /// </summary>
     /// <param name="server">The stalling server.</param>
     /// <param name="outcome">The outcome of the open under test.</param>
-    private static void AssertTimedOutAtConnectTimeout(StallingServer server, OpenOutcome outcome)
+    private static void AssertTimedOutAtConnectTimeout(TlsHandshakeStallingTdsServer server, OpenOutcome outcome)
     {
-        Assert.True(server.HandshakeReached.IsCompleted, "The client never reached the TLS handshake.");
+        Assert.True(server.HandshakeStalled.IsCompleted, "The connection never reached the TLS handshake.");
         Assert.True(
             outcome.Settled,
             $"The open did not fail within {OpenBudget.TotalSeconds:N0}s although Connect Timeout is " +
@@ -201,106 +179,6 @@ public sealed class TlsHandshakeTimeoutTests
     /// <param name="Settled">Whether the open completed within <see cref="OpenBudget"/>.</param>
     /// <param name="Elapsed">How long the open ran, or the budget if it did not complete.</param>
     private sealed record OpenOutcome(Task Open, bool Settled, TimeSpan Elapsed);
-
-    /// <summary>
-    /// A TCP server that, for every connection, optionally answers PRELOGIN with ENCRYPT_ON,
-    /// then reads the client's TLS ClientHello and never answers it. It accepts any number of
-    /// connections because MultiSubnetFailover retries the login on a new connection. Disposal
-    /// closes every connection, which also releases a client still blocked in the handshake.
-    /// </summary>
-    private sealed class StallingServer : IDisposable
-    {
-        private readonly TcpListener _listener = new(IPAddress.Loopback, 0);
-        private readonly CancellationTokenSource _stop = new();
-        private readonly TaskCompletionSource _handshakeReached = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        private readonly ConcurrentBag<Task> _connections = new();
-        private readonly Task _accept;
-
-        /// <summary>
-        /// Starts listening on a loopback port.
-        /// </summary>
-        /// <param name="answerPreLogin">Whether to answer each PRELOGIN packet before the handshake.</param>
-        public StallingServer(bool answerPreLogin)
-        {
-            _listener.Start();
-            Port = ((IPEndPoint)_listener.LocalEndpoint).Port;
-            _accept = AcceptAsync(answerPreLogin);
-        }
-
-        /// <summary>
-        /// The loopback port the server listens on.
-        /// </summary>
-        public int Port { get; }
-
-        /// <summary>
-        /// Completes once the first byte of a TLS ClientHello has arrived.
-        /// </summary>
-        public Task HandshakeReached => _handshakeReached.Task;
-
-        /// <summary>
-        /// Stops the server and closes its connections.
-        /// </summary>
-        public void Dispose()
-        {
-            _stop.Cancel();
-            _listener.Stop();
-            _accept.Wait(OpenBudget);
-            Task.WaitAll(_connections.ToArray(), OpenBudget);
-            _stop.Dispose();
-        }
-
-        private async Task AcceptAsync(bool answerPreLogin)
-        {
-            try
-            {
-                while (true)
-                {
-                    TcpClient client = await _listener.AcceptTcpClientAsync(_stop.Token);
-                    _connections.Add(ServeAsync(client, answerPreLogin));
-                }
-            }
-            catch (OperationCanceledException) when (_stop.IsCancellationRequested)
-            {
-            }
-        }
-
-        private async Task ServeAsync(TcpClient client, bool answerPreLogin)
-        {
-            try
-            {
-                using (client)
-                using (NetworkStream stream = client.GetStream())
-                {
-                    // Answer PRELOGIN so the client starts TLS inside TDS.
-                    if (answerPreLogin)
-                    {
-                        byte[] header = new byte[8];
-                        await stream.ReadExactlyAsync(header, _stop.Token);
-                        int length = (header[2] << 8) | header[3];
-                        await stream.ReadExactlyAsync(new byte[length - header.Length], _stop.Token);
-                        await stream.WriteAsync(s_preLoginEncryptOnResponse, _stop.Token);
-                    }
-
-                    // The client has sent its ClientHello and now waits for a ServerHello that never comes.
-                    await stream.ReadExactlyAsync(new byte[1], _stop.Token);
-                    _handshakeReached.TrySetResult();
-
-                    // Drain and drop whatever else arrives until the client or the test gives up.
-                    byte[] sink = new byte[4096];
-                    while (await stream.ReadAsync(sink, _stop.Token) > 0)
-                    {
-                    }
-                }
-            }
-            catch (OperationCanceledException) when (_stop.IsCancellationRequested)
-            {
-            }
-            catch (IOException)
-            {
-                // The client closed the connection, which is what a timed-out attempt does.
-            }
-        }
-    }
 }
 
 #endif

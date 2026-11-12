@@ -92,7 +92,10 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         /// <summary>
         /// Enable transport encryption
         /// </summary>
-        protected void EnableServerTransportEncryption(X509Certificate certificate, SslProtocols encryptionProtocols)
+        /// <param name="certificate">Server certificate</param>
+        /// <param name="encryptionProtocols">TLS protocols to allow</param>
+        /// <param name="tlsFirst">Whether the handshake runs directly on the transport (TDS 8) instead of inside PRELOGIN packets</param>
+        protected void EnableServerTransportEncryption(X509Certificate certificate, SslProtocols encryptionProtocols, bool tlsFirst)
         {
             // Check if transport encryption is applied
             if (Transport.InnerStream is SslStream)
@@ -109,17 +112,24 @@ namespace Microsoft.SqlServer.TDS.EndPoint
 
             Log("Enabling server transport encryption...");
 
-            // Wrap TDS stream with auto TDS stream
-            AutoTDSStream tds = new AutoTDSStream(Transport, false);
+            PlaceholderStream multiplexer = null;
+            Stream handshakeStream = Transport.InnerStream;
 
-            // We want to wrap each TLS message with PreLogin
-            tds.OutgoingMessageType = TDSMessageType.PreLogin;
+            if (!tlsFirst)
+            {
+                // Wrap TDS stream with auto TDS stream
+                AutoTDSStream tds = new AutoTDSStream(Transport, false);
 
-            // Create multiplexer stream to be able to remove TDS from under SSL
-            PlaceholderStream multiplexer = new PlaceholderStream(tds, false);
+                // We want to wrap each TLS message with PreLogin
+                tds.OutgoingMessageType = TDSMessageType.PreLogin;
 
-            // Wrap multiplexer stream with SSL stream
-            SslStream ssl = new SslStream(multiplexer, true);
+                // Create multiplexer stream to be able to remove TDS from under SSL
+                multiplexer = new PlaceholderStream(tds, false);
+                handshakeStream = multiplexer;
+            }
+
+            // Wrap the handshake stream with SSL stream
+            SslStream ssl = new SslStream(handshakeStream, true);
 
             // Secure the channel
             try
@@ -132,8 +142,11 @@ namespace Microsoft.SqlServer.TDS.EndPoint
                 throw new IOException("The expected TLS handshake failed.", ex);
             }
 
-            // Replace TDS stream with raw transport stream in multiplexer
-            multiplexer.InnerStream = Transport.InnerStream;
+            if (multiplexer != null)
+            {
+                // Replace TDS stream with raw transport stream in multiplexer
+                multiplexer.InnerStream = Transport.InnerStream;
+            }
 
             // Upgrade transport stream to SSL
             Transport.InnerStream = ssl;
