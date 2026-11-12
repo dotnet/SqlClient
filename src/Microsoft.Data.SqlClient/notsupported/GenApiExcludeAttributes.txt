@@ -1,0 +1,5 @@
+# Attributes that GenAPI must not copy from the ref assembly into the generated source.
+# Nullable metadata attributes are reserved for the compiler (CS8335); GenAPI already reflects
+# them as '?' annotations in the generated declarations.
+T:System.Runtime.CompilerServices.NullableAttribute
+T:System.Runtime.CompilerServices.NullableContextAttribute
