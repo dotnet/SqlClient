@@ -5,6 +5,7 @@
 using System.Security.Authentication;
 using Microsoft.Data.SqlClient.Connection;
 using Xunit;
+using static Microsoft.Data.SqlClient.UnitTests.Utilities.EncryptionInfoTestData;
 
 namespace Microsoft.Data.SqlClient.UnitTests
 {
@@ -14,13 +15,8 @@ namespace Microsoft.Data.SqlClient.UnitTests
     /// </summary>
     public class EncryptionInfoCaptureTests
     {
-        // IANA identifier for TLS_AES_256_GCM_SHA384.
-        private const int SampleCipherSuite = 0x1302;
-
         // IANA identifier for TLS_AES_128_GCM_SHA256.
         private const int OtherCipherSuite = 0x1301;
-
-        private const string ServerVersion = "16.00.1000";
 
         #region DiscardUnobservedNegotiation
 
@@ -320,43 +316,6 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(System.Net.Security.TlsCipherSuite.TLS_AES_256_GCM_SHA384, snapshot.NegotiatedCipherSuite);
         }
 #endif
-
-        /// <summary>
-        /// Mirrors the failed-open attach path: the snapshot attached to a <see cref="SqlException"/>
-        /// keeps the cipher suite after the capture is reset, and the message is unchanged.
-        /// </summary>
-        [Fact]
-        public void ToSnapshot_AttachedToSqlException_CarriesCipherSuite()
-        {
-            // Arrange
-            EncryptionInfoCapture capture = new();
-            capture.Record(SqlConnectionEncryptionMode.Full, SslProtocols.Tls12);
-            capture.RecordCipherSuite(SampleCipherSuite);
-            SqlException exception = SqlException.CreateException(
-                new SqlErrorCollection
-                {
-                    new SqlError(
-                        infoNumber: 50000,
-                        errorState: 1,
-                        errorClass: 16,
-                        server: "server",
-                        errorMessage: "Test error message.",
-                        procedure: "proc",
-                        lineNumber: 1,
-                        exception: null,
-                        batchIndex: -1)
-                },
-                ServerVersion);
-            string messageBefore = exception.Message;
-
-            // Act
-            exception.EncryptionInfo = capture.ToSnapshot();
-            capture.Reset();
-
-            // Assert
-            Assert.Equal(SampleCipherSuite, exception.EncryptionInfo.NegotiatedCipherSuiteId);
-            Assert.Equal(messageBefore, exception.Message);
-        }
 
         /// <summary>
         /// A snapshot is unaffected when the capture is later reset and reused for another attempt.
