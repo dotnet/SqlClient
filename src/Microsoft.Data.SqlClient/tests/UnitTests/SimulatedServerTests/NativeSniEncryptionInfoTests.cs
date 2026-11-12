@@ -7,6 +7,7 @@ using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.Tests.Common;
+using Microsoft.Data.SqlClient.UnitTests.Utilities;
 using Microsoft.SqlServer.TDS.PreLogin;
 using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
@@ -46,7 +47,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             // Assert
             AssertCertificateDetails(ex.EncryptionInfo);
-            Assert.True(connection.EncryptionInfo.IsEmpty);
+            EncryptionInfoTestData.AssertEmpty(connection.EncryptionInfo);
         }
 
         /// <summary>Verifies an asynchronous open reports the untrusted certificate details.</summary>
@@ -62,7 +63,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             // Assert
             AssertCertificateDetails(ex.EncryptionInfo);
-            Assert.True(connection.EncryptionInfo.IsEmpty);
+            EncryptionInfoTestData.AssertEmpty(connection.EncryptionInfo);
         }
 
         private TdsServer StartUntrustedServer()
@@ -112,8 +113,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             // The certificate name matches localhost, so only the chain is rejected.
             Assert.Equal(SqlServerCertificateValidationErrors.ChainError, info.ValidationErrors);
-            Assert.NotNull(info.ChainStatus);
-            Assert.True((info.ChainStatus!.Value & X509ChainStatusFlags.UntrustedRoot) != 0);
+            X509ChainStatusFlags chainStatus = Assert.NotNull(info.ChainStatus);
+            Assert.True((chainStatus & X509ChainStatusFlags.UntrustedRoot) != 0);
 
             using X509Certificate2? presented = info.GetServerCertificate();
             if (capture.IsCertificateUnavailable)
@@ -124,7 +125,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             else
             {
                 Assert.NotNull(presented);
-                Assert.Equal(_certificate.RawData, presented!.RawData);
+                Assert.Equal(_certificate.RawData, presented.RawData);
             }
         }
     }
