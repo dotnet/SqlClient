@@ -174,7 +174,7 @@ jobs:
       #
       # Enabled only for projects whose callers identify a documentation snippet directory.
       - ${{ if ne(parameters.documentationSnippetsPath, '') }}:
-        - template: /eng/pipelines/onebranch/steps/validate-xml-docs-step.yml@self
+        - template: /eng/pipelines/common/steps/validate-xml-docs-step.yml@self
           parameters:
             displayName: 'Validate XML documentation sources'
             snippetsDirectory: '${{ parameters.documentationSnippetsPath }}'
@@ -244,7 +244,7 @@ jobs:
       # those with a "!:" prefix) and whether a reference to our own API matches a member that was
       # actually emitted.  It runs for every package: documentation is shared through <include>, so
       # a defect can surface in an assembly whose own sources contain no cross-references at all.
-      - template: /eng/pipelines/onebranch/steps/validate-xml-docs-step.yml@self
+      - template: /eng/pipelines/common/steps/validate-xml-docs-step.yml@self
         parameters:
           displayName: 'Validate generated XML documentation'
           snippetsDirectory: ''
@@ -262,7 +262,7 @@ jobs:
       # before packing so malformed ref documentation is attributed to the source build rather than
       # surfacing only after the assembled package is extracted in package_validation.
       - ${{ if eq(parameters.packageShortName, 'SqlClient') }}:
-        - template: /eng/pipelines/onebranch/steps/validate-xml-docs-step.yml@self
+        - template: /eng/pipelines/common/steps/validate-xml-docs-step.yml@self
           parameters:
             displayName: 'Validate generated reference XML documentation'
             snippetsDirectory: ''

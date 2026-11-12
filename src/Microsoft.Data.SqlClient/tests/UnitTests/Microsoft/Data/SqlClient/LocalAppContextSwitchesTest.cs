@@ -41,6 +41,7 @@ public class LocalAppContextSwitchesTest
     [Fact]
     public void TestDefaultAppContextSwitchValues()
     {
+        // Arrange
         // LocalAppContextSwitches caches each switch value on first access for
         // the lifetime of the process.  Other tests running in parallel may
         // already have triggered caching, or may use LocalAppContextSwitchesHelper
@@ -78,6 +79,10 @@ public class LocalAppContextSwitchesTest
         switchesHelper.DisableTnirByDefault = null;
         #endif
 
+        // Act
+        bool overallConnectTimeout = switchesHelper.UseOverallConnectTimeoutForPoolWait == true;
+
+        // Assert
         Assert.False(switchesHelper.LegacyRowVersionNullBehavior);
         Assert.False(switchesHelper.SuppressInsecureTlsWarning);
         Assert.False(switchesHelper.MakeReadAsyncBlocking);
@@ -88,7 +93,7 @@ public class LocalAppContextSwitchesTest
         Assert.True(switchesHelper.UseLegacyIdleTimeoutBehavior);
         Assert.Null(switchesHelper.UseBulkCopyCatalogMetadataDiscovery);
         Assert.False(switchesHelper.UseConnectionPoolV2);
-        Assert.False(switchesHelper.UseOverallConnectTimeoutForPoolWait);
+        Assert.True(overallConnectTimeout);
         Assert.False(switchesHelper.TruncateScaledDecimal);
         Assert.False(switchesHelper.IgnoreServerProvidedFailoverPartner);
         Assert.False(switchesHelper.UseLegacyFailoverAlternationOnLoginSqlErrors);

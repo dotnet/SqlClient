@@ -68,56 +68,143 @@ public class WaitHandleDbConnectionPoolBudgetTest : IDisposable
     }
 
     /// <summary>
-    /// Verifies that the <see cref="TimeoutTimer"/> the pool hands to the
-    /// connection factory reports a reduced remaining-time budget when the
-    /// timer's clock has advanced before the pool was entered. Both the
-    /// synchronous (<c>taskCompletionSource == null</c>) and asynchronous
-    /// paths must forward the caller's already-advanced timer rather than
-    /// constructing a fresh one from <c>CreationTimeout</c>. Mirrors
-    /// <c>ChannelDbConnectionPoolTest.GetConnection_TimeoutTimerReflectsPoolWaitTime</c>.
+    /// Ensures synchronous acquisition forwards the remaining budget to physical creation,
+    /// independently of whether login will later honor it or use the compatibility opt-out.
     /// </summary>
     [Theory]
-    [InlineData(false)] // sync
-    [InlineData(true)]  // async
-    public async Task GetConnection_TimeoutTimerReflectsTimeAlreadyConsumed(bool async)
+    [InlineData(null)]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void TryGetConnection_ConsumedBudget_ForwardsRemainingTime(bool? switchEnabled)
     {
-        // Arrange: capturing factory and a fake-time-backed timer with a
-        // 30-second budget anchored at virtual time t = 0.
+        // Arrange
+        using LocalAppContextSwitchesHelper switches = new()
+        {
+            UseOverallConnectTimeoutForPoolWait = switchEnabled,
+        };
         var factory = new MockSqlConnectionFactory();
         var pool = CreatePool(factory);
-        var owner = new SqlConnection("Timeout=30");
+        using var owner = new SqlConnection("Timeout=30");
         var fakeTime = new FakeTimeProvider();
         TimeoutTimer timer = TimeoutTimer.StartNew(TimeSpan.FromSeconds(30), fakeTime);
-        TaskCompletionSource<DbConnectionInternal>? tcs =
-            async ? new TaskCompletionSource<DbConnectionInternal>() : null;
-
-        // Act: simulate 5s of budget consumed elsewhere (e.g., higher-level
-        // Open() work) before the pool is entered, then request a connection.
         fakeTime.Advance(TimeSpan.FromSeconds(5));
+
+        // Act
         bool completed = pool.TryGetConnection(
             owner,
-            tcs,
+            taskCompletionSource: null,
             timer,
             out DbConnectionInternal? connection);
 
-        if (async)
-        {
-            // Bound the await so a regression in the pool can't hang the suite.
-            Task winner = await Task.WhenAny(tcs!.Task, Task.Delay(TimeSpan.FromSeconds(30)));
-            Assert.Same(tcs.Task, winner);
-            connection = await tcs.Task;
-        }
-        else
-        {
-            Assert.True(completed);
-        }
-
-        // Assert: factory received the same timer, and it reports the reduced
-        // 25-second remaining budget rather than the original 30s or the
-        // pool's static 15s CreationTimeout.
+        // Assert
+        Assert.True(completed);
         Assert.NotNull(connection);
         Assert.Same(timer, factory.CapturedTimeout);
         Assert.Equal(25_000, factory.CapturedTimeout!.MillisecondsRemainingInt);
+    }
+
+    /// <summary>
+    /// Ensures asynchronous acquisition forwards the already-consumed budget to physical
+    /// creation for the default, enabled, and compatibility settings.
+    /// </summary>
+    [Theory]
+    [InlineData(null)]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task TryGetConnectionAsync_ConsumedBudget_ForwardsRemainingTime(bool? switchEnabled)
+    {
+        // Arrange
+        using LocalAppContextSwitchesHelper switches = new()
+        {
+            UseOverallConnectTimeoutForPoolWait = switchEnabled,
+        };
+        var factory = new MockSqlConnectionFactory();
+        var pool = CreatePool(factory);
+        using var owner = new SqlConnection("Timeout=30");
+        var fakeTime = new FakeTimeProvider();
+        TimeoutTimer timer = TimeoutTimer.StartNew(TimeSpan.FromSeconds(30), fakeTime);
+        fakeTime.Advance(TimeSpan.FromSeconds(5));
+        var completion = new TaskCompletionSource<DbConnectionInternal>();
+
+        // Act
+        bool completed = pool.TryGetConnection(owner, completion, timer, out _);
+        Task winner = await Task.WhenAny(completion.Task, Task.Delay(TimeSpan.FromSeconds(30)));
+
+        // Assert
+        Assert.False(completed);
+        Assert.Same(completion.Task, winner);
+        Assert.NotNull(await completion.Task);
+        Assert.Same(timer, factory.CapturedTimeout);
+        Assert.Equal(25_000, factory.CapturedTimeout!.MillisecondsRemainingInt);
+    }
+
+    /// <summary>
+    /// Ensures an expired overall budget also expires a queued asynchronous pool wait,
+    /// rather than starting a fresh CreationTimeout by default.
+    /// </summary>
+    [Theory]
+    [InlineData(null)]
+    [InlineData(true)]
+    public async Task TryGetConnectionAsync_ExpiredOverallBudget_TimesOut(bool? switchEnabled)
+    {
+        // Arrange
+        using LocalAppContextSwitchesHelper switches = new()
+        {
+            UseOverallConnectTimeoutForPoolWait = switchEnabled,
+        };
+        var pool = CreatePool(new MockSqlConnectionFactory(), maxPoolSize: 1);
+        using var firstOwner = new SqlConnection();
+        pool.TryGetConnection(
+            firstOwner, taskCompletionSource: null,
+            TimeoutTimer.StartNew(TimeSpan.FromSeconds(30)), out DbConnectionInternal? held);
+        using var waitingOwner = new SqlConnection();
+        var completion = new TaskCompletionSource<DbConnectionInternal>();
+
+        // Act
+        bool completed = pool.TryGetConnection(
+            waitingOwner, completion, TimeoutTimer.StartExpired(), out _);
+        Task winner = await Task.WhenAny(completion.Task, Task.Delay(TimeSpan.FromSeconds(5)));
+
+        // Assert
+        Assert.NotNull(held);
+        Assert.False(completed);
+        Assert.Same(completion.Task, winner);
+        InvalidOperationException exception =
+            await Assert.ThrowsAsync<InvalidOperationException>(() => completion.Task);
+        Assert.Contains("prior to obtaining a connection from the pool", exception.Message);
+        Assert.Equal(1, pool.Count);
+    }
+
+    /// <summary>
+    /// Ensures the compatibility opt-out allows an asynchronous pool wait to succeed after
+    /// the caller's overall budget has expired.
+    /// </summary>
+    [Fact]
+    public async Task TryGetConnectionAsync_OverallBudgetDisabled_UsesLegacyPoolWait()
+    {
+        // Arrange
+        using LocalAppContextSwitchesHelper switches = new()
+        {
+            UseOverallConnectTimeoutForPoolWait = false,
+        };
+        var pool = CreatePool(new MockSqlConnectionFactory(), maxPoolSize: 1);
+        using var firstOwner = new SqlConnection();
+        pool.TryGetConnection(
+            firstOwner, taskCompletionSource: null,
+            TimeoutTimer.StartNew(TimeSpan.FromSeconds(30)), out DbConnectionInternal? held);
+        using var waitingOwner = new SqlConnection();
+        var completion = new TaskCompletionSource<DbConnectionInternal>();
+
+        // Act
+        bool completed = pool.TryGetConnection(
+            waitingOwner, completion, TimeoutTimer.StartExpired(), out _);
+        pool.ReturnInternalConnection(held!, firstOwner);
+        Task winner = await Task.WhenAny(completion.Task, Task.Delay(TimeSpan.FromSeconds(5)));
+
+        // Assert
+        Assert.False(completed);
+        Assert.Same(completion.Task, winner);
+        Assert.Same(held, await completion.Task);
     }
 
     /// <summary>
@@ -133,23 +220,18 @@ public class WaitHandleDbConnectionPoolBudgetTest : IDisposable
     }
 
     /// <summary>
-    /// Verifies the resolution matrix for the synchronous
-    /// <c>WaitHandle.WaitAny</c> timeout:
-    /// <list type="bullet">
-    ///   <item>switch ON  → use the caller timer's remaining budget
-    ///   (expired → 0, infinite → <see cref="Timeout.Infinite"/>);</item>
-    ///   <item>switch OFF → ignore the caller timer and use
-    ///   <c>CreationTimeout</c>, treating <c>0</c> as
-    ///   <see cref="Timeout.Infinite"/> per legacy behavior.</item>
-    /// </list>
+    /// Ensures synchronous waits use the remaining caller budget by default and when enabled,
+    /// while the compatibility opt-out uses CreationTimeout. Infinite waits remain infinite.
     /// </summary>
     [Theory]
+    [InlineData(null,  TimerKind.Expired,  5_000, 0u)]
+    [InlineData(null,  TimerKind.Infinite, 5_000, unchecked((uint)Timeout.Infinite))]
     [InlineData(true,  TimerKind.Expired,  5_000, 0u)]
     [InlineData(true,  TimerKind.Infinite, 5_000, unchecked((uint)Timeout.Infinite))]
     [InlineData(false, TimerKind.Expired,  1_500, 1_500u)]
     [InlineData(false, TimerKind.Expired,  0,     unchecked((uint)Timeout.Infinite))]
-    public void ResolvePoolWaitTimeoutMs_ReturnsExpected(
-        bool switchEnabled,
+    public void ResolvePoolWaitTimeoutMs_SwitchAndBudget_ReturnsExpectedTimeout(
+        bool? switchEnabled,
         TimerKind timerKind,
         int creationTimeoutMs,
         uint expected)
