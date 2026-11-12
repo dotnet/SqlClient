@@ -591,26 +591,11 @@
   <data name="SQL_NonLocalSSEInstance" xml:space="preserve">
     <value>La redirection d'instance SSE n'est pas prise en charge pour les instances d'utilisateurs non locaux.</value>
   </data>
-  <data name="SQL_UnsupportedAuthentication" xml:space="preserve">
-    <value>L'authentification '{0}' n'est pas prise en charge.</value>
-  </data>
-  <data name="SQL_CannotCreateAuthProvider" xml:space="preserve">
-    <value>Échec de l'instanciation d'un fournisseur d'authentification ayant le type '{1}' pour '{0}'.</value>
-  </data>
-  <data name="SQL_CannotCreateAuthInitializer" xml:space="preserve">
-    <value>Échec de l'instanciation d'un SqlAuthenticationInitializer ayant le type '{0}'.</value>
-  </data>
-  <data name="SQL_UnsupportedAuthenticationByProvider" xml:space="preserve">
-    <value>Le fournisseur '{0}' ne prend pas en charge l'authentification '{1}'.</value>
-  </data>
   <data name="SQL_CannotFindAuthProvider" xml:space="preserve">
     <value>Le fournisseur d'authentification est introuvable pour '{0}'.</value>
   </data>
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
     <value>Nous ne pouvons pas trouver un fournisseur d’authentification pour « {0} ». Inscrivez un fournisseur avec SqlAuthenticationProvider.SetProvider ou utilisez un package NuGet « Microsoft.Data.SqlClient.Extensions.Azure » compatible avec la découverte automatique, en activant cette dernière. La découverte automatique n’est pas disponible lorsqu’elle est désactivée au moment de la publication. Les applications JAT dont le code a été réduit nécessitent la préservation des contrats de réflexion. Les applications NativeAOT doivent désactiver les chemins d’amorçage basés sur la réflexion lors de la publication et inscrire explicitement les fournisseurs. Consultez les traces de Microsoft.Data.SqlClient.EventSource (niveau Informations, Mot clé de trace 0x2) pour identifier les échecs de configuration ou de chargement de l’extension Azure.</value>
-  </data>
-  <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>Le paramètre « useWamBroker » nécessite le package « Microsoft.Data.SqlClient.Extensions.Azure » pour exposer « Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions ». Mettez à niveau le package « Microsoft.Data.SqlClient.Extensions.Azure » vers la version 7.0.2 qui inclut ce type.</value>
   </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>Le paramètre « {0} » ne peut pas être Null ou vide.</value>
