@@ -6,12 +6,12 @@
 
   <!-- .NET Framework Dependencies -->
   <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
-    <PackageVersion Include="Microsoft.Data.SqlClient.SNI" Version="6.0.2" />
+    <PackageVersion Include="Microsoft.Data.SqlClient.SNI" Version="6.0.4" />
   </ItemGroup>
   
   <!-- .NET Runtime Dependencies -->
   <ItemGroup Condition="!$(TargetFramework.StartsWith('net4'))">
-    <PackageVersion Include="Microsoft.Data.SqlClient.SNI.runtime" Version="6.0.2" />
+    <PackageVersion Include="Microsoft.Data.SqlClient.SNI.runtime" Version="6.0.4" />
   </ItemGroup>
 </Project>
   
