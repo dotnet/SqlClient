@@ -19,6 +19,8 @@ using Microsoft.SqlServer.TDS.PreLogin;
 using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
 
+using static Microsoft.Data.SqlClient.UnitTests.Utilities.EncryptionInfoTestData;
+
 namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 {
     /// <summary>
@@ -574,7 +576,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             // Certificate validation failed after the protocol was agreed; the observed values
             // are kept.
             AssertObservedNegotiation(info);
-            Assert.True(connection.EncryptionInfo.IsEmpty);
+            AssertEmpty(connection.EncryptionInfo);
             AssertNoLeak(ex, info);
         }
 
@@ -639,9 +641,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// </summary>
         private static void AssertNoCertificateCaptured(SqlConnectionEncryptionInfo info)
         {
-            Assert.Null(info.PresentedServerCertificateRawData);
-            Assert.Null(info.GetServerCertificate());
-            Assert.True(info.IsEmpty);
+            AssertEmpty(info);
         }
 
         /// <summary>
@@ -669,8 +669,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         {
             Assert.Equal(SqlConnectionEncryptionMode.Full, info.NegotiatedEncryptionMode);
             Assert.Equal(SslProtocols.Tls12, info.NegotiatedEncryptionProtocol);
-            Assert.NotNull(info.NegotiatedCipherSuiteId);
-            Assert.InRange(info.NegotiatedCipherSuiteId!.Value, 1, 0xFFFF);
+            Assert.InRange(Assert.NotNull(info.NegotiatedCipherSuiteId), 1, 0xFFFF);
         }
 
         /// <summary>
@@ -814,7 +813,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// </summary>
         private static void AssertNoLeak(SqlException ex, SqlConnectionEncryptionInfo info)
         {
-            byte[] der = info.PresentedServerCertificateRawData!.Value.ToArray();
+            byte[] der = Assert.NotNull(info.PresentedServerCertificateRawData).ToArray();
             string[] encodings =
             {
                 Convert.ToHexString(der),

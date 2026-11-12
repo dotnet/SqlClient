@@ -706,7 +706,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
             Assert.Null(snapshot.NegotiatedEncryptionMode);
             Assert.Null(snapshot.NegotiatedEncryptionProtocol);
             Assert.Equal(serverCert.RawData,
-                snapshot.PresentedServerCertificateRawData!.Value.ToArray());
+                Assert.NotNull(snapshot.PresentedServerCertificateRawData).ToArray());
             using (X509Certificate2? roundTripped = snapshot.GetServerCertificate())
             {
                 Assert.NotNull(roundTripped);
