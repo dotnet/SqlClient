@@ -16,6 +16,7 @@ using Microsoft.Data.SqlClient.Tests.Common.Fixtures;
 using Microsoft.SqlServer.TDS.PreLogin;
 using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
+using static Microsoft.Data.SqlClient.UnitTests.Utilities.EncryptionInfoTestData;
 
 namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 {
@@ -85,7 +86,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             // Arrange
             using TdsServer server = StartServer(serverEncryption);
             using SqlConnection connection = new(BuildConnectionString(server.EndPoint.Port));
-            Assert.True(connection.EncryptionInfo.IsEmpty);
+            AssertEmpty(connection.EncryptionInfo);
 
             // Act
             connection.Open();
@@ -109,7 +110,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             // Arrange
             using TdsServer server = StartServer(serverEncryption);
             using SqlConnection connection = new(BuildConnectionString(server.EndPoint.Port));
-            Assert.True(connection.EncryptionInfo.IsEmpty);
+            AssertEmpty(connection.EncryptionInfo);
 
             // Act
             await connection.OpenAsync();
@@ -183,7 +184,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             // Assert
             Assert.Same(SqlConnectionEncryptionInfo.Empty, afterClose);
             AssertNegotiated(afterReopen, ServerEncryption.Off);
-            Assert.True(afterDispose.IsEmpty);
+            AssertEmpty(afterDispose);
             // The snapshot the caller already holds is immutable.
             AssertNegotiated(held, ServerEncryption.Off);
         }
@@ -213,7 +214,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             // Assert
             Assert.Same(SqlConnectionEncryptionInfo.Empty, afterClose);
             AssertNegotiated(afterReopen, ServerEncryption.Off);
-            Assert.True(afterDispose.IsEmpty);
+            AssertEmpty(afterDispose);
             // The snapshot the caller already holds is immutable.
             AssertNegotiated(held, ServerEncryption.Off);
         }
@@ -250,7 +251,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 Assert.Equal(preLoginCount, server.PreLoginCount);
                 AssertNegotiated(first, ServerEncryption.Off);
                 Assert.Same(first, published);
-                Assert.True(reused.EncryptionInfo.IsEmpty);
+                AssertEmpty(reused.EncryptionInfo);
             }
             finally
             {
@@ -291,7 +292,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 Assert.Equal(preLoginCount, server.PreLoginCount);
                 AssertNegotiated(first, ServerEncryption.Off);
                 Assert.Same(first, published);
-                Assert.True(reused.EncryptionInfo.IsEmpty);
+                AssertEmpty(reused.EncryptionInfo);
             }
             finally
             {
@@ -397,8 +398,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             SqlException ex = Assert.Throws<SqlException>(() => connection.Open());
 
             // Assert
-            Assert.True(ex.EncryptionInfo.IsEmpty);
-            Assert.True(connection.EncryptionInfo.IsEmpty);
+            AssertEmpty(ex.EncryptionInfo);
+            AssertEmpty(connection.EncryptionInfo);
         }
 
         /// <summary>
@@ -414,8 +415,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             SqlException ex = await Assert.ThrowsAsync<SqlException>(() => connection.OpenAsync());
 
             // Assert
-            Assert.True(ex.EncryptionInfo.IsEmpty);
-            Assert.True(connection.EncryptionInfo.IsEmpty);
+            AssertEmpty(ex.EncryptionInfo);
+            AssertEmpty(connection.EncryptionInfo);
         }
 
         /// <summary>
@@ -433,7 +434,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             SqlException ex = Assert.Throws<SqlException>(() => connection.Open());
 
             // Assert
-            Assert.True(ex.EncryptionInfo.IsEmpty);
+            AssertEmpty(ex.EncryptionInfo);
         }
 
         /// <summary>
@@ -451,7 +452,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             SqlException ex = await Assert.ThrowsAsync<SqlException>(() => connection.OpenAsync());
 
             // Assert
-            Assert.True(ex.EncryptionInfo.IsEmpty);
+            AssertEmpty(ex.EncryptionInfo);
         }
 
         /// <summary>
@@ -560,7 +561,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             // Assert
             Assert.True(router.PreLoginCount >= 1);
-            Assert.True(ex.EncryptionInfo.IsEmpty);
+            AssertEmpty(ex.EncryptionInfo);
         }
 
         /// <summary>
@@ -579,7 +580,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
             // Assert
             Assert.True(router.PreLoginCount >= 1);
-            Assert.True(ex.EncryptionInfo.IsEmpty);
+            AssertEmpty(ex.EncryptionInfo);
         }
 
         /// <summary>
@@ -867,8 +868,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             int expectedLogins)
         {
             Assert.Equal(expectedLogins, server.Login7Count);
-            Assert.True(ex.EncryptionInfo.IsEmpty);
-            Assert.True(connection.EncryptionInfo.IsEmpty);
+            AssertEmpty(ex.EncryptionInfo);
+            AssertEmpty(connection.EncryptionInfo);
             Assert.NotEqual(ConnectionState.Open, connection.State);
 
             // Depending on teardown ordering, the server may report the failure wrapped by the
@@ -1062,7 +1063,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(18456, ex.Number);
             AssertNegotiated(ex.EncryptionInfo, serverEncryption);
             AssertCertificateFieldsNull(ex.EncryptionInfo);
-            Assert.True(connection.EncryptionInfo.IsEmpty);
+            AssertEmpty(connection.EncryptionInfo);
             Assert.DoesNotContain("Tls12", ex.Message);
             Assert.DoesNotContain("LoginOnly", ex.Message);
         }
@@ -1081,7 +1082,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Null(ex.EncryptionInfo.NegotiatedEncryptionMode);
             Assert.Null(ex.EncryptionInfo.NegotiatedEncryptionProtocol);
             Assert.Null(ex.EncryptionInfo.NegotiatedCipherSuiteId);
-            Assert.True(connection.EncryptionInfo.IsEmpty);
+            AssertEmpty(connection.EncryptionInfo);
         }
 
         /// <summary>

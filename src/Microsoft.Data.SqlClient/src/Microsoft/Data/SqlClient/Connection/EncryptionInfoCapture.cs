@@ -2,6 +2,9 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if NET
+using System.Net.Security;
+#endif
 using System.Security.Authentication;
 
 #nullable enable
@@ -124,7 +127,9 @@ namespace Microsoft.Data.SqlClient.Connection
         /// <see cref="SqlConnectionEncryptionInfo.Empty"/> when nothing was captured.
         /// </summary>
         /// <remarks>
-        /// Certificate fields are never inferred here; they remain unavailable.
+        /// Certificate fields are never inferred here; they remain unavailable. On .NET the captured
+        /// identifier, already limited to <c>0</c>..<c>0xFFFF</c> by <see cref="RecordCipherSuite"/>,
+        /// is converted to <c>TlsCipherSuite</c> at this boundary.
         /// </remarks>
         public SqlConnectionEncryptionInfo ToSnapshot() =>
             HasValues
@@ -134,7 +139,11 @@ namespace Microsoft.Data.SqlClient.Connection
                     presentedServerCertificate: null,
                     validationErrors: null,
                     chainStatus: null,
+#if NET
+                    negotiatedCipherSuite: (TlsCipherSuite?)CipherSuite)
+#else
                     negotiatedCipherSuite: CipherSuite)
+#endif
                 : SqlConnectionEncryptionInfo.Empty;
     }
 }
