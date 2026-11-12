@@ -45,14 +45,17 @@ namespace Microsoft.Data.SqlClient
             ReliablePutStateObject();
         }
 
+        // Errors can arrive after the final DONEPROC, when the index is past the last command.
         internal SqlBatchCommand GetBatchCommand(int index) =>
-            _RPCList[index].batchCommand;
+            _RPCList is not null && index >= 0 && index < _RPCList.Count
+                ? _RPCList[index].batchCommand
+                : null;
 
         // @TODO: This should be a property.
         internal SqlBatchCommand GetCurrentBatchCommand()
         {
             return _batchRPCMode
-                ? _RPCList[_currentlyExecutingBatch].batchCommand
+                ? GetBatchCommand(_currentlyExecutingBatch)
                 : _rpcArrayOf1?[0].batchCommand;
         }
 
