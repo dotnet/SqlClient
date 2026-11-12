@@ -169,7 +169,14 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
                 if (_sslStream != null)
                 {
-                    _sslStream.Dispose();
+                    try
+                    {
+                        _sslStream.Dispose();
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                        // The SSL stream flushes the pipe it leaves open, which a handshake timeout has already closed.
+                    }
                     _sslStream = null;
                 }
 
@@ -329,26 +336,37 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             _sendCallback = sendCallback;
         }
 
-        public override uint EnableSsl(uint options)
+        public override uint EnableSsl(uint options, CancellationToken cancellationToken)
         {
             using (SqlClientSNIEventScope.Create(nameof(SniNpHandle)))
             {
                 _validateCert = (options & TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE) != 0;
                 try
                 {
-                    if (_tlsFirst)
+                    // The handshake reads block on the pipe, so closing the transport is what bounds them.
+                    using (cancellationToken.UnsafeRegister(static stream => ((Stream)stream).Dispose(), _pipeStream))
                     {
-                        AuthenticateAsClient(_sslStream, _targetServer, null);
+                        if (_tlsFirst)
+                        {
+                            AuthenticateAsClient(_sslStream, _targetServer, null);
+                        }
+                        else
+                        {
+                            // TODO: Resolve whether to send _serverNameIndication or _targetServer. _serverNameIndication currently results in error. Why?
+                            _sslStream.AuthenticateAsClient(_targetServer, null, s_supportedProtocols, false);
+                        }
                     }
-                    else
-                    {
-                        // TODO: Resolve whether to send _serverNameIndication or _targetServer. _serverNameIndication currently results in error. Why?
-                        _sslStream.AuthenticateAsClient(_targetServer, null, s_supportedProtocols, false);
-                    }
+                    // A timeout landing after the handshake but before the registration ended has already closed the transport.
+                    cancellationToken.ThrowIfCancellationRequested();
                     if (_sslOverTdsStream is not null)
                     {
                         _sslOverTdsStream.FinishHandshake();
                     }
+                }
+                catch (Exception e) when (cancellationToken.IsCancellationRequested)
+                {
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.ERR, "Connection Id {0}, TLS handshake did not complete within the connection timeout: {1}", args0: ConnectionId, args1: e.Message);
+                    return SniCommon.ReportSNIError(SniProviders.NP_PROV, (int)TdsEnums.SNI_WAIT_TIMEOUT, SniCommon.ConnTimeoutError, Strings.SNI_ERROR_11);
                 }
                 catch (AuthenticationException aue)
                 {
