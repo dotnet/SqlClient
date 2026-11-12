@@ -5,7 +5,7 @@
 namespace Microsoft.Data.SqlClient
 {
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionMode.xml' path='docs/members[@name="SqlConnectionEncryptionMode"]/SqlConnectionEncryptionMode/*' />
-    public enum SqlConnectionEncryptionMode
+    public enum SqlConnectionEncryptionMode : byte
     {
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionMode.xml' path='docs/members[@name="SqlConnectionEncryptionMode"]/None/*' />
         None = 0,

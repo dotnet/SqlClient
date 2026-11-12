@@ -1325,11 +1325,13 @@ public sealed class SqlConnectionEncryptionInfo
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/ValidationErrors/*'/>
     public Microsoft.Data.SqlClient.SqlServerCertificateValidationErrors? ValidationErrors { get { throw null; } }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/GetServerCertificate/*'/>
-    public System.Security.Cryptography.X509Certificates.X509Certificate2 GetServerCertificate() { throw null; }
+#nullable enable annotations
+    public System.Security.Cryptography.X509Certificates.X509Certificate2? GetServerCertificate() { throw null; }
+#nullable restore
 }
 
 /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionMode.xml' path='docs/members[@name="SqlConnectionEncryptionMode"]/SqlConnectionEncryptionMode/*'/>
-public enum SqlConnectionEncryptionMode
+public enum SqlConnectionEncryptionMode : byte
 {
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionMode.xml' path='docs/members[@name="SqlConnectionEncryptionMode"]/None/*'/>
     None = 0,

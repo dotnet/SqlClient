@@ -9,7 +9,7 @@
           Instances are obtained from <see cref="P:Microsoft.Data.SqlClient.SqlConnection.EncryptionInfo" /> or <see cref="P:Microsoft.Data.SqlClient.SqlException.EncryptionInfo" />. Applications cannot create instances directly.
         </para>
         <para>
-          Every property is nullable, and <see cref="M:Microsoft.Data.SqlClient.SqlConnectionEncryptionInfo.GetServerCertificate" /> can return <see langword="null" />. A <see langword="null" /> value means the information is not available (for example, the connection has not reached the relevant phase, the information was not captured on the current code path, or the driver does not yet populate it). A <see langword="null" /> value never means that encryption or certificate validation succeeded.
+          Every property is nullable, and <see cref="M:Microsoft.Data.SqlClient.SqlConnectionEncryptionInfo.GetServerCertificate" /> can return <see langword="null" />. A <see langword="null" /> value means the information was not available when the snapshot was created (for example, the connection had not reached the relevant phase, or the network implementation in use does not report it). The presence or absence of <see langword="null" /> values does not indicate that encryption or certificate validation succeeded or failed.
         </para>
         <para>
           This type is intended for diagnostics only. It must not be used to make security decisions; the driver's own validation is authoritative.
@@ -35,11 +35,11 @@
         Gets the TLS cipher suite that the server selected for the encrypted channel, as a <c>System.Net.Security.TlsCipherSuite</c>. This property is available only on .NET.
       </summary>
       <value>
-        The value of <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptionInfo.NegotiatedCipherSuiteId" /> converted to <c>System.Net.Security.TlsCipherSuite</c>, or <see langword="null" /> if the cipher suite is not available.
+        A <c>System.Net.Security.TlsCipherSuite</c> value, or <see langword="null" /> if the cipher suite is not available.
       </value>
       <remarks>
         <para>
-          This property returns the same value as <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptionInfo.NegotiatedCipherSuiteId" />, using the type of <c>System.Net.Security.SslStream.NegotiatedCipherSuite</c>. An identifier that has no named member in the enumeration is preserved numerically and is not discarded. The <see langword="null" /> and failure semantics are the same as for <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptionInfo.NegotiatedCipherSuiteId" />.
+          This property represents the same cipher suite as <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptionInfo.NegotiatedCipherSuiteId" />, using the type of <c>System.Net.Security.SslStream.NegotiatedCipherSuite</c>. An identifier that has no named member in the enumeration is preserved numerically. When one property is <see langword="null" />, so is the other.
         </para>
         <para>
           <c>TlsCipherSuite</c> is an unsigned 16-bit enumeration, so this property is not CLS-compliant. Use <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptionInfo.NegotiatedCipherSuiteId" /> from CLS-compliant code or from libraries that target .NET Standard or .NET Framework.
@@ -105,7 +105,7 @@
         A combination of <see cref="T:Microsoft.Data.SqlClient.SqlServerCertificateValidationErrors" /> values, or <see langword="null" /> if certificate validation did not run or its outcome is not available.
       </value>
       <remarks>
-        A value of <see cref="F:Microsoft.Data.SqlClient.SqlServerCertificateValidationErrors.None" /> means validation ran and no errors were observed, which is distinct from <see langword="null" />. When validation is bypassed (for example, with <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.TrustServerCertificate" />), this value can be <see langword="null" />.
+        A value of <see cref="F:Microsoft.Data.SqlClient.SqlServerCertificateValidationErrors.None" /> means validation ran and no errors were observed, which is distinct from <see langword="null" />. When the driver does not validate the server certificate (for example, when <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.TrustServerCertificate" /> is <see langword="true" />), this value is <see langword="null" />, even if the server presented a certificate.
       </remarks>
     </ValidationErrors>
     <GetServerCertificate>
@@ -129,7 +129,7 @@
           This method is intended for diagnostics only. Its result is not a trust decision: a returned certificate does not mean that it passed validation, and it must not be used to override or bypass the driver's certificate validation.
         </para>
         <para>
-          This method does not throw. It does not perform a handshake or certificate validation.
+          If the captured certificate cannot be decoded, this method returns <see langword="null" />. It does not perform a handshake or certificate validation.
         </para>
       </remarks>
     </GetServerCertificate>

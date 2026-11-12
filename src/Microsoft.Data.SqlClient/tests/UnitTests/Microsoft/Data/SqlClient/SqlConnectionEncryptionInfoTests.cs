@@ -3,61 +3,19 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Runtime.Serialization;
+using System.Reflection;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using Xunit;
+using static Microsoft.Data.SqlClient.UnitTests.Utilities.EncryptionInfoTestData;
 
 namespace Microsoft.Data.SqlClient
 {
     /// <summary>
-    /// Unit tests for the <see cref="SqlConnectionEncryptionInfo"/> public API surface and the
-    /// <see cref="SqlConnection.EncryptionInfo"/> and <see cref="SqlException.EncryptionInfo"/>
-    /// getters.
+    /// Unit tests for the <see cref="SqlConnectionEncryptionInfo"/> public API surface.
     /// </summary>
     public class SqlConnectionEncryptionInfoTests
     {
-        /// <summary>
-        /// Server version reported by exceptions created through the internal factories.
-        /// </summary>
-        private const string ServerVersion = "16.00.1000";
-
-        /// <summary>
-        /// Base64 DER encoding of a public-only, self-signed ECDSA P-256 test certificate
-        /// (CN=encryption-info.test). It has no private key and is used only to verify DER
-        /// round-tripping.
-        /// </summary>
-        private const string SampleCertificateBase64 =
-            "MIIBNDCB2qADAgECAggohG/gEdxs1TAKBggqhkjOPQQDAjAfMR0wGwYDVQQDExRlbmNyeXB0aW9uLWluZm8u" +
-            "dGVzdDAgFw0yNjAxMDEwMDAwMDBaGA8yMTI2MDEwMTAwMDAwMFowHzEdMBsGA1UEAxMUZW5jcnlwdGlvbi1p" +
-            "bmZvLnRlc3QwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAATKtC9pE1F5JC1ciq1W/ANr5OBPgXrlvMpmPXMr" +
-            "ectPyl630QJbCUT640lSLXUfdF3/8iTglUTiCyxg7SNUztJKMAoGCCqGSM49BAMCA0kAMEYCIQDoHA2MzlvfTWHm" +
-            "n8Iioi8sMoKAnV/DcSrw50GwJf+fGAIhAPCezMdXBEwwpf4MU2fkmifrj36YES+JJM49BDRItkIl";
-
-        /// <summary>
-        /// SHA-1 thumbprint of the sample certificate, used to confirm the round-tripped identity.
-        /// </summary>
-        private const string SampleCertificateThumbprint = "60820F552FF4F3CAAEC10B18EB468A16F01D7313";
-
-        /// <summary>
-        /// Subject distinguished name of the sample certificate.
-        /// </summary>
-        private const string SampleCertificateSubject = "CN=encryption-info.test";
-
-        /// <summary>
-        /// IANA identifier for TLS_AES_256_GCM_SHA384.
-        /// </summary>
-        private const int SampleCipherSuite = 0x1302;
-
-        /// <summary>
-        /// Creates a new array holding the DER encoding of the sample certificate.
-        /// </summary>
-        /// <returns>A new array that the caller may mutate.</returns>
-        private static byte[] CreateSampleCertificate() =>
-            Convert.FromBase64String(SampleCertificateBase64);
-
         #region Empty snapshot
 
         /// <summary>
@@ -66,10 +24,11 @@ namespace Microsoft.Data.SqlClient
         [Fact]
         public void Empty_AllPropertiesAreNull()
         {
+            // Act
             SqlConnectionEncryptionInfo info = SqlConnectionEncryptionInfo.Empty;
 
+            // Assert
             AssertEmpty(info);
-            Assert.True(info.IsEmpty);
         }
 
         /// <summary>
@@ -78,6 +37,7 @@ namespace Microsoft.Data.SqlClient
         [Fact]
         public void Empty_IsSharedInstance()
         {
+            // Act & Assert
             Assert.Same(SqlConnectionEncryptionInfo.Empty, SqlConnectionEncryptionInfo.Empty);
         }
 
@@ -87,10 +47,11 @@ namespace Microsoft.Data.SqlClient
         [Fact]
         public void Constructor_AllNull_IsEmpty()
         {
+            // Act
             SqlConnectionEncryptionInfo info = new(null, null, null, null, null);
 
+            // Assert
             AssertEmpty(info);
-            Assert.True(info.IsEmpty);
         }
 
         /// <summary>
@@ -99,8 +60,10 @@ namespace Microsoft.Data.SqlClient
         [Fact]
         public void Type_IsSealedWithNoPublicConstructors()
         {
+            // Act
             Type type = typeof(SqlConnectionEncryptionInfo);
 
+            // Assert
             Assert.True(type.IsSealed);
             Assert.Empty(type.GetConstructors());
         }
@@ -111,237 +74,15 @@ namespace Microsoft.Data.SqlClient
         [Fact]
         public void Type_PublicPropertiesAreReadOnly()
         {
-            foreach (var property in typeof(SqlConnectionEncryptionInfo).GetProperties())
+            // Act
+            PropertyInfo[] properties = typeof(SqlConnectionEncryptionInfo).GetProperties();
+
+            // Assert
+            foreach (PropertyInfo property in properties)
             {
                 Assert.True(property.CanRead, property.Name);
                 Assert.Null(property.GetSetMethod(nonPublic: true));
             }
-        }
-
-        #endregion
-
-        #region SqlConnection getter
-
-        /// <summary>
-        /// Verifies the getter returns a non-null empty snapshot on a new connection.
-        /// </summary>
-        [Fact]
-        public void SqlConnection_New_ReturnsEmptySnapshot()
-        {
-            using SqlConnection connection = new();
-
-            Assert.NotNull(connection.EncryptionInfo);
-            Assert.True(connection.EncryptionInfo.IsEmpty);
-        }
-
-        /// <summary>
-        /// Verifies the getter returns a non-null empty snapshot on a connection with a
-        /// connection string that has not been opened.
-        /// </summary>
-        [Fact]
-        public void SqlConnection_WithConnectionString_ReturnsEmptySnapshot()
-        {
-            using SqlConnection connection = new("Data Source=localhost;Encrypt=Strict");
-
-            AssertEmpty(connection.EncryptionInfo);
-        }
-
-        /// <summary>
-        /// Verifies the getter returns a non-null empty snapshot after the connection is closed.
-        /// </summary>
-        [Fact]
-        public void SqlConnection_Closed_ReturnsEmptySnapshot()
-        {
-            using SqlConnection connection = new("Data Source=localhost");
-            connection.Close();
-
-            AssertEmpty(connection.EncryptionInfo);
-        }
-
-        /// <summary>
-        /// Verifies the getter does not throw and returns a non-null empty snapshot after the
-        /// connection is disposed.
-        /// </summary>
-        [Fact]
-        public void SqlConnection_Disposed_ReturnsEmptySnapshot()
-        {
-            SqlConnection connection = new("Data Source=localhost");
-            connection.Dispose();
-
-            AssertEmpty(connection.EncryptionInfo);
-        }
-
-        #endregion
-
-        #region SqlException getter
-
-        /// <summary>
-        /// Verifies exceptions created via the error-collection factory return an empty snapshot.
-        /// </summary>
-        [Fact]
-        public void SqlException_CreateFromCollection_ReturnsEmptySnapshot()
-        {
-            SqlException exception = SqlException.CreateException(CreateErrorCollection(), ServerVersion);
-
-            AssertEmpty(exception.EncryptionInfo);
-        }
-
-        /// <summary>
-        /// Verifies exceptions created via the single-error factory return an empty snapshot.
-        /// </summary>
-        [Fact]
-        public void SqlException_CreateFromError_ReturnsEmptySnapshot()
-        {
-            SqlException exception = SqlException.CreateException(
-                CreateError(),
-                ServerVersion,
-                internalConnection: null,
-                innerException: new InvalidOperationException("inner"));
-
-            AssertEmpty(exception.EncryptionInfo);
-        }
-
-        /// <summary>
-        /// Verifies exceptions created via the connection-id factory return an empty snapshot.
-        /// </summary>
-        [Fact]
-        public void SqlException_CreateWithConnectionId_ReturnsEmptySnapshot()
-        {
-            SqlException exception = SqlException.CreateException(
-                CreateErrorCollection(),
-                ServerVersion,
-                Guid.NewGuid(),
-                innerException: null);
-
-            AssertEmpty(exception.EncryptionInfo);
-        }
-
-        /// <summary>
-        /// Verifies exceptions created via the batch-command factory return an empty snapshot.
-        /// </summary>
-        [Fact]
-        public void SqlException_CreateWithBatchCommand_ReturnsEmptySnapshot()
-        {
-            SqlException exception = SqlException.CreateException(
-                CreateErrorCollection(),
-                ServerVersion,
-                new SqlBatchCommand("SELECT 1"));
-
-            AssertEmpty(exception.EncryptionInfo);
-        }
-
-        /// <summary>
-        /// Verifies that a populated snapshot set internally is returned by the getter and is
-        /// preserved by <see cref="SqlException.InternalClone"/>.
-        /// </summary>
-        [Fact]
-        public void SqlException_PopulatedSnapshot_PreservedByInternalClone()
-        {
-            SqlConnectionEncryptionInfo info = CreatePopulated();
-            SqlException exception = SqlException.CreateException(CreateErrorCollection(), ServerVersion);
-            exception.EncryptionInfo = info;
-
-            SqlException clone = exception.InternalClone();
-
-            Assert.Same(info, exception.EncryptionInfo);
-            Assert.Same(info, clone.EncryptionInfo);
-        }
-
-        /// <summary>
-        /// Verifies that clearing the snapshot internally falls back to the empty snapshot.
-        /// </summary>
-        [Fact]
-        public void SqlException_SetNull_ReturnsEmptySnapshot()
-        {
-            SqlException exception = SqlException.CreateException(CreateErrorCollection(), ServerVersion);
-            exception.EncryptionInfo = CreatePopulated();
-            exception.EncryptionInfo = null!;
-
-            AssertEmpty(exception.EncryptionInfo);
-        }
-
-        /// <summary>
-        /// Verifies that a deserialized exception returns a non-null empty snapshot and that the
-        /// snapshot is not written to the serialized payload.
-        /// </summary>
-        [Fact]
-        public void SqlException_DataContractRoundTrip_ReturnsEmptySnapshot()
-        {
-            SqlException original = SqlException.CreateException(CreateErrorCollection(), ServerVersion);
-            original.EncryptionInfo = CreatePopulated();
-
-            // Exception.Data is backed by an internal dictionary type, and GetObjectData writes the
-            // error collection, so these types must be known to the serializer.
-            DataContractSerializer serializer = new(
-                typeof(SqlException),
-                new[]
-                {
-                    original.Data.GetType(),
-                    typeof(SqlErrorCollection),
-                    typeof(SqlError),
-                    typeof(List<object>),
-                });
-            using MemoryStream stream = new();
-            serializer.WriteObject(stream, original);
-
-            stream.Position = 0;
-            string payload = new StreamReader(stream).ReadToEnd();
-            Assert.DoesNotContain(nameof(SqlException.EncryptionInfo), payload);
-            Assert.DoesNotContain(
-                SampleCertificateThumbprint, payload, StringComparison.OrdinalIgnoreCase);
-            Assert.DoesNotContain(SampleCertificateBase64.Substring(0, 24), payload);
-            Assert.DoesNotContain("encryption-info.test", payload);
-
-            stream.Position = 0;
-            SqlException? roundTripped = serializer.ReadObject(stream) as SqlException;
-
-            Assert.NotNull(roundTripped);
-            Assert.Equal(original.Message, roundTripped.Message);
-            AssertEmpty(roundTripped.EncryptionInfo);
-        }
-
-#if NETFRAMEWORK
-        /// <summary>
-        /// Verifies BinaryFormatter serialization is unaffected by the new non-serialized field and
-        /// that the deserialized exception returns a non-null empty snapshot.
-        /// </summary>
-        [Fact]
-        public void SqlException_BinaryFormatterRoundTrip_ReturnsEmptySnapshot()
-        {
-            SqlException original = SqlException.CreateException(CreateErrorCollection(), ServerVersion);
-            original.EncryptionInfo = CreatePopulated();
-
-            var formatter = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
-            using MemoryStream stream = new();
-            formatter.Serialize(stream, original);
-            stream.Position = 0;
-            SqlException roundTripped = (SqlException)formatter.Deserialize(stream);
-
-            Assert.Equal(original.Message, roundTripped.Message);
-            AssertEmpty(roundTripped.EncryptionInfo);
-        }
-#endif
-
-        /// <summary>
-        /// Verifies that <see cref="Exception.Message"/> and <see cref="SqlException.ToString"/>
-        /// do not change when a populated snapshot is attached.
-        /// </summary>
-        [Fact]
-        public void SqlException_MessageAndToString_UnchangedByPopulatedSnapshot()
-        {
-            Guid connectionId = Guid.NewGuid();
-            SqlException withoutInfo = SqlException.CreateException(CreateErrorCollection(), ServerVersion, connectionId, null);
-            SqlException withInfo = SqlException.CreateException(CreateErrorCollection(), ServerVersion, connectionId, null);
-            withInfo.EncryptionInfo = CreatePopulated();
-
-            Assert.Equal(withoutInfo.Message, withInfo.Message);
-            Assert.Equal(withoutInfo.ToString(), withInfo.ToString());
-            Assert.DoesNotContain(SampleCertificateThumbprint, withInfo.ToString(), StringComparison.OrdinalIgnoreCase);
-            Assert.DoesNotContain(SampleCertificateThumbprint, withInfo.Message, StringComparison.OrdinalIgnoreCase);
-            Assert.DoesNotContain(SampleCertificateBase64.Substring(0, 24), withInfo.ToString());
-            Assert.DoesNotContain("encryption-info.test", withInfo.ToString());
-            Assert.DoesNotContain(nameof(SqlConnectionEncryptionInfo.GetServerCertificate), withInfo.ToString());
-            Assert.DoesNotContain(nameof(SqlConnectionEncryptionMode.Strict), withInfo.Message);
         }
 
         #endregion
@@ -354,25 +95,29 @@ namespace Microsoft.Data.SqlClient
         [Fact]
         public void Constructor_Populated_RoundTripsValues()
         {
+            // Act
             SqlConnectionEncryptionInfo info = CreatePopulated();
+            using X509Certificate2? certificate = info.GetServerCertificate();
 
+            // Assert
             Assert.Equal(SqlConnectionEncryptionMode.Strict, info.NegotiatedEncryptionMode);
             Assert.Equal(SslProtocols.Tls12, info.NegotiatedEncryptionProtocol);
             Assert.Equal(SampleCipherSuite, info.NegotiatedCipherSuiteId);
-            Assert.NotNull(info.PresentedServerCertificateRawData);
-            Assert.Equal(CreateSampleCertificate(), info.PresentedServerCertificateRawData!.Value.ToArray());
-            using (X509Certificate2? certificate = info.GetServerCertificate())
-            {
-                Assert.NotNull(certificate);
-                Assert.Equal(SampleCertificateThumbprint, certificate!.Thumbprint);
-            }
+#if NET
+            Assert.Equal(System.Net.Security.TlsCipherSuite.TLS_AES_256_GCM_SHA384, info.NegotiatedCipherSuite);
+#endif
+            ReadOnlyMemory<byte> rawData = Assert.NotNull(info.PresentedServerCertificateRawData);
+            Assert.Equal(CreateSampleCertificate(), rawData.ToArray());
+            Assert.NotNull(certificate);
+            Assert.Equal(SampleCertificateThumbprint, certificate.Thumbprint);
             Assert.Equal(SqlServerCertificateValidationErrors.HostNameMismatch, info.ValidationErrors);
             Assert.Equal(X509ChainStatusFlags.UntrustedRoot, info.ChainStatus);
             Assert.False(info.IsEmpty);
         }
 
         /// <summary>
-        /// Verifies that each field independently controls <see cref="SqlConnectionEncryptionInfo.IsEmpty"/>.
+        /// Verifies that each field independently controls <see cref="SqlConnectionEncryptionInfo.IsEmpty"/>,
+        /// and that the field that was supplied is the one reported.
         /// </summary>
         [Theory]
         [InlineData(0)]
@@ -383,14 +128,26 @@ namespace Microsoft.Data.SqlClient
         [InlineData(5)]
         public void Constructor_SingleFieldSet_IsNotEmpty(int fieldIndex)
         {
+            // Act
             SqlConnectionEncryptionInfo info = new(
                 fieldIndex == 0 ? SqlConnectionEncryptionMode.None : null,
                 fieldIndex == 1 ? SslProtocols.None : null,
                 fieldIndex == 2 ? CreateSampleCertificate() : null,
                 fieldIndex == 3 ? SqlServerCertificateValidationErrors.None : null,
                 fieldIndex == 4 ? X509ChainStatusFlags.NoError : null,
-                fieldIndex == 5 ? 0 : null);
+                fieldIndex == 5 ? ToConstructorCipherSuite(0) : null);
 
+            // Assert
+            object? supplied = fieldIndex switch
+            {
+                0 => info.NegotiatedEncryptionMode,
+                1 => info.NegotiatedEncryptionProtocol,
+                2 => info.PresentedServerCertificateRawData,
+                3 => info.ValidationErrors,
+                4 => info.ChainStatus,
+                _ => info.NegotiatedCipherSuiteId,
+            };
+            Assert.NotNull(supplied);
             Assert.False(info.IsEmpty);
         }
 
@@ -400,6 +157,7 @@ namespace Microsoft.Data.SqlClient
         [Fact]
         public void Constructor_ZeroValues_DistinctFromNull()
         {
+            // Act
             SqlConnectionEncryptionInfo info = new(
                 SqlConnectionEncryptionMode.None,
                 SslProtocols.None,
@@ -407,14 +165,11 @@ namespace Microsoft.Data.SqlClient
                 SqlServerCertificateValidationErrors.None,
                 X509ChainStatusFlags.NoError);
 
-            Assert.True(info.NegotiatedEncryptionMode.HasValue);
-            Assert.Equal(SqlConnectionEncryptionMode.None, info.NegotiatedEncryptionMode);
-            Assert.True(info.NegotiatedEncryptionProtocol.HasValue);
-            Assert.Equal(SslProtocols.None, info.NegotiatedEncryptionProtocol);
-            Assert.True(info.ValidationErrors.HasValue);
-            Assert.Equal(SqlServerCertificateValidationErrors.None, info.ValidationErrors);
-            Assert.True(info.ChainStatus.HasValue);
-            Assert.Equal(X509ChainStatusFlags.NoError, info.ChainStatus);
+            // Assert
+            Assert.Equal(SqlConnectionEncryptionMode.None, Assert.NotNull(info.NegotiatedEncryptionMode));
+            Assert.Equal(SslProtocols.None, Assert.NotNull(info.NegotiatedEncryptionProtocol));
+            Assert.Equal(SqlServerCertificateValidationErrors.None, Assert.NotNull(info.ValidationErrors));
+            Assert.Equal(X509ChainStatusFlags.NoError, Assert.NotNull(info.ChainStatus));
             Assert.Null(info.PresentedServerCertificateRawData);
             Assert.Null(info.GetServerCertificate());
         }
@@ -425,6 +180,7 @@ namespace Microsoft.Data.SqlClient
         [Fact]
         public void Constructor_FlagCombinations_RoundTrip()
         {
+            // Arrange
             const SqlServerCertificateValidationErrors errors =
                 SqlServerCertificateValidationErrors.HostNameMismatch |
                 SqlServerCertificateValidationErrors.ChainError |
@@ -434,13 +190,17 @@ namespace Microsoft.Data.SqlClient
                 X509ChainStatusFlags.NotTimeValid |
                 X509ChainStatusFlags.PartialChain;
 
+            // Act
             SqlConnectionEncryptionInfo info = new(null, null, null, errors, chain);
 
-            Assert.Equal(errors, info.ValidationErrors);
-            Assert.True(info.ValidationErrors!.Value.HasFlag(SqlServerCertificateValidationErrors.ChainError));
-            Assert.False(info.ValidationErrors!.Value.HasFlag(SqlServerCertificateValidationErrors.ServerCertificateMissing));
-            Assert.Equal(chain, info.ChainStatus);
-            Assert.True(info.ChainStatus!.Value.HasFlag(X509ChainStatusFlags.PartialChain));
+            // Assert
+            SqlServerCertificateValidationErrors actualErrors = Assert.NotNull(info.ValidationErrors);
+            Assert.Equal(errors, actualErrors);
+            Assert.True(actualErrors.HasFlag(SqlServerCertificateValidationErrors.ChainError));
+            Assert.False(actualErrors.HasFlag(SqlServerCertificateValidationErrors.ServerCertificateMissing));
+            X509ChainStatusFlags actualChain = Assert.NotNull(info.ChainStatus);
+            Assert.Equal(chain, actualChain);
+            Assert.True(actualChain.HasFlag(X509ChainStatusFlags.PartialChain));
         }
 
         /// <summary>
@@ -450,12 +210,19 @@ namespace Microsoft.Data.SqlClient
         [Fact]
         public void Constructor_NumericProtocolValue_IsPreserved()
         {
+            // Arrange
             const SslProtocols tls13 = (SslProtocols)0x3000;
 
+            // Act
             SqlConnectionEncryptionInfo info = new(SqlConnectionEncryptionMode.Strict, tls13, null, null, null);
 
-            Assert.Equal(0x3000, (int)info.NegotiatedEncryptionProtocol!.Value);
+            // Assert
+            Assert.Equal(0x3000, (int)Assert.NotNull(info.NegotiatedEncryptionProtocol));
         }
+
+        #endregion
+
+        #region Negotiated cipher suite
 
         /// <summary>
         /// Verifies that the negotiated cipher suite defaults to null (not available) when it is not
@@ -464,8 +231,10 @@ namespace Microsoft.Data.SqlClient
         [Fact]
         public void NegotiatedCipherSuite_NotSupplied_IsNull()
         {
+            // Act
             SqlConnectionEncryptionInfo info = new(SqlConnectionEncryptionMode.Full, SslProtocols.Tls12, null, null, null);
 
+            // Assert
             Assert.Null(info.NegotiatedCipherSuiteId);
 #if NET
             Assert.Null(info.NegotiatedCipherSuite);
@@ -478,24 +247,28 @@ namespace Microsoft.Data.SqlClient
         /// A value of zero (TLS_NULL_WITH_NULL_NULL) is distinct from null.
         /// </summary>
         [Theory]
-        [InlineData(0x0000)]
-        [InlineData(0x1301)]
-        [InlineData(0x1302)]
-        [InlineData(0xC030)]
-        [InlineData(0xFFFF)]
-        public void NegotiatedCipherSuite_Value_RoundTrips(int cipherSuite)
+        [InlineData((ushort)0x0000)]
+        [InlineData((ushort)0x1301)]
+        [InlineData((ushort)0x1302)]
+        [InlineData((ushort)0xC030)]
+        [InlineData((ushort)0xFFFF)]
+        public void NegotiatedCipherSuite_Value_RoundTrips(ushort cipherSuite)
         {
-            SqlConnectionEncryptionInfo info = new(null, null, null, null, null, cipherSuite);
+            // Act
+            SqlConnectionEncryptionInfo info = CreateWithCipherSuite(cipherSuite);
 
-            Assert.Equal(cipherSuite, info.NegotiatedCipherSuiteId);
+            // Assert
+            Assert.Equal((int)cipherSuite, info.NegotiatedCipherSuiteId);
 #if NET
             Assert.Equal((System.Net.Security.TlsCipherSuite)cipherSuite, info.NegotiatedCipherSuite);
 #endif
             Assert.False(info.IsEmpty);
         }
 
+#if NETFRAMEWORK
         /// <summary>
-        /// Verifies that a value outside the 16-bit IANA identifier range is rejected.
+        /// Verifies that a value outside the 16-bit IANA identifier range is rejected. On .NET the
+        /// constructor takes a <c>TlsCipherSuite</c>, so such a value cannot be supplied.
         /// </summary>
         [Theory]
         [InlineData(-1)]
@@ -503,11 +276,53 @@ namespace Microsoft.Data.SqlClient
         [InlineData(int.MaxValue)]
         public void Constructor_InvalidCipherSuite_Throws(int cipherSuite)
         {
+            // Act
             ArgumentOutOfRangeException ex = Assert.Throws<ArgumentOutOfRangeException>(
                 () => new SqlConnectionEncryptionInfo(null, null, null, null, null, cipherSuite));
 
+            // Assert
             Assert.Equal("negotiatedCipherSuite", ex.ParamName);
         }
+#endif
+
+        /// <summary>
+        /// Verifies that a valid 16-bit identifier that is not a registered cipher suite or has no
+        /// named <c>TlsCipherSuite</c> member (for example, a GREASE value) is preserved numerically
+        /// and not filtered out.
+        /// </summary>
+        [Theory]
+        [InlineData((ushort)0x0A0A)]
+        [InlineData((ushort)0xF00F)]
+        [InlineData((ushort)0xFAFA)]
+        public void NegotiatedCipherSuite_UnknownIdentifier_IsPreserved(ushort cipherSuite)
+        {
+            // Act
+            SqlConnectionEncryptionInfo info = CreateWithCipherSuite(cipherSuite);
+
+            // Assert
+            Assert.Equal((int)cipherSuite, info.NegotiatedCipherSuiteId);
+#if NET
+            Assert.False(Enum.IsDefined(typeof(System.Net.Security.TlsCipherSuite), cipherSuite));
+            Assert.Equal((System.Net.Security.TlsCipherSuite)cipherSuite, info.NegotiatedCipherSuite);
+#endif
+        }
+
+#if NET
+        /// <summary>
+        /// Verifies that a known IANA identifier maps to the matching named <c>TlsCipherSuite</c> member.
+        /// </summary>
+        [Fact]
+        public void NegotiatedCipherSuite_KnownIdentifier_MapsToNamedMember()
+        {
+            // Act
+            SqlConnectionEncryptionInfo info = new(
+                null, null, null, null, null, System.Net.Security.TlsCipherSuite.TLS_AES_256_GCM_SHA384);
+
+            // Assert
+            Assert.Equal(System.Net.Security.TlsCipherSuite.TLS_AES_256_GCM_SHA384, info.NegotiatedCipherSuite);
+            Assert.Equal(0x1302, info.NegotiatedCipherSuiteId);
+        }
+#endif
 
         /// <summary>
         /// Verifies that <c>NegotiatedCipherSuiteId</c> is a read-only <c>int?</c> on every target
@@ -517,16 +332,20 @@ namespace Microsoft.Data.SqlClient
         [Fact]
         public void NegotiatedCipherSuiteId_PropertyShape_IsSameOnEveryTargetFramework()
         {
-            System.Reflection.PropertyInfo? property =
+            // Act
+            PropertyInfo? property =
                 typeof(SqlConnectionEncryptionInfo).GetProperty(nameof(SqlConnectionEncryptionInfo.NegotiatedCipherSuiteId));
 
+            // Assert
             Assert.NotNull(property);
-            Assert.Equal(typeof(int?), property!.PropertyType);
+            Assert.Equal(typeof(int?), property.PropertyType);
             Assert.True(property.CanRead);
             Assert.False(property.CanWrite);
-            Assert.True(property.GetMethod!.IsPublic);
+            MethodInfo? getter = property.GetMethod;
+            Assert.NotNull(getter);
+            Assert.True(getter.IsPublic);
             Assert.Null(Attribute.GetCustomAttribute(property, typeof(CLSCompliantAttribute)));
-            Assert.Null(Attribute.GetCustomAttribute(property.GetMethod, typeof(CLSCompliantAttribute)));
+            Assert.Null(Attribute.GetCustomAttribute(getter, typeof(CLSCompliantAttribute)));
         }
 
         /// <summary>
@@ -536,18 +355,20 @@ namespace Microsoft.Data.SqlClient
         [Fact]
         public void NegotiatedCipherSuite_PropertyShape_MatchesTargetFramework()
         {
-            System.Reflection.PropertyInfo? property =
+            // Act
+            PropertyInfo? property =
                 typeof(SqlConnectionEncryptionInfo).GetProperty("NegotiatedCipherSuite");
 
+            // Assert
 #if NET
             Assert.NotNull(property);
-            Assert.Equal(typeof(System.Net.Security.TlsCipherSuite?), property!.PropertyType);
+            Assert.Equal(typeof(System.Net.Security.TlsCipherSuite?), property.PropertyType);
             Assert.True(property.CanRead);
             Assert.False(property.CanWrite);
             CLSCompliantAttribute? cls =
                 (CLSCompliantAttribute?)Attribute.GetCustomAttribute(property, typeof(CLSCompliantAttribute));
             Assert.NotNull(cls);
-            Assert.False(cls!.IsCompliant);
+            Assert.False(cls.IsCompliant);
 #else
             Assert.Null(property);
 #endif
@@ -559,60 +380,13 @@ namespace Microsoft.Data.SqlClient
         [Fact]
         public void Assembly_RemainsClsCompliant()
         {
+            // Act
             CLSCompliantAttribute? cls = (CLSCompliantAttribute?)Attribute.GetCustomAttribute(
                 typeof(SqlConnectionEncryptionInfo).Assembly, typeof(CLSCompliantAttribute));
 
+            // Assert
             Assert.NotNull(cls);
-            Assert.True(cls!.IsCompliant);
-        }
-
-#if NET
-        /// <summary>
-        /// Verifies that a known IANA identifier maps to the matching named <c>TlsCipherSuite</c> member.
-        /// </summary>
-        [Fact]
-        public void NegotiatedCipherSuite_KnownIdentifier_MapsToNamedMember()
-        {
-            SqlConnectionEncryptionInfo info = new(null, null, null, null, null, 0x1302);
-
-            Assert.Equal(System.Net.Security.TlsCipherSuite.TLS_AES_256_GCM_SHA384, info.NegotiatedCipherSuite);
-            Assert.Equal(0x1302, info.NegotiatedCipherSuiteId);
-        }
-#endif
-
-        /// <summary>
-        /// Verifies that a valid 16-bit identifier with no named <c>TlsCipherSuite</c> member (for
-        /// example, a GREASE value) is preserved numerically and not filtered out.
-        /// </summary>
-        [Theory]
-        [InlineData(0x0A0A)]
-        [InlineData(0xFAFA)]
-        public void NegotiatedCipherSuite_UnknownIdentifier_IsPreserved(int cipherSuite)
-        {
-            SqlConnectionEncryptionInfo info = new(null, null, null, null, null, cipherSuite);
-
-            Assert.Equal(cipherSuite, info.NegotiatedCipherSuiteId);
-#if NET
-            Assert.False(Enum.IsDefined(typeof(System.Net.Security.TlsCipherSuite), (ushort)cipherSuite));
-            Assert.Equal((System.Net.Security.TlsCipherSuite)cipherSuite, info.NegotiatedCipherSuite);
-#endif
-        }
-
-        /// <summary>
-        /// Verifies that a snapshot with a cipher suite is preserved by <see cref="SqlException"/> clone
-        /// and that the value does not leak into the exception message.
-        /// </summary>
-        [Fact]
-        public void NegotiatedCipherSuite_SqlException_ClonedAndNotInMessage()
-        {
-            SqlException ex = SqlException.CreateException(CreateErrorCollection(), ServerVersion);
-            ex.EncryptionInfo = CreatePopulated();
-
-            SqlException clone = ex.InternalClone();
-
-            Assert.Equal(SampleCipherSuite, clone.EncryptionInfo.NegotiatedCipherSuiteId);
-            Assert.DoesNotContain("NegotiatedCipherSuite", ex.ToString());
-            Assert.DoesNotContain("TLS_AES_256_GCM_SHA384", ex.ToString());
+            Assert.True(cls.IsCompliant);
         }
 
         #endregion
@@ -626,13 +400,17 @@ namespace Microsoft.Data.SqlClient
         [Fact]
         public void GetServerCertificate_PublicShape()
         {
+            // Arrange
             Type type = typeof(SqlConnectionEncryptionInfo);
-            System.Reflection.MethodInfo? method = type.GetMethod(
+
+            // Act
+            MethodInfo? method = type.GetMethod(
                 nameof(SqlConnectionEncryptionInfo.GetServerCertificate),
                 Type.EmptyTypes);
 
+            // Assert
             Assert.NotNull(method);
-            Assert.True(method!.IsPublic);
+            Assert.True(method.IsPublic);
             Assert.Equal(typeof(X509Certificate2), method.ReturnType);
             Assert.Null(type.GetProperty("PresentedServerCertificateHash256"));
             Assert.Null(type.GetProperty("ServerCertificate"));
@@ -645,13 +423,16 @@ namespace Microsoft.Data.SqlClient
         [Fact]
         public void GetServerCertificate_RoundTripsCertificate()
         {
+            // Arrange
             byte[] der = CreateSampleCertificate();
             SqlConnectionEncryptionInfo info = new(null, null, der, null, null);
 
+            // Act
             using X509Certificate2? certificate = info.GetServerCertificate();
 
+            // Assert
             Assert.NotNull(certificate);
-            Assert.Equal(SampleCertificateThumbprint, certificate!.Thumbprint);
+            Assert.Equal(SampleCertificateThumbprint, certificate.Thumbprint);
             Assert.Equal(SampleCertificateSubject, certificate.Subject);
             Assert.Equal(der, certificate.RawData);
             Assert.False(certificate.HasPrivateKey);
@@ -664,20 +445,23 @@ namespace Microsoft.Data.SqlClient
         [Fact]
         public void GetServerCertificate_ReturnsNewInstancePerCall()
         {
+            // Arrange
             SqlConnectionEncryptionInfo info = CreatePopulated();
 
+            // Act
             X509Certificate2? first = info.GetServerCertificate();
             using X509Certificate2? second = info.GetServerCertificate();
-
             Assert.NotNull(first);
-            Assert.NotNull(second);
-            Assert.NotSame(first, second);
-
-            first!.Dispose();
-
+            first.Dispose();
             using X509Certificate2? third = info.GetServerCertificate();
-            Assert.Equal(SampleCertificateThumbprint, second!.Thumbprint);
-            Assert.Equal(SampleCertificateThumbprint, third!.Thumbprint);
+
+            // Assert
+            Assert.NotNull(second);
+            Assert.NotNull(third);
+            Assert.NotSame(first, second);
+            Assert.NotSame(second, third);
+            Assert.Equal(SampleCertificateThumbprint, second.Thumbprint);
+            Assert.Equal(SampleCertificateThumbprint, third.Thumbprint);
         }
 
         /// <summary>
@@ -687,14 +471,19 @@ namespace Microsoft.Data.SqlClient
         [Fact]
         public void GetServerCertificate_SourceMutation_DoesNotAffectSnapshot()
         {
+            // Arrange
             byte[] source = CreateSampleCertificate();
             SqlConnectionEncryptionInfo info = new(null, null, source, null, null);
 
+            // Act
             Array.Clear(source, 0, source.Length);
-
-            Assert.Equal(CreateSampleCertificate(), info.PresentedServerCertificateRawData!.Value.ToArray());
             using X509Certificate2? certificate = info.GetServerCertificate();
-            Assert.Equal(SampleCertificateThumbprint, certificate!.Thumbprint);
+
+            // Assert
+            ReadOnlyMemory<byte> rawData = Assert.NotNull(info.PresentedServerCertificateRawData);
+            Assert.Equal(CreateSampleCertificate(), rawData.ToArray());
+            Assert.NotNull(certificate);
+            Assert.Equal(SampleCertificateThumbprint, certificate.Thumbprint);
         }
 
         /// <summary>
@@ -704,70 +493,64 @@ namespace Microsoft.Data.SqlClient
         [Fact]
         public void GetServerCertificate_ReturnedRawDataMutation_DoesNotAffectSnapshot()
         {
+            // Arrange
             SqlConnectionEncryptionInfo info = CreatePopulated();
 
+            // Act
             using (X509Certificate2? certificate = info.GetServerCertificate())
             {
-                byte[] raw = certificate!.RawData;
+                Assert.NotNull(certificate);
+                byte[] raw = certificate.RawData;
                 Array.Clear(raw, 0, raw.Length);
             }
-
             using X509Certificate2? again = info.GetServerCertificate();
-            Assert.Equal(SampleCertificateThumbprint, again!.Thumbprint);
+
+            // Assert
+            Assert.NotNull(again);
+            Assert.Equal(SampleCertificateThumbprint, again.Thumbprint);
         }
 
         /// <summary>
-        /// Verifies that a cloned <see cref="SqlException"/> exposes an equivalent certificate,
-        /// and that disposing a certificate returned from one exception does not affect the other.
-        /// </summary>
-        [Fact]
-        public void GetServerCertificate_ExceptionClone_IsIsolated()
-        {
-            SqlException ex = SqlException.CreateException(CreateErrorCollection(), ServerVersion);
-            ex.EncryptionInfo = CreatePopulated();
-            SqlException clone = ex.InternalClone();
-
-            X509Certificate2? fromOriginal = ex.EncryptionInfo.GetServerCertificate();
-            using X509Certificate2? fromClone = clone.EncryptionInfo.GetServerCertificate();
-
-            Assert.NotSame(fromOriginal, fromClone);
-            fromOriginal!.Dispose();
-
-            Assert.Equal(SampleCertificateThumbprint, fromClone!.Thumbprint);
-            using X509Certificate2? again = ex.EncryptionInfo.GetServerCertificate();
-            Assert.Equal(SampleCertificateThumbprint, again!.Thumbprint);
-        }
-
-        /// <summary>
-        /// Verifies that null or empty certificate bytes are reported as unavailable.
+        /// Verifies that null and empty certificate bytes are both reported as unavailable and
+        /// produce an empty snapshot.
         /// </summary>
         [Fact]
         public void GetServerCertificate_NullOrEmpty_ReturnsNull()
         {
-            SqlConnectionEncryptionInfo fromNull =
-                new(SqlConnectionEncryptionMode.Full, null, null, null, null);
+            // Act
+            SqlConnectionEncryptionInfo fromNull = new(null, null, null, null, null);
             SqlConnectionEncryptionInfo fromEmpty = new(null, null, Array.Empty<byte>(), null, null);
 
-            Assert.Null(fromNull.GetServerCertificate());
-            Assert.Null(fromNull.PresentedServerCertificateRawData);
-            Assert.Null(fromEmpty.GetServerCertificate());
-            Assert.Null(fromEmpty.PresentedServerCertificateRawData);
-            Assert.True(fromEmpty.IsEmpty);
+            // Assert
+            AssertEmpty(fromNull);
+            AssertEmpty(fromEmpty);
         }
 
         /// <summary>
-        /// Verifies that bytes that cannot be parsed as a certificate are reported as
-        /// unavailable instead of throwing.
+        /// Verifies that bytes that cannot be decoded as a certificate are reported as unavailable
+        /// instead of throwing.
         /// </summary>
+        /// <remarks>
+        /// The snapshot is still not empty: <see cref="SqlConnectionEncryptionInfo.IsEmpty"/>
+        /// reports whether the driver captured anything, and decoding is deferred to
+        /// <see cref="SqlConnectionEncryptionInfo.GetServerCertificate"/>. The driver's capture paths
+        /// only supply certificates from a completed TLS handshake, so this state is not expected
+        /// outside of tests.
+        /// </remarks>
         [Theory]
         [InlineData(new byte[] { 0x01 })]
         [InlineData(new byte[] { 0x30, 0x82, 0x01, 0x00, 0x00 })]
         [InlineData(new byte[] { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF })]
-        public void GetServerCertificate_UnparsableBytes_ReturnsNull(byte[] bytes)
+        public void GetServerCertificate_UndecodableBytes_ReturnsNull(byte[] bytes)
         {
+            // Arrange
             SqlConnectionEncryptionInfo info = new(null, null, bytes, null, null);
 
-            Assert.Null(info.GetServerCertificate());
+            // Act
+            using X509Certificate2? certificate = info.GetServerCertificate();
+
+            // Assert
+            Assert.Null(certificate);
             Assert.False(info.IsEmpty);
         }
 
@@ -777,8 +560,14 @@ namespace Microsoft.Data.SqlClient
         [Fact]
         public void GetServerCertificate_CertificateOnly_IsNotEmpty()
         {
+            // Arrange
             SqlConnectionEncryptionInfo info = new(null, null, CreateSampleCertificate(), null, null);
 
+            // Act
+            using X509Certificate2? certificate = info.GetServerCertificate();
+
+            // Assert
+            Assert.NotNull(certificate);
             Assert.False(info.IsEmpty);
             Assert.Null(info.NegotiatedEncryptionMode);
             Assert.Null(info.ValidationErrors);
@@ -789,11 +578,16 @@ namespace Microsoft.Data.SqlClient
         #region Enum contracts
 
         /// <summary>
-        /// Verifies the numeric values of <see cref="SqlConnectionEncryptionMode"/>.
+        /// Verifies the underlying type and numeric values of <see cref="SqlConnectionEncryptionMode"/>.
         /// </summary>
         [Fact]
         public void SqlConnectionEncryptionMode_HasExpectedValues()
         {
+            // Act
+            Type underlyingType = Enum.GetUnderlyingType(typeof(SqlConnectionEncryptionMode));
+
+            // Assert
+            Assert.Equal(typeof(byte), underlyingType);
             Assert.Equal(0, (int)SqlConnectionEncryptionMode.None);
             Assert.Equal(1, (int)SqlConnectionEncryptionMode.LoginOnly);
             Assert.Equal(2, (int)SqlConnectionEncryptionMode.Full);
@@ -808,72 +602,19 @@ namespace Microsoft.Data.SqlClient
         [Fact]
         public void SqlServerCertificateValidationErrors_HasExpectedValues()
         {
-            Assert.True(typeof(SqlServerCertificateValidationErrors).IsDefined(typeof(FlagsAttribute), inherit: false));
+            // Act
+            Type type = typeof(SqlServerCertificateValidationErrors);
+
+            // Assert
+            Assert.True(type.IsDefined(typeof(FlagsAttribute), inherit: false));
+            Assert.Equal(typeof(int), Enum.GetUnderlyingType(type));
             Assert.Equal(0, (int)SqlServerCertificateValidationErrors.None);
             Assert.Equal(1, (int)SqlServerCertificateValidationErrors.ServerCertificateMissing);
             Assert.Equal(2, (int)SqlServerCertificateValidationErrors.HostNameMismatch);
             Assert.Equal(4, (int)SqlServerCertificateValidationErrors.ChainError);
             Assert.Equal(8, (int)SqlServerCertificateValidationErrors.PinnedCertificateMismatch);
-            Assert.Equal(5, Enum.GetValues(typeof(SqlServerCertificateValidationErrors)).Length);
+            Assert.Equal(5, Enum.GetValues(type).Length);
         }
-
-        #endregion
-
-        #region Helpers
-
-        /// <summary>
-        /// Asserts that a snapshot is non-null and that every field is unavailable.
-        /// </summary>
-        /// <param name="info">The snapshot to check.</param>
-        private static void AssertEmpty(SqlConnectionEncryptionInfo? info)
-        {
-            Assert.NotNull(info);
-            Assert.Null(info.NegotiatedEncryptionMode);
-            Assert.Null(info.NegotiatedEncryptionProtocol);
-            Assert.Null(info.NegotiatedCipherSuiteId);
-#if NET
-            Assert.Null(info.NegotiatedCipherSuite);
-#endif
-            Assert.Null(info.PresentedServerCertificateRawData);
-            Assert.Null(info.GetServerCertificate());
-            Assert.Null(info.ValidationErrors);
-            Assert.Null(info.ChainStatus);
-        }
-
-        /// <summary>
-        /// Creates a snapshot with every field populated with a distinct non-default value.
-        /// </summary>
-        /// <returns>The populated snapshot.</returns>
-        private static SqlConnectionEncryptionInfo CreatePopulated() =>
-            new(
-                SqlConnectionEncryptionMode.Strict,
-                SslProtocols.Tls12,
-                CreateSampleCertificate(),
-                SqlServerCertificateValidationErrors.HostNameMismatch,
-                X509ChainStatusFlags.UntrustedRoot,
-                SampleCipherSuite);
-
-        /// <summary>
-        /// Creates a server error used to build exceptions through the internal factories.
-        /// </summary>
-        /// <returns>The error.</returns>
-        private static SqlError CreateError() =>
-            new(
-                infoNumber: 50000,
-                errorState: 1,
-                errorClass: 16,
-                server: "server",
-                errorMessage: "Test error message.",
-                procedure: "proc",
-                lineNumber: 1,
-                exception: null,
-                batchIndex: -1);
-
-        /// <summary>
-        /// Creates an error collection holding a single error from <see cref="CreateError"/>.
-        /// </summary>
-        /// <returns>The error collection.</returns>
-        private static SqlErrorCollection CreateErrorCollection() => new() { CreateError() };
 
         #endregion
     }
