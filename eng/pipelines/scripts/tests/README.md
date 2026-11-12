@@ -43,6 +43,7 @@ Add `-Output Detailed` to see per-test results.
 | `Install-DockerCli.macos.Tests.ps1` | `Install-DockerCli.macos.ps1` — Homebrew bottle selection for the macOS docker CLI. |
 | `Pipeline-Arguments.Tests.ps1` | PR build/pack/test argument quoting and the repository's CI variable naming convention. |
 | `Pipeline-Platforms.Tests.ps1` | Windows/Linux-only PR validation, macOS job/dependency exclusion, and unchanged CI macOS defaults. |
+| `Pipeline-XmlDocs.Tests.ps1` | Parallel PR XML documentation validation and parameterized, retry-safe pack artifact routing. |
 | `Build-Orchestration.Tests.ps1` | Explicit root/standalone PowerShell module restore, MSBuild test filters, dependency-pack ordering/version forwarding, local restore freshness, and generated argument quoting. |
 
 The localization and Docker helper tests mock `git`, `tar`, `Invoke-RestMethod`,
@@ -69,6 +70,13 @@ $configuration.Run.Path = @(
 $configuration.TestDrive.Enabled = $false
 $configuration.Run.Exit = $true
 Invoke-Pester -Configuration $configuration
+```
+
+The shared XML documentation validator and its invocation tests live in
+[`common/scripts/tests/`](../../common/scripts/tests/). Run that suite with:
+
+```powershell
+Invoke-Pester ./eng/pipelines/common/scripts/tests/
 ```
 
 `DotNetCoreCLI@2` argument strings are not shell scripts: use double quotes to
