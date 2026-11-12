@@ -591,26 +591,11 @@
   <data name="SQL_NonLocalSSEInstance" xml:space="preserve">
     <value>Il reindirizzamento dell'istanza SSE non è supportato per le istanze di utenti non locali.</value>
   </data>
-  <data name="SQL_UnsupportedAuthentication" xml:space="preserve">
-    <value>L'autenticazione '{0}' non è supportata.</value>
-  </data>
-  <data name="SQL_CannotCreateAuthProvider" xml:space="preserve">
-    <value>Non è stato possibile creare un'istanza di un provider di autenticazione di tipo '{1}' per '{0}'.</value>
-  </data>
-  <data name="SQL_CannotCreateAuthInitializer" xml:space="preserve">
-    <value>Non è stato possibile creare un'istanza di un elemento SqlAuthenticationInitializer di tipo '{0}'.</value>
-  </data>
-  <data name="SQL_UnsupportedAuthenticationByProvider" xml:space="preserve">
-    <value>Il provider '{0}' non supporta l'autenticazione '{1}'.</value>
-  </data>
   <data name="SQL_CannotFindAuthProvider" xml:space="preserve">
     <value>Non è possibile trovare un provider di autenticazione per '{0}'.</value>
   </data>
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
     <value>Non è possibile trovare un provider di autenticazione per '{0}'. Registrare un provider con SqlAuthenticationProvider.SetProvider oppure usare un pacchetto NuGet 'Microsoft.Data.SqlClient.Extensions.Azure' compatibile con l'individuazione automatica abilitata. L'individuazione automatica non è disponibile se è stata disabilitata in fase di pubblicazione. Le applicazioni JIT con trimming richiedono contratti basati su riflessione conservati; le applicazioni NativeAOT devono disabilitare i percorsi di bootstrap basati su riflessione in fase di pubblicazione e registrare i provider in modo esplicito. Esaminare le tracce di Microsoft.Data.SqlClient.EventSource (livello Informational, parola chiave Trace 0x2) per individuare errori di configurazione o di caricamento dell'estensione di Azure.</value>
-  </data>
-  <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>L'impostazione 'useWamBroker' richiede 'Microsoft.Data.SqlClient.Extensions. Pacchetto di Azure per esporre 'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions'. Aggiornare 'Microsoft.Data.SqlClient.Extensions. pacchetto di Azure almeno alla versione v7.0.2 che include questo tipo.</value>
   </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>Il parametro '{0}' non può essere Null o vuoto.</value>

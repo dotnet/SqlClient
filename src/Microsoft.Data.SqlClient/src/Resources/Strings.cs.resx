@@ -591,26 +591,11 @@
   <data name="SQL_NonLocalSSEInstance" xml:space="preserve">
     <value>Přesměrování instance SSE není podporováno u uživatelských instancí, které nejsou místní.</value>
   </data>
-  <data name="SQL_UnsupportedAuthentication" xml:space="preserve">
-    <value>Ověřování {0} není podporované.</value>
-  </data>
-  <data name="SQL_CannotCreateAuthProvider" xml:space="preserve">
-    <value>Pro {0} se nepodařilo vytvořit instanci zprostředkovatele ověřování s typem {1}.</value>
-  </data>
-  <data name="SQL_CannotCreateAuthInitializer" xml:space="preserve">
-    <value>Nepodařilo se vytvořit instanci SqlAuthenticationInitializer s typem {0}.</value>
-  </data>
-  <data name="SQL_UnsupportedAuthenticationByProvider" xml:space="preserve">
-    <value>Zprostředkovatel {0} nepodporuje ověřování {1}.</value>
-  </data>
   <data name="SQL_CannotFindAuthProvider" xml:space="preserve">
     <value>Pro {0} nelze najít zprostředkovatele ověřování.</value>
   </data>
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
     <value>Pro {0} nelze najít zprostředkovatele ověřování. Zaregistrujte poskytovatele pomocí metody SqlAuthenticationProvider.SetProvider nebo použijte kompatibilní balíček NuGet Microsoft.Data.SqlClient.Extensions.Azure s povoleným automatickým zjišťováním. Automatické zjišťování není dostupné, pokud je při publikování zakázané. Aplikace JIT s oříznutým kódem vyžadují zachované kontrakty reflexe. Aplikace NativeAOT by měly při publikování zakázat cesty spuštění využívající reflexi a explicitně zaregistrovat poskytovatele. V trasování Microsoft.Data.SqlClient.EventSource (úroveň Informational, klíčové slovo Trace 0x2) zkontrolujte selhání konfigurace nebo načítání rozšíření Azure.</value>
-  </data>
-  <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>Nastavení useWamBroker vyžaduje Microsoft.Data.SqlClient.Extensions. Balíček Azure pro zveřejnění Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions. Upgradujte Microsoft.Data.SqlClient.Extensions. Balíček služby Azure alespoň na verzi 7.0.2, která obsahuje tento typ.</value>
   </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>Parametr {0} nesmí obsahovat hodnotu Null ani nesmí být prázdný.</value>
