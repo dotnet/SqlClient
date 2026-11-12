@@ -470,6 +470,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
                 HashAlgorithmName.SHA256,
                 RSASignaturePadding.Pkcs1);
 
+            // macOS TLS policy requires an explicit Server Authentication EKU.
+            request.CertificateExtensions.Add(new X509EnhancedKeyUsageExtension(
+                new OidCollection { new("1.3.6.1.5.5.7.3.1") }, critical: false));
+
             if (dnsNames.Length > 0)
             {
                 SubjectAlternativeNameBuilder names = new();
