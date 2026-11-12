@@ -747,7 +747,7 @@
       </value>
       <remarks>
         <para>
-          This property never returns <see langword="null" />. A <see langword="null" /> property value on the returned snapshot means the information is not available; it does not indicate that encryption or certificate validation succeeded.
+          This property never returns <see langword="null" />. A <see langword="null" /> property value on the returned snapshot means the information was not available when the snapshot was created. Any snapshot may have any combination of <see langword="null" /> and non-null property values depending on how far the connection attempt progressed. The presence or absence of <see langword="null" /> property values does not indicate that encryption or certificate validation succeeded or failed.
         </para>
         <para>
           The snapshot is not serialized with the exception; a deserialized <see cref="T:Microsoft.Data.SqlClient.SqlException" /> returns a snapshot with all properties set to <see langword="null" />. The snapshot is not included in <see cref="P:System.Exception.Message" /> or in the output of <see cref="M:Microsoft.Data.SqlClient.SqlException.ToString" />.

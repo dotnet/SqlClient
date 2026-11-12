@@ -3,7 +3,11 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+#if NET
+using System.Net.Security;
+#endif
 using System.Security.Authentication;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
 #nullable enable
@@ -38,8 +42,9 @@ namespace Microsoft.Data.SqlClient
         /// <param name="validationErrors">The certificate validation errors observed by the driver.</param>
         /// <param name="chainStatus">The aggregated X.509 chain status flags.</param>
         /// <param name="negotiatedCipherSuite">
-        /// The IANA TLS cipher suite identifier selected by the server (for example, 0x1302), not a
-        /// Windows ALG_ID. Must be in the range 0 to 0xFFFF when not <see langword="null"/>.
+        /// The TLS cipher suite selected by the server. On .NET Framework this is the IANA cipher
+        /// suite identifier (for example, 0x1302), not a Windows ALG_ID, and must be in the range
+        /// 0 to 0xFFFF when not <see langword="null"/>.
         /// </param>
         internal SqlConnectionEncryptionInfo(
             SqlConnectionEncryptionMode? negotiatedEncryptionMode,
@@ -47,8 +52,16 @@ namespace Microsoft.Data.SqlClient
             byte[]? presentedServerCertificate,
             SqlServerCertificateValidationErrors? validationErrors,
             X509ChainStatusFlags? chainStatus,
+#if NET
+            TlsCipherSuite? negotiatedCipherSuite = null)
+#else
             int? negotiatedCipherSuite = null)
+#endif
         {
+#if NET
+            NegotiatedCipherSuite = negotiatedCipherSuite;
+            NegotiatedCipherSuiteId = (int?)negotiatedCipherSuite;
+#else
             if (negotiatedCipherSuite is < 0 or > ushort.MaxValue)
             {
                 throw new ArgumentOutOfRangeException(
@@ -57,9 +70,10 @@ namespace Microsoft.Data.SqlClient
                     "A TLS cipher suite identifier must be in the range 0 to 0xFFFF.");
             }
 
+            NegotiatedCipherSuiteId = negotiatedCipherSuite;
+#endif
             NegotiatedEncryptionMode = negotiatedEncryptionMode;
             NegotiatedEncryptionProtocol = negotiatedEncryptionProtocol;
-            NegotiatedCipherSuiteId = negotiatedCipherSuite;
             if (presentedServerCertificate is { Length: > 0 })
             {
                 _presentedServerCertificate = (byte[])presentedServerCertificate.Clone();
@@ -72,15 +86,11 @@ namespace Microsoft.Data.SqlClient
         public X509ChainStatusFlags? ChainStatus { get; }
 
 #if NET
-        // Strongly typed view of NegotiatedCipherSuiteId. TlsCipherSuite is ushort-backed, matching
-        // SslStream.NegotiatedCipherSuite, so this member is not CLS-compliant. Values with no named
-        // enum member are preserved.
+        // TlsCipherSuite is ushort-backed, matching SslStream.NegotiatedCipherSuite, so this member
+        // is not CLS-compliant.
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/NegotiatedCipherSuite/*' />
         [CLSCompliant(false)]
-        public System.Net.Security.TlsCipherSuite? NegotiatedCipherSuite =>
-            NegotiatedCipherSuiteId is int value
-                ? (System.Net.Security.TlsCipherSuite)value
-                : null;
+        public TlsCipherSuite? NegotiatedCipherSuite { get; }
 #endif
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionInfo.xml' path='docs/members[@name="SqlConnectionEncryptionInfo"]/NegotiatedCipherSuiteId/*' />
@@ -107,7 +117,7 @@ namespace Microsoft.Data.SqlClient
             {
                 return X509CertificateLoader.LoadCertificate(_presentedServerCertificate);
             }
-            catch (Exception)
+            catch (CryptographicException)
             {
                 // Diagnostics only: bytes that cannot be parsed are reported as unavailable.
                 return null;

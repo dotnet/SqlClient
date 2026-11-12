@@ -4,9 +4,6 @@
       <summary>
         Specifies server certificate validation errors observed by the driver. This enumeration supports a bitwise combination of its member values.
       </summary>
-      <remarks>
-        Reported by <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptionInfo.ValidationErrors" />. A <see langword="null" /> value for that property means validation did not run or the outcome is not available; <see cref="F:Microsoft.Data.SqlClient.SqlServerCertificateValidationErrors.None" /> means validation ran and no errors were observed.
-      </remarks>
     </SqlServerCertificateValidationErrors>
     <None>
       <summary>
