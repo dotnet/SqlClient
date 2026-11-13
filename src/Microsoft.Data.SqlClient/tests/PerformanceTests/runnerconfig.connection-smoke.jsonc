@@ -1,0 +1,27 @@
+{
+    "ConnectionString": "Server=localhost;Database=master;Integrated Security=true;Encrypt=true;TrustServerCertificate=true",
+    "UseManagedSniOnWindows": false,
+    "UseConnectionPoolV2": false,
+    "UseOptimizedAsyncBehaviour": true,
+    // Read-only existing workloads. Async-health is selected with benchmark attributes.
+    // Connection opens deliberately keep short windows; insufficient health coverage is expected.
+    // Contention is steady-state: the predeclared batch repeats the existing workload, not its setup.
+    "Benchmarks": {
+        "SqlConnectionRunnerConfig": {
+            "Enabled": true,
+            "LaunchCount": 1,
+            "IterationCount": 2,
+            "InvocationCount": 1,
+            "WarmupCount": 1,
+            "RunStrategy": "Monitoring"
+        },
+        "ConnectionPoolContentionRunnerConfig": {
+            "Enabled": true,
+            "LaunchCount": 1,
+            "IterationCount": 2,
+            "InvocationCount": 100,
+            "WarmupCount": 1,
+            "RunStrategy": "Monitoring"
+        }
+    }
+}

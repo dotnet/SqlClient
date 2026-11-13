@@ -21,7 +21,8 @@ PASSWORD = 'test;="quoted" and \'single\''
 class RunnerConfigTests(unittest.TestCase):
     """Exercise authentication and per-pass configs without real SQL commands or builds."""
 
-    def check_config(self, shell, switch, local=False, sql_failure=""):
+    def check_config(self, shell, switch, local=False, sql_failure="",
+                     config_file="runnerconfig.jsonc"):
         """Run isolated runner sections with captured SQL calls and temporary config files."""
         if local and os.name != "nt":
             self.skipTest("Local Windows authentication requires Windows")
@@ -31,7 +32,7 @@ class RunnerConfigTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
             (root / "results").mkdir()
-            source = root / "runnerconfig.jsonc"
+            source = root / config_file
             # Include a local tuning value to prove we use the live config, not the default.
             config = {"ConnectionString": "local", "Iterations": 17,
                       **dict.fromkeys(SWITCHES, False)}
@@ -40,7 +41,8 @@ class RunnerConfigTests(unittest.TestCase):
             env = dict(os.environ, TEST_ROOT=root.as_posix(), SQL_PASSWORD=PASSWORD,
                        TEST_SWITCH=switch, TEST_PYTHON=Path(sys.executable).as_posix(),
                        TEST_SQL_SERVER="127.0.0.1" if local else "192.0.2.1",
-                       TEST_SQL_FAILURE=sql_failure)
+                       TEST_SQL_FAILURE=sql_failure,
+                       TEST_CONFIG_FILE=config_file)
             ext = "ps1" if shell == "pwsh" else "sh"
             text = (SCRIPTS / f"run-perf-tests.{ext}").read_text(encoding="utf-8-sig")
             start = "$RunnerConfig =" if shell == "pwsh" else 'RUNNER_CONFIG="'
@@ -53,6 +55,7 @@ class RunnerConfigTests(unittest.TestCase):
 Set-StrictMode -Version Latest
 $RepoRoot = $env:TEST_ROOT
 $PerfDir = $RepoRoot
+$RunnerConfigFile = $env:TEST_CONFIG_FILE
 $ResultsDir = Join-Path $RepoRoot "results"
 $SqlPassword = $env:SQL_PASSWORD
 $SqlServer = $env:TEST_SQL_SERVER
@@ -82,6 +85,7 @@ Prepare-RunnerConfig
                 script = '''set -u
 REPO_ROOT="$TEST_ROOT"
 PERF_DIR="$REPO_ROOT"
+runnerConfigFile="$TEST_CONFIG_FILE"
 RESULTS_DIR="$REPO_ROOT/results"
 export SQL_SERVER=localhost DB_NAME=perf
 switchUnderTest="$TEST_SWITCH"
@@ -169,6 +173,13 @@ prepare_runner_config || exit 6
         for phase in ("setup", "preflight"):
             with self.subTest(phase=phase):
                 self.check_config("pwsh", "", local=True, sql_failure=phase)
+
+    def test_alternate_workload_configuration(self):
+        """Both entry points preserve the selected workload configuration without a measurement mode."""
+        for shell in ("bash", "pwsh"):
+            with self.subTest(shell=shell):
+                self.check_config(shell, "",
+                                  config_file="runnerconfig.connection-smoke.jsonc")
 
     def test_powershell_local_endpoint_classification(self):
         """Only loopback or local-interface addresses qualify for Windows authentication."""
