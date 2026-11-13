@@ -36,24 +36,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         private static readonly TimeSpan CheckoutTimeout = TimeSpan.FromSeconds(30);
 
         /// <summary>
-        /// Constructs the pool shared by the concurrent checkout test and its contention regression.
-        /// </summary>
-        /// <remarks>
-        /// The legacy pool wait is configured in milliseconds, independently of the caller timer.
-        /// Both budgets must cover the same checkout instead of inheriting the harness's 15 ms default.
-        /// </remarks>
-        private static IDbConnectionPool ConstructCheckoutPool(
-            PoolImplementation implementation,
-            FakeSqlClientMetrics metrics,
-            int maxPoolSize)
-            => ConstructPool(
-                implementation,
-                metrics,
-                new SuccessfulSqlConnectionFactory(metrics),
-                maxPoolSize: maxPoolSize,
-                creationTimeout: (int)CheckoutTimeout.TotalMilliseconds);
-
-        /// <summary>
         /// Builds the requested pool implementation behind the shared pool interface, reporting to
         /// the supplied metrics instance. Keeps this class's argument order over
         /// <see cref="PoolTestHarness.ConstructPool"/>, which every test here shares.
@@ -66,8 +48,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             int maxPoolSize = 50,
             int minPoolSize = 0,
             int idleTimeout = 0,
-            FakeTimeProvider? timeProvider = null,
-            int creationTimeout = 15)
+            FakeTimeProvider? timeProvider = null)
             => PoolTestHarness.ConstructPool(
                 implementation,
                 connectionFactory,
@@ -77,7 +58,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 maxPoolSize,
                 minPoolSize,
                 idleTimeout,
-                creationTimeout);
+                creationTimeout: (int)CheckoutTimeout.TotalMilliseconds);
 
         /// <summary>
         /// Asserts the exact value of every counter a pool is responsible for. Any counter not named
@@ -447,7 +428,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             const int MaxPoolSize = 4;
 
             FakeSqlClientMetrics metrics = new();
-            IDbConnectionPool pool = ConstructCheckoutPool(implementation, metrics, MaxPoolSize);
+            IDbConnectionPool pool = ConstructPool(
+                implementation, metrics, new SuccessfulSqlConnectionFactory(metrics),
+                maxPoolSize: MaxPoolSize);
 
             // Act
             Task[] workers = Enumerable.Range(0, Threads).Select(_ => Task.Run(() =>
@@ -491,7 +474,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         {
             // Arrange
             FakeSqlClientMetrics metrics = new();
-            IDbConnectionPool pool = ConstructCheckoutPool(implementation, metrics, maxPoolSize: 1);
+            IDbConnectionPool pool = ConstructPool(
+                implementation, metrics, new SuccessfulSqlConnectionFactory(metrics),
+                maxPoolSize: 1);
             using SqlConnection owner = new();
             using SqlConnection waitingOwner = new();
             using ManualResetEventSlim started = new();
