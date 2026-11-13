@@ -13,82 +13,55 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SQL.Common.SystemDataInte
     {
         internal static DateTime? GetTokenExpiryDateTime(SqlConnection connection, out string tokenHash)
         {
-            try
-            {
-                object authenticationContextValueObj = GetAuthenticationContextValue(connection);
+            object authenticationContextValueObj = GetAuthenticationContextValue(connection);
 
-                DateTime expirationTimeProperty = (DateTime)authenticationContextValueObj.GetType().GetProperty("ExpirationTime", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(authenticationContextValueObj, null);
+            DateTime expirationTimeProperty = (DateTime)GetRequiredProperty(authenticationContextValueObj.GetType(), "ExpirationTime", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(authenticationContextValueObj, null);
 
-                tokenHash = GetTokenHash(authenticationContextValueObj);
+            tokenHash = GetTokenHash(authenticationContextValueObj);
 
-                return expirationTimeProperty;
-            }
-            catch (Exception)
-            {
-                tokenHash = "";
-                return null;
-            }
+            return expirationTimeProperty;
         }
 
         internal static DateTime? SetTokenExpiryDateTime(SqlConnection connection, int minutesToExpire, out string tokenHash)
         {
-            try
-            {
-                object authenticationContextValueObj = GetAuthenticationContextValue(connection);
+            object authenticationContextValueObj = GetAuthenticationContextValue(connection);
 
-                DateTime expirationTimeProperty = (DateTime)authenticationContextValueObj.GetType().GetProperty("ExpirationTime", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(authenticationContextValueObj, null);
+            DateTime expirationTimeProperty = DateTime.UtcNow.AddMinutes(minutesToExpire);
 
-                expirationTimeProperty = DateTime.UtcNow.AddMinutes(minutesToExpire);
+            FieldInfo expirationTimeInfo = authenticationContextValueObj.GetType().GetField("_expirationTime", BindingFlags.NonPublic | BindingFlags.Instance)
+                ?? throw new MissingFieldException(authenticationContextValueObj.GetType().FullName, "_expirationTime");
+            expirationTimeInfo.SetValue(authenticationContextValueObj, expirationTimeProperty);
 
-                FieldInfo expirationTimeInfo = authenticationContextValueObj.GetType().GetField("_expirationTime", BindingFlags.NonPublic | BindingFlags.Instance);
-                expirationTimeInfo.SetValue(authenticationContextValueObj, expirationTimeProperty);
+            tokenHash = GetTokenHash(authenticationContextValueObj);
 
-                tokenHash = GetTokenHash(authenticationContextValueObj);
-
-                return expirationTimeProperty;
-            }
-            catch (Exception)
-            {
-                tokenHash = "";
-                return null;
-            }
+            return expirationTimeProperty;
         }
 
         internal static string GetTokenHash(object authenticationContextValueObj)
         {
-            try
-            {
-                Assembly sqlConnectionAssembly = Assembly.GetAssembly(typeof(SqlConnection));
+            Assembly sqlConnectionAssembly = typeof(SqlConnection).Assembly;
 
-                Type sqlFedAuthTokenType = sqlConnectionAssembly.GetType("Microsoft.Data.SqlClient.SqlFedAuthToken");
+            Type sqlFedAuthTokenType = GetRequiredType(sqlConnectionAssembly, "Microsoft.Data.SqlClient.Parser.Login.SqlFedAuthToken");
+            Type retryHelperType = GetRequiredType(sqlConnectionAssembly, "Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationTimeoutRetryHelper");
 
-                Type[] sqlFedAuthTokenTypeArray = new Type[] { sqlFedAuthTokenType };
+            ConstructorInfo sqlFedAuthTokenConstructorInfo = sqlFedAuthTokenType.GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, null, new Type[] { typeof(byte[]), typeof(long) }, null)
+                ?? throw new MissingMethodException(sqlFedAuthTokenType.FullName, ".ctor(byte[], long)");
 
-                ConstructorInfo sqlFedAuthTokenConstructorInfo = sqlFedAuthTokenType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, Type.EmptyTypes, null);
+            MethodInfo tokenHashInfo = retryHelperType.GetMethod("GetTokenHash", BindingFlags.Static | BindingFlags.NonPublic, null, new Type[] { sqlFedAuthTokenType }, null)
+                ?? throw new MissingMethodException(retryHelperType.FullName, "GetTokenHash");
 
-                Type activeDirectoryAuthenticationTimeoutRetryHelperType = sqlConnectionAssembly.GetType("Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationTimeoutRetryHelper");
+            byte[] tokenBytes = (byte[])GetRequiredProperty(authenticationContextValueObj.GetType(), "AccessToken", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(authenticationContextValueObj, null);
 
-                ConstructorInfo activeDirectoryAuthenticationTimeoutRetryHelperConstructorInfo = activeDirectoryAuthenticationTimeoutRetryHelperType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, Type.EmptyTypes, null);
+            object sqlFedAuthTokenObj = sqlFedAuthTokenConstructorInfo.Invoke(new object[] { tokenBytes, 0L });
 
-                object activeDirectoryAuthenticationTimeoutRetryHelperObj = activeDirectoryAuthenticationTimeoutRetryHelperConstructorInfo.Invoke(new object[] { });
-
-                MethodInfo tokenHashInfo = activeDirectoryAuthenticationTimeoutRetryHelperObj.GetType().GetMethod("GetTokenHash", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, null, CallingConventions.Any, sqlFedAuthTokenTypeArray, null);
-
-                byte[] tokenBytes = (byte[])authenticationContextValueObj.GetType().GetProperty("AccessToken", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(authenticationContextValueObj, null);
-
-                object sqlFedAuthTokenObj = sqlFedAuthTokenConstructorInfo.Invoke(new object[] { });
-                FieldInfo accessTokenInfo = sqlFedAuthTokenObj.GetType().GetField("accessToken", BindingFlags.NonPublic | BindingFlags.Instance);
-                accessTokenInfo.SetValue(sqlFedAuthTokenObj, tokenBytes);
-
-                string tokenHash = (string)tokenHashInfo.Invoke(activeDirectoryAuthenticationTimeoutRetryHelperObj, new object[] { sqlFedAuthTokenObj });
-
-                return tokenHash;
-            }
-            catch (Exception)
-            {
-                return "";
-            }
+            return (string)tokenHashInfo.Invoke(null, new object[] { sqlFedAuthTokenObj });
         }
+
+        private static Type GetRequiredType(Assembly assembly, string typeName) =>
+            assembly.GetType(typeName) ?? throw new TypeLoadException($"Type '{typeName}' was not found in '{assembly.FullName}'.");
+
+        private static PropertyInfo GetRequiredProperty(Type type, string propertyName, BindingFlags bindingFlags) =>
+            type.GetProperty(propertyName, bindingFlags) ?? throw new MissingMemberException(type.FullName, propertyName);
 
         internal static object GetAuthenticationContextValue(SqlConnection connection)
         {
