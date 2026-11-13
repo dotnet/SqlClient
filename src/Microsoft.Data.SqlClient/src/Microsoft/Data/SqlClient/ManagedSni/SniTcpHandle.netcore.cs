@@ -752,7 +752,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <summary>
         /// Enable SSL
         /// </summary>
-        public override uint EnableSsl(uint options)
+        public override uint EnableSsl(uint options, CancellationToken cancellationToken)
         {
             using (SqlClientSNIEventScope.Create(nameof(SniHandle)))
             {
@@ -760,18 +760,29 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
                 try
                 {
-                    if (_tlsFirst)
+                    // The handshake reads block on the socket, so closing the transport is what bounds them.
+                    using (cancellationToken.UnsafeRegister(static stream => ((Stream)stream).Dispose(), _tcpStream))
                     {
-                        AuthenticateAsClient(_sslStream, _targetServer, null);
+                        if (_tlsFirst)
+                        {
+                            AuthenticateAsClient(_sslStream, _targetServer, null);
+                        }
+                        else
+                        {
+                            _sslStream.AuthenticateAsClient(_targetServer, null, s_supportedProtocols, false);
+                        }
                     }
-                    else
-                    {
-                        _sslStream.AuthenticateAsClient(_targetServer, null, s_supportedProtocols, false);
-                    }
+                    // A timeout landing after the handshake but before the registration ended has already closed the transport.
+                    cancellationToken.ThrowIfCancellationRequested();
                     if (_sslOverTdsStream is not null)
                     {
                         _sslOverTdsStream.FinishHandshake();
                     }
+                }
+                catch (Exception e) when (cancellationToken.IsCancellationRequested)
+                {
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniTcpHandle), EventType.ERR, "Connection Id {0}, TLS handshake did not complete within the connection timeout: {1}", args0: _connectionId, args1: e.Message);
+                    return ReportTcpSNIError((int)TdsEnums.SNI_WAIT_TIMEOUT, SniCommon.ConnTimeoutError, Strings.SNI_ERROR_11);
                 }
                 catch (AuthenticationException aue)
                 {

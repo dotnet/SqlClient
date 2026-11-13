@@ -82,6 +82,12 @@ namespace Microsoft.SqlServer.TDS.Servers
         public bool ExpectTlsHandshakeFailure { get; set; }
 
         /// <summary>
+        /// Runs the TLS handshake before any TDS traffic, as TDS 8 strict encryption does.
+        /// The PRELOGIN encryption option then no longer turns transport encryption on or off.
+        /// </summary>
+        public bool TlsFirst { get; set; }
+
+        /// <summary>
         /// Routing destination protocol
         /// </summary>
         public string FailoverPartner { get; set; } = string.Empty;

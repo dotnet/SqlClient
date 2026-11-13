@@ -496,7 +496,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
 
             public override void Dispose() => throw new NotSupportedException();
 
-            public override uint EnableSsl(uint options) => throw new NotSupportedException();
+            public override uint EnableSsl(uint options, CancellationToken cancellationToken) => throw new NotSupportedException();
 
             public override uint Receive(out SniPacket packet, int timeoutInMilliseconds)
                 => throw new NotSupportedException();

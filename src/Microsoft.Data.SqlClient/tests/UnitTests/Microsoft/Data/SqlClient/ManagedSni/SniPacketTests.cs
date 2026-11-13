@@ -7,6 +7,7 @@
 using System;
 using System.IO;
 using System.Security.Authentication;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.ManagedSni;
 using Microsoft.Data.SqlClient.Parser;
@@ -92,7 +93,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
             {
             }
 
-            public override uint EnableSsl(uint options) => TdsEnums.SNI_SUCCESS;
+            public override uint EnableSsl(uint options, CancellationToken cancellationToken) => TdsEnums.SNI_SUCCESS;
 
             public override SniPacket RentPacket(int headerSize, int dataSize)
             {

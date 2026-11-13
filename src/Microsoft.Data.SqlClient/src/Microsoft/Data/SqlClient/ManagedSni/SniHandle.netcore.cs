@@ -90,7 +90,10 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <summary>
         /// Enable SSL
         /// </summary>
-        public abstract uint EnableSsl(uint options);
+        /// <param name="options">SSL options</param>
+        /// <param name="cancellationToken">Cancelled when the connection's Connect Timeout elapses; aborts a handshake still in progress.</param>
+        /// <returns>SNI error code</returns>
+        public abstract uint EnableSsl(uint options, CancellationToken cancellationToken);
 
         /// <summary>
         /// Disable SSL
