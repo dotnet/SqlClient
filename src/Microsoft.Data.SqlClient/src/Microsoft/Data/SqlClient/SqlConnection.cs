@@ -1023,6 +1023,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/EncryptionInfo/*' />
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public SqlConnectionEncryptionInfo EncryptionInfo => SqlConnectionEncryptionInfo.Empty;
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ServerVersion/*' />
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -2497,18 +2502,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal bool Is2008OrNewer
-        {
-            get
-            {
-                if (_currentReconnectionTask != null)
-                { // holds true even if task is completed
-                    return true; // if CR is enabled, connection, if established, will be 2008+
-                }
-                return GetOpenTdsConnection().Is2008OrNewer;
-            }
-        }
-
         internal TdsParser Parser
         {
             get
@@ -3089,23 +3082,23 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal void CheckGetExtendedUDTInfo(SqlMetaDataPriv metaData, bool fThrow)
+        internal void CheckGetExtendedUDTInfo(TdsTypeInfo metaData, bool fThrow)
         {
-            if (metaData.udt?.Type == null)
+            if (metaData.UdtTypeInfo?.Type == null)
             { // If null, we have not obtained extended info.
-                Debug.Assert(!string.IsNullOrEmpty(metaData.udt?.AssemblyQualifiedName), "Unexpected state on GetUDTInfo");
+                Debug.Assert(!string.IsNullOrEmpty(metaData.UdtTypeInfo?.AssemblyQualifiedName), "Unexpected state on GetUDTInfo");
                 // Parameter throwOnError determines whether exception from Assembly.Load is thrown.
-                metaData.udt.Type =
-                    Type.GetType(typeName: metaData.udt.AssemblyQualifiedName, assemblyResolver: asmRef => ResolveTypeAssembly(asmRef, fThrow), typeResolver: null, throwOnError: fThrow);
+                metaData.UdtTypeInfo.Type =
+                    Type.GetType(typeName: metaData.UdtTypeInfo.AssemblyQualifiedName, assemblyResolver: asmRef => ResolveTypeAssembly(asmRef, fThrow), typeResolver: null, throwOnError: fThrow);
 
-                if (fThrow && metaData.udt.Type == null)
+                if (fThrow && metaData.UdtTypeInfo.Type == null)
                 {
-                    throw SQL.UDTUnexpectedResult(metaData.udt.AssemblyQualifiedName);
+                    throw SQL.UDTUnexpectedResult(metaData.UdtTypeInfo.AssemblyQualifiedName);
                 }
             }
         }
 
-        internal object GetUdtValue(object value, SqlMetaDataPriv metaData, bool returnDBNull)
+        internal object GetUdtValue(object value, TdsTypeInfo metaData, bool returnDBNull)
         {
             if (returnDBNull && ADP.IsNull(value))
             {
@@ -3117,7 +3110,7 @@ namespace Microsoft.Data.SqlClient
             // Since the serializer doesn't handle nulls...
             if (ADP.IsNull(value))
             {
-                Type t = metaData.udt?.Type;
+                Type t = metaData.UdtTypeInfo?.Type;
                 Debug.Assert(t != null, "Unexpected null of udtType on GetUdtValue!");
                 o = t.InvokeMember("Null", BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.Static, null, null, Array.Empty<object>(), CultureInfo.InvariantCulture);
                 Debug.Assert(o != null);
@@ -3128,7 +3121,7 @@ namespace Microsoft.Data.SqlClient
 
                 MemoryStream stm = new MemoryStream((byte[])value);
 
-                o = Server.SerializationHelperSql9.Deserialize(stm, metaData.udt?.Type);
+                o = Server.SerializationHelperSql9.Deserialize(stm, metaData.UdtTypeInfo?.Type);
 
                 Debug.Assert(o != null, "object could NOT be created");
                 return o;

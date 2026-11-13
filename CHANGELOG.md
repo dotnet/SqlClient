@@ -6,6 +6,668 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 > **Note:** Releases are sorted in reverse chronological order (newest first).
 
+## [Stable Release 7.1.2] - 2026-11-12
+
+This servicing release includes the following changes since 7.1.1.
+The driver and its four companion packages use version `7.1.2` and retain
+`AssemblyVersion 7.0.0.0`.
+
+### Changed
+
+- Updated dependency minimums to address
+  [CVE-2026-84008](https://github.com/advisories/GHSA-846f-f764-76mx):
+  `System.Security.Cryptography.Pkcs` is now `8.0.2` for net462, net8.0, and netstandard2.0.
+  For net9.0, `Microsoft.Bcl.Cryptography`, `Microsoft.Extensions.Caching.Memory`,
+  `System.Configuration.ConfigurationManager`, `System.Security.Cryptography.Pkcs`, and
+  `System.Threading.RateLimiting` are now `9.0.21`.
+  ([#4842](https://github.com/dotnet/SqlClient/pull/4842),
+  [#4862](https://github.com/dotnet/SqlClient/pull/4862))
+
+- Added user-agent Driver Properties bits for the configured
+  `Switch.Microsoft.Data.SqlClient.UseCompatibilityAsyncBehaviour` (`0x2`) and
+  `Switch.Microsoft.Data.SqlClient.UseCompatibilityProcessSni` (`0x4`) settings.
+  These report configured values independently of the parser's effective override;
+  async behavior and switch defaults are unchanged.
+  ([#4912](https://github.com/dotnet/SqlClient/pull/4912))
+
+### Fixed
+
+- Fixed managed SNI certificate validation to enforce an explicitly configured
+  `HostNameInCertificate`, even when the certificate matches the connection's server name.
+  When hostname validation is required, the configured name is the expected name;
+  a mismatch now fails the TLS handshake. Certificate-chain checks and explicit
+  `ServerCertificate` matching are unchanged. (net8.0/net9.0 only, managed SNI)
+  ([#4907](https://github.com/dotnet/SqlClient/pull/4907))
+
+- Isolated Always Encrypted enclave-session cache entries by attestation protocol so a session
+  established under one protocol cannot be reused by a connection requesting another.
+  ([#4866](https://github.com/dotnet/SqlClient/pull/4866))
+
+- Fixed unobserved receive-continuation exceptions when a managed SNI connection is closed
+  while Multiple Active Result Sets (MARS) is still receiving. Pending reads are notified
+  through the existing network-error path, and receive packets are released correctly.
+  (net8.0/net9.0 only, managed SNI)
+  ([#4679](https://github.com/dotnet/SqlClient/issues/4679),
+  [#4951](https://github.com/dotnet/SqlClient/pull/4951))
+
+- Fixed `SqlDataReader.HasRows` incorrectly returning `false` when multiple informational
+  messages precede the first row. The first row remains available to `Read`/`ReadAsync`,
+  and existing informational-message delivery timing is preserved.
+  ([#4900](https://github.com/dotnet/SqlClient/pull/4900))
+
+- Fixed statistics timer bookkeeping throwing `InvalidOperationException` with
+  "Nullable object must have a value" when a concurrent timer release clears its timestamp.
+  This can affect statistics-enabled or diagnostic-instrumented operations; it does not
+  make concurrent use of a connection or MARS thread-safe.
+  ([#4778](https://github.com/dotnet/SqlClient/issues/4778),
+  [#4895](https://github.com/dotnet/SqlClient/pull/4895))
+
+- Fixed corrupted `nvarchar` text from `SqlDataReader.GetTextReader` with
+  `CommandBehavior.SequentialAccess` on big-endian platforms. Decoding now preserves the
+  source bytes, partial-read offsets, and raw UTF-16 code units.
+  ([#4961](https://github.com/dotnet/SqlClient/pull/4961))
+
+- Fixed `SqlConnection.Open`/`OpenAsync` throwing `IndexOutOfRangeException` for malformed
+  PRELOGIN option offsets or lengths. Invalid headers, option sizes, and total response sizes
+  now produce the existing corrupted-stream parsing error. Nonconforming server or proxy
+  responses that previously escaped these checks are rejected.
+  ([#4977](https://github.com/dotnet/SqlClient/pull/4977))
+
+- Fixed malformed row, alternate-result, and authentication responses being processed without
+  their required metadata or authentication state. These responses now produce a corrupted-stream
+  parsing error and invalidate the physical connection so it cannot return to the pool.
+  Valid SQL Server result processing is unchanged.
+  ([#4983](https://github.com/dotnet/SqlClient/pull/4983))
+
+- Fixed eager initialization of Windows native SNI on non-Windows platforms, preventing
+  `TypeInitializationException`/`DllNotFoundException` when managed networking is selected.
+  (net8.0/net9.0 on Unix only)
+  ([#4770](https://github.com/dotnet/SqlClient/pull/4770))
+
+### Companion packages
+
+- Released [Microsoft.Data.SqlClient.Extensions.Azure 7.1.2](release-notes/Extensions/Azure/7.1/7.1.2.md)
+  with actionable Windows WAM missing-parent-window guidance for windowless hosts.
+- Released [Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 7.1.2](release-notes/add-ons/AzureKeyVaultProvider/7.1/7.1.2.md),
+  [Microsoft.Data.SqlClient.Extensions.Abstractions 7.1.2](release-notes/Extensions/Abstractions/7.1/7.1.2.md),
+  and [Microsoft.Data.SqlClient.Internal.Logging 7.1.2](release-notes/Internal/Logging/7.1/7.1.2.md)
+  for version alignment only, with no functional or API changes.
+
+## [Stable Release 7.0.4] - 2026-11-12
+
+This servicing release includes the following changes since 7.0.3.
+The driver and its four companion packages use version `7.0.4` and retain
+`AssemblyVersion 7.0.0.0`.
+
+### Changed
+
+- Updated dependency minimums to address
+  [CVE-2026-84008](https://github.com/advisories/GHSA-846f-f764-76mx):
+  `System.Security.Cryptography.Pkcs` is now `8.0.2` for net462, net8.0, and netstandard2.0.
+  For net9.0, `Microsoft.Bcl.Cryptography`, `Microsoft.Extensions.Caching.Memory`,
+  `System.Configuration.ConfigurationManager`, and `System.Security.Cryptography.Pkcs`
+  are now `9.0.21`.
+  ([#4869](https://github.com/dotnet/SqlClient/pull/4869))
+
+- Updated user-agent telemetry to the v2 payload, with an application ID field fixed at `0`
+  and a Driver Properties field. New bits report the configured
+  `Switch.Microsoft.Data.SqlClient.UseCompatibilityAsyncBehaviour` (`0x2`) and
+  `Switch.Microsoft.Data.SqlClient.UseCompatibilityProcessSni` (`0x4`) settings independently
+  of the parser's effective override. Async behavior and switch defaults are unchanged;
+  this does not add a registered-application API to 7.0.
+  ([#4913](https://github.com/dotnet/SqlClient/pull/4913))
+
+### Fixed
+
+- Fixed managed SNI certificate validation to enforce an explicitly configured
+  `HostNameInCertificate`, even when the certificate matches the connection's server name.
+  When hostname validation is required, the configured name is the expected name;
+  a mismatch now fails the TLS handshake. Certificate-chain checks and explicit
+  `ServerCertificate` matching are unchanged. (net8.0/net9.0 only, managed SNI)
+  ([#4908](https://github.com/dotnet/SqlClient/pull/4908))
+
+- Isolated Always Encrypted enclave-session cache entries by attestation protocol so a session
+  established under one protocol cannot be reused by a connection requesting another.
+  ([#4867](https://github.com/dotnet/SqlClient/pull/4867))
+
+- Fixed unobserved receive-continuation exceptions when a managed SNI connection is closed
+  while Multiple Active Result Sets (MARS) is still receiving. Pending reads are notified
+  through the existing network-error path, and receive packets are released correctly.
+  (net8.0/net9.0 only, managed SNI)
+  ([#4679](https://github.com/dotnet/SqlClient/issues/4679),
+  [#4950](https://github.com/dotnet/SqlClient/pull/4950))
+
+- Fixed `SqlDataReader.HasRows` incorrectly returning `false` when multiple informational
+  messages precede the first row. The first row remains available to `Read`/`ReadAsync`,
+  and existing informational-message delivery timing is preserved.
+  ([#4899](https://github.com/dotnet/SqlClient/pull/4899))
+
+- Fixed statistics timer bookkeeping throwing `InvalidOperationException` with
+  "Nullable object must have a value" when a concurrent timer release clears its timestamp.
+  This can affect statistics-enabled or diagnostic-instrumented operations; it does not
+  make concurrent use of a connection or MARS thread-safe.
+  ([#4778](https://github.com/dotnet/SqlClient/issues/4778),
+  [#4897](https://github.com/dotnet/SqlClient/pull/4897))
+
+- Fixed corrupted `nvarchar` text from `SqlDataReader.GetTextReader` with
+  `CommandBehavior.SequentialAccess` on big-endian platforms. Decoding now preserves the
+  source bytes, partial-read offsets, and raw UTF-16 code units.
+  ([#4962](https://github.com/dotnet/SqlClient/pull/4962))
+
+- Fixed `SqlConnection.Open`/`OpenAsync` throwing `IndexOutOfRangeException` for malformed
+  PRELOGIN option offsets or lengths. Invalid headers, option sizes, and total response sizes
+  now produce the existing corrupted-stream parsing error. Nonconforming server or proxy
+  responses that previously escaped these checks are rejected.
+  ([#4978](https://github.com/dotnet/SqlClient/pull/4978))
+
+- Fixed malformed row, alternate-result, and authentication responses being processed without
+  their required metadata or authentication state. These responses now produce a corrupted-stream
+  parsing error and invalidate the physical connection so it cannot return to the pool.
+  Valid SQL Server result processing is unchanged.
+  ([#4982](https://github.com/dotnet/SqlClient/pull/4982))
+
+### Companion packages
+
+- Released [Microsoft.Data.SqlClient.Extensions.Azure 7.0.4](release-notes/Extensions/Azure/7.0/7.0.4.md)
+  with actionable Windows WAM missing-parent-window guidance for windowless hosts.
+- Released [Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 7.0.4](release-notes/add-ons/AzureKeyVaultProvider/7.0/7.0.4.md),
+  [Microsoft.Data.SqlClient.Extensions.Abstractions 7.0.4](release-notes/Extensions/Abstractions/7.0/7.0.4.md),
+  and [Microsoft.Data.SqlClient.Internal.Logging 7.0.4](release-notes/Internal/Logging/7.0/7.0.4.md)
+  for version alignment only, with no functional or API changes.
+
+## [Preview Release 8.0.0-preview1] - 2026-11-09
+
+This first 8.0 preview includes changes since the `release/7.1` branch point,
+[`92f220956b07328054701a869f452cade51830c1`](https://github.com/dotnet/SqlClient/commit/92f220956b07328054701a869f452cade51830c1)
+(2026-09-15), through
+[`b87ca6e7643611ddc3273324de346d09e8ff2c43`](https://github.com/dotnet/SqlClient/commit/b87ca6e7643611ddc3273324de346d09e8ff2c43).
+Changes already shipped in 7.1.1 are identified below because the branch-cut baseline
+predates that release.
+
+The driver and its four companion packages use package version `8.0.0-preview1`.
+The family `AssemblyVersion` changes from `7.0.0.0` to `8.0.0.0`;
+.NET Framework applications should review strong-name binding redirects when upgrading.
+Native SNI and `Microsoft.SqlServer.Server` remain independently versioned.
+
+### Added
+
+#### Vector float16 support and per-connection version negotiation
+
+*What Changed:*
+
+- Added support for SQL Server `vector(N, float16)`, including reader values, parameters,
+  output parameters, column schema, and bulk copy. On modern .NET, use `SqlVector<Half>`;
+  the existing `SqlVector<float>` API remains supported.
+  ([#4501](https://github.com/dotnet/SqlClient/pull/4501))
+- Added the `Vector Type Support` connection-string keyword and
+  `SqlConnectionStringBuilder.VectorTypeSupport`, of type `SqlVectorTypeSupport`.
+  Values are `Off`, `V1`, and `V2`; the default is `V2`.
+
+*Who Benefits:*
+
+- Applications storing embeddings can use float16 vectors with smaller element payloads,
+  while choosing the result-type contract independently for each connection.
+
+*Impact:*
+
+- **Result-type change:** when the server negotiates V2, modern .NET returns native
+  `SqlVector<Half>` values for float16 columns instead of JSON strings. Set
+  `Vector Type Support=v1` to preserve float16 JSON-string results, or `off` to receive
+  all vector columns as text. Different settings use separate connection pools.
+- .NET Framework has no `System.Half`. Float16 columns remain available as JSON strings
+  or through `GetSqlVector<float>`, which widens their elements exactly. Prefer the latter
+  when reading many values, to avoid the additional JSON serialization.
+- `GetColumnSchema()` exposes `VectorBaseType` and `VectorDimensions` through the column
+  indexer when native vector metadata is negotiated.
+- SQL Server performs cross-base conversion for native vector parameters and bulk-copy
+  inputs. Typed vectors are not automatically serialized for text destinations; supply
+  JSON strings or an explicit SQL cast instead. Vector TVPs are not added by this change.
+- Float16 requires a server that supports it; enable `PREVIEW_FEATURES` while the server
+  feature is in preview. See the [float16 sample](doc/samples/SqlVectorFloat16Example.cs).
+
+```csharp
+var builder = new SqlConnectionStringBuilder(connectionString)
+{
+    VectorTypeSupport = SqlVectorTypeSupport.V1
+};
+```
+
+#### Opt-in reset of pooled transaction isolation levels
+
+*What Changed:*
+
+- Added `Switch.Microsoft.Data.SqlClient.EnableTransactionIsolationLevelReset`, default
+  `false`. When enabled, a SqlClient-tracked isolation-level change is reset to
+  `READ COMMITTED` before pooled reuse when no existing enlistment or active delegated
+  transaction root remains.
+  ([#96](https://github.com/dotnet/SqlClient/issues/96),
+  [#4330](https://github.com/dotnet/SqlClient/pull/4330))
+
+*Who Benefits:*
+
+- Applications that otherwise inherit an isolation level left by a previous user of a
+  pooled connection.
+
+*Impact:*
+
+- Enable the switch before opening connections. A necessary reset adds a round trip and
+  uses the remaining open-timeout budget. Known Azure Synapse dedicated SQL pool endpoints
+  are excluded; the default preserves existing behavior.
+- A user-issued `SET TRANSACTION ISOLATION LEVEL` alone does not mark the connection for
+  this reset. The switch is not general cleanup for arbitrary T-SQL session changes.
+
+#### Additional TimeOnly write paths (net10.0 only)
+
+*What Changed:*
+
+- Added `TimeOnly` support for `SqlBulkCopy` DataRow/DataTable sources and `SqlParameter`
+  values with `SqlDbType.Variant`, writing SQL `time` values.
+  ([#4604](https://github.com/dotnet/SqlClient/pull/4604))
+
+*Who Benefits:*
+
+- Applications using modern .NET time-only values in bulk-copy and variant workflows.
+
+*Impact:*
+
+- These paths no longer require conversion to `TimeSpan`. This does not add `TimeOnly`
+  to .NET Framework.
+
+#### Authentication diagnostics
+
+*What Changed:*
+
+- The Azure extension forwards MSAL, allowlisted Azure.Identity, and SqlClient token
+  acquisition events to `Microsoft.Data.SqlClient.EventSource` using the new
+  `AuthenticationTrace` keyword (`0x2000`).
+  ([#1846](https://github.com/dotnet/SqlClient/issues/1846),
+  [#4872](https://github.com/dotnet/SqlClient/pull/4872))
+
+*Who Benefits:*
+
+- Support teams can diagnose built-in Entra ID authentication without implementing a
+  custom provider or logging callback.
+
+*Impact:*
+
+- Collect authentication events with `0x2000`, or authentication plus ordinary trace with
+  `0x2002`. On modern .NET:
+
+  ```text
+  dotnet-trace collect --process-id <pid> --providers Microsoft.Data.SqlClient.EventSource:0x2000:5 --rundown false
+  ```
+
+- On .NET Framework, use ETW or an in-process `EventListener`. PII logging remains disabled
+  for extension-owned requests. Correlation is best effort; some Azure.Identity events
+  have an empty connection ID and can originate from application-owned credentials.
+  Treat captures as sensitive operational data.
+- See the [Azure extension notes](release-notes/Extensions/Azure/8.0/8.0.0-preview1.md) for limitations
+  and [the logging sample](doc/samples/SqlAuthenticationLogging_Example.cs).
+
+### Changed
+
+#### Breaking change: minimum modern runtime is .NET 10
+
+*What Changed:*
+
+- Replaced the `net8.0` and `net9.0` driver implementation targets with `net10.0`.
+  .NET Framework 4.6.2 support is retained.
+  ([#4779](https://github.com/dotnet/SqlClient/pull/4779))
+
+*Who Benefits:*
+
+- Applications moving to the .NET 10 runtime and dependency servicing band.
+
+*Impact:*
+
+- Upgrade modern applications to .NET 10, or remain on a compatible earlier driver.
+  Retained `netstandard2.0` reference/unsupported-platform assets do not extend driver
+  runtime support to .NET 8 or .NET 9.
+
+#### Breaking change: TCP MultiSubnetFailover is enabled by default
+
+*What Changed:*
+
+- When omitted from the connection string, `MultiSubnetFailover` now defaults to `true`
+  for TCP connections. `TransparentNetworkIPResolution` defaults to `false` on
+  .NET Framework.
+  ([#4876](https://github.com/dotnet/SqlClient/issues/4876),
+  [#4927](https://github.com/dotnet/SqlClient/pull/4927))
+
+*Who Benefits:*
+
+- Applications connecting to multi-address hosts try resolved IP addresses in parallel,
+  without needing an explicit opt-in.
+
+*Impact:*
+
+- Explicit values remain authoritative. The automatic default is disabled for non-TCP
+  protocols, LocalDB, database mirroring partners, `admin:`/`via:`, and unprefixed local
+  servers using native SNI. Explicit `true` still fails with unsupported protocols or
+  failover partners. MSF retains its 64-address limit.
+- With native SNI on Windows, an unprefixed remote host now uses TCP only, without
+  Named Pipes fallback. Use `np:` or `MultiSubnetFailover=false` when needed.
+- With MSF enabled, `IPAddressPreference` and TNIR are ignored. The builder reports the
+  keyword default, not the routing decision for a particular connection.
+- Restore the old MSF default with
+  `Switch.Microsoft.Data.SqlClient.EnableMultiSubnetFailoverByDefault=false`.
+  On .NET Framework, also set
+  `Switch.Microsoft.Data.SqlClient.DisableTNIRByDefaultInConnectionString=false`
+  to restore the previous TNIR default. Set switches before using SqlClient.
+  See [networking migration guidance](doc/networking-defaults.md).
+
+#### Breaking change: Azure Attestation requires the Azure extension
+
+*What Changed:*
+
+- Moved Azure Attestation token validation and the IdentityModel dependencies from the core
+  driver to `Microsoft.Data.SqlClient.Extensions.Azure`.
+  ([#4017](https://github.com/dotnet/SqlClient/issues/4017),
+  [#4790](https://github.com/dotnet/SqlClient/pull/4790))
+
+*Who Benefits:*
+
+- Applications not using Azure Attestation no longer receive these dependencies from core.
+
+*Impact:*
+
+- Applications using `Attestation Protocol=AAS` must explicitly reference the matching
+  Azure extension. Without it, enclave session setup throws `InvalidOperationException`.
+- The Azure extension now depends on Azure.Core rather than Azure.Identity. Credential
+  namespaces are unchanged. Remove direct Azure.Identity references older than 1.21.0,
+  or upgrade to 1.21.0 or later; Azure.Identity.Broker users need 1.6.0 or later.
+  ([#4749](https://github.com/dotnet/SqlClient/pull/4749))
+
+#### Breaking changes: reference API and argument validation corrections
+
+*What Changed:*
+
+- Reference APIs now match implementation accessibility and sealing, and no longer expose
+  the nonexistent `SqlBatchCommand.CanCreateParameter` setter on .NET Framework.
+  ([#4832](https://github.com/dotnet/SqlClient/pull/4832),
+  [#4890](https://github.com/dotnet/SqlClient/pull/4890))
+- `SqlParameterCollection.RemoveAt(int)` throws `ArgumentOutOfRangeException`, rather
+  than `IndexOutOfRangeException`, for an invalid index; indexer behavior is unchanged.
+  ([#4874](https://github.com/dotnet/SqlClient/pull/4874))
+- Character-type `SqlMetaData` construction in globalization-invariant mode requires an
+  overload with an explicit LCID (net10.0 only).
+  ([#4457](https://github.com/dotnet/SqlClient/pull/4457))
+
+*Who Benefits:*
+
+- Consumers get accurate compile-time API contracts and explicit argument validation.
+
+*Impact:*
+
+- Correct code that instantiated inaccessible types, derived from sealed
+  data-classification types, or assigned the nonexistent setter. Update exception
+  handling for `RemoveAt(int)`.
+- Use a constructor with `locale` or `localeId` for character metadata in invariant mode;
+  this does not add general globalization-invariant connection support.
+
+#### Package layout and family-version validation
+
+- Managed driver implementations now reside in `lib/net462` and `lib/net10.0`, without
+  duplicated RID-specific managed DLLs. Update custom scripts copying from
+  `runtimes/<rid>/lib/<tfm>/Microsoft.Data.SqlClient.dll`. Native SNI remains separate.
+  ([#4673](https://github.com/dotnet/SqlClient/pull/4673))
+- Consumer builds emit warning `SQLCLIENT001` for mismatched installed family package
+  versions, including preview suffixes. Use matching driver and companion versions.
+  Native SNI and `Microsoft.SqlServer.Server` are excluded; setting
+  `SqlClientEnforceFamilyVersions=false` disables the check.
+  ([#4815](https://github.com/dotnet/SqlClient/pull/4815))
+- Corrected Source Link mappings and package source coverage. This branch-cut delta
+  was also backported to 7.1; it is not unique to 8.0.
+  ([#4710](https://github.com/dotnet/SqlClient/pull/4710))
+
+#### Windows connection pool identity isolation (Windows only)
+
+- Pool identity includes the Windows logon session, separating network-only impersonation
+  sessions even when their local SID is identical. Reusing tokens from the same logon
+  session preserves reuse; distinct sessions can increase pool counts.
+  ([#4814](https://github.com/dotnet/SqlClient/pull/4814))
+- See [connection pooling and impersonation](doc/connection-pooling-impersonation.md).
+
+#### Trimming and authentication configuration
+
+- Authentication registration/bootstrap now lives in Abstractions, allowing
+  `SqlAuthenticationProvider.GetProvider`/`SetProvider` to use the shared registry without
+  loading the driver through reflection. `SqlAuthenticationInitializer` also lives in
+  Abstractions, with a type forward preserving existing references.
+  Abstractions adds a trim/AOT-analyzed `net10.0` asset.
+  ([#4821](https://github.com/dotnet/SqlClient/pull/4821))
+- `Switch.Microsoft.Data.SqlClient.EnableAppConfig` controls authentication configuration
+  on both .NET Framework and modern .NET. The driver's separate retry-configuration and
+  switch-override readers use this switch on modern .NET only; they remain unchanged on
+  .NET Framework.
+  ([#4697](https://github.com/dotnet/SqlClient/pull/4697),
+  [#4821](https://github.com/dotnet/SqlClient/pull/4821))
+- Added `Switch.Microsoft.Data.SqlClient.EnableAzureExtensionDiscovery` for reflective
+  authentication-provider discovery. Both authentication switches default to `true`
+  and cache their first value. Explicit provider registration remains available when
+  discovery is disabled. Authentication discovery does not control the driver's separate
+  Azure Attestation loader.
+- For explicit registration in trimmed/Native AOT applications, disable **both**
+  reflective paths at publish time, then explicitly construct/register a provider for
+  every required method before opening connections. Runtime switch values alone cannot
+  remove code during publication.
+
+  ```xml
+  <ItemGroup>
+    <RuntimeHostConfigurationOption Include="Switch.Microsoft.Data.SqlClient.EnableAppConfig"
+                                    Value="false" Trim="true" />
+    <RuntimeHostConfigurationOption Include="Switch.Microsoft.Data.SqlClient.EnableAzureExtensionDiscovery"
+                                    Value="false" Trim="true" />
+  </ItemGroup>
+  ```
+
+- Trimmed JIT applications can retain enabled reflective paths if they preserve the
+  configuration infrastructure, handlers, provider/initializer constructors, and Azure
+  discovery contracts. Enabling a switch does not root these members. Enabled paths
+  report trimming warnings and, for Native AOT, dynamic-code warnings.
+- Source-generated JSON serialization replaces reflection-based calls for vector
+  conversions and enclave attestation, including the asynchronous HGS request path,
+  reducing trimming and dynamic-code warnings (net10.0 only). JSON representations
+  remain unchanged.
+  ([#4683](https://github.com/dotnet/SqlClient/pull/4683),
+  [#4801](https://github.com/dotnet/SqlClient/pull/4801))
+- Reduced trimming/AOT warnings in diagnostics, schema metadata, server discovery, and
+  native interop (net10.0 only). These are incremental improvements, not complete
+  Native AOT support.
+  ([#4684](https://github.com/dotnet/SqlClient/pull/4684),
+  [#4688](https://github.com/dotnet/SqlClient/pull/4688),
+  [#4703](https://github.com/dotnet/SqlClient/pull/4703))
+- Authentication section handlers are public in Abstractions; existing driver-qualified
+  app.config declarations remain supported. Configured providers/initializers take
+  precedence over application registrations, which take precedence over Azure defaults.
+  Failed explicit configuration does not silently select an earlier/default provider;
+  failures are traced, and explicit successful application registration can recover a
+  failed method. Check `SetProvider`'s return value and trace diagnostics when registering.
+  ([#4816](https://github.com/dotnet/SqlClient/pull/4816),
+  [#4860](https://github.com/dotnet/SqlClient/pull/4860),
+  [#4821](https://github.com/dotnet/SqlClient/pull/4821))
+
+#### Performance and sync/async pathways
+
+- Reduced allocations in Always Encrypted key handling and cache contention for parallel
+  encryption-key lookups. Calls to key-store providers to decrypt column encryption keys
+  remain serialized.
+  ([#4256](https://github.com/dotnet/SqlClient/pull/4256))
+- Converted asynchronous `SqlBulkCopy` setup, including metadata retrieval and connection
+  recovery, to native async/await. The per-row asynchronous copy loop is unchanged.
+  ([#4687](https://github.com/dotnet/SqlClient/pull/4687))
+- Added asynchronous enclave-provider and delegate operations, including awaited
+  attestation HTTP requests and retry delays. This is groundwork, not end-to-end
+  nonblocking Always Encrypted command execution: the new operations are not yet wired
+  into the command execution path, and driver key-store resolution remains synchronous
+  for both sync and async commands.
+  ([#4541](https://github.com/dotnet/SqlClient/pull/4541),
+  [#4886](https://github.com/dotnet/SqlClient/pull/4886))
+
+#### Other changes
+
+- The user-agent Driver Properties mask now reports configured
+  `UseCompatibilityAsyncBehaviour` and `UseCompatibilityProcessSni` values through
+  bits `0x2` and `0x4`, respectively. These report configuration before compatibility
+  overrides, not effective behavior; async defaults are unchanged.
+  ([#4911](https://github.com/dotnet/SqlClient/pull/4911))
+- Added diagnostics for database-context mismatches after transparent reconnection,
+  without changing recovery behavior.
+  ([#4130](https://github.com/dotnet/SqlClient/pull/4130))
+- Documentation now explains complete reader consumption for `InfoMessage` delivery and
+  trailing errors.
+  `Read()`/`ReadAsync()` ending a result does not establish batch success: with default
+  behavior, advance through `NextResult()`/`NextResultAsync()` until `false`, including
+  after empty results. Cleanup still suppresses pending nonfatal errors; `SingleRow`
+  and `SingleResult` retain their discard semantics. Reader runtime behavior is unchanged.
+  ([#4723](https://github.com/dotnet/SqlClient/pull/4723),
+  [#4729](https://github.com/dotnet/SqlClient/pull/4729))
+- Clarified `Prepare` incompatibility with optimized parameter binding and `SqlBatch`
+  command-behavior exceptions.
+  ([#4726](https://github.com/dotnet/SqlClient/pull/4726),
+  [#4878](https://github.com/dotnet/SqlClient/pull/4878))
+- Updated shipping dependencies, including the cryptography servicing fixes. Concrete
+  direct dependency floors are listed below and in the companion notes.
+  ([#4848](https://github.com/dotnet/SqlClient/pull/4848),
+  [#4880](https://github.com/dotnet/SqlClient/pull/4880))
+- Updated `Microsoft.Data.SqlClient.SNI` and `Microsoft.Data.SqlClient.SNI.runtime`
+  from 7.1.0 to 8.0.0-preview1.26309.4 (Windows native SNI only).
+  ([#5011](https://github.com/dotnet/SqlClient/pull/5011))
+
+### Fixed
+
+- Malformed PRELOGIN option headers, offsets, lengths, and response sizes now produce
+  a parsing error (`InvalidOperationException`) during `Open`/`OpenAsync`, rather than
+  incidental `IndexOutOfRangeException` failures.
+  ([#4902](https://github.com/dotnet/SqlClient/pull/4902))
+- Responses missing required row metadata or authentication state now produce a
+  corrupted-stream parsing error and invalidate the connection, rather than causing
+  null-reference failures or falling back to unrelated result metadata. The parsing
+  error is an `InvalidOperationException`, not a `SqlException`.
+  ([#4941](https://github.com/dotnet/SqlClient/pull/4941))
+- Managed SNI honors an explicit `HostNameInCertificate` as the sole expected certificate
+  hostname, rather than accepting a match only to the destination (net10.0, managed SNI
+  only). Certificate-chain and `ServerCertificate` checks are unchanged.
+  ([#4905](https://github.com/dotnet/SqlClient/pull/4905))
+- Fixed managed-SNI parallel TCP connection attempts failing when one address errors
+  immediately despite another reachable address; unused sockets are disposed
+  (net10.0, managed SNI only).
+  ([#4929](https://github.com/dotnet/SqlClient/pull/4929))
+- Fixed the managed-SNI MARS receive teardown race that could leave an unobserved callback
+  exception during disposal (net10.0, managed SNI only).
+  ([#4680](https://github.com/dotnet/SqlClient/pull/4680))
+- Fixed `HasRows` returning `false` when multiple informational messages precede rows.
+  ([#4773](https://github.com/dotnet/SqlClient/pull/4773))
+- Fixed XML streaming failures for fragments beginning with text by explicitly selecting
+  UTF-16LE when creating the XML reader.
+  ([#4757](https://github.com/dotnet/SqlClient/pull/4757))
+- Fixed corrupted `nvarchar` text from `GetTextReader()` with `SequentialAccess` on
+  big-endian platforms; little-endian behavior is unchanged (big-endian only).
+  ([#4945](https://github.com/dotnet/SqlClient/pull/4945))
+- Fixed `SqlBulkCopy` losing `money`/`smallmoney` type identity in `sql_variant` values.
+  ([#4727](https://github.com/dotnet/SqlClient/pull/4727))
+- Fixed configurable retry logic retrying a command outside its original transaction
+  after the error aborted that transaction.
+  ([#4728](https://github.com/dotnet/SqlClient/pull/4728))
+- Reassert non-`ReadCommitted` isolation levels when pooled connections reattach to the
+  same ambient transaction with a pending reset. This unconditional correctness fix can
+  add a round trip and is separate from the opt-in reset switch.
+  ([#4335](https://github.com/dotnet/SqlClient/pull/4335))
+- Prevent V1/V2 pool pruning from retiring pools with in-flight acquisition, physical
+  creation, or background replenishment, preserving transaction-affine reuse and avoiding
+  unintended transaction promotion. Explicit clear/shutdown semantics are unchanged.
+  ([#4755](https://github.com/dotnet/SqlClient/issues/4755),
+  [#4754](https://github.com/dotnet/SqlClient/pull/4754))
+- Isolate cached enclave sessions by attestation protocol, server, database, and URL.
+  ([#4829](https://github.com/dotnet/SqlClient/pull/4829))
+- Retry providers load/resolve in SqlClient's current `AssemblyLoadContext`, rather than
+  the default context (net10.0 only). Collectible contexts using managed SNI can unload;
+  this does not promise native-SNI unloadability.
+  ([#4588](https://github.com/dotnet/SqlClient/pull/4588))
+- Prevent eager native SNI initialization on non-Windows platforms
+  (net10.0 on Linux/macOS).
+  ([#4700](https://github.com/dotnet/SqlClient/pull/4700))
+- Fixed the nullable statistics execution-timer race and active soft-connection counter
+  drift when the default wait-handle pool reclaims abandoned connections. Concurrent use
+  of a connection is still unsupported.
+  ([#4875](https://github.com/dotnet/SqlClient/pull/4875),
+  [#4725](https://github.com/dotnet/SqlClient/pull/4725))
+- Formatter-based `SqlException` serialization preserves `Errors` and derived error
+  properties such as `Number`, addressing .NET Framework remoting scenarios. Formatter
+  serialization remains obsolete on modern .NET; this is not guidance to use
+  `BinaryFormatter` or deserialize untrusted data.
+  ([#1940](https://github.com/dotnet/SqlClient/issues/1940),
+  [#4622](https://github.com/dotnet/SqlClient/pull/4622))
+- Restored `SqlParameterCollection.Add(string, object)` and exposed
+  `Microsoft.Data.SqlClient.Server.TriggerAction` in the reference assembly (net462 only).
+  The former remains obsolete; prefer `AddWithValue` or explicitly typed parameters.
+  ([#4832](https://github.com/dotnet/SqlClient/pull/4832))
+- Windows WAM missing-parent-window errors now explain alternatives for windowless hosts,
+  preserving the MSAL error code and inner exception (Windows only, Azure extension).
+  ([#4858](https://github.com/dotnet/SqlClient/pull/4858))
+
+#### Included in the branch-cut delta, already shipped in 7.1.1
+
+- Fixed zero-valued decimal parameters with equal precision and scale.
+  ([#4721](https://github.com/dotnet/SqlClient/pull/4721))
+- Fixed expired/nearly expired access-token eviction in opt-in connection pool V2.
+  ([#4734](https://github.com/dotnet/SqlClient/pull/4734))
+- Preserve admitted in-flight opens during pool clearing, discarding connections returned
+  to the retired pool.
+  ([#4718](https://github.com/dotnet/SqlClient/pull/4718))
+
+These are retained because the requested baseline predates [7.1.1](release-notes/7.1/7.1.1.md);
+they are not new fixes for applications already using that release.
+
+### Removed
+
+#### Breaking change: SQL Server 2005 compatibility
+
+*What Changed:*
+
+- Removed SQL Server 2005 connectivity and `Type System Version=SQL Server 2005`,
+  including its date/time-as-string and large-UDT-as-binary compatibility projections.
+  ([#4881](https://github.com/dotnet/SqlClient/pull/4881))
+
+*Impact:*
+
+- SQL Server 2005 connections are rejected. Remove that type-system setting and update code
+  that depended on its projections to consume current date/time and UDT representations.
+
+### Companion packages
+
+- Released Microsoft.Data.SqlClient.Extensions.Azure 8.0.0-preview1. See [release notes](release-notes/Extensions/Azure/8.0/8.0.0-preview1.md).
+- Released Microsoft.Data.SqlClient.Extensions.Abstractions 8.0.0-preview1. See [release notes](release-notes/Extensions/Abstractions/8.0/8.0.0-preview1.md).
+- Released Microsoft.Data.SqlClient.Internal.Logging 8.0.0-preview1. See [release notes](release-notes/Internal/Logging/8.0/8.0.0-preview1.md).
+- Released Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 8.0.0-preview1. See [release notes](release-notes/add-ons/AzureKeyVaultProvider/8.0/8.0.0-preview1.md).
+
+## [Stable Release 6.1.8] - 2026-10-28
+
+### Changed
+
+- Updated the `System.Security.Cryptography.Pkcs` dependency to 8.0.2 (was 8.0.1) for .NET Framework 4.6.2, .NET 8.0, and .NET Standard 2.0, and updated the `Microsoft.Extensions.Caching.Memory`, `System.Configuration.ConfigurationManager`, and `System.Security.Cryptography.Pkcs` dependencies to 9.0.21 (was 9.0.11) for .NET 9.0.
+  ([#4842](https://github.com/dotnet/SqlClient/pull/4842), [#4862](https://github.com/dotnet/SqlClient/pull/4862), [#4870](https://github.com/dotnet/SqlClient/pull/4870))
+
+- Improved the error reported when `Active Directory Interactive` authentication through the Windows Web Account Manager (WAM) broker fails because the host has no parent window, such as a service or Azure Functions host. The resulting error now explains the supported alternatives: supply a parent window with `SetParentActivityOrWindowFunc`, use `Active Directory Default` with a configured non-interactive credential, or supply a custom `ApplicationClientId` with `UseWamBroker` disabled. The original MSAL error code and inner exception are preserved, and authentication selection, retry behavior, and other failures are unchanged. (Windows only)
+  ([#4854](https://github.com/dotnet/SqlClient/issues/4854), [#4858](https://github.com/dotnet/SqlClient/pull/4858), [#4918](https://github.com/dotnet/SqlClient/pull/4918))
+
+### Fixed
+
+- Fixed the managed SNI path ignoring `HostNameInCertificate` during server certificate validation. When `HostNameInCertificate` is set, it is now the only host name the server certificate is validated against, and certificates that do not match it are rejected. Default host-name selection when the property is not set, certificate chain validation, `ServerCertificate` matching, and the connection destination are unchanged. (net8.0/net9.0 only)
+  ([#4905](https://github.com/dotnet/SqlClient/pull/4905), [#4909](https://github.com/dotnet/SqlClient/pull/4909))
+
+- Fixed Always Encrypted enclave session caching so that cached enclave sessions are isolated by attestation protocol. A session established with one `Attestation Protocol` setting is no longer reused by a connection to the same server, database, and attestation URL that uses a different protocol.
+  ([#4829](https://github.com/dotnet/SqlClient/pull/4829), [#4868](https://github.com/dotnet/SqlClient/pull/4868))
+
+- Fixed `SqlDataReader.HasRows` returning `false` when a result set contains rows but the server sends multiple informational messages, or an informational message before an `ORDER` token, ahead of the first row. Empty results still report `false`, and `InfoMessage` delivery is unchanged.
+  ([#3018](https://github.com/dotnet/SqlClient/issues/3018), [#4773](https://github.com/dotnet/SqlClient/pull/4773), [#4898](https://github.com/dotnet/SqlClient/pull/4898))
+
+- Fixed an intermittent `InvalidOperationException` ("Nullable object must have a value") from statistics bookkeeping when commands complete concurrently on a MARS connection. This issue was reported as a regression starting with 6.1.4.
+  ([#4778](https://github.com/dotnet/SqlClient/issues/4778), [#4875](https://github.com/dotnet/SqlClient/pull/4875), [#4896](https://github.com/dotnet/SqlClient/pull/4896))
+
+- Fixed Entra ID authentication when the server supplies an authority URL with an OAuth endpoint suffix, such as `https://login.microsoftonline.com/<tenant>/oauth2/authorize` returned by the Dataverse/Dynamics 365 TDS endpoint. The provider now extracts the tenant from the first path segment and uses the normalized authority for Azure.Identity credentials, MSAL, and their cache keys. An authority URL that cannot be parsed now fails with a clear, localized `ArgumentException` naming the authority. Bare tenant authority URLs used by Azure SQL and Fabric retain their existing behavior.
+  ([#4496](https://github.com/dotnet/SqlClient/issues/4496), [#4521](https://github.com/dotnet/SqlClient/pull/4521), [#4791](https://github.com/dotnet/SqlClient/pull/4791), [#4807](https://github.com/dotnet/SqlClient/pull/4807))
+
 ## [Stable Release 7.1.1] - 2026-09-29
 
 ### Fixed

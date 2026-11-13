@@ -1,0 +1,47 @@
+<!--
+Licensed to the .NET Foundation under one or more agreements.
+The .NET Foundation licenses this file to you under the MIT license.
+See the LICENSE file in the project root for more information.
+-->
+<docs>
+  <members name="SqlAuthenticationInitializer">
+    <SqlAuthenticationInitializer>
+      <summary>Initializes authentication providers configured in app.config.</summary>
+      <remarks>
+        Configured initializers run synchronously during registry bootstrap without holding the
+        lookup/publication lock. Concurrent and reentrant calls observe providers published so far.
+        Only registrations made on the initializer's own thread receive configuration precedence.
+        This uses the current managed thread ID, not logical async context or causal ownership.
+        Work queued to another thread, including Task.Run work that this method waits for, uses
+        application precedence and normal recoverable-error handling (SetProvider returns false).
+        Same-thread calls made before an asynchronous operation yields still receive initializer
+        handling while Initialize is running. Continuations on another thread do not.
+        Initializer status ends when Initialize returns or throws. The registry does not await
+        queued work or async-void continuations, and failures from that work are not automatically
+        captured as initializer failures. GetProvider does not use this thread-ID check.
+        Recoverable initialization or registration failures stop this initializer and are traced,
+        but later configured providers are still attempted. Defaults cannot fill
+        otherwise-unregistered methods after initializer failure because its intended methods
+        are unknown. Explicit application registration can recover a missing method.
+        Fatal failures propagate and are not cached by registry bootstrap. If execution continues,
+        later access can retry bootstrap and repeat initializer side effects.
+        Earlier registrations and initializer side effects are not
+        rolled back. Enable tracing before the first registry access to capture these failures;
+        recoverable initialization failures are not retried until the application restarts.
+      </remarks>
+    </SqlAuthenticationInitializer>
+    <ctor>
+      <summary>Creates an authentication initializer.</summary>
+    </ctor>
+    <Initialize>
+      <summary>Registers application-configured authentication providers.</summary>
+      <remarks>
+        This method executes without the lookup/publication lock. Concurrent and reentrant
+        lookups observe providers published so far and can return null before a method has been
+        initialized. Configuration precedence applies only to registrations made on this thread.
+        Complete required registrations synchronously before returning; asynchronous work does not
+        inherit initializer status through ExecutionContext flow.
+      </remarks>
+    </Initialize>
+  </members>
+</docs>

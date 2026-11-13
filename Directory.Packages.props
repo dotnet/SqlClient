@@ -52,7 +52,7 @@
   -->
   <PropertyGroup>
     <!-- SNI version (external package, version declared once here) -->
-    <SniVersion>7.1.0</SniVersion>
+    <SniVersion>8.0.0-preview1.26309.4</SniVersion>
     <SniVersionRange>[$(SniVersion), $([MSBuild]::Add($(SniVersion.Split('.')[0]), 1)).0.0)</SniVersionRange>
   </PropertyGroup>
 
@@ -96,13 +96,13 @@
   <!-- Dependencies shared by multiple projects -->
 
   <ItemGroup>
-    <PackageVersion Include="Azure.Core" Version="1.63.0" />
-    <PackageVersion Include="Microsoft.Identity.Client" Version="4.91.1" />
+    <PackageVersion Include="Azure.Core" Version="1.65.0" />
+    <PackageVersion Include="Microsoft.Identity.Client" Version="4.92.0" />
   </ItemGroup>
 
   <!-- .NET 10 is the lowest supported runtime band, including legacy/Standard dependencies. -->
   <ItemGroup>
-    <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="10.0.15" />
   </ItemGroup>
 
   <!-- ===================================================================== -->
@@ -142,7 +142,7 @@
   <!-- Azure Dependencies -->
 
   <ItemGroup>
-    <PackageVersion Include="Microsoft.Identity.Client.Broker" Version="4.91.1" />
+    <PackageVersion Include="Microsoft.Identity.Client.Broker" Version="4.92.0" />
   </ItemGroup>
 
   <!-- ===================================================================== -->
@@ -155,20 +155,21 @@
     <PackageVersion Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.23.0" />
     <PackageVersion Include="System.Buffers" Version="4.6.1" />
     <PackageVersion Include="System.Data.Common" Version="4.3.0" />
-    <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="10.0.13" />
+    <PackageVersion Include="System.Diagnostics.DiagnosticSource" Version="10.0.15" />
     <PackageVersion Include="System.Memory" Version="4.6.3" />
     <PackageVersion Include="System.Runtime.InteropServices.RuntimeInformation" Version="4.3.0" />
-    <PackageVersion Include="System.Text.Json" Version="10.0.13" />
+    <PackageVersion Include="System.Text.Json" Version="10.0.15" />
     <PackageVersion Include="System.ValueTuple" Version="4.6.2" />
-    <PackageVersion Include="System.Threading.Channels" Version="10.0.13" />
+    <PackageVersion Include="System.Threading.Channels" Version="10.0.15" />
+    <PackageVersion Include="Microsoft.DotNet.ApiCompat.Task" Version="10.0.404" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageVersion Include="Microsoft.Bcl.Cryptography" Version="10.0.13" />
-    <PackageVersion Include="Microsoft.Bcl.TimeProvider" Version="10.0.13" />
-    <PackageVersion Include="System.Threading.RateLimiting" Version="10.0.13" />
-    <PackageVersion Include="System.Configuration.ConfigurationManager" Version="10.0.13" />
-    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.Bcl.Cryptography" Version="10.0.15" />
+    <PackageVersion Include="Microsoft.Bcl.TimeProvider" Version="10.0.15" />
+    <PackageVersion Include="System.Threading.RateLimiting" Version="10.0.15" />
+    <PackageVersion Include="System.Configuration.ConfigurationManager" Version="10.0.15" />
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.15" />
   </ItemGroup>
 
   <!-- ===================================================================== -->

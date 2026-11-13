@@ -22,7 +22,6 @@ internal sealed class ConnectionCapabilities
     /// from the server.
     /// </summary>
     /// <remarks>
-    /// <see cref="TdsEnums.SQL2005_VERSION"/> is negotiated for SQL Server 2005.
     /// <see cref="TdsEnums.SQL2008_VERSION"/> is negotiated for SQL Server 2008.
     /// <see cref="TdsEnums.TDS7X_VERSION"/> is negotiated for SQL Server 2012 and upwards using TDS 7.x.
     /// <see cref="TdsEnums.TDS80_VERSION"/> is negotiated for the TDS 8.0 flow in SQL Server 2022 and upwards.
@@ -56,13 +55,6 @@ internal sealed class ConnectionCapabilities
 
     /// <summary>
     /// If true (as determined by the value of <see cref="TdsVersion"/>)
-    /// then the connection is to SQL Server 2008 R2 or newer.
-    /// </summary>
-    public bool Is2008R2OrNewer =>
-        Is2012OrNewer || TdsVersion is TdsEnums.SQL2008_VERSION;
-
-    /// <summary>
-    /// If true (as determined by the value of <see cref="TdsVersion"/>)
     /// then the connection is to SQL Server 2012 or newer.
     /// </summary>
     public bool Is2012OrNewer =>
@@ -73,31 +65,6 @@ internal sealed class ConnectionCapabilities
     /// by the receipt of a FEATUREEXTACK token of value <c>0x08</c>.
     /// </summary>
     public bool IsAzureSql { get; set; }
-
-    /// <summary>
-    /// Indicates support for user-defined CLR types (up to a length of 8000
-    /// bytes.) This was introduced in SQL Server 2005.
-    /// </summary>
-    public bool UserDefinedTypes => true;
-
-    /// <summary>
-    /// Indicates support for the <c>xml</c> data type. This was introduced
-    /// in SQL Server 2005.
-    /// </summary>
-    public bool XmlDataType => true;
-
-    /// <summary>
-    /// Indicates support for the <c>date</c>, <c>time</c>, <c>datetime2</c>
-    /// and <c>datetimeoffset</c> data types. These were introduced in SQL
-    /// Server 2008.
-    /// </summary>
-    public bool ExpandedDateTimeDataTypes => Is2008R2OrNewer;
-
-    /// <summary>
-    /// Indicates support for user-defined CLR types of any length. This
-    /// was introduced in SQL Server 2008.
-    /// </summary>
-    public bool LargeUserDefinedTypes => Is2008R2OrNewer;
 
     /// <summary>
     /// Indicates support for the client to include a TDS trace header,
@@ -161,12 +128,19 @@ internal sealed class ConnectionCapabilities
     public bool ReadOnlyFailoverPartnerConnection { get; set; }
 
     /// <summary>
-    /// Indicates support for the <c>vector</c> data type, with a backing type
-    /// of <c>float32</c>. This was introduced in SQL Server 2022, and is only
-    /// available if a FEATUREEXTACK token of value <c>0x0E</c> is received, and
-    /// if the version in this token's data is greater than or equal to <c>1</c>.
+    /// The version negotiated via the <c>VECTORSUPPORT</c> feature extension
+    /// (FEATUREEXTACK token value <c>0x0E</c>), which determines the vector base
+    /// types the server returns in their native binary form.
     /// </summary>
-    public bool Float32VectorType { get; set; }
+    /// <remarks>
+    /// <see cref="TdsEnums.VECTOR_VERSION_NOT_SUPPORTED"/> indicates native vector support
+    /// was not negotiated; vector columns are returned as <c>varchar(max)</c>.
+    /// <see cref="TdsEnums.VECTOR_VERSION_FLOAT32"/> indicates support for a <c>float32</c>
+    /// base type; columns with any other base type are returned as <c>varchar(max)</c>.
+    /// <see cref="TdsEnums.VECTOR_VERSION_FLOAT16"/> additionally indicates support for a
+    /// <c>float16</c> base type.
+    /// </remarks>
+    public byte VectorVersion { get; set; }
 
     /// <summary>
     /// Indicates support for the <c>json</c> data type. This was introduced in
@@ -214,7 +188,7 @@ internal sealed class ConnectionCapabilities
         GlobalTransactionsSupported = false;
         EnhancedRouting = false;
         ReadOnlyFailoverPartnerConnection = false;
-        Float32VectorType = false;
+        VectorVersion = TdsEnums.VECTOR_VERSION_NOT_SUPPORTED;
         JsonType = false;
         ColumnEncryptionVersion = TdsEnums.TCE_NOT_ENABLED;
         ColumnEncryptionEnclaveType = null;

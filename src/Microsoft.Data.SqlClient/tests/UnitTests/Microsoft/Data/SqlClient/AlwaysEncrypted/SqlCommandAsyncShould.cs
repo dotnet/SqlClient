@@ -152,7 +152,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             {
                 CommandBehavior.Default, null, 30, true, true,
                 globalCompletion, localCompletion, end, retry, nameof(SqlCommand.EndExecuteReader),
-                ADP.TimerCurrent(),
+                ADP.TimerCurrent(), CancellationToken.None,
             });
         }
 

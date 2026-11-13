@@ -591,26 +591,11 @@
   <data name="SQL_NonLocalSSEInstance" xml:space="preserve">
     <value>非ローカル ユーザーのインスタンスでは、SSE インスタンスのリダイレクトを行うことはできません。</value>
   </data>
-  <data name="SQL_UnsupportedAuthentication" xml:space="preserve">
-    <value>認証 '{0}' はサポートされていません。</value>
-  </data>
-  <data name="SQL_CannotCreateAuthProvider" xml:space="preserve">
-    <value>'{0}' の種類 '{1}' の認証プロバイダーをインスタンス化できませんでした。</value>
-  </data>
-  <data name="SQL_CannotCreateAuthInitializer" xml:space="preserve">
-    <value>種類 '{0}' の SqlAuthenticationInitializer をインスタンス化できませんでした。</value>
-  </data>
-  <data name="SQL_UnsupportedAuthenticationByProvider" xml:space="preserve">
-    <value>プロバイダー '{0}' では認証 '{1}' はサポートされていません。</value>
-  </data>
   <data name="SQL_CannotFindAuthProvider" xml:space="preserve">
     <value>'{0}' の認証プロバイダーが見つかりません。</value>
   </data>
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
-    <value>'{0}' の認証プロバイダーが見つかりません。Active Directory (Entra ID) 認証方法を使用するには、'Microsoft.Data.SqlClient.Extensions.Azure' NuGet パッケージ (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure) をインストールしてください。</value>
-  </data>
-  <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>'useWamBroker' を設定するには、'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions' を公開する 'Microsoft.Data.SqlClient.Extensions.Azure' パッケージが必要です。この型を含む v1.1.0 以降の 'Microsoft.Data.SqlClient.Extensions.Azure' パッケージにアップグレードしてください。</value>
+    <value>'{0}' の認証プロバイダーが見つかりません。SqlAuthenticationProvider.SetProvider を使用してプロバイダーを登録するか、自動検出を有効にした互換性のある 'Microsoft.Data.SqlClient.Extensions.Azure' NuGet パッケージを使用してください。発行時に自動検出を無効にすると、自動検出は使用できません。トリミングされた JIT アプリケーションでは、リフレクション コントラクトを保持する必要があります。NativeAOT アプリケーションでは、発行時にリフレクションによるブートストラップ パスを無効にし、プロバイダーを明示的に登録する必要があります。Microsoft.Data.SqlClient.EventSource のトレース (情報レベル、トレース キーワード 0x2) を確認し、構成または Azure 拡張機能の読み込みに関するエラーを調べてください。</value>
   </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>パラメーター '{0}' を null や空にすることはできません。</value>
@@ -1800,6 +1785,9 @@
   <data name="TCE_EnclaveTypeNullForEnclaveBasedQuery" xml:space="preserve">
     <value>内部エラーです。エンクレーブ計算が必要なクエリを実行するときに SQL Server から受信したエンクレーブ型が null または空です。</value>
   </data>
+  <data name="TCE_AzureAttestationExtensionNotFound" xml:space="preserve">
+    <value>構成証明プロトコル 'AAS' には、Microsoft.Data.SqlClient と同じバージョンの Microsoft.Data.SqlClient.Extensions.Azure パッケージが必要です。そのパッケージへの参照を追加または更新するか、接続文字列で別の構成証明プロトコルを指定してください。</value>
+  </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
     <value>エンクレーブの種類 '{0}' および構成証明プロトコル '{1}' に対して、エンクレーブ プロバイダーが見つかりませんでした。接続文字列に正しい構成証明プロトコルを指定してください。</value>
   </data>
@@ -1901,6 +1889,9 @@
   </data>
   <data name="SQLCR_NoCRAckAtReconnection" xml:space="preserve">
     <value>サーバーが回復の試行を認めませんでした。接続を回復できません。</value>
+  </data>
+  <data name="DbConnectionString_VectorTypeSupport" xml:space="preserve">
+    <value>サーバーとネゴシエートするベクター型サポートのレベル。</value>
   </data>
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>接続プールのためのブロック期間ビヘイビアーを定義します。</value>
@@ -2067,6 +2058,9 @@
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
     <value>親コマンドで EnableOptimizedParameterBinding が有効になっている場合、パラメーター '{0}' に Direction 出力または InputOutput は指定できません。</value>
   </data>
+  <data name="SQL_PrepareNotSupportedForOptimizedBinding" xml:space="preserve">
+    <value>EnableOptimizedParameterBinding が有効な場合、準備はサポートされません。新しい SqlCommand を作成し、最初の実行前に EnableOptimizedParameterBinding を false に設定するか、Prepare を呼び出さずに実行します。</value>
+  </data>
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
     <value>認証方法 '{0}' によるアクセス トークンの取得中に接続がタイムアウトしました。前回のエラー: {1}: {2}</value>
   </data>
@@ -2099,6 +2093,9 @@
   </data>
   <data name="SqlAppContextSwitchManager_InvalidValue" xml:space="preserve">
     <value>AppContext スイッチ '{0}'={1} の設定中に例外が発生しました。</value>
+  </data>
+  <data name="SQL_GlobalizationInvariantModeRequiresLcid" xml:space="preserve">
+    <value>グローバリゼーション インバリアント モードが有効な場合、文字型またはテキスト型を表す SqlMetaData インスタンスでは、LCID を指定する必要があります。</value>
   </data>
   <data name="SQL_GlobalizationInvariantModeNotSupported" xml:space="preserve">
     <value>グローバリゼーション インバリアント モードはサポートされていません。</value>

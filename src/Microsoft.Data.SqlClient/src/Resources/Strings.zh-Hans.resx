@@ -591,26 +591,11 @@
   <data name="SQL_NonLocalSSEInstance" xml:space="preserve">
     <value>非本地用户实例不支持 SSE 实例重定向。</value>
   </data>
-  <data name="SQL_UnsupportedAuthentication" xml:space="preserve">
-    <value>不支持身份验证“{0}”。</value>
-  </data>
-  <data name="SQL_CannotCreateAuthProvider" xml:space="preserve">
-    <value>未能实例化“{0}”的类型为“{1}”的身份验证提供程序。</value>
-  </data>
-  <data name="SQL_CannotCreateAuthInitializer" xml:space="preserve">
-    <value>未能实例化类型为“{0}”的 SqlAuthenticationInitializer。</value>
-  </data>
-  <data name="SQL_UnsupportedAuthenticationByProvider" xml:space="preserve">
-    <value>提供程序“{0}”不支持身份验证“{1}”。</value>
-  </data>
   <data name="SQL_CannotFindAuthProvider" xml:space="preserve">
     <value>找不到“{0}”的身份验证提供程序。</value>
   </data>
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
-    <value>找不到 ‘{0}’ 的身份验证提供程序。安装 'Microsoft.Data.SqlClient.Extensions.Azure' NuGet 包(https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure)以使用 Active Directory (Entra ID)身份验证方法。</value>
-  </data>
-  <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>要设置 "useWamBroker"，需要 "Microsoft.Data.SqlClient.Extensions.Azure" 包公开 "Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions"。将 "Microsoft.Data.SqlClient.Extensions.Azure" 包升级到至少 v1.1.0，该版本包含此类型。</value>
+    <value>找不到“{0}”的身份验证提供程序。使用 SqlAuthenticationProvider.SetProvider 注册提供程序，或使用兼容的“Microsoft.Data.SqlClient.Extensions.Azure”NuGet 包并启用自动发现。在发布时禁用自动发现则该功能不可用。精简的 JIT 应用程序需要保留的反射协议；NativeAOT 应用程序应在发布时禁用反射式启动并显式注册提供程序。检查 Microsoft.Data.SqlClient.EventSource 跟踪（信息级别、跟踪关键字 0x2）是否存在配置问题或 Azure 扩展加载失败。</value>
   </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>参数“{0}”不能为 null 或为空。</value>
@@ -1800,6 +1785,9 @@
   <data name="TCE_EnclaveTypeNullForEnclaveBasedQuery" xml:space="preserve">
     <value>出现内部错误。执行需要 enclave 计算的查询时，接收自 SQL Server 的 enclave 类型为 null 或为空。</value>
   </data>
+  <data name="TCE_AzureAttestationExtensionNotFound" xml:space="preserve">
+    <value>证明协议 "AAS" 要求使用与 Microsoft.Data.SqlClient 版本相同的 Microsoft.Data.SqlClient.Extensions.Azure 包。请添加或更新对该包的引用，或在连接字符串中指定其他证明协议。</value>
+  </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
     <value>未找到 enclave 类型“{0}”和证明协议“{1}”的 enclave 提供程序。请在连接字符串中指定正确的证明协议。</value>
   </data>
@@ -1901,6 +1889,9 @@
   </data>
   <data name="SQLCR_NoCRAckAtReconnection" xml:space="preserve">
     <value>服务器未收到恢复尝试，无法恢复连接。</value>
+  </data>
+  <data name="DbConnectionString_VectorTypeSupport" xml:space="preserve">
+    <value>与服务器协商时使用的矢量类型支持级别。</value>
   </data>
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>定义针对连接池的暂停时段行为。</value>
@@ -2067,6 +2058,9 @@
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
     <value>当在父命令上启用 EnableOptimizedParameterBinding 时，参数“{0}”不能具有 Direction Output 或 InputOutput。</value>
   </data>
+  <data name="SQL_PrepareNotSupportedForOptimizedBinding" xml:space="preserve">
+    <value>启用 EnableOptimizedParameterBinding 时不支持准备。创建新的 SqlCommand，并在首次执行前将 EnableOptimizedParameterBinding 设置为 false，或者在不调用 Prepare 的情况下执行它。</value>
+  </data>
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
     <value>使用“{0}”身份验证方法检索访问令牌时连接超时。最后一个错误: {1}: {2}</value>
   </data>
@@ -2099,6 +2093,9 @@
   </data>
   <data name="SqlAppContextSwitchManager_InvalidValue" xml:space="preserve">
     <value>尝试设置 AppContext 交换机“{0}”={1} 时发生异常。</value>
+  </data>
+  <data name="SQL_GlobalizationInvariantModeRequiresLcid" xml:space="preserve">
+    <value>启用全球化固定模式后，描述字符或文本类型的 SqlMetaData 实例必须指定 LCID。</value>
   </data>
   <data name="SQL_GlobalizationInvariantModeNotSupported" xml:space="preserve">
     <value>不支持全球化固定模式。</value>

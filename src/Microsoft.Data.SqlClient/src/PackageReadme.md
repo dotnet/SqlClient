@@ -95,6 +95,29 @@ Install-Package Microsoft.Data.SqlClient.Extensions.Azure
 
 This package provides the `ActiveDirectoryAuthenticationProvider`, which uses `Azure.Identity` credential types supplied by [Azure.Core](https://www.nuget.org/packages/Azure.Core) to handle token acquisition, caching, and credential management.
 
+The authentication registry and `SqlAuthenticationInitializer` now live in
+`Microsoft.Data.SqlClient.Extensions.Abstractions`; existing driver type names are forwarded.
+`SqlAuthenticationProvider.GetProvider` and `SetProvider` work directly without a reflective
+bridge to the driver. Configuration registrations take precedence over application registrations,
+which take precedence over discovered Azure defaults.
+
+For explicit registration in trimmed and NativeAOT .NET 10 applications, disable reflective Azure
+discovery and authentication app.config loading at publish time, then construct and register a
+provider for each required method before opening connections. Trimmed JIT applications may retain
+enabled reflection paths when they preserve the configuration infrastructure, handlers, providers,
+initializers and discovered Azure contracts. Enabled paths report trimming/dynamic-code warnings.
+They are not removed automatically. The switches
+`Switch.Microsoft.Data.SqlClient.EnableAppConfig` and
+`Switch.Microsoft.Data.SqlClient.EnableAzureExtensionDiscovery` default to `true` and are cached
+on first access. Recoverable initialization failures emit diagnostic guidance through
+`Microsoft.Data.SqlClient.EventSource` (Informational level, Trace keyword `0x2`).
+Recoverable bootstrap failures do not block explicit application registration or lookup of
+usable registrations. Failed explicit methods cannot fall back to old/default providers;
+initializer failure prevents defaults for otherwise-unregistered methods. Register a provider
+as a workaround, or correct the cause and restart the application. Fatal bootstrap failures
+propagate without being cached by the registry; later access can retry and repeat side effects
+if execution continues. Detailed activation causes are not attached to the connection exception.
+
 With this package reference, you can continue to use Entra ID authentication modes directly in your connection string:
 
 ```csharp

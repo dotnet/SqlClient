@@ -811,47 +811,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }
             }
+        }
 
-            using (SqlConnection conn = DataTestUtility.CreateConnection(new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+        [Fact]
+        public static void TypeVersionKnobRejectsSqlServer2005()
+        {
+            string connectionString = new SqlConnectionStringBuilder
             {
+                DataSource = "localhost",
                 TypeSystemVersion = "SQL Server 2005"
-            }.ConnectionString))
-            {
-                conn.Open();
-                using (SqlCommand cmd = conn.CreateCommand())
-                {
-                    try
-                    {
-                        cmd.CommandText = tableCreate;
-                        cmd.ExecuteNonQuery();
-                        cmd.CommandText = tableInsert1;
-                        cmd.ExecuteNonQuery();
-                        cmd.CommandText = tableInsert2;
-                        cmd.ExecuteNonQuery();
+            }.ConnectionString;
 
-                        cmd.CommandText = "SELECT * FROM " + tableName;
-                        using (SqlDataReader rdr = cmd.ExecuteReader())
-                        {
-                            while (rdr.Read())
-                            {
-                                for (int i = 2; i < rdr.FieldCount; ++i)
-                                {
-                                    Assert.True(IsString(rdr, i), string.Format("FAILED: IsString failed for column: {0}", i));
-                                }
-                                for (int i = 2; i < rdr.FieldCount; ++i)
-                                {
-                                    ValidateReader(rdr, i);
-                                }
-                            }
-                        }
-                    }
-                    finally
-                    {
-                        cmd.CommandText = "DROP TABLE " + tableName;
-                        cmd.ExecuteNonQuery();
-                    }
-                }
-            }
+            // Validation happens during construction, without contacting a server.
+            Assert.Throws<ArgumentException>(() => new SqlConnection(connectionString));
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]

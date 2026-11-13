@@ -42,10 +42,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
             s_forcePendingReadsToWaitForUser = tdsParserStateObject.GetField("s_forcePendingReadsToWaitForUser", BindingFlags.Static | BindingFlags.NonPublic);
             Assert.True(s_forcePendingReadsToWaitForUser is not null, nameof(s_forcePendingReadsToWaitForUser));
 
-            // These managed SNI handles are allowed to be null, since they
-            // won't exist in .NET Framework builds.
+            // The managed state object only exists in .NET builds.
             s_tdsParserStateObjectManaged =
-                assembly.GetType("Microsoft.Data.SqlClient.ManagedSni.TdsParserStateObjectManaged");
+                assembly.GetType("Microsoft.Data.SqlClient.Parser.TdsParserStateObjectManaged");
+#if NET
+            Assert.True(s_tdsParserStateObjectManaged is not null, nameof(s_tdsParserStateObjectManaged));
+#endif
             s_tdsParserStateObjectManagedSessionHandle = null;
             if (s_tdsParserStateObjectManaged is not null)
             {

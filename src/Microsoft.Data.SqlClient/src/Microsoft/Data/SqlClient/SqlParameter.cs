@@ -14,7 +14,6 @@ using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Text;
-using System.Text.Json;
 using System.Threading;
 using System.Xml;
 using Microsoft.Data.Common;
@@ -226,7 +225,7 @@ namespace Microsoft.Data.SqlClient
 
         private MetaType _metaType;
         private SqlCollation _collation;
-        private SqlMetaDataXmlSchemaCollection _xmlSchemaCollection;
+        private TdsXmlTypeInfo _xmlTypeInfo;
         private string _udtTypeName;
         private string _typeName;
         private Exception _udtLoadError;
@@ -353,9 +352,9 @@ namespace Microsoft.Data.SqlClient
             if (!string.IsNullOrEmpty(xmlSchemaCollectionDatabase) || !string.IsNullOrEmpty(xmlSchemaCollectionOwningSchema) || !string.IsNullOrEmpty(xmlSchemaCollectionName))
             {
                 EnsureXmlSchemaCollection();
-                _xmlSchemaCollection.Database = xmlSchemaCollectionDatabase;
-                _xmlSchemaCollection.OwningSchema = xmlSchemaCollectionOwningSchema;
-                _xmlSchemaCollection.Name = xmlSchemaCollectionName;
+                _xmlTypeInfo.Database = xmlSchemaCollectionDatabase;
+                _xmlTypeInfo.OwningSchema = xmlSchemaCollectionOwningSchema;
+                _xmlTypeInfo.Name = xmlSchemaCollectionName;
             }
         }
 
@@ -431,7 +430,7 @@ namespace Microsoft.Data.SqlClient
         [ResCategory(nameof(Strings.DataCategory_Xml))]
         public string XmlSchemaCollectionDatabase
         {
-            get => _xmlSchemaCollection?.Database ?? string.Empty;
+            get => _xmlTypeInfo?.Database ?? string.Empty;
             set => EnsureXmlSchemaCollection().Database = value;
         }
 
@@ -439,7 +438,7 @@ namespace Microsoft.Data.SqlClient
         [ResCategory(nameof(Strings.DataCategory_Xml))]
         public string XmlSchemaCollectionOwningSchema
         {
-            get => _xmlSchemaCollection?.OwningSchema ?? string.Empty;
+            get => _xmlTypeInfo?.OwningSchema ?? string.Empty;
             set => EnsureXmlSchemaCollection().OwningSchema = value;
         }
 
@@ -447,7 +446,7 @@ namespace Microsoft.Data.SqlClient
         [ResCategory(nameof(Strings.DataCategory_Xml))]
         public string XmlSchemaCollectionName
         {
-            get => _xmlSchemaCollection?.Name ?? string.Empty;
+            get => _xmlTypeInfo?.Name ?? string.Empty;
             set => EnsureXmlSchemaCollection().Name = value;
         }
 
@@ -775,7 +774,17 @@ namespace Microsoft.Data.SqlClient
                 switch (elementType)
                 {
                     case MetaType.SqlVectorElementType.Float32:
-                        return SqlVector<float>.CreateNull(elementCount);
+                        return SqlVector<float>.CreateNullFromServer(elementCount);
+                    case MetaType.SqlVectorElementType.Float16:
+                        #if NET
+                        return SqlVector<Half>.CreateNullFromServer(elementCount);
+                        #else
+                        // Unlike reader columns, vector-bound output values retain a vector
+                        // representation. Framework widens float16 to SqlVector<float>.
+                        // A float16 column may declare more dimensions than can be sent as
+                        // float32, so the server's count is taken as given.
+                        return SqlVector<float>.CreateNullFromServer(elementCount);
+                        #endif
                     default:
                         throw SQL.VectorTypeNotSupported(elementType.ToString());
                 }
@@ -783,7 +792,16 @@ namespace Microsoft.Data.SqlClient
             switch (elementType)
             {
                 case MetaType.SqlVectorElementType.Float32:
-                    return new SqlVector<float>((byte[])_sqlBufferReturnValue.Value);
+                    return SqlVector<float>.FromTdsPayload(
+                        (byte[])_sqlBufferReturnValue.Value, allowWidening: false);
+                case MetaType.SqlVectorElementType.Float16:
+                    #if NET
+                    return SqlVector<Half>.FromTdsPayload(
+                        (byte[])_sqlBufferReturnValue.Value, allowWidening: false);
+                    #else
+                    // Widening binary16 to binary32 is exact, so no information is lost.
+                    return SqlVector<float>.FromTdsPayload((byte[])_sqlBufferReturnValue.Value);
+                    #endif
                 default:
                     throw SQL.VectorTypeNotSupported(elementType.ToString());
             }
@@ -818,6 +836,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/IsNullable/*' />
+        [DefaultValue(false)]
         public override bool IsNullable
         {
             get => HasFlag(SqlParameterFlags.IsNullable);
@@ -825,6 +844,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Offset/*' />
+        [Browsable(false)]
+        [EditorBrowsable(EditorBrowsableState.Advanced)]
         public int Offset
         {
             get => _offset;
@@ -1131,10 +1152,8 @@ namespace Microsoft.Data.SqlClient
             );
             destination._metaType = _metaType;
             destination._collation = _collation;
-            if (_xmlSchemaCollection != null)
-            {
-                destination.EnsureXmlSchemaCollection().CopyFrom(_xmlSchemaCollection);
-            }
+
+            destination._xmlTypeInfo = _xmlTypeInfo?.Clone();
             destination._udtTypeName = _udtTypeName;
             destination._typeName = _typeName;
             destination._udtLoadError = _udtLoadError;
@@ -1168,13 +1187,13 @@ namespace Microsoft.Data.SqlClient
             return parent;
         }
 
-        private SqlMetaDataXmlSchemaCollection EnsureXmlSchemaCollection()
+        private TdsXmlTypeInfo EnsureXmlSchemaCollection()
         {
-            if (_xmlSchemaCollection is null)
+            if (_xmlTypeInfo is null)
             {
-                _xmlSchemaCollection = new SqlMetaDataXmlSchemaCollection();
+                _xmlTypeInfo = new TdsXmlTypeInfo();
             }
-            return _xmlSchemaCollection;
+            return _xmlTypeInfo;
         }
 
         internal void FixStreamDataForNonPLP()
@@ -2114,7 +2133,8 @@ namespace Microsoft.Data.SqlClient
                 // 'this.Size' is in charaters;
                 // 'sizeInCharacters' is in characters;
                 // 'TdsEnums.TYPE_SIZE_LIMIT' is in bytes;
-                // For Non-NCharType and for non-2005 or greater variables, size should be maintained;
+                // Convert Unicode character sizes to bytes before comparing with the byte limit;
+                // other types retain their declared size in bytes.
                 // Reverting changes from bug VSTFDevDiv # 479739 as it caused an regression;
                 // Modifed variable names from 'size' to 'sizeInCharacters', 'actualSize' to 'actualSizeInBytes', and
                 // 'maxSize' to 'maxSizeInBytes'
@@ -2387,16 +2407,15 @@ namespace Microsoft.Data.SqlClient
                     {
                         value = ((ISqlVector)value).VectorPayload;
                     }
+                    #if NET
+                    else if (currentType == typeof(SqlVector<Half>))
+                    {
+                        value = ((ISqlVector)value).VectorPayload;
+                    }
+                    #endif
                     else if (currentType == typeof(string) && destinationType.SqlDbType == SqlDbTypeExtensions.Vector)
                     {
-                        try
-                        {
-                            value = ((ISqlVector)new SqlVector<float>(JsonSerializer.Deserialize((string)value, SqlClientJsonSerializerContext.Default.SingleArray))).VectorPayload;
-                        }
-                        catch (Exception ex) when (ex is ArgumentNullException || ex is JsonException)
-                        {
-                            throw ADP.InvalidJsonStringForVector((string)value, ex);
-                        }
+                        value = ((ISqlVector)SqlVector<float>.Parse((string)value)).VectorPayload;
                     }
                     else if (
                         TdsEnums.SQLTABLE == destinationType.TDSType &&

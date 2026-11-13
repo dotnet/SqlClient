@@ -80,6 +80,32 @@ When using shell/terminal tools, follow these rules strictly:
 
 ## Common Tasks
 
+### Writing and Updating Tests
+
+Read [the testing guide](.github/instructions/testing.instructions.md#writing-tests) before writing
+or changing tests. These rules are mandatory for unit tests and should be strongly considered for
+manual and functional tests, even when nearby older tests use different conventions:
+
+1. Use commented Arrange, Act, Assert, Cleanup sections in that order. Act and Assert are required;
+   include Arrange only for needed setup and Cleanup only for special teardown. Within a section
+   with multiple groups of steps, comment each group to explain what happens and, when unclear, why.
+2. For theory data that cannot use `[InlineData]`, use `[MemberData]`, never `[ClassData]`, and
+   declare the data member's return type as `TheoryData<...>`.
+3. Keep each unit test file focused on the class it is named for: `TdsParserTests` tests `TdsParser`.
+4. Name unit tests `{MethodName}_{Input}_{ExpectedOutput}`, without the tested class name; for
+   example, `ExecuteReader_NullParameter_Throws` or `ExecuteReader_ValidParameters_ReturnsReader`.
+5. Mirror the tested source file's folder structure under `UnitTests/`. For example,
+   `src/Microsoft/Data/SqlClient/Parser/TdsParser.cs` maps to
+   `tests/UnitTests/Microsoft/Data/SqlClient/Parser/TdsParserTests.cs` within the SqlClient project.
+6. Put utilities used only by unit tests in `tests/UnitTests/Utilities/`.
+7. Put utilities shared across test projects in TestCommon (`tests/Common/`); fuzz, stress, and
+   performance test projects are excluded from this sharing rule.
+8. Split separate scenarios into separate tests. Do not use switches or flags to turn one test
+   into multiple behaviors, including sync/async switches. Theories may vary inputs for one behavior.
+9. Write and run beneficial tests: exercise the intended product behavior, assert meaningful
+   outcomes, and ensure the assertions would detect a regression. Check test results to confirm the
+   intended tests actually ran; skipped tests and zero matches do not establish coverage.
+
 ### Bug Fix Workflow
 
 1. Understand the issue from the bug report

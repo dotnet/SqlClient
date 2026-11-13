@@ -31,21 +31,24 @@ Respect this graph when modifying build stages:
 Validation runs in three places and shares one gating switch.
 
 - **Localization** — `steps/validate-localization-step.yml`, in the SqlClient build job before the driver is built. Reports missing or obsolete keys, empty localized values whose English value is non-empty, and untranslated resources. Approved identical translations are listed by culture and resource key in `.config/LocalizationValidationAllowlist.json`.
-- **XML documentation** — `steps/validate-xml-docs-step.yml`, in three modes: snippet sources before each snippet-consuming project is built (SqlClient, SqlServer, Abstractions, and Azure), generated documentation after documented projects are built (including the separate SqlClient reference-assembly output), and assembled packages in `package_validation`. Reports malformed documentation IDs, unresolved cross-references, and `lib/` vs `ref/` documentation-trimming defects.
+- **XML documentation** — `eng/pipelines/common/steps/validate-xml-docs-step.yml`, shared with PR validation, in three modes: snippet sources before each snippet-consuming project is built (SqlClient, SqlServer, Abstractions, and Azure), generated documentation after documented projects are built (including the separate SqlClient reference-assembly output), and assembled packages in `package_validation`. Reports malformed documentation IDs, unresolved cross-references, and `lib/` vs `ref/` documentation-trimming defects.
 - **Packages** — `steps/validate-packages-step.yml`, in `package_validation`. Runs `tools/PackageValidator` across the whole drop so its cross-package version and dependency rules apply.
 
 ### `failOnValidationError`
 
 All three honour the `failOnValidationError` queue-time parameter, which defaults to `true` in
-non-official runs. Set it to `false` explicitly for report-only validation. Official runs remain
-strict. This parameter is independent of `failOnSdlError`; disabling SDL failure gating does not
-change validation gating.
+both official and non-official runs. Set it to `false` explicitly for report-only validation.
+This parameter is independent of `failOnSdlError`; disabling SDL failure gating does not change
+validation gating.
 
 When `false`, findings are logged as warnings and the build continues. This exists because the gates span jobs that depend on one another: a hard failure in an early gate aborts the build stage, so the later gates never run and a single run cannot show the full picture. Turning it off lets one run exercise every gate at once, which is how a newly added gate or a known backlog of findings is assessed.
 
 Report-only affects *findings* only. Malformed or missing inputs, and a validator that fails to run, still fail the step — neither produced findings worth reporting.
 
-The parameter is exposed at queue time only by `sqlclient-non-official.yml`. `sqlclient-official.yml` hardcodes it to `true` at its `build-stages.yml` call site, so an official run cannot be started with validation downgraded. Stages, jobs and steps declare it with no default and simply honour what they are given — the policy lives in one place rather than being re-asserted at every level.
+Both `sqlclient-non-official.yml` and `sqlclient-official.yml` expose the parameter at queue time
+and forward it to `build-stages.yml`. Stages, jobs and steps declare it with no default and simply
+honour what they are given. Report-only mode is also available for official release runs, so keep
+the default `true` when validation findings must block publication.
 
 ## Build Stages
 

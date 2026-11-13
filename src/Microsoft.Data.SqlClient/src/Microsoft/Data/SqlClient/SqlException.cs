@@ -37,6 +37,13 @@ namespace Microsoft.Data.SqlClient
 #endif
         // Do not serialize this field! It is used to indicate that no reconnection attempts are required
         internal bool _doNotReconnect = false;
+        // Diagnostic snapshot only; not serialized so the existing serialization graph is unchanged.
+        // A null value (including after deserialization) is surfaced as an empty snapshot.
+#if NETFRAMEWORK
+        [IgnoreDataMember]
+#endif
+        [NonSerialized]
+        private SqlConnectionEncryptionInfo _encryptionInfo;
 
         private SqlException(string message, SqlErrorCollection errorCollection, Exception innerException, Guid conId) : base(message, innerException)
         {
@@ -49,9 +56,7 @@ namespace Microsoft.Data.SqlClient
 #endif
         private SqlException(SerializationInfo si, StreamingContext sc) : base(si, sc)
         {
-#if NETFRAMEWORK
             _errors = (SqlErrorCollection)si.GetValue("Errors", typeof(SqlErrorCollection));
-#endif
             HResult = SqlExceptionHResult;
             foreach (SerializationEntry siEntry in si)
             {
@@ -70,7 +75,7 @@ namespace Microsoft.Data.SqlClient
         public override void GetObjectData(SerializationInfo si, StreamingContext context)
         {
             base.GetObjectData(si, context);
-            si.AddValue("Errors", null); // Not specifying type to enable serialization of null value of non-serializable type
+            si.AddValue("Errors", _errors, typeof(SqlErrorCollection));
             si.AddValue("ClientConnectionId", _clientConnectionId, typeof(object));
 
             // Writing sqlerrors to base exception data table
@@ -87,9 +92,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Errors/*' />
         // runtime will call even if private...
-#if NETFRAMEWORK
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
-#endif
         public SqlErrorCollection Errors => _errors ?? new SqlErrorCollection();
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/ClientConnectionId/*' />
@@ -135,6 +138,13 @@ namespace Microsoft.Data.SqlClient
             internal set => _batchCommand = value;
         }
         #endif
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/EncryptionInfo/*' />
+        public SqlConnectionEncryptionInfo EncryptionInfo
+        {
+            get => _encryptionInfo ?? SqlConnectionEncryptionInfo.Empty;
+            internal set => _encryptionInfo = value;
+        }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/ToString/*' />
         public override string ToString()
@@ -305,6 +315,7 @@ namespace Microsoft.Data.SqlClient
             }
             exception._batchCommand = _batchCommand;
             exception._doNotReconnect = _doNotReconnect;
+            exception._encryptionInfo = _encryptionInfo;
             return exception;
         }
     }

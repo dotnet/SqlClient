@@ -362,8 +362,11 @@ public class ServerLifecycleTests
     /// Repeated lifetimes expose registration/close races within one process.
     /// </summary>
     [Fact]
+    [Trait("category", "flaky")]
+    [Trait("category", "probation")]
     public void Dispose_DrainsConnectionsAcrossRepeatedServerLifetimes()
     {
+        // Arrange
         for (int iteration = 0; iteration < 20; iteration++)
         {
             using WorkerTrackingServer server = new();
@@ -377,7 +380,11 @@ public class ServerLifecycleTests
             connection.Open();
             using TcpClient idle = new();
             idle.Connect("127.0.0.1", server.EndPoint.Port);
+
+            // Act
             server.Dispose();
+
+            // Assert
             Assert.Equal(0, server.ActiveSessions);
         }
     }

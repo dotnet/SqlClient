@@ -9,6 +9,21 @@ See the LICENSE file in the project root for more information.
       <summary>
         Represents AD authentication parameters passed by a driver to authentication providers.
       </summary>
+      <remarks>
+        <para>
+          During federated authentication, SQL Server supplies the security token service URL
+          (STSURL) and target resource identifier (SPN) in the FEDAUTHINFO token. The driver passes
+          these values to the authentication provider or access-token callback as
+          <see cref="P:Microsoft.Data.SqlClient.SqlAuthenticationParameters.Authority" /> and
+          <see cref="P:Microsoft.Data.SqlClient.SqlAuthenticationParameters.Resource" />, respectively.
+        </para>
+        <para>
+          These values reflect the server's authentication configuration. The driver does not
+          impose a fixed list of authority or resource identifiers, allowing customer-configured
+          authentication systems. Protocol checks and the selected authentication provider's
+          requirements still apply.
+        </para>
+      </remarks>
     </SqlAuthenticationParameters>
     <ctor>
       <summary>
@@ -17,8 +32,8 @@ See the LICENSE file in the project root for more information.
       <param name="authenticationMethod">The authentication method.</param>
       <param name="serverName">The server name.</param>
       <param name="databaseName">The database name.</param>
-      <param name="resource">The resource URI.</param>
-      <param name="authority">The authority URI.</param>
+      <param name="resource">The target resource identifier used to acquire an access token.</param>
+      <param name="authority">The authority URI used to acquire an access token.</param>
       <param name="userId">The user login name/ID, or null if not applicable.</param>
       <param name="password">The user password, or null if not applicable.</param>
       <param name="connectionId">The connection ID.</param>
@@ -40,12 +55,35 @@ See the LICENSE file in the project root for more information.
       <value>The database name.</value>
     </DatabaseName>
     <Resource>
-      <summary>The resource URIs.</summary>
-      <value>The resource URI.</value>
+      <summary>Gets the target resource identifier used to acquire an access token.</summary>
+      <value>
+        The target resource identifier. During federated authentication, the driver supplies the
+        SPN value received from SQL Server in the FEDAUTHINFO token.
+      </value>
+      <remarks>
+        <para>
+          The FEDAUTH SPN identifies the resource for token acquisition. It is not the Kerberos
+          service principal name configured by the Server SPN or Failover Partner SPN
+          connection-string options, or an application's service-principal client ID.
+        </para>
+        <para>
+          The authentication provider or access-token callback uses this identifier according to
+          its token acquisition requirements. For example, the Azure authentication provider
+          appends <c>/.default</c> when the resource does not already have that scope suffix.
+        </para>
+      </remarks>
     </Resource>
     <Authority>
       <summary>Gets the authority URI.</summary>
-      <value>The authority URI.</value>
+      <value>
+        The authority URI. During federated authentication, the driver supplies the security token
+        service URL (STSURL) received from SQL Server in the FEDAUTHINFO token.
+      </value>
+      <remarks>
+        The authentication provider or access-token callback uses this URI according to its token
+        acquisition requirements. For example, the Azure authentication provider parses an absolute
+        HTTPS URL into an authority host and tenant before acquiring a token.
+      </remarks>
     </Authority>
     <UserId>
       <summary>Gets the user login name/ID.</summary>

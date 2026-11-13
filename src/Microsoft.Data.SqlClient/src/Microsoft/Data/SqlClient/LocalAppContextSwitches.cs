@@ -39,6 +39,13 @@ internal static class LocalAppContextSwitches
     #endif
 
     /// <summary>
+    /// The name of the app context switch that controls whether SqlBulkCopy
+    /// discovers destination metadata from catalog views.
+    /// </summary>
+    private const string UseBulkCopyCatalogMetadataDiscoveryString =
+        "Switch.Microsoft.Data.SqlClient.UseBulkCopyCatalogMetadataDiscovery";
+
+    /// <summary>
     /// The name of the app context switch that controls whether
     /// MultiSubnetFailover is enabled by default in the connection string.
     /// </summary>
@@ -186,9 +193,14 @@ internal static class LocalAppContextSwitches
     /// </summary>
     internal enum SwitchValue : byte
     {
+        // The switch has not been read yet.
         None = 0,
+        // The cached Boolean value is true, whether configured or supplied by a default.
         True = 1,
-        False = 2
+        // The cached Boolean value is false, whether configured or supplied by a default.
+        False = 2,
+        // The switch was read but is unset; tri-state switches use automatic behavior.
+        Automatic = 3
     }
 
     // GOTCHA: These fields are internal so that the LocalAppContextSwitchesHelper
@@ -275,6 +287,11 @@ internal static class LocalAppContextSwitches
     /// The cached value of the UseConnectionPoolV2 switch.
     /// </summary>
     internal static SwitchValue s_useConnectionPoolV2 = SwitchValue.None;
+
+    /// <summary>
+    /// The cached value of the UseBulkCopyCatalogMetadataDiscovery switch.
+    /// </summary>
+    internal static SwitchValue s_useBulkCopyCatalogMetadataDiscovery = SwitchValue.None;
 
     /// <summary>
     /// The cached value of the UseLegacyIdleTimeoutBehavior switch.
@@ -370,16 +387,16 @@ internal static class LocalAppContextSwitches
     ///   1: All IPs are attempted in parallel
     ///   2: All IPs are attempted one after another
     ///
-    /// TransparentNetworkIPResolution is enabled by default.
-    /// MultiSubnetFailover is disabled by default.  To disable TNIR, you can
-    /// enable the app context switch.
+    /// TransparentNetworkIPResolution is disabled by default.
+    /// Set this switch to false to restore its legacy default. TNIR is still
+    /// ignored when MultiSubnetFailover is enabled.
     ///
-    /// The default value of this switch is false.
+    /// The default value of this switch is true.
     /// </summary>
     public static bool DisableTnirByDefault =>
         AcquireAndReturn(
             DisableTnirByDefaultString,
-            defaultValue: false,
+            defaultValue: true,
             ref s_disableTnirByDefault);
     #endif
 
@@ -410,17 +427,18 @@ internal static class LocalAppContextSwitches
     #endif
 
     /// <summary>
-    /// When set to true, the default value for MultiSubnetFailover connection
-    /// string property will be true instead of false. This enables parallel IP
+    /// Controls the default value for the MultiSubnetFailover connection
+    /// string property. When enabled, this allows parallel IP
     /// connection attempts for improved connection times in multi-subnet
     /// environments.
     ///
-    /// The default value of this switch is false.
+    /// The default value of this switch is true. Set it to false to restore
+    /// the legacy default. An explicit connection-string value takes precedence.
     /// </summary>
     public static bool EnableMultiSubnetFailoverByDefault =>
         AcquireAndReturn(
             EnableMultiSubnetFailoverByDefaultString,
-            defaultValue: false,
+            defaultValue: true,
             ref s_enableMultiSubnetFailoverByDefault);
 
     #if NET
@@ -645,12 +663,20 @@ internal static class LocalAppContextSwitches
                 return true;
             }
 
-            return AcquireAndReturn(
-                UseCompatibilityAsyncBehaviourString,
-                defaultValue: true,
-                ref s_useCompatibilityAsyncBehaviour);
+            return UseCompatibilityAsyncBehaviourConfigured;
         }
     }
+
+    /// <summary>
+    /// The configured async compatibility value, before the ProcessSni
+    /// compatibility override. Used to report configuration in user agent telemetry.
+    /// Defaults to true when the switch is unset.
+    /// </summary>
+    internal static bool UseCompatibilityAsyncBehaviourConfigured =>
+        AcquireAndReturn(
+            UseCompatibilityAsyncBehaviourString,
+            defaultValue: true,
+            ref s_useCompatibilityAsyncBehaviour);
 
     /// <summary>
     /// In TdsParser, the ProcessSni function changed significantly when the
@@ -682,6 +708,32 @@ internal static class LocalAppContextSwitches
             ref s_useConnectionPoolV2);
 
     /// <summary>
+    /// When true, SqlBulkCopy always discovers destination metadata from sys.all_columns.
+    /// When false, it never uses catalog discovery, so hidden columns and SQL Graph aliases
+    /// cannot be mapped.
+    ///
+    /// When unset, it uses SELECT * first and falls back to catalog discovery for missing
+    /// destination names. SQL Graph alias mappings use catalog discovery immediately.
+    /// </summary>
+    public static bool? UseBulkCopyCatalogMetadataDiscovery
+    {
+        get
+        {
+            SwitchValue value = s_useBulkCopyCatalogMetadataDiscovery;
+            if (value == SwitchValue.None)
+            {
+                value = AppContext.TryGetSwitch(
+                    UseBulkCopyCatalogMetadataDiscoveryString, out bool enabled)
+                    ? (enabled ? SwitchValue.True : SwitchValue.False)
+                    : SwitchValue.Automatic;
+                s_useBulkCopyCatalogMetadataDiscovery = value;
+            }
+
+            return value == SwitchValue.Automatic ? null : value == SwitchValue.True;
+        }
+    }
+
+    /// <summary>
     /// When set to true (the default), pooling preserves historical idle-timeout behavior.
     /// When set to false, configured Connection Idle Timeout is enforced by the pool.
     /// </summary>
@@ -692,17 +744,17 @@ internal static class LocalAppContextSwitches
             ref s_useLegacyIdleTimeoutBehavior);
 
     /// <summary>
-    /// When set to true, pool operations count against the
+    /// When set to true (the default), pool operations count against the
     /// caller's ConnectTimeout budget. This includes waits and async operations.
-    /// When false, pool operations receive a full ConnectTimeout and
-    /// network calls receive a further full ConnectTimeout.
+    /// When false, login receives a fresh ConnectTimeout after pool acquisition.
+    /// The legacy pool also starts a fresh pool-wait timeout.
     ///
-    /// The default value of this switch is false.
+    /// The default value of this switch is true.
     /// </summary>
     public static bool UseOverallConnectTimeoutForPoolWait =>
         AcquireAndReturn(
             UseOverallConnectTimeoutForPoolWaitString,
-            defaultValue: false,
+            defaultValue: true,
             ref s_useOverallConnectTimeoutForPoolWait);
 
     #if NET

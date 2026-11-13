@@ -38,6 +38,7 @@
 #   MERGE_COMMIT_SHA   SHA of the merge commit on the default branch.
 #   PR_NUMBER          Number of the original PR that was merged.
 #   PR_TITLE           Title of the original PR (used in cherry-pick PR title).
+#   PR_AUTHOR          GitHub login of the original PR author (assigned to the new PR).
 #   GH_TOKEN           GitHub token for 'gh' CLI authentication.
 #   GITHUB_REPOSITORY  Owner/repo (e.g. "dotnet/SqlClient"). Set by Actions.
 #
@@ -57,6 +58,7 @@
 #     export MERGE_COMMIT_SHA="abc123"
 #     export PR_NUMBER=42
 #     export PR_TITLE="Fix connection timeout"
+#     export PR_AUTHOR="original-author"
 #     export GH_TOKEN="ghp_..."
 #     export GITHUB_REPOSITORY="dotnet/SqlClient"
 #     bash .github/scripts/cherry-pick-to-release.sh
@@ -77,6 +79,7 @@ fi
 : "${MERGE_COMMIT_SHA:?MERGE_COMMIT_SHA environment variable is required}"
 : "${PR_NUMBER:?PR_NUMBER environment variable is required}"
 : "${PR_TITLE:?PR_TITLE environment variable is required}"
+: "${PR_AUTHOR:?PR_AUTHOR environment variable is required}"
 : "${GITHUB_REPOSITORY:?GITHUB_REPOSITORY environment variable is required}"
 
 # -- Step 1: Derive target branch from major.minor ---------------------------
@@ -164,6 +167,7 @@ if git cherry-pick ${MAINLINE_FLAG} "${MERGE_COMMIT_SHA}"; then
   lookup_milestone "${VERSION}"
 
   gh pr create \
+    --assignee "${PR_AUTHOR}" \
     --base "${TARGET_BRANCH}" \
     --head "${CHERRY_PICK_BRANCH}" \
     --title "[${VERSION} Cherry-pick] ${PR_TITLE}" \
@@ -213,6 +217,7 @@ else
 
   gh pr create \
     --draft \
+    --assignee "${PR_AUTHOR}" \
     --base "${TARGET_BRANCH}" \
     --head "${CHERRY_PICK_BRANCH}" \
     --title "[${VERSION} Cherry-pick - CONFLICTS] ${PR_TITLE}" \

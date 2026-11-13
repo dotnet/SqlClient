@@ -25,7 +25,7 @@
       1. Acquires a bearer token from Azure CLI for the symbol publishing service.
       2. Registers a unique request name with the publishing service.
       3. Submits the request to publish symbols to the specified servers.
-      4. Queries the publishing status for confirmation.
+      4. Queries the publishing status for confirmation unless SkipPolling is enabled.
 
     Diagnostics emitted on every run:
       - On a failed call, the HTTP status code and any service correlation identifiers
@@ -62,6 +62,11 @@
 
 .PARAMETER PublishToPublic
     Whether to publish symbols to the public symbol server. Defaults to $true.
+
+.PARAMETER SkipPolling
+    When $true, returns after submitting the publish request without querying its status.
+    Submission errors still fail the script; publishing completion and results are not verified.
+    Defaults to $false.
 
 .PARAMETER VerboseDiagnostics
     Emit the additional diagnostics listed above: the commands executed and the token's
@@ -133,6 +138,9 @@ param(
 
     [Parameter(Mandatory = $false, HelpMessage = "Publish symbols to the public symbol server.")]
     [bool]$PublishToPublic = $true,
+
+    [Parameter(Mandatory = $false, HelpMessage = "Skip status queries after submitting the publishing request.")]
+    [bool]$SkipPolling = $false,
 
     [Parameter(Mandatory = $false, HelpMessage = "Emit command and token-claim diagnostics. Never relaxes redaction.")]
     [switch]$VerboseDiagnostics
@@ -353,6 +361,7 @@ Write-Host "PublishProjectName: ${PublishProjectName}"
 Write-Host "ArtifactName:       ${ArtifactName}"
 Write-Host "PublishToInternal:  ${PublishToInternal}"
 Write-Host "PublishToPublic:    ${PublishToPublic}"
+Write-Host "SkipPolling:        ${SkipPolling}"
 # Reported so a quiet log is self-explaining: a reader can see the diagnostics were off.
 Write-Host "VerboseDiagnostics: ${VerboseDiagnostics}"
 Write-Host "=================================="
@@ -415,6 +424,11 @@ try {
     throw "Failed to publish symbols. URI: ${requestUrl} | Body: ${publishSymbolsBody} | $(Format-HttpErrorDetail $_)"
 }
 Write-Host ">  3. Request to publish symbols submitted successfully."
+
+if ($SkipPolling) {
+    Write-Warning "Skipping symbol publishing status polling. The request was submitted, but publishing completion and results have not been verified."
+    return
+}
 
 # --- Step 4: Check status ---
 Write-Host ">  4. Checking the status of the request..."

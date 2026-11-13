@@ -225,6 +225,8 @@
           -l:"@(_referencePathDirectories)"
           -o:"$(NotSupportedSourceFile)"
           -t:"Microsoft.Data.SqlClient is not supported on this platform."
+          --header-file:"$(MSBuildThisFileDirectory)GenApiHeader.txt"
+          --exclude-attributes-list:"$(MSBuildThisFileDirectory)GenApiExcludeAttributes.txt"
       </GenApiCommand>
       <!-- Collapse line breaks without changing spaces inside quoted arguments -->
       <GenApiCommand>$([System.Text.RegularExpressions.Regex]::Replace($(GenApiCommand), "\s*[\r\n]+\s*", " "))</GenApiCommand>

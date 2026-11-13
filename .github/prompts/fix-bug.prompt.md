@@ -28,7 +28,13 @@ Follow this workflow step-by-step:
   - `src/Microsoft.Data.SqlClient/tests/UnitTests/` — for isolated logic tests (no SQL Server needed)
   - `src/Microsoft.Data.SqlClient/tests/FunctionalTests/` — for API behavior tests (no SQL Server needed)
   - `src/Microsoft.Data.SqlClient/tests/ManualTests/` — for integration tests (requires SQL Server)
-- Follow existing naming conventions: `{ClassName}Tests.cs` with methods named `{MethodName}_{Scenario}_{ExpectedResult}`.
+- Read and follow the [test authoring rules](../instructions/testing.instructions.md#writing-tests).
+  They are mandatory for unit tests and strongly recommended for manual and functional tests.
+- Keep unit tests focused on their named class, mirror its source folders, and name methods
+  `{MethodName}_{Input}_{ExpectedOutput}` without the tested class name.
+- Use commented Arrange, Act, Assert, Cleanup sections (Act and Assert required), typed
+  `TheoryData<...>` with `[MemberData]` for non-constant data, and separate tests for separate
+  behaviors instead of switches. Place utilities according to the guide's project ownership rules.
 - If the bug is platform-specific, add appropriate `[ConditionalFact]` or `[ConditionalTheory]` attributes with `[PlatformSpecific]`.
 - **Cover both sync and async code paths** if the affected API has both variants (e.g., `Open`/`OpenAsync`, `ExecuteReader`/`ExecuteReaderAsync`). Sync and async paths often have different internal implementations and a bug may manifest in only one.
 
@@ -41,6 +47,8 @@ Follow this workflow step-by-step:
 
 ## 5. Validate
 - Verify the failing test now passes with the fix applied.
+- Confirm the intended tests actually ran and their assertions detect the reported regression;
+  zero matches or skipped tests do not establish coverage. Report tests that could not run and why.
 - Check that existing tests in the affected area still pass.
 - Review that no new compiler warnings or errors are introduced.
 

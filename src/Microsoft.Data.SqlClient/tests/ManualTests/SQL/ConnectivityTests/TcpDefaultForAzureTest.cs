@@ -43,10 +43,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void NonAzureNoProtocolConnectionTestWindows()
         {
             builder.DataSource = InvalidHostname;
+            // With MultiSubnetFailover on (the default), native SNI uses TCP only.
+            bool tcpOnly = builder.MultiSubnetFailover;
 #if NETFRAMEWORK
-            CheckConnectionFailure(builder.ConnectionString, NP);
+            CheckConnectionFailure(builder.ConnectionString, tcpOnly ? TCP : NP);
 #else
-            CheckConnectionFailure(builder.ConnectionString, DataTestUtility.IsUsingManagedSNI() ? TCP : NP);
+            CheckConnectionFailure(builder.ConnectionString, tcpOnly || DataTestUtility.IsUsingManagedSNI() ? TCP : NP);
 #endif
         }
 

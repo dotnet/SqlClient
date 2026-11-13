@@ -14,7 +14,8 @@ namespace Microsoft.Data.SqlClient;
 
 internal sealed partial class SqlMetaDataFactory
 {
-    private static void LoadDataTypesDataTables(DataSet metaDataCollectionsDataSet, bool jsonTypeSupported)
+    private static void LoadDataTypesDataTables(
+        DataSet metaDataCollectionsDataSet, ConnectionCapabilities connectionCapabilities)
     {
         DataTable dataTypesDataTable = CreateDataTypesDataTable();
 
@@ -59,7 +60,7 @@ internal sealed partial class SqlMetaDataFactory
             minimumVersion: "10.00.000.0");
 
         AddLongStringOrBinaryType(SqlDbType.Xml);
-        if (jsonTypeSupported)
+        if (connectionCapabilities.JsonType)
         {
             AddLongStringOrBinaryType(SqlDbTypeExtensions.Json, literalPrefix: "'", literalSuffix: "'");
         }
@@ -78,6 +79,14 @@ internal sealed partial class SqlMetaDataFactory
         AddUniqueIdentifierType();
         AddSqlVariantType();
         AddRowVersionType();
+
+        // A vector type is reported when the connection has negotiated one, rather than
+        // when the server reports a version which is new enough to have it. Azure SQL
+        // reports 12.00 whatever it supports, so a version is not enough to tell.
+        if (connectionCapabilities.VectorVersion != TdsEnums.VECTOR_VERSION_NOT_SUPPORTED)
+        {
+            AddVectorType();
+        }
 
         dataTypesDataTable.EndLoadData();
         dataTypesDataTable.AcceptChanges();
@@ -352,6 +361,44 @@ internal sealed partial class SqlMetaDataFactory
             {
                 typeRow[MinimumVersionKey] = minimumVersion;
             }
+
+            dataTypesDataTable.Rows.Add(typeRow);
+        }
+
+        void AddVectorType()
+        {
+            MetaType metaType = MetaType.GetMetaTypeFromSqlDbType(SqlDbTypeExtensions.Vector, isMultiValued: false);
+            DataRow typeRow = dataTypesDataTable.NewRow();
+
+            typeRow[DbMetaDataColumnNames.TypeName] = metaType.TypeName;
+            typeRow[DbMetaDataColumnNames.ProviderDbType] = (int)metaType.SqlDbType;
+            // A vector is transported as an 8 byte header followed by its elements, and
+            // the whole value must fit within the maximum vector size.
+            typeRow[DbMetaDataColumnNames.ColumnSize] = TdsEnums.MAXSIZE;
+            bool supportsFloat16 =
+                connectionCapabilities.VectorVersion >= TdsEnums.VECTOR_VERSION_FLOAT16;
+            typeRow[DbMetaDataColumnNames.CreateFormat] = supportsFloat16
+                ? $"{metaType.TypeName}({{0}}, {{1}})"
+                : $"{metaType.TypeName}({{0}})";
+            typeRow[DbMetaDataColumnNames.CreateParameters] = supportsFloat16
+                ? "dimensions,base_type"
+                : "dimensions";
+            typeRow[DbMetaDataColumnNames.DataType] = metaType.ClassType.FullName;
+            typeRow[DbMetaDataColumnNames.IsAutoIncrementable] = false;
+            // The DataType for a vector is a byte array, which is how it is transported
+            // rather than how it is best represented.
+            typeRow[DbMetaDataColumnNames.IsBestMatch] = false;
+            typeRow[DbMetaDataColumnNames.IsCaseSensitive] = false;
+            typeRow[DbMetaDataColumnNames.IsConcurrencyType] = false;
+            typeRow[DbMetaDataColumnNames.IsFixedLength] = false;
+            typeRow[DbMetaDataColumnNames.IsFixedPrecisionScale] = false;
+            typeRow[DbMetaDataColumnNames.IsLong] = false;
+            typeRow[DbMetaDataColumnNames.IsNullable] = true;
+            typeRow[DbMetaDataColumnNames.IsSearchable] = false;
+            typeRow[DbMetaDataColumnNames.IsSearchableWithLike] = false;
+            // A vector literal is written as a JSON array in a string literal.
+            typeRow[DbMetaDataColumnNames.LiteralPrefix] = "'";
+            typeRow[DbMetaDataColumnNames.LiteralSuffix] = "'";
 
             dataTypesDataTable.Rows.Add(typeRow);
         }

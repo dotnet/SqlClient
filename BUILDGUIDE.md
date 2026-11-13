@@ -40,6 +40,36 @@ This repository uses .NET local tools (e.g. PowerShell) that must be restored be
 dotnet tool restore
 ```
 
+### PowerShell Modules
+
+Before using scripts or tests that need PowerShell resources, run from the repository root:
+
+```console
+dotnet tool restore
+dotnet build build.proj -t:RestorePowerShellModules
+```
+
+Add or update resource versions in [`powershell-modules.json`](powershell-modules.json).
+The target uses PSResourceGet from the restored PowerShell tool and the anonymous feed in
+[`PowerShell.config`](PowerShell.config). It reuses exact installed versions and installs
+missing resources for the current user, without clobbering existing commands or falling
+back to other sources.
+Automatic credential-provider selection is disabled for anonymous feed access.
+Restore and consumption must use the same user.
+Consumers import modules normally; the manifest pins installation, not runtime resolution.
+Run restore explicitly after manifest changes or on a new machine/user. It does not build
+the driver, run tests, or install OS-level tools.
+
+Pipelines run the same restore after .NET tool restore through
+`eng/pipelines/common/steps/restore-powershell-modules.yml`:
+
+```console
+dotnet build tools/targets/RestorePowerShellModules.targets -t:RestorePowerShellModules
+```
+
+The standalone entry point also works locally and with older package-producing commits.
+Account setup/cleanup and certificate scripts only consume prerequisites; they never install modules.
+
 ## Developer Workflow
 
 Once you've cloned the repository and made your changes to the codebase, it is time to build, test, and optionally
@@ -91,7 +121,8 @@ extend the driver's runtime support below .NET Framework 4.6.2 or .NET 10.
 | Driver reference and unsupported-platform assemblies | `net462;net10.0;netstandard2.0` |
 | Existing dual-target tests, stress projects, and their shared helpers | `net462;net10.0` |
 | Modern-only projects, including performance tests | `net10.0` |
-| AKV Provider, Abstractions, Logging, and standard-only test utilities | `netstandard2.0` only |
+| Abstractions | `net462;netstandard2.0;net10.0` |
+| AKV Provider, Logging, and standard-only test utilities | `netstandard2.0` only |
 | Azure extensions | `net462;netstandard2.0` |
 | Microsoft.SqlServer.Server (independently versioned; unchanged here) | `net46;netstandard2.0` |
 | PackageCompatibility tool and tests (xUnit v3) | `net481;net10.0` |
@@ -196,6 +227,25 @@ PowerShell script tests. The tool test targets use their own runner options rath
 test parameters below; see the [PackageCompatibility](tools/PackageCompatibility/README.md) and
 [PackageValidator](tools/PackageValidator/README.md) guides.
 
+Authentication registry, callback, switch, formatter and exception tests are ordinary xUnit tests
+under `src/Microsoft.Data.SqlClient.Extensions/Abstractions/test`. Run this focused target on Linux:
+
+```bash
+dotnet build build.proj -t:TestAbstractions -p:TestFramework=net10.0 -p:ReferenceType=Project
+```
+
+Signed Abstractions builds use the repository test public key for their `InternalsVisibleTo`
+grant in Package mode. Pass `-p:ReferenceType=Package` together with `SigningKeyPath` and
+`TestSigningKeyPath` to run signed tests. `TestAbstractions` prepares the Logging package unless
+`SkipDependencyPack=true` and forwards the selected reference mode, versions and signing keys.
+The test project still references Abstractions directly; its Logging dependency follows the
+selected reference mode. Signed Project builds intentionally omit test access.
+
+The executable current/legacy app.config compatibility harness is deferred to
+[#4817](https://github.com/dotnet/SqlClient/pull/4817); its scenario project and test target are
+not available in this layer. Executing `net462` tests requires Windows; a Linux cross-build is
+not runtime validation.
+
 > [!TIP]
 > In project-reference mode, test targets automatically build their dependencies. In package mode,
 > prepare the referenced packages first; see [Package Mode Builds](#package-mode-builds).
@@ -278,12 +328,13 @@ referenced project consumes SqlClient as a package. Project-mode repository buil
 reference SqlClient's source project directly, so they do not import its packaged
 targets and are not validated by this consumer target.
 
-Run `dotnet tool restore` first to restore the repository's pinned PowerShell tool.
-The regression suite also requires Pester 5.7.1:
+Restore [.NET tools and PowerShell modules](#powershell-modules) first, then run:
 
 ```powershell
-dotnet tool run pwsh -NoProfile -Command "Install-Module Pester -RequiredVersion 5.7.1 -Repository PSGallery -Scope CurrentUser -Force -ErrorAction Stop"
-dotnet tool run pwsh -NoProfile -Command 'Import-Module Pester -RequiredVersion 5.7.1; Invoke-Pester -Path ./src/Microsoft.Data.SqlClient/tests/VersionChecks/VersionChecks.Tests.ps1 -CI'
+dotnet tool run pwsh -- -NoProfile -Command '
+    Import-Module Pester
+    Invoke-Pester -Path ./src/Microsoft.Data.SqlClient/tests/VersionChecks/VersionChecks.Tests.ps1 -CI
+'
 ```
 
 The parameterized Pester suite creates small family-package fixtures in a private local
@@ -294,8 +345,7 @@ build is needed. It uses a unique directory under `tests/VersionChecks` and remo
 directory on completion; no SQL Server is required.
 Add `-Tag Synthetic` to `Invoke-Pester` to run only the metadata and legacy manifest
 matrix without packing consumer fixtures.
-The suite is available for local execution only. PR and OneBranch pipelines do not
-install Pester or run these tests.
+The suite is available for local execution only. PR and OneBranch pipelines do not run it.
 
 Just like building and testing the various projects in this repository, packaging the projects into NuGet packages is
 also handled by `build.proj`. From the root of your repository, run `dotnet build` against `build.proj` with a pack target,
@@ -398,18 +448,52 @@ while Source Link only maps `/_/`. NuGet Package Explorer reports this as
 **Contains untracked sources (obj)** for both Source Link and Deterministic, even when all `obj`
 sources are embedded and the compiler's deterministic flag is enabled.
 
+## PR XML Documentation Validation
+
+The `sqlclient-pr` pipeline validates documentation snippets in `doc/snippets` and the Abstractions
+and Azure extension `doc` directories, plus XML documentation inside all produced NuGet packages,
+using the shared offline validator at
+[`eng/pipelines/common/scripts/validate-xml-docs.ps1`](eng/pipelines/common/scripts/validate-xml-docs.ps1).
+The validation stage depends only on packing, so it can run in parallel with tests without waiting
+for test secrets.
+It takes the successful pack job's artifact name as a parameter rather than rebuilding.
+The caller supplies the pack output expression, preserving the correct artifact across job retries.
+
+Error-severity findings fail PR validation, including malformed cross-references, missing package
+documentation, and incorrect `lib/` versus `ref/` documentation trimming. The JSON report is
+published as `xml_docs_validation_attempt<N>` even when documentation validation fails.
+
 ## OneBranch Validation
 
-The non-official OneBranch pipeline defaults **Fail on validation errors**
+Both OneBranch pipelines default **Fail on validation errors**
 (`failOnValidationError`) to `true`. Localization, XML documentation, and package
 validation findings fail the build by default. Select `false` at queue time to
 report findings as warnings so pending translations do not block the rest of a
-development build. Official builds always use `true`.
+build. Official builds also support this report-only mode, including release runs;
+keep the default `true` when validation findings must block publication.
 
 This flag is independent of **Fail on SDL errors** (`failOnSdlError`). Neither flag
 turns missing or malformed validation inputs into success. Localization report-only
 mode marks findings as `SucceededWithIssues`; it does not claim that translations
 passed validation.
+
+## OneBranch Symbol Publishing
+
+Both OneBranch pipelines expose **Skip symbol publishing polling**
+(`skipSymbolPublishingPolling`), defaulting to `false` to preserve the existing
+status check. It has no effect unless **Publish symbols** (`publishSymbols`) is enabled.
+
+When enabled, symbols are still uploaded and publishing requests are submitted to
+the selected internal and public symbol servers for every built package. Token,
+registration, and submission errors still fail the job. The script skips the
+subsequent status query and logs a warning that publishing completion and results
+have not been verified.
+
+Package release still depends on the symbol-publishing stage when `publishSymbols`
+is enabled. With polling skipped, that dependency waits only for successful
+request submission, not symbol availability. With the default setting, the
+existing status check rejects terminal failures but does not wait for pending
+requests to complete.
 
 ## Versioning
 

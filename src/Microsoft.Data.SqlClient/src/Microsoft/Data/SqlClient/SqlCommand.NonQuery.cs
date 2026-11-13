@@ -170,7 +170,7 @@ namespace Microsoft.Data.SqlClient
         #region Private Methods
 
         // @TODO: This can be inlined into InternalExecuteNonQueryAsync before restructuring into async pathway
-        private IAsyncResult BeginExecuteNonQueryAsync(AsyncCallback callback, object stateObject)
+        private IAsyncResult BeginExecuteNonQueryAsync(AsyncCallback callback, object stateObject, CancellationToken cancellationToken)
         {
             SqlClientEventSource.Log.TryCorrelationTraceEvent(
                 "SqlCommand.BeginExecuteNonQueryAsync | API | Correlation | " +
@@ -189,7 +189,8 @@ namespace Microsoft.Data.SqlClient
                 stateObject,
                 CommandTimeout,
                 isRetry: false,
-                asyncWrite: true);
+                asyncWrite: true,
+                cancellationToken);
         }
 
         private IAsyncResult BeginExecuteNonQueryInternal(
@@ -198,7 +199,8 @@ namespace Microsoft.Data.SqlClient
             object stateObject,
             int timeout,
             bool isRetry,
-            bool asyncWrite = false)
+            bool asyncWrite = false,
+            CancellationToken cancellationToken = default)
         {
             TaskCompletionSource<object> globalCompletion = new TaskCompletionSource<object>(stateObject);
             TaskCompletionSource<object> localCompletion = new TaskCompletionSource<object>(stateObject);
@@ -235,7 +237,8 @@ namespace Microsoft.Data.SqlClient
                         out usedCache,
                         asyncWrite,
                         isRetry,
-                        methodName: nameof(BeginExecuteNonQuery));
+                        methodName: nameof(BeginExecuteNonQuery),
+                        cancellationToken);
 
                     if (execNonQuery is not null)
                     {
@@ -280,11 +283,12 @@ namespace Microsoft.Data.SqlClient
                         {
                             return command.InternalEndExecuteNonQuery(asyncResult, isInternal, endMethod);
                         },
-                        retryFunc: static (SqlCommand command, CommandBehavior behavior, AsyncCallback callback, object stateObject, int timeout, bool isRetry, bool asyncWrite) =>
+                        retryFunc: (SqlCommand command, CommandBehavior behavior, AsyncCallback callback, object stateObject, int timeout, bool isRetry, bool asyncWrite) =>
                         {
-                            return command.BeginExecuteNonQueryInternal(behavior, callback, stateObject, timeout, isRetry, asyncWrite);
+                            return command.BeginExecuteNonQueryInternal(behavior, callback, stateObject, timeout, isRetry, asyncWrite, cancellationToken);
                         },
-                        endMethod: nameof(EndExecuteNonQuery)))
+                        endMethod: nameof(EndExecuteNonQuery),
+                        cancellationToken))
                 {
                     globalCompletion = localCompletion;
                 }
@@ -383,7 +387,6 @@ namespace Microsoft.Data.SqlClient
             }
 
             ThrowIfReconnectionHasBeenCanceled();
-
             if (((Task)asyncResult).IsCanceled && _stateObj is null)
             {
                 throw new TaskCanceledException((Task)asyncResult);
@@ -557,7 +560,8 @@ namespace Microsoft.Data.SqlClient
             out bool usedCache,
             bool asyncWrite = false,
             bool isRetry = false,
-            [CallerMemberName] string methodName = "")
+            [CallerMemberName] string methodName = "",
+            CancellationToken cancellationToken = default)
         {
             SqlClientEventSource.Log.TryTraceEvent(
                 "SqlCommand.InternalExecuteNonQuery | INFO | " +
@@ -648,7 +652,8 @@ namespace Microsoft.Data.SqlClient
                     out usedCache,
                     asyncWrite,
                     isRetry,
-                    methodName);
+                    methodName,
+                    cancellationToken);
 
                 if (reader is not null)
                 {
@@ -715,6 +720,7 @@ namespace Microsoft.Data.SqlClient
                 returnedTask = RegisterForConnectionCloseNotification(returnedTask);
                 context = new ExecuteNonQueryAsyncCallContext();
                 context.Set(this, source, registration, operationId);
+                context.CancellationToken = cancellationToken;
 
                 // @TODO: Replace with native async implementation, make Begin/End implementation rely on async implementation
                 Task<int>.Factory.FromAsync(
@@ -723,7 +729,8 @@ namespace Microsoft.Data.SqlClient
                         // @TODO: With C# 10/net6 add [StackTraceHidden]
                         return ((ExecuteNonQueryAsyncCallContext)stateObject).Command.BeginExecuteNonQueryAsync(
                             callback,
-                            stateObject);
+                            stateObject,
+                            ((ExecuteNonQueryAsyncCallContext)stateObject).CancellationToken);
                     },
                     endMethod: static asyncResult =>
                     {
@@ -982,6 +989,8 @@ namespace Microsoft.Data.SqlClient
         internal sealed class ExecuteNonQueryAsyncCallContext
             : AAsyncCallContext<SqlCommand, int, CancellationTokenRegistration>
         {
+            public CancellationToken CancellationToken { get; set; }
+
             public SqlCommand Command => _owner;
 
             public Guid OperationId { get; set; }
@@ -1010,6 +1019,7 @@ namespace Microsoft.Data.SqlClient
             protected override void Clear()
             {
                 OperationId = Guid.Empty;
+                CancellationToken = default;
             }
         }
     }

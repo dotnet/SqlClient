@@ -875,7 +875,7 @@ namespace Microsoft.Data.SqlClient.Server
             return (TimeSpan)GetValue200(getters, ordinal, metaData);
         }
 
-        // GetValue() for v200 SMI (2008 Date/Time types)
+        // GetValue() for v200 SMI, including Date, Time, DateTime2, and DateTimeOffset.
         internal static object GetValue200(
             ITypedGettersV3 getters,
             int ordinal,
@@ -1624,8 +1624,8 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
-        // VSTFDevDiv#479681 - Data corruption when sending 2008 Date types to the server via TVP
-        // Ensures proper handling on DateTime2 sub type for Sql_Variants and TVPs.
+        // VSTFDevDiv#479681 - Preserve the Date or DateTime2 storage subtype when sending
+        // DateTime values through sql_variant and table-valued parameters.
         internal static void SetCompatibleValueV200(
             SmiTypedGetterSetter setters,
             int ordinal,
@@ -1669,7 +1669,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
-        //  Implements SqlClient 2.0-compatible SetValue() semantics + VS2008 extensions
+        //  Implements SqlClient 2.0-compatible SetValue() semantics with v200 SMI extensions.
         //      Assumes caller already validated basic type against the metadata, other than trimming lengths and
         //      checking individual field values (TVPs)
         internal static void SetCompatibleValueV200(

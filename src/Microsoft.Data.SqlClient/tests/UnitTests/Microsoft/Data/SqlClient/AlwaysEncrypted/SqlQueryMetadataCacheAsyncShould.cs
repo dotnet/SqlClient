@@ -119,7 +119,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             MethodInfo prepare = typeof(SqlCommand).GetMethod(
                 "PrepareForTransparentEncryption", BindingFlags.Instance | BindingFlags.NonPublic)
                 ?? throw new InvalidOperationException("Encryption preparation method not found.");
-            object[] arguments = { true, 30, new TaskCompletionSource<object>(), null, true, false, false };
+            object[] arguments = { true, 30, new TaskCompletionSource<object>(), null, true, false, false, CancellationToken.None };
             try
             {
                 prepare.Invoke(command, arguments);

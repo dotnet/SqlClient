@@ -6,7 +6,7 @@ using System.Reflection;
 
 namespace Microsoft.Data.SqlClient.Extensions.Azure.Test;
 
-[Collection("SqlAuthenticationProvider")]
+[Collection(SqlAuthenticationProviderCollection.Name)]
 public class WamBrokerTests
 {
     // The SqlClient first-party application client id that is hard-coded in the provider.
@@ -88,7 +88,7 @@ public class WamBrokerTests
     /// Mirrors the previous test for the <see cref="ActiveDirectoryAuthenticationProviderOptions"/>
     /// constructor: a caller (or app.config) that sets only <c>ApplicationClientId</c> and skips
     /// <c>UseWamBroker</c> must get the documented default of <see langword="false"/>. This is
-    /// the contract <c>SqlAuthenticationProviderManager</c> relies on when reflecting onto the
+    /// the contract the Abstractions authentication registry relies on when reflecting onto the
     /// Options ctor and only forwarding the properties that were explicitly configured.
     /// </summary>
     [Fact]

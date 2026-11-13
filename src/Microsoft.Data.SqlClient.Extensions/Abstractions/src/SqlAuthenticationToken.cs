@@ -14,7 +14,7 @@ public sealed class SqlAuthenticationToken
     {
         if (string.IsNullOrEmpty(accessToken))
         {
-            throw new TokenException("AccessToken must not be null or empty.");
+            throw new TokenException(AuthenticationStrings.Format("SQL_EmptyAccessToken"));
         }
 
         AccessToken = accessToken;

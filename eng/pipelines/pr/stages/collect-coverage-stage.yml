@@ -92,3 +92,12 @@ stages:
             displayName: Publish coverage results
             inputs:
               summaryFileLocation: "${{ variables.workingDir }}/merge/cobertura.xml"
+
+          # Part 3) Publish merged results to CodeCov
+          # Note: Because this requires reading a secret from the library, it cannot be run on PRs
+          #    from a forked repository. The only alternative is a token-less approach that
+          #    requires reconfiguring CodeCov.
+          - ${{ if eq(variables['System.PullRequest.IsFork'], 'False') }}:
+            - template: /eng/pipelines/pr/steps/upload-codecov-step.yml
+              parameters:
+                mergedCoveragePath: "${{ variables.workingDir }}/merge/cobertura.xml"

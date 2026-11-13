@@ -56,51 +56,25 @@ namespace Microsoft.Data.SqlClient
         private static readonly object s_cachedInvalidPrepareHandle = (object)-1;
 
         /// <summary>
-        /// 2005- column ordinals (this array indexed by ProcParamsColIndex
+        /// Provides compile-time constants for the names of the columns for use by
+        /// DeriveParameters.
         /// </summary>
-        // @TODO: There's gotta be a better way to define these than with 3x static structures
-        // @TODO: Rename to ProcParamNamesPreSql2008
-        private static readonly string[] PreSql2008ProcParamsNames = new string[]
+        private static class ProcParamsColumns
         {
-            "PARAMETER_NAME",           // ParameterName,
-            "PARAMETER_TYPE",           // ParameterType,
-            "DATA_TYPE",                // DataType
-            null,                       // ManagedDataType, introduced in 2008
-            "CHARACTER_MAXIMUM_LENGTH", // CharacterMaximumLength,
-            "NUMERIC_PRECISION",        // NumericPrecision,
-            "NUMERIC_SCALE",            // NumericScale,
-            "UDT_CATALOG",              // TypeCatalogName,
-            "UDT_SCHEMA",               // TypeSchemaName,
-            "TYPE_NAME",                // TypeName,
-            "XML_CATALOGNAME",          // XmlSchemaCollectionCatalogName,
-            "XML_SCHEMANAME",           // XmlSchemaCollectionSchemaName,
-            "XML_SCHEMACOLLECTIONNAME", // XmlSchemaCollectionName
-            "UDT_NAME",                 // UdtTypeName
-            null,                       // Scale for datetime types with scale, introduced in 2008
-        };
-
-        /// <summary>
-        /// 2008+ column ordinals (this array indexed by ProcParamsColIndex.
-        /// </summary>
-        // @TODO: There's gotta be a better way to define these than with 3x static structures
-        // @TODO: Rename to ProcParamNamesPostSql2008
-        internal static readonly string[] Sql2008ProcParamsNames = new[] {
-            "PARAMETER_NAME",           // ParameterName,
-            "PARAMETER_TYPE",           // ParameterType,
-            null,                       // DataType, removed from 2008+
-            "MANAGED_DATA_TYPE",        // ManagedDataType,
-            "CHARACTER_MAXIMUM_LENGTH", // CharacterMaximumLength,
-            "NUMERIC_PRECISION",        // NumericPrecision,
-            "NUMERIC_SCALE",            // NumericScale,
-            "TYPE_CATALOG_NAME",        // TypeCatalogName,
-            "TYPE_SCHEMA_NAME",         // TypeSchemaName,
-            "TYPE_NAME",                // TypeName,
-            "XML_CATALOGNAME",          // XmlSchemaCollectionCatalogName,
-            "XML_SCHEMANAME",           // XmlSchemaCollectionSchemaName,
-            "XML_SCHEMACOLLECTIONNAME", // XmlSchemaCollectionName
-            null,                       // UdtTypeName, removed from 2008+
-            "SS_DATETIME_PRECISION",    // Scale for datetime types with scale
-        };
+            public const string ParameterName = "PARAMETER_NAME";
+            public const string ParameterType = "PARAMETER_TYPE";
+            public const string ManagedDataType = "MANAGED_DATA_TYPE";
+            public const string CharacterMaximumLength = "CHARACTER_MAXIMUM_LENGTH";
+            public const string NumericPrecision = "NUMERIC_PRECISION";
+            public const string NumericScale = "NUMERIC_SCALE";
+            public const string TypeCatalogName = "TYPE_CATALOG_NAME";
+            public const string TypeSchemaName = "TYPE_SCHEMA_NAME";
+            public const string TypeName = "TYPE_NAME";
+            public const string XmlSchemaCollectionCatalogName = "XML_CATALOGNAME";
+            public const string XmlSchemaCollectionSchemaName = "XML_SCHEMANAME";
+            public const string XmlSchemaCollectionName = "XML_SCHEMACOLLECTIONNAME";
+            public const string DateTimeScale = "SS_DATETIME_PRECISION";
+        }
 
         #endregion
 
@@ -198,7 +172,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Cut down on object creation and cache all the cached metadata
         /// </summary>
-        private _SqlMetaDataSet _cachedMetaData;
+        private TdsColumnMetadataToken _cachedMetaData;
 
         /// <summary>
         /// Column Encryption Override. Defaults to SqlConnectionSetting, in which case it will be
@@ -268,6 +242,12 @@ namespace Microsoft.Data.SqlClient
 
         // @TODO: Rename to match naming conventions _enclaveAttestationParameters
         private SqlEnclaveAttestationParameters enclaveAttestationParameters = null;
+
+        // Provider awaits can precede both parser-state acquisition and a cached async result.
+        private bool _enclaveAttestationInProgress;
+
+        private SqlConnectionInternal _describeParameterEncryptionConnection;
+        private SqlConnectionInternal _enclaveRetryConnection;
 
         /// <summary>
         /// On 8.0 and above the Prepared state cannot be left. Once a command is prepared it will
@@ -524,26 +504,6 @@ namespace Microsoft.Data.SqlClient
             PREPARED,
         }
 
-        // Index into indirection arrays for columns of interest to DeriveParameters
-        private enum ProcParamsColIndex
-        {
-            ParameterName = 0,
-            ParameterType,
-            DataType,        // Obsolete in 2008, use ManagedDataType instead
-            ManagedDataType, // New in 2008
-            CharacterMaximumLength,
-            NumericPrecision,
-            NumericScale,
-            TypeCatalogName,
-            TypeSchemaName,
-            TypeName,
-            XmlSchemaCollectionCatalogName,
-            XmlSchemaCollectionSchemaName,
-            XmlSchemaCollectionName,
-            UdtTypeName,  // Obsolete in 2008.  Holds the actual typename if UDT, since TypeName didn't back then.
-            DateTimeScale // New in 2008
-        }
-
         #endregion
 
         #region Public Properties
@@ -664,7 +624,7 @@ namespace Microsoft.Data.SqlClient
                 if (_activeConnection != value && _activeConnection != null)
                 {
                     // If new value...
-                    if (CachedAsyncState != null && CachedAsyncState.PendingAsyncOperation)
+                    if (_enclaveAttestationInProgress || (CachedAsyncState != null && CachedAsyncState.PendingAsyncOperation))
                     {
                         // If in pending async state, throw.
                         throw SQL.CannotModifyPropertyAsyncOperationInProgress();
@@ -817,7 +777,7 @@ namespace Microsoft.Data.SqlClient
                 if (_transaction != value && _activeConnection is not null)
                 {
                     // If new value...
-                    if (CachedAsyncState != null && CachedAsyncState.PendingAsyncOperation)
+                    if (_enclaveAttestationInProgress || (CachedAsyncState != null && CachedAsyncState.PendingAsyncOperation))
                     {
                         // If in pending async state, throw.
                         throw SQL.CannotModifyPropertyAsyncOperationInProgress();
@@ -918,7 +878,7 @@ namespace Microsoft.Data.SqlClient
 
         // @TODO: Autoproperty
         // @TODO: MetaData or Metadata?
-        internal _SqlMetaDataSet MetaData => _cachedMetaData;
+        internal TdsColumnMetadataToken MetaData => _cachedMetaData;
 
         // @TODO: Rename to match conventions.
         internal int ObjectID { get; } = Interlocked.Increment(ref _objectTypeCount);
@@ -1365,9 +1325,9 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(parsedSProc.Length == 4,
                 "Invalid array length result from SqlCommandBuilder.ParseProcedureName");
 
-            // Build call for sp_procedure_params_rowset built of unquoted values from user:
+            // Build the parameter metadata procedure call from unquoted user values:
             // [user server, if provided].[user catalog, else current database].
-            // [sys if 2005, else blank].[sp_procedure_params_rowset]
+            // [sys].[sp_procedure_params_100_managed]
             StringBuilder cmdText = new StringBuilder();
 
             // Server - pass only if user provided.
@@ -1385,33 +1345,15 @@ namespace Microsoft.Data.SqlClient
             SqlCommandSet.BuildStoredProcedureName(cmdText, parsedSProc[1]);
             cmdText.Append(".");
 
-            // Schema - only if 2005, and then only pass sys.  Also - pass managed version of sproc
-            // for 2005, else older sproc.
-            string[] colNames;
-            bool useManagedDataType;
-            if (Connection.Is2008OrNewer)
-            {
-                // Procedure - [sp_procedure_params_managed]
-                cmdText.Append("[sys].[").Append(TdsEnums.SP_PARAMS_MGD10).Append("]");
-
-                colNames = Sql2008ProcParamsNames;
-                useManagedDataType = true;
-            }
-            else
-            {
-                // Procedure - [sp_procedure_params_managed]
-                cmdText.Append("[sys].[").Append(TdsEnums.SP_PARAMS_MANAGED).Append("]");
-
-                colNames = PreSql2008ProcParamsNames;
-                useManagedDataType = false;
-            }
+            // Procedure - [sys].[sp_procedure_params_100_managed]
+            cmdText.Append("[sys].[").Append(TdsEnums.SP_PARAMS_MGD10).Append("]");
 
             using SqlCommand paramsCmd = new SqlCommand(cmdText.ToString(), Connection, Transaction)
             {
                 CommandType = CommandType.StoredProcedure
             };
 
-            // Prepare parameters for sp_procedure_params_rowset:
+            // Prepare parameters for sp_procedure_params_100_managed:
             // 1) procedure name - unquote user value
             // 2) group number - parsed at the time we unquoted procedure name
             // 3) procedure schema - unquote user value
@@ -1447,52 +1389,39 @@ namespace Microsoft.Data.SqlClient
                     // each row corresponds to a parameter of the stored proc.  Fill in all the info
                     SqlParameter p = new SqlParameter
                     {
-                        ParameterName = (string)r[colNames[(int)ProcParamsColIndex.ParameterName]]
+                        ParameterName = (string)r[ProcParamsColumns.ParameterName]
                     };
 
                     // type
-                    if (useManagedDataType)
+                    p.SqlDbType = (SqlDbType)(short)r[ProcParamsColumns.ManagedDataType];
+
+                    // Preserve the derived parameter types expected by existing applications
+                    // when metadata reports legacy LOB types or timestamp.
+                    switch (p.SqlDbType)
                     {
-                        p.SqlDbType = (SqlDbType)(short)r[colNames[(int)ProcParamsColIndex.ManagedDataType]];
+                        case SqlDbType.Image:
+                        case SqlDbType.Timestamp:
+                            p.SqlDbType = SqlDbType.VarBinary;
+                            break;
 
-                        // 2005 didn't have as accurate of information as we're getting for 2008, so re-map a couple of
-                        //  types for backward compatability.
-                        switch (p.SqlDbType)
-                        {
-                            case SqlDbType.Image:
-                            case SqlDbType.Timestamp:
-                                p.SqlDbType = SqlDbType.VarBinary;
-                                break;
+                        case SqlDbType.NText:
+                            p.SqlDbType = SqlDbType.NVarChar;
+                            break;
 
-                            case SqlDbType.NText:
-                                p.SqlDbType = SqlDbType.NVarChar;
-                                break;
+                        case SqlDbType.Text:
+                            p.SqlDbType = SqlDbType.VarChar;
+                            break;
 
-                            case SqlDbType.Text:
-                                p.SqlDbType = SqlDbType.VarChar;
-                                break;
-
-                            default:
-                                break;
-                        }
-                    }
-                    else
-                    {
-                        short dbType = (short)r[colNames[(int)ProcParamsColIndex.DataType]];
-                        string typeName = ADP.IsNull(r[colNames[(int)ProcParamsColIndex.TypeName]])
-                            ? string.Empty
-                            : (string)r[colNames[(int)ProcParamsColIndex.TypeName]];
-                        p.SqlDbType = MetaType.GetSqlDbTypeFromOleDbType(dbType, typeName);
+                        default:
+                            break;
                     }
 
                     // size
-                    object a = r[colNames[(int)ProcParamsColIndex.CharacterMaximumLength]];
+                    object a = r[ProcParamsColumns.CharacterMaximumLength];
                     if (a is int size)
                     {
-                        // Map MAX sizes correctly. The 2008 server-side proc sends 0 for these
-                        // instead of -1. Should be fixed on the 2008 side, but would likely hold
-                        // up the RI, and is safer to fix here. If we can get the server-side fixed
-                        // before shipping 2008, we can remove this mapping.
+                        // Normalize MAX lengths reported as 0 by the metadata procedure to
+                        // the -1 indicator expected by SqlParameter.Size.
                         if (size == 0 && p.SqlDbType is SqlDbType.NVarChar or SqlDbType.VarBinary or SqlDbType.VarChar)
                         {
                             size = -1;
@@ -1501,25 +1430,22 @@ namespace Microsoft.Data.SqlClient
                     }
 
                     // direction
-                    p.Direction = GetParameterDirectionFromOleDbDirection(
-                        (short)r[colNames[(int)ProcParamsColIndex.ParameterType]]);
+                    p.Direction = GetParameterDirectionFromOleDbDirection((short)r[ProcParamsColumns.ParameterType]);
 
                     if (p.SqlDbType is SqlDbType.Decimal)
                     {
-                        p.ScaleInternal = (byte)((short)r[colNames[(int)ProcParamsColIndex.NumericScale]] & 0xff);
-                        p.PrecisionInternal = (byte)((short)r[colNames[(int)ProcParamsColIndex.NumericPrecision]] & 0xff);
+                        p.ScaleInternal = (byte)((short)r[ProcParamsColumns.NumericScale] & 0xff);
+                        p.PrecisionInternal = (byte)((short)r[ProcParamsColumns.NumericPrecision] & 0xff);
                     }
 
                     // Type name for Udt
                     if (p.SqlDbType is SqlDbType.Udt)
                     {
-                        string udtTypeName = useManagedDataType
-                            ? (string)r[colNames[(int)ProcParamsColIndex.TypeName]]
-                            : (string)r[colNames[(int)ProcParamsColIndex.UdtTypeName]];
+                        string udtTypeName = (string)r[ProcParamsColumns.TypeName];
 
                         // Read the type name
-                        p.UdtTypeName = r[colNames[(int)ProcParamsColIndex.TypeCatalogName]] + "." +
-                                        r[colNames[(int)ProcParamsColIndex.TypeSchemaName]] + "." +
+                        p.UdtTypeName = r[ProcParamsColumns.TypeCatalogName] + "." +
+                                        r[ProcParamsColumns.TypeSchemaName] + "." +
                                         udtTypeName;
                     }
 
@@ -1527,13 +1453,10 @@ namespace Microsoft.Data.SqlClient
                     // instead of p.UdtTypeName)
                     if (p.SqlDbType is SqlDbType.Structured)
                     {
-                        Debug.Assert(_activeConnection.Is2008OrNewer,
-                            "Invalid datatype token received from pre-2008 server");
-
                         //read the type name
-                        p.TypeName = r[colNames[(int)ProcParamsColIndex.TypeCatalogName]] + "." +
-                                     r[colNames[(int)ProcParamsColIndex.TypeSchemaName]] + "." +
-                                     r[colNames[(int)ProcParamsColIndex.TypeName]];
+                        p.TypeName = r[ProcParamsColumns.TypeCatalogName] + "." +
+                                     r[ProcParamsColumns.TypeSchemaName] + "." +
+                                     r[ProcParamsColumns.TypeName];
 
                         // the constructed type name above is incorrectly formatted, it should be a
                         // 2 part name not 3 for compatibility we can't change this because the bug
@@ -1548,19 +1471,19 @@ namespace Microsoft.Data.SqlClient
                     {
                         object value;
 
-                        value = r[colNames[(int)ProcParamsColIndex.XmlSchemaCollectionCatalogName]];
+                        value = r[ProcParamsColumns.XmlSchemaCollectionCatalogName];
                         p.XmlSchemaCollectionDatabase = ADP.IsNull(value) ? string.Empty : (string)value;
 
-                        value = r[colNames[(int)ProcParamsColIndex.XmlSchemaCollectionSchemaName]];
+                        value = r[ProcParamsColumns.XmlSchemaCollectionSchemaName];
                         p.XmlSchemaCollectionOwningSchema = ADP.IsNull(value) ? string.Empty : (string)value;
 
-                        value = r[colNames[(int)ProcParamsColIndex.XmlSchemaCollectionName]];
+                        value = r[ProcParamsColumns.XmlSchemaCollectionName];
                         p.XmlSchemaCollectionName = ADP.IsNull(value) ? string.Empty : (string)value;
                     }
 
                     if (MetaType._IsVarTime(p.SqlDbType))
                     {
-                        object value = r[colNames[(int)ProcParamsColIndex.DateTimeScale]];
+                        object value = r[ProcParamsColumns.DateTimeScale];
                         if (value is int intValue)
                         {
                             p.ScaleInternal = (byte)(intValue & 0xff);
@@ -1694,7 +1617,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal void OnReturnValue(SqlReturnValue returnValue, TdsParserStateObject stateObj)
+        internal void OnReturnValue(TdsReturnValueToken returnValue, TdsParserStateObject stateObj)
         {
             // Move the return value to the corresponding output parameter.
             // Return parameters are sent in the order in which they were defined in the procedure.
@@ -1706,9 +1629,9 @@ namespace Microsoft.Data.SqlClient
             if (_inPrepare)
             {
                 // Store the returned prepare handle if we are returning from sp_prepare
-                if (!returnValue.value.IsNull)
+                if (!returnValue.Value.IsNull)
                 {
-                    _prepareHandle = returnValue.value.Int32;
+                    _prepareHandle = returnValue.Value.Int32;
                 }
 
                 _inPrepare = false;
@@ -1727,7 +1650,7 @@ namespace Microsoft.Data.SqlClient
                 // If the parameter's direction is InputOutput, Output, or ReturnValue and it needs
                 // to be transparently encrypted/decrypted, then simply decrypt, deserialize, and
                 // set the value.
-                if (returnValue.cipherMD is not null &&
+                if (returnValue.CipherMetadata is not null &&
                     thisParam.CipherMetadata is not null &&
                     (thisParam.Direction == ParameterDirection.Output ||
                      thisParam.Direction == ParameterDirection.InputOutput ||
@@ -1735,11 +1658,11 @@ namespace Microsoft.Data.SqlClient
                 {
                     // @TODO: make this a separate method
                     // Validate type of the return value is valid for encryption
-                    if (returnValue.tdsType != TdsEnums.SQLBIGVARBINARY)
+                    if (returnValue.TdsType != TdsEnums.SQLBIGVARBINARY)
                     {
                         throw SQL.InvalidDataTypeForEncryptedParameter(
                             thisParam.GetPrefixedParameterName(),
-                            returnValue.tdsType,
+                            returnValue.TdsType,
                             expectedDataType: TdsEnums.SQLBIGVARBINARY);
                     }
 
@@ -1750,17 +1673,17 @@ namespace Microsoft.Data.SqlClient
                         throw ADP.ClosedConnectionError();
                     }
 
-                    if (!returnValue.value.IsNull)
+                    if (!returnValue.Value.IsNull)
                     {
                         try
                         {
                             Debug.Assert(_activeConnection is not null, @"_activeConnection should not be null");
 
                             // Get the key information from the parameter and decrypt the value.
-                            returnValue.cipherMD.EncryptionInfo = thisParam.CipherMetadata.EncryptionInfo;
+                            returnValue.CipherMetadata.EncryptionInfo = thisParam.CipherMetadata.EncryptionInfo;
                             byte[] unencryptedBytes = SqlSecurityUtility.DecryptWithKey(
-                                returnValue.value.ByteArray,
-                                returnValue.cipherMD,
+                                returnValue.Value.ByteArray,
+                                returnValue.CipherMetadata,
                                 _activeConnection,
                                 this);
 
@@ -1818,9 +1741,9 @@ namespace Microsoft.Data.SqlClient
                             _activeConnection.CheckGetExtendedUDTInfo(returnValue, fThrow: true);
 
                             // Extract the byte array from the param value
-                            object data = returnValue.value.IsNull
+                            object data = returnValue.Value.IsNull
                                 ? DBNull.Value
-                                : returnValue.value.ByteArray;
+                                : returnValue.Value.ByteArray;
 
                             // Call the connection to instantiate the UDT object
                             thisParam.Value = _activeConnection.GetUdtValue(data, returnValue, returnDBNull: false);
@@ -1836,13 +1759,13 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        thisParam.SetSqlBuffer(returnValue.value);
+                        thisParam.SetSqlBuffer(returnValue.Value);
                     }
 
-                    // @TODO: This seems fishy to me, it seems like it should be part of the SqlReturnValue class
-                    MetaType mt = MetaType.GetMetaTypeFromSqlDbType(returnValue.type, isMultiValued: false);
+                    // @TODO: This seems fishy to me, it seems like it should be part of the TdsReturnValueToken class
+                    MetaType mt = MetaType.GetMetaTypeFromSqlDbType(returnValue.DbType, isMultiValued: false);
 
-                    if (returnValue.type is SqlDbType.Decimal)
+                    if (returnValue.DbType is SqlDbType.Decimal)
                     {
                         thisParam.ScaleInternal = returnValue.scale;
                         thisParam.PrecisionInternal = returnValue.precision;
@@ -1851,7 +1774,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         thisParam.ScaleInternal = returnValue.scale;
                     }
-                    else if (returnValue.type is SqlDbType.Xml)
+                    else if (returnValue.DbType is SqlDbType.Xml)
                     {
                         if (thisParam.Value is SqlCachedBuffer cachedBuffer)
                         {
@@ -2306,7 +2229,9 @@ namespace Microsoft.Data.SqlClient
                     // The validate function for SqlParameters would have already thrown
                     // InvalidCastException if an incompatible value is specified for vector type.
                     ISqlVector vectorProps = (ISqlVector)sqlParam.Value;
-                    paramList.AppendFormat("({0})", vectorProps.Length);
+
+                    MetaType.AppendVectorTypeArguments(
+                        paramList, vectorProps.Length, vectorProps.ElementType);
                 }
                 else if (!mt.IsFixed && !mt.IsLong && mt.SqlDbType is not  SqlDbType.Timestamp
                                                                    and not SqlDbType.Udt
@@ -2486,10 +2411,11 @@ namespace Microsoft.Data.SqlClient
             Func<SqlCommand, IAsyncResult, bool, string, object> endFunc,
             Func<SqlCommand, CommandBehavior, AsyncCallback, object, int, bool, bool, IAsyncResult> retryFunc,
             string endMethod,
-            long firstAttemptStart)
+            long firstAttemptStart,
+            CancellationToken cancellationToken)
         {
             localCompletion.Task.ContinueWith(
-                task =>
+                async task =>
                 {
                     if (task.IsFaulted &&
                         task.Exception.InnerException is not EnclaveDelegate.RetryableEnclaveQueryExecutionException)
@@ -2573,44 +2499,49 @@ namespace Microsoft.Data.SqlClient
 
                         // Remove the entry from the cache since it was inconsistent
                         SqlQueryMetadataCache.GetInstance().InvalidateCacheEntry(this);
-                        InvalidateEnclaveSession();
-
                         // Kick off the retry
+                        SqlConnectionInternal retryConnection = _activeConnection.InnerConnection as SqlConnectionInternal;
+                        Task<object> retryTask = null;
                         try
                         {
+                            await InvalidateEnclaveSessionAsync(cancellationToken).ConfigureAwait(false);
                             _internalEndExecuteInitiated = false;
-                            Task<object> retryTask = (Task<object>)retryFunc(
-                                this,
-                                behavior,
-                                /*asyncCallback:*/ null, // @TODO: Is this ever not null?
-                                stateObject,
-                                TdsParserStaticMethods.GetRemainingTimeout(timeout, firstAttemptStart),
-                                /*isRetry:*/ true,
-                                asyncWrite);
+                            _enclaveRetryConnection = retryConnection;
+                            try
+                            {
+                                retryTask = (Task<object>)retryFunc(
+                                    this,
+                                    behavior,
+                                    /*asyncCallback:*/ null, // @TODO: Is this ever not null?
+                                    stateObject,
+                                    TdsParserStaticMethods.GetRemainingTimeout(timeout, firstAttemptStart),
+                                    /*isRetry:*/ true,
+                                    asyncWrite);
+                            }
+                            finally
+                            {
+                                _enclaveRetryConnection = null;
+                            }
 
-                            retryTask.ContinueWith(
-                                static (retryTask, state) =>
-                                {
-                                    TaskCompletionSource<object> completionSource = (TaskCompletionSource<object>)state;
-                                    if (retryTask.IsFaulted)
-                                    {
-                                        completionSource.TrySetException(retryTask.Exception.InnerException);
-                                    }
-                                    else if (retryTask.IsCanceled)
-                                    {
-                                        completionSource.TrySetCanceled();
-                                    }
-                                    else
-                                    {
-                                        completionSource.TrySetResult(retryTask.Result);
-                                    }
-                                },
-                                state: globalCompletion,
-                                TaskScheduler.Default);
+                            object result = await retryTask.ConfigureAwait(false);
+                            globalCompletion.TrySetResult(result);
                         }
                         catch (Exception e2)
                         {
-                            globalCompletion.TrySetException(e2);
+                            CachedAsyncState?.ResetAsyncState();
+                            // Failed retry setup cannot transfer the original reservation to End.
+                            retryConnection?.DecrementAsyncCount();
+                            _internalEndExecuteInitiated = false;
+
+                            if (e2 is OperationCanceledException &&
+                                (cancellationToken.IsCancellationRequested || retryTask?.IsCanceled == true))
+                            {
+                                globalCompletion.TrySetCanceled();
+                            }
+                            else
+                            {
+                                globalCompletion.TrySetException(e2);
+                            }
                         }
                     }
                 },
@@ -2922,7 +2853,8 @@ namespace Microsoft.Data.SqlClient
             TaskCompletionSource<object> localCompletion,
             Func<SqlCommand, IAsyncResult, bool, string, object> endFunc,
             Func<SqlCommand, CommandBehavior, AsyncCallback, object, int, bool, bool, IAsyncResult> retryFunc,
-            string endMethod)
+            string endMethod,
+            CancellationToken cancellationToken = default)
         {
             // We shouldn't be using the cache if we are in retry.
             Debug.Assert(!usedCache || !isRetry);
@@ -2950,7 +2882,8 @@ namespace Microsoft.Data.SqlClient
                     endFunc,
                     retryFunc,
                     endMethod,
-                    firstAttemptStart);
+                    firstAttemptStart,
+                    cancellationToken);
 
                 return true;
             }
@@ -2992,6 +2925,11 @@ namespace Microsoft.Data.SqlClient
 
         private void ValidateAsyncCommand()
         {
+            if (_enclaveAttestationInProgress)
+            {
+                throw SQL.PendingBeginXXXExists();
+            }
+
             if (CachedAsyncState is not null && CachedAsyncState.PendingAsyncOperation)
             {
                 // Enforce only one pending async execute at a time.
@@ -3009,6 +2947,11 @@ namespace Microsoft.Data.SqlClient
         // @TODO: isAsync isn't used.
         private void ValidateCommand(bool isAsync, [CallerMemberName] string method = "")
         {
+            if (_enclaveAttestationInProgress)
+            {
+                throw SQL.PendingBeginXXXExists();
+            }
+
             if (_activeConnection is null)
             {
                 throw ADP.ConnectionRequired(method);
