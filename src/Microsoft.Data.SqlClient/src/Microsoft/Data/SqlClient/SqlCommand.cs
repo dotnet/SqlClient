@@ -347,6 +347,14 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private SqlTransaction _transaction;
 
+        // Transactions from commands copied into a batch. The batch command itself may have
+        // none. This is a copy: a later clear of the caller's list must not change the check
+        // or throw while it is walked. Null means this command is not checking a batch.
+        // ValidateCommand rechecks the copy after a drain and before the write is sent.
+#nullable enable
+        private List<SqlTransaction>? _retainedBatchTransactions;
+#nullable restore
+
         /// <summary>
         /// How command results are applied to a DataRow when used by the update method of
         /// DbDataAdapter.
@@ -420,7 +428,9 @@ namespace Microsoft.Data.SqlClient
             CommandType = from.CommandType;
             Connection = from.Connection;
             DesignTimeVisible = from.DesignTimeVisible;
-            Transaction = from.Transaction;
+            // Copy the field. The getter returns null once the server has completed the transaction,
+            // and the clone has to keep that transaction so its next execute is rejected.
+            Transaction = from._transaction;
             UpdatedRowSource = from.UpdatedRowSource;
             _columnEncryptionSetting = from.ColumnEncryptionSetting;
 
@@ -603,9 +613,10 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
 
-                // Check to see if the currently set transaction has completed. If so, null out
-                // our local reference.
-                if (_transaction?.Connection is null)
+                // Rollback or disposal of a transaction the server already aborted clears the
+                // mark, so drop that reference. Until then it stays attached, and the next
+                // execute is rejected instead of auto-committing.
+                if (_transaction is not null && _transaction.Connection is null && !_transaction.CompletedByServer)
                 {
                     _transaction = null;
                 }
@@ -735,10 +746,17 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                // If the transaction object has been zombied, just return null
+                // Rollback or disposal of a transaction the server already aborted clears the
+                // mark, so drop that reference. Until then it stays attached: the getter still
+                // returns null, and the next execute is rejected instead of auto-committing.
                 if (_transaction is not null && _transaction.Connection is null)
                 {
-                    _transaction = null;
+                    if (!_transaction.CompletedByServer)
+                    {
+                        _transaction = null;
+                    }
+
+                    return null;
                 }
 
                 return _transaction;
@@ -821,6 +839,23 @@ namespace Microsoft.Data.SqlClient
         }
 
         internal bool InPrepare => _inPrepare;
+
+        // Transaction returns null after the server aborts this command's transaction, but the
+        // field stays set so the next execute is rejected. Copies have to use the field.
+        internal SqlTransaction BoundTransaction => _transaction;
+
+        /// <summary>
+        /// Keeps the transactions a batch must recheck after a drain. The list is copied so the
+        /// check stays stable if the caller later clears or mutates its own list, and so walking
+        /// the copy cannot throw <see cref="ArgumentOutOfRangeException"/>. Null means this
+        /// command is not checking a batch. The copy is not mutated while it is walked.
+        /// </summary>
+#nullable enable
+        internal void RetainBatchTransactions(List<SqlTransaction>? transactions)
+        {
+            _retainedBatchTransactions = transactions is null ? null : new List<SqlTransaction>(transactions);
+        }
+#nullable restore
 
         // @TODO: Rename RowsAffectedInternal or
         // @TODO: Make `int?`
@@ -2902,6 +2937,14 @@ namespace Microsoft.Data.SqlClient
         // @TODO: isAsync isn't used.
         private void ValidateCommand(bool isAsync, [CallerMemberName] string method = "")
         {
+            // A transaction aborted by the server stays attached, and its connection reports null.
+            // Reject it before the command can run outside that transaction and auto-commit.
+            // Rollback of that transaction clears the mark; that case is handled below.
+            if (_transaction is not null && _transaction.Connection is null && _transaction.CompletedByServer)
+            {
+                throw ADP.TransactionZombied(_transaction);
+            }
+
             if (_activeConnection is null)
             {
                 throw ADP.ConnectionRequired(method);
@@ -2951,11 +2994,32 @@ namespace Microsoft.Data.SqlClient
             // we have a live reader for this command.
             _activeConnection.ValidateConnectionForExecute(method, this);
 
-            // Check to see if the currently set transaction has completed. If so, null out our
-            // local reference.
+            // Draining an abandoned reader can abort the transaction after the check above.
+            // Reject that too. A transaction the caller already finished is cleared instead.
             if (_transaction is not null && _transaction.Connection is null)
             {
+                if (_transaction.CompletedByServer)
+                {
+                    throw ADP.TransactionZombied(_transaction);
+                }
+
                 _transaction = null;
+            }
+
+            // A batch copies each command's text without its transaction. Recheck the snapshot
+            // taken above, after the drain and before a write is sent. A transaction the caller
+            // already finished is left alone. The snapshot is not mutated here.
+            List<SqlTransaction> retainedTransactions = _retainedBatchTransactions;
+            if (retainedTransactions is not null)
+            {
+                for (int index = 0; index < retainedTransactions.Count; index++)
+                {
+                    SqlTransaction retainedTransaction = retainedTransactions[index];
+                    if (retainedTransaction is not null && retainedTransaction.Connection is null && retainedTransaction.CompletedByServer)
+                    {
+                        throw ADP.TransactionZombied(retainedTransaction);
+                    }
+                }
             }
 
             // Throw if the connection is in a transaction but there is no locally assigned

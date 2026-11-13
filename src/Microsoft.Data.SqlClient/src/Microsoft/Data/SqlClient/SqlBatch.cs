@@ -354,7 +354,8 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.InvalidOperation(StringsHelper.GetString(Strings.ADP_NoSqlBatchCommandList));
             }
             _batchCommand.Connection = Connection;
-            _batchCommand.Transaction = Transaction;
+            // Transaction returns null after a server abort. Assigning it here would drop the
+            // transaction this command still holds, and the batch would auto-commit.
             _batchCommand.SetBatchRPCMode(true, _commands.Count);
             _batchCommand.Parameters.Clear();
             for (int index = 0; index < _commands.Count; index++)
