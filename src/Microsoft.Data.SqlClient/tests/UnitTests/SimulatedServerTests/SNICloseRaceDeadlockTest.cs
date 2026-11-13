@@ -5,6 +5,8 @@
 #nullable enable
 
 using System;
+using System.Collections.Concurrent;
+using System.Diagnostics.Tracing;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.SqlServer.TDS;
@@ -80,6 +82,9 @@ public class SNICloseRaceDeadlockTest
         }
     }
 
+    /// <summary>
+    /// Physical teardown must finish when response completion and connection close race.
+    /// </summary>
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
@@ -89,6 +94,8 @@ public class SNICloseRaceDeadlockTest
 
         for (int i = 0; i < iterations; i++)
         {
+            // Arrange
+            using CloseTraceListener trace = new();
             using ManualResetEventSlim batchReceived = new(false);
             using ManualResetEventSlim releaseResponse = new(false);
 
@@ -134,6 +141,7 @@ public class SNICloseRaceDeadlockTest
                 // completion callback fires concurrently with SNIClose.
                 using Barrier gate = new(2);
 
+                // Act
                 closeAttempted = true;
                 Task closeTask = Task.Factory.StartNew(
                     () =>
@@ -155,14 +163,17 @@ public class SNICloseRaceDeadlockTest
 
                 closedInTime = closeTask.Wait(CloseBudget);
 
+                // Assert
                 Assert.True(
                     closedInTime,
                     $"iteration {i}: {(disposeInsteadOfClose ? "Dispose()" : "Close()")} did not " +
                     $"complete within {CloseBudget.TotalSeconds:N0}s while a response completion " +
-                    "raced close. This indicates the SNIClose deadlock (ADO.Net #43847 / ICM 775308542).");
+                    "raced close. This indicates the SNIClose deadlock (ADO.Net #43847 / ICM 775308542)." +
+                    Environment.NewLine + trace);
             }
             finally
             {
+                // Cleanup
                 // Always release the (possibly still-stalled) server thread so
                 // the using-scoped server can be disposed without blocking.
                 releaseResponse.Set();
@@ -190,5 +201,45 @@ public class SNICloseRaceDeadlockTest
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// Records bounded close/read progress without enabling packet payload events.
+    /// </summary>
+    private sealed class CloseTraceListener : EventListener
+    {
+        private readonly ConcurrentQueue<string> _messages = new();
+
+        /// <summary>
+        /// Enables flow and managed-network tracing for the loopback connection.
+        /// </summary>
+        protected override void OnEventSourceCreated(EventSource eventSource)
+        {
+            if (eventSource.Name == "Microsoft.Data.SqlClient.EventSource")
+            {
+                EnableEvents(eventSource, EventLevel.Verbose, (EventKeywords)(2 | 4 | 128 | 2048));
+            }
+        }
+
+        /// <summary>
+        /// Retains recent progress and thread identities for a stalled iteration.
+        /// </summary>
+        protected override void OnEventWritten(EventWrittenEventArgs eventData)
+        {
+            if (eventData.Payload is not null)
+            {
+                _messages.Enqueue(
+                    $"{Environment.CurrentManagedThreadId}: {string.Join(" | ", eventData.Payload)}");
+                while (_messages.Count > 128)
+                {
+                    _messages.TryDequeue(out _);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Supplies the captured progress to the close watchdog assertion.
+        /// </summary>
+        public override string ToString() => string.Join(Environment.NewLine, _messages);
     }
 }
