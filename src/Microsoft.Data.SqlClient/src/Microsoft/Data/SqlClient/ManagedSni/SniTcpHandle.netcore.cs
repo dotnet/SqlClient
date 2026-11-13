@@ -866,7 +866,8 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 {
                     try
                     {
-                        packet.WriteToStream(_stream);
+                        Stream stream = _stream ?? throw new ObjectDisposedException(nameof(SniTcpHandle));
+                        packet.WriteToStream(stream);
                         SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniTcpHandle), EventType.INFO, "Connection Id {0}, Data sent to stream synchronously", args0: _connectionId);
                         return TdsEnums.SNI_SUCCESS;
                     }
