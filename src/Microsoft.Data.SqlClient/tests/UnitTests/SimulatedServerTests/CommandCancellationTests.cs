@@ -3,10 +3,10 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections.Concurrent;
 using System.Diagnostics.Tracing;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.Parser;
 using Microsoft.SqlServer.TDS;
 using Microsoft.SqlServer.TDS.Done;
 using Microsoft.SqlServer.TDS.EndPoint;
@@ -55,7 +55,6 @@ public class CommandCancellationTests
         Func<SqlCommand, CancellationToken, Task> execute)
     {
         // Arrange
-        using CancellationTraceListener trace = new();
         using PartialResponseServer server = new();
         server.Start();
 
@@ -87,6 +86,8 @@ public class CommandCancellationTests
         try
         {
             await connection.OpenAsync();
+            using AttentionAcknowledgmentGate gate = new(
+                connection.GetOpenTdsConnection().Parser._physicalStateObj);
 
             // Act
             executeTask = execute(command, cts.Token);
@@ -100,10 +101,12 @@ public class CommandCancellationTests
             await CompleteWithinAsync(cancelTask, "Cancellation callbacks");
 
             // Assert
+            Assert.True(gate.AcknowledgmentObserved,
+                "The acknowledgement must be parsed before SendAttention finishes.");
             Exception? exception = await Record.ExceptionAsync(
                 () => CompleteWithinAsync(executeTask, "Command completion"));
             Assert.True(exception is OperationCanceledException or SqlException,
-                $"Expected cancellation after ATTENTION, got {exception}.{Environment.NewLine}{trace}");
+                $"Expected cancellation after ATTENTION, got {exception}.");
             if (exception is SqlException sqlException)
             {
                 Assert.Contains("Operation cancelled by user.", sqlException.Message);
@@ -136,43 +139,45 @@ public class CommandCancellationTests
     }
 
     /// <summary>
-    /// Retains recent protocol progress when a cancellation watchdog expires on a CI platform.
+    /// Holds the sender after its write until the receiver processes the acknowledgement.
     /// </summary>
-    private sealed class CancellationTraceListener : EventListener
+    private sealed class AttentionAcknowledgmentGate : EventListener
     {
-        private readonly ConcurrentQueue<string> _messages = new();
+        private readonly TdsParserStateObject _stateObj;
+
+        internal bool AcknowledgmentObserved { get; private set; }
 
         /// <summary>
-        /// Enables the driver's existing flow traces without recording packet payloads.
+        /// Targets the active session so unrelated driver events cannot release the gate.
+        /// </summary>
+        internal AttentionAcknowledgmentGate(TdsParserStateObject stateObj) => _stateObj = stateObj;
+
+        /// <summary>
+        /// Uses the existing send-completion trace rather than a product-only test hook.
         /// </summary>
         protected override void OnEventSourceCreated(EventSource eventSource)
         {
             if (eventSource.Name == "Microsoft.Data.SqlClient.EventSource")
             {
-                EnableEvents(eventSource, EventLevel.Verbose, (EventKeywords)(2 | 128));
+                EnableEvents(eventSource, EventLevel.Informational, (EventKeywords)2);
             }
         }
 
         /// <summary>
-        /// Keeps a bounded, thread-safe history without blocking cancellation callbacks.
+        /// Forces the ACK to arrive while the sender has not yet published its sent flag.
         /// </summary>
         protected override void OnEventWritten(EventWrittenEventArgs eventData)
         {
-            if (eventData.Payload is not null)
+            if (_stateObj is not null &&
+                eventData.Payload?.Count == 1 &&
+                eventData.Payload[0] is string message &&
+                message == $"TdsParserStateObject.SendAttention | Info | State Object Id " +
+                    $"{_stateObj._objectID}, Sent Attention.")
             {
-                _messages.Enqueue(
-                    $"{Environment.CurrentManagedThreadId}: {string.Join(" | ", eventData.Payload)}");
-                while (_messages.Count > 128)
-                {
-                    _messages.TryDequeue(out _);
-                }
+                AcknowledgmentObserved = SpinWait.SpinUntil(
+                    () => _stateObj.HasReceivedAttention, WatchdogTimeout);
             }
         }
-
-        /// <summary>
-        /// Includes the captured protocol history in the failure message.
-        /// </summary>
-        public override string ToString() => string.Join(Environment.NewLine, _messages);
     }
 
     /// <summary>
