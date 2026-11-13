@@ -100,6 +100,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static bool IsNotAzureServer() => DataTestUtility.IsNotAzureServer();
         private static bool UseManagedSNIOnWindows() => DataTestUtility.UseManagedSNIOnWindows;
 
+        [Trait("category", "flaky")]
         [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsNotAzureServer), nameof(IsLocalHost), nameof(IsAdmin))]
         public void OpeningConnectionWithGoodCertificateTest()
         {
