@@ -386,3 +386,10 @@ extends:
 
           releaseSqlServer: ${{ parameters.releaseSqlServer }}
           releaseSqlClient: ${{ parameters.releaseSqlClient }}
+
+      # After a production SqlClient release succeeds, open a GitHub PR that moves the source
+      # branch to its next version.
+      - template: /eng/pipelines/onebranch/stages/version-bump-pr-stage.yml@self
+        parameters:
+          releaseToProduction: ${{ parameters.releaseToProduction }}
+          releaseSqlClient: ${{ parameters.releaseSqlClient }}

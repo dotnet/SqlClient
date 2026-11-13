@@ -1,0 +1,365 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+<#
+.SYNOPSIS
+    Opens a GitHub PR that bumps SqlClientNextVersion after a SqlClient release is published.
+
+.DESCRIPTION
+    Runs after the official pipeline publishes the SqlClient family to NuGet Production.
+
+    The ADO branch that was built is mapped to its GitHub branch:
+      - internal/main         -> main
+      - internal/release/X.Y  -> release/X.Y
+
+    The next version is chosen as follows:
+      - release/X.Y: a GA release bumps the patch (7.0.1 -> 7.0.2). A preview release moves to
+        its GA version (7.1.0-preview3 -> 7.1.0).
+      - main: the lowest open GitHub milestone in the same major.minor series that is greater than
+        the published version (8.1.0-preview1 -> 8.1.0-preview2). With no such milestone, the
+        script logs a warning and does nothing.
+
+    The script also does nothing when the GitHub branch already has a version at or above the next
+    version, or when an open bump PR already exists. Otherwise it creates or resets the branch
+    dev/automation/bump-sqlclient-version-<version>, commits the Versions.props change, opens the
+    PR, and assigns the matching milestone when one is open.
+
+.PARAMETER SourceBranch
+    The ADO branch that was built, such as refs/heads/internal/main. Defaults to
+    BUILD_SOURCEBRANCH.
+
+.PARAMETER VersionsPropsPath
+    Path to the built commit's src/Microsoft.Data.SqlClient/Versions.props, from which the
+    published version is read.
+
+.PARAMETER GitHubRepository
+    The GitHub repository in owner/name form.
+
+.PARAMETER Token
+    A GitHub token with contents, pull request, and issue write access. Defaults to GITHUB_TOKEN.
+
+.PARAMETER DryRun
+    Logs the planned change without writing to GitHub.
+#>
+
+[CmdletBinding()]
+param(
+    [string]$SourceBranch = $env:BUILD_SOURCEBRANCH,
+    [string]$VersionsPropsPath,
+    [string]$GitHubRepository = 'dotnet/SqlClient',
+    [string]$Token = $env:GITHUB_TOKEN,
+    [switch]$DryRun
+)
+
+$script:VersionsPropsRepoPath = 'src/Microsoft.Data.SqlClient/Versions.props'
+$script:VersionPattern = '<SqlClientNextVersion>([^<]*)</SqlClientNextVersion>'
+
+function Write-PipelineWarning {
+    param([string]$Message)
+
+    Write-Host "##vso[task.logissue type=warning]$Message"
+}
+
+# Maps the built ADO branch to the GitHub branch the PR targets, or $null when it has none.
+function Get-GitHubTargetBranch {
+    param([string]$SourceBranch)
+
+    $branch = $SourceBranch -replace '^refs/heads/', ''
+    $branch = $branch -replace '^internal/', ''
+
+    if ($branch -eq 'main') {
+        return 'main'
+    }
+
+    if ($branch -match '^release/\d+\.\d+$') {
+        return $branch
+    }
+
+    return $null
+}
+
+# Parses a SemVer 2.0 version without build metadata, or returns $null when it is not one.
+function ConvertTo-SqlClientVersion {
+    param([string]$Text)
+
+    if ($Text -notmatch '^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?$') {
+        return $null
+    }
+
+    [pscustomobject]@{
+        Text       = $Text
+        Major      = [int]$Matches[1]
+        Minor      = [int]$Matches[2]
+        Patch      = [int]$Matches[3]
+        Prerelease = $Matches[4]
+    }
+}
+
+# Compares two prerelease identifiers. Labels such as preview2 and preview10 compare by their
+# numeric suffix, so preview10 is greater than preview2.
+function Compare-PrereleaseLabel {
+    param([string]$Left, [string]$Right)
+
+    $leftMatch = [regex]::Match($Left, '^([A-Za-z]*)(\d+)$')
+    $rightMatch = [regex]::Match($Right, '^([A-Za-z]*)(\d+)$')
+
+    if ($leftMatch.Success -and $rightMatch.Success) {
+        $prefix = [string]::CompareOrdinal($leftMatch.Groups[1].Value, $rightMatch.Groups[1].Value)
+        if ($prefix -ne 0) {
+            return [Math]::Sign($prefix)
+        }
+
+        return ([long]$leftMatch.Groups[2].Value).CompareTo([long]$rightMatch.Groups[2].Value)
+    }
+
+    return [Math]::Sign([string]::CompareOrdinal($Left, $Right))
+}
+
+# Returns -1, 0, or 1. A GA version is greater than any prerelease of the same number.
+function Compare-SqlClientVersion {
+    param($Left, $Right)
+
+    foreach ($part in 'Major', 'Minor', 'Patch') {
+        $result = $Left.$part.CompareTo($Right.$part)
+        if ($result -ne 0) {
+            return $result
+        }
+    }
+
+    $leftIsGa = [string]::IsNullOrEmpty($Left.Prerelease)
+    $rightIsGa = [string]::IsNullOrEmpty($Right.Prerelease)
+
+    if ($leftIsGa -and $rightIsGa) {
+        return 0
+    }
+    if ($leftIsGa) {
+        return 1
+    }
+    if ($rightIsGa) {
+        return -1
+    }
+
+    return Compare-PrereleaseLabel -Left $Left.Prerelease -Right $Right.Prerelease
+}
+
+# Chooses the next version for the target branch, or $null when none can be chosen.
+function Get-NextSqlClientVersion {
+    param(
+        [string]$TargetBranch,
+        [string]$PublishedVersion,
+        [string[]]$MilestoneTitles = @()
+    )
+
+    $published = ConvertTo-SqlClientVersion $PublishedVersion
+    if ($null -eq $published) {
+        throw "Published version '$PublishedVersion' is not a valid SqlClient version."
+    }
+
+    if ($TargetBranch -like 'release/*') {
+        if ($published.Prerelease) {
+            return "$($published.Major).$($published.Minor).$($published.Patch)"
+        }
+
+        return "$($published.Major).$($published.Minor).$($published.Patch + 1)"
+    }
+
+    $candidates = foreach ($title in $MilestoneTitles) {
+        $milestone = ConvertTo-SqlClientVersion $title
+        if ($null -ne $milestone -and
+            $milestone.Major -eq $published.Major -and
+            $milestone.Minor -eq $published.Minor -and
+            (Compare-SqlClientVersion $milestone $published) -gt 0) {
+            $milestone
+        }
+    }
+
+    $next = $null
+    foreach ($candidate in $candidates) {
+        if ($null -eq $next -or (Compare-SqlClientVersion $candidate $next) -lt 0) {
+            $next = $candidate
+        }
+    }
+
+    if ($null -eq $next) {
+        return $null
+    }
+
+    return $next.Text
+}
+
+# Reads SqlClientNextVersion from Versions.props content, requiring exactly one definition.
+function Get-VersionFromProps {
+    param([string]$Content)
+
+    $found = [regex]::Matches($Content, $script:VersionPattern)
+    if ($found.Count -ne 1) {
+        return $null
+    }
+
+    return $found[0].Groups[1].Value.Trim()
+}
+
+function Set-VersionInProps {
+    param([string]$Content, [string]$Version)
+
+    return [regex]::Replace(
+        $Content,
+        $script:VersionPattern,
+        "<SqlClientNextVersion>$Version</SqlClientNextVersion>")
+}
+
+function Invoke-GitHubApi {
+    param(
+        [string]$Method = 'GET',
+        [string]$Path,
+        $Body
+    )
+
+    $request = @{
+        Method  = $Method
+        Uri     = "https://api.github.com/$Path"
+        Headers = @{
+            Authorization          = "Bearer $Token"
+            Accept                 = 'application/vnd.github+json'
+            'X-GitHub-Api-Version' = '2022-11-28'
+        }
+    }
+
+    if ($null -ne $Body) {
+        $request.Body = $Body | ConvertTo-Json -Depth 5
+        $request.ContentType = 'application/json'
+    }
+
+    Invoke-RestMethod @request
+}
+
+function Invoke-VersionBumpPr {
+    if ([string]::IsNullOrWhiteSpace($VersionsPropsPath) -or -not (Test-Path $VersionsPropsPath)) {
+        throw "Versions.props was not found at '$VersionsPropsPath'."
+    }
+
+    $targetBranch = Get-GitHubTargetBranch $SourceBranch
+    if ($null -eq $targetBranch) {
+        Write-PipelineWarning "Branch '$SourceBranch' has no GitHub branch to bump. Skipping."
+        return
+    }
+
+    $publishedVersion = Get-VersionFromProps (Get-Content -LiteralPath $VersionsPropsPath -Raw)
+    if ($null -eq $publishedVersion) {
+        throw "Could not read a single SqlClientNextVersion from '$VersionsPropsPath'."
+    }
+
+    if (-not $DryRun -and [string]::IsNullOrWhiteSpace($Token)) {
+        throw 'A GitHub token is required. Set GITHUB_TOKEN or pass -Token.'
+    }
+
+    $owner = $GitHubRepository.Split('/')[0]
+    $repoApi = "repos/$GitHubRepository"
+    $propsApi = "$repoApi/contents/$($script:VersionsPropsRepoPath)"
+    $milestones = @(Invoke-GitHubApi -Path "$repoApi/milestones?state=open&per_page=100" |
+        ForEach-Object { $_ } | Where-Object { $_.title })
+    $nextVersion = Get-NextSqlClientVersion `
+        -TargetBranch $targetBranch `
+        -PublishedVersion $publishedVersion `
+        -MilestoneTitles @($milestones | ForEach-Object { $_.title })
+
+    if ($null -eq $nextVersion) {
+        Write-PipelineWarning ("No open milestone after $publishedVersion in the same " +
+            "major.minor series. Create one and update $targetBranch manually.")
+        return
+    }
+
+    Write-Host "Published $publishedVersion from $SourceBranch."
+    Write-Host "Next version for GitHub $targetBranch is $nextVersion."
+
+    $encodedTarget = [uri]::EscapeDataString($targetBranch)
+    $file = Invoke-GitHubApi -Path "${propsApi}?ref=$encodedTarget"
+    $content = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($file.content))
+    $currentText = Get-VersionFromProps $content
+    $current = ConvertTo-SqlClientVersion $currentText
+
+    if ($null -eq $current) {
+        Write-PipelineWarning ("GitHub $targetBranch has no single valid SqlClientNextVersion. " +
+            "Skipping.")
+        return
+    }
+
+    if ((Compare-SqlClientVersion $current (ConvertTo-SqlClientVersion $nextVersion)) -ge 0) {
+        Write-Host "GitHub $targetBranch is already at $currentText. Nothing to do."
+        return
+    }
+
+    $headBranch = "dev/automation/bump-sqlclient-version-$nextVersion"
+    $encodedHead = [uri]::EscapeDataString("${owner}:$headBranch")
+    # Invoke-RestMethod can return an empty JSON array as one item, so keep only real PRs.
+    $existing = @(Invoke-GitHubApi -Path "$repoApi/pulls?state=open&head=$encodedHead" |
+        ForEach-Object { $_ } | Where-Object { $_.html_url })
+    if ($existing.Count -gt 0) {
+        Write-Host "PR $($existing[0].html_url) already exists. Nothing to do."
+        return
+    }
+
+    $title = "Bump SqlClient version to $nextVersion"
+    if ($DryRun) {
+        Write-Host "Dry run: would open '$title' from $headBranch into $targetBranch."
+        return
+    }
+
+    # Create the head branch at the target branch tip, or reset a stale one left by an earlier run.
+    $baseSha = (Invoke-GitHubApi -Path "$repoApi/git/ref/heads/$targetBranch").object.sha
+    try {
+        Invoke-GitHubApi -Method POST -Path "$repoApi/git/refs" -Body @{
+            ref = "refs/heads/$headBranch"
+            sha = $baseSha
+        } | Out-Null
+    }
+    catch {
+        if ($_.Exception.Response.StatusCode.value__ -ne 422) {
+            throw
+        }
+
+        Invoke-GitHubApi -Method PATCH -Path "$repoApi/git/refs/heads/$headBranch" -Body @{
+            sha   = $baseSha
+            force = $true
+        } | Out-Null
+    }
+
+    $updated = Set-VersionInProps -Content $content -Version $nextVersion
+    Invoke-GitHubApi -Method PUT -Path $propsApi -Body @{
+        message = $title
+        content = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($updated))
+        sha     = $file.sha
+        branch  = $headBranch
+    } | Out-Null
+
+    $body = "Sets ``SqlClientNextVersion`` to ``$nextVersion`` after ``$publishedVersion`` " +
+        "was published to NuGet.`n`nOpened by the SqlClient official pipeline " +
+        "(build $env:BUILD_BUILDNUMBER)."
+    $pr = Invoke-GitHubApi -Method POST -Path "$repoApi/pulls" -Body @{
+        title = $title
+        head  = $headBranch
+        base  = $targetBranch
+        body  = $body
+    }
+    Write-Host "Opened $($pr.html_url)."
+
+    $milestone = $milestones | Where-Object { $_.title -eq $nextVersion } | Select-Object -First 1
+    if ($null -eq $milestone) {
+        Write-PipelineWarning ("No open milestone '$nextVersion'. Create it and assign it to " +
+            "$($pr.html_url).")
+        return
+    }
+
+    Invoke-GitHubApi -Method PATCH -Path "$repoApi/issues/$($pr.number)" -Body @{
+        milestone = $milestone.number
+    } | Out-Null
+    Write-Host "Assigned milestone $nextVersion."
+}
+
+# Dot-sourcing loads the functions for tests without running the script.
+if ($MyInvocation.InvocationName -ne '.') {
+    Invoke-VersionBumpPr
+}

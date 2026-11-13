@@ -71,6 +71,7 @@ Invoke-Pester ./publish-symbols.Tests.ps1 -Output Detailed
 | Token diagnostics     | Minimal troubleshooting claims, malformed payload handling, gated off by default, header/signature segments never logged |
 | Command logging       | Commands logged only under `-VerboseDiagnostics`, `Authorization` redacted unconditionally either way |
 | HTTP failure detail   | Status code and correlation ids captured, exception and inner-exception types reported, explicit when no response was received |
+| Version bump PR       | Branch mapping, version ordering, next patch or milestone selection, and Versions.props read/update |
 | Endpoint reachability | Comma-separated and array host lists, DNS failure distinguished from connection failure, socket error code and errno reported, never throws |
 
 ## Notes

@@ -127,6 +127,19 @@ When adding a new package to the OneBranch flow:
   - Non-official: `ob_release_environment: Test`, `ob_deploymentjob_environment: NuGet-DryRun`
 - Each publish job uses OneBranch deployment job syntax (`templateContext.type: releaseJob` with `inputs` for artifact download)
 
+## Version Bump PR Stage
+
+- Defined in `stages/version-bump-pr-stage.yml`; official pipeline only
+- Emitted only when `releaseToProduction` and `releaseSqlClient` are both true
+- Depends on `release_production` with `succeeded()`, so a rejected or failed release opens no PR
+- Runs `scripts/new-version-bump-pr.ps1`, which opens a GitHub PR on the matching branch:
+  - `internal/release/X.Y` → `release/X.Y`: GA bumps the patch; a preview moves to its GA version
+  - `internal/main` → `main`: lowest open milestone in the same major.minor above the published version
+  - Other branches, or no matching milestone → warning, no PR
+- No-op when the GitHub branch is already at or above the next version, or the PR is already open
+- PR head is `dev/automation/bump-sqlclient-version-<version>`; milestone is set to `<version>`
+- Uses `PATToken` from the `GitHub PAT Tokens` variable group (contents, PR, and issue writes)
+
 ## Parameters
 
 Build parameters:
@@ -159,6 +172,7 @@ When `isPreview` is true, pipeline resolves `effective*Version` variables to pre
 Variable groups:
 - `Symbols Publishing` — symbol publishing credentials (in `onebranch-variables.yml`)
 - `ESRP Federated Creds (AME)` — ESRP signing credentials (in `common-variables.yml`)
+- `GitHub PAT Tokens` — GitHub token for the version bump PR (in `version-bump-pr-stage.yml`)
 
 ## Code Signing (ESRP)
 
