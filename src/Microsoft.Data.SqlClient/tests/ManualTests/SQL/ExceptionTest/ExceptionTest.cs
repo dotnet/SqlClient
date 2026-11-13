@@ -133,6 +133,42 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             sqlConnection.Close();
         }
 
+        [Theory]
+        [InlineData(null)]
+        [InlineData("same-value")]
+        public static void CheckThatExceptionsAreDistinctButHaveSameData_MatchingDataValues_ReturnsTrue(string value)
+        {
+            var first = RetryLogicConfigHelper.CreateSqlException(1);
+            var second = RetryLogicConfigHelper.CreateSqlException(1);
+            first.Data.Clear();
+            second.Data.Clear();
+            first.Data.Add("shared-key", value);
+            second.Data.Add("shared-key", value);
+
+            var result = CheckThatExceptionsAreDistinctButHaveSameData(first, second);
+
+            Assert.True(result);
+        }
+
+        [Theory]
+        [InlineData("first-value", "second-value")]
+        [InlineData(null, "value")]
+        [InlineData("value", null)]
+        public static void CheckThatExceptionsAreDistinctButHaveSameData_DifferentDataValues_Throws(string firstValue, string secondValue)
+        {
+            var first = RetryLogicConfigHelper.CreateSqlException(1);
+            var second = RetryLogicConfigHelper.CreateSqlException(1);
+            first.Data.Clear();
+            second.Data.Clear();
+            first.Data.Add("shared-key", firstValue);
+            second.Data.Add("shared-key", secondValue);
+
+            Action compare = () => CheckThatExceptionsAreDistinctButHaveSameData(first, second);
+
+            var exception = Assert.Throws<Xunit.Sdk.TrueException>(compare);
+            Assert.Contains("FAILED: exceptions do not contain the same data", exception.Message);
+        }
+
         private static bool CheckThatExceptionsAreDistinctButHaveSameData(SqlException e1, SqlException e2)
         {
             Assert.True(e1 != e2, "FAILED: verification of exception cloning in subsequent connection attempts");
@@ -167,7 +203,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
 
                 enum2.MoveNext();
-                equal = (enum1.Key == enum2.Key) && (enum2.Value == enum2.Value); // @TODO: 2nd condition compares the same values!
+                equal = (enum1.Key == enum2.Key) && (enum1.Value == enum2.Value);
             }
 
             Assert.True(equal, string.Format("FAILED: exceptions do not contain the same data (besides call stack):\nFirst: {0}\nSecond: {1}\n", e1, e2));
