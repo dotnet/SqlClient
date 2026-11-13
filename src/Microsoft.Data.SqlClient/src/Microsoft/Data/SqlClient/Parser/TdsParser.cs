@@ -577,6 +577,9 @@ namespace Microsoft.Data.SqlClient.Parser
                 SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Prelogin handshake unsuccessful. Reattempting prelogin handshake");
                 _physicalStateObj.Dispose(); // Close previous connection
 
+                // The retry is a new physical connection: discard anything the failed connection
+                // recorded (for example, Strict mode and protocol from a TLS-first handshake).
+                _connHandler?.EncryptionInfoCapture?.Reset();
                 // On Instance failure re-connect and flush SNI named instance cache.
                 _physicalStateObj.SniContext = SniContext.Snix_Connect;
                 _physicalStateObj.CreatePhysicalSNIHandle(
@@ -952,6 +955,7 @@ namespace Microsoft.Data.SqlClient.Parser
 
             if (error != TdsEnums.SNI_SUCCESS)
             {
+                RecordFailedTlsAttempt(encrypt);
                 _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
                 ThrowExceptionAndWarning(_physicalStateObj);
             }
@@ -969,6 +973,7 @@ namespace Microsoft.Data.SqlClient.Parser
                 error = _physicalStateObj.WaitForSSLHandShakeToComplete(out protocol);
                 if (error != TdsEnums.SNI_SUCCESS)
                 {
+                    RecordFailedTlsAttempt(encrypt);
                     _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
                     ThrowExceptionAndWarning(_physicalStateObj);
                 }
@@ -988,6 +993,8 @@ namespace Microsoft.Data.SqlClient.Parser
                     _logger.LogWarning(nameof(TdsParser), nameof(EnableSsl), warningMessage);
                 }
             }
+
+            RecordNegotiatedEncryption(encrypt, protocol);
 
             // create a new packet encryption changes the internal packet size Bug# 228403
             _physicalStateObj.ClearAllWritePackets();
@@ -1072,6 +1079,75 @@ namespace Microsoft.Data.SqlClient.Parser
             }
 
             return (dataOffset, dataLength);
+        }
+
+        /// <summary>
+        /// Records the negotiated encryption mode and TLS protocol for the in-progress login
+        /// attempt after a TLS handshake completed successfully.
+        /// </summary>
+        /// <remarks>
+        /// Mode mapping (final state after login):
+        /// <list type="bullet">
+        /// <item><description><see cref="SqlConnectionEncryptOption.Strict"/> (TDS 8, TLS before pre-login) maps to <see cref="SqlConnectionEncryptionMode.Strict"/>.</description></item>
+        /// <item><description><see cref="EncryptionOptions.LOGIN"/> (TLS removed after LOGIN7) maps to <see cref="SqlConnectionEncryptionMode.LoginOnly"/>.</description></item>
+        /// <item><description><see cref="EncryptionOptions.ON"/> (all traffic encrypted) maps to <see cref="SqlConnectionEncryptionMode.Full"/>.</description></item>
+        /// </list>
+        /// The no-TLS case (<see cref="SqlConnectionEncryptionMode.None"/>) is recorded by
+        /// <see cref="ConsumePreLoginHandshake"/>.
+        /// </remarks>
+        private void RecordNegotiatedEncryption(SqlConnectionEncryptOption encrypt, SslProtocols protocol)
+        {
+            EncryptionInfoCapture capture = _connHandler?.EncryptionInfoCapture;
+            if (capture is null)
+            {
+                return;
+            }
+
+#if NET
+            // The handshake wait (and so the protocol) is only performed on Windows above. Managed
+            // SNI reports the protocol from the completed SslStream without side effects, so query
+            // it here for capture only; it is intentionally not fed into the insecure TLS warning
+            // to preserve existing behavior.
+            if (protocol == SslProtocols.None && !OsConstants.IsWindows)
+            {
+                if (_physicalStateObj.WaitForSSLHandShakeToComplete(out SslProtocols reported) == TdsEnums.SNI_SUCCESS)
+                {
+                    protocol = reported;
+                }
+            }
+#endif
+
+            capture.Record(GetTlsEncryptionMode(encrypt), protocol);
+        }
+
+        /// <summary>
+        /// Maps the TLS-using encryption state of the current attempt to the public mode.
+        /// </summary>
+        private SqlConnectionEncryptionMode GetTlsEncryptionMode(SqlConnectionEncryptOption encrypt)
+        {
+            if (encrypt == SqlConnectionEncryptOption.Strict)
+            {
+                return SqlConnectionEncryptionMode.Strict;
+            }
+
+            if (_encryptionOption == EncryptionOptions.LOGIN)
+            {
+                return SqlConnectionEncryptionMode.LoginOnly;
+            }
+
+            Debug.Assert(_encryptionOption == EncryptionOptions.ON, "Unexpected encryption option for a TLS handshake");
+            return SqlConnectionEncryptionMode.Full;
+        }
+
+        /// <summary>
+        /// Records what was observed for a TLS handshake that failed on the current attempt. The
+        /// mode is published only when the transport reported the TLS protocol agreed for this
+        /// attempt (for example, captured in the certificate validation callback before the
+        /// certificate was rejected); requested settings alone are not evidence.
+        /// </summary>
+        private void RecordFailedTlsAttempt(SqlConnectionEncryptOption encrypt)
+        {
+            _connHandler?.EncryptionInfoCapture?.RecordModeIfProtocolObserved(GetTlsEncryptionMode(encrypt));
         }
 
         private PreLoginHandshakeStatus ConsumePreLoginHandshake(
@@ -1306,6 +1382,13 @@ namespace Microsoft.Data.SqlClient.Parser
                     | TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE;
 
                 EnableSsl(info, encrypt, integratedSecurity, serverCertificateFilename);
+            }
+            else if (encrypt != SqlConnectionEncryptOption.Strict)
+            {
+                // No TLS on this connection: either the server does not support encryption with
+                // Encrypt=Optional, or the client OS does not support encryption. In Strict mode TLS
+                // was already established (and recorded) before pre-login.
+                _connHandler?.EncryptionInfoCapture?.Record(SqlConnectionEncryptionMode.None, SslProtocols.None);
             }
 
             return PreLoginHandshakeStatus.Successful;
@@ -1827,6 +1910,17 @@ namespace Microsoft.Data.SqlClient.Parser
             Debug.Assert(SniContext.Undefined != stateObj.DebugOnlyCopyOfSniContext || ((_fMARS) && ((_state == TdsParserState.Closed) || (_state == TdsParserState.Broken))), "SniContext must not be None");
 #endif
             TdsParserStateObject.SniErrorDetails details = stateObj.GetErrorDetails();
+
+            if (details.Provider == TdsEnums.SNI_SSL_PROVIDER)
+            {
+                // Native SNI (Schannel) defers server certificate verification, so EnableSsl can
+                // report success and the verdict only surfaces as an SSL provider error on the first
+                // post-handshake I/O (the LOGIN7 write). Per the failure-path rule, the mode and
+                // protocol recorded by EnableSsl are kept when the protocol agreed for this attempt was
+                // observed, and the mode is discarded otherwise; certificate details are always kept.
+                // After login completes the capture is released, so published snapshots are unaffected.
+                _connHandler?.EncryptionInfoCapture?.DiscardUnobservedNegotiation();
+            }
 
             if (details.SniErrorNumber != 0)
             {

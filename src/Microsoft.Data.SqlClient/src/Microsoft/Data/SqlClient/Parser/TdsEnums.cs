@@ -551,6 +551,10 @@ internal static class TdsEnums
     // SNI internal errors (shouldn't overlap with Win32 / socket errors)
     public const uint SNI_QUEUE_FULL = 1048576;		 // Packet queue is full
 
+    // SNI provider identifiers reported in SNI error details. The value matches SSL_PROV in both
+    // the native (Interop.Windows.Sni.Provider) and managed (ManagedSni.SniProviders) enums.
+    public const int SNI_SSL_PROVIDER = 6;
+
     // SNI flags
     public const uint SNI_SSL_VALIDATE_CERTIFICATE = 1;   // This enables validation of server certificate
     public const uint SNI_SSL_USE_SCHANNEL_CACHE = 2;     // This enables schannel session cache

@@ -634,6 +634,24 @@ namespace Microsoft.Data.SqlClient.Connection
             get => CurrentTransaction?.HasParentTransaction == true;
         }
 
+        #nullable enable
+        /// <summary>
+        /// Gets the mutable collector for the in-progress physical login attempt, or
+        /// <see langword="null"/> when no login is in progress. Allocated on the first login
+        /// attempt, reset at the start of each physical attempt, written by
+        /// <see cref="TdsParser"/> during the handshake, and released once login completes.
+        /// </summary>
+        internal EncryptionInfoCapture? EncryptionInfoCapture { get; private set; }
+        #nullable restore
+
+        /// <summary>
+        /// Gets the immutable encryption snapshot for this physical connection. Remains
+        /// <see cref="SqlConnectionEncryptionInfo.Empty"/> until login succeeds, then is shared by
+        /// every <see cref="SqlConnection"/> that later uses this physical connection (including
+        /// pooled reuse and MARS sessions).
+        /// </summary>
+        internal SqlConnectionEncryptionInfo EncryptionInfo { get; private set; } = SqlConnectionEncryptionInfo.Empty;
+
         // @TODO: Make auto-property
         internal DbConnectionPoolIdentity Identity
         {
@@ -2345,6 +2363,10 @@ namespace Microsoft.Data.SqlClient.Connection
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.AttemptOneLogin|ADV> {0}, timeout={1}[msec], server={2}", ObjectID, timeout.MillisecondsRemaining, serverInfo.ExtendedServerName);
             RoutingInfo = null; // forget routing information
 
+            // Each physical attempt (retry, redirect, routing, failover) starts with a clean capture
+            // so only the terminal attempt's values are published.
+            (EncryptionInfoCapture ??= new EncryptionInfoCapture()).Reset();
+
             _parser._physicalStateObj.SniContext = SniContext.Snix_Connect;
 
             #if NETFRAMEWORK
@@ -2540,7 +2562,17 @@ namespace Microsoft.Data.SqlClient.Connection
             {
                 _parser._physicalStateObj.SniContext = SniContext.Snix_AutoEnlist;
                 Transaction tx = ADP.GetCurrentTransaction();
-                Enlist(tx, ConnectionOptions.ConnectTimeout);
+                try
+                {
+                    Enlist(tx, ConnectionOptions.ConnectTimeout);
+                }
+                catch
+                {
+                    // Login has completed, so an enlistment failure is not a
+                    // connection-establishment failure and must not carry encryption info.
+                    EncryptionInfoCapture = null;
+                    throw;
+                }
             }
 
             _parser._physicalStateObj.SniContext = SniContext.Snix_Login;
@@ -3471,6 +3503,34 @@ namespace Microsoft.Data.SqlClient.Connection
         }
 
         /// <summary>
+        /// Attaches the encryption values captured by the terminal login attempt to a failed-open
+        /// <see cref="SqlException"/>. Only values that were actually captured are attached;
+        /// exceptions raised before any value was captured, and non-<see cref="SqlException"/>
+        /// exceptions, are left unchanged.
+        /// </summary>
+        /// <remarks>
+        /// This is the only place that sets <see cref="SqlException.EncryptionInfo"/>. It runs once
+        /// per failed open and releases the capture, so the exception always arrives here with
+        /// <see cref="SqlConnectionEncryptionInfo.Empty"/>.
+        /// Failures after login completes are intentionally out of scope and keep
+        /// <see cref="SqlConnectionEncryptionInfo.Empty"/>. That includes automatic transaction
+        /// enlistment, both at the end of a non-pooled login (which releases the capture before
+        /// rethrowing) and in <see cref="Activate"/> on pooled checkout, explicit enlistment, and
+        /// command execution. They are not connection-establishment failures.
+        /// </remarks>
+        private void AttachEncryptionInfo(Exception e)
+        {
+            EncryptionInfoCapture capture = EncryptionInfoCapture;
+            EncryptionInfoCapture = null;
+
+            if (capture is { HasValues: true } && e is SqlException sqlException)
+            {
+                Debug.Assert(sqlException.EncryptionInfo.IsEmpty, "Encryption info is attached only once, by the failed open.");
+                sqlException.EncryptionInfo = capture.ToSnapshot();
+            }
+        }
+
+        /// <summary>
         /// Attempt to log in to a host that does not have a failover partner.
         /// </summary>
         /// <remarks>
@@ -4242,11 +4302,15 @@ namespace Microsoft.Data.SqlClient.Connection
             }
             catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
+                AttachEncryptionInfo(e);
                 LoginFailure();
                 throw;
             }
 
             _timeoutErrorInternal.SetAllCompleteMarker();
+
+            EncryptionInfo = EncryptionInfoCapture?.ToSnapshot() ?? SqlConnectionEncryptionInfo.Empty;
+            EncryptionInfoCapture = null;
 
             #if DEBUG
             _parser._physicalStateObj.InvalidateDebugOnlyCopyOfSniContext();
