@@ -54,7 +54,8 @@ parameters:
   - name: testTimeoutMinutes
     displayName: Test Timeout (minutes)
     type: number
-    default: 210
+    # Includes the bounded 30-minute matched OpenAsync health phase before BenchmarkDotNet.
+    default: 240
 
   # The git ref of THIS repository whose source is used as the baseline.  Defaults to the branch a
   # PR normally targets; override at queue time to compare against a release branch instead.  Set to

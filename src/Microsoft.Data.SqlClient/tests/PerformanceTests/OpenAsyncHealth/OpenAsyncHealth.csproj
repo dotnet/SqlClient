@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <HealthDriverProject Condition="'$(HealthDriverProject)' == ''">$(RepoRoot)src\Microsoft.Data.SqlClient\src\Microsoft.Data.SqlClient.csproj</HealthDriverProject>
+  </PropertyGroup>
+  <!-- Build the same harness against either source tree, not the baseline's benchmark sources. -->
+  <ItemGroup>
+    <Compile Include="..\Measurements\OpenAsyncHealth*.cs" Link="Measurements\%(Filename)%(Extension)" />
+    <Compile Include="..\Measurements\ThreadPool*.cs" Link="Measurements\%(Filename)%(Extension)" />
+    <ProjectReference Include="$(HealthDriverProject)" Condition="'$(HealthPackageVersion)' == ''" />
+    <PackageReference Include="Microsoft.Data.SqlClient" VersionOverride="$(HealthPackageVersion)"
+                      Condition="'$(HealthPackageVersion)' != ''" />
+  </ItemGroup>
+</Project>

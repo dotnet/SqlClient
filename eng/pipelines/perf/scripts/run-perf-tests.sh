@@ -814,6 +814,27 @@ if [[ -n "${baselineLabel}" ]]; then
     printf '%s\n' "${baselineLabel}" > "${RESULTS_DIR}/baseline-label.txt"
 fi
 
+# Always run production-path health coverage, independently of BDN switches and regression opt-in.
+# Both driver variants use the candidate harness; old baseline perf apps need no health CLI.
+build_current_default_output
+prepare_runner_config
+health_args=(
+    --repo "${REPO_ROOT}" --results-dir "${RESULTS_DIR}" --runner-config "${RUNNER_CONFIG}"
+    --baseline-label "${baselineLabel}" --client-cpus "${PERF_CLIENT_CPUS:-}"
+    --rtt 0 --server "${SQL_SERVER}"
+)
+if [[ -n "${baselineSourceRef}" ]]; then
+    health_args+=(--baseline-source-root "${BASELINE_SRC_DIR}")
+elif [[ -n "${baselineVersion}" ]]; then
+    health_args+=(--baseline-package-version "${baselineVersion}")
+fi
+health_status=0
+python3 "${SCRIPT_DIR}/openasync_health.py" "${health_args[@]}" || health_status=$?
+if [[ "${health_status}" -gt 1 ]]; then
+    echo "ERROR: OpenAsync health could not produce valid evidence." >&2
+    exit "${health_status}"
+fi
+
 if [[ -n "${baselineLabel}" && "${runMode}" == "interleaved" ]]; then
     ################################################################################################
     # Interleaved + best-of-N (wiki 339 §2.2/§2.3/§2.6).  Build both variants once, then let the
@@ -911,3 +932,4 @@ find "${RESULTS_DIR}" -type f | sort
 echo "=================================================================="
 echo " Performance run complete."
 echo "=================================================================="
+exit "${health_status}"

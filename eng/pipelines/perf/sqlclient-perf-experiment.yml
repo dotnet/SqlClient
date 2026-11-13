@@ -86,7 +86,8 @@ parameters:
   - name: testTimeoutMinutes
     displayName: Test Timeout (minutes)
     type: number
-    default: 180
+    # Includes production-path OpenAsync coverage (current-only for a switch experiment).
+    default: 210
 
   # Percent difference (switch-on vs switch-off mean) the comparison flags.
   - name: regressionThreshold
