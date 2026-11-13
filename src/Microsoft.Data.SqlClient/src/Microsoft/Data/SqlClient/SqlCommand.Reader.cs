@@ -842,11 +842,7 @@ namespace Microsoft.Data.SqlClient
             if (ds is not null)
             {
                 ds.Bind(_stateObj);
-                _stateObj = null; // The reader now owns this...
                 ds.ResetOptionsString = resetOptionsString;
-
-                // Bind the reader to this connection now
-                _activeConnection.AddWeakReference(ds, SqlReferenceCollection.DataReaderTag);
 
                 // Force this command to start reading data off the wire.
                 // This will cause an error to be reported at Execute() time instead of Read() time
@@ -874,6 +870,10 @@ namespace Microsoft.Data.SqlClient
 
                     // @TODO: Why does the command set whether the reader is initialized??
                     ds.IsInitialized = true;
+
+                    // Until initialization finishes, close must abort the command rather than
+                    // drain the reader concurrently with metadata consumption.
+                    _activeConnection.AddWeakReference(ds, SqlReferenceCollection.DataReaderTag);
                 }
                 catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                 {
@@ -897,6 +897,11 @@ namespace Microsoft.Data.SqlClient
                     }
 
                     throw;
+                }
+                finally
+                {
+                    // Bind transferred session ownership even if initialization failed.
+                    _stateObj = null;
                 }
             }
         }
