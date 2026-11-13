@@ -877,6 +877,9 @@ namespace Microsoft.Data.SqlClient
                 }
                 catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                 {
+                    // Closing the reader can return its session to the MARS pool.
+                    _stateObj = null;
+
                     if (_inPrepare)
                     {
                         // The flag is expected to be reset by OnReturnValue. We should receive
