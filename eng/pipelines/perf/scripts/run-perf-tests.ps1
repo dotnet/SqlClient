@@ -864,6 +864,33 @@ if (-not [string]::IsNullOrEmpty($BaselineLabel)) {
     Set-Content -Path (Join-Path $ResultsDir "baseline-label.txt") -Value $BaselineLabel -Encoding ascii
 }
 
+# Automatic production-path coverage uses one candidate harness against both drivers, even when
+# the baseline's perf app predates the health CLI. Windows uses the selected SNI and no RTT injection.
+Build-CurrentDefaultOutput
+Prepare-RunnerConfig
+$healthArgs = @(
+    "--repo", $RepoRoot, "--results-dir", $ResultsDir, "--runner-config", $RunnerConfig
+)
+if ($BaselineLabel) { $healthArgs += @("--baseline-label", $BaselineLabel) }
+if ($env:PERF_CLIENT_CPUS) { $healthArgs += @("--client-cpus", $env:PERF_CLIENT_CPUS) }
+if ($BaselineSourceRef) {
+    $healthArgs += @("--baseline-source-root", $BaselineSrcDir)
+} elseif ($BaselineVersion) {
+    $healthArgs += @("--baseline-package-version", $BaselineVersion)
+}
+Get-Command python3 -ErrorAction Stop | Out-Null
+$previousPreference = $ErrorActionPreference
+$ErrorActionPreference = 'Continue'
+try {
+    & python3 (Join-Path $ScriptDir "openasync_health.py") @healthArgs
+    $healthStatus = $LASTEXITCODE
+} finally {
+    $ErrorActionPreference = $previousPreference
+}
+if ($healthStatus -notin @(0, 1)) {
+    throw "OpenAsync health could not produce valid evidence (exit $healthStatus)."
+}
+
 if ((-not [string]::IsNullOrEmpty($BaselineLabel)) -and ($RunMode -eq "interleaved")) {
     ####################################################################################################
     # Interleaved + best-of-N (wiki 339 §2.2/§2.3/§2.6).  Build both variants once, then let the
@@ -952,3 +979,4 @@ Get-ChildItem -Recurse -File $ResultsDir | ForEach-Object { $_.FullName } | Sort
 Write-Host "=================================================================="
 Write-Host " Performance run complete."
 Write-Host "=================================================================="
+exit $healthStatus

@@ -19,6 +19,7 @@
 
   <!-- Items to remove -->
   <ItemGroup>
+    <Compile Remove="OpenAsyncHealth\**;Measurements\OpenAsyncHealth*.cs;Measurements\ThreadPool*.cs" />
     <EmbeddedResource Remove="BenchmarkDotNet.Artifacts\**" />
     <None Remove=".AssemblyAttributes" />
     <None Remove="BenchmarkDotNet.Artifacts\**" />

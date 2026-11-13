@@ -6,6 +6,13 @@ dedicated performance test lab (Azure Dedicated Hosts), compare the branch under
 released NuGet baseline, and optionally ingest the results into an Azure Data Explorer (Kusto)
 database.
 
+Every invocation also runs the [OpenAsync health phase](openasync-health.md) automatically,
+before BenchmarkDotNet, including `perf-pr`. It compares fresh-process scheduling, useful work,
+and process-thread cost across both pools and non-pooled paths. Its matched regression gate is
+separate from the optional BDN gate. Default automation adds **zero RTT**; the 100 ms reproduction
+is an explicit Linux-only run, not part of the default matrix. Existing pipeline triggers are
+unchanged.
+
 ## Contents
 
 | Path | Purpose |
@@ -17,6 +24,7 @@ database.
 | `scripts/run-perf-tests.ps1` | Windows equivalent (ProcessorAffinity instead of `taskset`). |
 | `scripts/interleave_perf.py` | Interleaved + best-of-N orchestrator: runs each unit baseline↔candidate back-to-back and confirms regressions across N passes. |
 | `scripts/compare_perf.py` | Compares baseline vs current BenchmarkDotNet JSON → delta (md + json). Reused by the orchestrator. |
+| `scripts/openasync_health.py` | Builds a matched harness against candidate/baseline drivers; runs the automatic OpenAsync health phase and publishes raw evidence plus comparisons. |
 | `scripts/perf_to_kusto.py` | Translates BenchmarkDotNet "full" JSON → Kusto `PerfRun` + `PerfBenchmarkResult` NDJSON. |
 | `scripts/ingest_kusto.py` | Queued Kusto ingestion (az CLI auth, runs on the agent). |
 
@@ -60,7 +68,7 @@ context variables are available (the VM is behind NAT and lacks the pipeline ide
 | --------- | ------- | ----------- |
 | `platform` | `linux` | `linux` or `windows` VM + client. |
 | `dotnetFramework` | `net10.0` | TFM the benchmarks run against (`net10.0` only). |
-| `testTimeoutMinutes` | `180` | Template timeout waiting for the VM run. |
+| `testTimeoutMinutes` | `210` (`240` for PR) | Template timeout waiting for the VM run, including the bounded 30-minute OpenAsync health phase. |
 | `baselineVersion` | `latest` | Highest stable MDS version in the governed feed, resolved at run time. Pin an explicit version to override. Empty = current-only (no baseline pass / comparison). |
 | `regressionThreshold` | `10` | Percent slowdown (current vs baseline mean) flagged as a regression. |
 | `failOnRegression` | `false` | When `true`, a candidate-slower regression **fails** the run (gate). In interleaved mode only **confirmed** regressions (best-of-N majority) fail. Default off. |
