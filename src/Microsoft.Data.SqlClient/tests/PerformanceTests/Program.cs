@@ -311,6 +311,25 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         /// </summary>
         public static void Main(string[] args)
         {
+            if (args.Length > 0 && args[0] == "--openasync-health")
+            {
+                if (args.Length != 3)
+                {
+                    Console.Error.WriteLine("Usage: --openasync-health settings.json output.json");
+                    Environment.ExitCode = 2;
+                    return;
+                }
+                try
+                {
+                    Environment.ExitCode = OpenAsyncHealthExperiment.Run(args[1], args[2]);
+                }
+                catch (Exception error)
+                {
+                    Console.Error.WriteLine("Open-health failed: " + error.GetType().Name);
+                    Environment.ExitCode = 1;
+                }
+                return;
+            }
             _ = new Program(args);
         }
     }

@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1300 590" role="img" aria-label="Total process-thread cost, not just ThreadPool threads">
+<rect width="100%" height="100%" fill="white"/>
+<text x="12" y="25" font-size="18">Total process-thread cost, not just ThreadPool threads</text>
+<text x="12" y="47">Markers = medians; vertical whiskers = observed min/max (threads)</text>
+<path d="M85 510.0 H755" stroke="#ddd"/>
+<text x="8" y="514.0">0</text>
+<path d="M85 400.0 H755" stroke="#ddd"/>
+<text x="8" y="404.0">25</text>
+<path d="M85 290.0 H755" stroke="#ddd"/>
+<text x="8" y="294.0">50</text>
+<path d="M85 180.0 H755" stroke="#ddd"/>
+<text x="8" y="184.0">75</text>
+<path d="M85 70.0 H755" stroke="#ddd"/>
+<text x="8" y="74.0">100</text>
+<text x="75.0" y="535">0</text>
+<text x="142.0" y="535">20</text>
+<text x="242.5" y="535">50</text>
+<text x="410.0" y="535">100</text>
+<text x="745.0" y="535">200</text>
+<path d="M85.0 382.5274725274725 V369.34065934065933" stroke="#dc2626" stroke-width="2"/>
+<circle cx="85.0" cy="382.5274725274725" r="4" fill="#dc2626"/>
+<path d="M152.0 386.92307692307696 V386.92307692307696" stroke="#dc2626" stroke-width="2"/>
+<circle cx="152.0" cy="386.92307692307696" r="4" fill="#dc2626"/>
+<path d="M252.5 386.92307692307696 V386.92307692307696" stroke="#dc2626" stroke-width="2"/>
+<circle cx="252.5" cy="386.92307692307696" r="4" fill="#dc2626"/>
+<path d="M420.0 382.5274725274725 V382.5274725274725" stroke="#dc2626" stroke-width="2"/>
+<circle cx="420.0" cy="382.5274725274725" r="4" fill="#dc2626"/>
+<path d="M755.0 382.5274725274725 V378.13186813186815" stroke="#dc2626" stroke-width="2"/>
+<circle cx="755.0" cy="378.13186813186815" r="4" fill="#dc2626"/>
+<polyline points="85.0,382.5274725274725 152.0,386.92307692307696 252.5,386.92307692307696 420.0,382.5274725274725 755.0,378.13186813186815" fill="none" stroke="#dc2626" stroke-width="2"/>
+<g fill="#dc2626"><text x="790" y="70">Pooled V2 | 64 workers</text><text x="790" y="87">Cold process / empty pool | Pool max 100</text><text x="790" y="104">TP min/max 16/32767 | Open/query/close</text></g>
+<path d="M85.0 110.00000000000001 V110.00000000000001" stroke="#2563eb" stroke-width="2"/>
+<circle cx="85.0" cy="110.00000000000001" r="4" fill="#2563eb"/>
+<path d="M152.0 110.00000000000001 V110.00000000000001" stroke="#2563eb" stroke-width="2"/>
+<circle cx="152.0" cy="110.00000000000001" r="4" fill="#2563eb"/>
+<path d="M252.5 110.00000000000001 V110.00000000000001" stroke="#2563eb" stroke-width="2"/>
+<circle cx="252.5" cy="110.00000000000001" r="4" fill="#2563eb"/>
+<path d="M420.0 110.00000000000001 V110.00000000000001" stroke="#2563eb" stroke-width="2"/>
+<circle cx="420.0" cy="110.00000000000001" r="4" fill="#2563eb"/>
+<path d="M755.0 110.00000000000001 V110.00000000000001" stroke="#2563eb" stroke-width="2"/>
+<circle cx="755.0" cy="110.00000000000001" r="4" fill="#2563eb"/>
+<polyline points="85.0,110.00000000000001 152.0,110.00000000000001 252.5,110.00000000000001 420.0,110.00000000000001 755.0,110.00000000000001" fill="none" stroke="#2563eb" stroke-width="2"/>
+<g fill="#2563eb"><text x="790" y="138">Pooled V2 | 64 workers | LongRunning</text><text x="790" y="155">Cold process / empty pool | Pool max 100</text><text x="790" y="172">TP min/max 16/32767 | Open/query/close</text></g>
+<path d="M85.0 175.93406593406596 V175.93406593406596" stroke="#059669" stroke-width="2"/>
+<circle cx="85.0" cy="175.93406593406596" r="4" fill="#059669"/>
+<path d="M152.0 175.93406593406596 V171.53846153846158" stroke="#059669" stroke-width="2"/>
+<circle cx="152.0" cy="175.93406593406596" r="4" fill="#059669"/>
+<path d="M252.5 175.93406593406596 V171.53846153846158" stroke="#059669" stroke-width="2"/>
+<circle cx="252.5" cy="175.93406593406596" r="4" fill="#059669"/>
+<path d="M420.0 175.93406593406596 V175.93406593406596" stroke="#059669" stroke-width="2"/>
+<circle cx="420.0" cy="175.93406593406596" r="4" fill="#059669"/>
+<path d="M755.0 175.93406593406596 V175.93406593406596" stroke="#059669" stroke-width="2"/>
+<circle cx="755.0" cy="175.93406593406596" r="4" fill="#059669"/>
+<polyline points="85.0,175.93406593406596 152.0,175.93406593406596 252.5,175.93406593406596 420.0,175.93406593406596 755.0,175.93406593406596" fill="none" stroke="#059669" stroke-width="2"/>
+<g fill="#059669"><text x="790" y="206">Pooled V2 | 64 workers</text><text x="790" y="223">Cold process / empty pool | Pool max 100</text><text x="790" y="240">TP min/max 64/32767 | Open/query/close</text></g>
+<path d="M85.0 391.31868131868134 V391.31868131868134" stroke="#d97706" stroke-width="2"/>
+<circle cx="85.0" cy="391.31868131868134" r="4" fill="#d97706"/>
+<path d="M152.0 391.31868131868134 V391.31868131868134" stroke="#d97706" stroke-width="2"/>
+<circle cx="152.0" cy="391.31868131868134" r="4" fill="#d97706"/>
+<path d="M252.5 391.31868131868134 V391.31868131868134" stroke="#d97706" stroke-width="2"/>
+<circle cx="252.5" cy="391.31868131868134" r="4" fill="#d97706"/>
+<path d="M420.0 391.31868131868134 V391.31868131868134" stroke="#d97706" stroke-width="2"/>
+<circle cx="420.0" cy="391.31868131868134" r="4" fill="#d97706"/>
+<path d="M755.0 391.31868131868134 V391.31868131868134" stroke="#d97706" stroke-width="2"/>
+<circle cx="755.0" cy="391.31868131868134" r="4" fill="#d97706"/>
+<polyline points="85.0,391.31868131868134 152.0,391.31868131868134 252.5,391.31868131868134 420.0,391.31868131868134 755.0,391.31868131868134" fill="none" stroke="#d97706" stroke-width="2"/>
+<g fill="#d97706"><text x="790" y="274">Pooled V2 | 64 workers</text><text x="790" y="291">Cold process / empty pool | Pool max 100</text><text x="790" y="308">TP min/max 16/16 | Open/query/close</text></g>
+<path d="M85.0 386.92307692307696 V338.5714285714286" stroke="#9333ea" stroke-width="2"/>
+<circle cx="85.0" cy="364.94505494505495" r="4" fill="#9333ea"/>
+<path d="M152.0 386.92307692307696 V347.3626373626374" stroke="#9333ea" stroke-width="2"/>
+<circle cx="152.0" cy="356.1538461538462" r="4" fill="#9333ea"/>
+<path d="M252.5 356.1538461538462 V342.96703296703294" stroke="#9333ea" stroke-width="2"/>
+<circle cx="252.5" cy="347.3626373626374" r="4" fill="#9333ea"/>
+<path d="M420.0 373.73626373626377 V334.1758241758242" stroke="#9333ea" stroke-width="2"/>
+<circle cx="420.0" cy="356.1538461538462" r="4" fill="#9333ea"/>
+<path d="M755.0 386.92307692307696 V342.96703296703294" stroke="#9333ea" stroke-width="2"/>
+<circle cx="755.0" cy="364.94505494505495" r="4" fill="#9333ea"/>
+<polyline points="85.0,364.94505494505495 152.0,356.1538461538462 252.5,347.3626373626374 420.0,356.1538461538462 755.0,364.94505494505495" fill="none" stroke="#9333ea" stroke-width="2"/>
+<g fill="#9333ea"><text x="790" y="342">Pooled V1 | 64 workers</text><text x="790" y="359">Cold process / empty pool | Pool max 100</text><text x="790" y="376">TP min/max 16/32767 | Open/query/close</text></g>
+<path d="M85.0 386.92307692307696 V369.34065934065933" stroke="#475569" stroke-width="2"/>
+<circle cx="85.0" cy="373.73626373626377" r="4" fill="#475569"/>
+<path d="M152.0 391.31868131868134 V391.31868131868134" stroke="#475569" stroke-width="2"/>
+<circle cx="152.0" cy="391.31868131868134" r="4" fill="#475569"/>
+<path d="M252.5 391.31868131868134 V391.31868131868134" stroke="#475569" stroke-width="2"/>
+<circle cx="252.5" cy="391.31868131868134" r="4" fill="#475569"/>
+<path d="M420.0 391.31868131868134 V391.31868131868134" stroke="#475569" stroke-width="2"/>
+<circle cx="420.0" cy="391.31868131868134" r="4" fill="#475569"/>
+<path d="M755.0 391.31868131868134 V391.31868131868134" stroke="#475569" stroke-width="2"/>
+<circle cx="755.0" cy="391.31868131868134" r="4" fill="#475569"/>
+<polyline points="85.0,373.73626373626377 152.0,391.31868131868134 252.5,391.31868131868134 420.0,391.31868131868134 755.0,391.31868131868134" fill="none" stroke="#475569" stroke-width="2"/>
+<g fill="#475569"><text x="790" y="410">Pooled V2 | 64 workers</text><text x="790" y="427">Prewarmed pool | Pool max 100</text><text x="790" y="444">TP min/max 16/32767 | Open/query/close</text></g>
+<path d="M85.0 312.19780219780216 V307.80219780219784" stroke="#be185d" stroke-width="2"/>
+<circle cx="85.0" cy="307.80219780219784" r="4" fill="#be185d"/>
+<path d="M152.0 312.19780219780216 V307.80219780219784" stroke="#be185d" stroke-width="2"/>
+<circle cx="152.0" cy="312.19780219780216" r="4" fill="#be185d"/>
+<path d="M252.5 316.5934065934066 V312.19780219780216" stroke="#be185d" stroke-width="2"/>
+<circle cx="252.5" cy="316.5934065934066" r="4" fill="#be185d"/>
+<path d="M420.0 316.5934065934066 V312.19780219780216" stroke="#be185d" stroke-width="2"/>
+<circle cx="420.0" cy="312.19780219780216" r="4" fill="#be185d"/>
+<path d="M755.0 316.5934065934066 V312.19780219780216" stroke="#be185d" stroke-width="2"/>
+<circle cx="755.0" cy="316.5934065934066" r="4" fill="#be185d"/>
+<polyline points="85.0,307.80219780219784 152.0,312.19780219780216 252.5,316.5934065934066 420.0,312.19780219780216 755.0,316.5934065934066" fill="none" stroke="#be185d" stroke-width="2"/>
+<g fill="#be185d"><text x="790" y="478">Non-pooled | 64 workers</text><text x="790" y="495">Cold process</text><text x="790" y="512">TP min/max 16/32767 | Open/query/close</text></g>
+<text x="250" y="575">Added RTT (ms); missing probes require separate interpretation.</text>
+</svg>

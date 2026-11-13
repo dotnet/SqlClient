@@ -914,3 +914,14 @@ signature, error diagnostics, mask bounds, and unchanged Linux warning-only beha
 Windows-only tests also pin a disposable Python child to an available CPU and read its
 affinity back, and check the real error from an invalid handle. No SQL Server is needed,
 and the test runner's affinity is never changed.
+
+## Cold-start OpenAsync health
+
+For fresh-process scheduler/connection-pool boundary experiments, see
+[openasync-health.md](openasync-health.md). The diagnostic companion records first-open latency,
+failed and pending work, scheduler probes, and thread/queue peaks without BDN warmup masking
+cold-start behavior. It includes a SQL-free stalled-prelogin negative control and an optional
+exclusive-netem authenticated SQL sweep. Use `--suite open-paths` for symmetric V1/V2 and
+non-pooled cold/initialized/warm success paths, with and without a query. The protocol documents
+native/managed SNI selection, matched baseline throughput/resource gates, and remaining
+specialized-path and CI integration gaps.

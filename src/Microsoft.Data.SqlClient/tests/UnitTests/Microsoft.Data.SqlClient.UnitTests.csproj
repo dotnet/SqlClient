@@ -123,6 +123,7 @@
     <Compile Include="..\PerformanceTests\Config\AsyncHealthOptions.cs" Link="PerformanceMeasurements\AsyncHealthOptions.cs" />
     <Compile Include="..\PerformanceTests\Measurements\ThreadPoolProbeRecorder.cs" Link="PerformanceMeasurements\ThreadPoolProbeRecorder.cs" />
     <Compile Include="..\PerformanceTests\Measurements\ThreadPoolHealthObserver.cs" Link="PerformanceMeasurements\ThreadPoolHealthObserver.cs" />
+    <Compile Include="..\PerformanceTests\Measurements\OpenAsyncHealthExperiment.cs" Link="PerformanceMeasurements\OpenAsyncHealthExperiment.cs" />
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
     <!-- See the net462 group above for why this reference is declared explicitly. -->
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" />

@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1060 546" role="img" aria-label="Stalled prelogin negative control: scheduler tail (not an RTT test)">
+<rect width="100%" height="100%" fill="white"/>
+<text x="15" y="23" font-size="18">Stalled prelogin negative control: scheduler tail (not an RTT test)</text>
+<text x="210" y="48" fill="#2563eb">Dispatch p99 (ms)</text>
+<path d="M218.01692943004673 57 V536" stroke="#dc2626" stroke-dasharray="4 4"/>
+<text x="222.01692943004673" y="62" fill="#dc2626">100 budget</text>
+<text x="10" y="85">w128 *</text>
+<rect x="210" y="73" width="643.8844251794957" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M852.7371464595501 82 H857.5817769141273" stroke="#111" stroke-width="2"/>
+<text x="902" y="86">8031.6 [8017.2, 8077.7]</text>
+<text x="10" y="123">w16</text>
+<rect x="210" y="111" width="73.19210449899155" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M282.58228874496564 120 H283.47515020944877" stroke="#111" stroke-width="2"/>
+<text x="902" y="124">913.0 [905.4, 916.5]</text>
+<text x="10" y="161">w256 *</text>
+<rect x="210" y="149" width="643.4735735800647" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M852.6287575736559 158 H857.6190476190476" stroke="#111" stroke-width="2"/>
+<text x="902" y="162">8026.4 [8015.9, 8078.1]</text>
+<text x="10" y="199">w256-long *</text>
+<rect x="210" y="187" width="238.14256804236072" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M446.33874288674133 196 H608.5647010648856" stroke="#111" stroke-width="2"/>
+<text x="902" y="200">2970.5 [2948.0, 4971.5]</text>
+<text x="10" y="237">w32 *</text>
+<rect x="210" y="225" width="244.98070420287223" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M454.42549175519434 234 H456.9124234336891" stroke="#111" stroke-width="2"/>
+<text x="902" y="238">3055.8 [3048.9, 3079.9]</text>
+<text x="10" y="275">w64 *</text>
+<rect x="210" y="263" width="642.348998804265" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M851.570771413702 272 H853.6025178730176" stroke="#111" stroke-width="2"/>
+<text x="902" y="276">8012.4 [8002.7, 8028.0]</text>
+<text x="10" y="313">w64-long</text>
+<rect x="210" y="301" width="0.19149237636609606" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M210.1863936092486 310 H210.54917569981706" stroke="#111" stroke-width="2"/>
+<text x="902" y="314">2.4 [2.3, 6.9]</text>
+<text x="10" y="351">w64-max16 *</text>
+<rect x="210" y="339" width="0.1599778267765825" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M210.14069711149733 348 H210.189440042432" stroke="#111" stroke-width="2"/>
+<text x="902" y="352">2.0 [1.8, 2.4]</text>
+<text x="10" y="389">w64-max32 *</text>
+<rect x="210" y="377" width="645.4313638653881" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M850.7144831812788 386 H856.3032610594117" stroke="#111" stroke-width="2"/>
+<text x="902" y="390">8050.9 [7992.0, 8061.7]</text>
+<text x="10" y="427">w64-min64</text>
+<rect x="210" y="415" width="71.81048291487618" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M281.3863632972384 424 H282.7356846726801" stroke="#111" stroke-width="2"/>
+<text x="902" y="428">895.7 [890.4, 907.3]</text>
+<text x="10" y="465">w64-nonpooled</text>
+<rect x="210" y="453" width="0.07086163923216794" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M210.0578180950495 462 H210.37544883906796" stroke="#111" stroke-width="2"/>
+<text x="902" y="466">0.9 [0.7, 4.7]</text>
+<text x="10" y="503">w64-v1</text>
+<rect x="210" y="491" width="0.15889554130352615" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M210.10422809952007 500 H210.1886704172067" stroke="#111" stroke-width="2"/>
+<text x="902" y="504">2.0 [1.3, 2.4]</text>
+<text x="10" y="542" font-size="11">* Missing/missed probes in one or more runs: a low bar alone is not a pass.</text>
+</svg>

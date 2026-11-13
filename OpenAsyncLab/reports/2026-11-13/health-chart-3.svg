@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1060 882" role="img" aria-label="Stalled prelogin: where the threads went">
+<rect width="100%" height="100%" fill="white"/>
+<text x="15" y="23" font-size="18">Stalled prelogin: where the threads went</text>
+<text x="210" y="48" fill="#2563eb">ThreadPool peak (threads)</text>
+<text x="530" y="48" fill="#ea580c">Process threads peak (threads)</text>
+<text x="10" y="85">w128 *</text>
+<rect x="210" y="73" width="85.82903040734365" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M295.8290304073437 82 H295.8290304073437" stroke="#111" stroke-width="2"/>
+<text x="902" y="86">22.0 [22.0, 22.0]</text>
+<rect x="210" y="101" width="136.54618473895582" height="16" fill="#ea580c" opacity=".75"/>
+<path d="M346.54618473895584 110 H346.54618473895584" stroke="#111" stroke-width="2"/>
+<text x="902" y="114">35.0 [35.0, 35.0]</text>
+<text x="10" y="151">w16</text>
+<rect x="210" y="139" width="70.22375215146299" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M280.223752151463 148 H280.223752151463" stroke="#111" stroke-width="2"/>
+<text x="902" y="152">18.0 [18.0, 18.0]</text>
+<rect x="210" y="167" width="120.94090648307515" height="16" fill="#ea580c" opacity=".75"/>
+<path d="M330.94090648307514 176 H330.94090648307514" stroke="#111" stroke-width="2"/>
+<text x="902" y="180">31.0 [31.0, 31.0]</text>
+<text x="10" y="217">w256 *</text>
+<rect x="210" y="205" width="85.82903040734365" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M295.8290304073437 214 H295.8290304073437" stroke="#111" stroke-width="2"/>
+<text x="902" y="218">22.0 [22.0, 22.0]</text>
+<rect x="210" y="233" width="136.54618473895582" height="16" fill="#ea580c" opacity=".75"/>
+<path d="M346.54618473895584 242 H346.54618473895584" stroke="#111" stroke-width="2"/>
+<text x="902" y="246">35.0 [35.0, 35.0]</text>
+<text x="10" y="283">w256-long *</text>
+<rect x="210" y="271" width="81.92771084337349" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M288.02639127940336 280 H291.92771084337346" stroke="#111" stroke-width="2"/>
+<text x="902" y="284">21.0 [20.0, 21.0]</text>
+<rect x="210" y="299" width="612.5071715433161" height="16" fill="#ea580c" opacity=".75"/>
+<path d="M818.6058519793459 308 H857.6190476190476" stroke="#111" stroke-width="2"/>
+<text x="902" y="312">157.0 [156.0, 166.0]</text>
+<text x="10" y="349">w32 *</text>
+<rect x="210" y="337" width="78.02639127940333" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M284.12507171543314 346 H291.92771084337346" stroke="#111" stroke-width="2"/>
+<text x="902" y="350">20.0 [19.0, 21.0]</text>
+<rect x="210" y="365" width="128.7435456110155" height="16" fill="#ea580c" opacity=".75"/>
+<path d="M334.8422260470453 374 H342.6448651749856" stroke="#111" stroke-width="2"/>
+<text x="902" y="378">33.0 [32.0, 34.0]</text>
+<text x="10" y="415">w64 *</text>
+<rect x="210" y="403" width="85.82903040734365" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M295.8290304073437 412 H295.8290304073437" stroke="#111" stroke-width="2"/>
+<text x="902" y="416">22.0 [22.0, 22.0]</text>
+<rect x="210" y="431" width="136.54618473895582" height="16" fill="#ea580c" opacity=".75"/>
+<path d="M346.54618473895584 440 H346.54618473895584" stroke="#111" stroke-width="2"/>
+<text x="902" y="444">35.0 [35.0, 35.0]</text>
+<text x="10" y="481">w64-long</text>
+<rect x="210" y="469" width="66.32243258749283" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M276.3224325874928 478 H276.3224325874928" stroke="#111" stroke-width="2"/>
+<text x="902" y="482">17.0 [17.0, 17.0]</text>
+<rect x="210" y="497" width="362.8227194492255" height="16" fill="#ea580c" opacity=".75"/>
+<path d="M572.8227194492255 506 H572.8227194492255" stroke="#111" stroke-width="2"/>
+<text x="902" y="510">93.0 [93.0, 93.0]</text>
+<text x="10" y="547">w64-max16 *</text>
+<rect x="210" y="535" width="62.42111302352266" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M272.42111302352265 544 H272.42111302352265" stroke="#111" stroke-width="2"/>
+<text x="902" y="548">16.0 [16.0, 16.0]</text>
+<rect x="210" y="563" width="113.13826735513481" height="16" fill="#ea580c" opacity=".75"/>
+<path d="M323.1382673551348 572 H323.1382673551348" stroke="#111" stroke-width="2"/>
+<text x="902" y="576">29.0 [29.0, 29.0]</text>
+<text x="10" y="613">w64-max32 *</text>
+<rect x="210" y="601" width="85.82903040734365" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M295.8290304073437 610 H295.8290304073437" stroke="#111" stroke-width="2"/>
+<text x="902" y="614">22.0 [22.0, 22.0]</text>
+<rect x="210" y="629" width="136.54618473895582" height="16" fill="#ea580c" opacity=".75"/>
+<path d="M346.54618473895584 638 H346.54618473895584" stroke="#111" stroke-width="2"/>
+<text x="902" y="642">35.0 [35.0, 35.0]</text>
+<text x="10" y="679">w64-min64</text>
+<rect x="210" y="667" width="253.5857716580608" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M463.5857716580608 676 H463.5857716580608" stroke="#111" stroke-width="2"/>
+<text x="902" y="680">65.0 [65.0, 65.0]</text>
+<rect x="210" y="695" width="304.30292598967293" height="16" fill="#ea580c" opacity=".75"/>
+<path d="M514.302925989673 704 H514.302925989673" stroke="#111" stroke-width="2"/>
+<text x="902" y="708">78.0 [78.0, 78.0]</text>
+<text x="10" y="745">w64-nonpooled</text>
+<rect x="210" y="733" width="66.32243258749283" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M276.3224325874928 742 H276.3224325874928" stroke="#111" stroke-width="2"/>
+<text x="902" y="746">17.0 [17.0, 17.0]</text>
+<rect x="210" y="761" width="187.26333907056798" height="16" fill="#ea580c" opacity=".75"/>
+<path d="M397.263339070568 770 H405.06597819850833" stroke="#111" stroke-width="2"/>
+<text x="902" y="774">48.0 [48.0, 50.0]</text>
+<text x="10" y="811">w64-v1</text>
+<rect x="210" y="799" width="62.42111302352266" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M272.42111302352265 808 H272.42111302352265" stroke="#111" stroke-width="2"/>
+<text x="902" y="812">16.0 [16.0, 16.0]</text>
+<rect x="210" y="827" width="117.03958691910498" height="16" fill="#ea580c" opacity=".75"/>
+<path d="M327.039586919105 836 H327.039586919105" stroke="#111" stroke-width="2"/>
+<text x="902" y="840">30.0 [30.0, 30.0]</text>
+<text x="10" y="878" font-size="11">* Missing/missed probes in one or more runs: a low bar alone is not a pass.</text>
+</svg>

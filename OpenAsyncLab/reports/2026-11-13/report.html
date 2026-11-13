@@ -1,0 +1,428 @@
+<!doctype html><html lang="en"><meta charset="utf-8">
+<title>OpenAsync health boundary study</title>
+<style>body{font:15px system-ui;margin:32px;color:#172033;max-width:1400px}
+h1,h2{color:#163d67}p,li{max-width:1050px;line-height:1.55}
+.warning{background:#fff4d6;padding:18px;border-left:5px solid #d99000}
+svg{width:100%;margin:16px 0;font:13px system-ui;border:1px solid #ddd}
+table{border-collapse:collapse;font-size:12px}th,td{border:1px solid #ddd;padding:8px}
+th{background:#e8eff7}td{white-space:nowrap}.scroll{overflow-x:auto}</style>
+<h1>OpenAsync health boundary study</h1>
+<p>Fresh-process experiments. Bars show medians; black lines and brackets show the observed
+minimum and maximum across process repetitions, not confidence intervals.</p>
+<div class="warning"><b>Scope:</b> Measured: 27 authenticated Windows SQL runs at zero injected RTT and 36 real-driver stalled-prelogin controls, managed SNI, 16 logical processors, three repetitions per setting. Stalled prelogin is not a simulation of 100 ms RTT. The authenticated WSL/netem sweep remains blocked by private SQL credentials and another playground owning the active queue. Developer workstation results are not a production capacity guarantee.</div>
+<h2>Protocol and interpretation</h2>
+<ul><li>Eight-second observation, 25-ms probes, capacity 64, one-second probe recovery,
+and bounded worker drain. Each case runs in a fresh process; randomized order uses seed 5014.</li>
+<li>Cases default to V2, cold pool, pool size 100, ThreadPool min/max 16/32767.
+Suffixes change one setting: long = LongRunning dispatch; min64 = TP minimum 64;
+max16/max32 = TP ceiling; v1 = legacy pool; nonpooled = no pool;
+warm = prewarmed connections; pool16 = pool capacity 16.</li>
+<li>SQL cases loop OpenAsync/SELECT 1/close. Stalled cases launch one burst and never succeed.
+PoolBlockingPeriod is NeverBlock. Process-cold JIT, authentication, and TLS initialization are
+inside the cold observation; a warmed run removes more than just pool creation.</li>
+<li>100 ms is an investigative scheduler budget, not an ASP.NET or SqlClient SLA.
+Known over-budget results fail even when probes are missing; under-budget results with missing,
+missed, or fewer than 100 probes are insufficient, not passing.</li>
+<li>All-open p99 is dominated by fast reuse and is limited to the first 100,000 retained operation
+records. The table exposes truncation. Scheduler probes and completed-work counters are independent
+of that cap. First-open p99 and failed-open p99 avoid treating failures as fast successes.</li>
+<li>A lower ThreadPool peak is not necessarily a resource improvement: LongRunning can create
+dedicated threads. Compare total process threads, completions, and errors too.</li></ul>
+<h2>Interpretation and next steps</h2><details><summary>Read detailed findings and limitations</summary><pre style='white-space:pre-wrap;font:14px system-ui;line-height:1.6'># OpenAsync health boundaries: first measured findings
+
+## Status and scope
+
+**63 independent-process runs completed: 27 authenticated SQL baselines and 36 stalled-prelogin
+negative controls, with three repetitions per setting. The authenticated latency sweep is
+still pending.** Another playground owned the WSL SQL netem queue at 50 ms per direction
+(100 ms added RTT), and no private SQL credential was available for a new process. That queue
+was not changed and credentials were not read from the running app.
+
+The measurements below are Windows, managed SNI, .NET 10, 16 runtime-visible logical processors.
+SQL runs use the local MSSQLSERVER instance with integrated authentication and **zero injected RTT**.
+The negative control accepts TCP on an ephemeral port but deliberately never answers prelogin.
+It is **not** a simulation of SQL at 100 ms RTT. Neither series validates the exact reported
+64-worker / 100-ms-RTT symptom; the next sweep must reproduce that under authenticated SQL.
+This developer workstation was not reserved like a performance lab. Three repetitions establish
+an observed range, not a population confidence interval.
+
+See **report.html** for four graphs and all 21 configurations. Raw results, launch settings,
+logs, assembly hashes, runtime information, and randomized ordering are preserved in
+`sql-baseline/` and `stalled-controls/`.
+
+## Authenticated SQL: cold V2 perturbs the scheduler even without injected RTT
+
+Numbers below are medians across three runs. Brackets give the observed min/max of run-level p99.
+The baseline is 64 workers, pool max 100, ThreadPool min/max 16/32767, cold pool, Open/query/close.
+
+| Setting | Dispatch p99 ms [range] | Peak process threads | First successful open p99 ms |
+|---|---:|---:|---:|
+| V2 baseline | 394 [385, 437] | 52 | 369 |
+| V2 LongRunning | 45 [38, 46] | 93 | 533 |
+| V2, TP minimum 64 | 444 [438, 446] | 81 | 427 |
+| V2, TP maximum 16 | 412 [397, 436] | 32 | 366 |
+| V2, pool capacity 16 | 408 [303, 420] | 45 | 406 |
+| V2, prewarmed pool | 94 [47, 108] | 47 | 16 |
+| V1 | 6 [0.5, 17] | 49 | 639 |
+
+No SQL failures were counted before the deadline in these 27 runs. Work in flight at the
+deadline was cancelled and accounted separately. V2 baseline throughput was roughly 18,595
+completed cycles/sec (range 18,016-20,627); LongRunning was roughly 19,567 (15,955-21,014).
+These overlapping short-run ranges do **not** establish a throughput improvement.
+
+**LongRunning reduced scheduler disruption but was not a free win.** Total process threads
+grew approximately 79%, and first-open latency increased. Two of its three SQL repetitions
+also had missed producer ticks, so only one met the strict scheduler-coverage gate.
+V1 also had two insufficient-coverage repetitions. Low p99 alone is not certified health.
+The 100-ms dispatch budget is an investigative criterion, not a documented product SLA.
+
+Increasing TP minimum to 64 did not improve this cold SQL case. Reducing the maximum did not
+fix it either. Raising workers from 16 to 256 changed median dispatch p99 from about 374 ms to
+416 ms, while median throughput fell from about 19,537 to 17,299 completed cycles/sec. This is
+not evidence that more concurrency is more capacity.
+
+Cold-process JIT, authentication, TLS setup, and driver initialization contribute to these
+results. The experiment alone does not attribute every millisecond to pool creation.
+Prewarming removes several of those costs together. That is exactly why a benchmark that
+warms connections and the ThreadPool before observing work can miss this user-visible behavior.
+
+## Stalled prelogin: scheduling boundaries and misleading low tails
+
+This negative control uses a three-second connect timeout and one burst per worker. All opens
+are expected to fail or be cancelled; a scheduler pass here is **not** healthy SQL performance.
+The workload is observed for eight seconds, then cancelled, with a one-second probe recovery.
+
+| Setting | Dispatch p99 median ms | Peak process threads | Coverage interpretation |
+|---|---:|---:|---|
+| V2, 16 workers | 913 | 31 | Over budget |
+| V2, 32 workers | 3,056 | 33 | Over budget; probes dropped |
+| V2, 64 workers | 8,012 | 35 | Over budget; 256 probe opportunities dropped |
+| V2, 128 workers | 8,032 | 35 | Over budget; probes dropped |
+| V2, 256 workers | 8,026 | 35 | Over budget; probes dropped |
+| V2, 64 workers, LongRunning | 2.4 | 93 | Scheduler passes all three repetitions |
+| V2, 256 workers, LongRunning | 2,971 | 157 | Over budget; range 2,948-4,972 ms |
+| V2, 64 workers, TP min 64 | 896 | 78 | Still over budget |
+| V2, 64 workers, TP max 16 | 2.0 completed-only | 29 | **Insufficient: 320 missing/dropped probes** |
+| V1, 64 workers | 2.0 | 30 | Scheduler healthy; 62 SQL operations still in flight at deadline |
+| Non-pooled, 64 workers | 0.9 | 48 | Scheduler healthy; opens fail as expected |
+
+**The approximately eight-second figures are not natural recovery times.** Cancellation at
+the measurement deadline released blocked work, allowing the recorded callbacks to run during
+recovery. Without that intervention their delay could have been longer.
+
+For V2 at 64 workers, the largest one-second p99 **during the workload** was only about 1.9 ms,
+yet posting-cohort p99 including recovery was about 8,012 ms. Fast early callbacks were visible;
+the stalled callbacks were not in any completion cohort until recovery. With TP max 16,
+64 probes remained outstanding after recovery and 256 further opportunities were dropped.
+Reporting only completed probes would incorrectly make that severe stall look healthy.
+
+LongRunning at 256 workers also failed the budget. This is consistent with the known limitation:
+only initial work is moved to dedicated threads; continuations after incomplete awaits can run
+on the ThreadPool and later perform blocking connection creation. The observations support the
+limitation, but do not replace a stack trace establishing exactly where each thread was blocked.
+
+## Performance-test changes informed by these observations
+
+Added a `--openasync-health case.json result.json` mode to the existing PerformanceTests
+executable. Unlike a warmed BDN iteration, each invocation is one fresh process.
+The existing warm-pool benchmark remains unchanged.
+
+The new mode exports worker offer/start times, first-open and subsequent-open timestamps,
+successful and failed operations, cancellation, unstarted workers, deadline counters, and the
+existing bounded ThreadPool observer&#x27;s raw probes and resource series. This avoids conflating
+worker scheduling with OpenAsync and avoids dropping failures from the story.
+
+The sweep script supplies randomized repeated worker, TP minimum/maximum, pool-size,
+V1/V2, pooling, warm/cold, and LongRunning cases. It can own an optional Linux netem queue
+for an explicit RTT grid and refuses to replace an existing queue.
+
+The `--require-healthy-sql` gate rejects any repetition over the 100-ms p99 budget, with
+insufficient probe coverage, workload failures, unstarted workers, no completed SQL work, or an
+unsuccessful process. It cannot certify negative controls as healthy SQL. Throughput and process
+resource non-regression remain separate matched-baseline requirements.
+
+Raw operation records are capped at 100,000 per process. Most high-throughput SQL cases reach
+that cap; counters remain complete, but all-open percentiles in the report describe retained
+samples, not full-run operation distributions. First-wave records and the independent scheduler
+probe stream remain available. No production driver fix was made and LongRunning is not being
+declared the solution.
+
+## Required next experiment
+
+Stop other netem-owning workloads, enter the SQL password privately, and run the authenticated
+matrix at **0, 20, 50, 100, and 200 ms added RTT**, three fresh-process repetitions each.
+100 ms RTT means **50 ms per direction**, not the TUI setting of 100 ms per direction.
+Start with 64 workers / pool 100 / TP min 16 / max 32767, then pair LongRunning, warm pool,
+TP min 64, TP cap 16, V1, non-pooled, and 16/32/128/256-worker cases.
+
+Run baseline and candidate under identical conditions, alternating build order. Require the
+baseline failure to reproduce before crediting an improvement. Report every repetition,
+including failed/incomplete runs, producer misses, and dedicated-thread cost. Increase repetition
+count and duration on a quiet dedicated host before making a release/performance claim.
+
+Exact commands and interpretation rules are in `eng/pipelines/perf/openasync-health.md`.
+The source revision for the driver is `23b42bb80902e47879569a8c5d658bb7145db579`; the new
+diagnostic harness is an uncommitted addition on top, identified by assembly hashes in the
+run manifests. The Windows SQL connection string uses integrated authentication and no password
+was stored in artifacts.
+</pre></details><h2>Graphs</h2><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1060 432" role="img" aria-label="Authenticated SQL: fresh-process scheduler tail">
+<rect width="100%" height="100%" fill="white"/>
+<text x="15" y="23" font-size="18">Authenticated SQL: fresh-process scheduler tail</text>
+<text x="210" y="48" fill="#2563eb">Dispatch p99 (ms)</text>
+<path d="M355.3057259719273 57 V422" stroke="#dc2626" stroke-dasharray="4 4"/>
+<text x="359.3057259719273" y="62" fill="#dc2626">100 budget</text>
+<text x="10" y="85">w16 / RTT 0</text>
+<rect x="210" y="73" width="543.6606471953361" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M659.7024774444646 82 H783.5597705114018" stroke="#111" stroke-width="2"/>
+<text x="902" y="86">374.1 [309.5, 394.7]</text>
+<text x="10" y="123">w256 / RTT 0 *</text>
+<rect x="210" y="111" width="604.4089026638718" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M751.089607679989 120 H821.3521914737142" stroke="#111" stroke-width="2"/>
+<text x="902" y="124">416.0 [372.4, 420.7]</text>
+<text x="10" y="161">w64 / RTT 0 *</text>
+<rect x="210" y="149" width="572.1491425236662" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M770.1281451197347 158 H845.0532990484472" stroke="#111" stroke-width="2"/>
+<text x="902" y="162">393.8 [385.5, 437.0]</text>
+<text x="10" y="199">w64-long / RTT 0 *</text>
+<rect x="210" y="187" width="65.58214105444375" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M265.7491572721974 196 H277.39773610046313" stroke="#111" stroke-width="2"/>
+<text x="902" y="200">45.1 [38.4, 46.4]</text>
+<text x="10" y="237">w64-max16 / RTT 0 *</text>
+<rect x="210" y="225" width="599.3720249787808" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M786.8856732731731 234 H844.0871612764599" stroke="#111" stroke-width="2"/>
+<text x="902" y="238">412.5 [397.0, 436.4]</text>
+<text x="10" y="275">w64-min64 / RTT 0 *</text>
+<rect x="210" y="263" width="645.3482097335584" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M846.5845307887396 272 H857.6190476190476" stroke="#111" stroke-width="2"/>
+<text x="902" y="276">444.1 [438.1, 445.7]</text>
+<text x="10" y="313">w64-pool16 / RTT 0</text>
+<rect x="210" y="301" width="592.8865945114758" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M650.2051498892134 310 H819.6059072589837" stroke="#111" stroke-width="2"/>
+<text x="902" y="314">408.0 [303.0, 419.5]</text>
+<text x="10" y="351">w64-v1 / RTT 0 *</text>
+<rect x="210" y="339" width="8.742319003100935" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M210.67203898261963 348 H234.10738238455042" stroke="#111" stroke-width="2"/>
+<text x="902" y="352">6.0 [0.5, 16.6]</text>
+<text x="10" y="389">w64-warm / RTT 0 *</text>
+<rect x="210" y="377" width="136.65669324490025" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M277.96166762295996 386 H367.13303084313833" stroke="#111" stroke-width="2"/>
+<text x="902" y="390">94.0 [46.8, 108.1]</text>
+<text x="10" y="428" font-size="11">* Missing/missed probes in one or more runs: a low bar alone is not a pass.</text>
+</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1060 546" role="img" aria-label="Stalled prelogin negative control: scheduler tail (not an RTT test)">
+<rect width="100%" height="100%" fill="white"/>
+<text x="15" y="23" font-size="18">Stalled prelogin negative control: scheduler tail (not an RTT test)</text>
+<text x="210" y="48" fill="#2563eb">Dispatch p99 (ms)</text>
+<path d="M218.01692943004673 57 V536" stroke="#dc2626" stroke-dasharray="4 4"/>
+<text x="222.01692943004673" y="62" fill="#dc2626">100 budget</text>
+<text x="10" y="85">w128 *</text>
+<rect x="210" y="73" width="643.8844251794957" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M852.7371464595501 82 H857.5817769141273" stroke="#111" stroke-width="2"/>
+<text x="902" y="86">8031.6 [8017.2, 8077.7]</text>
+<text x="10" y="123">w16</text>
+<rect x="210" y="111" width="73.19210449899155" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M282.58228874496564 120 H283.47515020944877" stroke="#111" stroke-width="2"/>
+<text x="902" y="124">913.0 [905.4, 916.5]</text>
+<text x="10" y="161">w256 *</text>
+<rect x="210" y="149" width="643.4735735800647" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M852.6287575736559 158 H857.6190476190476" stroke="#111" stroke-width="2"/>
+<text x="902" y="162">8026.4 [8015.9, 8078.1]</text>
+<text x="10" y="199">w256-long *</text>
+<rect x="210" y="187" width="238.14256804236072" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M446.33874288674133 196 H608.5647010648856" stroke="#111" stroke-width="2"/>
+<text x="902" y="200">2970.5 [2948.0, 4971.5]</text>
+<text x="10" y="237">w32 *</text>
+<rect x="210" y="225" width="244.98070420287223" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M454.42549175519434 234 H456.9124234336891" stroke="#111" stroke-width="2"/>
+<text x="902" y="238">3055.8 [3048.9, 3079.9]</text>
+<text x="10" y="275">w64 *</text>
+<rect x="210" y="263" width="642.348998804265" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M851.570771413702 272 H853.6025178730176" stroke="#111" stroke-width="2"/>
+<text x="902" y="276">8012.4 [8002.7, 8028.0]</text>
+<text x="10" y="313">w64-long</text>
+<rect x="210" y="301" width="0.19149237636609606" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M210.1863936092486 310 H210.54917569981706" stroke="#111" stroke-width="2"/>
+<text x="902" y="314">2.4 [2.3, 6.9]</text>
+<text x="10" y="351">w64-max16 *</text>
+<rect x="210" y="339" width="0.1599778267765825" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M210.14069711149733 348 H210.189440042432" stroke="#111" stroke-width="2"/>
+<text x="902" y="352">2.0 [1.8, 2.4]</text>
+<text x="10" y="389">w64-max32 *</text>
+<rect x="210" y="377" width="645.4313638653881" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M850.7144831812788 386 H856.3032610594117" stroke="#111" stroke-width="2"/>
+<text x="902" y="390">8050.9 [7992.0, 8061.7]</text>
+<text x="10" y="427">w64-min64</text>
+<rect x="210" y="415" width="71.81048291487618" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M281.3863632972384 424 H282.7356846726801" stroke="#111" stroke-width="2"/>
+<text x="902" y="428">895.7 [890.4, 907.3]</text>
+<text x="10" y="465">w64-nonpooled</text>
+<rect x="210" y="453" width="0.07086163923216794" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M210.0578180950495 462 H210.37544883906796" stroke="#111" stroke-width="2"/>
+<text x="902" y="466">0.9 [0.7, 4.7]</text>
+<text x="10" y="503">w64-v1</text>
+<rect x="210" y="491" width="0.15889554130352615" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M210.10422809952007 500 H210.1886704172067" stroke="#111" stroke-width="2"/>
+<text x="902" y="504">2.0 [1.3, 2.4]</text>
+<text x="10" y="542" font-size="11">* Missing/missed probes in one or more runs: a low bar alone is not a pass.</text>
+</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1060 882" role="img" aria-label="Stalled prelogin: where the threads went">
+<rect width="100%" height="100%" fill="white"/>
+<text x="15" y="23" font-size="18">Stalled prelogin: where the threads went</text>
+<text x="210" y="48" fill="#2563eb">ThreadPool peak (threads)</text>
+<text x="530" y="48" fill="#ea580c">Process threads peak (threads)</text>
+<text x="10" y="85">w128 *</text>
+<rect x="210" y="73" width="85.82903040734365" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M295.8290304073437 82 H295.8290304073437" stroke="#111" stroke-width="2"/>
+<text x="902" y="86">22.0 [22.0, 22.0]</text>
+<rect x="210" y="101" width="136.54618473895582" height="16" fill="#ea580c" opacity=".75"/>
+<path d="M346.54618473895584 110 H346.54618473895584" stroke="#111" stroke-width="2"/>
+<text x="902" y="114">35.0 [35.0, 35.0]</text>
+<text x="10" y="151">w16</text>
+<rect x="210" y="139" width="70.22375215146299" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M280.223752151463 148 H280.223752151463" stroke="#111" stroke-width="2"/>
+<text x="902" y="152">18.0 [18.0, 18.0]</text>
+<rect x="210" y="167" width="120.94090648307515" height="16" fill="#ea580c" opacity=".75"/>
+<path d="M330.94090648307514 176 H330.94090648307514" stroke="#111" stroke-width="2"/>
+<text x="902" y="180">31.0 [31.0, 31.0]</text>
+<text x="10" y="217">w256 *</text>
+<rect x="210" y="205" width="85.82903040734365" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M295.8290304073437 214 H295.8290304073437" stroke="#111" stroke-width="2"/>
+<text x="902" y="218">22.0 [22.0, 22.0]</text>
+<rect x="210" y="233" width="136.54618473895582" height="16" fill="#ea580c" opacity=".75"/>
+<path d="M346.54618473895584 242 H346.54618473895584" stroke="#111" stroke-width="2"/>
+<text x="902" y="246">35.0 [35.0, 35.0]</text>
+<text x="10" y="283">w256-long *</text>
+<rect x="210" y="271" width="81.92771084337349" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M288.02639127940336 280 H291.92771084337346" stroke="#111" stroke-width="2"/>
+<text x="902" y="284">21.0 [20.0, 21.0]</text>
+<rect x="210" y="299" width="612.5071715433161" height="16" fill="#ea580c" opacity=".75"/>
+<path d="M818.6058519793459 308 H857.6190476190476" stroke="#111" stroke-width="2"/>
+<text x="902" y="312">157.0 [156.0, 166.0]</text>
+<text x="10" y="349">w32 *</text>
+<rect x="210" y="337" width="78.02639127940333" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M284.12507171543314 346 H291.92771084337346" stroke="#111" stroke-width="2"/>
+<text x="902" y="350">20.0 [19.0, 21.0]</text>
+<rect x="210" y="365" width="128.7435456110155" height="16" fill="#ea580c" opacity=".75"/>
+<path d="M334.8422260470453 374 H342.6448651749856" stroke="#111" stroke-width="2"/>
+<text x="902" y="378">33.0 [32.0, 34.0]</text>
+<text x="10" y="415">w64 *</text>
+<rect x="210" y="403" width="85.82903040734365" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M295.8290304073437 412 H295.8290304073437" stroke="#111" stroke-width="2"/>
+<text x="902" y="416">22.0 [22.0, 22.0]</text>
+<rect x="210" y="431" width="136.54618473895582" height="16" fill="#ea580c" opacity=".75"/>
+<path d="M346.54618473895584 440 H346.54618473895584" stroke="#111" stroke-width="2"/>
+<text x="902" y="444">35.0 [35.0, 35.0]</text>
+<text x="10" y="481">w64-long</text>
+<rect x="210" y="469" width="66.32243258749283" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M276.3224325874928 478 H276.3224325874928" stroke="#111" stroke-width="2"/>
+<text x="902" y="482">17.0 [17.0, 17.0]</text>
+<rect x="210" y="497" width="362.8227194492255" height="16" fill="#ea580c" opacity=".75"/>
+<path d="M572.8227194492255 506 H572.8227194492255" stroke="#111" stroke-width="2"/>
+<text x="902" y="510">93.0 [93.0, 93.0]</text>
+<text x="10" y="547">w64-max16 *</text>
+<rect x="210" y="535" width="62.42111302352266" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M272.42111302352265 544 H272.42111302352265" stroke="#111" stroke-width="2"/>
+<text x="902" y="548">16.0 [16.0, 16.0]</text>
+<rect x="210" y="563" width="113.13826735513481" height="16" fill="#ea580c" opacity=".75"/>
+<path d="M323.1382673551348 572 H323.1382673551348" stroke="#111" stroke-width="2"/>
+<text x="902" y="576">29.0 [29.0, 29.0]</text>
+<text x="10" y="613">w64-max32 *</text>
+<rect x="210" y="601" width="85.82903040734365" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M295.8290304073437 610 H295.8290304073437" stroke="#111" stroke-width="2"/>
+<text x="902" y="614">22.0 [22.0, 22.0]</text>
+<rect x="210" y="629" width="136.54618473895582" height="16" fill="#ea580c" opacity=".75"/>
+<path d="M346.54618473895584 638 H346.54618473895584" stroke="#111" stroke-width="2"/>
+<text x="902" y="642">35.0 [35.0, 35.0]</text>
+<text x="10" y="679">w64-min64</text>
+<rect x="210" y="667" width="253.5857716580608" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M463.5857716580608 676 H463.5857716580608" stroke="#111" stroke-width="2"/>
+<text x="902" y="680">65.0 [65.0, 65.0]</text>
+<rect x="210" y="695" width="304.30292598967293" height="16" fill="#ea580c" opacity=".75"/>
+<path d="M514.302925989673 704 H514.302925989673" stroke="#111" stroke-width="2"/>
+<text x="902" y="708">78.0 [78.0, 78.0]</text>
+<text x="10" y="745">w64-nonpooled</text>
+<rect x="210" y="733" width="66.32243258749283" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M276.3224325874928 742 H276.3224325874928" stroke="#111" stroke-width="2"/>
+<text x="902" y="746">17.0 [17.0, 17.0]</text>
+<rect x="210" y="761" width="187.26333907056798" height="16" fill="#ea580c" opacity=".75"/>
+<path d="M397.263339070568 770 H405.06597819850833" stroke="#111" stroke-width="2"/>
+<text x="902" y="774">48.0 [48.0, 50.0]</text>
+<text x="10" y="811">w64-v1</text>
+<rect x="210" y="799" width="62.42111302352266" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M272.42111302352265 808 H272.42111302352265" stroke="#111" stroke-width="2"/>
+<text x="902" y="812">16.0 [16.0, 16.0]</text>
+<rect x="210" y="827" width="117.03958691910498" height="16" fill="#ea580c" opacity=".75"/>
+<path d="M327.039586919105 836 H327.039586919105" stroke="#111" stroke-width="2"/>
+<text x="902" y="840">30.0 [30.0, 30.0]</text>
+<text x="10" y="878" font-size="11">* Missing/missed probes in one or more runs: a low bar alone is not a pass.</text>
+</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1060 684" role="img" aria-label="Cold-open latency versus warm-reuse dominated latency">
+<rect width="100%" height="100%" fill="white"/>
+<text x="15" y="23" font-size="18">Cold-open latency versus warm-reuse dominated latency</text>
+<text x="210" y="48" fill="#2563eb">First open per worker p99 (ms)</text>
+<text x="530" y="48" fill="#ea580c">Retained successful opens p99 (ms)</text>
+<text x="10" y="85">w16 / RTT 0</text>
+<rect x="210" y="73" width="381.4983283693403" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M538.6556138507183 82 H620.0105569881396" stroke="#111" stroke-width="2"/>
+<text x="902" y="86">380.4 [327.7, 408.8]</text>
+<rect x="210" y="101" width="0.17620322215050943" height="16" fill="#ea580c" opacity=".75"/>
+<path d="M210.1722920521657 110 H210.19636079053572" stroke="#111" stroke-width="2"/>
+<text x="902" y="114">0.2 [0.2, 0.2]</text>
+<text x="10" y="151">w256 / RTT 0 *</text>
+<rect x="210" y="139" width="373.604083043194" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M556.2230851277872 148 H593.9659757707295" stroke="#111" stroke-width="2"/>
+<text x="902" y="152">372.5 [345.2, 382.9]</text>
+<rect x="210" y="167" width="20.83961625847696" height="16" fill="#ea580c" opacity=".75"/>
+<path d="M226.96264393911125 176 H234.69231926665256" stroke="#111" stroke-width="2"/>
+<text x="902" y="180">20.8 [16.9, 24.6]</text>
+<text x="10" y="217">w64 / RTT 0 *</text>
+<rect x="210" y="205" width="370.31428765364785" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M564.2875164914917 214 H601.7504074780626" stroke="#111" stroke-width="2"/>
+<text x="902" y="218">369.3 [353.3, 390.6]</text>
+<rect x="210" y="233" width="1.3685083491568988" height="16" fill="#ea580c" opacity=".75"/>
+<path d="M210.38951241595532 242 H224.5687070489806" stroke="#111" stroke-width="2"/>
+<text x="902" y="246">1.4 [0.4, 14.5]</text>
+<text x="10" y="283">w64-long / RTT 0 *</text>
+<rect x="210" y="271" width="534.7390715373563" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M742.8817672264676 280 H776.6614392375518" stroke="#111" stroke-width="2"/>
+<text x="902" y="284">533.2 [531.4, 565.0]</text>
+<rect x="210" y="299" width="0.23787936422401088" height="16" fill="#ea580c" opacity=".75"/>
+<path d="M210.21110289278732 308 H224.5223747276178" stroke="#111" stroke-width="2"/>
+<text x="902" y="312">0.2 [0.2, 14.5]</text>
+<text x="10" y="349">w64-max16 / RTT 0 *</text>
+<rect x="210" y="337" width="367.1135465960708" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M576.7193207188515 346 H591.2418960192895" stroke="#111" stroke-width="2"/>
+<text x="902" y="350">366.1 [365.7, 380.2]</text>
+<rect x="210" y="365" width="13.469768569568073" height="16" fill="#ea580c" opacity=".75"/>
+<path d="M210.19936938283203 374 H225.6661412322449" stroke="#111" stroke-width="2"/>
+<text x="902" y="378">13.4 [0.2, 15.6]</text>
+<text x="10" y="415">w64-min64 / RTT 0 *</text>
+<rect x="210" y="403" width="428.0046466528174" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M629.4926370418399 412 H666.5036374655131" stroke="#111" stroke-width="2"/>
+<text x="902" y="416">426.8 [418.3, 455.2]</text>
+<rect x="210" y="431" width="0.22213439787367992" height="16" fill="#ea580c" opacity=".75"/>
+<path d="M210.21010002868894 440 H210.24249253907826" stroke="#111" stroke-width="2"/>
+<text x="902" y="444">0.2 [0.2, 0.2]</text>
+<text x="10" y="481">w64-pool16 / RTT 0</text>
+<rect x="210" y="469" width="406.88081870875413" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M540.3057264388049 478 H647.1350222670856" stroke="#111" stroke-width="2"/>
+<text x="902" y="482">405.7 [329.4, 435.9]</text>
+<rect x="210" y="497" width="8.812166835733873" height="16" fill="#ea580c" opacity=".75"/>
+<path d="M218.4015942737048 506 H219.19997438272176" stroke="#111" stroke-width="2"/>
+<text x="902" y="510">8.8 [8.4, 9.2]</text>
+<text x="10" y="547">w64-v1 / RTT 0 *</text>
+<rect x="210" y="535" width="641.1999150957555" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M785.1081623957007 544 H857.6190476190476" stroke="#111" stroke-width="2"/>
+<text x="902" y="548">639.4 [573.5, 645.8]</text>
+<rect x="210" y="563" width="0.2770913504851772" height="16" fill="#ea580c" opacity=".75"/>
+<path d="M210.24429769445578 572 H218.59093501554906" stroke="#111" stroke-width="2"/>
+<text x="902" y="576">0.3 [0.2, 8.6]</text>
+<text x="10" y="613">w64-warm / RTT 0 *</text>
+<rect x="210" y="601" width="15.6374593190206" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M225.41642807165567 610 H226.4386474475136" stroke="#111" stroke-width="2"/>
+<text x="902" y="614">15.6 [15.4, 16.4]</text>
+<rect x="210" y="629" width="0.2338679078290976" height="16" fill="#ea580c" opacity=".75"/>
+<path d="M210.19325191182958 638 H224.5032200233319" stroke="#111" stroke-width="2"/>
+<text x="902" y="642">0.2 [0.2, 14.5]</text>
+<text x="10" y="680" font-size="11">* Missing/missed probes in one or more runs: a low bar alone is not a pass.</text>
+</svg><h2>Complete results</h2><p>Each metric: median [min, max].</p><div class='scroll'><table><thead><tr><th>Source / RTT / Case</th><th>N</th><th>Scheduler verdicts</th><th>Dispatch p99 ms</th><th>Worst 1s p99 ms</th><th>Producer p99 ms</th><th>TP peak</th><th>Process peak</th><th>Queue peak</th><th>First open p99 ms</th><th>Failed open p99 ms</th><th>Completed cycles/s</th><th>Failures</th><th>In flight at deadline</th><th>Unstarted workers</th><th>Missing/missed probes</th><th>Operation samples dropped</th></tr></thead><tbody><tr><td>AuthenticatedSql / 0 / w16</td><td>3</td><td>Pass: 0, Fail: 3, Insufficient: 0</td><td>374.15 [309.49, 394.73]</td><td>450.04 [387.01, 473.89]</td><td>19.33 [19.28, 20.55]</td><td>26.00 [23.00, 28.00]</td><td>42.00 [39.00, 44.00]</td><td>18.00 [16.00, 19.00]</td><td>380.41 [327.72, 408.84]</td><td>N/A</td><td>19537.49 [18794.43, 19709.15]</td><td>0.00 [0.00, 0.00]</td><td>16.00 [16.00, 16.00]</td><td>0.00 [0.00, 0.00]</td><td>0.00 [0.00, 0.00]</td><td>56409.00 [50538.00, 57993.00]</td></tr><tr><td>AuthenticatedSql / 0 / w256</td><td>3</td><td>Pass: 0, Fail: 3, Insufficient: 0</td><td>415.96 [372.38, 420.74]</td><td>496.04 [450.44, 497.70]</td><td>23.16 [23.02, 27.54]</td><td>36.00 [36.00, 36.00]</td><td>52.00 [52.00, 52.00]</td><td>258.00 [256.00, 258.00]</td><td>372.54 [345.23, 382.87]</td><td>N/A</td><td>17299.38 [15247.19, 18132.50]</td><td>0.00 [0.00, 0.00]</td><td>256.00 [246.00, 256.00]</td><td>0.00 [0.00, 0.00]</td><td>2.00 [2.00, 4.00]</td><td>38769.00 [22328.00, 45348.00]</td></tr><tr><td>AuthenticatedSql / 0 / w64</td><td>3</td><td>Pass: 0, Fail: 3, Insufficient: 0</td><td>393.76 [385.48, 437.05]</td><td>470.97 [447.03, 514.90]</td><td>22.36 [21.78, 22.38]</td><td>36.00 [36.00, 36.00]</td><td>52.00 [52.00, 52.00]</td><td>67.00 [66.00, 68.00]</td><td>369.26 [353.28, 390.63]</td><td>N/A</td><td>18594.49 [18015.93, 20626.65]</td><td>0.00 [0.00, 0.00]</td><td>64.00 [64.00, 64.00]</td><td>0.00 [0.00, 0.00]</td><td>1.00 [0.00, 1.00]</td><td>49050.00 [44246.00, 65183.00]</td></tr><tr><td>AuthenticatedSql / 0 / w64-long</td><td>3</td><td>Pass: 1, Fail: 0, Insufficient: 2</td><td>45.13 [38.37, 46.38]</td><td>83.31 [81.52, 109.92]</td><td>22.96 [21.93, 26.26]</td><td>36.00 [34.00, 36.00]</td><td>93.00 [93.00, 93.00]</td><td>50.00 [50.00, 53.00]</td><td>533.21 [531.36, 565.04]</td><td>N/A</td><td>19567.03 [15955.22, 21014.01]</td><td>0.00 [0.00, 0.00]</td><td>64.00 [62.00, 64.00]</td><td>0.00 [0.00, 0.00]</td><td>1.00 [0.00, 9.00]</td><td>56603.00 [27886.00, 68298.00]</td></tr><tr><td>AuthenticatedSql / 0 / w64-max16</td><td>3</td><td>Pass: 0, Fail: 3, Insufficient: 0</td><td>412.49 [397.02, 436.38]</td><td>483.56 [482.41, 499.67]</td><td>22.21 [19.10, 22.45]</td><td>16.00 [16.00, 16.00]</td><td>32.00 [31.00, 32.00]</td><td>69.00 [67.00, 70.00]</td><td>366.07 [365.67, 380.15]</td><td>N/A</td><td>21518.79 [8366.67, 22143.53]</td><td>0.00 [0.00, 0.00]</td><td>64.00 [59.00, 64.00]</td><td>0.00 [0.00, 0.00]</td><td>0.00 [0.00, 1.00]</td><td>72381.00 [0.00, 77479.00]</td></tr><tr><td>AuthenticatedSql / 0 / w64-min64</td><td>3</td><td>Pass: 0, Fail: 3, Insufficient: 0</td><td>444.13 [438.10, 445.69]</td><td>523.10 [519.26, 524.77]</td><td>23.13 [21.54, 24.17]</td><td>65.00 [65.00, 65.00]</td><td>81.00 [81.00, 81.00]</td><td>40.00 [36.00, 40.00]</td><td>426.78 [418.29, 455.20]</td><td>N/A</td><td>19648.72 [17714.53, 20929.66]</td><td>0.00 [0.00, 0.00]</td><td>63.00 [60.00, 63.00]</td><td>0.00 [0.00, 0.00]</td><td>2.00 [0.00, 2.00]</td><td>57295.00 [41997.00, 67615.00]</td></tr><tr><td>AuthenticatedSql / 0 / w64-pool16</td><td>3</td><td>Pass: 0, Fail: 3, Insufficient: 0</td><td>408.03 [302.95, 419.53]</td><td>486.33 [382.00, 496.36]</td><td>21.28 [18.58, 21.31]</td><td>29.00 [28.00, 30.00]</td><td>45.00 [44.00, 46.00]</td><td>68.00 [63.00, 83.00]</td><td>405.72 [329.36, 435.89]</td><td>N/A</td><td>16345.83 [15867.74, 18186.97]</td><td>0.00 [0.00, 0.00]</td><td>64.00 [64.00, 64.00]</td><td>0.00 [0.00, 0.00]</td><td>0.00 [0.00, 0.00]</td><td>31072.00 [27026.00, 45637.00]</td></tr><tr><td>AuthenticatedSql / 0 / w64-v1</td><td>3</td><td>Pass: 1, Fail: 0, Insufficient: 2</td><td>6.02 [0.46, 16.59]</td><td>29.46 [28.11, 62.42]</td><td>23.63 [21.73, 25.99]</td><td>33.00 [32.00, 35.00]</td><td>49.00 [48.00, 51.00]</td><td>49.00 [49.00, 50.00]</td><td>639.37 [573.47, 645.77]</td><td>N/A</td><td>19566.44 [17619.20, 22298.44]</td><td>0.00 [0.00, 0.00]</td><td>64.00 [63.00, 64.00]</td><td>0.00 [0.00, 0.00]</td><td>1.00 [0.00, 5.00]</td><td>56811.00 [41169.00, 78788.00]</td></tr><tr><td>AuthenticatedSql / 0 / w64-warm</td><td>3</td><td>Pass: 0, Fail: 1, Insufficient: 2</td><td>94.05 [46.77, 108.14]</td><td>139.40 [129.77, 190.35]</td><td>21.76 [20.93, 30.31]</td><td>31.00 [31.00, 36.00]</td><td>47.00 [47.00, 52.00]</td><td>53.00 [53.00, 54.00]</td><td>15.59 [15.37, 16.39]</td><td>N/A</td><td>20616.77 [20463.01, 23200.52]</td><td>0.00 [0.00, 0.00]</td><td>63.00 [63.00, 64.00]</td><td>0.00 [0.00, 0.00]</td><td>1.00 [0.00, 6.00]</td><td>65191.00 [63879.00, 85780.00]</td></tr><tr><td>SyntheticStalledPrelogin / 0 / w128</td><td>3</td><td>Pass: 0, Fail: 3, Insufficient: 0</td><td>8031.56 [8017.25, 8077.68]</td><td>2.09 [1.78, 2.52]</td><td>14.89 [14.64, 15.72]</td><td>22.00 [22.00, 22.00]</td><td>35.00 [35.00, 35.00]</td><td>182.00 [181.00, 184.00]</td><td>N/A</td><td>3134.71 [3127.04, 3153.69]</td><td>0.00 [0.00, 0.00]</td><td>38.00 [37.00, 38.00]</td><td>22.00 [22.00, 22.00]</td><td>68.00 [68.00, 69.00]</td><td>256.00 [256.00, 256.00]</td><td>0.00 [0.00, 0.00]</td></tr><tr><td>SyntheticStalledPrelogin / 0 / w16</td><td>3</td><td>Pass: 0, Fail: 3, Insufficient: 0</td><td>912.97 [905.36, 916.50]</td><td>990.06 [974.57, 995.39]</td><td>14.80 [14.46, 14.91]</td><td>18.00 [18.00, 18.00]</td><td>31.00 [31.00, 31.00]</td><td>39.00 [39.00, 40.00]</td><td>N/A</td><td>3128.40 [3126.40, 3148.68]</td><td>0.00 [0.00, 0.00]</td><td>16.00 [16.00, 16.00]</td><td>0.00 [0.00, 0.00]</td><td>0.00 [0.00, 0.00]</td><td>0.00 [0.00, 0.00]</td><td>0.00 [0.00, 0.00]</td></tr><tr><td>SyntheticStalledPrelogin / 0 / w256</td><td>3</td><td>Pass: 0, Fail: 3, Insufficient: 0</td><td>8026.43 [8015.90, 8078.14]</td><td>1.79 [1.78, 2.04]</td><td>14.83 [14.61, 14.89]</td><td>22.00 [22.00, 22.00]</td><td>35.00 [35.00, 35.00]</td><td>311.00 [309.00, 312.00]</td><td>N/A</td><td>3138.49 [3128.15, 3140.47]</td><td>0.00 [0.00, 0.00]</td><td>38.00 [37.00, 38.00]</td><td>22.00 [22.00, 22.00]</td><td>196.00 [196.00, 197.00]</td><td>256.00 [256.00, 256.00]</td><td>0.00 [0.00, 0.00]</td></tr><tr><td>SyntheticStalledPrelogin / 0 / w256-long</td><td>3</td><td>Pass: 0, Fail: 3, Insufficient: 0</td><td>2970.50 [2948.00, 4971.54]</td><td>2994.67 [94.70, 3016.15]</td><td>14.53 [14.50, 14.98]</td><td>21.00 [20.00, 21.00]</td><td>157.00 [156.00, 166.00]</td><td>242.00 [242.00, 243.00]</td><td>N/A</td><td>6953.71 [6151.20, 7454.66]</td><td>0.00 [0.00, 0.00]</td><td>240.00 [146.00, 240.00]</td><td>16.00 [16.00, 110.00]</td><td>0.00 [0.00, 0.00]</td><td>59.00 [58.00, 132.00]</td><td>0.00 [0.00, 0.00]</td></tr><tr><td>SyntheticStalledPrelogin / 0 / w32</td><td>3</td><td>Pass: 0, Fail: 3, Insufficient: 0</td><td>3055.79 [3048.87, 3079.89]</td><td>3102.43 [3095.60, 3127.30]</td><td>14.84 [14.77, 14.99]</td><td>20.00 [19.00, 21.00]</td><td>33.00 [32.00, 34.00]</td><td>86.00 [83.00, 89.00]</td><td>N/A</td><td>3131.94 [3121.30, 3149.58]</td><td>0.00 [0.00, 0.00]</td><td>32.00 [32.00, 32.00]</td><td>0.00 [0.00, 0.00]</td><td>0.00 [0.00, 0.00]</td><td>61.00 [61.00, 62.00]</td><td>0.00 [0.00, 0.00]</td></tr><tr><td>SyntheticStalledPrelogin / 0 / w64</td><td>3</td><td>Pass: 0, Fail: 3, Insufficient: 0</td><td>8012.41 [8002.70, 8028.04]</td><td>1.90 [1.85, 2.08]</td><td>14.59 [14.56, 14.80]</td><td>22.00 [22.00, 22.00]</td><td>35.00 [35.00, 35.00]</td><td>121.00 [117.00, 121.00]</td><td>N/A</td><td>3136.04 [3121.31, 3139.10]</td><td>0.00 [0.00, 0.00]</td><td>37.00 [37.00, 37.00]</td><td>22.00 [22.00, 22.00]</td><td>5.00 [5.00, 5.00]</td><td>256.00 [256.00, 256.00]</td><td>0.00 [0.00, 0.00]</td></tr><tr><td>SyntheticStalledPrelogin / 0 / w64-long</td><td>3</td><td>Pass: 3, Fail: 0, Insufficient: 0</td><td>2.39 [2.32, 6.85]</td><td>70.21 [64.66, 79.61]</td><td>14.66 [14.43, 14.89]</td><td>17.00 [17.00, 17.00]</td><td>93.00 [93.00, 93.00]</td><td>51.00 [51.00, 51.00]</td><td>N/A</td><td>3141.91 [3136.98, 3155.82]</td><td>0.00 [0.00, 0.00]</td><td>64.00 [64.00, 64.00]</td><td>0.00 [0.00, 0.00]</td><td>0.00 [0.00, 0.00]</td><td>0.00 [0.00, 0.00]</td><td>0.00 [0.00, 0.00]</td></tr><tr><td>SyntheticStalledPrelogin / 0 / w64-max16</td><td>3</td><td>Pass: 0, Fail: 0, Insufficient: 3</td><td>2.00 [1.76, 2.36]</td><td>2.00 [1.76, 2.36]</td><td>15.09 [14.64, 15.44]</td><td>16.00 [16.00, 16.00]</td><td>29.00 [29.00, 29.00]</td><td>121.00 [119.00, 123.00]</td><td>N/A</td><td>3133.53 [3128.53, 3135.44]</td><td>0.00 [0.00, 0.00]</td><td>32.00 [32.00, 32.00]</td><td>16.00 [16.00, 16.00]</td><td>16.00 [16.00, 16.00]</td><td>320.00 [320.00, 320.00]</td><td>0.00 [0.00, 0.00]</td></tr><tr><td>SyntheticStalledPrelogin / 0 / w64-max32</td><td>3</td><td>Pass: 0, Fail: 3, Insufficient: 0</td><td>8050.85 [7992.02, 8061.73]</td><td>2.34 [2.27, 2.40]</td><td>14.57 [14.50, 15.25]</td><td>22.00 [22.00, 22.00]</td><td>35.00 [35.00, 35.00]</td><td>116.00 [115.00, 117.00]</td><td>N/A</td><td>3133.63 [3127.72, 3138.99]</td><td>0.00 [0.00, 0.00]</td><td>38.00 [37.00, 38.00]</td><td>22.00 [22.00, 22.00]</td><td>4.00 [4.00, 5.00]</td><td>256.00 [256.00, 257.00]</td><td>0.00 [0.00, 0.00]</td></tr><tr><td>SyntheticStalledPrelogin / 0 / w64-min64</td><td>3</td><td>Pass: 0, Fail: 3, Insufficient: 0</td><td>895.74 [890.45, 907.28]</td><td>972.72 [968.73, 986.17]</td><td>14.82 [14.70, 14.93]</td><td>65.00 [65.00, 65.00]</td><td>78.00 [78.00, 78.00]</td><td>39.00 [39.00, 42.00]</td><td>N/A</td><td>3153.63 [3144.13, 3157.87]</td><td>0.00 [0.00, 0.00]</td><td>64.00 [64.00, 64.00]</td><td>0.00 [0.00, 0.00]</td><td>0.00 [0.00, 0.00]</td><td>0.00 [0.00, 0.00]</td><td>0.00 [0.00, 0.00]</td></tr><tr><td>SyntheticStalledPrelogin / 0 / w64-nonpooled</td><td>3</td><td>Pass: 3, Fail: 0, Insufficient: 0</td><td>0.88 [0.72, 4.68]</td><td>53.12 [43.61, 53.67]</td><td>14.83 [14.38, 15.19]</td><td>17.00 [17.00, 17.00]</td><td>48.00 [48.00, 50.00]</td><td>50.00 [50.00, 50.00]</td><td>N/A</td><td>6025.23 [6019.39, 6025.57]</td><td>0.00 [0.00, 0.00]</td><td>64.00 [64.00, 64.00]</td><td>0.00 [0.00, 0.00]</td><td>0.00 [0.00, 0.00]</td><td>0.00 [0.00, 0.00]</td><td>0.00 [0.00, 0.00]</td></tr><tr><td>SyntheticStalledPrelogin / 0 / w64-v1</td><td>3</td><td>Pass: 3, Fail: 0, Insufficient: 0</td><td>1.98 [1.30, 2.35]</td><td>73.34 [59.71, 84.21]</td><td>14.82 [14.62, 15.05]</td><td>16.00 [16.00, 16.00]</td><td>30.00 [30.00, 30.00]</td><td>51.00 [51.00, 51.00]</td><td>N/A</td><td>6126.75 [6114.03, 6128.06]</td><td>0.00 [0.00, 0.00]</td><td>2.00 [2.00, 2.00]</td><td>62.00 [62.00, 62.00]</td><td>0.00 [0.00, 0.00]</td><td>0.00 [0.00, 0.00]</td><td>0.00 [0.00, 0.00]</td></tr></tbody></table></div><h2>Reproduction</h2><p>See eng/pipelines/perf/openasync-health.md for exact commands, RTT conventions, health eligibility, and baseline/candidate acceptance criteria. Raw per-case JSON and manifests remain beside each summary CSV.</p></html>

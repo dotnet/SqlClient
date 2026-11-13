@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1060 432" role="img" aria-label="Authenticated SQL: fresh-process scheduler tail">
+<rect width="100%" height="100%" fill="white"/>
+<text x="15" y="23" font-size="18">Authenticated SQL: fresh-process scheduler tail</text>
+<text x="210" y="48" fill="#2563eb">Dispatch p99 (ms)</text>
+<path d="M355.3057259719273 57 V422" stroke="#dc2626" stroke-dasharray="4 4"/>
+<text x="359.3057259719273" y="62" fill="#dc2626">100 budget</text>
+<text x="10" y="85">w16 / RTT 0</text>
+<rect x="210" y="73" width="543.6606471953361" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M659.7024774444646 82 H783.5597705114018" stroke="#111" stroke-width="2"/>
+<text x="902" y="86">374.1 [309.5, 394.7]</text>
+<text x="10" y="123">w256 / RTT 0 *</text>
+<rect x="210" y="111" width="604.4089026638718" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M751.089607679989 120 H821.3521914737142" stroke="#111" stroke-width="2"/>
+<text x="902" y="124">416.0 [372.4, 420.7]</text>
+<text x="10" y="161">w64 / RTT 0 *</text>
+<rect x="210" y="149" width="572.1491425236662" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M770.1281451197347 158 H845.0532990484472" stroke="#111" stroke-width="2"/>
+<text x="902" y="162">393.8 [385.5, 437.0]</text>
+<text x="10" y="199">w64-long / RTT 0 *</text>
+<rect x="210" y="187" width="65.58214105444375" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M265.7491572721974 196 H277.39773610046313" stroke="#111" stroke-width="2"/>
+<text x="902" y="200">45.1 [38.4, 46.4]</text>
+<text x="10" y="237">w64-max16 / RTT 0 *</text>
+<rect x="210" y="225" width="599.3720249787808" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M786.8856732731731 234 H844.0871612764599" stroke="#111" stroke-width="2"/>
+<text x="902" y="238">412.5 [397.0, 436.4]</text>
+<text x="10" y="275">w64-min64 / RTT 0 *</text>
+<rect x="210" y="263" width="645.3482097335584" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M846.5845307887396 272 H857.6190476190476" stroke="#111" stroke-width="2"/>
+<text x="902" y="276">444.1 [438.1, 445.7]</text>
+<text x="10" y="313">w64-pool16 / RTT 0</text>
+<rect x="210" y="301" width="592.8865945114758" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M650.2051498892134 310 H819.6059072589837" stroke="#111" stroke-width="2"/>
+<text x="902" y="314">408.0 [303.0, 419.5]</text>
+<text x="10" y="351">w64-v1 / RTT 0 *</text>
+<rect x="210" y="339" width="8.742319003100935" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M210.67203898261963 348 H234.10738238455042" stroke="#111" stroke-width="2"/>
+<text x="902" y="352">6.0 [0.5, 16.6]</text>
+<text x="10" y="389">w64-warm / RTT 0 *</text>
+<rect x="210" y="377" width="136.65669324490025" height="16" fill="#2563eb" opacity=".75"/>
+<path d="M277.96166762295996 386 H367.13303084313833" stroke="#111" stroke-width="2"/>
+<text x="902" y="390">94.0 [46.8, 108.1]</text>
+<text x="10" y="428" font-size="11">* Missing/missed probes in one or more runs: a low bar alone is not a pass.</text>
+</svg>

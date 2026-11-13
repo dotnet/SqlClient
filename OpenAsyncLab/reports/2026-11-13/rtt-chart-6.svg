@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1300 565" role="img" aria-label="First open per worker: successful samples">
+<rect width="100%" height="100%" fill="white"/>
+<text x="12" y="25" font-size="18">First open per worker: successful samples</text>
+<text x="12" y="48">Cell value: First successful OpenAsync p99 (ms, inside worker) - median of the per-run values across repetitions.</text>
+<text x="12" y="68">* = incomplete probe coverage in at least one run; n = repetitions.</text>
+<rect x="12" y="80" width="14" height="14" fill="#eef2f7" stroke="#999"/>
+<text x="34" y="91">Gray: descriptive metric only; not a scheduler-health verdict</text>
+<text x="460" y="152">0 ms RTT</text>
+<text x="625" y="152">20 ms RTT</text>
+<text x="790" y="152">50 ms RTT</text>
+<text x="955" y="152">100 ms RTT</text>
+<text x="1120" y="152">200 ms RTT</text>
+<text x="10" y="180">Pooled V2 | 64 workers</text><text x="10" y="197">Cold process / empty pool | Pool max 100</text><text x="10" y="214">TP min/max 16/32767 | Open/query/close</text>
+<rect class="metric-cell" x="450" y="160" width="161" height="68" fill="#eef2f7"/>
+<text x="462" y="189" font-size="18">726.2</text>
+<text x="462" y="210" font-size="11">n=3</text>
+<rect class="metric-cell" x="615" y="160" width="161" height="68" fill="#eef2f7"/>
+<text x="627" y="189" font-size="18">1275.0 *</text>
+<text x="627" y="210" font-size="11">n=3</text>
+<rect class="metric-cell" x="780" y="160" width="161" height="68" fill="#eef2f7"/>
+<text x="792" y="189" font-size="18">924.5 *</text>
+<text x="792" y="210" font-size="11">n=3</text>
+<rect class="metric-cell" x="945" y="160" width="161" height="68" fill="#eef2f7"/>
+<text x="957" y="189" font-size="18">1310.5 *</text>
+<text x="957" y="210" font-size="11">n=3</text>
+<rect class="metric-cell" x="1110" y="160" width="161" height="68" fill="#eef2f7"/>
+<text x="1122" y="189" font-size="18">1696.2 *</text>
+<text x="1122" y="210" font-size="11">n=3</text>
+<text x="10" y="252">Pooled V2 | 256 workers</text><text x="10" y="269">Cold process / empty pool | Pool max 100</text><text x="10" y="286">TP min/max 16/32767 | Open/query/close</text>
+<rect class="metric-cell" x="450" y="232" width="161" height="68" fill="#eef2f7"/>
+<text x="462" y="261" font-size="18">718.5 *</text>
+<text x="462" y="282" font-size="11">n=3</text>
+<rect class="metric-cell" x="615" y="232" width="161" height="68" fill="#eef2f7"/>
+<text x="627" y="261" font-size="18">757.9 *</text>
+<text x="627" y="282" font-size="11">n=3</text>
+<rect class="metric-cell" x="780" y="232" width="161" height="68" fill="#eef2f7"/>
+<text x="792" y="261" font-size="18">947.5 *</text>
+<text x="792" y="282" font-size="11">n=3</text>
+<rect class="metric-cell" x="945" y="232" width="161" height="68" fill="#eef2f7"/>
+<text x="957" y="261" font-size="18">1207.8 *</text>
+<text x="957" y="282" font-size="11">n=3</text>
+<rect class="metric-cell" x="1110" y="232" width="161" height="68" fill="#eef2f7"/>
+<text x="1122" y="261" font-size="18">1644.3 *</text>
+<text x="1122" y="282" font-size="11">n=3</text>
+<text x="10" y="324">Pooled V2 | 64 workers | LongRunning</text><text x="10" y="341">Cold process / empty pool | Pool max 100</text><text x="10" y="358">TP min/max 16/32767 | Open/query/close</text>
+<rect class="metric-cell" x="450" y="304" width="161" height="68" fill="#eef2f7"/>
+<text x="462" y="333" font-size="18">2222.3</text>
+<text x="462" y="354" font-size="11">n=3</text>
+<rect class="metric-cell" x="615" y="304" width="161" height="68" fill="#eef2f7"/>
+<text x="627" y="333" font-size="18">2162.1 *</text>
+<text x="627" y="354" font-size="11">n=3</text>
+<rect class="metric-cell" x="780" y="304" width="161" height="68" fill="#eef2f7"/>
+<text x="792" y="333" font-size="18">2164.0</text>
+<text x="792" y="354" font-size="11">n=3</text>
+<rect class="metric-cell" x="945" y="304" width="161" height="68" fill="#eef2f7"/>
+<text x="957" y="333" font-size="18">2431.4</text>
+<text x="957" y="354" font-size="11">n=3</text>
+<rect class="metric-cell" x="1110" y="304" width="161" height="68" fill="#eef2f7"/>
+<text x="1122" y="333" font-size="18">2912.4</text>
+<text x="1122" y="354" font-size="11">n=3</text>
+<text x="10" y="396">Pooled V2 | 256 workers | LongRunning</text><text x="10" y="413">Cold process / empty pool | Pool max 100</text><text x="10" y="430">TP min/max 16/32767 | Open/query/close</text>
+<rect class="metric-cell" x="450" y="376" width="161" height="68" fill="#eef2f7"/>
+<text x="462" y="405" font-size="18">2873.7 *</text>
+<text x="462" y="426" font-size="11">n=3</text>
+<rect class="metric-cell" x="615" y="376" width="161" height="68" fill="#eef2f7"/>
+<text x="627" y="405" font-size="18">2938.6 *</text>
+<text x="627" y="426" font-size="11">n=3</text>
+<rect class="metric-cell" x="780" y="376" width="161" height="68" fill="#eef2f7"/>
+<text x="792" y="405" font-size="18">3172.7</text>
+<text x="792" y="426" font-size="11">n=3</text>
+<rect class="metric-cell" x="945" y="376" width="161" height="68" fill="#eef2f7"/>
+<text x="957" y="405" font-size="18">3379.5</text>
+<text x="957" y="426" font-size="11">n=3</text>
+<rect class="metric-cell" x="1110" y="376" width="161" height="68" fill="#eef2f7"/>
+<text x="1122" y="405" font-size="18">3813.8</text>
+<text x="1122" y="426" font-size="11">n=3</text>
+<text x="10" y="468">Non-pooled | 64 workers</text><text x="10" y="485">Cold process</text><text x="10" y="502">TP min/max 16/32767 | Open/query/close</text>
+<rect class="metric-cell" x="450" y="448" width="161" height="68" fill="#eef2f7"/>
+<text x="462" y="477" font-size="18">2077.1 *</text>
+<text x="462" y="498" font-size="11">n=3</text>
+<rect class="metric-cell" x="615" y="448" width="161" height="68" fill="#eef2f7"/>
+<text x="627" y="477" font-size="18">1908.8</text>
+<text x="627" y="498" font-size="11">n=3</text>
+<rect class="metric-cell" x="780" y="448" width="161" height="68" fill="#eef2f7"/>
+<text x="792" y="477" font-size="18">2455.4</text>
+<text x="792" y="498" font-size="11">n=3</text>
+<rect class="metric-cell" x="945" y="448" width="161" height="68" fill="#eef2f7"/>
+<text x="957" y="477" font-size="18">3639.1</text>
+<text x="957" y="498" font-size="11">n=3</text>
+<rect class="metric-cell" x="1110" y="448" width="161" height="68" fill="#eef2f7"/>
+<text x="1122" y="477" font-size="18">5500.7</text>
+<text x="1122" y="498" font-size="11">n=3</text>
+<text x="12" y="553">RTT is added delay; 100 ms RTT = 50 ms per direction.</text>
+</svg>
