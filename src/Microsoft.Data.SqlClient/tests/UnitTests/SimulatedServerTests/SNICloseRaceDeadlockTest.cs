@@ -127,6 +127,7 @@ public class SNICloseRaceDeadlockTest
             try
             {
                 connection.Open();
+                trace.SetConnection(connection.ClientConnectionId);
 
                 command = new("SELECT 1", connection);
                 readTask = command.ExecuteReaderAsync();
@@ -147,6 +148,7 @@ public class SNICloseRaceDeadlockTest
                     () =>
                     {
                         gate.SignalAndWait();
+                        trace.SetCloseThread();
                         if (disposeInsteadOfClose)
                         {
                             connection.Dispose();
@@ -209,6 +211,21 @@ public class SNICloseRaceDeadlockTest
     private sealed class CloseTraceListener : EventListener
     {
         private readonly ConcurrentQueue<string> _messages = new();
+        private readonly ConcurrentQueue<string> _closeMessages = new();
+        private string? _connectionId;
+        private int _closeThreadId;
+
+        /// <summary>
+        /// Selects the physical connection without retaining traffic from parallel tests.
+        /// </summary>
+        public void SetConnection(Guid connectionId) =>
+            Volatile.Write(ref _connectionId, connectionId.ToString());
+
+        /// <summary>
+        /// Preserves teardown progress even when its events omit a connection identity.
+        /// </summary>
+        public void SetCloseThread() =>
+            Volatile.Write(ref _closeThreadId, Environment.CurrentManagedThreadId);
 
         /// <summary>
         /// Enables flow and managed-network tracing for the loopback connection.
@@ -228,11 +245,26 @@ public class SNICloseRaceDeadlockTest
         {
             if (eventData.Payload is not null)
             {
-                _messages.Enqueue(
-                    $"{Environment.CurrentManagedThreadId}: {string.Join(" | ", eventData.Payload)}");
-                while (_messages.Count > 128)
+                int threadId = Environment.CurrentManagedThreadId;
+                string message = string.Join(" | ", eventData.Payload);
+                ConcurrentQueue<string>? messages = null;
+                if (threadId == Volatile.Read(ref _closeThreadId))
                 {
-                    _messages.TryDequeue(out _);
+                    messages = _closeMessages;
+                }
+                else if (Volatile.Read(ref _connectionId) is string connectionId &&
+                    message.IndexOf(connectionId, StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    messages = _messages;
+                }
+
+                if (messages is not null)
+                {
+                    messages.Enqueue($"{DateTime.UtcNow:O} [{threadId}]: {message}");
+                    while (messages.Count > 128)
+                    {
+                        messages.TryDequeue(out _);
+                    }
                 }
             }
         }
@@ -240,6 +272,10 @@ public class SNICloseRaceDeadlockTest
         /// <summary>
         /// Supplies the captured progress to the close watchdog assertion.
         /// </summary>
-        public override string ToString() => string.Join(Environment.NewLine, _messages);
+        public override string ToString() =>
+            "Close thread:" + Environment.NewLine +
+            string.Join(Environment.NewLine, _closeMessages) + Environment.NewLine +
+            "Connection callbacks:" + Environment.NewLine +
+            string.Join(Environment.NewLine, _messages);
     }
 }
