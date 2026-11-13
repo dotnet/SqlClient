@@ -23,14 +23,36 @@ public class CommandCancellationTests
     private static readonly TimeSpan WatchdogTimeout = TimeSpan.FromSeconds(30);
 
     /// <summary>
-    /// A partial INFO response must not prevent any async command API from sending ATTENTION.
+    /// A partial INFO response must not prevent reader execution from sending ATTENTION.
     /// </summary>
-    [Theory]
-    [InlineData(nameof(SqlCommand.ExecuteReaderAsync))]
-    [InlineData(nameof(SqlCommand.ExecuteNonQueryAsync))]
-    [InlineData(nameof(SqlCommand.ExecuteXmlReaderAsync))]
-    public async Task PartialResponse_CancellationSendsAttention(string executeMethod)
+    [Fact]
+    public Task ExecuteReaderAsync_PartialResponse_CancellationSendsAttention() =>
+        AssertCancellationSendsAttentionAsync(
+            static (command, token) => command.ExecuteReaderAsync(token));
+
+    /// <summary>
+    /// A partial INFO response must not prevent nonquery execution from sending ATTENTION.
+    /// </summary>
+    [Fact]
+    public Task ExecuteNonQueryAsync_PartialResponse_CancellationSendsAttention() =>
+        AssertCancellationSendsAttentionAsync(
+            static (command, token) => command.ExecuteNonQueryAsync(token));
+
+    /// <summary>
+    /// A partial INFO response must not prevent XML reader execution from sending ATTENTION.
+    /// </summary>
+    [Fact]
+    public Task ExecuteXmlReaderAsync_PartialResponse_CancellationSendsAttention() =>
+        AssertCancellationSendsAttentionAsync(
+            static (command, token) => command.ExecuteXmlReaderAsync(token));
+
+    /// <summary>
+    /// Exercises partial-response cancellation through the supplied async command API.
+    /// </summary>
+    private static async Task AssertCancellationSendsAttentionAsync(
+        Func<SqlCommand, CancellationToken, Task> execute)
     {
+        // Arrange
         using PartialResponseServer server = new();
         server.Start();
 
@@ -62,14 +84,9 @@ public class CommandCancellationTests
         try
         {
             await connection.OpenAsync();
-            executeTask = executeMethod switch
-            {
-                nameof(SqlCommand.ExecuteReaderAsync) => command.ExecuteReaderAsync(cts.Token),
-                nameof(SqlCommand.ExecuteNonQueryAsync) => command.ExecuteNonQueryAsync(cts.Token),
-                nameof(SqlCommand.ExecuteXmlReaderAsync) =>
-                    command.ExecuteXmlReaderAsync(cts.Token),
-                _ => throw new ArgumentOutOfRangeException(nameof(executeMethod))
-            };
+
+            // Act
+            executeTask = execute(command, cts.Token);
 
             await CompleteWithinAsync(partialResponse.Task, "Partial response");
             Assert.False(executeTask.IsCompleted,
@@ -79,6 +96,7 @@ public class CommandCancellationTests
             await CompleteWithinAsync(server.AttentionReceived.Task, "ATTENTION reception");
             await CompleteWithinAsync(cancelTask, "Cancellation callbacks");
 
+            // Assert
             Exception? exception = await Record.ExceptionAsync(
                 () => CompleteWithinAsync(executeTask, "Command completion"));
             Assert.True(exception is OperationCanceledException or SqlException,
@@ -90,6 +108,7 @@ public class CommandCancellationTests
         }
         finally
         {
+            // Cleanup
             // Closing the peer unblocks reads even if the cancellation monitor regresses.
             server.Dispose();
             if (executeTask is not null)
@@ -130,7 +149,10 @@ public class CommandCancellationTests
             ITDSServerSession session, TDSMessage message) =>
             new(new TDSMessage(TDSMessageType.Response,
                 new TDSInfoToken(50000, 1, 10, PartialResult, "test"),
-                new TDSDoneToken(TDSDoneTokenStatusType.More)));
+                new TDSDoneToken(TDSDoneTokenStatusType.More))
+            {
+                IsEndOfMessage = false
+            });
 
         /// <summary>
         /// Records the actual ATTENTION request before returning the standard attention DONE token.

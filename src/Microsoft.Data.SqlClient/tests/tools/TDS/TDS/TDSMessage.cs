@@ -29,6 +29,11 @@ namespace Microsoft.SqlServer.TDS
         public TDSMessageType MessageType { get; private set; }
 
         /// <summary>
+        /// Whether deflation completes the message or leaves it open for a later response fragment.
+        /// </summary>
+        public bool IsEndOfMessage { get; set; } = true;
+
+        /// <summary>
         /// Collection of packet statuses
         /// </summary>
         public List<TDSPacketStatus> PacketStatuses { get; private set; }
@@ -139,7 +144,14 @@ namespace Microsoft.SqlServer.TDS
             }
 
             // Complete the message
-            stream.EndMessage();
+            if (IsEndOfMessage)
+            {
+                stream.EndMessage();
+            }
+            else
+            {
+                stream.EndMessage(false);
+            }
         }
 
         /// <summary>

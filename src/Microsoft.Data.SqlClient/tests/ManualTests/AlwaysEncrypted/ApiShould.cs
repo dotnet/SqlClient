@@ -2430,11 +2430,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         /// server is busy, and cancellation is handled out in ExecuteReaderAsync's await, which
         /// passes whether or not the internal-end path holds lock (_stateObj).
         ///
-        /// Flushing a partial result before the delay is what exposes the retained lock:
-        /// localCompletion completes on that first packet, the continuation enters endFunc while
-        /// holding the monitor, and blocks reading the rest. TdsParserStateObject.Cancel() needs
-        /// that same monitor to send the attention signal, so cancellation is silently dropped
-        /// and ExecuteReaderAsync returns a reader once WAITFOR expires.
+        /// Flushing a partial result before the delay exposes the original locking regression:
+        /// localCompletion completes on that first packet and endFunc blocks reading the rest.
+        /// It must not hold the state-object monitor because TdsParserStateObject.Cancel() needs
+        /// that monitor to send ATTENTION.
         /// </summary>
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
         [ClassData(typeof(AEConnectionStringProvider))]
@@ -2521,8 +2520,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                         Assert.False(readerReturned,
                             $"ExecuteReaderAsync returned a reader {latency}ms after cancellation was requested. " +
-                            "The retained lock (_stateObj) in CreateLocalCompletionTask blocked " +
-                            "TdsParserStateObject.Cancel() from sending the attention signal.");
+                            "Cancellation did not interrupt the internal-end completion path.");
                         Assert.NotNull(caughtException);
                         // Fail loudly if the InfoMessage never arrived: without it we silently
                         // degrade to a fixed-timer cancellation and no longer prove that

@@ -416,8 +416,8 @@ END";
         public static async Task CancellationOnInternalEndExecutePath_SendsAttention()
         {
             // Partial results must arrive before the blocking statement. That is what completes
-            // localCompletion early and gets the internal-end continuation into the monitor while
-            // the server is still busy.
+            // localCompletion early and starts the internal-end continuation while the server is
+            // still busy.
             const string query = @"
 RAISERROR('partial result', 10, 1) WITH NOWAIT;
 WAITFOR DELAY '00:01:00';
@@ -444,7 +444,7 @@ SELECT 1 AS Result;";
                         Task<SqlDataReader> execTask = command.ExecuteReaderAsync(cts.Token);
 
                         // Let the RAISERROR NOWAIT packet land so the internal-end continuation is
-                        // inside endFunc, and therefore inside lock (_stateObj), before we cancel.
+                        // inside endFunc before we cancel. It must not hold the state-object lock.
                         await Task.WhenAny(infoMessageReceived.Task, Task.Delay(System.TimeSpan.FromSeconds(10)));
 
                         long cancelledAtMs = stopwatch.ElapsedMilliseconds;
