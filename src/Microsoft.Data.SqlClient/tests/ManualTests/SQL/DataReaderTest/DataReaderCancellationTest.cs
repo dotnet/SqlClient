@@ -134,6 +134,7 @@ from ThousandRows as A, ThousandRows as B, ThousandRows as C;";
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static async Task CancellationSendsAttention_WhenPartialResultsReceived()
         {
+            // Arrange
             // Severity 10 informational message flushed via NOWAIT sends a partial TDS
             // response, then WAITFOR blocks for 60s. Cancellation should send attention
             // and abort within seconds.
@@ -142,8 +143,12 @@ RAISERROR('partial result', 10, 1) WITH NOWAIT;
 WAITFOR DELAY '00:01:00';
 SELECT 1 AS Result;";
 
-            using (var cts = new CancellationTokenSource())
-            using (var connection = DataTestUtility.CreateConnection())
+            using var cts = new CancellationTokenSource();
+            var connection = DataTestUtility.CreateConnection();
+            Task<SqlDataReader> execTask = null;
+            Task cancelTask = null;
+
+            try
             {
                 await connection.OpenAsync();
 
@@ -162,11 +167,12 @@ SELECT 1 AS Result;";
                     // cancellation from a separate thread once the query is in flight.
                     // The 60-second WAITFOR gives a wide window during which
                     // cancellation must send a TDS attention signal to the server.
-                    Task<SqlDataReader> execTask = command.ExecuteReaderAsync(cts.Token);
+                    // Act
+                    execTask = command.ExecuteReaderAsync(cts.Token);
 
                     // Cancel only after the server has flushed the RAISERROR NOWAIT packet so we know we're in the
                     // "partial results received" state that regressed in #4424.
-                    Task cancelTask = Task.Run(async () =>
+                    cancelTask = Task.Run(async () =>
                     {
                         await Task.WhenAny(infoMessageReceived.Task, Task.Delay(System.TimeSpan.FromSeconds(10)));
                         await CancelWithoutBlockingAsync(cts, "partial results received");
@@ -177,6 +183,7 @@ SELECT 1 AS Result;";
                     System.Exception caughtException = null;
                     try
                     {
+                        await WaitWithoutBlockingAsync(execTask, "ExecuteReaderAsync cancellation");
                         using (var reader = await execTask)
                         {
                             // If we reach here, cancellation failed to abort ExecuteReaderAsync while it was waiting
@@ -197,6 +204,7 @@ SELECT 1 AS Result;";
                     await cancelTask;
                     stopwatch.Stop();
 
+                    // Assert
                     Assert.NotNull(caughtException);
                     // Fail loudly if the InfoMessage never arrived: without it we silently
                     // degrade to a fixed-timer cancellation and no longer prove that
@@ -215,6 +223,21 @@ SELECT 1 AS Result;";
                         "Attention signal may not have been sent to the server.");
                 }
             }
+            finally
+            {
+                // Cleanup
+                if (execTask is not null)
+                {
+                    ObserveWhenComplete(execTask);
+                }
+
+                if (cancelTask is not null)
+                {
+                    ObserveWhenComplete(cancelTask);
+                }
+
+                await DisposeWithoutBlockingAsync(connection);
+            }
         }
 
         /// <summary>
@@ -227,12 +250,17 @@ SELECT 1 AS Result;";
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static async Task CancellationDuringExecuteReaderAsync_SendsAttention()
         {
+            // Arrange
             // WAITFOR as the first statement means no metadata is returned until it
             // completes. ExecuteReaderAsync will be blocked in the async completion path.
             const string query = "WAITFOR DELAY '00:01:00'; SELECT 1 AS Result;";
 
-            using (var cts = new CancellationTokenSource())
-            using (var connection = DataTestUtility.CreateConnection())
+            using var cts = new CancellationTokenSource();
+            var connection = DataTestUtility.CreateConnection();
+            Task<SqlDataReader> execTask = null;
+            Task cancelTask = null;
+
+            try
             {
                 await connection.OpenAsync();
 
@@ -245,13 +273,14 @@ SELECT 1 AS Result;";
                     // cancellation from a separate thread once the query is in flight.
                     // WAITFOR as the first statement blocks for 60s, giving a wide
                     // window during which cancellation must send TDS attention.
-                    Task<SqlDataReader> execTask = command.ExecuteReaderAsync(cts.Token);
+                    // Act
+                    execTask = command.ExecuteReaderAsync(cts.Token);
 
                     // Cancel from another thread after briefly yielding to ensure the
                     // async operation has been dispatched and reached the server-side
                     // WAITFOR. This avoids the flakiness of a preemptive timer that
                     // could fire before the query is actually in flight.
-                    Task cancelTask = Task.Run(async () =>
+                    cancelTask = Task.Run(async () =>
                     {
                         await Task.Delay(System.TimeSpan.FromMilliseconds(500));
                         await CancelWithoutBlockingAsync(cts, "WAITFOR before any results");
@@ -262,6 +291,7 @@ SELECT 1 AS Result;";
                     {
                         // ExecuteReaderAsync should be cancelled via attention before
                         // a reader is ever returned.
+                        await WaitWithoutBlockingAsync(execTask, "ExecuteReaderAsync cancellation");
                         using (var reader = await execTask)
                         {
                             // If we reach here, cancellation failed to abort ExecuteReaderAsync.
@@ -280,6 +310,7 @@ SELECT 1 AS Result;";
                     await cancelTask;
                     stopwatch.Stop();
 
+                    // Assert
                     Assert.NotNull(caughtException);
                     Assert.True(cts.IsCancellationRequested,
                         "CancellationTokenSource was not cancelled; exception may be unrelated to cancellation.");
@@ -287,6 +318,21 @@ SELECT 1 AS Result;";
                         $"Cancellation took {stopwatch.ElapsedMilliseconds}ms, expected < 30000ms. " +
                         "Attention signal may not have been sent during ExecuteReaderAsync.");
                 }
+            }
+            finally
+            {
+                // Cleanup
+                if (execTask is not null)
+                {
+                    ObserveWhenComplete(execTask);
+                }
+
+                if (cancelTask is not null)
+                {
+                    ObserveWhenComplete(cancelTask);
+                }
+
+                await DisposeWithoutBlockingAsync(connection);
             }
         }
 
@@ -432,6 +478,7 @@ END";
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsForceInternalEndQuerySupported))]
         public static async Task CancellationOnInternalEndExecutePath_SendsAttention()
         {
+            // Arrange
             // Partial results must arrive before the blocking statement. That is what completes
             // localCompletion early and starts the internal-end continuation while the server is
             // still busy.
@@ -440,11 +487,13 @@ RAISERROR('partial result', 10, 1) WITH NOWAIT;
 WAITFOR DELAY '00:01:00';
 SELECT 1 AS Result;";
 
-            CommandHelper.s_forceInternalEndQuery.SetValue(null, true);
-            try
+            using (var cts = new CancellationTokenSource())
             {
-                using (var cts = new CancellationTokenSource())
-                using (var connection = DataTestUtility.CreateConnection())
+                var connection = DataTestUtility.CreateConnection();
+                Task<SqlDataReader> execTask = null;
+                CommandHelper.s_forceInternalEndQuery.SetValue(null, true);
+
+                try
                 {
                     await connection.OpenAsync();
 
@@ -457,8 +506,9 @@ SELECT 1 AS Result;";
                         var infoMessageReceived = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
                         connection.InfoMessage += (_, __) => infoMessageReceived.TrySetResult(true);
 
+                        // Act
                         Stopwatch stopwatch = Stopwatch.StartNew();
-                        Task<SqlDataReader> execTask = command.ExecuteReaderAsync(cts.Token);
+                        execTask = command.ExecuteReaderAsync(cts.Token);
 
                         // Let the RAISERROR NOWAIT packet land so the internal-end continuation is
                         // inside endFunc before we cancel. It must not hold the state-object lock.
@@ -471,6 +521,7 @@ SELECT 1 AS Result;";
                         bool readerReturned = false;
                         try
                         {
+                            await WaitWithoutBlockingAsync(execTask, "ExecuteReaderAsync cancellation");
                             using (var reader = await execTask)
                             {
                                 readerReturned = true;
@@ -488,6 +539,7 @@ SELECT 1 AS Result;";
                         stopwatch.Stop();
                         long latency = stopwatch.ElapsedMilliseconds - cancelledAtMs;
 
+                        // Assert
                         Assert.False(readerReturned,
                             $"ExecuteReaderAsync returned a reader {latency}ms after cancellation was requested. " +
                             "The internal-end path held lock (_stateObj) across a blocking read, so " +
@@ -504,10 +556,17 @@ SELECT 1 AS Result;";
                             "Attention signal was not delivered on the internal-end path.");
                     }
                 }
-            }
-            finally
-            {
-                CommandHelper.s_forceInternalEndQuery.SetValue(null, false);
+                finally
+                {
+                    // Cleanup
+                    CommandHelper.s_forceInternalEndQuery.SetValue(null, false);
+                    if (execTask is not null)
+                    {
+                        ObserveWhenComplete(execTask);
+                    }
+
+                    await DisposeWithoutBlockingAsync(connection);
+                }
             }
         }
 
@@ -522,6 +581,7 @@ SELECT 1 AS Result;";
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static async Task CancellationDuringExecuteXmlReaderAsync_SendsAttention()
         {
+            // Arrange
             // RAISERROR ... WITH NOWAIT flushes a packet before WAITFOR blocks, which is the
             // partial-results state that regressed in #4424. FOR XML RAW makes the batch valid
             // for ExecuteXmlReaderAsync (FOR XML AUTO would require a table in the FROM clause).
@@ -530,8 +590,11 @@ RAISERROR('partial result', 10, 1) WITH NOWAIT;
 WAITFOR DELAY '00:01:00';
 SELECT 1 AS Result FOR XML RAW;";
 
-            using (var cts = new CancellationTokenSource())
-            using (var connection = DataTestUtility.CreateConnection())
+            using var cts = new CancellationTokenSource();
+            var connection = DataTestUtility.CreateConnection();
+            Task<System.Xml.XmlReader> execTask = null;
+
+            try
             {
                 await connection.OpenAsync();
 
@@ -544,8 +607,9 @@ SELECT 1 AS Result FOR XML RAW;";
                     var infoMessageReceived = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
                     connection.InfoMessage += (_, __) => infoMessageReceived.TrySetResult(true);
 
+                    // Act
                     Stopwatch stopwatch = Stopwatch.StartNew();
-                    Task<System.Xml.XmlReader> execTask = command.ExecuteXmlReaderAsync(cts.Token);
+                    execTask = command.ExecuteXmlReaderAsync(cts.Token);
 
                     await Task.WhenAny(infoMessageReceived.Task, Task.Delay(System.TimeSpan.FromSeconds(10)));
 
@@ -556,6 +620,7 @@ SELECT 1 AS Result FOR XML RAW;";
                     bool readerReturned = false;
                     try
                     {
+                        await WaitWithoutBlockingAsync(execTask, "ExecuteXmlReaderAsync cancellation");
                         using (System.Xml.XmlReader reader = await execTask)
                         {
                             readerReturned = true;
@@ -573,6 +638,7 @@ SELECT 1 AS Result FOR XML RAW;";
                     stopwatch.Stop();
                     long latency = stopwatch.ElapsedMilliseconds - cancelledAtMs;
 
+                    // Assert
                     Assert.False(readerReturned,
                         $"ExecuteXmlReaderAsync returned a reader {latency}ms after cancellation was requested. " +
                         "The attention signal was not delivered on the XML path.");
@@ -586,6 +652,16 @@ SELECT 1 AS Result FOR XML RAW;";
                         $"Cancellation took {latency}ms, expected < 30000ms. " +
                         "Attention signal may not have been sent during ExecuteXmlReaderAsync.");
                 }
+            }
+            finally
+            {
+                // Cleanup
+                if (execTask is not null)
+                {
+                    ObserveWhenComplete(execTask);
+                }
+
+                await DisposeWithoutBlockingAsync(connection);
             }
         }
     }
