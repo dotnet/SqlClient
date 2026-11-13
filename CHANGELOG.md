@@ -6,6 +6,175 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 > **Note:** Releases are sorted in reverse chronological order (newest first).
 
+## [Stable Release 7.1.2] - 2026-11-12
+
+This servicing release includes the following changes since 7.1.1.
+The driver and its four companion packages use version `7.1.2` and retain
+`AssemblyVersion 7.0.0.0`.
+
+### Changed
+
+- Updated dependency minimums to address
+  [CVE-2026-84008](https://github.com/advisories/GHSA-846f-f764-76mx):
+  `System.Security.Cryptography.Pkcs` is now `8.0.2` for net462, net8.0, and netstandard2.0.
+  For net9.0, `Microsoft.Bcl.Cryptography`, `Microsoft.Extensions.Caching.Memory`,
+  `System.Configuration.ConfigurationManager`, `System.Security.Cryptography.Pkcs`, and
+  `System.Threading.RateLimiting` are now `9.0.21`.
+  ([#4842](https://github.com/dotnet/SqlClient/pull/4842),
+  [#4862](https://github.com/dotnet/SqlClient/pull/4862))
+
+- Added user-agent Driver Properties bits for the configured
+  `Switch.Microsoft.Data.SqlClient.UseCompatibilityAsyncBehaviour` (`0x2`) and
+  `Switch.Microsoft.Data.SqlClient.UseCompatibilityProcessSni` (`0x4`) settings.
+  These report configured values independently of the parser's effective override;
+  async behavior and switch defaults are unchanged.
+  ([#4912](https://github.com/dotnet/SqlClient/pull/4912))
+
+### Fixed
+
+- Fixed managed SNI certificate validation to enforce an explicitly configured
+  `HostNameInCertificate`, even when the certificate matches the connection's server name.
+  When hostname validation is required, the configured name is the expected name;
+  a mismatch now fails the TLS handshake. Certificate-chain checks and explicit
+  `ServerCertificate` matching are unchanged. (net8.0/net9.0 only, managed SNI)
+  ([#4907](https://github.com/dotnet/SqlClient/pull/4907))
+
+- Isolated Always Encrypted enclave-session cache entries by attestation protocol so a session
+  established under one protocol cannot be reused by a connection requesting another.
+  ([#4866](https://github.com/dotnet/SqlClient/pull/4866))
+
+- Fixed unobserved receive-continuation exceptions when a managed SNI connection is closed
+  while Multiple Active Result Sets (MARS) is still receiving. Pending reads are notified
+  through the existing network-error path, and receive packets are released correctly.
+  (net8.0/net9.0 only, managed SNI)
+  ([#4679](https://github.com/dotnet/SqlClient/issues/4679),
+  [#4951](https://github.com/dotnet/SqlClient/pull/4951))
+
+- Fixed `SqlDataReader.HasRows` incorrectly returning `false` when multiple informational
+  messages precede the first row. The first row remains available to `Read`/`ReadAsync`,
+  and existing informational-message delivery timing is preserved.
+  ([#4900](https://github.com/dotnet/SqlClient/pull/4900))
+
+- Fixed statistics timer bookkeeping throwing `InvalidOperationException` with
+  "Nullable object must have a value" when a concurrent timer release clears its timestamp.
+  This can affect statistics-enabled or diagnostic-instrumented operations; it does not
+  make concurrent use of a connection or MARS thread-safe.
+  ([#4778](https://github.com/dotnet/SqlClient/issues/4778),
+  [#4895](https://github.com/dotnet/SqlClient/pull/4895))
+
+- Fixed corrupted `nvarchar` text from `SqlDataReader.GetTextReader` with
+  `CommandBehavior.SequentialAccess` on big-endian platforms. Decoding now preserves the
+  source bytes, partial-read offsets, and raw UTF-16 code units.
+  ([#4961](https://github.com/dotnet/SqlClient/pull/4961))
+
+- Fixed `SqlConnection.Open`/`OpenAsync` throwing `IndexOutOfRangeException` for malformed
+  PRELOGIN option offsets or lengths. Invalid headers, option sizes, and total response sizes
+  now produce the existing corrupted-stream parsing error. Nonconforming server or proxy
+  responses that previously escaped these checks are rejected.
+  ([#4977](https://github.com/dotnet/SqlClient/pull/4977))
+
+- Fixed malformed row, alternate-result, and authentication responses being processed without
+  their required metadata or authentication state. These responses now produce a corrupted-stream
+  parsing error and invalidate the physical connection so it cannot return to the pool.
+  Valid SQL Server result processing is unchanged.
+  ([#4983](https://github.com/dotnet/SqlClient/pull/4983))
+
+- Fixed eager initialization of Windows native SNI on non-Windows platforms, preventing
+  `TypeInitializationException`/`DllNotFoundException` when managed networking is selected.
+  (net8.0/net9.0 on Unix only)
+  ([#4770](https://github.com/dotnet/SqlClient/pull/4770))
+
+### Companion packages
+
+- Released [Microsoft.Data.SqlClient.Extensions.Azure 7.1.2](release-notes/Extensions/Azure/7.1/7.1.2.md)
+  with actionable Windows WAM missing-parent-window guidance for windowless hosts.
+- Released [Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 7.1.2](release-notes/add-ons/AzureKeyVaultProvider/7.1/7.1.2.md),
+  [Microsoft.Data.SqlClient.Extensions.Abstractions 7.1.2](release-notes/Extensions/Abstractions/7.1/7.1.2.md),
+  and [Microsoft.Data.SqlClient.Internal.Logging 7.1.2](release-notes/Internal/Logging/7.1/7.1.2.md)
+  for version alignment only, with no functional or API changes.
+
+## [Stable Release 7.0.4] - 2026-11-12
+
+This servicing release includes the following changes since 7.0.3.
+The driver and its four companion packages use version `7.0.4` and retain
+`AssemblyVersion 7.0.0.0`.
+
+### Changed
+
+- Updated dependency minimums to address
+  [CVE-2026-84008](https://github.com/advisories/GHSA-846f-f764-76mx):
+  `System.Security.Cryptography.Pkcs` is now `8.0.2` for net462, net8.0, and netstandard2.0.
+  For net9.0, `Microsoft.Bcl.Cryptography`, `Microsoft.Extensions.Caching.Memory`,
+  `System.Configuration.ConfigurationManager`, and `System.Security.Cryptography.Pkcs`
+  are now `9.0.21`.
+  ([#4869](https://github.com/dotnet/SqlClient/pull/4869))
+
+- Updated user-agent telemetry to the v2 payload, with an application ID field fixed at `0`
+  and a Driver Properties field. New bits report the configured
+  `Switch.Microsoft.Data.SqlClient.UseCompatibilityAsyncBehaviour` (`0x2`) and
+  `Switch.Microsoft.Data.SqlClient.UseCompatibilityProcessSni` (`0x4`) settings independently
+  of the parser's effective override. Async behavior and switch defaults are unchanged;
+  this does not add a registered-application API to 7.0.
+  ([#4913](https://github.com/dotnet/SqlClient/pull/4913))
+
+### Fixed
+
+- Fixed managed SNI certificate validation to enforce an explicitly configured
+  `HostNameInCertificate`, even when the certificate matches the connection's server name.
+  When hostname validation is required, the configured name is the expected name;
+  a mismatch now fails the TLS handshake. Certificate-chain checks and explicit
+  `ServerCertificate` matching are unchanged. (net8.0/net9.0 only, managed SNI)
+  ([#4908](https://github.com/dotnet/SqlClient/pull/4908))
+
+- Isolated Always Encrypted enclave-session cache entries by attestation protocol so a session
+  established under one protocol cannot be reused by a connection requesting another.
+  ([#4867](https://github.com/dotnet/SqlClient/pull/4867))
+
+- Fixed unobserved receive-continuation exceptions when a managed SNI connection is closed
+  while Multiple Active Result Sets (MARS) is still receiving. Pending reads are notified
+  through the existing network-error path, and receive packets are released correctly.
+  (net8.0/net9.0 only, managed SNI)
+  ([#4679](https://github.com/dotnet/SqlClient/issues/4679),
+  [#4950](https://github.com/dotnet/SqlClient/pull/4950))
+
+- Fixed `SqlDataReader.HasRows` incorrectly returning `false` when multiple informational
+  messages precede the first row. The first row remains available to `Read`/`ReadAsync`,
+  and existing informational-message delivery timing is preserved.
+  ([#4899](https://github.com/dotnet/SqlClient/pull/4899))
+
+- Fixed statistics timer bookkeeping throwing `InvalidOperationException` with
+  "Nullable object must have a value" when a concurrent timer release clears its timestamp.
+  This can affect statistics-enabled or diagnostic-instrumented operations; it does not
+  make concurrent use of a connection or MARS thread-safe.
+  ([#4778](https://github.com/dotnet/SqlClient/issues/4778),
+  [#4897](https://github.com/dotnet/SqlClient/pull/4897))
+
+- Fixed corrupted `nvarchar` text from `SqlDataReader.GetTextReader` with
+  `CommandBehavior.SequentialAccess` on big-endian platforms. Decoding now preserves the
+  source bytes, partial-read offsets, and raw UTF-16 code units.
+  ([#4962](https://github.com/dotnet/SqlClient/pull/4962))
+
+- Fixed `SqlConnection.Open`/`OpenAsync` throwing `IndexOutOfRangeException` for malformed
+  PRELOGIN option offsets or lengths. Invalid headers, option sizes, and total response sizes
+  now produce the existing corrupted-stream parsing error. Nonconforming server or proxy
+  responses that previously escaped these checks are rejected.
+  ([#4978](https://github.com/dotnet/SqlClient/pull/4978))
+
+- Fixed malformed row, alternate-result, and authentication responses being processed without
+  their required metadata or authentication state. These responses now produce a corrupted-stream
+  parsing error and invalidate the physical connection so it cannot return to the pool.
+  Valid SQL Server result processing is unchanged.
+  ([#4982](https://github.com/dotnet/SqlClient/pull/4982))
+
+### Companion packages
+
+- Released [Microsoft.Data.SqlClient.Extensions.Azure 7.0.4](release-notes/Extensions/Azure/7.0/7.0.4.md)
+  with actionable Windows WAM missing-parent-window guidance for windowless hosts.
+- Released [Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 7.0.4](release-notes/add-ons/AzureKeyVaultProvider/7.0/7.0.4.md),
+  [Microsoft.Data.SqlClient.Extensions.Abstractions 7.0.4](release-notes/Extensions/Abstractions/7.0/7.0.4.md),
+  and [Microsoft.Data.SqlClient.Internal.Logging 7.0.4](release-notes/Internal/Logging/7.0/7.0.4.md)
+  for version alignment only, with no functional or API changes.
+
 ## [Preview Release 8.0.0-preview1] - 2026-11-09
 
 This first 8.0 preview includes changes since the `release/7.1` branch point,
