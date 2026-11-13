@@ -46,4 +46,4 @@ When reviewing a PR that touches `.github/workflows/**/*.md`:
   source and recompile.
 - For deeper authoring guidance (creating, debugging, upgrading workflows),
   invoke the `agentic-workflows` agent at
-  `.github/agents/agentic-workflows.agent.md`.
+  `.github/agents/agentic-workflows.md`.
