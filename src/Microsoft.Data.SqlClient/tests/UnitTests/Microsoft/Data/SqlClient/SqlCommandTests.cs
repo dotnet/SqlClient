@@ -2,16 +2,103 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.Parser;
+using Microsoft.SqlServer.TDS.Info;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests;
 
-/// <summary>Verifies batch command lookup for SQL errors and info messages.</summary>
+/// <summary>Verifies command completion and batch error attribution.</summary>
 public class SqlCommandTests
 {
+    /// <summary>
+    /// Closing during metadata initialization must abort execution, not drain its reader concurrently.
+    /// </summary>
+    [Fact]
+    public Task ExecuteReaderAsync_CloseDuringInitialization_FaultsExecution() =>
+        AssertCloseDuringInitializationAsync(
+            static command => Task.Run(() => command.ExecuteReaderAsync()));
+
+    /// <summary>
+    /// Synchronous execution must also fail when its connection closes during initialization.
+    /// </summary>
+    [Fact]
+    public Task ExecuteReader_CloseDuringInitialization_FaultsExecution() =>
+        AssertCloseDuringInitializationAsync(
+            static command => Task.Run(() => command.ExecuteReader()));
+
+    /// <summary>Holds metadata parsing inside an INFO callback while closing the connection.</summary>
+    /// <param name="execute">Starts command execution on a separate thread.</param>
+    /// <returns>The bounded close and command-completion assertions.</returns>
+    private static async Task AssertCloseDuringInitializationAsync(
+        Func<SqlCommand, Task<SqlDataReader>> execute)
+    {
+        // Arrange
+        TimeSpan watchdog = TimeSpan.FromSeconds(30);
+        using TdsServerFixture fixture = new();
+        fixture.TdsServer.OnSQLBatchCompleted = response =>
+            response.Insert(0, new TDSInfoToken(50000, 1, 10, "initializing", "test"));
+        SqlConnectionStringBuilder builder = new()
+        {
+            DataSource = $"127.0.0.1,{fixture.TdsServer.EndPoint.Port}",
+            Encrypt = SqlConnectionEncryptOption.Optional,
+            Pooling = false
+        };
+        using SqlConnection connection = new(builder.ConnectionString)
+        {
+            FireInfoMessageEventOnUserErrors = true
+        };
+        using SqlCommand command = new("SELECT 1", connection);
+        using ManualResetEventSlim resumeInitialization = new(false);
+        TaskCompletionSource<bool> initializing = new(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        bool resumedInTime = false;
+        connection.InfoMessage += (_, e) =>
+        {
+            if (e.Message == "initializing")
+            {
+                initializing.TrySetResult(true);
+                resumedInTime = resumeInitialization.Wait(watchdog);
+            }
+        };
+        await connection.OpenAsync();
+        Task<SqlDataReader>? execution = null;
+        try
+        {
+            // Act
+            // Hold the parser inside reader initialization while another thread closes the connection.
+            execution = execute(command);
+            Assert.Same(initializing.Task,
+                await Task.WhenAny(initializing.Task, Task.Delay(watchdog)));
+            Task close = Task.Run(() => connection.Close());
+            Assert.Same(close, await Task.WhenAny(close, Task.Delay(watchdog)));
+            await close;
+            resumeInitialization.Set();
+
+            // Assert
+            Assert.Same(execution, await Task.WhenAny(execution, Task.Delay(watchdog)));
+            Exception? error = await Record.ExceptionAsync(async () => await execution);
+            Assert.True(resumedInTime, "Initialization did not resume within the watchdog.");
+            Assert.IsType<InvalidOperationException>(error);
+        }
+        finally
+        {
+            // Cleanup
+            // Release both sides before disposing the connection if an assertion fails.
+            resumeInitialization.Set();
+            fixture.Dispose();
+            if (execution is not null)
+            {
+                _ = execution.ContinueWith(static task => _ = task.Exception, TaskScheduler.Default);
+            }
+        }
+    }
+
     /// <summary>Errors after the final DONEPROC have no remaining command to attribute.</summary>
     [Theory]
     [InlineData(1)]

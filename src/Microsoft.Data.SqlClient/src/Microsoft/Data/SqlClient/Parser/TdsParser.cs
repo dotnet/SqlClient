@@ -3762,7 +3762,9 @@ namespace Microsoft.Data.SqlClient.Parser
             if (TdsEnums.DONE_ATTN == (status & TdsEnums.DONE_ATTN))
             {
                 Debug.Assert(TdsEnums.DONE_MORE != (status & TdsEnums.DONE_MORE), "Not expecting DONE_MORE when receiving DONE_ATTN");
-                Debug.Assert(stateObj._attentionSent, "Received attention done without sending one!");
+                // The ACK can arrive before SendAttention publishes _attentionSent.
+                Debug.Assert(stateObj._attentionSent || stateObj._attentionSending,
+                    "Received attention done without sending one!");
                 stateObj.HasReceivedAttention = true;
                 Debug.Assert(stateObj._inBytesUsed == stateObj._inBytesRead && stateObj._inBytesPacket == 0, "DONE_ATTN received with more data left on wire");
             }

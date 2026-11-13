@@ -700,15 +700,16 @@ namespace Microsoft.Data.SqlClient
                 throw new TaskCanceledException((Task)asyncResult);
             }
 
-            // Lock on _stateObj prevents race with close/cancel
-            if (!_internalEndExecuteInitiated)
-            {
-                lock (_stateObj)
-                {
-                    return EndExecuteReaderInternal(asyncResult);
-                }
-            }
-
+            // Note: We intentionally do NOT lock on _stateObj here.
+            // Taking lock(_stateObj) would prevent Cancel() from acquiring the stateObj
+            // monitor to send a TDS attention signal while FinishExecuteReader may be
+            // blocked on a synchronous network read (e.g., waiting for metadata after
+            // partial results like RAISERROR WITH NOWAIT). This caused cancellation to
+            // hang until the full query completed. See GitHub issue #4424.
+            //
+            // Concurrent close is handled by parser state checks within TryRun
+            // (detects Broken/Closed state). Cancel() uses Monitor.TryEnter with polling
+            // and checks parser state in its loop, so it handles concurrency safely.
             return EndExecuteReaderInternal(asyncResult);
         }
 
@@ -841,11 +842,7 @@ namespace Microsoft.Data.SqlClient
             if (ds is not null)
             {
                 ds.Bind(_stateObj);
-                _stateObj = null; // The reader now owns this...
                 ds.ResetOptionsString = resetOptionsString;
-
-                // Bind the reader to this connection now
-                _activeConnection.AddWeakReference(ds, SqlReferenceCollection.DataReaderTag);
 
                 // Force this command to start reading data off the wire.
                 // This will cause an error to be reported at Execute() time instead of Read() time
@@ -873,9 +870,16 @@ namespace Microsoft.Data.SqlClient
 
                     // @TODO: Why does the command set whether the reader is initialized??
                     ds.IsInitialized = true;
+
+                    // Until initialization finishes, close must abort the command rather than
+                    // drain the reader concurrently with metadata consumption.
+                    _activeConnection.AddWeakReference(ds, SqlReferenceCollection.DataReaderTag);
                 }
                 catch (Exception e) when (ADP.IsCatchableExceptionType(e))
                 {
+                    // Closing the reader can return its session to the MARS pool.
+                    _stateObj = null;
+
                     if (_inPrepare)
                     {
                         // The flag is expected to be reset by OnReturnValue. We should receive
@@ -896,6 +900,11 @@ namespace Microsoft.Data.SqlClient
                     }
 
                     throw;
+                }
+                finally
+                {
+                    // Bind transferred session ownership even if initialization failed.
+                    _stateObj = null;
                 }
             }
         }

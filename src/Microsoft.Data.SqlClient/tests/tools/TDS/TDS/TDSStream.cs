@@ -23,6 +23,8 @@ namespace Microsoft.SqlServer.TDS
         /// </summary>
         private uint _packetSize;
 
+        private byte _nextOutgoingPacketID = 1;
+
         /// <summary>
         /// Header of the packet being processed
         /// </summary>
@@ -189,7 +191,7 @@ namespace Microsoft.SqlServer.TDS
             _SendCurrentPacket();
 
             // Create a new packet of the specified type
-            _CreateOutgoingPacket(type, 1);
+            _CreateOutgoingPacket(type, _nextOutgoingPacketID);
         }
 
         /// <summary>
@@ -197,11 +199,26 @@ namespace Microsoft.SqlServer.TDS
         /// </summary>
         public virtual void EndMessage()
         {
+            EndMessage(true);
+        }
+
+        /// <summary>
+        /// Sends the buffered packet, optionally leaving the message open for another fragment.
+        /// </summary>
+        public void EndMessage(bool isEndOfMessage)
+        {
             // Check if we have a current packet
             if (OutgoingPacketHeader != null)
             {
                 // Indicate that this is the end of message
-                OutgoingPacketHeader.Status |= TDSPacketStatus.EndOfMessage;
+                if (isEndOfMessage)
+                {
+                    OutgoingPacketHeader.Status |= TDSPacketStatus.EndOfMessage;
+                }
+
+                _nextOutgoingPacketID = isEndOfMessage
+                    ? (byte)1
+                    : unchecked((byte)(OutgoingPacketHeader.PacketID + 1));
 
                 // Send the packet out
                 _SendCurrentPacket();

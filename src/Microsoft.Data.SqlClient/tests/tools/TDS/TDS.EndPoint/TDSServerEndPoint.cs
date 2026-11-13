@@ -224,9 +224,9 @@ namespace Microsoft.SqlServer.TDS.EndPoint
 
                     try
                     {
-                        // Block until a client connects.  This call is interrupted
-                        // by Stop() closing the listener socket during shutdown.
-                        newConnection = ListenerSocket.AcceptTcpClient();
+                        // Async accept releases the socket handle while waiting, so Stop()
+                        // can close it on Unix as well as Windows.
+                        newConnection = ListenerSocket.AcceptTcpClientAsync().GetAwaiter().GetResult();
                     }
                     catch (Exception)
                     {
