@@ -143,7 +143,7 @@ WAITFOR DELAY '00:01:00';
 SELECT 1 AS Result;";
 
             using (var cts = new CancellationTokenSource())
-            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (var connection = DataTestUtility.CreateConnection())
             {
                 await connection.OpenAsync();
 
@@ -232,7 +232,7 @@ SELECT 1 AS Result;";
             const string query = "WAITFOR DELAY '00:01:00'; SELECT 1 AS Result;";
 
             using (var cts = new CancellationTokenSource())
-            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (var connection = DataTestUtility.CreateConnection())
             {
                 await connection.OpenAsync();
 
@@ -302,8 +302,10 @@ SELECT 1 AS Result;";
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static async Task CancellationOfInfiniteWhileLoop_DoesNotHang()
         {
-            // Infinite loop that never completes — only cancellation via attention can stop it.
+            // Arrange
+            // Signal server execution before entering the loop so cancellation cannot be preemptive.
             const string query = @"
+RAISERROR('loop started', 10, 1) WITH NOWAIT;
 WHILE 1 = 1
 BEGIN
     DECLARE @x INT = 1
@@ -311,7 +313,7 @@ END";
 
             using (var cts = new CancellationTokenSource())
             {
-                var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+                var connection = DataTestUtility.CreateConnection();
                 Task execTask = null;
 
                 try
@@ -324,16 +326,27 @@ END";
                         // up instead of leaving the loop spinning on a shared CI server forever.
                         command.CommandTimeout = 60;
 
+                        var loopStarted = new TaskCompletionSource<bool>(
+                            TaskCreationOptions.RunContinuationsAsynchronously);
+                        connection.InfoMessage += (_, e) =>
+                        {
+                            if (e.Message == "loop started")
+                            {
+                                loopStarted.TrySetResult(true);
+                            }
+                        };
+
                         Stopwatch stopwatch = Stopwatch.StartNew();
 
+                        // Act
                         // Start ExecuteNonQueryAsync without awaiting so we can trigger
                         // cancellation once the query is in flight. The infinite WHILE loop
                         // guarantees the server stays busy until attention aborts it.
                         execTask = command.ExecuteNonQueryAsync(cts.Token);
 
-                        // Give the batch time to reach the server-side loop. This avoids the
-                        // flakiness of cancelling before the query is actually in flight.
-                        await Task.Delay(System.TimeSpan.FromMilliseconds(500));
+                        await Task.WhenAny(loopStarted.Task, execTask, Task.Delay(WatchdogTimeout));
+                        Assert.True(loopStarted.Task.IsCompleted,
+                            "SQL Server did not signal execution before cancellation.");
 
                         await CancelWithoutBlockingAsync(cts, "infinite WHILE loop");
 
@@ -365,6 +378,7 @@ END";
 
                         stopwatch.Stop();
 
+                        // Assert
                         Assert.NotNull(caughtException);
                         Assert.True(cts.IsCancellationRequested,
                             "CancellationTokenSource was not cancelled; exception may be unrelated to cancellation.");
@@ -383,6 +397,7 @@ END";
                 }
                 finally
                 {
+                    // Cleanup
                     if (execTask is not null)
                     {
                         ObserveWhenComplete(execTask);
@@ -427,7 +442,7 @@ SELECT 1 AS Result;";
             try
             {
                 using (var cts = new CancellationTokenSource())
-                using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+                using (var connection = DataTestUtility.CreateConnection())
                 {
                     await connection.OpenAsync();
 
@@ -514,7 +529,7 @@ WAITFOR DELAY '00:01:00';
 SELECT 1 AS Result FOR XML RAW;";
 
             using (var cts = new CancellationTokenSource())
-            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (var connection = DataTestUtility.CreateConnection())
             {
                 await connection.OpenAsync();
 
