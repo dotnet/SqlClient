@@ -10060,7 +10060,9 @@ namespace Microsoft.Data.SqlClient.Parser
 
         internal void FailureCleanup(TdsParserStateObject stateObj, Exception e)
         {
-            int old_outputPacketNumber = stateObj._outputPacketNumber;
+            // _outputPacketNumber is the one-byte TDS header packet number and wraps around, so it
+            // cannot tell whether packets were sent. Use the non-wrapping packet count instead.
+            bool packetsSent = stateObj._outputPacketCount > 0;
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.FailureCleanup|ERR> Exception caught on ExecuteXXX: '{0}'", e);
 
             if (stateObj.HasOpenResult)
@@ -10072,7 +10074,7 @@ namespace Microsoft.Data.SqlClient.Parser
             stateObj.ResetBuffer();
             stateObj.ResetPacketCounters();
 
-            if (old_outputPacketNumber != 1 && _state == TdsParserState.OpenLoggedIn)
+            if (packetsSent && _state == TdsParserState.OpenLoggedIn)
             {
                 Debug.Assert(_connHandler._parserLock.ThreadMayHaveLock, "Should not be calling into FailureCleanup without first taking the parser lock");
 
@@ -10083,8 +10085,8 @@ namespace Microsoft.Data.SqlClient.Parser
                     // Need to set this to true such that if we have an error sending\processing the attention, we won't deadlock ourselves
                     _connHandler.ThreadHasParserLockForClose = true;
 
-                    // If _outputPacketNumber prior to ResetBuffer was not equal to 1, a packet was already
-                    // sent to the server and so we need to send an attention and process the attention ack.
+                    // At least one packet of the request was already sent to the server, so we need
+                    // to send an attention and process the attention ack.
                     stateObj.SendAttention();
                     ProcessAttention(stateObj);
                 }
