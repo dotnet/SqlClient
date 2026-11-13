@@ -314,6 +314,8 @@ END";
             using (var cts = new CancellationTokenSource())
             {
                 var connection = DataTestUtility.CreateConnection();
+                // Deliver the start marker before the batch completes.
+                connection.FireInfoMessageEventOnUserErrors = true;
                 Task execTask = null;
 
                 try
