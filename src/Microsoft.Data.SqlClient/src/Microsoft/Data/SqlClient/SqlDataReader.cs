@@ -68,7 +68,6 @@ namespace Microsoft.Data.SqlClient
         private ALTROWSTATUS _altRowStatus;
         private int _recordsAffected = -1;
         private long _defaultTimeoutMilliseconds;
-        private SqlConnectionOptions.TypeSystem _typeSystem;
 
         // SQLStatistics support
         private SqlStatistics _statistics;
@@ -118,7 +117,6 @@ namespace Microsoft.Data.SqlClient
                 if (_connection != null)
                 {
                     _statistics = _connection.Statistics;
-                    _typeSystem = _connection.TypeSystem;
                 }
             }
             _sharedState._dataReady = false;
