@@ -55,3 +55,27 @@ On modern .NET, TNIR remains unsupported.
 
 See [SqlClient high availability and disaster recovery](https://learn.microsoft.com/sql/connect/ado-net/sql/sqlclient-support-high-availability-disaster-recovery)
 for the supported connection strategies and their limitations.
+
+## Pool-wait timeout budget
+
+`Switch.Microsoft.Data.SqlClient.UseOverallConnectTimeoutForPoolWait` now defaults
+to `true` on .NET Framework and modern .NET. `SqlConnection.Open` and `OpenAsync`
+carry the caller's remaining `Connect Timeout` budget through pool acquisition and
+login, for both pool implementations. Time spent waiting for the pool is deducted
+from the budget available for physical connection creation instead of granting
+login another full timeout. Applications that previously relied on those separate
+budgets may now time out sooner under pool contention. `Connect Timeout=0` remains
+infinite.
+
+To restore the previous behavior, set the existing switch to `false` before using
+SqlClient, because its value is cached on first use:
+
+```csharp
+AppContext.SetSwitch(
+    "Switch.Microsoft.Data.SqlClient.UseOverallConnectTimeoutForPoolWait", false);
+```
+
+With this compatibility opt-out, login starts a fresh `Connect Timeout` after pool
+acquisition. The legacy wait-handle pool also uses its configured pool-wait timeout
+rather than the caller's remaining budget; the channel pool continues to use the
+caller's remaining budget for its internal waits.
