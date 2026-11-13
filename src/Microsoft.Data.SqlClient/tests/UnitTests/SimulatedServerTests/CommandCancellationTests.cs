@@ -3,6 +3,8 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Concurrent;
+using System.Diagnostics.Tracing;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.SqlServer.TDS;
@@ -53,6 +55,7 @@ public class CommandCancellationTests
         Func<SqlCommand, CancellationToken, Task> execute)
     {
         // Arrange
+        using CancellationTraceListener trace = new();
         using PartialResponseServer server = new();
         server.Start();
 
@@ -100,7 +103,7 @@ public class CommandCancellationTests
             Exception? exception = await Record.ExceptionAsync(
                 () => CompleteWithinAsync(executeTask, "Command completion"));
             Assert.True(exception is OperationCanceledException or SqlException,
-                $"Expected cancellation after ATTENTION, got {exception}.");
+                $"Expected cancellation after ATTENTION, got {exception}.{Environment.NewLine}{trace}");
             if (exception is SqlException sqlException)
             {
                 Assert.Contains("Operation cancelled by user.", sqlException.Message);
@@ -130,6 +133,46 @@ public class CommandCancellationTests
         Assert.True(await Task.WhenAny(task, Task.Delay(WatchdogTimeout)) == task,
             $"{context} did not complete within {WatchdogTimeout.TotalSeconds}s.");
         await task;
+    }
+
+    /// <summary>
+    /// Retains recent protocol progress when a cancellation watchdog expires on a CI platform.
+    /// </summary>
+    private sealed class CancellationTraceListener : EventListener
+    {
+        private readonly ConcurrentQueue<string> _messages = new();
+
+        /// <summary>
+        /// Enables the driver's existing flow traces without recording packet payloads.
+        /// </summary>
+        protected override void OnEventSourceCreated(EventSource eventSource)
+        {
+            if (eventSource.Name == "Microsoft.Data.SqlClient.EventSource")
+            {
+                EnableEvents(eventSource, EventLevel.Verbose, (EventKeywords)(2 | 128));
+            }
+        }
+
+        /// <summary>
+        /// Keeps a bounded, thread-safe history without blocking cancellation callbacks.
+        /// </summary>
+        protected override void OnEventWritten(EventWrittenEventArgs eventData)
+        {
+            if (eventData.Payload is not null)
+            {
+                _messages.Enqueue(
+                    $"{Environment.CurrentManagedThreadId}: {string.Join(" | ", eventData.Payload)}");
+                while (_messages.Count > 128)
+                {
+                    _messages.TryDequeue(out _);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Includes the captured protocol history in the failure message.
+        /// </summary>
+        public override string ToString() => string.Join(Environment.NewLine, _messages);
     }
 
     /// <summary>
