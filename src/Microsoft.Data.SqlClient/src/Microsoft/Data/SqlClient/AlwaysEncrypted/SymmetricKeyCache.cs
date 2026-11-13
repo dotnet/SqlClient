@@ -122,7 +122,8 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
         /// <remarks>
         /// Provider invocation uses the process-wide gate to serialize synchronous fallbacks.
         /// The returned task is awaited outside that gate so asynchronous I/O does not hold it.
-        /// Async misses for the same key wait for its pending load and recheck the cache.
+        /// When caching is enabled, async misses for the same key wait for its pending load
+        /// and recheck the cache. Uncached loads do not wait for other asynchronous loads.
         /// Different keys load independently; synchronous races retain first-published key identity.
         /// </remarks>
         internal async Task<SymmetricKey> GetKeyAsync(
@@ -139,6 +140,13 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
             if (_cache.TryGetValue(cacheLookupKey, out SymmetricKey? cachedKey) && cachedKey is not null)
             {
                 return cachedKey;
+            }
+
+            if (SqlConnection.ColumnEncryptionKeyCacheTtl == TimeSpan.Zero)
+            {
+                return await LoadKeyAsync(
+                    keyInfo, connection, command, cancellationToken, serverName!, cacheLookupKey)
+                    .ConfigureAwait(false);
             }
 
             KeyLoadGate gate;
