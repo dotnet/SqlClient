@@ -81,6 +81,7 @@
     <Compile Include="SQL\AsyncTest\BeginExecReaderAsyncTest.cs" />
     <Compile Include="SQL\AsyncTest\XmlReaderAsyncTest.cs" />
     <Compile Include="SQL\AsyncTest\AsyncCancelledConnectionsTest.cs" />
+    <Compile Include="SQL\AsyncTest\MarsReceiveTeardownTest.cs" />
     <Compile Include="SQL\ConnectionTestWithSSLCert\HostNameInCertificateTest.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(TestSet)' == '' OR '$(TestSet)' == '2'">
