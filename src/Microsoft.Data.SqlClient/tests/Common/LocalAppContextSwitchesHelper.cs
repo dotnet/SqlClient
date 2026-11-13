@@ -64,6 +64,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     private readonly SwitchValue _useBulkCopyCatalogMetadataDiscoveryOriginal;
     private readonly bool? _useLegacyIdleTimeoutBehaviorOriginal;
     private readonly bool? _useOverallConnectTimeoutForPoolWaitOriginal;
+    private readonly bool? _useLegacyUdtAssemblyLoadOriginal;
     #if NET
     // On non-Windows platforms the UseManagedNetworking switch is always true
     // and never consults its cached field, so the field is captured/restored
@@ -140,6 +141,8 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
                 ToBool(LocalAppContextSwitches.s_useLegacyIdleTimeoutBehavior);
             _useOverallConnectTimeoutForPoolWaitOriginal =
                 ToBool(LocalAppContextSwitches.s_useOverallConnectTimeoutForPoolWait);
+            _useLegacyUdtAssemblyLoadOriginal =
+                ToBool(LocalAppContextSwitches.s_useLegacyUdtAssemblyLoad);
             #if NET
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -209,6 +212,8 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
                 ToSwitchValue(_useLegacyIdleTimeoutBehaviorOriginal);
             LocalAppContextSwitches.s_useOverallConnectTimeoutForPoolWait =
                 ToSwitchValue(_useOverallConnectTimeoutForPoolWaitOriginal);
+            LocalAppContextSwitches.s_useLegacyUdtAssemblyLoad =
+                ToSwitchValue(_useLegacyUdtAssemblyLoadOriginal);
             #if NET
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -399,6 +404,15 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     {
         get => LocalAppContextSwitches.UseOverallConnectTimeoutForPoolWait;
         set => LocalAppContextSwitches.s_useOverallConnectTimeoutForPoolWait = ToSwitchValue(value);
+    }
+
+    /// <summary>
+    /// Get or set the UseLegacyUdtAssemblyLoad switch value.
+    /// </summary>
+    public bool? UseLegacyUdtAssemblyLoad
+    {
+        get => LocalAppContextSwitches.UseLegacyUdtAssemblyLoad;
+        set => LocalAppContextSwitches.s_useLegacyUdtAssemblyLoad = ToSwitchValue(value);
     }
 
     #if NET
