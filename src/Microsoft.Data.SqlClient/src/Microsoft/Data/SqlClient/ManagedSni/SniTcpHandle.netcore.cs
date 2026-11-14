@@ -1089,7 +1089,11 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 // Since _socket.Connected alone doesn't guarantee if the connection is still active, we use it in
                 // combination with _socket.Poll method and _socket.Available == 0 check. When both of them
                 // return true we can safely determine that the connection is no longer active.
-                if (!_socket.Connected || (_socket.Poll(100, SelectMode.SelectRead) && _socket.Available == 0))
+                //
+                // The poll does not wait: a closed connection is already readable, so waiting adds nothing.
+                // Any positive timeout is rounded up to the system timer tick on Windows (15.6 ms by default),
+                // which this check would cost on every connection taken from the pool.
+                if (!_socket.Connected || (_socket.Poll(0, SelectMode.SelectRead) && _socket.Available == 0))
                 {
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniTcpHandle), EventType.INFO, "Connection Id {0}, Socket not usable.", args0: _connectionId);
                     return TdsEnums.SNI_ERROR;
