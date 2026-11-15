@@ -3329,7 +3329,6 @@ namespace Microsoft.Data.SqlClient.Connection
             }
 
             // @TODO: How about we define all the easy ones in one block, then have the conditional ones below that
-            login.authentication = ConnectionOptions.Authentication;
             login.timeout = timeoutInSeconds;
             login.userInstance = ConnectionOptions.UserInstance;
             login.hostName = ConnectionOptions.ObtainWorkstationId();
