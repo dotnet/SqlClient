@@ -16,16 +16,18 @@
       - internal/release/X.Y  -> release/X.Y
 
     The next version is chosen as follows:
-      - release/X.Y: a GA release bumps the patch (7.0.1 -> 7.0.2). A preview release moves to
-        its GA version (7.1.0-preview3 -> 7.1.0).
-      - main: the lowest open GitHub milestone in the same major.minor series that is greater than
-        the published version (8.1.0-preview1 -> 8.1.0-preview2). With no such milestone, the
-        script logs a warning and does nothing.
+      - A GA release always bumps the patch (7.0.1 -> 7.0.2), on any branch.
+      - A preview release on release/X.Y moves to its GA version (7.1.0-preview3 -> 7.1.0).
+      - A preview release on main moves to the lowest open GitHub milestone in the same
+        major.minor series that is greater than the published version
+        (8.1.0-preview1 -> 8.1.0-preview2). With no such milestone, the script logs a warning and
+        does nothing.
 
     The script also does nothing when the GitHub branch already has a version at or above the next
     version, or when an open bump PR already exists. Otherwise it creates or resets the branch
-    dev/automation/bump-sqlclient-version-<version>, commits the Versions.props change, opens the
-    PR, and assigns the matching milestone when one is open.
+    dev/automation/bump-sqlclient-version-<version>, commits the Versions.props change, and opens
+    the PR. The PR gets the milestone matching the next version, or else the closest earlier
+    milestone in any state.
 
 .PARAMETER SourceBranch
     The ADO branch that was built, such as refs/heads/internal/main. Defaults to
@@ -158,12 +160,12 @@ function Get-NextSqlClientVersion {
         throw "Published version '$PublishedVersion' is not a valid SqlClient version."
     }
 
-    if ($TargetBranch -like 'release/*') {
-        if ($published.Prerelease) {
-            return "$($published.Major).$($published.Minor).$($published.Patch)"
-        }
-
+    if (-not $published.Prerelease) {
         return "$($published.Major).$($published.Minor).$($published.Patch + 1)"
+    }
+
+    if ($TargetBranch -like 'release/*') {
+        return "$($published.Major).$($published.Minor).$($published.Patch)"
     }
 
     $candidates = foreach ($title in $MilestoneTitles) {
@@ -188,6 +190,36 @@ function Get-NextSqlClientVersion {
     }
 
     return $next.Text
+}
+
+# Picks the PR milestone title: the one matching the next version, or else the greatest one below
+# it. Returns $null when neither exists.
+function Get-PrMilestoneTitle {
+    param(
+        [string]$NextVersion,
+        [string[]]$MilestoneTitles = @()
+    )
+
+    if ($MilestoneTitles -contains $NextVersion) {
+        return $NextVersion
+    }
+
+    $next = ConvertTo-SqlClientVersion $NextVersion
+    $previous = $null
+    foreach ($title in $MilestoneTitles) {
+        $milestone = ConvertTo-SqlClientVersion $title
+        if ($null -ne $milestone -and
+            (Compare-SqlClientVersion $milestone $next) -lt 0 -and
+            ($null -eq $previous -or (Compare-SqlClientVersion $milestone $previous) -gt 0)) {
+            $previous = $milestone
+        }
+    }
+
+    if ($null -eq $previous) {
+        return $null
+    }
+
+    return $previous.Text
 }
 
 # Reads SqlClientNextVersion from Versions.props content, requiring exactly one definition.
@@ -259,12 +291,13 @@ function Invoke-VersionBumpPr {
     $owner = $GitHubRepository.Split('/')[0]
     $repoApi = "repos/$GitHubRepository"
     $propsApi = "$repoApi/contents/$($script:VersionsPropsRepoPath)"
-    $milestones = @(Invoke-GitHubApi -Path "$repoApi/milestones?state=open&per_page=100" |
+    $milestones = @(Invoke-GitHubApi -Path "$repoApi/milestones?state=all&per_page=100" |
         ForEach-Object { $_ } | Where-Object { $_.title })
     $nextVersion = Get-NextSqlClientVersion `
         -TargetBranch $targetBranch `
         -PublishedVersion $publishedVersion `
-        -MilestoneTitles @($milestones | ForEach-Object { $_.title })
+        -MilestoneTitles @($milestones | Where-Object { $_.state -eq 'open' } |
+            ForEach-Object { $_.title })
 
     if ($null -eq $nextVersion) {
         Write-PipelineWarning ("No open milestone after $publishedVersion in the same " +
@@ -346,17 +379,19 @@ function Invoke-VersionBumpPr {
     }
     Write-Host "Opened $($pr.html_url)."
 
-    $milestone = $milestones | Where-Object { $_.title -eq $nextVersion } | Select-Object -First 1
-    if ($null -eq $milestone) {
-        Write-PipelineWarning ("No open milestone '$nextVersion'. Create it and assign it to " +
-            "$($pr.html_url).")
+    $milestoneTitle = Get-PrMilestoneTitle -NextVersion $nextVersion `
+        -MilestoneTitles @($milestones | ForEach-Object { $_.title })
+    if ($null -eq $milestoneTitle) {
+        Write-PipelineWarning "No milestone at or below $nextVersion for $($pr.html_url)."
         return
     }
 
+    $milestone = $milestones | Where-Object { $_.title -eq $milestoneTitle } |
+        Select-Object -First 1
     Invoke-GitHubApi -Method PATCH -Path "$repoApi/issues/$($pr.number)" -Body @{
         milestone = $milestone.number
     } | Out-Null
-    Write-Host "Assigned milestone $nextVersion."
+    Write-Host "Assigned milestone $milestoneTitle."
 }
 
 # Dot-sourcing loads the functions for tests without running the script.

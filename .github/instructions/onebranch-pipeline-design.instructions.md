@@ -133,11 +133,14 @@ When adding a new package to the OneBranch flow:
 - Emitted only when `releaseToProduction` and `releaseSqlClient` are both true
 - Depends on `release_production` with `succeeded()`, so a rejected or failed release opens no PR
 - Runs `scripts/new-version-bump-pr.ps1`, which opens a GitHub PR on the matching branch:
-  - `internal/release/X.Y` → `release/X.Y`: GA bumps the patch; a preview moves to its GA version
-  - `internal/main` → `main`: lowest open milestone in the same major.minor above the published version
-  - Other branches, or no matching milestone → warning, no PR
+  - Branches map `internal/main` → `main` and `internal/release/X.Y` → `release/X.Y`
+  - GA release on any branch bumps the patch (8.1.0 → 8.1.1)
+  - Preview on `release/X.Y` moves to its GA version
+  - Preview on `main` moves to the lowest open milestone in the same major.minor above it
+  - Other branches, or a `main` preview with no such milestone → warning, no PR
 - No-op when the GitHub branch is already at or above the next version, or the PR is already open
-- PR head is `dev/automation/bump-sqlclient-version-<version>`; milestone is set to `<version>`
+- PR head is `dev/automation/bump-sqlclient-version-<version>`; milestone is `<version>`, or else
+  the closest earlier milestone (open or closed)
 - Uses `PATToken` from the `GitHub PAT Tokens` variable group (contents, PR, and issue writes)
 
 ## Parameters

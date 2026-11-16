@@ -69,12 +69,15 @@ Describe 'Compare-SqlClientVersion' {
     Verifies next-version selection for release branches and main.
 #>
 Describe 'Get-NextSqlClientVersion' {
-    It 'Bumps the patch on a release branch after GA <Published>' -TestCases @(
-        @{ Published = '7.1.1'; Expected = '7.1.2' }
-        @{ Published = '7.0.0'; Expected = '7.0.1' }
+    It 'Bumps the patch on <Branch> after GA <Published>' -TestCases @(
+        @{ Branch = 'release/7.1'; Published = '7.1.1'; Expected = '7.1.2' }
+        @{ Branch = 'release/7.0'; Published = '7.0.0'; Expected = '7.0.1' }
+        @{ Branch = 'main'; Published = '8.0.0'; Expected = '8.0.1' }
+        @{ Branch = 'main'; Published = '8.1.0'; Expected = '8.1.1' }
     ) {
         # Act
-        $result = Get-NextSqlClientVersion -TargetBranch 'release/7.1' -PublishedVersion $Published
+        $result = Get-NextSqlClientVersion -TargetBranch $Branch -PublishedVersion $Published `
+            -MilestoneTitles $script:milestones
 
         # Assert
         $result | Should -Be $Expected
@@ -103,7 +106,7 @@ Describe 'Get-NextSqlClientVersion' {
 
     It 'Ignores milestones from other major.minor series on main' {
         # Act
-        $result = Get-NextSqlClientVersion -TargetBranch 'main' -PublishedVersion '8.1.0' `
+        $result = Get-NextSqlClientVersion -TargetBranch 'main' -PublishedVersion '8.2.0-preview1' `
             -MilestoneTitles $script:milestones
 
         # Assert
@@ -152,5 +155,33 @@ Describe 'Versions.props content' {
         # Act / Assert
         Get-VersionFromProps '<Project />' | Should -BeNullOrEmpty
         Get-VersionFromProps $duplicated | Should -BeNullOrEmpty
+    }
+}
+
+<#
+.SYNOPSIS
+    Verifies the PR milestone falls back to the closest earlier milestone.
+#>
+Describe 'Get-PrMilestoneTitle' {
+    It 'Picks <Expected> for next version <Next>' -TestCases @(
+        @{ Next = '8.1.0-preview2'; Expected = '8.1.0-preview2' }
+        @{ Next = '8.1.1'; Expected = '8.1.0' }
+        @{ Next = '7.1.3'; Expected = '7.1.2' }
+        @{ Next = '8.0.0-preview1'; Expected = '7.1.2' }
+    ) {
+        # Act
+        $result = Get-PrMilestoneTitle -NextVersion $Next `
+            -MilestoneTitles (@('Future') + $script:milestones)
+
+        # Assert
+        $result | Should -Be $Expected
+    }
+
+    It 'Returns null when no milestone is at or below the next version' {
+        # Act
+        $result = Get-PrMilestoneTitle -NextVersion '1.0.0' -MilestoneTitles $script:milestones
+
+        # Assert
+        $result | Should -BeNullOrEmpty
     }
 }
