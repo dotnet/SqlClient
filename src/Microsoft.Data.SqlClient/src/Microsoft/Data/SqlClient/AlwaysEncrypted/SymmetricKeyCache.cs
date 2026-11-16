@@ -23,7 +23,15 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
         private static readonly SemaphoreSlim s_cacheLock = new(1, 1);
 
         private readonly MemoryCache _cache;
+
+        // Makes cache check-and-publish atomic so sync/async races share the first published key.
+        // Also protects pending-gate membership and user counts. Unlike s_cacheLock, this short
+        // lock never covers provider I/O, so a blocked provider cannot delay async publication.
         private readonly object _publicationLock = new();
+
+        // Shares one load gate among async misses for the same key, avoiding duplicate decryptions
+        // while allowing different keys' async I/O to overlap. A single global async gate would
+        // serialize unrelated keys; user counts keep each entry alive until all callers leave.
         private readonly Dictionary<string, KeyLoadGate> _pendingKeyLoads = new();
 
         private sealed class KeyLoadGate
