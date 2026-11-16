@@ -536,6 +536,7 @@ namespace Microsoft.Data.SqlClient
                     SqlConnectionInternal retryConnection = _enclaveRetryConnection;
                     SqlConnection connection = _activeConnection;
                     int closeCount = connection.CloseCount;
+                    string database = connection.Database;
 
                     // Block command and connection changes until execution has been handed off.
                     _enclaveAttestationInProgress = true;
@@ -544,6 +545,7 @@ namespace Microsoft.Data.SqlClient
                         retryConnection,
                         connection,
                         closeCount,
+                        database,
                         timeout,
                         completion,
                         asyncWrite,
@@ -580,6 +582,7 @@ namespace Microsoft.Data.SqlClient
             SqlConnectionInternal retryConnection,
             SqlConnection connection,
             int closeCount,
+            string database,
             int timeout,
             TaskCompletionSource<object> completion,
             bool asyncWrite,
@@ -594,7 +597,7 @@ namespace Microsoft.Data.SqlClient
                     .CompleteCachedQueryMetadataAsync(this, metadata, cancellationToken)
                     .ConfigureAwait(false);
 
-                ValidateConnectionLifetime(connection, closeCount);
+                ValidateConnectionLifetime(connection, closeCount, database);
 
                 if (!cacheHit)
                 {
@@ -636,14 +639,24 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Rejects execution when the command's connection was replaced, or closed and reopened,
-        /// while encryption preparation was pending.
+        /// Rejects execution when the command's connection was replaced, closed and reopened, or
+        /// switched to another database while encryption preparation was pending. The query
+        /// metadata cache key includes the database, so metadata loaded for one database must not
+        /// be used to execute against another.
         /// </summary>
-        private void ValidateConnectionLifetime(SqlConnection connection, int closeCount)
+        private void ValidateConnectionLifetime(
+            SqlConnection connection,
+            int closeCount,
+            string database)
         {
             if (!ReferenceEquals(_activeConnection, connection) || connection.CloseCount != closeCount)
             {
                 throw ADP.ClosedConnectionError();
+            }
+
+            if (!string.Equals(connection.Database, database, StringComparison.Ordinal))
+            {
+                throw SQL.CannotModifyPropertyAsyncOperationInProgress(nameof(SqlConnection.Database));
             }
         }
 

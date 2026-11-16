@@ -1849,6 +1849,7 @@ namespace Microsoft.Data.SqlClient
                 bool clearInProgress = _enclaveAttestationInProgress;
                 SqlConnection preparedConnection = _activeConnection;
                 int preparedCloseCount = preparedConnection.CloseCount;
+                string preparedDatabase = preparedConnection.Database;
                 AsyncHelper.ContinueTaskWithState(
                     taskToContinue: describeParameterEncryptionTask,
                     taskCompletionSource: completion,
@@ -1862,7 +1863,8 @@ namespace Microsoft.Data.SqlClient
                             {
                                 sqlCommand.ValidateConnectionLifetime(
                                     preparedConnection,
-                                    preparedCloseCount);
+                                    preparedCloseCount,
+                                    preparedDatabase);
                             }
 
                             sqlCommand.ValidateConnectionForEnclaveExecution(retryConnection);
