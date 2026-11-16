@@ -67,8 +67,7 @@ parameters:
   - name: testTimeoutMinutes
     displayName: Test Timeout (minutes)
     type: number
-    # Includes the bounded 30-minute matched OpenAsync health phase before BenchmarkDotNet.
-    default: 210
+    default: 180
 
   # The released Microsoft.Data.SqlClient version the branch under test is benchmarked against.
   # "latest" resolves the highest stable version in the governed feed at run time.

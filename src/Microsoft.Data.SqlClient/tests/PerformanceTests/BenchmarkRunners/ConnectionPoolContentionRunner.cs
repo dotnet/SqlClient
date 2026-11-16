@@ -179,26 +179,45 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
 
         [AsyncHealthDiagnoser]
         [Benchmark]
-        public Task SteadyStateOpenQueryCloseAsync()
+        public async Task SteadyStateOpenQueryCloseAsync()
         {
+            var invocation = AsyncHealthDiagnoser.BeginInvocation(Parallelism);
             var tasks = new Task[Parallelism];
             for (int i = 0; i < Parallelism; i++)
             {
+                int worker = i;
+                var first = invocation?.Offer(worker);
                 tasks[i] = Task.Run(async () =>
                 {
                     for (int op = 0; op < OpsPerWorker; op++)
                     {
-                        await using var conn = new SqlConnection(_connectionString);
-                        await conn.OpenAsync();
-                        await using var cmd = conn.CreateCommand();
-                        cmd.CommandText = "SELECT 1";
-                        _ = await cmd.ExecuteScalarAsync();
-                        // Dispose returns the connection to the pool.
+                        var operation = op == 0 ? first : invocation?.Offer(worker);
+                        operation?.Start();
+                        try
+                        {
+                            await using (var conn = new SqlConnection(_connectionString))
+                            {
+                                Task open = conn.OpenAsync();
+                                operation?.OpenReturned(open.IsCompleted);
+                                await open;
+                                operation?.Opened();
+                                await using var cmd = conn.CreateCommand();
+                                cmd.CommandText = "SELECT 1";
+                                _ = await cmd.ExecuteScalarAsync();
+                            }
+                            operation?.Complete();
+                        }
+                        catch (Exception error)
+                        {
+                            operation?.Fail(error);
+                            throw;
+                        }
                     }
                 });
             }
 
-            return Task.WhenAll(tasks);
+            await Task.WhenAll(tasks);
+            invocation?.Complete();
         }
 
         private void WarmPool(int count)

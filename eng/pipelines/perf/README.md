@@ -6,18 +6,13 @@ dedicated performance test lab (Azure Dedicated Hosts), compare the branch under
 released NuGet baseline, and optionally ingest the results into an Azure Data Explorer (Kusto)
 database.
 
-Every invocation also runs the [OpenAsync health phase](openasync-health.md) automatically,
-before BenchmarkDotNet, including `perf-pr`. It compares fresh-process scheduling, useful work,
-and process-thread cost across both pools and non-pooled paths. Its matched regression gate is
-separate from the optional BDN gate. Default automation adds **zero RTT**; the 100 ms reproduction
-is an explicit Linux-only run, not part of the default matrix. Existing pipeline triggers are
-unchanged.
-
-BDN itself also runs `AsyncHealthDiagnoser` for marked single/parallel opens, async pool
+BDN runs [AsyncHealthDiagnoser](async-health.md) for marked single/parallel opens, async pool
 contention, the saturated synchronous control, and the new `OpenAsyncBurst` benchmarks.
 The pipeline enables the diagnoser and burst unit even with an older private runner config.
-The extra diagnostic iteration is excluded from BDN timing samples. Raw BDN diagnostics are
-retained alongside each side/repetition and summarized in `benchmark-async-health.md`.
+Startup/warmup and the extra diagnostic iteration are observed separately; normal timing
+iterations are not observed. Raw queue/open/outcome/probe/resource evidence is retained alongside
+each side/repetition and summarized in `benchmark-async-health.md`. There is no separate sweep
+or ramp before the benchmarks, and pipeline trigger conventions remain unchanged.
 
 ## Contents
 
@@ -30,7 +25,6 @@ retained alongside each side/repetition and summarized in `benchmark-async-healt
 | `scripts/run-perf-tests.ps1` | Windows equivalent (ProcessorAffinity instead of `taskset`). |
 | `scripts/interleave_perf.py` | Interleaved + best-of-N orchestrator: runs each unit baseline↔candidate back-to-back and confirms regressions across N passes. |
 | `scripts/compare_perf.py` | Compares baseline vs current BenchmarkDotNet JSON → delta (md + json). Reused by the orchestrator. |
-| `scripts/openasync_health.py` | Builds a matched harness against candidate/baseline drivers; runs the automatic OpenAsync health phase and publishes raw evidence plus comparisons. |
 | `scripts/benchmark_health_report.py` | Summarizes BDN's workload-only diagnostic windows separately from timing comparisons. |
 | `scripts/perf_to_kusto.py` | Translates BenchmarkDotNet "full" JSON → Kusto `PerfRun` + `PerfBenchmarkResult` NDJSON. |
 | `scripts/ingest_kusto.py` | Queued Kusto ingestion (az CLI auth, runs on the agent). |
@@ -75,7 +69,7 @@ context variables are available (the VM is behind NAT and lacks the pipeline ide
 | --------- | ------- | ----------- |
 | `platform` | `linux` | `linux` or `windows` VM + client. |
 | `dotnetFramework` | `net10.0` | TFM the benchmarks run against (`net10.0` only). |
-| `testTimeoutMinutes` | `210` (`240` for PR) | Template timeout waiting for the VM run, including the bounded 30-minute OpenAsync health phase. |
+| `testTimeoutMinutes` | `180` (`210` for PR) | Template timeout waiting for the VM run. |
 | `baselineVersion` | `latest` | Highest stable MDS version in the governed feed, resolved at run time. Pin an explicit version to override. Empty = current-only (no baseline pass / comparison). |
 | `regressionThreshold` | `10` | Percent slowdown (current vs baseline mean) flagged as a regression. |
 | `failOnRegression` | `false` | When `true`, a candidate-slower regression **fails** the run (gate). In interleaved mode only **confirmed** regressions (best-of-N majority) fail. Default off. |
@@ -147,7 +141,7 @@ PR-only parameters (everything else is identical to the table above):
 | --------- | ------- | ----------- |
 | `baselineSourceRef` | `main` | Git ref of this repo whose **source** is the baseline. Empty = current-only (no baseline pass / comparison). |
 | `baselineRepoUrl` | `https://github.com/dotnet/SqlClient.git` | Fallback remote used to obtain the baseline ref when the VM copy of the checkout cannot fetch it from its own `origin`. |
-| `testTimeoutMinutes` | `240` | Higher than the main pipeline's `210` because **both** sides are built from source; includes the 30-minute fresh-process health budget. |
+| `testTimeoutMinutes` | `210` | Higher than the main pipeline's `180` because **both** sides are built from source. |
 
 ### Source baseline (`--baseline-source-ref` / `-BaselineSourceRef`)
 
@@ -210,7 +204,7 @@ Switch-pipeline parameters that differ from the tables above:
 | --------- | ------- | ----------- |
 | `switchUnderTest` | `UseConnectionPoolV2` | The single switch to A/B. Baseline forces it `false`, current forces it `true`. |
 | `failIfSwitchSlower` | `false` | Maps onto the scripts' `--fail-on-regression` gate, but means something different here: "switch on is slower" is usually the *result* you queued the run to measure, not a defect. Enable it only when asserting the switch must not be a slowdown (e.g. before flipping its default). |
-| `testTimeoutMinutes` | `210` | Same as the main pipeline, not the PR pipeline's `240`: both sides are the same source. |
+| `testTimeoutMinutes` | `180` | Same as the main pipeline, not the PR pipeline's `210`: both sides are the same source. |
 
 The pipeline deliberately does **not** expose `baselineVersion` / `baselineSourceRef` (the run
 scripts reject combining those with `--switch-under-test`, since a simultaneous source change would

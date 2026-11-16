@@ -2,11 +2,11 @@
 
 ## Async-health benchmarks and diagnoser
 
-`EnableAsyncHealth` defaults to true. Marked workloads run one additional instrumented BDN
-iteration; timing iterations and setup/cleanup are not observed. Raw probe/resource evidence and
-per-window health summaries are exported under `BenchmarkDotNet.Artifacts/async-health`.
-Short or censored windows are explicitly insufficient, not healthy. This is separate from the
-fresh-process suite that captures driver startup and automatically exercises both pools.
+`EnableAsyncHealth` defaults to true. Marked workloads record BDN startup/warmup and the
+extra diagnostic iteration separately; normal timing iterations are not observed. Raw
+queue/open/outcome/probe/resource evidence and per-window summaries are exported under
+`BenchmarkDotNet.Artifacts/async-health`. Short or censored windows are insufficient, not healthy.
+There is no separate health sweep before the perf tests.
 
 | Unit | Async-health regression coverage |
 | --- | --- |
@@ -20,20 +20,21 @@ fresh-process suite that captures driver startup and automatically exercises bot
 one invocation per iteration, and a five-minute per-case timeout. It reports per-connection
 cost for a completed 64-operation batch. Empty-pool setup clears just its own pool; warm
 setup holds all connections simultaneously before releasing them. Setup and cleanup are
-outside both timing and diagnostic windows. No exceptions or unsuccessful opens count as
+outside timing and the extra-iteration window; startup observations include fixture setup.
+No exceptions or unsuccessful opens count as
 completed benchmark operations.
 
 BDN uses the run's process-wide `UseConnectionPoolV2` selection, not a per-case switch flip.
-To compare V1/V2 BDN results use separate process configurations. BDN warms the driver and
-ThreadPool, so its empty-pool case is **not** a cold-process measurement. The automatic
-fresh-process suite retains that coverage and its matched regression gates.
+To compare V1/V2 BDN results use separate process configurations. Startup observations retain
+first-open scheduling evidence during BDN's existing warmup. `FirstBenchmarkInProcess`
+identifies the first case; an empty SQL pool in subsequent cases does not imply a cold process.
 
 The test-only BenchmarkDotNet packages use `0.16.0-preview.1` because stable `0.15.8`
 lacks the in-process workload-only diagnoser hooks. Per-case timeouts are retained through
 BDN's cancellation API. Do not combine async health with native/interactive profilers;
 set `EnableAsyncHealth=false` for local profiling. Pipelines explicitly enable health.
 
-See [the pipeline protocol](../../../../eng/pipelines/perf/openasync-health.md).
+See [the pipeline protocol](../../../../eng/pipelines/perf/async-health.md).
 
 ## Command and reader benchmarks
 

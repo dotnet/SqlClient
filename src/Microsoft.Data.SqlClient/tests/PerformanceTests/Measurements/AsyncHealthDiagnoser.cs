@@ -25,25 +25,31 @@ using BenchmarkDotNet.Validators;
 
 namespace Microsoft.Data.SqlClient.PerformanceTests;
 
-/// <summary>Opts a benchmark into workload-only async-health observation.</summary>
+/// <summary>Opts a benchmark into startup/warmup and extra-iteration async-health observation.</summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, Inherited = true)]
 public sealed class AsyncHealthDiagnoserAttribute : Attribute;
 
 /// <summary>
-/// Observes BDN's extra iteration, not its timing iterations or fixture setup/cleanup.
-/// Raw censored probes remain evidence; a short successful benchmark is not a health pass.
+/// Observes BDN startup/warmup and its extra iteration separately, not timing iterations.
+/// Startup includes fixture initialization; extra-iteration observation excludes fixture work.
 /// </summary>
 public sealed class AsyncHealthDiagnoser : EventProcessor, IInProcessDiagnoser
 {
     private static readonly ConcurrentDictionary<string, AsyncHealthDiagnoser> s_active = new();
+    private static AsyncHealthOperationRecorder? s_operations;
+    private static int s_benchmarksStarted;
     private readonly string _handlerId = Guid.NewGuid().ToString("N");
     private readonly List<AsyncHealthSummary> _summaries = [];
     private readonly bool _poolV2, _managedSni, _optimizedAsync;
     private readonly string? _outputDirectory;
     private BenchmarkCase? _case;
     private ThreadPoolHealthObserver? _observer;
+    private AsyncHealthOperationRecorder? _operations;
     private string? _caseId;
     private bool _windowCompleted;
+    private bool _startupCompleted;
+    private bool _firstBenchmarkInProcess;
+    private string? _phase;
 
     public AsyncHealthDiagnoser(bool poolV2, bool managedSni, bool optimizedAsync)
         : this(poolV2, managedSni, optimizedAsync, null)
@@ -60,7 +66,9 @@ public sealed class AsyncHealthDiagnoser : EventProcessor, IInProcessDiagnoser
     }
 
     internal bool HasFailed { get; private set; }
-    internal bool IsObserving => _observer != null;
+    internal bool IsObserving => _observer != null && _phase == "ExtraIteration";
+    internal static AsyncHealthOperationRecorder.Invocation? BeginInvocation(int workers) =>
+        Volatile.Read(ref s_operations)?.BeginInvocation(workers);
     public IEnumerable<string> Ids => [nameof(AsyncHealthDiagnoser)];
     public IEnumerable<IExporter> Exporters => [];
     public IEnumerable<IAnalyser> Analysers => [];
@@ -75,6 +83,7 @@ public sealed class AsyncHealthDiagnoser : EventProcessor, IInProcessDiagnoser
 
     public override void OnStartRunBenchmark(BenchmarkCase benchmarkCase)
     {
+        _firstBenchmarkInProcess = Interlocked.Increment(ref s_benchmarksStarted) == 1;
         if (HasFailed)
         {
             throw new InvalidOperationException("Previous async-health benchmark failed.");
@@ -91,6 +100,9 @@ public sealed class AsyncHealthDiagnoser : EventProcessor, IInProcessDiagnoser
         _case = benchmarkCase;
         _caseId = Guid.NewGuid().ToString("N");
         _windowCompleted = false;
+        _startupCompleted = false;
+        _operations = null;
+        _phase = null;
         if (_poolV2 && !Equals(typeof(SqlConnection).Assembly
             .GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches")
             ?.GetProperty("UseConnectionPoolV2",
@@ -114,7 +126,7 @@ public sealed class AsyncHealthDiagnoser : EventProcessor, IInProcessDiagnoser
         {
             return;
         }
-        if (!report.Success || !_windowCompleted)
+        if (!report.Success || !_windowCompleted || !_startupCompleted)
         {
             HasFailed = true;
         }
@@ -137,7 +149,7 @@ public sealed class AsyncHealthDiagnoser : EventProcessor, IInProcessDiagnoser
             {
                 CompleteWindow(false);
             }
-            if (!_windowCompleted || HasFailed)
+            if (!_windowCompleted || !_startupCompleted || HasFailed)
             {
                 HasFailed = true;
                 Save(null, "Failed", "Benchmark failed or produced no diagnostic iteration.");
@@ -197,14 +209,21 @@ public sealed class AsyncHealthDiagnoser : EventProcessor, IInProcessDiagnoser
     private string OutputDirectory => _outputDirectory ??
         Path.Combine("BenchmarkDotNet.Artifacts", "async-health");
 
-    internal void StartWindow()
+    internal void StartWindow(string phase)
     {
-        if (_case == null || _observer != null || _windowCompleted)
+        if (_case == null || _observer != null || _windowCompleted ||
+            (phase == "Startup" && _startupCompleted))
         {
             throw new InvalidOperationException("Unexpected async-health iteration start.");
         }
+        _phase = phase;
         _observer = new ThreadPoolHealthObserver();
         _observer.Start();
+        _operations = new AsyncHealthOperationRecorder();
+        if (Interlocked.CompareExchange(ref s_operations, _operations, null) != null)
+        {
+            throw new InvalidOperationException("An operation recorder is already active.");
+        }
     }
 
     internal void CompleteWindow(bool completed)
@@ -212,11 +231,21 @@ public sealed class AsyncHealthDiagnoser : EventProcessor, IInProcessDiagnoser
         using ThreadPoolHealthObserver observer = _observer ??
             throw new InvalidOperationException("Missing async-health observation.");
         _observer = null;
+        Interlocked.CompareExchange(ref s_operations, null, _operations);
         try
         {
             AsyncHealthWindow window = observer.Complete();
-            _windowCompleted = completed;
+            AsyncHealthOperationSnapshot? operations = _operations?.Snapshot();
+            if (_phase == "Startup") _startupCompleted = completed;
+            else _windowCompleted = completed;
             HasFailed |= !completed || window.ObserverError != null;
+            if (operations?.Invocations > 0)
+            {
+                HasFailed |= operations.Failed != 0 || operations.Cancelled != 0 ||
+                    operations.InFlight != 0 || operations.Queued != 0 ||
+                    operations.FirstWorkerOutcomesMissing != 0 ||
+                    operations.CompletedInvocations != operations.Invocations;
+            }
             Save(window, HasFailed ? "Failed" : "Completed", window.ObserverError);
             // Continuing with queued callbacks would contaminate later benchmark cases.
             if (window.Probes.Outstanding != 0)
@@ -235,36 +264,42 @@ public sealed class AsyncHealthDiagnoser : EventProcessor, IInProcessDiagnoser
     {
         BenchmarkCase benchmark = _case ??
             throw new InvalidOperationException("Missing async-health benchmark context.");
-        AsyncHealthSummary? summary = measurement == null ? null : AsyncHealthSummary.Create(measurement);
+        AsyncHealthOperationSnapshot? operations = _operations?.Snapshot();
+        AsyncHealthSummary? summary = measurement == null ? null :
+            AsyncHealthSummary.Create(measurement, operations);
         if (summary != null)
         {
             _summaries.Add(summary);
         }
+        ThreadPool.GetMinThreads(out int minimumWorkers, out _);
+        ThreadPool.GetMaxThreads(out int maximumWorkers, out _);
 
         var result = new
         {
-            SchemaVersion = 1, Kind = "BenchmarkAsyncHealth", Status = status, Error = error,
-            CaseId = _caseId,
+            SchemaVersion = 2, Kind = "BenchmarkAsyncHealth", Status = status, Error = error,
+            CaseId = _caseId, Phase = _phase,
             Benchmark = benchmark.Descriptor.Type.FullName + "." + benchmark.Descriptor.WorkloadMethod.Name,
             Parameters = benchmark.Parameters.DisplayInfo,
-            Invocations = benchmark.Job.Run.InvocationCount,
+            ConfiguredInvocationsPerIteration = benchmark.Job.Run.InvocationCount,
             benchmark.Descriptor.OperationsPerInvoke,
-            CompletedInvocations = status == "Completed" ? (long?)benchmark.Job.Run.InvocationCount : null,
+            CompletedInvocations = operations?.CompletedInvocations,
             Configuration = new
             {
                 UseConnectionPoolV2 = _poolV2, UseManagedSni = _managedSni,
                 UseOptimizedAsync = _optimizedAsync, Runtime = Environment.Version.ToString(),
                 OS = Environment.OSVersion.Platform.ToString(), Environment.ProcessorCount,
+                MinimumWorkerThreads = minimumWorkers, MaximumWorkerThreads = maximumWorkers,
                 Environment.ProcessId, DriverVersion = typeof(SqlConnection).Assembly.FullName,
                 DriverSha256 = Convert.ToHexString(SHA256.HashData(
                     File.ReadAllBytes(typeof(SqlConnection).Assembly.Location))),
-                DiagnosticRunMode = "ExtraIteration"
+                DiagnosticRunMode = "StartupAndExtraIteration",
+                FirstBenchmarkInProcess = _firstBenchmarkInProcess
             },
-            Summary = summary, Measurement = measurement
+            Summary = summary, Measurement = measurement, Operations = operations
         };
         Directory.CreateDirectory(OutputDirectory);
         // A later execution failure must not overwrite the already captured failed window.
-        string suffix = measurement == null ? "execution-" + status : status;
+        string suffix = measurement == null ? "execution-" + status : _phase + "-" + status;
         string path = Path.Combine(OutputDirectory, $"{_caseId}-{suffix}.json");
         File.WriteAllText(path + ".tmp", JsonSerializer.Serialize(result,
             new JsonSerializerOptions { WriteIndented = true }));
@@ -289,9 +324,17 @@ public sealed class AsyncHealthDiagnoser : EventProcessor, IInProcessDiagnoser
         {
             AsyncHealthDiagnoser owner = _owner ??
                 throw new InvalidOperationException("Async-health handler not initialized.");
-            if (signal == BenchmarkSignal.BeforeExtraIteration)
+            if (signal == BenchmarkSignal.BeforeEngine)
             {
-                owner.StartWindow();
+                owner.StartWindow("Startup");
+            }
+            else if (signal == BenchmarkSignal.BeforeActualRun)
+            {
+                owner.CompleteWindow(true);
+            }
+            else if (signal == BenchmarkSignal.BeforeExtraIteration)
+            {
+                owner.StartWindow("ExtraIteration");
             }
             else if (signal == BenchmarkSignal.AfterExtraIteration)
             {

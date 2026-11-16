@@ -2,7 +2,7 @@
 # Licensed to the .NET Foundation under one or more agreements.
 # The .NET Foundation licenses this file to you under the MIT license.
 
-"""Render workload-only BDN diagnostic evidence separately from timing comparisons/Kusto."""
+"""Render BDN startup and extra-iteration evidence separately from timing comparisons/Kusto."""
 
 import argparse
 import json
@@ -13,12 +13,14 @@ def render(root):
     """Keep side/repetition provenance and explicit failures/insufficient windows in the summary."""
     lines = [
         "# BenchmarkDotNet async health", "",
-        "Observed only during the extra diagnostic iteration, outside BDN timing samples.",
-        "Short/censored windows are not health passes. Fresh-process matched gates are separate.",
+        "Startup/warmup and the extra diagnostic iteration are separate observations of BDN's "
+        "own workloads. Normal timing iterations are not observed.",
+        "Startup includes fixture initialization. Short/censored windows are not health passes.",
         "",
-        "| Evidence | Benchmark | Parameters | Status | Health | Dispatch p99 (ms) | "
-        "Completed probes | Missing | Peak process threads |",
-        "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+        "| Evidence | Benchmark | Parameters | Phase | Status | Scheduler | Dispatch p99 (ms) | "
+        "First queue p99 (ms) | First offer-to-open p99 (ms) | Completed/s | Failed/cancelled | "
+        "Queued/in-flight | Missing first outcomes | Operation evidence | Peak process threads |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     paths = sorted(root.glob("**/async-health/*.json"))
     if not paths:
@@ -27,7 +29,7 @@ def render(root):
     failed = False
     for path in paths:
         data = json.loads(path.read_text(encoding="utf-8-sig"))
-        if data.get("SchemaVersion") != 1 or data.get("Kind") != "BenchmarkAsyncHealth":
+        if data.get("SchemaVersion") != 2 or data.get("Kind") != "BenchmarkAsyncHealth":
             raise ValueError(f"Unknown BDN async-health schema: {path.name}")
         # Sequential collection retains both a full artifacts tree and copied timing reports;
         # identify health windows by their unique case id and result/marker filename.
@@ -40,14 +42,19 @@ def render(root):
             raise ValueError("Invalid BDN diagnostic status.")
         failed |= status == "Failed"
         summary = data.get("Summary")
-        if status == "Completed" and (not summary or not data.get("Measurement") or
-                                      data.get("CompletedInvocations", 0) <= 0):
-            raise ValueError("Completed BDN diagnostic has no completed workload/evidence.")
+        if status == "Completed" and (not summary or not data.get("Measurement")):
+            raise ValueError("Completed BDN diagnostic has no measurement evidence.")
         summary = summary or {}
+        operations = data.get("Operations") or {}
         values = [
-            str(path.relative_to(root)), data["Benchmark"], data["Parameters"], status,
+            str(path.relative_to(root)), data["Benchmark"], data["Parameters"], data["Phase"], status,
             summary.get("Health", "Invalid"), summary.get("DispatchP99Ms"),
-            summary.get("Samples"), summary.get("Missing"), summary.get("ProcessThreadsPeak")]
+            summary.get("FirstWorkerQueueP99Ms"), summary.get("FirstWorkerOfferToOpenP99Ms"),
+            summary.get("CompletedOperationsPerSecond"),
+            f"{operations.get('Failed', '-')}/{operations.get('Cancelled', '-')}",
+            f"{operations.get('Queued', '-')}/{operations.get('InFlight', '-')}",
+            operations.get("FirstWorkerOutcomesMissing"),
+            summary.get("OperationEvidence", "Unknown"), summary.get("ProcessThreadsPeak")]
         lines.append("| " + " | ".join(
             str(value).replace("|", "\\|").replace("\n", " ") if value is not None else "-"
             for value in values) + " |")

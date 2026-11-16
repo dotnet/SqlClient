@@ -30,9 +30,9 @@ public sealed class AsyncHealthBenchmarkCollection
 [Collection(AsyncHealthBenchmarkCollection.Name)]
 public class AsyncHealthDiagnoserTests
 {
-    /// <summary>Exactly one extra workload is observed, excluding timing and fixture setup/cleanup.</summary>
+    /// <summary>Startup and extra work are captured separately without recording timing invocations.</summary>
     [Fact]
-    public void Run_MarkedBenchmark_ObservesOnlyExtraIteration()
+    public void Run_MarkedBenchmark_SeparatesStartupAndExtraFromTiming()
     {
         // Arrange
         string directory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
@@ -41,6 +41,7 @@ public class AsyncHealthDiagnoserTests
         AsyncHealthBenchmarkFixture.Observer = diagnoser;
         AsyncHealthBenchmarkFixture.Observed = AsyncHealthBenchmarkFixture.Unobserved = 0;
         AsyncHealthBenchmarkFixture.Setups = AsyncHealthBenchmarkFixture.Cleanups = 0;
+        AsyncHealthBenchmarkFixture.StartupObserved = AsyncHealthBenchmarkFixture.TimingInvocations = 0;
         try
         {
             // Act
@@ -50,11 +51,20 @@ public class AsyncHealthDiagnoserTests
             Assert.False(diagnoser.HasFailed);
             Assert.Equal(1, AsyncHealthBenchmarkFixture.Observed);
             Assert.True(AsyncHealthBenchmarkFixture.Unobserved > 0);
+            Assert.True(AsyncHealthBenchmarkFixture.StartupObserved > 0);
+            Assert.True(AsyncHealthBenchmarkFixture.TimingInvocations > 0);
             Assert.Equal(AsyncHealthBenchmarkFixture.Setups, AsyncHealthBenchmarkFixture.Cleanups);
+            using JsonDocument startup = JsonDocument.Parse(File.ReadAllText(
+                Assert.Single(Directory.GetFiles(directory, "*-Startup-Completed.json"))));
+            Assert.Equal("Startup", startup.RootElement.GetProperty("Phase").GetString());
+            Assert.True(startup.RootElement.GetProperty("Operations")
+                .GetProperty("Completed").GetInt64() > 0);
             using JsonDocument result = JsonDocument.Parse(File.ReadAllText(
-                Assert.Single(Directory.GetFiles(directory, "*-Completed.json"))));
+                Assert.Single(Directory.GetFiles(directory, "*-ExtraIteration-Completed.json"))));
             Assert.Equal("Completed", result.RootElement.GetProperty("Status").GetString());
             Assert.Equal(1, result.RootElement.GetProperty("CompletedInvocations").GetInt64());
+            Assert.Equal(1, result.RootElement.GetProperty("Operations")
+                .GetProperty("Completed").GetInt64());
             Assert.Equal("Insufficient", result.RootElement.GetProperty("Summary")
                 .GetProperty("Health").GetString());
             Assert.NotEmpty(result.RootElement.GetProperty("Measurement")
@@ -92,6 +102,8 @@ public class AsyncHealthDiagnoserTests
             using JsonDocument window = JsonDocument.Parse(File.ReadAllText(windowPath));
             Assert.Equal(JsonValueKind.Object,
                 window.RootElement.GetProperty("Measurement").ValueKind);
+            Assert.Equal(1, window.RootElement.GetProperty("Operations")
+                .GetProperty("Failed").GetInt64());
             Assert.False(diagnoser.IsObserving);
         }
         finally
@@ -139,7 +151,7 @@ public class AsyncHealthDiagnoserTests
             .WithArtifactsPath(directory)
             .WithOption(ConfigOptions.DisableOptimizationsValidator, true)
             .AddJob(Job.Dry.WithToolchain(InProcessEmitToolchain.Default)
-                .WithLaunchCount(1).WithWarmupCount(0).WithIterationCount(1)
+                .WithLaunchCount(1).WithWarmupCount(1).WithIterationCount(1)
                 .WithInvocationCount(1).WithUnrollFactor(1).WithStrategy(RunStrategy.Monitoring))
             .AddDiagnoser(MemoryDiagnoser.Default).AddDiagnoser(ThreadingDiagnoser.Default)
             .AddDiagnoser(diagnoser).AddEventProcessor(diagnoser);

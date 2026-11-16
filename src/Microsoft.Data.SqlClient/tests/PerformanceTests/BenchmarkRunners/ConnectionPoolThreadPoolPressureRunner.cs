@@ -209,26 +209,44 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
 
         [AsyncHealthDiagnoser]
         [Benchmark]
-        public Task SaturatedSyncOpenOnThreadPool()
+        public async Task SaturatedSyncOpenOnThreadPool()
         {
+            var invocation = AsyncHealthDiagnoser.BeginInvocation(Parallelism);
             var tasks = new Task[Parallelism];
             for (int i = 0; i < Parallelism; i++)
             {
+                int worker = i;
+                var first = invocation?.Offer(worker);
                 tasks[i] = Task.Run(() =>
                 {
                     for (int op = 0; op < OpsPerWorker; op++)
                     {
-                        using var conn = new SqlConnection(_connectionString);
-                        conn.Open();
-                        using var cmd = conn.CreateCommand();
-                        cmd.CommandText = "SELECT 1";
-                        _ = cmd.ExecuteScalar();
-                        // Dispose returns the connection to the pool.
+                        var operation = op == 0 ? first : invocation?.Offer(worker);
+                        operation?.Start();
+                        try
+                        {
+                            using (var conn = new SqlConnection(_connectionString))
+                            {
+                                conn.Open();
+                                operation?.OpenReturned(true);
+                                operation?.Opened();
+                                using var cmd = conn.CreateCommand();
+                                cmd.CommandText = "SELECT 1";
+                                _ = cmd.ExecuteScalar();
+                            }
+                            operation?.Complete();
+                        }
+                        catch (Exception error)
+                        {
+                            operation?.Fail(error);
+                            throw;
+                        }
                     }
                 });
             }
 
-            return Task.WhenAll(tasks);
+            await Task.WhenAll(tasks);
+            invocation?.Complete();
         }
 
         private void WarmPool(int count)

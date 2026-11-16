@@ -59,18 +59,22 @@ class BenchmarkHealthTests(unittest.TestCase):
             root = Path(temp)
             target = root / "current/async-health"
             target.mkdir(parents=True)
-            data = dict(SchemaVersion=1, Kind="BenchmarkAsyncHealth", CaseId="case",
+            data = dict(SchemaVersion=2, Kind="BenchmarkAsyncHealth", CaseId="case",
                         Benchmark="Burst.OpenClose", Parameters="State=Warm",
-                        Status="Completed", CompletedInvocations=1,
+                        Status="Completed", CompletedInvocations=1, Phase="ExtraIteration",
+                        Operations=dict(Failed=0, Cancelled=1, Queued=2, InFlight=3,
+                                        FirstWorkerOutcomesMissing=5),
                         Measurement={"Probes": {}},
                         Summary=dict(Health="Insufficient", DispatchP99Ms=1, Samples=5,
-                                     Missing=0, ProcessThreadsPeak=50))
+                                     Missing=0, ProcessThreadsPeak=50, OperationEvidence="Incomplete"))
             (target / "case-Completed.json").write_text(json.dumps(data))
             markdown, failed = report.render(root)
             self.assertFalse(failed)
             self.assertIn("Insufficient", markdown)
             self.assertIn("current", markdown)
             self.assertIn("State=Warm", markdown)
+            self.assertIn("ExtraIteration", markdown)
+            self.assertIn("0/1 | 2/3 | 5 | Incomplete", markdown)
             data.update(Status="Failed", Summary=None, Measurement=None)
             (target / "case-execution-Failed.json").write_text(json.dumps(data))
             markdown, failed = report.render(root)

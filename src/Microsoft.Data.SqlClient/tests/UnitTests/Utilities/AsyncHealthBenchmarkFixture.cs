@@ -15,25 +15,26 @@ public class AsyncHealthBenchmarkFixture
 {
     internal static AsyncHealthDiagnoser? Observer;
     internal static int Observed, Unobserved, Setups, Cleanups;
+    internal static int StartupObserved, TimingInvocations;
 
-    /// <summary>Resets per-iteration fixtures outside the diagnostic observation.</summary>
+    /// <summary>Checks that fixture setup remains outside the extra-iteration observation.</summary>
     [IterationSetup]
     public void Setup()
     {
         if (Observer!.IsObserving)
         {
-            throw new InvalidOperationException("Setup overlapped observation.");
+            throw new InvalidOperationException("Setup overlapped extra-iteration observation.");
         }
         Interlocked.Increment(ref Setups);
     }
 
-    /// <summary>Checks that the diagnostic observation ends before fixture cleanup.</summary>
+    /// <summary>Checks that extra-iteration observation ends before successful fixture cleanup.</summary>
     [IterationCleanup]
     public void Cleanup()
     {
         if (Observer!.IsObserving)
         {
-            throw new InvalidOperationException("Cleanup overlapped observation.");
+            throw new InvalidOperationException("Cleanup overlapped extra-iteration observation.");
         }
         Interlocked.Increment(ref Cleanups);
     }
@@ -43,9 +44,17 @@ public class AsyncHealthBenchmarkFixture
     [AsyncHealthDiagnoser]
     public async Task AsyncWait()
     {
+        var invocation = AsyncHealthDiagnoser.BeginInvocation(1);
+        var operation = invocation?.Offer(0);
         if (Observer!.IsObserving) Interlocked.Increment(ref Observed);
         else Interlocked.Increment(ref Unobserved);
+        if (!Observer.IsObserving && invocation != null) Interlocked.Increment(ref StartupObserved);
+        if (invocation == null) Interlocked.Increment(ref TimingInvocations);
+        operation?.Start();
         await Task.Delay(150).ConfigureAwait(false);
+        operation?.Opened();
+        operation?.Complete();
+        invocation?.Complete();
     }
 
     /// <summary>Fails inside the diagnostic window, after successful timing iterations.</summary>
@@ -53,10 +62,24 @@ public class AsyncHealthBenchmarkFixture
     [AsyncHealthDiagnoser]
     public async Task DiagnosticFailure()
     {
-        await Task.Delay(50).ConfigureAwait(false);
-        if (Observer!.IsObserving)
+        var invocation = AsyncHealthDiagnoser.BeginInvocation(1);
+        var operation = invocation?.Offer(0);
+        operation?.Start();
+        try
         {
-            throw new InvalidOperationException("Intentional diagnostic failure.");
+            await Task.Delay(50).ConfigureAwait(false);
+            if (Observer!.IsObserving)
+            {
+                throw new InvalidOperationException("Intentional diagnostic failure.");
+            }
+            operation?.Opened();
+            operation?.Complete();
+            invocation?.Complete();
+        }
+        catch (Exception error)
+        {
+            operation?.Fail(error);
+            throw;
         }
     }
 

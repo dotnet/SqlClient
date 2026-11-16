@@ -11,7 +11,7 @@
     // Enable this flag to enable optimized async behavior in SqlClient.
     // This is useful for benchmarking packet multiplexing and async performance improvements.
     "UseOptimizedAsyncBehaviour": true,
-    // Collect workload-only probes in a separate BDN extra iteration for marked benchmarks.
+    // Collect startup/warmup and extra-iteration signals within marked BDN benchmarks.
     // Short diagnostic windows are explicitly insufficient, not healthy.
     "EnableAsyncHealth": true,
     // Enable this flag to get prompted to attach a profiler when running the performance tests.

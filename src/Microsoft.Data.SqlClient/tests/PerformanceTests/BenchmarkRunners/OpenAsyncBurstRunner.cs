@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
 
@@ -9,7 +10,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests;
 
 /// <summary>
 /// ThreadPool-dispatched OpenAsync bursts cover empty-pool creation, warm checkout, waiter wakeup
-/// and non-pooled login. BDN initializes the driver; truly cold processes are measured separately.
+/// and non-pooled login. Startup observations retain first-open effects; later cases reuse driver state.
 /// </summary>
 [AsyncHealthDiagnoser]
 public class OpenAsyncBurstRunner : BaseRunner
@@ -21,10 +22,23 @@ public class OpenAsyncBurstRunner : BaseRunner
 
     private const int Workers = 64;
     private string _connectionString;
+    private int _originalMinimumWorkers;
+    private int _originalMinimumIo;
 
     [GlobalSetup]
     public void Setup()
     {
+        ThreadPool.GetMinThreads(out _originalMinimumWorkers, out _originalMinimumIo);
+        if (!ThreadPool.SetMinThreads(16, _originalMinimumIo))
+        {
+            throw new InvalidOperationException("Could not set the benchmark's worker minimum.");
+        }
+        ThreadPool.GetMinThreads(out int minimumWorkers, out _);
+        if (minimumWorkers != 16)
+        {
+            throw new InvalidOperationException("The runtime changed the requested worker minimum.");
+        }
+
         var builder = new SqlConnectionStringBuilder(s_config.ConnectionString)
         {
             ApplicationName = "OpenAsyncBurst-" + Guid.NewGuid().ToString("N"),
@@ -36,6 +50,15 @@ public class OpenAsyncBurstRunner : BaseRunner
             PoolBlockingPeriod = PoolBlockingPeriod.NeverBlock
         };
         _connectionString = builder.ConnectionString;
+    }
+
+    [GlobalCleanup]
+    public void RestoreWorkerMinimum()
+    {
+        if (!ThreadPool.SetMinThreads(_originalMinimumWorkers, _originalMinimumIo))
+        {
+            throw new InvalidOperationException("Could not restore the worker minimum.");
+        }
     }
 
     [IterationSetup]
@@ -72,36 +95,72 @@ public class OpenAsyncBurstRunner : BaseRunner
     }
 
     [Benchmark(OperationsPerInvoke = Workers)]
-    public Task OpenClose()
+    public async Task OpenClose()
     {
+        var invocation = AsyncHealthDiagnoser.BeginInvocation(Workers);
         var tasks = new Task[Workers];
         for (int i = 0; i < tasks.Length; i++)
         {
+            var operation = invocation?.Offer(i);
             tasks[i] = Task.Run(async () =>
             {
-                using var connection = new SqlConnection(_connectionString);
-                await connection.OpenAsync().ConfigureAwait(false);
+                operation?.Start();
+                try
+                {
+                    using (var connection = new SqlConnection(_connectionString))
+                    {
+                        Task open = connection.OpenAsync();
+                        operation?.OpenReturned(open.IsCompleted);
+                        await open.ConfigureAwait(false);
+                        operation?.Opened();
+                    }
+                    operation?.Complete();
+                }
+                catch (Exception error)
+                {
+                    operation?.Fail(error);
+                    throw;
+                }
             });
         }
-        return Task.WhenAll(tasks);
+        await Task.WhenAll(tasks).ConfigureAwait(false);
+        invocation?.Complete();
     }
 
     [Benchmark(OperationsPerInvoke = Workers)]
-    public Task OpenQueryClose()
+    public async Task OpenQueryClose()
     {
+        var invocation = AsyncHealthDiagnoser.BeginInvocation(Workers);
         var tasks = new Task[Workers];
         for (int i = 0; i < tasks.Length; i++)
         {
+            var operation = invocation?.Offer(i);
             tasks[i] = Task.Run(async () =>
             {
-                using var connection = new SqlConnection(_connectionString);
-                await connection.OpenAsync().ConfigureAwait(false);
-                using var command = connection.CreateCommand();
-                command.CommandText = "SELECT 1";
-                command.CommandTimeout = 15;
-                _ = await command.ExecuteScalarAsync().ConfigureAwait(false);
+                operation?.Start();
+                try
+                {
+                    using (var connection = new SqlConnection(_connectionString))
+                    {
+                        Task open = connection.OpenAsync();
+                        operation?.OpenReturned(open.IsCompleted);
+                        await open.ConfigureAwait(false);
+                        operation?.Opened();
+                        using var command = connection.CreateCommand();
+                        command.CommandText = "SELECT 1";
+                        command.CommandTimeout = 15;
+                        _ = await command.ExecuteScalarAsync().ConfigureAwait(false);
+                    }
+                    operation?.Complete();
+                }
+                catch (Exception error)
+                {
+                    operation?.Fail(error);
+                    throw;
+                }
             });
         }
-        return Task.WhenAll(tasks);
+        await Task.WhenAll(tasks).ConfigureAwait(false);
+        invocation?.Complete();
     }
 }
