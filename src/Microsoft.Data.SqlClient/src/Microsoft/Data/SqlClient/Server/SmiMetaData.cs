@@ -472,48 +472,6 @@ namespace Microsoft.Data.SqlClient.Server
                 DefaultDateTimeOffset,         // SqlDbType.DateTimeOffset
             };
 
-        // static array of type names ordered by corresponding SqlDbType.
-        // NOTE: INDEXED BY SqlDbType ENUM!  MUST UPDATE THIS ARRAY WHEN UPDATING SqlDbType!
-        //   ONLY ACCESS THIS GLOBAL FROM get_TypeName!
-        private static readonly string[] s_typeNameByDatabaseType =
-            {
-                "bigint",               // SqlDbType.BigInt
-                "binary",               // SqlDbType.Binary
-                "bit",                  // SqlDbType.Bit
-                "char",                 // SqlDbType.Char
-                "datetime",             // SqlDbType.DateTime
-                "decimal",              // SqlDbType.Decimal
-                "float",                // SqlDbType.Float
-                "image",                // SqlDbType.Image
-                "int",                  // SqlDbType.Int
-                "money",                // SqlDbType.Money
-                "nchar",                // SqlDbType.NChar
-                "ntext",                // SqlDbType.NText
-                "nvarchar",             // SqlDbType.NVarChar
-                "real",                 // SqlDbType.Real
-                "uniqueidentifier",     // SqlDbType.UniqueIdentifier
-                "smalldatetime",        // SqlDbType.SmallDateTime
-                "smallint",             // SqlDbType.SmallInt
-                "smallmoney",           // SqlDbType.SmallMoney
-                "text",                 // SqlDbType.Text
-                "timestamp",            // SqlDbType.Timestamp
-                "tinyint",              // SqlDbType.TinyInt
-                "varbinary",            // SqlDbType.VarBinary
-                "varchar",              // SqlDbType.VarChar
-                "sql_variant",          // SqlDbType.Variant
-                null,                   // placeholder for 24
-                "xml",                  // SqlDbType.Xml
-                null,                   // placeholder for 26
-                null,                   // placeholder for 27
-                null,                   // placeholder for 28
-                string.Empty,           // SqlDbType.Udt  -- get type name from Type.FullName instead.
-                string.Empty,           // Structured types have user-defined type names.
-                "date",                 // SqlDbType.Date
-                "time",                 // SqlDbType.Time
-                "datetime2",            // SqlDbType.DateTime2
-                "datetimeoffset",       // SqlDbType.DateTimeOffset
-            };
-
         // Internal setter to be used by constructors only!  Modifies state!
         private void SetDefaultsForType(SqlDbType dbType)
         {
@@ -865,7 +823,6 @@ namespace Microsoft.Data.SqlClient.Server
         private readonly string _columnName;  // underlying column's name
         private readonly SqlBoolean _isKey;   // Is this one of a set of key columns that uniquely identify an underlying table?
         private readonly bool _isIdentity;    // Is this from an identity column
-        private readonly bool _isColumnSet;   // Is this column the XML representation of a columnset?
 
         internal SmiStorageMetaData(
             SqlDbType dbType,
@@ -1031,7 +988,6 @@ namespace Microsoft.Data.SqlClient.Server
             _columnName = columnName;
             _isKey = isKey;
             _isIdentity = isIdentity;
-            _isColumnSet = isColumnSet;
         }
 
         internal bool AllowsDBNull => _allowsDBNull;
@@ -1082,7 +1038,6 @@ namespace Microsoft.Data.SqlClient.Server
     //  Maps to full COLMETADATA + COLINFO + TABNAME tokens on TDS.
     internal class SmiQueryMetaData : SmiStorageMetaData
     {
-        private readonly bool _isReadOnly;
         private readonly SqlBoolean _isExpression;
         private readonly SqlBoolean _isAliased;
         private readonly SqlBoolean _isHidden;
@@ -1213,7 +1168,6 @@ namespace Microsoft.Data.SqlClient.Server
                 isColumnSet
             )
         {
-            _isReadOnly = isReadOnly;
             _isExpression = isExpression;
             _isAliased = isAliased;
             _isHidden = isHidden;

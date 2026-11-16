@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Runtime.CompilerServices;
@@ -186,7 +187,8 @@ namespace Microsoft.SqlServer.TDS.Servers
                 ServerEndPoint = new IPEndPoint(IPAddress.Any, 0),
                 EndpointName = methodName,
                 EventLog = Arguments.Log,
-                ExpectTlsHandshakeFailure = Arguments.ExpectTlsHandshakeFailure
+                ExpectTlsHandshakeFailure = Arguments.ExpectTlsHandshakeFailure,
+                TlsFirst = Arguments.TlsFirst
             };
             _endpoint.Start();
         }
@@ -216,6 +218,13 @@ namespace Microsoft.SqlServer.TDS.Servers
         public virtual void CloseSession(ITDSServerSession session)
         {
             // Do nothing
+        }
+
+        /// <summary>
+        /// Called before the server starts the TLS handshake on a connection
+        /// </summary>
+        public virtual void OnTlsHandshakeStarting(ITDSServerSession session, Stream transport)
+        {
         }
 
         /// <summary>

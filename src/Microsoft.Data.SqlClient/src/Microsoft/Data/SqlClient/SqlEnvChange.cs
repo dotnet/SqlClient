@@ -15,7 +15,6 @@ namespace Microsoft.Data.SqlClient
         internal int _newLength; // 7206 TDS changes makes this length an int
         internal int _length;
         internal string _newValue;
-        internal string _oldValue;
         /// <summary>
         /// contains binary data, before using this field check newBinRented to see if you can take the field array or whether you should allocate and copy
         /// </summary>
@@ -27,7 +26,6 @@ namespace Microsoft.Data.SqlClient
         internal long _newLongValue;
         internal long _oldLongValue;
         internal SqlCollation _newCollation;
-        internal SqlCollation _oldCollation;
         internal TdsEnvChangeRoutingInfo _newRoutingInfo;
         internal bool _newBinRented;
         internal bool _oldBinRented;
@@ -41,7 +39,6 @@ namespace Microsoft.Data.SqlClient
             _newLength = 0;
             _length = 0;
             _newValue = null;
-            _oldValue = null;
             if (_newBinValue != null)
             {
                 Array.Clear(_newBinValue, 0, _newBinValue.Length);
@@ -65,7 +62,6 @@ namespace Microsoft.Data.SqlClient
             _newLongValue = 0;
             _oldLongValue = 0;
             _newCollation = null;
-            _oldCollation = null;
             _newRoutingInfo = null;
             _next = null;
         }
