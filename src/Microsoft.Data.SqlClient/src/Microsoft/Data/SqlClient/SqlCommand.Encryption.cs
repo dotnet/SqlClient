@@ -533,8 +533,17 @@ namespace Microsoft.Data.SqlClient
                     // worker so even synchronously completed key loads cannot run the blocking
                     // stale-cache describe fallback on the caller's thread.
                     usedCache = true;
+                    SqlConnectionInternal retryConnection = _enclaveRetryConnection;
+                    SqlConnection connection = _activeConnection;
+                    int closeCount = connection.CloseCount;
+
+                    // Block command and connection changes until execution has been handed off.
+                    _enclaveAttestationInProgress = true;
                     returnTask = Task.Run(() => CompleteCachedQueryMetadataAsync(
                         metadata,
+                        retryConnection,
+                        connection,
+                        closeCount,
                         timeout,
                         completion,
                         asyncWrite,
@@ -568,35 +577,73 @@ namespace Microsoft.Data.SqlClient
         /// </remarks>
         private async Task CompleteCachedQueryMetadataAsync(
             SqlQueryMetadataCache.CachedQueryMetadata metadata,
+            SqlConnectionInternal retryConnection,
+            SqlConnection connection,
+            int closeCount,
             int timeout,
             TaskCompletionSource<object> completion,
             bool asyncWrite,
             bool isRetry,
             CancellationToken cancellationToken)
         {
-            bool cacheHit = await SqlQueryMetadataCache.GetInstance()
-                .CompleteCachedQueryMetadataAsync(this, metadata, cancellationToken)
-                .ConfigureAwait(false);
-
-            if (cacheHit)
+            // On success, execution clears the in-progress flag after it reserves the connection.
+            bool handedOff = false;
+            try
             {
-                return;
+                bool cacheHit = await SqlQueryMetadataCache.GetInstance()
+                    .CompleteCachedQueryMetadataAsync(this, metadata, cancellationToken)
+                    .ConfigureAwait(false);
+
+                ValidateConnectionLifetime(connection, closeCount);
+
+                if (!cacheHit)
+                {
+                    // The cached key information was stale, so run the full describe parameter
+                    // encryption round trip. It issues blocking TDS writes, but we are already off
+                    // the caller's thread.
+                    cancellationToken.ThrowIfCancellationRequested();
+                    ValidateConnectionForEnclaveExecution(retryConnection);
+                    PrepareForTransparentEncryptionCore(
+                        isAsync: true,
+                        timeout,
+                        completion,
+                        out Task describeTask,
+                        asyncWrite,
+                        isRetry,
+                        cancellationToken);
+
+                    if (describeTask is not null)
+                    {
+                        await describeTask.ConfigureAwait(false);
+                    }
+                }
+
+                handedOff = true;
             }
-
-            // The cached key information was stale, so run the full describe parameter encryption
-            // round trip. It issues blocking TDS writes, but we are already off the caller's thread.
-            PrepareForTransparentEncryptionCore(
-                isAsync: true,
-                timeout,
-                completion,
-                out Task describeTask,
-                asyncWrite,
-                isRetry,
-                cancellationToken);
-
-            if (describeTask is not null)
+            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
-                await describeTask.ConfigureAwait(false);
+                CachedAsyncState?.ResetAsyncState();
+                ReliablePutStateObject();
+                throw;
+            }
+            finally
+            {
+                if (!handedOff)
+                {
+                    _enclaveAttestationInProgress = false;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Rejects execution when the command's connection was replaced, or closed and reopened,
+        /// while encryption preparation was pending.
+        /// </summary>
+        private void ValidateConnectionLifetime(SqlConnection connection, int closeCount)
+        {
+            if (!ReferenceEquals(_activeConnection, connection) || connection.CloseCount != closeCount)
+            {
+                throw ADP.ClosedConnectionError();
             }
         }
 
@@ -783,6 +830,8 @@ namespace Microsoft.Data.SqlClient
             CancellationToken cancellationToken)
         {
             SqlConnectionInternal retryConnection = _enclaveRetryConnection;
+            // A stale cached-metadata fallback already holds the flag until execution hand-off.
+            bool ownsInProgressFlag = !_enclaveAttestationInProgress;
             _enclaveAttestationInProgress = true;
             try
             {
@@ -806,7 +855,10 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                _enclaveAttestationInProgress = false;
+                if (ownsInProgressFlag)
+                {
+                    _enclaveAttestationInProgress = false;
+                }
             }
         }
 

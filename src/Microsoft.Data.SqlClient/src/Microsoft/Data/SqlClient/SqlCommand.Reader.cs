@@ -1844,24 +1844,49 @@ namespace Microsoft.Data.SqlClient
                 // @TODO: This is a prime candidate for proper async-await execution
                 TaskCompletionSource<object> completion = new TaskCompletionSource<object>();
                 SqlConnectionInternal retryConnection = _enclaveRetryConnection;
+
+                // Cached query metadata keeps the in-progress flag set until execution starts.
+                bool clearInProgress = _enclaveAttestationInProgress;
+                SqlConnection preparedConnection = _activeConnection;
+                int preparedCloseCount = preparedConnection.CloseCount;
                 AsyncHelper.ContinueTaskWithState(
                     taskToContinue: describeParameterEncryptionTask,
                     taskCompletionSource: completion,
                     state: this,
                     onSuccess: sqlCommand =>
                     {
-                        sqlCommand.ValidateConnectionForEnclaveExecution(retryConnection);
-                        sqlCommand.GenerateEnclavePackage();
-                        sqlCommand.RunExecuteReaderTds(
-                            cmdBehavior,
-                            runBehavior,
-                            returnStream,
-                            isAsync,
-                            TdsParserStaticMethods.GetRemainingTimeout(timeout, parameterEncryptionStart),
-                            out Task subTask,
-                            asyncWrite,
-                            isRetry,
-                            ds);
+                        Task subTask;
+                        try
+                        {
+                            if (clearInProgress)
+                            {
+                                sqlCommand.ValidateConnectionLifetime(
+                                    preparedConnection,
+                                    preparedCloseCount);
+                            }
+
+                            sqlCommand.ValidateConnectionForEnclaveExecution(retryConnection);
+                            sqlCommand.GenerateEnclavePackage();
+                            sqlCommand.RunExecuteReaderTds(
+                                cmdBehavior,
+                                runBehavior,
+                                returnStream,
+                                isAsync,
+                                TdsParserStaticMethods.GetRemainingTimeout(
+                                    timeout,
+                                    parameterEncryptionStart),
+                                out subTask,
+                                asyncWrite,
+                                isRetry,
+                                ds);
+                        }
+                        finally
+                        {
+                            if (clearInProgress)
+                            {
+                                sqlCommand._enclaveAttestationInProgress = false;
+                            }
+                        }
 
                         if (subTask is null)
                         {
@@ -1877,16 +1902,26 @@ namespace Microsoft.Data.SqlClient
                                 onSuccess: static state => state.SetResult(null));
                         }
                     },
-                    onFailure: static (sqlCommand, exception) =>
+                    onFailure: (sqlCommand, exception) =>
                     {
+                        if (clearInProgress)
+                        {
+                            sqlCommand._enclaveAttestationInProgress = false;
+                        }
+
                         sqlCommand.CachedAsyncState?.ResetAsyncState();
                         if (exception is not null)
                         {
                             throw exception;
                         }
                     },
-                    onCancellation: static sqlCommand =>
+                    onCancellation: sqlCommand =>
                     {
+                        if (clearInProgress)
+                        {
+                            sqlCommand._enclaveAttestationInProgress = false;
+                        }
+
                         sqlCommand.CachedAsyncState?.ResetAsyncState();
                     });
 
