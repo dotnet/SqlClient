@@ -6,11 +6,16 @@
     Directory containing the English and localized Strings.resx files.
 
 .PARAMETER AllowlistPath
-    Optional JSON file containing approved English-value matches grouped by localized filename.
+    Optional JSONC file containing approved English-value matches grouped by resource owner,
+    localized filename, and resource key.
 
 .PARAMETER ReportOnly
     Report validation findings as warnings without failing. Malformed or missing inputs still fail,
     because a run that could not examine the resources has produced no result to report.
+
+.PARAMETER AllowlistSection
+    Resource owner containing the allowlist for the resource set being validated.
+    Defaults to SqlClient.
 #>
 
 # Licensed to the .NET Foundation under one or more agreements.
@@ -25,7 +30,9 @@ param(
 
     [string]$AllowlistPath,
 
-    [switch]$ReportOnly
+    [switch]$ReportOnly,
+
+    [string]$AllowlistSection = 'SqlClient'
 )
 
 Set-StrictMode -Version Latest
@@ -83,9 +90,9 @@ if (-not [string]::IsNullOrWhiteSpace($AllowlistPath)) {
     }
 
     $configuration = Get-Content -LiteralPath $AllowlistPath -Raw | ConvertFrom-Json
-    $englishValueMatchesProperty = $configuration.PSObject.Properties['AllowedEnglishValueMatches']
+    $englishValueMatchesProperty = $configuration.PSObject.Properties[$AllowlistSection]
     if ($null -eq $englishValueMatchesProperty) {
-        throw "Localization allowlist file '$AllowlistPath' must define 'AllowedEnglishValueMatches'."
+        throw "Localization allowlist file '$AllowlistPath' must define '$AllowlistSection'."
     }
 
     foreach ($fileProperty in $englishValueMatchesProperty.Value.PSObject.Properties) {
