@@ -16,7 +16,10 @@ namespace Microsoft.Data.SqlClient.Parser
 
         internal void ProcessSSPI(int receivedLength)
         {
-            Debug.Assert(_authenticationProvider is not null);
+            if (_authenticationProvider is null)
+            {
+                ThrowCorruptedTdsStream();
+            }
 
             SniContext outerContext = _physicalStateObj.SniContext;
             _physicalStateObj.SniContext = SniContext.Snix_ProcessSspi;
@@ -65,6 +68,19 @@ namespace Microsoft.Data.SqlClient.Parser
         }
 
 #nullable disable
+
+        /// <summary>
+        /// Rejects invalid token prerequisites using the existing parsing error, after ensuring
+        /// the connection cannot be reused. This does not convert other failures to SqlException.
+        /// </summary>
+        internal void ThrowCorruptedTdsStream()
+        {
+            SqlClientEventSource.Log.TryTraceEvent(
+                "<sc.TdsParser|ERR> Invalid state for received TDS token. Object ID {0}", ObjectID);
+            _state = TdsParserState.Broken;
+            _connHandler.BreakConnection();
+            throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+        }
 
         internal void TdsLogin(
             SqlLogin rec,
