@@ -230,6 +230,12 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
                 try
                 {
                     cancellationToken.ThrowIfCancellationRequested();
+                    // A synchronous caller may have published this key while we waited.
+                    if (_cache.TryGetValue(cacheLookupKey, out cachedKey) && cachedKey is not null)
+                    {
+                        return cachedKey;
+                    }
+
                     // The base async implementation invokes the synchronous provider before returning.
                     provider.ColumnEncryptionKeyCacheTtl = TimeSpan.Zero;
                     pendingDecryption = provider.DecryptColumnEncryptionKeyAsync(

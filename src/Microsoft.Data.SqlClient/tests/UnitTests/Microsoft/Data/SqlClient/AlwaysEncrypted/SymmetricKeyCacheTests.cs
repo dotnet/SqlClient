@@ -393,6 +393,67 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
         }
 
         /// <summary>
+        /// A key published while an async caller waits for the provider gate avoids another decrypt.
+        /// </summary>
+        [Fact]
+        public async Task GetKeyAsync_SynchronousOwnerPublishesWhileWaiting_ReusesPublishedKey()
+        {
+            // Arrange
+            SymmetricKeyCache cache = SymmetricKeyCache.Instance;
+            TaskCompletionSource<bool> entered = new(TaskCreationOptions.RunContinuationsAsynchronously);
+            using ManualResetEventSlim release = new();
+            int calls = 0;
+            byte[] expectedKey = NewPlaintextKey(seed: 46);
+            SynchronousKeyStoreProvider provider = new()
+            {
+                DecryptCallback = () =>
+                {
+                    if (Interlocked.Increment(ref calls) != 1)
+                    {
+                        throw new InvalidOperationException("The key was already decrypted.");
+                    }
+                    entered.TrySetResult(true);
+                    release.Wait();
+                    return expectedKey;
+                }
+            };
+            using SqlConnection connection = NewConnection((ProviderName, provider));
+            SqlEncryptionKeyInfo keyInfo = NewKeyInfo();
+            Task<SymmetricKey>? waiter = null;
+
+            // Act
+            Task<SymmetricKey> owner = Task.Factory.StartNew(
+                () => cache.GetKey(keyInfo, connection, null),
+                CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+            try
+            {
+                Assert.Same(entered.Task, await Task.WhenAny(
+                    entered.Task, Task.Delay(TimeSpan.FromSeconds(5))));
+                waiter = cache.GetKeyAsync(keyInfo, connection, null, CancellationToken.None);
+                bool waitedForOwner = !waiter.IsCompleted;
+                release.Set();
+                SymmetricKey ownerKey = await owner;
+                SymmetricKey waiterKey = await waiter;
+
+                // Assert
+                Assert.True(waitedForOwner);
+                Assert.Same(ownerKey, waiterKey);
+                Assert.Equal(expectedKey, waiterKey.RootKey);
+                Assert.Equal(1, Volatile.Read(ref calls));
+            }
+            finally
+            {
+                // Cleanup
+                release.Set();
+                await owner;
+                if (waiter is not null)
+                {
+                    await waiter;
+                }
+            }
+        }
+
+        /// <summary>
         /// Async fallback calls remain serialized, and waiting callers can cancel before entry.
         /// </summary>
         [Fact]
