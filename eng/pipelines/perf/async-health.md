@@ -97,7 +97,20 @@ Benchmark exceptions, missing diagnostic windows, observer faults and incomplete
 work fail explicitly. Failed-window evidence and execution-failure markers are separate files.
 The normal per-case timeout remains enforced. The test-only BDN packages use
 `0.16.0-preview.1` because `0.15.8` lacks the necessary in-process lifecycle hooks.
+SQL jobs explicitly use `JitTieringMode.Skip`: the preview's automatic tier-promotion stage
+otherwise adds about 90 complete workload invocations, including repeated fixtures, beyond
+the configured warmup. This does not disable runtime tiered compilation or reduce configured
+warmups, timing iterations, operations, or diagnostic iterations. Reclassifying long-running
+jobs as `Monitoring` is separate work; existing strategies are unchanged.
 For local native/interactive profiling, disable `EnableAsyncHealth`; pipeline runs enable it.
+
+The VM runner reserves the final ten minutes of `testTimeoutMinutes` for the template's
+completion poll and artifact collection. Build/setup elapsed time counts against the remaining
+benchmark budget. An expired benchmark budget terminates owned benchmark processes and fails
+explicitly, but leaves the collector alive. Interleaved raw logs/reports live under
+`perf-results/runs`; per-unit `.timing.json` records retain elapsed time and exit status.
+This protects benchmark-timeout evidence; a hung SDK installation or an externally killed
+agent/VM can still prevent collection.
 
 ## Limits
 

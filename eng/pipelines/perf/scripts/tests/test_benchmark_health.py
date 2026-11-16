@@ -24,7 +24,7 @@ class BenchmarkHealthTests(unittest.TestCase):
             root = Path(temp)
             destination = root / "results"
 
-            def child(exe_dir, assembly, unit, cwd, cpus, log_path, env_overrides=None):
+            def child(exe_dir, assembly, unit, cwd, cpus, log_path, env_overrides=None, timeout=None):
                 artifact = Path(cwd) / "BenchmarkDotNet.Artifacts/async-health"
                 artifact.mkdir(parents=True)
                 (artifact / "failed.json").write_text('{"Status":"Failed"}')

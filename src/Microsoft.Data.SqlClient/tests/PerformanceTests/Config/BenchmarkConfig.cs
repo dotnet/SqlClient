@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable enable
 using System;
 using System.Threading;
 using BenchmarkDotNet.Configs;
@@ -53,7 +54,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 ? strategy
                 : RunStrategy.Throughput;
 
-        public static ManualConfig s_instance(RunnerJob runnerJob, Config suiteConfig = null)
+        public static ManualConfig s_instance(RunnerJob runnerJob, Config? suiteConfig = null)
         {
             ManualConfig config = DefaultConfig.Instance
                 .WithOption(ConfigOptions.DisableOptimizationsValidator, true)
@@ -71,6 +72,10 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                     .WithInvocationCount(runnerJob.InvocationCount)
                     .WithIterationCount(runnerJob.IterationCount)
                     .WithWarmupCount(runnerJob.WarmupCount)
+                    // SQL jobs already configure warmup. Preview auto-tiering adds about 90
+                    // full workload calls (and repeated fixtures) beyond that configuration.
+                    // Skip that extra preparation, not runtime tiered compilation.
+                    .WithJitTieringMode(JitTieringMode.Skip)
                     .WithUnrollFactor(1)
                     .WithStrategy(ResolveRunStrategy(runnerJob))
                     .WithEnvironmentVariable("COMPlus_gcServer", "1")
@@ -105,7 +110,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         /// <summary>Retains per-case timeout enforcement with BDN's cancellation-based executor.</summary>
         internal sealed class ExecutionTimeout(int minutes) : EventProcessor
         {
-            internal CancellationTokenSource Source { get; set; }
+            internal CancellationTokenSource? Source { get; set; }
 
             public override void OnStartRunBenchmark(BenchmarkCase benchmarkCase) =>
                 Source?.CancelAfter(TimeSpan.FromMinutes(minutes > 0 ? minutes : 5));

@@ -29,10 +29,13 @@ Only the Python standard library is used so it runs on the perf VM unchanged.
 import argparse
 import glob
 import json
+import math
 import os
 import shutil
+import signal
 import subprocess
 import sys
+import time
 
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -109,7 +112,30 @@ def apply_affinity(proc, cpus):
 # --------------------------------------------------------------------------------------------------
 # Running one unit and collecting its artifacts.
 # --------------------------------------------------------------------------------------------------
-def run_unit_process(exe_dir, assembly, unit, cwd, cpus, log_path, env_overrides=None):
+def stop_process_tree(proc):
+    """Stop only this benchmark's process tree, leaving the collector alive."""
+    if proc.poll() is not None:
+        return
+    if os.name == "nt":
+        stopped = subprocess.run(
+            ["taskkill", "/PID", str(proc.pid), "/T", "/F"],
+            capture_output=True, text=True, timeout=30)
+        if stopped.returncode and proc.poll() is None:
+            stopped.check_returncode()
+    else:
+        try:
+            os.killpg(proc.pid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+        try:
+            proc.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            os.killpg(proc.pid, signal.SIGKILL)
+    proc.wait(timeout=30)
+
+
+def run_unit_process(exe_dir, assembly, unit, cwd, cpus, log_path, env_overrides=None,
+                     timeout=None):
     """Run one benchmark *unit* from the build at *exe_dir* in *cwd*.
 
     Returns the subprocess return code.  Kept as a small seam so tests can substitute
@@ -128,9 +154,18 @@ def run_unit_process(exe_dir, assembly, unit, cwd, cpus, log_path, env_overrides
 
     with open(log_path, "w", encoding="utf-8") as log:
         proc = subprocess.Popen(cmd, cwd=cwd, env=env, stdout=log,
-                                stderr=subprocess.STDOUT)
+                                stderr=subprocess.STDOUT, start_new_session=os.name != "nt")
         apply_affinity(proc, cpus)
-        return proc.wait()
+        try:
+            return proc.wait(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            log.write("\nERROR: benchmark exceeded the remaining run budget.\n")
+            log.flush()
+            stop_process_tree(proc)
+            return 124
+        except BaseException:
+            stop_process_tree(proc)
+            raise
 
 
 def _report_files(root):
@@ -171,7 +206,7 @@ class Runner:
     """Holds the invariant run parameters and performs interleaved unit passes."""
 
     def __init__(self, baseline_dir, current_dir, assembly, work_dir, cpus,
-                 baseline_runner_config=None, current_runner_config=None):
+                 baseline_runner_config=None, current_runner_config=None, max_run_seconds=None):
         self.baseline_dir = baseline_dir
         self.current_dir = current_dir
         self.assembly = assembly
@@ -182,13 +217,24 @@ class Runner:
         # same build). None means "no override" -> both variants use the ambient RUNNER_CONFIG.
         self.baseline_runner_config = baseline_runner_config
         self.current_runner_config = current_runner_config
+        self.deadline = (time.monotonic() + max_run_seconds
+                         if max_run_seconds is not None else None)
+
+    def remaining_seconds(self):
+        if self.deadline is None:
+            return None
+        remaining = self.deadline - time.monotonic()
+        if remaining <= 0:
+            raise TimeoutError("Benchmark run budget exhausted; partial artifacts are retained.")
+        return remaining
 
     def list_units(self):
         cmd = ["dotnet", os.path.join(self.current_dir, self.assembly)]
         env = dict(os.environ)
         env["PERF_LIST_BENCHMARKS"] = "1"
         env.pop("PERF_BENCHMARK", None)
-        out = subprocess.check_output(cmd, cwd=self.work_dir, env=env, text=True)
+        out = subprocess.check_output(cmd, cwd=self.work_dir, env=env, text=True,
+                                      timeout=self.remaining_seconds())
         return [line.strip() for line in out.splitlines() if line.strip()]
 
     def _run_one(self, variant, exe_dir, unit, rep, agg_dir):
@@ -200,11 +246,24 @@ class Runner:
         runner_config = (self.baseline_runner_config if variant == "baseline"
                          else self.current_runner_config)
         env_overrides = {"RUNNER_CONFIG": runner_config} if runner_config else None
-        rc = run_unit_process(exe_dir, self.assembly, unit, cwd, self.cpus, log_path,
-                              env_overrides=env_overrides)
-        # Preserve failed diagnostic windows before interpreting the process exit code.
-        types = collect_results(cwd, agg_dir)
-        shutil.copy2(log_path, os.path.join(agg_dir, f"{unit}-rep{rep}.log"))
+        started = time.monotonic()
+        rc = None
+        try:
+            rc = run_unit_process(exe_dir, self.assembly, unit, cwd, self.cpus, log_path,
+                                  env_overrides=env_overrides, timeout=self.remaining_seconds())
+        finally:
+            elapsed = time.monotonic() - started
+            timing_path = os.path.join(cwd, "run-timing.json")
+            with open(timing_path + ".tmp", "w", encoding="utf-8") as timing:
+                json.dump(dict(unit=unit, variant=variant, repetition=rep,
+                               elapsed_seconds=elapsed, exit_code=rc), timing)
+            os.replace(timing_path + ".tmp", timing_path)
+            # Preserve partial evidence even when launch, execution or the deadline fails.
+            types = collect_results(cwd, agg_dir)
+            shutil.copy2(timing_path, os.path.join(agg_dir, f"{unit}-rep{rep}.timing.json"))
+            if os.path.isfile(log_path):
+                shutil.copy2(log_path, os.path.join(agg_dir, f"{unit}-rep{rep}.log"))
+            print(f"[rep {rep}] {unit} ({variant}): {elapsed:.1f}s, exit {rc}", flush=True)
         if rc != 0:
             _tail(log_path)
             raise RuntimeError(f"benchmark unit '{unit}' ({variant}, rep {rep}) failed (exit {rc}).")
@@ -376,7 +435,9 @@ def main(argv=None):
     parser.add_argument("--assembly", default="PerformanceTests.dll")
     parser.add_argument("--results-dir", required=True)
     parser.add_argument("--work-dir", default=None,
-                        help="Scratch directory for per-unit run dirs (default: <results>/../perf-interleave-work).")
+                        help="Per-unit raw artifacts directory (default: <results>/runs).")
+    parser.add_argument("--max-run-seconds", type=float, default=None,
+                        help="Remaining execution budget, excluding pipeline collection grace.")
     parser.add_argument("--threshold", type=float, default=10.0)
     parser.add_argument("--reps", type=int, default=3,
                         help="Total interleaved passes for a flagged unit (best-of-N). 1 disables confirmation.")
@@ -397,10 +458,13 @@ def main(argv=None):
 
     if args.reps < 1:
         parser.error("--reps must be >= 1")
+    if args.max_run_seconds is not None and (
+            not math.isfinite(args.max_run_seconds) or args.max_run_seconds <= 0):
+        parser.error("--max-run-seconds must be a positive finite number")
 
     results_dir = os.path.abspath(args.results_dir)
     work_dir = os.path.abspath(args.work_dir) if args.work_dir \
-        else os.path.join(os.path.dirname(results_dir), "perf-interleave-work")
+        else os.path.join(results_dir, "runs")
     os.makedirs(work_dir, exist_ok=True)
     os.makedirs(results_dir, exist_ok=True)
 
@@ -414,7 +478,8 @@ def main(argv=None):
                     os.path.abspath(args.current_exe_dir),
                     args.assembly, work_dir, cpus,
                     baseline_runner_config=args.baseline_runner_config,
-                    current_runner_config=args.current_runner_config)
+                    current_runner_config=args.current_runner_config,
+                    max_run_seconds=args.max_run_seconds)
 
     units = runner.list_units()
     if not units:

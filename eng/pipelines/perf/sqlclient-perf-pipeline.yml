@@ -178,10 +178,10 @@ variables:
   # always passed (their defaults match runnerconfig.default.jsonc), so they live in the common chunk.
   - ${{ if eq(parameters.platform, 'windows') }}:
     - name: PerfArgsCommon
-      value: '-Configuration Release -Framework ${{ parameters.dotnetFramework }} -ResultsSubdir perf-results -RegressionThreshold ${{ parameters.regressionThreshold }} -RunMode ${{ parameters.benchmarkRunMode }} -ConfirmationRuns ${{ parameters.confirmationRuns }} -UseManagedSniOnWindows ${{ lower(parameters.useManagedSniOnWindows) }} -UseOptimizedAsyncBehaviour ${{ lower(parameters.useOptimizedAsyncBehaviour) }} -UseConnectionPoolV2 ${{ lower(parameters.useConnectionPoolV2) }}'
+      value: '-Configuration Release -Framework ${{ parameters.dotnetFramework }} -ResultsSubdir perf-results -RegressionThreshold ${{ parameters.regressionThreshold }} -RunMode ${{ parameters.benchmarkRunMode }} -ConfirmationRuns ${{ parameters.confirmationRuns }} -UseManagedSniOnWindows ${{ lower(parameters.useManagedSniOnWindows) }} -UseOptimizedAsyncBehaviour ${{ lower(parameters.useOptimizedAsyncBehaviour) }} -UseConnectionPoolV2 ${{ lower(parameters.useConnectionPoolV2) }} -TestTimeoutMinutes ${{ parameters.testTimeoutMinutes }}'
   - ${{ else }}:
     - name: PerfArgsCommon
-      value: '--configuration Release --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }} --use-managed-sni-on-windows ${{ lower(parameters.useManagedSniOnWindows) }} --use-optimized-async-behaviour ${{ lower(parameters.useOptimizedAsyncBehaviour) }} --use-connection-pool-v2 ${{ lower(parameters.useConnectionPoolV2) }}'
+      value: '--configuration Release --framework ${{ parameters.dotnetFramework }} --results-subdir perf-results --regression-threshold ${{ parameters.regressionThreshold }} --run-mode ${{ parameters.benchmarkRunMode }} --confirmation-runs ${{ parameters.confirmationRuns }} --use-managed-sni-on-windows ${{ lower(parameters.useManagedSniOnWindows) }} --use-optimized-async-behaviour ${{ lower(parameters.useOptimizedAsyncBehaviour) }} --use-connection-pool-v2 ${{ lower(parameters.useConnectionPoolV2) }} --test-timeout-minutes ${{ parameters.testTimeoutMinutes }}'
 
   # Baseline-version flag, omitted entirely when no baseline is requested: on bash an empty value
   # would let arg parsing consume the following flag as the baseline version and corrupt every

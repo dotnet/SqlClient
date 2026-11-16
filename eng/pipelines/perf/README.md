@@ -69,7 +69,7 @@ context variables are available (the VM is behind NAT and lacks the pipeline ide
 | --------- | ------- | ----------- |
 | `platform` | `linux` | `linux` or `windows` VM + client. |
 | `dotnetFramework` | `net10.0` | TFM the benchmarks run against (`net10.0` only). |
-| `testTimeoutMinutes` | `180` (`210` for PR) | Template timeout waiting for the VM run. |
+| `testTimeoutMinutes` | `180` (`210` for PR) | Outer task timeout; the VM runner reserves its final 10 minutes for completion polling and artifact collection. |
 | `baselineVersion` | `latest` | Highest stable MDS version in the governed feed, resolved at run time. Pin an explicit version to override. Empty = current-only (no baseline pass / comparison). |
 | `regressionThreshold` | `10` | Percent slowdown (current vs baseline mean) flagged as a regression. |
 | `failOnRegression` | `false` | When `true`, a candidate-slower regression **fails** the run (gate). In interleaved mode only **confirmed** regressions (best-of-N majority) fail. Default off. |

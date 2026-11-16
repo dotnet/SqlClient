@@ -34,6 +34,11 @@ lacks the in-process workload-only diagnoser hooks. Per-case timeouts are retain
 BDN's cancellation API. Do not combine async health with native/interactive profilers;
 set `EnableAsyncHealth=false` for local profiling. Pipelines explicitly enable health.
 
+`JitTieringMode.Skip` avoids the preview's additional automatic tier-promotion invocations.
+Those repeat full SQL batches (and fixtures), beyond the configured warmup. Runtime tiered
+compilation stays enabled, and configured warmup/measurement counts are unchanged.
+Existing `Throughput`/`Monitoring` choices are not reclassified by this change.
+
 See [the pipeline protocol](../../../../eng/pipelines/perf/async-health.md).
 
 ## Command and reader benchmarks
