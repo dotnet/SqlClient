@@ -27,6 +27,8 @@ pr:
       - azurepipelines-coverage.yml
       - build.proj
       - NuGet.config
+      - PowerShell.config
+      - powershell-modules.json
     exclude:
       - eng/pipelines/ci/*
       - eng/pipelines/onebranch/*

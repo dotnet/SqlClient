@@ -127,6 +127,8 @@ stages:
             parameters:
               runtimes: [8.x, 9.x]
 
+          - template: /eng/pipelines/common/steps/restore-powershell-modules.yml@self
+
           # --- Update test configuration ---
           # Uses runtime variables from the matrix ($(managedSNI)) so we use
           # inline PowerShell instead of the shared config template which
@@ -140,6 +142,8 @@ stages:
                   $p.SupportsIntegratedSecurity = $true
                   $p.UseManagedSNIOnWindows    = $managedSni
               }
+              $jdata | Add-Member -NotePropertyName "KerberosDomainUser"     -NotePropertyValue $env:KERBEROS_DOMAIN_USER     -Force
+              $jdata | Add-Member -NotePropertyName "KerberosDomainPassword" -NotePropertyValue $env:KERBEROS_DOMAIN_PASSWORD -Force
               $jdata | ConvertTo-Json | Set-Content "config.json"
             workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities
             displayName: Update test config.json
@@ -147,6 +151,8 @@ stages:
               REMOTE_TCP_CONN_STRING: $(REMOTE_TCP_CONN_STRING)
               REMOTE_NP_CONN_STRING: $(REMOTE_NP_CONN_STRING)
               MANAGED_SNI: $(managedSNI)
+              KERBEROS_DOMAIN_USER: $(KerberosDomainUser)
+              KERBEROS_DOMAIN_PASSWORD: $(KerberosDomainPassword)
 
           # --- Prepare Windows services ---
           - powershell: |
@@ -213,6 +219,8 @@ stages:
             parameters:
               runtimes: [8.x, 9.x]
 
+          - template: /eng/pipelines/common/steps/restore-powershell-modules.yml@self
+
           # --- Update test configuration ---
           - pwsh: |
               $jdata = Get-Content -Raw "config.default.json" | ConvertFrom-Json
@@ -222,12 +230,16 @@ stages:
                   $p.SupportsIntegratedSecurity = $true
                   $p.UseManagedSNIOnWindows    = $false
               }
+              $jdata | Add-Member -NotePropertyName "KerberosDomainUser"     -NotePropertyValue $env:KERBEROS_DOMAIN_USER     -Force
+              $jdata | Add-Member -NotePropertyName "KerberosDomainPassword" -NotePropertyValue $env:KERBEROS_DOMAIN_PASSWORD -Force
               $jdata | ConvertTo-Json | Set-Content "config.json"
             workingDirectory: src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities
             displayName: Update test config.json
             env:
               REMOTE_TCP_CONN_STRING: $(REMOTE_TCP_CONN_STRING)
               REMOTE_NP_CONN_STRING: $(REMOTE_NP_CONN_STRING)
+              KERBEROS_DOMAIN_USER: $(KerberosDomainUser)
+              KERBEROS_DOMAIN_PASSWORD: $(KerberosDomainPassword)
 
           # --- Prepare Windows services ---
           - powershell: |
@@ -301,6 +313,8 @@ stages:
             parameters:
               runtimes: [8.x, 9.x]
 
+          - template: /eng/pipelines/common/steps/restore-powershell-modules.yml@self
+
           # --- Update test configuration (with Kerberos credentials) ---
           - pwsh: |
               $jdata = Get-Content -Raw "config.default.json" | ConvertFrom-Json
@@ -330,7 +344,6 @@ stages:
 
           # --- Verify SQL connectivity ---
           - pwsh: |
-              Install-Module -Name SqlServer -Force -Confirm:$false
               Import-Module SqlServer
               Invoke-Sqlcmd -Query "SELECT @@VERSION, @@SERVERNAME" -ConnectionString $env:REMOTE_TCP_CONN_STRING
             displayName: Verify SQL connectivity

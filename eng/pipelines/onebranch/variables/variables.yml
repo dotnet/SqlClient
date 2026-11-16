@@ -6,6 +6,12 @@
 
 variables:
   - template: /eng/pipelines/onebranch/variables/build-variables.yml@self
+
+  # Registered APIScan major.minor version for SqlClient and the AKV provider.
+  # Pass via runtime $(...) references to preserve the version as a string.
+  - name: ApiScanVersionSqlClient
+    value: '6.1'
+
   # onebranch template variables
   - name: ob_outputDirectory
     value: '$(artifactDirectory)' # this directory is uploaded to pipeline artifacts, reddog and cloudvault. More info at https://aka.ms/obpipelines/artifacts
