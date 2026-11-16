@@ -98,6 +98,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(0, failoverServer.PreLoginCount);
         }
 
+        // CI intermittently records an extra pre-login (3 instead of 2) when reopening
+        // the connection after the pool is cleared.
+        [Trait("category", "flaky")]
         [Fact]
         public void NetworkError_TriggersFailover_ClearsPool()
         {
