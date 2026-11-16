@@ -34,3 +34,12 @@ public sealed class SymmetricKeyCacheTestCollection
 {
     public const string Name = "SymmetricKeyCacheTests";
 }
+
+/// <summary>
+/// Isolates tests that temporarily replace globally registered encryption key store providers.
+/// </summary>
+[CollectionDefinition(Name, DisableParallelization = true)]
+public sealed class SqlSecurityUtilityTestCollection
+{
+    public const string Name = "SqlSecurityUtilityTests";
+}

@@ -11,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.AlwaysEncrypted;
 using Microsoft.Data.SqlClient.Parser;
+using Microsoft.Data.SqlClient.UnitTests.Utilities;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests
@@ -18,6 +19,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
     /// <summary>
     /// Verifies async key decryption, candidate fallback, and signature verification contracts.
     /// </summary>
+    [Collection(SqlSecurityUtilityTestCollection.Name)]
     public class SqlSecurityUtilityTests
     {
         private const string ProviderName = "TEST_ASYNC_PROVIDER";
@@ -710,6 +712,177 @@ namespace Microsoft.Data.SqlClient.UnitTests
                 SqlSecurityUtility.VerifyColumnMasterKeySignature(
                     providerName, keyPath, true, signature, connection, null));
             Assert.Equal(syncError.Message, error.Message);
+        }
+
+        /// <summary>
+        /// Cancellation before an inline global-provider result prevents publication and permits retry.
+        /// </summary>
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task VerifyColumnMasterKeySignatureAsync_GlobalResultInlineAfterCancellation_DoesNotCache(
+            bool verificationResult)
+        {
+            // Arrange
+            using CancellationTokenSource cts = new();
+            TestKeyStoreProvider provider = new()
+            {
+                VerifyResult = true,
+                VerifyAsyncCallback = token =>
+                {
+                    Assert.Equal(cts.Token, token);
+                    cts.Cancel();
+                    return Task.FromResult(verificationResult);
+                }
+            };
+            using GlobalSignatureProviderScope scope = new(provider);
+            using SqlConnection connection = new(
+                "Data Source=async-ae-unit-test;Column Encryption Setting=Enabled");
+            ColumnMasterKeyMetadataSignatureVerificationCache cache =
+                ColumnMasterKeyMetadataSignatureVerificationCache.Instance;
+            Assert.Equal(SignatureVerificationResult.NotFound, cache.GetSignatureVerificationResult(
+                scope.ProviderName, scope.KeyPath, true, scope.Signature));
+
+            // Act
+            Task verify = SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
+                scope.ProviderName, scope.KeyPath, true, scope.Signature, connection, null, cts.Token);
+
+            // Assert
+            OperationCanceledException error =
+                await Assert.ThrowsAnyAsync<OperationCanceledException>(() => verify);
+            Assert.Equal(cts.Token, error.CancellationToken);
+            Assert.True(verify.IsCanceled);
+            Assert.Equal(1, provider.VerifyAsyncCallCount);
+            Assert.Equal(SignatureVerificationResult.NotFound, cache.GetSignatureVerificationResult(
+                scope.ProviderName, scope.KeyPath, true, scope.Signature));
+
+            // A retry must reach the provider, not a result published by the canceled call.
+            provider.VerifyAsyncCallback = null;
+            await SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
+                scope.ProviderName, scope.KeyPath, true, scope.Signature,
+                connection, null, CancellationToken.None);
+            Assert.Equal(2, provider.VerifyAsyncCallCount);
+            Assert.Equal(SignatureVerificationResult.True, cache.GetSignatureVerificationResult(
+                scope.ProviderName, scope.KeyPath, true, scope.Signature));
+        }
+
+        /// <summary>
+        /// Cancellation before a suspended global-provider result prevents publication and permits retry.
+        /// </summary>
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task VerifyColumnMasterKeySignatureAsync_GlobalResultLaterAfterCancellation_DoesNotCache(
+            bool verificationResult)
+        {
+            // Arrange
+            using CancellationTokenSource cts = new();
+            TaskCompletionSource<bool> result = new(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+            TestKeyStoreProvider provider = new()
+            {
+                VerifyResult = true,
+                VerifyAsyncCallback = token =>
+                {
+                    Assert.Equal(cts.Token, token);
+                    return result.Task;
+                }
+            };
+            using GlobalSignatureProviderScope scope = new(provider);
+            using SqlConnection connection = new(
+                "Data Source=async-ae-unit-test;Column Encryption Setting=Enabled");
+            ColumnMasterKeyMetadataSignatureVerificationCache cache =
+                ColumnMasterKeyMetadataSignatureVerificationCache.Instance;
+            Assert.Equal(SignatureVerificationResult.NotFound, cache.GetSignatureVerificationResult(
+                scope.ProviderName, scope.KeyPath, true, scope.Signature));
+
+            // Act
+            Task verify = SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
+                scope.ProviderName, scope.KeyPath, true, scope.Signature, connection, null, cts.Token);
+            Assert.False(verify.IsCompleted);
+            cts.Cancel();
+            result.SetResult(verificationResult);
+
+            // Assert
+            OperationCanceledException error =
+                await Assert.ThrowsAnyAsync<OperationCanceledException>(() => verify);
+            Assert.Equal(cts.Token, error.CancellationToken);
+            Assert.True(verify.IsCanceled);
+            Assert.Equal(1, provider.VerifyAsyncCallCount);
+            Assert.Equal(SignatureVerificationResult.NotFound, cache.GetSignatureVerificationResult(
+                scope.ProviderName, scope.KeyPath, true, scope.Signature));
+
+            // A retry must reach the provider, not a result published by the canceled call.
+            provider.VerifyAsyncCallback = null;
+            await SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
+                scope.ProviderName, scope.KeyPath, true, scope.Signature,
+                connection, null, CancellationToken.None);
+            Assert.Equal(2, provider.VerifyAsyncCallCount);
+            Assert.Equal(SignatureVerificationResult.True, cache.GetSignatureVerificationResult(
+                scope.ProviderName, scope.KeyPath, true, scope.Signature));
+        }
+
+        /// <summary>An uncanceled global-provider success is published and reused without verification.</summary>
+        [Fact]
+        public async Task VerifyColumnMasterKeySignatureAsync_GlobalValidResult_PublishesAndReuses()
+        {
+            // Arrange
+            TestKeyStoreProvider provider = new() { VerifyResult = true };
+            using GlobalSignatureProviderScope scope = new(provider);
+            using SqlConnection connection = new(
+                "Data Source=async-ae-unit-test;Column Encryption Setting=Enabled");
+            ColumnMasterKeyMetadataSignatureVerificationCache cache =
+                ColumnMasterKeyMetadataSignatureVerificationCache.Instance;
+            Assert.Equal(SignatureVerificationResult.NotFound, cache.GetSignatureVerificationResult(
+                scope.ProviderName, scope.KeyPath, true, scope.Signature));
+
+            // Act
+            await SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
+                scope.ProviderName, scope.KeyPath, true, scope.Signature,
+                connection, null, CancellationToken.None);
+
+            // Assert
+            Assert.Equal(1, provider.VerifyAsyncCallCount);
+            Assert.Equal(SignatureVerificationResult.True, cache.GetSignatureVerificationResult(
+                scope.ProviderName, scope.KeyPath, true, scope.Signature));
+
+            // A later call must accept the cached result even if the provider would reject it.
+            provider.VerifyResult = false;
+            await SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
+                scope.ProviderName, scope.KeyPath, true, scope.Signature,
+                connection, null, CancellationToken.None);
+            Assert.Equal(1, provider.VerifyAsyncCallCount);
+        }
+
+        /// <summary>An uncanceled global-provider rejection is published and reused without verification.</summary>
+        [Fact]
+        public async Task VerifyColumnMasterKeySignatureAsync_GlobalInvalidResult_PublishesAndReuses()
+        {
+            // Arrange
+            TestKeyStoreProvider provider = new() { VerifyResult = false };
+            using GlobalSignatureProviderScope scope = new(provider);
+            using SqlConnection connection = new(
+                "Data Source=async-ae-unit-test;Column Encryption Setting=Enabled");
+            ColumnMasterKeyMetadataSignatureVerificationCache cache =
+                ColumnMasterKeyMetadataSignatureVerificationCache.Instance;
+            Assert.Equal(SignatureVerificationResult.NotFound, cache.GetSignatureVerificationResult(
+                scope.ProviderName, scope.KeyPath, true, scope.Signature));
+
+            // Act
+            Func<Task> verify = () => SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
+                scope.ProviderName, scope.KeyPath, true, scope.Signature,
+                connection, null, CancellationToken.None);
+
+            // Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(verify);
+            Assert.Equal(1, provider.VerifyAsyncCallCount);
+            Assert.Equal(SignatureVerificationResult.False, cache.GetSignatureVerificationResult(
+                scope.ProviderName, scope.KeyPath, true, scope.Signature));
+
+            // A later call must reject the cached result even if the provider would accept it.
+            provider.VerifyResult = true;
+            await Assert.ThrowsAsync<InvalidOperationException>(verify);
+            Assert.Equal(1, provider.VerifyAsyncCallCount);
         }
 
         /// <summary>Separately observes synchronous decryption and asynchronous provider calls.</summary>
