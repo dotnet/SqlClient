@@ -640,9 +640,6 @@ internal static class TdsEnums
     internal const int MAX_TIME_LENGTH = 5; // Maximum length for time
     internal const int MAX_DATETIME2_LENGTH = 8; // Maximum length for datetime2
     internal const int WHIDBEY_DATE_LENGTH = 10;
-    internal static readonly int[] WHIDBEY_TIME_LENGTH = { 8, 10, 11, 12, 13, 14, 15, 16 };
-    internal static readonly int[] WHIDBEY_DATETIME2_LENGTH = { 19, 21, 22, 23, 24, 25, 26, 27 };
-    internal static readonly int[] WHIDBEY_DATETIMEOFFSET_LENGTH = { 26, 28, 29, 30, 31, 32, 33, 34 };
 
     internal enum FedAuthInfoId : byte
     {

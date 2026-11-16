@@ -12,8 +12,6 @@ namespace Microsoft.Data.SqlClient.Parser.Tokens;
 /// </summary>
 internal struct TdsTableName
 {
-    internal static readonly TdsTableName Null = new([null, null, null, null]);
-
     private string _multipartName;
     private string _serverName;
     private string _catalogName;
