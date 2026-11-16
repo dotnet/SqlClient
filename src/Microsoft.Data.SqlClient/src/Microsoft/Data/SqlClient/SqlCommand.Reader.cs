@@ -1944,6 +1944,7 @@ namespace Microsoft.Data.SqlClient
                 SqlConnectionInternal retryConnection = _enclaveRetryConnection;
                 SqlConnection preparedConnection = _activeConnection;
                 int preparedCloseCount = preparedConnection.CloseCount;
+                string preparedDatabase = preparedConnection.Database;
 
                 // Block command and connection changes until execution has reserved the connection.
                 // The continuation below is the only place that clears the flag for async
@@ -1964,7 +1965,8 @@ namespace Microsoft.Data.SqlClient
                     cancellationToken,
                     retryConnection,
                     preparedConnection,
-                    preparedCloseCount));
+                    preparedCloseCount,
+                    preparedDatabase));
 
                 return ds;
             }
@@ -2021,7 +2023,8 @@ namespace Microsoft.Data.SqlClient
             CancellationToken cancellationToken,
             SqlConnectionInternal retryConnection,
             SqlConnection preparedConnection,
-            int preparedCloseCount)
+            int preparedCloseCount,
+            string preparedDatabase)
         {
             Task subTask;
             try
@@ -2036,11 +2039,17 @@ namespace Microsoft.Data.SqlClient
                     throw;
                 }
 
-                ValidateConnectionLifetime(preparedConnection, preparedCloseCount);
+                ValidateConnectionLifetime(
+                    preparedConnection,
+                    preparedCloseCount,
+                    preparedDatabase);
                 ValidateConnectionForEnclaveExecution(retryConnection);
                 await GenerateEnclavePackageAsync(cancellationToken).ConfigureAwait(false);
 
-                ValidateConnectionLifetime(preparedConnection, preparedCloseCount);
+                ValidateConnectionLifetime(
+                    preparedConnection,
+                    preparedCloseCount,
+                    preparedDatabase);
                 ValidateConnectionForEnclaveExecution(retryConnection);
                 RunExecuteReaderTds(
                     cmdBehavior,

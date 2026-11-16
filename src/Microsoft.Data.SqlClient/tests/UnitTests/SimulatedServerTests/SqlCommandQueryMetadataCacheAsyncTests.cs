@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.UnitTests.Utilities;
+using Microsoft.SqlServer.TDS;
+using Microsoft.SqlServer.TDS.EndPoint;
 using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
 
@@ -123,6 +125,35 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         /// <summary>
+        /// Metadata cached for one database must not execute after the connection switches to
+        /// another database while the keys load, because the cache key includes the database.
+        /// </summary>
+        [Fact]
+        public async Task ExecuteReaderAsync_DatabaseChangedDuringKeyLoad_Throws()
+        {
+            // Arrange
+            using Fixture fixture = new();
+            using SqlCommand command = fixture.CreateCachedCommand();
+            Task<SqlDataReader> operation = command.ExecuteReaderAsync();
+            await fixture.KeyLoadEntered;
+            fixture.Connection.ChangeDatabase(OtherDatabase);
+            Assert.Equal(OtherDatabase, fixture.Connection.Database);
+
+            // Act
+            fixture.CompleteKeyLoad();
+
+            // Assert
+            InvalidOperationException error =
+                await Assert.ThrowsAsync<InvalidOperationException>(() => Bounded(operation));
+            Assert.Equal(
+                SQL.CannotModifyPropertyAsyncOperationInProgress(nameof(SqlConnection.Database))
+                    .Message,
+                error.Message);
+            Assert.False(IsInProgress(command));
+            Assert.Equal(0, fixture.AsyncCount);
+        }
+
+        /// <summary>
         /// A stale key must not start the fallback describe on a connection that was closed and
         /// reopened while the key was loading.
         /// </summary>
@@ -198,6 +229,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             await task;
         }
 
+        private const string OtherDatabase = "OtherDatabase";
+
         private static bool IsInProgress(SqlCommand command) =>
             (bool)typeof(SqlCommand)
                 .GetField(
@@ -211,7 +244,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// </summary>
         private sealed class Fixture : IDisposable
         {
-            private readonly TdsServer _server = new(new TdsServerArguments());
+            private readonly TdsServer _server = CreateServer();
             private readonly TestKeyStoreProvider _provider = new();
             private readonly TaskCompletionSource<bool> _entered =
                 new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -271,6 +304,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             {
                 Connection.Dispose();
                 _server.Dispose();
+            }
+
+            private static TdsServer CreateServer()
+            {
+                TdsServerArguments arguments = new();
+                return new TdsServer(new UseDatabaseQueryEngine(arguments), arguments);
             }
         }
     }

@@ -16,6 +16,7 @@ using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.Parser;
+using Microsoft.Data.SqlClient.UnitTests.Utilities;
 using Microsoft.SqlServer.TDS;
 using Microsoft.SqlServer.TDS.Done;
 using Microsoft.SqlServer.TDS.EndPoint;
@@ -228,6 +229,50 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             // Only the original execution reserved the connection for its read stage.
             Assert.Equal(
                 1, GetAsyncCount((SqlConnectionInternal)fixture.Connection.InnerConnection));
+        }
+
+        /// <summary>
+        /// Switching the connection's database while package keys load must stop the execution,
+        /// because the keys and metadata were prepared for the original database.
+        /// </summary>
+        [Fact]
+        public async Task Execute_PendingPackageKey_DatabaseChangeThrows()
+        {
+            // Arrange
+            // The server answers USE batches so ChangeDatabase moves the client.
+            TdsServerArguments arguments = new TdsServerArguments();
+            using TdsServer server =
+                new TdsServer(new UseDatabaseQueryEngine(arguments), arguments);
+            server.Start();
+            using Fixture fixture = new Fixture(server);
+            using SqlCommand command = fixture.CreateCommand();
+            PendingKeyStoreProvider keyProvider = new PendingKeyStoreProvider();
+            Task execution = StartPendingPackageExecution(fixture, command, keyProvider);
+            try
+            {
+                await await Task.WhenAny(keyProvider.Entered.Task, execution);
+                fixture.Connection.ChangeDatabase("OtherDatabase");
+                Assert.Equal("OtherDatabase", fixture.Connection.Database);
+
+                // Act
+                keyProvider.Completion.SetResult(new byte[32]);
+
+                // Assert
+                InvalidOperationException error =
+                    await Assert.ThrowsAsync<InvalidOperationException>(() => execution);
+                Assert.Equal(
+                    SQL.CannotModifyPropertyAsyncOperationInProgress(
+                        nameof(SqlConnection.Database)).Message,
+                    error.Message);
+                Assert.False((bool)GetField(command, "_enclaveAttestationInProgress"));
+                Assert.Equal(
+                    0, GetAsyncCount((SqlConnectionInternal)fixture.Connection.InnerConnection));
+            }
+            finally
+            {
+                // Cleanup
+                keyProvider.Completion.TrySetResult(new byte[32]);
+            }
         }
 
         /// <summary>
