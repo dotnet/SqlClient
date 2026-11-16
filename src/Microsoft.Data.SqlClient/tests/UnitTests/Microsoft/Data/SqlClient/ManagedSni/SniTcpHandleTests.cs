@@ -22,34 +22,6 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
     public sealed class SniTcpHandleTests
     {
         /// <summary>
-        /// The check on an open, idle connection succeeds without waiting. A positive poll timeout is
-        /// rounded up to the timer tick on Windows (15.6 ms by default), so twenty checks that waited
-        /// would take about 300 ms instead of well under the bound.
-        /// </summary>
-        [Fact]
-        public void CheckConnection_IdleOpenConnection_ReturnsSuccessWithoutWaiting()
-        {
-            // Arrange
-            using LocalConnection connection = new();
-            const int Checks = 20;
-            uint[] results = new uint[Checks];
-
-            // Act
-            Stopwatch stopwatch = Stopwatch.StartNew();
-            for (int i = 0; i < Checks; i++)
-            {
-                results[i] = connection.Handle.CheckConnection();
-            }
-            stopwatch.Stop();
-
-            // Assert
-            Assert.All(results, result => Assert.Equal(TdsEnums.SNI_SUCCESS, result));
-            Assert.True(
-                stopwatch.ElapsedMilliseconds < 100,
-                $"{Checks} checks took {stopwatch.ElapsedMilliseconds} ms.");
-        }
-
-        /// <summary>
         /// The check reports a connection the peer has closed, so the pool discards it instead of
         /// handing it out. The peer's close reaches the client asynchronously, so the check is repeated
         /// until it fails or a deadline passes.
