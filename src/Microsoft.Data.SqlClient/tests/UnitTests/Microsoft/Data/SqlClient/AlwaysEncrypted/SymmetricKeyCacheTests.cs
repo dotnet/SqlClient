@@ -1,0 +1,742 @@
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.AlwaysEncrypted;
+using Microsoft.Data.SqlClient.UnitTests.Utilities;
+using Xunit;
+
+namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
+{
+    /// <summary>
+    /// Verifies asynchronous CEK loading, cancellation, and shared cache publication.
+    /// </summary>
+    [Collection(SymmetricKeyCacheTestCollection.Name)]
+    public class SymmetricKeyCacheTests
+    {
+        private const string ProviderName = "TEST_ASYNC_PROVIDER";
+        private const string KeyPath = "test-key-path";
+        private const string EncryptionAlgorithm = "RSA_OAEP";
+
+        /// <summary>Creates a deterministic 256-bit root key for encryption tests.</summary>
+        /// <param name="seed">Starting value for the key bytes.</param>
+        /// <returns>Key material of the length required by AEAD_AES_256_CBC_HMAC_SHA256.</returns>
+        private static byte[] NewPlaintextKey(byte seed)
+        {
+            byte[] key = new byte[32];
+            for (int i = 0; i < key.Length; i++)
+            {
+                key[i] = (byte)(seed + i);
+            }
+            return key;
+        }
+
+        /// <summary>
+        /// Produces key material whose cache lookup key cannot collide with any other test. The CEK
+        /// cache is a process-wide singleton shared by every test in this assembly.
+        /// </summary>
+        /// <param name="providerName">Name of the provider that can decrypt this key.</param>
+        /// <param name="keyPath">Master key path supplied to that provider.</param>
+        /// <returns>Key information with unique encrypted bytes for cache isolation.</returns>
+        private static SqlEncryptionKeyInfo NewKeyInfo(string providerName = ProviderName, string keyPath = KeyPath)
+            => new SqlEncryptionKeyInfo
+            {
+                encryptedKey = Guid.NewGuid().ToByteArray(),
+                databaseId = 1,
+                cekId = 1,
+                cekVersion = 1,
+                cekMdVersion = 1,
+                keyPath = keyPath,
+                keyStoreName = providerName,
+                algorithmName = EncryptionAlgorithm,
+            };
+
+        /// <summary>Registers test providers on an unopened connection without changing global registrations.</summary>
+        /// <param name="providers">Provider names and instances used by this connection.</param>
+        /// <returns>An unopened connection that the caller must dispose.</returns>
+        private static SqlConnection NewConnection(params (string Name, SqlColumnEncryptionKeyStoreProvider Provider)[] providers)
+        {
+            SqlConnection connection = new SqlConnection("Data Source=async-ae-unit-test;Column Encryption Setting=Enabled");
+            Dictionary<string, SqlColumnEncryptionKeyStoreProvider> map = new();
+            foreach ((string name, SqlColumnEncryptionKeyStoreProvider provider) in providers)
+            {
+                map[name] = provider;
+            }
+            connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(map);
+            return connection;
+        }
+
+        #region SymmetricKeyCache.GetKeyAsync
+
+        /// <summary>
+        /// A key cached synchronously is reused asynchronously without another provider call.
+        /// </summary>
+        [Fact]
+        public async Task GetKeyAsync_SynchronouslyCachedKey_ReusesEntry()
+        {
+            // Arrange
+            SymmetricKeyCache cache = SymmetricKeyCache.Instance;
+
+            TestKeyStoreProvider provider = new TestKeyStoreProvider { PlaintextKey = NewPlaintextKey(seed: 11) };
+            using SqlConnection connection = NewConnection((ProviderName, provider));
+
+            SqlEncryptionKeyInfo syncFirst = NewKeyInfo();
+            SymmetricKey fromSync = cache.GetKey(syncFirst, connection, command: null);
+
+            // Act
+            SymmetricKey fromAsync = await cache.GetKeyAsync(syncFirst, connection, command: null, CancellationToken.None);
+
+            // Assert
+            Assert.Same(fromSync, fromAsync);
+            Assert.Equal(1, provider.DecryptCallCount);
+            Assert.Equal(0, provider.DecryptAsyncCallCount);
+        }
+
+        /// <summary>
+        /// A key cached asynchronously is reused synchronously without another provider call.
+        /// </summary>
+        [Fact]
+        public async Task GetKey_AsynchronouslyCachedKey_ReusesEntry()
+        {
+            // Arrange
+            SymmetricKeyCache cache = SymmetricKeyCache.Instance;
+            TestKeyStoreProvider provider = new() { PlaintextKey = NewPlaintextKey(seed: 11) };
+            using SqlConnection connection = NewConnection((ProviderName, provider));
+            SqlEncryptionKeyInfo asyncFirst = NewKeyInfo();
+            SymmetricKey asyncKey = await cache.GetKeyAsync(asyncFirst, connection, command: null, CancellationToken.None);
+
+            // Act
+            SymmetricKey syncKey = cache.GetKey(asyncFirst, connection, command: null);
+
+            // Assert
+            Assert.Same(asyncKey, syncKey);
+            Assert.Equal(0, provider.DecryptCallCount);
+            Assert.Equal(1, provider.DecryptAsyncCallCount);
+        }
+
+        /// <summary>
+        /// A synchronously populated cache must still honor cancellation on async lookup.
+        /// </summary>
+        [Fact]
+        public async Task GetKeyAsync_SynchronouslyCachedKey_ObservesCancellation()
+        {
+            // Arrange
+            SymmetricKeyCache cache = SymmetricKeyCache.Instance;
+            TestKeyStoreProvider provider = new TestKeyStoreProvider { PlaintextKey = NewPlaintextKey(seed: 17) };
+            using SqlConnection connection = NewConnection((ProviderName, provider));
+            SqlEncryptionKeyInfo keyInfo = NewKeyInfo();
+            SymmetricKey cachedKey = cache.GetKey(keyInfo, connection, command: null);
+            using CancellationTokenSource cts = new CancellationTokenSource();
+            cts.Cancel();
+
+            // Act
+            Task<SymmetricKey> cancelled = cache.GetKeyAsync(keyInfo, connection, command: null, cts.Token);
+            // Assert
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => cancelled);
+            Assert.True(cancelled.IsCanceled);
+            Assert.Same(cachedKey, cache.GetKey(keyInfo, connection, command: null));
+            Assert.Equal(1, provider.DecryptCallCount);
+            Assert.Equal(0, provider.DecryptAsyncCallCount);
+        }
+
+        /// <summary>
+        /// An asynchronously populated cache must still honor cancellation on later lookup.
+        /// </summary>
+        [Fact]
+        public async Task GetKeyAsync_AsynchronouslyCachedKey_ObservesCancellation()
+        {
+            // Arrange
+            SymmetricKeyCache cache = SymmetricKeyCache.Instance;
+            TestKeyStoreProvider provider = new TestKeyStoreProvider { PlaintextKey = NewPlaintextKey(seed: 17) };
+            using SqlConnection connection = NewConnection((ProviderName, provider));
+            SqlEncryptionKeyInfo keyInfo = NewKeyInfo();
+            SymmetricKey cachedKey = await cache.GetKeyAsync(keyInfo, connection, command: null, CancellationToken.None);
+            using CancellationTokenSource cts = new CancellationTokenSource();
+            cts.Cancel();
+
+            // Act
+            Task<SymmetricKey> cancelled = cache.GetKeyAsync(keyInfo, connection, command: null, cts.Token);
+            // Assert
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => cancelled);
+            Assert.True(cancelled.IsCanceled);
+            Assert.Same(cachedKey, cache.GetKey(keyInfo, connection, command: null));
+            Assert.Equal(0, provider.DecryptCallCount);
+            Assert.Equal(1, provider.DecryptAsyncCallCount);
+        }
+
+        /// <summary>
+        /// Concurrent cold-cache callers share one provider fetch and the published key instance.
+        /// </summary>
+        [Fact]
+        public async Task GetKeyAsync_WithConcurrentCacheMisses_FetchesOnceAndPublishesOneKey()
+        {
+            // Arrange
+            SymmetricKeyCache cache = SymmetricKeyCache.Instance;
+
+            TaskCompletionSource<bool> release = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+            TestKeyStoreProvider provider = new TestKeyStoreProvider
+            {
+                DecryptAsyncCallback = async _ =>
+                {
+                    await release.Task;
+                    return NewPlaintextKey(seed: 21);
+                }
+            };
+
+            using SqlConnection connection = NewConnection((ProviderName, provider));
+            SqlEncryptionKeyInfo keyInfo = NewKeyInfo();
+
+            // Act
+            Task<SymmetricKey> first = cache.GetKeyAsync(keyInfo, connection, command: null, CancellationToken.None);
+            Task<SymmetricKey>[] followers = Enumerable.Range(0, 8)
+                .Select(_ => cache.GetKeyAsync(keyInfo, connection, command: null, CancellationToken.None)).ToArray();
+            int callsBeforeRelease = provider.DecryptAsyncCallCount;
+            release.TrySetResult(true);
+
+            SymmetricKey firstKey = await first;
+            SymmetricKey[] followerKeys = await Task.WhenAll(followers);
+
+            // Assert
+            Assert.Equal(1, callsBeforeRelease);
+            Assert.Equal(1, provider.DecryptAsyncCallCount);
+            Assert.All(followerKeys, key => Assert.Same(firstKey, key));
+
+            // Subsequent callers, sync or async, see the published instance without another fetch.
+            Assert.Same(firstKey, cache.GetKey(keyInfo, connection, command: null));
+            Assert.Same(firstKey, await cache.GetKeyAsync(keyInfo, connection, command: null, CancellationToken.None));
+            Assert.Equal(1, provider.DecryptAsyncCallCount);
+            Assert.Equal(0, provider.DecryptCallCount);
+        }
+
+        /// <summary>
+        /// Cancelling a waiting caller must not cancel the active fetch or prevent another key from loading.
+        /// </summary>
+        [Fact]
+        public async Task GetKeyAsync_CancelledWaiter_DoesNotBlockOtherCallersOrKeys()
+        {
+            // Arrange
+            SymmetricKeyCache cache = SymmetricKeyCache.Instance;
+            TaskCompletionSource<byte[]> result = new(TaskCreationOptions.RunContinuationsAsynchronously);
+            TestKeyStoreProvider provider = new() { DecryptAsyncCallback = _ => result.Task };
+            using SqlConnection connection = NewConnection((ProviderName, provider));
+            SqlEncryptionKeyInfo keyInfo = NewKeyInfo();
+
+            // Act
+            Task<SymmetricKey> first = cache.GetKeyAsync(keyInfo, connection, null, CancellationToken.None);
+            using CancellationTokenSource cts = new();
+            Task<SymmetricKey> cancelled = cache.GetKeyAsync(keyInfo, connection, null, cts.Token);
+            Task<SymmetricKey> follower = cache.GetKeyAsync(keyInfo, connection, null, CancellationToken.None);
+            cts.Cancel();
+
+            try
+            {
+                // Assert
+                Assert.Same(cancelled, await Task.WhenAny(cancelled, Task.Delay(TimeSpan.FromSeconds(5))));
+                OperationCanceledException error = await Assert.ThrowsAnyAsync<OperationCanceledException>(() => cancelled);
+                Assert.Equal(cts.Token, error.CancellationToken);
+                Assert.False(first.IsCompleted);
+                provider.DecryptAsyncCallback = null;
+                Task<SymmetricKey> otherKey = cache.GetKeyAsync(NewKeyInfo(), connection, null, CancellationToken.None);
+                Assert.Same(otherKey, await Task.WhenAny(otherKey, Task.Delay(TimeSpan.FromSeconds(5))));
+                await otherKey;
+                Assert.Equal(2, provider.DecryptAsyncCallCount);
+            }
+            finally
+            {
+                // Cleanup
+                result.TrySetResult(NewPlaintextKey(seed: 22));
+                await first;
+                await follower;
+                // Drain the task even when an assertion fails before the cancellation check.
+                try { await cancelled; }
+                catch (OperationCanceledException) { }
+            }
+
+            Assert.Same(await first, await follower);
+            Assert.Equal(2, provider.DecryptAsyncCallCount);
+        }
+
+        /// <summary>
+        /// A cancelled owner releases the per-key gate so a queued caller can retry independently.
+        /// </summary>
+        [Fact]
+        public async Task GetKeyAsync_CancelledOwner_AllowsWaitingCallerToRetry()
+        {
+            // Arrange
+            SymmetricKeyCache cache = SymmetricKeyCache.Instance;
+            TaskCompletionSource<byte[]> result = new(TaskCreationOptions.RunContinuationsAsynchronously);
+            TestKeyStoreProvider provider = new() { DecryptAsyncCallback = _ => result.Task };
+            using SqlConnection connection = NewConnection((ProviderName, provider));
+            using CancellationTokenSource cts = new();
+            SqlEncryptionKeyInfo keyInfo = NewKeyInfo();
+
+            // Act
+            Task<SymmetricKey> first = cache.GetKeyAsync(keyInfo, connection, null, cts.Token);
+            Task<SymmetricKey> follower = cache.GetKeyAsync(keyInfo, connection, null, CancellationToken.None);
+            int callsBeforeRelease = provider.DecryptAsyncCallCount;
+            provider.DecryptAsyncCallback = null;
+            cts.Cancel();
+            result.TrySetCanceled();
+
+            // Assert
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => first);
+            Assert.True(first.IsCanceled);
+
+            Assert.Same(follower, await Task.WhenAny(follower, Task.Delay(TimeSpan.FromSeconds(5))));
+            SymmetricKey key = await follower;
+            Assert.Equal(1, callsBeforeRelease);
+            Assert.Equal(2, provider.DecryptAsyncCallCount);
+            Assert.Same(key, await cache.GetKeyAsync(keyInfo, connection, null, CancellationToken.None));
+        }
+
+        /// <summary>
+        /// A failed owner releases the per-key gate so a queued caller can retry independently.
+        /// </summary>
+        [Fact]
+        public async Task GetKeyAsync_FailedOwner_AllowsWaitingCallerToRetry()
+        {
+            // Arrange
+            SymmetricKeyCache cache = SymmetricKeyCache.Instance;
+            TaskCompletionSource<byte[]> result = new(TaskCreationOptions.RunContinuationsAsynchronously);
+            TestKeyStoreProvider provider = new() { DecryptAsyncCallback = _ => result.Task };
+            using SqlConnection connection = NewConnection((ProviderName, provider));
+            using CancellationTokenSource cts = new();
+            SqlEncryptionKeyInfo keyInfo = NewKeyInfo();
+
+            // Act
+            Task<SymmetricKey> first = cache.GetKeyAsync(keyInfo, connection, null, cts.Token);
+            Task<SymmetricKey> follower = cache.GetKeyAsync(keyInfo, connection, null, CancellationToken.None);
+            int callsBeforeRelease = provider.DecryptAsyncCallCount;
+            provider.DecryptAsyncCallback = null;
+            result.TrySetException(new InvalidOperationException("Provider failure"));
+
+            // Assert
+            await Assert.ThrowsAsync<SqlException>(() => first);
+
+            Assert.Same(follower, await Task.WhenAny(follower, Task.Delay(TimeSpan.FromSeconds(5))));
+            SymmetricKey key = await follower;
+            Assert.Equal(1, callsBeforeRelease);
+            Assert.Equal(2, provider.DecryptAsyncCallCount);
+            Assert.Same(key, await cache.GetKeyAsync(keyInfo, connection, null, CancellationToken.None));
+        }
+
+        /// <summary>
+        /// Async fallback waits behind synchronous provider invocation and can cancel before entry.
+        /// </summary>
+        [Fact]
+        public async Task GetKeyAsync_SynchronousOwner_WaitsForProviderGateAndHonorsCancellation()
+        {
+            // Arrange
+            SymmetricKeyCache cache = SymmetricKeyCache.Instance;
+            TaskCompletionSource<bool> entered = new(TaskCreationOptions.RunContinuationsAsynchronously);
+            using ManualResetEventSlim release = new();
+            int calls = 0;
+            SynchronousKeyStoreProvider provider = new()
+            {
+                DecryptCallback = () =>
+                {
+                    if (Interlocked.Increment(ref calls) == 1)
+                    {
+                        entered.TrySetResult(true);
+                        release.Wait();
+                    }
+                    return NewPlaintextKey(seed: 45);
+                }
+            };
+            using SqlConnection connection = NewConnection((ProviderName, provider));
+            SqlEncryptionKeyInfo ownerInfo = NewKeyInfo();
+            // Act
+            Task<SymmetricKey> owner = Task.Factory.StartNew(
+                () => Task.FromResult(cache.GetKey(ownerInfo, connection, null)),
+                CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default).Unwrap();
+            using CancellationTokenSource cts = new();
+            Task<SymmetricKey>? waiter = null;
+            SqlEncryptionKeyInfo waiterInfo = NewKeyInfo();
+
+            try
+            {
+                // Assert
+                Assert.Same(entered.Task, await Task.WhenAny(
+                    entered.Task, Task.Delay(TimeSpan.FromSeconds(5))));
+                waiter = cache.GetKeyAsync(waiterInfo, connection, null, cts.Token);
+                Assert.False(waiter.IsCompleted);
+                Assert.Equal(1, Volatile.Read(ref calls));
+                cts.Cancel();
+                Assert.Same(waiter, await Task.WhenAny(
+                    waiter, Task.Delay(TimeSpan.FromSeconds(5))));
+                OperationCanceledException error =
+                    await Assert.ThrowsAnyAsync<OperationCanceledException>(() => waiter);
+                Assert.Equal(cts.Token, error.CancellationToken);
+                Assert.True(waiter.IsCanceled);
+                Assert.Equal(1, Volatile.Read(ref calls));
+            }
+            finally
+            {
+                // Cleanup
+                release.Set();
+                await owner;
+                if (waiter is not null)
+                {
+                    try { await waiter; }
+                    catch (OperationCanceledException) { }
+                }
+            }
+
+            await cache.GetKeyAsync(waiterInfo, connection, null, CancellationToken.None);
+            Assert.Equal(2, Volatile.Read(ref calls));
+        }
+
+        /// <summary>
+        /// Async fallback calls remain serialized, and waiting callers can cancel before entry.
+        /// </summary>
+        [Fact]
+        public async Task GetKeyAsync_BaseAsyncFallbackOwner_WaitsForProviderGateAndHonorsCancellation()
+        {
+            // Arrange
+            SymmetricKeyCache cache = SymmetricKeyCache.Instance;
+            TaskCompletionSource<bool> entered = new(TaskCreationOptions.RunContinuationsAsynchronously);
+            using ManualResetEventSlim release = new();
+            int calls = 0;
+            SynchronousKeyStoreProvider provider = new()
+            {
+                DecryptCallback = () =>
+                {
+                    if (Interlocked.Increment(ref calls) == 1)
+                    {
+                        entered.TrySetResult(true);
+                        release.Wait();
+                    }
+                    return NewPlaintextKey(seed: 45);
+                }
+            };
+            using SqlConnection connection = NewConnection((ProviderName, provider));
+            SqlEncryptionKeyInfo ownerInfo = NewKeyInfo();
+            // Act
+            Task<SymmetricKey> owner = Task.Factory.StartNew(
+                () => cache.GetKeyAsync(ownerInfo, connection, null, CancellationToken.None),
+                CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default).Unwrap();
+            using CancellationTokenSource cts = new();
+            Task<SymmetricKey>? waiter = null;
+            SqlEncryptionKeyInfo waiterInfo = NewKeyInfo();
+
+            try
+            {
+                // Assert
+                Assert.Same(entered.Task, await Task.WhenAny(
+                    entered.Task, Task.Delay(TimeSpan.FromSeconds(5))));
+                waiter = cache.GetKeyAsync(waiterInfo, connection, null, cts.Token);
+                Assert.False(waiter.IsCompleted);
+                Assert.Equal(1, Volatile.Read(ref calls));
+                cts.Cancel();
+                Assert.Same(waiter, await Task.WhenAny(
+                    waiter, Task.Delay(TimeSpan.FromSeconds(5))));
+                OperationCanceledException error =
+                    await Assert.ThrowsAnyAsync<OperationCanceledException>(() => waiter);
+                Assert.Equal(cts.Token, error.CancellationToken);
+                Assert.True(waiter.IsCanceled);
+                Assert.Equal(1, Volatile.Read(ref calls));
+            }
+            finally
+            {
+                // Cleanup
+                release.Set();
+                await owner;
+                if (waiter is not null)
+                {
+                    try { await waiter; }
+                    catch (OperationCanceledException) { }
+                }
+            }
+
+            await cache.GetKeyAsync(waiterInfo, connection, null, CancellationToken.None);
+            Assert.Equal(2, Volatile.Read(ref calls));
+        }
+
+        /// <summary>
+        /// Completed async decryption must not wait for unrelated synchronous provider I/O to publish its key.
+        /// </summary>
+        [Fact]
+        public async Task GetKeyAsync_UnrelatedSynchronousProviderBlocked_PublishesWithoutWaiting()
+        {
+            // Arrange
+            SymmetricKeyCache cache = SymmetricKeyCache.Instance;
+            TaskCompletionSource<byte[]> asyncResult = new(TaskCreationOptions.RunContinuationsAsynchronously);
+            TaskCompletionSource<bool> syncEntered = new(TaskCreationOptions.RunContinuationsAsynchronously);
+            using ManualResetEventSlim releaseSync = new();
+            byte[] expectedKey = NewPlaintextKey(seed: 43);
+            TestKeyStoreProvider provider = new()
+            {
+                DecryptAsyncCallback = _ => asyncResult.Task,
+                DecryptCallback = () =>
+                {
+                    syncEntered.TrySetResult(true);
+                    releaseSync.Wait();
+                    return NewPlaintextKey(seed: 44);
+                }
+            };
+            using SqlConnection connection = NewConnection((ProviderName, provider));
+            SqlEncryptionKeyInfo asyncKeyInfo = NewKeyInfo();
+            SqlEncryptionKeyInfo syncKeyInfo = NewKeyInfo();
+            // Act
+            Task<SymmetricKey> asyncKey = cache.GetKeyAsync(asyncKeyInfo, connection, command: null, CancellationToken.None);
+            // Keep blocking provider I/O off the pool needed by the async continuations.
+            Task<SymmetricKey> syncKey = Task.Factory.StartNew(
+                () => cache.GetKey(syncKeyInfo, connection, command: null),
+                CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+
+            try
+            {
+                // Assert
+                Assert.Same(syncEntered.Task, await Task.WhenAny(syncEntered.Task, Task.Delay(TimeSpan.FromSeconds(5))));
+                asyncResult.TrySetResult(expectedKey);
+                Assert.Same(asyncKey, await Task.WhenAny(asyncKey, Task.Delay(TimeSpan.FromSeconds(5))));
+                Assert.Equal(expectedKey, (await asyncKey).RootKey);
+                Assert.False(syncKey.IsCompleted);
+                Assert.Same(await asyncKey, cache.GetKey(asyncKeyInfo, connection, command: null));
+            }
+            finally
+            {
+                // Cleanup
+                asyncResult.TrySetResult(expectedKey);
+                releaseSync.Set();
+                await syncKey;
+                await asyncKey;
+            }
+        }
+
+        /// <summary>
+        /// Async publication wins a same-key synchronous race without waiting for provider I/O.
+        /// </summary>
+        [Fact]
+        public async Task GetKeyAsync_SameKeySynchronousProviderBlocked_PublishesFirstKeyInstance()
+        {
+            // Arrange
+            SymmetricKeyCache cache = SymmetricKeyCache.Instance;
+            TaskCompletionSource<byte[]> asyncResult = new(TaskCreationOptions.RunContinuationsAsynchronously);
+            TaskCompletionSource<bool> syncEntered = new(TaskCreationOptions.RunContinuationsAsynchronously);
+            using ManualResetEventSlim releaseSync = new();
+            byte[] expectedKey = NewPlaintextKey(seed: 43);
+            TestKeyStoreProvider provider = new()
+            {
+                DecryptAsyncCallback = _ => asyncResult.Task,
+                DecryptCallback = () =>
+                {
+                    syncEntered.TrySetResult(true);
+                    releaseSync.Wait();
+                    return NewPlaintextKey(seed: 44);
+                }
+            };
+            using SqlConnection connection = NewConnection((ProviderName, provider));
+            SqlEncryptionKeyInfo asyncKeyInfo = NewKeyInfo();
+            SqlEncryptionKeyInfo syncKeyInfo = asyncKeyInfo;
+            // Act
+            Task<SymmetricKey> asyncKey = cache.GetKeyAsync(asyncKeyInfo, connection, command: null, CancellationToken.None);
+            // Keep blocking provider I/O off the pool needed by the async continuations.
+            Task<SymmetricKey> syncKey = Task.Factory.StartNew(
+                () => cache.GetKey(syncKeyInfo, connection, command: null),
+                CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+
+            try
+            {
+                // Assert
+                Assert.Same(syncEntered.Task, await Task.WhenAny(syncEntered.Task, Task.Delay(TimeSpan.FromSeconds(5))));
+                asyncResult.TrySetResult(expectedKey);
+                Assert.Same(asyncKey, await Task.WhenAny(asyncKey, Task.Delay(TimeSpan.FromSeconds(5))));
+                Assert.Equal(expectedKey, (await asyncKey).RootKey);
+                Assert.False(syncKey.IsCompleted);
+                Assert.Same(await asyncKey, cache.GetKey(asyncKeyInfo, connection, command: null));
+            }
+            finally
+            {
+                // Cleanup
+                asyncResult.TrySetResult(expectedKey);
+                releaseSync.Set();
+                await syncKey;
+                await asyncKey;
+            }
+
+            Assert.Same(await asyncKey, await syncKey);
+        }
+
+        /// <summary>
+        /// A decryption that has already succeeded must not be thrown away just because the caller
+        /// cancelled while the result was being published. The remote work is done at that point, so
+        /// discarding it would only force the next caller to repeat it.
+        /// </summary>
+        [Fact]
+        public async Task GetKeyAsync_WhenCancelledAfterDecryptSucceeds_StillPublishesTheKey()
+        {
+            // Arrange
+            SymmetricKeyCache cache = SymmetricKeyCache.Instance;
+
+            using CancellationTokenSource cts = new CancellationTokenSource();
+            TestKeyStoreProvider provider = new TestKeyStoreProvider
+            {
+                DecryptAsyncCallback = _ =>
+                {
+                    // Cancel between a successful provider call and the cache insertion.
+                    cts.Cancel();
+                    return Task.FromResult(NewPlaintextKey(seed: 57));
+                }
+            };
+
+            using SqlConnection connection = NewConnection((ProviderName, provider));
+            SqlEncryptionKeyInfo keyInfo = NewKeyInfo();
+
+            // Act
+            SymmetricKey key = await cache.GetKeyAsync(keyInfo, connection, command: null, cts.Token);
+
+            // Assert
+            Assert.NotNull(key);
+            Assert.Equal(1, provider.DecryptAsyncCallCount);
+
+            // The key was published despite the cancellation, so no second decryption is needed.
+            Assert.Same(key, cache.GetKey(keyInfo, connection, command: null));
+            Assert.Equal(1, provider.DecryptAsyncCallCount);
+            Assert.Equal(0, provider.DecryptCallCount);
+        }
+
+        /// <summary>
+        /// Pre-cancelled requests do not invoke the provider or populate the cache.
+        /// </summary>
+        [Fact]
+        public async Task GetKeyAsync_PreCancelledToken_DoesNotInvokeProvider()
+        {
+            // Arrange
+            SymmetricKeyCache cache = SymmetricKeyCache.Instance;
+
+            TestKeyStoreProvider provider = new TestKeyStoreProvider { PlaintextKey = NewPlaintextKey(seed: 31) };
+            using SqlConnection connection = NewConnection((ProviderName, provider));
+            SqlEncryptionKeyInfo keyInfo = NewKeyInfo();
+
+            using CancellationTokenSource preCancelled = new CancellationTokenSource();
+            preCancelled.Cancel();
+
+            // Act
+            Task preCancelledTask = cache.GetKeyAsync(keyInfo, connection, command: null, preCancelled.Token);
+
+            // Assert
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => preCancelledTask);
+            Assert.True(preCancelledTask.IsCanceled);
+            Assert.Equal(0, provider.DecryptAsyncCallCount);
+            SymmetricKey key = await cache.GetKeyAsync(keyInfo, connection, null, CancellationToken.None);
+            Assert.Equal(provider.PlaintextKey, key.RootKey);
+            Assert.Equal(1, provider.DecryptAsyncCallCount);
+        }
+
+        /// <summary>
+        /// In-flight cancellation remains unwrapped and does not populate the cache.
+        /// </summary>
+        [Fact]
+        public async Task GetKeyAsync_InFlightCancellation_ProducesCancelledTaskAndDoesNotCache()
+        {
+            // Arrange
+            SymmetricKeyCache cache = SymmetricKeyCache.Instance;
+            TestKeyStoreProvider provider = new() { PlaintextKey = NewPlaintextKey(seed: 31) };
+            using SqlConnection connection = NewConnection((ProviderName, provider));
+            SqlEncryptionKeyInfo keyInfo = NewKeyInfo();
+            using CancellationTokenSource cts = new CancellationTokenSource();
+            TaskCompletionSource<bool> providerEntered = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            provider.DecryptAsyncCallback = async token =>
+            {
+                providerEntered.TrySetResult(true);
+                await Task.Delay(Timeout.Infinite, token);
+                return NewPlaintextKey(seed: 32);
+            };
+
+            // Act
+            Task inFlight = cache.GetKeyAsync(keyInfo, connection, command: null, cts.Token);
+            await providerEntered.Task;
+            cts.Cancel();
+
+            // Assert
+            // Cancellation is not wrapped in SQL.KeyDecryptionFailed.
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => inFlight);
+            Assert.True(inFlight.IsCanceled);
+
+            // Nothing was cached, so a subsequent successful call still reaches the provider.
+            provider.DecryptAsyncCallback = null;
+            SymmetricKey key = await cache.GetKeyAsync(keyInfo, connection, command: null, CancellationToken.None);
+            Assert.Equal(provider.PlaintextKey, key.RootKey);
+        }
+
+        #endregion
+
+        /// <summary>
+        /// Uncached requests for the same key overlap provider I/O and do not publish their results.
+        /// </summary>
+        [Fact]
+        public async Task GetKeyAsync_ZeroTtl_LoadsSameKeyConcurrentlyWithoutCaching()
+        {
+            // Arrange
+            TimeSpan originalTtl = SqlConnection.ColumnEncryptionKeyCacheTtl;
+            PendingDecryptionKeyStoreProvider provider = new();
+            using SqlConnection connection = new("Data Source=async-ae-unit-test");
+            connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(
+                new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>
+                {
+                    ["PENDING_DECRYPTION_PROVIDER"] = provider
+                });
+            SqlEncryptionKeyInfo keyInfo = new()
+            {
+                encryptedKey = Guid.NewGuid().ToByteArray(),
+                keyPath = "test-key-path",
+                keyStoreName = "PENDING_DECRYPTION_PROVIDER",
+                algorithmName = "RSA_OAEP"
+            };
+            byte[] plaintextKey = new byte[32];
+            Task<SymmetricKey>? first = null;
+            Task<SymmetricKey>? second = null;
+
+            try
+            {
+                SqlConnection.ColumnEncryptionKeyCacheTtl = TimeSpan.Zero;
+
+                // Act
+                first = SymmetricKeyCache.Instance.GetKeyAsync(
+                    keyInfo, connection, null, CancellationToken.None);
+                second = SymmetricKeyCache.Instance.GetKeyAsync(
+                    keyInfo, connection, null, CancellationToken.None);
+                int callsBeforeCompletion = provider.CallCount;
+                provider.Completion.TrySetResult(plaintextKey);
+                SymmetricKey[] keys = await Task.WhenAll(first, second);
+                SymmetricKey subsequent = await SymmetricKeyCache.Instance.GetKeyAsync(
+                    keyInfo, connection, null, CancellationToken.None);
+
+                // Assert
+                Assert.Equal(2, callsBeforeCompletion);
+                Assert.Equal(3, provider.CallCount);
+                Assert.NotSame(keys[0], keys[1]);
+                Assert.NotSame(keys[0], subsequent);
+                Assert.All(keys, key => Assert.Equal(plaintextKey, key.RootKey));
+                Assert.Equal(plaintextKey, subsequent.RootKey);
+            }
+            finally
+            {
+                // Cleanup
+                provider.Completion.TrySetResult(plaintextKey);
+                try
+                {
+                    if (first is not null)
+                    {
+                        await first;
+                    }
+                    if (second is not null)
+                    {
+                        await second;
+                    }
+                }
+                finally
+                {
+                    SqlConnection.ColumnEncryptionKeyCacheTtl = originalTtl;
+                }
+            }
+        }
+    }
+}
