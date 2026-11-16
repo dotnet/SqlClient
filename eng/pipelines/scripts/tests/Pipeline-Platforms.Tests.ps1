@@ -12,18 +12,6 @@
 # The .NET Foundation licenses this file to you under the MIT license.
 # See the LICENSE file in the project root for more information.
 
-Describe 'PR platform selection in <RelativePath>' -ForEach @(
-    @{ RelativePath = 'sqlclient-pr-project-ref-pipeline.yml' }
-    @{ RelativePath = 'sqlclient-pr-package-ref-pipeline.yml' }
-) {
-    It 'disables all inherited macOS tests' {
-        $pipelineRoot = Join-Path $PSScriptRoot '../..'
-        $template = Get-Content -LiteralPath (Join-Path $pipelineRoot $RelativePath) -Raw
-
-        $template | Should -Match '(?m)^    runMacOSTests: false\s*$'
-    }
-}
-
 Describe 'Shared platform selection in <RelativePath>' -ForEach @(
     @{ RelativePath = 'dotnet-sqlclient-ci-core.yml'; ConditionalCount = 1 }
     @{ RelativePath = 'stages/build-abstractions-package-ci-stage.yml'; ConditionalCount = 2 }

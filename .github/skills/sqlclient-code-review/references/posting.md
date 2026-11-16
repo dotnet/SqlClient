@@ -99,8 +99,7 @@ the review, or retain it only under the host's private-artifact policy.
 gh pr checks <N> -R dotnet/SqlClient
 ```
 
-- Driver CI runs in Azure DevOps (for example `PR-SqlClient-Project`,
-  `PR-SqlClient-Package`, `sqlclient-pr`) and reports back as checks. CodeQL and
+- Driver CI runs in Azure DevOps (for example `sqlclient-pr`) and reports back as checks. CodeQL and
   milestone checks run as GitHub Actions. Check names change; read them from
   the PR rather than this list.
 - PR pipelines are path filtered. Changes only under `.github/`, `policy/`, or
