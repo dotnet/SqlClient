@@ -15,6 +15,7 @@ using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.Parser;
+using Microsoft.Data.SqlClient.UnitTests.Utilities;
 using Microsoft.SqlServer.TDS;
 using Microsoft.SqlServer.TDS.Done;
 using Microsoft.SqlServer.TDS.EndPoint;
@@ -638,6 +639,57 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             using SqlCommand reusable = new SqlCommand("/* reuse after inline enclave retry */", fixture.Connection);
             Assert.Equal(-1, await reusable.ExecuteNonQueryAsync());
             Assert.Equal(0, GetAsyncCount(inner));
+        }
+
+        /// <summary>
+        /// An XML execution whose first attempt faults with a retryable package failure stays
+        /// pending until the retry finishes, and then reports the retry's outcome.
+        /// </summary>
+        [Fact]
+        public async Task BeginExecuteXmlReader_RetryablePackageFault_CompletesWithRetry()
+        {
+            // Arrange
+            // Cached enclave keys send execution through async package generation, where the
+            // missing enclave session faults the first attempt with a retryable failure.
+            using Fixture fixture = new Fixture();
+            using SqlCommand command = QueryMetadataCacheTestCommands.NewCommandWithCipherMetadata(
+                fixture.Connection,
+                new TestKeyStoreProvider(),
+                SqlCommandColumnEncryptionSetting.Enabled);
+            command.requiresEnclaveComputations = true;
+            command.keysToBeSentToEnclave = new ConcurrentDictionary<int, SqlTceCipherInfoEntry>();
+            Assert.True(command.keysToBeSentToEnclave.TryAdd(0, new SqlTceCipherInfoEntry(0)));
+            SqlQueryMetadataCache.GetInstance().AddQueryMetadata(
+                command, ignoreQueriesWithReturnValueParams: true);
+            SqlConnectionInternal inner = (SqlConnectionInternal)fixture.Connection.InnerConnection;
+
+            // Act
+            // The retry skips the cache and waits on its own attestation lookup.
+            IAsyncResult result = command.BeginExecuteXmlReader();
+            await Task.WhenAny(fixture.Provider.RetryLookupEntered.Task, (Task)result);
+            bool completedDuringRetry = result.IsCompleted;
+            fixture.Provider.Fail();
+
+            // Assert
+            // The caller observes only the retry's outcome.
+            Assert.False(completedDuringRetry);
+            Assert.Equal(1, fixture.Provider.SyncCalls);
+            Assert.Same(fixture.Provider.Error,
+                await Assert.ThrowsAsync<InvalidOperationException>(() => (Task)result));
+            Assert.Same(
+                fixture.Provider.Error,
+                Assert.Throws<InvalidOperationException>(
+                    () => command.EndExecuteXmlReader(result)));
+
+            // Command and connection state are released, so both remain usable.
+            Assert.Null(GetField(command, "_stateObj"));
+            Assert.Null(GetField(command, "_enclaveRetryConnection"));
+            Assert.False((bool)GetField(command, "_enclaveAttestationInProgress"));
+            Assert.False((bool)GetField(command, "_internalEndExecuteInitiated"));
+            Assert.Equal(0, GetAsyncCount(inner));
+            using SqlCommand reusable =
+                new SqlCommand("/* reuse after XML enclave retry */", fixture.Connection);
+            Assert.Equal(-1, await reusable.ExecuteNonQueryAsync());
         }
 
         /// <summary>
