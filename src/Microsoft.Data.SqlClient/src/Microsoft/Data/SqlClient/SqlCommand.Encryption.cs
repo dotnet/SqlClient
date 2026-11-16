@@ -508,6 +508,115 @@ namespace Microsoft.Data.SqlClient
             bool isRetry,
             CancellationToken cancellationToken = default)
         {
+            returnTask = null;
+            usedCache = false;
+
+            // If we are not in _batchRPC and not already retrying, attempt to fetch the cipher MD for
+            // each parameter from the cache. If this succeeds then return immediately, otherwise just
+            // fall back to the full crypto MD discovery.
+            if (!_batchRPCMode && !isRetry && _parameters?.Count > 0)
+            {
+                SqlQueryMetadataCache cache = SqlQueryMetadataCache.GetInstance();
+
+                if (!isAsync)
+                {
+                    if (cache.GetQueryMetadataIfExists(this))
+                    {
+                        usedCache = true;
+                        return;
+                    }
+                }
+                else if (cache.TryGetCachedQueryMetadata(this, out SqlQueryMetadataCache.CachedQueryMetadata metadata))
+                {
+                    // The cached metadata matched, but the column encryption keys still have to be
+                    // loaded, which may require key store network I/O. Hand the rest of the work to a
+                    // worker so even synchronously completed key loads cannot run the blocking
+                    // stale-cache describe fallback on the caller's thread.
+                    usedCache = true;
+                    returnTask = Task.Run(() => CompleteCachedQueryMetadataAsync(
+                        metadata,
+                        timeout,
+                        completion,
+                        asyncWrite,
+                        isRetry,
+                        cancellationToken));
+                    return;
+                }
+            }
+
+            PrepareForTransparentEncryptionCore(
+                isAsync,
+                timeout,
+                completion,
+                out returnTask,
+                asyncWrite,
+                isRetry,
+                cancellationToken);
+        }
+
+        /// <summary>
+        /// Finishes a query metadata cache lookup whose column encryption keys still had to be loaded,
+        /// falling back to a full describe parameter encryption round trip if the cached key information
+        /// turned out to be stale.
+        /// </summary>
+        /// <remarks>
+        /// The command reports <c>usedCache = true</c> even when this method falls back, because the
+        /// caller has already returned by the time the fallback is discovered. That is deliberately
+        /// conservative: over-reporting a cache hit can only cause one additional retry attempt of an
+        /// already failing execution, whereas under-reporting it would suppress the
+        /// <see cref="TdsEnums.TCE_CONVERSION_ERROR_CLIENT_RETRY"/> retry that a genuine cache hit needs.
+        /// </remarks>
+        private async Task CompleteCachedQueryMetadataAsync(
+            SqlQueryMetadataCache.CachedQueryMetadata metadata,
+            int timeout,
+            TaskCompletionSource<object> completion,
+            bool asyncWrite,
+            bool isRetry,
+            CancellationToken cancellationToken)
+        {
+            bool cacheHit = await SqlQueryMetadataCache.GetInstance()
+                .CompleteCachedQueryMetadataAsync(this, metadata, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (cacheHit)
+            {
+                return;
+            }
+
+            // The cached key information was stale, so run the full describe parameter encryption
+            // round trip. It issues blocking TDS writes, but we are already off the caller's thread.
+            PrepareForTransparentEncryptionCore(
+                isAsync: true,
+                timeout,
+                completion,
+                out Task describeTask,
+                asyncWrite,
+                isRetry,
+                cancellationToken);
+
+            if (describeTask is not null)
+            {
+                await describeTask.ConfigureAwait(false);
+            }
+        }
+
+        /// <summary>
+        /// Performs transparent parameter encryption preparation by issuing a full
+        /// sp_describe_parameter_encryption round trip, bypassing the query metadata cache.
+        /// </summary>
+        /// <remarks>
+        /// <paramref name="cancellationToken"/> is captured by the caller while it is still on the thread
+        /// that started the execution, and is used only by the asynchronous key store provider calls.
+        /// </remarks>
+        private void PrepareForTransparentEncryptionCore(
+            bool isAsync,
+            int timeout,
+            TaskCompletionSource<object> completion, // @TODO: Only used for debug checks
+            out Task returnTask,
+            bool asyncWrite,
+            bool isRetry,
+            CancellationToken cancellationToken)
+        {
             Debug.Assert(_activeConnection != null,
                 "_activeConnection should not be null in PrepareForTransparentEncryption.");
             Debug.Assert(_activeConnection.Parser != null,
@@ -521,18 +630,6 @@ namespace Microsoft.Data.SqlClient
                 "completion should be null if and only if mode is async.");
 
             returnTask = null;
-            usedCache = false;
-
-            // If we are not in _batchRPC and not already retrying, attempt to fetch the cipher MD for each parameter from the cache.
-            // If this succeeds then return immediately, otherwise just fall back to the full crypto MD discovery.
-            if (!_batchRPCMode &&
-                !isRetry &&
-                _parameters?.Count > 0 &&
-                SqlQueryMetadataCache.GetInstance().GetQueryMetadataIfExists(this))
-            {
-                usedCache = true;
-                return;
-            }
 
             if (isAsync && ShouldUseEnclaveBasedWorkflow)
             {

@@ -8,13 +8,14 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.Parser;
+using Microsoft.Data.SqlClient.UnitTests.Utilities;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests;
 
 /// <summary>
-/// Verifies batch command lookup for SQL errors and info messages, and asynchronous execution
-/// cancellation state cleanup.
+/// Verifies batch command lookup for SQL errors and info messages, asynchronous execution
+/// cancellation state cleanup, and asynchronous query metadata cache dispatch.
 /// </summary>
 public class SqlCommandTests
 {
@@ -247,6 +248,95 @@ public class SqlCommandTests
         Assert.Equal(CancellationToken.None, GetAsyncExecutionCancellationToken(command));
     }
 
+    /// <summary>
+    /// An async cache hit whose provider completes synchronously must still load the key on a
+    /// worker, not inline on the caller's thread, and must publish the cached metadata.
+    /// </summary>
+    [Fact]
+    public async Task PrepareForTransparentEncryption_AsyncCacheHit_LoadsKeyOnWorker()
+    {
+        // Arrange
+        int callerThreadId = Environment.CurrentManagedThreadId;
+        bool invokingPrepare = true;
+        bool providerRanInline = false;
+        TestKeyStoreProvider provider = new()
+        {
+            DecryptAsyncCallback = _ =>
+            {
+                providerRanInline =
+                    invokingPrepare && Environment.CurrentManagedThreadId == callerThreadId;
+                return Task.FromResult(QueryMetadataCacheTestCommands.NewPlaintextKey(seed: 53));
+            },
+        };
+        using SqlCommand command = QueryMetadataCacheTestCommands.NewCachedCommand(provider);
+        using SqlConnection connection = command.Connection;
+
+        // Act
+        object?[] arguments;
+        try
+        {
+            arguments = InvokeAsyncPrepareForTransparentEncryption(command);
+        }
+        finally
+        {
+            invokingPrepare = false;
+        }
+        Task completion = Assert.IsAssignableFrom<Task>(arguments[3]);
+        await completion;
+
+        // Assert
+        Assert.Equal(true, arguments[5]);
+        Assert.False(providerRanInline);
+        Assert.Equal(1, provider.DecryptAsyncCallCount);
+        Assert.Equal(0, provider.DecryptCallCount);
+        Assert.True(command.Parameters[0].CipherMetadata.IsAlgorithmInitialized());
+    }
+
+    /// <summary>
+    /// An async cache hit with a stale key must run the blocking describe fallback on a worker,
+    /// not inline on the caller's thread, after evicting the stale entry.
+    /// </summary>
+    [Fact]
+    public async Task PrepareForTransparentEncryption_AsyncCacheHitWithStaleKey_FallsBackOnWorker()
+    {
+        // Arrange
+        int callerThreadId = Environment.CurrentManagedThreadId;
+        bool invokingPrepare = true;
+        bool providerRanInline = false;
+        TestKeyStoreProvider provider = new()
+        {
+            DecryptAsyncCallback = _ =>
+            {
+                providerRanInline =
+                    invokingPrepare && Environment.CurrentManagedThreadId == callerThreadId;
+                return Task.FromException<byte[]>(new ArgumentException("stale key"));
+            },
+        };
+        using SqlCommand command = QueryMetadataCacheTestCommands.NewCachedCommand(provider);
+        using SqlConnection connection = command.Connection;
+
+        // Act
+        object?[] arguments;
+        try
+        {
+            arguments = InvokeAsyncPrepareForTransparentEncryption(command);
+        }
+        finally
+        {
+            invokingPrepare = false;
+        }
+        Task completion = Assert.IsAssignableFrom<Task>(arguments[3]);
+
+        // Assert
+        // The closed connection stops the describe fallback before any network I/O.
+        await Assert.ThrowsAsync<InvalidOperationException>(() => completion);
+        Assert.Equal(true, arguments[5]);
+        Assert.False(providerRanInline);
+        Assert.Equal(1, provider.DecryptAsyncCallCount);
+        Assert.Null(command.Parameters[0].CipherMetadata);
+        Assert.False(SqlQueryMetadataCache.GetInstance().TryGetCachedQueryMetadata(command, out _));
+    }
+
     /// <summary>Creates RPC entries without requiring a network connection.</summary>
     /// <param name="count">The number of entries to add.</param>
     /// <returns>A command owned by the test.</returns>
@@ -301,4 +391,24 @@ public class SqlCommandTests
             .GetField(
                 "_asyncExecutionCancellationToken", BindingFlags.Instance | BindingFlags.NonPublic)!
             .GetValue(command));
+
+    /// <summary>
+    /// Invokes the private asynchronous encryption preparation entry point for a first attempt,
+    /// as async execution does, without opening a connection.
+    /// </summary>
+    /// <param name="command">The command whose parameters may hit the query metadata cache.</param>
+    /// <returns>The invocation arguments, including the returned task and used-cache flag.</returns>
+    private static object?[] InvokeAsyncPrepareForTransparentEncryption(SqlCommand command)
+    {
+        MethodInfo prepare = typeof(SqlCommand).GetMethod(
+            "PrepareForTransparentEncryption", BindingFlags.Instance | BindingFlags.NonPublic)
+            ?? throw new InvalidOperationException("Encryption preparation method not found.");
+        object?[] arguments =
+        {
+            true, 30, new TaskCompletionSource<object>(), null, true, false, false,
+            CancellationToken.None,
+        };
+        prepare.Invoke(command, arguments);
+        return arguments;
+    }
 }
