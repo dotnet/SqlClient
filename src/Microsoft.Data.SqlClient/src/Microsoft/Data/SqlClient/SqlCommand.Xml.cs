@@ -371,6 +371,8 @@ namespace Microsoft.Data.SqlClient
             TaskCompletionSource<XmlReader> source,
             Guid operationId)
         {
+            _asyncExecutionCancellationToken = default;
+
             if (task.IsFaulted)
             {
                 Exception e = task.Exception?.InnerException;
@@ -511,20 +513,22 @@ namespace Microsoft.Data.SqlClient
                 registration = cancellationToken.Register(callback: s_cancelIgnoreFailure, state: this);
             }
 
+            _asyncExecutionCancellationToken = cancellationToken;
+
             // @TODO: This can be cleaned up to lines if InnerConnection is always SqlInternalConnection
             ExecuteXmlReaderAsyncCallContext context = null;
-            if (_activeConnection?.InnerConnection is SqlConnectionInternal sqlInternalConnection)
-            {
-                context = sqlInternalConnection.CachedContexts.TakeCommandExecuteXmlReaderAsyncContext();
-            }
-
-            context ??= new ExecuteXmlReaderAsyncCallContext();
-            context.Set(this, source, registration, operationId);
-            context.CancellationToken = cancellationToken;
-
             Task<XmlReader> returnedTask = source.Task;
             try
             {
+                if (_activeConnection?.InnerConnection is SqlConnectionInternal sqlInternalConnection)
+                {
+                    context = sqlInternalConnection.CachedContexts.TakeCommandExecuteXmlReaderAsyncContext();
+                }
+
+                context ??= new ExecuteXmlReaderAsyncCallContext();
+                context.Set(this, source, registration, operationId);
+                context.CancellationToken = cancellationToken;
+
                 returnedTask = RegisterForConnectionCloseNotification(returnedTask);
 
                 // @TODO: Replace with native async implementation, make Begin/End implementation rely on async implementation
@@ -560,9 +564,17 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception e)
             {
+                _asyncExecutionCancellationToken = default;
                 s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
 
-                context.Dispose();
+                if (context is not null)
+                {
+                    context.Dispose();
+                }
+                else
+                {
+                    registration.Dispose();
+                }
                 source.SetException(e);
             }
 

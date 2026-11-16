@@ -601,6 +601,8 @@ namespace Microsoft.Data.SqlClient
             TaskCompletionSource<SqlDataReader> source,
             Guid operationId)
         {
+            _asyncExecutionCancellationToken = default;
+
             if (task.IsFaulted)
             {
                 Exception e = task.Exception.InnerException;
@@ -1007,6 +1009,8 @@ namespace Microsoft.Data.SqlClient
                 registration = cancellationToken.Register(s_cancelIgnoreFailure, state: this);
             }
 
+            _asyncExecutionCancellationToken = cancellationToken;
+
             Task<SqlDataReader> returnedTask = source.Task;
             ExecuteReaderAsyncCallContext context = null;
             try
@@ -1056,13 +1060,20 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception e)
             {
+                _asyncExecutionCancellationToken = default;
                 if (!_parentOperationStarted)
                 {
                     s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
                 }
 
-                registration.Dispose();
-                context?.Dispose();
+                if (context is not null)
+                {
+                    context.Dispose();
+                }
+                else
+                {
+                    registration.Dispose();
+                }
                 source.SetException(e);
             }
 
