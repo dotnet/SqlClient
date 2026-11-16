@@ -244,6 +244,8 @@ namespace Microsoft.Data.SqlClient
         private SqlEnclaveAttestationParameters enclaveAttestationParameters = null;
 
         // Provider awaits can precede both parser-state acquisition and a cached async result.
+        // Set during enclave attestation and during async key loading for cached query metadata;
+        // the cached path keeps it set until execution has been handed off.
         private bool _enclaveAttestationInProgress;
 
         private SqlConnectionInternal _describeParameterEncryptionConnection;

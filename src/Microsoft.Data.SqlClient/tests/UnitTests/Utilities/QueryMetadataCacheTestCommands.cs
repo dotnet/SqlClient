@@ -38,17 +38,33 @@ namespace Microsoft.Data.SqlClient.UnitTests.Utilities
         /// <returns>A command with uncached cipher metadata and an unopened connection.</returns>
         internal static SqlCommand NewCommandWithCipherMetadata(
             SqlColumnEncryptionKeyStoreProvider provider)
+            => NewCommandWithCipherMetadata(
+                new SqlConnection(
+                    "Data Source=async-ae-metadata-cache-test;Initial Catalog=async-ae-db;" +
+                    "Column Encryption Setting=Enabled"),
+                provider,
+                SqlCommandColumnEncryptionSetting.UseConnectionSetting);
+
+        /// <summary>
+        /// Builds a command with uncached cipher metadata bound to the supplied connection.
+        /// </summary>
+        /// <param name="connection">Connection that executes the command and owns the provider.</param>
+        /// <param name="provider">Connection-scoped provider that will load the parameter's key.</param>
+        /// <param name="setting">Column encryption setting of the command.</param>
+        /// <returns>A command with uncached cipher metadata.</returns>
+        internal static SqlCommand NewCommandWithCipherMetadata(
+            SqlConnection connection,
+            SqlColumnEncryptionKeyStoreProvider provider,
+            SqlCommandColumnEncryptionSetting setting)
         {
-            SqlConnection connection = new(
-                "Data Source=async-ae-metadata-cache-test;Initial Catalog=async-ae-db;" +
-                "Column Encryption Setting=Enabled");
             connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(
                 new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>
                 {
                     { ProviderName, provider },
                 });
 
-            SqlCommand command = new($"SELECT * FROM T WHERE C = @p -- {Guid.NewGuid()}", connection);
+            SqlCommand command = new(
+                $"SELECT * FROM T WHERE C = @p -- {Guid.NewGuid()}", connection, null, setting);
             SqlParameter parameter = command.Parameters.AddWithValue("@p", 1);
 
             SqlTceCipherInfoEntry entry = new(ordinal: 0);
@@ -79,8 +95,24 @@ namespace Microsoft.Data.SqlClient.UnitTests.Utilities
         /// <param name="provider">Connection-scoped provider for the subsequent cache completion.</param>
         /// <returns>A command with cached metadata and an unopened connection.</returns>
         internal static SqlCommand NewCachedCommand(SqlColumnEncryptionKeyStoreProvider provider)
+            => Cache(NewCommandWithCipherMetadata(provider));
+
+        /// <summary>
+        /// Primes the query metadata cache for a command bound to the supplied connection.
+        /// </summary>
+        /// <param name="connection">Connection that executes the command and owns the provider.</param>
+        /// <param name="provider">Connection-scoped provider for the subsequent cache completion.</param>
+        /// <returns>A command with cached metadata and column encryption enabled.</returns>
+        internal static SqlCommand NewCachedCommand(
+            SqlConnection connection,
+            SqlColumnEncryptionKeyStoreProvider provider)
         {
-            SqlCommand command = NewCommandWithCipherMetadata(provider);
+            return Cache(NewCommandWithCipherMetadata(
+                connection, provider, SqlCommandColumnEncryptionSetting.Enabled));
+        }
+
+        private static SqlCommand Cache(SqlCommand command)
+        {
             SqlQueryMetadataCache.GetInstance().AddQueryMetadata(
                 command, ignoreQueriesWithReturnValueParams: true);
             return command;

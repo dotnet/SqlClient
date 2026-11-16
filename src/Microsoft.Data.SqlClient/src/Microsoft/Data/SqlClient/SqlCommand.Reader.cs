@@ -1942,6 +1942,13 @@ namespace Microsoft.Data.SqlClient
                 // already cleared by the execution's cleanup continuation.
                 CancellationToken cancellationToken = isAsync ? _asyncExecutionCancellationToken : CancellationToken.None;
                 SqlConnectionInternal retryConnection = _enclaveRetryConnection;
+                SqlConnection preparedConnection = _activeConnection;
+                int preparedCloseCount = preparedConnection.CloseCount;
+
+                // Block command and connection changes until execution has reserved the connection.
+                // The continuation below is the only place that clears the flag for async
+                // preparation.
+                _enclaveAttestationInProgress = true;
 
                 task = Task.Run(() => ContinueRunExecuteReaderTdsAsync(
                     describeParameterEncryptionTask,
@@ -1955,7 +1962,9 @@ namespace Microsoft.Data.SqlClient
                     isRetry,
                     ds,
                     cancellationToken,
-                    retryConnection));
+                    retryConnection,
+                    preparedConnection,
+                    preparedCloseCount));
 
                 return ds;
             }
@@ -1991,6 +2000,12 @@ namespace Microsoft.Data.SqlClient
         /// describe-parameter-encryption round trip resets the cached async state, while a failure that occurs
         /// after that point is surfaced without resetting it.
         /// </para>
+        /// <para>
+        /// The caller sets <c>_enclaveAttestationInProgress</c> before starting this method, and
+        /// this method clears it once execution has reserved the connection or preparation has
+        /// failed. This blocks connection changes and overlapping executions while key store calls
+        /// are pending.
+        /// </para>
         /// </remarks>
         private async Task ContinueRunExecuteReaderTdsAsync(
             Task describeParameterEncryptionTask,
@@ -2004,32 +2019,45 @@ namespace Microsoft.Data.SqlClient
             bool isRetry,
             SqlDataReader ds,
             CancellationToken cancellationToken,
-            SqlConnectionInternal retryConnection)
+            SqlConnectionInternal retryConnection,
+            SqlConnection preparedConnection,
+            int preparedCloseCount)
         {
+            Task subTask;
             try
             {
-                await describeParameterEncryptionTask.ConfigureAwait(false);
+                try
+                {
+                    await describeParameterEncryptionTask.ConfigureAwait(false);
+                }
+                catch
+                {
+                    CachedAsyncState?.ResetAsyncState();
+                    throw;
+                }
+
+                ValidateConnectionLifetime(preparedConnection, preparedCloseCount);
+                ValidateConnectionForEnclaveExecution(retryConnection);
+                await GenerateEnclavePackageAsync(cancellationToken).ConfigureAwait(false);
+
+                ValidateConnectionLifetime(preparedConnection, preparedCloseCount);
+                ValidateConnectionForEnclaveExecution(retryConnection);
+                RunExecuteReaderTds(
+                    cmdBehavior,
+                    runBehavior,
+                    returnStream,
+                    isAsync,
+                    TdsParserStaticMethods.GetRemainingTimeout(timeout, parameterEncryptionStart),
+                    out subTask,
+                    asyncWrite,
+                    isRetry,
+                    ds);
             }
-            catch
+            finally
             {
-                CachedAsyncState?.ResetAsyncState();
-                throw;
+                // Execution has reserved the connection, or preparation failed.
+                _enclaveAttestationInProgress = false;
             }
-
-            ValidateConnectionForEnclaveExecution(retryConnection);
-            await GenerateEnclavePackageAsync(cancellationToken).ConfigureAwait(false);
-
-            ValidateConnectionForEnclaveExecution(retryConnection);
-            RunExecuteReaderTds(
-                cmdBehavior,
-                runBehavior,
-                returnStream,
-                isAsync,
-                TdsParserStaticMethods.GetRemainingTimeout(timeout, parameterEncryptionStart),
-                out Task subTask,
-                asyncWrite,
-                isRetry,
-                ds);
 
             if (subTask is not null)
             {
