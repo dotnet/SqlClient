@@ -118,7 +118,16 @@ stages:
       poolName: $(general_purpose_pool_name)
       poolImage: ADO-UB24
 
-  # Stage 2: Execute tests and collect code coverage
+  # Stage 2a: Validate documentation in parallel with tests, using the packed artifacts.
+  - template: /eng/pipelines/pr/stages/validate-xml-docs-stage.yml@self
+    parameters:
+      stageNamePack: ${{ variables.stageNamePackDebug }}
+      packArtifactName: >-
+        $[ stageDependencies.${{ variables.stageNamePackDebug }}.pack_job.outputs['packOutput.artifactName'] ]
+      poolName: $(general_purpose_pool_name)
+      poolImage: ADO-UB24
+
+  # Stage 2b: Execute tests and collect code coverage
   - template: /eng/pipelines/pr/stages/test-stages.yml@self
     parameters:
       buildConfiguration: Debug

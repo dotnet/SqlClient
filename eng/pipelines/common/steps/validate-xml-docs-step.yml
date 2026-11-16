@@ -4,7 +4,7 @@
 # See the LICENSE file in the project root for more information.                #
 #################################################################################
 
-# Runs eng/pipelines/onebranch/scripts/validate-xml-docs.ps1 over XML documentation cross-references.
+# Runs eng/pipelines/common/scripts/validate-xml-docs.ps1 over XML documentation cross-references.
 #
 # Open Publishing resolves every cref in our XML documentation against the Learn xref map when the
 # API docs are ingested into dotnet/sqlclient-api-docs.  A malformed documentation ID cannot
@@ -29,9 +29,10 @@ parameters:
   - name: displayName
     type: string
 
-  # Directory of documentation snippet sources, scanned recursively.  Pass '' to skip source mode.
+  # One directory or a list of documentation snippet directories, scanned recursively.
+  # Pass '' to skip source mode. Lists are passed as PowerShell arrays under -Command.
   - name: snippetsDirectory
-    type: string
+    type: object
 
   # Generated XML documentation file or directory, scanned recursively.  Non-documentation XML in a
   # scanned directory is ignored, so a whole build output tree may be passed.  Pass '' to skip.
@@ -115,7 +116,7 @@ steps:
   - pwsh: |
       $arguments = '-ReportPath "${{ parameters.reportPath }}"' +
                    ' -FailOn "${{ join(',', parameters.failOn) }}"' +
-                   ' -SnippetsDirectory "${{ parameters.snippetsDirectory }}"' +
+                   ' -SnippetsDirectory "${{ join('","', parameters.snippetsDirectory) }}"' +
                    ' -DocumentationPath "${{ parameters.documentationPath }}"' +
                    ' -PackagesPath "${{ parameters.packagesPath }}"' +
                    ' -ExtractPath "${{ parameters.extractPath }}"' +
@@ -139,5 +140,5 @@ steps:
     inputs:
       targetType: filePath
       pwsh: true
-      filePath: $(REPO_ROOT)/eng/pipelines/onebranch/scripts/validate-xml-docs.ps1
+      filePath: $(REPO_ROOT)/eng/pipelines/common/scripts/validate-xml-docs.ps1
       arguments: $(validateXmlDocsArguments)

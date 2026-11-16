@@ -64,12 +64,6 @@ Invoke-Pester ./publish-symbols.Tests.ps1 -Output Detailed
 | Status validation     | Detects Failed/Cancelled results, respects PublishToInternal/PublishToPublic flags, passes on Succeeded/Pending |
 | Skip polling          | Both publishing targets submitted without a status query, unverified-results warning, explicit false retains status checks, token/registration/submission errors still fail |
 | Package validation    | Wildcard vs per-id version expectations, SqlServer omitted when unbuilt, gate tokens, report written before gating, exit-code handling, report-only mode suppressing the gate but not a broken validator |
-| XML docs validation   | Every documentation-ID defect form reported by the API Docs build (array `T:` UIDs, empty parentheses, C# aliases, embedded whitespace, misspelled namespace roots) plus valid controls, compiler-unresolved `!:` crefs, local UID and wrong-prefix resolution, package expansion, allowlisting and staleness, report-only mode |
-| XML docs lib/ref layout | Full `lib/` XML paired with trimmed `ref/` XML accepted; trimmed `lib/`, untrimmed `ref/`, and byte-identical `lib`/`ref` rejected; per-target-framework isolation; packages without a `ref/` folder ignored |
-| XML docs dependencies | References into a package that was not built this run resolve against the published dependency's documentation; that documentation is not itself validated, does not establish the public API surface, and does not enable resolution when nothing is under validation |
-| XML docs enum remarks | `<remarks>` on an enum field reported, since the documentation build discards it; type blocks and platform-variant type blocks accepted; members of non-enum types accepted; enum members read from source through attributes, initializers and comments; in generated documentation only public fields reported, and none when the public API surface is unknown |
-| XML docs unresolved includes | An `<include>` surviving into generated documentation reported, since the compiler leaves it in place and the member ships undocumented; the requested path echoed back; every occurrence reported; includes inside snippets ignored |
-| XML docs unexpected elements | Member containers emitted by an over-broad `<include>` reported, including an end-to-end compiler expansion; compiler-supported top-level documentation elements accepted |
 | XML docs pipeline invocation | Source validation enabled by each job's configured snippet path; SqlClient, SqlServer, Abstractions, and Azure snippet directories wired and present; generated SqlClient reference documentation validated after build and before packing |
 | Dependency documentation restore | Exact version pinned, central package management not inherited, documentation collected per target framework, restore tree removed, stale destination replaced, and failures reported for a failed restore, a missing package folder, or a package shipping no documentation |
 | Package signatures    | Every package and symbol package verified, all failures reported before throwing |
@@ -81,6 +75,9 @@ Invoke-Pester ./publish-symbols.Tests.ps1 -Output Detailed
 
 ## Notes
 
+- Shared XML documentation validator and task-invocation tests have moved to
+  [`common/scripts/tests/`](../../../common/scripts/tests/). Run them separately from the root:
+  `Invoke-Pester ./eng/pipelines/common/scripts/tests/`.
 - All external calls (`az`, `Invoke-RestMethod`) are mocked — no network access or Azure credentials are required.
 - The endpoint-reachability tests are the one exception: they exercise real sockets, but only
   against loopback and the RFC 2606 reserved `.invalid` TLD, so they need no external network.

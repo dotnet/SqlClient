@@ -150,8 +150,15 @@ stages:
           # be unique within a build. Re-running a failed job would otherwise attempt to publish
           # an artifact that already exists and fail with:
           #   "Artifact build_and_pack_projects already exists for build <id>."
+          - pwsh: |
+              $artifactName = '${{ parameters.packArtifactBaseName }}_${{ parameters.buildConfiguration }}_attempt$(System.JobAttempt)'
+              Write-Host "##vso[task.setvariable variable=artifactName;isOutput=true]$artifactName"
+            name: packOutput
+            displayName: Record Build Output Artifact
+            condition: succeededOrFailed()
+
           - publish: $(BUILD_OUTPUT)
-            artifact: ${{ parameters.packArtifactBaseName }}_${{ parameters.buildConfiguration }}_attempt$(System.JobAttempt)
+            artifact: $(packOutput.artifactName)
             displayName: Publish Build Output
             condition: succeededOrFailed()
 
