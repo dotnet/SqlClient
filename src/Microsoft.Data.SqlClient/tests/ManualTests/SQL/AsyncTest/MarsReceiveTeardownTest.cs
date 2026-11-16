@@ -86,7 +86,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool CanRun()
         {
             if (!DataTestUtility.AreConnStringsSetup() ||
-                !DataTestUtility.IsNotAzureServer() || !DataTestUtility.IsUsingManagedSNI())
+                !DataTestUtility.IsNotAzureServer() ||
+                (OperatingSystem.IsWindows() && !DataTestUtility.IsUsingManagedSNI()))
             {
                 return false;
             }
