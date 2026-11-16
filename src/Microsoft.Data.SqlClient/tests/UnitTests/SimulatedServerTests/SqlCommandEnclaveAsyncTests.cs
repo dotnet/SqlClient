@@ -6,6 +6,7 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Data;
 using System.Reflection;
 using System.Security.Cryptography;
@@ -89,6 +90,116 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }
             Assert.Equal(0, GetAsyncCount((SqlConnectionInternal)fixture.Connection.InnerConnection));
             Assert.Equal(-1, await other.ExecuteNonQueryAsync());
+        }
+
+        /// <summary>Package key loading must finish before queued execution checks for a competing reader.</summary>
+        [Fact]
+        public async Task Execute_PendingPackageKey_RevalidatesConnection()
+        {
+            // Arrange
+            // A warm session lets package generation reach the pending key load.
+            using Fixture fixture = new Fixture();
+            using SqlCommand command = fixture.CreateCommand();
+            fixture.Provider.SyncCacheHit = true;
+            PendingKeyStoreProvider keyProvider = new PendingKeyStoreProvider();
+            fixture.Connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(
+                new Dictionary<string, SqlColumnEncryptionKeyStoreProvider> { ["PENDING_PACKAGE_KEY"] = keyProvider });
+            SqlTceCipherInfoEntry entry = new SqlTceCipherInfoEntry(0);
+            entry.Add(Guid.NewGuid().ToByteArray(), 42, 7, 1, 3,
+                "pending-package-key", "PENDING_PACKAGE_KEY", "RSA_OAEP");
+            command.keysToBeSentToEnclave = new ConcurrentDictionary<int, SqlTceCipherInfoEntry>();
+            Assert.True(command.keysToBeSentToEnclave.TryAdd(0, entry));
+            object[] arguments =
+            {
+                CommandBehavior.Default, RunBehavior.ReturnImmediately, true, true, 30, null,
+                true, false, null, Task.CompletedTask
+            };
+
+            // Act
+            using SqlDataReader pendingReader = (SqlDataReader)typeof(SqlCommand)
+                .GetMethod("RunExecuteReaderTdsWithTransparentParameterEncryption", BindingFlags.NonPublic | BindingFlags.Instance)
+                .Invoke(command, arguments);
+            Task execution = (Task)arguments[5];
+            try
+            {
+                await await Task.WhenAny(keyProvider.Entered.Task, execution);
+                Assert.False(execution.IsCompleted);
+
+                // Assert
+                // A reader opened while the key loads must stop the queued execution.
+                using SqlCommand other = new SqlCommand("/* competing package reader */", fixture.Connection);
+                using (SqlDataReader reader = other.ExecuteReader())
+                {
+                    keyProvider.Completion.SetResult(new byte[32]);
+                    await Assert.ThrowsAsync<InvalidOperationException>(() => execution);
+                    Assert.NotNull(GetField(command, "enclavePackage"));
+                    Assert.Null(GetField(command, "_stateObj"));
+                    Assert.False(reader.IsClosed);
+                }
+                Assert.Equal(0, GetAsyncCount((SqlConnectionInternal)fixture.Connection.InnerConnection));
+                Assert.Equal(-1, await other.ExecuteNonQueryAsync());
+            }
+            finally
+            {
+                // Cleanup
+                keyProvider.Completion.TrySetResult(new byte[32]);
+            }
+        }
+
+        /// <summary>
+        /// A package fault happens after the failed write released its reservation, so the retry
+        /// must not inherit one: it revalidates the connection, and a failed retry does not
+        /// release a reservation twice.
+        /// </summary>
+        [Fact]
+        public async Task Retry_PackageFault_DoesNotTransferReservation()
+        {
+            // Arrange
+            using Fixture fixture = new Fixture();
+            using SqlCommand command = fixture.CreateCommand();
+            SqlConnectionInternal inner = (SqlConnectionInternal)fixture.Connection.InnerConnection;
+            var local = new TaskCompletionSource<object>(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+            var global = new TaskCompletionSource<object>(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+            InvalidOperationException retryFailure = new InvalidOperationException("retry failed");
+            object retryConnection = inner;
+            int retries = 0;
+            Func<SqlCommand, IAsyncResult, bool, string, object> end =
+                (cmd, result, internalEnd, name) =>
+                    throw new InvalidOperationException("A failed write must not be read.");
+            Func<SqlCommand, CommandBehavior, AsyncCallback, object, int, bool, bool, IAsyncResult>
+                retry =
+                (cmd, behavior, callback, state, timeout, isRetry, asyncWrite) =>
+                {
+                    retries++;
+                    retryConnection = GetField(cmd, "_enclaveRetryConnection");
+                    return Task.FromException<object>(retryFailure);
+                };
+            typeof(SqlCommand)
+                .GetMethod(
+                    "CreateLocalCompletionTask",
+                    BindingFlags.NonPublic | BindingFlags.Instance)
+                .Invoke(command, new object[]
+                {
+                    CommandBehavior.Default, null, 30, false, true, global, local, end, retry,
+                    nameof(SqlCommand.EndExecuteReader), ADP.TimerCurrent(), CancellationToken.None
+                });
+
+            // Act
+            local.SetException(
+                new EnclaveDelegate.RetryableEnclaveQueryExecutionException("Package", null));
+
+            // Assert
+            Assert.Same(
+                retryFailure,
+                await Assert.ThrowsAsync<InvalidOperationException>(() => global.Task));
+            Assert.Equal(1, retries);
+            Assert.Null(retryConnection);
+            Assert.Equal(0, GetAsyncCount(inner));
+            using SqlCommand reusable =
+                new SqlCommand("/* reuse after package retry */", fixture.Connection);
+            Assert.Equal(-1, await reusable.ExecuteNonQueryAsync());
         }
 
         /// <summary>Revalidation must not mistake an internal retry's own reservation for a competing command.</summary>
@@ -923,15 +1034,37 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }
         }
 
-        /// <summary>
-        /// Suspends one provider operation until explicitly faulted or canceled by its caller.
-        /// </summary>
+        /// <summary>Suspends enclave-package key loading without blocking the command caller.</summary>
+        private sealed class PendingKeyStoreProvider : SqlColumnEncryptionKeyStoreProvider
+        {
+            internal readonly TaskCompletionSource<bool> Entered =
+                new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            internal readonly TaskCompletionSource<byte[]> Completion =
+                new TaskCompletionSource<byte[]>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+            /// <summary>Signals that package generation reached asynchronous key loading.</summary>
+            public override Task<byte[]> DecryptColumnEncryptionKeyAsync(
+                string path, string algorithm, byte[] key, CancellationToken cancellationToken = default)
+            {
+                Entered.SetResult(true);
+                return Completion.Task;
+            }
+
+            public override byte[] DecryptColumnEncryptionKey(string path, string algorithm, byte[] key) =>
+                throw new InvalidOperationException("Package key loading must use the asynchronous provider API.");
+
+            public override byte[] EncryptColumnEncryptionKey(string path, string algorithm, byte[] key) =>
+                throw new NotSupportedException();
+        }
+
+        /// <summary>Suspends one provider operation until explicitly faulted or canceled by its caller.</summary>
         private sealed class PendingProvider : SqlColumnEncryptionEnclaveProvider
         {
             internal readonly InvalidOperationException Error = new InvalidOperationException("Provider failure");
             internal bool Attestation;
             internal bool SessionOperation;
             internal bool CacheHit;
+            internal bool SyncCacheHit;
             internal Action OnCacheHit;
             internal readonly SqlEnclaveSession Session = new SqlEnclaveSession(new byte[32], 42);
             internal readonly byte[] CustomData = { 2, 3 };
@@ -1029,6 +1162,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 bool isRetry, out SqlEnclaveSession session, out long counter, out byte[] customData, out int customDataLength)
             {
                 SyncCalls++;
+                if (SyncCacheHit)
+                {
+                    session = Session;
+                    counter = 42;
+                    customData = CustomData;
+                    customDataLength = CustomData.Length;
+                    return;
+                }
                 throw Error;
             }
 

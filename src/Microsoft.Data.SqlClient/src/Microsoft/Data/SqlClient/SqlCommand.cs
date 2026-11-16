@@ -2417,7 +2417,8 @@ namespace Microsoft.Data.SqlClient
             localCompletion.Task.ContinueWith(
                 async task =>
                 {
-                    if (task.IsFaulted)
+                    if (task.IsFaulted &&
+                        task.Exception.InnerException is not EnclaveDelegate.RetryableEnclaveQueryExecutionException)
                     {
                         globalCompletion.TrySetException(task.Exception.InnerException);
                         return;
@@ -2431,6 +2432,9 @@ namespace Microsoft.Data.SqlClient
 
                     try
                     {
+                        // Package generation can fail before the read stage; use the same bounded retry.
+                        task.GetAwaiter().GetResult();
+
                         // Mark that we initiated the internal EndExecute. This should always be false
                         // until we set it here.
                         Debug.Assert(!_internalEndExecuteInitiated);
@@ -2495,8 +2499,11 @@ namespace Microsoft.Data.SqlClient
 
                         // Remove the entry from the cache since it was inconsistent
                         SqlQueryMetadataCache.GetInstance().InvalidateCacheEntry(this);
-                        // Kick off the retry
-                        SqlConnectionInternal retryConnection = _activeConnection.InnerConnection as SqlConnectionInternal;
+                        // Kick off the retry. A faulted write released its reservation, so only a
+                        // read-stage failure has one to transfer to the retry.
+                        SqlConnectionInternal retryConnection = task.IsFaulted
+                            ? null
+                            : _activeConnection.InnerConnection as SqlConnectionInternal;
                         Task<object> retryTask = null;
                         try
                         {

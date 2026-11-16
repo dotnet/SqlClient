@@ -4,9 +4,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Parser;
 using Microsoft.Data.SqlClient.UnitTests.Utilities;
 using Xunit;
@@ -15,7 +17,8 @@ namespace Microsoft.Data.SqlClient.UnitTests;
 
 /// <summary>
 /// Verifies batch command lookup for SQL errors and info messages, asynchronous execution
-/// cancellation state cleanup, and asynchronous query metadata cache dispatch.
+/// cancellation state cleanup, asynchronous query metadata cache dispatch, and bounded retry
+/// routing for enclave package failures.
 /// </summary>
 public class SqlCommandTests
 {
@@ -335,6 +338,222 @@ public class SqlCommandTests
         Assert.Equal(1, provider.DecryptAsyncCallCount);
         Assert.Null(command.Parameters[0].CipherMetadata);
         Assert.False(SqlQueryMetadataCache.GetInstance().TryGetCachedQueryMetadata(command, out _));
+    }
+
+    /// <summary>
+    /// A retryable enclave package fault before the read stage must invalidate cached metadata and
+    /// retry once, completing with the retry's result.
+    /// </summary>
+    [Fact]
+    public async Task
+        CreateLocalCompletionTask_RetryableWriteFaultRetrySucceeds_ReturnsRetryResult()
+    {
+        // Arrange
+        using SqlCommand command = NewCachedRetryCommand();
+        using SqlConnection connection = command.Connection;
+        object expectedResult = new();
+        RetryObserver retry = new(command, Task.FromResult(expectedResult));
+        TaskCompletionSource<object> localCompletion = new();
+        TaskCompletionSource<object> globalCompletion = new();
+        AttachCachedExecutionRetry(command, localCompletion, globalCompletion, retry.Retry);
+
+        // Act
+        localCompletion.SetException(NewPackageFault());
+
+        // Assert
+        Assert.Same(expectedResult, await globalCompletion.Task);
+        Assert.Equal(1, retry.Calls);
+    }
+
+    /// <summary>
+    /// A retryable enclave package fault retries once; a failed retry faults the caller's
+    /// completion with the retry's own exception instead of retrying again.
+    /// </summary>
+    [Fact]
+    public async Task CreateLocalCompletionTask_RetryableWriteFaultRetryFails_ThrowsRetryFailure()
+    {
+        // Arrange
+        using SqlCommand command = NewCachedRetryCommand();
+        using SqlConnection connection = command.Connection;
+        EnclaveDelegate.RetryableEnclaveQueryExecutionException retryFailure =
+            new("retry failed", null);
+        RetryObserver retry = new(command, Task.FromException<object>(retryFailure));
+        TaskCompletionSource<object> localCompletion = new();
+        TaskCompletionSource<object> globalCompletion = new();
+        AttachCachedExecutionRetry(command, localCompletion, globalCompletion, retry.Retry);
+
+        // Act
+        localCompletion.SetException(NewPackageFault());
+
+        // Assert
+        var exception = await Assert.ThrowsAsync<
+            EnclaveDelegate.RetryableEnclaveQueryExecutionException>(() => globalCompletion.Task);
+        Assert.Same(retryFailure, exception);
+        Assert.Equal(1, retry.Calls);
+    }
+
+    /// <summary>
+    /// A retryable enclave package fault retries once; a canceled retry cancels the caller's
+    /// completion.
+    /// </summary>
+    [Fact]
+    public async Task CreateLocalCompletionTask_RetryableWriteFaultRetryCanceled_Cancels()
+    {
+        // Arrange
+        using SqlCommand command = NewCachedRetryCommand();
+        using SqlConnection connection = command.Connection;
+        RetryObserver retry = new(command, Task.FromCanceled<object>(new CancellationToken(true)));
+        TaskCompletionSource<object> localCompletion = new();
+        TaskCompletionSource<object> globalCompletion = new();
+        AttachCachedExecutionRetry(command, localCompletion, globalCompletion, retry.Retry);
+
+        // Act
+        localCompletion.SetException(NewPackageFault());
+
+        // Assert
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => globalCompletion.Task);
+        Assert.True(globalCompletion.Task.IsCanceled);
+        Assert.Equal(1, retry.Calls);
+    }
+
+    /// <summary>
+    /// An ordinary write failure keeps its exception and does not trigger a retry.
+    /// </summary>
+    [Fact]
+    public async Task CreateLocalCompletionTask_NonRetryableWriteFault_ThrowsWithoutRetry()
+    {
+        // Arrange
+        using SqlConnection connection = new(
+            "Data Source=async-ae-unit-test;Column Encryption Setting=Enabled");
+        using SqlCommand command = new("SELECT @p", connection);
+        RetryObserver retry = new(command, Task.FromResult<object>(command));
+        InvalidOperationException failure = new("write failed");
+        TaskCompletionSource<object> localCompletion = new();
+        TaskCompletionSource<object> globalCompletion = new();
+        AttachCachedExecutionRetry(command, localCompletion, globalCompletion, retry.Retry);
+
+        // Act
+        localCompletion.SetException(failure);
+
+        // Assert
+        InvalidOperationException exception =
+            await Assert.ThrowsAsync<InvalidOperationException>(() => globalCompletion.Task);
+        Assert.Same(failure, exception);
+        Assert.Equal(0, retry.Calls);
+    }
+
+    /// <summary>
+    /// A canceled write cancels the caller's completion without triggering a retry.
+    /// </summary>
+    [Fact]
+    public async Task CreateLocalCompletionTask_CanceledWrite_CancelsWithoutRetry()
+    {
+        // Arrange
+        using SqlConnection connection = new(
+            "Data Source=async-ae-unit-test;Column Encryption Setting=Enabled");
+        using SqlCommand command = new("SELECT @p", connection);
+        RetryObserver retry = new(command, Task.FromResult<object>(command));
+        TaskCompletionSource<object> localCompletion = new();
+        TaskCompletionSource<object> globalCompletion = new();
+        AttachCachedExecutionRetry(command, localCompletion, globalCompletion, retry.Retry);
+
+        // Act
+        localCompletion.SetCanceled();
+
+        // Assert
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => globalCompletion.Task);
+        Assert.True(globalCompletion.Task.IsCanceled);
+        Assert.Equal(0, retry.Calls);
+    }
+
+    /// <summary>
+    /// Creates a command whose query metadata is cached, so a retry must invalidate it.
+    /// </summary>
+    /// <returns>A cached command with an unopened connection; the caller disposes both.</returns>
+    private static SqlCommand NewCachedRetryCommand()
+    {
+        SqlCommand command =
+            QueryMetadataCacheTestCommands.NewCachedCommand(new TestKeyStoreProvider());
+        Assert.True(SqlQueryMetadataCache.GetInstance().TryGetCachedQueryMetadata(command, out _));
+        return command;
+    }
+
+    /// <summary>Creates the fault raised when enclave package generation must be retried.</summary>
+    /// <returns>A retryable enclave exception.</returns>
+    private static EnclaveDelegate.RetryableEnclaveQueryExecutionException NewPackageFault() =>
+        new("package generation failed", null);
+
+    /// <summary>
+    /// Wires the command's cache-hit completion path with an End delegate that fails the test if a
+    /// failed write reaches the read stage.
+    /// </summary>
+    /// <param name="command">Command whose cached metadata may need invalidating.</param>
+    /// <param name="localCompletion">Completion representing the initial write stage.</param>
+    /// <param name="globalCompletion">Completion returned to the caller.</param>
+    /// <param name="retry">Delegate observing the retry attempt.</param>
+    private static void AttachCachedExecutionRetry(
+        SqlCommand command,
+        TaskCompletionSource<object> localCompletion,
+        TaskCompletionSource<object> globalCompletion,
+        Func<SqlCommand, CommandBehavior, AsyncCallback?, object?, int, bool, bool, IAsyncResult>
+            retry)
+    {
+        MethodInfo method = typeof(SqlCommand).GetMethod(
+            "CreateLocalCompletionTask", BindingFlags.Instance | BindingFlags.NonPublic)
+            ?? throw new InvalidOperationException("Async retry method not found.");
+        Func<SqlCommand, IAsyncResult, bool, string, object> end = (_, _, _, _) =>
+            throw new InvalidOperationException("A failed write must not enter the read stage.");
+        method.Invoke(command, new object?[]
+        {
+            CommandBehavior.Default, null, 30, true, true,
+            globalCompletion, localCompletion, end, retry, nameof(SqlCommand.EndExecuteReader),
+            ADP.TimerCurrent(), CancellationToken.None,
+        });
+    }
+
+    /// <summary>
+    /// Records retry attempts and checks that each one is an async-write retry of the original
+    /// command that starts only after its cached metadata was invalidated.
+    /// </summary>
+    private sealed class RetryObserver
+    {
+        private readonly SqlCommand _command;
+        private readonly Task<object> _result;
+
+        /// <summary>Creates an observer that completes every retry with the given task.</summary>
+        /// <param name="command">The command expected to be retried.</param>
+        /// <param name="result">The task returned by the retry.</param>
+        internal RetryObserver(SqlCommand command, Task<object> result)
+        {
+            _command = command;
+            _result = result;
+        }
+
+        /// <summary>Gets the number of retry attempts.</summary>
+        internal int Calls { get; private set; }
+
+        /// <summary>Validates and records one retry attempt.</summary>
+        internal IAsyncResult Retry(
+            SqlCommand command,
+            CommandBehavior behavior,
+            AsyncCallback? callback,
+            object? state,
+            int timeout,
+            bool isRetry,
+            bool asyncWrite)
+        {
+            Calls++;
+            Assert.Same(_command, command);
+            Assert.Equal(CommandBehavior.Default, behavior);
+            Assert.Null(callback);
+            Assert.Null(state);
+            Assert.InRange(timeout, 0, 30);
+            Assert.True(isRetry);
+            Assert.True(asyncWrite);
+            Assert.False(
+                SqlQueryMetadataCache.GetInstance().TryGetCachedQueryMetadata(command, out _));
+            return _result;
+        }
     }
 
     /// <summary>Creates RPC entries without requiring a network connection.</summary>
