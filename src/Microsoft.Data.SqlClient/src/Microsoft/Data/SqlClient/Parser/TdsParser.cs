@@ -579,7 +579,7 @@ namespace Microsoft.Data.SqlClient.Parser
 
                 // The retry is a new physical connection: discard anything the failed connection
                 // recorded (for example, Strict mode and protocol from a TLS-first handshake).
-                _connHandler?.EncryptionInfoCapture?.Reset();
+                _connHandler?.EncryptionInfoAccumulator?.Reset();
                 // On Instance failure re-connect and flush SNI named instance cache.
                 _physicalStateObj.SniContext = SniContext.Snix_Connect;
                 _physicalStateObj.CreatePhysicalSNIHandle(
@@ -1097,8 +1097,8 @@ namespace Microsoft.Data.SqlClient.Parser
         /// </remarks>
         private void RecordNegotiatedEncryption(SqlConnectionEncryptOption encrypt, SslProtocols protocol)
         {
-            EncryptionInfoCapture capture = _connHandler?.EncryptionInfoCapture;
-            if (capture is null)
+            EncryptionInfoAccumulator accumulator = _connHandler?.EncryptionInfoAccumulator;
+            if (accumulator is null)
             {
                 return;
             }
@@ -1106,7 +1106,7 @@ namespace Microsoft.Data.SqlClient.Parser
 #if NET
             // The handshake wait (and so the protocol) is only performed on Windows above. Managed
             // SNI reports the protocol from the completed SslStream without side effects, so query
-            // it here for capture only; it is intentionally not fed into the insecure TLS warning
+            // it here for encryption info only; it is intentionally not fed into the insecure TLS warning
             // to preserve existing behavior.
             if (protocol == SslProtocols.None && !OsConstants.IsWindows)
             {
@@ -1117,8 +1117,89 @@ namespace Microsoft.Data.SqlClient.Parser
             }
 #endif
 
-            capture.Record(GetTlsEncryptionMode(encrypt), protocol);
+            RecordEncryption(accumulator, GetTlsEncryptionMode(encrypt), protocol);
         }
+
+        /// <summary>
+        /// Records the negotiated encryption mode and, when known, the negotiated TLS protocol.
+        /// </summary>
+        /// <param name="accumulator">The accumulator for the in-progress login attempt.</param>
+        /// <param name="mode">The negotiated encryption mode.</param>
+        /// <param name="protocol">
+        /// The negotiated TLS protocol. A value of <c>0</c> (<see cref="SslProtocols.None"/>) means the
+        /// protocol was not reported and is recorded as unavailable.
+        /// </param>
+        internal static void RecordEncryption(
+            EncryptionInfoAccumulator accumulator,
+            SqlConnectionEncryptionMode mode,
+            SslProtocols protocol)
+        {
+            accumulator.Mode = mode;
+            accumulator.Protocol = protocol == SslProtocols.None ? null : protocol;
+        }
+
+        /// <summary>
+        /// Records the negotiated encryption mode for a failed TLS attempt, but only when a TLS
+        /// protocol version was observed for this attempt (for example, reported by the transport's
+        /// certificate validation callback before the certificate was rejected).
+        /// </summary>
+        /// <param name="accumulator">The accumulator for the in-progress login attempt.</param>
+        /// <param name="mode">The encryption mode the attempt was negotiating.</param>
+        internal static void RecordModeIfProtocolObserved(
+            EncryptionInfoAccumulator accumulator,
+            SqlConnectionEncryptionMode mode)
+        {
+            if (accumulator.Protocol is not null)
+            {
+                accumulator.Mode = mode;
+            }
+        }
+
+        /// <summary>
+        /// Applies the failure-path rule for a TLS failure on the current attempt: the negotiated
+        /// mode and protocol are published only when they were actually observed. A TLS protocol
+        /// version agreed for this attempt is the evidence of that; without it the mode is cleared,
+        /// since requested settings and server pre-login responses are not substitutes. An observed
+        /// cipher suite is kept and none is inferred. Certificate fields are never affected.
+        /// </summary>
+        /// <param name="accumulator">The accumulator for the in-progress login attempt.</param>
+        internal static void DiscardUnobservedNegotiation(EncryptionInfoAccumulator accumulator)
+        {
+            if (accumulator.Protocol is null)
+            {
+                accumulator.Mode = null;
+            }
+        }
+
+#if NET
+        /// <summary>
+        /// Records the TLS cipher suite the transport reported for the current attempt. It is kept on
+        /// a failed attempt like the negotiated protocol.
+        /// </summary>
+        /// <param name="accumulator">The accumulator for the in-progress login attempt.</param>
+        /// <param name="cipherSuite">The negotiated TLS cipher suite.</param>
+        internal static void RecordCipherSuite(
+            EncryptionInfoAccumulator accumulator,
+            System.Net.Security.TlsCipherSuite cipherSuite) =>
+            accumulator.CipherSuite = cipherSuite;
+#else
+        /// <summary>
+        /// Records the TLS cipher suite the transport reported for the current attempt. It is kept on
+        /// a failed attempt like the negotiated protocol.
+        /// </summary>
+        /// <param name="accumulator">The accumulator for the in-progress login attempt.</param>
+        /// <param name="cipherSuite">
+        /// The IANA TLS cipher suite identifier. Values outside <c>0</c>..<c>0xFFFF</c> are not valid
+        /// identifiers and are ignored rather than failing the login.
+        /// </param>
+        internal static void RecordCipherSuite(EncryptionInfoAccumulator accumulator, int cipherSuite)
+        {
+            if (cipherSuite is >= 0 and <= ushort.MaxValue)
+            {
+                accumulator.CipherSuite = cipherSuite;
+            }
+        }
+#endif
 
         /// <summary>
         /// Maps the TLS-using encryption state of the current attempt to the public mode.
@@ -1147,7 +1228,11 @@ namespace Microsoft.Data.SqlClient.Parser
         /// </summary>
         private void RecordFailedTlsAttempt(SqlConnectionEncryptOption encrypt)
         {
-            _connHandler?.EncryptionInfoCapture?.RecordModeIfProtocolObserved(GetTlsEncryptionMode(encrypt));
+            EncryptionInfoAccumulator accumulator = _connHandler?.EncryptionInfoAccumulator;
+            if (accumulator is not null)
+            {
+                RecordModeIfProtocolObserved(accumulator, GetTlsEncryptionMode(encrypt));
+            }
         }
 
         private PreLoginHandshakeStatus ConsumePreLoginHandshake(
@@ -1388,7 +1473,11 @@ namespace Microsoft.Data.SqlClient.Parser
                 // No TLS on this connection: either the server does not support encryption with
                 // Encrypt=Optional, or the client OS does not support encryption. In Strict mode TLS
                 // was already established (and recorded) before pre-login.
-                _connHandler?.EncryptionInfoCapture?.Record(SqlConnectionEncryptionMode.None, SslProtocols.None);
+                EncryptionInfoAccumulator accumulator = _connHandler?.EncryptionInfoAccumulator;
+                if (accumulator is not null)
+                {
+                    RecordEncryption(accumulator, SqlConnectionEncryptionMode.None, SslProtocols.None);
+                }
             }
 
             return PreLoginHandshakeStatus.Successful;
@@ -1918,8 +2007,12 @@ namespace Microsoft.Data.SqlClient.Parser
                 // post-handshake I/O (the LOGIN7 write). Per the failure-path rule, the mode and
                 // protocol recorded by EnableSsl are kept when the protocol agreed for this attempt was
                 // observed, and the mode is discarded otherwise; certificate details are always kept.
-                // After login completes the capture is released, so published snapshots are unaffected.
-                _connHandler?.EncryptionInfoCapture?.DiscardUnobservedNegotiation();
+                // After login completes the accumulator is released, so published snapshots are unaffected.
+                EncryptionInfoAccumulator accumulator = _connHandler?.EncryptionInfoAccumulator;
+                if (accumulator is not null)
+                {
+                    DiscardUnobservedNegotiation(accumulator);
+                }
             }
 
             if (details.SniErrorNumber != 0)

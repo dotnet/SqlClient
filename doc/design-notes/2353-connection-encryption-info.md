@@ -276,47 +276,42 @@ and protocol. Values are captured per physical login attempt and reset for every
 and failover attempt, and for the reconnect `TdsParser.Connect` makes when the server reports an
 instance failure in its PRELOGIN response.
 
-**Failure scope.** `SqlException.EncryptionInfo` is attached only to failures of physical
-connection establishment. In practice that means exceptions thrown from the login sequence in
-`SqlConnectionInternal.OpenLoginEnlist`, which includes PRELOGIN, TLS, LOGIN7, routing, and
-failover. Some failures happen after login has completed, even when they surface from `Open` or
-`OpenAsync`. Examples are automatic `System.Transactions` enlistment, both at the end of a
-non-pooled login and while a pooled connection is activated (`Activate` → `Enlist` →
-`GetDTCAddress`/propagation). Others are session-reset
-errors on pooled checkout, explicit `EnlistTransaction` calls, and command execution. These are
-not connection-establishment failures, so their exceptions keep `Empty`. For a pooled connection,
-the negotiated values belong to an earlier, successful physical login and remain unchanged on that
-physical connection. Attaching them to a transaction error would describe a different operation
-than the one that failed. This also keeps implicit and explicit enlistment failures consistent.
-
+**Failure scope.** A `SqlException` thrown while opening a connection carries the encryption
+info whenever any is available, whatever its cause. Failures in the login sequence in
+`SqlConnectionInternal.OpenLoginEnlist` (PRELOGIN, TLS, LOGIN7, routing and failover) carry the
+values of the terminal attempt. Automatic `System.Transactions` enlistment at the end of a
+non-pooled login runs inside that sequence, so its failures carry the values the completed login
+negotiated. When a pooled connection is checked out, its automatic enlistment (`Activate` →
+`Enlist`) can fail without a new login; that exception carries the snapshot the physical
+connection published when it logged in. Exceptions raised before any value was observed, and
+non-`SqlException` failures, keep `Empty`.
 - **Managed SNI** validates the server certificate inside the handshake, so a validation
   failure fails `EnableSsl`. In this slice Managed SNI does not capture the negotiated protocol
   on a failed handshake, so `TdsParser.EnableSsl` records no mode and both stay `null`. Slice C
   adds capture of `SslStream.SslProtocol` from the validation callback; after that, the failure
-  path records the mode through `EncryptionInfoCapture.RecordModeIfProtocolObserved`.
+  path records the mode through `TdsParser.RecordModeIfProtocolObserved`.
 - **Native SNI.** With the current SNI package, native SNI also rejects an untrusted server
   certificate during the handshake, so this slice reports neither mode nor protocol for that
   failure (the tests assert this for both SNI implementations). The rule that covers a deferred
   validation failure is conditional: if an SSL-provider SNI error occurs during login after a
   protocol was observed, `TdsParser.ProcessSNIError`, the single place every SNI error becomes a
-  `SqlError`, calls `EncryptionInfoCapture.DiscardUnobservedNegotiation`, which keeps the observed
+  `SqlError`, calls `TdsParser.DiscardUnobservedNegotiation`, which keeps the observed
   mode and protocol and drops the mode only when no protocol was observed. Populated values are
   not promised for an untrusted-certificate failure.
 
 These rules only touch mode and protocol; certificate fields are never affected. Once login
-completes the capture is released, so SSL errors on an open connection never alter a published
+completes the accumulator is released, so SSL errors on an open connection never alter a published
 snapshot.
 
-**Cipher suite.** `EncryptionInfoCapture.RecordCipherSuite(int cipherSuite)` is the single
-recording point for `NegotiatedCipherSuiteId` and, on .NET, `NegotiatedCipherSuite`. The capture stores the IANA identifier as an integer on
-every target framework and passes it to the snapshot constructor, so `NegotiatedCipherSuiteId`
-(every target) and the .NET-only `NegotiatedCipherSuite` (`TlsCipherSuite?`) read the same value
-(Slice C records `(int)SslStream.NegotiatedCipherSuite`). Slice B adds only the plumbing: the value is reset
-with the other fields at the start of every physical login attempt, flows into the snapshot
-published on `SqlConnection` and attached to `SqlException`, and values outside 0–0xFFFF are
-ignored instead of failing the login. No transport calls it in this slice, so the property stays
-`null`; Slice C records it from `SslStream.NegotiatedCipherSuite` (Managed SNI) and Slice D from
-native SNI, which needs a new SNI contract. On failure an observed cipher suite is kept, like the
+**Cipher suite.** `TdsParser.RecordCipherSuite` is the single recording point for
+`NegotiatedCipherSuiteId` and, on .NET, `NegotiatedCipherSuite`. On .NET it takes a
+`TlsCipherSuite`, which the accumulator stores and passes to the snapshot constructor unchanged.
+On .NET Framework it takes the IANA identifier as an `int` and ignores values outside 0–0xFFFF
+instead of failing the login. Both properties read the same value. Slice B adds only the
+plumbing: the value is reset with the other fields at the start of every physical login attempt
+and flows into the snapshot published on `SqlConnection` and attached to `SqlException`. No
+transport calls it in this slice, so the property stays `null`; Slice C records it from
+`SslStream.NegotiatedCipherSuite` (Managed SNI) and Slice D fromnative SNI, which needs a new SNI contract. On failure an observed cipher suite is kept, like the
 protocol; `DiscardUnobservedNegotiation` neither clears nor infers it. A cipher suite is only
 reported once a ServerHello selected it, which is itself evidence of the observed negotiation, so
 it is not dropped when the protocol is unavailable.

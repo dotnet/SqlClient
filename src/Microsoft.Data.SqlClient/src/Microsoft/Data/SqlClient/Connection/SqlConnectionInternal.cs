@@ -636,12 +636,12 @@ namespace Microsoft.Data.SqlClient.Connection
 
         #nullable enable
         /// <summary>
-        /// Gets the mutable collector for the in-progress physical login attempt, or
+        /// Gets the mutable accumulator for the in-progress physical login attempt, or
         /// <see langword="null"/> when no login is in progress. Allocated on the first login
         /// attempt, reset at the start of each physical attempt, written by
         /// <see cref="TdsParser"/> during the handshake, and released once login completes.
         /// </summary>
-        internal EncryptionInfoCapture? EncryptionInfoCapture { get; private set; }
+        internal EncryptionInfoAccumulator? EncryptionInfoAccumulator { get; private set; }
         #nullable restore
 
         /// <summary>
@@ -2215,16 +2215,26 @@ namespace Microsoft.Data.SqlClient.Connection
             // currently enlisted in one, then we un-enlist from it.
             // Regardless of whether we're required to automatically enlist, when there is not a
             // current transaction, we cannot leave the connection enlisted in a transaction.
-            if (transaction != null)
+            try
             {
-                if (ConnectionOptions.Enlist)
+                if (transaction != null)
                 {
-                    Enlist(transaction, ConnectionOptions.ConnectTimeout);
+                    if (ConnectionOptions.Enlist)
+                    {
+                        Enlist(transaction, ConnectionOptions.ConnectTimeout);
+                    }
+                }
+                else
+                {
+                    Enlist(null, ConnectionOptions.ConnectTimeout);
                 }
             }
-            else
+            catch (SqlException ex)
             {
-                Enlist(null, ConnectionOptions.ConnectTimeout);
+                // A pooled checkout is part of Open(), so its failure carries the encryption info
+                // the physical connection published when it logged in.
+                AttachPublishedEncryptionInfo(ex);
+                throw;
             }
         }
 
@@ -2363,9 +2373,9 @@ namespace Microsoft.Data.SqlClient.Connection
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.AttemptOneLogin|ADV> {0}, timeout={1}[msec], server={2}", ObjectID, timeout.MillisecondsRemaining, serverInfo.ExtendedServerName);
             RoutingInfo = null; // forget routing information
 
-            // Each physical attempt (retry, redirect, routing, failover) starts with a clean capture
+            // Each physical attempt (retry, redirect, routing, failover) starts with a clean accumulator
             // so only the terminal attempt's values are published.
-            (EncryptionInfoCapture ??= new EncryptionInfoCapture()).Reset();
+            (EncryptionInfoAccumulator ??= new()).Reset();
 
             _parser._physicalStateObj.SniContext = SniContext.Snix_Connect;
 
@@ -2562,17 +2572,7 @@ namespace Microsoft.Data.SqlClient.Connection
             {
                 _parser._physicalStateObj.SniContext = SniContext.Snix_AutoEnlist;
                 Transaction tx = ADP.GetCurrentTransaction();
-                try
-                {
-                    Enlist(tx, ConnectionOptions.ConnectTimeout);
-                }
-                catch
-                {
-                    // Login has completed, so an enlistment failure is not a
-                    // connection-establishment failure and must not carry encryption info.
-                    EncryptionInfoCapture = null;
-                    throw;
-                }
+                Enlist(tx, ConnectionOptions.ConnectTimeout);
             }
 
             _parser._physicalStateObj.SniContext = SniContext.Snix_Login;
@@ -3502,30 +3502,39 @@ namespace Microsoft.Data.SqlClient.Connection
         }
 
         /// <summary>
-        /// Attaches the encryption values captured by the terminal login attempt to a failed-open
-        /// <see cref="SqlException"/>. Only values that were actually captured are attached;
-        /// exceptions raised before any value was captured, and non-<see cref="SqlException"/>
-        /// exceptions, are left unchanged.
+        /// Attaches the encryption values recorded by the terminal login attempt to a
+        /// <see cref="SqlException"/> thrown while opening the connection, and releases the
+        /// accumulator. Exceptions raised before any value was recorded are left unchanged.
         /// </summary>
         /// <remarks>
-        /// This is the only place that sets <see cref="SqlException.EncryptionInfo"/>. It runs once
-        /// per failed open and releases the capture, so the exception always arrives here with
-        /// <see cref="SqlConnectionEncryptionInfo.Empty"/>.
-        /// Failures after login completes are intentionally out of scope and keep
-        /// <see cref="SqlConnectionEncryptionInfo.Empty"/>. That includes automatic transaction
-        /// enlistment, both at the end of a non-pooled login (which releases the capture before
-        /// rethrowing) and in <see cref="Activate"/> on pooled checkout, explicit enlistment, and
-        /// command execution. They are not connection-establishment failures.
+        /// A <see cref="SqlException"/> thrown during <c>Open</c> carries the encryption info whenever
+        /// any is available, whatever its cause. That includes automatic transaction enlistment at
+        /// the end of a non-pooled login, which runs inside the login.
         /// </remarks>
-        private void AttachEncryptionInfo(Exception e)
+        /// <param name="ex">The exception thrown by the failed login.</param>
+        private void AttachEncryptionInfo(SqlException ex)
         {
-            EncryptionInfoCapture capture = EncryptionInfoCapture;
-            EncryptionInfoCapture = null;
+            EncryptionInfoAccumulator accumulator = EncryptionInfoAccumulator;
+            EncryptionInfoAccumulator = null;
 
-            if (capture is { HasValues: true } && e is SqlException sqlException)
+            if (accumulator is { HasValues: true })
             {
-                Debug.Assert(sqlException.EncryptionInfo.IsEmpty, "Encryption info is attached only once, by the failed open.");
-                sqlException.EncryptionInfo = capture.ToSnapshot();
+                Debug.Assert(ex.EncryptionInfo.IsEmpty, "Encryption info is attached only once, by the failed open.");
+                ex.EncryptionInfo = accumulator.ToSnapshot();
+            }
+        }
+
+        /// <summary>
+        /// Attaches the snapshot this physical connection published at login to a
+        /// <see cref="SqlException"/> thrown while a pooled checkout enlists the connection in a
+        /// transaction during <c>Open</c>.
+        /// </summary>
+        /// <param name="ex">The exception thrown by the enlistment.</param>
+        private void AttachPublishedEncryptionInfo(SqlException ex)
+        {
+            if (!EncryptionInfo.IsEmpty && ex.EncryptionInfo.IsEmpty)
+            {
+                ex.EncryptionInfo = EncryptionInfo;
             }
         }
 
@@ -4299,17 +4308,23 @@ namespace Microsoft.Data.SqlClient.Connection
 
                 _timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.PostLogin);
             }
+            catch (SqlException ex)
+            {
+                AttachEncryptionInfo(ex);
+                LoginFailure();
+                throw;
+            }
             catch (Exception e) when (ADP.IsCatchableExceptionType(e))
             {
-                AttachEncryptionInfo(e);
+                EncryptionInfoAccumulator = null;
                 LoginFailure();
                 throw;
             }
 
             _timeoutErrorInternal.SetAllCompleteMarker();
 
-            EncryptionInfo = EncryptionInfoCapture?.ToSnapshot() ?? SqlConnectionEncryptionInfo.Empty;
-            EncryptionInfoCapture = null;
+            EncryptionInfo = EncryptionInfoAccumulator?.ToSnapshot() ?? SqlConnectionEncryptionInfo.Empty;
+            EncryptionInfoAccumulator = null;
 
             #if DEBUG
             _parser._physicalStateObj.InvalidateDebugOnlyCopyOfSniContext();

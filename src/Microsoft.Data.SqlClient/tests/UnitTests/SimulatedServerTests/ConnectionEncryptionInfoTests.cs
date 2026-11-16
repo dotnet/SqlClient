@@ -679,11 +679,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
         /// <summary>
         /// A synchronous non-pooled open that logs in successfully but then fails to enlist in the
-        /// ambient transaction throws an exception without encryption info, because enlistment is
-        /// not part of establishing the connection.
+        /// ambient transaction throws an exception that carries the negotiated encryption info,
+        /// because enlistment is part of opening the connection.
         /// </summary>
         [Fact]
-        public void Open_AmbientTransactionEnlistmentFails_ExceptionEncryptionInfoIsEmpty()
+        public void Open_AmbientTransactionEnlistmentFails_ExceptionCarriesNegotiatedValues()
         {
             // Arrange
             // The simulated server cannot process transaction manager requests, so enlistment fails.
@@ -700,11 +700,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
         /// <summary>
         /// An asynchronous non-pooled open that logs in successfully but then fails to enlist in the
-        /// ambient transaction throws an exception without encryption info, because enlistment is
-        /// not part of establishing the connection.
+        /// ambient transaction throws an exception that carries the negotiated encryption info,
+        /// because enlistment is part of opening the connection.
         /// </summary>
         [Fact]
-        public async Task OpenAsync_AmbientTransactionEnlistmentFails_ExceptionEncryptionInfoIsEmpty()
+        public async Task OpenAsync_AmbientTransactionEnlistmentFails_ExceptionCarriesNegotiatedValues()
         {
             // Arrange
             // The simulated server cannot process transaction manager requests, so enlistment fails.
@@ -721,10 +721,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
         /// <summary>
         /// A synchronous pooled checkout that fails to enlist the idle physical connection in the
-        /// ambient transaction throws an exception without encryption info, and performs no login.
+        /// ambient transaction throws an exception that carries the encryption info the physical
+        /// connection negotiated when it logged in, and performs no login.
         /// </summary>
         [Fact]
-        public void Open_PooledCheckoutEnlistmentFails_ExceptionEncryptionInfoIsEmpty()
+        public void Open_PooledCheckoutEnlistmentFails_ExceptionCarriesNegotiatedValues()
         {
             // Arrange
             // Pool an idle physical connection, then check it out inside a transaction scope.
@@ -755,10 +756,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
         /// <summary>
         /// An asynchronous pooled checkout that fails to enlist the idle physical connection in the
-        /// ambient transaction throws an exception without encryption info, and performs no login.
+        /// ambient transaction throws an exception that carries the encryption info the physical
+        /// connection negotiated when it logged in, and performs no login.
         /// </summary>
         [Fact]
-        public async Task OpenAsync_PooledCheckoutEnlistmentFails_ExceptionEncryptionInfoIsEmpty()
+        public async Task OpenAsync_PooledCheckoutEnlistmentFails_ExceptionCarriesNegotiatedValues()
         {
             // Arrange
             // Pool an idle physical connection, then check it out inside a transaction scope.
@@ -856,8 +858,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         private static readonly TimeSpan ReconnectTimeout = TimeSpan.FromSeconds(10);
 
         /// <summary>
-        /// Asserts that a failure to enlist after a completed login carries no encryption info,
-        /// leaves the connection without a snapshot, and did not cause an additional login. Then
+        /// Asserts that a failure to enlist after a completed login carries the negotiated
+        /// encryption info, leaves the connection without a snapshot, and did not cause an additional login. Then
         /// stops the server and asserts that it failed only because it cannot process the
         /// client's transaction manager request, which is what made enlistment fail.
         /// </summary>
@@ -868,7 +870,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             int expectedLogins)
         {
             Assert.Equal(expectedLogins, server.Login7Count);
-            AssertEmpty(ex.EncryptionInfo);
+            AssertNegotiated(ex.EncryptionInfo, ServerEncryption.Required);
+            AssertCertificateFieldsNull(ex.EncryptionInfo);
             AssertEmpty(connection.EncryptionInfo);
             Assert.NotEqual(ConnectionState.Open, connection.State);
 
