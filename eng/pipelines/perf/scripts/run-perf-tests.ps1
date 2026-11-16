@@ -439,6 +439,17 @@ function Write-RunnerConfig {
     $rawConfig = ($rawConfig -split "`n" | ForEach-Object { $_ -replace '(?m)^\s*//.*$', '' }) -join "`n"
     $cfg = ConvertFrom-Json $rawConfig
 
+    $defaultsText = Get-Content (Join-Path $PerfDir "runnerconfig.default.jsonc") -Raw
+    $defaultsText = ($defaultsText -split "`n" |
+        ForEach-Object { $_ -replace '(?m)^\s*//.*$', '' }) -join "`n"
+    $defaults = ConvertFrom-Json $defaultsText
+    $cfg | Add-Member -Force -NotePropertyName EnableAsyncHealth -NotePropertyValue $true
+    if ($cfg.Benchmarks.PSObject.Properties.Name -notcontains "OpenAsyncBurstRunnerConfig") {
+        $cfg.Benchmarks | Add-Member -NotePropertyName OpenAsyncBurstRunnerConfig `
+            -NotePropertyValue $defaults.Benchmarks.OpenAsyncBurstRunnerConfig
+    }
+    $cfg.Benchmarks.OpenAsyncBurstRunnerConfig.Enabled = $true
+
     $cfg.ConnectionString = $BenchmarkConnectionString
     # Apply the optional SqlClient behaviour overrides supplied by the pipeline.  An empty value
     # leaves the checked-in default untouched; otherwise the flag is forced to the requested boolean
@@ -502,7 +513,7 @@ $BaselineSrcDir = Join-Path (Split-Path -Parent $RepoRoot) "sqlclient-perf-basel
 # Prefers the copied checkout's own 'origin' (no extra network round-trip, and it resolves the ref
 # exactly as the pipeline's repository does); falls back to a shallow clone of -BaselineRepoUrl when
 # the source tree arrived without .git, or when origin is unreachable/needs credentials.
-# Returns a hashtable with the baseline perf project path and the '<ref>@<sha>' label.
+# Returns the '<ref>@<sha>' label after validating source dependencies.
 # --- Non-interactive, time-bounded git ------------------------------------------------------------
 # The checkout is copied to the VM WITHOUT credentials (ADO's checkout task defaults to
 # persistCredentials:false), so a fetch from an authenticated origin has no way to succeed.  Every
@@ -623,9 +634,10 @@ function Initialize-BaselineSource {
         $ErrorActionPreference = $previousPreference
     }
 
-    $baselineProject = Join-Path $BaselineSrcDir "src\Microsoft.Data.SqlClient\tests\PerformanceTests\Microsoft.Data.SqlClient.PerformanceTests.csproj"
-    if (-not (Test-Path $baselineProject)) {
-        throw "Baseline source tree at $BaselineSrcDir has no performance test project ($baselineProject)."
+    $driverProject = Join-Path $BaselineSrcDir "src\Microsoft.Data.SqlClient\src\Microsoft.Data.SqlClient.csproj"
+    $commonProject = Join-Path $BaselineSrcDir "src\Microsoft.Data.SqlClient\tests\Common\Microsoft.Data.SqlClient.TestCommon.csproj"
+    if (-not (Test-Path $driverProject) -or -not (Test-Path $commonProject)) {
+        throw "Baseline source tree requires the unified driver and matching TestCommon projects."
     }
 
     Restore-LocalTools $BaselineSrcDir
@@ -634,7 +646,7 @@ function Initialize-BaselineSource {
     $label = "$Ref@$($sha.Trim())"
     Write-Host "Baseline source ready: $BaselineSrcDir ($label)"
 
-    return @{ Project = $baselineProject; Label = $label }
+    return @{ Label = $label }
 }
 
 # Convert a CPU range like "16-31" (or a comma list "16,17,18") into an affinity bitmask.
@@ -717,8 +729,7 @@ function Build-CurrentDefaultOutput {
 
 # Runs one benchmark pass (build + run pinned to PERF_CLIENT_CPUS) from $Project and collects its
 # artifacts into results\<label>. $ExtraArgs are appended to both the build and run invocations.
-# $Project is the candidate's perf project for every pass except a source-baseline pass, which
-# builds the baseline ref's own perf project.
+# Both sides compile the candidate's harness; source baselines override MdsSourceRoot.
 function Invoke-PerfPass([string]$Label, [string]$Project, [string[]]$ExtraArgs) {
     $runDir = Join-Path $RepoRoot "perf-run-$Label"
     if (Test-Path $runDir) { Remove-Item -Recurse -Force $runDir }
@@ -737,6 +748,9 @@ function Invoke-PerfPass([string]$Label, [string]$Project, [string[]]$ExtraArgs)
         Invoke-Native { dotnet build $Project -c $Configuration -f $Framework --nologo -v minimal @ExtraArgs } "Build failed for '$Label'"
         if (($Label -eq "current") -and ($Project -eq $PerfProject) -and ($ExtraArgs.Count -eq 0)) {
             $script:CurrentDefaultOutputBuilt = $true
+        } elseif ($Project -eq $PerfProject) {
+            # Baseline and candidate now share the project output in sequential mode.
+            $script:CurrentDefaultOutputBuilt = $false
         }
     }
 
@@ -775,7 +789,7 @@ function Invoke-PerfPass([string]$Label, [string]$Project, [string[]]$ExtraArgs)
         Save-CpuTelemetry $Label "before"
         $proc.WaitForExit()
         Save-CpuTelemetry $Label "after"
-        if ($proc.ExitCode -ne 0) { throw "Benchmark run '$Label' failed (exit $($proc.ExitCode))." }
+        $runStatus = $proc.ExitCode
     } finally {
         Pop-Location
     }
@@ -792,6 +806,10 @@ function Invoke-PerfPass([string]$Label, [string]$Project, [string[]]$ExtraArgs)
         }
     } else {
         Write-Warning "No BenchmarkDotNet.Artifacts directory was produced for '$Label' at $artifactsDir."
+    }
+
+    if ($runStatus -ne 0) {
+        throw "Benchmark run '$Label' failed (exit $runStatus); diagnostic artifacts retained."
     }
 
     # §2.10 Fail loud: a pass that produced zero benchmark results (server dropped, all benches
@@ -844,11 +862,11 @@ if (-not [string]::IsNullOrEmpty($BaselineVersion)) {
         "-p:WarningsNotAsErrors=NU1901%3BNU1902%3BNU1903%3BNU1904" # Allow dependencies with vulnerabilities on baseline tests
     )
 } elseif (-not [string]::IsNullOrEmpty($BaselineSourceRef)) {
-    # Source baseline: build the baseline ref's OWN perf project so the driver under measurement is
-    # that ref's source (ProjectReference), exactly as the candidate pass builds this branch's.
+    # Compile identical candidate benchmark/diagnoser sources against the baseline driver/common.
     $baselineSource = Initialize-BaselineSource -Ref $BaselineSourceRef
     $BaselineLabel = $baselineSource.Label
-    $BaselineProject = $baselineSource.Project
+    $BaselineProject = $PerfProject
+    $BaselineBuildArgs = @("-p:MdsSourceRoot=$BaselineSrcDir")
 } elseif (-not [string]::IsNullOrEmpty($SwitchUnderTest)) {
     # Switch A/B: SAME source/project for both passes ($BaselineProject/$BaselineBuildArgs are
     # already the candidate's, set above), so only the runner config differs (see
@@ -972,6 +990,10 @@ if ((-not [string]::IsNullOrEmpty($BaselineLabel)) -and ($RunMode -eq "interleav
     Write-Host "Neither -BaselineVersion nor -BaselineSourceRef supplied; running current only (no comparison)."
     Invoke-PerfPass "current" $PerfProject @()
 }
+
+Invoke-Native {
+    python3 (Join-Path $ScriptDir "benchmark_health_report.py") --results-dir $ResultsDir
+} "Benchmark async-health reporting failed"
 
 Write-Host "Collected results:"
 Get-ChildItem -Recurse -File $ResultsDir | ForEach-Object { $_.FullName } | Sort-Object

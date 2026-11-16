@@ -207,6 +207,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             SqlConnection.ClearPool(conn);
         }
 
+        [AsyncHealthDiagnoser]
         [Benchmark]
         public Task SaturatedSyncOpenOnThreadPool()
         {

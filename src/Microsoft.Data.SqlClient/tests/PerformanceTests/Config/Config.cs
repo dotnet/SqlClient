@@ -28,6 +28,9 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         /// </summary>
         public bool UseConnectionPoolV2;
 
+        /// <summary>Observe marked workloads in BDN's extra iteration, outside timing samples.</summary>
+        public bool EnableAsyncHealth = true;
+
         public bool WaitForProfiler;
         public bool UseNativeMemoryAndETWProfiler;
         public Benchmarks Benchmarks;
@@ -76,6 +79,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         public RunnerJob ConnectionPoolChurnRunnerConfig;
         public RunnerJob ConnectionPoolRampRunnerConfig;
         public RunnerJob ConnectionPoolThreadPoolPressureRunnerConfig;
+        public RunnerJob OpenAsyncBurstRunnerConfig;
     }
 
     public class RunnerJob
@@ -90,21 +94,20 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         /// <summary>
         /// Per-benchmark execution timeout, in minutes, for the in-process toolchain.
         ///
-        /// BenchmarkDotNet's in-process executor aborts a benchmark case that exceeds its
-        /// timeout with "takes too long to run. Prefer to use out-of-process toolchains for
-        /// long-running benchmarks." The built-in default is 5 minutes, which is not enough
+        /// The benchmark runner cancels a case that exceeds its timeout and stops the process's
+        /// benchmark sequence to avoid overlapping workloads. The default is 5 minutes, not enough
         /// for benchmarks whose single operation is inherently slow (for example reading a
         /// 20 MB VARBINARY(MAX) value 20 times, plus the additional iterations that
         /// MemoryDiagnoser and ThreadingDiagnoser each add).
         ///
-        /// Switching to an out-of-process toolchain - BenchmarkDotNet's own suggestion - is
+        /// Switching to an out-of-process toolchain is
         /// deliberately NOT an option for this suite: the AppContext switches configured in
         /// <see cref="Program.SetupConfigurations"/> (managed SNI, connection pool V2,
         /// optimized async behaviour) only apply to the process that runs Main. An
         /// out-of-process toolchain spawns a generated host where those switches revert to
         /// their defaults, so the benchmark would silently measure the wrong code paths.
         ///
-        /// When 0 or negative, BenchmarkDotNet's default timeout is used.
+        /// When 0 or negative, the runner uses a five-minute timeout.
         /// </summary>
         public int TimeoutMinutes;
 

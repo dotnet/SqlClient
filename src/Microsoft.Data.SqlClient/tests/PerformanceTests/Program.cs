@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using BenchmarkDotNet.ConsoleArguments;
 using BenchmarkDotNet.ConsoleArguments.ListBenchmarks;
 using BenchmarkDotNet.Loggers;
@@ -62,6 +63,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             new BenchmarkUnit("ConnectionPoolChurn", b => b.ConnectionPoolChurnRunnerConfig, typeof(ConnectionPoolChurnRunner)),
             new BenchmarkUnit("ConnectionPoolRamp", b => b.ConnectionPoolRampRunnerConfig, typeof(ConnectionPoolRampRunner)),
             new BenchmarkUnit("ConnectionPoolThreadPoolPressure", b => b.ConnectionPoolThreadPoolPressureRunnerConfig, typeof(ConnectionPoolThreadPoolPressureRunner)),
+            new BenchmarkUnit("OpenAsyncBurst", b => b.OpenAsyncBurstRunnerConfig, typeof(OpenAsyncBurstRunner)),
         };
 
         /// <summary>
@@ -125,7 +127,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             foreach (BenchmarkUnit unit in toRun)
             {
                 RunnerJob job = unit.Selector(_config.Benchmarks);
-                var config = BenchmarkConfig.s_instance(job);
+                var config = BenchmarkConfig.s_instance(job, _config);
                 // Match across all enabled units before treating an empty selection as a failure.
                 // Keep the unit's job settings when executing the selected benchmarks.
                 using BenchmarkRunInfo benchmarks = BenchmarkConverter.TypeToBenchmarks(unit.RunnerType, config);
@@ -142,8 +144,42 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 }
                 // Execute the selected cases with the validated unit job. Passing args here
                 // would parse them again and allow CLI job settings to override that job.
-                var selectedBenchmarks = new BenchmarkRunInfo(selectedCases, benchmarks.Type, benchmarks.Config);
-                Summary summary = BenchmarkRunner.Run(selectedBenchmarks);
+                var selectedBenchmarks = new BenchmarkRunInfo(
+                    selectedCases, benchmarks.Type, benchmarks.Config,
+                    benchmarks.CompositeInProcessDiagnoser);
+                AsyncHealthDiagnoser diagnoser = config.GetDiagnosers()
+                    .OfType<AsyncHealthDiagnoser>().SingleOrDefault();
+                using var cancellation = new CancellationTokenSource();
+                config.GetEventProcessors().OfType<BenchmarkConfig.ExecutionTimeout>()
+                    .Single().Source = cancellation;
+                Summary summary;
+                try
+                {
+                    summary = BenchmarkRunner.RunAsync([selectedBenchmarks], cancellation.Token)
+                        .AsTask().WaitAsync(cancellation.Token).GetAwaiter().GetResult().Single();
+                }
+                catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
+                {
+                    Console.Error.WriteLine("Benchmark timed out; stopping this process.");
+                    Environment.ExitCode = 1;
+                    return;
+                }
+                catch (Exception) when (diagnoser?.HasFailed == true)
+                {
+                    Console.Error.WriteLine("Async-health benchmark failed; evidence retained.");
+                    Environment.ExitCode = 1;
+                    return;
+                }
+                finally
+                {
+                    diagnoser?.FinishRun();
+                }
+                if (diagnoser?.HasFailed == true)
+                {
+                    Console.Error.WriteLine("Async-health diagnosis failed; stopping this process.");
+                    Environment.ExitCode = 1;
+                    return;
+                }
                 if (summary.HasCriticalValidationErrors || !summary.Reports.Any() ||
                     summary.Reports.Any(report => !report.Success))
                 {

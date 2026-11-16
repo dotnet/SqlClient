@@ -1,5 +1,43 @@
 # Automatic OpenAsync health coverage
 
+This PR provides two complementary measurements: an async-health **BDN diagnoser** on actual
+benchmarks, and a **fresh-process OpenAsync suite** for startup behavior that BDN warmup hides.
+
+## BenchmarkDotNet diagnoser
+
+`AsyncHealthDiagnoser` observes exactly the extra diagnostic iteration of marked benchmarks.
+It does not include timing iterations, setup, warmup or cleanup in its window, and does not
+export its timings as extra BDN comparison/Kusto rows. It shares the bounded probe/resource
+observer with the fresh-process suite. Short windows (less than 2.5 seconds or 100 probes)
+and censored windows are insufficient, not automatically healthy. Diagnostic execution failures
+fail the run and preserve both raw failed-window evidence and a separate execution-failure marker.
+
+Marked cases include existing single/parallel OpenAsync and async pool-contention benchmarks,
+the saturated sync-on-ThreadPool pressure control, and eight new `OpenAsyncBurst` cases:
+64 queued workers, empty/warm/16-slot oversubscribed/non-pooled connections, each performing
+open/close or open/query/close. The batch is normalized to 64 completed connections, with one
+warmup and three timing iterations by default. Per-case timeout remains five minutes.
+BDN honors the selected process-wide pool/SNI settings; it does not flip a cached pool switch
+inside one process. A requested V2 BDN case fails explicitly if the loaded driver cannot apply
+that selection, rather than labeling legacy-pool work as V2. Its empty-pool case is
+driver-initialized, not a cold-process claim.
+
+Both shared pipeline entrypoints explicitly enable BDN health and the burst unit, preserving
+any configured burst iteration counts. This happens in addition to the fresh-process phase below.
+Source-baseline BDN builds now use candidate benchmark/diagnoser sources with `MdsSourceRoot`
+selecting the baseline driver and matching TestCommon, so new benchmark names exist on both sides.
+The required test-only dependency is BenchmarkDotNet `0.16.0-preview.1` (including Windows
+diagnostics); its workload-only hooks are absent in `0.15.8`. Timeout enforcement uses the
+new cancellation API instead of removing the old timeout when changing toolchains.
+
+Per-side/per-repetition `async-health/*.json` files and execution logs are retained even on a
+failed interleaved benchmark. Sequential runs retain their complete BDN artifact tree, including
+failed evidence. Successful pipeline completion also writes `benchmark-async-health.md` at the
+artifact root. Absolute BDN findings are diagnostic, not an additional unconditional 100 ms gate:
+the matched fresh-process gate below still distinguishes baseline debt from regressions.
+
+## Fresh-process phase
+
 The existing Linux and Windows perf runners execute this phase automatically before
 BenchmarkDotNet. This includes `sqlclient-perf-pr-pipeline.yml` when queued. It does **not**
 add an all-PR trigger: perf-pr remains manual/queue-time, nightly remains scheduled, and

@@ -34,6 +34,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             SqlConnection.ClearAllPools();
         }
 
+        [AsyncHealthDiagnoser]
         [Benchmark]
         public async Task OpenConnectionsConcurrently()
         {

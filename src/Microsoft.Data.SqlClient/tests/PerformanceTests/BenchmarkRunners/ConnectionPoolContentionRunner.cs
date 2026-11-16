@@ -177,6 +177,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             return Task.WhenAll(tasks);
         }
 
+        [AsyncHealthDiagnoser]
         [Benchmark]
         public Task SteadyStateOpenQueryCloseAsync()
         {

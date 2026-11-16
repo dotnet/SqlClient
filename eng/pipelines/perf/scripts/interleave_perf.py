@@ -146,6 +146,9 @@ def collect_results(cwd, dest):
     os.makedirs(dest, exist_ok=True)
     types = set()
     artifacts = os.path.join(cwd, "BenchmarkDotNet.Artifacts")
+    health = os.path.join(artifacts, "async-health")
+    if os.path.isdir(health):
+        shutil.copytree(health, os.path.join(dest, "async-health"), dirs_exist_ok=True)
     for path in _report_files(artifacts):
         shutil.copy2(path, os.path.join(dest, os.path.basename(path)))
         try:
@@ -199,10 +202,12 @@ class Runner:
         env_overrides = {"RUNNER_CONFIG": runner_config} if runner_config else None
         rc = run_unit_process(exe_dir, self.assembly, unit, cwd, self.cpus, log_path,
                               env_overrides=env_overrides)
+        # Preserve failed diagnostic windows before interpreting the process exit code.
+        types = collect_results(cwd, agg_dir)
+        shutil.copy2(log_path, os.path.join(agg_dir, f"{unit}-rep{rep}.log"))
         if rc != 0:
             _tail(log_path)
             raise RuntimeError(f"benchmark unit '{unit}' ({variant}, rep {rep}) failed (exit {rc}).")
-        types = collect_results(cwd, agg_dir)
         if not types:
             _tail(log_path)
             raise RuntimeError(

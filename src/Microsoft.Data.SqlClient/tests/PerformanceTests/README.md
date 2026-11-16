@@ -1,4 +1,41 @@
-# Command and reader performance tests
+# SqlClient performance tests
+
+## Async-health benchmarks and diagnoser
+
+`EnableAsyncHealth` defaults to true. Marked workloads run one additional instrumented BDN
+iteration; timing iterations and setup/cleanup are not observed. Raw probe/resource evidence and
+per-window health summaries are exported under `BenchmarkDotNet.Artifacts/async-health`.
+Short or censored windows are explicitly insufficient, not healthy. This is separate from the
+fresh-process suite that captures driver startup and automatically exercises both pools.
+
+| Unit | Async-health regression coverage |
+| --- | --- |
+| `SqlConnection` | Single OpenAsync, pooled/non-pooled and MARS off/on |
+| `ParallelAsyncConnection` | Concurrent OpenAsync at 10/50/100 operations, pooled/non-pooled |
+| `ConnectionPoolContention` | Async open/query/close across spare capacity through oversubscription |
+| `ConnectionPoolThreadPoolPressure` | Synchronous blocking on ThreadPool workers, as a scheduler-pressure control |
+| `OpenAsyncBurst` | 64 ThreadPool-dispatched opens against empty, warm, oversubscribed (16-slot), and non-pooled connections, with separate open/close and open/query/close methods |
+
+`OpenAsyncBurst` runs eight benchmark cases, each with one warmup, three timing iterations,
+one invocation per iteration, and a five-minute per-case timeout. It reports per-connection
+cost for a completed 64-operation batch. Empty-pool setup clears just its own pool; warm
+setup holds all connections simultaneously before releasing them. Setup and cleanup are
+outside both timing and diagnostic windows. No exceptions or unsuccessful opens count as
+completed benchmark operations.
+
+BDN uses the run's process-wide `UseConnectionPoolV2` selection, not a per-case switch flip.
+To compare V1/V2 BDN results use separate process configurations. BDN warms the driver and
+ThreadPool, so its empty-pool case is **not** a cold-process measurement. The automatic
+fresh-process suite retains that coverage and its matched regression gates.
+
+The test-only BenchmarkDotNet packages use `0.16.0-preview.1` because stable `0.15.8`
+lacks the in-process workload-only diagnoser hooks. Per-case timeouts are retained through
+BDN's cancellation API. Do not combine async health with native/interactive profilers;
+set `EnableAsyncHealth=false` for local profiling. Pipelines explicitly enable health.
+
+See [the pipeline protocol](../../../../eng/pipelines/perf/openasync-health.md).
+
+## Command and reader benchmarks
 
 The command/parser coverage lives in the existing benchmark units. Select a unit with
 `PERF_BENCHMARK`; the performance pipeline continues to discover enabled units through
@@ -59,9 +96,9 @@ Commands/buffers formerly allocated in benchmark bodies now live in setup; DataT
 materialization alongside its drain baseline; SqlCommand now uses focused one-row workloads.
 Compare baseline and candidate drivers using the same updated benchmark sources. Historical
 results from the old implementations are not directly comparable. No parser or driver API code
-is changed by this suite consolidation. A source baseline must already contain the suite update
-before it is compared with subsequent parser/API changes; the source-baseline pipeline otherwise
-builds that older ref's own benchmark sources.
+is changed by this suite consolidation. The source-baseline pipeline compiles these same candidate
+benchmark sources with `MdsSourceRoot` pointing to the baseline driver and its matching TestCommon,
+so a baseline need not already contain the benchmark updates.
 
 ## Running and configuration
 

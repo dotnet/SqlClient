@@ -438,6 +438,13 @@ with open(src, "r", encoding="utf-8-sig") as fh:
 text = re.sub(r'(?m)^\s*//.*$', '', text)
 cfg = json.loads(text)
 
+# Pipeline diagnostics cannot depend on a pre-existing runnerconfig having the new defaults.
+with open(os.path.join(os.path.dirname(src), "runnerconfig.default.jsonc"), encoding="utf-8-sig") as fh:
+    defaults = json.loads(re.sub(r'(?m)^\s*//.*$', '', fh.read()))
+cfg["EnableAsyncHealth"] = True
+cfg["Benchmarks"].setdefault(
+    "OpenAsyncBurstRunnerConfig", defaults["Benchmarks"]["OpenAsyncBurstRunnerConfig"])["Enabled"] = True
+
 server = os.environ["SQL_SERVER"]
 password = os.environ["SQL_PASSWORD"]
 db = os.environ.get("DB_NAME", "sqlclient-perf-db")
@@ -622,9 +629,9 @@ prepare_baseline_source() {
         fi
     fi
 
-    BASELINE_PERF_PROJECT="${BASELINE_SRC_DIR}/src/Microsoft.Data.SqlClient/tests/PerformanceTests/Microsoft.Data.SqlClient.PerformanceTests.csproj"
-    if [[ ! -f "${BASELINE_PERF_PROJECT}" ]]; then
-        echo "ERROR: baseline source tree at ${BASELINE_SRC_DIR} has no performance test project (${BASELINE_PERF_PROJECT})." >&2
+    if [[ ! -f "${BASELINE_SRC_DIR}/src/Microsoft.Data.SqlClient/src/Microsoft.Data.SqlClient.csproj" ||
+          ! -f "${BASELINE_SRC_DIR}/src/Microsoft.Data.SqlClient/tests/Common/Microsoft.Data.SqlClient.TestCommon.csproj" ]]; then
+        echo "ERROR: baseline source tree requires the unified driver and matching TestCommon projects." >&2
         exit 1
     fi
 
@@ -683,8 +690,8 @@ build_current_default_output() {
 
 # run_pass <label> <project> <extra dotnet build/run args...>
 # Builds and runs one benchmark pass from <project>, pinned to PERF_CLIENT_CPUS, collecting artifacts
-# into ${RESULTS_DIR}/<label>.  <project> is the candidate's perf project for every pass except a
-# source-baseline pass, which builds the baseline ref's own perf project.
+# into ${RESULTS_DIR}/<label>. Both sides compile the candidate's harness; source baselines
+# override MdsSourceRoot to reference their own driver and matching TestCommon.
 run_pass() {
     local label="$1"; shift
     local project="$1"; shift
@@ -710,6 +717,9 @@ run_pass() {
         if [[ "${label}" == "current" && "${project}" == "${PERF_PROJECT}" \
                 && "${#extra_args[@]}" -eq 0 ]]; then
             CURRENT_DEFAULT_OUTPUT_BUILT=true
+        elif [[ "${project}" == "${PERF_PROJECT}" ]]; then
+            # A baseline build used the same project output; candidate must rebuild before running.
+            CURRENT_DEFAULT_OUTPUT_BUILT=false
         fi
     fi
 
@@ -727,10 +737,11 @@ run_pass() {
 
     echo "Running (${label}): ${run_cmd[*]}"
     capture_cpu_telemetry "${label}" "before"
+    local run_status=0
     (
-        cd "${run_dir}"
+        cd "${run_dir}" || exit $?
         "${run_cmd[@]}"
-    )
+    ) || run_status=$?
     capture_cpu_telemetry "${label}" "after"
 
     local artifacts_dir="${run_dir}/BenchmarkDotNet.Artifacts"
@@ -744,6 +755,11 @@ run_pass() {
         fi
     else
         echo "WARNING: No BenchmarkDotNet.Artifacts directory was produced for '${label}' at ${artifacts_dir}." >&2
+    fi
+
+    if [[ "${run_status}" -ne 0 ]]; then
+        echo "ERROR: pass '${label}' failed (exit ${run_status}); diagnostic artifacts retained." >&2
+        exit "${run_status}"
     fi
 
     # §2.10 Fail loud: a pass that produced zero benchmark results (server dropped, all benches
@@ -794,11 +810,12 @@ if [[ -n "${baselineVersion}" ]]; then
         -p:WarningsNotAsErrors=NU1901%3BNU1902%3BNU1903%3BNU1904 # Allow dependencies with vulnerabilities on baseline tests
     )
 elif [[ -n "${baselineSourceRef}" ]]; then
-    # Source baseline: build the baseline ref's OWN perf project so the driver under measurement is
-    # that ref's source (ProjectReference), exactly as the candidate pass builds this branch's.
+    # The candidate owns both benchmark definitions and diagnostics; only the driver/common
+    # project references come from the baseline tree, so new benchmark units exist on both sides.
     prepare_baseline_source "${baselineSourceRef}"
     baselineLabel="${BASELINE_SRC_LABEL}"
-    baselineProject="${BASELINE_PERF_PROJECT}"
+    baselineProject="${PERF_PROJECT}"
+    baselineBuildArgs=(-p:MdsSourceRoot="${BASELINE_SRC_DIR}")
 elif [[ -n "${switchUnderTest}" ]]; then
     # Switch A/B: SAME source/project for both passes (baselineProject/baselineBuildArgs are already
     # the candidate's, set above), so only the runner config differs (see BASELINE_RUNNER_CONFIG /
@@ -925,6 +942,8 @@ else
     echo "Neither --baseline-version nor --baseline-source-ref supplied; running current only (no comparison)."
     run_pass "current" "${PERF_PROJECT}"
 fi
+
+python3 "${SCRIPT_DIR}/benchmark_health_report.py" --results-dir "${RESULTS_DIR}"
 
 echo "Collected results:"
 find "${RESULTS_DIR}" -type f | sort

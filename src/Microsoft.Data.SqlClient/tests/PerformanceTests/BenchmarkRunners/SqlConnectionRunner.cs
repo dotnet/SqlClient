@@ -31,6 +31,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             sqlConnection.Open();
         }
 
+        [AsyncHealthDiagnoser]
         [Benchmark]
         public async Task OpenAsyncConnection()
         {

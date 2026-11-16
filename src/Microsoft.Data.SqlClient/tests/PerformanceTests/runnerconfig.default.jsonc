@@ -11,6 +11,9 @@
     // Enable this flag to enable optimized async behavior in SqlClient.
     // This is useful for benchmarking packet multiplexing and async performance improvements.
     "UseOptimizedAsyncBehaviour": true,
+    // Collect workload-only probes in a separate BDN extra iteration for marked benchmarks.
+    // Short diagnostic windows are explicitly insufficient, not healthy.
+    "EnableAsyncHealth": true,
     // Enable this flag to get prompted to attach a profiler when running the performance tests.
     // This is useful for capturing event source traces when running a performance test on any OS.
     // On Windows, you can also set UseNativeMemoryAndETWProfiler=true to attach ETW diagnosers automatically.
@@ -24,16 +27,24 @@
     // warmup runs, and row count for each benchmark.
     //
     // Two optional per-benchmark settings are available for slow benchmarks:
-    //   "TimeoutMinutes" - overrides BenchmarkDotNet's 5 minute in-process execution timeout.
+    //   "TimeoutMinutes" - overrides the runner's 5 minute per-case execution timeout.
     //                      Omit (or set 0) to keep the default. Benchmarks that exceed it fail
-    //                      with "takes too long to run. Prefer to use out-of-process
-    //                      toolchains for long-running benchmarks." Note that switching to an
+    //                      and stop the process's benchmark sequence. Switching to an
     //                      out-of-process toolchain is NOT viable for this suite, because the
     //                      AppContext switches above only apply to the process running Main.
     //   "RunStrategy"    - "Throughput" (default) or "Monitoring". Use "Monitoring" when a
     //                      single operation takes seconds, to skip the harness-overhead
     //                      measurement that "Throughput" performs.
     "Benchmarks": {
+        "OpenAsyncBurstRunnerConfig": {
+            "Enabled": true,
+            "LaunchCount": 1,
+            "IterationCount": 3,
+            "InvocationCount": 1,
+            "WarmupCount": 1,
+            "RunStrategy": "Monitoring",
+            "TimeoutMinutes": 5
+        },
         "SqlConnectionRunnerConfig": {
             "Enabled": true,
             "LaunchCount": 1,

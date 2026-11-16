@@ -120,6 +120,8 @@
 
   <!-- References for netcore -->
   <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
+    <PackageReference Include="BenchmarkDotNet" />
+    <Compile Include="..\PerformanceTests\Measurements\AsyncHealth*.cs" Link="Measurements\%(Filename)%(Extension)" />
     <Compile Include="..\PerformanceTests\Measurements\OpenAsyncHealth*.cs" Link="Measurements\%(Filename)%(Extension)" />
     <Compile Include="..\PerformanceTests\Measurements\ThreadPool*.cs" Link="Measurements\%(Filename)%(Extension)" />
     <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
