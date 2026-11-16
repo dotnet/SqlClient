@@ -104,13 +104,13 @@ Describe 'Get-NextSqlClientVersion' {
         $result | Should -Be $Expected
     }
 
-    It 'Ignores milestones from other major.minor series on main' {
+    It 'Moves a main preview to its GA version without a later milestone in its series' {
         # Act
         $result = Get-NextSqlClientVersion -TargetBranch 'main' -PublishedVersion '8.2.0-preview1' `
             -MilestoneTitles $script:milestones
 
         # Assert
-        $result | Should -BeNullOrEmpty
+        $result | Should -Be '8.2.0'
     }
 
     It 'Ignores milestone titles that are not versions' {
@@ -183,5 +183,116 @@ Describe 'Get-PrMilestoneTitle' {
 
         # Assert
         $result | Should -BeNullOrEmpty
+    }
+}
+
+<#
+.SYNOPSIS
+    Verifies the end-to-end flow against a mocked GitHub API.
+#>
+Describe 'Invoke-VersionBumpPr' {
+    BeforeEach {
+        # Arrange: a published 8.1.0 build of main, and GitHub main still at 8.1.0.
+        $VersionsPropsPath = Join-Path $TestDrive 'Versions.props'
+        Set-Content -LiteralPath $VersionsPropsPath `
+            -Value '<SqlClientNextVersion>8.1.0</SqlClientNextVersion>'
+        $SourceBranch = 'refs/heads/internal/main'
+        $GitHubRepository = 'dotnet/SqlClient'
+        $Token = 'token'
+        $DryRun = $false
+        $props = [Convert]::ToBase64String(
+            [Text.Encoding]::UTF8.GetBytes('<SqlClientNextVersion>8.1.0</SqlClientNextVersion>'))
+
+        # Arrange: 100 unrelated milestones on page 1, so 8.1.0 is only found on page 2.
+        $page1 = 1..100 | ForEach-Object {
+            [pscustomobject]@{ title = "old-$_"; number = $_; state = 'closed' }
+        }
+        $page2 = @([pscustomobject]@{ title = '8.1.0'; number = 500; state = 'closed' })
+
+        Mock Write-Host {}
+        Mock Write-PipelineWarning {}
+        Mock Invoke-GitHubApi { $page1 } -ParameterFilter { $Path -like '*milestones*page=1' }
+        Mock Invoke-GitHubApi { $page2 } -ParameterFilter { $Path -like '*milestones*page=2' }
+        Mock Invoke-GitHubApi { [pscustomobject]@{ content = $props; sha = 'filesha' } } `
+            -ParameterFilter { $Path -like '*contents*' -and -not $Method }
+        Mock Invoke-GitHubApi { ,@() } -ParameterFilter { $Path -like '*pulls?state=open*' }
+        Mock Invoke-GitHubApi { [pscustomobject]@{ object = @{ sha = 'basesha' } } } `
+            -ParameterFilter { $Path -like '*git/ref/heads/*' }
+        Mock Invoke-GitHubApi {} -ParameterFilter { $Method -in 'PUT', 'PATCH' -or
+            ($Method -eq 'POST' -and $Path -like '*git/refs') }
+        Mock Invoke-GitHubApi { [pscustomobject]@{ number = 42; html_url = 'pr-url' } } `
+            -ParameterFilter { $Method -eq 'POST' -and $Path -like '*/pulls' }
+    }
+
+    It 'Opens a patch bump PR with the previous milestone from a later page' {
+        # Act
+        Invoke-VersionBumpPr
+
+        # Assert
+        Should -Invoke Invoke-GitHubApi -Times 1 -ParameterFilter {
+            $Method -eq 'PUT' -and $Body.branch -eq 'dev/automation/bump-sqlclient-version-8.1.1'
+        }
+        Should -Invoke Invoke-GitHubApi -Times 1 -ParameterFilter {
+            $Method -eq 'POST' -and $Path -like '*/pulls' -and $Body.base -eq 'main'
+        }
+        Should -Invoke Invoke-GitHubApi -Times 1 -ParameterFilter {
+            $Method -eq 'PATCH' -and $Path -like '*issues/42' -and $Body.milestone -eq 500
+        }
+    }
+
+    It 'Writes nothing when the bump PR is already open' {
+        # Arrange
+        Mock Invoke-GitHubApi { @([pscustomobject]@{ html_url = 'existing' }) } `
+            -ParameterFilter { $Path -like '*pulls?state=open*' }
+
+        # Act
+        Invoke-VersionBumpPr
+
+        # Assert
+        Should -Invoke Invoke-GitHubApi -Times 0 -ParameterFilter { [bool]$Method }
+    }
+
+    It 'Writes nothing in a dry run' {
+        # Arrange
+        $DryRun = $true
+
+        # Act
+        Invoke-VersionBumpPr
+
+        # Assert
+        Should -Invoke Invoke-GitHubApi -Times 0 -ParameterFilter { [bool]$Method }
+    }
+
+    It 'Skips with a warning when GitHub has no Versions.props' {
+        # Arrange
+        Mock Invoke-GitHubApi {
+            $response = [pscustomobject]@{ StatusCode = [pscustomobject]@{ value__ = 404 } }
+            $exception = [Exception]::new('Not Found')
+            $exception | Add-Member -NotePropertyName Response -NotePropertyValue $response
+            throw $exception
+        } -ParameterFilter { $Path -like '*contents*' -and -not $Method }
+
+        # Act
+        Invoke-VersionBumpPr
+
+        # Assert
+        Should -Invoke Write-PipelineWarning -Times 1 -ParameterFilter {
+            $Message -like '*Skipping*'
+        }
+        Should -Invoke Invoke-GitHubApi -Times 0 -ParameterFilter { [bool]$Method }
+    }
+
+    It 'Skips with a warning when the built commit has no Versions.props' {
+        # Arrange
+        $VersionsPropsPath = Join-Path $TestDrive 'missing.props'
+
+        # Act
+        Invoke-VersionBumpPr
+
+        # Assert
+        Should -Invoke Write-PipelineWarning -Times 1 -ParameterFilter {
+            $Message -like '*Skipping*'
+        }
+        Should -Invoke Invoke-GitHubApi -Times 0
     }
 }

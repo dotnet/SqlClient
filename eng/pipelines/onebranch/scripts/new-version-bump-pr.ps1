@@ -20,8 +20,7 @@
       - A preview release on release/X.Y moves to its GA version (7.1.0-preview3 -> 7.1.0).
       - A preview release on main moves to the lowest open GitHub milestone in the same
         major.minor series that is greater than the published version
-        (8.1.0-preview1 -> 8.1.0-preview2). With no such milestone, the script logs a warning and
-        does nothing.
+        (8.1.0-preview1 -> 8.1.0-preview2). With no such milestone, it moves to its GA version.
 
     The script also does nothing when the GitHub branch already has a version at or above the next
     version, or when an open bump PR already exists. Otherwise it creates or resets the branch
@@ -147,7 +146,7 @@ function Compare-SqlClientVersion {
     return Compare-PrereleaseLabel -Left $Left.Prerelease -Right $Right.Prerelease
 }
 
-# Chooses the next version for the target branch, or $null when none can be chosen.
+# Chooses the next version for the target branch.
 function Get-NextSqlClientVersion {
     param(
         [string]$TargetBranch,
@@ -186,7 +185,7 @@ function Get-NextSqlClientVersion {
     }
 
     if ($null -eq $next) {
-        return $null
+        return "$($published.Major).$($published.Minor).$($published.Patch)"
     }
 
     return $next.Text
@@ -268,20 +267,38 @@ function Invoke-GitHubApi {
     Invoke-RestMethod @request
 }
 
-function Invoke-VersionBumpPr {
-    if ([string]::IsNullOrWhiteSpace($VersionsPropsPath) -or -not (Test-Path $VersionsPropsPath)) {
-        throw "Versions.props was not found at '$VersionsPropsPath'."
-    }
+# Reads every milestone in any state, following pages until a short page is returned.
+function Get-AllMilestones {
+    param([string]$RepoApi)
 
+    $page = 1
+    do {
+        # Invoke-RestMethod can return an empty JSON array as one item, so keep only real ones.
+        $batch = @(Invoke-GitHubApi -Path "$RepoApi/milestones?state=all&per_page=100&page=$page" |
+            ForEach-Object { $_ } | Where-Object { $_.title })
+        $batch
+        $page++
+    } while ($batch.Count -eq 100)
+}
+
+function Invoke-VersionBumpPr {
     $targetBranch = Get-GitHubTargetBranch $SourceBranch
     if ($null -eq $targetBranch) {
         Write-PipelineWarning "Branch '$SourceBranch' has no GitHub branch to bump. Skipping."
         return
     }
 
+    # Older release branches keep the version elsewhere, so they are skipped rather than failed.
+    if ([string]::IsNullOrWhiteSpace($VersionsPropsPath) -or -not (Test-Path $VersionsPropsPath)) {
+        Write-PipelineWarning "Versions.props was not found at '$VersionsPropsPath'. Skipping."
+        return
+    }
+
     $publishedVersion = Get-VersionFromProps (Get-Content -LiteralPath $VersionsPropsPath -Raw)
     if ($null -eq $publishedVersion) {
-        throw "Could not read a single SqlClientNextVersion from '$VersionsPropsPath'."
+        Write-PipelineWarning ("No single SqlClientNextVersion in '$VersionsPropsPath'. " +
+            "Skipping.")
+        return
     }
 
     if (-not $DryRun -and [string]::IsNullOrWhiteSpace($Token)) {
@@ -291,25 +308,30 @@ function Invoke-VersionBumpPr {
     $owner = $GitHubRepository.Split('/')[0]
     $repoApi = "repos/$GitHubRepository"
     $propsApi = "$repoApi/contents/$($script:VersionsPropsRepoPath)"
-    $milestones = @(Invoke-GitHubApi -Path "$repoApi/milestones?state=all&per_page=100" |
-        ForEach-Object { $_ } | Where-Object { $_.title })
+    $milestones = @(Get-AllMilestones $repoApi)
     $nextVersion = Get-NextSqlClientVersion `
         -TargetBranch $targetBranch `
         -PublishedVersion $publishedVersion `
         -MilestoneTitles @($milestones | Where-Object { $_.state -eq 'open' } |
             ForEach-Object { $_.title })
 
-    if ($null -eq $nextVersion) {
-        Write-PipelineWarning ("No open milestone after $publishedVersion in the same " +
-            "major.minor series. Create one and update $targetBranch manually.")
-        return
-    }
-
     Write-Host "Published $publishedVersion from $SourceBranch."
     Write-Host "Next version for GitHub $targetBranch is $nextVersion."
 
     $encodedTarget = [uri]::EscapeDataString($targetBranch)
-    $file = Invoke-GitHubApi -Path "${propsApi}?ref=$encodedTarget"
+    try {
+        $file = Invoke-GitHubApi -Path "${propsApi}?ref=$encodedTarget"
+    }
+    catch {
+        if ($_.Exception.Response.StatusCode.value__ -ne 404) {
+            throw
+        }
+
+        Write-PipelineWarning ("GitHub $targetBranch has no $($script:VersionsPropsRepoPath). " +
+            "Skipping.")
+        return
+    }
+
     $content = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($file.content))
     $currentText = Get-VersionFromProps $content
     $current = ConvertTo-SqlClientVersion $currentText
@@ -336,8 +358,11 @@ function Invoke-VersionBumpPr {
     }
 
     $title = "Bump SqlClient version to $nextVersion"
+    $milestoneTitle = Get-PrMilestoneTitle -NextVersion $nextVersion `
+        -MilestoneTitles @($milestones | ForEach-Object { $_.title })
     if ($DryRun) {
         Write-Host "Dry run: would open '$title' from $headBranch into $targetBranch."
+        Write-Host "Dry run: would assign milestone '$milestoneTitle'."
         return
     }
 
@@ -379,8 +404,6 @@ function Invoke-VersionBumpPr {
     }
     Write-Host "Opened $($pr.html_url)."
 
-    $milestoneTitle = Get-PrMilestoneTitle -NextVersion $nextVersion `
-        -MilestoneTitles @($milestones | ForEach-Object { $_.title })
     if ($null -eq $milestoneTitle) {
         Write-PipelineWarning "No milestone at or below $nextVersion for $($pr.html_url)."
         return
