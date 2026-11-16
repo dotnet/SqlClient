@@ -26,6 +26,8 @@ namespace Microsoft.SqlServer.TDS.EndPoint
 
         internal bool ExpectTlsHandshakeFailure { get; set; }
 
+        internal bool TlsFirst { get; set; }
+
         public TDSServerEndPointConnection(ITDSServer server, TcpClient connection)
             : base(server, connection)
         {
@@ -37,7 +39,8 @@ namespace Microsoft.SqlServer.TDS.EndPoint
             Debug.Assert(_parser == null, "PrepareForProcessingData should not be called twice");
             _parser = new TDSServerParser(Server, Session, rawStream)
             {
-                ExpectTlsHandshakeFailure = ExpectTlsHandshakeFailure
+                ExpectTlsHandshakeFailure = ExpectTlsHandshakeFailure,
+                TlsFirst = TlsFirst
             };
         }
 
