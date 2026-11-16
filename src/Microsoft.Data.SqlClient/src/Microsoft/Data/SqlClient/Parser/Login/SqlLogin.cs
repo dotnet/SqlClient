@@ -9,7 +9,6 @@ namespace Microsoft.Data.SqlClient.Parser.Login;
 
 internal sealed class SqlLogin
 {
-    internal SqlAuthenticationMethod authentication = SqlAuthenticationMethod.NotSpecified;  // Authentication type
     internal int timeout;                                            // login timeout
     internal bool userInstance = false;                              // user instance
     internal string hostName = "";                                   // client machine name

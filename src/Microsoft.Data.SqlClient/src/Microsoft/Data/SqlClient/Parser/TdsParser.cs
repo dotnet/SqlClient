@@ -3367,7 +3367,8 @@ namespace Microsoft.Data.SqlClient.Parser
                         Debug.Assert(env._oldLength == 5 || env._oldLength == 0, "Improper length in old collation!");
                         if (env._oldLength == 5)
                         {
-                            result = TryProcessCollation(stateObj, out env._oldCollation);
+                            // The old collation is not used; read it to advance past it.
+                            result = TryProcessCollation(stateObj, out _);
                             if (result != TdsOperationStatus.Done)
                             {
                                 return result;
@@ -3691,7 +3692,7 @@ namespace Microsoft.Data.SqlClient.Parser
         {
             // Used by ProcessEnvChangeToken
             byte newLength, oldLength;
-            string newValue, oldValue;
+            string newValue;
             TdsOperationStatus result = stateObj.TryReadByte(out newLength);
             if (result != TdsOperationStatus.Done)
             {
@@ -3707,7 +3708,8 @@ namespace Microsoft.Data.SqlClient.Parser
             {
                 return result;
             }
-            result = stateObj.TryReadString(oldLength, out oldValue);
+            // The old value is not used; read it to advance past it.
+            result = stateObj.TryReadString(oldLength, out _);
             if (result != TdsOperationStatus.Done)
             {
                 return result;
@@ -3716,7 +3718,6 @@ namespace Microsoft.Data.SqlClient.Parser
             env._newLength = newLength;
             env._newValue = newValue;
             env._oldLength = oldLength;
-            env._oldValue = oldValue;
 
             // env.length includes 1 byte type token
             env._length = 3 + env._newLength * 2 + env._oldLength * 2;
