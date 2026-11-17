@@ -94,6 +94,50 @@ These are retained in the normal perf-results artifact, even after a failed inte
 Successful runs also produce `benchmark-async-health.md` at the artifact root. Diagnostic
 records are not extra timing rows in BDN comparison or Kusto ingestion.
 
+### Compact comparison
+
+The report contains one baseline/current row per burst method, parameters and compatible
+recorded configuration. It reduces Startup, ExtraIteration and available repetitions to
+independent maxima for dispatch p99, first-worker queue p99, peak ThreadPool threads and peak
+total process threads. It compares existing per-window percentiles; it does not pool samples
+or calculate a new percentile. Different metrics may attain their maxima in different cohorts.
+
+Each metric cell shows `current maximum (signed percentage delta; signed raw difference)`.
+The difference is current minus baseline; the percentage divides that difference by the
+baseline. Missing values and every zero baseline, including zero-to-zero, produce `N/A`
+percentages. Rows sort by descending unrounded dispatch-p99 percentage delta, undefined last,
+with deterministic ties.
+
+The leading status uses the regular comparison's indicators and the pipeline's actual
+`regressionThreshold` (default 10%). Dispatch increases strictly above the threshold are red,
+decreases strictly below its negative are green, and boundary equality is neutral/white.
+Current-only, baseline-only and undefined comparisons retain the new/removed/unknown indicators.
+This is an **observed relative change**, not the normal timing report's best-of-N majority
+confirmation and not an absolute scheduler-health verdict. It adds no regression failure gate.
+
+Pool/SNI/async selections, runtime, OS, CPU/worker counts, process-cold position and recorded
+workload settings must match. Incompatible configurations remain unpaired, with explicit
+new/removed rows rather than misleading deltas. This also applies to intentional switch
+experiments whose settings differ. Process IDs and driver identities may differ across sides;
+mixing multiple driver identities within one side/configuration is rejected.
+
+Coverage warnings remain outside the compact table. Expanded provenance retains each side's
+health classifications, phase completeness, sample/missing-probe counts, operation problems,
+driver identity, repetition, process ID, raw artifact aliases and the cohort(s) supplying every
+maximum. Identical aliases are counted once; conflicting data/origins fail explicitly. A green
+relative indicator never hides insufficient, censored, incomplete or failed evidence.
+
+To regenerate a historical preview without replacing the original report:
+
+```powershell
+python eng\pipelines\perf\scripts\benchmark_health_report.py `
+    --results-dir <extracted-results> --threshold 10 `
+    --out-md <preview-directory>\historical-comparison.md `
+    --source-label "Historical run data, regenerated with the current report format"
+```
+
+### Execution and collection
+
 Benchmark exceptions, missing diagnostic windows, observer faults and incomplete instrumented
 work fail explicitly. Failed-window evidence and execution-failure markers are separate files.
 The normal per-case timeout remains enforced. The test-only BDN packages use

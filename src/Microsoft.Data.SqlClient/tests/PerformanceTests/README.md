@@ -9,6 +9,12 @@ and per-window summaries are exported under
 `BenchmarkDotNet.Artifacts/async-health`. Short or censored windows are insufficient, not healthy.
 There is no separate health sweep before the perf tests.
 
+The pipeline report pairs baseline/current maxima across phases and repetitions for four
+metrics: dispatch p99, first-worker queue p99, peak ThreadPool threads and peak process threads.
+Cells show the current maximum with signed percentage/raw deltas. Status uses the configured
+dispatch-change threshold; it is not majority confirmation or proof of absolute health.
+The report preserves phase completeness and raw cohort provenance outside its compact table.
+
 | Unit | Async-health regression coverage |
 | --- | --- |
 | `OpenAsyncBurst` | 64 ThreadPool-dispatched opens against empty, warm, oversubscribed (16-slot), and non-pooled connections, with separate open/close and open/query/close methods |

@@ -987,7 +987,8 @@ if ((-not [string]::IsNullOrEmpty($BaselineLabel)) -and ($RunMode -eq "interleav
 }
 
 Invoke-Native {
-    python3 (Join-Path $ScriptDir "benchmark_health_report.py") --results-dir $ResultsDir
+    python3 (Join-Path $ScriptDir "benchmark_health_report.py") --results-dir $ResultsDir `
+        --threshold $RegressionThreshold
 } "Benchmark async-health reporting failed"
 
 Write-Host "Collected results:"

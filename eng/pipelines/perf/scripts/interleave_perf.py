@@ -371,13 +371,8 @@ def orchestrate(runner, units, results_dir, threshold, reps):
 # Rendering.
 # --------------------------------------------------------------------------------------------------
 _ICON = {
-    "regression": "🔴 regression",
-    "regression-unconfirmed": "🟠 regression (unconfirmed)",
-    "improvement": "🟢 improvement",
-    "unchanged": "⚪ unchanged",
-    "current-only": "🆕 new",
-    "baseline-only": "➖ removed",
-    "unknown": "❔",
+    **compare_perf.STATUS_LABELS,
+    "regression-unconfirmed": "\U0001f7e0 regression (unconfirmed)",
 }
 
 
@@ -387,13 +382,13 @@ def render_markdown(entries, confirmed, unconfirmed, baseline_version, threshold
     lines.append("# SqlClient Performance Comparison (interleaved, best-of-N)")
     lines.append("")
     lines.append(f"Baseline: **{baseline_version}** &nbsp;|&nbsp; "
-                 f"Regression threshold: **{threshold:.0f}%** &nbsp;|&nbsp; "
+                 f"Regression threshold: **{threshold:g}%** &nbsp;|&nbsp; "
                  f"Confirmation runs: **N = {reps}**")
     lines.append("")
     lines.append(f"- Benchmarks compared: **{len(entries)}**")
     lines.append(f"- **Confirmed** regressions (majority of {reps}): **{len(confirmed)}**")
     lines.append(f"- Unconfirmed (flagged once, not reproduced): **{len(unconfirmed)}**")
-    lines.append(f"- Improvements (faster > {threshold:.0f}%): **{len(improvements)}**")
+    lines.append(f"- Improvements (faster > {threshold:g}%): **{len(improvements)}**")
     lines.append("")
     lines.append("| Status | Benchmark | Method | Params | Baseline (ms) | "
                  "Current (ms) | Mean Δ | Alloc Δ | Confirm |")
@@ -438,7 +433,7 @@ def main(argv=None):
                         help="Per-unit raw artifacts directory (default: <results>/runs).")
     parser.add_argument("--max-run-seconds", type=float, default=None,
                         help="Remaining execution budget, excluding pipeline collection grace.")
-    parser.add_argument("--threshold", type=float, default=10.0)
+    parser.add_argument("--threshold", type=float, default=compare_perf.DEFAULT_THRESHOLD_PCT)
     parser.add_argument("--reps", type=int, default=3,
                         help="Total interleaved passes for a flagged unit (best-of-N). 1 disables confirmation.")
     parser.add_argument("--baseline-version", default="baseline")

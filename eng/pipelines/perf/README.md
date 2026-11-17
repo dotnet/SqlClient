@@ -14,6 +14,11 @@ iterations are not observed. Raw queue/open/outcome/probe/resource evidence is r
 each side/repetition and summarized in `benchmark-async-health.md`. There is no separate sweep
 or ramp before the benchmarks, and pipeline trigger conventions remain unchanged.
 
+The compact async-health report pairs baseline/current worst-observed burst metrics across
+phases and repetitions. Its leading dispatch-change indicator uses the same configured
+`regressionThreshold`, but is an observed relative change, not best-of-N confirmation or an
+absolute health verdict. Coverage qualifications and raw cohort provenance remain separate.
+
 ## Contents
 
 | Path | Purpose |
@@ -25,7 +30,7 @@ or ramp before the benchmarks, and pipeline trigger conventions remain unchanged
 | `scripts/run-perf-tests.ps1` | Windows equivalent (ProcessorAffinity instead of `taskset`). |
 | `scripts/interleave_perf.py` | Interleaved + best-of-N orchestrator: runs each unit baseline↔candidate back-to-back and confirms regressions across N passes. |
 | `scripts/compare_perf.py` | Compares baseline vs current BenchmarkDotNet JSON → delta (md + json). Reused by the orchestrator. |
-| `scripts/benchmark_health_report.py` | Summarizes BDN's workload-only diagnostic windows separately from timing comparisons. |
+| `scripts/benchmark_health_report.py` | Pairs worst-observed burst metrics, relative status, and separate coverage/provenance evidence. |
 | `scripts/perf_to_kusto.py` | Translates BenchmarkDotNet "full" JSON → Kusto `PerfRun` + `PerfBenchmarkResult` NDJSON. |
 | `scripts/ingest_kusto.py` | Queued Kusto ingestion (az CLI auth, runs on the agent). |
 

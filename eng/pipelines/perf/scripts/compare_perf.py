@@ -21,6 +21,26 @@ import sys
 
 
 NS_PER_MS = 1_000_000.0
+DEFAULT_THRESHOLD_PCT = 10.0
+STATUS_LABELS = {
+    "regression": "\U0001f534 regression",
+    "improvement": "\U0001f7e2 improvement",
+    "unchanged": "\u26aa unchanged",
+    "current-only": "\U0001f195 new",
+    "baseline-only": "\u2796 removed",
+    "unknown": "\u2754",
+}
+
+
+def classify_change(delta, threshold_pct):
+    """Classify an unrounded relative change; equality with either boundary is neutral."""
+    if delta is None:
+        return "unknown"
+    if delta > threshold_pct:
+        return "regression"
+    if delta < -threshold_pct:
+        return "improvement"
+    return "unchanged"
 
 
 def _load_benchmarks(directory):
@@ -103,15 +123,7 @@ def build_comparison(baseline_dir, current_dir, threshold_pct):
                 entry["allocDeltaPct"] = _pct(b["allocatedBytes"], c["allocatedBytes"])
             else:
                 entry["allocDeltaPct"] = None
-            delta = entry["meanDeltaPct"]
-            if delta is None:
-                entry["status"] = "unknown"
-            elif delta > threshold_pct:
-                entry["status"] = "regression"
-            elif delta < -threshold_pct:
-                entry["status"] = "improvement"
-            else:
-                entry["status"] = "unchanged"
+            entry["status"] = classify_change(entry["meanDeltaPct"], threshold_pct)
         elif c and not b:
             entry["meanDeltaPct"] = None
             entry["meanRatio"] = None
@@ -169,30 +181,22 @@ def render_markdown(entries, baseline_version, threshold_pct):
     lines.append("# SqlClient Performance Comparison")
     lines.append("")
     lines.append(f"Baseline: **{baseline_version}** &nbsp;|&nbsp; "
-                 f"Regression threshold: **{threshold_pct:.0f}%**")
+                 f"Regression threshold: **{threshold_pct:g}%**")
     lines.append("")
     lines.append(f"- Benchmarks compared: **{len(entries)}**")
-    lines.append(f"- Regressions (slower > {threshold_pct:.0f}%): **{len(regressions)}**")
-    lines.append(f"- Improvements (faster > {threshold_pct:.0f}%): **{len(improvements)}**")
+    lines.append(f"- Regressions (slower > {threshold_pct:g}%): **{len(regressions)}**")
+    lines.append(f"- Improvements (faster > {threshold_pct:g}%): **{len(improvements)}**")
     lines.append("")
     lines.append("| Status | Benchmark | Method | Params | Baseline (ms) | "
                  "Current (ms) | Mean Δ | Alloc Δ |")
     lines.append("| ------ | --------- | ------ | ------ | ------------- | "
                  "------------ | ------ | ------- |")
 
-    icon = {
-        "regression": "🔴 regression",
-        "improvement": "🟢 improvement",
-        "unchanged": "⚪ unchanged",
-        "current-only": "🆕 new",
-        "baseline-only": "➖ removed",
-        "unknown": "❔",
-    }
     for e in entries:
         lines.append(
             "| {status} | {name} | {method} | {params} | {base} | {cur} | "
             "{delta} | {alloc} |".format(
-                status=icon.get(e["status"], e["status"]),
+                status=STATUS_LABELS.get(e["status"], e["status"]),
                 name=e["benchmarkName"],
                 method=e["methodName"],
                 params=e["parameterSignature"] or "-",
@@ -213,7 +217,7 @@ def main(argv=None):
     parser.add_argument("--out-md", required=True)
     parser.add_argument("--out-json", required=True)
     parser.add_argument("--baseline-version", default="baseline")
-    parser.add_argument("--threshold", type=float, default=10.0,
+    parser.add_argument("--threshold", type=float, default=DEFAULT_THRESHOLD_PCT,
                         help="Percent slowdown that counts as a regression.")
     parser.add_argument("--fail-on-regression", action="store_true",
                         help="Exit non-zero if any regression is detected.")
