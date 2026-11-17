@@ -69,7 +69,6 @@ stages:
                 pwsh: true
                 filePath: $(Build.SourcesDirectory)/$(scriptPath)
                 arguments: >-
-                  -SourceBranch "$(Build.SourceBranch)"
                   -VersionsPropsPath "$(Build.SourcesDirectory)/$(versionsPropsPath)"
               env:
                 # Secrets are not exposed to scripts unless mapped explicitly.

@@ -11,9 +11,9 @@
 .DESCRIPTION
     Runs after the official pipeline publishes the SqlClient family to NuGet Production.
 
-    The ADO branch that was built is mapped to its GitHub branch:
-      - internal/main         -> main
-      - internal/release/X.Y  -> release/X.Y
+    The PR always targets the branch that was built (BUILD_SOURCEBRANCH), with an optional
+    internal/ prefix removed: internal/release/7.1 and release/7.1 both target release/7.1. The
+    published version is read from that build's Versions.props.
 
     The next version is chosen as follows:
       - A GA release always bumps the patch (7.0.1 -> 7.0.2), on any branch.
@@ -27,10 +27,6 @@
     dev/automation/bump-sqlclient-version-<version>, commits the Versions.props change, and opens
     the PR. The PR gets the milestone matching the next version, or else the closest earlier
     milestone in any state.
-
-.PARAMETER SourceBranch
-    The ADO branch that was built, such as refs/heads/internal/main. Defaults to
-    BUILD_SOURCEBRANCH.
 
 .PARAMETER VersionsPropsPath
     Path to the built commit's src/Microsoft.Data.SqlClient/Versions.props, from which the
@@ -48,7 +44,6 @@
 
 [CmdletBinding()]
 param(
-    [string]$SourceBranch = $env:BUILD_SOURCEBRANCH,
     [string]$VersionsPropsPath,
     [string]$GitHubRepository = 'dotnet/SqlClient',
     [string]$Token = $env:GITHUB_TOKEN,
@@ -64,22 +59,15 @@ function Write-PipelineWarning {
     Write-Host "##vso[task.logissue type=warning]$Message"
 }
 
-# Maps the built ADO branch to the GitHub branch the PR targets, or $null when it has none.
+# Maps the built ref to the GitHub branch the PR targets, or $null when it is not a branch.
 function Get-GitHubTargetBranch {
     param([string]$SourceBranch)
 
-    $branch = $SourceBranch -replace '^refs/heads/', ''
-    $branch = $branch -replace '^internal/', ''
-
-    if ($branch -eq 'main') {
-        return 'main'
+    if ($SourceBranch -notmatch '^refs/heads/(?:internal/)?(.+)$') {
+        return $null
     }
 
-    if ($branch -match '^release/\d+\.\d+$') {
-        return $branch
-    }
-
-    return $null
+    return $Matches[1]
 }
 
 # Parses a SemVer 2.0 version without build metadata, or returns $null when it is not one.
@@ -282,9 +270,10 @@ function Get-AllMilestones {
 }
 
 function Invoke-VersionBumpPr {
-    $targetBranch = Get-GitHubTargetBranch $SourceBranch
+    $sourceBranch = $env:BUILD_SOURCEBRANCH
+    $targetBranch = Get-GitHubTargetBranch $sourceBranch
     if ($null -eq $targetBranch) {
-        Write-PipelineWarning "Branch '$SourceBranch' has no GitHub branch to bump. Skipping."
+        Write-PipelineWarning "'$sourceBranch' is not a branch. Skipping."
         return
     }
 
@@ -315,7 +304,7 @@ function Invoke-VersionBumpPr {
         -MilestoneTitles @($milestones | Where-Object { $_.state -eq 'open' } |
             ForEach-Object { $_.title })
 
-    Write-Host "Published $publishedVersion from $SourceBranch."
+    Write-Host "Published $publishedVersion from $sourceBranch."
     Write-Host "Next version for GitHub $targetBranch is $nextVersion."
 
     $encodedTarget = [uri]::EscapeDataString($targetBranch)

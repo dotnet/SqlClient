@@ -14,7 +14,7 @@ BeforeAll {
 
 <#
 .SYNOPSIS
-    Verifies that built ADO branches map to the GitHub branches the PR targets.
+    Verifies that the built branch maps to the same GitHub branch, without internal/.
 #>
 Describe 'Get-GitHubTargetBranch' {
     It 'Maps <Source> to <Expected>' -TestCases @(
@@ -22,6 +22,7 @@ Describe 'Get-GitHubTargetBranch' {
         @{ Source = 'refs/heads/internal/release/7.1'; Expected = 'release/7.1' }
         @{ Source = 'refs/heads/main'; Expected = 'main' }
         @{ Source = 'refs/heads/release/6.1'; Expected = 'release/6.1' }
+        @{ Source = 'refs/heads/internal/release/7.1-hotfix'; Expected = 'release/7.1-hotfix' }
     ) {
         # Act
         $result = Get-GitHubTargetBranch $Source
@@ -31,9 +32,9 @@ Describe 'Get-GitHubTargetBranch' {
     }
 
     It 'Returns null for <Source>' -TestCases @(
-        @{ Source = 'refs/heads/dev/cheena/feature' }
-        @{ Source = 'refs/heads/internal/release/7.1-hotfix' }
         @{ Source = 'refs/pull/123/merge' }
+        @{ Source = 'refs/tags/v7.1.1' }
+        @{ Source = '' }
     ) {
         # Act
         $result = Get-GitHubTargetBranch $Source
@@ -196,7 +197,7 @@ Describe 'Invoke-VersionBumpPr' {
         $VersionsPropsPath = Join-Path $TestDrive 'Versions.props'
         Set-Content -LiteralPath $VersionsPropsPath `
             -Value '<SqlClientNextVersion>8.1.0</SqlClientNextVersion>'
-        $SourceBranch = 'refs/heads/internal/main'
+        $env:BUILD_SOURCEBRANCH = 'refs/heads/internal/main'
         $GitHubRepository = 'dotnet/SqlClient'
         $Token = 'token'
         $DryRun = $false
@@ -222,6 +223,42 @@ Describe 'Invoke-VersionBumpPr' {
             ($Method -eq 'POST' -and $Path -like '*git/refs') }
         Mock Invoke-GitHubApi { [pscustomobject]@{ number = 42; html_url = 'pr-url' } } `
             -ParameterFilter { $Method -eq 'POST' -and $Path -like '*/pulls' }
+    }
+
+    AfterEach {
+        # Cleanup: restore the pipeline variable shared with other tests.
+        $env:BUILD_SOURCEBRANCH = $script:savedSourceBranch
+    }
+
+    BeforeAll {
+        $script:savedSourceBranch = $env:BUILD_SOURCEBRANCH
+    }
+
+    It 'Opens the PR against the built release branch without internal/' {
+        # Arrange
+        $env:BUILD_SOURCEBRANCH = 'refs/heads/internal/release/8.1'
+
+        # Act
+        Invoke-VersionBumpPr
+
+        # Assert
+        Should -Invoke Invoke-GitHubApi -Times 1 -ParameterFilter {
+            $Method -eq 'POST' -and $Path -like '*/pulls' -and $Body.base -eq 'release/8.1'
+        }
+    }
+
+    It 'Skips with a warning when the build is not from a branch' {
+        # Arrange
+        $env:BUILD_SOURCEBRANCH = 'refs/pull/123/merge'
+
+        # Act
+        Invoke-VersionBumpPr
+
+        # Assert
+        Should -Invoke Write-PipelineWarning -Times 1 -ParameterFilter {
+            $Message -like '*not a branch*'
+        }
+        Should -Invoke Invoke-GitHubApi -Times 0
     }
 
     It 'Opens a patch bump PR with the previous milestone from a later page' {
