@@ -1355,7 +1355,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// Asserts the values published by a successful <c>Encrypt=Strict</c> open whose server
         /// certificate is pinned. Managed SNI also publishes the presented certificate with no
         /// validation errors, and no chain status because the pin, not the chain, decides trust.
-        /// Native SNI does not capture certificate details.
+        /// Native SNI reports the same values and the cipher suite when sni.dll provides the
+        /// validation info export, with the certificate only when it also provides the certificate
+        /// export; an older sni.dll reports no certificate details.
         /// </summary>
         private void AssertStrict(SqlConnectionEncryptionInfo info)
         {
@@ -1364,6 +1366,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             if (LocalAppContextSwitches.UseManagedNetworking)
             {
                 AssertPresentedCertificate(info);
+                Assert.Equal(SqlServerCertificateValidationErrors.None, info.ValidationErrors);
+            }
+            else if (!SniNativeCertificateCapture.Default.IsValidationInfoUnavailable)
+            {
+                Assert.InRange(Assert.NotNull(info.NegotiatedCipherSuiteId), 1, 0xFFFF);
+                AssertNativeCertificate(info);
                 Assert.Equal(SqlServerCertificateValidationErrors.None, info.ValidationErrors);
             }
             else
@@ -1378,10 +1386,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// <summary>
         /// Asserts the values reported when the <c>Encrypt=Strict</c> TLS handshake rejects the
         /// untrusted certificate. Strict is recorded before the handshake starts, so it is
-        /// reported, and no pre-login message is exchanged. Native SNI rejects the certificate
-        /// inside the handshake before reporting a protocol, cipher suite or certificate. Managed
-        /// SNI records the protocol, cipher suite, presented certificate, ChainError and the chain
-        /// status from the validation callback.
+        /// reported, and no pre-login message is exchanged. Managed SNI records the protocol,
+        /// cipher suite, presented certificate, ChainError and the chain status from the validation
+        /// callback. Native SNI reports the same values when sni.dll provides the validation info
+        /// export, because it validates the certificate after Schannel has agreed the protocol and
+        /// cipher suite, with the certificate only when it also provides the certificate export; an
+        /// older sni.dll reports none of them.
         /// </summary>
         private void AssertStrictHandshakeFailure(SqlException ex, SqlConnection connection, TdsServer server)
         {
@@ -1396,6 +1406,15 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 Assert.Equal(SqlServerCertificateValidationErrors.ChainError, info.ValidationErrors);
                 Assert.NotEqual(X509ChainStatusFlags.NoError, Assert.NotNull(info.ChainStatus));
             }
+            else if (!SniNativeCertificateCapture.Default.IsValidationInfoUnavailable)
+            {
+                Assert.Equal(SslProtocols.Tls12, info.NegotiatedEncryptionProtocol);
+                Assert.InRange(Assert.NotNull(info.NegotiatedCipherSuiteId), 1, 0xFFFF);
+                AssertNativeCertificate(info);
+                Assert.True(Assert.NotNull(info.ValidationErrors)
+                    .HasFlag(SqlServerCertificateValidationErrors.ChainError));
+                Assert.NotEqual(X509ChainStatusFlags.NoError, Assert.NotNull(info.ChainStatus));
+            }
             else
             {
                 Assert.Null(info.NegotiatedEncryptionProtocol);
@@ -1406,6 +1425,22 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }
 
             AssertEmpty(connection.EncryptionInfo);
+        }
+
+        /// <summary>
+        /// Asserts the certificate reported by Native SNI: the fixture certificate's DER when sni.dll
+        /// provides <c>SNIGetServerCertificateWrapper</c>, and no certificate otherwise.
+        /// </summary>
+        private void AssertNativeCertificate(SqlConnectionEncryptionInfo info)
+        {
+            if (SniNativeCertificateCapture.Default.IsCertificateUnavailable)
+            {
+                Assert.Null(info.PresentedServerCertificateRawData);
+            }
+            else
+            {
+                AssertPresentedCertificate(info);
+            }
         }
 
         /// <summary>
