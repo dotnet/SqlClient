@@ -510,6 +510,53 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(0, fixture.Provider.SyncCalls);
         }
 
+        /// <summary>
+        /// Completed preparation with pending enclave keys must keep its task, so package keys load
+        /// on the asynchronous reader continuation instead of the caller's thread.
+        /// </summary>
+        [Fact]
+        public void Prepare_CompletedWithPendingEnclaveKeys_KeepsAsyncContinuation()
+        {
+            // Arrange
+            // Seed a pending package key; a warm, parameterless batch makes preparation complete.
+            using Fixture fixture = new Fixture();
+            using SqlCommand command = fixture.CreateCommand();
+            fixture.Provider.CacheHit = true;
+            command.SetBatchRPCMode(true, 2);
+            command.AddBatchCommand(new SqlBatchCommand("SELECT 1",
+                columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled));
+            command.AddBatchCommand(new SqlBatchCommand("SELECT 2",
+                columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled));
+            command.SetBatchRPCModeReadyToExecute();
+            ConcurrentDictionary<int, SqlTceCipherInfoEntry> keys =
+                new ConcurrentDictionary<int, SqlTceCipherInfoEntry>();
+            keys.TryAdd(0, new SqlTceCipherInfoEntry(ordinal: 0));
+            SetField(command, "keysToBeSentToEnclave", keys);
+            object[] arguments =
+            {
+                true, 30, new TaskCompletionSource<object>(), null, true, false, false,
+                "ExecuteReader", CancellationToken.None
+            };
+
+            // Act
+            typeof(SqlCommand)
+                .GetMethod(
+                    "PrepareForTransparentEncryption",
+                    BindingFlags.NonPublic | BindingFlags.Instance)
+                .Invoke(command, arguments);
+
+            // Assert
+            // The completed task and the in-progress flag both pass to the reader continuation.
+            Task prepareTask = Assert.IsAssignableFrom<Task>(arguments[3]);
+            Assert.Equal(TaskStatus.RanToCompletion, prepareTask.Status);
+            Assert.True((bool)GetField(command, "_enclaveAttestationInProgress"));
+            Assert.Equal(0, fixture.Provider.SyncCalls);
+
+            // Cleanup
+            // Release the flag that the reader continuation would otherwise clear.
+            SetField(command, "_enclaveAttestationInProgress", false);
+        }
+
         /// <summary>Independent fixtures must not share mutated options even when their server endpoint matches.</summary>
         [Fact]
         public void Fixture_SharedEndpoint_IsolatesConnectionOptions()
@@ -915,7 +962,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         /// <summary>
-        /// Inline package failures await invalidation before retrying and release command state on either failure path.
+        /// Cached-key package failures await invalidation before retrying and release command state on either failure path.
         /// </summary>
         [Theory]
         [InlineData(false, false)]
@@ -942,7 +989,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             SqlConnectionInternal inner = (SqlConnectionInternal)fixture.Connection.InnerConnection;
             Task<SqlDataReader> operation = command.ExecuteReaderAsync(cancellation.Token);
 
-            Assert.True(fixture.Provider.Entered.Task.IsCompleted);
+            // Package generation runs on the reader continuation, so wait for invalidation.
+            await await Task.WhenAny(fixture.Provider.Entered.Task, operation);
             Assert.False(operation.IsCompleted);
             Assert.Equal(1, fixture.Provider.AsyncCalls);
             Assert.Equal(1, fixture.Provider.SyncCalls);

@@ -734,8 +734,10 @@ namespace Microsoft.Data.SqlClient
                     serializedAttestationParameters: null, cancellationToken);
             }
 
-            // Completed preparation must not queue otherwise unreserved TDS setup.
-            if (returnTask?.Status == TaskStatus.RanToCompletion)
+            // Completed preparation must not queue otherwise unreserved TDS setup. Keep the task
+            // when enclave keys are pending, so the reader continuation loads them asynchronously.
+            if (returnTask?.Status == TaskStatus.RanToCompletion
+                && (keysToBeSentToEnclave is null || keysToBeSentToEnclave.IsEmpty))
             {
                 returnTask = null;
 
