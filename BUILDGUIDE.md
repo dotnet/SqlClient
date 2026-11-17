@@ -55,6 +55,9 @@ The target uses PSResourceGet from the restored PowerShell tool and the anonymou
 missing resources for the current user, without clobbering existing commands or falling
 back to other sources.
 Automatic credential-provider selection is disabled for anonymous feed access.
+Timeouts and transient HTTP download failures are retried up to three total attempts,
+waiting 5 and 10 seconds between attempts. Other errors fail immediately, and the final
+download failure is propagated without changing the configured feed or pinned version.
 Restore and consumption must use the same user.
 Consumers import modules normally; the manifest pins installation, not runtime resolution.
 Run restore explicitly after manifest changes or on a new machine/user. It does not build
