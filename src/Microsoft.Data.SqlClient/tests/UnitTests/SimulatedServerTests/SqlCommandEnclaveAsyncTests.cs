@@ -962,7 +962,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         /// <summary>
-        /// Cached-key package failures await invalidation before retrying and release command state on either failure path.
+        /// Cached-key package failures await invalidation before retrying and release command state
+        /// on either failure path.
         /// </summary>
         [Theory]
         [InlineData(false, false)]
