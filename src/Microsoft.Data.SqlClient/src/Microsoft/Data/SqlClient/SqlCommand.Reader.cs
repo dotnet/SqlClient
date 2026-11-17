@@ -1282,6 +1282,7 @@ namespace Microsoft.Data.SqlClient
                     asyncWrite: asyncWrite && isAsync,
                     out usedCache,
                     isRetry,
+                    method,
                     cancellationToken);
 
                 long firstAttemptStart = ADP.TimerCurrent();
@@ -1296,6 +1297,7 @@ namespace Microsoft.Data.SqlClient
                         out executeTask,
                         asyncWrite: asyncWrite && isAsync,
                         isRetry,
+                        method,
                         ds: null,
                         describeParameterEncryptionTask: prepareEncryptionTask);
                 }
@@ -1919,6 +1921,7 @@ namespace Microsoft.Data.SqlClient
             out Task task,
             bool asyncWrite,
             bool isRetry,
+            string method,
             SqlDataReader ds = null,
             Task describeParameterEncryptionTask = null) // @TODO: This task should likely come from this method otherwise this is just setting up a continuation
         {
@@ -1966,7 +1969,8 @@ namespace Microsoft.Data.SqlClient
                     retryConnection,
                     preparedConnection,
                     preparedCloseCount,
-                    preparedDatabase));
+                    preparedDatabase,
+                    method));
 
                 return ds;
             }
@@ -2024,7 +2028,8 @@ namespace Microsoft.Data.SqlClient
             SqlConnectionInternal retryConnection,
             SqlConnection preparedConnection,
             int preparedCloseCount,
-            string preparedDatabase)
+            string preparedDatabase,
+            string method)
         {
             Task subTask;
             try
@@ -2042,14 +2047,16 @@ namespace Microsoft.Data.SqlClient
                 ValidateConnectionLifetime(
                     preparedConnection,
                     preparedCloseCount,
-                    preparedDatabase);
+                    preparedDatabase,
+                    method);
                 ValidateConnectionForEnclaveExecution(retryConnection);
                 await GenerateEnclavePackageAsync(cancellationToken).ConfigureAwait(false);
 
                 ValidateConnectionLifetime(
                     preparedConnection,
                     preparedCloseCount,
-                    preparedDatabase);
+                    preparedDatabase,
+                    method);
                 ValidateConnectionForEnclaveExecution(retryConnection);
                 RunExecuteReaderTds(
                     cmdBehavior,

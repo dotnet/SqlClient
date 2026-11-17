@@ -227,9 +227,34 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
+        /// Finishes a cache lookup inline when it needs no key store work: no parameter keys to
+        /// load and no cached enclave keys, which would make execution build the enclave package
+        /// synchronously.
+        /// </summary>
+        /// <returns>
+        /// <see langword="true"/> if the lookup completed as a cache hit; otherwise
+        /// <see langword="false"/>, and the caller must use
+        /// <see cref="CompleteCachedQueryMetadataAsync"/>.
+        /// </returns>
+        internal bool TryCompleteCachedQueryMetadataInline(
+            SqlCommand sqlCommand,
+            CachedQueryMetadata metadata)
+        {
+            if (metadata.KeysToLoad.Count != 0
+                || _cache.Get<ConcurrentDictionary<int, SqlTceCipherInfoEntry>>(
+                    metadata.EnclaveLookupKey) is not null)
+            {
+                return false;
+            }
+
+            IncrementCacheHits();
+            return true;
+        }
+
+        /// <summary>
         /// Finishes a successful cache lookup by publishing the enclave keys and recording the hit.
         /// </summary>
-        internal void CompleteCachedQueryMetadata(
+        private void CompleteCachedQueryMetadata(
             SqlCommand sqlCommand,
             CachedQueryMetadata metadata)
         {

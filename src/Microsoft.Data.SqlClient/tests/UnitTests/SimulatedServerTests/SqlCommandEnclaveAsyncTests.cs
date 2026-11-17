@@ -76,7 +76,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             object[] arguments =
             {
                 CommandBehavior.Default, RunBehavior.ReturnImmediately, true, true, 30, null,
-                true, false, null, preparation.Task
+                true, false, "ExecuteReader", null, preparation.Task
             };
             using SqlDataReader pendingReader = (SqlDataReader)typeof(SqlCommand)
                 .GetMethod("RunExecuteReaderTdsWithTransparentParameterEncryption", BindingFlags.NonPublic | BindingFlags.Instance)
@@ -113,7 +113,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             object[] arguments =
             {
                 CommandBehavior.Default, RunBehavior.ReturnImmediately, true, true, 30, null,
-                true, false, null, Task.CompletedTask
+                true, false, "ExecuteReader", null, Task.CompletedTask
             };
 
             // Act
@@ -276,6 +276,54 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         /// <summary>
+        /// A transaction begun on the connection while package keys load must stop execution of
+        /// a command that is not bound to it, and leave the command reusable.
+        /// </summary>
+        [Fact]
+        public async Task Execute_PendingPackageKey_BeginTransactionThrows()
+        {
+            // Arrange
+            using Fixture fixture = new Fixture();
+            using SqlCommand command = fixture.CreateCommand();
+            PendingKeyStoreProvider keyProvider = new PendingKeyStoreProvider();
+            Task execution = StartPendingPackageExecution(fixture, command, keyProvider);
+            SqlConnectionInternal inner = (SqlConnectionInternal)fixture.Connection.InnerConnection;
+            try
+            {
+                await await Task.WhenAny(keyProvider.Entered.Task, execution);
+
+                // The simulated server has no transaction manager, so record the API
+                // transaction directly on the idle session.
+                SqlTransaction transaction = new SqlTransaction(
+                    inner, fixture.Connection, IsolationLevel.ReadCommitted, null);
+                inner.Parser.CurrentTransaction = transaction.InternalTransaction;
+
+                // Act
+                keyProvider.Completion.SetResult(new byte[32]);
+
+                // Assert
+                InvalidOperationException error =
+                    await Assert.ThrowsAsync<InvalidOperationException>(() => execution);
+                Assert.Equal(
+                    ADP.TransactionRequired(nameof(SqlCommand.ExecuteReader)).Message,
+                    error.Message);
+                Assert.False((bool)GetField(command, "_enclaveAttestationInProgress"));
+                Assert.Equal(0, GetAsyncCount(inner));
+
+                // The command accepts the transaction once the failed execution released it.
+                command.Transaction = transaction;
+                Assert.Same(transaction, command.Transaction);
+            }
+            finally
+            {
+                // Cleanup
+                // Detach the recorded transaction so closing the connection sends no rollback.
+                keyProvider.Completion.TrySetResult(new byte[32]);
+                inner.Parser.CurrentTransaction = null;
+            }
+        }
+
+        /// <summary>
         /// Successful asynchronous preparation keeps the in-progress flag set for the reader
         /// continuation, which clears it after reserving the connection.
         /// </summary>
@@ -325,7 +373,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             object[] arguments =
             {
                 CommandBehavior.Default, RunBehavior.ReturnImmediately, true, true, 30, null,
-                true, false, null, Task.CompletedTask
+                true, false, "ExecuteReader", null, Task.CompletedTask
             };
             typeof(SqlCommand)
                 .GetMethod(
@@ -449,7 +497,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             command.SetBatchRPCModeReadyToExecute();
             object[] arguments =
             {
-                true, 30, new TaskCompletionSource<object>(), null, true, false, false, CancellationToken.None
+                true, 30, new TaskCompletionSource<object>(), null, true, false, false,
+                "ExecuteReader", CancellationToken.None
             };
             typeof(SqlCommand).GetMethod("PrepareForTransparentEncryption", BindingFlags.NonPublic | BindingFlags.Instance)
                 .Invoke(command, arguments);
@@ -489,7 +538,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 .SetValue(fixture.Connection.ConnectionOptions, SqlConnectionAttestationProtocol.NotSpecified);
             object[] preparationArguments =
             {
-                true, 30, new TaskCompletionSource<object>(), null, true, false, false, CancellationToken.None
+                true, 30, new TaskCompletionSource<object>(), null, true, false, false,
+                "ExecuteReader", CancellationToken.None
             };
             typeof(SqlCommand).GetMethod("PrepareForTransparentEncryption", BindingFlags.NonPublic | BindingFlags.Instance)
                 .Invoke(command, preparationArguments);

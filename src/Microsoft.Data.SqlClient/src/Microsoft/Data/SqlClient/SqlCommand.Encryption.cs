@@ -506,6 +506,7 @@ namespace Microsoft.Data.SqlClient
             bool asyncWrite,
             out bool usedCache,
             bool isRetry,
+            string method,
             CancellationToken cancellationToken = default)
         {
             returnTask = null;
@@ -530,10 +531,10 @@ namespace Microsoft.Data.SqlClient
                 {
                     usedCache = true;
 
-                    // With only plaintext parameters there are no keys to load, so finish inline.
-                    if (metadata.KeysToLoad.Count == 0)
+                    // With only plaintext parameters and no cached enclave keys there is no key
+                    // store work, so finish inline.
+                    if (cache.TryCompleteCachedQueryMetadataInline(this, metadata))
                     {
-                        cache.CompleteCachedQueryMetadata(this, metadata);
                         return;
                     }
 
@@ -558,6 +559,7 @@ namespace Microsoft.Data.SqlClient
                         completion,
                         asyncWrite,
                         isRetry,
+                        method,
                         cancellationToken));
                     return;
                 }
@@ -595,6 +597,7 @@ namespace Microsoft.Data.SqlClient
             TaskCompletionSource<object> completion,
             bool asyncWrite,
             bool isRetry,
+            string method,
             CancellationToken cancellationToken)
         {
             // On success, execution clears the in-progress flag after it reserves the connection.
@@ -605,7 +608,7 @@ namespace Microsoft.Data.SqlClient
                     .CompleteCachedQueryMetadataAsync(this, metadata, cancellationToken)
                     .ConfigureAwait(false);
 
-                ValidateConnectionLifetime(connection, closeCount, database);
+                ValidateConnectionLifetime(connection, closeCount, database, method);
 
                 if (!cacheHit)
                 {
@@ -650,12 +653,14 @@ namespace Microsoft.Data.SqlClient
         /// Rejects execution when the command's connection was replaced, closed and reopened, or
         /// switched to another database while encryption preparation was pending. The query
         /// metadata cache key includes the database, so metadata loaded for one database must not
-        /// be used to execute against another.
+        /// be used to execute against another. Also repeats the transaction binding checks of
+        /// <see cref="ValidateCommand"/>, because a transaction may have begun meanwhile.
         /// </summary>
         private void ValidateConnectionLifetime(
             SqlConnection connection,
             int closeCount,
-            string database)
+            string database,
+            string method)
         {
             if (!ReferenceEquals(_activeConnection, connection) || connection.CloseCount != closeCount)
             {
@@ -665,6 +670,24 @@ namespace Microsoft.Data.SqlClient
             if (!string.Equals(connection.Database, database, StringComparison.Ordinal))
             {
                 throw SQL.CannotModifyPropertyAsyncOperationInProgress(nameof(SqlConnection.Database));
+            }
+
+            if (_transaction is not null && _transaction.Connection is null)
+            {
+                _transaction = null;
+            }
+
+            // A closed connection has no transaction; a real close already failed the count check.
+            if (connection.State == ConnectionState.Open
+                && connection.HasLocalTransactionFromAPI
+                && _transaction is null)
+            {
+                throw ADP.TransactionRequired(method);
+            }
+
+            if (_transaction is not null && connection != _transaction.Connection)
+            {
+                throw ADP.TransactionConnectionMismatch();
             }
         }
 
