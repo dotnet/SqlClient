@@ -42,6 +42,31 @@ configuration bytes after execution, including when a scenario fails.
 The CI stage runs both reference modes on Linux and Windows, self-building its
 packages with per-job caches and unique versions rather than assuming artifacts.
 
+## Released-version compatibility comparison
+
+`CompatibilityTest` compiles the same public-API consumer against an exact released
+driver/Azure package version and the current Project build. It reuses the configuration
+files but does not assert Abstractions assembly placement, new switches, or diagnostic text.
+It requires neither SQL Server nor an identity service.
+
+```powershell
+pwsh -NoProfile -File src/Microsoft.Data.SqlClient/tests/AuthenticationTests/RunCompatibilityComparison.ps1 -BaselineVersion 7.1.2
+```
+
+The runner validates the restored baseline family versions and executes each scenario
+in a fresh process with a private copy of its configuration and a one-minute timeout.
+Current and legacy configuration, initializer activation, configured-provider precedence,
+Azure defaults, and application registration/replacement are shared success contracts.
+Initializer reentrant registration and the three invalid-configuration cases are behavioral
+probes; their outcomes and full exception diagnostics are recorded without version-specific
+expectations. Any observed difference or failed shared contract fails the comparison after
+writing `artifacts/AuthenticationCompatibility/comparison.json`. Use `-ReportPath` to retain
+a report elsewhere. An exception captured as an observation is not a passing assertion.
+
+This comparison runs on net10.0 only and does not establish Windows/net462 compatibility.
+It is a manual investigation tool, not part of the default test or CI targets. Differences
+must be assessed explicitly; do not make a comparison pass by hiding known baseline behavior.
+
 ## Registry publishing regression fixture
 
 [RegistryPublishTest](RegistryPublishTest/AuthenticationPublishTest.csproj) preserves
