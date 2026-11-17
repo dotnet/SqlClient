@@ -772,7 +772,7 @@ namespace Microsoft.Data.SqlClient.Parser
                 uint info = TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE | TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE | TdsEnums.SNI_SSL_SEND_ALPN_EXTENSION;
 
                 // Strict is a connection invariant: record it before the TLS-first handshake.
-                RecordEncryptionMode(encrypt);
+                _connHandler?.EncryptionInfoAccumulator?.Mode = SqlConnectionEncryptionMode.Strict;
                 EnableSsl(info, encrypt, integratedSecurity, serverCertificateFilename);
 
                 // Since encryption has already been negotiated, we need to set encryption not supported in
@@ -1111,41 +1111,105 @@ namespace Microsoft.Data.SqlClient.Parser
         }
 
         /// <summary>
-        /// Records the encryption mode of the in-progress login attempt as soon as it is known,
-        /// before any TLS handshake, so that a TLS failure still reports it.
+        /// Maps the encryption option resolved by the pre-login exchange to the encryption mode
+        /// reported for the connection. Strict (TDS 8) is recorded separately, before pre-login.
+        /// </summary>
+        /// <param name="option">
+        /// The option returned by <see cref="NegotiateEncryptionOption"/>, or the client's own
+        /// option when the server's pre-login response carried no encryption option.
+        /// </param>
+        /// <returns>
+        /// <see cref="SqlConnectionEncryptionMode.LoginOnly"/> for
+        /// <see cref="EncryptionOptions.LOGIN"/> (TLS removed after LOGIN7),
+        /// <see cref="SqlConnectionEncryptionMode.Full"/> for <see cref="EncryptionOptions.ON"/>
+        /// (all traffic encrypted), and otherwise <see cref="SqlConnectionEncryptionMode.None"/>
+        /// (no TLS).
+        /// </returns>
+        private static SqlConnectionEncryptionMode GetEncryptionMode(EncryptionOptions option) =>
+            option switch
+            {
+                EncryptionOptions.LOGIN => SqlConnectionEncryptionMode.LoginOnly,
+                EncryptionOptions.ON => SqlConnectionEncryptionMode.Full,
+                _ => SqlConnectionEncryptionMode.None,
+            };
+
+        /// <summary>
+        /// Resolves the encryption option for the connection from the client's option and the
+        /// encryption option of the server's pre-login response.
         /// </summary>
         /// <remarks>
-        /// Mode mapping (final state after login):
-        /// <list type="bullet">
-        /// <item><description><see cref="SqlConnectionEncryptOption.Strict"/> (TDS 8, TLS before pre-login) maps to <see cref="SqlConnectionEncryptionMode.Strict"/>.</description></item>
-        /// <item><description><see cref="EncryptionOptions.LOGIN"/> (TLS removed after LOGIN7) maps to <see cref="SqlConnectionEncryptionMode.LoginOnly"/>.</description></item>
-        /// <item><description><see cref="EncryptionOptions.ON"/> (all traffic encrypted) maps to <see cref="SqlConnectionEncryptionMode.Full"/>.</description></item>
-        /// <item><description>Any other pre-login outcome (no TLS) maps to <see cref="SqlConnectionEncryptionMode.None"/>.</description></item>
+        /// <list type="table">
+        /// <listheader>
+        /// <term>Client and server options</term><description>Result</description>
+        /// </listheader>
+        /// <item>
+        /// <term>OFF and OFF</term><description>LOGIN: only the login is encrypted.</description>
+        /// </item>
+        /// <item>
+        /// <term>OFF and REQ</term><description>ON: all traffic is encrypted.</description>
+        /// </item>
+        /// <item>
+        /// <term>OFF and any other</term><description>OFF: no encryption.</description>
+        /// </item>
+        /// <item>
+        /// <term>NOT_SUP and REQ</term>
+        /// <description>Error: the client does not support encryption.</description>
+        /// </item>
+        /// <item>
+        /// <term>Any other and NOT_SUP</term>
+        /// <description>Error: the server does not support encryption.</description>
+        /// </item>
+        /// <item>
+        /// <term>Otherwise</term><description>The client's option, unchanged.</description>
+        /// </item>
         /// </list>
         /// </remarks>
-        private void RecordEncryptionMode(SqlConnectionEncryptOption encrypt)
+        /// <param name="clientOption">
+        /// The client's encryption option sent in its pre-login request.
+        /// </param>
+        /// <param name="serverOption">
+        /// The encryption option of the server's pre-login response.
+        /// </param>
+        /// <returns>The resolved encryption option.</returns>
+        private EncryptionOptions NegotiateEncryptionOption(
+            EncryptionOptions clientOption,
+            EncryptionOptions serverOption)
         {
-            EncryptionInfoAccumulator accumulator = _connHandler?.EncryptionInfoAccumulator;
-            if (accumulator is null)
+            switch (clientOption)
             {
-                return;
-            }
+                case EncryptionOptions.OFF:
+                    if (serverOption == EncryptionOptions.OFF)
+                    {
+                        // Only encrypt login.
+                        return EncryptionOptions.LOGIN;
+                    }
+                    if (serverOption == EncryptionOptions.REQ)
+                    {
+                        // Encrypt all.
+                        return EncryptionOptions.ON;
+                    }
+                    // NOT_SUP: No encryption.
+                    return clientOption;
 
-            if (encrypt == SqlConnectionEncryptOption.Strict)
-            {
-                accumulator.Mode = SqlConnectionEncryptionMode.Strict;
-            }
-            else if (_encryptionOption == EncryptionOptions.LOGIN)
-            {
-                accumulator.Mode = SqlConnectionEncryptionMode.LoginOnly;
-            }
-            else if (_encryptionOption == EncryptionOptions.ON)
-            {
-                accumulator.Mode = SqlConnectionEncryptionMode.Full;
-            }
-            else
-            {
-                accumulator.Mode = SqlConnectionEncryptionMode.None;
+                case EncryptionOptions.NOT_SUP:
+                    if (serverOption == EncryptionOptions.REQ)
+                    {
+                        // Server requires encryption, but client does not support it.
+                        _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByClient(), "", 0));
+                        _physicalStateObj.Dispose();
+                        ThrowExceptionAndWarning(_physicalStateObj);
+                    }
+                    return clientOption;
+
+                default:
+                    // Any other client option needs encryption
+                    if (serverOption == EncryptionOptions.NOT_SUP)
+                    {
+                        _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByServer(), "", 0));
+                        _physicalStateObj.Dispose();
+                        ThrowExceptionAndWarning(_physicalStateObj);
+                    }
+                    return clientOption;
             }
         }
 
@@ -1256,43 +1320,7 @@ namespace Microsoft.Data.SqlClient.Parser
                         // Any response other than NOT_SUP means the server supports encryption.
                         serverSupportsEncryption = serverOption != EncryptionOptions.NOT_SUP;
 
-                        switch (_encryptionOption)
-                        {
-                            case (EncryptionOptions.OFF):
-                                if (serverOption == EncryptionOptions.OFF)
-                                {
-                                    // Only encrypt login.
-                                    _encryptionOption = EncryptionOptions.LOGIN;
-                                }
-                                else if (serverOption == EncryptionOptions.REQ)
-                                {
-                                    // Encrypt all.
-                                    _encryptionOption = EncryptionOptions.ON;
-                                }
-                                // NOT_SUP: No encryption.
-                                break;
-
-                            case (EncryptionOptions.NOT_SUP):
-                                if (serverOption == EncryptionOptions.REQ)
-                                {
-                                    // Server requires encryption, but client does not support it.
-                                    _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByClient(), "", 0));
-                                    _physicalStateObj.Dispose();
-                                    ThrowExceptionAndWarning(_physicalStateObj);
-                                }
-
-                                break;
-                            default:
-                                // Any other client option needs encryption
-                                if (serverOption == EncryptionOptions.NOT_SUP)
-                                {
-                                    _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByServer(), "", 0));
-                                    _physicalStateObj.Dispose();
-                                    ThrowExceptionAndWarning(_physicalStateObj);
-                                }
-                                break;
-                        }
-
+                        _encryptionOption = NegotiateEncryptionOption(_encryptionOption, serverOption);
                         break;
 
                     case (int)PreLoginOptions.INSTANCE:
@@ -1381,7 +1409,7 @@ namespace Microsoft.Data.SqlClient.Parser
                     | TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE;
 
                 // The pre-login response selected the mode; record it before the TLS handshake.
-                RecordEncryptionMode(encrypt);
+                _connHandler?.EncryptionInfoAccumulator?.Mode = GetEncryptionMode(_encryptionOption);
                 EnableSsl(info, encrypt, integratedSecurity, serverCertificateFilename);
             }
             else if (encrypt != SqlConnectionEncryptOption.Strict)
@@ -1389,7 +1417,7 @@ namespace Microsoft.Data.SqlClient.Parser
                 // No TLS on this connection: either the server does not support encryption with
                 // Encrypt=Optional, or the client OS does not support encryption. In Strict mode TLS
                 // was already established (and recorded) before pre-login.
-                RecordEncryptionMode(encrypt);
+                _connHandler?.EncryptionInfoAccumulator?.Mode = GetEncryptionMode(_encryptionOption);
             }
 
             return PreLoginHandshakeStatus.Successful;

@@ -2202,14 +2202,7 @@ namespace Microsoft.Data.SqlClient.Connection
             //
             // A delegated root can remain active after EnlistedTransaction has been detached.
             // Preserve the dirty flag until both forms of transaction ownership have ended.
-            if (_isolationLevelDirty &&
-                LocalAppContextSwitches.EnableTransactionIsolationLevelReset &&
-                EnlistedTransaction is null &&
-                !IsTransactionRoot)
-            {
-                ResetSessionIsolationLevel(timeout);
-            }
-
+            //
             // When we're required to automatically enlist in transactions and there is one we
             // enlist in it. On the other hand, if there isn't a transaction, and we are
             // currently enlisted in one, then we un-enlist from it.
@@ -2217,6 +2210,14 @@ namespace Microsoft.Data.SqlClient.Connection
             // current transaction, we cannot leave the connection enlisted in a transaction.
             try
             {
+                if (_isolationLevelDirty &&
+                    LocalAppContextSwitches.EnableTransactionIsolationLevelReset &&
+                    EnlistedTransaction is null &&
+                    !IsTransactionRoot)
+                {
+                    ResetSessionIsolationLevel(timeout);
+                }
+
                 if (transaction != null)
                 {
                     if (ConnectionOptions.Enlist)
@@ -2231,8 +2232,9 @@ namespace Microsoft.Data.SqlClient.Connection
             }
             catch (SqlException ex)
             {
-                // A pooled checkout is part of Open(), so its failure carries the encryption info
-                // the physical connection published when it logged in.
+                // A pooled checkout is part of Open(), so a failure of the isolation-level reset or
+                // the enlistment carries the encryption info the physical connection published when
+                // it logged in.
                 AttachPublishedEncryptionInfo(ex);
                 throw;
             }
@@ -3526,10 +3528,10 @@ namespace Microsoft.Data.SqlClient.Connection
 
         /// <summary>
         /// Attaches the snapshot this physical connection published at login to a
-        /// <see cref="SqlException"/> thrown while a pooled checkout enlists the connection in a
-        /// transaction during <c>Open</c>.
+        /// <see cref="SqlException"/> thrown while a pooled checkout resets the session isolation
+        /// level or enlists the connection in a transaction during <c>Open</c>.
         /// </summary>
-        /// <param name="ex">The exception thrown by the enlistment.</param>
+        /// <param name="ex">The exception thrown by the reset or the enlistment.</param>
         private void AttachPublishedEncryptionInfo(SqlException ex)
         {
             if (!EncryptionInfo.IsEmpty)

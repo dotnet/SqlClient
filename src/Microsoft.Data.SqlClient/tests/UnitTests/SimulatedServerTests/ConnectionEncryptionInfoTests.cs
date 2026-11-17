@@ -5,6 +5,7 @@
 using System;
 using System.Data;
 using System.Diagnostics;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Security.Authentication;
@@ -12,6 +13,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
+using Microsoft.Data.SqlClient.Tests.Common;
 using Microsoft.Data.SqlClient.Tests.Common.Fixtures;
 using Microsoft.SqlServer.TDS.PreLogin;
 using Microsoft.SqlServer.TDS.Servers;
@@ -31,12 +33,29 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         public EncryptionInfoCertificateFixture()
         {
             Certificate = CreateCertificate("localhost", new[] { "localhost" }, new[] { "127.0.0.1" });
+            CertificateFilePath = Path.Combine(Path.GetTempPath(), $"EncryptionInfo_{Guid.NewGuid():N}.cer");
+            File.WriteAllBytes(CertificateFilePath, Certificate.Export(X509ContentType.Cert));
         }
 
         /// <summary>
         /// Gets the self-signed certificate. It is not installed in any trusted store.
         /// </summary>
         public X509Certificate2 Certificate { get; }
+
+        /// <summary>
+        /// Gets the path of a file containing the public certificate, for pinning it through the
+        /// <c>ServerCertificate</c> connection string keyword.
+        /// </summary>
+        public string CertificateFilePath { get; }
+
+        /// <summary>
+        /// Deletes the exported certificate file.
+        /// </summary>
+        protected override void Dispose(bool disposing)
+        {
+            File.Delete(CertificateFilePath);
+            base.Dispose(disposing);
+        }
     }
 
     /// <summary>
@@ -47,6 +66,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
     public class ConnectionEncryptionInfoTests : IClassFixture<EncryptionInfoCertificateFixture>
     {
         private readonly X509Certificate2 _certificate;
+        private readonly string _certificateFilePath;
 
         /// <summary>
         /// Creates the test class with the shared server certificate.
@@ -54,6 +74,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         public ConnectionEncryptionInfoTests(EncryptionInfoCertificateFixture fixture)
         {
             _certificate = fixture.Certificate;
+            _certificateFilePath = fixture.CertificateFilePath;
         }
 
         /// <summary>
@@ -503,6 +524,86 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
         #endregion
 
+        #region Strict (TDS 8)
+
+        /// <summary>
+        /// A synchronous open with <c>Encrypt=Strict</c> establishes TLS before pre-login and
+        /// publishes <c>Strict</c> with the negotiated protocol.
+        /// </summary>
+        [Fact]
+        public void Open_EncryptStrictPinnedCertificate_PublishesStrictAndProtocol()
+        {
+            // Arrange
+            using TdsServer server = StartStrictServer(expectTlsHandshakeFailure: false);
+            using SqlConnection connection = new(BuildStrictConnectionString(server.EndPoint.Port, _certificateFilePath));
+
+            // Act
+            connection.Open();
+
+            // Assert
+            Assert.Equal(ConnectionState.Open, connection.State);
+            AssertStrict(connection.EncryptionInfo);
+        }
+
+        /// <summary>
+        /// An asynchronous open with <c>Encrypt=Strict</c> establishes TLS before pre-login and
+        /// publishes <c>Strict</c> with the negotiated protocol.
+        /// </summary>
+        [Fact]
+        public async Task OpenAsync_EncryptStrictPinnedCertificate_PublishesStrictAndProtocol()
+        {
+            // Arrange
+            using TdsServer server = StartStrictServer(expectTlsHandshakeFailure: false);
+            using SqlConnection connection = new(BuildStrictConnectionString(server.EndPoint.Port, _certificateFilePath));
+
+            // Act
+            await connection.OpenAsync();
+
+            // Assert
+            Assert.Equal(ConnectionState.Open, connection.State);
+            AssertStrict(connection.EncryptionInfo);
+        }
+
+        /// <summary>
+        /// A synchronous open with <c>Encrypt=Strict</c> whose TLS handshake rejects the untrusted
+        /// server certificate reports <c>Strict</c>, which is known before the handshake, but no
+        /// protocol.
+        /// </summary>
+        [Fact]
+        public void Open_EncryptStrictUntrustedCertificate_ExceptionReportsStrictWithoutProtocol()
+        {
+            // Arrange
+            using TdsServer server = StartStrictServer(expectTlsHandshakeFailure: true);
+            using SqlConnection connection = new(BuildStrictConnectionString(server.EndPoint.Port, serverCertificate: null));
+
+            // Act
+            SqlException ex = Assert.Throws<SqlException>(() => connection.Open());
+
+            // Assert
+            AssertStrictHandshakeFailure(ex, connection, server);
+        }
+
+        /// <summary>
+        /// An asynchronous open with <c>Encrypt=Strict</c> whose TLS handshake rejects the untrusted
+        /// server certificate reports <c>Strict</c>, which is known before the handshake, but no
+        /// protocol.
+        /// </summary>
+        [Fact]
+        public async Task OpenAsync_EncryptStrictUntrustedCertificate_ExceptionReportsStrictWithoutProtocol()
+        {
+            // Arrange
+            using TdsServer server = StartStrictServer(expectTlsHandshakeFailure: true);
+            using SqlConnection connection = new(BuildStrictConnectionString(server.EndPoint.Port, serverCertificate: null));
+
+            // Act
+            SqlException ex = await Assert.ThrowsAsync<SqlException>(() => connection.OpenAsync());
+
+            // Assert
+            AssertStrictHandshakeFailure(ex, connection, server);
+        }
+
+        #endregion
+
         #region Attempt isolation
 
         /// <summary>
@@ -789,9 +890,127 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             }
         }
 
+        /// <summary>
+        /// A synchronous pooled checkout whose session isolation-level reset is rejected by the
+        /// server throws an exception that carries the encryption info the physical connection
+        /// negotiated when it logged in, and performs no login.
+        /// </summary>
+        [Fact]
+        public void Open_PooledIsolationResetFails_ExceptionCarriesNegotiatedValues()
+        {
+            // Arrange
+            // Pool an idle physical connection whose isolation level must be reset on checkout,
+            // and make the server reject the reset batch.
+            using LocalAppContextSwitchesHelper switches = new();
+            switches.EnableTransactionIsolationLevelReset = true;
+            using TransientTdsErrorTdsServer server = StartIsolationLevelResetServer();
+            string connectionString = BuildPooledConnectionString(server.EndPoint.Port);
+            PoolDirtyIsolationLevelConnection(connectionString);
+            server.SetErrorBehavior(true, IsolationLevelResetErrorNumber);
+            using SqlConnection connection = new(connectionString);
+
+            try
+            {
+                // Act
+                SqlException ex = Assert.Throws<SqlException>(connection.Open);
+
+                // Assert
+                AssertIsolationLevelResetFailure(ex, connection, server);
+            }
+            finally
+            {
+                // Cleanup
+                SqlConnection.ClearPool(connection);
+            }
+        }
+
+        /// <summary>
+        /// An asynchronous pooled checkout whose session isolation-level reset is rejected by the
+        /// server throws an exception that carries the encryption info the physical connection
+        /// negotiated when it logged in, and performs no login.
+        /// </summary>
+        [Fact]
+        public async Task OpenAsync_PooledIsolationResetFails_ExceptionCarriesNegotiatedValues()
+        {
+            // Arrange
+            // Pool an idle physical connection whose isolation level must be reset on checkout,
+            // and make the server reject the reset batch.
+            using LocalAppContextSwitchesHelper switches = new();
+            switches.EnableTransactionIsolationLevelReset = true;
+            using TransientTdsErrorTdsServer server = StartIsolationLevelResetServer();
+            string connectionString = BuildPooledConnectionString(server.EndPoint.Port);
+            PoolDirtyIsolationLevelConnection(connectionString);
+            server.SetErrorBehavior(true, IsolationLevelResetErrorNumber);
+            using SqlConnection connection = new(connectionString);
+
+            try
+            {
+                // Act
+                SqlException ex = await Assert.ThrowsAsync<SqlException>(connection.OpenAsync);
+
+                // Assert
+                AssertIsolationLevelResetFailure(ex, connection, server);
+            }
+            finally
+            {
+                // Cleanup
+                SqlConnection.ClearPool(connection);
+            }
+        }
+
         #endregion
 
         #region Helpers
+
+        /// <summary>
+        /// The error number the server returns for the rejected isolation-level reset batch.
+        /// </summary>
+        private const uint IsolationLevelResetErrorNumber = 50000;
+
+        /// <summary>
+        /// Starts a server, requiring TLS, whose transient errors are non-fatal so that a rejected
+        /// batch surfaces as an ordinary <see cref="SqlException"/>. Errors are disabled until
+        /// <see cref="TransientTdsErrorTdsServer.SetErrorBehavior"/> enables them.
+        /// </summary>
+        private TransientTdsErrorTdsServer StartIsolationLevelResetServer()
+        {
+            TransientTdsErrorTdsServerArguments arguments =
+                CreateArguments<TransientTdsErrorTdsServerArguments>(ServerEncryption.Required);
+            arguments.ErrorClass = 16;
+            TransientTdsErrorTdsServer server = new(arguments);
+            server.Start();
+            return server;
+        }
+
+        /// <summary>
+        /// Opens a pooled connection, marks its session isolation level as changed, and returns it
+        /// to the pool, so the next checkout must reset the isolation level. The simulated server
+        /// does not implement transactions, so the changed state is seeded directly.
+        /// </summary>
+        private static void PoolDirtyIsolationLevelConnection(string connectionString)
+        {
+            using SqlConnection pooled = new(connectionString);
+            pooled.Open();
+            ((Connection.SqlConnectionInternal)pooled.InnerConnection).IsolationLevelDirty = true;
+        }
+
+        /// <summary>
+        /// Asserts that a rejected isolation-level reset on pooled checkout surfaced the server's
+        /// error with the negotiated encryption info, left the connection without a snapshot, and
+        /// did not cause an additional login.
+        /// </summary>
+        private static void AssertIsolationLevelResetFailure(
+            SqlException ex,
+            SqlConnection connection,
+            TransientTdsErrorTdsServer server)
+        {
+            Assert.Equal((int)IsolationLevelResetErrorNumber, ex.Number);
+            Assert.Equal(1, server.Login7Count);
+            AssertNegotiated(ex.EncryptionInfo, ServerEncryption.Required);
+            AssertCertificateFieldsNull(ex.EncryptionInfo);
+            AssertEmpty(connection.EncryptionInfo);
+            Assert.NotEqual(ConnectionState.Open, connection.State);
+        }
 
         /// <summary>
         /// A simulated server that can drop every connected client while it keeps listening, so
@@ -914,6 +1133,21 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         {
             TdsServerArguments arguments = CreateArguments<TdsServerArguments>(serverEncryption);
             arguments.ExpectTlsHandshakeFailure = true;
+            TdsServer server = new(arguments);
+            server.Start();
+            return server;
+        }
+
+        /// <summary>
+        /// Starts a server that establishes TLS before pre-login, as <c>Encrypt=Strict</c>
+        /// (TDS 8) requires. When <paramref name="expectTlsHandshakeFailure"/> is set, the server
+        /// expects the client to reject its certificate.
+        /// </summary>
+        private TdsServer StartStrictServer(bool expectTlsHandshakeFailure)
+        {
+            TdsServerArguments arguments = CreateArguments<TdsServerArguments>(ServerEncryption.Required);
+            arguments.TlsFirst = true;
+            arguments.ExpectTlsHandshakeFailure = expectTlsHandshakeFailure;
             TdsServer server = new(arguments);
             server.Start();
             return server;
@@ -1083,6 +1317,48 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         {
             Assert.True(server.PreLoginCount >= 1);
             Assert.Equal(SqlConnectionEncryptionMode.Full, ex.EncryptionInfo.NegotiatedEncryptionMode);
+            Assert.Null(ex.EncryptionInfo.NegotiatedEncryptionProtocol);
+            Assert.Null(ex.EncryptionInfo.NegotiatedCipherSuiteId);
+            AssertEmpty(connection.EncryptionInfo);
+        }
+
+        /// <summary>
+        /// Builds a <c>Encrypt=Strict</c> connection string. Strict always validates the server
+        /// certificate and ignores <c>TrustServerCertificate</c>, so the self-signed fixture
+        /// certificate is trusted only when pinned through <paramref name="serverCertificate"/>.
+        /// </summary>
+        private static string BuildStrictConnectionString(int port, string? serverCertificate)
+        {
+            SqlConnectionStringBuilder builder = new(BuildConnectionString(
+                port,
+                SqlConnectionEncryptOption.Strict,
+                trustServerCertificate: false));
+            if (serverCertificate is not null)
+            {
+                builder.ServerCertificate = serverCertificate;
+            }
+            return builder.ConnectionString;
+        }
+
+        /// <summary>
+        /// Asserts the values published by a successful <c>Encrypt=Strict</c> open.
+        /// </summary>
+        private static void AssertStrict(SqlConnectionEncryptionInfo info)
+        {
+            Assert.Equal(SqlConnectionEncryptionMode.Strict, info.NegotiatedEncryptionMode);
+            Assert.Equal(SslProtocols.Tls12, info.NegotiatedEncryptionProtocol);
+            AssertCertificateFieldsNull(info);
+        }
+
+        /// <summary>
+        /// Asserts the values reported when the <c>Encrypt=Strict</c> TLS handshake fails. Strict is
+        /// recorded before the handshake starts, so it is reported, but the handshake never
+        /// reports a protocol or cipher suite. No pre-login message is exchanged.
+        /// </summary>
+        private static void AssertStrictHandshakeFailure(SqlException ex, SqlConnection connection, TdsServer server)
+        {
+            Assert.Equal(0, server.PreLoginCount);
+            Assert.Equal(SqlConnectionEncryptionMode.Strict, ex.EncryptionInfo.NegotiatedEncryptionMode);
             Assert.Null(ex.EncryptionInfo.NegotiatedEncryptionProtocol);
             Assert.Null(ex.EncryptionInfo.NegotiatedCipherSuiteId);
             AssertEmpty(connection.EncryptionInfo);

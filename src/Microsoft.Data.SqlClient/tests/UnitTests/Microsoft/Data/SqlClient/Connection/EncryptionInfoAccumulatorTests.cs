@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
+using System.Linq;
 using System.Security.Authentication;
 using Microsoft.Data.SqlClient.Connection;
 using Xunit;
@@ -18,11 +20,72 @@ namespace Microsoft.Data.SqlClient.UnitTests
         // IANA identifier for TLS_AES_128_GCM_SHA256.
         private const int OtherCipherSuite = 0x1301;
 
+        #region Test data
+
+        /// <summary>
+        /// Every <see cref="SqlConnectionEncryptionMode"/> value.
+        /// </summary>
+        public static TheoryData<SqlConnectionEncryptionMode> AllModes =>
+            new((SqlConnectionEncryptionMode[])Enum.GetValues(typeof(SqlConnectionEncryptionMode)));
+
+        /// <summary>
+        /// Every <see cref="SslProtocols"/> value other than <see cref="SslProtocols.None"/>,
+        /// enumerated at run time so values added in future frameworks are covered. Obsolete
+        /// values are included: enumerating them does not reference them by name, so the compiler
+        /// does not warn.
+        /// </summary>
+        public static TheoryData<SslProtocols> ReportedProtocols =>
+            new(((SslProtocols[])Enum.GetValues(typeof(SslProtocols)))
+                .Where(protocol => protocol != SslProtocols.None));
+
+        /// <summary>
+        /// Every subset of the mode, protocol and cipher suite, as flags saying which are set.
+        /// </summary>
+        public static TheoryData<bool, bool, bool> AllPropertySubsets
+        {
+            get
+            {
+                TheoryData<bool, bool, bool> data = new();
+                for (int subset = 0; subset < 8; subset++)
+                {
+                    data.Add((subset & 1) != 0, (subset & 2) != 0, (subset & 4) != 0);
+                }
+                return data;
+            }
+        }
+
+        #endregion
+
+        #region Mode
+
+        /// <summary>
+        /// Setting the mode stores it and leaves the protocol and cipher suite unset.
+        /// </summary>
+        [Theory]
+        [MemberData(nameof(AllModes))]
+        public void Mode_Set_StoresValueOnly(SqlConnectionEncryptionMode mode)
+        {
+            // Arrange
+            EncryptionInfoAccumulator accumulator = new();
+
+            // Act
+            accumulator.Mode = mode;
+
+            // Assert
+            Assert.NotNull(accumulator.Mode);
+            Assert.Equal(mode, accumulator.Mode);
+            Assert.Null(accumulator.Protocol);
+            Assert.Null(accumulator.CipherSuite);
+            Assert.True(accumulator.HasValues);
+        }
+
+        #endregion
+
         #region Protocol
 
         /// <summary>
         /// <see cref="SslProtocols.None"/> means the protocol was not reported, so it is stored as
-        /// unavailable.
+        /// unavailable, replacing an earlier value, and leaves the other values unset.
         /// </summary>
         [Fact]
         public void Protocol_SetNone_StoresNull()
@@ -36,48 +99,30 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
             // Assert
             Assert.Null(accumulator.Protocol);
+            Assert.Null(accumulator.Mode);
+            Assert.Null(accumulator.CipherSuite);
             Assert.False(accumulator.HasValues);
         }
 
         /// <summary>
-        /// A reported protocol is stored unchanged.
+        /// A reported protocol is stored unchanged and leaves the mode and cipher suite unset.
         /// </summary>
-        [Fact]
-        public void Protocol_SetReported_StoresValue()
+        [Theory]
+        [MemberData(nameof(ReportedProtocols))]
+        public void Protocol_SetReported_StoresValueOnly(SslProtocols protocol)
         {
             // Arrange
             EncryptionInfoAccumulator accumulator = new();
 
             // Act
-            accumulator.Protocol = SslProtocols.Tls12;
+            accumulator.Protocol = protocol;
 
             // Assert
-            Assert.Equal(SslProtocols.Tls12, accumulator.Protocol);
+            Assert.NotNull(accumulator.Protocol);
+            Assert.Equal(protocol, accumulator.Protocol);
+            Assert.Null(accumulator.Mode);
+            Assert.Null(accumulator.CipherSuite);
             Assert.True(accumulator.HasValues);
-        }
-
-        #endregion
-
-        #region Mode
-
-        /// <summary>
-        /// The mode is kept without a protocol, as after a failed TLS handshake.
-        /// </summary>
-        [Fact]
-        public void Mode_SetWithoutProtocol_SnapshotHasModeOnly()
-        {
-            // Arrange
-            EncryptionInfoAccumulator accumulator = new();
-
-            // Act
-            accumulator.Mode = SqlConnectionEncryptionMode.Strict;
-
-            // Assert
-            Assert.True(accumulator.HasValues);
-            SqlConnectionEncryptionInfo snapshot = accumulator.ToSnapshot();
-            Assert.Equal(SqlConnectionEncryptionMode.Strict, snapshot.NegotiatedEncryptionMode);
-            Assert.Null(snapshot.NegotiatedEncryptionProtocol);
-            Assert.Null(snapshot.NegotiatedCipherSuiteId);
         }
 
         #endregion
@@ -85,12 +130,13 @@ namespace Microsoft.Data.SqlClient.UnitTests
         #region CipherSuite
 
         /// <summary>
-        /// The smallest and largest valid IANA identifiers are kept.
+        /// The smallest and largest valid IANA identifiers are stored and leave the mode and
+        /// protocol unset.
         /// </summary>
         [Theory]
         [InlineData(0)]
         [InlineData(0xFFFF)]
-        public void CipherSuite_BoundaryValue_Kept(int cipherSuite)
+        public void CipherSuite_BoundaryValue_StoresValueOnly(int cipherSuite)
         {
             // Arrange
             EncryptionInfoAccumulator accumulator = new();
@@ -99,13 +145,19 @@ namespace Microsoft.Data.SqlClient.UnitTests
             accumulator.CipherSuite = ToConstructorCipherSuite(cipherSuite);
 
             // Assert
+            Assert.NotNull(accumulator.CipherSuite);
+            Assert.Equal(ToConstructorCipherSuite(cipherSuite), accumulator.CipherSuite);
+            Assert.Null(accumulator.Mode);
+            Assert.Null(accumulator.Protocol);
+            Assert.True(accumulator.HasValues);
             Assert.Equal(cipherSuite, accumulator.ToSnapshot().NegotiatedCipherSuiteId);
         }
 
 #if NETFRAMEWORK
         /// <summary>
         /// On .NET Framework, where the identifier is an integer, a value outside the IANA identifier
-        /// range is ignored without throwing, and leaves an earlier valid value in place.
+        /// range is ignored without throwing, leaves an earlier valid value in place, and leaves the
+        /// mode and protocol unset.
         /// </summary>
         [Theory]
         [InlineData(-1)]
@@ -121,27 +173,61 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
             // Assert
             Assert.Equal(SampleCipherSuite, accumulator.CipherSuite);
+            Assert.Null(accumulator.Mode);
+            Assert.Null(accumulator.Protocol);
             Assert.Equal(SampleCipherSuite, accumulator.ToSnapshot().NegotiatedCipherSuiteId);
         }
 #endif
 
+        #endregion
+
+        #region Combinations
+
         /// <summary>
-        /// A cipher suite set on its own makes the accumulator non-empty.
+        /// Any combination of the mode, protocol and cipher suite can be set, and exactly the set
+        /// values are stored and surfaced in the snapshot.
         /// </summary>
-        [Fact]
-        public void CipherSuite_SetAlone_HasValuesAndSnapshotNotEmpty()
+        [Theory]
+        [MemberData(nameof(AllPropertySubsets))]
+        public void Properties_AnySubsetSet_StoresExactlyThatSubset(
+            bool setMode,
+            bool setProtocol,
+            bool setCipherSuite)
         {
             // Arrange
             EncryptionInfoAccumulator accumulator = new();
 
             // Act
-            accumulator.CipherSuite = ToConstructorCipherSuite(SampleCipherSuite);
+            if (setMode)
+            {
+                accumulator.Mode = SqlConnectionEncryptionMode.Full;
+            }
+            if (setProtocol)
+            {
+                accumulator.Protocol = SslProtocols.Tls12;
+            }
+            if (setCipherSuite)
+            {
+                accumulator.CipherSuite = ToConstructorCipherSuite(SampleCipherSuite);
+            }
+            SqlConnectionEncryptionInfo snapshot = accumulator.ToSnapshot();
 
             // Assert
-            Assert.True(accumulator.HasValues);
-            SqlConnectionEncryptionInfo snapshot = accumulator.ToSnapshot();
-            Assert.NotSame(SqlConnectionEncryptionInfo.Empty, snapshot);
-            Assert.Equal(SampleCipherSuite, snapshot.NegotiatedCipherSuiteId);
+            // The accumulator holds exactly the values that were set.
+            SqlConnectionEncryptionMode? expectedMode =
+                setMode ? SqlConnectionEncryptionMode.Full : null;
+            SslProtocols? expectedProtocol = setProtocol ? SslProtocols.Tls12 : null;
+            int? expectedCipherSuite = setCipherSuite ? SampleCipherSuite : null;
+            Assert.Equal(expectedMode, accumulator.Mode);
+            Assert.Equal(expectedProtocol, accumulator.Protocol);
+            Assert.Equal(setCipherSuite, accumulator.CipherSuite is not null);
+            Assert.Equal(setMode || setProtocol || setCipherSuite, accumulator.HasValues);
+
+            // The snapshot surfaces the same values, and is empty when none is set.
+            Assert.Equal(expectedMode, snapshot.NegotiatedEncryptionMode);
+            Assert.Equal(expectedProtocol, snapshot.NegotiatedEncryptionProtocol);
+            Assert.Equal(expectedCipherSuite, snapshot.NegotiatedCipherSuiteId);
+            Assert.Equal(!accumulator.HasValues, snapshot.IsEmpty);
         }
 
         #endregion
