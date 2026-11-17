@@ -528,6 +528,94 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
         #endregion
 
+        #region Strict (TDS 8)
+
+        /// <summary>
+        /// A synchronous <c>Encrypt=Strict</c> open with a matching ServerCertificate pin
+        /// publishes Strict with the certificate, no validation errors and no chain status.
+        /// </summary>
+        [Fact]
+        public void Open_StrictMatchingServerCertificate_PublishesCertificateAndNoErrors()
+        {
+            // Arrange
+            using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
+            using TdsServer server = StartServer(_fixture.Localhost, tlsFirst: true);
+            using TempCertFile pin = new(_fixture.Localhost);
+            using SqlConnection connection = new(BuildConnectionString(
+                server.EndPoint.Port, serverCertificate: pin.Path, encrypt: SqlConnectionEncryptOption.Strict));
+
+            // Act
+            connection.Open();
+
+            // Assert
+            AssertMatchingPinSnapshot(connection.EncryptionInfo, SqlConnectionEncryptionMode.Strict);
+        }
+
+        /// <summary>
+        /// An asynchronous <c>Encrypt=Strict</c> open with a matching ServerCertificate pin
+        /// publishes Strict with the certificate, no validation errors and no chain status.
+        /// </summary>
+        [Fact]
+        public async Task OpenAsync_StrictMatchingServerCertificate_PublishesCertificateAndNoErrors()
+        {
+            // Arrange
+            using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
+            using TdsServer server = StartServer(_fixture.Localhost, tlsFirst: true);
+            using TempCertFile pin = new(_fixture.Localhost);
+            using SqlConnection connection = new(BuildConnectionString(
+                server.EndPoint.Port, serverCertificate: pin.Path, encrypt: SqlConnectionEncryptOption.Strict));
+
+            // Act
+            await connection.OpenAsync();
+
+            // Assert
+            AssertMatchingPinSnapshot(connection.EncryptionInfo, SqlConnectionEncryptionMode.Strict);
+        }
+
+        /// <summary>
+        /// An untrusted certificate fails a synchronous <c>Encrypt=Strict</c> open; the exception
+        /// carries Strict, the certificate, ChainError, a non-clean chain status and the observed
+        /// protocol and cipher suite.
+        /// </summary>
+        [Fact]
+        public void Open_StrictUntrustedCertificate_ExceptionCarriesChainErrorAndCertificate()
+        {
+            // Arrange
+            using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
+            using TdsServer server = StartServer(_fixture.Localhost, expectTlsHandshakeFailure: true, tlsFirst: true);
+            using SqlConnection connection = new(BuildConnectionString(
+                server.EndPoint.Port, encrypt: SqlConnectionEncryptOption.Strict));
+
+            // Act
+            SqlException ex = Assert.Throws<SqlException>(() => connection.Open());
+
+            // Assert
+            AssertUntrustedCertificateFailure(ex, connection, SqlConnectionEncryptionMode.Strict);
+        }
+
+        /// <summary>
+        /// An untrusted certificate fails an asynchronous <c>Encrypt=Strict</c> open; the exception
+        /// carries Strict, the certificate, ChainError, a non-clean chain status and the observed
+        /// protocol and cipher suite.
+        /// </summary>
+        [Fact]
+        public async Task OpenAsync_StrictUntrustedCertificate_ExceptionCarriesChainErrorAndCertificate()
+        {
+            // Arrange
+            using LocalAppContextSwitchesHelper? switches = ForceManagedSni();
+            using TdsServer server = StartServer(_fixture.Localhost, expectTlsHandshakeFailure: true, tlsFirst: true);
+            using SqlConnection connection = new(BuildConnectionString(
+                server.EndPoint.Port, encrypt: SqlConnectionEncryptOption.Strict));
+
+            // Act
+            SqlException ex = await Assert.ThrowsAsync<SqlException>(() => connection.OpenAsync());
+
+            // Assert
+            AssertUntrustedCertificateFailure(ex, connection, SqlConnectionEncryptionMode.Strict);
+        }
+
+        #endregion
+
         #region Scenario assertions
 
         /// <summary>
@@ -552,9 +640,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// Asserts the matching-pin snapshot: the certificate with no validation errors and no
         /// chain status, because the chain is not consulted when a pin decides trust.
         /// </summary>
-        private void AssertMatchingPinSnapshot(SqlConnectionEncryptionInfo info)
+        private void AssertMatchingPinSnapshot(
+            SqlConnectionEncryptionInfo info,
+            SqlConnectionEncryptionMode mode = SqlConnectionEncryptionMode.Full)
         {
-            Assert.Equal(SqlConnectionEncryptionMode.Full, info.NegotiatedEncryptionMode);
+            Assert.Equal(mode, info.NegotiatedEncryptionMode);
             Assert.Equal(SslProtocols.Tls12, info.NegotiatedEncryptionProtocol);
             AssertCertificate(_fixture.Localhost, info);
             Assert.Equal(SqlServerCertificateValidationErrors.None, info.ValidationErrors);
@@ -566,7 +656,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// ChainError, a non-clean chain status and the observed negotiation, the connection stays
         /// empty, and nothing leaks into the message.
         /// </summary>
-        private void AssertUntrustedCertificateFailure(SqlException ex, SqlConnection connection)
+        private void AssertUntrustedCertificateFailure(
+            SqlException ex,
+            SqlConnection connection,
+            SqlConnectionEncryptionMode mode = SqlConnectionEncryptionMode.Full)
         {
             SqlConnectionEncryptionInfo info = ex.EncryptionInfo;
             AssertCertificate(_fixture.Localhost, info);
@@ -575,7 +668,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.NotEqual(X509ChainStatusFlags.NoError, info.ChainStatus);
             // Certificate validation failed after the protocol was agreed; the observed values
             // are kept.
-            AssertObservedNegotiation(info);
+            AssertObservedNegotiation(info, mode);
             AssertEmpty(connection.EncryptionInfo);
             AssertNoLeak(ex, info);
         }
@@ -665,9 +758,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// Managed SNI records the protocol and cipher suite agreed for the handshake inside the validation
         /// callback, so a certificate-validation failure still reports them and the mode being negotiated.
         /// </summary>
-        private static void AssertObservedNegotiation(SqlConnectionEncryptionInfo info)
+        private static void AssertObservedNegotiation(
+            SqlConnectionEncryptionInfo info,
+            SqlConnectionEncryptionMode mode = SqlConnectionEncryptionMode.Full)
         {
-            Assert.Equal(SqlConnectionEncryptionMode.Full, info.NegotiatedEncryptionMode);
+            Assert.Equal(mode, info.NegotiatedEncryptionMode);
             Assert.Equal(SslProtocols.Tls12, info.NegotiatedEncryptionProtocol);
             Assert.InRange(Assert.NotNull(info.NegotiatedCipherSuiteId), 1, 0xFFFF);
         }
@@ -714,7 +809,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// True when the client is expected to reject the certificate, so the server treats the resulting
         /// TLS handshake failure as expected rather than reporting it as a fault when it is stopped.
         /// </param>
-        private static TdsServer StartServer(X509Certificate2 certificate, bool expectTlsHandshakeFailure = false)
+        /// <param name="tlsFirst">
+        /// True to start a TDS 8 server that expects TLS before pre-login, as <c>Encrypt=Strict</c> requires.
+        /// </param>
+        private static TdsServer StartServer(
+            X509Certificate2 certificate,
+            bool expectTlsHandshakeFailure = false,
+            bool tlsFirst = false)
         {
             TdsServer server = new(new TdsServerArguments
             {
@@ -722,6 +823,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 EncryptionCertificate = certificate,
                 EncryptionProtocols = SslProtocols.Tls12,
                 ExpectTlsHandshakeFailure = expectTlsHandshakeFailure,
+                TlsFirst = tlsFirst,
             });
             server.Start();
             return server;
@@ -763,19 +865,20 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         /// <summary>
-        /// Builds a non-pooled, Encrypt=Mandatory connection string for a local simulated server,
-        /// with connection retry disabled so each test observes a single login.
+        /// Builds a non-pooled connection string for a local simulated server, with connection
+        /// retry disabled so each test observes a single login. Encryption defaults to Mandatory.
         /// </summary>
         private static string BuildConnectionString(
             int port,
             bool trustServerCertificate = false,
             string? serverCertificate = null,
-            string? hostNameInCertificate = null)
+            string? hostNameInCertificate = null,
+            SqlConnectionEncryptOption? encrypt = null)
         {
             SqlConnectionStringBuilder builder = new()
             {
                 DataSource = "localhost," + port,
-                Encrypt = SqlConnectionEncryptOption.Mandatory,
+                Encrypt = encrypt ?? SqlConnectionEncryptOption.Mandatory,
                 TrustServerCertificate = trustServerCertificate,
                 Pooling = false,
                 ConnectTimeout = 15,

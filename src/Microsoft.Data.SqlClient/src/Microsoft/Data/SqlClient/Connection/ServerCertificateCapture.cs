@@ -11,7 +11,7 @@ namespace Microsoft.Data.SqlClient.Connection
 {
     /// <summary>
     /// Immutable record of the server certificate details observed by the transport during one TLS
-    /// handshake. Produced by the transport layer and consumed by <see cref="EncryptionInfoCapture"/>.
+    /// handshake. Produced by the transport layer and consumed by <see cref="EncryptionInfoAccumulator"/>.
     /// </summary>
     /// <remarks>
     /// Each value is <see langword="null"/> when it is unavailable: no certificate was presented

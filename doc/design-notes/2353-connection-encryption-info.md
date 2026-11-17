@@ -345,8 +345,9 @@ Native SNI does not yet report certificate details; those fields remain `null` t
 same two points as the protocol, on both the TCP and named-pipe handles (MARS passes through to
 the physical handle):
 
-- **After the handshake completes,** `TdsParser.EnableSsl` records the value from the session
-  handle into the accumulator's `CipherSuite` property. This read is authoritative for a successful attempt.
+- **After the handshake completes,** `TdsParser.EnableSsl` assigns the value from the session
+  handle to the accumulator's `CipherSuite` property. This read is authoritative for a
+  successful attempt.
 - **Inside the validation callback,** the value is stored with the certificate capture.
   `SslStream` processes the ServerHello, which selects the suite, before it raises the callback,
   so the value is real there. The tests confirm it matches the suite a trusted handshake with the
@@ -355,9 +356,9 @@ the physical handle):
 
 Both reads are wrapped in `try`/`catch` so that capture never affects the handshake. A suite of
 `0` (`TLS_NULL_WITH_NULL_NULL`, nothing agreed yet) is treated as unavailable. Without TLS, the
-properties are `null`. The value flows through the SNI handles, `ServerCertificateCapture` and
-`EncryptionInfoCapture` as an `int`. `NegotiatedCipherSuiteId` returns it unchanged, and on .NET
-`NegotiatedCipherSuite` casts the same value to `TlsCipherSuite`.
+properties are `null`. The value flows through the SNI handles and `ServerCertificateCapture` as
+an `int`; `TdsParser.EnableSsl` casts it to `TlsCipherSuite` on .NET when it assigns it to the
+accumulator. `NegotiatedCipherSuiteId` returns the same IANA identifier.
 Managed SNI runs only on `net10.0`; on `net462` this capture is not compiled
 and `NegotiatedCipherSuiteId` stays `null` until native SNI support (Slice D).
 
