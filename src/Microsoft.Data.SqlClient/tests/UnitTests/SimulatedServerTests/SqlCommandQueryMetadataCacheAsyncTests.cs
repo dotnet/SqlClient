@@ -191,6 +191,39 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         /// <summary>
+        /// A stale key found after the connection switched databases must evict the entry that was
+        /// probed, not the valid entry cached for the new database.
+        /// </summary>
+        [Fact]
+        public async Task ExecuteReaderAsync_DatabaseChangedBeforeStaleKey_EvictsProbedEntry()
+        {
+            // Arrange
+            using Fixture fixture = new();
+            using SqlCommand command = fixture.CreateCachedCommand();
+            string probedDatabase = fixture.Connection.Database;
+            SqlQueryMetadataCache cache = SqlQueryMetadataCache.GetInstance();
+
+            // Cache the same query for the other database, then switch back to probe the first.
+            fixture.Connection.ChangeDatabase(OtherDatabase);
+            cache.AddQueryMetadata(command, ignoreQueriesWithReturnValueParams: true);
+            fixture.Connection.ChangeDatabase(probedDatabase);
+
+            Task<SqlDataReader> operation = command.ExecuteReaderAsync();
+            await fixture.KeyLoadEntered;
+            fixture.Connection.ChangeDatabase(OtherDatabase);
+
+            // Act
+            fixture.FailKeyLoad();
+            await Assert.ThrowsAsync<InvalidOperationException>(() => Bounded(operation));
+
+            // Assert
+            Assert.True(cache.TryGetCachedQueryMetadata(command, out _));
+            fixture.Connection.ChangeDatabase(probedDatabase);
+            Assert.False(cache.TryGetCachedQueryMetadata(command, out _));
+            Assert.False(IsInProgress(command));
+        }
+
+        /// <summary>
         /// A stale key must not start the fallback describe on a connection that was closed and
         /// reopened while the key was loading.
         /// </summary>

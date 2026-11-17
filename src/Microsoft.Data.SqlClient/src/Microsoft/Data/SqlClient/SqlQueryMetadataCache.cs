@@ -69,12 +69,12 @@ namespace Microsoft.Data.SqlClient
                 }
                 catch (Exception ex) when (ex is SqlException or ArgumentException)
                 {
-                    OnKeyLoadFailed(sqlCommand, clearParameterMetadata: true);
+                    OnKeyLoadFailed(sqlCommand, metadata, clearParameterMetadata: true);
                     return false;
                 }
                 catch (Exception)
                 {
-                    OnKeyLoadFailed(sqlCommand, clearParameterMetadata: false);
+                    OnKeyLoadFailed(sqlCommand, metadata, clearParameterMetadata: false);
                     throw;
                 }
             }
@@ -172,7 +172,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            metadata = new CachedQueryMetadata(enclaveLookupKey, keysToLoad);
+            metadata = new CachedQueryMetadata(cacheLookupKey, enclaveLookupKey, keysToLoad);
             return true;
         }
 
@@ -204,7 +204,7 @@ namespace Microsoft.Data.SqlClient
                 catch (Exception ex) when (ex is SqlException or ArgumentException)
                 {
                     // The key information is stale, so fail the cache lookup.
-                    OnKeyLoadFailed(sqlCommand, clearParameterMetadata: true);
+                    OnKeyLoadFailed(sqlCommand, metadata, clearParameterMetadata: true);
                     return false;
                 }
                 catch (OperationCanceledException)
@@ -217,7 +217,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 catch (Exception)
                 {
-                    OnKeyLoadFailed(sqlCommand, clearParameterMetadata: false);
+                    OnKeyLoadFailed(sqlCommand, metadata, clearParameterMetadata: false);
                     throw;
                 }
             }
@@ -271,10 +271,15 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Rolls back a cache lookup whose column encryption key load failed.
         /// </summary>
-        private void OnKeyLoadFailed(SqlCommand sqlCommand, bool clearParameterMetadata)
+        private void OnKeyLoadFailed(
+            SqlCommand sqlCommand,
+            CachedQueryMetadata metadata,
+            bool clearParameterMetadata)
         {
-            // Invalidate the cache entry.
-            InvalidateCacheEntry(sqlCommand);
+            // Invalidate the probed entry. The connection's database may have changed while the
+            // keys were loading, so don't recompute the keys from the command.
+            _cache.Remove(metadata.CacheLookupKey);
+            _cache.Remove(metadata.EnclaveLookupKey);
 
             if (!clearParameterMetadata)
             {
@@ -295,11 +300,20 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal readonly struct CachedQueryMetadata
         {
-            internal CachedQueryMetadata(string enclaveLookupKey, List<SqlCipherMetadata> keysToLoad)
+            internal CachedQueryMetadata(
+                string cacheLookupKey,
+                string enclaveLookupKey,
+                List<SqlCipherMetadata> keysToLoad)
             {
+                CacheLookupKey = cacheLookupKey;
                 EnclaveLookupKey = enclaveLookupKey;
                 KeysToLoad = (IReadOnlyList<SqlCipherMetadata>)keysToLoad ?? Array.Empty<SqlCipherMetadata>();
             }
+
+            /// <summary>
+            /// The cache key under which this query's parameter metadata is stored.
+            /// </summary>
+            internal string CacheLookupKey { get; }
 
             /// <summary>
             /// The cache key under which this query's enclave keys are stored.
