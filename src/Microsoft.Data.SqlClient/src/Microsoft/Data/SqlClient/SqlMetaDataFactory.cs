@@ -151,11 +151,12 @@ namespace Microsoft.Data.SqlClient
 
         internal sealed class MetaDataContext
         {
-            public readonly ConnectionCapabilities Capabilities;
-            public readonly string[] RestrictionValues;
-            public readonly DbConnection Connection;
-            public readonly bool IsAsync;
-            public readonly CancellationToken CancellationToken;
+            public ConnectionCapabilities Capabilities { get; }
+            public string[] RestrictionValues { get; }
+            public DbConnection Connection { get; }
+            public bool IsAsync { get; }
+            public CancellationToken CancellationToken { get; }
+
 
             internal MetaDataContext(string[] restrictions, DbConnection connection, bool isAsync, CancellationToken cancellationToken)
             {
@@ -171,9 +172,9 @@ namespace Microsoft.Data.SqlClient
 
         internal sealed class Restriction
         {
-            public readonly string RestrictionName;
-            public readonly string ParameterName;
-            public readonly string RestrictionDefault;
+            public string RestrictionName { get; }
+            public string ParameterName { get; }
+            public string RestrictionDefault { get; }
 
             internal Restriction(string restrictionName, string parameterName,string restrictionDefault)
             {
@@ -185,8 +186,8 @@ namespace Microsoft.Data.SqlClient
 
         internal abstract class MetaDataCollectionBase
         {
-            public readonly string CollectionName;
-            public readonly int NumberOfIdentifierParts;
+            public string CollectionName { get; }
+            public int NumberOfIdentifierParts { get; }
             public virtual int NumberOfRestrictions => 0;
 
             internal MetaDataCollectionBase(string collectionName, int numberOfIdentifierParts)

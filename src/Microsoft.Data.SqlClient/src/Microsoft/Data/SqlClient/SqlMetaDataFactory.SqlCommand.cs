@@ -34,7 +34,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private sealed class SqlCommandCollection : MetaDataCollectionBase
         {
-            private readonly SupportedQuery[] Queries;
+            private SupportedQuery[] Queries { get; }
             public Restriction[] RestrictionParams { get; init; }
             public override int NumberOfRestrictions => RestrictionParams.Length;
 
