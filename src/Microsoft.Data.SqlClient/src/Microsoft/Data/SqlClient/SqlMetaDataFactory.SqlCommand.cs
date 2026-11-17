@@ -5,9 +5,7 @@
 using System;
 using System.Data;
 using System.Data.Common;
-using System.Diagnostics;
 using System.Globalization;
-using System.Security.Policy;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
 
@@ -17,55 +15,20 @@ namespace Microsoft.Data.SqlClient
 {
     internal sealed partial class SqlMetaDataFactory
     {
-        private sealed class SupportedQuery
-        {
-            public readonly string Query;
-            public readonly Predicate<ConnectionCapabilities>? IsSupported;
-
-            public SupportedQuery(string query, Predicate<ConnectionCapabilities>? isSupported = null)
-            {
-                Query = query;
-                IsSupported = isSupported;
-            }
-        }
-
         /// <summary>
         /// Returns one of the <see href="https://learn.microsoft.com/en-us/dotnet/framework/data/adonet/sql-server-schema-collections">SQL Server Schema collections</see>
         /// </summary>
         private sealed class SqlCommandCollection : MetaDataCollectionBase
         {
-            private SupportedQuery[] Queries { get; }
-            public Restriction[] RestrictionParams { get; init; }
+            private readonly string _query;
+            public Restriction[] RestrictionParams { get; }
             public override int NumberOfRestrictions => RestrictionParams.Length;
 
-            public SqlCommandCollection(string collectionName, int numberOfIdentifierParts, SupportedQuery[] queries, Restriction[] restrictions)
+            public SqlCommandCollection(string collectionName, int numberOfIdentifierParts, string query, Restriction[] restrictions)
                 : base(collectionName, numberOfIdentifierParts)
             {
                 RestrictionParams = restrictions;
-                Queries = queries;
-            }
-
-            public override bool SupportedByCurrentVersion(MetaDataContext context) => GetSupportedQuery(context, false) != null;
-
-            private SupportedQuery? GetSupportedQuery(MetaDataContext context, bool throwIfNotFound)
-            {
-                SupportedQuery? validQuery = null;
-                foreach (SupportedQuery query in Queries)
-                {
-                    if (query.IsSupported == null || query.IsSupported(context.Capabilities))
-                    {
-                        Debug.Assert(validQuery == null, $"Two queries matches current version {context.Capabilities.ServerVersion} in collection {CollectionName}");
-                        validQuery = query;
-                    }
-                }
-
-                // If there are no queries matching current server version, then whole collection is undefined for this version
-                if (validQuery == null && throwIfNotFound)
-                {
-                    throw ADP.UndefinedCollection(CollectionName);
-                }
-
-                return validQuery;
+                _query = query;
             }
 
             public async override ValueTask<DataTable> GetMetadata(MetaDataContext context, DataTable? accumulator = null)
@@ -95,7 +58,7 @@ namespace Microsoft.Data.SqlClient
                 SqlConnection castConnection = (SqlConnection)context.Connection;
                 using SqlCommand command = castConnection.CreateCommand();
 
-                command.CommandText = GetSupportedQuery(context, true)!.Query;
+                command.CommandText = _query;
                 command.CommandTimeout = Math.Max(command.CommandTimeout, 180);
                 command.Transaction = castConnection?.GetOpenTdsConnection()?.CurrentTransaction?.Parent;
 

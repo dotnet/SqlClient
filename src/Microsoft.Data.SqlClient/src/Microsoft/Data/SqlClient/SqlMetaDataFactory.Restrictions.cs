@@ -16,6 +16,12 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private sealed class RestrictionsCollection : MetaDataCollectionBase
         {
+            // Well-known column names
+            private const string RestrictionDefaultKey = "RestrictionDefault";
+            private const string RestrictionNumberKey = "RestrictionNumber";
+            private const string RestrictionNameKey = "RestrictionName";
+            private const string ParameterNameKey = "ParameterName";
+
             internal RestrictionsCollection() : base(DbMetaDataCollectionNames.Restrictions, 0)
             {
             }
@@ -41,9 +47,7 @@ namespace Microsoft.Data.SqlClient
 
                 foreach (MetaDataCollectionBase mdc in s_metaDataCollection)
                 {
-                    if (mdc is SqlCommandCollection sqlCollection &&
-                        sqlCollection.RestrictionParams != null &&
-                        sqlCollection.SupportedByCurrentVersion(context))
+                    if (mdc is SqlCommandCollection sqlCollection && sqlCollection.RestrictionParams != null)
                     {
                         int i = 1;
                         foreach (Restriction restriction in sqlCollection.RestrictionParams)

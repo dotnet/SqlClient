@@ -3,9 +3,9 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
-using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Parser;
@@ -59,7 +59,7 @@ internal sealed partial class SqlMetaDataFactory
             TypeMetaData.CreateVectorType(caps => caps.VectorVersion != TdsEnums.VECTOR_VERSION_NOT_SUPPORTED && caps.VectorVersion >= TdsEnums.VECTOR_VERSION_FLOAT16, "dimensions,base_type"),
         ];
 
-        #pragma warning restore format
+        private static readonly HashSet<int> s_assemblyPropertyUnsupportedEngines = new() { 6, 9, 11 };
 
         internal DataTypesCollection()
             : base(DbMetaDataCollectionNames.DataTypes, 0)
@@ -157,30 +157,83 @@ internal sealed partial class SqlMetaDataFactory
             result.EndLoadData();
             result.AcceptChanges();
 
-            // 2. Add UDTs from the server if supported
-            MetaDataCollectionBase? udtCollection = FindMetaDataCollection("_UDTs", context);
-            if (udtCollection != null)
-            {
-                const string GetEngineEditionSqlCommand = "SELECT SERVERPROPERTY('EngineEdition');";
-                using SqlCommand command = ((SqlConnection)context.Connection).CreateCommand();
+            // 2. Add UDTs from the server
+            const string GetEngineEditionSqlCommand = "SELECT SERVERPROPERTY('EngineEdition');";
+            using SqlCommand command = ((SqlConnection)context.Connection).CreateCommand();
 
-                command.CommandText = GetEngineEditionSqlCommand;
-                int engineEdition = (int)(context.IsAsync ? await command.ExecuteScalarAsync(context.CancellationToken).ConfigureAwait(false) : command.ExecuteScalar());
-                // Azure SQL Edge (9) throws an exception when querying sys.assemblies
-                // Azure Synapse Analytics (6) and Azure Synapse serverless SQL pool (11)
-                // do not support ASSEMBLYPROPERTY
-                if (!s_assemblyPropertyUnsupportedEngines.Contains(engineEdition))
-                {
-                    await udtCollection.GetMetadata(context, result).ConfigureAwait(false);
-                }
+            command.CommandText = GetEngineEditionSqlCommand;
+            int engineEdition = (int)(context.IsAsync ? await command.ExecuteScalarAsync(context.CancellationToken).ConfigureAwait(false) : command.ExecuteScalar());
+            // Azure SQL Edge (9) throws an exception when querying sys.assemblies
+            // Azure Synapse Analytics (6) and Azure Synapse serverless SQL pool (11)
+            // do not support ASSEMBLYPROPERTY
+            if (!s_assemblyPropertyUnsupportedEngines.Contains(engineEdition))
+            {
+                var udtCommand = new SqlCommandCollection("_UDTs", 2,
+                @"select types.assembly_class COLLATE database_default+"
+                        + "', ' + assemblies.name + ', Version=' +"
+                        + "CONVERT(VARCHAR(200),ASSEMBLYPROPERTY(assemblies.name, 'VersionMajor')) + '.' +"
+                        + "CONVERT(VARCHAR(200),ASSEMBLYPROPERTY(assemblies.name, 'VersionMinor')) + '.' +"
+                        + "CONVERT(VARCHAR(200),ASSEMBLYPROPERTY(assemblies.name, 'VersionBuild')) + '.' +"
+                        + "CONVERT(VARCHAR(200),ASSEMBLYPROPERTY(assemblies.name, 'VersionRevision')) +"
+                        + "ISNULL(', Culture=' + CONVERT(VARCHAR(200),ASSEMBLYPROPERTY(assemblies.name, 'CultureInfo')),'') +"
+                        + "ISNULL(', PublicKeyToken=' + LOWER(REPLACE(CONVERT(VARCHAR(200),ASSEMBLYPROPERTY(assemblies.name, 'PublicKey'),1),'0x','')),'') TypeName,"
+                        + "29 ProviderDbType,"
+                        + "max_length ColumnSize,"
+                        + "null CreateFormat,"
+                        + "null CreateParameters,"
+                        + "null DataType,"
+                        + "null IsAutoincrementable,"
+                        + "null IsBestMatch,"
+                        + "null IsCaseSensitive,"
+                        + "is_fixed_length IsFixedLength,"
+                        + "null IsFixedPrecisionScale,"
+                        + "null IsLong,"
+                        + "is_nullable IsNullable,"
+                        + "1 IsSearchable,"
+                        + "null IsSearchableWithLike,"
+                        + "null IsUnsigned,"
+                        + "null MaximumScale,"
+                        + "null MinimumScale,"
+                        + "null IsConcurrencyType,"
+                        + "0 IsLiteralSupported,"
+                        + "null LiteralPrefix,"
+                        + "null LiteralSuffix,"
+                        + "null NativeDataType "
+                  + "from sys.assemblies as assemblies "
+                  + "join sys.assembly_types as types on assemblies.assembly_id = types.assembly_id",
+                []);
+                await udtCommand.GetMetadata(context, result).ConfigureAwait(false);
             }
 
-            // 3. Add TVPs from the server if supported
-            MetaDataCollectionBase? tvpCollection = FindMetaDataCollection("_TVPs", context);
-            if (tvpCollection != null)
-            {
-                await tvpCollection.GetMetadata(context, result).ConfigureAwait(false);
-            }
+            // 3. Add TVPs from the server
+            var tvpCommand = new SqlCommandCollection("_TVPs", 2,
+                    @"select name TypeName, "
+                      + "30 ProviderDbType, "
+                      + "max_length ColumnSize, "
+                      + "null CreateFormat, "
+                      + "null CreateParameters, "
+                      + "null DataType, "
+                      + "null IsAutoincrementable, "
+                      + "null IsBestMatch, "
+                      + "null IsCaseSensitive, "
+                      + "null IsFixedLength, "
+                      + "null IsFixedPrecisionScale, "
+                      + "null IsLong, "
+                      + "is_nullable IsNullable, "
+                      + "0 IsSearchable, "
+                      + "null IsSearchableWithLike, "
+                      + "null IsUnsigned, "
+                      + "null MaximumScale, "
+                      + "null MinimumScale, "
+                      + "null IsConcurrencyType, "
+                      + "0 IsLiteralSupported, "
+                      + "null LiteralPrefix, "
+                      + "null LiteralSuffix, "
+                      + "null NativeDataType "
+                    + "from sys.types "
+                    + "where is_table_type = 1",
+                    []);
+            await tvpCommand.GetMetadata(context, result).ConfigureAwait(false);
 
             return result;
         }

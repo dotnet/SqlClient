@@ -45,10 +45,7 @@ internal sealed partial class SqlMetaDataFactory
 
             foreach (MetaDataCollectionBase mdc in s_metaDataCollection)
             {
-                if (mdc.SupportedByCurrentVersion(context) && mdc.CollectionName[0] != '_')
-                {
-                    table.Rows.Add([mdc.CollectionName, mdc.NumberOfRestrictions, mdc.NumberOfIdentifierParts]);
-                }
+                table.Rows.Add([mdc.CollectionName, mdc.NumberOfRestrictions, mdc.NumberOfIdentifierParts]);
             }
 
             return new ValueTask<DataTable>(table);

@@ -336,7 +336,7 @@ namespace Microsoft.Data.SqlClient
 
             // Get the metadata factory from the pool entry. If it does not already have one
             // create one and save it on the pool entry
-            return poolGroup.MetaDataFactory ??= CreateMetaDataFactory();
+            return poolGroup.MetaDataFactory ??= new SqlMetaDataFactory();
         }
         
         internal void QueuePoolForRelease(IDbConnectionPool pool, bool clearing)
@@ -819,11 +819,6 @@ namespace Microsoft.Data.SqlClient
                     opt.IdleTimeout);
             }
             return poolingOptions;
-        }
-
-        private static SqlMetaDataFactory CreateMetaDataFactory()
-        {
-            return new SqlMetaDataFactory();
         }
         
         private Task<DbConnectionInternal> CreateReplaceConnectionContinuation(
