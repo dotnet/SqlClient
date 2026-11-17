@@ -87,27 +87,9 @@ namespace Microsoft.Data.SqlClient
         /// </returns>
         internal ServerCertificateCapture? TryCapture(SNIHandle? handle)
         {
-            if (_validationInfoUnavailable)
-            {
-                return null;
-            }
-
             try
             {
-                SniCertValidationInfo info = SniCertValidationInfo.Create();
-                uint result;
-                try
-                {
-                    result = _validationInfoQuery(handle, ref info);
-                }
-                catch (EntryPointNotFoundException)
-                {
-                    _validationInfoUnavailable = true;
-                    SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SniNativeCertificateCapture.TryCapture|ADV> SNIGetCertValidationInfoWrapper is not exported by the loaded SNI library; certificate details are unavailable.");
-                    return null;
-                }
-
-                if (result != ERROR_SUCCESS || !IsValid(info))
+                if (!TryQueryValidationInfo(handle, out SniCertValidationInfo info))
                 {
                     return null;
                 }
@@ -123,6 +105,55 @@ namespace Microsoft.Data.SqlClient
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SniNativeCertificateCapture.TryCapture|ADV> Certificate details unavailable; capture failed with {0}.", e.GetType().Name);
                 return null;
             }
+        }
+
+        /// <summary>
+        /// Reads only the cipher suite native SNI recorded for <paramref name="handle"/>, without
+        /// reading the presented certificate.
+        /// </summary>
+        /// <returns>
+        /// The IANA cipher suite identifier, or <see langword="null"/> when native SNI did not report
+        /// one, the export is not available, or the query failed.
+        /// </returns>
+        internal int? TryGetCipherSuite(SNIHandle? handle)
+        {
+            try
+            {
+                return TryQueryValidationInfo(handle, out SniCertValidationInfo info) ? MapCipherSuite(info) : null;
+            }
+            catch (Exception e)
+            {
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SniNativeCertificateCapture.TryGetCipherSuite|ADV> Cipher suite unavailable; query failed with {0}.", e.GetType().Name);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Queries <c>SNIGetCertValidationInfoWrapper</c>, caching a missing export.
+        /// </summary>
+        /// <returns><see langword="true"/> if the query succeeded and returned a valid structure.</returns>
+        private bool TryQueryValidationInfo(SNIHandle? handle, out SniCertValidationInfo info)
+        {
+            info = default;
+            if (_validationInfoUnavailable)
+            {
+                return false;
+            }
+
+            info = SniCertValidationInfo.Create();
+            uint result;
+            try
+            {
+                result = _validationInfoQuery(handle, ref info);
+            }
+            catch (EntryPointNotFoundException)
+            {
+                _validationInfoUnavailable = true;
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SniNativeCertificateCapture.TryCapture|ADV> SNIGetCertValidationInfoWrapper is not exported by the loaded SNI library; certificate details are unavailable.");
+                return false;
+            }
+
+            return result == ERROR_SUCCESS && IsValid(info);
         }
 
         /// <summary>
@@ -218,13 +249,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            int? cipherSuite = null;
-            if ((available & SniCertInfoAvailability.CipherSuite) != 0 &&
-                info.dwCipherSuite != 0 &&
-                info.dwCipherSuite <= ushort.MaxValue)
-            {
-                cipherSuite = (int)info.dwCipherSuite;
-            }
+            int? cipherSuite = MapCipherSuite(info);
 
             if (certificate is null && validationErrors is null && chainStatus is null && protocol is null && cipherSuite is null)
             {
@@ -233,5 +258,16 @@ namespace Microsoft.Data.SqlClient
 
             return new ServerCertificateCapture(certificate, validationErrors, chainStatus, protocol, cipherSuite);
         }
+
+        /// <summary>
+        /// Maps the cipher suite of a valid structure, or <see langword="null"/> if it is not
+        /// available or is not a valid IANA identifier.
+        /// </summary>
+        private static int? MapCipherSuite(SniCertValidationInfo info) =>
+            (info.dwAvailable & (uint)SniCertInfoAvailability.CipherSuite) != 0 &&
+            info.dwCipherSuite != 0 &&
+            info.dwCipherSuite <= ushort.MaxValue
+                ? (int)info.dwCipherSuite
+                : null;
     }
 }

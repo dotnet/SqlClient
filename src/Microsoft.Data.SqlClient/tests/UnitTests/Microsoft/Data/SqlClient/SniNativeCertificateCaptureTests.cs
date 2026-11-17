@@ -536,54 +536,6 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal(0xFFFF, mappedCapture.CipherSuite);
         }
 
-        /// <summary>Verifies a native cipher suite survives a deferred validation failure.</summary>
-        [Fact]
-        public void EncryptionInfoCapture_DeferredValidationFailure_KeepsCipherSuite()
-        {
-            // Native deferred validation: the handshake completes, so the capture taken after EnableSsl
-            // carries the cipher suite. The verdict then fails the LOGIN7 write; the observed cipher
-            // suite survives the failure-path rule together with the protocol and certificate fields.
-            ServerCertificateCapture? certificate = SniNativeCertificateCapture.Map(
-                Build(
-                    0x1 | 0x2 | 0x4 | 0x8 | 0x10 | CipherSuiteAvailable,
-                    mode: 2,
-                    protocol: TlsClient12,
-                    errors: (uint)SqlServerCertificateValidationErrors.ChainError,
-                    chain: (uint)X509ChainStatusFlags.UntrustedRoot,
-                    cipherSuite: 0xC030),
-                Certificate(8));
-
-            var capture = new EncryptionInfoCapture();
-            capture.Reset();
-            capture.RecordServerCertificate(certificate);
-            capture.Record(SqlConnectionEncryptionMode.Full, SslProtocols.None);
-
-            capture.DiscardUnobservedNegotiation();
-
-            SqlConnectionEncryptionInfo snapshot = capture.ToSnapshot();
-            Assert.Equal(0xC030, snapshot.NegotiatedCipherSuiteId);
-#if NET
-            Assert.Equal(
-                System.Net.Security.TlsCipherSuite.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-                snapshot.NegotiatedCipherSuite);
-#endif
-            Assert.Equal(SslProtocols.Tls12, snapshot.NegotiatedEncryptionProtocol);
-            Assert.Equal(SqlServerCertificateValidationErrors.ChainError, snapshot.ValidationErrors);
-            Assert.Equal(Certificate(8), Assert.NotNull(snapshot.PresentedServerCertificateRawData).ToArray());
-        }
-
-        /// <summary>Verifies a reset clears a native cipher suite.</summary>
-        [Fact]
-        public void EncryptionInfoCapture_ResetClearsNativeCipherSuite()
-        {
-            var capture = new EncryptionInfoCapture();
-            capture.RecordServerCertificate(new ServerCertificateCapture(null, null, null, SslProtocols.Tls12, 0xC030));
-            capture.Reset();
-
-            Assert.Null(capture.ToSnapshot().NegotiatedCipherSuiteId);
-            Assert.False(capture.HasValues);
-        }
-
         #endregion
 
         #region Query, error codes, and degradation
@@ -916,138 +868,141 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Null(SniNativeCertificateCapture.Default.TryCapture(null));
         }
 
-        #endregion
-
-        #region Capture context integration
-
-        /// <summary>Verifies the native protocol is used when no other protocol was recorded.</summary>
+        /// <summary>
+        /// Verifies the cipher suite query reads only the validation info structure and never reads
+        /// the presented certificate.
+        /// </summary>
         [Fact]
-        public void EncryptionInfoCapture_TransportProtocol_UsedWhenNotOtherwiseRecorded()
+        public void TryGetCipherSuite_CipherSuiteAvailable_ReturnsItWithoutReadingCertificate()
         {
-            var capture = new EncryptionInfoCapture();
-            capture.Reset();
+            // Arrange
+            var certificateQuery = new FakeCertificateQuery(Certificate(0x21));
+            var capture = new SniNativeCertificateCapture(
+                (SNIHandle? _, ref SniCertValidationInfo info) =>
+                {
+                    info = Build(available: AllAvailable, mode: 3, protocol: TlsClient12, errors: 0, chain: 0, cipherSuite: TlsAes256GcmSha384);
+                    return SniNativeCertificateCapture.ERROR_SUCCESS;
+                },
+                certificateQuery.Query);
 
-            capture.RecordServerCertificate(new ServerCertificateCapture(Certificate(1), SqlServerCertificateValidationErrors.ChainError, X509ChainStatusFlags.UntrustedRoot, SslProtocols.Tls12));
+            // Act
+            int? cipherSuite = capture.TryGetCipherSuite(null);
 
-            SqlConnectionEncryptionInfo snapshot = capture.ToSnapshot();
-            Assert.Null(snapshot.NegotiatedEncryptionMode);
-            Assert.Equal(SslProtocols.Tls12, snapshot.NegotiatedEncryptionProtocol);
-            Assert.Equal(SqlServerCertificateValidationErrors.ChainError, snapshot.ValidationErrors);
-            Assert.Equal(X509ChainStatusFlags.UntrustedRoot, snapshot.ChainStatus);
+            // Assert
+            Assert.Equal((int)TlsAes256GcmSha384, cipherSuite);
+            Assert.Empty(certificateQuery.BufferLengths);
         }
 
-        /// <summary>Verifies the protocol from the handshake takes precedence over the native one.</summary>
-        [Fact]
-        public void EncryptionInfoCapture_HandshakeProtocol_TakesPrecedence()
+        /// <summary>
+        /// Verifies the cipher suite query reports nothing when native SNI did not flag a usable
+        /// cipher suite.
+        /// </summary>
+        [Theory]
+        [InlineData(AllAvailable & ~CipherSuiteAvailable, TlsAes256GcmSha384)]
+        [InlineData(CipherSuiteAvailable, 0u)]
+        [InlineData(CipherSuiteAvailable, 0x10000u)]
+        public void TryGetCipherSuite_CipherSuiteUnavailableOrInvalid_ReturnsNull(uint available, uint cipherSuite)
         {
-            var capture = new EncryptionInfoCapture();
-            capture.RecordServerCertificate(new ServerCertificateCapture(null, null, null, (SslProtocols)0x3000));
-            capture.Record(SqlConnectionEncryptionMode.Full, SslProtocols.Tls12);
+            // Arrange
+            var capture = new SniNativeCertificateCapture(
+                (SNIHandle? _, ref SniCertValidationInfo info) =>
+                {
+                    info = Build(available, mode: 3, protocol: TlsClient12, errors: 0, chain: 0, cipherSuite: cipherSuite);
+                    return SniNativeCertificateCapture.ERROR_SUCCESS;
+                },
+                new FakeCertificateQuery(Certificate(0x22)).Query);
 
-            Assert.Equal(SslProtocols.Tls12, capture.Protocol);
+            // Act
+            int? result = capture.TryGetCipherSuite(null);
+
+            // Assert
+            Assert.Null(result);
         }
 
-        /// <summary>Verifies an unreported handshake protocol keeps the native protocol.</summary>
-        [Fact]
-        public void EncryptionInfoCapture_UnreportedHandshakeProtocol_KeepsTransportProtocol()
+        /// <summary>
+        /// Verifies the cipher suite query ignores the structure when native SNI returns an error code.
+        /// </summary>
+        [Theory]
+        [InlineData(87u)]
+        [InlineData(122u)]
+        [InlineData(1168u)]
+        public void TryGetCipherSuite_ErrorReturnCode_ReturnsNull(uint errorCode)
         {
-            var capture = new EncryptionInfoCapture();
-            capture.RecordServerCertificate(new ServerCertificateCapture(null, null, null, SslProtocols.Tls12));
-            capture.Record(SqlConnectionEncryptionMode.Full, SslProtocols.None);
+            // Arrange
+            var capture = new SniNativeCertificateCapture(
+                (SNIHandle? _, ref SniCertValidationInfo info) =>
+                {
+                    info = Build(available: CipherSuiteAvailable, mode: 0, protocol: 0, errors: 0, chain: 0, cipherSuite: TlsAes256GcmSha384);
+                    return errorCode;
+                },
+                new FakeCertificateQuery(Certificate(0x23)).Query);
 
-            Assert.Equal(SslProtocols.Tls12, capture.Protocol);
+            // Act
+            int? result = capture.TryGetCipherSuite(null);
+
+            // Assert
+            Assert.Null(result);
         }
 
-        /// <summary>Verifies the native protocol does not override an already recorded protocol.</summary>
+        /// <summary>
+        /// Verifies a missing validation info export is detected once and shared with the full
+        /// certificate capture.
+        /// </summary>
         [Fact]
-        public void EncryptionInfoCapture_TransportProtocol_DoesNotOverrideRecordedProtocol()
+        public void TryGetCipherSuite_MissingExport_DegradesOnceForAllQueries()
         {
-            var capture = new EncryptionInfoCapture();
-            capture.Record(SqlConnectionEncryptionMode.Strict, SslProtocols.Tls12);
-            capture.RecordServerCertificate(new ServerCertificateCapture(null, null, null, (SslProtocols)0x3000));
+            // Arrange
+            int infoCalls = 0;
+            var capture = new SniNativeCertificateCapture(
+                (SNIHandle? _, ref SniCertValidationInfo info) =>
+                {
+                    infoCalls++;
+                    throw new EntryPointNotFoundException("SNIGetCertValidationInfoWrapper");
+                },
+                new FakeCertificateQuery(Certificate(0x24)).Query);
 
-            Assert.Equal(SslProtocols.Tls12, capture.Protocol);
+            // Act
+            int? first = capture.TryGetCipherSuite(null);
+            int? second = capture.TryGetCipherSuite(null);
+            ServerCertificateCapture? details = capture.TryCapture(null);
+
+            // Assert
+            Assert.Null(first);
+            Assert.Null(second);
+            Assert.Null(details);
+            Assert.True(capture.IsValidationInfoUnavailable);
+            Assert.Equal(1, infoCalls);
         }
 
-        /// <summary>Verifies a deferred validation failure keeps the observed negotiation and certificate fields.</summary>
+        /// <summary>
+        /// Verifies an unexpected exception from the native query is swallowed and does not mark the
+        /// export as missing.
+        /// </summary>
         [Fact]
-        public void EncryptionInfoCapture_DeferredValidationFailure_KeepsObservedNegotiationAndCertificateFields()
+        public void TryGetCipherSuite_QueryThrows_ReturnsNullWithoutDisabling()
         {
-            // Native ChainPolicy failure: EnableSsl and the handshake wait report success, so the
-            // certificate details and the negotiated values are recorded; the verdict then surfaces as
-            // an SSL provider error on the LOGIN7 write, and ProcessSNIError applies the failure-path
-            // rule. The protocol was observed for this attempt, so mode and protocol are kept.
-            byte[] certificate = Certificate(7);
-            const uint available = 0x1 | 0x2 | 0x4 | 0x8 | 0x10;
-            ServerCertificateCapture? details = SniNativeCertificateCapture.Map(
-                Build(
-                    available,
-                    mode: 3,
-                    protocol: 0x800,
-                    errors: (uint)(SqlServerCertificateValidationErrors.HostNameMismatch | SqlServerCertificateValidationErrors.ChainError),
-                    chain: (uint)X509ChainStatusFlags.UntrustedRoot),
-                certificate);
+            // Arrange
+            var capture = new SniNativeCertificateCapture(
+                (SNIHandle? _, ref SniCertValidationInfo info) => throw new InvalidOperationException("boom"),
+                new FakeCertificateQuery(Certificate(0x25)).Query);
 
-            var capture = new EncryptionInfoCapture();
-            capture.Reset();
-            capture.RecordServerCertificate(details);
-            capture.Record(SqlConnectionEncryptionMode.Full, SslProtocols.None);
-            Assert.Equal(SslProtocols.Tls12, capture.Protocol);
+            // Act
+            int? result = capture.TryGetCipherSuite(null);
 
-            capture.DiscardUnobservedNegotiation();
-
-            SqlConnectionEncryptionInfo snapshot = capture.ToSnapshot();
-            Assert.Equal(SqlConnectionEncryptionMode.Full, snapshot.NegotiatedEncryptionMode);
-            Assert.Equal(SslProtocols.Tls12, snapshot.NegotiatedEncryptionProtocol);
-            Assert.Equal(certificate, Assert.NotNull(snapshot.PresentedServerCertificateRawData).ToArray());
-            Assert.Equal(SqlServerCertificateValidationErrors.HostNameMismatch | SqlServerCertificateValidationErrors.ChainError, snapshot.ValidationErrors);
-            Assert.Equal(X509ChainStatusFlags.UntrustedRoot, snapshot.ChainStatus);
+            // Assert
+            Assert.Null(result);
+            Assert.False(capture.IsValidationInfoUnavailable);
         }
 
-        /// <summary>Verifies a failure without an observed protocol discards the mode.</summary>
+        /// <summary>Verifies the real P/Invoke binding degrades to no cipher suite without a usable handle.</summary>
         [Fact]
-        public void EncryptionInfoCapture_FailureWithoutObservedProtocol_DiscardsMode()
+        public void TryGetCipherSuite_DefaultWithoutUsableHandle_ReturnsNull()
         {
-            byte[] certificate = Certificate(9);
-            var capture = new EncryptionInfoCapture();
-            capture.RecordServerCertificate(new ServerCertificateCapture(certificate, SqlServerCertificateValidationErrors.ChainError, X509ChainStatusFlags.UntrustedRoot));
-            capture.Record(SqlConnectionEncryptionMode.Full, SslProtocols.None);
+            // Act
+            int? result = SniNativeCertificateCapture.Default.TryGetCipherSuite(null);
 
-            capture.DiscardUnobservedNegotiation();
-
-            SqlConnectionEncryptionInfo snapshot = capture.ToSnapshot();
-            Assert.Null(snapshot.NegotiatedEncryptionMode);
-            Assert.Null(snapshot.NegotiatedEncryptionProtocol);
-            Assert.Equal(certificate, Assert.NotNull(snapshot.PresentedServerCertificateRawData).ToArray());
-            Assert.Equal(SqlServerCertificateValidationErrors.ChainError, snapshot.ValidationErrors);
-        }
-
-        /// <summary>Verifies the mode is recorded only when a protocol was observed.</summary>
-        [Fact]
-        public void EncryptionInfoCapture_RecordModeIfProtocolObserved_RequiresProtocol()
-        {
-            var withoutProtocol = new EncryptionInfoCapture();
-            withoutProtocol.RecordServerCertificate(new ServerCertificateCapture(Certificate(1), SqlServerCertificateValidationErrors.ChainError, null));
-            withoutProtocol.RecordModeIfProtocolObserved(SqlConnectionEncryptionMode.Full);
-            Assert.Null(withoutProtocol.Mode);
-
-            var withProtocol = new EncryptionInfoCapture();
-            withProtocol.RecordServerCertificate(new ServerCertificateCapture(Certificate(1), SqlServerCertificateValidationErrors.ChainError, null, SslProtocols.Tls12));
-            withProtocol.RecordModeIfProtocolObserved(SqlConnectionEncryptionMode.Strict);
-            Assert.Equal(SqlConnectionEncryptionMode.Strict, withProtocol.Mode);
-            Assert.Equal(SslProtocols.Tls12, withProtocol.Protocol);
-        }
-
-        /// <summary>Verifies a reset clears the native protocol.</summary>
-        [Fact]
-        public void EncryptionInfoCapture_ResetClearsTransportProtocol()
-        {
-            var capture = new EncryptionInfoCapture();
-            capture.RecordServerCertificate(new ServerCertificateCapture(null, null, null, SslProtocols.Tls12));
-            capture.Reset();
-
-            Assert.Null(capture.Protocol);
-            Assert.False(capture.HasValues);
+            // Assert
+            Assert.Null(result);
         }
 
         #endregion

@@ -980,7 +980,7 @@ namespace Microsoft.Data.SqlClient.Parser
 
                 // For an asynchronous native handshake the certificate details are complete only once
                 // the handshake wait returns; refresh them before any failure is reported.
-                _connHandler?.EncryptionInfoCapture?.RecordServerCertificate(_physicalStateObj.GetServerCertificateCapture());
+                ApplyServerCertificateCapture();
 
                 if (error != TdsEnums.SNI_SUCCESS)
                 {
@@ -1013,6 +1013,33 @@ namespace Microsoft.Data.SqlClient.Parser
 
             // create a new packet encryption changes the internal packet size Bug# 228403
             _physicalStateObj.ClearAllWritePackets();
+
+            void ApplyServerCertificateCapture()
+            {
+                ServerCertificateCapture certificateCapture = _physicalStateObj.GetServerCertificateCapture();
+                EncryptionInfoAccumulator accumulator = _connHandler?.EncryptionInfoAccumulator;
+                if (accumulator is null || certificateCapture is null)
+                {
+                    return;
+                }
+
+                accumulator.ServerCertificateRawData = certificateCapture.RawCertificate;
+                accumulator.ValidationErrors = certificateCapture.ValidationErrors;
+                accumulator.ChainStatus = certificateCapture.ChainStatus;
+
+                // A protocol or cipher suite already determined for this attempt takes precedence over
+                // one reported alongside the certificate details.
+                accumulator.Protocol ??= certificateCapture.Protocol;
+
+                if (accumulator.CipherSuite is null && certificateCapture.CipherSuite is int capturedCipherSuite)
+                {
+#if NET
+                    accumulator.CipherSuite = (System.Net.Security.TlsCipherSuite)capturedCipherSuite;
+#else
+                    accumulator.CipherSuite = capturedCipherSuite;
+#endif
+                }
+            }
         }
 
         /// <summary>
@@ -1122,7 +1149,12 @@ namespace Microsoft.Data.SqlClient.Parser
             }
 #endif
 
-            accumulator.Protocol = protocol;
+            // A protocol that was not reported keeps one the transport already observed for this
+            // attempt (for example native SNI's certificate capture) instead of erasing it.
+            if (protocol != SslProtocols.None)
+            {
+                accumulator.Protocol = protocol;
+            }
         }
 
         /// <summary>

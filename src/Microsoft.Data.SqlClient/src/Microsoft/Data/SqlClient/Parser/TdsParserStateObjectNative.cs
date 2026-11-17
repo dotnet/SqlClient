@@ -462,6 +462,13 @@ namespace Microsoft.Data.SqlClient.Parser
         internal override Connection.ServerCertificateCapture GetServerCertificateCapture() =>
             _sessionHandle is null ? null : SniNativeCertificateCapture.Default.TryCapture(_sessionHandle);
 
+        /// <summary>
+        /// Reads the cipher suite native SNI recorded for the TLS handshake on this connection.
+        /// Returns <see langword="null"/> when the loaded SNI library does not report it.
+        /// </summary>
+        internal override int? GetNegotiatedCipherSuite() =>
+            _sessionHandle is null ? null : SniNativeCertificateCapture.Default.TryGetCipherSuite(_sessionHandle);
+
         internal override SniErrorDetails GetErrorDetails()
         {
             SniNativeWrapper.SniGetLastError(out SniError sniError);
