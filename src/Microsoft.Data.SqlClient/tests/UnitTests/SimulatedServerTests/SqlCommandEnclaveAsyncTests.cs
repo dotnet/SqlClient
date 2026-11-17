@@ -76,7 +76,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             object[] arguments =
             {
                 CommandBehavior.Default, RunBehavior.ReturnImmediately, true, true, 30, null,
-                true, false, "ExecuteReader", null, preparation.Task
+                true, false, "ExecuteReader", CancellationToken.None, null, preparation.Task
             };
             using SqlDataReader pendingReader = (SqlDataReader)typeof(SqlCommand)
                 .GetMethod("RunExecuteReaderTdsWithTransparentParameterEncryption", BindingFlags.NonPublic | BindingFlags.Instance)
@@ -113,7 +113,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             object[] arguments =
             {
                 CommandBehavior.Default, RunBehavior.ReturnImmediately, true, true, 30, null,
-                true, false, "ExecuteReader", null, Task.CompletedTask
+                true, false, "ExecuteReader", CancellationToken.None, null, Task.CompletedTask
             };
 
             // Act
@@ -373,7 +373,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             object[] arguments =
             {
                 CommandBehavior.Default, RunBehavior.ReturnImmediately, true, true, 30, null,
-                true, false, "ExecuteReader", null, Task.CompletedTask
+                true, false, "ExecuteReader", CancellationToken.None, null, Task.CompletedTask
             };
             typeof(SqlCommand)
                 .GetMethod(
@@ -1042,6 +1042,87 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         /// <summary>
+        /// An overlapping execution rejected while the bounded retry prepares does not detach the
+        /// original execution's token, so canceling it still releases the retry's package key load.
+        /// </summary>
+        [Fact]
+        public async Task ExecuteReaderAsync_RejectedOverlapDuringRetry_RetryKeepsCancellation()
+        {
+            // Arrange
+            // Cached key metadata whose session disappears faults the first attempt.
+            using Fixture fixture = new Fixture();
+            using SqlCommand command = fixture.CreateCommand();
+            using CancellationTokenSource cancellation = new CancellationTokenSource();
+            command.SetBatchRPCMode(true, 1);
+            command.AddBatchCommand(new SqlBatchCommand("SELECT 1",
+                columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled));
+            command.SetBatchRPCModeReadyToExecute();
+            fixture.Provider.CacheHit = true;
+            fixture.Provider.OnCacheHit = () =>
+            {
+                command.keysToBeSentToEnclave =
+                    new ConcurrentDictionary<int, SqlTceCipherInfoEntry>();
+                Assert.True(command.keysToBeSentToEnclave.TryAdd(0, new SqlTceCipherInfoEntry()));
+                SetField(command, "enclavePackage",
+                    new EnclavePackage(Array.Empty<byte>(), fixture.Provider.Session));
+            };
+            SqlConnectionInternal inner = (SqlConnectionInternal)fixture.Connection.InnerConnection;
+            Task<SqlDataReader> operation = command.ExecuteReaderAsync(cancellation.Token);
+            await await Task.WhenAny(fixture.Provider.Entered.Task, operation);
+
+            // The retry finds a warm session, and its package needs a key held pending.
+            PendingKeyStoreProvider keyProvider = new PendingKeyStoreProvider();
+            fixture.Connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(
+                new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>
+                {
+                    ["PENDING_PACKAGE_KEY"] = keyProvider
+                });
+            SqlTceCipherInfoEntry entry = new SqlTceCipherInfoEntry(0);
+            entry.Add(Guid.NewGuid().ToByteArray(), 42, 7, 1, 3,
+                "pending-package-key", "PENDING_PACKAGE_KEY", "RSA_OAEP");
+            Task<SqlDataReader> second = null;
+            fixture.Provider.SyncCacheHit = true;
+            fixture.Provider.OnCacheHit = () =>
+            {
+                command.keysToBeSentToEnclave =
+                    new ConcurrentDictionary<int, SqlTceCipherInfoEntry>();
+                Assert.True(command.keysToBeSentToEnclave.TryAdd(0, entry));
+
+                // Act
+                // Start an overlapping execution while the retry prepares.
+                second = command.ExecuteReaderAsync();
+            };
+            try
+            {
+                fixture.Provider.CompleteSessionOperation();
+                await await Task.WhenAny(keyProvider.Entered.Task, operation);
+                CancellationToken keyToken = keyProvider.Token;
+                cancellation.Cancel();
+
+                // Assert
+                // The overlap is rejected, and the retry's key load still observes the original
+                // token, so canceling it releases the execution.
+                await Assert.ThrowsAsync<InvalidOperationException>(() => second);
+                Assert.Equal(cancellation.Token, keyToken);
+                await Assert.ThrowsAnyAsync<OperationCanceledException>(() => operation);
+            }
+            finally
+            {
+                // Cleanup
+                keyProvider.Completion.TrySetResult(new byte[32]);
+            }
+
+            // Command and connection state are released, so the connection remains usable.
+            Assert.Null(GetField(command, "_stateObj"));
+            Assert.Null(GetField(command, "_enclaveRetryConnection"));
+            Assert.False((bool)GetField(command, "_enclaveAttestationInProgress"));
+            Assert.Equal(0, GetAsyncCount(inner));
+            using SqlCommand reusable =
+                new SqlCommand("/* reuse after canceled retry */", fixture.Connection);
+            Assert.Equal(-1, await reusable.ExecuteNonQueryAsync());
+        }
+
+        /// <summary>
         /// An XML execution whose first attempt faults with a retryable package failure stays
         /// pending until the retry finishes, and then reports the retry's outcome.
         /// </summary>
@@ -1382,11 +1463,17 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
             internal readonly TaskCompletionSource<byte[]> Completion =
                 new TaskCompletionSource<byte[]>(TaskCreationOptions.RunContinuationsAsynchronously);
+            internal CancellationToken Token;
 
-            /// <summary>Signals that package generation reached asynchronous key loading.</summary>
+            /// <summary>
+            /// Signals that package generation reached asynchronous key loading, and cancels the
+            /// pending load when the caller's token is canceled.
+            /// </summary>
             public override Task<byte[]> DecryptColumnEncryptionKeyAsync(
                 string path, string algorithm, byte[] key, CancellationToken cancellationToken = default)
             {
+                Token = cancellationToken;
+                cancellationToken.Register(() => Completion.TrySetCanceled(cancellationToken));
                 Entered.SetResult(true);
                 return Completion.Task;
             }

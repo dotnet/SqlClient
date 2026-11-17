@@ -187,72 +187,6 @@ public class SqlCommandTests
     }
 
     /// <summary>
-    /// A missing or closed connection faults reader setup without retaining the caller's token,
-    /// even though setup fails before the cleanup continuation is registered.
-    /// </summary>
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public async Task ExecuteReaderAsync_FailedSetup_ClearsCancellationToken(bool hasConnection)
-    {
-        // Arrange
-        using SqlConnection connection = new();
-        using SqlCommand command = new("SELECT 1", hasConnection ? connection : null);
-        using CancellationTokenSource source = new();
-
-        // Act
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => command.ExecuteReaderAsync(source.Token));
-
-        // Assert
-        Assert.Equal(CancellationToken.None, GetAsyncExecutionCancellationToken(command));
-    }
-
-    /// <summary>
-    /// A missing or closed connection faults non-query setup without retaining the caller's token,
-    /// even though setup fails before the cleanup continuation is registered.
-    /// </summary>
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public async Task ExecuteNonQueryAsync_FailedSetup_ClearsCancellationToken(bool hasConnection)
-    {
-        // Arrange
-        using SqlConnection connection = new();
-        using SqlCommand command = new("SELECT 1", hasConnection ? connection : null);
-        using CancellationTokenSource source = new();
-
-        // Act
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => command.ExecuteNonQueryAsync(source.Token));
-
-        // Assert
-        Assert.Equal(CancellationToken.None, GetAsyncExecutionCancellationToken(command));
-    }
-
-    /// <summary>
-    /// A missing or closed connection faults XML reader setup without retaining the caller's
-    /// token, even though setup fails before the cleanup continuation is registered.
-    /// </summary>
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public async Task ExecuteXmlReaderAsync_FailedSetup_ClearsCancellationToken(bool hasConnection)
-    {
-        // Arrange
-        using SqlConnection connection = new();
-        using SqlCommand command = new("SELECT 1", hasConnection ? connection : null);
-        using CancellationTokenSource source = new();
-
-        // Act
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => command.ExecuteXmlReaderAsync(source.Token));
-
-        // Assert
-        Assert.Equal(CancellationToken.None, GetAsyncExecutionCancellationToken(command));
-    }
-
-    /// <summary>
     /// An async cache hit whose provider completes synchronously must still load the key on a
     /// worker, not inline on the caller's thread, and must publish the cached metadata.
     /// </summary>
@@ -664,15 +598,6 @@ public class SqlCommandTests
             () => method.Invoke(command, new object[] { completion.Task }));
         return exception.InnerException;
     }
-
-    /// <summary>Reads the private token captured for the in-flight async execution.</summary>
-    /// <param name="command">The command to inspect.</param>
-    /// <returns>The captured cancellation token.</returns>
-    private static CancellationToken GetAsyncExecutionCancellationToken(SqlCommand command) =>
-        Assert.IsType<CancellationToken>(typeof(SqlCommand)
-            .GetField(
-                "_asyncExecutionCancellationToken", BindingFlags.Instance | BindingFlags.NonPublic)!
-            .GetValue(command));
 
     /// <summary>
     /// Invokes the private asynchronous encryption preparation entry point for a first attempt,

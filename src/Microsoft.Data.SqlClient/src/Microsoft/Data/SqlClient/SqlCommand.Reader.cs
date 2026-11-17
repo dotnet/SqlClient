@@ -601,8 +601,6 @@ namespace Microsoft.Data.SqlClient
             TaskCompletionSource<SqlDataReader> source,
             Guid operationId)
         {
-            _asyncExecutionCancellationToken = default;
-
             if (task.IsFaulted)
             {
                 Exception e = task.Exception.InnerException;
@@ -1103,8 +1101,6 @@ namespace Microsoft.Data.SqlClient
                 registration = cancellationToken.Register(s_cancelIgnoreFailure, state: this);
             }
 
-            _asyncExecutionCancellationToken = cancellationToken;
-
             Task<SqlDataReader> returnedTask = source.Task;
             ExecuteReaderAsyncCallContext context = null;
             try
@@ -1154,7 +1150,6 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception e)
             {
-                _asyncExecutionCancellationToken = default;
                 if (!_parentOperationStarted)
                 {
                     s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
@@ -1298,6 +1293,7 @@ namespace Microsoft.Data.SqlClient
                         asyncWrite: asyncWrite && isAsync,
                         isRetry,
                         method,
+                        isAsync ? cancellationToken : CancellationToken.None,
                         ds: null,
                         describeParameterEncryptionTask: prepareEncryptionTask);
                 }
@@ -1922,6 +1918,7 @@ namespace Microsoft.Data.SqlClient
             bool asyncWrite,
             bool isRetry,
             string method,
+            CancellationToken cancellationToken,
             SqlDataReader ds = null,
             Task describeParameterEncryptionTask = null) // @TODO: This task should likely come from this method otherwise this is just setting up a continuation
         {
@@ -1940,10 +1937,6 @@ namespace Microsoft.Data.SqlClient
                 // The remainder of the execution issues blocking TDS writes, so it must never run inline on
                 // the caller's thread (nor on a network callback thread). Task.Run reproduces the thread pool
                 // hand-off that the previous ContinueWith-based continuation provided.
-                // Capture the caller's cancellation token here, on the thread that started the
-                // execution. The body below runs after a thread pool hand-off and may observe the field
-                // already cleared by the execution's cleanup continuation.
-                CancellationToken cancellationToken = isAsync ? _asyncExecutionCancellationToken : CancellationToken.None;
                 SqlConnectionInternal retryConnection = _enclaveRetryConnection;
                 SqlConnection preparedConnection = _activeConnection;
                 int preparedCloseCount = preparedConnection.CloseCount;
