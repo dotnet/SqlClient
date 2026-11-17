@@ -5,6 +5,7 @@
 #if NET
 
 using System;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -83,6 +84,74 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
                 // Cleanup
                 // Disposing the handle also releases a handshake that ignored the token.
                 handle.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// The liveness check reports a connection the peer has closed, so the pool discards it
+        /// instead of handing it out. The peer's close reaches the client asynchronously, so the
+        /// check is repeated until it fails or a deadline passes.
+        /// </summary>
+        [Fact]
+        public void CheckConnection_PeerClosed_ReturnsError()
+        {
+            // Arrange
+            using LocalConnection connection = new();
+            connection.Peer.Close();
+
+            // Act
+            uint result = TdsEnums.SNI_SUCCESS;
+            Stopwatch deadline = Stopwatch.StartNew();
+            while (result == TdsEnums.SNI_SUCCESS && deadline.Elapsed < TimeSpan.FromSeconds(5))
+            {
+                result = connection.Handle.CheckConnection();
+                if (result == TdsEnums.SNI_SUCCESS)
+                {
+                    Thread.Sleep(10);
+                }
+            }
+
+            // Assert
+            Assert.Equal(TdsEnums.SNI_ERROR, result);
+        }
+
+        /// <summary>
+        /// Opens a managed TCP handle to a local listener and owns both ends.
+        /// </summary>
+        private sealed class LocalConnection : IDisposable
+        {
+            public SniTcpHandle Handle { get; }
+
+            public Socket Peer { get; }
+
+            public LocalConnection()
+            {
+                using TcpListener listener = new(IPAddress.Loopback, 0);
+                listener.Start();
+                SQLDNSInfo? pendingDnsInfo = null;
+                Handle = new SniTcpHandle(
+                    IPAddress.Loopback.ToString(),
+                    ((IPEndPoint)listener.LocalEndpoint).Port,
+                    TimeoutTimer.StartNew(TimeSpan.FromSeconds(5)),
+                    parallel: false,
+                    SqlConnectionIPAddressPreference.IPv4First,
+                    cachedFQDN: nameof(SniTcpHandleTests),
+                    ref pendingDnsInfo,
+                    tlsFirst: false,
+                    hostNameInCertificate: null,
+                    serverCertificateFilename: null);
+                using CancellationTokenSource timeout = new(TimeSpan.FromSeconds(5));
+                Peer = listener.AcceptSocketAsync(timeout.Token).AsTask().GetAwaiter().GetResult();
+                Assert.Equal(TdsEnums.SNI_SUCCESS, Handle.Status);
+            }
+
+            /// <summary>
+            /// Closes the client handle and the accepted socket.
+            /// </summary>
+            public void Dispose()
+            {
+                Handle.Dispose();
+                Peer.Dispose();
             }
         }
     }
