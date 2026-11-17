@@ -21,14 +21,17 @@ public class SqlCommandZombiedTransactionTest
     [Fact]
     public void Execute_NewCommandOnServerAbortedTransaction_Throws()
     {
+        // Arrange
         SqlTransaction transaction = CreateLiveTransaction();
         transaction.InternalTransaction.Completed(TransactionState.Aborted);
-        Assert.NotNull(transaction.InternalTransaction);
-        Assert.Null(transaction.Connection);
-
         using SqlCommand command = new SqlCommand("INSERT INTO T DEFAULT VALUES", connection: null, transaction);
+
+        // Act
         InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => command.ExecuteNonQuery());
 
+        // Assert
+        Assert.NotNull(transaction.InternalTransaction);
+        Assert.Null(transaction.Connection);
         Assert.Contains("no longer usable", exception.Message);
     }
 
@@ -38,17 +41,19 @@ public class SqlCommandZombiedTransactionTest
     [Fact]
     public void Execute_CommandBoundBeforeServerAbort_Throws()
     {
+        // Arrange
         SqlTransaction transaction = CreateLiveTransaction();
         using SqlCommand command = new SqlCommand("INSERT INTO T DEFAULT VALUES")
         {
             Transaction = transaction
         };
-
         transaction.InternalTransaction.Completed(TransactionState.Aborted);
-        Assert.NotNull(transaction.InternalTransaction);
 
+        // Act
         InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => command.ExecuteNonQuery());
 
+        // Assert
+        Assert.NotNull(transaction.InternalTransaction);
         Assert.Contains("no longer usable", exception.Message);
     }
 
@@ -58,17 +63,20 @@ public class SqlCommandZombiedTransactionTest
     [Fact]
     public void Execute_AfterReadingTransactionProperty_Throws()
     {
+        // Arrange
         SqlTransaction transaction = CreateLiveTransaction();
         using SqlCommand command = new SqlCommand("INSERT INTO T DEFAULT VALUES")
         {
             Transaction = transaction
         };
-
         transaction.InternalTransaction.Completed(TransactionState.Aborted);
-        Assert.Null(command.Transaction);
 
+        // Act
+        SqlTransaction reportedTransaction = command.Transaction;
         InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => command.ExecuteNonQuery());
 
+        // Assert
+        Assert.Null(reportedTransaction);
         Assert.Contains("no longer usable", exception.Message);
     }
 
@@ -78,17 +86,19 @@ public class SqlCommandZombiedTransactionTest
     [Fact]
     public void Execute_CloneOfCommandBoundToServerAbortedTransaction_Throws()
     {
+        // Arrange
         SqlTransaction transaction = CreateLiveTransaction();
         using SqlCommand command = new SqlCommand("INSERT INTO T DEFAULT VALUES")
         {
             Transaction = transaction
         };
-
         transaction.InternalTransaction.Completed(TransactionState.Aborted);
 
+        // Act
         using SqlCommand clone = command.Clone();
         InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => clone.ExecuteNonQuery());
 
+        // Assert
         Assert.Contains("no longer usable", exception.Message);
     }
 
@@ -99,15 +109,17 @@ public class SqlCommandZombiedTransactionTest
     [Fact]
     public void Execute_AfterAssigningSameConnection_Throws()
     {
+        // Arrange
         SqlTransaction transaction = CreateLiveTransaction();
         SqlConnection connection = transaction.Connection;
         using SqlCommand command = new SqlCommand("INSERT INTO T DEFAULT VALUES", connection, transaction);
-
         transaction.InternalTransaction.Completed(TransactionState.Aborted);
-        command.Connection = connection;
 
+        // Act
+        command.Connection = connection;
         InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => command.ExecuteNonQuery());
 
+        // Assert
         Assert.Contains("no longer usable", exception.Message);
     }
 
@@ -118,19 +130,21 @@ public class SqlCommandZombiedTransactionTest
     [Fact]
     public void Execute_AfterReadingIsolationLevel_Throws()
     {
+        // Arrange
         SqlTransaction transaction = CreateLiveTransaction();
         using SqlCommand command = new SqlCommand("INSERT INTO T DEFAULT VALUES")
         {
             Transaction = transaction
         };
-
         transaction.InternalTransaction.Completed(TransactionState.Aborted);
-        Assert.Throws<InvalidOperationException>(() => transaction.IsolationLevel);
-        Assert.Null(transaction.InternalTransaction);
-        Assert.Null(command.Transaction);
 
+        // Act
+        Assert.Throws<InvalidOperationException>(() => transaction.IsolationLevel);
         InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => command.ExecuteNonQuery());
 
+        // Assert
+        Assert.Null(transaction.InternalTransaction);
+        Assert.Null(command.Transaction);
         Assert.Contains("no longer usable", exception.Message);
     }
 
@@ -140,14 +154,17 @@ public class SqlCommandZombiedTransactionTest
     [Fact]
     public void Execute_AfterRollbackOfServerAbortedTransaction_IsNotRejectedAsZombied()
     {
+        // Arrange
         SqlTransaction transaction = CreateLiveTransaction();
         using SqlCommand command = new SqlCommand("INSERT INTO T DEFAULT VALUES", connection: null, transaction);
         transaction.InternalTransaction.Completed(TransactionState.Aborted);
-        transaction.Rollback();
-        Assert.Null(command.Transaction);
 
+        // Act
+        transaction.Rollback();
         InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => command.ExecuteNonQuery());
 
+        // Assert
+        Assert.Null(command.Transaction);
         Assert.Contains("Connection property has not been initialized", exception.Message);
     }
 

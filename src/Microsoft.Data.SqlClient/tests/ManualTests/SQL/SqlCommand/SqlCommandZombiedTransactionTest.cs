@@ -20,7 +20,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void Execute_AfterAssigningSameConnection_DoesNotAutocommit()
         {
-            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             connection.Open();
 
             using SqlCommand setup = connection.CreateCommand();
@@ -47,7 +47,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public async Task ExecuteNonQuery_AfterAssigningSameConnection_DoesNotAutocommitAsync()
         {
-            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             await connection.OpenAsync();
 
             using SqlCommand setup = connection.CreateCommand();
@@ -74,7 +74,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public async Task ExecuteReader_AfterAssigningSameConnection_DoesNotAutocommitAsync()
         {
-            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             await connection.OpenAsync();
 
             using SqlCommand setup = connection.CreateCommand();
@@ -101,7 +101,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void Rollback_AfterDisposingLiveTransaction_DoesNotThrow()
         {
-            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             connection.Open();
 
             SqlTransaction transaction = connection.BeginTransaction();
@@ -118,7 +118,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void Execute_AfterDisposingLiveTransaction_Runs()
         {
-            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             connection.Open();
 
             using SqlCommand setup = connection.CreateCommand();
@@ -145,7 +145,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public async Task Execute_AfterDisposingLiveTransaction_RunsAsync()
         {
-            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             await connection.OpenAsync();
 
             using SqlCommand setup = connection.CreateCommand();
@@ -173,7 +173,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void Execute_AfterDisposingServerAbortedTransaction_Runs()
         {
-            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             connection.Open();
 
             using SqlCommand setup = connection.CreateCommand();
@@ -203,7 +203,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void Execute_AfterDisposingFullyZombiedTransaction_Runs()
         {
-            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             connection.Open();
 
             using SqlCommand setup = connection.CreateCommand();
@@ -257,7 +257,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public async Task Execute_AfterDisposingFullyZombiedTransaction_RunsAsync()
         {
-            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             await connection.OpenAsync();
 
             using SqlCommand setup = connection.CreateCommand();
@@ -310,7 +310,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void Execute_AfterTsqlCommit_Runs()
         {
-            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             connection.Open();
 
             using SqlCommand setup = connection.CreateCommand();
@@ -339,7 +339,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public async Task Execute_AfterTsqlCommit_RunsAsync()
         {
-            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             await connection.OpenAsync();
 
             using SqlCommand setup = connection.CreateCommand();
@@ -368,7 +368,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void Execute_AfterApiCommit_Runs()
         {
-            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             connection.Open();
 
             using SqlCommand setup = connection.CreateCommand();
@@ -397,7 +397,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void Execute_SqlBatchAfterServerAbort_DoesNotAutocommit()
         {
-            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             connection.Open();
 
             using SqlCommand setup = connection.CreateCommand();
@@ -423,7 +423,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public async Task Execute_SqlBatchAfterServerAbort_DoesNotAutocommitAsync()
         {
-            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             await connection.OpenAsync();
 
             using SqlCommand setup = connection.CreateCommand();
@@ -451,7 +451,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void Update_AdapterBatchAfterServerAbort_DoesNotAutocommit()
         {
-            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             connection.Open();
 
             using SqlCommand setup = connection.CreateCommand();
@@ -492,7 +492,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void Update_AdapterBatchWithUnboundSelect_DoesNotAutocommit()
         {
-            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             connection.Open();
 
             using SqlCommand setup = connection.CreateCommand();
@@ -533,7 +533,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void Update_AdapterBatchAfterDrainingAbandonedRollback_DoesNotAutocommit()
         {
-            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             connection.Open();
 
             using SqlCommand setup = connection.CreateCommand();
@@ -598,7 +598,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void Execute_AfterDrainingAbandonedRollback_DoesNotAutocommit()
         {
-            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             connection.Open();
 
             using SqlCommand setup = connection.CreateCommand();
@@ -650,7 +650,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void Execute_AfterCommitDrainsAbandonedRollback_DoesNotAutocommit()
         {
-            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             connection.Open();
 
             using SqlCommand setup = connection.CreateCommand();
@@ -704,7 +704,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void Commit_DuringBulkCopy_ThrowsLockError()
         {
-            using SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using SqlConnection connection = DataTestUtility.CreateConnection();
             connection.Open();
 
             using SqlCommand setup = connection.CreateCommand();
