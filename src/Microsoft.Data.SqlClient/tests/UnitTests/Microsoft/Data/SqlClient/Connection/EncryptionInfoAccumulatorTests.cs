@@ -18,6 +18,134 @@ namespace Microsoft.Data.SqlClient.UnitTests
         // IANA identifier for TLS_AES_128_GCM_SHA256.
         private const int OtherCipherSuite = 0x1301;
 
+        #region Protocol
+
+        /// <summary>
+        /// <see cref="SslProtocols.None"/> means the protocol was not reported, so it is stored as
+        /// unavailable.
+        /// </summary>
+        [Fact]
+        public void Protocol_SetNone_StoresNull()
+        {
+            // Arrange
+            EncryptionInfoAccumulator accumulator = new();
+            accumulator.Protocol = SslProtocols.Tls12;
+
+            // Act
+            accumulator.Protocol = SslProtocols.None;
+
+            // Assert
+            Assert.Null(accumulator.Protocol);
+            Assert.False(accumulator.HasValues);
+        }
+
+        /// <summary>
+        /// A reported protocol is stored unchanged.
+        /// </summary>
+        [Fact]
+        public void Protocol_SetReported_StoresValue()
+        {
+            // Arrange
+            EncryptionInfoAccumulator accumulator = new();
+
+            // Act
+            accumulator.Protocol = SslProtocols.Tls12;
+
+            // Assert
+            Assert.Equal(SslProtocols.Tls12, accumulator.Protocol);
+            Assert.True(accumulator.HasValues);
+        }
+
+        #endregion
+
+        #region Mode
+
+        /// <summary>
+        /// The mode is kept without a protocol, as after a failed TLS handshake.
+        /// </summary>
+        [Fact]
+        public void Mode_SetWithoutProtocol_SnapshotHasModeOnly()
+        {
+            // Arrange
+            EncryptionInfoAccumulator accumulator = new();
+
+            // Act
+            accumulator.Mode = SqlConnectionEncryptionMode.Strict;
+
+            // Assert
+            Assert.True(accumulator.HasValues);
+            SqlConnectionEncryptionInfo snapshot = accumulator.ToSnapshot();
+            Assert.Equal(SqlConnectionEncryptionMode.Strict, snapshot.NegotiatedEncryptionMode);
+            Assert.Null(snapshot.NegotiatedEncryptionProtocol);
+            Assert.Null(snapshot.NegotiatedCipherSuiteId);
+        }
+
+        #endregion
+
+        #region CipherSuite
+
+        /// <summary>
+        /// The smallest and largest valid IANA identifiers are kept.
+        /// </summary>
+        [Theory]
+        [InlineData(0)]
+        [InlineData(0xFFFF)]
+        public void CipherSuite_BoundaryValue_Kept(int cipherSuite)
+        {
+            // Arrange
+            EncryptionInfoAccumulator accumulator = new();
+
+            // Act
+            accumulator.CipherSuite = ToConstructorCipherSuite(cipherSuite);
+
+            // Assert
+            Assert.Equal(cipherSuite, accumulator.ToSnapshot().NegotiatedCipherSuiteId);
+        }
+
+#if NETFRAMEWORK
+        /// <summary>
+        /// On .NET Framework, where the identifier is an integer, a value outside the IANA identifier
+        /// range is ignored without throwing, and leaves an earlier valid value in place.
+        /// </summary>
+        [Theory]
+        [InlineData(-1)]
+        [InlineData(0x10000)]
+        public void CipherSuite_OutOfRange_Ignored(int cipherSuite)
+        {
+            // Arrange
+            EncryptionInfoAccumulator accumulator = new();
+            accumulator.CipherSuite = SampleCipherSuite;
+
+            // Act
+            accumulator.CipherSuite = cipherSuite;
+
+            // Assert
+            Assert.Equal(SampleCipherSuite, accumulator.CipherSuite);
+            Assert.Equal(SampleCipherSuite, accumulator.ToSnapshot().NegotiatedCipherSuiteId);
+        }
+#endif
+
+        /// <summary>
+        /// A cipher suite set on its own makes the accumulator non-empty.
+        /// </summary>
+        [Fact]
+        public void CipherSuite_SetAlone_HasValuesAndSnapshotNotEmpty()
+        {
+            // Arrange
+            EncryptionInfoAccumulator accumulator = new();
+
+            // Act
+            accumulator.CipherSuite = ToConstructorCipherSuite(SampleCipherSuite);
+
+            // Assert
+            Assert.True(accumulator.HasValues);
+            SqlConnectionEncryptionInfo snapshot = accumulator.ToSnapshot();
+            Assert.NotSame(SqlConnectionEncryptionInfo.Empty, snapshot);
+            Assert.Equal(SampleCipherSuite, snapshot.NegotiatedCipherSuiteId);
+        }
+
+        #endregion
+
         #region Reset
 
         /// <summary>

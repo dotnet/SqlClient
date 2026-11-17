@@ -261,21 +261,19 @@ login, derived from the client `Encrypt` setting and the server's PRELOGIN respo
 | `Optional` / `false` | `ENCRYPT_OFF` (TLS removed after LOGIN7) | `LoginOnly` | Negotiated TLS version |
 | `Optional` / `false` | `ENCRYPT_NOT_SUP` | `None` | `null` |
 
-**Failure path.** Only values actually observed for the attempt are published; the requested
-settings and the server's PRELOGIN response are never used as substitutes. On success the mode
-is recorded once the TLS handshake (if any) completes. When TLS fails after a protocol was
-observed, the attempt reports that protocol and the mode that was being negotiated, matching
-the design-review rule that observed values are kept on certificate-validation failures. On a
-TLS failure the mode is never reported without an observed protocol, so an early handshake
-failure leaves both `null`, and so does a TDS 7.x PRELOGIN failure that happens before any mode is
-known. When no TLS is negotiated (`Optional` against a server that replies `ENCRYPT_NOT_SUP`), the
-mode `None` is recorded at PRELOGIN with a `null` protocol, so a later LOGIN7 failure (for example
-error 18456) on that attempt reports mode `None` and a `null` protocol. With `Strict`, TLS completes before
-PRELOGIN, so a later PRELOGIN or login failure on that attempt reports the observed `Strict` mode
-and protocol. Values are captured per physical login attempt and reset for every routing, retry,
-and failover attempt, and for the reconnect `TdsParser.Connect` makes when the server reports an
-instance failure in its PRELOGIN response.
-
+**Failure path.** Each value is recorded as soon as it is known for the attempt; the requested
+settings are never used as substitutes for an unknown value. The mode is recorded when it is
+selected, before any TLS handshake: for `Strict` (TDS 8) immediately before the TLS-first
+handshake, because it is a connection invariant, and otherwise when the PRELOGIN response
+selects it. A TLS failure therefore reports the mode with a `null` protocol and cipher suite,
+unless those were observed. A TDS 7.x PRELOGIN failure that happens before the mode is selected
+(including the server rejecting the requested encryption) leaves the mode `null`. When no TLS is
+negotiated (`Optional` against a server that replies `ENCRYPT_NOT_SUP`), the mode `None` is
+recorded at PRELOGIN with a `null` protocol, so a later LOGIN7 failure (for example error 18456)
+reports mode `None` and a `null` protocol. Values are captured per physical login attempt and
+reset for every routing, retry, and failover attempt, and for the reconnect `TdsParser.Connect`
+makes when the server reports an instance failure in its PRELOGIN response, so a mode from an
+earlier attempt never reaches a later attempt's exception.
 **Failure scope.** A `SqlException` thrown while opening a connection carries the encryption
 info whenever any is available, whatever its cause. Failures in the login sequence in
 `SqlConnectionInternal.OpenLoginEnlist` (PRELOGIN, TLS, LOGIN7, routing and failover) carry the
@@ -287,35 +285,28 @@ connection published when it logged in. Exceptions raised before any value was o
 non-`SqlException` failures, keep `Empty`.
 - **Managed SNI** validates the server certificate inside the handshake, so a validation
   failure fails `EnableSsl`. In this slice Managed SNI does not capture the negotiated protocol
-  on a failed handshake, so `TdsParser.EnableSsl` records no mode and both stay `null`. Slice C
-  adds capture of `SslStream.SslProtocol` from the validation callback; after that, the failure
-  path records the mode through `TdsParser.RecordModeIfProtocolObserved`.
+  on a failed handshake, so the exception reports the mode with a `null` protocol. Slice C adds
+  capture of `SslStream.SslProtocol` from the validation callback.
 - **Native SNI.** With the current SNI package, native SNI also rejects an untrusted server
-  certificate during the handshake, so this slice reports neither mode nor protocol for that
-  failure (the tests assert this for both SNI implementations). The rule that covers a deferred
-  validation failure is conditional: if an SSL-provider SNI error occurs during login after a
-  protocol was observed, `TdsParser.ProcessSNIError`, the single place every SNI error becomes a
-  `SqlError`, calls `TdsParser.DiscardUnobservedNegotiation`, which keeps the observed
-  mode and protocol and drops the mode only when no protocol was observed. Populated values are
-  not promised for an untrusted-certificate failure.
-
+  certificate during the handshake, so this slice reports the mode but no protocol for that
+  failure (the tests assert this for both SNI implementations). If a deferred validation
+  failure surfaces after a successful `EnableSsl`, the protocol recorded by `EnableSsl` is kept.
 These rules only touch mode and protocol; certificate fields are never affected. Once login
 completes the accumulator is released, so SSL errors on an open connection never alter a published
 snapshot.
 
-**Cipher suite.** `TdsParser.RecordCipherSuite` is the single recording point for
-`NegotiatedCipherSuiteId` and, on .NET, `NegotiatedCipherSuite`. On .NET it takes a
-`TlsCipherSuite`, which the accumulator stores and passes to the snapshot constructor unchanged.
-On .NET Framework it takes the IANA identifier as an `int` and ignores values outside 0–0xFFFF
-instead of failing the login. Both properties read the same value. Slice B adds only the
-plumbing: the value is reset with the other fields at the start of every physical login attempt
-and flows into the snapshot published on `SqlConnection` and attached to `SqlException`. No
-transport calls it in this slice, so the property stays `null`; Slice C records it from
-`SslStream.NegotiatedCipherSuite` (Managed SNI) and Slice D fromnative SNI, which needs a new SNI contract. On failure an observed cipher suite is kept, like the
-protocol; `DiscardUnobservedNegotiation` neither clears nor infers it. A cipher suite is only
-reported once a ServerHello selected it, which is itself evidence of the observed negotiation, so
-it is not dropped when the protocol is unavailable.
-
+**Cipher suite.** Producers assign the accumulator's `CipherSuite` property directly. On .NET it
+is a `TlsCipherSuite?`, which the accumulator stores and passes to the snapshot constructor
+unchanged. On .NET Framework it is the IANA identifier as an `int?`; the property setter ignores
+values outside 0-0xFFFF instead of failing the login. Likewise, the `Protocol` setter stores
+`SslProtocols.None` as `null`. Both cipher suite properties read the same value. Slice B adds
+only the plumbing: the value is reset with the other fields at the start of every physical login
+attempt and flows into the snapshot published on `SqlConnection` and attached to `SqlException`.
+No transport sets it in this slice, so the property stays `null`; Slice C records it from
+`SslStream.NegotiatedCipherSuite` (Managed SNI) and Slice D from native SNI, which needs a new
+SNI contract. On failure an observed cipher suite is kept, like the protocol. A cipher suite is
+only reported once a ServerHello selected it, so it is not dropped when the protocol is
+unavailable.
 ## 5. Scope
 
 The API reports negotiated encryption, TLS protocol, the server-selected cipher suite, the

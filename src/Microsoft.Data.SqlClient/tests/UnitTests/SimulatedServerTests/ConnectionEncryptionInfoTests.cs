@@ -456,13 +456,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         /// <summary>
-        /// A synchronous open that fails certificate validation inside the TLS handshake reports no
-        /// mode or protocol, because none was observed.
+        /// A synchronous open that fails certificate validation inside the TLS handshake reports
+        /// the mode selected by pre-login, but no protocol.
         /// </summary>
         [Theory]
         [InlineData(ServerEncryption.Off)]
         [InlineData(ServerEncryption.Required)]
-        public void Open_UntrustedServerCertificate_ExceptionDoesNotInferModeOrProtocol(ServerEncryption serverEncryption)
+        public void Open_UntrustedServerCertificate_ExceptionReportsModeWithoutProtocol(ServerEncryption serverEncryption)
         {
             // Arrange
             using TdsServer server = StartUntrustedCertificateServer(serverEncryption);
@@ -479,13 +479,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         /// <summary>
-        /// An asynchronous open that fails certificate validation inside the TLS handshake reports no
-        /// mode or protocol, because none was observed.
+        /// An asynchronous open that fails certificate validation inside the TLS handshake reports
+        /// the mode selected by pre-login, but no protocol.
         /// </summary>
         [Theory]
         [InlineData(ServerEncryption.Off)]
         [InlineData(ServerEncryption.Required)]
-        public async Task OpenAsync_UntrustedServerCertificate_ExceptionDoesNotInferModeOrProtocol(ServerEncryption serverEncryption)
+        public async Task OpenAsync_UntrustedServerCertificate_ExceptionReportsModeWithoutProtocol(ServerEncryption serverEncryption)
         {
             // Arrange
             using TdsServer server = StartUntrustedCertificateServer(serverEncryption);
@@ -1073,16 +1073,16 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
 
         /// <summary>
         /// Asserts the values reported for a certificate-validation failure. The fixture certificate is
-        /// self-signed and untrusted, and the server allows only TLS 1.2. Both the managed and native
-        /// SNI implementations reject the certificate inside the TLS handshake, before a protocol is
-        /// reported to this slice, so no protocol is observed and the mode must not be inferred from
-        /// the requested or pre-login settings. Certificate fields are owned by later slices and are
-        /// not asserted here.
+        /// self-signed and untrusted, and the server allows only TLS 1.2. The pre-login response
+        /// selected full encryption, so the mode is reported even though the TLS handshake failed.
+        /// Both the managed and native SNI implementations reject the certificate inside the TLS
+        /// handshake, before a protocol is reported, so no protocol or cipher suite is reported.
+        /// Certificate fields are owned by later slices and are not asserted here.
         /// </summary>
         private static void AssertUntrustedCertificateFailure(SqlException ex, SqlConnection connection, TdsServer server)
         {
             Assert.True(server.PreLoginCount >= 1);
-            Assert.Null(ex.EncryptionInfo.NegotiatedEncryptionMode);
+            Assert.Equal(SqlConnectionEncryptionMode.Full, ex.EncryptionInfo.NegotiatedEncryptionMode);
             Assert.Null(ex.EncryptionInfo.NegotiatedEncryptionProtocol);
             Assert.Null(ex.EncryptionInfo.NegotiatedCipherSuiteId);
             AssertEmpty(connection.EncryptionInfo);

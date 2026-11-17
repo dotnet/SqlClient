@@ -22,22 +22,41 @@ namespace Microsoft.Data.SqlClient.Connection
     /// recorded by the terminal attempt are ever published.
     /// </para>
     /// <para>
-    /// This type only holds values. The rules that decide which values are recorded live with the
-    /// code that observes them, in <see cref="Parser.TdsParser"/>. Values are only written during
+    /// This type holds values and normalizes ones that cannot be reported (see
+    /// <see cref="Protocol"/> and <see cref="CipherSuite"/>). <see cref="Parser.TdsParser"/>
+    /// records each value as soon as it becomes known. Values are only written during
     /// login, never on the per-command hot path. Callers convert the accumulated values into an
     /// immutable <see cref="SqlConnectionEncryptionInfo"/> snapshot via <see cref="ToSnapshot"/>.
     /// </para>
     /// </remarks>
     internal sealed class EncryptionInfoAccumulator
     {
+#if NET
         /// <summary>
         /// Gets or sets the TLS cipher suite negotiated for the current attempt, or
         /// <see langword="null"/> if the transport did not report one.
         /// </summary>
-#if NET
         public TlsCipherSuite? CipherSuite { get; set; }
 #else
-        public int? CipherSuite { get; set; }
+        /// <summary>
+        /// Gets or sets the IANA TLS cipher suite identifier negotiated for the current attempt, or
+        /// <see langword="null"/> if the transport did not report one.
+        /// </summary>
+        /// <remarks>
+        /// Values outside <c>0</c>..<c>0xFFFF</c> are not valid identifiers. Setting one is ignored
+        /// rather than failing the login, and the property keeps its previous value.
+        /// </remarks>
+        public int? CipherSuite
+        {
+            get;
+            set
+            {
+                if (value is null or (>= 0 and <= ushort.MaxValue))
+                {
+                    field = value;
+                }
+            }
+        }
 #endif
 
         /// <summary>
@@ -56,7 +75,16 @@ namespace Microsoft.Data.SqlClient.Connection
         /// <see langword="null"/> if no TLS handshake completed or the transport did not report a
         /// protocol.
         /// </summary>
-        public SslProtocols? Protocol { get; set; }
+        /// <remarks>
+        /// Setting <see cref="SslProtocols.None"/> stores <see langword="null"/>: Native SNI reports
+        /// <c>0</c> both when TLS was not used and when the protocol was not reported, so the two
+        /// cannot be told apart.
+        /// </remarks>
+        public SslProtocols? Protocol
+        {
+            get;
+            set => field = value == SslProtocols.None ? null : value;
+        }
 
         /// <summary>
         /// Clears all accumulated values. Called at the start of each physical login attempt.

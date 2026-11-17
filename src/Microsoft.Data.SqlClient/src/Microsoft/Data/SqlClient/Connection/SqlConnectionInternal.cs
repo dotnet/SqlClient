@@ -3532,8 +3532,9 @@ namespace Microsoft.Data.SqlClient.Connection
         /// <param name="ex">The exception thrown by the enlistment.</param>
         private void AttachPublishedEncryptionInfo(SqlException ex)
         {
-            if (!EncryptionInfo.IsEmpty && ex.EncryptionInfo.IsEmpty)
+            if (!EncryptionInfo.IsEmpty)
             {
+                Debug.Assert(ex.EncryptionInfo.IsEmpty, "Encryption info is attached only once, by the failed open.");
                 ex.EncryptionInfo = EncryptionInfo;
             }
         }
