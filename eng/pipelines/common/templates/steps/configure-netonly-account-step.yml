@@ -32,13 +32,19 @@ steps:
     ${{ if eq(parameters.mode, 'cleanup') }}:
       condition: always()
     inputs:
-      targetType: inline
+      targetType: filePath
+      filePath: '$(Build.SourcesDirectory)\eng\scripts\Configure-NetOnlyAccount.ps1'
       pwsh: true
-      # Job variables are absent from the environment until setup publishes them.
-      script: |
-        & '$(Build.SourcesDirectory)\eng\scripts\Configure-NetOnlyAccount.ps1' `
-          -Mode '${{ parameters.mode }}' `
-          -InstanceName '${{ parameters.instanceName }}' `
-          -Port '${{ parameters.port }}' `
-          -AccountName $env:NETONLYUSER `
-          -AccountSid $env:NETONLYSID
+      ${{ if eq(parameters.mode, 'setup') }}:
+        arguments: >-
+          -Mode 'setup'
+          -InstanceName '${{ parameters.instanceName }}'
+          -Port '${{ parameters.port }}'
+      ${{ if eq(parameters.mode, 'cleanup') }}:
+        # Single quotes preserve undefined ADO macros for cleanup's absent-value checks.
+        arguments: >-
+          -Mode 'cleanup'
+          -InstanceName '${{ parameters.instanceName }}'
+          -Port '${{ parameters.port }}'
+          -AccountName '$(netOnlyUser)'
+          -AccountSid '$(netOnlySid)'
