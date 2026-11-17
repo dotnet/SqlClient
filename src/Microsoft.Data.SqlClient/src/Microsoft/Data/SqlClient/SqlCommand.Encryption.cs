@@ -539,8 +539,8 @@ namespace Microsoft.Data.SqlClient
 
                     // The column encryption keys still have to be loaded, which may require key
                     // store network I/O. Hand the rest of the work to a worker so even
-                    // synchronously completed key loads cannot run the blocking stale-cache describe
-                    // fallback on the caller's thread.
+                    // synchronously completed key loads cannot run the blocking stale-cache
+                    // describe fallback on the caller's thread.
                     SqlConnectionInternal retryConnection = _enclaveRetryConnection;
                     SqlConnection connection = _activeConnection;
                     int closeCount = connection.CloseCount;
