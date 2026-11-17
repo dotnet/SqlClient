@@ -130,7 +130,8 @@ When adding a new package to the OneBranch flow:
 ## Version Bump PR Stage
 
 - Defined in `stages/version-bump-pr-stage.yml`; official pipeline only
-- Emitted only when `releaseToProduction` and `releaseSqlClient` are both true
+- Included by `sqlclient-official.yml` only when `releaseToProduction` and `releaseSqlClient`
+  are both true
 - Depends on `release_production` with `succeeded()`, so a rejected or failed release opens no PR
 - Runs `scripts/new-version-bump-pr.ps1`, which opens a GitHub PR on the matching branch:
   - Targets the built branch (`Build.SourceBranch`), with an optional `internal/` prefix removed;
