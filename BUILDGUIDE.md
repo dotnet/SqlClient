@@ -24,6 +24,18 @@ Tests and tools may require different .NET Runtimes that may be installed
 independently.  For example, tests targeting .NET 8.0 will need that runtime
 installed.
 
+## NuGet Auditing
+
+NuGet auditing is enabled for local, CI, and official builds, including GenAPI and
+test projects. It uses the package sources in the root `NuGet.config` rather than
+an explicit nuget.org audit source. The policy requests all direct and transitive
+dependencies and all vulnerability severities; reported vulnerabilities fail the
+build, matching [PR #3713](https://github.com/dotnet/SqlClient/pull/3713) on `main`.
+
+Actual vulnerability checks require the governed feed to expose a `VulnerabilityInfo`
+resource. Without that resource, NuGet silently skips the checks when using package
+sources for auditing; a successful restore does not prove that dependencies were audited.
+
 ## Visual Studio Pre-Requisites
 
 This project should be built with Visual Studio 2019+ for the best compatibility. The required set of components are provided in the below file:
