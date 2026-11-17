@@ -158,6 +158,43 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         /// <summary>
+        /// A transaction begun on the connection while cached keys load must stop execution of a
+        /// command that is not bound to it, as it would before execution starts.
+        /// </summary>
+        [Fact]
+        public async Task ExecuteReaderAsync_TransactionBegunDuringKeyLoad_Throws()
+        {
+            // Arrange
+            using Fixture fixture = new();
+            using SqlCommand command = fixture.CreateCachedCommand();
+            Task<SqlDataReader> operation = command.ExecuteReaderAsync();
+            await fixture.KeyLoadEntered;
+
+            // The simulated server has no transaction manager, so begin the API transaction
+            // directly on the idle connection.
+            SqlTransaction transaction = fixture.BeginTransaction();
+
+            // Act
+            fixture.CompleteKeyLoad();
+
+            // Assert
+            InvalidOperationException error =
+                await Assert.ThrowsAsync<InvalidOperationException>(() => Bounded(operation));
+            Assert.Equal(
+                ADP.TransactionRequired(nameof(SqlCommand.BeginExecuteReader)).Message,
+                error.Message);
+            Assert.False(IsInProgress(command));
+            Assert.Equal(0, fixture.AsyncCount);
+
+            // The command accepts the transaction once the failed execution has released it.
+            command.Transaction = transaction;
+            Assert.Same(transaction, command.Transaction);
+
+            // Cleanup
+            fixture.EndTransaction();
+        }
+
+        /// <summary>
         /// A stale key must not start the fallback describe on a connection that was closed and
         /// reopened while the key was loading.
         /// </summary>
@@ -291,6 +328,28 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             internal void EnableColumnEncryption() =>
                 ((SqlConnectionInternal)Connection.InnerConnection)
                     .Capabilities.ColumnEncryptionVersion = 1;
+
+            /// <summary>
+            /// Records an API transaction on the open session, as a completed
+            /// <see cref="SqlConnection.BeginTransaction()"/> would.
+            /// </summary>
+            internal SqlTransaction BeginTransaction()
+            {
+                SqlConnectionInternal inner = (SqlConnectionInternal)Connection.InnerConnection;
+                SqlTransaction transaction =
+                    new(inner, Connection, System.Data.IsolationLevel.ReadCommitted, null);
+                inner.Parser.CurrentTransaction = transaction.InternalTransaction;
+                return transaction;
+            }
+
+            /// <summary>
+            /// Detaches the recorded transaction so closing the connection sends no rollback.
+            /// </summary>
+            internal void EndTransaction()
+            {
+                SqlConnectionInternal inner = (SqlConnectionInternal)Connection.InnerConnection;
+                inner.Parser.CurrentTransaction = null;
+            }
 
             internal SqlCommand CreateCachedCommand() =>
                 QueryMetadataCacheTestCommands.NewCachedCommand(Connection, _provider);

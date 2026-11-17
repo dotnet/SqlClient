@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Threading;
@@ -365,6 +366,40 @@ public class SqlCommandTests
         Assert.Null(command.Parameters[0].CipherMetadata);
     }
 
+    /// <summary>
+    /// An async cache hit with plaintext parameters but cached enclave keys still completes on a
+    /// worker, because execution would otherwise build the enclave package on the caller's thread.
+    /// </summary>
+    [Fact]
+    public async Task PrepareForTransparentEncryption_AsyncCacheHitEnclaveKeys_UsesWorker()
+    {
+        // Arrange
+        // Cache the query with a plaintext parameter and one enclave key.
+        TestKeyStoreProvider provider = new();
+        using SqlCommand command =
+            QueryMetadataCacheTestCommands.NewCommandWithCipherMetadata(provider);
+        using SqlConnection connection = command.Connection;
+        command.Parameters[0].CipherMetadata = null;
+        command.requiresEnclaveComputations = true;
+        command.keysToBeSentToEnclave = new ConcurrentDictionary<int, SqlTceCipherInfoEntry>();
+        command.keysToBeSentToEnclave[0] = new SqlTceCipherInfoEntry(0);
+        SqlQueryMetadataCache.GetInstance().AddQueryMetadata(
+            command, ignoreQueriesWithReturnValueParams: true);
+        command.keysToBeSentToEnclave = null;
+
+        // Act
+        object?[] arguments = InvokeAsyncPrepareForTransparentEncryption(command);
+        Task completion = Assert.IsAssignableFrom<Task>(arguments[3]);
+        await completion;
+
+        // Assert
+        Assert.Equal(true, arguments[5]);
+        Assert.Equal(0, provider.DecryptAsyncCallCount);
+        Assert.Equal(0, provider.DecryptCallCount);
+        Assert.NotNull(command.keysToBeSentToEnclave);
+        Assert.Single(command.keysToBeSentToEnclave);
+    }
+
     /// <summary>Creates RPC entries without requiring a network connection.</summary>
     /// <param name="count">The number of entries to add.</param>
     /// <returns>A command owned by the test.</returns>
@@ -433,7 +468,7 @@ public class SqlCommandTests
             ?? throw new InvalidOperationException("Encryption preparation method not found.");
         object?[] arguments =
         {
-            true, 30, new TaskCompletionSource<object>(), null, true, false, false,
+            true, 30, new TaskCompletionSource<object>(), null, true, false, false, "ExecuteReader",
             CancellationToken.None,
         };
         prepare.Invoke(command, arguments);

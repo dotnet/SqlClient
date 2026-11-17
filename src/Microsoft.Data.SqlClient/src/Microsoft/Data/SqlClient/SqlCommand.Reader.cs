@@ -1188,6 +1188,7 @@ namespace Microsoft.Data.SqlClient
                     asyncWrite: asyncWrite && isAsync,
                     out usedCache,
                     isRetry,
+                    method,
                     cancellationToken);
 
                 long firstAttemptStart = ADP.TimerCurrent();
@@ -1202,6 +1203,7 @@ namespace Microsoft.Data.SqlClient
                         out executeTask,
                         asyncWrite: asyncWrite && isAsync,
                         isRetry,
+                        method,
                         ds: null,
                         describeParameterEncryptionTask: prepareEncryptionTask);
                 }
@@ -1825,6 +1827,7 @@ namespace Microsoft.Data.SqlClient
             out Task task,
             bool asyncWrite,
             bool isRetry,
+            string method,
             SqlDataReader ds = null,
             Task describeParameterEncryptionTask = null) // @TODO: This task should likely come from this method otherwise this is just setting up a continuation
         {
@@ -1864,7 +1867,8 @@ namespace Microsoft.Data.SqlClient
                                 sqlCommand.ValidateConnectionLifetime(
                                     preparedConnection,
                                     preparedCloseCount,
-                                    preparedDatabase);
+                                    preparedDatabase,
+                                    method);
                             }
 
                             sqlCommand.ValidateConnectionForEnclaveExecution(retryConnection);

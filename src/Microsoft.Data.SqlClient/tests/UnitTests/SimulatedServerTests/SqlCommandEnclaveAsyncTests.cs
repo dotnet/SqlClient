@@ -74,7 +74,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             object[] arguments =
             {
                 CommandBehavior.Default, RunBehavior.ReturnImmediately, true, true, 30, null,
-                true, false, null, preparation.Task
+                true, false, "ExecuteReader", null, preparation.Task
             };
             using SqlDataReader pendingReader = (SqlDataReader)typeof(SqlCommand)
                 .GetMethod("RunExecuteReaderTdsWithTransparentParameterEncryption", BindingFlags.NonPublic | BindingFlags.Instance)
@@ -149,7 +149,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             command.SetBatchRPCModeReadyToExecute();
             object[] arguments =
             {
-                true, 30, new TaskCompletionSource<object>(), null, true, false, false, CancellationToken.None
+                true, 30, new TaskCompletionSource<object>(), null, true, false, false,
+                "ExecuteReader", CancellationToken.None
             };
             typeof(SqlCommand).GetMethod("PrepareForTransparentEncryption", BindingFlags.NonPublic | BindingFlags.Instance)
                 .Invoke(command, arguments);
@@ -188,7 +189,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 .SetValue(fixture.Connection.ConnectionOptions, SqlConnectionAttestationProtocol.NotSpecified);
             object[] preparationArguments =
             {
-                true, 30, new TaskCompletionSource<object>(), null, true, false, false, CancellationToken.None
+                true, 30, new TaskCompletionSource<object>(), null, true, false, false,
+                "ExecuteReader", CancellationToken.None
             };
             typeof(SqlCommand).GetMethod("PrepareForTransparentEncryption", BindingFlags.NonPublic | BindingFlags.Instance)
                 .Invoke(command, preparationArguments);
