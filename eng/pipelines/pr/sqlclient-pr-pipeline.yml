@@ -38,6 +38,7 @@ pr:
       - doc/*
       - eng/pipelines/common/*
       - eng/pipelines/pr/*
+      - eng/scripts/*
       - src/*
       - tools/*
       - azurepipelines-coverage.yml
@@ -46,6 +47,8 @@ pr:
       - dotnet-tools.json
       - global.json
       - NuGet.config
+      - PowerShell.config
+      - powershell-modules.json
 
 # Do not trigger commit or schedule runs for this pipeline.
 trigger: none
