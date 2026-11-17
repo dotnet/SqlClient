@@ -25,9 +25,9 @@
 
     The script also does nothing when the GitHub branch already has a version at or above the next
     version, or when an open bump PR already exists. Otherwise it creates or resets the branch
-    dev/automation/bump-sqlclient-version-<version>, commits the Versions.props change, and opens
-    the PR. The PR gets the milestone matching the next version, or else the closest earlier
-    milestone in any state.
+    dev/automation/bump-sqlclient-version/<target>/<version>, commits the Versions.props change,
+    and opens the PR. The PR gets the milestone matching the next version, or else the closest
+    earlier milestone in any state.
 
 .PARAMETER VersionsPropsPath
     Path to the built commit's src/Microsoft.Data.SqlClient/Versions.props, from which the
@@ -342,7 +342,7 @@ function Invoke-VersionBumpPr {
         return
     }
 
-    $headBranch = "dev/automation/bump-sqlclient-version-$nextVersion"
+    $headBranch = "dev/automation/bump-sqlclient-version/$targetBranch/$nextVersion"
     $encodedHead = [uri]::EscapeDataString("${owner}:$headBranch")
     # Invoke-RestMethod can return an empty JSON array as one item, so keep only real PRs.
     $existing = @(Invoke-GitHubApi -Path "$repoApi/pulls?state=open&head=$encodedHead" |

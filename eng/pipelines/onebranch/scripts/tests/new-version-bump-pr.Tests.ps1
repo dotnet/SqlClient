@@ -282,7 +282,8 @@ Describe 'Invoke-VersionBumpPr' {
 
         # Assert
         Should -Invoke Invoke-GitHubApi -Times 1 -ParameterFilter {
-            $Method -eq 'PUT' -and $Body.branch -eq 'dev/automation/bump-sqlclient-version-8.1.1'
+            $Method -eq 'PUT' -and
+                $Body.branch -eq 'dev/automation/bump-sqlclient-version/main/8.1.1'
         }
         Should -Invoke Invoke-GitHubApi -Times 1 -ParameterFilter {
             $Method -eq 'POST' -and $Path -like '*/pulls' -and $Body.base -eq 'main'

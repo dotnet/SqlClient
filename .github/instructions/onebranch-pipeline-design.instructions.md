@@ -142,8 +142,8 @@ When adding a new package to the OneBranch flow:
   - Other branches or refs, or branches without `Versions.props` → warning, no PR
   - Outside an Azure DevOps build (`TF_BUILD`), only `-DryRun` is allowed
 - No-op when the GitHub branch is already at or above the next version, or the PR is already open
-- PR head is `dev/automation/bump-sqlclient-version-<version>`; milestone is `<version>`, or else
-  the closest earlier milestone (open or closed)
+- PR head is `dev/automation/bump-sqlclient-version/<target>/<version>`;
+  milestone is `<version>`, or else the closest earlier milestone (open or closed)
 - Uses `PATToken` from the `GitHub PAT Tokens` variable group (contents, PR, and issue writes)
 
 ## Parameters
