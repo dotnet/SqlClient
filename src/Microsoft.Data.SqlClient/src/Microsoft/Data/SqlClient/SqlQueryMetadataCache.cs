@@ -229,7 +229,9 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Finishes a successful cache lookup by publishing the enclave keys and recording the hit.
         /// </summary>
-        private void CompleteCachedQueryMetadata(SqlCommand sqlCommand, CachedQueryMetadata metadata)
+        internal void CompleteCachedQueryMetadata(
+            SqlCommand sqlCommand,
+            CachedQueryMetadata metadata)
         {
             ConcurrentDictionary<int, SqlTceCipherInfoEntry> enclaveKeys =
                 _cache.Get<ConcurrentDictionary<int, SqlTceCipherInfoEntry>>(metadata.EnclaveLookupKey);

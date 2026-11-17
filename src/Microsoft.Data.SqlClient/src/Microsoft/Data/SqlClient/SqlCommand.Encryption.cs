@@ -528,11 +528,19 @@ namespace Microsoft.Data.SqlClient
                 }
                 else if (cache.TryGetCachedQueryMetadata(this, out SqlQueryMetadataCache.CachedQueryMetadata metadata))
                 {
-                    // The cached metadata matched, but the column encryption keys still have to be
-                    // loaded, which may require key store network I/O. Hand the rest of the work to a
-                    // worker so even synchronously completed key loads cannot run the blocking
-                    // stale-cache describe fallback on the caller's thread.
                     usedCache = true;
+
+                    // With only plaintext parameters there are no keys to load, so finish inline.
+                    if (metadata.KeysToLoad.Count == 0)
+                    {
+                        cache.CompleteCachedQueryMetadata(this, metadata);
+                        return;
+                    }
+
+                    // The column encryption keys still have to be loaded, which may require key
+                    // store network I/O. Hand the rest of the work to a worker so even
+                    // synchronously completed key loads cannot run the blocking stale-cache describe
+                    // fallback on the caller's thread.
                     SqlConnectionInternal retryConnection = _enclaveRetryConnection;
                     SqlConnection connection = _activeConnection;
                     int closeCount = connection.CloseCount;
