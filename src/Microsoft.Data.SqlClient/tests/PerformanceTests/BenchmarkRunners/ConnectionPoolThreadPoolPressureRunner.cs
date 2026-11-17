@@ -207,46 +207,27 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             SqlConnection.ClearPool(conn);
         }
 
-        [AsyncHealthDiagnoser]
         [Benchmark]
-        public async Task SaturatedSyncOpenOnThreadPool()
+        public Task SaturatedSyncOpenOnThreadPool()
         {
-            var invocation = AsyncHealthDiagnoser.BeginInvocation(Parallelism);
             var tasks = new Task[Parallelism];
             for (int i = 0; i < Parallelism; i++)
             {
-                int worker = i;
-                var first = invocation?.Offer(worker);
                 tasks[i] = Task.Run(() =>
                 {
                     for (int op = 0; op < OpsPerWorker; op++)
                     {
-                        var operation = op == 0 ? first : invocation?.Offer(worker);
-                        operation?.Start();
-                        try
-                        {
-                            using (var conn = new SqlConnection(_connectionString))
-                            {
-                                conn.Open();
-                                operation?.OpenReturned(true);
-                                operation?.Opened();
-                                using var cmd = conn.CreateCommand();
-                                cmd.CommandText = "SELECT 1";
-                                _ = cmd.ExecuteScalar();
-                            }
-                            operation?.Complete();
-                        }
-                        catch (Exception error)
-                        {
-                            operation?.Fail(error);
-                            throw;
-                        }
+                        using var conn = new SqlConnection(_connectionString);
+                        conn.Open();
+                        using var cmd = conn.CreateCommand();
+                        cmd.CommandText = "SELECT 1";
+                        _ = cmd.ExecuteScalar();
+                        // Dispose returns the connection to the pool.
                     }
                 });
             }
 
-            await Task.WhenAll(tasks);
-            invocation?.Complete();
+            return Task.WhenAll(tasks);
         }
 
         private void WarmPool(int count)

@@ -8,11 +8,12 @@ The existing pipeline flow and trigger conventions are unchanged.
 
 | Unit | Regression signals |
 | --- | --- |
-| `SqlConnection` | Single OpenAsync, pooled/non-pooled and MARS off/on |
-| `ParallelAsyncConnection` | Concurrent OpenAsync at 10/50/100 operations, pooled/non-pooled |
-| `ConnectionPoolContention` | Async open/query/close across spare capacity through oversubscription |
-| `ConnectionPoolThreadPoolPressure` | Synchronous blocking on ThreadPool workers as a pressure control |
 | `OpenAsyncBurst` | 64 queued workers against empty, warm, oversubscribed (16-slot), and non-pooled connections, with separate open/close and open/query/close methods |
+
+Only the newly added `OpenAsyncBurstRunner` carries async-health instrumentation.
+Existing single/parallel connection, pool-contention and synchronous-pressure benchmarks
+retain their original workloads and ordinary BDN measurements, without async-health
+annotations or operation-recorder wrappers.
 
 `OpenAsyncBurst` adds eight benchmark cases, not a preliminary suite. Each has one warmup,
 three timing iterations and one invocation per iteration by default. Each completed batch
@@ -39,7 +40,7 @@ No experimental LongRunning driver switch is added.
    excludes iteration setup/cleanup on successful execution and is labeled `ExtraIteration`.
 
 Neither window adds a separate workload sweep. Probe production and operation recording are
-disabled during normal timing iterations. Instrumented benchmark code takes a null-recorder
+disabled during normal timing iterations. Instrumented burst benchmark code takes a null-recorder
 branch during timing; baseline and candidate use identical instrumentation.
 Diagnostic resource/allocation counts include observer bookkeeping; they are not driver-only
 allocation counts. For isolated allocation profiling, disable async health locally.

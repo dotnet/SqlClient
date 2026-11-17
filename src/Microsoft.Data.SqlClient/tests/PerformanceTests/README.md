@@ -2,19 +2,19 @@
 
 ## Async-health benchmarks and diagnoser
 
-`EnableAsyncHealth` defaults to true. Marked workloads record BDN startup/warmup and the
-extra diagnostic iteration separately; normal timing iterations are not observed. Raw
-queue/open/outcome/probe/resource evidence and per-window summaries are exported under
+`EnableAsyncHealth` defaults to true and applies only to the new `OpenAsyncBurstRunner`.
+Its workloads record BDN startup/warmup and the extra diagnostic iteration separately;
+normal timing iterations are not observed. Raw queue/open/outcome/probe/resource evidence
+and per-window summaries are exported under
 `BenchmarkDotNet.Artifacts/async-health`. Short or censored windows are insufficient, not healthy.
 There is no separate health sweep before the perf tests.
 
 | Unit | Async-health regression coverage |
 | --- | --- |
-| `SqlConnection` | Single OpenAsync, pooled/non-pooled and MARS off/on |
-| `ParallelAsyncConnection` | Concurrent OpenAsync at 10/50/100 operations, pooled/non-pooled |
-| `ConnectionPoolContention` | Async open/query/close across spare capacity through oversubscription |
-| `ConnectionPoolThreadPoolPressure` | Synchronous blocking on ThreadPool workers, as a scheduler-pressure control |
 | `OpenAsyncBurst` | 64 ThreadPool-dispatched opens against empty, warm, oversubscribed (16-slot), and non-pooled connections, with separate open/close and open/query/close methods |
+
+Existing connection, contention and synchronous-pressure workloads remain ordinary benchmarks,
+without async-health annotations or operation-recorder wrappers.
 
 `OpenAsyncBurst` runs eight benchmark cases, each with one warmup, three timing iterations,
 one invocation per iteration, and a five-minute per-case timeout. It reports per-connection

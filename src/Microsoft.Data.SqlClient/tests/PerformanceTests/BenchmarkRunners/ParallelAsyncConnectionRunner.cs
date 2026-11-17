@@ -34,39 +34,21 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             SqlConnection.ClearAllPools();
         }
 
-        [AsyncHealthDiagnoser]
         [Benchmark]
         public async Task OpenConnectionsConcurrently()
         {
-            var invocation = AsyncHealthDiagnoser.BeginInvocation(Concurrency);
             var tasks = new Task[Concurrency];
             for (int i = 0; i < Concurrency; i++)
             {
-                tasks[i] = OpenAndCloseConnectionAsync(invocation?.Offer(i));
+                tasks[i] = OpenAndCloseConnectionAsync();
             }
             await Task.WhenAll(tasks);
-            invocation?.Complete();
         }
 
-        private async Task OpenAndCloseConnectionAsync(AsyncHealthOperationRecorder.Operation operation)
+        private async Task OpenAndCloseConnectionAsync()
         {
-            operation?.Start();
-            try
-            {
-                await using (var conn = new SqlConnection(ConnectionString))
-                {
-                    Task open = conn.OpenAsync();
-                    operation?.OpenReturned(open.IsCompleted);
-                    await open;
-                    operation?.Opened();
-                }
-                operation?.Complete();
-            }
-            catch (Exception error)
-            {
-                operation?.Fail(error);
-                throw;
-            }
+            await using var conn = new SqlConnection(ConnectionString);
+            await conn.OpenAsync();
         }
     }
 }

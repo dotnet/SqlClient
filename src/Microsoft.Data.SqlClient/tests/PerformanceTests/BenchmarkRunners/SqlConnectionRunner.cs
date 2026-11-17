@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
 using System.Threading.Tasks;
 using BenchmarkDotNet.Attributes;
 
@@ -32,31 +31,11 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             sqlConnection.Open();
         }
 
-        [AsyncHealthDiagnoser]
         [Benchmark]
         public async Task OpenAsyncConnection()
         {
-            var invocation = AsyncHealthDiagnoser.BeginInvocation(1);
-            var operation = invocation?.Offer(0);
-            operation?.Start();
-            try
-            {
-                await using (var sqlConnection = new SqlConnection(
-                    s_config.ConnectionString + $";Pooling={Pooling};MultipleActiveResultSets={MARS}"))
-                {
-                    Task open = sqlConnection.OpenAsync();
-                    operation?.OpenReturned(open.IsCompleted);
-                    await open;
-                    operation?.Opened();
-                }
-                operation?.Complete();
-                invocation?.Complete();
-            }
-            catch (Exception error)
-            {
-                operation?.Fail(error);
-                throw;
-            }
+            await using var sqlConnection = new SqlConnection(s_config.ConnectionString + $";Pooling={Pooling};MultipleActiveResultSets={MARS}");
+            await sqlConnection.OpenAsync();
         }
     }
 }

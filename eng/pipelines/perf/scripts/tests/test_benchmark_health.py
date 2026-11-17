@@ -3,6 +3,7 @@
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -18,6 +19,24 @@ import interleave_perf as interleave
 
 class BenchmarkHealthTests(unittest.TestCase):
     """BDN health artifacts remain separate from normal benchmark timing rows."""
+
+    def test_only_new_burst_runner_has_async_health_instrumentation(self):
+        """Existing workloads retain ordinary BDN measurements without health wrappers."""
+        # Arrange
+        runners = (SCRIPTS.parents[3] / "src/Microsoft.Data.SqlClient/tests/"
+                   "PerformanceTests/BenchmarkRunners")
+        sources = {path.name: path.read_text(encoding="utf-8-sig")
+                   for path in runners.rglob("*.cs")}
+
+        # Act
+        marked = {name for name, text in sources.items()
+                  if re.search(r"\[\s*AsyncHealthDiagnoser(?:Attribute)?\s*\]", text)}
+        recorded = {name for name, text in sources.items()
+                    if re.search(r"AsyncHealth(?:Diagnoser|OperationRecorder)\s*\.", text)}
+
+        # Assert
+        self.assertEqual(marked, {"OpenAsyncBurstRunner.cs"})
+        self.assertEqual(recorded, {"OpenAsyncBurstRunner.cs"})
 
     def test_interleaved_failure_copies_raw_evidence_and_log_before_raising(self):
         with tempfile.TemporaryDirectory() as temp:

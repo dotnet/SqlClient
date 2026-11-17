@@ -6,8 +6,8 @@ dedicated performance test lab (Azure Dedicated Hosts), compare the branch under
 released NuGet baseline, and optionally ingest the results into an Azure Data Explorer (Kusto)
 database.
 
-BDN runs [AsyncHealthDiagnoser](async-health.md) for marked single/parallel opens, async pool
-contention, the saturated synchronous control, and the new `OpenAsyncBurst` benchmarks.
+BDN runs [AsyncHealthDiagnoser](async-health.md) only for the eight new `OpenAsyncBurst` cases.
+Existing benchmarks retain their ordinary measurements without async-health instrumentation.
 The pipeline enables the diagnoser and burst unit even with an older private runner config.
 Startup/warmup and the extra diagnostic iteration are observed separately; normal timing
 iterations are not observed. Raw queue/open/outcome/probe/resource evidence is retained alongside
