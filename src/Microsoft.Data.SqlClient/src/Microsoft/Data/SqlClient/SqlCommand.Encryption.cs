@@ -528,11 +528,19 @@ namespace Microsoft.Data.SqlClient
                 }
                 else if (cache.TryGetCachedQueryMetadata(this, out SqlQueryMetadataCache.CachedQueryMetadata metadata))
                 {
-                    // The cached metadata matched, but the column encryption keys still have to be
-                    // loaded, which may require key store network I/O. Hand the rest of the work to a
-                    // worker so even synchronously completed key loads cannot run the blocking
-                    // stale-cache describe fallback on the caller's thread.
                     usedCache = true;
+
+                    // With only plaintext parameters there are no keys to load, so finish inline.
+                    if (metadata.KeysToLoad.Count == 0)
+                    {
+                        cache.CompleteCachedQueryMetadata(this, metadata);
+                        return;
+                    }
+
+                    // The column encryption keys still have to be loaded, which may require key
+                    // store network I/O. Hand the rest of the work to a worker so even
+                    // synchronously completed key loads cannot run the blocking stale-cache
+                    // describe fallback on the caller's thread.
                     SqlConnectionInternal retryConnection = _enclaveRetryConnection;
                     SqlConnection connection = _activeConnection;
                     int closeCount = connection.CloseCount;
@@ -971,8 +979,11 @@ namespace Microsoft.Data.SqlClient
             bool isRetry)
         {
             PendingColumnEncryptionKeyOperations pending = new PendingColumnEncryptionKeyOperations();
+            int verifiedCount = 0;
             foreach (byte[] attestationInfo in ReadDescribeEncryptionParameterResultsCore(ds, describeParameterEncryptionRpcOriginalRpcMap, pending))
             {
+                // Reject untrusted keys before attestation creates and caches an enclave session.
+                verifiedCount = VerifyPendingColumnMasterKeySignatures(pending, verifiedCount);
                 EnclaveDelegate.Instance.CreateEnclaveSession(
                     _activeConnection.AttestationProtocol, _activeConnection.Parser.EnclaveType,
                     GetEnclaveSessionParameters(), attestationInfo, enclaveAttestationParameters,
@@ -980,8 +991,25 @@ namespace Microsoft.Data.SqlClient
                 enclaveAttestationParameters = null;
             }
 
+            VerifyPendingColumnMasterKeySignatures(pending, verifiedCount);
+
+            IReadOnlyList<SqlCipherMetadata> keyDecryptions = pending.KeyDecryptions;
+            for (int i = 0; i < keyDecryptions.Count; i++)
+            {
+                SqlSecurityUtility.DecryptSymmetricKey(keyDecryptions[i], _activeConnection, this);
+            }
+
+            CacheQueryMetadataIfNeeded();
+        }
+
+        /// <summary>
+        /// Verifies the column master key signatures recorded after the first <paramref name="startIndex"/> entries.
+        /// </summary>
+        /// <returns>The number of signatures verified so far.</returns>
+        private int VerifyPendingColumnMasterKeySignatures(PendingColumnEncryptionKeyOperations pending, int startIndex)
+        {
             IReadOnlyList<ColumnMasterKeySignatureVerification> verifications = pending.SignatureVerifications;
-            for (int i = 0; i < verifications.Count; i++)
+            for (int i = startIndex; i < verifications.Count; i++)
             {
                 ColumnMasterKeySignatureVerification verification = verifications[i];
                 SqlSecurityUtility.VerifyColumnMasterKeySignature(
@@ -993,13 +1021,7 @@ namespace Microsoft.Data.SqlClient
                     this);
             }
 
-            IReadOnlyList<SqlCipherMetadata> keyDecryptions = pending.KeyDecryptions;
-            for (int i = 0; i < keyDecryptions.Count; i++)
-            {
-                SqlSecurityUtility.DecryptSymmetricKey(keyDecryptions[i], _activeConnection, this);
-            }
-
-            CacheQueryMetadataIfNeeded();
+            return verifications.Count;
         }
 
         /// <summary>
@@ -1021,13 +1043,42 @@ namespace Microsoft.Data.SqlClient
             CancellationToken cancellationToken)
         {
             PendingColumnEncryptionKeyOperations pending = new PendingColumnEncryptionKeyOperations();
+            int verifiedCount = 0;
             foreach (byte[] attestationInfo in ReadDescribeEncryptionParameterResultsCore(ds, describeParameterEncryptionRpcOriginalRpcMap, pending))
             {
+                // Reject untrusted keys before attestation creates and caches an enclave session.
+                verifiedCount = await VerifyPendingColumnMasterKeySignaturesAsync(pending, verifiedCount, cancellationToken)
+                    .ConfigureAwait(false);
                 await CreateEnclaveSessionAsync(attestationInfo, isRetry, cancellationToken).ConfigureAwait(false);
             }
 
+            await VerifyPendingColumnMasterKeySignaturesAsync(pending, verifiedCount, cancellationToken)
+                .ConfigureAwait(false);
+
+            // Metadata entries frequently share a key. Resolve them sequentially so the first result
+            // populates the cache without creating additional waiters for the same key.
+            IReadOnlyList<SqlCipherMetadata> keyDecryptions = pending.KeyDecryptions;
+            for (int i = 0; i < keyDecryptions.Count; i++)
+            {
+                await SqlSecurityUtility.DecryptSymmetricKeyAsync(keyDecryptions[i], _activeConnection, this, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+
+            CacheQueryMetadataIfNeeded();
+        }
+
+        /// <summary>
+        /// Asynchronously verifies the column master key signatures recorded after the first
+        /// <paramref name="startIndex"/> entries.
+        /// </summary>
+        /// <returns>The number of signatures verified so far.</returns>
+        private async Task<int> VerifyPendingColumnMasterKeySignaturesAsync(
+            PendingColumnEncryptionKeyOperations pending,
+            int startIndex,
+            CancellationToken cancellationToken)
+        {
             IReadOnlyList<ColumnMasterKeySignatureVerification> verifications = pending.SignatureVerifications;
-            for (int i = 0; i < verifications.Count; i++)
+            for (int i = startIndex; i < verifications.Count; i++)
             {
                 ColumnMasterKeySignatureVerification verification = verifications[i];
                 await SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
@@ -1041,16 +1092,7 @@ namespace Microsoft.Data.SqlClient
                     .ConfigureAwait(false);
             }
 
-            // Metadata entries frequently share a key. Resolve them sequentially so the first result
-            // populates the cache without creating additional waiters for the same key.
-            IReadOnlyList<SqlCipherMetadata> keyDecryptions = pending.KeyDecryptions;
-            for (int i = 0; i < keyDecryptions.Count; i++)
-            {
-                await SqlSecurityUtility.DecryptSymmetricKeyAsync(keyDecryptions[i], _activeConnection, this, cancellationToken)
-                    .ConfigureAwait(false);
-            }
-
-            CacheQueryMetadataIfNeeded();
+            return verifications.Count;
         }
 
         private async Task CreateEnclaveSessionAsync(byte[] attestationInfo, bool isRetry, CancellationToken cancellationToken)
@@ -1088,8 +1130,13 @@ namespace Microsoft.Data.SqlClient
         /// Deferring these operations changes which exception surfaces when a query hits more than one
         /// problem. Previously verification and decryption were interleaved with parsing, so a bad signature
         /// on the first key was raised before the parameter metadata result set was parsed at all. Now parsing
-        /// always completes first, so a malformed result set is reported in preference to a key store failure.
-        /// The set of exceptions that can be thrown, and the state left behind on failure, are unchanged.
+        /// completes first, except that recorded signatures are verified before each enclave session is created.
+        /// A malformed result set is therefore usually reported in preference to a key store failure.
+        /// </para>
+        /// <para>
+        /// The caller verifies signatures before creating enclave sessions, so an untrusted key is rejected
+        /// before attestation, as before. Key decryption now runs after enclave session creation, so a
+        /// decryption failure can leave a cached enclave session; the set of exceptions is unchanged.
         /// </para>
         /// </remarks>
         /// <param name="ds">Resultset from calling to sp_describe_parameter_encryption</param>

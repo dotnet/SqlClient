@@ -556,6 +556,34 @@ public class SqlCommandTests
         }
     }
 
+    /// <summary>
+    /// An async cache hit whose parameters are all plaintext has no keys to load, so it completes
+    /// inline without a worker task or a provider call.
+    /// </summary>
+    [Fact]
+    public void PrepareForTransparentEncryption_AsyncCacheHitPlaintextOnly_CompletesInline()
+    {
+        // Arrange
+        // Cache the query with a plaintext parameter.
+        TestKeyStoreProvider provider = new();
+        using SqlCommand command =
+            QueryMetadataCacheTestCommands.NewCommandWithCipherMetadata(provider);
+        using SqlConnection connection = command.Connection;
+        command.Parameters[0].CipherMetadata = null;
+        SqlQueryMetadataCache.GetInstance().AddQueryMetadata(
+            command, ignoreQueriesWithReturnValueParams: true);
+
+        // Act
+        object?[] arguments = InvokeAsyncPrepareForTransparentEncryption(command);
+
+        // Assert
+        Assert.Null(arguments[3]);
+        Assert.Equal(true, arguments[5]);
+        Assert.Equal(0, provider.DecryptAsyncCallCount);
+        Assert.Equal(0, provider.DecryptCallCount);
+        Assert.Null(command.Parameters[0].CipherMetadata);
+    }
+
     /// <summary>Creates RPC entries without requiring a network connection.</summary>
     /// <param name="count">The number of entries to add.</param>
     /// <returns>A command owned by the test.</returns>
