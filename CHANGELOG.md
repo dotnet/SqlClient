@@ -6,42 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 > **Note:** Releases are sorted in reverse chronological order (newest first).
 
-## [Planned Stable Release 8.0.0] - Unreleased
+## [Stable Release 8.0.0]
 
-These are planned changes, not a published release. The source branch declares `8.0.0`;
-final contents, package-build parameters, and the release date remain subject to confirmation.
 The driver and four companion packages align at `8.0.0`, with `AssemblyVersion 8.0.0.0`.
-See the [core release notes](release-notes/8.0/8.0.0.md) for current platform/dependency details
-and the encryption-information API's current empty-snapshot limitation.
+See the [core release notes](release-notes/8.0/8.0.0.md) for platform and dependency details.
 
 ### Changes Since [8.0.0-preview1](release-notes/8.0/8.0.0-preview1.md)
-
-#### Added
-
-##### Connection encryption information API groundwork
-
-*What Changed:*
-
-- Added `SqlConnection.EncryptionInfo`, `SqlException.EncryptionInfo`,
-  `SqlConnectionEncryptionInfo`, `SqlConnectionEncryptionMode`, and
-  `SqlServerCertificateValidationErrors`.
-  ([#2353](https://github.com/dotnet/SqlClient/issues/2353),
-  [#4830](https://github.com/dotnet/SqlClient/pull/4830),
-  [#5037](https://github.com/dotnet/SqlClient/pull/5037),
-  [#5043](https://github.com/dotnet/SqlClient/pull/5043))
-
-*Who Benefits:*
-
-- Tooling authors can compile against the diagnostic snapshot contracts.
-
-*Impact:*
-
-- **API surface only on the current release branch:** both getters return a non-null empty
-  snapshot. Fields are unavailable (`null`), and `GetServerCertificate()` returns `null`.
-  TLS mode, protocol, cipher-suite, and certificate capture are not wired into this branch.
-  Do not use these empty values to infer connection security or success.
-- `NegotiatedCipherSuiteId` is available on both runtime targets; the strongly typed
-  `NegotiatedCipherSuite` property is net10.0 only. This does not change TLS validation policy.
 
 #### Changed
 
@@ -129,6 +99,12 @@ and the encryption-information API's current empty-snapshot limitation.
   [#5044](https://github.com/dotnet/SqlClient/pull/5044))
 
 #### Fixed
+
+- Fixed managed TCP sends after connection disposal reporting an unexpected
+  `NullReferenceException` instead of the existing connection-error path.
+  (net10.0, managed SNI only)
+  ([#5067](https://github.com/dotnet/SqlClient/pull/5067),
+  [#5076](https://github.com/dotnet/SqlClient/pull/5076))
 
 - Fixed managed SNI TLS handshakes ignoring the remaining login timeout, which could block
   `Open`/`OpenAsync` and pool users for minutes when a server or network stalls after PRELOGIN.
@@ -291,12 +267,12 @@ again as new 8.0 fixes, even though preview1's branch-cut baseline included them
 
 ### Companion packages
 
-- Planned [Microsoft.Data.SqlClient.Extensions.Abstractions 8.0.0](release-notes/Extensions/Abstractions/8.0/8.0.0.md)
+- [Microsoft.Data.SqlClient.Extensions.Abstractions 8.0.0](release-notes/Extensions/Abstractions/8.0/8.0.0.md)
   includes localized authentication diagnostics and dependency updates.
-- Planned [Microsoft.Data.SqlClient.Extensions.Azure 8.0.0](release-notes/Extensions/Azure/8.0/8.0.0.md)
+- [Microsoft.Data.SqlClient.Extensions.Azure 8.0.0](release-notes/Extensions/Azure/8.0/8.0.0.md)
   and [Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 8.0.0](release-notes/add-ons/AzureKeyVaultProvider/8.0/8.0.0.md)
   include compatible dependency updates.
-- Planned [Microsoft.Data.SqlClient.Internal.Logging 8.0.0](release-notes/Internal/Logging/8.0/8.0.0.md)
+- [Microsoft.Data.SqlClient.Internal.Logging 8.0.0](release-notes/Internal/Logging/8.0/8.0.0.md)
   is version-alignment-only since preview1. Each companion's cumulative changes are documented
   in its own notes; no separate Microsoft.SqlServer.Server release is established.
 
