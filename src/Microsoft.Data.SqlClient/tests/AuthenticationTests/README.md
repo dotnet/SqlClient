@@ -21,8 +21,8 @@ SqlServer version inputs and freezes the effective family version for all builds
 
 | Fixture | Checks |
 | --- | --- |
-| ConfigurationTest | Current and legacy real app.config handlers still compile through the public `ConfigurationSection` base type and resolve through driver type forwards; initializer/configuration beat discovered Azure and application registration; application registration replaces Azure; invalid provider/initializer/unsupported provider entries are traced once without blocking discovery or explicit registration; disabled switches leave explicit registration usable. |
-| PublishTest | References Abstractions and Azure but never uses Azure types in source. linux-x64 trim/AOT publishes treat C#, ILLink and ILC warnings as errors. Execution proves discovery absent and explicit registration succeeds; the runner verifies no Azure DLL or Azure runtime dependency remains. XML documentation is not a runtime assembly. |
+| ConfigurationTest | Current and legacy real app.config handlers still compile through the public `ConfigurationSection` base type and resolve through driver type forwards; initializer/configuration beat discovered Azure and application registration; application registration replaces Azure; invalid provider/initializer/unsupported provider entries are diagnosed without retrying activation, discovery is still attempted, and failed configured methods remain unavailable until explicit registration recovers them; disabled switches leave explicit registration usable. |
+| PublishTest | References Abstractions and Azure but never uses Azure types in source. Both reflection switches are disabled at publish time with `Trim="true"`. linux-x64 trim/AOT publishes treat C#, ILLink and ILC warnings as errors. Execution proves discovery absent and explicit registration succeeds; the runner verifies no Azure DLL or Azure runtime dependency remains. XML documentation is not a runtime assembly. |
 
 The focused `TestAuthenticationConfiguration` target runs just current/legacy
 configuration. `TestAuthentication` runs six configuration scenarios. Optional

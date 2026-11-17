@@ -17,8 +17,11 @@ if (scenario.StartsWith("bad-", StringComparison.Ordinal))
 {
     using var listener = new AuthenticationTraceListener();
     Require(SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryDefault)
-        is ActiveDirectoryAuthenticationProvider,
-        "A recoverable configuration failure prevented Azure discovery.");
+        is null, "A failed configuration silently fell back to an Azure provider.");
+    Require(listener.Messages.Any(message =>
+        message.Contains("Attempting to load Azure extension assembly=") &&
+        message.Contains("Microsoft.Data.SqlClient.Extensions.Azure")),
+        "A recoverable configuration failure prevented Azure discovery from being attempted.");
     string expected = scenario switch
     {
         "bad-provider" => "MissingProvider",

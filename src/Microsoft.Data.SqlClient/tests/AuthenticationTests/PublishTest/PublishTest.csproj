@@ -12,6 +12,14 @@
     <PublishTrimmed Condition="'$(PublishMode)' == 'trim'">true</PublishTrimmed>
     <PublishAot Condition="'$(PublishMode)' == 'aot'">true</PublishAot>
   </PropertyGroup>
+  <ItemGroup>
+    <RuntimeHostConfigurationOption
+        Include="Switch.Microsoft.Data.SqlClient.EnableAppConfig"
+        Value="false" Trim="true" />
+    <RuntimeHostConfigurationOption
+        Include="Switch.Microsoft.Data.SqlClient.EnableAzureExtensionDiscovery"
+        Value="false" Trim="true" />
+  </ItemGroup>
   <ItemGroup Condition="'$(ReferenceType)' == 'Project'">
     <ProjectReference Include="$(RepoRoot)src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Abstractions.csproj"
                       GlobalPropertiesToRemove="PublishTrimmed;PublishAot" />

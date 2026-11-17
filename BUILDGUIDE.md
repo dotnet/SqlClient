@@ -109,6 +109,10 @@ invalid provider/initializer/unsupported-provider recovery checks and
 disabled switches. Add `AuthenticationPublish=true`
 on Linux to publish **and execute** linux-x64 trimmed and NativeAOT consumers with
 compiler/linker warnings as errors. GCC and the NativeAOT prerequisites are required.
+The publish fixture disables authentication configuration and Azure discovery at publish
+time so reflective bootstrap is removed. Invalid-configuration scenarios still verify a
+discovery attempt, but reject fallback for failed configured methods and require explicit
+registration to recover them.
 
 ```bash
 dotnet build build.proj -t:TestAuthentication -p:Configuration=Release -p:TestFramework=net10.0 -p:ReferenceType=Project -p:AuthenticationPublish=true -p:PackageVersionSqlClient=8.0.0-stack.6
