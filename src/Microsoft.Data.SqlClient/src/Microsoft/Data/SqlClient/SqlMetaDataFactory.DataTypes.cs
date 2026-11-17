@@ -158,52 +158,48 @@ internal sealed partial class SqlMetaDataFactory
             result.AcceptChanges();
 
             // 2. Add UDTs from the server
-            const string GetEngineEditionSqlCommand = "SELECT SERVERPROPERTY('EngineEdition');";
-            using SqlCommand command = ((SqlConnection)context.Connection).CreateCommand();
-
-            command.CommandText = GetEngineEditionSqlCommand;
-            int engineEdition = (int)(context.IsAsync ? await command.ExecuteScalarAsync(context.CancellationToken).ConfigureAwait(false) : command.ExecuteScalar());
-            // Azure SQL Edge (9) throws an exception when querying sys.assemblies
-            // Azure Synapse Analytics (6) and Azure Synapse serverless SQL pool (11)
-            // do not support ASSEMBLYPROPERTY
-            if (!s_assemblyPropertyUnsupportedEngines.Contains(engineEdition))
-            {
-                var udtCommand = new SqlCommandCollection("_UDTs", 2,
-                @"select types.assembly_class COLLATE database_default+"
-                        + "', ' + assemblies.name + ', Version=' +"
-                        + "CONVERT(VARCHAR(200),ASSEMBLYPROPERTY(assemblies.name, 'VersionMajor')) + '.' +"
-                        + "CONVERT(VARCHAR(200),ASSEMBLYPROPERTY(assemblies.name, 'VersionMinor')) + '.' +"
-                        + "CONVERT(VARCHAR(200),ASSEMBLYPROPERTY(assemblies.name, 'VersionBuild')) + '.' +"
-                        + "CONVERT(VARCHAR(200),ASSEMBLYPROPERTY(assemblies.name, 'VersionRevision')) +"
-                        + "ISNULL(', Culture=' + CONVERT(VARCHAR(200),ASSEMBLYPROPERTY(assemblies.name, 'CultureInfo')),'') +"
-                        + "ISNULL(', PublicKeyToken=' + LOWER(REPLACE(CONVERT(VARCHAR(200),ASSEMBLYPROPERTY(assemblies.name, 'PublicKey'),1),'0x','')),'') TypeName,"
-                        + "29 ProviderDbType,"
-                        + "max_length ColumnSize,"
-                        + "null CreateFormat,"
-                        + "null CreateParameters,"
-                        + "null DataType,"
-                        + "null IsAutoincrementable,"
-                        + "null IsBestMatch,"
-                        + "null IsCaseSensitive,"
-                        + "is_fixed_length IsFixedLength,"
-                        + "null IsFixedPrecisionScale,"
-                        + "null IsLong,"
-                        + "is_nullable IsNullable,"
-                        + "1 IsSearchable,"
-                        + "null IsSearchableWithLike,"
-                        + "null IsUnsigned,"
-                        + "null MaximumScale,"
-                        + "null MinimumScale,"
-                        + "null IsConcurrencyType,"
-                        + "0 IsLiteralSupported,"
-                        + "null LiteralPrefix,"
-                        + "null LiteralSuffix,"
-                        + "null NativeDataType "
-                  + "from sys.assemblies as assemblies "
-                  + "join sys.assembly_types as types on assemblies.assembly_id = types.assembly_id",
-                []);
-                await udtCommand.GetMetadata(context, result).ConfigureAwait(false);
-            }
+            // We skip reading UDTs, from the following Server editions:
+            // - (9)  Azure SQL Edge                     throws an exception when querying sys.assemblies
+            // - (6)  Azure Synapse Analytics            do not support ASSEMBLYPROPERTY
+            // - (11) Azure Synapse serverless SQL pool  do not support ASSEMBLYPROPERTY
+            var udtCommand = new SqlCommandCollection("_UDTs", 2,
+            @"if (SELECT SERVERPROPERTY('EngineEdition')) not in (6,9,11) "
+                + "begin "
+                  + "exec sp_executesql N'select types.assembly_class COLLATE database_default+"
+                    + "'', '' + assemblies.name + '', Version='' +"
+                    + "CONVERT(VARCHAR(200),ASSEMBLYPROPERTY(assemblies.name, ''VersionMajor'')) + ''.'' +"
+                    + "CONVERT(VARCHAR(200),ASSEMBLYPROPERTY(assemblies.name, ''VersionMinor'')) + ''.'' +"
+                    + "CONVERT(VARCHAR(200),ASSEMBLYPROPERTY(assemblies.name, ''VersionBuild'')) + ''.'' +"
+                    + "CONVERT(VARCHAR(200),ASSEMBLYPROPERTY(assemblies.name, ''VersionRevision'')) +"
+                    + "ISNULL('', Culture='' + CONVERT(VARCHAR(200),ASSEMBLYPROPERTY(assemblies.name, ''CultureInfo'')),'''') +"
+                    + "ISNULL('', PublicKeyToken='' + LOWER(REPLACE(CONVERT(VARCHAR(200),ASSEMBLYPROPERTY(assemblies.name, ''PublicKey''),1),''0x'','''')),'''') TypeName,"
+                    + "29 ProviderDbType,"
+                    + "max_length ColumnSize,"
+                    + "null CreateFormat,"
+                    + "null CreateParameters,"
+                    + "null DataType,"
+                    + "null IsAutoincrementable,"
+                    + "null IsBestMatch,"
+                    + "null IsCaseSensitive,"
+                    + "is_fixed_length IsFixedLength,"
+                    + "null IsFixedPrecisionScale,"
+                    + "null IsLong,"
+                    + "is_nullable IsNullable,"
+                    + "1 IsSearchable,"
+                    + "null IsSearchableWithLike,"
+                    + "null IsUnsigned,"
+                    + "null MaximumScale,"
+                    + "null MinimumScale,"
+                    + "null IsConcurrencyType,"
+                    + "0 IsLiteralSupported,"
+                    + "null LiteralPrefix,"
+                    + "null LiteralSuffix,"
+                    + "null NativeDataType "
+                 + "from sys.assemblies as assemblies "
+                 + "join sys.assembly_types as types on assemblies.assembly_id = types.assembly_id' "
+               + "end",
+            []);
+            await udtCommand.GetMetadata(context, result).ConfigureAwait(false);
 
             // 3. Add TVPs from the server
             var tvpCommand = new SqlCommandCollection("_TVPs", 2,
