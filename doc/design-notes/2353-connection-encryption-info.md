@@ -257,9 +257,13 @@ login, derived from the client `Encrypt` setting and the server's PRELOGIN respo
 | --- | --- | --- | --- |
 | `Strict` (TDS 8.0) | — (TLS before PRELOGIN) | `Strict` | Negotiated TLS version |
 | `Mandatory` / `true` | `ENCRYPT_OFF`, `ENCRYPT_ON`, `ENCRYPT_REQ` | `Full` | Negotiated TLS version |
-| `Optional` / `false` | `ENCRYPT_ON` / `ENCRYPT_REQ` | `Full` | Negotiated TLS version |
+| `Optional` / `false` | `ENCRYPT_REQ` | `Full` | Negotiated TLS version |
 | `Optional` / `false` | `ENCRYPT_OFF` (TLS removed after LOGIN7) | `LoginOnly` | Negotiated TLS version |
-| `Optional` / `false` | `ENCRYPT_NOT_SUP` | `None` | `null` |
+| `Optional` / `false` | `ENCRYPT_ON` / `ENCRYPT_NOT_SUP` | `None` | `null` |
+
+With `Optional`, the client sends `ENCRYPT_OFF` in PRELOGIN. Only a server reply of
+`ENCRYPT_REQ` upgrades the session to full encryption; `ENCRYPT_ON` leaves the client option
+`OFF`, so no TLS handshake runs and the mode is `None`.
 
 **Failure path.** Each value is recorded as soon as it is known for the attempt; the requested
 settings are never used as substitutes for an unknown value. The mode is recorded when it is
