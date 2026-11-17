@@ -12,8 +12,9 @@
     Runs after the official pipeline publishes the SqlClient family to NuGet Production.
 
     The PR always targets the branch that was built (BUILD_SOURCEBRANCH), with an optional
-    internal/ prefix removed: internal/release/7.1 and release/7.1 both target release/7.1. The
-    published version is read from that build's Versions.props.
+    internal/ prefix removed: internal/release/7.1 and release/7.1 both target release/7.1. Only
+    main and release/X.Y are allowed; other branches are skipped. Outside an Azure DevOps build,
+    only -DryRun is allowed. The published version is read from that build's Versions.props.
 
     The next version is chosen as follows:
       - A GA release always bumps the patch (7.0.1 -> 7.0.2), on any branch.
@@ -59,11 +60,12 @@ function Write-PipelineWarning {
     Write-Host "##vso[task.logissue type=warning]$Message"
 }
 
-# Maps the built ref to the GitHub branch the PR targets, or $null when it is not a branch.
+# Maps the built ref to the GitHub branch the PR targets, or $null when it is not main or a
+# release/X.Y branch.
 function Get-GitHubTargetBranch {
     param([string]$SourceBranch)
 
-    if ($SourceBranch -notmatch '^refs/heads/(?:internal/)?(.+)$') {
+    if ($SourceBranch -notmatch '^refs/heads/(?:internal/)?(main|release/\d+\.\d+)$') {
         return $null
     }
 
@@ -273,7 +275,7 @@ function Invoke-VersionBumpPr {
     $sourceBranch = $env:BUILD_SOURCEBRANCH
     $targetBranch = Get-GitHubTargetBranch $sourceBranch
     if ($null -eq $targetBranch) {
-        Write-PipelineWarning "'$sourceBranch' is not a branch. Skipping."
+        Write-PipelineWarning "'$sourceBranch' is not main or a release/X.Y branch. Skipping."
         return
     }
 
@@ -288,6 +290,10 @@ function Invoke-VersionBumpPr {
         Write-PipelineWarning ("No single SqlClientNextVersion in '$VersionsPropsPath'. " +
             "Skipping.")
         return
+    }
+
+    if (-not $DryRun -and $env:TF_BUILD -ne 'True') {
+        throw 'Only -DryRun is allowed outside an Azure DevOps build.'
     }
 
     if (-not $DryRun -and [string]::IsNullOrWhiteSpace($Token)) {

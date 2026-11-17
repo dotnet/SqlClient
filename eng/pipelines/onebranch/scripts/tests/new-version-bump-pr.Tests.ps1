@@ -14,7 +14,7 @@ BeforeAll {
 
 <#
 .SYNOPSIS
-    Verifies that the built branch maps to the same GitHub branch, without internal/.
+    Verifies that only main and release/X.Y map to GitHub branches, without internal/.
 #>
 Describe 'Get-GitHubTargetBranch' {
     It 'Maps <Source> to <Expected>' -TestCases @(
@@ -22,7 +22,6 @@ Describe 'Get-GitHubTargetBranch' {
         @{ Source = 'refs/heads/internal/release/7.1'; Expected = 'release/7.1' }
         @{ Source = 'refs/heads/main'; Expected = 'main' }
         @{ Source = 'refs/heads/release/6.1'; Expected = 'release/6.1' }
-        @{ Source = 'refs/heads/internal/release/7.1-hotfix'; Expected = 'release/7.1-hotfix' }
     ) {
         # Act
         $result = Get-GitHubTargetBranch $Source
@@ -32,6 +31,10 @@ Describe 'Get-GitHubTargetBranch' {
     }
 
     It 'Returns null for <Source>' -TestCases @(
+        @{ Source = 'refs/heads/dev/cheena/feature' }
+        @{ Source = 'refs/heads/internal/dev/cheena/feature' }
+        @{ Source = 'refs/heads/internal/release/7.1-hotfix' }
+        @{ Source = 'refs/heads/feature/main' }
         @{ Source = 'refs/pull/123/merge' }
         @{ Source = 'refs/tags/v7.1.1' }
         @{ Source = '' }
@@ -198,6 +201,7 @@ Describe 'Invoke-VersionBumpPr' {
         Set-Content -LiteralPath $VersionsPropsPath `
             -Value '<SqlClientNextVersion>8.1.0</SqlClientNextVersion>'
         $env:BUILD_SOURCEBRANCH = 'refs/heads/internal/main'
+        $env:TF_BUILD = 'True'
         $GitHubRepository = 'dotnet/SqlClient'
         $Token = 'token'
         $DryRun = $false
@@ -228,10 +232,12 @@ Describe 'Invoke-VersionBumpPr' {
     AfterEach {
         # Cleanup: restore the pipeline variable shared with other tests.
         $env:BUILD_SOURCEBRANCH = $script:savedSourceBranch
+        $env:TF_BUILD = $script:savedTfBuild
     }
 
     BeforeAll {
         $script:savedSourceBranch = $env:BUILD_SOURCEBRANCH
+        $script:savedTfBuild = $env:TF_BUILD
     }
 
     It 'Opens the PR against the built release branch without internal/' {
@@ -247,16 +253,25 @@ Describe 'Invoke-VersionBumpPr' {
         }
     }
 
-    It 'Skips with a warning when the build is not from a branch' {
+    It 'Throws for a real run outside an Azure DevOps build' {
         # Arrange
-        $env:BUILD_SOURCEBRANCH = 'refs/pull/123/merge'
+        $env:TF_BUILD = $null
+
+        # Act / Assert
+        { Invoke-VersionBumpPr } | Should -Throw '*Only -DryRun*'
+        Should -Invoke Invoke-GitHubApi -Times 0
+    }
+
+    It 'Skips with a warning when built from a dev branch' {
+        # Arrange
+        $env:BUILD_SOURCEBRANCH = 'refs/heads/dev/cheena/feature'
 
         # Act
         Invoke-VersionBumpPr
 
         # Assert
         Should -Invoke Write-PipelineWarning -Times 1 -ParameterFilter {
-            $Message -like '*not a branch*'
+            $Message -like '*not main or a release*'
         }
         Should -Invoke Invoke-GitHubApi -Times 0
     }

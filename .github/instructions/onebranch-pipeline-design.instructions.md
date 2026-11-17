@@ -133,12 +133,14 @@ When adding a new package to the OneBranch flow:
 - Emitted only when `releaseToProduction` and `releaseSqlClient` are both true
 - Depends on `release_production` with `succeeded()`, so a rejected or failed release opens no PR
 - Runs `scripts/new-version-bump-pr.ps1`, which opens a GitHub PR on the matching branch:
-  - Targets the built branch (`Build.SourceBranch`), with an optional `internal/` prefix removed
+  - Targets the built branch (`Build.SourceBranch`), with an optional `internal/` prefix removed;
+    only `main` and `release/X.Y` are allowed
   - GA release on any branch bumps the patch (8.1.0 → 8.1.1)
   - Preview on `release/X.Y` moves to its GA version
   - Preview on `main` moves to the lowest open milestone in the same major.minor above it,
     or else to its GA version
-  - Non-branch refs, or branches without `Versions.props` → warning, no PR
+  - Other branches or refs, or branches without `Versions.props` → warning, no PR
+  - Outside an Azure DevOps build (`TF_BUILD`), only `-DryRun` is allowed
 - No-op when the GitHub branch is already at or above the next version, or the PR is already open
 - PR head is `dev/automation/bump-sqlclient-version-<version>`; milestone is `<version>`, or else
   the closest earlier milestone (open or closed)
