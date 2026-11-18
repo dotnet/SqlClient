@@ -35,6 +35,8 @@ internal sealed class AsyncHealthWindow
 /// <summary>Dedicated producer: never relies on a ThreadPool timer or continuation to stop.</summary>
 internal sealed class ThreadPoolHealthObserver : IDisposable
 {
+    internal const int ProbeIntervalMilliseconds = 25;
+    internal const int MaximumOutstandingProbes = 256;
     private readonly ManualResetEventSlim _ready = new();
     private readonly ManualResetEventSlim _active = new();
     private readonly ManualResetEventSlim _stop = new();
@@ -59,7 +61,8 @@ internal sealed class ThreadPoolHealthObserver : IDisposable
     internal ThreadPoolHealthObserver(Action<Action> dispatch, int recoveryMilliseconds = 1000)
     {
         _recoveryMilliseconds = recoveryMilliseconds;
-        _probes = new ThreadPoolProbeRecorder(64, TimeProvider.System, _epoch, dispatch);
+        _probes = new ThreadPoolProbeRecorder(
+            MaximumOutstandingProbes, TimeProvider.System, _epoch, dispatch);
     }
 
     private double Timestamp() => Stopwatch.GetElapsedTime(_epoch).TotalMilliseconds;
@@ -103,7 +106,7 @@ internal sealed class ThreadPoolHealthObserver : IDisposable
                     continue;
                 }
 
-                _probes.RequestProbe(ref next, now, 25);
+                _probes.RequestProbe(ref next, now, ProbeIntervalMilliseconds);
                 if (_resources.Count == 100000)
                 {
                     _resourceSamplesDropped++;

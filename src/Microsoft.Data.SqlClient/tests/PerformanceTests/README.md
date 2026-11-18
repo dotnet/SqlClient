@@ -22,6 +22,12 @@ The report preserves phase completeness and raw cohort provenance outside its co
 Existing connection, contention and synchronous-pressure workloads remain ordinary benchmarks,
 without async-health annotations or operation-recorder wrappers.
 
+All runner configs inherit `ProcessIsolation` (`PerRunner` by default, or explicit `PerCase`)
+and `AdditionalRttMilliseconds` (zero by default). These settings do not depend on the diagnoser
+attribute. The burst default explicitly uses `PerCase`; direct CLI and pipeline execution use
+the same process dispatcher. Positive RTT is applied by an owned Linux SQL-loopback netem scope,
+never silently ignored on unsupported platforms or endpoints.
+
 `OpenAsyncBurst` runs eight benchmark cases, each with one warmup, three timing iterations,
 one invocation per iteration, and a five-minute per-case timeout. It reports per-connection
 cost for a completed 64-operation batch. Empty-pool setup clears just its own pool; warm
@@ -29,6 +35,18 @@ setup holds all connections simultaneously before releasing them. Setup and clea
 outside timing and the extra-iteration window; startup observations include fixture setup.
 No exceptions or unsuccessful opens count as
 completed benchmark operations.
+
+The optional `Extended` sampling profile keeps `Empty` as one cold wave but increases the other
+states to 16 waves with fixed `SteadyOperationsPerWorker` values. At most 64 workers run at once;
+1,024 worker starts are retained per invocation. BDN operation normalization uses the complete
+configured workload count. Interleaved extended jobs run all configured repetitions without
+adding another confirmation loop. Counts are not automatically tuned during comparisons.
+Probe and first-worker p99 sample adequacy are reported independently; cold 64-start p99 remains
+an explicitly sparse observed maximum.
+
+See [the opt-in 100ms extended profile](profiles/openasync-extended-100ms.jsonc) and its
+[measured sampling limits](../../../../eng/pipelines/perf/async-health.md#calibrated-100ms-example).
+It is not a default pipeline cost or a calibrated zero-RTT profile.
 
 BDN uses the run's process-wide `UseConnectionPoolV2` selection, not a per-case switch flip.
 To compare V1/V2 BDN results use separate process configurations. Startup observations retain

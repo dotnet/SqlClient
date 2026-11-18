@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 #nullable disable
+using System;
 
 namespace Microsoft.Data.SqlClient.PerformanceTests
 {
@@ -79,11 +80,17 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         public RunnerJob ConnectionPoolChurnRunnerConfig;
         public RunnerJob ConnectionPoolRampRunnerConfig;
         public RunnerJob ConnectionPoolThreadPoolPressureRunnerConfig;
-        public RunnerJob OpenAsyncBurstRunnerConfig;
+        public OpenAsyncBurstRunnerJob OpenAsyncBurstRunnerConfig;
     }
 
     public class RunnerJob
     {
+        /// <summary>Cases share a runner process unless PerCase is explicitly requested.</summary>
+        public string ProcessIsolation = "PerRunner";
+
+        /// <summary>Additional round-trip delay for SQL traffic; zero leaves networking unchanged.</summary>
+        public int AdditionalRttMilliseconds;
+
         public bool Enabled;
         public int LaunchCount;
         public int IterationCount;
@@ -124,5 +131,21 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         /// When null or empty, "Throughput" is used.
         /// </summary>
         public string RunStrategy;
+
+        /// <summary>Rejects unsupported execution policies before launching benchmark work.</summary>
+        public virtual void ValidateExecution()
+        {
+            if (ProcessIsolation != "PerRunner" && ProcessIsolation != "PerCase")
+            {
+                throw new ArgumentException(
+                    "ProcessIsolation must be PerRunner or PerCase.", nameof(ProcessIsolation));
+            }
+            if (AdditionalRttMilliseconds < 0)
+            {
+                throw new ArgumentException(
+                    "AdditionalRttMilliseconds must be nonnegative.",
+                    nameof(AdditionalRttMilliseconds));
+            }
+        }
     }
 }

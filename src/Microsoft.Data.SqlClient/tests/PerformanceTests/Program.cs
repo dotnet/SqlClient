@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using BenchmarkDotNet.ConsoleArguments;
 using BenchmarkDotNet.ConsoleArguments.ListBenchmarks;
@@ -72,8 +73,14 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         /// </summary>
         public Program(string[] args = null)
         {
+            using var shutdown = new BenchmarkCancellation();
             _config = Config.Load();
-            SetupConfigurations();
+            string childRequest = Environment.GetEnvironmentVariable(
+                BenchmarkProcessRunner.SelectionVariable);
+            BenchmarkProcessSelection childSelection = childRequest == null ? null :
+                JsonSerializer.Deserialize<BenchmarkProcessSelection>(childRequest) ??
+                    throw new InvalidOperationException("Invalid benchmark child selection.");
+            SetupConfigurations(childSelection != null);
 
             // Interleaving support for the perf pipeline (InternalDriverTools wiki 339 §2.2/§2.3):
             // the harness can enumerate the enabled units and run one at a time, so a candidate and
@@ -86,6 +93,21 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
 
             if (Environment.GetEnvironmentVariable("PERF_LIST_BENCHMARKS") != null)
             {
+                if (Environment.GetEnvironmentVariable("PERF_LIST_BENCHMARKS") == "json")
+                {
+                    Console.WriteLine(JsonSerializer.Serialize(enabled.Select(unit =>
+                    {
+                        RunnerJob job = unit.Selector(_config.Benchmarks);
+                        job.ValidateExecution();
+                        return new
+                        {
+                            unit.Name, job.ProcessIsolation, job.AdditionalRttMilliseconds,
+                            RepeatAll = job is OpenAsyncBurstRunnerJob burst &&
+                                burst.SamplingProfile == "Extended"
+                        };
+                    })));
+                    return;
+                }
                 foreach (BenchmarkUnit unit in enabled)
                 {
                     Console.WriteLine(unit.Name);
@@ -94,6 +116,10 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             }
 
             string only = Environment.GetEnvironmentVariable("PERF_BENCHMARK");
+            if (childSelection != null && childSelection.Unit != only)
+            {
+                throw new InvalidOperationException("Benchmark child unit does not match its selection.");
+            }
             IEnumerable<BenchmarkUnit> toRun = enabled;
             if (!string.IsNullOrWhiteSpace(only))
             {
@@ -126,13 +152,37 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             bool matched = false;
             foreach (BenchmarkUnit unit in toRun)
             {
+                shutdown.Token.ThrowIfCancellationRequested();
                 RunnerJob job = unit.Selector(_config.Benchmarks);
                 var config = BenchmarkConfig.s_instance(job, _config);
                 // Match across all enabled units before treating an empty selection as a failure.
                 // Keep the unit's job settings when executing the selected benchmarks.
                 using BenchmarkRunInfo benchmarks = BenchmarkConverter.TypeToBenchmarks(unit.RunnerType, config);
-                var selectedCases = benchmarks.BenchmarksCases.Where(benchmark =>
-                    argumentConfig.GetFilters().All(filter => filter.Predicate(benchmark))).ToArray();
+                BenchmarkCase[] cases = benchmarks.BenchmarksCases;
+                int[] selectedIndexes = childSelection?.Indexes ??
+                    cases.Select((benchmark, index) => (benchmark, index))
+                        .Where(item => argumentConfig.GetFilters()
+                            .All(filter => filter.Predicate(item.benchmark)))
+                        .Select(item => item.index).ToArray();
+                if (selectedIndexes.Length == 0) continue;
+                BenchmarkExecutionPlan.ValidateIndexes(cases, selectedIndexes);
+                if (job is OpenAsyncBurstRunnerJob burst)
+                {
+                    cases = cases.ToArray();
+                    foreach (int index in selectedIndexes)
+                    {
+                        BenchmarkCase benchmark = cases[index];
+                        string state = benchmark.Parameters.Items.Single(p => p.Name == "State")
+                            .Value.ToString();
+                        int operations = burst.GetWorkload(
+                            benchmark.Descriptor.WorkloadMethod.Name, state).OperationsPerInvoke;
+                        cases[index] = BenchmarkExecutionPlan.WithOperationsPerInvoke(
+                            benchmark, operations);
+                    }
+                }
+                var selectedCases = childSelection == null
+                    ? selectedIndexes.Select(index => cases[index]).ToArray()
+                    : BenchmarkExecutionPlan.Select(childSelection, unit.Name, cases, job);
                 if (selectedCases.Length == 0)
                 {
                     continue;
@@ -142,6 +192,32 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 {
                     commandJob.Validate();
                 }
+                if (childSelection == null)
+                {
+                    foreach (BenchmarkProcessSelection selection in
+                        BenchmarkExecutionPlan.Create(unit.Name, cases, selectedIndexes, job))
+                    {
+                        int result = BenchmarkProcessRunner.Run(
+                            selection, job, _config.ConnectionString,
+                            IsHarnessControlled(), shutdown.Token);
+                        if (result != 0)
+                        {
+                            Console.Error.WriteLine(
+                                $"Benchmark child for '{unit.Name}' failed (exit {result}).");
+                            Environment.ExitCode = result;
+                            return;
+                        }
+                    }
+                    continue;
+                }
+
+                _ = BenchmarkNetworkScope.ReadAppliedRtt(job);
+                if (job.ProcessIsolation == "PerRunner" && selectedCases.Length > 1 &&
+                    selectedCases.Any(AsyncHealthDiagnoser.IsMarked))
+                {
+                    Console.Error.WriteLine(
+                        "Async health with PerRunner isolation: only the first case is process-cold.");
+                }
                 // Execute the selected cases with the validated unit job. Passing args here
                 // would parse them again and allow CLI job settings to override that job.
                 var selectedBenchmarks = new BenchmarkRunInfo(
@@ -149,7 +225,8 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                     benchmarks.CompositeInProcessDiagnoser);
                 AsyncHealthDiagnoser diagnoser = config.GetDiagnosers()
                     .OfType<AsyncHealthDiagnoser>().SingleOrDefault();
-                using var cancellation = new CancellationTokenSource();
+                using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(
+                    shutdown.Token);
                 config.GetEventProcessors().OfType<BenchmarkConfig.ExecutionTimeout>()
                     .Single().Source = cancellation;
                 Summary summary;
@@ -160,7 +237,9 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 }
                 catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
                 {
-                    Console.Error.WriteLine("Benchmark timed out; stopping this process.");
+                    Console.Error.WriteLine(shutdown.Token.IsCancellationRequested
+                        ? "Benchmark cancelled; stopping this process."
+                        : "Benchmark timed out; stopping this process.");
                     Environment.ExitCode = 1;
                     return;
                 }
@@ -214,10 +293,12 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         /// These modes run unattended, so interactive prompts (e.g. WaitForProfiler) must be skipped.
         /// </summary>
         private static bool IsHarnessControlled() =>
-            Environment.GetEnvironmentVariable("PERF_LIST_BENCHMARKS") != null ||
-            !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("PERF_BENCHMARK"));
+            Environment.GetEnvironmentVariable(BenchmarkProcessRunner.SelectionVariable) != null
+                ? Environment.GetEnvironmentVariable("SQLCLIENT_BENCHMARK_UNATTENDED") == "1"
+                : Environment.GetEnvironmentVariable("PERF_LIST_BENCHMARKS") != null ||
+                    !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("PERF_BENCHMARK"));
 
-        private void SetupConfigurations()
+        private void SetupConfigurations(bool executing)
         {
             // If the config file specifies to use managed SNI on Windows,
             // enable the appropriate AppContext switch to use the managed SNI implementation.
@@ -252,7 +333,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
             // display the process ID and wait for user input before starting the benchmarks.
             // Skipped under harness-controlled execution (PERF_LIST_BENCHMARKS / PERF_BENCHMARK):
             // those modes run unattended, so blocking on Console.ReadKey() would hang automation.
-            if (_config.WaitForProfiler && !IsHarnessControlled())
+            if (executing && _config.WaitForProfiler && !IsHarnessControlled())
             {
                 int pid = System.Diagnostics.Process.GetCurrentProcess().Id;
                 Console.WriteLine();
@@ -273,6 +354,17 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         /// <summary>
         /// The main entry point for the performance tests program.
         /// </summary>
-        public static void Main(string[] args) => _ = new Program(args);
+        public static void Main(string[] args)
+        {
+            try
+            {
+                _ = new Program(args);
+            }
+            catch (OperationCanceledException)
+            {
+                Console.Error.WriteLine("Benchmark execution cancelled; stopping owned work.");
+                Environment.ExitCode = 1;
+            }
+        }
     }
 }

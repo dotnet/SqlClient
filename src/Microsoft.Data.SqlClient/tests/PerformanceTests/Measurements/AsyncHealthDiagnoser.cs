@@ -42,6 +42,7 @@ public sealed class AsyncHealthDiagnoser : EventProcessor, IInProcessDiagnoser
     private readonly List<AsyncHealthSummary> _summaries = [];
     private readonly bool _poolV2, _managedSni, _optimizedAsync;
     private readonly string? _outputDirectory;
+    private readonly RunnerJob _job;
     private BenchmarkCase? _case;
     private ThreadPoolHealthObserver? _observer;
     private AsyncHealthOperationRecorder? _operations;
@@ -58,11 +59,18 @@ public sealed class AsyncHealthDiagnoser : EventProcessor, IInProcessDiagnoser
 
     internal AsyncHealthDiagnoser(
         bool poolV2, bool managedSni, bool optimizedAsync, string? outputDirectory)
+        : this(poolV2, managedSni, optimizedAsync, outputDirectory, new RunnerJob())
+    {
+    }
+
+    internal AsyncHealthDiagnoser(
+        bool poolV2, bool managedSni, bool optimizedAsync, string? outputDirectory, RunnerJob job)
     {
         _poolV2 = poolV2;
         _managedSni = managedSni;
         _optimizedAsync = optimizedAsync;
         _outputDirectory = outputDirectory;
+        _job = job;
     }
 
     internal bool HasFailed { get; private set; }
@@ -273,6 +281,10 @@ public sealed class AsyncHealthDiagnoser : EventProcessor, IInProcessDiagnoser
         }
         ThreadPool.GetMinThreads(out int minimumWorkers, out _);
         ThreadPool.GetMaxThreads(out int maximumWorkers, out _);
+        BurstWorkload? workload = _job is OpenAsyncBurstRunnerJob burst ?
+            burst.GetWorkload(benchmark.Descriptor.WorkloadMethod.Name,
+                benchmark.Parameters.Items.Single(p => p.Name == "State").Value?.ToString() ??
+                    throw new InvalidOperationException("Missing burst pool state.")) : null;
 
         var result = new
         {
@@ -293,7 +305,19 @@ public sealed class AsyncHealthDiagnoser : EventProcessor, IInProcessDiagnoser
                 DriverSha256 = Convert.ToHexString(SHA256.HashData(
                     File.ReadAllBytes(typeof(SqlConnection).Assembly.Location))),
                 DiagnosticRunMode = "StartupAndExtraIteration",
-                FirstBenchmarkInProcess = _firstBenchmarkInProcess
+                FirstBenchmarkInProcess = _firstBenchmarkInProcess,
+                RequestedProcessIsolation = _job.ProcessIsolation,
+                EffectiveProcessIsolation = _job.ProcessIsolation,
+                RequestedAdditionalRttMilliseconds = _job.AdditionalRttMilliseconds,
+                AppliedAdditionalRttMilliseconds = BenchmarkNetworkScope.ReadAppliedRtt(_job),
+                SamplingProfile = (_job as OpenAsyncBurstRunnerJob)?.SamplingProfile ?? "Default",
+                ConcurrentWorkers = workload == null ? (int?)null :
+                    OpenAsyncBurstRunnerJob.ConcurrentWorkers,
+                WorkloadWaves = workload?.Waves,
+                SteadyOperationsPerWorker = workload?.OperationsPerWorker,
+                ThreadPoolHealthObserver.ProbeIntervalMilliseconds,
+                ThreadPoolHealthObserver.MaximumOutstandingProbes,
+                AsyncHealthSummary.MinimumP99Samples
             },
             Summary = summary, Measurement = measurement, Operations = operations
         };

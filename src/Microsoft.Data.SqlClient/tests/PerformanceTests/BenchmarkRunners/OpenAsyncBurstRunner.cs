@@ -20,13 +20,30 @@ public class OpenAsyncBurstRunner : BaseRunner
     [Params(PoolState.Empty, PoolState.Warm, PoolState.Oversubscribed, PoolState.NonPooled)]
     public PoolState State { get; set; }
 
-    private const int Workers = 64;
+    private const int Workers = OpenAsyncBurstRunnerJob.ConcurrentWorkers;
     private string _connectionString;
+    private BurstWorkload _openClose;
+    private BurstWorkload _openQueryClose;
     private int _originalMinimumWorkers;
     private int _originalMinimumIo;
 
-    [GlobalSetup]
-    public void Setup()
+    [GlobalSetup(Target = nameof(OpenClose))]
+    public void SetupOpenClose()
+    {
+        _openClose = s_config.Benchmarks.OpenAsyncBurstRunnerConfig.GetWorkload(
+            nameof(OpenClose), State.ToString());
+        Setup();
+    }
+
+    [GlobalSetup(Target = nameof(OpenQueryClose))]
+    public void SetupOpenQueryClose()
+    {
+        _openQueryClose = s_config.Benchmarks.OpenAsyncBurstRunnerConfig.GetWorkload(
+            nameof(OpenQueryClose), State.ToString());
+        Setup();
+    }
+
+    private void Setup()
     {
         ThreadPool.GetMinThreads(out _originalMinimumWorkers, out _originalMinimumIo);
         if (!ThreadPool.SetMinThreads(16, _originalMinimumIo))
@@ -97,70 +114,88 @@ public class OpenAsyncBurstRunner : BaseRunner
     [Benchmark(OperationsPerInvoke = Workers)]
     public async Task OpenClose()
     {
-        var invocation = AsyncHealthDiagnoser.BeginInvocation(Workers);
-        var tasks = new Task[Workers];
-        for (int i = 0; i < tasks.Length; i++)
+        var invocation = AsyncHealthDiagnoser.BeginInvocation(_openClose.WorkerStarts);
+        for (int wave = 0; wave < _openClose.Waves; wave++)
         {
-            var operation = invocation?.Offer(i);
-            tasks[i] = Task.Run(async () =>
+            var tasks = new Task[Workers];
+            for (int i = 0; i < tasks.Length; i++)
             {
-                operation?.Start();
-                try
+                int worker = wave * Workers + i;
+                var first = invocation?.Offer(worker);
+                tasks[i] = Task.Run(async () =>
                 {
-                    using (var connection = new SqlConnection(_connectionString))
+                    for (int operationIndex = 0;
+                        operationIndex < _openClose.OperationsPerWorker; operationIndex++)
                     {
-                        Task open = connection.OpenAsync();
-                        operation?.OpenReturned(open.IsCompleted);
-                        await open.ConfigureAwait(false);
-                        operation?.Opened();
+                        var operation = operationIndex == 0 ? first : invocation?.Offer(worker);
+                        operation?.Start();
+                        try
+                        {
+                            using (var connection = new SqlConnection(_connectionString))
+                            {
+                                Task open = connection.OpenAsync();
+                                operation?.OpenReturned(open.IsCompleted);
+                                await open.ConfigureAwait(false);
+                                operation?.Opened();
+                            }
+                            operation?.Complete();
+                        }
+                        catch (Exception error)
+                        {
+                            operation?.Fail(error);
+                            throw;
+                        }
                     }
-                    operation?.Complete();
-                }
-                catch (Exception error)
-                {
-                    operation?.Fail(error);
-                    throw;
-                }
-            });
+                });
+            }
+            await Task.WhenAll(tasks).ConfigureAwait(false);
         }
-        await Task.WhenAll(tasks).ConfigureAwait(false);
         invocation?.Complete();
     }
 
     [Benchmark(OperationsPerInvoke = Workers)]
     public async Task OpenQueryClose()
     {
-        var invocation = AsyncHealthDiagnoser.BeginInvocation(Workers);
-        var tasks = new Task[Workers];
-        for (int i = 0; i < tasks.Length; i++)
+        var invocation = AsyncHealthDiagnoser.BeginInvocation(_openQueryClose.WorkerStarts);
+        for (int wave = 0; wave < _openQueryClose.Waves; wave++)
         {
-            var operation = invocation?.Offer(i);
-            tasks[i] = Task.Run(async () =>
+            var tasks = new Task[Workers];
+            for (int i = 0; i < tasks.Length; i++)
             {
-                operation?.Start();
-                try
+                int worker = wave * Workers + i;
+                var first = invocation?.Offer(worker);
+                tasks[i] = Task.Run(async () =>
                 {
-                    using (var connection = new SqlConnection(_connectionString))
+                    for (int operationIndex = 0;
+                        operationIndex < _openQueryClose.OperationsPerWorker; operationIndex++)
                     {
-                        Task open = connection.OpenAsync();
-                        operation?.OpenReturned(open.IsCompleted);
-                        await open.ConfigureAwait(false);
-                        operation?.Opened();
-                        using var command = connection.CreateCommand();
-                        command.CommandText = "SELECT 1";
-                        command.CommandTimeout = 15;
-                        _ = await command.ExecuteScalarAsync().ConfigureAwait(false);
+                        var operation = operationIndex == 0 ? first : invocation?.Offer(worker);
+                        operation?.Start();
+                        try
+                        {
+                            using (var connection = new SqlConnection(_connectionString))
+                            {
+                                Task open = connection.OpenAsync();
+                                operation?.OpenReturned(open.IsCompleted);
+                                await open.ConfigureAwait(false);
+                                operation?.Opened();
+                                using var command = connection.CreateCommand();
+                                command.CommandText = "SELECT 1";
+                                command.CommandTimeout = 15;
+                                _ = await command.ExecuteScalarAsync().ConfigureAwait(false);
+                            }
+                            operation?.Complete();
+                        }
+                        catch (Exception error)
+                        {
+                            operation?.Fail(error);
+                            throw;
+                        }
                     }
-                    operation?.Complete();
-                }
-                catch (Exception error)
-                {
-                    operation?.Fail(error);
-                    throw;
-                }
-            });
+                });
+            }
+            await Task.WhenAll(tasks).ConfigureAwait(false);
         }
-        await Task.WhenAll(tasks).ConfigureAwait(false);
         invocation?.Complete();
     }
 }

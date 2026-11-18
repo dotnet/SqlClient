@@ -155,7 +155,13 @@ def _reduce(records):
         statuses=Counter(r["data"]["Status"] for r in records),
         health=Counter((r["data"].get("Summary") or {}).get("Health", "Invalid") for r in records),
         operationEvidence=Counter((r["data"].get("Summary") or {}).get(
-            "OperationEvidence", "Unknown") for r in records))
+            "OperationEvidence", "Unknown") for r in records),
+        dispatchEvidence=Counter((r["data"].get("Summary") or {}).get(
+            "DispatchEvidence", "Unknown") for r in records),
+        firstQueueEvidence=Counter((r["data"].get("Summary") or {}).get(
+            "FirstWorkerQueueEvidence", "Unknown") for r in records),
+        firstQueueSamples=[(r["data"].get("Summary") or {}).get("FirstWorkerQueueSamples")
+                           for r in records])
 
 
 def build_comparison(root, threshold=compare_perf.DEFAULT_THRESHOLD_PCT):
@@ -227,6 +233,9 @@ def _provenance(entry, index):
             f"**{side}**: {len(group['records'])} unique records; "
             f"status: {_counts(group['statuses'])}; scheduler: {_counts(group['health'])}; "
             f"operation evidence: {_counts(group['operationEvidence'])}.",
+            f"Dispatch p99 sampling: {_counts(group['dispatchEvidence'])}; "
+            f"first-worker p99 sampling: {_counts(group['firstQueueEvidence'])}; "
+            f"first-worker sample counts: `{json.dumps(group['firstQueueSamples'])}`.",
             "Probe sample counts by window: `" + json.dumps(group["samples"]) +
             "`; missing/censored probe counts by window: `" +
             json.dumps(group["missingProbes"]) + "` (null means unavailable).",
@@ -308,9 +317,13 @@ def render(root, threshold=compare_perf.DEFAULT_THRESHOLD_PCT, source_label=None
     for side in ("baseline", "current"):
         side_groups = [entry[side] for entry in entries if entry[side]]
         evidence = sum((group["operationEvidence"] for group in side_groups), Counter())
+        dispatch = sum((group["dispatchEvidence"] for group in side_groups), Counter())
+        first_queue = sum((group["firstQueueEvidence"] for group in side_groups), Counter())
         issues = sum((group["issues"] for group in side_groups), Counter())
         unknown = sorted({field for group in side_groups for field in group["unknownCounters"]})
         lines.append(f"- **{side} coverage:** operation evidence: {_counts(evidence)}; "
+                     f"dispatch p99 sampling: {_counts(dispatch)}; "
+                     f"first-worker p99 sampling: {_counts(first_queue)}; "
                      f"outcome/retention issues: {_counts(issues)}; "
                      f"unknown counters: {', '.join(unknown) or 'none'}.")
     lines.extend(["", "<details>",

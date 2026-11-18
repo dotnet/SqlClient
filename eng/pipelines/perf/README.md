@@ -19,6 +19,13 @@ phases and repetitions. Its leading dispatch-change indicator uses the same conf
 `regressionThreshold`, but is an observed relative change, not best-of-N confirmation or an
 absolute health verdict. Coverage qualifications and raw cohort provenance remain separate.
 
+All runner configs support explicit `ProcessIsolation` (`PerRunner` by default, or `PerCase`)
+and optional `AdditionalRttMilliseconds` (zero by default). These are independent of diagnoser
+annotations. The shared executable dispatcher handles direct CLI and pipeline runs, retains
+per-process artifacts, and verifies owned Linux SQL-only shaping when RTT is requested.
+Execution conditions also participate in ordinary timing comparisons. See the
+[execution protocol and calibrated opt-in profile](async-health.md#execution-and-workload-settings).
+
 ## Contents
 
 | Path | Purpose |

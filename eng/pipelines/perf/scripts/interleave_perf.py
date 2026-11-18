@@ -181,11 +181,19 @@ def collect_results(cwd, dest):
     os.makedirs(dest, exist_ok=True)
     types = set()
     artifacts = os.path.join(cwd, "BenchmarkDotNet.Artifacts")
-    health = os.path.join(artifacts, "async-health")
-    if os.path.isdir(health):
+    for name in ("process.json", "network.json"):
+        for path in glob.glob(os.path.join(artifacts, "processes", "**", name), recursive=True):
+            target = os.path.join(dest, os.path.relpath(path, artifacts))
+            os.makedirs(os.path.dirname(target), exist_ok=True)
+            shutil.copy2(path, target)
+    for health in glob.glob(os.path.join(artifacts, "**", "async-health"), recursive=True):
         shutil.copytree(health, os.path.join(dest, "async-health"), dirs_exist_ok=True)
     for path in _report_files(artifacts):
-        shutil.copy2(path, os.path.join(dest, os.path.basename(path)))
+        relative = os.path.relpath(path, artifacts)
+        target = os.path.join(dest, relative if relative.startswith("processes" + os.sep)
+                              else os.path.basename(path))
+        os.makedirs(os.path.dirname(target), exist_ok=True)
+        shutil.copy2(path, target)
         try:
             with open(path, "r", encoding="utf-8-sig") as fh:
                 for bench in json.load(fh).get("Benchmarks", []):
@@ -195,7 +203,11 @@ def collect_results(cwd, dest):
             pass
     # Also keep the human-readable GitHub markdown reports alongside, best effort.
     for md in glob.glob(os.path.join(artifacts, "**", "*-report-github.md"), recursive=True):
-        shutil.copy2(md, os.path.join(dest, os.path.basename(md)))
+        relative = os.path.relpath(md, artifacts)
+        target = os.path.join(dest, relative if relative.startswith("processes" + os.sep)
+                              else os.path.basename(md))
+        os.makedirs(os.path.dirname(target), exist_ok=True)
+        shutil.copy2(md, target)
     return types
 
 
@@ -219,6 +231,7 @@ class Runner:
         self.current_runner_config = current_runner_config
         self.deadline = (time.monotonic() + max_run_seconds
                          if max_run_seconds is not None else None)
+        self.repeat_all_units = set()
 
     def remaining_seconds(self):
         if self.deadline is None:
@@ -231,11 +244,17 @@ class Runner:
     def list_units(self):
         cmd = ["dotnet", os.path.join(self.current_dir, self.assembly)]
         env = dict(os.environ)
-        env["PERF_LIST_BENCHMARKS"] = "1"
+        env["PERF_LIST_BENCHMARKS"] = "json"
         env.pop("PERF_BENCHMARK", None)
         out = subprocess.check_output(cmd, cwd=self.work_dir, env=env, text=True,
                                       timeout=self.remaining_seconds())
-        return [line.strip() for line in out.splitlines() if line.strip()]
+        settings = json.loads(out)
+        if not isinstance(settings, list) or any(
+                not isinstance(item.get("Name"), str) or type(item.get("RepeatAll")) is not bool
+                for item in settings):
+            raise ValueError("Invalid benchmark execution metadata.")
+        self.repeat_all_units = {item["Name"] for item in settings if item["RepeatAll"]}
+        return [item["Name"] for item in settings]
 
     def _run_one(self, variant, exe_dir, unit, rep, agg_dir):
         cwd = os.path.join(self.work_dir, f"rep{rep}", variant, unit)
@@ -322,7 +341,8 @@ def orchestrate(runner, units, results_dir, threshold, reps):
     entries, reg_keys_1 = _regression_keys(baseline_agg, current_agg, threshold)
 
     # Which units contain a rep-1 regression?  Those are the best-of-N candidates.
-    candidate_units = []
+    candidate_units = [unit for unit in units
+                       if unit in getattr(runner, "repeat_all_units", set())]
     for e in entries:
         if e["status"] == "regression":
             unit = type_to_unit.get(e["benchmarkName"])
@@ -405,7 +425,7 @@ def render_markdown(entries, confirmed, unconfirmed, baseline_version, threshold
                 status=_ICON.get(e["status"], e["status"]),
                 name=e["benchmarkName"],
                 method=e["methodName"],
-                params=e["parameterSignature"] or "-",
+                params=compare_perf._fmt_parameters(e),
                 base=compare_perf._fmt_ms(e["baselineMeanMs"]),
                 cur=compare_perf._fmt_ms(e["currentMeanMs"]),
                 delta=compare_perf._fmt_pct(e["meanDeltaPct"]),

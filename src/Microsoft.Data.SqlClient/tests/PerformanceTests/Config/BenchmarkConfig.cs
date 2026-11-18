@@ -56,6 +56,8 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
 
         public static ManualConfig s_instance(RunnerJob runnerJob, Config? suiteConfig = null)
         {
+            runnerJob.ValidateExecution();
+
             ManualConfig config = DefaultConfig.Instance
                 .WithOption(ConfigOptions.DisableOptimizationsValidator, true)
                 .WithOption(ConfigOptions.DontOverwriteResults, true)
@@ -91,7 +93,7 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 }
                 var diagnoser = new AsyncHealthDiagnoser(suiteConfig.UseConnectionPoolV2,
                     !OperatingSystem.IsWindows() || suiteConfig.UseManagedSniOnWindows,
-                    suiteConfig.UseOptimizedAsyncBehaviour);
+                    suiteConfig.UseOptimizedAsyncBehaviour, null, runnerJob);
                 config.AddDiagnoser(diagnoser).AddEventProcessor(diagnoser);
             }
 

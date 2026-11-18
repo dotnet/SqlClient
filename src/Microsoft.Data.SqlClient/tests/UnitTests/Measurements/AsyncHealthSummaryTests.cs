@@ -41,11 +41,11 @@ public class AsyncHealthSummaryTests
         // Arrange
         var window = new AsyncHealthWindow
         {
-            WorkloadEndMilliseconds = 3000,
+            WorkloadEndMilliseconds = 25000,
             Probes = new ThreadPoolProbeSnapshot
             {
-                Total = 120, Posted = 120, Executed = 120,
-                Samples = Enumerable.Range(0, 120).Select(i => new ThreadPoolProbe
+                Total = 1000, Posted = 1000, Executed = 1000,
+                Samples = Enumerable.Range(0, 1000).Select(i => new ThreadPoolProbe
                 {
                     ScheduledMilliseconds = i * 25, PostedMilliseconds = i * 25,
                     ExecutedMilliseconds = i * 25 + 2
@@ -59,6 +59,7 @@ public class AsyncHealthSummaryTests
 
         // Assert
         Assert.Equal("Pass", result.Health);
+        Assert.Equal("Adequate", result.DispatchEvidence);
         Assert.Equal(2, result.DispatchP99Ms);
         Assert.Equal(70, result.ProcessThreadsPeak);
         Assert.Equal(16, result.ThreadPoolThreadsPeak);
@@ -78,6 +79,60 @@ public class AsyncHealthSummaryTests
         Assert.Equal("Insufficient", result.Health);
         Assert.Equal(120, result.Missing);
         Assert.Null(result.DispatchP99Ms);
+    }
+
+    /// <summary>A cold wave's 64 first starts are retained but are not a precise p99 population.</summary>
+    [Fact]
+    public void Create_SingleWave_IdentifiesSparseMaximum()
+    {
+        // Arrange
+        var recorder = new AsyncHealthOperationRecorder();
+        var invocation = recorder.BeginInvocation(64);
+        for (int worker = 0; worker < 64; worker++)
+        {
+            var operation = invocation.Offer(worker);
+            operation.Start();
+            operation.Opened();
+            operation.Complete();
+        }
+        invocation.Complete();
+
+        // Act
+        var summary = AsyncHealthSummary.Create(new AsyncHealthWindow(), recorder.Snapshot());
+
+        // Assert
+        Assert.Equal(64, summary.FirstWorkerQueueSamples);
+        Assert.Equal("Sparse", summary.FirstWorkerQueueEvidence);
+        Assert.True(summary.FirstWorkerQueueP99IsMaximum);
+    }
+
+    /// <summary>First starts across all waves survive ordinary-record truncation.</summary>
+    [Fact]
+    public void Create_ExtendedWaves_RetainsAdequateFirstStarts()
+    {
+        // Arrange
+        var recorder = new AsyncHealthOperationRecorder(sampleLimit: 1);
+        var invocation = recorder.BeginInvocation(1024);
+        for (int worker = 0; worker < 1024; worker++)
+        {
+            for (int operationIndex = 0; operationIndex < 2; operationIndex++)
+            {
+                var operation = invocation.Offer(worker);
+                operation.Start();
+                operation.Opened();
+                operation.Complete();
+            }
+        }
+        invocation.Complete();
+
+        // Act
+        var summary = AsyncHealthSummary.Create(new AsyncHealthWindow(), recorder.Snapshot());
+
+        // Assert
+        Assert.Equal(1024, summary.FirstWorkerQueueSamples);
+        Assert.Equal("Adequate", summary.FirstWorkerQueueEvidence);
+        Assert.False(summary.FirstWorkerQueueP99IsMaximum);
+        Assert.Equal("Truncated", summary.OperationEvidence);
     }
 }
 #endif

@@ -73,10 +73,70 @@ class BenchmarkHealthTests(unittest.TestCase):
             self.assertTrue((root / "results/async-health/one.json").is_file())
             self.assertEqual(len(list((root / "results").glob("*-report-full.json"))), 1)
 
+    def test_collector_preserves_each_isolated_case_report(self):
+        """Per-case processes emit the same report filename; none may overwrite another case."""
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            for case in ("first", "second"):
+                artifact = (root / "work/BenchmarkDotNet.Artifacts/processes" /
+                            case / "BenchmarkDotNet.Artifacts")
+                (artifact / "async-health").mkdir(parents=True)
+                (artifact / f"async-health/{case}.json").write_text('{"Status":"Completed"}')
+                (artifact / "Runner-report-full.json").write_text(json.dumps({
+                    "Benchmarks": [{"Type": "Runner", "Parameters": case}]}))
+            types = interleave.collect_results(str(root / "work"), str(root / "results"))
+            self.assertEqual(types, {"Runner"})
+            reports = list((root / "results").glob("**/*-report-full.json"))
+            self.assertEqual(len(reports), 2)
+            self.assertEqual({json.loads(path.read_text())["Benchmarks"][0]["Parameters"]
+                              for path in reports}, {"first", "second"})
+            self.assertEqual(len(list((root / "results/async-health").glob("*.json"))), 2)
+
     def test_missing_diagnostic_evidence_fails(self):
         with tempfile.TemporaryDirectory() as temp:
             with self.assertRaisesRegex(ValueError, "No BDN"):
                 report.render(Path(temp))
+
+    def test_execution_metadata_selects_repetition_policy_without_unit_name_rules(self):
+        """A runner's declared extended sampling policy drives repetitions, not a Python allowlist."""
+        runner = interleave.Runner("baseline", "current", "app.dll", "work", [])
+        metadata = [
+            {"Name": "FutureRunner", "RepeatAll": True},
+            {"Name": "Ordinary", "RepeatAll": False}]
+        with patch.object(interleave.subprocess, "check_output",
+                          return_value=json.dumps(metadata)) as command:
+            units = runner.list_units()
+        self.assertEqual(units, ["FutureRunner", "Ordinary"])
+        self.assertEqual(runner.repeat_all_units, {"FutureRunner"})
+        self.assertEqual(command.call_args.kwargs["env"]["PERF_LIST_BENCHMARKS"], "json")
+
+    def test_extended_unit_runs_requested_repetitions_without_nested_confirmation(self):
+        """Adequate sampling repeats even an unchanged unit, exactly N times."""
+        class FakeRunner:
+            repeat_all_units = {"Extended"}
+
+            def __init__(self):
+                self.calls = []
+
+            def interleave(self, units, rep, baseline, current):
+                self.calls.append((list(units), rep))
+                for directory in (baseline, current):
+                    Path(directory).mkdir(parents=True, exist_ok=True)
+                    for unit in units:
+                        (Path(directory) / f"{unit}-report-full.json").write_text(json.dumps({
+                            "Benchmarks": [{"Type": unit, "Method": "Run",
+                                            "Statistics": {"Mean": 100}}]}))
+                return {unit: {unit} for unit in units}
+
+        with tempfile.TemporaryDirectory() as temp:
+            runner = FakeRunner()
+            entries, confirmed, unconfirmed = interleave.orchestrate(
+                runner, ["Extended", "Ordinary"], temp, 10, 3)
+            self.assertEqual(runner.calls,
+                             [(["Extended", "Ordinary"], 1), (["Extended"], 2), (["Extended"], 3)])
+            self.assertFalse(confirmed)
+            self.assertFalse(unconfirmed)
+            self.assertTrue(all(entry["status"] == "unchanged" for entry in entries))
 
     def check_sequential_rebuild(self, shell):
         """Execute each real runner's build guard, proving baseline cannot leave candidate stale."""

@@ -35,9 +35,14 @@
     //   "RunStrategy"    - "Throughput" (default) or "Monitoring". Use "Monitoring" when a
     //                      single operation takes seconds, to skip the harness-overhead
     //                      measurement that "Throughput" performs.
+    // Every runner supports ProcessIsolation ("PerRunner" default, or "PerCase") and
+    // AdditionalRttMilliseconds (default 0; Linux SQL-only loopback shaping when positive).
     "Benchmarks": {
         "OpenAsyncBurstRunnerConfig": {
             "Enabled": true,
+            "ProcessIsolation": "PerCase",
+            "AdditionalRttMilliseconds": 0,
+            "SamplingProfile": "Burst",
             "LaunchCount": 1,
             "IterationCount": 3,
             "InvocationCount": 1,

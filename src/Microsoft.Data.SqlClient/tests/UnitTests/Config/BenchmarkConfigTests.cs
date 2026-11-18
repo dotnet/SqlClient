@@ -20,6 +20,34 @@ namespace Microsoft.Data.SqlClient.UnitTests.Config;
 [Collection(AsyncHealthBenchmarkCollection.Name)]
 public class BenchmarkConfigTests
 {
+    /// <summary>Invalid execution requests cannot silently fall back to an unshaped/shared run.</summary>
+    [Theory]
+    [InlineData("\"ProcessIsolation\":\"Auto\"", "ProcessIsolation")]
+    [InlineData("\"AdditionalRttMilliseconds\":-1", "AdditionalRttMilliseconds")]
+    public void Create_InvalidExecutionSetting_Throws(string setting, string field)
+    {
+        // Arrange
+        string path = Path.GetTempFileName();
+        File.WriteAllText(path, "{\"LaunchCount\":1,\"InvocationCount\":1," +
+            "\"IterationCount\":1,\"WarmupCount\":1," + setting + "}");
+        try
+        {
+            RunnerJob job = Loader.FromJsonFile<RunnerJob>(path);
+
+            // Act
+            ArgumentException error = Assert.Throws<ArgumentException>(() =>
+                BenchmarkConfig.s_instance(job));
+
+            // Assert
+            Assert.Contains(field, error.Message);
+        }
+        finally
+        {
+            // Cleanup
+            File.Delete(path);
+        }
+    }
+
     /// <summary>Configured warmups and measured operations remain intact without ninety extra prep calls.</summary>
     [Fact]
     public void Run_ExplicitSqlJob_PreservesMeasurementsWithBoundedPreparation()

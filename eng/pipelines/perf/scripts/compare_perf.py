@@ -15,9 +15,11 @@ without installing any packages.
 
 import argparse
 import glob
+import hashlib
 import json
 import os
 import sys
+from pathlib import Path
 
 
 NS_PER_MS = 1_000_000.0
@@ -43,6 +45,32 @@ def classify_change(delta, threshold_pct):
     return "unchanged"
 
 
+def _execution_conditions(path, directory):
+    """Keep new runner outputs from silently pairing across different execution conditions."""
+    root = Path(directory).resolve()
+    parent = Path(path).resolve().parent
+    while parent == root or root in parent.parents:
+        manifest = parent / "process.json"
+        if manifest.is_file():
+            data = json.loads(manifest.read_text(encoding="utf-8-sig"))
+            conditions = data.get("ExecutionConditions")
+            if not isinstance(conditions, dict):
+                raise ValueError(f"Missing execution conditions: {manifest}")
+            requested = conditions.get("AdditionalRttMilliseconds")
+            applied = data.get("AppliedAdditionalRttMilliseconds")
+            if requested is None or applied != requested:
+                raise ValueError(f"Mismatched requested/applied RTT: {manifest}")
+            if data.get("EffectiveProcessIsolation") != conditions.get("ProcessIsolation"):
+                raise ValueError(f"Mismatched process isolation: {manifest}")
+            return conditions
+        if parent == root:
+            break
+        parent = parent.parent
+    if "processes" in Path(path).resolve().relative_to(root).parts:
+        raise ValueError(f"Missing process manifest for isolated benchmark report: {path}")
+    return None
+
+
 def _load_benchmarks(directory):
     """Return {key: record} for every benchmark found under *directory*.
 
@@ -52,6 +80,9 @@ def _load_benchmarks(directory):
     records = {}
     pattern = os.path.join(directory, "**", "*-report-full.json")
     for path in sorted(glob.glob(pattern, recursive=True)):
+        conditions = _execution_conditions(path, directory)
+        signature = (hashlib.sha256(json.dumps(conditions, sort_keys=True).encode()).hexdigest()[:16]
+                     if conditions is not None else None)
         try:
             with open(path, "r", encoding="utf-8-sig") as handle:
                 data = json.load(handle)
@@ -71,12 +102,16 @@ def _load_benchmarks(directory):
             alloc = memory.get("BytesAllocatedPerOperation")
 
             key = f"{btype}.{method}({params})"
+            if signature is not None:
+                key += f"[conditions={signature}]"
             records[key] = {
                 "benchmarkName": btype,
                 "methodName": method,
                 "parameterSignature": params,
                 "meanNs": float(mean_ns),
                 "allocatedBytes": float(alloc) if alloc is not None else None,
+                "executionConditions": conditions,
+                "conditionSignature": signature,
             }
     return records
 
@@ -106,6 +141,8 @@ def build_comparison(baseline_dir, current_dir, threshold_pct):
             "benchmarkName": ref["benchmarkName"],
             "methodName": ref["methodName"],
             "parameterSignature": ref["parameterSignature"],
+            "executionConditions": ref["executionConditions"],
+            "conditionSignature": ref["conditionSignature"],
             "baselineMeanMs": (b["meanNs"] / NS_PER_MS) if b else None,
             "currentMeanMs": (c["meanNs"] / NS_PER_MS) if c else None,
             "baselineAllocBytes": b["allocatedBytes"] if b else None,
@@ -173,6 +210,13 @@ def _fmt_alloc(entry):
     return "-"
 
 
+def _fmt_parameters(entry):
+    parameters = entry["parameterSignature"] or "-"
+    if entry["status"] in ("current-only", "baseline-only") and entry.get("conditionSignature"):
+        parameters += f" [conditions={entry['conditionSignature']}]"
+    return parameters
+
+
 def render_markdown(entries, baseline_version, threshold_pct):
     regressions = [e for e in entries if e["status"] == "regression"]
     improvements = [e for e in entries if e["status"] == "improvement"]
@@ -199,7 +243,7 @@ def render_markdown(entries, baseline_version, threshold_pct):
                 status=STATUS_LABELS.get(e["status"], e["status"]),
                 name=e["benchmarkName"],
                 method=e["methodName"],
-                params=e["parameterSignature"] or "-",
+                params=_fmt_parameters(e),
                 base=_fmt_ms(e["baselineMeanMs"]),
                 cur=_fmt_ms(e["currentMeanMs"]),
                 delta=_fmt_pct(e["meanDeltaPct"]),
