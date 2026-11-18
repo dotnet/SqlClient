@@ -127,26 +127,6 @@ When adding a new package to the OneBranch flow:
   - Non-official: `ob_release_environment: Test`, `ob_deploymentjob_environment: NuGet-DryRun`
 - Each publish job uses OneBranch deployment job syntax (`templateContext.type: releaseJob` with `inputs` for artifact download)
 
-## Version Bump PR Stage
-
-- Defined in `stages/version-bump-pr-stage.yml`; official pipeline only
-- Included by `sqlclient-official.yml` only when `releaseToProduction` and `releaseSqlClient`
-  are both true
-- Depends on `release_production` with `succeeded()`, so a rejected or failed release opens no PR
-- Runs `scripts/new-version-bump-pr.ps1`, which opens a GitHub PR on the matching branch:
-  - Targets the built branch (`Build.SourceBranch`), with an optional `internal/` prefix removed;
-    only `main` and `release/X.Y` are allowed
-  - GA release on any branch bumps the patch (8.1.0 → 8.1.1)
-  - Preview on `release/X.Y` moves to its GA version
-  - Preview on `main` moves to the lowest open milestone in the same major.minor above it,
-    or else to its GA version
-  - Other branches or refs, or branches without `Versions.props` → warning, no PR
-  - Outside an Azure DevOps build (`TF_BUILD`), only `-DryRun` is allowed
-- No-op when the GitHub branch is already at or above the next version, or the PR is already open
-- PR head is `dev/automation/bump-sqlclient-version/<target>/<version>`;
-  milestone is `<version>`, or else the closest earlier milestone (open or closed)
-- Uses `PATToken` from the `GitHub PAT Tokens` variable group (contents, PR, and issue writes)
-
 ## Parameters
 
 Build parameters:
@@ -179,7 +159,6 @@ When `isPreview` is true, pipeline resolves `effective*Version` variables to pre
 Variable groups:
 - `Symbols Publishing` — symbol publishing credentials (in `onebranch-variables.yml`)
 - `ESRP Federated Creds (AME)` — ESRP signing credentials (in `common-variables.yml`)
-- `GitHub PAT Tokens` — GitHub token for the version bump PR (in `version-bump-pr-stage.yml`)
 
 ## Code Signing (ESRP)
 

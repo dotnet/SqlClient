@@ -9,12 +9,11 @@
     Opens a GitHub PR that bumps SqlClientNextVersion after a SqlClient release is published.
 
 .DESCRIPTION
-    Runs after the official pipeline publishes the SqlClient family to NuGet Production.
+    Runs from the version-bump-pr workflow when a GitHub release is published.
 
-    The PR always targets the branch that was built (BUILD_SOURCEBRANCH), with an optional
-    internal/ prefix removed: internal/release/7.1 and release/7.1 both target release/7.1. Only
-    main and release/X.Y are allowed; other branches are skipped. Outside an Azure DevOps build,
-    only -DryRun is allowed. The published version is read from that build's Versions.props.
+    The published version is the release tag without its leading v (v7.1.2 -> 7.1.2). Tags that
+    are not SqlClient versions, such as AKV_6.1.1, are skipped. The PR targets release/X.Y when
+    that branch exists, or else main. Outside GitHub Actions, only -DryRun is allowed.
 
     The next version is chosen as follows:
       - A GA release always bumps the patch (7.0.1 -> 7.0.2), on any branch.
@@ -23,18 +22,17 @@
         major.minor series that is greater than the published version
         (8.1.0-preview1 -> 8.1.0-preview2). With no such milestone, it moves to its GA version.
 
-    The script also does nothing when the GitHub branch already has a version at or above the next
+    The script also does nothing when the target branch already has a version at or above the next
     version, or when an open bump PR already exists. Otherwise it creates or resets the branch
     dev/automation/bump-sqlclient-version/<target>/<version>, commits the Versions.props change,
     and opens the PR. The PR gets the milestone matching the next version, or else the closest
     earlier milestone in any state.
 
-.PARAMETER VersionsPropsPath
-    Path to the built commit's src/Microsoft.Data.SqlClient/Versions.props, from which the
-    published version is read.
+.PARAMETER ReleaseTag
+    The published release tag, such as v7.1.2. Defaults to RELEASE_TAG.
 
 .PARAMETER GitHubRepository
-    The GitHub repository in owner/name form.
+    The GitHub repository in owner/name form. Defaults to GITHUB_REPOSITORY, or dotnet/SqlClient.
 
 .PARAMETER Token
     A GitHub token with contents, pull request, and issue write access. Defaults to GITHUB_TOKEN.
@@ -45,27 +43,30 @@
 
 [CmdletBinding()]
 param(
-    [string]$VersionsPropsPath,
-    [string]$GitHubRepository = 'dotnet/SqlClient',
+    [string]$ReleaseTag = $env:RELEASE_TAG,
+    [string]$GitHubRepository = $env:GITHUB_REPOSITORY,
     [string]$Token = $env:GITHUB_TOKEN,
     [switch]$DryRun
 )
 
+if ([string]::IsNullOrWhiteSpace($GitHubRepository)) {
+    $GitHubRepository = 'dotnet/SqlClient'
+}
+
 $script:VersionsPropsRepoPath = 'src/Microsoft.Data.SqlClient/Versions.props'
 $script:VersionPattern = '<SqlClientNextVersion>([^<]*)</SqlClientNextVersion>'
 
-function Write-PipelineWarning {
+function Write-ActionsWarning {
     param([string]$Message)
 
-    Write-Host "##vso[task.logissue type=warning]$Message"
+    Write-Host "::warning::$Message"
 }
 
-# Maps the built ref to the GitHub branch the PR targets, or $null when it is not main or a
-# release/X.Y branch.
-function Get-GitHubTargetBranch {
-    param([string]$SourceBranch)
+# Returns the SqlClient version of a release tag, or $null when the tag is not one.
+function Get-ReleaseVersion {
+    param([string]$Tag)
 
-    if ($SourceBranch -notmatch '^refs/heads/(?:internal/)?(main|release/\d+\.\d+)$') {
+    if ($Tag -notmatch '^v(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)$') {
         return $null
     }
 
@@ -271,29 +272,32 @@ function Get-AllMilestones {
     } while ($batch.Count -eq 100)
 }
 
+# Returns true when the branch exists in the repository.
+function Test-GitHubBranch {
+    param([string]$RepoApi, [string]$Branch)
+
+    try {
+        Invoke-GitHubApi -Path "$RepoApi/git/ref/heads/$Branch" | Out-Null
+        return $true
+    }
+    catch {
+        if ($_.Exception.Response.StatusCode.value__ -ne 404) {
+            throw
+        }
+
+        return $false
+    }
+}
+
 function Invoke-VersionBumpPr {
-    $sourceBranch = $env:BUILD_SOURCEBRANCH
-    $targetBranch = Get-GitHubTargetBranch $sourceBranch
-    if ($null -eq $targetBranch) {
-        Write-PipelineWarning "'$sourceBranch' is not main or a release/X.Y branch. Skipping."
-        return
-    }
-
-    # Older release branches keep the version elsewhere, so they are skipped rather than failed.
-    if ([string]::IsNullOrWhiteSpace($VersionsPropsPath) -or -not (Test-Path $VersionsPropsPath)) {
-        Write-PipelineWarning "Versions.props was not found at '$VersionsPropsPath'. Skipping."
-        return
-    }
-
-    $publishedVersion = Get-VersionFromProps (Get-Content -LiteralPath $VersionsPropsPath -Raw)
+    $publishedVersion = Get-ReleaseVersion $ReleaseTag
     if ($null -eq $publishedVersion) {
-        Write-PipelineWarning ("No single SqlClientNextVersion in '$VersionsPropsPath'. " +
-            "Skipping.")
+        Write-ActionsWarning "'$ReleaseTag' is not a SqlClient release tag. Skipping."
         return
     }
 
-    if (-not $DryRun -and $env:TF_BUILD -ne 'True') {
-        throw 'Only -DryRun is allowed outside an Azure DevOps build.'
+    if (-not $DryRun -and $env:GITHUB_ACTIONS -ne 'true') {
+        throw 'Only -DryRun is allowed outside GitHub Actions.'
     }
 
     if (-not $DryRun -and [string]::IsNullOrWhiteSpace($Token)) {
@@ -303,6 +307,14 @@ function Invoke-VersionBumpPr {
     $owner = $GitHubRepository.Split('/')[0]
     $repoApi = "repos/$GitHubRepository"
     $propsApi = "$repoApi/contents/$($script:VersionsPropsRepoPath)"
+
+    $published = ConvertTo-SqlClientVersion $publishedVersion
+    $releaseBranch = "release/$($published.Major).$($published.Minor)"
+    $targetBranch = 'main'
+    if (Test-GitHubBranch $repoApi $releaseBranch) {
+        $targetBranch = $releaseBranch
+    }
+
     $milestones = @(Get-AllMilestones $repoApi)
     $nextVersion = Get-NextSqlClientVersion `
         -TargetBranch $targetBranch `
@@ -310,8 +322,8 @@ function Invoke-VersionBumpPr {
         -MilestoneTitles @($milestones | Where-Object { $_.state -eq 'open' } |
             ForEach-Object { $_.title })
 
-    Write-Host "Published $publishedVersion from $sourceBranch."
-    Write-Host "Next version for GitHub $targetBranch is $nextVersion."
+    Write-Host "Published $publishedVersion ($ReleaseTag)."
+    Write-Host "Next version for $targetBranch is $nextVersion."
 
     $encodedTarget = [uri]::EscapeDataString($targetBranch)
     try {
@@ -322,7 +334,7 @@ function Invoke-VersionBumpPr {
             throw
         }
 
-        Write-PipelineWarning ("GitHub $targetBranch has no $($script:VersionsPropsRepoPath). " +
+        Write-ActionsWarning ("$targetBranch has no $($script:VersionsPropsRepoPath). " +
             "Skipping.")
         return
     }
@@ -332,13 +344,13 @@ function Invoke-VersionBumpPr {
     $current = ConvertTo-SqlClientVersion $currentText
 
     if ($null -eq $current) {
-        Write-PipelineWarning ("GitHub $targetBranch has no single valid SqlClientNextVersion. " +
+        Write-ActionsWarning ("$targetBranch has no single valid SqlClientNextVersion. " +
             "Skipping.")
         return
     }
 
     if ((Compare-SqlClientVersion $current (ConvertTo-SqlClientVersion $nextVersion)) -ge 0) {
-        Write-Host "GitHub $targetBranch is already at $currentText. Nothing to do."
+        Write-Host "$targetBranch is already at $currentText. Nothing to do."
         return
     }
 
@@ -389,8 +401,7 @@ function Invoke-VersionBumpPr {
     } | Out-Null
 
     $body = "Sets ``SqlClientNextVersion`` to ``$nextVersion`` after ``$publishedVersion`` " +
-        "was published to NuGet.`n`nOpened by the SqlClient official pipeline " +
-        "(build $env:BUILD_BUILDNUMBER)."
+        "was released ($ReleaseTag).`n`nOpened by the version-bump-pr workflow."
     $pr = Invoke-GitHubApi -Method POST -Path "$repoApi/pulls" -Body @{
         title = $title
         head  = $headBranch
@@ -400,7 +411,7 @@ function Invoke-VersionBumpPr {
     Write-Host "Opened $($pr.html_url)."
 
     if ($null -eq $milestoneTitle) {
-        Write-PipelineWarning "No milestone at or below $nextVersion for $($pr.html_url)."
+        Write-ActionsWarning "No milestone at or below $nextVersion for $($pr.html_url)."
         return
     }
 

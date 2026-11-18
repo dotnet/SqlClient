@@ -14,33 +14,29 @@ BeforeAll {
 
 <#
 .SYNOPSIS
-    Verifies that only main and release/X.Y map to GitHub branches, without internal/.
+    Verifies that only v-prefixed SqlClient version tags map to a published version.
 #>
-Describe 'Get-GitHubTargetBranch' {
-    It 'Maps <Source> to <Expected>' -TestCases @(
-        @{ Source = 'refs/heads/internal/main'; Expected = 'main' }
-        @{ Source = 'refs/heads/internal/release/7.1'; Expected = 'release/7.1' }
-        @{ Source = 'refs/heads/main'; Expected = 'main' }
-        @{ Source = 'refs/heads/release/6.1'; Expected = 'release/6.1' }
+Describe 'Get-ReleaseVersion' {
+    It 'Maps <Tag> to <Expected>' -TestCases @(
+        @{ Tag = 'v7.1.2'; Expected = '7.1.2' }
+        @{ Tag = 'v8.0.0-preview1'; Expected = '8.0.0-preview1' }
     ) {
         # Act
-        $result = Get-GitHubTargetBranch $Source
+        $result = Get-ReleaseVersion $Tag
 
         # Assert
         $result | Should -Be $Expected
     }
 
-    It 'Returns null for <Source>' -TestCases @(
-        @{ Source = 'refs/heads/dev/cheena/feature' }
-        @{ Source = 'refs/heads/internal/dev/cheena/feature' }
-        @{ Source = 'refs/heads/internal/release/7.1-hotfix' }
-        @{ Source = 'refs/heads/feature/main' }
-        @{ Source = 'refs/pull/123/merge' }
-        @{ Source = 'refs/tags/v7.1.1' }
-        @{ Source = '' }
+    It 'Returns null for <Tag>' -TestCases @(
+        @{ Tag = 'AKV_6.1.1' }
+        @{ Tag = '7.1.2' }
+        @{ Tag = 'v7.1' }
+        @{ Tag = 'v7.1.2+build' }
+        @{ Tag = '' }
     ) {
         # Act
-        $result = Get-GitHubTargetBranch $Source
+        $result = Get-ReleaseVersion $Tag
 
         # Assert
         $result | Should -BeNullOrEmpty
@@ -195,13 +191,22 @@ Describe 'Get-PrMilestoneTitle' {
     Verifies the end-to-end flow against a mocked GitHub API.
 #>
 Describe 'Invoke-VersionBumpPr' {
+    BeforeAll {
+        $script:savedGitHubActions = $env:GITHUB_ACTIONS
+
+        # Builds the error Invoke-RestMethod throws for an HTTP 404 response.
+        function New-NotFoundException {
+            $response = [pscustomobject]@{ StatusCode = [pscustomobject]@{ value__ = 404 } }
+            $exception = [Exception]::new('Not Found')
+            $exception | Add-Member -NotePropertyName Response -NotePropertyValue $response
+            $exception
+        }
+    }
+
     BeforeEach {
-        # Arrange: a published 8.1.0 build of main, and GitHub main still at 8.1.0.
-        $VersionsPropsPath = Join-Path $TestDrive 'Versions.props'
-        Set-Content -LiteralPath $VersionsPropsPath `
-            -Value '<SqlClientNextVersion>8.1.0</SqlClientNextVersion>'
-        $env:BUILD_SOURCEBRANCH = 'refs/heads/internal/main'
-        $env:TF_BUILD = 'True'
+        # Arrange: a published 8.1.0 release, no release/8.1 branch, and main still at 8.1.0.
+        $env:GITHUB_ACTIONS = 'true'
+        $ReleaseTag = 'v8.1.0'
         $GitHubRepository = 'dotnet/SqlClient'
         $Token = 'token'
         $DryRun = $false
@@ -215,7 +220,7 @@ Describe 'Invoke-VersionBumpPr' {
         $page2 = @([pscustomobject]@{ title = '8.1.0'; number = 500; state = 'closed' })
 
         Mock Write-Host {}
-        Mock Write-PipelineWarning {}
+        Mock Write-ActionsWarning {}
         Mock Invoke-GitHubApi { $page1 } -ParameterFilter { $Path -like '*milestones*page=1' }
         Mock Invoke-GitHubApi { $page2 } -ParameterFilter { $Path -like '*milestones*page=2' }
         Mock Invoke-GitHubApi { [pscustomobject]@{ content = $props; sha = 'filesha' } } `
@@ -223,6 +228,8 @@ Describe 'Invoke-VersionBumpPr' {
         Mock Invoke-GitHubApi { ,@() } -ParameterFilter { $Path -like '*pulls?state=open*' }
         Mock Invoke-GitHubApi { [pscustomobject]@{ object = @{ sha = 'basesha' } } } `
             -ParameterFilter { $Path -like '*git/ref/heads/*' }
+        Mock Invoke-GitHubApi { throw (New-NotFoundException) } `
+            -ParameterFilter { $Path -like '*git/ref/heads/release/*' }
         Mock Invoke-GitHubApi {} -ParameterFilter { $Method -in 'PUT', 'PATCH' -or
             ($Method -eq 'POST' -and $Path -like '*git/refs') }
         Mock Invoke-GitHubApi { [pscustomobject]@{ number = 42; html_url = 'pr-url' } } `
@@ -230,19 +237,14 @@ Describe 'Invoke-VersionBumpPr' {
     }
 
     AfterEach {
-        # Cleanup: restore the pipeline variable shared with other tests.
-        $env:BUILD_SOURCEBRANCH = $script:savedSourceBranch
-        $env:TF_BUILD = $script:savedTfBuild
+        # Cleanup: restore the environment variable shared with other tests.
+        $env:GITHUB_ACTIONS = $script:savedGitHubActions
     }
 
-    BeforeAll {
-        $script:savedSourceBranch = $env:BUILD_SOURCEBRANCH
-        $script:savedTfBuild = $env:TF_BUILD
-    }
-
-    It 'Opens the PR against the built release branch without internal/' {
+    It 'Opens the PR against the release branch when it exists' {
         # Arrange
-        $env:BUILD_SOURCEBRANCH = 'refs/heads/internal/release/8.1'
+        Mock Invoke-GitHubApi { [pscustomobject]@{ object = @{ sha = 'basesha' } } } `
+            -ParameterFilter { $Path -like '*git/ref/heads/release/8.1' }
 
         # Act
         Invoke-VersionBumpPr
@@ -253,30 +255,30 @@ Describe 'Invoke-VersionBumpPr' {
         }
     }
 
-    It 'Throws for a real run outside an Azure DevOps build' {
+    It 'Throws for a real run outside GitHub Actions' {
         # Arrange
-        $env:TF_BUILD = $null
+        $env:GITHUB_ACTIONS = $null
 
         # Act / Assert
         { Invoke-VersionBumpPr } | Should -Throw '*Only -DryRun*'
         Should -Invoke Invoke-GitHubApi -Times 0
     }
 
-    It 'Skips with a warning when built from a dev branch' {
+    It 'Skips with a warning for a tag that is not a SqlClient version' {
         # Arrange
-        $env:BUILD_SOURCEBRANCH = 'refs/heads/dev/cheena/feature'
+        $ReleaseTag = 'AKV_6.1.1'
 
         # Act
         Invoke-VersionBumpPr
 
         # Assert
-        Should -Invoke Write-PipelineWarning -Times 1 -ParameterFilter {
-            $Message -like '*not main or a release*'
+        Should -Invoke Write-ActionsWarning -Times 1 -ParameterFilter {
+            $Message -like '*not a SqlClient release tag*'
         }
         Should -Invoke Invoke-GitHubApi -Times 0
     }
 
-    It 'Opens a patch bump PR with the previous milestone from a later page' {
+    It 'Opens a patch bump PR on main with the previous milestone from a later page' {
         # Act
         Invoke-VersionBumpPr
 
@@ -305,6 +307,18 @@ Describe 'Invoke-VersionBumpPr' {
         Should -Invoke Invoke-GitHubApi -Times 0 -ParameterFilter { [bool]$Method }
     }
 
+    It 'Writes nothing when the target branch is already at the next version' {
+        # Arrange
+        $props = [Convert]::ToBase64String(
+            [Text.Encoding]::UTF8.GetBytes('<SqlClientNextVersion>8.1.1</SqlClientNextVersion>'))
+
+        # Act
+        Invoke-VersionBumpPr
+
+        # Assert
+        Should -Invoke Invoke-GitHubApi -Times 0 -ParameterFilter { [bool]$Method }
+    }
+
     It 'Writes nothing in a dry run' {
         # Arrange
         $DryRun = $true
@@ -316,36 +330,18 @@ Describe 'Invoke-VersionBumpPr' {
         Should -Invoke Invoke-GitHubApi -Times 0 -ParameterFilter { [bool]$Method }
     }
 
-    It 'Skips with a warning when GitHub has no Versions.props' {
+    It 'Skips with a warning when the target branch has no Versions.props' {
         # Arrange
-        Mock Invoke-GitHubApi {
-            $response = [pscustomobject]@{ StatusCode = [pscustomobject]@{ value__ = 404 } }
-            $exception = [Exception]::new('Not Found')
-            $exception | Add-Member -NotePropertyName Response -NotePropertyValue $response
-            throw $exception
-        } -ParameterFilter { $Path -like '*contents*' -and -not $Method }
+        Mock Invoke-GitHubApi { throw (New-NotFoundException) } `
+            -ParameterFilter { $Path -like '*contents*' -and -not $Method }
 
         # Act
         Invoke-VersionBumpPr
 
         # Assert
-        Should -Invoke Write-PipelineWarning -Times 1 -ParameterFilter {
+        Should -Invoke Write-ActionsWarning -Times 1 -ParameterFilter {
             $Message -like '*Skipping*'
         }
         Should -Invoke Invoke-GitHubApi -Times 0 -ParameterFilter { [bool]$Method }
-    }
-
-    It 'Skips with a warning when the built commit has no Versions.props' {
-        # Arrange
-        $VersionsPropsPath = Join-Path $TestDrive 'missing.props'
-
-        # Act
-        Invoke-VersionBumpPr
-
-        # Assert
-        Should -Invoke Write-PipelineWarning -Times 1 -ParameterFilter {
-            $Message -like '*Skipping*'
-        }
-        Should -Invoke Invoke-GitHubApi -Times 0
     }
 }
