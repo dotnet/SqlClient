@@ -273,21 +273,16 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(_stateObj is null, "non-null state object in PrepareForTransparentEncryption.");
 
                 // The async state was reset above, so keep the command marked busy while key store calls
-                // are pending. This blocks connection changes and overlapping executions.
-                bool wasInProgress = _enclaveAttestationInProgress;
+                // are pending. This blocks connection changes and overlapping executions. The reader
+                // continuation awaiting this task clears the flag after execution reserves the
+                // connection or preparation fails. Restoring it here could clear the flag that
+                // continuation set, before enclave package keys load.
                 _enclaveAttestationInProgress = true;
-                try
-                {
-                    await ReadDescribeEncryptionParameterResultsAsync(
-                        describeParameterEncryptionDataReader,
-                        describeParameterEncryptionRpcOriginalRpcMap,
-                        isRetry,
-                        cancellationToken).ConfigureAwait(false);
-                }
-                finally
-                {
-                    _enclaveAttestationInProgress = wasInProgress;
-                }
+                await ReadDescribeEncryptionParameterResultsAsync(
+                    describeParameterEncryptionDataReader,
+                    describeParameterEncryptionRpcOriginalRpcMap,
+                    isRetry,
+                    cancellationToken).ConfigureAwait(false);
 
                 #if DEBUG
                 // Failpoint to force the thread to halt to simulate cancellation of SqlCommand.
