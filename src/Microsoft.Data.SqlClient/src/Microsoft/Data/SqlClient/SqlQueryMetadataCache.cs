@@ -46,52 +46,14 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// <para> Retrieves the query metadata for a specific query from the cache.</para>
-        /// </summary>
-        /// <remarks>
-        /// Column encryption keys are loaded synchronously, which may block the calling thread on key
-        /// store I/O. Asynchronous execution paths should use <see cref="TryGetCachedQueryMetadata"/>
-        /// followed by <see cref="CompleteCachedQueryMetadataAsync"/> instead.
-        /// </remarks>
-        internal bool GetQueryMetadataIfExists(SqlCommand sqlCommand)
-        {
-            if (!TryGetCachedQueryMetadata(sqlCommand, out CachedQueryMetadata metadata))
-            {
-                return false;
-            }
-
-            IReadOnlyList<SqlCipherMetadata> keysToLoad = metadata.KeysToLoad;
-            for (int i = 0; i < keysToLoad.Count; i++)
-            {
-                try
-                {
-                    SqlSecurityUtility.DecryptSymmetricKey(keysToLoad[i], sqlCommand.Connection, sqlCommand);
-                }
-                catch (Exception ex) when (ex is SqlException or ArgumentException)
-                {
-                    OnKeyLoadFailed(sqlCommand, metadata, clearParameterMetadata: true);
-                    return false;
-                }
-                catch (Exception)
-                {
-                    OnKeyLoadFailed(sqlCommand, metadata, clearParameterMetadata: false);
-                    throw;
-                }
-            }
-
-            CompleteCachedQueryMetadata(sqlCommand, metadata);
-            return true;
-        }
-
-        /// <summary>
         /// Performs the purely in-memory portion of a query metadata cache lookup.
         /// </summary>
         /// <remarks>
         /// On success every parameter has been assigned a private copy of its cached cipher metadata and
         /// <paramref name="metadata"/> describes the column encryption keys that still have to be loaded.
-        /// The caller must then either load those keys and call <see cref="CompleteCachedQueryMetadata"/>,
-        /// or call <see cref="CompleteCachedQueryMetadataAsync"/> which does both. Splitting the lookup this
-        /// way lets asynchronous execution paths await key store I/O instead of blocking on it.
+        /// The caller must then call <see cref="CompleteCachedQueryMetadata"/> to load those keys and
+        /// finish the lookup. Splitting the lookup this way lets asynchronous execution paths await
+        /// key store I/O instead of blocking on it.
         /// </remarks>
         internal bool TryGetCachedQueryMetadata(SqlCommand sqlCommand, out CachedQueryMetadata metadata)
         {
@@ -177,17 +139,19 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Loads the outstanding column encryption keys for a cache lookup using the asynchronous key
-        /// store provider APIs and then finishes the lookup.
+        /// Loads the outstanding column encryption keys for a cache lookup and then finishes the
+        /// lookup. Keys are loaded through the asynchronous key store provider APIs when
+        /// <paramref name="isAsync"/> is <see langword="true"/>, and the synchronous ones otherwise.
         /// </summary>
         /// <returns>
         /// <see langword="true"/> if the lookup completed as a cache hit; <see langword="false"/> if the
         /// cached key information was stale, in which case the entry has been invalidated and the caller
         /// must fall back to a full describe parameter encryption round trip.
         /// </returns>
-        internal async Task<bool> CompleteCachedQueryMetadataAsync(
+        internal async ValueTask<bool> CompleteCachedQueryMetadata(
             SqlCommand sqlCommand,
             CachedQueryMetadata metadata,
+            bool isAsync,
             CancellationToken cancellationToken)
         {
             IReadOnlyList<SqlCipherMetadata> keysToLoad = metadata.KeysToLoad;
@@ -195,10 +159,11 @@ namespace Microsoft.Data.SqlClient
             {
                 try
                 {
-                    await SqlSecurityUtility.DecryptSymmetricKeyAsync(
+                    await SqlSecurityUtility.DecryptSymmetricKey(
                         keysToLoad[i],
                         sqlCommand.Connection,
                         sqlCommand,
+                        isAsync,
                         cancellationToken).ConfigureAwait(false);
                 }
                 catch (Exception ex) when (ex is SqlException or ArgumentException)
@@ -207,12 +172,11 @@ namespace Microsoft.Data.SqlClient
                     OnKeyLoadFailed(sqlCommand, metadata, clearParameterMetadata: true);
                     return false;
                 }
-                catch (OperationCanceledException)
+                catch (OperationCanceledException) when (isAsync)
                 {
                     // Cancellation says nothing about whether the cached metadata is still valid, so
                     // leave the entry in place for the next caller instead of forcing it to pay for
-                    // another describe parameter encryption round trip. This case cannot arise on the
-                    // synchronous path, which is why only this overload handles it.
+                    // another describe parameter encryption round trip.
                     throw;
                 }
                 catch (Exception)
@@ -222,7 +186,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            CompleteCachedQueryMetadata(sqlCommand, metadata);
+            PublishCachedQueryMetadata(sqlCommand, metadata);
             return true;
         }
 
@@ -234,7 +198,7 @@ namespace Microsoft.Data.SqlClient
         /// <returns>
         /// <see langword="true"/> if the lookup completed as a cache hit; otherwise
         /// <see langword="false"/>, and the caller must use
-        /// <see cref="CompleteCachedQueryMetadataAsync"/>.
+        /// <see cref="CompleteCachedQueryMetadata"/>.
         /// </returns>
         internal bool TryCompleteCachedQueryMetadataInline(
             SqlCommand sqlCommand,
@@ -254,7 +218,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Finishes a successful cache lookup by publishing the enclave keys and recording the hit.
         /// </summary>
-        private void CompleteCachedQueryMetadata(
+        private void PublishCachedQueryMetadata(
             SqlCommand sqlCommand,
             CachedQueryMetadata metadata)
         {

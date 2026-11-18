@@ -900,113 +900,20 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private void GenerateEnclavePackage()
-        {
-            if (!TryPrepareEnclavePackageGeneration(
-                    out string enclaveType,
-                    out SqlConnectionAttestationProtocol attestationProtocol))
-            {
-                return;
-            }
-
-            // Generate the enclave package
-            try
-            {
-                ThrowIfForcedRetryableEnclaveQueryExecutionException();
-
-                enclavePackage = EnclaveDelegate.Instance.GenerateEnclavePackage(
-                    attestationProtocol,
-                    keysToBeSentToEnclave,
-                    CommandText,
-                    enclaveType,
-                    GetEnclaveSessionParameters(),
-                    _activeConnection,
-                    command: this);
-            }
-            catch (EnclaveDelegate.RetryableEnclaveQueryExecutionException)
-            {
-                throw;
-            }
-            catch (Exception e)
-            {
-                throw SQL.ExceptionWhenGeneratingEnclavePackage(e);
-            }
-        }
-
         /// <summary>
-        /// Asynchronously generates the enclave package for the current command.
+        /// Generates the enclave package for the current command.
         /// </summary>
-        /// <remarks>
-        /// Async counterpart of <see cref="GenerateEnclavePackage"/>. Column encryption keys destined for the
-        /// enclave are decrypted through the asynchronous key store provider APIs, so a key store that performs
-        /// network I/O does not block a thread while the package is generated.
-        /// </remarks>
+        /// <param name="isAsync">
+        /// True to decrypt the column encryption keys sent to the enclave with the asynchronous key
+        /// store APIs, so a key store performing network I/O does not block a thread.
+        /// </param>
         /// <param name="cancellationToken">Token used to request cancellation of the operation</param>
-        private async Task GenerateEnclavePackageAsync(CancellationToken cancellationToken)
+        private async ValueTask GenerateEnclavePackage(bool isAsync, CancellationToken cancellationToken)
         {
-            if (!TryPrepareEnclavePackageGeneration(
-                    out string enclaveType,
-                    out SqlConnectionAttestationProtocol attestationProtocol))
-            {
-                return;
-            }
-
-            // Generate the enclave package
-            try
-            {
-                ThrowIfForcedRetryableEnclaveQueryExecutionException();
-
-                enclavePackage = await EnclaveDelegate.Instance.GenerateEnclavePackageAsync(
-                        attestationProtocol,
-                        keysToBeSentToEnclave,
-                        CommandText,
-                        enclaveType,
-                        GetEnclaveSessionParameters(),
-                        _activeConnection,
-                        command: this,
-                        cancellationToken)
-                    .ConfigureAwait(false);
-            }
-            catch (EnclaveDelegate.RetryableEnclaveQueryExecutionException)
-            {
-                throw;
-            }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-            {
-                // Propagate cancellation unwrapped so the returned Task is cancelled rather than faulted
-                // with an enclave-specific exception that would suggest an attestation problem.
-                throw;
-            }
-            catch (Exception e)
-            {
-                throw SQL.ExceptionWhenGeneratingEnclavePackage(e);
-            }
-        }
-
-        /// <summary>
-        /// Validates the connection state required to generate an enclave package.
-        /// </summary>
-        /// <remarks>
-        /// Shared by the synchronous and asynchronous enclave package generation paths so that both perform
-        /// identical validation and throw identical exceptions.
-        /// </remarks>
-        /// <param name="enclaveType">The validated enclave type reported by the server</param>
-        /// <param name="attestationProtocol">The validated attestation protocol configured on the connection</param>
-        /// <returns>
-        /// <c>false</c> when there are no keys to send to the enclave and package generation must be skipped;
-        /// otherwise <c>true</c>.
-        /// </returns>
-        private bool TryPrepareEnclavePackageGeneration(
-            out string enclaveType,
-            out SqlConnectionAttestationProtocol attestationProtocol)
-        {
-            enclaveType = null;
-            attestationProtocol = SqlConnectionAttestationProtocol.NotSpecified;
-
             // Skip processing if there are no keys to send to enclave
             if (keysToBeSentToEnclave is null || keysToBeSentToEnclave.IsEmpty)
             {
-                return false;
+                return;
             }
 
             // Validate attestation url is provided when necessary
@@ -1018,42 +925,58 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Validate enclave type
-            enclaveType = _activeConnection.Parser.EnclaveType;
+            string enclaveType = _activeConnection.Parser.EnclaveType;
             if (string.IsNullOrWhiteSpace(enclaveType))
             {
                 throw SQL.EnclaveTypeNullForEnclaveBasedQuery();
             }
 
             // Validate protocol type
-            attestationProtocol = _activeConnection.AttestationProtocol;
+            SqlConnectionAttestationProtocol attestationProtocol = _activeConnection.AttestationProtocol;
             if (attestationProtocol is SqlConnectionAttestationProtocol.NotSpecified)
             {
                 throw SQL.AttestationProtocolNotSpecifiedForGeneratingEnclavePackage();
             }
 
-            return true;
-        }
-
-        /// <summary>
-        /// Test-only failpoint that forces a retryable enclave failure during package generation.
-        /// </summary>
-        /// <remarks>
-        /// Both guards are required and are not redundant: <see cref="ConditionalAttribute"/> elides the
-        /// call sites in non-DEBUG builds, while the <c>#if DEBUG</c> is needed because the body still
-        /// compiles there and the field it reads is itself DEBUG-only.
-        /// </remarks>
-        // @TODO: These should be wrapped with something other than DEBUG since we don't even run tests in debug mode
-        [Conditional("DEBUG")]
-        private void ThrowIfForcedRetryableEnclaveQueryExecutionException()
-        {
-            #if DEBUG
-            // Test-only code for forcing a retryable exception to occur
-            if (_forceRetryableEnclaveQueryExecutionExceptionDuringGenerateEnclavePackage)
+            // Generate the enclave package
+            try
             {
-                _forceRetryableEnclaveQueryExecutionExceptionDuringGenerateEnclavePackage = false;
-                throw new EnclaveDelegate.RetryableEnclaveQueryExecutionException("testing", null);
+                #if DEBUG
+                // @TODO: These should be wrapped with something other than DEBUG since we don't even run tests in debug mode
+                // Test-only code for forcing a retryable exception to occur
+                if (_forceRetryableEnclaveQueryExecutionExceptionDuringGenerateEnclavePackage)
+                {
+                    _forceRetryableEnclaveQueryExecutionExceptionDuringGenerateEnclavePackage = false;
+                    throw new EnclaveDelegate.RetryableEnclaveQueryExecutionException("testing", null);
+                }
+                #endif
+
+                enclavePackage = await EnclaveDelegate.Instance.GenerateEnclavePackage(
+                        attestationProtocol,
+                        keysToBeSentToEnclave,
+                        CommandText,
+                        enclaveType,
+                        GetEnclaveSessionParameters(),
+                        _activeConnection,
+                        command: this,
+                        isAsync,
+                        cancellationToken)
+                    .ConfigureAwait(false);
             }
-            #endif
+            catch (EnclaveDelegate.RetryableEnclaveQueryExecutionException)
+            {
+                throw;
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                // Propagate cancellation unwrapped so the returned task is cancelled rather than faulted
+                // with an enclave-specific exception that would suggest an attestation problem.
+                throw;
+            }
+            catch (Exception e)
+            {
+                throw SQL.ExceptionWhenGeneratingEnclavePackage(e);
+            }
         }
 
         private Task<SqlDataReader> InternalExecuteReaderAsync(
@@ -1970,7 +1893,7 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 // Synchronous execution
-                GenerateEnclavePackage();
+                GenerateEnclavePackage(isAsync: false, CancellationToken.None).GetAwaiter().GetResult();
                 return RunExecuteReaderTds(
                     cmdBehavior,
                     runBehavior,
@@ -2043,7 +1966,7 @@ namespace Microsoft.Data.SqlClient
                     preparedDatabase,
                     method);
                 ValidateConnectionForEnclaveExecution(retryConnection);
-                await GenerateEnclavePackageAsync(cancellationToken).ConfigureAwait(false);
+                await GenerateEnclavePackage(isAsync: true, cancellationToken).ConfigureAwait(false);
 
                 ValidateConnectionLifetime(
                     preparedConnection,

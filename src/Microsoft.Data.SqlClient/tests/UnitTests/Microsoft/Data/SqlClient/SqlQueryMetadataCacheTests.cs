@@ -22,7 +22,7 @@ public class SqlQueryMetadataCacheTests
     /// asynchronous provider API and report a cache hit.
     /// </summary>
     [Fact]
-    public async Task CompleteCachedQueryMetadataAsync_ValidKey_UsesAsyncProviderAndReportsHit()
+    public async Task CompleteCachedQueryMetadata_AsyncValidKey_UsesAsyncProviderAndReportsHit()
     {
         // Arrange
         TestKeyStoreProvider provider = new() { PlaintextKey = NewPlaintextKey(seed: 41) };
@@ -34,8 +34,8 @@ public class SqlQueryMetadataCacheTests
         int decryptCallsAfterProbe = provider.DecryptCallCount + provider.DecryptAsyncCallCount;
 
         // Act
-        bool hit = await cache.CompleteCachedQueryMetadataAsync(
-            command, metadata, CancellationToken.None);
+        bool hit = await cache.CompleteCachedQueryMetadata(
+            command, metadata, isAsync: true, CancellationToken.None);
 
         // Assert
         // The probe itself must defer all key store work to the completion step.
@@ -54,7 +54,7 @@ public class SqlQueryMetadataCacheTests
     /// entry, so execution falls back to describing parameters again.
     /// </summary>
     [Fact]
-    public async Task CompleteCachedQueryMetadataAsync_StaleKey_ReturnsFalseAndEvictsEntry()
+    public async Task CompleteCachedQueryMetadata_AsyncStaleKey_ReturnsFalseAndEvictsEntry()
     {
         // Arrange
         TestKeyStoreProvider provider = new()
@@ -68,8 +68,8 @@ public class SqlQueryMetadataCacheTests
             command, out SqlQueryMetadataCache.CachedQueryMetadata metadata));
 
         // Act
-        bool hit = await cache.CompleteCachedQueryMetadataAsync(
-            command, metadata, CancellationToken.None);
+        bool hit = await cache.CompleteCachedQueryMetadata(
+            command, metadata, isAsync: true, CancellationToken.None);
 
         // Assert
         Assert.False(hit);
@@ -82,7 +82,7 @@ public class SqlQueryMetadataCacheTests
     /// evicting the entry; a later uncancelled completion must still hit.
     /// </summary>
     [Fact]
-    public async Task CompleteCachedQueryMetadataAsync_Canceled_ThrowsAndKeepsEntry()
+    public async Task CompleteCachedQueryMetadata_AsyncCanceled_ThrowsAndKeepsEntry()
     {
         // Arrange
         TestKeyStoreProvider provider = new() { PlaintextKey = NewPlaintextKey(seed: 43) };
@@ -96,7 +96,8 @@ public class SqlQueryMetadataCacheTests
 
         // Act
         Exception? exception = await Record.ExceptionAsync(
-            () => cache.CompleteCachedQueryMetadataAsync(command, metadata, source.Token));
+            async () => await cache.CompleteCachedQueryMetadata(
+                command, metadata, isAsync: true, source.Token));
 
         // Assert
         // Cancellation propagates to the caller.
@@ -105,25 +106,29 @@ public class SqlQueryMetadataCacheTests
         // The entry survives, and an uncancelled retry completes as a hit.
         Assert.True(cache.TryGetCachedQueryMetadata(
             command, out SqlQueryMetadataCache.CachedQueryMetadata retryMetadata));
-        Assert.True(await cache.CompleteCachedQueryMetadataAsync(
-            command, retryMetadata, CancellationToken.None));
+        Assert.True(await cache.CompleteCachedQueryMetadata(
+            command, retryMetadata, isAsync: true, CancellationToken.None));
         Assert.True(command.Parameters[0].CipherMetadata.IsAlgorithmInitialized());
     }
 
     /// <summary>
-    /// The synchronous lookup now shares the probe, so it must still load keys through the
-    /// synchronous provider API and report a hit.
+    /// The synchronous completion must load keys through the synchronous provider API and
+    /// report a hit.
     /// </summary>
     [Fact]
-    public void GetQueryMetadataIfExists_ValidKey_UsesSyncProviderAndReturnsTrue()
+    public void CompleteCachedQueryMetadata_SyncValidKey_UsesSyncProviderAndReturnsTrue()
     {
         // Arrange
         TestKeyStoreProvider provider = new() { PlaintextKey = NewPlaintextKey(seed: 47) };
         using SqlCommand command = NewCachedCommand(provider);
         using SqlConnection connection = command.Connection;
+        SqlQueryMetadataCache cache = SqlQueryMetadataCache.GetInstance();
+        Assert.True(cache.TryGetCachedQueryMetadata(
+            command, out SqlQueryMetadataCache.CachedQueryMetadata metadata));
 
         // Act
-        bool hit = SqlQueryMetadataCache.GetInstance().GetQueryMetadataIfExists(command);
+        bool hit = cache.CompleteCachedQueryMetadata(
+            command, metadata, isAsync: false, CancellationToken.None).GetAwaiter().GetResult();
 
         // Assert
         Assert.True(hit);
@@ -133,11 +138,11 @@ public class SqlQueryMetadataCacheTests
     }
 
     /// <summary>
-    /// The synchronous lookup must still treat a stale key as a miss that clears parameter
+    /// The synchronous completion must still treat a stale key as a miss that clears parameter
     /// metadata and evicts the entry.
     /// </summary>
     [Fact]
-    public void GetQueryMetadataIfExists_StaleKey_ReturnsFalseAndEvictsEntry()
+    public void CompleteCachedQueryMetadata_SyncStaleKey_ReturnsFalseAndEvictsEntry()
     {
         // Arrange
         TestKeyStoreProvider provider = new()
@@ -147,9 +152,12 @@ public class SqlQueryMetadataCacheTests
         using SqlCommand command = NewCachedCommand(provider);
         using SqlConnection connection = command.Connection;
         SqlQueryMetadataCache cache = SqlQueryMetadataCache.GetInstance();
+        Assert.True(cache.TryGetCachedQueryMetadata(
+            command, out SqlQueryMetadataCache.CachedQueryMetadata metadata));
 
         // Act
-        bool hit = cache.GetQueryMetadataIfExists(command);
+        bool hit = cache.CompleteCachedQueryMetadata(
+            command, metadata, isAsync: false, CancellationToken.None).GetAwaiter().GetResult();
 
         // Assert
         Assert.False(hit);

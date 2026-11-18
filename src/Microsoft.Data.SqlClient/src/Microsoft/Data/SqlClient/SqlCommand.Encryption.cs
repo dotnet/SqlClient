@@ -278,10 +278,11 @@ namespace Microsoft.Data.SqlClient
                 // reserves the connection or preparation fails. Restoring it here could clear the
                 // flag that continuation set, before enclave package keys load.
                 _enclaveAttestationInProgress = true;
-                await ReadDescribeEncryptionParameterResultsAsync(
+                await ReadDescribeEncryptionParameterResults(
                     describeParameterEncryptionDataReader,
                     describeParameterEncryptionRpcOriginalRpcMap,
                     isRetry,
+                    isAsync: true,
                     cancellationToken).ConfigureAwait(false);
 
                 #if DEBUG
@@ -527,7 +528,14 @@ namespace Microsoft.Data.SqlClient
 
                 if (!isAsync)
                 {
-                    if (cache.GetQueryMetadataIfExists(this))
+                    if (cache.TryGetCachedQueryMetadata(
+                            this,
+                            out SqlQueryMetadataCache.CachedQueryMetadata syncMetadata)
+                        && cache.CompleteCachedQueryMetadata(
+                            this,
+                            syncMetadata,
+                            isAsync: false,
+                            CancellationToken.None).GetAwaiter().GetResult())
                     {
                         usedCache = true;
                         return;
@@ -611,7 +619,7 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 bool cacheHit = await SqlQueryMetadataCache.GetInstance()
-                    .CompleteCachedQueryMetadataAsync(this, metadata, cancellationToken)
+                    .CompleteCachedQueryMetadata(this, metadata, isAsync: true, cancellationToken)
                     .ConfigureAwait(false);
 
                 ValidateConnectionLifetime(connection, closeCount, database, method);
@@ -838,7 +846,9 @@ namespace Microsoft.Data.SqlClient
                         ReadDescribeEncryptionParameterResults(
                             describeParameterEncryptionDataReader,
                             describeParameterEncryptionRpcOriginalRpcMap,
-                            isRetry);
+                            isRetry,
+                            isAsync: false,
+                            CancellationToken.None).GetAwaiter().GetResult();
 
                         #if DEBUG
                         // Failpoint to force the thread to halt to simulate cancellation of SqlCommand.
@@ -999,35 +1009,46 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Read the output of sp_describe_parameter_encryption
+        /// Reads the output of sp_describe_parameter_encryption, then performs the recorded key store operations.
         /// </summary>
+        /// <remarks>
+        /// Result set parsing is shared by both modes. Enclave session creation, column master key signature
+        /// verification, and column encryption key decryption use the asynchronous provider APIs when
+        /// <paramref name="isAsync"/> is true.
+        /// </remarks>
         /// <param name="ds">Resultset from calling to sp_describe_parameter_encryption</param>
-        /// <param name="describeParameterEncryptionRpcOriginalRpcMap"> Readonly dictionary with the map of parameter encryption rpc requests with the corresponding original rpc requests.</param>
+        /// <param name="describeParameterEncryptionRpcOriginalRpcMap">Readonly dictionary with the map of parameter encryption rpc requests with the corresponding original rpc requests.</param>
         /// <param name="isRetry">Indicates if this is a retry from a failed call.</param>
-        private void ReadDescribeEncryptionParameterResults(
+        /// <param name="isAsync">Whether to use the asynchronous provider APIs.</param>
+        /// <param name="cancellationToken">Token used to request cancellation of the operation</param>
+        private async ValueTask ReadDescribeEncryptionParameterResults(
             SqlDataReader ds,
             ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap,
-            bool isRetry)
+            bool isRetry,
+            bool isAsync,
+            CancellationToken cancellationToken)
         {
             PendingColumnEncryptionKeyOperations pending = new PendingColumnEncryptionKeyOperations();
             int verifiedCount = 0;
             foreach (byte[] attestationInfo in ReadDescribeEncryptionParameterResultsCore(ds, describeParameterEncryptionRpcOriginalRpcMap, pending))
             {
                 // Reject untrusted keys before attestation creates and caches an enclave session.
-                verifiedCount = VerifyPendingColumnMasterKeySignatures(pending, verifiedCount);
-                EnclaveDelegate.Instance.CreateEnclaveSession(
-                    _activeConnection.AttestationProtocol, _activeConnection.Parser.EnclaveType,
-                    GetEnclaveSessionParameters(), attestationInfo, enclaveAttestationParameters,
-                    customData, customDataLength, isRetry);
-                enclaveAttestationParameters = null;
+                verifiedCount = await VerifyPendingColumnMasterKeySignatures(pending, verifiedCount, isAsync, cancellationToken)
+                    .ConfigureAwait(false);
+                await CreateEnclaveSession(attestationInfo, isRetry, isAsync, cancellationToken).ConfigureAwait(false);
             }
 
-            VerifyPendingColumnMasterKeySignatures(pending, verifiedCount);
+            await VerifyPendingColumnMasterKeySignatures(pending, verifiedCount, isAsync, cancellationToken)
+                .ConfigureAwait(false);
 
+            // Metadata entries frequently share a key. Resolve them sequentially so the first result
+            // populates the cache without creating additional waiters for the same key.
             IReadOnlyList<SqlCipherMetadata> keyDecryptions = pending.KeyDecryptions;
             for (int i = 0; i < keyDecryptions.Count; i++)
             {
-                SqlSecurityUtility.DecryptSymmetricKey(keyDecryptions[i], _activeConnection, this);
+                await SqlSecurityUtility.DecryptSymmetricKey(
+                        keyDecryptions[i], _activeConnection, this, isAsync, cancellationToken)
+                    .ConfigureAwait(false);
             }
 
             CacheQueryMetadataIfNeeded();
@@ -1037,88 +1058,24 @@ namespace Microsoft.Data.SqlClient
         /// Verifies the column master key signatures recorded after the first <paramref name="startIndex"/> entries.
         /// </summary>
         /// <returns>The number of signatures verified so far.</returns>
-        private int VerifyPendingColumnMasterKeySignatures(PendingColumnEncryptionKeyOperations pending, int startIndex)
-        {
-            IReadOnlyList<ColumnMasterKeySignatureVerification> verifications = pending.SignatureVerifications;
-            for (int i = startIndex; i < verifications.Count; i++)
-            {
-                ColumnMasterKeySignatureVerification verification = verifications[i];
-                SqlSecurityUtility.VerifyColumnMasterKeySignature(
-                    verification.KeyStoreName,
-                    verification.KeyPath,
-                    verification.IsEnclaveEnabled,
-                    verification.Signature,
-                    _activeConnection,
-                    this);
-            }
-
-            return verifications.Count;
-        }
-
-        /// <summary>
-        /// Asynchronously reads the output of sp_describe_parameter_encryption.
-        /// </summary>
-        /// <remarks>
-        /// Async counterpart of <see cref="ReadDescribeEncryptionParameterResults"/>. Result set parsing is
-        /// shared with the synchronous path; enclave session creation, column master key signature
-        /// verification, and column encryption key decryption use their asynchronous provider APIs.
-        /// </remarks>
-        /// <param name="ds">Resultset from calling to sp_describe_parameter_encryption</param>
-        /// <param name="describeParameterEncryptionRpcOriginalRpcMap">Readonly dictionary with the map of parameter encryption rpc requests with the corresponding original rpc requests.</param>
-        /// <param name="isRetry">Indicates if this is a retry from a failed call.</param>
-        /// <param name="cancellationToken">Token used to request cancellation of the operation</param>
-        private async Task ReadDescribeEncryptionParameterResultsAsync(
-            SqlDataReader ds,
-            ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap,
-            bool isRetry,
-            CancellationToken cancellationToken)
-        {
-            PendingColumnEncryptionKeyOperations pending = new PendingColumnEncryptionKeyOperations();
-            int verifiedCount = 0;
-            foreach (byte[] attestationInfo in ReadDescribeEncryptionParameterResultsCore(ds, describeParameterEncryptionRpcOriginalRpcMap, pending))
-            {
-                // Reject untrusted keys before attestation creates and caches an enclave session.
-                verifiedCount = await VerifyPendingColumnMasterKeySignaturesAsync(pending, verifiedCount, cancellationToken)
-                    .ConfigureAwait(false);
-                await CreateEnclaveSessionAsync(attestationInfo, isRetry, cancellationToken).ConfigureAwait(false);
-            }
-
-            await VerifyPendingColumnMasterKeySignaturesAsync(pending, verifiedCount, cancellationToken)
-                .ConfigureAwait(false);
-
-            // Metadata entries frequently share a key. Resolve them sequentially so the first result
-            // populates the cache without creating additional waiters for the same key.
-            IReadOnlyList<SqlCipherMetadata> keyDecryptions = pending.KeyDecryptions;
-            for (int i = 0; i < keyDecryptions.Count; i++)
-            {
-                await SqlSecurityUtility.DecryptSymmetricKeyAsync(keyDecryptions[i], _activeConnection, this, cancellationToken)
-                    .ConfigureAwait(false);
-            }
-
-            CacheQueryMetadataIfNeeded();
-        }
-
-        /// <summary>
-        /// Asynchronously verifies the column master key signatures recorded after the first
-        /// <paramref name="startIndex"/> entries.
-        /// </summary>
-        /// <returns>The number of signatures verified so far.</returns>
-        private async Task<int> VerifyPendingColumnMasterKeySignaturesAsync(
+        private async ValueTask<int> VerifyPendingColumnMasterKeySignatures(
             PendingColumnEncryptionKeyOperations pending,
             int startIndex,
+            bool isAsync,
             CancellationToken cancellationToken)
         {
             IReadOnlyList<ColumnMasterKeySignatureVerification> verifications = pending.SignatureVerifications;
             for (int i = startIndex; i < verifications.Count; i++)
             {
                 ColumnMasterKeySignatureVerification verification = verifications[i];
-                await SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
+                await SqlSecurityUtility.VerifyColumnMasterKeySignature(
                         verification.KeyStoreName,
                         verification.KeyPath,
                         verification.IsEnclaveEnabled,
                         verification.Signature,
                         _activeConnection,
                         this,
+                        isAsync,
                         cancellationToken)
                     .ConfigureAwait(false);
             }
@@ -1126,12 +1083,27 @@ namespace Microsoft.Data.SqlClient
             return verifications.Count;
         }
 
-        private async Task CreateEnclaveSessionAsync(byte[] attestationInfo, bool isRetry, CancellationToken cancellationToken)
+        private async ValueTask CreateEnclaveSession(
+            byte[] attestationInfo,
+            bool isRetry,
+            bool isAsync,
+            CancellationToken cancellationToken)
         {
-            await EnclaveDelegate.Instance.CreateEnclaveSessionAsync(
-                _activeConnection.AttestationProtocol, _activeConnection.Parser.EnclaveType,
-                GetEnclaveSessionParameters(), attestationInfo, enclaveAttestationParameters,
-                customData, customDataLength, isRetry, cancellationToken).ConfigureAwait(false);
+            if (isAsync)
+            {
+                await EnclaveDelegate.Instance.CreateEnclaveSessionAsync(
+                    _activeConnection.AttestationProtocol, _activeConnection.Parser.EnclaveType,
+                    GetEnclaveSessionParameters(), attestationInfo, enclaveAttestationParameters,
+                    customData, customDataLength, isRetry, cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                EnclaveDelegate.Instance.CreateEnclaveSession(
+                    _activeConnection.AttestationProtocol, _activeConnection.Parser.EnclaveType,
+                    GetEnclaveSessionParameters(), attestationInfo, enclaveAttestationParameters,
+                    customData, customDataLength, isRetry);
+            }
+
             enclaveAttestationParameters = null;
         }
 

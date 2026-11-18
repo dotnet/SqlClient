@@ -32,7 +32,7 @@ public class EnclaveDelegateTests
     /// thread, and must return the decrypted key with its identifiers.
     /// </summary>
     [Fact]
-    public async Task GetDecryptedKeysToBeSentToEnclaveAsync_OneKey_UsesAsyncProviderApi()
+    public async Task GetDecryptedKeysToBeSentToEnclave_AsyncOneKey_UsesAsyncProviderApi()
     {
         // Arrange
         byte[] expectedKey = QueryMetadataCacheTestCommands.NewPlaintextKey(seed: 11);
@@ -41,10 +41,11 @@ public class EnclaveDelegateTests
 
         // Act
         List<ColumnEncryptionKeyInfo> keys =
-            await EnclaveDelegate.Instance.GetDecryptedKeysToBeSentToEnclaveAsync(
+            await EnclaveDelegate.Instance.GetDecryptedKeysToBeSentToEnclave(
                 NewKeyTable(NewCipherInfoEntry()),
             connection,
             command: null,
+            isAsync: true,
             CancellationToken.None);
 
         // Assert
@@ -59,7 +60,7 @@ public class EnclaveDelegateTests
 
     /// <summary>Every requested key is resolved, each through the async provider API.</summary>
     [Fact]
-    public async Task GetDecryptedKeysToBeSentToEnclaveAsync_ThreeKeys_ResolvesEveryKey()
+    public async Task GetDecryptedKeysToBeSentToEnclave_AsyncThreeKeys_ResolvesEveryKey()
     {
         // Arrange
         TestKeyStoreProvider provider = new()
@@ -74,8 +75,8 @@ public class EnclaveDelegateTests
 
         // Act
         List<ColumnEncryptionKeyInfo> keys =
-            await EnclaveDelegate.Instance.GetDecryptedKeysToBeSentToEnclaveAsync(
-                table, connection, command: null, CancellationToken.None);
+            await EnclaveDelegate.Instance.GetDecryptedKeysToBeSentToEnclave(
+                table, connection, command: null, isAsync: true, CancellationToken.None);
 
         // Assert
         Assert.Equal(3, keys.Count);
@@ -88,7 +89,7 @@ public class EnclaveDelegateTests
     /// package.
     /// </summary>
     [Fact]
-    public async Task GetDecryptedKeysToBeSentToEnclaveAsync_ThreeKeys_LoadsSequentially()
+    public async Task GetDecryptedKeysToBeSentToEnclave_AsyncThreeKeys_LoadsSequentially()
     {
         // Arrange
         int active = 0;
@@ -112,8 +113,8 @@ public class EnclaveDelegateTests
 
         // Act
         List<ColumnEncryptionKeyInfo> keys =
-            await EnclaveDelegate.Instance.GetDecryptedKeysToBeSentToEnclaveAsync(
-                table, connection, command: null, CancellationToken.None);
+            await EnclaveDelegate.Instance.GetDecryptedKeysToBeSentToEnclave(
+                table, connection, command: null, isAsync: true, CancellationToken.None);
 
         // Assert
         Assert.Equal(3, keys.Count);
@@ -125,7 +126,7 @@ public class EnclaveDelegateTests
     /// members keep working.
     /// </summary>
     [Fact]
-    public void GetDecryptedKeysToBeSentToEnclave_OneKey_UsesSyncProviderApi()
+    public void GetDecryptedKeysToBeSentToEnclave_SyncOneKey_UsesSyncProviderApi()
     {
         // Arrange
         TestKeyStoreProvider provider = new()
@@ -137,7 +138,11 @@ public class EnclaveDelegateTests
         // Act
         List<ColumnEncryptionKeyInfo> keys =
             EnclaveDelegate.Instance.GetDecryptedKeysToBeSentToEnclave(
-            NewKeyTable(NewCipherInfoEntry()), connection, command: null);
+                NewKeyTable(NewCipherInfoEntry()),
+                connection,
+                command: null,
+                isAsync: false,
+                CancellationToken.None).GetAwaiter().GetResult();
 
         // Assert
         Assert.Single(keys);
@@ -150,7 +155,7 @@ public class EnclaveDelegateTests
     /// provider call is made.
     /// </summary>
     [Fact]
-    public async Task GetDecryptedKeysToBeSentToEnclaveAsync_CanceledToken_ThrowsOperationCanceled()
+    public async Task GetDecryptedKeysToBeSentToEnclave_AsyncCanceledToken_ThrowsOperationCanceled()
     {
         // Arrange
         TestKeyStoreProvider provider = new()
@@ -162,8 +167,9 @@ public class EnclaveDelegateTests
         source.Cancel();
 
         // Act
-        Task action() => EnclaveDelegate.Instance.GetDecryptedKeysToBeSentToEnclaveAsync(
-            NewKeyTable(NewCipherInfoEntry()), connection, command: null, source.Token);
+        Task action() => EnclaveDelegate.Instance.GetDecryptedKeysToBeSentToEnclave(
+            NewKeyTable(NewCipherInfoEntry()), connection, command: null, isAsync: true, source.Token)
+            .AsTask();
 
         // Assert
         await Assert.ThrowsAnyAsync<OperationCanceledException>(action);
@@ -175,7 +181,7 @@ public class EnclaveDelegateTests
     /// list.
     /// </summary>
     [Fact]
-    public async Task GetDecryptedKeysToBeSentToEnclaveAsync_ProviderFails_ThrowsSqlException()
+    public async Task GetDecryptedKeysToBeSentToEnclave_AsyncProviderFails_ThrowsSqlException()
     {
         // Arrange
         TestKeyStoreProvider provider = new()
@@ -186,11 +192,12 @@ public class EnclaveDelegateTests
         using SqlConnection connection = NewConnection(provider);
 
         // Act
-        Task action() => EnclaveDelegate.Instance.GetDecryptedKeysToBeSentToEnclaveAsync(
+        Task action() => EnclaveDelegate.Instance.GetDecryptedKeysToBeSentToEnclave(
             NewKeyTable(NewCipherInfoEntry()),
             connection,
             command: null,
-            CancellationToken.None);
+            isAsync: true,
+            CancellationToken.None).AsTask();
 
         // Assert
         SqlException exception = await Assert.ThrowsAsync<SqlException>(action);
