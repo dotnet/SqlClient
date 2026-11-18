@@ -633,33 +633,19 @@ public class WaitHandleDbConnectionPoolTransactionTest : IDisposable
 
     #region Controlled Concurrency Tests
 
-    // Flaky under CI load only (never reproduces locally): the two worker tasks are
-    // scheduled via Task.Run on the thread pool. On a loaded x86 agent the pool can be
-    // slow to spin up a worker, so task1 starts late and fails to signal task1Returned
-    // within task2's 10s wait, producing a WaitAll timeout. task1 itself throws no
-    // assertion (none appears in the AggregateException) — this is thread-pool
-    // starvation, not a pool/transaction defect.
-    //
-    //     [xUnit.net 00:00:14.24]     Microsoft.Data.SqlClient.UnitTests.ConnectionPool.WaitHandleDbConnectionPoolTransactionTest.TwoThreads_SharedTransaction_AccessSameTransactedEntry [FAIL]
-    //     Failed Microsoft.Data.SqlClient.UnitTests.ConnectionPool.WaitHandleDbConnectionPoolTransactionTest.TwoThreads_SharedTransaction_AccessSameTransactedEntry [10 s]
-    //     System.AggregateException : One or more errors occurred. (Timed out waiting for task1 to return its connection.)
-    //       ---- Timed out waiting for task1 to return its connection.
-    //     Stack Trace:
-    //          at System.Threading.Tasks.Task.WaitAllCore(Task[] tasks, Int32 millisecondsTimeout, CancellationToken cancellationToken)
-    //        at System.Threading.Tasks.Task.WaitAll(Task[] tasks)
-    //        at Microsoft.Data.SqlClient.UnitTests.ConnectionPool.WaitHandleDbConnectionPoolTransactionTest.TwoThreads_SharedTransaction_AccessSameTransactedEntry() in WaitHandleDbConnectionPoolTransactionTest.cs:line 681
-    //       ----- Inner Stack Trace -----
-    //        at Microsoft.Data.SqlClient.UnitTests.ConnectionPool.WaitHandleDbConnectionPoolTransactionTest.<>c__DisplayClass29_0.<TwoThreads_SharedTransaction_AccessSameTransactedEntry>b__1() in WaitHandleDbConnectionPoolTransactionTest.cs:line 670
-    //        at System.Threading.Tasks.Task.InnerInvoke()
+    /// <summary>
+    /// Reuses a transacted connection across two workers without depending on thread-pool
+    /// availability while the caller and the second worker synchronously wait.
+    /// </summary>
     [Trait("category", "flaky")]
+    [Trait("category", "probation")]
     [Fact]
     public void TwoThreads_SharedTransaction_AccessSameTransactedEntry()
     {
         // Arrange
-        // Use 3-phase synchronization so task1 gets AND returns before task2 requests.
+        // Sequence acquisition so task1 gets AND returns before task2 requests.
         // This ensures the connection is back in the transacted pool for task2 to reuse.
         using var task1Returned = new ManualResetEventSlim(false);
-        using var task2Done = new ManualResetEventSlim(false);
         DbConnectionInternal? connFromTask1 = null;
         DbConnectionInternal? connFromTask2 = null;
 
@@ -669,7 +655,8 @@ public class WaitHandleDbConnectionPoolTransactionTest : IDisposable
 
         // Act - two threads sharing the same transaction, sequenced so the
         // transacted pool can vend the same connection to both.
-        var task1 = Task.Run(() =>
+        // Dedicated workers prevent the waiting consumer from starving the producer.
+        var task1 = Task.Factory.StartNew(() =>
         {
             using var innerScope = new TransactionScope(transaction);
             var owner = new SqlConnection();
@@ -681,9 +668,9 @@ public class WaitHandleDbConnectionPoolTransactionTest : IDisposable
             innerScope.Complete();
 
             task1Returned.Set(); // Signal: connection is back in the transacted pool
-        });
+        }, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
 
-        var task2 = Task.Run(() =>
+        var task2 = Task.Factory.StartNew(() =>
         {
             // Wait until task1 has returned the connection to the transacted pool
             Assert.True(task1Returned.Wait(TimeSpan.FromSeconds(10)),
@@ -695,11 +682,11 @@ public class WaitHandleDbConnectionPoolTransactionTest : IDisposable
             Assert.NotNull(connFromTask2);
             ReturnConnection(connFromTask2, owner);
             innerScope.Complete();
-        });
+        }, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
 
         Task.WaitAll(task1, task2);
 
-        // Both tasks should have received the same connection via the transacted pool
+        // Assert - both workers received the same connection via the transacted pool.
         Assert.Same(connFromTask1, connFromTask2);
         scope.Complete();
     }
