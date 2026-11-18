@@ -68,6 +68,54 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         /// <summary>
+        /// Synchronous non-query execution shares parameter discovery with the async path, but must
+        /// keep using only the synchronous provider API.
+        /// </summary>
+        [ConditionalTheory(
+            typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
+        [MemberData(nameof(AEConnectionStrings))]
+        public void ExecuteNonQuery_EncryptedParameter_UsesSyncProviderApi(string connectionString)
+        {
+            // Arrange
+            RecordingKeyStoreProvider provider = new();
+            using SqlConnection connection = new(connectionString);
+            connection.Open();
+            connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(Wrap(provider));
+            using SqlCommand command = CreateEncryptedParameterCommand(connection);
+
+            // Act
+            Assert.Throws<SqlException>(() => command.ExecuteNonQuery());
+
+            // Assert
+            Assert.True(provider.SyncCalls > 0, "Expected the synchronous provider API.");
+            Assert.Equal(0, provider.AsyncCalls);
+        }
+
+        /// <summary>
+        /// Synchronous XML execution shares parameter discovery with the async path, but must keep
+        /// using only the synchronous provider API.
+        /// </summary>
+        [ConditionalTheory(
+            typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
+        [MemberData(nameof(AEConnectionStrings))]
+        public void ExecuteXmlReader_EncryptedParameter_UsesSyncProviderApi(string connectionString)
+        {
+            // Arrange
+            RecordingKeyStoreProvider provider = new();
+            using SqlConnection connection = new(connectionString);
+            connection.Open();
+            connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(Wrap(provider));
+            using SqlCommand command = CreateEncryptedParameterCommand(connection, forXml: true);
+
+            // Act
+            Assert.Throws<SqlException>(() => command.ExecuteXmlReader());
+
+            // Assert
+            Assert.True(provider.SyncCalls > 0, "Expected the synchronous provider API.");
+            Assert.Equal(0, provider.AsyncCalls);
+        }
+
+        /// <summary>
         /// Asynchronous reader execution must decrypt keys through the asynchronous provider API.
         /// </summary>
         [ConditionalTheory(
