@@ -336,8 +336,6 @@ namespace Microsoft.Data.SqlClient
 
         private void CleanupAfterExecuteNonQueryAsync(Task<int> task, TaskCompletionSource<int> source, Guid operationId)
         {
-            _asyncExecutionCancellationToken = default;
-
             if (task.IsFaulted)
             {
                 Exception e = task.Exception?.InnerException;
@@ -362,7 +360,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // @TODO: This can be inlined into InternalExecuteNonQueryAsync before restructuring into async pathway
-        private int EndExecuteNonQueryAsync(IAsyncResult asyncResult)
+        internal int EndExecuteNonQueryAsync(IAsyncResult asyncResult)
         {
             Debug.Assert(!_internalEndExecuteInitiated || _stateObj == null);
 
@@ -529,7 +527,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     // Otherwise, use a full-fledged execute that can handle params and stored sprocs
-                    SqlDataReader reader = CompleteAsyncExecuteReader(isInternal, forDescribeParameterEncryption: false);
+                    SqlDataReader reader = CompleteAsyncExecutionSynchronously(isInternal, forDescribeParameterEncryption: false);
                     reader?.Close();
                 }
             }
@@ -711,8 +709,6 @@ namespace Microsoft.Data.SqlClient
                 registration = cancellationToken.Register(callback: s_cancelIgnoreFailure, state: this);
             }
 
-            _asyncExecutionCancellationToken = cancellationToken;
-
             Task<int> returnedTask = source.Task;
             ExecuteNonQueryAsyncCallContext context = null;
             try
@@ -756,7 +752,6 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception e)
             {
-                _asyncExecutionCancellationToken = default;
                 s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
 
                 if (context is not null)
