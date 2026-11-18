@@ -189,8 +189,18 @@ validity, subject alternative names, and any thumbprint the caller wants to comp
   Framework). Bytes that cannot be decoded are reported as `null`. The bytes are never
   written to `ToString()`, exception messages, traces, or
   serialization.
-- **Capture limit:** certificates larger than 64 KiB (DER) are not captured; the method
-  returns `null` and the connection is unaffected.
+- **Capture limit:** certificates larger than 64 KiB (65,536 bytes, DER) are not captured.
+  - *Why a cap:* the DER bytes are retained on the connection, carried into the pooled
+    connection's info, and attached to `SqlException`. TLS's 24-bit certificate length
+    fields let a server send a leaf of about 16 MiB. Without a cap, a hostile or
+    misconfigured server could make every connection, and every exception, hold a large
+    blob (memory amplification).
+  - *Why 64 KiB:* real leaf certificates are a few KiB, so 64 KiB leaves a wide margin.
+    It matches native SNI's `SNI_CERT_MAX_CAPTURED_SIZE` (65536), so managed and native
+    SNI behave the same.
+  - *Above the cap:* the certificate is not captured and `GetServerCertificate()` returns
+    `null`. The bytes are never truncated. The handshake, validation, and the other
+    encryption-info fields are unaffected.
 
 #### Why a method rather than a property
 
@@ -345,7 +355,7 @@ completed handshake instead.
 
 | Field | Source | `null` when |
 | --- | --- | --- |
-| `PresentedServerCertificateRawData` / `GetServerCertificate()` | A copy of the presented leaf certificate's DER encoding (`GetRawCertData()`), stored as `TlsHandshakeInfo.DerBytes` and the accumulator's `ServerCertificateDerBytes` | No certificate was presented, its encoding could not be read, or it exceeds 64 KiB (`TlsHandshakeInfo.MaxDerBytesSize`). Captured even when `TrustServerCertificate` bypasses validation, and on validation failure. |
+| `PresentedServerCertificateRawData` / `GetServerCertificate()` | A copy of the presented leaf certificate's DER encoding (`GetRawCertData()`), stored as `TlsHandshakeInfo.DerBytes` and the accumulator's `ServerCertificateDerBytes` | No certificate was presented, its encoding could not be read, or it exceeds the 64 KiB cap (`TlsHandshakeInfo.MaxDerBytesSize`, matching native SNI's `SNI_CERT_MAX_CAPTURED_SIZE`; never truncated, see *Capture limit*). Captured even when `TrustServerCertificate` bypasses validation, and on validation failure. |
 | `ServerCertificateValidationErrors` | Effective SqlClient verdict: `ServerCertificateMissing`, `ChainError`, `HostNameMismatch` (after `HostNameInCertificate`), `PinnedCertificateMismatch` (`ServerCertificate`); `None` when validation passed | Validation was bypassed, or the configured `ServerCertificate` file could not be read. |
 | `ServerCertificateChainStatus` | Bitwise OR of the original callback chain's `ChainStatus` flags (no chain rebuild); `NoError` when the chain was evaluated cleanly | Validation was bypassed, `ServerCertificate` pinning is used (the chain isn't consulted), no certificate was presented, or the platform reported a chain error without flags. |
 
