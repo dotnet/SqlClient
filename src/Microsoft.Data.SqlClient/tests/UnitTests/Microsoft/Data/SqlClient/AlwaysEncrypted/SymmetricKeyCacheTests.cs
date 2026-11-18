@@ -608,6 +608,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             Task<SymmetricKey> blocked = Task.Factory.StartNew(
                 () => cache.GetKey(blockedInfo, connection, command: null),
                 CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+            Task<SymmetricKey>? other = null;
 
             try
             {
@@ -615,9 +616,17 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
                     entered.Task, Task.Delay(TimeSpan.FromSeconds(5))));
 
                 // Act
-                SymmetricKey key = cache.GetKey(otherInfo, connection, command: null);
+                // Use a dedicated worker so a cross-key wait fails the test instead of hanging.
+                other = Task.Factory.StartNew(
+                    () => cache.GetKey(otherInfo, connection, command: null),
+                    CancellationToken.None, TaskCreationOptions.LongRunning,
+                    TaskScheduler.Default);
+                Task completed = await Task.WhenAny(
+                    other, Task.Delay(TimeSpan.FromSeconds(5)));
 
                 // Assert
+                Assert.Same(other, completed);
+                SymmetricKey key = await other;
                 Assert.Equal(otherKey, key.RootKey);
                 Assert.False(blocked.IsCompleted);
                 Assert.Same(key, cache.GetKey(otherInfo, connection, command: null));
@@ -627,6 +636,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
                 // Cleanup
                 release.Set();
                 await blocked;
+                if (other is not null)
+                {
+                    await other;
+                }
             }
         }
 
