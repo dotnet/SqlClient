@@ -566,7 +566,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         {
         }
 
-        public override uint EnableSsl(uint options) => _connection.EnableSsl(options);
+        public override uint EnableSsl(uint options, CancellationToken cancellationToken) => _connection.EnableSsl(options, cancellationToken);
 
         public override void DisableSsl() => _connection.DisableSsl();
 
