@@ -28,9 +28,9 @@ Describe 'Net-only provisioning lifecycle' -Skip:(-not $IsWindows) {
             )
         }
         function Get-LocalUser {}
-        function Install-Module {
+        function Install-PSResource {
             [CmdletBinding()]
-            param($Name, $RequiredVersion, $Repository, $Scope, [switch] $AllowClobber, [switch] $Force)
+            param($Name, $Version, $Repository, $Scope)
         }
         function New-LocalUser {
             param($Name, $Password, $Description, $ErrorAction)
@@ -49,10 +49,8 @@ Describe 'Net-only provisioning lifecycle' -Skip:(-not $IsWindows) {
     BeforeEach {
         Mock Write-Host {}
         Mock Import-Module {}
-        Mock Install-Module {}
-        Mock Get-Module { [pscustomobject]@{ Version = [version]'22.4.5.1' } } -ParameterFilter {
-            $FullyQualifiedName.Name -eq 'SqlServer'
-        }
+        Mock Install-PSResource { throw 'Resource installation belongs in the prerequisite step' }
+        Mock Register-PSResourceRepository { throw 'Consumers must not register repositories' }
         Mock Get-LocalUser {}
         Mock New-LocalUser {
             [pscustomobject]@{ SID = $sid; Description = $Description }
@@ -61,14 +59,24 @@ Describe 'Net-only provisioning lifecycle' -Skip:(-not $IsWindows) {
         Mock Invoke-Sqlcmd {}
     }
 
-    It 'loads the pinned module before creating an account and uses TCP with integrated authentication' {
+    It 'uses the restored SqlServer module without reading the manifest' {
+        Mock Get-Content { throw 'Consumers must not read the module manifest' }
+
+        & $scriptPath -Mode setup
+
+        Should -Invoke Import-Module -Times 1 -Exactly -ParameterFilter {
+            $Name -eq 'SqlServer' -and -not $FullyQualifiedName -and
+            -not $RequiredVersion -and -not $MinimumVersion -and -not $MaximumVersion
+        }
+    }
+
+    It 'loads the module before creating an account and uses TCP with integrated authentication' {
         & $scriptPath -Mode setup -Port 15433
 
         Should -Invoke Import-Module -Times 1 -Exactly -ParameterFilter {
-            $FullyQualifiedName.Name -eq 'SqlServer' -and
-            $FullyQualifiedName.RequiredVersion -eq '22.4.5.1'
+            $Name -eq 'SqlServer' -and $ErrorAction -eq 'Stop'
         }
-        Should -Invoke Install-Module -Times 0 -Exactly
+        Should -Invoke Install-PSResource -Times 0 -Exactly
         Should -Invoke Invoke-Sqlcmd -Times 1 -Exactly -ParameterFilter {
             $ServerInstance -eq 'tcp:localhost,15433' -and $Database -eq 'master' -and
             $ConnectionTimeout -eq 15 -and $QueryTimeout -eq 30 -and
@@ -83,28 +91,55 @@ Describe 'Net-only provisioning lifecycle' -Skip:(-not $IsWindows) {
         }
     }
 
-    It 'installs only the pinned module when it is missing' {
-        Mock Get-Module {} -ParameterFilter { $FullyQualifiedName.Name -eq 'SqlServer' }
-
-        & $scriptPath -Mode setup
-
-        Should -Invoke Install-Module -Times 1 -Exactly -ParameterFilter {
-            $Name -eq 'SqlServer' -and $RequiredVersion -eq '22.4.5.1' -and
-            $Repository -eq 'PSGallery' -and $Scope -eq 'CurrentUser' -and $AllowClobber -and $Force
+    It 'uses the secret pipeline password as a read-only SecureString and disposes it on <Outcome>' -ForEach @(
+        @{ Outcome = 'success'; FailCreation = $false }
+        @{ Outcome = 'failure'; FailCreation = $true }
+    ) {
+        $passwordState = @{ Published = $null; Account = $null }
+        Mock Write-Host {
+            $passwordState.Published = "$Object".Substring(
+                '##vso[task.setvariable variable=netOnlyPassword;issecret=true]'.Length)
+        } -ParameterFilter {
+            "$Object".StartsWith('##vso[task.setvariable variable=netOnlyPassword;issecret=true]')
         }
-    }
+        Mock New-LocalUser {
+            $passwordState.Account = $Password
+            $Password | Should -BeOfType ([System.Security.SecureString])
+            $Password.IsReadOnly() | Should -BeTrue
+            $Password.Length | Should -Be 48
+            $credential = [System.Net.NetworkCredential]::new('', $Password)
+            $credential.Password | Should -BeExactly $passwordState.Published
+            $credential.Password | Should -Match '^Aa1![A-Za-z0-9+/]{43}=$'
+            if ($FailCreation) {
+                throw 'account creation failed'
+            }
+            [pscustomobject]@{ SID = $sid; Description = $Description }
+        }
 
-    It 'does not create an account if module installation fails' {
-        Mock Get-Module {} -ParameterFilter { $FullyQualifiedName.Name -eq 'SqlServer' }
-        Mock Install-Module { throw 'module installation failed' }
+        try {
+            if ($FailCreation) {
+                { & $scriptPath -Mode setup } | Should -Throw '*account creation failed*'
+            }
+            else {
+                & $scriptPath -Mode setup
+            }
 
-        { & $scriptPath -Mode setup } | Should -Throw '*module installation failed*'
-        Should -Invoke New-LocalUser -Times 0 -Exactly
+            Should -Invoke New-LocalUser -Times 1 -Exactly
+            Should -Invoke Write-Host -Times 1 -Exactly -ParameterFilter {
+                "$Object".StartsWith('##vso[task.setvariable variable=netOnlyPassword;issecret=true]')
+            }
+            $passwordState.Account | Should -BeOfType ([System.Security.SecureString])
+            $disposalError = { $passwordState.Account.IsReadOnly() } | Should -Throw -PassThru
+            $disposalError.Exception.InnerException | Should -BeOfType ([ObjectDisposedException])
+        }
+        finally {
+            $passwordState.Clear()
+        }
     }
 
     It 'does not create an account if module import fails' {
         Mock Import-Module { throw 'module import failed' } -ParameterFilter {
-            $FullyQualifiedName.Name -eq 'SqlServer'
+            $Name -eq 'SqlServer'
         }
 
         { & $scriptPath -Mode setup } | Should -Throw '*module import failed*'
@@ -127,7 +162,7 @@ Describe 'Net-only provisioning lifecycle' -Skip:(-not $IsWindows) {
         & $scriptPath -Mode cleanup -AccountName $Name
 
         Should -Invoke Import-Module -Times 0 -Exactly
-        Should -Invoke Install-Module -Times 0 -Exactly
+        Should -Invoke Install-PSResource -Times 0 -Exactly
         Should -Invoke Invoke-Sqlcmd -Times 0 -Exactly
         Should -Invoke Remove-LocalUser -Times 0 -Exactly
     }
@@ -139,7 +174,7 @@ Describe 'Net-only provisioning lifecycle' -Skip:(-not $IsWindows) {
 
         & $scriptPath -Mode cleanup -AccountName $accountName -AccountSid $sid.Value
 
-        Should -Invoke Install-Module -Times 0 -Exactly
+        Should -Invoke Install-PSResource -Times 0 -Exactly
         Should -Invoke Invoke-Sqlcmd -Times 1 -Exactly -ParameterFilter {
             $Query.Contains($sidHex) -and $Query.Contains("name = @login AND type = 'U'") -and
             $Query.Contains("CONVERT(varbinary(85), NULLIF(@sid, ''), 1)") -and

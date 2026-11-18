@@ -37,6 +37,11 @@ parameters:
       type: boolean
       default: false
 
+    # Upload and submit publishing requests, but leave final results unverified.
+    - name: skipSymbolPublishingPolling
+      type: boolean
+      default: false
+
     # Hosts probed for reachability when debug is enabled.  Both symbol servers are probed
     # from the same agent under the same identity, so a difference between them narrows the
     # cause to something specific to the host that failed.
@@ -183,4 +188,5 @@ steps:
           -ArtifactName "${{ parameters.artifactName }}"
           -PublishToInternal $${{ parameters.publishToInternal }}
           -PublishToPublic $${{ parameters.publishToPublic }}
+          -SkipPolling $${{ parameters.skipSymbolPublishingPolling }}
           -VerboseDiagnostics:$${{ parameters.debug }}

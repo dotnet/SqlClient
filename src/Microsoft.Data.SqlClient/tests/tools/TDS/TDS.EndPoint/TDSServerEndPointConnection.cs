@@ -26,6 +26,8 @@ namespace Microsoft.SqlServer.TDS.EndPoint
 
         internal bool ExpectTlsHandshakeFailure { get; set; }
 
+        internal bool TlsFirst { get; set; }
+
         public TDSServerEndPointConnection(ITDSServer server, TcpClient connection)
             : base(server, connection)
         {
@@ -37,7 +39,8 @@ namespace Microsoft.SqlServer.TDS.EndPoint
             Debug.Assert(_parser == null, "PrepareForProcessingData should not be called twice");
             _parser = new TDSServerParser(Server, Session, rawStream)
             {
-                ExpectTlsHandshakeFailure = ExpectTlsHandshakeFailure
+                ExpectTlsHandshakeFailure = ExpectTlsHandshakeFailure,
+                TlsFirst = TlsFirst
             };
         }
 
@@ -52,6 +55,8 @@ namespace Microsoft.SqlServer.TDS.EndPoint
     /// </summary>
     public abstract class ServerEndPointConnection : IDisposable
     {
+        private readonly object _connectionLock = new object();
+
         /// <summary>
         /// Worker thread
         /// </summary>
@@ -157,7 +162,10 @@ namespace Microsoft.SqlServer.TDS.EndPoint
 
             // Close the socket first.  This unblocks any synchronous read or poll
             // the processor task may be waiting on, causing it to exit its loop.
-            Connection?.Close();
+            lock (_connectionLock)
+            {
+                Connection?.Close();
+            }
 
             // Deterministically wait for the processor task to finish so that no
             // background work (socket I/O, counter mutation) outlives Dispose().
@@ -181,10 +189,21 @@ namespace Microsoft.SqlServer.TDS.EndPoint
 
             try
             {
-                // Get network stream
-                Socket socket = connection.Client;
-                NetworkStream rawStream = connection.GetStream();
-                PrepareForProcessingData(rawStream);
+                Socket socket;
+                NetworkStream rawStream;
+                // TcpClient.GetStream and Close are not safe to run concurrently, including
+                // on Framework where Close can clear the socket during stream construction.
+                lock (_connectionLock)
+                {
+                    if (_stopRequested)
+                    {
+                        return;
+                    }
+
+                    socket = connection.Client;
+                    rawStream = connection.GetStream();
+                    PrepareForProcessingData(rawStream);
+                }
 
                 // Process the packet sequence until the peer disconnects or the
                 // server requests a stop.
@@ -222,7 +241,10 @@ namespace Microsoft.SqlServer.TDS.EndPoint
             }
             finally
             {
-                connection.Close();
+                lock (_connectionLock)
+                {
+                    connection.Close();
+                }
                 try
                 {
                     Server.CloseSession(Session);

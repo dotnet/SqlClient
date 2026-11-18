@@ -96,7 +96,6 @@ SqlException. Error Code: 8152
 Matches = 14
 +++++++ Iteration 6 ++++++++
 SqlException creating objects: 1701
-SqlException dropping objects: 3701
 +++++++ Iteration 7 ++++++++
 ------IEnumerable<SqlDataRecord>---------
 Matches = 168
@@ -211,10 +210,8 @@ SqlException. Error Code: 8152
 Matches = 14
 +++++++ Iteration 14 ++++++++
 SqlException creating objects: 1701
-SqlException dropping objects: 3701
 +++++++ Iteration 15 ++++++++
 SqlException creating objects: 1701
-SqlException dropping objects: 3701
 +++++++ Iteration 16 ++++++++
 ------IEnumerable<SqlDataRecord>---------
 Matches = 168
@@ -313,13 +310,10 @@ SqlException. Error Code: 8152
 Matches = 14
 +++++++ Iteration 22 ++++++++
 SqlException creating objects: 1701
-SqlException dropping objects: 3701
 +++++++ Iteration 23 ++++++++
 SqlException creating objects: 1701
-SqlException dropping objects: 3701
 +++++++ Iteration 24 ++++++++
 SqlException creating objects: 1701
-SqlException dropping objects: 3701
 +++++++ Iteration 25 ++++++++
 ------IEnumerable<SqlDataRecord>---------
 Failed Row[0]Col[5] = 1/1/1753 12:00:00 AM: Invalid value for this metadata.

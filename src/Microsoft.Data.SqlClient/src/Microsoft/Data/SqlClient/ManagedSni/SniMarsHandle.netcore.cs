@@ -346,14 +346,24 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 // which should handle ownership of the packet because the individual mars handles are not aware of
                 // each other and cannot know if they are the last one in the list and that it is safe to return the packet
 
+                bool notifyAsyncReceive;
                 lock (_receivedPacketQueue)
                 {
                     _connectionError = SniLoadHandle.LastError;
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniMarsHandle), EventType.ERR, "MARS Session Id {0}, _connectionError to be handled: {1}", args0: ConnectionId, args1: _connectionError);
                     _packetEvent.Set();
+                    notifyAsyncReceive = _asyncReceives > 0;
+                    if (notifyAsyncReceive)
+                    {
+                        _asyncReceives--;
+                    }
                 }
 
-                ((TdsParserStateObject)_callbackObject).ReadAsyncCallback(PacketHandle.FromManagedPacket(packet), 1);
+                // Sync and idle sessions observe _connectionError without an async callback.
+                if (notifyAsyncReceive)
+                {
+                    ((TdsParserStateObject)_callbackObject).ReadAsyncCallback(PacketHandle.FromManagedPacket(packet), 1);
+                }
             }
         }
 
@@ -556,7 +566,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         {
         }
 
-        public override uint EnableSsl(uint options) => _connection.EnableSsl(options);
+        public override uint EnableSsl(uint options, CancellationToken cancellationToken) => _connection.EnableSsl(options, cancellationToken);
 
         public override void DisableSsl() => _connection.DisableSsl();
 

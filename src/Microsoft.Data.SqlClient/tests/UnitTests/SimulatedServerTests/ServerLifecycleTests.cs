@@ -7,11 +7,11 @@ using System.IO;
 using System.Linq;
 using System.Net.Sockets;
 using System.Security.Authentication;
-using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.UnitTests.Utilities;
 using Microsoft.SqlServer.TDS;
 using Microsoft.SqlServer.TDS.EndPoint;
 using Microsoft.SqlServer.TDS.Error;
@@ -39,7 +39,7 @@ public class ServerLifecycleTests
     [InlineData(true, true)]
     public async Task TlsHandshake_CertificateValidation_DoesNotFailDisposal(bool trustServerCertificate, bool useAsync)
     {
-        using X509Certificate2 certificate = CreateServerCertificate();
+        using X509Certificate2 certificate = TestServerCertificate.Create();
         using WorkerTrackingServer server = new(new TdsServerArguments
         {
             Encryption = TDSPreLoginTokenEncryptionType.On,
@@ -93,7 +93,7 @@ public class ServerLifecycleTests
     [InlineData(true)]
     public void TlsHandshake_PeerAlert_RequiresExplicitExpectation(bool expectedFailure)
     {
-        using X509Certificate2 certificate = CreateServerCertificate();
+        using X509Certificate2 certificate = TestServerCertificate.Create();
         using WorkerTrackingServer server = new(new TdsServerArguments
         {
             Encryption = TDSPreLoginTokenEncryptionType.On,
@@ -131,7 +131,7 @@ public class ServerLifecycleTests
     [Fact]
     public void TlsHandshake_MissingPrivateKey_ReportsSetupFailure()
     {
-        using X509Certificate2 certificate = CreateServerCertificate();
+        using X509Certificate2 certificate = TestServerCertificate.Create();
         using X509Certificate2 publicCertificate = X509CertificateLoader.LoadCertificate(certificate.RawData);
         using TdsServer server = new(new TdsServerArguments
         {
@@ -153,19 +153,6 @@ public class ServerLifecycleTests
         AggregateException error = Assert.Throws<AggregateException>(() => server.Dispose());
         Assert.Contains(error.Flatten().InnerExceptions,
             exception => exception is AuthenticationException);
-    }
-
-    /// <summary>
-    /// Creates a short-lived certificate without installing it in a machine or user trust store.
-    /// </summary>
-    private static X509Certificate2 CreateServerCertificate()
-    {
-        using RSA key = RSA.Create(2048);
-        CertificateRequest request = new("CN=localhost", key, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
-        using X509Certificate2 certificate = request.CreateSelfSigned(
-            DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(1));
-        // Schannel requires an imported key rather than the ephemeral key returned above.
-        return X509CertificateLoader.LoadPkcs12(certificate.Export(X509ContentType.Pfx), null);
     }
 #endif
 
@@ -362,8 +349,11 @@ public class ServerLifecycleTests
     /// Repeated lifetimes expose registration/close races within one process.
     /// </summary>
     [Fact]
+    [Trait("category", "flaky")]
+    [Trait("category", "probation")]
     public void Dispose_DrainsConnectionsAcrossRepeatedServerLifetimes()
     {
+        // Arrange
         for (int iteration = 0; iteration < 20; iteration++)
         {
             using WorkerTrackingServer server = new();
@@ -377,7 +367,11 @@ public class ServerLifecycleTests
             connection.Open();
             using TcpClient idle = new();
             idle.Connect("127.0.0.1", server.EndPoint.Port);
+
+            // Act
             server.Dispose();
+
+            // Assert
             Assert.Equal(0, server.ActiveSessions);
         }
     }

@@ -104,6 +104,9 @@
     <PackageReference Include="Moq" />
     <PackageReference Include="System.Configuration.ConfigurationManager" />
     <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" />
+    <!-- Connection pool tests use System.Threading.Channels directly. As with Caching.Memory
+         above, it does not flow transitively from the driver package in Package mode. -->
+    <PackageReference Include="System.Threading.Channels" />
     <PackageReference Include="System.Threading.RateLimiting" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.console" ExcludeAssets="compile" />

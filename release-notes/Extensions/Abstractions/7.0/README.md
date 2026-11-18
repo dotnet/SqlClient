@@ -7,5 +7,6 @@ The following `Microsoft.Data.SqlClient.Extensions.Abstractions`
 
 | Release Date | Description | Notes |
 | :-- | :-- | :--: |
+| 2026-11-12 | 7.0.4 | [Release Notes](7.0.4.md) |
 | 2026-09-10 | 7.0.3 | [Release Notes](7.0.3.md) |
 | 2026-06-24 | 7.0.2 | [Release Notes](7.0.2.md) |

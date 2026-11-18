@@ -6,6 +6,7 @@ using System;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Connection;
 using Microsoft.Data.SqlClient.Tests.Common;
+using Microsoft.Extensions.Time.Testing;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.UnitTests;
@@ -27,49 +28,54 @@ namespace Microsoft.Data.SqlClient.UnitTests;
 public class SqlConnectionInternalTimeoutTests
 {
     /// <summary>
-    /// Verifies the branch selection in
-    /// <see cref="SqlConnectionInternal.ResolveLoginTimeout"/>:
-    /// <list type="bullet">
-    ///   <item>switch ON  → the caller's <see cref="TimeoutTimer"/> instance
-    ///   flows through unchanged (asserted by reference identity), so any
-    ///   time already consumed counts against the overall ConnectTimeout;</item>
-    ///   <item>switch OFF → a fresh timer is started from
-    ///   <c>ConnectTimeout</c> (asserted by inspecting
-    ///   <see cref="TimeoutTimer.OriginalTicks"/>), preserving legacy
-    ///   behavior where login always gets the full configured budget.</item>
-    /// </list>
+    /// Ensures login uses the caller's remaining budget by default and when explicitly enabled.
     /// </summary>
     [Theory]
+    [InlineData(null)]
     [InlineData(true)]
-    [InlineData(false)]
-    public void ResolveLoginTimeout_HonorsSwitch(bool switchEnabled)
+    public void ResolveLoginTimeout_OverallBudgetEnabled_PreservesRemainingBudget(bool? switchEnabled)
     {
         // Arrange
         using LocalAppContextSwitchesHelper switches = new()
         {
             UseOverallConnectTimeoutForPoolWait = switchEnabled,
         };
-        const int ConnectTimeoutSeconds = 30;
-        TimeoutTimer callerTimeout = TimeoutTimer.StartNew(TimeSpan.FromSeconds(ConnectTimeoutSeconds));
+        var fakeTime = new FakeTimeProvider();
+        TimeoutTimer callerTimeout = TimeoutTimer.StartNew(TimeSpan.FromSeconds(30), fakeTime);
+        fakeTime.Advance(TimeSpan.FromSeconds(5));
 
         // Act
         TimeoutTimer resolved = SqlConnectionInternal.ResolveLoginTimeout(
             callerTimeout,
-            ConnectTimeoutSeconds);
+            connectTimeoutSeconds: 30);
 
         // Assert
-        if (switchEnabled)
+        Assert.Same(callerTimeout, resolved);
+        Assert.Equal(25_000, resolved.MillisecondsRemainingInt);
+    }
+
+    /// <summary>
+    /// Ensures the explicit compatibility opt-out starts a full login budget even after
+    /// the caller's pool-wait budget has expired.
+    /// </summary>
+    [Fact]
+    public void ResolveLoginTimeout_OverallBudgetDisabled_StartsFreshBudget()
+    {
+        // Arrange
+        using LocalAppContextSwitchesHelper switches = new()
         {
-            // Switch on: caller's timer must flow through unchanged so any
-            // time already consumed counts against the overall budget.
-            Assert.Same(callerTimeout, resolved);
-        }
-        else
-        {
-            // Switch off (legacy): a fresh timer must be started from
-            // ConnectTimeout, independent of the caller's timer.
-            Assert.NotSame(callerTimeout, resolved);
-            Assert.Equal(TimeSpan.FromSeconds(ConnectTimeoutSeconds).Ticks, resolved.OriginalTicks);
-        }
+            UseOverallConnectTimeoutForPoolWait = false,
+        };
+        TimeoutTimer callerTimeout = TimeoutTimer.StartExpired();
+
+        // Act
+        TimeoutTimer resolved = SqlConnectionInternal.ResolveLoginTimeout(
+            callerTimeout,
+            connectTimeoutSeconds: 30);
+
+        // Assert
+        Assert.NotSame(callerTimeout, resolved);
+        Assert.Equal(TimeSpan.FromSeconds(30).Ticks, resolved.OriginalTicks);
+        Assert.False(resolved.IsExpired);
     }
 }

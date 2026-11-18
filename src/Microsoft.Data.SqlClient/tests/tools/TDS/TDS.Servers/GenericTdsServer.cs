@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Runtime.CompilerServices;
@@ -69,6 +70,15 @@ namespace Microsoft.SqlServer.TDS.Servers
         /// Property for setting server version for vector feature extension.
         /// </summary>
         public byte ServerSupportedVectorFeatureExtVersion { get; set; } = DefaultSupportedVectorFeatureExtVersion;
+
+        /// <summary>
+        /// When true, the vector feature extension is acknowledged with
+        /// <see cref="ServerSupportedVectorFeatureExtVersion"/> as-is, rather than capped to
+        /// the version the client requested. This models a server which acknowledges a
+        /// version the client cannot interpret, so that the client's own ceiling can be
+        /// exercised.
+        /// </summary>
+        public bool AcknowledgeRawVectorFeatureExtVersion { get; set; }
 
         /// <summary>
         /// Property for setting server version for user agent feature extension.
@@ -177,7 +187,8 @@ namespace Microsoft.SqlServer.TDS.Servers
                 ServerEndPoint = new IPEndPoint(IPAddress.Any, 0),
                 EndpointName = methodName,
                 EventLog = Arguments.Log,
-                ExpectTlsHandshakeFailure = Arguments.ExpectTlsHandshakeFailure
+                ExpectTlsHandshakeFailure = Arguments.ExpectTlsHandshakeFailure,
+                TlsFirst = Arguments.TlsFirst
             };
             _endpoint.Start();
         }
@@ -207,6 +218,13 @@ namespace Microsoft.SqlServer.TDS.Servers
         public virtual void CloseSession(ITDSServerSession session)
         {
             // Do nothing
+        }
+
+        /// <summary>
+        /// Called before the server starts the TLS handshake on a connection
+        /// </summary>
+        public virtual void OnTlsHandshakeStarting(ITDSServerSession session, Stream transport)
+        {
         }
 
         /// <summary>
@@ -786,7 +804,9 @@ namespace Microsoft.SqlServer.TDS.Servers
             {
                 // Create ack data (1 byte: Version number)
                 byte[] data = new byte[1];
-                data[0] = ServerSupportedVectorFeatureExtVersion > _clientSupportedVectorFeatureExtVersion ? _clientSupportedVectorFeatureExtVersion : ServerSupportedVectorFeatureExtVersion;
+                data[0] = AcknowledgeRawVectorFeatureExtVersion || ServerSupportedVectorFeatureExtVersion <= _clientSupportedVectorFeatureExtVersion
+                    ? ServerSupportedVectorFeatureExtVersion
+                    : _clientSupportedVectorFeatureExtVersion;
 
                 // Create vector support as a generic feature extension option
                 TDSFeatureExtAckGenericOption vectorSupportOption = new TDSFeatureExtAckGenericOption(TDSFeatureID.VectorSupport, (uint)data.Length, data);

@@ -227,8 +227,8 @@ namespace Microsoft.Data.SqlClient.Parser
         private readonly byte[] _partialHeaderBuffer = new byte[TdsEnums.HEADER_LEN];   // Scratch buffer for ProcessHeader
         internal int _partialHeaderBytesRead;
 
-        internal _SqlMetaDataSet _cleanupMetaData;
-        internal _SqlMetaDataSetCollection _cleanupAltMetaDataSetArray;
+        internal TdsColumnMetadataToken _cleanupMetaData;
+        internal TdsAltMetadataCollection _cleanupAltMetaDataSetArray;
 
         private SniContext _sniContext = SniContext.Undefined;
 #if DEBUG
@@ -292,15 +292,6 @@ namespace Microsoft.Data.SqlClient.Parser
         // This is a test hook to enable testing of the retry paths.
         // When set to true, almost every possible retry point will be attempted.
         // This will drastically impact performance.
-        //
-        // Sample code to enable:
-        //
-        //    Type type = typeof(SqlDataReader).Assembly.GetType("Microsoft.Data.SqlClient.TdsParserStateObject");
-        //    System.Reflection.FieldInfo field = type.GetField("_forceAllPends", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-        //    if (field != null) {
-        //        field.SetValue(null, true);
-        //    }
-        //
         internal static bool s_forceAllPends = false;
 
         // set this while making a call that should not block.
@@ -3394,7 +3385,10 @@ namespace Microsoft.Data.SqlClient.Parser
         internal TdsOperationStatus TryReadNetworkPacket()
         {
 #if DEBUG
-            Debug.Assert(!_shouldHaveEnoughData || _attentionSent, "Caller said there should be enough data, but we are currently reading a packet");
+            // Teardown can invalidate the reader's buffered-data estimate before this call.
+            Debug.Assert(!_shouldHaveEnoughData || _attentionSent ||
+                _parser.State == TdsParserState.Closed || _parser.State == TdsParserState.Broken,
+                "Caller said there should be enough data, but we are currently reading a packet");
 #endif
             TdsOperationStatus result = TdsOperationStatus.InvalidData;
             if (_snapshot != null)
@@ -3621,7 +3615,14 @@ namespace Microsoft.Data.SqlClient.Parser
             try
             {
 #if NET
-                Debug.Assert((packet.Type == 0 && PartialPacketContainsCompletePacket()) || (CheckPacket(packet, source) && source != null), "AsyncResult null on callback");
+                // Closing a MARS connection can complete and clear a session's task before
+                // its pending error callback arrives. It must still retire the callback count.
+                Debug.Assert(
+                    (packet.Type == 0 && PartialPacketContainsCompletePacket()) ||
+                    (CheckPacket(packet, source) && source != null) ||
+                    (source == null && error != 0 && _parser.MARSOn &&
+                        (_parser.State == TdsParserState.Closed || _parser.State == TdsParserState.Broken)),
+                    "AsyncResult null on callback");
 #else
                 Debug.Assert(CheckPacket(packet, source), "AsyncResult null on callback");
 #endif
@@ -4124,9 +4125,9 @@ namespace Microsoft.Data.SqlClient.Parser
                             }
                             else if ((_parser.State == TdsParserState.OpenNotLoggedIn)
 #if NETFRAMEWORK
-                                && (_parser.Connection.ConnectionOptions.MultiSubnetFailover || _parser.Connection.ConnectionOptions.TransparentNetworkIPResolution))
+                                && (_parser.Connection.MultiSubnetFailover || _parser.Connection.ConnectionOptions.TransparentNetworkIPResolution))
 #else
-                                && (_parser.Connection.ConnectionOptions.MultiSubnetFailover))
+                                && (_parser.Connection.MultiSubnetFailover))
 #endif
                             {
                                 // For MultiSubnet Failover during login, never break the connection, just close the TdsParser
@@ -4928,8 +4929,8 @@ namespace Microsoft.Data.SqlClient.Parser
                 private int _inBytesPacket;
                 private byte _messageStatus;
                 internal NullBitmap _nullBitmapInfo;
-                private _SqlMetaDataSet _cleanupMetaData;
-                internal _SqlMetaDataSetCollection _cleanupAltMetaDataSetArray;
+                private TdsColumnMetadataToken _cleanupMetaData;
+                internal TdsAltMetadataCollection _cleanupAltMetaDataSetArray;
                 private SnapshottedStateFlags _state;
                 private ulong _longLen;
                 private ulong _longLenLeft;
@@ -5092,7 +5093,7 @@ namespace Microsoft.Data.SqlClient.Parser
             {
                 if (_stateObj._cleanupAltMetaDataSetArray != null && object.ReferenceEquals(_replayStateData?._cleanupAltMetaDataSetArray ?? default, _stateObj._cleanupAltMetaDataSetArray))
                 {
-                    _stateObj._cleanupAltMetaDataSetArray = (_SqlMetaDataSetCollection)_stateObj._cleanupAltMetaDataSetArray.Clone();
+                    _stateObj._cleanupAltMetaDataSetArray = (TdsAltMetadataCollection)_stateObj._cleanupAltMetaDataSetArray.Clone();
                 }
             }
 

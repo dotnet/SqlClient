@@ -197,6 +197,12 @@ namespace Microsoft.Data.SqlClient
             object valueType = datarow[SchemaTableColumn.ProviderType];
             p.SqlDbType = (SqlDbType)valueType;
             p.Offset = 0;
+            if ((SqlDbType)valueType == SqlDbTypeExtensions.Vector &&
+                (Type)datarow[SchemaTableColumn.DataType] == typeof(string))
+            {
+                p.SqlDbType = SqlDbType.VarChar;
+                p.Size = -1;
+            }
 
             if ((p.SqlDbType == SqlDbType.Udt) && !p.SourceColumnNullMapping)
             {

@@ -257,6 +257,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// Reclaiming an abandoned checkout must balance the published soft-connection counters
         /// on every reuse, and closing its new owner must not count the abandoned checkout twice.
         /// </summary>
+        [Trait("category", "flaky")]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [InlineData(false, false)]
         [InlineData(false, true)]

@@ -58,6 +58,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup), nameof(DataTestUtility.IsLocalHost), nameof(DataTestUtility.IsNotNamedInstance))]
+        [Trait("category", "flaky")]
         public void FullHeaderTest()
         {
             _splitPacketSize = 8;
@@ -74,6 +75,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup), nameof(DataTestUtility.IsLocalHost), nameof(DataTestUtility.IsNotNamedInstance))]
+        // SqlException: connection timed out consuming the pre-login handshake acknowledgement.
+        [Trait("category", "flaky")]
         public void MARSSplitTest()
         {
             _splitPacketSize = 1;

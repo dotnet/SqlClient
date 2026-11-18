@@ -17,12 +17,31 @@ namespace Microsoft.Data.SqlClient.UnitTests;
 [Collection(AppContextSwitchTestCollection.Name)]
 public class LocalAppContextSwitchesTest
 {
+    /// <summary>Verifies automatic discovery is cached separately from an unread switch.</summary>
+    [Fact]
+    public void UseBulkCopyCatalogMetadataDiscovery_Unset_CachesAutomaticMode()
+    {
+        // Arrange
+        using LocalAppContextSwitchesHelper switches = new();
+        switches.UseBulkCopyCatalogMetadataDiscovery = null;
+
+        // Act
+        bool? mode = LocalAppContextSwitches.UseBulkCopyCatalogMetadataDiscovery;
+
+        // Assert
+        Assert.Null(mode);
+        Assert.Equal(LocalAppContextSwitches.SwitchValue.Automatic,
+            LocalAppContextSwitches.s_useBulkCopyCatalogMetadataDiscovery);
+        Assert.Null(LocalAppContextSwitches.UseBulkCopyCatalogMetadataDiscovery);
+    }
+
     /// <summary>
     /// Tests the default values of every AppContext switch used by SqlClient.
     /// </summary>
     [Fact]
     public void TestDefaultAppContextSwitchValues()
     {
+        // Arrange
         // LocalAppContextSwitches caches each switch value on first access for
         // the lifetime of the process.  Other tests running in parallel may
         // already have triggered caching, or may use LocalAppContextSwitchesHelper
@@ -46,6 +65,7 @@ public class LocalAppContextSwitchesTest
         switchesHelper.UseConnectionPoolV2 = null;
         switchesHelper.UseOverallConnectTimeoutForPoolWait = null;
         switchesHelper.UseLegacyIdleTimeoutBehavior = null;
+        switchesHelper.UseBulkCopyCatalogMetadataDiscovery = null;
         switchesHelper.UseMinimumLoginTimeout = null;
         #if NET
         switchesHelper.EnableAppConfig = null;
@@ -59,6 +79,10 @@ public class LocalAppContextSwitchesTest
         switchesHelper.DisableTnirByDefault = null;
         #endif
 
+        // Act
+        bool overallConnectTimeout = switchesHelper.UseOverallConnectTimeoutForPoolWait == true;
+
+        // Assert
         Assert.False(switchesHelper.LegacyRowVersionNullBehavior);
         Assert.False(switchesHelper.SuppressInsecureTlsWarning);
         Assert.False(switchesHelper.MakeReadAsyncBlocking);
@@ -67,13 +91,14 @@ public class LocalAppContextSwitchesTest
         Assert.True(switchesHelper.UseCompatibilityProcessSni);
         Assert.True(switchesHelper.UseCompatibilityAsyncBehaviour);
         Assert.True(switchesHelper.UseLegacyIdleTimeoutBehavior);
+        Assert.Null(switchesHelper.UseBulkCopyCatalogMetadataDiscovery);
         Assert.False(switchesHelper.UseConnectionPoolV2);
-        Assert.False(switchesHelper.UseOverallConnectTimeoutForPoolWait);
+        Assert.True(overallConnectTimeout);
         Assert.False(switchesHelper.TruncateScaledDecimal);
         Assert.False(switchesHelper.IgnoreServerProvidedFailoverPartner);
         Assert.False(switchesHelper.UseLegacyFailoverAlternationOnLoginSqlErrors);
         Assert.False(switchesHelper.EnableTransactionIsolationLevelReset);
-        Assert.False(switchesHelper.EnableMultiSubnetFailoverByDefault);
+        Assert.True(switchesHelper.EnableMultiSubnetFailoverByDefault);
         #if NET
         Assert.True(switchesHelper.EnableAppConfig);
         Assert.False(switchesHelper.GlobalizationInvariantMode);
@@ -89,7 +114,7 @@ public class LocalAppContextSwitchesTest
         }
         #endif
         #if NETFRAMEWORK
-        Assert.False(switchesHelper.DisableTnirByDefault);
+        Assert.True(switchesHelper.DisableTnirByDefault);
         #endif
     }
 

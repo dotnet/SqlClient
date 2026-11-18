@@ -61,6 +61,7 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     private readonly bool? _useCompatibilityAsyncBehaviourOriginal;
     private readonly bool? _useCompatibilityProcessSniOriginal;
     private readonly bool? _useConnectionPoolV2Original;
+    private readonly SwitchValue _useBulkCopyCatalogMetadataDiscoveryOriginal;
     private readonly bool? _useLegacyIdleTimeoutBehaviorOriginal;
     private readonly bool? _useOverallConnectTimeoutForPoolWaitOriginal;
     #if NET
@@ -133,6 +134,8 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
                 ToBool(LocalAppContextSwitches.s_useCompatibilityProcessSni);
             _useConnectionPoolV2Original =
                 ToBool(LocalAppContextSwitches.s_useConnectionPoolV2);
+            _useBulkCopyCatalogMetadataDiscoveryOriginal =
+                LocalAppContextSwitches.s_useBulkCopyCatalogMetadataDiscovery;
             _useLegacyIdleTimeoutBehaviorOriginal =
                 ToBool(LocalAppContextSwitches.s_useLegacyIdleTimeoutBehavior);
             _useOverallConnectTimeoutForPoolWaitOriginal =
@@ -200,6 +203,8 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
                 ToSwitchValue(_useCompatibilityProcessSniOriginal);
             LocalAppContextSwitches.s_useConnectionPoolV2 =
                 ToSwitchValue(_useConnectionPoolV2Original);
+            LocalAppContextSwitches.s_useBulkCopyCatalogMetadataDiscovery =
+                _useBulkCopyCatalogMetadataDiscoveryOriginal;
             LocalAppContextSwitches.s_useLegacyIdleTimeoutBehavior =
                 ToSwitchValue(_useLegacyIdleTimeoutBehaviorOriginal);
             LocalAppContextSwitches.s_useOverallConnectTimeoutForPoolWait =
@@ -367,6 +372,15 @@ public sealed class LocalAppContextSwitchesHelper : IDisposable
     {
         get => LocalAppContextSwitches.UseConnectionPoolV2;
         set => LocalAppContextSwitches.s_useConnectionPoolV2 = ToSwitchValue(value);
+    }
+
+    /// <summary>
+    /// Get or set the UseBulkCopyCatalogMetadataDiscovery switch value.
+    /// </summary>
+    public bool? UseBulkCopyCatalogMetadataDiscovery
+    {
+        get => LocalAppContextSwitches.UseBulkCopyCatalogMetadataDiscovery;
+        set => LocalAppContextSwitches.s_useBulkCopyCatalogMetadataDiscovery = ToSwitchValue(value);
     }
 
     /// <summary>

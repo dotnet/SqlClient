@@ -1,4 +1,4 @@
-﻿<docs>
+<docs>
   <members name="SqlException">
     <SqlException>
       <summary>
@@ -738,6 +738,28 @@
       <seealso cref="P:Microsoft.Data.SqlClient.SqlException.Procedure" />
       <seealso cref="P:Microsoft.Data.SqlClient.SqlException.LineNumber" />
     </BatchCommand>
+    <EncryptionInfo>
+      <summary>
+        Gets a diagnostic snapshot describing the connection encryption and server certificate validation state associated with the physical connection at the time this exception was raised.
+      </summary>
+      <value>
+        A non-null <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptionInfo" />. Individual properties of the snapshot are <see langword="null" /> when the corresponding information is not available.
+      </value>
+      <remarks>
+        <para>
+          This property never returns <see langword="null" />. A <see langword="null" /> property value on the returned snapshot means the information was not available when the snapshot was created. Any snapshot may have any combination of <see langword="null" /> and non-null property values depending on how far the connection attempt progressed. The presence or absence of <see langword="null" /> property values does not indicate that encryption or certificate validation succeeded or failed.
+        </para>
+        <para>
+          The snapshot is not serialized with the exception; a deserialized <see cref="T:Microsoft.Data.SqlClient.SqlException" /> returns a snapshot with all properties set to <see langword="null" />. The snapshot is not included in <see cref="P:System.Exception.Message" /> or in the output of <see cref="M:Microsoft.Data.SqlClient.SqlException.ToString" />.
+        </para>
+        <para>
+          When opening a connection fails, the snapshot describes values observed during the final connection attempt (for example, the negotiated encryption mode and TLS protocol, if the failure occurred after they were determined). The encryption mode is reported once it is selected, even if the TLS handshake then fails; in that case the TLS protocol is reported only if it was observed. Values from earlier attempts, such as attempts before a retry, redirect, or failover, are not included. When enlisting a pooled connection in a transaction fails, the snapshot describes the values that physical connection recorded at its earlier successful login.
+        </para>
+        <para>
+          Only exceptions thrown while opening a connection carry encryption information, and only when some is available. Exceptions raised by other operations, such as command execution, return a snapshot with all properties set to <see langword="null" />.
+        </para>
+      </remarks>
+    </EncryptionInfo>
     <DbBatchCommand>
       <summary>
         If this <see cref="T:Microsoft.Data.SqlClient.SqlException" /> was thrown when executing a <see cref="T:Microsoft.Data.SqlClient.SqlBatch" />, references the specific <see cref="T:Microsoft.Data.SqlClient.SqlBatchCommand" /> which triggered the exception.

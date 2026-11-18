@@ -150,7 +150,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Cut down on object creation and cache all the cached metadata
         /// </summary>
-        private _SqlMetaDataSet _cachedMetaData;
+        private TdsColumnMetadataToken _cachedMetaData;
 
         /// <summary>
         /// Column Encryption Override. Defaults to SqlConnectionSetting, in which case it will be
@@ -220,6 +220,12 @@ namespace Microsoft.Data.SqlClient
 
         // @TODO: Rename to match naming conventions _enclaveAttestationParameters
         private SqlEnclaveAttestationParameters enclaveAttestationParameters = null;
+
+        // Provider awaits can precede both parser-state acquisition and a cached async result.
+        private bool _enclaveAttestationInProgress;
+
+        private SqlConnectionInternal _describeParameterEncryptionConnection;
+        private SqlConnectionInternal _enclaveRetryConnection;
 
         /// <summary>
         /// On 8.0 and above the Prepared state cannot be left. Once a command is prepared it will
@@ -606,7 +612,7 @@ namespace Microsoft.Data.SqlClient
                 if (_activeConnection != value && _activeConnection != null)
                 {
                     // If new value...
-                    if (CachedAsyncState != null && CachedAsyncState.PendingAsyncOperation)
+                    if (_enclaveAttestationInProgress || (CachedAsyncState != null && CachedAsyncState.PendingAsyncOperation))
                     {
                         // If in pending async state, throw.
                         throw SQL.CannotModifyPropertyAsyncOperationInProgress();
@@ -767,7 +773,7 @@ namespace Microsoft.Data.SqlClient
                 if (_transaction != value && _activeConnection is not null)
                 {
                     // If new value...
-                    if (CachedAsyncState != null && CachedAsyncState.PendingAsyncOperation)
+                    if (_enclaveAttestationInProgress || (CachedAsyncState != null && CachedAsyncState.PendingAsyncOperation))
                     {
                         // If in pending async state, throw.
                         throw SQL.CannotModifyPropertyAsyncOperationInProgress();
@@ -885,7 +891,7 @@ namespace Microsoft.Data.SqlClient
 
         // @TODO: Autoproperty
         // @TODO: MetaData or Metadata?
-        internal _SqlMetaDataSet MetaData => _cachedMetaData;
+        internal TdsColumnMetadataToken MetaData => _cachedMetaData;
 
         // @TODO: Rename to match conventions.
         internal int ObjectID { get; } = Interlocked.Increment(ref _objectTypeCount);
@@ -1624,7 +1630,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal void OnReturnValue(SqlReturnValue returnValue, TdsParserStateObject stateObj)
+        internal void OnReturnValue(TdsReturnValueToken returnValue, TdsParserStateObject stateObj)
         {
             // Move the return value to the corresponding output parameter.
             // Return parameters are sent in the order in which they were defined in the procedure.
@@ -1636,9 +1642,9 @@ namespace Microsoft.Data.SqlClient
             if (_inPrepare)
             {
                 // Store the returned prepare handle if we are returning from sp_prepare
-                if (!returnValue.value.IsNull)
+                if (!returnValue.Value.IsNull)
                 {
-                    _prepareHandle = returnValue.value.Int32;
+                    _prepareHandle = returnValue.Value.Int32;
                 }
 
                 _inPrepare = false;
@@ -1657,7 +1663,7 @@ namespace Microsoft.Data.SqlClient
                 // If the parameter's direction is InputOutput, Output, or ReturnValue and it needs
                 // to be transparently encrypted/decrypted, then simply decrypt, deserialize, and
                 // set the value.
-                if (returnValue.cipherMD is not null &&
+                if (returnValue.CipherMetadata is not null &&
                     thisParam.CipherMetadata is not null &&
                     (thisParam.Direction == ParameterDirection.Output ||
                      thisParam.Direction == ParameterDirection.InputOutput ||
@@ -1665,11 +1671,11 @@ namespace Microsoft.Data.SqlClient
                 {
                     // @TODO: make this a separate method
                     // Validate type of the return value is valid for encryption
-                    if (returnValue.tdsType != TdsEnums.SQLBIGVARBINARY)
+                    if (returnValue.TdsType != TdsEnums.SQLBIGVARBINARY)
                     {
                         throw SQL.InvalidDataTypeForEncryptedParameter(
                             thisParam.GetPrefixedParameterName(),
-                            returnValue.tdsType,
+                            returnValue.TdsType,
                             expectedDataType: TdsEnums.SQLBIGVARBINARY);
                     }
 
@@ -1680,17 +1686,17 @@ namespace Microsoft.Data.SqlClient
                         throw ADP.ClosedConnectionError();
                     }
 
-                    if (!returnValue.value.IsNull)
+                    if (!returnValue.Value.IsNull)
                     {
                         try
                         {
                             Debug.Assert(_activeConnection is not null, @"_activeConnection should not be null");
 
                             // Get the key information from the parameter and decrypt the value.
-                            returnValue.cipherMD.EncryptionInfo = thisParam.CipherMetadata.EncryptionInfo;
+                            returnValue.CipherMetadata.EncryptionInfo = thisParam.CipherMetadata.EncryptionInfo;
                             byte[] unencryptedBytes = SqlSecurityUtility.DecryptWithKey(
-                                returnValue.value.ByteArray,
-                                returnValue.cipherMD,
+                                returnValue.Value.ByteArray,
+                                returnValue.CipherMetadata,
                                 _activeConnection,
                                 this);
 
@@ -1748,9 +1754,9 @@ namespace Microsoft.Data.SqlClient
                             _activeConnection.CheckGetExtendedUDTInfo(returnValue, fThrow: true);
 
                             // Extract the byte array from the param value
-                            object data = returnValue.value.IsNull
+                            object data = returnValue.Value.IsNull
                                 ? DBNull.Value
-                                : returnValue.value.ByteArray;
+                                : returnValue.Value.ByteArray;
 
                             // Call the connection to instantiate the UDT object
                             thisParam.Value = _activeConnection.GetUdtValue(data, returnValue, returnDBNull: false);
@@ -1766,13 +1772,13 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        thisParam.SetSqlBuffer(returnValue.value);
+                        thisParam.SetSqlBuffer(returnValue.Value);
                     }
 
-                    // @TODO: This seems fishy to me, it seems like it should be part of the SqlReturnValue class
-                    MetaType mt = MetaType.GetMetaTypeFromSqlDbType(returnValue.type, isMultiValued: false);
+                    // @TODO: This seems fishy to me, it seems like it should be part of the TdsReturnValueToken class
+                    MetaType mt = MetaType.GetMetaTypeFromSqlDbType(returnValue.DbType, isMultiValued: false);
 
-                    if (returnValue.type is SqlDbType.Decimal)
+                    if (returnValue.DbType is SqlDbType.Decimal)
                     {
                         thisParam.ScaleInternal = returnValue.scale;
                         thisParam.PrecisionInternal = returnValue.precision;
@@ -1781,7 +1787,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         thisParam.ScaleInternal = returnValue.scale;
                     }
-                    else if (returnValue.type is SqlDbType.Xml)
+                    else if (returnValue.DbType is SqlDbType.Xml)
                     {
                         if (thisParam.Value is SqlCachedBuffer cachedBuffer)
                         {
@@ -2236,7 +2242,9 @@ namespace Microsoft.Data.SqlClient
                     // The validate function for SqlParameters would have already thrown
                     // InvalidCastException if an incompatible value is specified for vector type.
                     ISqlVector vectorProps = (ISqlVector)sqlParam.Value;
-                    paramList.AppendFormat("({0})", vectorProps.Length);
+
+                    MetaType.AppendVectorTypeArguments(
+                        paramList, vectorProps.Length, vectorProps.ElementType);
                 }
                 else if (!mt.IsFixed && !mt.IsLong && mt.SqlDbType is not  SqlDbType.Timestamp
                                                                    and not SqlDbType.Udt
@@ -2416,10 +2424,11 @@ namespace Microsoft.Data.SqlClient
             Func<SqlCommand, IAsyncResult, bool, string, object> endFunc,
             Func<SqlCommand, CommandBehavior, AsyncCallback, object, int, bool, bool, IAsyncResult> retryFunc,
             string endMethod,
-            long firstAttemptStart)
+            long firstAttemptStart,
+            CancellationToken cancellationToken)
         {
             localCompletion.Task.ContinueWith(
-                task =>
+                async task =>
                 {
                     if (task.IsFaulted)
                     {
@@ -2499,44 +2508,49 @@ namespace Microsoft.Data.SqlClient
 
                         // Remove the entry from the cache since it was inconsistent
                         SqlQueryMetadataCache.GetInstance().InvalidateCacheEntry(this);
-                        InvalidateEnclaveSession();
-
                         // Kick off the retry
+                        SqlConnectionInternal retryConnection = _activeConnection.InnerConnection as SqlConnectionInternal;
+                        Task<object> retryTask = null;
                         try
                         {
+                            await InvalidateEnclaveSessionAsync(cancellationToken).ConfigureAwait(false);
                             _internalEndExecuteInitiated = false;
-                            Task<object> retryTask = (Task<object>)retryFunc(
-                                this,
-                                behavior,
-                                /*asyncCallback:*/ null, // @TODO: Is this ever not null?
-                                stateObject,
-                                TdsParserStaticMethods.GetRemainingTimeout(timeout, firstAttemptStart),
-                                /*isRetry:*/ true,
-                                asyncWrite);
+                            _enclaveRetryConnection = retryConnection;
+                            try
+                            {
+                                retryTask = (Task<object>)retryFunc(
+                                    this,
+                                    behavior,
+                                    /*asyncCallback:*/ null, // @TODO: Is this ever not null?
+                                    stateObject,
+                                    TdsParserStaticMethods.GetRemainingTimeout(timeout, firstAttemptStart),
+                                    /*isRetry:*/ true,
+                                    asyncWrite);
+                            }
+                            finally
+                            {
+                                _enclaveRetryConnection = null;
+                            }
 
-                            retryTask.ContinueWith(
-                                static (retryTask, state) =>
-                                {
-                                    TaskCompletionSource<object> completionSource = (TaskCompletionSource<object>)state;
-                                    if (retryTask.IsFaulted)
-                                    {
-                                        completionSource.TrySetException(retryTask.Exception.InnerException);
-                                    }
-                                    else if (retryTask.IsCanceled)
-                                    {
-                                        completionSource.TrySetCanceled();
-                                    }
-                                    else
-                                    {
-                                        completionSource.TrySetResult(retryTask.Result);
-                                    }
-                                },
-                                state: globalCompletion,
-                                TaskScheduler.Default);
+                            object result = await retryTask.ConfigureAwait(false);
+                            globalCompletion.TrySetResult(result);
                         }
                         catch (Exception e2)
                         {
-                            globalCompletion.TrySetException(e2);
+                            CachedAsyncState?.ResetAsyncState();
+                            // Failed retry setup cannot transfer the original reservation to End.
+                            retryConnection?.DecrementAsyncCount();
+                            _internalEndExecuteInitiated = false;
+
+                            if (e2 is OperationCanceledException &&
+                                (cancellationToken.IsCancellationRequested || retryTask?.IsCanceled == true))
+                            {
+                                globalCompletion.TrySetCanceled();
+                            }
+                            else
+                            {
+                                globalCompletion.TrySetException(e2);
+                            }
                         }
                     }
                 },
@@ -2848,7 +2862,8 @@ namespace Microsoft.Data.SqlClient
             TaskCompletionSource<object> localCompletion,
             Func<SqlCommand, IAsyncResult, bool, string, object> endFunc,
             Func<SqlCommand, CommandBehavior, AsyncCallback, object, int, bool, bool, IAsyncResult> retryFunc,
-            string endMethod)
+            string endMethod,
+            CancellationToken cancellationToken = default)
         {
             // We shouldn't be using the cache if we are in retry.
             Debug.Assert(!usedCache || !isRetry);
@@ -2876,7 +2891,8 @@ namespace Microsoft.Data.SqlClient
                     endFunc,
                     retryFunc,
                     endMethod,
-                    firstAttemptStart);
+                    firstAttemptStart,
+                    cancellationToken);
 
                 return true;
             }
@@ -2918,6 +2934,11 @@ namespace Microsoft.Data.SqlClient
 
         private void ValidateAsyncCommand()
         {
+            if (_enclaveAttestationInProgress)
+            {
+                throw SQL.PendingBeginXXXExists();
+            }
+
             if (CachedAsyncState is not null && CachedAsyncState.PendingAsyncOperation)
             {
                 // Enforce only one pending async execute at a time.
@@ -2935,6 +2956,11 @@ namespace Microsoft.Data.SqlClient
         // @TODO: isAsync isn't used.
         private void ValidateCommand(bool isAsync, [CallerMemberName] string method = "")
         {
+            if (_enclaveAttestationInProgress)
+            {
+                throw SQL.PendingBeginXXXExists();
+            }
+
             // A transaction aborted by the server stays attached, and its connection reports null.
             // Reject it before the command can run outside that transaction and auto-commit.
             // Rollback of that transaction clears the mark; that case is handled below.

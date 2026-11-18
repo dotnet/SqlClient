@@ -1,0 +1,47 @@
+name: Label Localization Changes
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, edited]
+
+concurrency:
+  group: label-localization-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  label-localization:
+    if: github.repository == 'dotnet/SqlClient'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      # Use only API metadata; never check out or execute PR code with this token.
+      - name: Label PRs changing Strings.resx
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const pull_number = context.payload.pull_request.number;
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner,
+              repo,
+              pull_number,
+              per_page: 100,
+            });
+
+            const isStringsResource = path =>
+              path === 'Strings.resx' || path?.endsWith('/Strings.resx');
+            const needsLocalization = files.some(file =>
+              isStringsResource(file.filename) || isStringsResource(file.previous_filename));
+
+            if (!needsLocalization) {
+              core.info('No Strings.resx changes found.');
+              return;
+            }
+
+            await github.rest.issues.addLabels({
+              owner,
+              repo,
+              issue_number: pull_number,
+              labels: ['Localization Needed'],
+            });

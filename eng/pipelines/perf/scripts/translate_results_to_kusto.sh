@@ -113,6 +113,14 @@ python3 "$scriptsDir/perf_to_kusto.py" \
 # --- baseline (released NuGet package), when a baseline pass ran ---
 if [ -d "$resultsDir/baseline" ]; then
     baseVer="${BASELINE_VERSION}"
+    if [ "$baseVer" = "latest" ]; then
+        labelFile="$resultsDir/baseline-label.txt"
+        if [ ! -s "$labelFile" ]; then
+            echo "ERROR: Resolved baseline version is missing from $labelFile." >&2
+            exit 1
+        fi
+        baseVer="$(tr -d '\r\n' < "$labelFile")"
+    fi
     python3 "$scriptsDir/perf_to_kusto.py" \
         --input-dir "$resultsDir/baseline" \
         --out-run "$kustoOut/baseline.PerfRun.ndjson" \

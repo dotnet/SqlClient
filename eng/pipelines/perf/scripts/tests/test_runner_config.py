@@ -202,6 +202,7 @@ foreach ($server in @("192.0.2.1", "2001:db8::1")) {
                 names = ("runnerconfig.json", "runnerconfig-baseline.json", "runnerconfig-current.json")
                 for name in names if separate else names[:1]:
                     (root / name).write_text('{}', encoding="utf-8")
+                (root / "baseline-label.txt").write_bytes(b"7.0.10\r\n")
                 # Capture translator arguments without needing BenchmarkDotNet result fixtures.
                 capture = root / "capture.py"
                 capture.write_text(
@@ -212,7 +213,7 @@ foreach ($server in @("192.0.2.1", "2001:db8::1")) {
                            RESULTS_DIR=root.as_posix(), KUSTO_OUT=(root / "out").as_posix(),
                            SOURCE_VERSION="HEAD", SOURCE_BRANCH="test", COLLECTION_URI="test",
                            TEAM_PROJECT="test", BUILD_ID="1", AGENT_MACHINE_NAME="test",
-                           PLATFORM="test", RUN_MODE="interleaved", BASELINE_VERSION="test",
+                           PLATFORM="test", RUN_MODE="interleaved", BASELINE_VERSION="latest",
                            CFG_USE_MANAGED_SNI="", CFG_USE_OPTIMIZED_ASYNC="",
                            CFG_USE_CONNECTION_POOL_V2="true", CAPTURE=(root / "args.jsonl").as_posix(),
                            TEST_PYTHON=Path(sys.executable).as_posix(), CAPTURE_SCRIPT=capture.as_posix(),
@@ -227,6 +228,10 @@ foreach ($server in @("192.0.2.1", "2001:db8::1")) {
                     name = f"runnerconfig-{variant}.json" if separate else "runnerconfig.json"
                     self.assertEqual(call[call.index("--runner-config") + 1], (root / name).as_posix())
                     self.assertNotIn("--config-override", call)
+                baseline = calls[1]
+                self.assertEqual(baseline[baseline.index("--version-string") + 1], "7.0.10")
+                self.assertEqual(baseline[baseline.index("--branch-name") + 1], "refs/tags/v7.0.10")
+                self.assertEqual(baseline[baseline.index("--commit-hash") + 1], "v7.0.10")
 
 
 if __name__ == "__main__":

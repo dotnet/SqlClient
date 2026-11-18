@@ -27,7 +27,8 @@ BeforeAll {
         $wrapper = Join-Path $TestDrive ([guid]::NewGuid().ToString('n') + '.ps1')
         Set-Content -LiteralPath $wrapper -Value $CommandLine -Encoding utf8
 
-        $pwshPath = (Get-Process -Id $PID).Path
+        # A local tool may be hosted by dotnet rather than the pwsh executable.
+        $pwshPath = Join-Path $PSHOME $(if ($IsWindows) { 'pwsh.exe' } else { 'pwsh' })
         & $pwshPath -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Unrestricted `
             -Command ". '$wrapper'" *> $null
         return $LASTEXITCODE
@@ -48,8 +49,25 @@ BeforeAll {
 }
 
 Describe 'Validation step templates' {
+    It 'selects the resource owner allowlist for <Owner>' -ForEach @(
+        @{ Owner = 'SqlClient'; Directory = 'src/Microsoft.Data.SqlClient/src/Resources' }
+        @{ Owner = 'Abstractions'; Directory = 'src/Microsoft.Data.SqlClient.Extensions/Abstractions/src/Resources' }
+    ) {
+        $content = Get-Content -LiteralPath (Join-Path $script:jobsPath 'build-buildproj-job.yml') -Raw
+        $allowlistPath = Join-Path $script:repoRoot '.config/LocalizationValidationAllowlist.jsonc'
+        $allowlist = Get-Content -LiteralPath $allowlistPath -Raw | ConvertFrom-Json
+        $step = Get-Content -LiteralPath (
+            Join-Path $script:stepsPath 'validate-localization-step.yml') -Raw
+
+        $step | Should -Match '\.config/LocalizationValidationAllowlist\.jsonc"'
+        $content | Should -Match (
+            'resourcesDirectory: ' + [regex]::Escape($Directory) +
+            '\r?\n\s+allowlistSection: ' + [regex]::Escape($Owner) + '\r?\n')
+        $allowlist.PSObject.Properties.Name | Should -Contain $Owner
+        Test-Path -LiteralPath (Join-Path $script:repoRoot $Directory) | Should -BeTrue
+    }
+
     It 'never passes a switch using the -Switch:Value form' -ForEach @(
-        @{ Template = 'validate-xml-docs-step.yml' }
         @{ Template = 'validate-localization-step.yml' }
         @{ Template = 'validate-packages-step.yml' }
     ) {
@@ -60,7 +78,6 @@ Describe 'Validation step templates' {
     }
 
     It 'appends -ReportOnly as a bare token' -ForEach @(
-        @{ Template = 'validate-xml-docs-step.yml' }
         @{ Template = 'validate-localization-step.yml' }
         @{ Template = 'validate-packages-step.yml' }
     ) {
@@ -69,7 +86,6 @@ Describe 'Validation step templates' {
     }
 
     It 'builds one argument list rather than repeating it per branch' -ForEach @(
-        @{ Template = 'validate-xml-docs-step.yml' }
         @{ Template = 'validate-localization-step.yml' }
         @{ Template = 'validate-packages-step.yml' }
     ) {
@@ -83,7 +99,6 @@ Describe 'Validation step templates' {
     }
 
     It 'rejects an unexpected failOnValidationError value rather than assuming report-only' -ForEach @(
-        @{ Template = 'validate-xml-docs-step.yml' }
         @{ Template = 'validate-localization-step.yml' }
         @{ Template = 'validate-packages-step.yml' }
     ) {
@@ -143,37 +158,6 @@ Describe 'Validation step templates' {
 }
 
 Describe 'Validation scripts under the pipeline invocation form' {
-    It 'accepts a bare -ReportOnly switch when dot-sourced: validate-xml-docs.ps1' {
-        $target = Join-Path $script:scriptsPath 'validate-xml-docs.ps1'
-        $snippets = Join-Path $TestDrive ([guid]::NewGuid().ToString('n'))
-        New-Item -ItemType Directory -Path $snippets | Out-Null
-        '<docs><members name="S"><S><see cref="T:System.Byte[]" /></S></members></docs>' |
-            Set-Content -LiteralPath (Join-Path $snippets 'Sample.xml') -Encoding utf8
-        $report = Join-Path $TestDrive ([guid]::NewGuid().ToString('n') + '.json')
-
-        $line = ". '$target' -ReportPath `"$report`" -FailOn `"error`" " +
-            "-SnippetsDirectory `"$snippets`" -DocumentationPath `"`" -PackagesPath `"`" " +
-            "-ExtractPath `"`" -ReportOnly"
-
-        Invoke-AsPipelineTask -CommandLine $line | Should -Be 0
-        Test-Path -LiteralPath $report | Should -BeTrue
-    }
-
-    It 'still fails when dot-sourced without -ReportOnly: validate-xml-docs.ps1' {
-        $target = Join-Path $script:scriptsPath 'validate-xml-docs.ps1'
-        $snippets = Join-Path $TestDrive ([guid]::NewGuid().ToString('n'))
-        New-Item -ItemType Directory -Path $snippets | Out-Null
-        '<docs><members name="S"><S><see cref="T:System.Byte[]" /></S></members></docs>' |
-            Set-Content -LiteralPath (Join-Path $snippets 'Sample.xml') -Encoding utf8
-        $report = Join-Path $TestDrive ([guid]::NewGuid().ToString('n') + '.json')
-
-        $line = ". '$target' -ReportPath `"$report`" -FailOn `"error`" " +
-            "-SnippetsDirectory `"$snippets`" -DocumentationPath `"`" -PackagesPath `"`" " +
-            "-ExtractPath `"`""
-
-        Invoke-AsPipelineTask -CommandLine $line | Should -Not -Be 0
-    }
-
     It 'accepts a bare -ReportOnly switch when dot-sourced: validate-localization.ps1' {
         $target = Join-Path $script:scriptsPath 'validate-localization.ps1'
         $resources = New-LocalizationResources -WithFindings

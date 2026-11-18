@@ -230,6 +230,9 @@ jobs:
           debug: ${{ parameters.debug }}
           runtimes: [10.x]
 
+      # Project-reference tests also build SqlClient's reference assembly, which requires pwsh.
+      - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
+
       # The Windows agent images include a suitable .NET Framework runtime, so
       # we don't have to install one explicitly.
 

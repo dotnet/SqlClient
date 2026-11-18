@@ -1,5 +1,34 @@
 # GitHub Actions Script Tests
 
+## Release-notes milestone exception tests
+
+`is-release-notes-only.test.cjs` uses the built-in Node.js test runner (Node.js
+20 or newer), with no npm dependencies:
+
+```bash
+node --test .github/scripts/tests/is-release-notes-only.test.cjs
+```
+
+Default-branch PRs with an assigned **open** milestone and a complete, nonempty
+file set exclusively under `release-notes/` or at exact `CHANGELOG.md` bypass
+only the milestone target-branch and next-version rules. Mixed changes and
+non-default targets retain the existing rules. Both names used by required
+status checks remain unchanged. API failures, incomplete pages, duplicate
+entries, unknown file statuses, and file counts beyond the API's 3,000-file
+limit fail the check rather than grant an exception. Renames/copies must have
+both paths in the allowlist; deleting code is not a release-notes-only change.
+
+Tests cover these rules, pagination boundaries, missing/closed milestones,
+stale events and concurrent PR changes, and wiring in both workflow jobs.
+Reconciliation continues to rerun the same workflow, including notes-only PRs.
+Unrelated default-branch updates before a rerun are allowed: the head, target,
+milestone, and file count must still match the event, while base-SHA stability
+is checked between the live snapshots around file retrieval, not against the
+historical event. Base changes during retrieval still fail closed.
+After landing changes to the check, update existing PR branches with the new
+base and trigger a fresh `pull_request` run; rerunning an old run reuses its old
+workflow/scripts and cannot activate the exception.
+
 ## Agentic triage output tests
 
 `validate-triage-output.test.cjs` uses the built-in Node.js test runner (Node.js
@@ -10,24 +39,27 @@ node --test .github/scripts/tests/validate-triage-output.test.cjs
 ```
 
 These tests also run in `verify-aw-lock.yml`. They cover the validation gate
-before triage comments and labels are published: complete summaries, explicit
+before triage comments are published: complete summaries, explicit
 no-op/failure results, placeholder comments, unfinished templates, quoted/fenced
 examples, duplicate comments, and mixed success/incomplete outcomes.
 They also reject partial safe-output batches with recorded errors while
 allowing C# generic type syntax in completed summaries. Draft prefixes such as
 `TODO:` and `TBD:` are rejected in required fields and list items; ordinary
 mentions of those markers within completed prose remain valid.
-Coverage also includes multiline template placeholders, label operations queued
-before the summary, and contradictory no-op/incomplete results.
+Coverage also includes multiline template placeholders and contradictory
+no-op/incomplete results. Label operations are rejected in every queue position,
+with or without a summary. Validation leaves `GH_AW_AGENT_OUTPUT` unchanged,
+and the compiled workflow is checked for that wiring and the absence of label tools.
 Comparison operators in completed prose remain valid; angle-bracket detection
 targets known template fields and instructions rather than arbitrary bracketed text.
 Generic arguments such as `Task<Result>` and `List<Item>`, including nested
 types, and XML documentation tags are covered by acceptance regressions.
 The summary heading must start at the beginning of the body; leading indentation
 cannot turn a code-block heading into an accepted Markdown heading.
-Initial and follow-up summaries must queue exactly one Waiting for Author label
-operation matching the Environment row; on-demand summaries must leave labels
-unchanged. Tests also reject diagnostic placeholders within required fields,
+Initial, follow-up, and on-demand summaries require no label operations,
+regardless of the Environment row. Author follow-ups use the latest workflow
+summary to determine whether environment details are still missing, not labels.
+Tests also reject diagnostic placeholders within required fields,
 duplicate required rows/sections, and unfinished content in additional prose.
 
 ## Shell script tests

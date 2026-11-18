@@ -176,17 +176,19 @@ that index proves the target is a parameterized method.
 
 ### Validating Cross-References Locally
 
-`eng/pipelines/onebranch/scripts/validate-xml-docs.ps1` enforces the rules above. It runs in the OneBranch build jobs against snippet sources, generated documentation, and the assembled packages, so run it before pushing documentation changes:
+`eng/pipelines/common/scripts/validate-xml-docs.ps1` enforces the rules above. OneBranch uses it
+against snippet sources, generated documentation, and assembled packages; the PR pipeline uses it
+against snippets and assembled packages. Run it before pushing documentation changes:
 
 ```powershell
-./eng/pipelines/onebranch/scripts/validate-xml-docs.ps1 -SnippetsDirectory ./doc/snippets
+./eng/pipelines/common/scripts/validate-xml-docs.ps1 -SnippetsDirectory ./doc/snippets
 ```
 
 To also resolve references against the members the build actually emitted, which additionally catches wrong-kind prefixes and cross-references the compiler failed to bind:
 
 ```powershell
 dotnet build ./src/Microsoft.Data.SqlClient/ref/Microsoft.Data.SqlClient.csproj -c Release
-./eng/pipelines/onebranch/scripts/validate-xml-docs.ps1 -DocumentationPath ./artifacts/Microsoft.Data.SqlClient.ref/Project-Release
+./eng/pipelines/common/scripts/validate-xml-docs.ps1 -DocumentationPath ./artifacts/Microsoft.Data.SqlClient.ref/Project-Release
 ```
 
 Use the configuration-specific directory so stale outputs from another reference mode or build

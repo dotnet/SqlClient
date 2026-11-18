@@ -20,6 +20,11 @@
 #
 # See .github/scripts/check-milestone-branch.sh for the full rule set.
 #
+# Exception: default-branch PRs changing only release-notes/** or CHANGELOG.md
+# still require an open milestone, but skip branch and next-version rules.
+# Both jobs use is-release-notes-only.cjs to verify the complete file set,
+# including previous paths for renames. API errors/incomplete data fail closed.
+#
 # Cutting release/X.Y flips the expected target for X.Y.* milestones but emits
 # no pull request activity. recheck-milestones.yml reconciles the already open
 # PRs that the new branch invalidates.
@@ -62,8 +67,16 @@ jobs:
           sparse-checkout: .github/scripts
           sparse-checkout-cone-mode: false
 
+      - name: Classify release-notes-only changes
+        id: release-notes
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const classify = require('./.github/scripts/is-release-notes-only.cjs');
+            return await classify({ github, context, core });
+
       - name: Check milestone matches target branch
-        if: github.event.pull_request.milestone != null
+        if: github.event.pull_request.milestone != null && steps.release-notes.outputs.result != 'true'
         env:
           # Pass PR data via env to avoid script injection from milestone text.
           MILESTONE_TITLE: ${{ github.event.pull_request.milestone.title }}
@@ -78,6 +91,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      pull-requests: read
     steps:
       - name: Checkout version check inputs
         uses: actions/checkout@v6
@@ -87,7 +101,16 @@ jobs:
             src/Microsoft.Data.SqlClient/Versions.props
           sparse-checkout-cone-mode: false
 
+      - name: Classify release-notes-only changes
+        id: release-notes
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const classify = require('./.github/scripts/is-release-notes-only.cjs');
+            return await classify({ github, context, core });
+
       - name: Validate milestone version
+        if: steps.release-notes.outputs.result != 'true'
         env:
           MILESTONE_TITLE: ${{ github.event.pull_request.milestone.title }}
           BASE_REF: ${{ github.event.pull_request.base.ref }}

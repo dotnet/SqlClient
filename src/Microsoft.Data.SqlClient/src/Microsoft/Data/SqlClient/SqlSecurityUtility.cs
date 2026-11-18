@@ -17,9 +17,6 @@ namespace Microsoft.Data.SqlClient
 
     internal static class SqlSecurityUtility
     {
-
-        static readonly ColumnMasterKeyMetadataSignatureVerificationCache ColumnMasterKeyMetadataSignatureVerificationCache = ColumnMasterKeyMetadataSignatureVerificationCache.Instance;
-
         #nullable enable
 
         /// <summary>

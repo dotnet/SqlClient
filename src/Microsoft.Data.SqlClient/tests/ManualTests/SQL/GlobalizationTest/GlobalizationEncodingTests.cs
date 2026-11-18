@@ -49,7 +49,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         /// <summary>
         /// Verifies normal and streamed Unicode parameters round-trip exactly through buffered and sequential
-        /// readers on synchronous and asynchronous paths.
+        /// readers on synchronous and asynchronous paths, including offset, zero-length, and mixed-size reads
+        /// across packet and surrogate boundaries.
         /// </summary>
         /// <param name="useAsync">Whether command and reader operations use asynchronous APIs.</param>
         /// <param name="streamInput">Whether the input parameter is supplied through a <see cref="StringReader"/>.</param>
@@ -97,12 +98,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             string query = $"SELECT Value FROM {table.Name}";
             string directValue = await ReadDirectValue(connection, query, useAsync);
-            string streamedValue = await ReadStreamedValue(connection, query, useAsync);
-
             Assert.Equal(expected, directValue);
-            Assert.Equal(expected, streamedValue);
             Assert.Equal(expected.Length, directValue.Length);
-            Assert.Equal(expected.Length, streamedValue.Length);
+
+            int[][] readPatterns = { new[] { 1 }, new[] { 3 }, new[] { 1, 2, 7, 255, 256, 257, 511 } };
+            foreach (int[] readSizes in readPatterns)
+            {
+                string streamedValue = await ReadStreamedValue(connection, query, useAsync, readSizes);
+                Assert.Equal(expected, streamedValue);
+                Assert.Equal(expected.Length, streamedValue.Length);
+            }
         }
 
         /// <summary>
@@ -181,14 +186,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         /// <summary>
-        /// Reads a string through sequential <see cref="TextReader"/> calls with a small buffer so character
-        /// sequences cross read boundaries.
+        /// Reads sequential text with offset buffers, checking untouched sentinels, non-consuming zero-length
+        /// reads, and repeatable EOF while character sequences and TDS packets cross read boundaries.
         /// </summary>
         /// <param name="connection">The open SQL connection used to execute the query.</param>
         /// <param name="query">The query that returns one string value.</param>
         /// <param name="useAsync">Whether command and reader operations use asynchronous APIs.</param>
+        /// <param name="readSizes">The positive read sizes to cycle through until EOF.</param>
         /// <returns>The string returned by SQL Server.</returns>
-        private static async Task<string> ReadStreamedValue(SqlConnection connection, string query, bool useAsync)
+        private static async Task<string> ReadStreamedValue(SqlConnection connection, string query, bool useAsync, int[] readSizes)
         {
             using SqlCommand command = new(query, connection);
             using SqlDataReader reader = useAsync
@@ -198,18 +204,45 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             Assert.True(hasRow);
             using TextReader textReader = reader.GetTextReader(0);
-            char[] buffer = new char[3];
+            char[] buffer = new char[515];
             StringBuilder result = new();
+            int readIndex = 0;
             int charsRead;
             do
             {
+                for (int i = 0; i < buffer.Length; i++)
+                {
+                    buffer[i] = '#';
+                }
+
+                int zeroRead = useAsync
+                    ? await textReader.ReadAsync(buffer, 2, 0)
+                    : textReader.Read(buffer, 2, 0);
+                Assert.Equal(0, zeroRead);
+                Assert.All(buffer, value => Assert.Equal('#', value));
+
+                int count = readSizes[readIndex++ % readSizes.Length];
                 charsRead = useAsync
-                    ? await textReader.ReadAsync(buffer, 0, buffer.Length)
-                    : textReader.Read(buffer, 0, buffer.Length);
-                result.Append(buffer, 0, charsRead);
+                    ? await textReader.ReadAsync(buffer, 2, count)
+                    : textReader.Read(buffer, 2, count);
+                Assert.InRange(charsRead, 0, count);
+                Assert.Equal("##", new string(buffer, 0, 2));
+                for (int i = 2 + charsRead; i < buffer.Length; i++)
+                {
+                    Assert.Equal('#', buffer[i]);
+                }
+                result.Append(buffer, 2, charsRead);
             }
             while (charsRead != 0);
 
+            Assert.Equal(0, useAsync
+                ? await textReader.ReadAsync(buffer, 2, 1)
+                : textReader.Read(buffer, 2, 1));
+            Assert.All(buffer, value => Assert.Equal('#', value));
+            Assert.Equal(0, useAsync
+                ? await textReader.ReadAsync(buffer, 2, 0)
+                : textReader.Read(buffer, 2, 0));
+            Assert.All(buffer, value => Assert.Equal('#', value));
             Assert.False(useAsync ? await reader.ReadAsync() : reader.Read());
             return result.ToString();
         }

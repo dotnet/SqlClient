@@ -591,26 +591,11 @@
   <data name="SQL_NonLocalSSEInstance" xml:space="preserve">
     <value>SSE Örneği yeniden yönlendirmesi, yerel olmayan kullanıcı örnekleri için desteklenmiyor.</value>
   </data>
-  <data name="SQL_UnsupportedAuthentication" xml:space="preserve">
-    <value>'{0}' kimlik doğrulaması desteklenmiyor.</value>
-  </data>
-  <data name="SQL_CannotCreateAuthProvider" xml:space="preserve">
-    <value>'{0}' için '{1}' türüne sahip bir kimlik doğrulama sağlayıcısı örneği oluşturulamadı.</value>
-  </data>
-  <data name="SQL_CannotCreateAuthInitializer" xml:space="preserve">
-    <value>'{0}' türüne sahip bir SqlAuthenticationInitializer örneği oluşturulamadı.</value>
-  </data>
-  <data name="SQL_UnsupportedAuthenticationByProvider" xml:space="preserve">
-    <value>'{0}' adlı sağlayıcı, '{1}' kimlik doğrulamasını desteklemiyor.</value>
-  </data>
   <data name="SQL_CannotFindAuthProvider" xml:space="preserve">
     <value>'{0}' için kimlik doğrulama sağlayıcısı bulunamıyor.</value>
   </data>
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
-    <value>'{0}' için kimlik doğrulaması sağlayıcısı bulunamıyor. Active Directory (Entra ID) kimlik doğrulaması yöntemlerini kullanmak için ‘Microsoft.Data.SqlClient.Extensions.Azure’ NuGet paketini (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure) yükleyin.</value>
-  </data>
-  <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>'useWamBroker' ayarı, 'Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions' türünü kullanıma sunmak için 'Microsoft.Data.SqlClient.Extensions.Azure' paketini gerektirir. Bu türü içeren en az v1.1.0 sürümüne ulaşmak için 'Microsoft.Data.SqlClient.Extensions.Azure' paketini yükseltin.</value>
+    <value>'{0}' için kimlik doğrulaması sağlayıcısı bulunamıyor. SqlAuthenticationProvider.SetProvider ile bir sağlayıcı kaydedin veya otomatik keşif etkinleştirilmiş uyumlu bir 'Microsoft.Data.SqlClient.Extensions.Azure' NuGet paketi kullanın. Otomatik keşif, yayımlama sırasında devre dışı bırakıldığında kullanılamaz. Kırpılmış JIT uygulamaları, korunan yansıma sözleşmeleri gerektirir; NativeAOT uygulamaları, yayımlama zamanında yansıtıcı önyükleme yollarını devre dışı bırakmalı ve sağlayıcıları açıkça kaydetmelisiniz. Yapılandırma veya Azure uzantısının yüklenmesiyle ilgili hatalar için Microsoft.Data.SqlClient.EventSource izlemelerini (Bilgi düzeyi, 0x2 izleme anahtar sözcüğü) denetleyin.</value>
   </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>'{0}' parametresi null veya boş olamaz.</value>
@@ -1800,6 +1785,9 @@
   <data name="TCE_EnclaveTypeNullForEnclaveBasedQuery" xml:space="preserve">
     <value>İç Hata. Kapanım hesaplamaları gerektiren bir sorgu yürütülürken SQL Server'dan alınan kapanım türü null veya boş.</value>
   </data>
+  <data name="TCE_AzureAttestationExtensionNotFound" xml:space="preserve">
+    <value>'AAS' kanıtlama protokolü Microsoft.Data.SqlClient.Extensions gerektirir. AzureAzure paketi, Microsoft.Data.SqlClient ile aynı sürümde. Bu pakete başvuru ekleyin veya güncelleştirin ya da bağlantı dizesi farklı bir kanıtlama protokolü belirtin.</value>
+  </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
     <value>Kapanım türü '{0}' ve kanıtlama protokolü '{1}' için kapanım sağlayıcısı bulunamadı. Lütfen bağlantı dizesinde doğru kanıtlama protokolünü belirtin. </value>
   </data>
@@ -1901,6 +1889,9 @@
   </data>
   <data name="SQLCR_NoCRAckAtReconnection" xml:space="preserve">
     <value>Sunucu, geri yükleme denemesini onaylamadı; bağlantı geri yüklemesi mümkün değil.</value>
+  </data>
+  <data name="DbConnectionString_VectorTypeSupport" xml:space="preserve">
+    <value>Sunucuyla anlaşmaya varılacak vektör türü desteği düzeyi.</value>
   </data>
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>Bir bağlantı havuzundaki bağlantılar için engelleme dönemi davranışını tanımlar.</value>
@@ -2067,6 +2058,9 @@
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
     <value>Üst komutta EnableOptimizedParameterBinding etkinleştirildiğinde '{0}' parametresinin Yön Çıkışı veya InputOutput’u olamaz.</value>
   </data>
+  <data name="SQL_PrepareNotSupportedForOptimizedBinding" xml:space="preserve">
+    <value>EnableOptimizedParameterBinding etkinleştirildiğinde Prepare desteklenmez. Yeni bir SqlCommand oluşturun ve ilk yürütmesinden önce EnableOptimizedParameterBinding özelliğini false olarak ayarlayın veya Prepare çağrısı yapmadan yürütün.</value>
+  </data>
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
     <value>'{0}' kimlik doğrulama yöntemi kullanılarak bir erişim belirteci alınırken bağlantı zaman aşımına uğradı. Son Hata: {1}: {2}</value>
   </data>
@@ -2099,6 +2093,9 @@
   </data>
   <data name="SqlAppContextSwitchManager_InvalidValue" xml:space="preserve">
     <value>AppContext Switch '{0}'={1} ayarlanırken özel durum oluştu.</value>
+  </data>
+  <data name="SQL_GlobalizationInvariantModeRequiresLcid" xml:space="preserve">
+    <value>Globalleştirme Değişmez Modu etkinleştirildiğinde karakter ya da metin türlerini açıklayan SqlMetaData örnekleri bir LCID belirtmelidir.</value>
   </data>
   <data name="SQL_GlobalizationInvariantModeNotSupported" xml:space="preserve">
     <value>Küreselleşme Değişmez Modu desteklenmiyor.</value>

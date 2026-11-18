@@ -372,15 +372,10 @@ namespace Microsoft.SqlServer.TDS.PreLogin
             // Write MARS
             destination.WriteByte((byte)(IsMARS ? 0x01 : 0x00));
 
-            // Write traceID
-            if (ClientTraceID != null)
+            // Write traceID and ActivityID only when the TraceID option header was added above
+            if (ActivityID != null && ClientTraceID != null)
             {
                 destination.Write(ClientTraceID, 0, ClientTraceID.Length);
-            }
-
-            // Write ActivityID
-            if (ActivityID != null)
-            {
                 destination.Write(ActivityID, 0, ActivityID.Length);
             }
 
@@ -396,8 +391,11 @@ namespace Microsoft.SqlServer.TDS.PreLogin
                 destination.Write(Nonce, 0, Nonce.Length);
             }
 
-            // Write Encryption
-            destination.WriteByte((byte)Encryption);
+            // Write Encryption only when the Encryption option header was added above
+            if (Encryption != TDSPreLoginTokenEncryptionType.None)
+            {
+                destination.WriteByte((byte)Encryption);
+            }
         }
     }
 }

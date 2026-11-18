@@ -60,6 +60,11 @@ Before writing code, produce a brief implementation plan covering:
 4. Test against multiple SQL Server versions.
 
 ## 5. Write Tests
+- Read and follow the [test authoring rules](../instructions/testing.instructions.md#writing-tests).
+  They are mandatory for unit tests and strongly recommended for manual and functional tests.
+- Use commented Arrange, Act, Assert, Cleanup sections (Act and Assert required), typed
+  `TheoryData<...>` with `[MemberData]` for non-constant data, and separate tests for separate
+  behaviors instead of switches. Follow the guide's class ownership, naming, folder, and utility rules.
 - **Unit tests** in `src/Microsoft.Data.SqlClient/tests/UnitTests/` for isolated logic.
 - **Functional tests** in `src/Microsoft.Data.SqlClient/tests/FunctionalTests/` for API behavior without SQL Server.
 - **Manual tests** in `src/Microsoft.Data.SqlClient/tests/ManualTests/` for full integration with SQL Server.
@@ -69,6 +74,8 @@ Before writing code, produce a brief implementation plan covering:
   - Cross-platform behavior differences
   - Error handling and invalid inputs
   - Backward compatibility (existing behavior unchanged)
+- Run tests that assert meaningful feature outcomes and would catch regressions. Confirm the
+  intended tests actually ran; report zero matches, skips, and tests that could not run.
 
 ## 6. Add Documentation and Samples
 - Add XML doc comments on all new public APIs.

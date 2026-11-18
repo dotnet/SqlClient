@@ -76,6 +76,7 @@ public class RegisteredApplicationPoolTests
     [Fact]
     public async Task MinPoolSizeBackgroundConnection_ReportsUnknownApplication()
     {
+        // Arrange
         using TdsServer server = new();
         server.EnableUserAgentFeatureExt = true;
         var payloads = new ConcurrentQueue<byte[]>();
@@ -95,7 +96,7 @@ public class RegisteredApplicationPoolTests
             poolByIdentity: false,
             minPoolSize: 1,
             maxPoolSize: 1,
-            creationTimeout: 15,
+            creationTimeout: 15_000,
             loadBalanceTimeout: 0,
             hasTransactionAffinity: true,
             idleTimeout: 0);
@@ -112,9 +113,11 @@ public class RegisteredApplicationPoolTests
             DbConnectionPoolIdentity.NoIdentity,
             new SqlConnectionPoolProviderInfo());
 
+        // Act
         pool.Startup();
         await pool.WarmupLoopTask!;
 
+        // Assert
         Assert.Equal(1, server.Login7Count);
         Assert.Single(payloads);
         Assert.True(payloads.TryDequeue(out byte[]? payload));

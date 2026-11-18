@@ -102,7 +102,6 @@ steps:
       DOMAIN_PASSWORD: ${{ parameters.kerberosDomainPassword }}
 
   - pwsh: |
-      Install-Module -Name SqlServer -Force -Confirm:$false
       Import-Module SqlServer
       Invoke-Sqlcmd -Query "SELECT @@VERSION, @@SERVERNAME" -ConnectionString $env:REMOTE_TCP_CONN_STRING
     displayName: Verify SQL connectivity

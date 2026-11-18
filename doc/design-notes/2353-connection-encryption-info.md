@@ -1,0 +1,332 @@
+# Design note: #2353 — connection encryption information
+
+| | |
+|---|---|
+| **Issue** | [#2353](https://github.com/dotnet/SqlClient/issues/2353) |
+| **Status** | Public API approved; implementation in progress in slices (see [Implementation plan](#6-implementation-plan)) |
+| **Primary consumer** | SQL Server Management Studio (SSMS); the API is general-purpose |
+| **Public surface** | `SqlConnection.EncryptionInfo`, `SqlException.EncryptionInfo`, `SqlConnectionEncryptionInfo`, `SqlConnectionEncryptionMode`, `SqlServerCertificateValidationErrors` |
+
+This note describes the approved API for exposing the encryption that a connection
+actually negotiated and the outcome of server certificate validation. Its public API
+shape was reviewed with the SSMS team. The implementation is being delivered in slices, as
+listed in the implementation plan.
+
+---
+
+## 1. Motivation
+
+Today an application can only see the encryption it *requested* (`Encrypt`,
+`TrustServerCertificate`, `HostNameInCertificate`, `ServerCertificate`). It cannot see
+what was actually negotiated, and when certificate validation fails the only information
+available is the localized exception message.
+
+The API brings the negotiated encryption mode, TLS version, the server-presented
+certificate, and structured validation results into one model that is available for both
+successful and failed connection attempts. Tools such as SSMS can then show connection
+security properties and build actionable failure messages from the driver's own
+observations, without a second handshake.
+
+## 2. Scenarios
+
+| Scenario | Proposed capability | Value |
+| --- | --- | --- |
+| Show security information for an open connection | Read the negotiated encryption mode, TLS version, and presented server certificate from `connection.EncryptionInfo`. | Display the actual negotiated values. |
+| Explain a failed certificate validation | Read typed validation errors, applicable chain-status flags, and the presented certificate from `exception.EncryptionInfo`, when captured. | Build user-facing messages from structured results rather than localized exception text. |
+| Identify the certificate involved in the attempt | Call `GetServerCertificate()` to get the leaf certificate captured from that attempt. | Show subject, issuer, validity, SANs, and thumbprint of the certificate observed on that same connection attempt. |
+
+## 3. Approved API
+
+Both `SqlConnection.EncryptionInfo` and `SqlException.EncryptionInfo` expose the same
+`SqlConnectionEncryptionInfo` snapshot, which is read-only to the caller. The object is
+always present; each field is `null` when the information is unavailable or not
+applicable.
+
+| Property on `SqlConnectionEncryptionInfo` | Type | Meaning |
+| --- | --- | --- |
+| `ChainStatus` | `X509ChainStatusFlags?` | Applicable chain-validation flags, such as `UntrustedRoot`, `NotTimeValid`, or `Revoked`. |
+| `NegotiatedCipherSuite` | `TlsCipherSuite?`; .NET only; not CLS-compliant | The same value as `NegotiatedCipherSuiteId`, typed as `System.Net.Security.TlsCipherSuite`. |
+| `NegotiatedCipherSuiteId` | `int?` on every target framework; CLS-compliant | IANA TLS cipher suite identifier selected by the server, such as `0x1302` (`TLS_AES_256_GCM_SHA384`). |
+| `NegotiatedEncryptionMode` | `SqlConnectionEncryptionMode?` | Actual encryption outcome, not the requested `Encrypt` setting. |
+| `NegotiatedEncryptionProtocol` | `SslProtocols?` | Negotiated TLS version, such as TLS 1.2 or TLS 1.3. |
+| `ValidationErrors` | `SqlServerCertificateValidationErrors?` | Effective certificate-validation result under the connection's configured rules. |
+
+| Method on `SqlConnectionEncryptionInfo` | Return type | Meaning |
+| --- | --- | --- |
+| `GetServerCertificate()` | `X509Certificate2?` | The leaf certificate the server presented, as a new instance on every call, or `null` when none was captured. Not the caller's configured certificate. |
+
+```csharp
+using System;
+using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
+
+namespace Microsoft.Data.SqlClient
+{
+    public sealed partial class SqlConnection
+    {
+        // Snapshot captured for the current open connection. Always non-null; empty
+        // before opening, while opening, and after closing or disposing.
+        public SqlConnectionEncryptionInfo EncryptionInfo { get; }
+    }
+
+    public sealed partial class SqlException
+    {
+        // Snapshot captured for the connection attempt that produced this exception.
+        // Always non-null. Its presence alone does not indicate a certificate failure.
+        public SqlConnectionEncryptionInfo EncryptionInfo { get; }
+    }
+
+    public sealed class SqlConnectionEncryptionInfo
+    {
+        public X509ChainStatusFlags? ChainStatus { get; }
+#if NET
+        [CLSCompliant(false)]
+        public System.Net.Security.TlsCipherSuite? NegotiatedCipherSuite { get; }
+#endif
+        public int? NegotiatedCipherSuiteId { get; }
+        public SqlConnectionEncryptionMode? NegotiatedEncryptionMode { get; }
+        public SslProtocols? NegotiatedEncryptionProtocol { get; }
+        public SqlServerCertificateValidationErrors? ValidationErrors { get; }
+
+        // New instance on every call; the caller owns and disposes it.
+        public X509Certificate2? GetServerCertificate();
+    }
+
+    public enum SqlConnectionEncryptionMode : byte
+    {
+        None = 0,      // Unencrypted connection.
+        LoginOnly = 1, // Login is protected; subsequent session traffic is unencrypted.
+        Full = 2,      // Full-session encryption.
+        Strict = 3     // TDS 8.0 strict encryption.
+    }
+
+    [Flags]
+    public enum SqlServerCertificateValidationErrors
+    {
+        None = 0,
+        ServerCertificateMissing = 1,
+        HostNameMismatch = 2,
+        ChainError = 4,
+        PinnedCertificateMismatch = 8
+    }
+}
+```
+
+Applications cannot construct `SqlConnectionEncryptionInfo`; the driver creates the
+snapshots.
+
+### How the encryption mode is negotiated
+
+`NegotiatedEncryptionMode` reports both how encryption was negotiated and how much of the
+connection it covers, so callers do not need to infer it from the TDS version:
+
+| Value | How it is negotiated | Traffic covered by TLS |
+| --- | --- | --- |
+| `None` | TDS 7.x PRELOGIN; neither side requested encryption and no login TLS was set up. | None. |
+| `LoginOnly` | TDS 7.x PRELOGIN `ENCRYPT_OFF` from both sides; TLS protects only the login. | The LOGIN7 packet only; later session traffic is plaintext. |
+| `Full` | TDS 7.x PRELOGIN `ENCRYPT_ON`/`ENCRYPT_REQ`; TLS is set up after PRELOGIN. | Everything after PRELOGIN, including login and session traffic. PRELOGIN itself is plaintext. |
+| `Strict` | TDS 8.0 (`Encrypt=Strict`); TLS is set up before any TDS packet. | All TDS traffic, including PRELOGIN. |
+
+The requested `Encrypt` setting is not echoed back; the value reflects the outcome the
+driver observed.
+
+### Negotiated cipher suite
+
+`NegotiatedCipherSuiteId` is the 16-bit identifier from the IANA TLS Cipher Suites
+registry for the suite the server selected in its ServerHello, for example `0x1302` for
+`TLS_AES_256_GCM_SHA384`. It is not a Windows `ALG_ID`.
+
+- **One shared member, plus a strong type on .NET:** `NegotiatedCipherSuiteId` is `int?`
+  on every target framework. On .NET only, `NegotiatedCipherSuite` exposes the same value
+  as `System.Net.Security.TlsCipherSuite?`, the type `SslStream.NegotiatedCipherSuite`
+  uses. .NET Framework and .NET Standard 2.0 have no `NegotiatedCipherSuite` member,
+  because `TlsCipherSuite` does not exist there.
+- **Why not a per-target type for one property name:** the package ships a
+  `netstandard2.0` reference assembly. If `NegotiatedCipherSuite` were `ushort?` there and
+  `TlsCipherSuite?` on .NET, a library compiled against .NET Standard would bind to
+  `Nullable<ushort> get_NegotiatedCipherSuite()`, which does not exist in the .NET
+  implementation, and would fail at run time with `MissingMethodException`. With this
+  shape, the only member present on every target has an identical signature everywhere.
+- **CLS compliance:** `NegotiatedCipherSuiteId` is CLS-compliant and carries no
+  attribute. `TlsCipherSuite` is backed by `ushort`, so `NegotiatedCipherSuite` is marked
+  `[CLSCompliant(false)]`, as `SslStream.NegotiatedCipherSuite` is. The assembly stays
+  `[CLSCompliant(true)]`.
+- **Unknown identifiers are preserved:** both properties return the captured identifier
+  unchanged, without `Enum.IsDefined` filtering, so newly registered or GREASE values are
+  not dropped.
+- **Internal contract:** on .NET, the internal constructor takes `TlsCipherSuite?`, so the
+  value stays strongly typed from `SslStream` to the public API; both properties are
+  assigned from it. On .NET Framework, it takes an `int?` that must be in the range 0 to
+  0xFFFF.
+- **`null` means unavailable:** no TLS, the value was not captured on the current code
+  path, the network layer (for example, an older native SNI) does not report it, or the
+  attempt failed before the value was known. It does not mean the server selected no
+  suite.
+- **Failures keep observed values:** a ServerHello can select a suite and the handshake
+  can still fail afterward, for example during certificate validation. As with
+  `NegotiatedEncryptionProtocol`, a value that was observed is kept in the snapshot
+  attached to `SqlException`.
+- **Out of scope:** the client's offered suite list, CAPI2-level chain detail, and
+  key-exchange group or post-quantum information.
+
+### Server certificate
+
+Following the threat model review, the snapshot exposes the full certificate the server
+presented instead of a hash of it. A hash only lets a caller correlate against a
+certificate it already has; the certificate itself lets tools show subject, issuer,
+validity, subject alternative names, and any thumbprint the caller wants to compute.
+
+- **Leaf only, public data only:** the certificate is what the server sent in the TLS
+  handshake. The chain is not included, and the certificate never has a private key.
+- **Captured on success and on failure:** the certificate is captured whenever the server
+  presents one, including with `TrustServerCertificate=true` and when validation fails
+  (read it from `SqlException.EncryptionInfo`).
+- **Diagnostics only:** returning a certificate is not a trust decision. Validation results
+  are reported separately through `ValidationErrors` and `ChainStatus`, and callers must
+  not use the certificate to override or bypass the driver's validation.
+- **Storage:** the snapshot keeps a private copy of the DER bytes. Each call parses them
+  with `X509CertificateLoader.LoadCertificate` (from `Microsoft.Bcl.Cryptography` on .NET
+  Framework). Bytes that cannot be decoded are reported as `null`. The bytes are never
+  written to `ToString()`, exception messages, traces, or
+  serialization.
+- **Capture limit:** certificates larger than 64 KiB (DER) are not captured; the method
+  returns `null` and the connection is unaffected.
+
+#### Why a method rather than a property
+
+- **Ownership:** `X509Certificate2` is disposable. Returning a new instance on each call
+  makes the caller the clear owner. A shared instance would leave it unclear who disposes
+  it, and disposing it would break other readers of the same snapshot.
+- **Immutability:** on .NET Framework, `X509Certificate2` is mutable (`Import`, `Reset`).
+  A shared instance would let one caller change what others see; a fresh instance per
+  call keeps the snapshot immutable.
+- **Cost:** each call parses the certificate. .NET design guidelines advise against
+  hiding that kind of work, or returning a new object each time, behind a property getter.
+
+### Certificate-validation outcomes
+
+`SqlServerCertificateValidationErrors` is a flags enum; applicable errors can coexist.
+
+| Value | Meaning |
+| --- | --- |
+| `None = 0` | Applicable validation ran and reported no error. |
+| `ServerCertificateMissing = 1` | An authoritative validation result indicates that the server did not present its certificate. Not a missing local certificate file. |
+| `HostNameMismatch = 2` | The certificate did not match the expected hostname after applying configured hostname rules. |
+| `ChainError = 4` | Chain validation reported an error; `ChainStatus` supplies the captured detail. |
+| `PinnedCertificateMismatch = 8` | The presented certificate did not match the certificate configured through `ServerCertificate`. |
+
+A pin mismatch is distinct from a chain error: the existing pin check compares
+certificate bytes, and this API does not change that comparison. A missing or unreadable
+configured file is not a completed pin comparison and is not reported as a mismatch.
+
+## 4. Behavior
+
+- **Success and failure:** after `Open()` or `OpenAsync()` succeeds, read
+  `connection.EncryptionInfo`. If opening throws `SqlException`, read
+  `exception.EncryptionInfo`. Its presence alone does not identify a certificate
+  failure.
+- **Unknown is not success:** `null` means unavailable, not applicable, or skipped.
+  Zero-valued `None` / `NoError` means the applicable validation ran without reporting
+  errors. If `TrustServerCertificate` bypasses validation, the skipped validation fields
+  remain `null`; a successful connection does not prove that certificate validation
+  occurred.
+- **Only applicable results:** the driver reports its effective verdict, not raw errors
+  that configured hostname or pin rules resolved. For a pin-only validation path,
+  `ChainStatus` remains `null` rather than reporting an invented chain failure. Absence
+  of `Revoked` does not establish that revocation was checked.
+- **Lifetime:** the connection snapshot is empty before opening, while opening, and after
+  close or dispose. Previously retained snapshots and exception snapshots don't change.
+  Pooled connections report the underlying physical connection's saved information;
+  retry and redirect results refer only to the terminal attempt.
+- **No additional validation:** reading these properties performs no handshake or
+  certificate check and doesn't change trust decisions.
+- **No message changes:** snapshot values are not added to exception messages,
+  `ToString()`, or default telemetry. Applications control their own display and
+  logging.
+- **Serialization:** the snapshot is not serialized with `SqlException`; a deserialized
+  exception returns an empty snapshot.
+- **Diagnostics only:** the snapshot must not be used to make security decisions; the
+  driver's own validation is authoritative.
+
+### Negotiated mode mapping
+
+`NegotiatedEncryptionMode` reflects the final state of the physical connection after
+login, derived from the client `Encrypt` setting and the server's PRELOGIN response:
+
+| Client `Encrypt` | Server PRELOGIN `ENCRYPTION` | Reported mode | Protocol |
+| --- | --- | --- | --- |
+| `Strict` (TDS 8.0) | — (TLS before PRELOGIN) | `Strict` | Negotiated TLS version |
+| `Mandatory` / `true` | `ENCRYPT_OFF`, `ENCRYPT_ON`, `ENCRYPT_REQ` | `Full` | Negotiated TLS version |
+| `Optional` / `false` | `ENCRYPT_REQ` | `Full` | Negotiated TLS version |
+| `Optional` / `false` | `ENCRYPT_OFF` (TLS removed after LOGIN7) | `LoginOnly` | Negotiated TLS version |
+| `Optional` / `false` | `ENCRYPT_ON` / `ENCRYPT_NOT_SUP` | `None` | `null` |
+
+With `Optional`, the client sends `ENCRYPT_OFF` in PRELOGIN. Only a server reply of
+`ENCRYPT_REQ` upgrades the session to full encryption; `ENCRYPT_ON` leaves the client option
+`OFF`, so no TLS handshake runs and the mode is `None`.
+
+**Failure path.** Each value is recorded as soon as it is known for the attempt; the requested
+settings are never used as substitutes for an unknown value. The mode is recorded when it is
+selected, before any TLS handshake: for `Strict` (TDS 8) immediately before the TLS-first
+handshake, because it is a connection invariant, and otherwise when the PRELOGIN response
+selects it. A TLS failure therefore reports the mode with a `null` protocol and cipher suite,
+unless those were observed. A TDS 7.x PRELOGIN failure that happens before the mode is selected
+(including the server rejecting the requested encryption) leaves the mode `null`. When no TLS is
+negotiated (`Optional` against a server that replies `ENCRYPT_NOT_SUP`), the mode `None` is
+recorded at PRELOGIN with a `null` protocol, so a later LOGIN7 failure (for example error 18456)
+reports mode `None` and a `null` protocol. Values are captured per physical login attempt and
+reset for every routing, retry, and failover attempt, and for the reconnect `TdsParser.Connect`
+makes when the server reports an instance failure in its PRELOGIN response, so a mode from an
+earlier attempt never reaches a later attempt's exception.
+**Failure scope.** A `SqlException` thrown while opening a connection carries the encryption
+info whenever any is available, whatever its cause. Failures in the login sequence in
+`SqlConnectionInternal.OpenLoginEnlist` (PRELOGIN, TLS, LOGIN7, routing and failover) carry the
+values of the terminal attempt. Automatic `System.Transactions` enlistment at the end of a
+non-pooled login runs inside that sequence, so its failures carry the values the completed login
+negotiated. When a pooled connection is checked out, its automatic enlistment (`Activate` →
+`Enlist`) can fail without a new login; that exception carries the snapshot the physical
+connection published when it logged in. Exceptions raised before any value was observed, and
+non-`SqlException` failures, keep `Empty`.
+- **Managed SNI** validates the server certificate inside the handshake, so a validation
+  failure fails `EnableSsl`. In this slice Managed SNI does not capture the negotiated protocol
+  on a failed handshake, so the exception reports the mode with a `null` protocol. Slice C adds
+  capture of `SslStream.SslProtocol` from the validation callback.
+- **Native SNI.** With the current SNI package, native SNI also rejects an untrusted server
+  certificate during the handshake, so this slice reports the mode but no protocol for that
+  failure (the tests assert this for both SNI implementations). If a deferred validation
+  failure surfaces after a successful `EnableSsl`, the protocol recorded by `EnableSsl` is kept.
+These rules only touch mode and protocol; certificate fields are never affected. Once login
+completes the accumulator is released, so SSL errors on an open connection never alter a published
+snapshot.
+
+**Cipher suite.** Producers assign the accumulator's `CipherSuite` property directly. On .NET it
+is a `TlsCipherSuite?`, which the accumulator stores and passes to the snapshot constructor
+unchanged. On .NET Framework it is the IANA identifier as an `int?`; the property setter ignores
+values outside 0-0xFFFF instead of failing the login. Likewise, the `Protocol` setter stores
+`SslProtocols.None` as `null`. Both cipher suite properties read the same value. Slice B adds
+only the plumbing: the value is reset with the other fields at the start of every physical login
+attempt and flows into the snapshot published on `SqlConnection` and attached to `SqlException`.
+No transport sets it in this slice, so the property stays `null`; Slice C records it from
+`SslStream.NegotiatedCipherSuite` (Managed SNI) and Slice D from native SNI, which needs a new
+SNI contract. On failure an observed cipher suite is kept, like the protocol. A cipher suite is
+only reported once a ServerHello selected it, so it is not dropped when the protocol is
+unavailable.
+## 5. Scope
+
+The API reports negotiated encryption, TLS protocol, the server-selected cipher suite, the
+server-presented leaf certificate, and certificate-validation results for successful and failed connection
+attempts.
+
+Intended coverage includes the supported .NET Framework and .NET targets, Managed and
+Native SNI, and TCP and Named Pipes where SqlClient uses TLS.
+
+## 6. Implementation plan
+
+The feature is delivered as a stack of pull requests:
+
+| Slice | Content |
+| --- | --- |
+| **A** | Public API surface only. Both getters return an empty snapshot. |
+| **B** | Capture the negotiated mode, TLS protocol and cipher suite, and attach the snapshot to `SqlException` when opening fails. |
+| **C** | Capture certificate details (presented certificate, validation errors, and chain status) in Managed SNI, on both successful and failed attempts. |
+| **D** | Native SNI interop for the certificate details and cipher suite. |

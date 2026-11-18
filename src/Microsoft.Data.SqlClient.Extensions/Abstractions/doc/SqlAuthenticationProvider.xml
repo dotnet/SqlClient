@@ -97,7 +97,9 @@ See the LICENSE file in the project root for more information.
     <BeforeLoad>
       <summary>This method is called immediately before the provider is added to the SQL authentication provider registry.</summary>
       <remarks>
-        Avoid performing long-waiting tasks in this method, since it can block other threads from accessing the provider registry.
+        This callback runs outside the registry lookup/publication lock. It delays the calling
+        registration, not other lookups. Concurrent or reentrant registration changes can cause
+        callbacks to be retried.
 
         This method must not throw.
       </remarks>
@@ -106,7 +108,9 @@ See the LICENSE file in the project root for more information.
     <BeforeUnload>
       <summary>This method is called immediately before the provider is removed from the SQL authentication provider registry.</summary>
       <remarks>
-        For example, this method is called when a different provider with the same authentication method overrides this provider in the SQL authentication provider registry. Avoid performing long-waiting task in this method, since it can block other threads from accessing the provider registry.
+        This method is called when a different provider replaces this provider for the same method.
+        It runs outside the lookup/publication lock; lookups retain the existing provider until
+        successful publication. Concurrent or reentrant registration changes can cause retries.
 
         This method must not throw.
       </remarks>
@@ -123,13 +127,46 @@ See the LICENSE file in the project root for more information.
     <AcquireTokenAsync>
       <summary>Acquires an access token from the authority.</summary>
       <param name="parameters">The parameters passed to the provider by the driver.</param>
+      <remarks>
+        During federated authentication, the driver passes the server-supplied STSURL and SPN as
+        <see cref="P:Microsoft.Data.SqlClient.SqlAuthenticationParameters.Authority" /> and
+        <see cref="P:Microsoft.Data.SqlClient.SqlAuthenticationParameters.Resource" />, respectively.
+        These values reflect the server's authentication configuration; the provider uses them
+        according to its token acquisition requirements.
+      </remarks>
       <throws cref="SqlAuthenticationProviderException">If any errors occur.</throws>
       <returns>Represents an asynchronous operation that returns the AD authentication token.</returns>
     </AcquireTokenAsync>
     <GetProvider>
       <summary>Gets an authentication provider by method.</summary>
       <param name="authenticationMethod">The authentication method.</param>
-      <returns>The authentication provider or <see langword="null" /> if not found.</returns>
+      <returns>The authentication provider or <see langword="null" /> if no provider is registered.</returns>
+      <remarks>
+        Bootstraps the registry on first access. Explicit registration in trimmed and NativeAOT
+        applications requires disabling configuration and Azure discovery at publish time.
+        Trimmed JIT apps may retain enabled reflective paths when they preserve the configuration
+        infrastructure, handlers, initializer/provider types and discovered Azure contracts.
+        Enabled paths report trimming and dynamic-code warnings as applicable.
+        Recoverable registry initialization failures emit diagnostic traces
+        through Microsoft.Data.SqlClient.EventSource with the Trace keyword (0x2).
+        Enable tracing before the first registry access to capture configuration-reading,
+        initializer/provider activation and Azure-discovery failures. Recoverable failures in
+        these steps are traced. Activation failures retain their original exceptions. A failed
+        explicit method returns null instead of an earlier provider or Azure default.
+        Failed initializers block defaults for otherwise-unregistered methods.
+        Subsequent lookups of affected methods trace their retained activation failures.
+        Unexpected recoverable bootstrap failures are also cached and logged on later accesses.
+        Unaffected successfully registered providers remain usable.
+        Register an application provider as a workaround, or correct the reported configuration
+        or package version problem and restart the application to retry bootstrap.
+        <para>
+          User callbacks execute outside the lookup/publication lock. Concurrent or reentrant
+          registration changes cause replacement to recheck precedence and retry callbacks.
+          During bootstrap, concurrent and reentrant lookups see only providers published so far;
+          a method not initialized yet can return null. During replacement, lookups retain the
+          previous provider until successful publication.
+        </para>
+      </remarks>
     </GetProvider>
     <SetProvider>
       <summary>Sets an authentication provider by method.</summary>
@@ -138,6 +175,41 @@ See the LICENSE file in the project root for more information.
       <returns>
         <see langword="true" /> if the operation succeeded; otherwise, <see langword="false" /> (for example, the existing provider disallows overriding).
       </returns>
+      <remarks>
+        Works directly under NativeAOT when reflective bootstrap is disabled at publish time.
+        Successfully registered configuration providers and configured initializers
+        cannot be overwritten by application registrations. Application registrations replace
+        the discovered Azure default. Outside configured initializer execution, a null provider,
+        unsupported method or recoverable provider callback failure returns false and emits diagnostic traces
+        through Microsoft.Data.SqlClient.EventSource with the Trace keyword (0x2).
+        During a configured initializer, registration errors propagate to the configuration
+        application step and stop that initializer. Recoverable initializer failures are traced,
+        and later configured providers are still attempted. Failed explicit methods cannot use
+        earlier providers or defaults. Failed initializers prevent defaults for unknown intended
+        methods. Application registration can explicitly recover a failed method.
+        Fatal failures propagate, including failures nested in inner or aggregate exceptions.
+        Fatal bootstrap failures are not cached; later access can retry bootstrap and repeat
+        earlier side effects if execution continues.
+        Failed application registrations do not publish the candidate provider.
+        Unexpected recoverable bootstrap failures are cached and traced, but application
+        registration remains available without retrying bootstrap. Existing configuration
+        registrations retain precedence. Correct the reported cause and restart the application
+        to retry failed configuration or discovery.
+        <para>
+          User callbacks execute outside the lookup/publication lock. Concurrent or reentrant
+          changes cause replacement to recheck precedence and retry callbacks.
+          Only registrations on the configured initializer's own thread inherit configuration
+          precedence and propagate registration errors to the initializer. This compares managed
+          thread IDs while Initialize is running; it does not track logical async context.
+          Queued work or continuations on another thread use application precedence and return
+          false on recoverable registration errors, even if the initializer waits for that work.
+          The marker is cleared when Initialize returns or throws; asynchronous work is not
+          awaited. GetProvider does not use this thread-ID check.
+          Concurrent bootstrap access observes published state without waiting for
+          initialization to finish; later configuration registrations can replace application
+          registrations made during bootstrap.
+        </para>
+      </remarks>
     </SetProvider>
   </members>
 </docs>

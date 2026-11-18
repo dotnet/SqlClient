@@ -9,6 +9,12 @@
 variables:
   # Libraries ==============================================================
 
+  # Variables to be used for all pipelines in the sqlclient reposity.
+  #
+  # codecov_token (SECRET)
+  # general_purpose_pool_name
+  - group: sqlclient-pipeline-config-v1
+
   # These variables are used to construct the config file for manual tests.
   #
   # AzureKeyVaultTenantId
@@ -23,15 +29,17 @@ variables:
   # UserManagedIdentityClientId
   - group: sqlclient-testconfig-v1
 
-  # Provides 'general_purpose_pool_name', the 1ES pool that hosts most jobs in this project.
-  - group: sqlclient-pipeline-config-v1
-
   # General Variables ======================================================
 
-  # Name to use for the packaging stage. This is to ensure that the packaging stage and the test
-  # stages (that will depend on the packaging stage passing) use the same name.
-  - name: stageNamePack
-    value: "pack_stage"
+  # Name to use for the packaging stage in debug config. This is to ensure that the packaging stage
+  # and the test stages (that will depend on the packaging stage passing) use the same name.
+  - name: stageNamePackDebug
+    value: "pack_stage_debug"
+
+  # Name to use for the packaging state in release config. This is to ensure that the packaging
+  # stage and the test stages (that will depend on the packaging stage passing) use the same name.
+  - name: stageNamePackRelease
+    value: "pack_stage_release"
 
   # Name to use for the secret generation stage. This is to ensure that the secret generation stage
   # and the test stages (that will depend on the generated secret) use the same name.

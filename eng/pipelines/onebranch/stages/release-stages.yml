@@ -72,8 +72,9 @@ parameters:
     type: string
 
   # ── Symbols publishing parameter ───────────────────────────────────────
-  # When true, the release stage will depend on publish_symbols so that
-  # symbol publishing completes before packages are released.
+  # When true, the release stage depends on publish_symbols. With
+  # skipSymbolPublishingPolling enabled, this waits only for request submission;
+  # otherwise, the existing status check must also pass before packages are released.
 
   - name: publishSymbols
     type: boolean

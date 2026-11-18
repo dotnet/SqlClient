@@ -591,26 +591,11 @@
   <data name="SQL_NonLocalSSEInstance" xml:space="preserve">
     <value>Přesměrování instance SSE není podporováno u uživatelských instancí, které nejsou místní.</value>
   </data>
-  <data name="SQL_UnsupportedAuthentication" xml:space="preserve">
-    <value>Ověřování {0} není podporované.</value>
-  </data>
-  <data name="SQL_CannotCreateAuthProvider" xml:space="preserve">
-    <value>Pro {0} se nepodařilo vytvořit instanci zprostředkovatele ověřování s typem {1}.</value>
-  </data>
-  <data name="SQL_CannotCreateAuthInitializer" xml:space="preserve">
-    <value>Nepodařilo se vytvořit instanci SqlAuthenticationInitializer s typem {0}.</value>
-  </data>
-  <data name="SQL_UnsupportedAuthenticationByProvider" xml:space="preserve">
-    <value>Zprostředkovatel {0} nepodporuje ověřování {1}.</value>
-  </data>
   <data name="SQL_CannotFindAuthProvider" xml:space="preserve">
     <value>Pro {0} nelze najít zprostředkovatele ověřování.</value>
   </data>
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
-    <value>Pro {0} nelze najít zprostředkovatele ověřování. Nainstalujte balíček NuGet Microsoft.Data.SqlClient.Extensions.Azure (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure), abyste mohli používat metody ověřování Active Directory (Entra ID).</value>
-  </data>
-  <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>Nastavení useWamBroker vyžaduje balíček Microsoft.Data.SqlClient.Extensions.Azure, aby se zpřístupnilo Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions. Upgradujte balíček Microsoft.Data.SqlClient.Extensions.Azure alespoň na verzi 1.1.0, která zahrnuje tento typ.</value>
+    <value>Pro {0} nelze najít zprostředkovatele ověřování. Zaregistrujte poskytovatele pomocí metody SqlAuthenticationProvider.SetProvider nebo použijte kompatibilní balíček NuGet Microsoft.Data.SqlClient.Extensions.Azure s povoleným automatickým zjišťováním. Automatické zjišťování není dostupné, pokud je při publikování zakázané. Aplikace JIT s oříznutým kódem vyžadují zachované kontrakty reflexe. Aplikace NativeAOT by měly při publikování zakázat cesty spuštění využívající reflexi a explicitně zaregistrovat poskytovatele. V trasování Microsoft.Data.SqlClient.EventSource (úroveň Informational, klíčové slovo Trace 0x2) zkontrolujte selhání konfigurace nebo načítání rozšíření Azure.</value>
   </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>Parametr {0} nesmí obsahovat hodnotu Null ani nesmí být prázdný.</value>
@@ -1800,6 +1785,9 @@
   <data name="TCE_EnclaveTypeNullForEnclaveBasedQuery" xml:space="preserve">
     <value>Vnitřní chyba. Při spouštění dotazu, který vyžaduje výpočty v enklávě, je typ enklávy přijatý ze systému SQL Server null nebo prázdný.</value>
   </data>
+  <data name="TCE_AzureAttestationExtensionNotFound" xml:space="preserve">
+    <value>Protokol ověření identity AAS vyžaduje Microsoft.Data.SqlClient.Extensions. Balíček Azure ve stejné verzi jako Microsoft.Data.SqlClient. Přidejte nebo aktualizujte odkaz na tento balíček, nebo v připojovací řetězec zadejte jiný protokol ověření identity.</value>
+  </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
     <value>Pro typu enklávy {0} a protokol ověření identity {1} se nenašel žádný zprostředkovatel enklávy. Zadejte prosím v připojovacím řetězci správný protokol ověření identity. </value>
   </data>
@@ -1901,6 +1889,9 @@
   </data>
   <data name="SQLCR_NoCRAckAtReconnection" xml:space="preserve">
     <value>Server neuznal pokus o obnovení. Připojení nelze obnovit.</value>
+  </data>
+  <data name="DbConnectionString_VectorTypeSupport" xml:space="preserve">
+    <value>Úroveň podpory vektorového typu, která se má vyjednat se serverem</value>
   </data>
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>Definuje chování v období blokování pro fond připojení.</value>
@@ -2067,6 +2058,9 @@
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
     <value>Pokud je u nadřazeného příkazu povolena vlastnost EnableOptimizedParameterBinding, parametr {0} nemůže mít hodnotu Direction Output nebo InputOutput.</value>
   </data>
+  <data name="SQL_PrepareNotSupportedForOptimizedBinding" xml:space="preserve">
+    <value>Pokud je povolená možnost EnableOptimizedParameterBinding, Prepare není podporované. Vytvořte nový SqlCommand a buď před jeho prvním provedením nastavte EnableOptimizedParameterBinding na false, nebo ho proveďte bez volání Prepare.</value>
+  </data>
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
     <value>Při načítání přístupového tokenu pomocí metody ověřování {0} vypršel časový limit připojení. Poslední chyba: {1}: {2}</value>
   </data>
@@ -2099,6 +2093,9 @@
   </data>
   <data name="SqlAppContextSwitchManager_InvalidValue" xml:space="preserve">
     <value>Při pokusu o nastavení přepínače AppContext {0}={1} došlo k výjimce.</value>
+  </data>
+  <data name="SQL_GlobalizationInvariantModeRequiresLcid" xml:space="preserve">
+    <value>Když je povolený invariantní režim globalizace, instance SqlMetaData popisující znakové nebo textové typy musí uvádět LCID.</value>
   </data>
   <data name="SQL_GlobalizationInvariantModeNotSupported" xml:space="preserve">
     <value>Invariantní režim globalizace není podporován.</value>

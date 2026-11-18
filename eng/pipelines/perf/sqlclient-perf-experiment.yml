@@ -130,9 +130,6 @@ parameters:
 # Fixed (non-configurable) constants for this pipeline.  These are intentionally NOT parameters or
 # library variables: they are invariant for the SqlClient perf pipelines.
 #   * buildConfiguration = Release            - perf numbers are only meaningful in Release.
-#   * sourcesSubDir       = dotnet-sqlclient  - folder 'self' checks out into under the template's
-#                                               MULTI-REPO checkout ($(Build.SourcesDirectory)/<repo>);
-#                                               must match the ADO repository name.
 #
 # The other pipelines additionally expose UseManagedSniOnWindows / UseOptimizedAsyncBehaviour /
 # UseConnectionPoolV2 as queue-time flags applied to BOTH passes.  This pipeline deliberately does
@@ -144,6 +141,14 @@ parameters:
 # Variables' group and has no translate/ingest steps.  See the header comment for why that is
 # structural here rather than conditional.
 variables:
+
+  # Multi-repo checkout uses the repository's leaf name, not GitHub's owner/repo name.
+  - ${{ if contains(variables['Build.Repository.Name'], '/') }}:
+    - name: PerfSourceRoot
+      value: $(Build.SourcesDirectory)/${{ split(variables['Build.Repository.Name'], '/')[1] }}
+  - ${{ else }}:
+    - name: PerfSourceRoot
+      value: $(Build.SourcesDirectory)/$(Build.Repository.Name)
 
   # Pre-computed testScriptArgs chunks.  The Windows entry point is PowerShell and binds
   # '-PascalCase' params, while the Linux one is bash and parses '--kebab-case' flags, so the
@@ -188,7 +193,7 @@ extends:
     # The entire driver source tree is copied to the VM so the benchmarks (which reference
     # Microsoft.Data.SqlClient as a project) can be built from source against the current commit.
     # Under the template's multi-repo checkout, 'self' lands in a repo-named subfolder.
-    testRootDir: $(Build.SourcesDirectory)/dotnet-sqlclient
+    testRootDir: $(PerfSourceRoot)
 
     # Entry-point script (relative to testRootDir), selected by platform.  Linux uses bash, Windows
     # uses PowerShell, per the template's .sh/.ps1 convention.  Same scripts as the other two perf
@@ -232,6 +237,6 @@ extends:
         condition: succeededOrFailed()
         inputs:
           targetType: filePath
-          filePath: $(Build.SourcesDirectory)/dotnet-sqlclient/eng/pipelines/perf/scripts/show_perf_results.sh
+          filePath: $(PerfSourceRoot)/eng/pipelines/perf/scripts/show_perf_results.sh
         env:
           RESULTS_DIR: $(Build.ArtifactStagingDirectory)/results

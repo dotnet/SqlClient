@@ -551,6 +551,10 @@ internal static class TdsEnums
     // SNI internal errors (shouldn't overlap with Win32 / socket errors)
     public const uint SNI_QUEUE_FULL = 1048576;		 // Packet queue is full
 
+    // SNI provider identifiers reported in SNI error details. The value matches SSL_PROV in both
+    // the native (Interop.Windows.Sni.Provider) and managed (ManagedSni.SniProviders) enums.
+    public const int SNI_SSL_PROVIDER = 6;
+
     // SNI flags
     public const uint SNI_SSL_VALIDATE_CERTIFICATE = 1;   // This enables validation of server certificate
     public const uint SNI_SSL_USE_SCHANNEL_CACHE = 2;     // This enables schannel session cache
@@ -640,9 +644,6 @@ internal static class TdsEnums
     internal const int MAX_TIME_LENGTH = 5; // Maximum length for time
     internal const int MAX_DATETIME2_LENGTH = 8; // Maximum length for datetime2
     internal const int WHIDBEY_DATE_LENGTH = 10;
-    internal static readonly int[] WHIDBEY_TIME_LENGTH = { 8, 10, 11, 12, 13, 14, 15, 16 };
-    internal static readonly int[] WHIDBEY_DATETIME2_LENGTH = { 19, 21, 22, 23, 24, 25, 26, 27 };
-    internal static readonly int[] WHIDBEY_DATETIMEOFFSET_LENGTH = { 26, 28, 29, 30, 31, 32, 33, 34 };
 
     internal enum FedAuthInfoId : byte
     {
@@ -659,8 +660,20 @@ internal static class TdsEnums
     internal const byte MAX_SUPPORTED_JSON_VERSION = 0x01;
 
     // Vector Support constants
-    internal const byte MAX_SUPPORTED_VECTOR_VERSION = 0x01;
+    //
+    // The version negotiated via the VECTORSUPPORT feature extension determines which
+    // vector base types the server returns in their native binary form:
+    //
+    //   0 - Native vector support was not negotiated. Vector columns are returned
+    //       as varchar(max) containing a JSON array.
+    //   1 - The server supports vector columns with a float32 base type. Columns with
+    //       any other base type are returned as varchar(max) containing a JSON array.
+    //   2 - The server additionally supports vector columns with a float16 base type.
+    internal const byte VECTOR_VERSION_NOT_SUPPORTED = 0x00;
+    internal const byte VECTOR_VERSION_FLOAT32 = 0x01;
+    internal const byte VECTOR_VERSION_FLOAT16 = 0x02;
     internal const int VECTOR_HEADER_SIZE = 8;
+    internal const int VECTOR_ELEMENT_TYPE_OFFSET = 4;
 
     // TCE Related constants
     internal const byte TCE_NOT_ENABLED = 0x00;

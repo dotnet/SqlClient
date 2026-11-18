@@ -246,6 +246,22 @@ if ($hasNet10Sdk) {
 # Informational only: never let 'dotnet --info' (or its stderr) fail the run.
 try { Invoke-Native { dotnet --info } "dotnet --info failed" } catch { Write-Warning $_.Exception.Message }
 
+# Restore repository-local build tools before any project builds.
+function Restore-LocalTools {
+    param([Parameter(Mandatory)][string]$SourceRoot)
+
+    Write-Host "Restoring local .NET tools in $SourceRoot ..."
+    Push-Location $SourceRoot
+    try {
+        Invoke-Native { dotnet tool restore } "Failed to restore local .NET tools in $SourceRoot" |
+            Out-Host
+    } finally {
+        Pop-Location
+    }
+}
+
+Restore-LocalTools $RepoRoot
+
 ####################################################################################################
 # 2. Create the perf database on the VM's SQL Server.
 #
@@ -463,7 +479,7 @@ function Prepare-RunnerConfig {
 # 4 & 5. Run the benchmarks, pinned to the reserved client CPU set.
 #
 # Two passes are executed so the pipeline can compare the branch under test against a baseline:
-#   * baseline  -> either Microsoft.Data.SqlClient restored from NuGet.org at $BaselineVersion
+#   * baseline  -> either Microsoft.Data.SqlClient restored from the governed feed at $BaselineVersion
 #                  (ReferenceType=Package + CPM VersionOverride), or - when $BaselineSourceRef is
 #                  given instead - the driver built from another git ref of this repository (e.g.
 #                  'main', used by the PR perf pipeline).  Skipped when neither is given.
@@ -473,21 +489,8 @@ function Prepare-RunnerConfig {
 # results\<label>\.
 ####################################################################################################
 
-# NuGet.config on the VM exposes only the governed feed; the baseline package (and its public deps)
-# live on NuGet.org.  Central Package Management rejects multiple unmapped sources (NU1507), so the
-# baseline restore uses a dedicated single-source config pointing only at NuGet.org.
-$BaselineNuGetConfig = Join-Path $RepoRoot "perf-baseline-nuget.config"
-function Write-BaselineNuGetConfig {
-    @'
-<?xml version="1.0" encoding="utf-8"?>
-<configuration>
-  <packageSources>
-    <clear />
-    <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
-  </packageSources>
-</configuration>
-'@ | Set-Content -Path $BaselineNuGetConfig -Encoding UTF8
-}
+# Use the repository's governed feed and package source mappings for baseline restores.
+$BaselineNuGetConfig = Join-Path $RepoRoot "NuGet.config"
 
 # --- Source baseline (-BaselineSourceRef) ---------------------------------------------------------
 # Materialises another git ref of THIS repository (e.g. 'main') next to the checkout so the baseline
@@ -624,6 +627,8 @@ function Initialize-BaselineSource {
     if (-not (Test-Path $baselineProject)) {
         throw "Baseline source tree at $BaselineSrcDir has no performance test project ($baselineProject)."
     }
+
+    Restore-LocalTools $BaselineSrcDir
 
     # Label recorded in the comparison output so a run states exactly which baseline commit it used.
     $label = "$Ref@$($sha.Trim())"
@@ -825,7 +830,12 @@ $BaselineBuildArgs = @()
 
 if (-not [string]::IsNullOrEmpty($BaselineVersion)) {
     # Released package baseline: candidate's perf project, MDS swapped to a NuGet package reference.
-    Write-BaselineNuGetConfig
+    if ($BaselineVersion -eq "latest") {
+        $BaselineVersion = Invoke-Native {
+            python3 (Join-Path $ScriptDir "resolve_baseline.py")
+        } "Failed to resolve latest stable baseline"
+        Write-Host "Resolved latest stable baseline: $BaselineVersion"
+    }
     $BaselineLabel = $BaselineVersion
     $BaselineBuildArgs = @(
         "-p:ReferenceType=Package",

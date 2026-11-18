@@ -3,8 +3,15 @@
 // See the LICENSE file in the project root for more information.
 
 const assert = require('node:assert/strict');
+const { spawnSync } = require('node:child_process');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
 const { test } = require('node:test');
-const { validateTriageOutput } = require('../validate-triage-output.cjs');
+const {
+    validateTriageOutput,
+    validateTriageOutputFile,
+} = require('../validate-triage-output.cjs');
 
 const summary = `## \u{1F50D} Triage Summary
 
@@ -25,15 +32,8 @@ Cancellation leaves the operation running. Investigate the async cancellation pa
 - Ask the author for their SQL Server version.
 `;
 
-const waitingLabel = 'Auto-Triage: Waiting for Author';
 const output = (body) => ({
-    items: [
-        { type: 'add_comment', body },
-        ...(!body.includes('Triage Summary (on-demand re-triage)') ? [{
-            type: /\| Environment \| (?:Missing:|.*Partial:)/.test(body) ? 'add_labels' : 'remove_labels',
-            labels: [waitingLabel],
-        }] : []),
-    ],
+    items: [{ type: 'add_comment', body }],
     errors: [],
 });
 
@@ -44,21 +44,87 @@ test('accepts initial, follow-up, and on-demand summaries with multiline content
     validateTriageOutput(output(summary.replaceAll('\n', '\r\n')));
 });
 
-test('accepts a summary followed by an allowed label operation', () => {
+test('rejects label operations before or after a summary and without one', () => {
+    // Arrange
+    const comment = output(summary).items[0];
     for (const type of ['add_labels', 'remove_labels']) {
-        const body = type === 'add_labels' ? summary :
-            summary.replace('Missing: SQL Server version', 'All required environment details provided');
-        const value = output(body);
-        validateTriageOutput(value);
+        const label = { type, labels: ['Any label'] };
+        for (const items of [
+            [label, comment],
+            [comment, label],
+            [label],
+            [{ type: 'noop', reason: 'No new information' }, label],
+            [{ type: 'report_incomplete', reason: 'Context unavailable' }, label],
+        ]) {
+            // Act and Assert
+            assert.throws(() => validateTriageOutput({ items }), /cannot change issue labels/);
+        }
     }
 });
 
-test('rejects label operations before the summary', () => {
-    for (const type of ['add_labels', 'remove_labels']) {
-        const value = output(summary);
-        value.items.unshift({ type, labels: ['Auto-Triage: Waiting for Author'] });
-        assert.throws(() => validateTriageOutput(value), /before/);
+test('validates the queued batch without rewriting its file', () => {
+    // Arrange
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'triage-output-'));
+    const filename = path.join(directory, 'agent_output.json');
+    try {
+        const queued = JSON.stringify(output(summary), null, 2);
+        fs.writeFileSync(filename, queued);
+
+        // Act
+        validateTriageOutputFile(filename);
+
+        // Assert
+        assert.equal(fs.readFileSync(filename, 'utf8'), queued);
+
+        // A rejected batch leaves the queued file unchanged.
+        const invalid = JSON.stringify({
+            items: [{ type: 'add_comment', body: 'test simple body' }],
+        });
+        fs.writeFileSync(filename, invalid);
+        assert.throws(() => validateTriageOutputFile(filename), /Triage Summary/);
+        assert.equal(fs.readFileSync(filename, 'utf8'), invalid);
+    } finally {
+        // Cleanup
+        fs.rmSync(directory, { recursive: true, force: true });
     }
+});
+
+test('command line validation accepts a comment-only batch without rewriting it', () => {
+    // Arrange
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'triage-output-'));
+    const filename = path.join(directory, 'agent_output.json');
+    const queued = JSON.stringify(output(summary), null, 2);
+    fs.writeFileSync(filename, queued);
+    try {
+        // Act
+        const result = spawnSync(process.execPath,
+            [path.join(__dirname, '..', 'validate-triage-output.cjs')],
+            { env: { ...process.env, GH_AW_AGENT_OUTPUT: filename }, encoding: 'utf8' });
+
+        // Assert
+        assert.equal(result.status, 0, result.stderr);
+        assert.match(result.stdout, /Triage output validated before safe-output publication/);
+        assert.equal(fs.readFileSync(filename, 'utf8'), queued);
+    } finally {
+        // Cleanup
+        fs.rmSync(directory, { recursive: true, force: true });
+    }
+});
+
+test('the compiled workflow validates the batch before publishing without label tools', () => {
+    // Arrange
+    const workflow = fs.readFileSync(
+        path.join(__dirname, '..', '..', 'workflows', 'issue-triage.lock.yml'), 'utf8');
+
+    // Act
+    const validate = workflow.indexOf('name: Validate triage output before publishing');
+    const validationCall = workflow.indexOf('validateTriageOutputFile(filename)', validate);
+    const publish = workflow.indexOf('name: Process Safe Outputs', validate);
+
+    // Assert
+    assert.ok(validate >= 0 && validationCall > validate && publish > validationCall);
+    assert.doesNotMatch(workflow.slice(validate, publish), /validateTriageOutput\(JSON\.parse/);
+    assert.doesNotMatch(workflow, /add_labels|remove_labels|Auto-Triage: Waiting for Author/);
 });
 
 test('preserves explicit no-op and failure reporting without a comment', () => {
@@ -67,7 +133,7 @@ test('preserves explicit no-op and failure reporting without a comment', () => {
     }
 });
 
-test('enforces label state for initial, follow-up, and on-demand summaries', () => {
+test('accepts all environment states without labels for each triage scenario', () => {
     for (const suffix of ['', ' (updated after author response)', ' (on-demand re-triage)']) {
         for (const environment of [
             'Missing: SQL Server version',
@@ -77,25 +143,9 @@ test('enforces label state for initial, follow-up, and on-demand summaries', () 
         ]) {
             const body = summary.replace('Triage Summary', `Triage Summary${suffix}`)
                 .replace('Missing: SQL Server version', environment);
-            const onDemand = suffix.includes('on-demand');
-            const expected = /Missing:|Partial:/.test(environment) ? 'add_labels' : 'remove_labels';
-            const comment = { type: 'add_comment', body };
-            const label = { type: expected, labels: [waitingLabel] };
-            validateTriageOutput({ items: onDemand ? [comment] : [comment, label] });
-            const invalid = onDemand ? [
-                [comment, label],
-                [comment, { ...label, type: expected === 'add_labels' ? 'remove_labels' : 'add_labels' }],
-            ] : [
-                [comment],
-                [comment, { ...label, type: expected === 'add_labels' ? 'remove_labels' : 'add_labels' }],
-                [comment, label, label],
-                [comment, { ...label, labels: [] }],
-                [comment, { ...label, labels: ['Unrelated label'] }],
-                [comment, { ...label, labels: [waitingLabel, 'Unrelated label'] }],
-            ];
-            for (const items of invalid) {
-                assert.throws(() => validateTriageOutput({ items }), /label/i);
-            }
+
+            // Act and Assert
+            assert.doesNotThrow(() => validateTriageOutput(output(body)));
         }
     }
 });
@@ -354,8 +404,7 @@ test('rejects multiple comments and mixed success/incomplete outcomes', () => {
 
 test('rejects output errors even when a complete summary is queued', () => {
     const value = output(summary);
-    value.items.push({ type: 'add_labels', labels: ['Auto-Triage: Waiting for Author'] });
-    value.errors.push({ type: 'remove_labels', message: 'Label operation exceeded quota' });
+    value.errors.push({ type: 'add_comment', message: 'Comment operation exceeded quota' });
     assert.throws(() => validateTriageOutput(value), /errors/);
     assert.throws(() => validateTriageOutput({
         items: [{ type: 'noop', reason: 'No new information' }],
@@ -369,6 +418,6 @@ test('rejects missing output, empty results, and label-only results', () => {
         assert.throws(() => validateTriageOutput(value), /output|result/);
     }
     assert.throws(() => validateTriageOutput({
-        items: [{ type: 'add_labels', labels: ['Auto-Triage: Waiting for Author'] }],
-    }), /summary/);
+        items: [{ type: 'add_labels', labels: ['Any label'] }],
+    }), /cannot change issue labels/);
 });

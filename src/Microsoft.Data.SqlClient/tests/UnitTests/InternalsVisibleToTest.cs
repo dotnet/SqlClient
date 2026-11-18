@@ -48,7 +48,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         }
 
         /// <summary>
-        /// Ensures that only the IVTs we expect are present on the SqlClient assembly.
+        /// Ensures only the expected test assemblies receive internal access with the expected signing keys.
         /// </summary>
         [Fact]
         public void FriendAssembliesMatchExpectedList()
@@ -70,6 +70,10 @@ namespace Microsoft.Data.SqlClient.UnitTests
             Assert.Equal("UnitTests", unitTestAssembly.GetName().Name);
             expectedFriends.Add(unitTestAssembly.GetName());
 
+            AssemblyName manualTestAssembly = unitTestAssembly.GetName();
+            manualTestAssembly.Name = "ManualTests";
+            expectedFriends.Add(manualTestAssembly);
+
             // Inspect the list of friend assemblies declared on the SqlClient assembly.
             foreach (var actualFriend in
                      sqlClientAssembly.GetCustomAttributes<InternalsVisibleToAttribute>())
@@ -87,6 +91,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
                     byte[]? publicKey = expectedAssembly.GetPublicKey();
                     Assert.NotNull(publicKey);
                     Assert.NotEmpty(publicKey);
+                    Assert.Equal(publicKey, actualAssembly.GetPublicKey());
                 }
             }
 

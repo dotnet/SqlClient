@@ -17,6 +17,8 @@
 # * Although theoretically in package build we could arrange build steps to minimize re-building,
 #   build.proj isn't properly aware of how to do this. So, instead, arranging the build steps
 #   alphabetically is the best way to arrange for now.
+# * The nuget verification step at the end only runs on Windows. So as of writing (2026-11) this
+#   stage must run on a Windows VM. If they ever release a version for linux, update this (@TODO:)!
 
 parameters:
 
@@ -66,14 +68,19 @@ stages:
             - imageOverride -equals ${{ parameters.poolImage }}
 
         steps:
-          # Install dotnet
+          ##################################################################
+          # 1) Setup for build/pack
+
+          # 1a) Install dotnet
           - template: /eng/pipelines/common/steps/install-dotnet.yml@self
 
-          # Restore dotnet tools
+          # 1b) Restore dotnet tools
           - template: /eng/pipelines/common/steps/restore-dotnet-tools.yml@self
 
           # ################################################################
-          # Build/Pack Microsoft.Data.SqlClient
+          # 2) Build and pack
+
+          # 2a) Build/Pack Microsoft.Data.SqlClient
           - template: /eng/pipelines/pr/steps/pack-buildproj-step.yml
             parameters:
               condition: succeeded() # Only run if dotnet was installed successfully
@@ -82,8 +89,7 @@ stages:
               buildSuffix: ${{ parameters.buildSuffix }}
               packageShortName: SqlClient
 
-          # ################################################################
-          # Build/Pack Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
+          # 2b) Build/Pack Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
           - template: /eng/pipelines/pr/steps/pack-buildproj-step.yml
             parameters:
               condition: succeededOrFailed()
@@ -92,8 +98,7 @@ stages:
               buildSuffix: ${{ parameters.buildSuffix }}
               packageShortName: AkvProvider
 
-          # ################################################################
-          # Build/Pack Microsoft.Data.SqlClient.Extensions.Abstractions
+          # 2c) Build/Pack Microsoft.Data.SqlClient.Extensions.Abstractions
           - template: /eng/pipelines/pr/steps/pack-buildproj-step.yml
             parameters:
               condition: succeededOrFailed()
@@ -102,8 +107,7 @@ stages:
               buildSuffix: ${{ parameters.buildSuffix }}
               packageShortName: Abstractions
 
-          # ################################################################
-          # Build/Pack Microsoft.Data.SqlClient.Extensions.Azure
+          # 2d) Build/Pack Microsoft.Data.SqlClient.Extensions.Azure
           - template: /eng/pipelines/pr/steps/pack-buildproj-step.yml
             parameters:
               condition: succeededOrFailed()
@@ -112,8 +116,7 @@ stages:
               buildSuffix: ${{ parameters.buildSuffix }}
               packageShortName: Azure
 
-          # ################################################################
-          # Build/Pack Microsoft.Data.SqlClient.Internal.Logging
+          # 2e) Build/Pack Microsoft.Data.SqlClient.Internal.Logging
           - template: /eng/pipelines/pr/steps/pack-buildproj-step.yml
             parameters:
               condition: succeededOrFailed()
@@ -122,8 +125,7 @@ stages:
               buildSuffix: ${{ parameters.buildSuffix }}
               packageShortName: Logging
 
-          # ################################################################
-          # Build/Pack Microsoft.SqlServer.Server
+          # 2f) Build/Pack Microsoft.SqlServer.Server
           - template: /eng/pipelines/pr/steps/pack-buildproj-step.yml
             parameters:
               condition: succeededOrFailed()
@@ -132,18 +134,36 @@ stages:
               buildSuffix: ${{ parameters.buildSuffix }}
               packageShortName: SqlServer
 
-          # Emit the build output
-          - script: tree -a $(BUILD_OUTPUT)
-            displayName: Output Build Output Tree
-            condition: succeededOrFailed()
+          ##################################################################
+          # 3) Log the build output
 
-          # Upload the build output as the artifact of the job.
+          # 3a) Emit the build output
+          - template: /eng/pipelines/common/steps/output-tree-step.yml@self
+            parameters:
+              condition: succeededOrFailed()
+
+              path: $(BUILD_OUTPUT)
+
+          # 3b) Upload the build output as the artifact of the job.
           #
           # The artifact name includes the job attempt number because pipeline artifact names must
           # be unique within a build. Re-running a failed job would otherwise attempt to publish
           # an artifact that already exists and fail with:
           #   "Artifact build_and_pack_projects already exists for build <id>."
+          - pwsh: |
+              $artifactName = '${{ parameters.packArtifactBaseName }}_${{ parameters.buildConfiguration }}_attempt$(System.JobAttempt)'
+              Write-Host "##vso[task.setvariable variable=artifactName;isOutput=true]$artifactName"
+            name: packOutput
+            displayName: Record Build Output Artifact
+            condition: succeededOrFailed()
+
           - publish: $(BUILD_OUTPUT)
-            artifact: ${{ parameters.packArtifactBaseName }}_attempt$(System.JobAttempt)
+            artifact: $(packOutput.artifactName)
             displayName: Publish Build Output
             condition: succeededOrFailed()
+
+          ##################################################################
+          # 4) Verify the nuget packages
+          - template: /eng/pipelines/common/templates/steps/verify-nuget-package-step.yml@self
+            parameters:
+              packagePath: $(BUILD_OUTPUT)

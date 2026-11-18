@@ -104,7 +104,22 @@ When a new issue is created, follow these steps:
 - Follow a test-driven approach: write failing tests before implementing fixes.
 - **Cover both sync and async code paths** where the API exposes both variants (e.g., `Open`/`OpenAsync`, `ExecuteReader`/`ExecuteReaderAsync`). Sync and async implementations often differ internally.
 - Use the existing test framework in the `tests/` directory.
-- Follow the naming conventions and structure of existing tests.
+- Read and follow the [test authoring rules](instructions/testing.instructions.md#writing-tests).
+  They are mandatory for unit tests and strongly recommended for manual and functional tests;
+  older neighboring tests do not override them.
+- Use commented Arrange, Act, Assert, Cleanup sections in order; Act and Assert are required.
+  Include Arrange only for needed setup and Cleanup only for special teardown. Comment each group
+  of steps within a section to explain what happens and, when unclear, why.
+- Use `[MemberData]` with a declared `TheoryData<...>` return type for non-constant theory data;
+  never use `[ClassData]` for it.
+- Keep `{ClassName}Tests.cs` focused on that class and mirror its source folder under `UnitTests/`.
+  Name tests `{MethodName}_{Input}_{ExpectedOutput}` without the tested class name.
+- Put unit-only utilities in `tests/UnitTests/Utilities/` and utilities shared across test projects
+  in TestCommon (`tests/Common/`), excluding fuzz, stress, and performance projects from this rule.
+- Split separate scenarios into separate tests; do not select behavior with switches or flags,
+  including sync/async switches. Use theories only to vary inputs for the same behavior.
+- Verify that tests exercise the intended behavior and assert outcomes that detect regressions.
+  Confirm the intended tests actually ran; skipped tests or zero matches do not establish coverage.
 - Ensure tests are comprehensive and cover edge cases.
 - If the issue involves changes to public APIs, update the corresponding `ref/` projects to reflect those changes.
 - Add sample code snippets in the 'doc/samples/' directory to demonstrate the new or fixed functionality and link them in the documentation in `doc/` folder.

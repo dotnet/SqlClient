@@ -222,7 +222,7 @@ jobs:
               -DestinationPath "$(xmlDocsDependencyRoot)"
               -ConfigFile "$(REPO_ROOT)/NuGet.config"
 
-      - template: /eng/pipelines/onebranch/steps/validate-xml-docs-step.yml@self
+      - template: /eng/pipelines/common/steps/validate-xml-docs-step.yml@self
         parameters:
           displayName: 'Validate packaged XML documentation'
           snippetsDirectory: ''

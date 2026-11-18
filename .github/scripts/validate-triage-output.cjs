@@ -2,8 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-// Pre-publication gate for issue-triage safe outputs: reject incomplete summaries
-// and partial batches before any queued comment or label change reaches GitHub.
+// Pre-publication gate for comment-only triage: reject label changes, incomplete
+// summaries, and partial batches before publication.
 const fs = require('node:fs');
 
 const TEMPLATE_PLACEHOLDER_PATTERN = /<([^<>]+)>/g;
@@ -61,7 +61,11 @@ function validateTriageOutput(output) {
         throw new Error('Triage output contains errors; refusing to publish a partial safe-output batch.');
     }
 
-    // Explicit no-op/failure reports may proceed, but cannot accompany a summary or label changes.
+    if (output.items.some(item => ['add_labels', 'remove_labels'].includes(item.type))) {
+        throw new Error('Triage cannot change issue labels.');
+    }
+
+    // Explicit no-op/failure reports may proceed, but cannot accompany a summary.
     const comments = output.items.filter(item => item.type === 'add_comment');
     const incomplete = output.items.some(item =>
         ['report_incomplete', 'missing_tool', 'missing_data'].includes(item.type));
@@ -76,20 +80,11 @@ function validateTriageOutput(output) {
         if (!incomplete && !noop) {
             throw new Error('Triage output has no summary or explicit no-op/incomplete result.');
         }
-        if (output.items.some(item => ['add_labels', 'remove_labels'].includes(item.type))) {
-            throw new Error('Triage cannot change labels without a validated summary.');
-        }
         return;
     }
     if (incomplete || noop) {
         throw new Error('Triage cannot publish a summary alongside an incomplete or no-op result.');
     }
-    const commentIndex = output.items.indexOf(comments[0]);
-    if (output.items.slice(0, commentIndex).some(item =>
-        ['add_labels', 'remove_labels'].includes(item.type))) {
-        throw new Error('Triage cannot change labels before its summary comment.');
-    }
-
     const body = comments[0].body;
     if (typeof body !== 'string' ||
         !/^## (?:\u{1F50D} )?Triage Summary(?: \(updated after author response\)| \(on-demand re-triage\))? *\r?\n/u.test(body)) {
@@ -98,7 +93,6 @@ function validateTriageOutput(output) {
     // Require the workflow's five check rows and both prose sections, not merely its heading.
     const prose = proseOnly(body.replace(/\r\n?/g, '\n').trim());
     const table = prose.split(/^### /m)[0];
-    let environment;
     for (const field of ['Issue type', 'Environment', 'Area', 'Duplicates', 'Regression']) {
         const rows = table.split('\n').filter(line => line.startsWith(`| ${field} |`));
         if (prose.split('\n').filter(line => line.startsWith(`| ${field} |`)).length > 1) {
@@ -108,9 +102,6 @@ function validateTriageOutput(output) {
         const match = row?.match(/^\| [^|]+ \| (.*?) \| *$/);
         if (!match || !meaningful(match[1])) {
             throw new Error(`Missing or unfinished triage check row: ${field}.`);
-        }
-        if (field === 'Environment') {
-            environment = match[1].replace(/[*_`]/g, '').trim();
         }
     }
     const sections = prose.split(/^### /m).slice(1);
@@ -130,22 +121,12 @@ function validateTriageOutput(output) {
         /^(?:\s*(?:[-+]|\d+[.)])\s+)?\s*(?:test simple body|2-4 sentences:|Actionable items\.)/im.test(prose)) {
         throw new Error('Unfinished triage content outside the required fields.');
     }
+}
 
-    const labels = output.items.filter(item => ['add_labels', 'remove_labels'].includes(item.type));
-    const onDemand = body.split('\n', 1)[0].includes('(on-demand re-triage)');
-    if (onDemand) {
-        if (labels.length > 0) {
-            throw new Error('On-demand triage must preserve label state.');
-        }
-    } else {
-        const missingEnvironment = /^(?:\u26A0\uFE0F?\s*)?(?:Missing|Partial):/iu.test(environment);
-        const expectedType = missingEnvironment ? 'add_labels' : 'remove_labels';
-        if (labels.length !== 1 || labels[0].type !== expectedType ||
-            !Array.isArray(labels[0].labels) || labels[0].labels.length !== 1 ||
-            labels[0].labels[0] !== 'Auto-Triage: Waiting for Author') {
-            throw new Error(`Triage requires exactly one ${expectedType} operation for the Waiting for Author label.`);
-        }
-    }
+// Validate the exact queued batch without modifying the file used for publication.
+function validateTriageOutputFile(filename) {
+    const output = JSON.parse(fs.readFileSync(filename, 'utf8'));
+    validateTriageOutput(output);
 }
 
 if (require.main === module) {
@@ -154,8 +135,8 @@ if (require.main === module) {
     if (!filename) {
         throw new Error('GH_AW_AGENT_OUTPUT is required; refusing to publish unvalidated triage output.');
     }
-    validateTriageOutput(JSON.parse(fs.readFileSync(filename, 'utf8')));
+    validateTriageOutputFile(filename);
     console.log('Triage output validated before safe-output publication.');
 }
 
-module.exports = { validateTriageOutput };
+module.exports = { validateTriageOutput, validateTriageOutputFile };

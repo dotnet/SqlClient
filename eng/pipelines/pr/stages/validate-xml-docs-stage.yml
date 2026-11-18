@@ -1,0 +1,72 @@
+#################################################################################
+# Licensed to the .NET Foundation under one or more agreements.                 #
+# The .NET Foundation licenses this file to you under the MIT license.          #
+# See the LICENSE file in the project root for more information.                #
+#################################################################################
+
+parameters:
+  - name: stageNamePack
+    type: string
+
+  # The caller resolves the artifact name from the successful pack job attempt.
+  - name: packArtifactName
+    type: string
+
+  - name: poolName
+    type: string
+
+  - name: poolImage
+    type: string
+
+stages:
+  - stage: validate_xml_docs
+    displayName: Validate XML Documentation
+    dependsOn:
+      - ${{ parameters.stageNamePack }}
+
+    variables:
+      - name: packArtifactName
+        value: ${{ parameters.packArtifactName }}
+      - name: xmlDocsPackagesRoot
+        value: $(Pipeline.Workspace)/xml-docs-packages
+      - name: xmlDocsReportRoot
+        value: $(Pipeline.Workspace)/xml-docs-reports
+
+    jobs:
+      - job: validate_xml_docs
+        displayName: Validate XML Documentation
+        pool:
+          name: ${{ parameters.poolName }}
+          demands:
+            - imageOverride -equals ${{ parameters.poolImage }}
+
+        steps:
+          - task: DownloadPipelineArtifact@2
+            displayName: Download packed projects
+            inputs:
+              artifactName: $(packArtifactName)
+              itemPattern: '**/*.nupkg'
+              targetPath: $(xmlDocsPackagesRoot)
+
+          # Validate all packages together so cross-package references resolve against this build.
+          - template: /eng/pipelines/common/steps/validate-xml-docs-step.yml@self
+            parameters:
+              displayName: Validate documentation snippets and packaged XML documentation
+              snippetsDirectory:
+                - $(REPO_ROOT)/doc/snippets
+                - $(REPO_ROOT)/src/Microsoft.Data.SqlClient.Extensions/Abstractions/doc
+                - $(REPO_ROOT)/src/Microsoft.Data.SqlClient.Extensions/Azure/doc
+              documentationPath: ''
+              packagesPath: $(xmlDocsPackagesRoot)
+              extractPath: $(Pipeline.Workspace)/xml-docs-extract
+              reportPath: $(xmlDocsReportRoot)/xml-docs.json
+              failOn:
+                - error
+              failOnValidationError: true
+              projectPath: ''
+              projectSearchRoot: $(REPO_ROOT)/src
+
+          - publish: $(xmlDocsReportRoot)
+            artifact: xml_docs_validation_attempt$(System.JobAttempt)
+            displayName: Publish XML documentation validation report
+            condition: succeededOrFailed()

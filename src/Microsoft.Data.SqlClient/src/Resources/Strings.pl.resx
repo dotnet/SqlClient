@@ -591,26 +591,11 @@
   <data name="SQL_NonLocalSSEInstance" xml:space="preserve">
     <value>Przekierowywanie wystąpienia SSE nie jest obsługiwane dla wystąpień użytkowników nielokalnych.</value>
   </data>
-  <data name="SQL_UnsupportedAuthentication" xml:space="preserve">
-    <value>Uwierzytelnianie „{0}” nie jest obsługiwane.</value>
-  </data>
-  <data name="SQL_CannotCreateAuthProvider" xml:space="preserve">
-    <value>Nie można utworzyć wystąpienia dostawcy uwierzytelniania typu {1} dla elementu {0}.</value>
-  </data>
-  <data name="SQL_CannotCreateAuthInitializer" xml:space="preserve">
-    <value>Nie można utworzyć wystąpienia elementu SqlAuthenticationInitializer typu {0}.</value>
-  </data>
-  <data name="SQL_UnsupportedAuthenticationByProvider" xml:space="preserve">
-    <value>Dostawca „{0}” nie obsługuje uwierzytelniania „{1}”.</value>
-  </data>
   <data name="SQL_CannotFindAuthProvider" xml:space="preserve">
     <value>Nie można odnaleźć dostawcy uwierzytelniania elementu {0}.</value>
   </data>
   <data name="SQL_CannotFindActiveDirectoryAuthProvider" xml:space="preserve">
-    <value>Nie można odnaleźć dostawcy uwierzytelniania dla elementu „{0}”. Zainstaluj pakiet NuGet „Microsoft.Data.SqlClient.Extensions.Azure” (https://www.nuget.org/packages/Microsoft.Data.SqlClient.Extensions.Azure), aby korzystać z metod uwierzytelniania usługi Active Directory (Entra ID).</value>
-  </data>
-  <data name="SQL_UseWamBrokerRequiresAzureExtensionUpgrade" xml:space="preserve">
-    <value>Ustawienie „useWamBroker” wymaga pakietu „Microsoft.Data.SqlClient.Extensions.Azure”, aby uwidoczniono element „Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProviderOptions”. Uaktualnij pakiet „Microsoft.Data.SqlClient.Extensions.Azure” do wersji co najmniej 1.1.0, która zawiera ten typ.</value>
+    <value>Nie można odnaleźć dostawcy uwierzytelniania dla elementu „{0}”. Zarejestruj dostawcę za pomocą elementu SqlAuthenticationProvider.SetProvider lub użyj zgodnego pakietu NuGet „Microsoft.Data.SqlClient.Extensions.Azure” z włączonym automatycznym odnajdowaniem. Automatyczne odnajdowanie jest niedostępne, gdy jest wyłączone w czasie publikowania. Przycięte aplikacje JIT wymagają zachowanych kontraktów odbicia; Aplikacje NativeAOT powinny wyłączać refleksyjne ścieżki uruchamiania w czasie publikowania i jawnie rejestrować dostawców. Sprawdź ślady Microsoft.Data.SqlClient.EventSource (poziom informacyjny, słowo kluczowe trace 0x2) pod kątem błędów ładowania konfiguracji lub rozszerzenia platformy Azure.</value>
   </data>
   <data name="SQL_ParameterCannotBeEmpty" xml:space="preserve">
     <value>Parametr „{0}” nie może mieć wartości null ani być pusty.</value>
@@ -1800,6 +1785,9 @@
   <data name="TCE_EnclaveTypeNullForEnclaveBasedQuery" xml:space="preserve">
     <value>Błąd wewnętrzny. Typ enklawy odebrany z programu SQL Server ma wartość null lub jest pusty podczas wykonywania zapytania wymagającego obliczeń enklawy.</value>
   </data>
+  <data name="TCE_AzureAttestationExtensionNotFound" xml:space="preserve">
+    <value>Protokół zaświadczania „AAS” wymaga pakietu Microsoft.Data.SqlClient.Extensions.Azure w tej samej wersji co Microsoft.Data.SqlClient. Dodaj lub zaktualizuj odwołanie do tego pakietu lub określ inny protokół zaświadczania w parametrach połączenia.</value>
+  </data>
   <data name="TCE_EnclaveProviderNotFound" xml:space="preserve">
     <value>Nie znaleziono dostawcy enklawy dla typu enklawy „{0}” i protokołu zaświadczania „{1}”. Określ poprawny protokół zaświadczania w parametrach połączenia. </value>
   </data>
@@ -1901,6 +1889,9 @@
   </data>
   <data name="SQLCR_NoCRAckAtReconnection" xml:space="preserve">
     <value>Serwer nie potwierdził próby odzyskiwania połączenia. Nie jest możliwe odzyskanie połączenia.</value>
+  </data>
+  <data name="DbConnectionString_VectorTypeSupport" xml:space="preserve">
+    <value>Poziom obsługi typów wektorowych do uzgodnienia z serwerem.</value>
   </data>
   <data name="DbConnectionString_PoolBlockingPeriod" xml:space="preserve">
     <value>Definiuje zachowanie okresu blokowania dla puli połączeń.</value>
@@ -2067,6 +2058,9 @@
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
     <value>Parametr „{0}” nie może mieć wartości Direction Output ani InputOutput, gdy właściwość EnableOptimizedParameterBinding jest włączona w poleceniu nadrzędnym.</value>
   </data>
+  <data name="SQL_PrepareNotSupportedForOptimizedBinding" xml:space="preserve">
+    <value>Przygotowywanie nie jest obsługiwane, gdy włączono funkcję EnableOptimizedParameterBinding. Utwórz nowy element SqlCommand i ustaw parametr EnableOptimizedParameterBinding na wartość false przed jego pierwszym wykonaniem lub wykonaj go bez wywoływania metody Prepare.</value>
+  </data>
   <data name="AAD_Token_Retrieving_Timeout" xml:space="preserve">
     <value>Upłynął limit czasu połączenia podczas pobierania tokenu dostępu przy użyciu metody uwierzytelniania „{0}”. Ostatni błąd: {1}: {2}</value>
   </data>
@@ -2099,6 +2093,9 @@
   </data>
   <data name="SqlAppContextSwitchManager_InvalidValue" xml:space="preserve">
     <value>Wystąpił wyjątek podczas próby ustawienia przełącznika AppContext „{0}”={1}.</value>
+  </data>
+  <data name="SQL_GlobalizationInvariantModeRequiresLcid" xml:space="preserve">
+    <value>Po włączeniu trybu niezmiennego globalizacji wystąpienia sqlMetaData opisujące typy znaków lub tekstu muszą określać identyfikator LCID.</value>
   </data>
   <data name="SQL_GlobalizationInvariantModeNotSupported" xml:space="preserve">
     <value>Tryb niezmienny globalizacji nie jest obsługiwany.</value>

@@ -6,12 +6,14 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.Tests.Common.Fixtures.DatabaseObjects;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    /// <summary>Verifies batch execution, command attribution, and reader behavior.</summary>
     [Trait("Set", "3")]
     public static class BatchTests
     {
@@ -753,6 +755,67 @@ END"))
 
             Assert.Equal(2, resultSetCount);
             Assert.Equal(2, resultRowCount);
+        }
+
+        /// <summary>Cancelling an executing batch preserves the SQL cancellation error.</summary>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup),
+            nameof(DataTestUtility.IsNotAzureSynapse))]
+        public static void ExecuteNonQuery_CancelledBatch_ThrowsSqlException()
+        {
+            // Arrange
+            using SqlConnection connection = DataTestUtility.CreateConnection();
+            connection.Open();
+            // Deliver the signal before WAITFOR finishes instead of accumulating warnings.
+            connection.FireInfoMessageEventOnUserErrors = true;
+            using SqlBatch batch = new(connection);
+            batch.BatchCommands.Add(new SqlBatchCommand(
+                "RAISERROR ('Cancel batch', 10, 1) WITH NOWAIT; WAITFOR DELAY '00:00:10';"));
+            connection.InfoMessage += (_, _) => batch.Cancel();
+
+            // Act
+            SqlException exception = Assert.Throws<SqlException>(() => batch.ExecuteNonQuery());
+
+            // Assert
+            Assert.Contains("Operation cancelled by user", exception.Message);
+            Assert.Equal(0, exception.Number);
+            using SqlCommand verify = new("SELECT 1", connection);
+            Assert.Equal(1, verify.ExecuteScalar());
+        }
+
+        /// <summary>Token cancellation preserves its exception and leaves the connection usable.</summary>
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup),
+            nameof(DataTestUtility.IsNotAzureSynapse))]
+        public static async Task ExecuteNonQueryAsync_CancelledBatch_ThrowsCancellationException()
+        {
+            // Arrange
+            using SqlConnection connection = DataTestUtility.CreateConnection();
+            await connection.OpenAsync();
+            // Deliver the signal before WAITFOR finishes instead of accumulating warnings.
+            connection.FireInfoMessageEventOnUserErrors = true;
+            using SqlBatch batch = new(connection);
+            batch.BatchCommands.Add(new SqlBatchCommand(
+                "RAISERROR ('Cancel batch', 10, 1) WITH NOWAIT; WAITFOR DELAY '00:00:10';"));
+            using CancellationTokenSource cancellation = new();
+            connection.InfoMessage += (_, _) => cancellation.Cancel();
+
+            // Act
+            Exception exception = await Record.ExceptionAsync(
+                () => batch.ExecuteNonQueryAsync(cancellation.Token));
+
+            // Assert
+            Assert.True(cancellation.IsCancellationRequested);
+            // Depending on timing, token cancellation surfaces as either exception type.
+            if (exception is SqlException sqlException)
+            {
+                Assert.Contains("Operation cancelled by user", sqlException.Message);
+                Assert.Equal(0, sqlException.Number);
+            }
+            else
+            {
+                Assert.IsAssignableFrom<OperationCanceledException>(exception);
+            }
+            using SqlCommand verify = new("SELECT 1", connection);
+            Assert.Equal(1, await verify.ExecuteScalarAsync());
         }
 
         private static SqlParameter CreateParameter<T>(string name, SqlDbType type, T value, ParameterDirection direction = ParameterDirection.Input)

@@ -101,7 +101,8 @@ namespace Microsoft.Data.SqlClient
         /// <remarks>
         /// The extension is loaded once per load of this assembly. If the application loads
         /// SqlClient into more than one AssemblyLoadContext, each copy loads the extension
-        /// separately, as the authentication provider manager does.
+        /// separately. This uses the driver's own loader, independently of authentication
+        /// configuration and discovery in Abstractions.
         /// </remarks>
         internal static AzureAttestationTokenValidatorBinding? Instance => s_instance.Value;
 

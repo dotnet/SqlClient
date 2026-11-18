@@ -16,6 +16,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         /// <summary>Type forwards preserve resolution through the original assembly name.</summary>
         [Theory]
         [InlineData("Microsoft.Data.SqlClient.SqlAuthenticationMethod", true)]
+        [InlineData("Microsoft.Data.SqlClient.SqlAuthenticationInitializer", false)]
         [InlineData("Microsoft.Data.SqlClient.SqlAuthenticationParameters", false)]
         [InlineData("Microsoft.Data.SqlClient.SqlAuthenticationProvider", false)]
         [InlineData("Microsoft.Data.SqlClient.SqlAuthenticationProviderException", false)]
