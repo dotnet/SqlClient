@@ -17,12 +17,15 @@ using Xunit;
 namespace Microsoft.Data.SqlClient.UnitTests;
 
 /// <summary>
-/// Verifies batch command lookup for SQL errors and info messages, asynchronous execution
-/// cancellation state cleanup, asynchronous query metadata cache dispatch, and bounded retry
+/// Verifies batch command lookup for SQL errors and info messages, cancellation handling when
+/// asynchronous execution ends, asynchronous query metadata cache dispatch, and bounded retry
 /// routing for enclave package failures.
 /// </summary>
 public class SqlCommandTests
 {
+    private const string CanceledExecutionConnectionString =
+        "Data Source=async-ae-unit-test;Column Encryption Setting=Enabled";
+
     /// <summary>Errors after the final DONEPROC have no remaining command to attribute.</summary>
     [Theory]
     [InlineData(1)]
@@ -151,11 +154,16 @@ public class SqlCommandTests
     [Fact]
     public void EndExecuteReaderAsync_CanceledTask_ThrowsOperationCanceled()
     {
+        // Arrange
+        using SqlConnection connection = new(CanceledExecutionConnectionString);
+        using SqlCommand command = new("SELECT 1", connection);
+        Task canceled = CreateCanceledTask();
+
         // Act
-        Exception? inner = InvokeEndAsyncWithCanceledTask("EndExecuteReaderAsync");
+        Exception exception = Record.Exception(() => command.EndExecuteReaderAsync(canceled));
 
         // Assert
-        Assert.IsAssignableFrom<OperationCanceledException>(inner);
+        Assert.IsAssignableFrom<OperationCanceledException>(exception);
     }
 
     /// <summary>
@@ -165,11 +173,16 @@ public class SqlCommandTests
     [Fact]
     public void EndExecuteNonQueryAsync_CanceledTask_ThrowsOperationCanceled()
     {
+        // Arrange
+        using SqlConnection connection = new(CanceledExecutionConnectionString);
+        using SqlCommand command = new("SELECT 1", connection);
+        Task canceled = CreateCanceledTask();
+
         // Act
-        Exception? inner = InvokeEndAsyncWithCanceledTask("EndExecuteNonQueryAsync");
+        Exception exception = Record.Exception(() => command.EndExecuteNonQueryAsync(canceled));
 
         // Assert
-        Assert.IsAssignableFrom<OperationCanceledException>(inner);
+        Assert.IsAssignableFrom<OperationCanceledException>(exception);
     }
 
     /// <summary>
@@ -179,11 +192,16 @@ public class SqlCommandTests
     [Fact]
     public void EndExecuteXmlReaderAsync_CanceledTask_ThrowsOperationCanceled()
     {
+        // Arrange
+        using SqlConnection connection = new(CanceledExecutionConnectionString);
+        using SqlCommand command = new("SELECT 1", connection);
+        Task canceled = CreateCanceledTask();
+
         // Act
-        Exception? inner = InvokeEndAsyncWithCanceledTask("EndExecuteXmlReaderAsync");
+        Exception exception = Record.Exception(() => command.EndExecuteXmlReaderAsync(canceled));
 
         // Assert
-        Assert.IsAssignableFrom<OperationCanceledException>(inner);
+        Assert.IsAssignableFrom<OperationCanceledException>(exception);
     }
 
     /// <summary>
@@ -578,25 +596,15 @@ public class SqlCommandTests
             .GetValue(command));
 
     /// <summary>
-    /// Invokes a private asynchronous End method with an already canceled task, as happens when a
-    /// key store operation is canceled after the parser state was released.
+    /// Creates an already canceled task, as happens when a key store operation is canceled after
+    /// the parser state was released.
     /// </summary>
-    /// <param name="endMethod">The name of the private End method to invoke.</param>
-    /// <returns>The exception thrown by the End method.</returns>
-    private static Exception? InvokeEndAsyncWithCanceledTask(string endMethod)
+    /// <returns>A canceled task.</returns>
+    private static Task CreateCanceledTask()
     {
-        using SqlConnection connection = new(
-            "Data Source=async-ae-unit-test;Column Encryption Setting=Enabled");
-        using SqlCommand command = new("SELECT 1", connection);
         TaskCompletionSource<object> completion = new();
         completion.SetCanceled();
-
-        MethodInfo method = typeof(SqlCommand).GetMethod(
-            endMethod, BindingFlags.Instance | BindingFlags.NonPublic)
-            ?? throw new InvalidOperationException("Async End method not found.");
-        TargetInvocationException exception = Assert.Throws<TargetInvocationException>(
-            () => method.Invoke(command, new object[] { completion.Task }));
-        return exception.InnerException;
+        return completion.Task;
     }
 
     /// <summary>

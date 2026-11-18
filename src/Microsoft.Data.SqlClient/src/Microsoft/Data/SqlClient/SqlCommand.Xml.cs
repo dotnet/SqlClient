@@ -393,7 +393,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private XmlReader EndExecuteXmlReaderAsync(IAsyncResult asyncResult)
+        internal XmlReader EndExecuteXmlReaderAsync(IAsyncResult asyncResult)
         {
             Debug.Assert(!_internalEndExecuteInitiated || _stateObj is null);
 

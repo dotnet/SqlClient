@@ -360,7 +360,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // @TODO: This can be inlined into InternalExecuteNonQueryAsync before restructuring into async pathway
-        private int EndExecuteNonQueryAsync(IAsyncResult asyncResult)
+        internal int EndExecuteNonQueryAsync(IAsyncResult asyncResult)
         {
             Debug.Assert(!_internalEndExecuteInitiated || _stateObj == null);
 
@@ -527,7 +527,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     // Otherwise, use a full-fledged execute that can handle params and stored sprocs
-                    SqlDataReader reader = CompleteAsyncExecuteReader(isInternal, forDescribeParameterEncryption: false);
+                    SqlDataReader reader = CompleteAsyncExecutionSynchronously(isInternal, forDescribeParameterEncryption: false);
                     reader?.Close();
                 }
             }

@@ -254,6 +254,12 @@ namespace Microsoft.Data.SqlClient
             bool isRetry,
             CancellationToken cancellationToken)
         {
+            // The async state is reset below, so keep the command marked busy for the whole method.
+            // This blocks connection changes and overlapping executions while key store calls are pending.
+            // The reader continuation awaiting this task clears the flag after execution reserves the
+            // connection or preparation fails. Restoring it here could clear the flag that continuation
+            // set, before enclave package keys load.
+            _enclaveAttestationInProgress = true;
             bool processFinallyBlock = true;
             try
             {
@@ -266,18 +272,12 @@ namespace Microsoft.Data.SqlClient
 
                 // Keep the connection reserved until the worker registers the reader.
                 // Legacy TDS completion is synchronous; provider I/O is awaited separately below.
-                describeParameterEncryptionDataReader = await Task.Run(() => CompleteAsyncExecuteReader(
+                describeParameterEncryptionDataReader = await Task.Run(() => CompleteAsyncExecutionSynchronously(
                     isInternal: false,
                     forDescribeParameterEncryption: true)).ConfigureAwait(false);
                 ReleaseDescribeParameterEncryptionConnection();
                 Debug.Assert(_stateObj is null, "non-null state object in PrepareForTransparentEncryption.");
 
-                // The async state was reset above, so keep the command marked busy while key store calls
-                // are pending. This blocks connection changes and overlapping executions.
-                // The reader continuation awaiting this task clears the flag after execution
-                // reserves the connection or preparation fails. Restoring it here could clear the
-                // flag that continuation set, before enclave package keys load.
-                _enclaveAttestationInProgress = true;
                 await ReadDescribeEncryptionParameterResults(
                     describeParameterEncryptionDataReader,
                     describeParameterEncryptionRpcOriginalRpcMap,
@@ -1083,7 +1083,7 @@ namespace Microsoft.Data.SqlClient
             return verifications.Count;
         }
 
-        private async ValueTask CreateEnclaveSession(
+        internal async ValueTask CreateEnclaveSession(
             byte[] attestationInfo,
             bool isRetry,
             bool isAsync,
