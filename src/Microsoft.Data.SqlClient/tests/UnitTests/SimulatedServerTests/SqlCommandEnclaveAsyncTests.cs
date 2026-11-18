@@ -516,7 +516,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             SetField(command, "enclaveAttestationParameters", parameters);
             SetField(command, "enclavePackage", new EnclavePackage(Array.Empty<byte>(), fixture.Provider.Session));
             Task operation = create
-                ? Invoke(command, "CreateEnclaveSessionAsync", new byte[] { 1 }, true, cancellation.Token)
+                ? InvokeValueTask(command, "CreateEnclaveSession", new byte[] { 1 }, true, true, cancellation.Token)
                 : Invoke(command, "InvalidateEnclaveSessionAsync", cancellation.Token);
 
             Assert.False(operation.IsCompleted);
@@ -785,7 +785,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 fixture.Provider.SessionOperation = stage == 2;
                 fixture.Provider.Attestation = stage == 1;
                 Task preparation = stage == 2
-                    ? Invoke(command, "CreateEnclaveSessionAsync", new byte[] { 1 }, true, cancellation.Token)
+                    ? InvokeValueTask(command, "CreateEnclaveSession", new byte[] { 1 }, true, true, cancellation.Token)
                     : Invoke(command, "PrepareForTransparentEncryptionAsync", 30, true, true, cancellation.Token);
                 retryEntered.SetResult(null);
                 await preparation;
@@ -796,6 +796,10 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// <summary>Invokes command-owned session logic without requiring a real attestation service.</summary>
         private static Task Invoke(SqlCommand command, string method, params object[] args) =>
             (Task)typeof(SqlCommand).GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic).Invoke(command, args);
+
+        /// <summary>Invokes a command-owned method that returns <see cref="ValueTask"/> and exposes it as a task.</summary>
+        private static Task InvokeValueTask(SqlCommand command, string method, params object[] args) =>
+            ((ValueTask)typeof(SqlCommand).GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic).Invoke(command, args)).AsTask();
 
         /// <summary>Cold preparation serializes awaited parameters and preserves provider custom data.</summary>
         [Fact]

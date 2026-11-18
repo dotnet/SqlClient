@@ -159,21 +159,12 @@ namespace Microsoft.Data.SqlClient
             {
                 try
                 {
-                    if (isAsync)
-                    {
-                        await SqlSecurityUtility.DecryptSymmetricKeyAsync(
-                            keysToLoad[i],
-                            sqlCommand.Connection,
-                            sqlCommand,
-                            cancellationToken).ConfigureAwait(false);
-                    }
-                    else
-                    {
-                        SqlSecurityUtility.DecryptSymmetricKey(
-                            keysToLoad[i],
-                            sqlCommand.Connection,
-                            sqlCommand);
-                    }
+                    await SqlSecurityUtility.DecryptSymmetricKey(
+                        keysToLoad[i],
+                        sqlCommand.Connection,
+                        sqlCommand,
+                        isAsync,
+                        cancellationToken).ConfigureAwait(false);
                 }
                 catch (Exception ex) when (ex is SqlException or ArgumentException)
                 {

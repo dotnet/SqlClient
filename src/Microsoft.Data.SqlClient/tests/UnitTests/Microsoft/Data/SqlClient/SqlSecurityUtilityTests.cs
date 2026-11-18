@@ -17,7 +17,7 @@ using Xunit;
 namespace Microsoft.Data.SqlClient.UnitTests
 {
     /// <summary>
-    /// Verifies async key decryption, candidate fallback, and signature verification contracts.
+    /// Verifies sync and async key decryption, candidate fallback, and signature verification.
     /// </summary>
     [Collection(SqlSecurityUtilityTestCollection.Name)]
     public class SqlSecurityUtilityTests
@@ -91,9 +91,184 @@ namespace Microsoft.Data.SqlClient.UnitTests
             return entry;
         }
 
+        /// <summary>
+        /// Synchronous metadata initialization completes inline without calling the async provider.
+        /// </summary>
+        [Fact]
+        public void DecryptSymmetricKey_SynchronousMetadata_InitializesInline()
+        {
+            // Arrange
+            TestKeyStoreProvider provider = new()
+            {
+                PlaintextKey = NewPlaintextKey(seed: 3),
+                DecryptAsyncCallback = _ => throw new InvalidOperationException("Async API called")
+            };
+            using SqlConnection connection = NewConnection((ProviderName, provider));
+            SqlEncryptionKeyInfo keyInfo = NewKeyInfo();
+            SqlCipherMetadata metadata = new(
+                NewCipherInfoEntry(keyInfo), ordinal: 0,
+                cipherAlgorithmId: (byte)TdsEnums.AEAD_AES_256_CBC_HMAC_SHA256,
+                cipherAlgorithmName: null, encryptionType: (byte)EncryptionType.Deterministic,
+                normalizationRuleVersion: 0x01);
+
+            // Act
+            ValueTask decrypt = SqlSecurityUtility.DecryptSymmetricKey(
+                metadata, connection, null, isAsync: false, CancellationToken.None);
+
+            // Assert
+            Assert.True(decrypt.IsCompleted);
+            decrypt.GetAwaiter().GetResult();
+            Assert.True(metadata.IsAlgorithmInitialized());
+            Assert.Equal(keyInfo.keyStoreName, metadata.EncryptionKeyInfo.keyStoreName);
+            Assert.Equal(1, provider.DecryptCallCount);
+            Assert.Equal(0, provider.DecryptAsyncCallCount);
+        }
+
+        /// <summary>Sync candidate failure preserves ordered fallback and sync provider dispatch.</summary>
+        [Fact]
+        public void DecryptSymmetricKey_SynchronousFirstKeyFails_SelectsSecondKey()
+        {
+            // Arrange
+            TestKeyStoreProvider failing = new()
+            {
+                DecryptCallback = () => throw new InvalidOperationException("First key unavailable")
+            };
+            TestKeyStoreProvider succeeding = new() { PlaintextKey = NewPlaintextKey(seed: 7) };
+            using SqlConnection connection = NewConnection(
+                (ProviderName, failing), (SecondProviderName, succeeding));
+            SqlTceCipherInfoEntry entry = NewCipherInfoEntry(
+                NewKeyInfo(), NewKeyInfo(SecondProviderName, SecondKeyPath));
+
+            // Act
+            ValueTask<(SymmetricKey Key, SqlEncryptionKeyInfo KeyInfoChosen)> decrypt =
+                SqlSecurityUtility.DecryptSymmetricKey(
+                    entry, connection, null, isAsync: false, CancellationToken.None);
+
+            // Assert
+            Assert.True(decrypt.IsCompleted);
+            (SymmetricKey key, SqlEncryptionKeyInfo chosen) = decrypt.GetAwaiter().GetResult();
+            Assert.Equal(succeeding.PlaintextKey, key.RootKey);
+            Assert.Equal(SecondProviderName, chosen.keyStoreName);
+            Assert.Equal(1, failing.DecryptCallCount);
+            Assert.Equal(1, succeeding.DecryptCallCount);
+            Assert.Equal(0, failing.DecryptAsyncCallCount);
+            Assert.Equal(0, succeeding.DecryptAsyncCallCount);
+        }
+
+        /// <summary>Sync decryption unwraps the last provider failure without AggregateException.</summary>
+        [Fact]
+        public void DecryptSymmetricKey_SynchronousCandidatesFail_ThrowsLastWrappedError()
+        {
+            // Arrange
+            int calls = 0;
+            TestKeyStoreProvider provider = new()
+            {
+                DecryptCallback = () => throw new InvalidOperationException(
+                    ++calls == 1 ? "First failure" : "Last failure")
+            };
+            using SqlConnection connection = NewConnection((ProviderName, provider));
+            SqlTceCipherInfoEntry entry = NewCipherInfoEntry(NewKeyInfo(), NewKeyInfo());
+
+            // Act
+            ValueTask<(SymmetricKey Key, SqlEncryptionKeyInfo KeyInfoChosen)> decrypt =
+                SqlSecurityUtility.DecryptSymmetricKey(
+                    entry, connection, null, isAsync: false, CancellationToken.None);
+
+            // Assert
+            Assert.True(decrypt.IsCompleted);
+            SqlException error = Assert.Throws<SqlException>(() => decrypt.GetAwaiter().GetResult());
+            Assert.Contains("Last failure", error.ToString());
+            Assert.Equal(2, provider.DecryptCallCount);
+            Assert.Equal(0, provider.DecryptAsyncCallCount);
+        }
+
+        /// <summary>Sync local verification completes inline using only the synchronous API.</summary>
+        [Fact]
+        public void VerifyColumnMasterKeySignature_SynchronousLocalSuccess_CompletesInline()
+        {
+            // Arrange
+            TestKeyStoreProvider provider = new()
+            {
+                VerifyResult = true,
+                VerifyAsyncCallback = _ => throw new InvalidOperationException("Async API called")
+            };
+            using SqlConnection connection = NewConnection((ProviderName, provider));
+
+            // Act
+            ValueTask verify = SqlSecurityUtility.VerifyColumnMasterKeySignature(
+                ProviderName, KeyPath, true, new byte[] { 1, 2, 3 },
+                connection, null, isAsync: false, CancellationToken.None);
+
+            // Assert
+            Assert.True(verify.IsCompleted);
+            verify.GetAwaiter().GetResult();
+            Assert.Equal(1, provider.VerifyCallCount);
+            Assert.Equal(0, provider.VerifyAsyncCallCount);
+        }
+
+        /// <summary>Sync verification retains the signature wrapper and original provider error.</summary>
+        [Fact]
+        public void VerifyColumnMasterKeySignature_SynchronousProviderFails_ThrowsWrappedError()
+        {
+            // Arrange
+            InvalidOperationException providerError = new("Verification failed");
+            TestKeyStoreProvider provider = new()
+            {
+                VerifyCallback = () => throw providerError
+            };
+            using SqlConnection connection = NewConnection((ProviderName, provider));
+
+            // Act
+            ValueTask verify = SqlSecurityUtility.VerifyColumnMasterKeySignature(
+                ProviderName, KeyPath, true, new byte[] { 1, 2, 3 },
+                connection, null, isAsync: false, CancellationToken.None);
+
+            // Assert
+            Assert.True(verify.IsCompleted);
+            InvalidOperationException error =
+                Assert.Throws<InvalidOperationException>(() => verify.GetAwaiter().GetResult());
+            Assert.Same(providerError, error.InnerException);
+            Assert.Equal(1, provider.VerifyCallCount);
+            Assert.Equal(0, provider.VerifyAsyncCallCount);
+        }
+
+        /// <summary>Sync global verification publishes its result for subsequent callers.</summary>
+        [Fact]
+        public void VerifyColumnMasterKeySignature_SynchronousGlobalSuccess_PublishesAndReuses()
+        {
+            // Arrange
+            TestKeyStoreProvider provider = new() { VerifyResult = true };
+            using GlobalSignatureProviderScope scope = new(provider);
+            using SqlConnection connection = new(
+                "Data Source=async-ae-unit-test;Column Encryption Setting=Enabled");
+
+            // Act
+            ValueTask verify = SqlSecurityUtility.VerifyColumnMasterKeySignature(
+                scope.ProviderName, scope.KeyPath, true, scope.Signature,
+                connection, null, isAsync: false, CancellationToken.None);
+
+            // Assert
+            Assert.True(verify.IsCompleted);
+            verify.GetAwaiter().GetResult();
+            Assert.Equal(SignatureVerificationResult.True,
+                ColumnMasterKeyMetadataSignatureVerificationCache.Instance
+                    .GetSignatureVerificationResult(
+                        scope.ProviderName, scope.KeyPath, true, scope.Signature));
+            Assert.Equal(1, provider.VerifyCallCount);
+            Assert.Equal(0, provider.VerifyAsyncCallCount);
+
+            // A cached result avoids another synchronous or asynchronous provider call.
+            provider.VerifyResult = false;
+            SqlSecurityUtility.VerifyColumnMasterKeySignature(
+                scope.ProviderName, scope.KeyPath, true, scope.Signature,
+                connection, null, isAsync: false, CancellationToken.None).GetAwaiter().GetResult();
+            Assert.Equal(1, provider.VerifyCallCount);
+            Assert.Equal(0, provider.VerifyAsyncCallCount);
+        }
+
         /// <summary>A failed candidate does not prevent the next key from being selected.</summary>
         [Fact]
-        public async Task DecryptSymmetricKeyAsync_FirstKeyFails_FallsBackToSecondKey()
+        public async Task DecryptSymmetricKey_AsyncFirstKeyFails_FallsBackToSecondKey()
         {
             // Arrange
             byte[] expectedKey = NewPlaintextKey(seed: 7);
@@ -109,8 +284,8 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
             // Act
             (SymmetricKey key, SqlEncryptionKeyInfo chosen) =
-                await SqlSecurityUtility.DecryptSymmetricKeyAsync(
-                    entry, connection, command: null, CancellationToken.None);
+                await SqlSecurityUtility.DecryptSymmetricKey(
+                    entry, connection, command: null, isAsync: true, CancellationToken.None);
 
             // Assert
             Assert.Equal(expectedKey, key.RootKey);
@@ -122,7 +297,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
         /// <summary>Exhausting candidate keys reports the final wrapped provider error.</summary>
         [Fact]
-        public async Task DecryptSymmetricKeyAsync_AllKeysFail_ThrowsLastException()
+        public async Task DecryptSymmetricKey_AsyncAllKeysFail_ThrowsLastException()
         {
             // Arrange
             int calls = 0;
@@ -135,8 +310,8 @@ namespace Microsoft.Data.SqlClient.UnitTests
             SqlTceCipherInfoEntry entry = NewCipherInfoEntry(NewKeyInfo(), NewKeyInfo());
 
             // Act
-            Func<Task> decrypt = () => SqlSecurityUtility.DecryptSymmetricKeyAsync(
-                entry, connection, command: null, CancellationToken.None);
+            Func<Task> decrypt = () => SqlSecurityUtility.DecryptSymmetricKey(
+                entry, connection, command: null, isAsync: true, CancellationToken.None).AsTask();
 
             // Assert
             SqlException exception = await Assert.ThrowsAsync<SqlException>(decrypt);
@@ -146,7 +321,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
         /// <summary>Decryption initializes the metadata algorithm and selected key information.</summary>
         [Fact]
-        public async Task DecryptSymmetricKeyAsync_CipherMetadata_PopulatesAlgorithmAndKeyInfo()
+        public async Task DecryptSymmetricKey_AsyncCipherMetadata_PopulatesAlgorithmAndKeyInfo()
         {
             // Arrange
             TestKeyStoreProvider provider = new() { PlaintextKey = NewPlaintextKey(seed: 3) };
@@ -159,8 +334,8 @@ namespace Microsoft.Data.SqlClient.UnitTests
                 normalizationRuleVersion: 0x01);
 
             // Act
-            await SqlSecurityUtility.DecryptSymmetricKeyAsync(
-                metadata, connection, command: null, CancellationToken.None);
+            await SqlSecurityUtility.DecryptSymmetricKey(
+                metadata, connection, command: null, isAsync: true, CancellationToken.None);
 
             // Assert
             Assert.True(metadata.IsAlgorithmInitialized());
@@ -172,7 +347,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
         /// <summary>Pre-cancellation avoids invoking an otherwise valid provider.</summary>
         [Fact]
-        public async Task DecryptSymmetricKeyAsync_CancelledToken_DoesNotInvokeProvider()
+        public async Task DecryptSymmetricKey_AsyncCancelledToken_DoesNotInvokeProvider()
         {
             // Arrange
             TestKeyStoreProvider provider = new() { PlaintextKey = NewPlaintextKey(seed: 1) };
@@ -182,8 +357,8 @@ namespace Microsoft.Data.SqlClient.UnitTests
             cts.Cancel();
 
             // Act
-            Task decrypt = SqlSecurityUtility.DecryptSymmetricKeyAsync(
-                entry, connection, command: null, cts.Token);
+            Task decrypt = SqlSecurityUtility.DecryptSymmetricKey(
+                entry, connection, command: null, isAsync: true, cts.Token).AsTask();
 
             // Assert
             await Assert.ThrowsAnyAsync<OperationCanceledException>(() => decrypt);
@@ -193,7 +368,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
         /// <summary>In-flight cancellation abandons fallback and is not wrapped as a key error.</summary>
         [Fact]
-        public async Task DecryptSymmetricKeyAsync_CancelledMidFlight_DoesNotAttemptRemainingKeys()
+        public async Task DecryptSymmetricKey_AsyncCancelledMidFlight_DoesNotAttemptRemainingKeys()
         {
             // Arrange
             using CancellationTokenSource cts = new();
@@ -212,8 +387,8 @@ namespace Microsoft.Data.SqlClient.UnitTests
             SqlTceCipherInfoEntry entry = NewCipherInfoEntry(NewKeyInfo(), NewKeyInfo());
 
             // Act
-            Task decrypt = SqlSecurityUtility.DecryptSymmetricKeyAsync(
-                entry, connection, command: null, cts.Token);
+            Task decrypt = SqlSecurityUtility.DecryptSymmetricKey(
+                entry, connection, command: null, isAsync: true, cts.Token).AsTask();
             await entered.Task;
             cts.Cancel();
 
@@ -225,7 +400,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
         /// <summary>Cancellation after a failed key wins over validation of the next provider.</summary>
         [Fact]
-        public async Task DecryptSymmetricKeyAsync_CancelledAfterFailure_DoesNotValidateNextProvider()
+        public async Task DecryptSymmetricKey_AsyncCancelledAfterFailure_DoesNotValidateNextProvider()
         {
             // Arrange
             using CancellationTokenSource cts = new();
@@ -242,8 +417,8 @@ namespace Microsoft.Data.SqlClient.UnitTests
                 NewKeyInfo(ProviderName), NewKeyInfo(SecondProviderName));
 
             // Act
-            Task decrypt = SqlSecurityUtility.DecryptSymmetricKeyAsync(
-                entry, connection, command: null, cts.Token);
+            Task decrypt = SqlSecurityUtility.DecryptSymmetricKey(
+                entry, connection, command: null, isAsync: true, cts.Token).AsTask();
 
             // Assert
             await Assert.ThrowsAnyAsync<OperationCanceledException>(() => decrypt);
@@ -255,7 +430,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [Theory]
         [InlineData(1)]
         [InlineData(2)]
-        public async Task DecryptSymmetricKeyAsync_FinalCandidateFailsInlineAfterCancellation_Cancels(
+        public async Task DecryptSymmetricKey_AsyncFinalCandidateFailsInlineAfterCancellation_Cancels(
             int candidateCount)
         {
             // Arrange
@@ -280,8 +455,8 @@ namespace Microsoft.Data.SqlClient.UnitTests
             }
 
             // Act
-            Task decrypt = SqlSecurityUtility.DecryptSymmetricKeyAsync(
-                NewCipherInfoEntry(candidates), connection, null, cts.Token);
+            Task decrypt = SqlSecurityUtility.DecryptSymmetricKey(
+                NewCipherInfoEntry(candidates), connection, null, isAsync: true, cts.Token).AsTask();
 
             // Assert
             OperationCanceledException error =
@@ -295,7 +470,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [Theory]
         [InlineData(1)]
         [InlineData(2)]
-        public async Task DecryptSymmetricKeyAsync_FinalCandidateFailsLaterAfterCancellation_Cancels(
+        public async Task DecryptSymmetricKey_AsyncFinalCandidateFailsLaterAfterCancellation_Cancels(
             int candidateCount)
         {
             // Arrange
@@ -317,8 +492,8 @@ namespace Microsoft.Data.SqlClient.UnitTests
             }
 
             // Act
-            Task decrypt = SqlSecurityUtility.DecryptSymmetricKeyAsync(
-                NewCipherInfoEntry(candidates), connection, null, cts.Token);
+            Task decrypt = SqlSecurityUtility.DecryptSymmetricKey(
+                NewCipherInfoEntry(candidates), connection, null, isAsync: true, cts.Token).AsTask();
             cts.Cancel();
             result.SetException(new InvalidOperationException("Final candidate failed"));
 
@@ -332,7 +507,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
         /// <summary>Pre-cancellation wins over an unregistered provider error.</summary>
         [Fact]
-        public async Task DecryptSymmetricKeyAsync_CancelledToken_DoesNotValidateProvider()
+        public async Task DecryptSymmetricKey_AsyncCancelledToken_DoesNotValidateProvider()
         {
             // Arrange
             TestKeyStoreProvider provider = new();
@@ -342,8 +517,8 @@ namespace Microsoft.Data.SqlClient.UnitTests
             cts.Cancel();
 
             // Act
-            Task decrypt = SqlSecurityUtility.DecryptSymmetricKeyAsync(
-                entry, connection, command: null, cts.Token);
+            Task decrypt = SqlSecurityUtility.DecryptSymmetricKey(
+                entry, connection, command: null, isAsync: true, cts.Token).AsTask();
 
             // Assert
             await Assert.ThrowsAnyAsync<OperationCanceledException>(() => decrypt);
@@ -353,7 +528,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
         /// <summary>Cancellation wins over a verification failure completed inline.</summary>
         [Fact]
-        public async Task VerifyColumnMasterKeySignatureAsync_ProviderFailsInlineAfterCancellation_Cancels()
+        public async Task VerifyColumnMasterKeySignature_AsyncProviderFailsInlineAfterCancellation_Cancels()
         {
             // Arrange
             using CancellationTokenSource cts = new();
@@ -368,8 +543,8 @@ namespace Microsoft.Data.SqlClient.UnitTests
             using SqlConnection connection = NewConnection((ProviderName, provider));
 
             // Act
-            Task verify = SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
-                ProviderName, KeyPath, true, new byte[] { 1, 2, 3 }, connection, null, cts.Token);
+            Task verify = SqlSecurityUtility.VerifyColumnMasterKeySignature(
+                ProviderName, KeyPath, true, new byte[] { 1, 2, 3 }, connection, null, isAsync: true, cts.Token).AsTask();
 
             // Assert
             OperationCanceledException error =
@@ -381,7 +556,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
         /// <summary>Cancellation wins over a verification failure completed after suspension.</summary>
         [Fact]
-        public async Task VerifyColumnMasterKeySignatureAsync_ProviderFailsLaterAfterCancellation_Cancels()
+        public async Task VerifyColumnMasterKeySignature_AsyncProviderFailsLaterAfterCancellation_Cancels()
         {
             // Arrange
             using CancellationTokenSource cts = new();
@@ -391,8 +566,8 @@ namespace Microsoft.Data.SqlClient.UnitTests
             using SqlConnection connection = NewConnection((ProviderName, provider));
 
             // Act
-            Task verify = SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
-                ProviderName, KeyPath, true, new byte[] { 1, 2, 3 }, connection, null, cts.Token);
+            Task verify = SqlSecurityUtility.VerifyColumnMasterKeySignature(
+                ProviderName, KeyPath, true, new byte[] { 1, 2, 3 }, connection, null, isAsync: true, cts.Token).AsTask();
             cts.Cancel();
             result.SetException(new InvalidOperationException("Verification failed"));
 
@@ -406,16 +581,16 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
         /// <summary>A valid provider signature completes using the async provider API.</summary>
         [Fact]
-        public async Task VerifyColumnMasterKeySignatureAsync_ValidSignature_Completes()
+        public async Task VerifyColumnMasterKeySignature_AsyncValidSignature_Completes()
         {
             // Arrange
             TestKeyStoreProvider provider = new() { VerifyResult = true };
             using SqlConnection connection = NewConnection((ProviderName, provider));
 
             // Act
-            await SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
+            await SqlSecurityUtility.VerifyColumnMasterKeySignature(
                 ProviderName, KeyPath, false, new byte[] { 1, 2, 3 },
-                connection, null, CancellationToken.None);
+                connection, null, isAsync: true, CancellationToken.None);
 
             // Assert
             Assert.Equal(1, provider.VerifyAsyncCallCount);
@@ -423,22 +598,22 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
         /// <summary>An invalid provider signature reports the same error as synchronous verification.</summary>
         [Fact]
-        public async Task VerifyColumnMasterKeySignatureAsync_InvalidSignature_Throws()
+        public async Task VerifyColumnMasterKeySignature_AsyncInvalidSignature_Throws()
         {
             // Arrange
             TestKeyStoreProvider provider = new() { VerifyResult = false };
             using SqlConnection connection = NewConnection((ProviderName, provider));
 
             // Act
-            Func<Task> verify = () => SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
+            Func<Task> verify = () => SqlSecurityUtility.VerifyColumnMasterKeySignature(
                 ProviderName, KeyPath, false, new byte[] { 1, 2, 3 },
-                connection, null, CancellationToken.None);
+                connection, null, isAsync: true, CancellationToken.None).AsTask();
 
             // Assert
             InvalidOperationException error = await Assert.ThrowsAsync<InvalidOperationException>(verify);
             InvalidOperationException syncError = Assert.Throws<InvalidOperationException>(() =>
                 SqlSecurityUtility.VerifyColumnMasterKeySignature(
-                    ProviderName, KeyPath, false, new byte[] { 1, 2, 3 }, connection, null));
+                    ProviderName, KeyPath, false, new byte[] { 1, 2, 3 }, connection, null, isAsync: false, CancellationToken.None).GetAwaiter().GetResult());
             Assert.Equal(syncError.Message, error.Message);
             Assert.Equal(1, provider.VerifyAsyncCallCount);
         }
@@ -447,7 +622,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
-        public async Task VerifyColumnMasterKeySignatureAsync_ProviderReturnsInlineAfterCancellation_Cancels(
+        public async Task VerifyColumnMasterKeySignature_AsyncProviderReturnsInlineAfterCancellation_Cancels(
             bool verificationResult)
         {
             // Arrange
@@ -464,8 +639,8 @@ namespace Microsoft.Data.SqlClient.UnitTests
             using SqlConnection connection = NewConnection((ProviderName, provider));
 
             // Act
-            Task verify = SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
-                ProviderName, KeyPath, false, new byte[] { 1, 2, 3 }, connection, null, cts.Token);
+            Task verify = SqlSecurityUtility.VerifyColumnMasterKeySignature(
+                ProviderName, KeyPath, false, new byte[] { 1, 2, 3 }, connection, null, isAsync: true, cts.Token).AsTask();
 
             // Assert
             OperationCanceledException error =
@@ -475,9 +650,9 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
             // Verify that the cancelled result cannot bypass the instance provider on retry.
             provider.VerifyAsyncCallback = null;
-            await SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
+            await SqlSecurityUtility.VerifyColumnMasterKeySignature(
                 ProviderName, KeyPath, false, new byte[] { 1, 2, 3 },
-                connection, null, CancellationToken.None);
+                connection, null, isAsync: true, CancellationToken.None);
             Assert.Equal(2, provider.VerifyAsyncCallCount);
         }
 
@@ -485,7 +660,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
-        public async Task VerifyColumnMasterKeySignatureAsync_ProviderReturnsLaterAfterCancellation_Cancels(
+        public async Task VerifyColumnMasterKeySignature_AsyncProviderReturnsLaterAfterCancellation_Cancels(
             bool verificationResult)
         {
             // Arrange
@@ -500,8 +675,8 @@ namespace Microsoft.Data.SqlClient.UnitTests
             using SqlConnection connection = NewConnection((ProviderName, provider));
 
             // Act
-            Task verify = SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
-                ProviderName, KeyPath, false, new byte[] { 1, 2, 3 }, connection, null, cts.Token);
+            Task verify = SqlSecurityUtility.VerifyColumnMasterKeySignature(
+                ProviderName, KeyPath, false, new byte[] { 1, 2, 3 }, connection, null, isAsync: true, cts.Token).AsTask();
             cts.Cancel();
             result.SetResult(verificationResult);
 
@@ -513,15 +688,15 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
             // Verify that the cancelled result cannot bypass the instance provider on retry.
             provider.VerifyAsyncCallback = null;
-            await SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
+            await SqlSecurityUtility.VerifyColumnMasterKeySignature(
                 ProviderName, KeyPath, false, new byte[] { 1, 2, 3 },
-                connection, null, CancellationToken.None);
+                connection, null, isAsync: true, CancellationToken.None);
             Assert.Equal(2, provider.VerifyAsyncCallCount);
         }
 
         /// <summary>Provider errors retain the signature-verification wrapper.</summary>
         [Fact]
-        public async Task VerifyColumnMasterKeySignatureAsync_ProviderThrows_WrapsException()
+        public async Task VerifyColumnMasterKeySignature_AsyncProviderThrows_WrapsException()
         {
             // Arrange
             TestKeyStoreProvider provider = new()
@@ -531,9 +706,9 @@ namespace Microsoft.Data.SqlClient.UnitTests
             using SqlConnection connection = NewConnection((ProviderName, provider));
 
             // Act
-            Func<Task> verify = () => SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
+            Func<Task> verify = () => SqlSecurityUtility.VerifyColumnMasterKeySignature(
                 ProviderName, KeyPath, false, new byte[] { 1, 2, 3 },
-                connection, null, CancellationToken.None);
+                connection, null, isAsync: true, CancellationToken.None).AsTask();
 
             // Assert
             InvalidOperationException error = await Assert.ThrowsAsync<InvalidOperationException>(verify);
@@ -543,7 +718,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
         /// <summary>Pre-cancellation takes precedence over empty signature validation.</summary>
         [Fact]
-        public async Task VerifyColumnMasterKeySignatureAsync_CancelledWithMissingSignature_Cancels()
+        public async Task VerifyColumnMasterKeySignature_AsyncCancelledWithMissingSignature_Cancels()
         {
             // Arrange
             TestKeyStoreProvider provider = new() { VerifyResult = true };
@@ -552,22 +727,22 @@ namespace Microsoft.Data.SqlClient.UnitTests
             cts.Cancel();
 
             // Act
-            Task verify = SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
-                ProviderName, KeyPath, false, Array.Empty<byte>(), connection, null, cts.Token);
+            Task verify = SqlSecurityUtility.VerifyColumnMasterKeySignature(
+                ProviderName, KeyPath, false, Array.Empty<byte>(), connection, null, isAsync: true, cts.Token).AsTask();
 
             // Assert
             await Assert.ThrowsAnyAsync<OperationCanceledException>(() => verify);
             Assert.True(verify.IsCanceled);
             await Assert.ThrowsAsync<InvalidOperationException>(() =>
-                SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
+                SqlSecurityUtility.VerifyColumnMasterKeySignature(
                     ProviderName, KeyPath, false, Array.Empty<byte>(),
-                    connection, null, CancellationToken.None));
+                    connection, null, isAsync: true, CancellationToken.None).AsTask());
             Assert.Equal(0, provider.VerifyAsyncCallCount);
         }
 
         /// <summary>Pre-cancellation takes precedence over provider lookup errors.</summary>
         [Fact]
-        public async Task VerifyColumnMasterKeySignatureAsync_CancelledWithUnknownProvider_Cancels()
+        public async Task VerifyColumnMasterKeySignature_AsyncCancelledWithUnknownProvider_Cancels()
         {
             // Arrange
             TestKeyStoreProvider provider = new() { VerifyResult = true };
@@ -576,23 +751,23 @@ namespace Microsoft.Data.SqlClient.UnitTests
             cts.Cancel();
 
             // Act
-            Task verify = SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
+            Task verify = SqlSecurityUtility.VerifyColumnMasterKeySignature(
                 SecondProviderName, KeyPath, false, new byte[] { 1, 2, 3 },
-                connection, null, cts.Token);
+                connection, null, isAsync: true, cts.Token).AsTask();
 
             // Assert
             await Assert.ThrowsAnyAsync<OperationCanceledException>(() => verify);
             Assert.True(verify.IsCanceled);
             await Assert.ThrowsAsync<InvalidOperationException>(() =>
-                SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
+                SqlSecurityUtility.VerifyColumnMasterKeySignature(
                     SecondProviderName, KeyPath, false, new byte[] { 1, 2, 3 },
-                    connection, null, CancellationToken.None));
+                    connection, null, isAsync: true, CancellationToken.None).AsTask());
             Assert.Equal(0, provider.VerifyAsyncCallCount);
         }
 
         /// <summary>Pre-cancellation does not invoke verification even with valid inputs.</summary>
         [Fact]
-        public async Task VerifyColumnMasterKeySignatureAsync_CancelledToken_DoesNotInvokeProvider()
+        public async Task VerifyColumnMasterKeySignature_AsyncCancelledToken_DoesNotInvokeProvider()
         {
             // Arrange
             TestKeyStoreProvider provider = new() { VerifyResult = true };
@@ -601,8 +776,8 @@ namespace Microsoft.Data.SqlClient.UnitTests
             cts.Cancel();
 
             // Act
-            Task verify = SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
-                ProviderName, KeyPath, false, new byte[] { 1, 2, 3 }, connection, null, cts.Token);
+            Task verify = SqlSecurityUtility.VerifyColumnMasterKeySignature(
+                ProviderName, KeyPath, false, new byte[] { 1, 2, 3 }, connection, null, isAsync: true, cts.Token).AsTask();
 
             // Assert
             await Assert.ThrowsAnyAsync<OperationCanceledException>(() => verify);
@@ -612,7 +787,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
         /// <summary>In-flight cancellation is not wrapped as a signature error.</summary>
         [Fact]
-        public async Task VerifyColumnMasterKeySignatureAsync_CancelledMidFlight_ProducesCancelledTask()
+        public async Task VerifyColumnMasterKeySignature_AsyncCancelledMidFlight_ProducesCancelledTask()
         {
             // Arrange
             using CancellationTokenSource cts = new();
@@ -630,9 +805,9 @@ namespace Microsoft.Data.SqlClient.UnitTests
             using SqlConnection connection = NewConnection((ProviderName, provider));
 
             // Act
-            Task verify = SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
+            Task verify = SqlSecurityUtility.VerifyColumnMasterKeySignature(
                 ProviderName, "unique-" + Guid.NewGuid(), false, new byte[] { 4, 5, 6 },
-                connection, null, cts.Token);
+                connection, null, isAsync: true, cts.Token).AsTask();
             await entered.Task;
             cts.Cancel();
 
@@ -645,7 +820,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
-        public async Task VerifyColumnMasterKeySignatureAsync_CachedResult_ObservesCancellation(
+        public async Task VerifyColumnMasterKeySignature_AsyncCachedResult_ObservesCancellation(
             bool cachedResult)
         {
             // Arrange
@@ -659,8 +834,8 @@ namespace Microsoft.Data.SqlClient.UnitTests
             cts.Cancel();
 
             // Act
-            Task verify = SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
-                providerName, keyPath, true, signature, connection, null, cts.Token);
+            Task verify = SqlSecurityUtility.VerifyColumnMasterKeySignature(
+                providerName, keyPath, true, signature, connection, null, isAsync: true, cts.Token).AsTask();
 
             // Assert
             OperationCanceledException error =
@@ -671,7 +846,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
         /// <summary>A positive signature cache entry is shared with the synchronous utility.</summary>
         [Fact]
-        public async Task VerifyColumnMasterKeySignatureAsync_CachedValidSignature_Completes()
+        public async Task VerifyColumnMasterKeySignature_AsyncCachedValidSignature_Completes()
         {
             // Arrange
             string providerName = SqlColumnEncryptionCertificateStoreProvider.ProviderName;
@@ -682,17 +857,17 @@ namespace Microsoft.Data.SqlClient.UnitTests
                 .AddSignatureVerificationResult(providerName, keyPath, true, signature, true);
 
             // Act
-            await SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
-                providerName, keyPath, true, signature, connection, null, CancellationToken.None);
+            await SqlSecurityUtility.VerifyColumnMasterKeySignature(
+                providerName, keyPath, true, signature, connection, null, isAsync: true, CancellationToken.None);
 
             // Assert
             SqlSecurityUtility.VerifyColumnMasterKeySignature(
-                providerName, keyPath, true, signature, connection, null);
+                providerName, keyPath, true, signature, connection, null, isAsync: false, CancellationToken.None).GetAwaiter().GetResult();
         }
 
         /// <summary>A negative signature cache entry reports the same sync and async error.</summary>
         [Fact]
-        public async Task VerifyColumnMasterKeySignatureAsync_CachedInvalidSignature_ThrowsSameError()
+        public async Task VerifyColumnMasterKeySignature_AsyncCachedInvalidSignature_ThrowsSameError()
         {
             // Arrange
             string providerName = SqlColumnEncryptionCertificateStoreProvider.ProviderName;
@@ -703,14 +878,14 @@ namespace Microsoft.Data.SqlClient.UnitTests
                 .AddSignatureVerificationResult(providerName, keyPath, true, signature, false);
 
             // Act
-            Func<Task> verify = () => SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
-                providerName, keyPath, true, signature, connection, null, CancellationToken.None);
+            Func<Task> verify = () => SqlSecurityUtility.VerifyColumnMasterKeySignature(
+                providerName, keyPath, true, signature, connection, null, isAsync: true, CancellationToken.None).AsTask();
 
             // Assert
             InvalidOperationException error = await Assert.ThrowsAsync<InvalidOperationException>(verify);
             InvalidOperationException syncError = Assert.Throws<InvalidOperationException>(() =>
                 SqlSecurityUtility.VerifyColumnMasterKeySignature(
-                    providerName, keyPath, true, signature, connection, null));
+                    providerName, keyPath, true, signature, connection, null, isAsync: false, CancellationToken.None).GetAwaiter().GetResult());
             Assert.Equal(syncError.Message, error.Message);
         }
 
@@ -720,7 +895,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
-        public async Task VerifyColumnMasterKeySignatureAsync_GlobalResultInlineAfterCancellation_DoesNotCache(
+        public async Task VerifyColumnMasterKeySignature_AsyncGlobalResultInlineAfterCancellation_DoesNotCache(
             bool verificationResult)
         {
             // Arrange
@@ -744,8 +919,8 @@ namespace Microsoft.Data.SqlClient.UnitTests
                 scope.ProviderName, scope.KeyPath, true, scope.Signature));
 
             // Act
-            Task verify = SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
-                scope.ProviderName, scope.KeyPath, true, scope.Signature, connection, null, cts.Token);
+            Task verify = SqlSecurityUtility.VerifyColumnMasterKeySignature(
+                scope.ProviderName, scope.KeyPath, true, scope.Signature, connection, null, isAsync: true, cts.Token).AsTask();
 
             // Assert
             OperationCanceledException error =
@@ -758,9 +933,9 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
             // A retry must reach the provider, not a result published by the canceled call.
             provider.VerifyAsyncCallback = null;
-            await SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
+            await SqlSecurityUtility.VerifyColumnMasterKeySignature(
                 scope.ProviderName, scope.KeyPath, true, scope.Signature,
-                connection, null, CancellationToken.None);
+                connection, null, isAsync: true, CancellationToken.None);
             Assert.Equal(2, provider.VerifyAsyncCallCount);
             Assert.Equal(SignatureVerificationResult.True, cache.GetSignatureVerificationResult(
                 scope.ProviderName, scope.KeyPath, true, scope.Signature));
@@ -772,7 +947,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
-        public async Task VerifyColumnMasterKeySignatureAsync_GlobalResultLaterAfterCancellation_DoesNotCache(
+        public async Task VerifyColumnMasterKeySignature_AsyncGlobalResultLaterAfterCancellation_DoesNotCache(
             bool verificationResult)
         {
             // Arrange
@@ -797,8 +972,8 @@ namespace Microsoft.Data.SqlClient.UnitTests
                 scope.ProviderName, scope.KeyPath, true, scope.Signature));
 
             // Act
-            Task verify = SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
-                scope.ProviderName, scope.KeyPath, true, scope.Signature, connection, null, cts.Token);
+            Task verify = SqlSecurityUtility.VerifyColumnMasterKeySignature(
+                scope.ProviderName, scope.KeyPath, true, scope.Signature, connection, null, isAsync: true, cts.Token).AsTask();
             Assert.False(verify.IsCompleted);
             cts.Cancel();
             result.SetResult(verificationResult);
@@ -814,9 +989,9 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
             // A retry must reach the provider, not a result published by the canceled call.
             provider.VerifyAsyncCallback = null;
-            await SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
+            await SqlSecurityUtility.VerifyColumnMasterKeySignature(
                 scope.ProviderName, scope.KeyPath, true, scope.Signature,
-                connection, null, CancellationToken.None);
+                connection, null, isAsync: true, CancellationToken.None);
             Assert.Equal(2, provider.VerifyAsyncCallCount);
             Assert.Equal(SignatureVerificationResult.True, cache.GetSignatureVerificationResult(
                 scope.ProviderName, scope.KeyPath, true, scope.Signature));
@@ -824,7 +999,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
         /// <summary>An uncanceled global-provider success is published and reused without verification.</summary>
         [Fact]
-        public async Task VerifyColumnMasterKeySignatureAsync_GlobalValidResult_PublishesAndReuses()
+        public async Task VerifyColumnMasterKeySignature_AsyncGlobalValidResult_PublishesAndReuses()
         {
             // Arrange
             TestKeyStoreProvider provider = new() { VerifyResult = true };
@@ -837,9 +1012,9 @@ namespace Microsoft.Data.SqlClient.UnitTests
                 scope.ProviderName, scope.KeyPath, true, scope.Signature));
 
             // Act
-            await SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
+            await SqlSecurityUtility.VerifyColumnMasterKeySignature(
                 scope.ProviderName, scope.KeyPath, true, scope.Signature,
-                connection, null, CancellationToken.None);
+                connection, null, isAsync: true, CancellationToken.None);
 
             // Assert
             Assert.Equal(1, provider.VerifyAsyncCallCount);
@@ -848,15 +1023,15 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
             // A later call must accept the cached result even if the provider would reject it.
             provider.VerifyResult = false;
-            await SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
+            await SqlSecurityUtility.VerifyColumnMasterKeySignature(
                 scope.ProviderName, scope.KeyPath, true, scope.Signature,
-                connection, null, CancellationToken.None);
+                connection, null, isAsync: true, CancellationToken.None);
             Assert.Equal(1, provider.VerifyAsyncCallCount);
         }
 
         /// <summary>An uncanceled global-provider rejection is published and reused without verification.</summary>
         [Fact]
-        public async Task VerifyColumnMasterKeySignatureAsync_GlobalInvalidResult_PublishesAndReuses()
+        public async Task VerifyColumnMasterKeySignature_AsyncGlobalInvalidResult_PublishesAndReuses()
         {
             // Arrange
             TestKeyStoreProvider provider = new() { VerifyResult = false };
@@ -869,9 +1044,9 @@ namespace Microsoft.Data.SqlClient.UnitTests
                 scope.ProviderName, scope.KeyPath, true, scope.Signature));
 
             // Act
-            Func<Task> verify = () => SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
+            Func<Task> verify = () => SqlSecurityUtility.VerifyColumnMasterKeySignature(
                 scope.ProviderName, scope.KeyPath, true, scope.Signature,
-                connection, null, CancellationToken.None);
+                connection, null, isAsync: true, CancellationToken.None).AsTask();
 
             // Assert
             await Assert.ThrowsAsync<InvalidOperationException>(verify);
@@ -890,21 +1065,25 @@ namespace Microsoft.Data.SqlClient.UnitTests
         {
             private int _decryptCallCount;
             private int _decryptAsyncCallCount;
+            private int _verifyCallCount;
             private int _verifyAsyncCallCount;
 
             internal byte[] PlaintextKey { get; set; } = new byte[32];
             internal bool VerifyResult { get; set; }
+            internal Func<byte[]> DecryptCallback { get; set; }
+            internal Func<bool> VerifyCallback { get; set; }
             internal Func<CancellationToken, Task<byte[]>> DecryptAsyncCallback { get; set; }
             internal Func<CancellationToken, Task<bool>> VerifyAsyncCallback { get; set; }
             internal int DecryptCallCount => _decryptCallCount;
             internal int DecryptAsyncCallCount => _decryptAsyncCallCount;
+            internal int VerifyCallCount => _verifyCallCount;
             internal int VerifyAsyncCallCount => _verifyAsyncCallCount;
 
             public override byte[] DecryptColumnEncryptionKey(
                 string masterKeyPath, string encryptionAlgorithm, byte[] encryptedColumnEncryptionKey)
             {
                 Interlocked.Increment(ref _decryptCallCount);
-                return PlaintextKey;
+                return DecryptCallback is not null ? DecryptCallback() : PlaintextKey;
             }
 
             public override Task<byte[]> DecryptColumnEncryptionKeyAsync(
@@ -927,7 +1106,10 @@ namespace Microsoft.Data.SqlClient.UnitTests
 
             public override bool VerifyColumnMasterKeyMetadata(
                 string masterKeyPath, bool allowEnclaveComputations, byte[] signature)
-                => VerifyResult;
+            {
+                Interlocked.Increment(ref _verifyCallCount);
+                return VerifyCallback is not null ? VerifyCallback() : VerifyResult;
+            }
 
             public override Task<bool> VerifyColumnMasterKeyMetadataAsync(
                 string masterKeyPath, bool allowEnclaveComputations, byte[] signature,
