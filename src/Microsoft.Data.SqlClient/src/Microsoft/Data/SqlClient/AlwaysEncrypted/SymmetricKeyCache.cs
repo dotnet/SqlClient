@@ -51,61 +51,40 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
         /// result. Different keys and uncached loads do not wait for each other.
         /// </remarks>
         public SymmetricKey GetKey(SqlEncryptionKeyInfo keyInfo, SqlConnection connection, SqlCommand? command)
-        {
-            string serverName = connection.DataSource;
-            Debug.Assert(serverName is not null, @"serverName should not be null.");
-            string cacheLookupKey = CreateCacheLookupKey(keyInfo, serverName!);
-
-            if (TryGetCachedKey(cacheLookupKey, out SymmetricKey? cachedKey))
-            {
-                return cachedKey;
-            }
-
-            TimeSpan cacheTtl = SqlConnection.ColumnEncryptionKeyCacheTtl;
-            if (cacheTtl == TimeSpan.Zero)
-            {
-                return LoadKey(
-                    keyInfo, connection, command, serverName!, cacheLookupKey, cacheTtl,
-                    isAsync: false, CancellationToken.None)
-                    .GetAwaiter().GetResult();
-            }
-
-            KeyLoadGate gate = AddGateUser(cacheLookupKey);
-            bool acquired = false;
-            try
-            {
-                gate.Semaphore.Wait();
-                acquired = true;
-                return LoadKey(
-                    keyInfo, connection, command, serverName!, cacheLookupKey, cacheTtl,
-                    isAsync: false, CancellationToken.None)
-                    .GetAwaiter().GetResult();
-            }
-            finally
-            {
-                RemoveGateUser(cacheLookupKey, gate, acquired);
-            }
-        }
+            => GetKey(keyInfo, connection, command, isAsync: false, CancellationToken.None)
+                .GetAwaiter().GetResult();
 
         /// <summary>
         /// Asynchronously retrieves a plaintext key, preserving cancellation and provider error
         /// wrapping.
         /// </summary>
         /// <remarks>
-        /// Uses the same per-key gates as <see cref="GetKey"/>, so sync and async callers for a
+        /// Shares per-key gates with the synchronous overload, so sync and async callers for a
         /// key share one decryption. Waiting for a gate observes
-        /// <paramref name="cancellationToken"/>.
+        /// <paramref name="cancellationToken"/>. Cache hits complete without allocating.
         /// </remarks>
-        internal async Task<SymmetricKey> GetKeyAsync(
+        internal ValueTask<SymmetricKey> GetKeyAsync(
             SqlEncryptionKeyInfo keyInfo,
             SqlConnection connection,
             SqlCommand? command,
             CancellationToken cancellationToken)
+            => GetKey(keyInfo, connection, command, isAsync: true, cancellationToken);
+
+        /// <summary>
+        /// Shared lookup for sync and async callers. When <paramref name="isAsync"/> is false,
+        /// the gate and provider are called synchronously and the result is already complete.
+        /// </summary>
+        private async ValueTask<SymmetricKey> GetKey(
+            SqlEncryptionKeyInfo keyInfo,
+            SqlConnection connection,
+            SqlCommand? command,
+            bool isAsync,
+            CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            string serverName = connection.DataSource;
-            Debug.Assert(serverName is not null, @"serverName should not be null.");
-            string cacheLookupKey = CreateCacheLookupKey(keyInfo, serverName!);
+            Debug.Assert(connection.DataSource is not null, @"serverName should not be null.");
+            string serverName = connection.DataSource!;
+            string cacheLookupKey = CreateCacheLookupKey(keyInfo, serverName);
 
             if (TryGetCachedKey(cacheLookupKey, out SymmetricKey? cachedKey))
             {
@@ -116,8 +95,8 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
             if (cacheTtl == TimeSpan.Zero)
             {
                 return await LoadKey(
-                    keyInfo, connection, command, serverName!, cacheLookupKey, cacheTtl,
-                    isAsync: true, cancellationToken)
+                    keyInfo, connection, command, serverName, cacheLookupKey, cacheTtl,
+                    isAsync, cancellationToken)
                     .ConfigureAwait(false);
             }
 
@@ -125,11 +104,18 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
             bool acquired = false;
             try
             {
-                await gate.Semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+                if (isAsync)
+                {
+                    await gate.Semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+                }
+                else
+                {
+                    gate.Semaphore.Wait();
+                }
                 acquired = true;
                 return await LoadKey(
-                    keyInfo, connection, command, serverName!, cacheLookupKey, cacheTtl,
-                    isAsync: true, cancellationToken)
+                    keyInfo, connection, command, serverName, cacheLookupKey, cacheTtl,
+                    isAsync, cancellationToken)
                     .ConfigureAwait(false);
             }
             finally
@@ -165,6 +151,11 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
             byte[] plaintextKey;
             try
             {
+                // AKV provider registration supports multi-user scenarios, so it is not safe to
+                // cache the CEK in the global provider. The CEK cache is global and shared across
+                // all connections. To prevent conflicts, global providers must not use their own
+                // CEK caches.
+                provider.ColumnEncryptionKeyCacheTtl = TimeSpan.Zero;
                 plaintextKey = isAsync
                     ? await provider.DecryptColumnEncryptionKeyAsync(
                         keyInfo.keyPath, keyInfo.algorithmName, keyInfo.encryptedKey,
@@ -188,7 +179,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
         }
 
         /// <summary>
-        /// Verifies key path trust and resolves the provider, disabling its own CEK cache.
+        /// Verifies key path trust and resolves the provider.
         /// </summary>
         private static SqlColumnEncryptionKeyStoreProvider GetTrustedProvider(
             SqlEncryptionKeyInfo keyInfo,
@@ -213,11 +204,6 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
                     SqlSecurityUtility.GetListOfProviderNamesThatWereSearched(connection, command));
             }
 
-            // AKV provider registration supports multi-user scenarios, so it is not safe to cache
-            // the CEK in the global provider. The CEK cache is global and shared across all
-            // connections. To prevent conflicts, global providers must not use their own CEK
-            // caches.
-            provider.ColumnEncryptionKeyCacheTtl = TimeSpan.Zero;
             return provider;
         }
 
