@@ -3,6 +3,9 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+#if NET
+using System.Net.Security;
+#endif
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using Interop.Windows.Sni;
@@ -15,20 +18,19 @@ using Microsoft.Data.SqlClient.NativeSni;
 namespace Microsoft.Data.SqlClient
 {
     /// <summary>
-    /// Reads the server certificate details that native SNI recorded for the most recent client TLS
-    /// handshake on a connection and maps them to a <see cref="ServerCertificateCapture"/>.
+    /// Reads what native SNI recorded for the most recent client TLS handshake on a connection and
+    /// maps it to a <see cref="TlsHandshakeInfo"/>.
     /// </summary>
     /// <remarks>
     /// <para>
     /// The native exports used here (<c>SNIGetCertValidationInfoWrapper</c> and
     /// <c>SNIGetServerCertificateWrapper</c>) are not present in older SNI libraries. The first call
-    /// that finds an export missing records that fact, and subsequent captures skip it, leaving the
-    /// corresponding fields unavailable. Connections are never affected.
+    /// that finds an export missing records that fact, and subsequent reads skip it, leaving the
+    /// corresponding values unavailable. Connections are never affected by a missing export.
     /// </para>
     /// <para>
-    /// Capture is diagnostic only: it never throws, never changes the connection outcome or the
-    /// exception that is reported, and never synthesizes a value that native SNI did not mark as
-    /// available.
+    /// A value is reported only when native SNI marked it as available; nothing is synthesized from
+    /// error codes or messages.
     /// </para>
     /// </remarks>
     internal sealed class SniNativeCertificateCapture
@@ -42,17 +44,23 @@ namespace Microsoft.Data.SqlClient
         internal delegate uint CertValidationInfoQuery(SNIHandle? handle, ref SniCertValidationInfo info);
 
         /// <summary>
-        /// Queries <c>SNIGetServerCertificateWrapper</c>. An empty <paramref name="certificate"/> buffer
-        /// requests only the size.
+        /// Queries <c>SNIGetServerCertificateWrapper</c>. An empty <paramref name="certificate"/>
+        /// buffer requests only the size.
         /// </summary>
-        internal delegate uint ServerCertificateQuery(SNIHandle? handle, Span<byte> certificate, out uint certificateSize);
+        internal delegate uint ServerCertificateQuery(
+            SNIHandle? handle,
+            Span<byte> certificate,
+            out uint certificateSize);
 
         /// <summary>
-        /// The instance used by <see cref="Parser.TdsParserStateObjectNative"/>, bound to the loaded SNI library.
+        /// The instance used by <see cref="Parser.TdsParserStateObjectNative"/>, bound to the loaded
+        /// SNI library.
         /// </summary>
         internal static SniNativeCertificateCapture Default { get; } = new SniNativeCertificateCapture(
-            static (SNIHandle? handle, ref SniCertValidationInfo info) => SniNativeWrapper.SniGetCertValidationInfo(handle!, ref info),
-            static (SNIHandle? handle, Span<byte> certificate, out uint certificateSize) => SniNativeWrapper.SniGetServerCertificate(handle!, certificate, out certificateSize));
+            static (SNIHandle? handle, ref SniCertValidationInfo info) =>
+                SniNativeWrapper.SniGetCertValidationInfo(handle!, ref info),
+            static (SNIHandle? handle, Span<byte> certificate, out uint certificateSize) =>
+                SniNativeWrapper.SniGetServerCertificate(handle!, certificate, out certificateSize));
 
         private readonly CertValidationInfoQuery _validationInfoQuery;
         private readonly ServerCertificateQuery _certificateQuery;
@@ -60,7 +68,9 @@ namespace Microsoft.Data.SqlClient
         private volatile bool _validationInfoUnavailable;
         private volatile bool _certificateUnavailable;
 
-        internal SniNativeCertificateCapture(CertValidationInfoQuery validationInfoQuery, ServerCertificateQuery certificateQuery)
+        internal SniNativeCertificateCapture(
+            CertValidationInfoQuery validationInfoQuery,
+            ServerCertificateQuery certificateQuery)
         {
             _validationInfoQuery = validationInfoQuery;
             _certificateQuery = certificateQuery;
@@ -79,53 +89,26 @@ namespace Microsoft.Data.SqlClient
         internal bool IsCertificateUnavailable => _certificateUnavailable;
 
         /// <summary>
-        /// Reads the certificate details native SNI recorded for <paramref name="handle"/>.
+        /// Reads the handshake record native SNI kept for <paramref name="handle"/>.
         /// </summary>
         /// <returns>
-        /// The captured details, or <see langword="null"/> when native SNI reported nothing usable,
-        /// the exports are not available, or the query failed.
+        /// The record, or <see langword="null"/> when native SNI reported nothing usable, the export
+        /// is not available, or the query returned an error code.
         /// </returns>
-        internal ServerCertificateCapture? TryCapture(SNIHandle? handle)
+        internal TlsHandshakeInfo? ReadTlsHandshakeInfo(SNIHandle? handle)
         {
-            try
+            if (!TryQueryValidationInfo(handle, out SniCertValidationInfo info))
             {
-                if (!TryQueryValidationInfo(handle, out SniCertValidationInfo info))
-                {
-                    return null;
-                }
-
-                byte[]? rawCertificate = (info.dwAvailable & (uint)SniCertInfoAvailability.Certificate) != 0
-                    ? TryReadCertificate(handle)
-                    : null;
-
-                return Map(info, rawCertificate);
-            }
-            catch (Exception e)
-            {
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SniNativeCertificateCapture.TryCapture|ADV> Certificate details unavailable; capture failed with {0}.", e.GetType().Name);
                 return null;
             }
-        }
 
-        /// <summary>
-        /// Reads only the cipher suite native SNI recorded for <paramref name="handle"/>, without
-        /// reading the presented certificate.
-        /// </summary>
-        /// <returns>
-        /// The IANA cipher suite identifier, or <see langword="null"/> when native SNI did not report
-        /// one, the export is not available, or the query failed.
-        /// </returns>
-        internal int? TryGetCipherSuite(SNIHandle? handle)
-        {
-            try
+            byte[]? derBytes = null;
+            if ((info.dwAvailable & (uint)SniCertInfoAvailability.Certificate) != 0)
             {
-                return TryQueryValidationInfo(handle, out SniCertValidationInfo info) ? MapCipherSuite(info) : null;
+                derBytes = TryReadCertificate(handle);
             }
-            catch (Exception e)
-            {
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SniNativeCertificateCapture.TryGetCipherSuite|ADV> Cipher suite unavailable; query failed with {0}.", e.GetType().Name);
-                return null;
-            }
+
+            return CreateTlsHandshakeInfo(info, derBytes);
         }
 
         /// <summary>
@@ -149,7 +132,10 @@ namespace Microsoft.Data.SqlClient
             catch (EntryPointNotFoundException)
             {
                 _validationInfoUnavailable = true;
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SniNativeCertificateCapture.TryCapture|ADV> SNIGetCertValidationInfoWrapper is not exported by the loaded SNI library; certificate details are unavailable.");
+                SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                    "<sc.SniNativeCertificateCapture.ReadTlsHandshakeInfo|ADV> " +
+                    "SNIGetCertValidationInfoWrapper is not exported by the loaded SNI library; " +
+                    "handshake details are unavailable.");
                 return false;
             }
 
@@ -157,8 +143,9 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Reads the presented certificate with a size query followed by a copy. Any failure leaves
-        /// the certificate unavailable without affecting the other captured fields.
+        /// Reads the presented certificate with a size query followed by a copy, caching a missing
+        /// export. An error code leaves the certificate unavailable without affecting the other
+        /// values.
         /// </summary>
         private byte[]? TryReadCertificate(SNIHandle? handle)
         {
@@ -167,29 +154,35 @@ namespace Microsoft.Data.SqlClient
                 return null;
             }
 
+            uint result;
+            uint size;
             try
             {
-                uint result = _certificateQuery(handle, Span<byte>.Empty, out uint size);
-                if (result != ERROR_INSUFFICIENT_BUFFER || size == 0 || size > ServerCertificateCapture.MaxRawCertificateSize)
-                {
-                    return null;
-                }
-
-                byte[] certificate = new byte[size];
-                result = _certificateQuery(handle, certificate, out uint written);
-                return result == ERROR_SUCCESS && written == size ? certificate : null;
+                result = _certificateQuery(handle, Span<byte>.Empty, out size);
             }
             catch (EntryPointNotFoundException)
             {
                 _certificateUnavailable = true;
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SniNativeCertificateCapture.TryCapture|ADV> SNIGetServerCertificateWrapper is not exported by the loaded SNI library; the presented certificate is unavailable.");
+                SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                    "<sc.SniNativeCertificateCapture.ReadTlsHandshakeInfo|ADV> " +
+                    "SNIGetServerCertificateWrapper is not exported by the loaded SNI library; " +
+                    "the presented certificate is unavailable.");
                 return null;
             }
-            catch (Exception e)
+
+            if (result != ERROR_INSUFFICIENT_BUFFER || size == 0 || size > TlsHandshakeInfo.MaxDerBytesSize)
             {
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SniNativeCertificateCapture.TryCapture|ADV> Presented certificate unavailable; read failed with {0}.", e.GetType().Name);
                 return null;
             }
+
+            byte[] certificate = new byte[size];
+            result = _certificateQuery(handle, certificate, out uint written);
+            if (result != ERROR_SUCCESS || written != size)
+            {
+                return null;
+            }
+
+            return certificate;
         }
 
         private static bool IsValid(SniCertValidationInfo info) =>
@@ -197,19 +190,20 @@ namespace Microsoft.Data.SqlClient
 
         /// <summary>
         /// Maps a native <see cref="SniCertValidationInfo"/> and the separately read presented
-        /// certificate to a <see cref="ServerCertificateCapture"/>. Only fields whose availability
-        /// flag is set are populated; all others remain <see langword="null"/>.
+        /// certificate to a <see cref="TlsHandshakeInfo"/>. Only values whose availability flag is
+        /// set are populated; all others remain <see langword="null"/>.
         /// </summary>
         /// <param name="info">The structure returned by native SNI.</param>
-        /// <param name="rawCertificate">
-        /// The DER encoding read with <c>SNIGetServerCertificateWrapper</c>, or <see langword="null"/>.
-        /// Ignored unless <see cref="SniCertInfoAvailability.Certificate"/> is set.
+        /// <param name="derBytes">
+        /// The DER encoding read with <c>SNIGetServerCertificateWrapper</c>, or
+        /// <see langword="null"/>. Ignored unless <see cref="SniCertInfoAvailability.Certificate"/>
+        /// is set.
         /// </param>
         /// <returns>
-        /// The mapped details, or <see langword="null"/> if the structure is malformed or reports no
-        /// usable field.
+        /// The record, or <see langword="null"/> if the structure is malformed or reports no usable
+        /// value.
         /// </returns>
-        internal static ServerCertificateCapture? Map(SniCertValidationInfo info, byte[]? rawCertificate = null)
+        internal static TlsHandshakeInfo? CreateTlsHandshakeInfo(SniCertValidationInfo info, byte[]? derBytes = null)
         {
             if (!IsValid(info))
             {
@@ -218,24 +212,29 @@ namespace Microsoft.Data.SqlClient
 
             SniCertInfoAvailability available = (SniCertInfoAvailability)info.dwAvailable;
 
-            byte[]? certificate = (available & SniCertInfoAvailability.Certificate) != 0 &&
-                rawCertificate is { Length: > 0 and <= ServerCertificateCapture.MaxRawCertificateSize }
-                ? rawCertificate
-                : null;
+            byte[]? certificate = null;
+            if ((available & SniCertInfoAvailability.Certificate) != 0
+                && derBytes is { Length: > 0 and <= TlsHandshakeInfo.MaxDerBytesSize })
+            {
+                certificate = derBytes;
+            }
 
             // Bit values are defined to be identical to the managed enums; unknown bits are preserved.
-            SqlServerCertificateValidationErrors? validationErrors = (available & SniCertInfoAvailability.ValidationErrors) != 0
-                ? (SqlServerCertificateValidationErrors)info.dwValidationErrors
-                : null;
+            SqlServerCertificateValidationErrors? validationErrors = null;
+            if ((available & SniCertInfoAvailability.ValidationErrors) != 0)
+            {
+                validationErrors = (SqlServerCertificateValidationErrors)info.dwValidationErrors;
+            }
 
             // ChainStatusLeafTimeOnly means only the pinned leaf's validity period was checked and no
             // chain was built. ChainStatus describes a built chain, so it stays unknown, as with
             // Managed SNI for a pinned certificate.
-            X509ChainStatusFlags? chainStatus =
-                (available & SniCertInfoAvailability.ChainStatus) != 0 &&
-                (available & SniCertInfoAvailability.ChainStatusLeafTimeOnly) == 0
-                ? (X509ChainStatusFlags)info.dwChainStatus
-                : null;
+            X509ChainStatusFlags? chainStatus = null;
+            if ((available & SniCertInfoAvailability.ChainStatus) != 0
+                && (available & SniCertInfoAvailability.ChainStatusLeafTimeOnly) == 0)
+            {
+                chainStatus = (X509ChainStatusFlags)info.dwChainStatus;
+            }
 
             // Native SNI reads the protocol from the Schannel connection info after the server's
             // ServerHello, so this is the version the server selected, not merely the one offered.
@@ -249,25 +248,52 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
+#if NET
+            TlsCipherSuite? cipherSuite = MapCipherSuite(info);
+#else
             int? cipherSuite = MapCipherSuite(info);
+#endif
 
-            if (certificate is null && validationErrors is null && chainStatus is null && protocol is null && cipherSuite is null)
+            if (certificate is null
+                && validationErrors is null
+                && chainStatus is null
+                && protocol is null
+                && cipherSuite is null)
             {
                 return null;
             }
 
-            return new ServerCertificateCapture(certificate, validationErrors, chainStatus, protocol, cipherSuite);
+            return new TlsHandshakeInfo(
+                chainStatus,
+                cipherSuite,
+                certificate,
+                protocol,
+                validationErrors);
         }
 
         /// <summary>
         /// Maps the cipher suite of a valid structure, or <see langword="null"/> if it is not
-        /// available or is not a valid IANA identifier.
+        /// available, is the null cipher suite (TLS_NULL_WITH_NULL_NULL, 0), or is not a valid
+        /// IANA identifier.
         /// </summary>
-        private static int? MapCipherSuite(SniCertValidationInfo info) =>
-            (info.dwAvailable & (uint)SniCertInfoAvailability.CipherSuite) != 0 &&
-            info.dwCipherSuite != 0 &&
-            info.dwCipherSuite <= ushort.MaxValue
-                ? (int)info.dwCipherSuite
-                : null;
+#if NET
+        private static TlsCipherSuite? MapCipherSuite(SniCertValidationInfo info)
+#else
+        private static int? MapCipherSuite(SniCertValidationInfo info)
+#endif
+        {
+            if ((info.dwAvailable & (uint)SniCertInfoAvailability.CipherSuite) == 0
+                || info.dwCipherSuite == 0
+                || info.dwCipherSuite > ushort.MaxValue)
+            {
+                return null;
+            }
+
+#if NET
+            return (TlsCipherSuite)(ushort)info.dwCipherSuite;
+#else
+            return (int)info.dwCipherSuite;
+#endif
+        }
     }
 }

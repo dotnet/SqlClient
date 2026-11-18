@@ -953,12 +953,16 @@ namespace Microsoft.Data.SqlClient.Parser
 #if NETFRAMEWORK
             Debug.Assert((_encryptionOption & EncryptionOptions.CLIENT_CERT) == 0, "Client certificate authentication support has been removed");
 #endif
-            EncryptionInfoAccumulator accumulator = _connHandler?.EncryptionInfoAccumulator;
+            error = _physicalStateObj.EnableSsl(ref info, encrypt == SqlConnectionEncryptOption.Strict, serverCertificateFilename);
 
-            // Managed SNI records the handshake into the accumulator from its certificate
-            // validation callback, before EnableSsl returns, so a failed handshake's login
-            // exception still carries what was observed.
-            error = _physicalStateObj.EnableSsl(ref info, encrypt == SqlConnectionEncryptOption.Strict, serverCertificateFilename, accumulator);
+            // The certificate validation callback runs synchronously within EnableSsl, so the
+            // transport's handshake record is complete here. It is the authority for the attempt's
+            // protocol, cipher suite and certificate details; record it before any failure is
+            // reported so that the login exception carries it.
+            TlsHandshakeInfo handshakeInfo = _physicalStateObj.GetTlsHandshakeInfo();
+            ApplyTlsHandshakeInfo(
+                _connHandler?.EncryptionInfoAccumulator,
+                handshakeInfo);
 
             if (error != TdsEnums.SNI_SUCCESS)
             {
@@ -978,9 +982,12 @@ namespace Microsoft.Data.SqlClient.Parser
             {
                 error = _physicalStateObj.WaitForSSLHandShakeToComplete(out protocol);
 
-                // For an asynchronous native handshake the certificate details are complete only once
-                // the handshake wait returns; refresh them before any failure is reported.
-                ApplyServerCertificateCapture();
+                // For an asynchronous native handshake the record is complete only once the
+                // handshake wait returns; refresh it before any failure is reported.
+                handshakeInfo = _physicalStateObj.GetTlsHandshakeInfo();
+                ApplyTlsHandshakeInfo(
+                    _connHandler?.EncryptionInfoAccumulator,
+                    handshakeInfo);
 
                 if (error != TdsEnums.SNI_SUCCESS)
                 {
@@ -1004,43 +1011,46 @@ namespace Microsoft.Data.SqlClient.Parser
                 }
             }
 
-            // Transports that did not record the protocol during the handshake (native SNI) report
-            // it from the completed handshake instead.
-            if (accumulator?.Protocol is null)
+            if (RequiresHandshakeProtocol(handshakeInfo))
             {
                 RecordNegotiatedProtocol(protocol);
             }
 
             // create a new packet encryption changes the internal packet size Bug# 228403
             _physicalStateObj.ClearAllWritePackets();
-
-            void ApplyServerCertificateCapture()
-            {
-                ServerCertificateCapture certificateCapture = _physicalStateObj.GetServerCertificateCapture();
-                EncryptionInfoAccumulator accumulator = _connHandler?.EncryptionInfoAccumulator;
-                if (accumulator is null || certificateCapture is null)
-                {
-                    return;
-                }
-
-                accumulator.ServerCertificateRawData = certificateCapture.RawCertificate;
-                accumulator.ValidationErrors = certificateCapture.ValidationErrors;
-                accumulator.ChainStatus = certificateCapture.ChainStatus;
-
-                // A protocol or cipher suite already determined for this attempt takes precedence over
-                // one reported alongside the certificate details.
-                accumulator.Protocol ??= certificateCapture.Protocol;
-
-                if (accumulator.CipherSuite is null && certificateCapture.CipherSuite is int capturedCipherSuite)
-                {
-#if NET
-                    accumulator.CipherSuite = (System.Net.Security.TlsCipherSuite)capturedCipherSuite;
-#else
-                    accumulator.CipherSuite = capturedCipherSuite;
-#endif
-                }
-            }
         }
+
+        /// <summary>
+        /// Copies a transport's latest TLS handshake record into the accumulator. The record is the
+        /// single source of the attempt's protocol, cipher suite and certificate details.
+        /// </summary>
+        /// <param name="accumulator">The accumulator of the in-progress login attempt, if any.</param>
+        /// <param name="record">The transport's handshake record, if any.</param>
+        internal static void ApplyTlsHandshakeInfo(
+            EncryptionInfoAccumulator accumulator,
+            TlsHandshakeInfo record)
+        {
+            if (accumulator is null || record is null)
+            {
+                return;
+            }
+
+            accumulator.ChainStatus = record.ChainStatus;
+            accumulator.CipherSuite = record.CipherSuite;
+            accumulator.Protocol = record.Protocol;
+            accumulator.ServerCertificateDerBytes = record.DerBytes;
+            accumulator.ValidationErrors = record.ValidationErrors;
+        }
+
+        /// <summary>
+        /// Determines whether the protocol reported by the completed handshake must be recorded
+        /// because the transport's handshake record does not supply one. This is the case for a
+        /// transport without a record, and for a native SNI record without a protocol.
+        /// </summary>
+        /// <param name="record">The transport's handshake record, if any.</param>
+        /// <returns><see langword="true"/> if the record does not report a protocol.</returns>
+        internal static bool RequiresHandshakeProtocol(TlsHandshakeInfo record) =>
+            record?.Protocol is null;
 
         /// <summary>
         /// The size of a PRELOGIN option header that follows the option token: a 2-byte data
@@ -1149,12 +1159,7 @@ namespace Microsoft.Data.SqlClient.Parser
             }
 #endif
 
-            // A protocol that was not reported keeps one the transport already observed for this
-            // attempt (for example native SNI's certificate capture) instead of erasing it.
-            if (protocol != SslProtocols.None)
-            {
-                accumulator.Protocol = protocol;
-            }
+            accumulator.Protocol = protocol;
         }
 
         /// <summary>
@@ -11715,9 +11720,7 @@ namespace Microsoft.Data.SqlClient.Parser
                         TdsColumnMetadata md = metadataCollection[col];
                         if (md.IsEncrypted)
                         {
-                            SqlSecurityUtility.DecryptSymmetricKey(
-                                md.CipherMetadata, connection, command,
-                                isAsync: false, CancellationToken.None).GetAwaiter().GetResult();
+                            SqlSecurityUtility.DecryptSymmetricKey(md.CipherMetadata, connection, command);
                         }
                     }
                 }
