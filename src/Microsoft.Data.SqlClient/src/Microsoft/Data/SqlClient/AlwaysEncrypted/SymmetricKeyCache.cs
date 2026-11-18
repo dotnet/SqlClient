@@ -44,37 +44,17 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
         public static SymmetricKeyCache Instance => s_singletonInstance;
 
         /// <summary>
-        /// Retrieves Symmetric Key (in plaintext) given the encryption material.
+        /// Retrieves a plaintext symmetric key for sync and async callers. When
+        /// <paramref name="isAsync"/> is false, the gate and provider are called synchronously,
+        /// the result is already complete, and callers use <c>.GetAwaiter().GetResult()</c>.
         /// </summary>
         /// <remarks>
         /// When caching is enabled, misses for the same key wait for its load and reuse the
-        /// result. Different keys and uncached loads do not wait for each other.
-        /// </remarks>
-        public SymmetricKey GetKey(SqlEncryptionKeyInfo keyInfo, SqlConnection connection, SqlCommand? command)
-            => GetKey(keyInfo, connection, command, isAsync: false, CancellationToken.None)
-                .GetAwaiter().GetResult();
-
-        /// <summary>
-        /// Asynchronously retrieves a plaintext key, preserving cancellation and provider error
-        /// wrapping.
-        /// </summary>
-        /// <remarks>
-        /// Shares per-key gates with the synchronous overload, so sync and async callers for a
-        /// key share one decryption. Waiting for a gate observes
+        /// result, so sync and async callers share one decryption. Different keys and uncached
+        /// loads do not wait for each other. Async gate waits observe
         /// <paramref name="cancellationToken"/>. Cache hits complete without allocating.
         /// </remarks>
-        internal ValueTask<SymmetricKey> GetKeyAsync(
-            SqlEncryptionKeyInfo keyInfo,
-            SqlConnection connection,
-            SqlCommand? command,
-            CancellationToken cancellationToken)
-            => GetKey(keyInfo, connection, command, isAsync: true, cancellationToken);
-
-        /// <summary>
-        /// Shared lookup for sync and async callers. When <paramref name="isAsync"/> is false,
-        /// the gate and provider are called synchronously and the result is already complete.
-        /// </summary>
-        private async ValueTask<SymmetricKey> GetKey(
+        internal async ValueTask<SymmetricKey> GetKey(
             SqlEncryptionKeyInfo keyInfo,
             SqlConnection connection,
             SqlCommand? command,

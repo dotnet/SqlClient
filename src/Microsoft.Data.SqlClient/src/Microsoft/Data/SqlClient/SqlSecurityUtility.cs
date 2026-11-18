@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.AlwaysEncrypted;
 using Microsoft.Data.SqlClient.Parser;
@@ -257,7 +258,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     sqlClientSymmetricKey = ShouldUseInstanceLevelProviderFlow(keyInfo.keyStoreName, connection, command) ?
                         GetKeyFromLocalProviders(keyInfo, connection, command) :
-                        globalCekCache.GetKey(keyInfo, connection, command);
+                        globalCekCache.GetKey(
+                            keyInfo, connection, command, isAsync: false, CancellationToken.None)
+                            .GetAwaiter().GetResult();
                     encryptionkeyInfoChosen = keyInfo;
                     break;
                 }
