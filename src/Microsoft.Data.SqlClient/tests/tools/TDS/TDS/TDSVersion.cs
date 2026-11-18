@@ -37,6 +37,16 @@ namespace Microsoft.SqlServer.TDS
         public static Version SqlServer2012 = new Version(7, 4, 0, 4);
 
         /// <summary>
+        /// TDS 8.0, which clients using strict encryption send in LOGIN7
+        /// </summary>
+        public static Version Tds8_0 = new Version(8, 0, 0, 0);
+
+        /// <summary>
+        /// LOGIN7 wire value of TDS 8.0, which does not follow the 7.x digit layout
+        /// </summary>
+        public const uint Tds8_0WireValue = 0x08000000;
+
+        /// <summary>
         /// Map SQL Server build version to TDS version
         /// </summary>
         /// <param name="buildVersion">Build version to analyze</param>
