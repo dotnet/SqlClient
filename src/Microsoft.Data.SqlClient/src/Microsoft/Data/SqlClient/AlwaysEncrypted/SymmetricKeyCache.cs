@@ -64,7 +64,10 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
             TimeSpan cacheTtl = SqlConnection.ColumnEncryptionKeyCacheTtl;
             if (cacheTtl == TimeSpan.Zero)
             {
-                return LoadKey(keyInfo, connection, command, serverName!, cacheLookupKey, cacheTtl);
+                return LoadKey(
+                    keyInfo, connection, command, serverName!, cacheLookupKey, cacheTtl,
+                    isAsync: false, CancellationToken.None)
+                    .GetAwaiter().GetResult();
             }
 
             KeyLoadGate gate = AddGateUser(cacheLookupKey);
@@ -73,7 +76,10 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
             {
                 gate.Semaphore.Wait();
                 acquired = true;
-                return LoadKey(keyInfo, connection, command, serverName!, cacheLookupKey, cacheTtl);
+                return LoadKey(
+                    keyInfo, connection, command, serverName!, cacheLookupKey, cacheTtl,
+                    isAsync: false, CancellationToken.None)
+                    .GetAwaiter().GetResult();
             }
             finally
             {
@@ -109,9 +115,9 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
             TimeSpan cacheTtl = SqlConnection.ColumnEncryptionKeyCacheTtl;
             if (cacheTtl == TimeSpan.Zero)
             {
-                return await LoadKeyAsync(
-                    isAsync: true, keyInfo, connection, command, serverName!, cacheLookupKey,
-                    cacheTtl, cancellationToken)
+                return await LoadKey(
+                    keyInfo, connection, command, serverName!, cacheLookupKey, cacheTtl,
+                    isAsync: true, cancellationToken)
                     .ConfigureAwait(false);
             }
 
@@ -121,9 +127,9 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
             {
                 await gate.Semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
                 acquired = true;
-                return await LoadKeyAsync(
-                    isAsync: true, keyInfo, connection, command, serverName!, cacheLookupKey,
-                    cacheTtl, cancellationToken)
+                return await LoadKey(
+                    keyInfo, connection, command, serverName!, cacheLookupKey, cacheTtl,
+                    isAsync: true, cancellationToken)
                     .ConfigureAwait(false);
             }
             finally
@@ -136,14 +142,14 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
         /// Loads and caches a key. When <paramref name="isAsync"/> is false, the provider is
         /// called synchronously and the returned task is already complete.
         /// </summary>
-        private async Task<SymmetricKey> LoadKeyAsync(
-            bool isAsync,
+        private async ValueTask<SymmetricKey> LoadKey(
             SqlEncryptionKeyInfo keyInfo,
             SqlConnection connection,
             SqlCommand? command,
             string serverName,
             string cacheLookupKey,
             TimeSpan cacheTtl,
+            bool isAsync,
             CancellationToken cancellationToken)
         {
             // Another caller may have published this key while we waited for the gate.
@@ -179,21 +185,6 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
             // Cache a completed decryption even if cancellation arrived after the provider
             // returned.
             return CacheKey(cacheLookupKey, new SymmetricKey(plaintextKey), cacheTtl);
-        }
-
-        private SymmetricKey LoadKey(
-            SqlEncryptionKeyInfo keyInfo,
-            SqlConnection connection,
-            SqlCommand? command,
-            string serverName,
-            string cacheLookupKey,
-            TimeSpan cacheTtl)
-        {
-            Task<SymmetricKey> load = LoadKeyAsync(
-                isAsync: false, keyInfo, connection, command, serverName, cacheLookupKey,
-                cacheTtl, CancellationToken.None);
-            Debug.Assert(load.IsCompleted, "A synchronous key load should complete inline.");
-            return load.GetAwaiter().GetResult();
         }
 
         /// <summary>
