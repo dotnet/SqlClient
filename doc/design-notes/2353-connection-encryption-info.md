@@ -289,12 +289,11 @@ connection published when it logged in. Exceptions raised before any value was o
 non-`SqlException` failures, keep `Empty`.
 - **Managed SNI** validates the server certificate inside the handshake, in the
   `RemoteCertificateValidationCallback`. `SslStream` agrees the protocol version before it
-  raises the callback, so the callback records `SslStream.SslProtocol` with the certificate
-  details. When validation fails `EnableSsl` fails; `TdsParser.EnableSsl` first assigns the
-  captured protocol and certificate details to the accumulator, so the exception reports the mode
-  selected at PRELOGIN together with that protocol. A protocol already determined for the attempt
-  takes precedence over the one reported with the certificate details. Managed SNI is used only on
-  .NET (`net10.0`).
+  raises the callback, so the callback's handshake record (`TlsHandshakeInfo`, see below)
+  includes `SslStream.SslProtocol`. When validation fails `EnableSsl` fails;
+  `TdsParser.EnableSsl` first assigns the record to the accumulator, so the exception reports the
+  mode selected at PRELOGIN together with that protocol. Managed SNI is used only on .NET
+  (`net10.0`).
 - **Native SNI.** With the current SNI package, native SNI also rejects an untrusted server
   certificate during the handshake, so this slice reports the mode but no protocol for that
   failure (the tests assert this for native SNI; Managed SNI also reports the protocol, as
@@ -311,24 +310,42 @@ values outside 0-0xFFFF instead of failing the login. Likewise, the `Protocol` s
 `SslProtocols.None` as `null`. Both cipher suite properties read the same value. Slice B adds
 only the plumbing: the value is reset with the other fields at the start of every physical login
 attempt and flows into the snapshot published on `SqlConnection` and attached to `SqlException`.
-No transport sets it in this slice, so the property stays `null`; Slice C records it from
-`SslStream.NegotiatedCipherSuite` (Managed SNI) and Slice D from native SNI, which needs a new
-SNI contract. On failure an observed cipher suite is kept, like the protocol. A cipher suite is
+Slice C records it from `SslStream.NegotiatedCipherSuite` in the Managed SNI handshake record,
+and Slice D from native SNI, which needs a new SNI contract. On failure an observed cipher suite is kept, like the protocol. A cipher suite is
 only reported once a ServerHello selected it, so it is not dropped when the protocol is
 unavailable.
 
 ### Managed SNI certificate capture
 
-Managed SNI records certificate details from the `RemoteCertificateValidationCallback`
-that runs during the TLS handshake. Capture reuses the callback's inputs and SqlClient's
-existing verdict; it performs no extra validation or network work and doesn't change
-trust decisions, messages, or tracing. Values are reset at the start of every TLS
-handshake and recorded whether the handshake succeeds or fails. The callback also records the
-TLS protocol agreed for the handshake (see **Failure path** above).
+Managed SNI creates a handshake record from the `RemoteCertificateValidationCallback` that runs
+during the TLS handshake. Capture reuses the callback's inputs and SqlClient's existing verdict;
+it performs no extra validation or network work and doesn't change trust decisions, messages, or
+tracing.
+
+Three types are involved, each with one role:
+
+- `SqlConnectionEncryptionInfo` is the public, immutable snapshot.
+- `EncryptionInfoAccumulator` is the internal, mutable, per-attempt accumulator that SqlClient
+  fills in as the login proceeds and converts to a snapshot.
+- `TlsHandshakeInfo` is the internal, immutable record that the TCP and named-pipe handles create
+  in the validation callback. It holds the TLS protocol, cipher suite, presented certificate
+  (`DerBytes`), validation errors and chain status. MARS passes the physical handle's record
+  through.
+
+The handle clears its record at the start of every TLS handshake. Each callback invocation
+replaces it with a new record, so the record always describes the latest callback, and it is
+kept whether the handshake succeeds or fails. The field holding the record is `volatile`: the
+callback can run on a thread-pool thread during asynchronous authentication, and the parser
+reads the record after the handshake. `TdsParserStateObject.GetTlsHandshakeInfo()` exposes the
+record to the parser; `TdsParser.EnableSsl` assigns all five values to the accumulator directly,
+before reporting any handshake failure. The record is the single source of truth for those
+values: the parser does not read the protocol or cipher suite from the stream again. Only a
+transport without a record (native SNI in this slice) has its protocol recorded from the
+completed handshake instead.
 
 | Field | Source | `null` when |
 | --- | --- | --- |
-| `PresentedServerCertificateRawData` / `GetServerCertificate()` | A copy of the presented leaf certificate's DER encoding (`GetRawCertData()`); the first certificate presented in the attempt is kept | No certificate was presented, or its encoding exceeds 64 KiB (`ServerCertificate.MaxRawCertificateSize`). Captured even when `TrustServerCertificate` bypasses validation, and on validation failure. |
+| `PresentedServerCertificateRawData` / `GetServerCertificate()` | A copy of the presented leaf certificate's DER encoding (`GetRawCertData()`), stored as `TlsHandshakeInfo.DerBytes` and the accumulator's `ServerCertificateDerBytes` | No certificate was presented, its encoding could not be read, or it exceeds 64 KiB (`TlsHandshakeInfo.MaxDerBytesSize`). Captured even when `TrustServerCertificate` bypasses validation, and on validation failure. |
 | `ServerCertificateValidationErrors` | Effective SqlClient verdict: `ServerCertificateMissing`, `ChainError`, `HostNameMismatch` (after `HostNameInCertificate`), `PinnedCertificateMismatch` (`ServerCertificate`); `None` when validation passed | Validation was bypassed, or the configured `ServerCertificate` file could not be read. |
 | `ServerCertificateChainStatus` | Bitwise OR of the original callback chain's `ChainStatus` flags (no chain rebuild); `NoError` when the chain was evaluated cleanly | Validation was bypassed, `ServerCertificate` pinning is used (the chain isn't consulted), no certificate was presented, or the platform reported a chain error without flags. |
 
@@ -341,26 +358,17 @@ reporting `None`.
 
 Native SNI does not yet report certificate details; those fields remain `null` there.
 
-**Cipher suite (Managed SNI).** Managed SNI reads `(int)SslStream.NegotiatedCipherSuite` at the
-same two points as the protocol, on both the TCP and named-pipe handles (MARS passes through to
-the physical handle):
-
-- **After the handshake completes,** `TdsParser.EnableSsl` assigns the value from the session
-  handle to the accumulator's `CipherSuite` property. This read is authoritative for a
-  successful attempt.
-- **Inside the validation callback,** the value is stored with the certificate capture.
-  `SslStream` processes the ServerHello, which selects the suite, before it raises the callback,
-  so the value is real there. The tests confirm it matches the suite a trusted handshake with the
-  same server negotiates. It is adopted only when no suite was recorded for the attempt, so a
-  certificate-validation failure still reports the observed suite.
-
-Both reads are wrapped in `try`/`catch` so that capture never affects the handshake. A suite of
-`0` (`TLS_NULL_WITH_NULL_NULL`, nothing agreed yet) is treated as unavailable. Without TLS, the
-properties are `null`. The value flows through the SNI handles and `ServerCertificate` as
-an `int`; `TdsParser.EnableSsl` casts it to `TlsCipherSuite` on .NET when it assigns it to the
-accumulator. `NegotiatedCipherSuiteId` returns the same IANA identifier.
-Managed SNI runs only on `net10.0`; on `net462` this capture is not compiled
-and `NegotiatedCipherSuiteId` stays `null` until native SNI support (Slice D).
+**Cipher suite (Managed SNI).** The handshake record stores `SslStream.NegotiatedCipherSuite` as a
+`TlsCipherSuite?`, on both the TCP and named-pipe handles. `SslStream` processes the ServerHello,
+which selects the suite, before it raises the callback, so the value is real there. The tests
+confirm it matches the suite a trusted handshake with the same server negotiates, and a
+certificate-validation failure still reports the observed suite. `SslStream.SslProtocol` and
+`SslStream.NegotiatedCipherSuite` cannot throw once the callback is raised, so they are read
+without a `try`/`catch`; only `GetRawCertData()` is guarded, against `CryptographicException`.
+A suite of `0` (`TLS_NULL_WITH_NULL_NULL`, nothing agreed) is treated as unavailable. Without TLS,
+the properties are `null`. `NegotiatedCipherSuiteId` returns the same IANA identifier. Managed SNI
+runs only on `net10.0`; on `net462` this capture is not compiled and `NegotiatedCipherSuiteId`
+stays `null` until native SNI support (Slice D).
 
 ## 5. Scope
 

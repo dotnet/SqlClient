@@ -76,7 +76,15 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         internal static bool ValidateSslServerCertificate(Guid connectionId, string targetServerName, string hostNameInCertificate, X509Certificate serverCert, string validationCertFileName, SslPolicyErrors policyErrors)
         {
             ServerCertificateVerdict verdict = default;
-            return ValidateSslServerCertificate(connectionId, targetServerName, hostNameInCertificate, serverCert, validationCertFileName, policyErrors, callbackChain: null, ref verdict);
+            return ValidateSslServerCertificate(
+                connectionId,
+                targetServerName,
+                hostNameInCertificate,
+                serverCert,
+                validationCertFileName,
+                policyErrors,
+                chain: null,
+                ref verdict);
         }
 
         /// <summary>
@@ -95,15 +103,23 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// it (such as <see cref="SqlServerCertificateValidationErrors.ChainError"/>) and the chain
         /// status remain recorded; the exception itself is not caught or changed.
         /// <para>
-        /// <see cref="ServerCertificateVerdict.ChainStatus"/> is the bitwise OR of the status flags of
-        /// the original <paramref name="callbackChain"/> supplied to the TLS validation callback. It is only
-        /// recorded when that chain is consulted (no <c>ServerCertificate</c> pin and a certificate
-        /// was presented); it is <see langword="null"/> in pin mode, when no certificate was
-        /// presented, when no chain was supplied, or when chain errors were reported but the chain
-        /// carries no status flags.
+        /// <see cref="ServerCertificateVerdict.ChainStatus"/> is the bitwise OR of the status flags
+        /// of the original <paramref name="chain"/> supplied to the TLS validation callback. It is
+        /// only recorded when that chain is consulted (no <c>ServerCertificate</c> pin and a
+        /// certificate was presented); it is <see langword="null"/> in pin mode, when no
+        /// certificate was presented, when no chain was supplied, or when chain errors were
+        /// reported but the chain carries no status flags.
         /// </para>
         /// </remarks>
-        internal static bool ValidateSslServerCertificate(Guid connectionId, string targetServerName, string hostNameInCertificate, X509Certificate serverCert, string validationCertFileName, SslPolicyErrors policyErrors, X509Chain callbackChain, ref ServerCertificateVerdict verdict)
+        internal static bool ValidateSslServerCertificate(
+            Guid connectionId,
+            string targetServerName,
+            string hostNameInCertificate,
+            X509Certificate serverCert,
+            string validationCertFileName,
+            SslPolicyErrors policyErrors,
+            X509Chain chain,
+            ref ServerCertificateVerdict verdict)
         {
             verdict = default;
 
@@ -115,9 +131,12 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 // The callback chain is only consulted when trust is decided by the platform chain,
                 // i.e. no ServerCertificate pin is configured and a certificate was presented.
                 X509ChainStatusFlags? callbackChainStatus = null;
-                if (!pinConfigured && serverCert is not null && !policyErrors.HasFlag(SslPolicyErrors.RemoteCertificateNotAvailable))
+                if (!pinConfigured
+                    && serverCert is not null
+                    && !policyErrors.HasFlag(SslPolicyErrors.RemoteCertificateNotAvailable)
+                    && chain is not null)
                 {
-                    callbackChainStatus = GetChainStatus(callbackChain, policyErrors);
+                    callbackChainStatus = GetChainStatus(chain.ChainStatus, policyErrors);
                 }
 
                 if (!hasHostNameInCertificate
@@ -187,14 +206,14 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
                     // get the chain status from the certificate
                     X509Certificate2 cert2 = serverCert as X509Certificate2;
-                    X509Chain chain = new();
-                    chain.ChainPolicy.RevocationMode = X509RevocationMode.Offline;
+                    X509Chain rebuiltChain = new();
+                    rebuiltChain.ChainPolicy.RevocationMode = X509RevocationMode.Offline;
                     StringBuilder chainStatusInformation = new();
-                    bool chainIsValid = chain.Build(cert2);
+                    bool chainIsValid = rebuiltChain.Build(cert2);
                     Debug.Assert(!chainIsValid, "RemoteCertificateChainError flag is detected, but certificate chain is valid.");
                     if (!chainIsValid)
                     {
-                        foreach (X509ChainStatus chainStatus in chain.ChainStatus)
+                        foreach (X509ChainStatus chainStatus in rebuiltChain.ChainStatus)
                         {
                             chainStatusInformation.Append($"{chainStatus.StatusInformation}, [Status: {chainStatus.Status}]");
                             chainStatusInformation.AppendLine();
@@ -239,37 +258,30 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             }
         }
 
+#nullable enable
         /// <summary>
         /// Combines the status flags of the chain supplied to the TLS validation callback without
         /// building or re-evaluating the chain.
         /// </summary>
-        /// <param name="chain">The original callback chain, if any.</param>
+        /// <param name="statuses">The status entries of the original callback chain.</param>
         /// <param name="policyErrors">The policy errors supplied to the callback.</param>
         /// <returns>
-        /// The bitwise OR of the chain element status flags, <see cref="X509ChainStatusFlags.NoError"/>
-        /// for a clean chain, or <see langword="null"/> when the chain is unavailable or chain errors
-        /// were reported without any status flags.
+        /// The bitwise OR of the status flags, <see cref="X509ChainStatusFlags.NoError"/> for a
+        /// clean chain, or <see langword="null"/> when chain errors were reported but the chain
+        /// carries no status flags that describe them.
         /// </returns>
-        internal static X509ChainStatusFlags? GetChainStatus(X509Chain chain, SslPolicyErrors policyErrors)
-        {
-            return chain is null ? null : CombineChainStatus(chain.ChainStatus, policyErrors);
-        }
-
-        /// <summary>
-        /// Combines chain status entries into a single set of flags.
-        /// </summary>
-        /// <param name="statuses">The chain status entries.</param>
-        /// <param name="policyErrors">The policy errors supplied to the callback.</param>
-        /// <returns>See <see cref="GetChainStatus(X509Chain, SslPolicyErrors)"/>.</returns>
-        internal static X509ChainStatusFlags? CombineChainStatus(X509ChainStatus[] statuses, SslPolicyErrors policyErrors)
+        internal static X509ChainStatusFlags? GetChainStatus(
+            X509ChainStatus[] statuses,
+            SslPolicyErrors policyErrors)
         {
             X509ChainStatusFlags flags = X509ChainStatusFlags.NoError;
-            foreach (X509ChainStatus status in statuses ?? Array.Empty<X509ChainStatus>())
+            foreach (X509ChainStatus status in statuses)
             {
                 flags |= status.Status;
             }
 
-            if (flags == X509ChainStatusFlags.NoError && policyErrors.HasFlag(SslPolicyErrors.RemoteCertificateChainErrors))
+            if (flags == X509ChainStatusFlags.NoError
+                && policyErrors.HasFlag(SslPolicyErrors.RemoteCertificateChainErrors))
             {
                 // A chain error was reported but the chain does not describe it; report the chain
                 // status as unavailable rather than as a clean chain.
@@ -280,113 +292,61 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         }
 
         /// <summary>
-        /// Creates the transport-level certificate capture for one TLS validation callback
-        /// invocation.
+        /// Creates the transport-level record of one TLS handshake from within the certificate
+        /// validation callback. SslStream agrees the protocol and cipher suite before it raises
+        /// the callback, so both are available even when the certificate is then rejected.
         /// </summary>
+        /// <param name="sslStream">The stream raising the validation callback.</param>
         /// <param name="serverCert">The certificate presented by the server, if any.</param>
         /// <param name="verdict">The verdict recorded by validation; default when not evaluated.</param>
-        /// <param name="sender">The <see cref="SslStream"/> raising the validation callback, if any.</param>
-        /// <param name="previous">
-        /// The capture already recorded for this handshake attempt, if any. The first certificate
-        /// captured in an attempt is kept; a later callback invocation does not replace it.
-        /// </param>
-        /// <returns>The capture. Never <see langword="null"/>.</returns>
-        internal static ServerCertificate CreateServerCertificate(X509Certificate serverCert, in ServerCertificateVerdict verdict, object sender = null, ServerCertificate previous = null)
+        /// <returns>The record. Never <see langword="null"/>.</returns>
+        internal static TlsHandshakeInfo CreateTlsHandshakeInfo(
+            SslStream sslStream,
+            X509Certificate? serverCert,
+            in ServerCertificateVerdict verdict)
         {
-            byte[] rawCertificate = previous?.RawCertificate ?? GetRawCertificate(serverCert);
+            byte[]? derBytes = null;
+            if (serverCert is not null)
+            {
+                try
+                {
+                    // GetRawCertData returns a new array, so the record owns it.
+                    derBytes = serverCert.GetRawCertData();
+                }
+                catch (CryptographicException)
+                {
+                    // Capture must never affect the handshake outcome; leave the certificate
+                    // unavailable.
+                }
 
-            return new ServerCertificate(
-                rawCertificate,
-                verdict.ValidationErrors,
+                if (derBytes is not null
+                    && (derBytes.Length == 0 || derBytes.Length > TlsHandshakeInfo.MaxDerBytesSize))
+                {
+                    derBytes = null;
+                }
+            }
+
+            SslProtocols? protocol = sslStream.SslProtocol;
+            if (protocol == SslProtocols.None)
+            {
+                protocol = null;
+            }
+
+            // The null cipher suite (TLS_NULL_WITH_NULL_NULL, 0) means none has been agreed.
+            TlsCipherSuite? cipherSuite = sslStream.NegotiatedCipherSuite;
+            if (cipherSuite == TlsCipherSuite.TLS_NULL_WITH_NULL_NULL)
+            {
+                cipherSuite = null;
+            }
+
+            return new TlsHandshakeInfo(
                 verdict.ChainStatus,
-                GetHandshakeProtocol(sender),
-                GetNegotiatedCipherSuite(sender as SslStream));
+                cipherSuite,
+                derBytes,
+                protocol,
+                verdict.ValidationErrors);
         }
-
-        /// <summary>
-        /// Copies the DER encoding of the presented certificate for diagnostics.
-        /// </summary>
-        /// <param name="serverCert">The certificate presented by the server, if any.</param>
-        /// <returns>
-        /// The DER bytes, or <see langword="null"/> when no certificate was presented, its encoding
-        /// cannot be read, or it is larger than <see cref="ServerCertificate.MaxRawCertificateSize"/>.
-        /// </returns>
-        internal static byte[] GetRawCertificate(X509Certificate serverCert)
-        {
-            if (serverCert is null)
-            {
-                return null;
-            }
-
-            try
-            {
-                // GetRawCertData returns a new array, so the capture owns it.
-                byte[] rawCertificate = serverCert.GetRawCertData();
-                return rawCertificate is { Length: > 0 and <= ServerCertificate.MaxRawCertificateSize }
-                    ? rawCertificate
-                    : null;
-            }
-            catch (CryptographicException)
-            {
-                // Capture must never affect the handshake outcome; leave the certificate unavailable.
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// Reads the IANA identifier of the cipher suite agreed for the handshake on
-        /// <paramref name="sslStream"/>. Like the protocol version, the cipher suite is agreed
-        /// before SslStream raises the certificate validation callback, so this can be read from
-        /// within the callback as well as after the handshake completes.
-        /// </summary>
-        /// <returns>
-        /// The cipher suite, or <see langword="null"/> when it is not available. The null cipher
-        /// suite (TLS_NULL_WITH_NULL_NULL, 0) means none has been agreed and is reported as
-        /// <see langword="null"/>.
-        /// </returns>
-        internal static int? GetNegotiatedCipherSuite(SslStream sslStream)
-        {
-            if (sslStream is null)
-            {
-                return null;
-            }
-
-            try
-            {
-                int cipherSuite = (int)sslStream.NegotiatedCipherSuite;
-                return cipherSuite == 0 ? null : cipherSuite;
-            }
-            catch (Exception)
-            {
-                // Capture must never affect the handshake outcome.
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// Reads the TLS protocol version agreed for the handshake in progress. SslStream raises the
-        /// certificate validation callback after the protocol version has been agreed, so this
-        /// reflects what was observed for the attempt even if the certificate is then rejected.
-        /// </summary>
-        /// <returns>The protocol, or <see langword="null"/> when it is not available.</returns>
-        private static SslProtocols? GetHandshakeProtocol(object sender)
-        {
-            if (sender is not SslStream sslStream)
-            {
-                return null;
-            }
-
-            try
-            {
-                SslProtocols protocol = sslStream.SslProtocol;
-                return protocol == SslProtocols.None ? null : protocol;
-            }
-            catch (Exception)
-            {
-                // Capture must never affect the handshake outcome.
-                return null;
-            }
-        }
+#nullable restore
 
         /// <summary>
         /// Loads the certificate specified by the <c>ServerCertificate</c> option, failing closed

@@ -73,7 +73,7 @@ namespace Microsoft.Data.SqlClient.Connection
             Mode is not null ||
             Protocol is not null ||
             CipherSuite is not null ||
-            ServerCertificateRawData is not null ||
+            ServerCertificateDerBytes is not null ||
             ValidationErrors is not null ||
             ChainStatus is not null;
 
@@ -103,7 +103,7 @@ namespace Microsoft.Data.SqlClient.Connection
         /// Gets or sets the DER encoding of the presented server certificate for the current attempt,
         /// or <see langword="null"/> if the transport did not capture a presented certificate.
         /// </summary>
-        public byte[]? ServerCertificateRawData { get; set; }
+        public byte[]? ServerCertificateDerBytes { get; set; }
 
         /// <summary>
         /// Gets or sets SqlClient's effective certificate validation verdict for the current attempt,
@@ -119,7 +119,7 @@ namespace Microsoft.Data.SqlClient.Connection
             Mode = null;
             Protocol = null;
             CipherSuite = null;
-            ServerCertificateRawData = null;
+            ServerCertificateDerBytes = null;
             ValidationErrors = null;
             ChainStatus = null;
         }
@@ -137,7 +137,7 @@ namespace Microsoft.Data.SqlClient.Connection
                 ? new SqlConnectionEncryptionInfo(
                     negotiatedEncryptionMode: Mode,
                     negotiatedEncryptionProtocol: Protocol,
-                    presentedServerCertificate: ServerCertificateRawData,
+                    presentedServerCertificate: ServerCertificateDerBytes,
                     validationErrors: ValidationErrors,
                     chainStatus: ChainStatus,
                     negotiatedCipherSuite: CipherSuite)

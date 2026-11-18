@@ -41,7 +41,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         private SniAsyncCallback _sendCallback;
 
         private bool _validateCert = true;
-        private volatile ServerCertificate _serverCertificate;
+        private volatile TlsHandshakeInfo _tlsHandshakeInfo;
         private readonly uint _status = TdsEnums.SNI_UNINITIALIZED;
         private int _bufferSize = TdsEnums.DEFAULT_LOGIN_PACKET_SIZE;
         private readonly Guid _connectionId = Guid.NewGuid();
@@ -141,9 +141,6 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 }
             }
         }
-
-        /// <inheritdoc/>
-        public override int? NegotiatedCipherSuite => SniCommon.GetNegotiatedCipherSuite(_sslStream);
 
         public override uint CheckConnection()
         {
@@ -346,7 +343,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             using (SqlClientSNIEventScope.Create(nameof(SniNpHandle)))
             {
                 _validateCert = (options & TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE) != 0;
-                _serverCertificate = null;
+                _tlsHandshakeInfo = null;
                 try
                 {
                     // The handshake reads block on the pipe, so closing the transport is what bounds them.
@@ -425,13 +422,20 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             finally
             {
                 // Recorded for both outcomes (including when validation is bypassed) so that a failed
-                // handshake still reports what was observed. The first certificate of the attempt is kept.
-                _serverCertificate = SniCommon.CreateServerCertificate(serverCertificate, verdict, sender, _serverCertificate);
+                // handshake still reports what was observed. Each callback replaces the previous
+                // record.
+                if (sender is SslStream sslStream)
+                {
+                    _tlsHandshakeInfo = SniCommon.CreateTlsHandshakeInfo(
+                        sslStream,
+                        serverCertificate,
+                        verdict);
+                }
             }
         }
 
         /// <inheritdoc/>
-        public override ServerCertificate ServerCertificate => _serverCertificate;
+        public override TlsHandshakeInfo TlsHandshakeInfo => _tlsHandshakeInfo;
 
         /// <summary>
         /// Set buffer size

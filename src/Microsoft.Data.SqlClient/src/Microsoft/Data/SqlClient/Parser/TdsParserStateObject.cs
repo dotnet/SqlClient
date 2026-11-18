@@ -555,17 +555,12 @@ namespace Microsoft.Data.SqlClient.Parser
         internal abstract uint EnableSsl(ref uint info, bool tlsFirst, string serverCertificateFilename);
 
         /// <summary>
-        /// Gets the server certificate details captured by the transport during the most recent
-        /// call to <see cref="EnableSsl"/>, or <see langword="null"/> if the transport does not
-        /// capture them or no certificate validation callback ran.
+        /// Gets the transport's record of the TLS handshake performed by the most recent call to
+        /// <see cref="EnableSsl"/>, or <see langword="null"/> if the transport does not produce
+        /// one or no certificate validation callback ran. When present, the record is the
+        /// authority for the negotiated protocol, cipher suite and certificate details.
         /// </summary>
-        internal virtual Connection.ServerCertificate GetServerCertificate() => null;
-
-        /// <summary>
-        /// Gets the IANA identifier of the TLS cipher suite negotiated on this session, or
-        /// <see langword="null"/> if the transport does not report one.
-        /// </summary>
-        internal virtual int? GetNegotiatedCipherSuite() => null;
+        internal virtual Connection.TlsHandshakeInfo GetTlsHandshakeInfo() => null;
 
         internal abstract uint CheckConnection();
 

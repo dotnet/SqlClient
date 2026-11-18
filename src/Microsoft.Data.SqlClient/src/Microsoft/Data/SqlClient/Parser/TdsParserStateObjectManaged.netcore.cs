@@ -389,9 +389,8 @@ namespace Microsoft.Data.SqlClient.Parser
             }
         }
 
-        internal override Connection.ServerCertificate? GetServerCertificate() => _sessionHandle?.ServerCertificate;
-
-        internal override int? GetNegotiatedCipherSuite() => _sessionHandle?.NegotiatedCipherSuite;
+        internal override Connection.TlsHandshakeInfo? GetTlsHandshakeInfo() =>
+            _sessionHandle?.TlsHandshakeInfo;
 
         internal override uint SetConnectionBufferSize(ref uint unsignedPacketSize)
         {

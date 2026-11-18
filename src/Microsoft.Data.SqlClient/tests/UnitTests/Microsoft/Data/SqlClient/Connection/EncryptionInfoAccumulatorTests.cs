@@ -217,16 +217,16 @@ namespace Microsoft.Data.SqlClient.UnitTests
         /// Setting the presented certificate stores it and leaves the other values unset.
         /// </summary>
         [Fact]
-        public void ServerCertificateRawData_Set_StoresValueOnly()
+        public void ServerCertificateDerBytes_Set_StoresValueOnly()
         {
             // Arrange
             EncryptionInfoAccumulator accumulator = new();
 
             // Act
-            accumulator.ServerCertificateRawData = SampleCertificate;
+            accumulator.ServerCertificateDerBytes = SampleCertificate;
 
             // Assert
-            Assert.Same(SampleCertificate, accumulator.ServerCertificateRawData);
+            Assert.Same(SampleCertificate, accumulator.ServerCertificateDerBytes);
             Assert.Null(accumulator.ValidationErrors);
             Assert.Null(accumulator.ChainStatus);
             AssertNegotiatedValuesUnset(accumulator);
@@ -252,7 +252,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             // Assert
             Assert.NotNull(accumulator.ValidationErrors);
             Assert.Equal(errors, accumulator.ValidationErrors);
-            Assert.Null(accumulator.ServerCertificateRawData);
+            Assert.Null(accumulator.ServerCertificateDerBytes);
             Assert.Null(accumulator.ChainStatus);
             AssertNegotiatedValuesUnset(accumulator);
             Assert.True(accumulator.HasValues);
@@ -277,7 +277,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             // Assert
             Assert.NotNull(accumulator.ChainStatus);
             Assert.Equal(chainStatus, accumulator.ChainStatus);
-            Assert.Null(accumulator.ServerCertificateRawData);
+            Assert.Null(accumulator.ServerCertificateDerBytes);
             Assert.Null(accumulator.ValidationErrors);
             AssertNegotiatedValuesUnset(accumulator);
             Assert.True(accumulator.HasValues);
@@ -292,7 +292,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         {
             // Arrange
             EncryptionInfoAccumulator accumulator = new();
-            accumulator.ServerCertificateRawData = SampleCertificate;
+            accumulator.ServerCertificateDerBytes = SampleCertificate;
             accumulator.ValidationErrors = SqlServerCertificateValidationErrors.ChainError;
 
             // Act
@@ -321,7 +321,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
             accumulator.Mode = SqlConnectionEncryptionMode.Full;
             accumulator.Protocol = SslProtocols.Tls12;
             accumulator.CipherSuite = ToConstructorCipherSuite(SampleCipherSuite);
-            accumulator.ServerCertificateRawData = SampleCertificate;
+            accumulator.ServerCertificateDerBytes = SampleCertificate;
             accumulator.ValidationErrors = SqlServerCertificateValidationErrors.ChainError;
             accumulator.ChainStatus = SampleChainStatus;
 
@@ -462,7 +462,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         /// </summary>
         private static void AssertCertificateFieldsUnset(EncryptionInfoAccumulator accumulator)
         {
-            Assert.Null(accumulator.ServerCertificateRawData);
+            Assert.Null(accumulator.ServerCertificateDerBytes);
             Assert.Null(accumulator.ValidationErrors);
             Assert.Null(accumulator.ChainStatus);
         }

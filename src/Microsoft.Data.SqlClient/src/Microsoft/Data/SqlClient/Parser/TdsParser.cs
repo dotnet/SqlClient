@@ -955,29 +955,19 @@ namespace Microsoft.Data.SqlClient.Parser
 #endif
             error = _physicalStateObj.EnableSsl(ref info, encrypt == SqlConnectionEncryptOption.Strict, serverCertificateFilename);
 
-            // The certificate validation callback runs synchronously within EnableSsl, so whatever the
-            // transport observed is complete here; record it before any failure is reported so that
-            // the login exception carries it.
-            ServerCertificate certificateCapture = _physicalStateObj.GetServerCertificate();
+            // The certificate validation callback runs synchronously within EnableSsl, so the
+            // transport's handshake record is complete here. It is the authority for the attempt's
+            // protocol, cipher suite and certificate details; record it before any failure is
+            // reported so that the login exception carries it.
+            TlsHandshakeInfo handshakeInfo = _physicalStateObj.GetTlsHandshakeInfo();
             EncryptionInfoAccumulator accumulator = _connHandler?.EncryptionInfoAccumulator;
-            if (accumulator is not null && certificateCapture is not null)
+            if (accumulator is not null && handshakeInfo is not null)
             {
-                accumulator.ServerCertificateRawData = certificateCapture.RawCertificate;
-                accumulator.ValidationErrors = certificateCapture.ValidationErrors;
-                accumulator.ChainStatus = certificateCapture.ChainStatus;
-
-                // A protocol or cipher suite already determined for this attempt takes precedence over
-                // one reported alongside the certificate details.
-                accumulator.Protocol ??= certificateCapture.Protocol;
-
-                if (accumulator.CipherSuite is null && certificateCapture.CipherSuite is int capturedCipherSuite)
-                {
-#if NET
-                    accumulator.CipherSuite = (System.Net.Security.TlsCipherSuite)capturedCipherSuite;
-#else
-                    accumulator.CipherSuite = capturedCipherSuite;
-#endif
-                }
+                accumulator.ChainStatus = handshakeInfo.ChainStatus;
+                accumulator.CipherSuite = handshakeInfo.CipherSuite;
+                accumulator.Protocol = handshakeInfo.Protocol;
+                accumulator.ServerCertificateDerBytes = handshakeInfo.DerBytes;
+                accumulator.ValidationErrors = handshakeInfo.ValidationErrors;
             }
 
             if (error != TdsEnums.SNI_SUCCESS)
@@ -1019,17 +1009,11 @@ namespace Microsoft.Data.SqlClient.Parser
                 }
             }
 
-            RecordNegotiatedProtocol(protocol);
-
-            // The cipher suite read after the handshake completes is authoritative for the attempt.
-            if (_physicalStateObj.GetNegotiatedCipherSuite() is int cipherSuite &&
-                _connHandler?.EncryptionInfoAccumulator is EncryptionInfoAccumulator negotiated)
+            // Transports without a handshake record (native SNI) report the protocol from the
+            // completed handshake instead.
+            if (handshakeInfo is null)
             {
-#if NET
-                negotiated.CipherSuite = (System.Net.Security.TlsCipherSuite)cipherSuite;
-#else
-                negotiated.CipherSuite = cipherSuite;
-#endif
+                RecordNegotiatedProtocol(protocol);
             }
 
             // create a new packet encryption changes the internal packet size Bug# 228403

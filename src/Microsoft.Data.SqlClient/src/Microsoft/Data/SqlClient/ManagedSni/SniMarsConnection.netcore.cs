@@ -38,17 +38,11 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         public SslProtocols ProtocolVersion => _lowerHandle.ProtocolVersion;
 
         /// <summary>
-        /// Gets the IANA identifier of the TLS cipher suite negotiated on the underlying physical
-        /// connection, or <see langword="null"/> if none is available.
+        /// Gets the record of the most recent TLS handshake on the underlying physical connection,
+        /// or <see langword="null"/> if none was recorded. MARS sessions share that connection's
+        /// TLS session.
         /// </summary>
-        internal int? NegotiatedCipherSuite => _lowerHandle.NegotiatedCipherSuite;
-
-        /// <summary>
-        /// Gets the server certificate details captured during the most recent TLS handshake on the
-        /// underlying physical connection, or <see langword="null"/> if none were captured. MARS
-        /// sessions share that connection's TLS session.
-        /// </summary>
-        internal Connection.ServerCertificate ServerCertificate => _lowerHandle.ServerCertificate;
+        internal Connection.TlsHandshakeInfo TlsHandshakeInfo => _lowerHandle.TlsHandshakeInfo;
 
         internal object DemuxerSync => _sync;
 

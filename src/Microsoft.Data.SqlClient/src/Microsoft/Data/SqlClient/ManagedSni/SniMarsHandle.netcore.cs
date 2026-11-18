@@ -55,10 +55,8 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         public override SslProtocols ProtocolVersion => _connection.ProtocolVersion;
 
         /// <inheritdoc/>
-        public override int? NegotiatedCipherSuite => _connection.NegotiatedCipherSuite;
-
-        /// <inheritdoc/>
-        public override Connection.ServerCertificate ServerCertificate => _connection.ServerCertificate;
+        public override Connection.TlsHandshakeInfo TlsHandshakeInfo =>
+            _connection.TlsHandshakeInfo;
 
         /// <summary>
         /// Dispose object
