@@ -23,7 +23,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
     /// SqlClient's effective validation verdict, the original callback chain status, and the DER
     /// encoding of the presented certificate.
     /// </summary>
-    public class SniCommonServerCertificateCaptureTest
+    public class SniCommonServerCertificateTest
     {
         private const string ServerName = "server.contoso.com";
 
@@ -357,7 +357,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
 
             if (capturing is not null && cert is not null)
             {
-                ServerCertificateCapture capture = SniCommon.CreateServerCertificateCapture(cert, verdict);
+                ServerCertificate capture = SniCommon.CreateServerCertificate(cert, verdict);
                 AssertNoLeak(capture.RawCertificate!, capturing.Message);
                 AssertNoLeak(capture.RawCertificate!, capturing.ToString());
             }
@@ -368,7 +368,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         /// alongside the verdict it was created with.
         /// </summary>
         [Fact]
-        public void CreateServerCertificateCapture_CapturesDer()
+        public void CreateServerCertificate_CapturesDer()
         {
             // Arrange
             using X509Certificate2 serverCert = CreateSelfSignedCertificate(ServerName);
@@ -376,8 +376,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
                 SqlServerCertificateValidationErrors.None, X509ChainStatusFlags.NoError);
 
             // Act
-            ServerCertificateCapture capture =
-                SniCommon.CreateServerCertificateCapture(serverCert, verdict);
+            ServerCertificate capture =
+                SniCommon.CreateServerCertificate(serverCert, verdict);
 
             // Assert
             Assert.NotNull(capture.RawCertificate);
@@ -395,18 +395,18 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         /// captured with it is kept.
         /// </summary>
         [Fact]
-        public void CreateServerCertificateCapture_OverSizeCap_CertificateUnavailable()
+        public void CreateServerCertificate_OverSizeCap_CertificateUnavailable()
         {
             // Arrange
             using X509Certificate2 serverCert = CreateSelfSignedCertificate(ServerName,
-                ServerCertificateCapture.MaxRawCertificateSize);
-            Assert.True(serverCert.RawData.Length > ServerCertificateCapture.MaxRawCertificateSize);
+                ServerCertificate.MaxRawCertificateSize);
+            Assert.True(serverCert.RawData.Length > ServerCertificate.MaxRawCertificateSize);
             ServerCertificateVerdict verdict = new(
                 SqlServerCertificateValidationErrors.ChainError, X509ChainStatusFlags.UntrustedRoot);
 
             // Act
-            ServerCertificateCapture capture =
-                SniCommon.CreateServerCertificateCapture(serverCert, verdict);
+            ServerCertificate capture =
+                SniCommon.CreateServerCertificate(serverCert, verdict);
 
             // Assert
             // Only the certificate is dropped; the other captured values are unaffected.
@@ -419,13 +419,13 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         /// A certificate within the capture size cap is captured.
         /// </summary>
         [Fact]
-        public void CreateServerCertificateCapture_AtSizeCap_CertificateCaptured()
+        public void CreateServerCertificate_AtSizeCap_CertificateCaptured()
         {
             // Arrange
             using X509Certificate2 serverCert = CreateSelfSignedCertificate(ServerName,
-                ServerCertificateCapture.MaxRawCertificateSize / 2);
+                ServerCertificate.MaxRawCertificateSize / 2);
             Assert.InRange(serverCert.RawData.Length, 1,
-                ServerCertificateCapture.MaxRawCertificateSize);
+                ServerCertificate.MaxRawCertificateSize);
 
             // Act
             byte[]? rawCertificate = SniCommon.GetRawCertificate(serverCert);
@@ -439,20 +439,20 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         /// recent one. A previous capture without a certificate does not block a later one.
         /// </summary>
         [Fact]
-        public void CreateServerCertificateCapture_FirstCertificateWins()
+        public void CreateServerCertificate_FirstCertificateWins()
         {
             // Arrange
             using X509Certificate2 first = CreateSelfSignedCertificate(ServerName);
             using X509Certificate2 second = CreateSelfSignedCertificate("other.contoso.com");
-            ServerCertificateCapture previous = SniCommon.CreateServerCertificateCapture(first, default);
-            ServerCertificateCapture empty = SniCommon.CreateServerCertificateCapture(null!, default);
+            ServerCertificate previous = SniCommon.CreateServerCertificate(first, default);
+            ServerCertificate empty = SniCommon.CreateServerCertificate(null!, default);
             ServerCertificateVerdict verdict = new(
                 SqlServerCertificateValidationErrors.HostNameMismatch, X509ChainStatusFlags.NoError);
 
             // Act
-            ServerCertificateCapture next = SniCommon.CreateServerCertificateCapture(
+            ServerCertificate next = SniCommon.CreateServerCertificate(
                 second, verdict, sender: null, previous: previous);
-            ServerCertificateCapture afterEmpty = SniCommon.CreateServerCertificateCapture(
+            ServerCertificate afterEmpty = SniCommon.CreateServerCertificate(
                 second, default, previous: empty);
 
             // Assert
@@ -466,14 +466,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         /// captured and the verdict stays unavailable.
         /// </summary>
         [Fact]
-        public void CreateServerCertificateCapture_Bypass_CertificateOnly()
+        public void CreateServerCertificate_Bypass_CertificateOnly()
         {
             // Arrange
             using X509Certificate2 serverCert = CreateSelfSignedCertificate(ServerName);
 
             // Act
-            ServerCertificateCapture capture =
-                SniCommon.CreateServerCertificateCapture(serverCert, default);
+            ServerCertificate capture =
+                SniCommon.CreateServerCertificate(serverCert, default);
 
             // Assert
             Assert.Equal(serverCert.RawData, capture.RawCertificate);
@@ -487,14 +487,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         /// suite are unavailable.
         /// </summary>
         [Fact]
-        public void CreateServerCertificateCapture_SenderNotSslStream_ProtocolUnavailable()
+        public void CreateServerCertificate_SenderNotSslStream_ProtocolUnavailable()
         {
             // Arrange
             using X509Certificate2 serverCert = CreateSelfSignedCertificate(ServerName);
 
             // Act
-            ServerCertificateCapture capture =
-                SniCommon.CreateServerCertificateCapture(serverCert, default, new object());
+            ServerCertificate capture =
+                SniCommon.CreateServerCertificate(serverCert, default, new object());
 
             // Assert
             Assert.Null(capture.Protocol);
@@ -525,14 +525,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         /// kept.
         /// </summary>
         [Fact]
-        public void CreateServerCertificateCapture_NoCertificate_CertificateUnavailable()
+        public void CreateServerCertificate_NoCertificate_CertificateUnavailable()
         {
             // Arrange
             ServerCertificateVerdict verdict = new(
                 SqlServerCertificateValidationErrors.ServerCertificateMissing, null);
 
             // Act
-            ServerCertificateCapture capture = SniCommon.CreateServerCertificateCapture(null!, verdict);
+            ServerCertificate capture = SniCommon.CreateServerCertificate(null!, verdict);
 
             // Assert
             Assert.Null(capture.RawCertificate);

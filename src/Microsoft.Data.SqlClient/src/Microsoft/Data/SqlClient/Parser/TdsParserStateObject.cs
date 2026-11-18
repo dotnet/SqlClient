@@ -559,7 +559,7 @@ namespace Microsoft.Data.SqlClient.Parser
         /// call to <see cref="EnableSsl"/>, or <see langword="null"/> if the transport does not
         /// capture them or no certificate validation callback ran.
         /// </summary>
-        internal virtual Connection.ServerCertificateCapture GetServerCertificateCapture() => null;
+        internal virtual Connection.ServerCertificate GetServerCertificate() => null;
 
         /// <summary>
         /// Gets the IANA identifier of the TLS cipher suite negotiated on this session, or

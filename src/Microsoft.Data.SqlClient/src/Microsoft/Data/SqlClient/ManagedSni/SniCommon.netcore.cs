@@ -291,11 +291,11 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// captured in an attempt is kept; a later callback invocation does not replace it.
         /// </param>
         /// <returns>The capture. Never <see langword="null"/>.</returns>
-        internal static ServerCertificateCapture CreateServerCertificateCapture(X509Certificate serverCert, in ServerCertificateVerdict verdict, object sender = null, ServerCertificateCapture previous = null)
+        internal static ServerCertificate CreateServerCertificate(X509Certificate serverCert, in ServerCertificateVerdict verdict, object sender = null, ServerCertificate previous = null)
         {
             byte[] rawCertificate = previous?.RawCertificate ?? GetRawCertificate(serverCert);
 
-            return new ServerCertificateCapture(
+            return new ServerCertificate(
                 rawCertificate,
                 verdict.ValidationErrors,
                 verdict.ChainStatus,
@@ -309,7 +309,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <param name="serverCert">The certificate presented by the server, if any.</param>
         /// <returns>
         /// The DER bytes, or <see langword="null"/> when no certificate was presented, its encoding
-        /// cannot be read, or it is larger than <see cref="ServerCertificateCapture.MaxRawCertificateSize"/>.
+        /// cannot be read, or it is larger than <see cref="ServerCertificate.MaxRawCertificateSize"/>.
         /// </returns>
         internal static byte[] GetRawCertificate(X509Certificate serverCert)
         {
@@ -322,7 +322,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             {
                 // GetRawCertData returns a new array, so the capture owns it.
                 byte[] rawCertificate = serverCert.GetRawCertData();
-                return rawCertificate is { Length: > 0 and <= ServerCertificateCapture.MaxRawCertificateSize }
+                return rawCertificate is { Length: > 0 and <= ServerCertificate.MaxRawCertificateSize }
                     ? rawCertificate
                     : null;
             }

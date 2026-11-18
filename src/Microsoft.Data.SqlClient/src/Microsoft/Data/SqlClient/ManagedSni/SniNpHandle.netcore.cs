@@ -41,7 +41,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         private SniAsyncCallback _sendCallback;
 
         private bool _validateCert = true;
-        private ServerCertificateCapture _serverCertificateCapture;
+        private volatile ServerCertificate _serverCertificate;
         private readonly uint _status = TdsEnums.SNI_UNINITIALIZED;
         private int _bufferSize = TdsEnums.DEFAULT_LOGIN_PACKET_SIZE;
         private readonly Guid _connectionId = Guid.NewGuid();
@@ -142,6 +142,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             }
         }
 
+        /// <inheritdoc/>
         public override int? NegotiatedCipherSuite => SniCommon.GetNegotiatedCipherSuite(_sslStream);
 
         public override uint CheckConnection()
@@ -345,7 +346,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
             using (SqlClientSNIEventScope.Create(nameof(SniNpHandle)))
             {
                 _validateCert = (options & TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE) != 0;
-                Volatile.Write(ref _serverCertificateCapture, null);
+                _serverCertificate = null;
                 try
                 {
                     // The handshake reads block on the pipe, so closing the transport is what bounds them.
@@ -408,31 +409,29 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <returns>true if valid</returns>
         private bool ValidateServerCertificate(object sender, X509Certificate serverCertificate, X509Chain chain, SslPolicyErrors policyErrors)
         {
+            using var _ = SqlClientSNIEventScope.Create(nameof(SniNpHandle));
             ServerCertificateVerdict verdict = default;
-            using (SqlClientSNIEventScope.Create(nameof(SniNpHandle)))
+            try
             {
-                try
+                if (!_validateCert)
                 {
-                    if (!_validateCert)
-                    {
-                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.INFO, "Connection Id {0}, Certificate validation not requested.", args0: ConnectionId);
-                        return true;
-                    }
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.INFO, "Connection Id {0}, Certificate validation not requested.", args0: ConnectionId);
+                    return true;
+                }
 
-                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.INFO, "Connection Id {0}, Proceeding to SSL certificate validation.", args0: ConnectionId);
-                    return SniCommon.ValidateSslServerCertificate(_connectionId, _targetServer, _hostNameInCertificate, serverCertificate, _serverCertificateFilename, policyErrors, chain, ref verdict);
-                }
-                finally
-                {
-                    // Recorded for both outcomes (including when validation is bypassed) so that a failed
-                    // handshake still reports what was observed. The first certificate of the attempt is kept.
-                    Volatile.Write(ref _serverCertificateCapture, SniCommon.CreateServerCertificateCapture(serverCertificate, verdict, sender, Volatile.Read(ref _serverCertificateCapture)));
-                }
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniNpHandle), EventType.INFO, "Connection Id {0}, Proceeding to SSL certificate validation.", args0: ConnectionId);
+                return SniCommon.ValidateSslServerCertificate(_connectionId, _targetServer, _hostNameInCertificate, serverCertificate, _serverCertificateFilename, policyErrors, chain, ref verdict);
+            }
+            finally
+            {
+                // Recorded for both outcomes (including when validation is bypassed) so that a failed
+                // handshake still reports what was observed. The first certificate of the attempt is kept.
+                _serverCertificate = SniCommon.CreateServerCertificate(serverCertificate, verdict, sender, _serverCertificate);
             }
         }
 
         /// <inheritdoc/>
-        public override ServerCertificateCapture ServerCertificateCapture => Volatile.Read(ref _serverCertificateCapture);
+        public override ServerCertificate ServerCertificate => _serverCertificate;
 
         /// <summary>
         /// Set buffer size

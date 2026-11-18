@@ -958,7 +958,7 @@ namespace Microsoft.Data.SqlClient.Parser
             // The certificate validation callback runs synchronously within EnableSsl, so whatever the
             // transport observed is complete here; record it before any failure is reported so that
             // the login exception carries it.
-            ServerCertificateCapture certificateCapture = _physicalStateObj.GetServerCertificateCapture();
+            ServerCertificate certificateCapture = _physicalStateObj.GetServerCertificate();
             EncryptionInfoAccumulator accumulator = _connHandler?.EncryptionInfoAccumulator;
             if (accumulator is not null && certificateCapture is not null)
             {

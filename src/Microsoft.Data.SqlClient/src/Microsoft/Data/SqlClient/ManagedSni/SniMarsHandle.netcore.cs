@@ -54,9 +54,11 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
         public override SslProtocols ProtocolVersion => _connection.ProtocolVersion;
 
+        /// <inheritdoc/>
         public override int? NegotiatedCipherSuite => _connection.NegotiatedCipherSuite;
 
-        public override Connection.ServerCertificateCapture ServerCertificateCapture => _connection.ServerCertificateCapture;
+        /// <inheritdoc/>
+        public override Connection.ServerCertificate ServerCertificate => _connection.ServerCertificate;
 
         /// <summary>
         /// Dispose object

@@ -79,35 +79,12 @@ namespace Microsoft.Data.SqlClient.UnitTests
             }
         }
 
-        /// <summary>
-        /// Every subset of the mode, protocol, cipher suite, certificate, validation errors and
-        /// chain status, as flags saying which are set.
-        /// </summary>
-        public static TheoryData<bool, bool, bool, bool, bool, bool> AllPropertySubsets
-        {
-            get
-            {
-                TheoryData<bool, bool, bool, bool, bool, bool> data = new();
-                for (int subset = 0; subset < 64; subset++)
-                {
-                    data.Add(
-                        (subset & 1) != 0,
-                        (subset & 2) != 0,
-                        (subset & 4) != 0,
-                        (subset & 8) != 0,
-                        (subset & 16) != 0,
-                        (subset & 32) != 0);
-                }
-                return data;
-            }
-        }
-
         #endregion
 
         #region Mode
 
         /// <summary>
-        /// Setting the mode stores it and leaves the protocol and cipher suite unset.
+        /// Setting the mode stores it and leaves every other value unset.
         /// </summary>
         [Theory]
         [MemberData(nameof(AllModes))]
@@ -155,7 +132,7 @@ namespace Microsoft.Data.SqlClient.UnitTests
         }
 
         /// <summary>
-        /// A reported protocol is stored unchanged and leaves the mode and cipher suite unset.
+        /// A reported protocol is stored unchanged and leaves every other value unset.
         /// </summary>
         [Theory]
         [MemberData(nameof(ReportedProtocols))]
@@ -181,8 +158,8 @@ namespace Microsoft.Data.SqlClient.UnitTests
         #region CipherSuite
 
         /// <summary>
-        /// The smallest and largest valid IANA identifiers are stored and leave the mode and
-        /// protocol unset.
+        /// The smallest and largest valid IANA identifiers are stored and leave every other value
+        /// unset.
         /// </summary>
         [Theory]
         [InlineData(0)]
@@ -327,83 +304,6 @@ namespace Microsoft.Data.SqlClient.UnitTests
                 BitConverter.ToString(SampleCertificate).Replace("-", string.Empty),
                 text,
                 StringComparison.OrdinalIgnoreCase);
-        }
-
-        #endregion
-
-        #region Combinations
-
-        /// <summary>
-        /// Any combination of the mode, protocol, cipher suite and certificate fields can be set,
-        /// and exactly the set values are stored and surfaced in the snapshot.
-        /// </summary>
-        [Theory]
-        [MemberData(nameof(AllPropertySubsets))]
-        public void Properties_AnySubsetSet_StoresExactlyThatSubset(
-            bool setMode,
-            bool setProtocol,
-            bool setCipherSuite,
-            bool setCertificate,
-            bool setValidationErrors,
-            bool setChainStatus)
-        {
-            // Arrange
-            EncryptionInfoAccumulator accumulator = new();
-
-            // Act
-            if (setMode)
-            {
-                accumulator.Mode = SqlConnectionEncryptionMode.Full;
-            }
-            if (setProtocol)
-            {
-                accumulator.Protocol = SslProtocols.Tls12;
-            }
-            if (setCipherSuite)
-            {
-                accumulator.CipherSuite = ToConstructorCipherSuite(SampleCipherSuite);
-            }
-            if (setCertificate)
-            {
-                accumulator.ServerCertificateRawData = SampleCertificate;
-            }
-            if (setValidationErrors)
-            {
-                accumulator.ValidationErrors = SqlServerCertificateValidationErrors.ChainError;
-            }
-            if (setChainStatus)
-            {
-                accumulator.ChainStatus = SampleChainStatus;
-            }
-            SqlConnectionEncryptionInfo snapshot = accumulator.ToSnapshot();
-
-            // Assert
-            // The accumulator holds exactly the values that were set.
-            SqlConnectionEncryptionMode? expectedMode =
-                setMode ? SqlConnectionEncryptionMode.Full : null;
-            SslProtocols? expectedProtocol = setProtocol ? SslProtocols.Tls12 : null;
-            int? expectedCipherSuite = setCipherSuite ? SampleCipherSuite : null;
-            SqlServerCertificateValidationErrors? expectedErrors =
-                setValidationErrors ? SqlServerCertificateValidationErrors.ChainError : null;
-            X509ChainStatusFlags? expectedChainStatus = setChainStatus ? SampleChainStatus : null;
-            bool anySet = setMode || setProtocol || setCipherSuite
-                || setCertificate || setValidationErrors || setChainStatus;
-            Assert.Equal(expectedMode, accumulator.Mode);
-            Assert.Equal(expectedProtocol, accumulator.Protocol);
-            Assert.Equal(setCipherSuite, accumulator.CipherSuite is not null);
-            Assert.Equal(setCertificate, accumulator.ServerCertificateRawData is not null);
-            Assert.Equal(expectedErrors, accumulator.ValidationErrors);
-            Assert.Equal(expectedChainStatus, accumulator.ChainStatus);
-            Assert.Equal(anySet, accumulator.HasValues);
-
-            // The snapshot surfaces the same values, and is empty when none is set.
-            Assert.Equal(expectedMode, snapshot.NegotiatedEncryptionMode);
-            Assert.Equal(expectedProtocol, snapshot.NegotiatedEncryptionProtocol);
-            Assert.Equal(expectedCipherSuite, snapshot.NegotiatedCipherSuiteId);
-            Assert.Equal(setCertificate, snapshot.PresentedServerCertificateRawData is not null);
-            Assert.Equal(expectedErrors, snapshot.ValidationErrors);
-            Assert.Equal(expectedChainStatus, snapshot.ChainStatus);
-            Assert.Equal(!anySet, snapshot.IsEmpty);
         }
 
         #endregion

@@ -328,7 +328,7 @@ TLS protocol agreed for the handshake (see **Failure path** above).
 
 | Field | Source | `null` when |
 | --- | --- | --- |
-| `PresentedServerCertificateRawData` / `GetServerCertificate()` | A copy of the presented leaf certificate's DER encoding (`GetRawCertData()`); the first certificate presented in the attempt is kept | No certificate was presented, or its encoding exceeds 64 KiB (`ServerCertificateCapture.MaxRawCertificateSize`). Captured even when `TrustServerCertificate` bypasses validation, and on validation failure. |
+| `PresentedServerCertificateRawData` / `GetServerCertificate()` | A copy of the presented leaf certificate's DER encoding (`GetRawCertData()`); the first certificate presented in the attempt is kept | No certificate was presented, or its encoding exceeds 64 KiB (`ServerCertificate.MaxRawCertificateSize`). Captured even when `TrustServerCertificate` bypasses validation, and on validation failure. |
 | `ServerCertificateValidationErrors` | Effective SqlClient verdict: `ServerCertificateMissing`, `ChainError`, `HostNameMismatch` (after `HostNameInCertificate`), `PinnedCertificateMismatch` (`ServerCertificate`); `None` when validation passed | Validation was bypassed, or the configured `ServerCertificate` file could not be read. |
 | `ServerCertificateChainStatus` | Bitwise OR of the original callback chain's `ChainStatus` flags (no chain rebuild); `NoError` when the chain was evaluated cleanly | Validation was bypassed, `ServerCertificate` pinning is used (the chain isn't consulted), no certificate was presented, or the platform reported a chain error without flags. |
 
@@ -356,7 +356,7 @@ the physical handle):
 
 Both reads are wrapped in `try`/`catch` so that capture never affects the handshake. A suite of
 `0` (`TLS_NULL_WITH_NULL_NULL`, nothing agreed yet) is treated as unavailable. Without TLS, the
-properties are `null`. The value flows through the SNI handles and `ServerCertificateCapture` as
+properties are `null`. The value flows through the SNI handles and `ServerCertificate` as
 an `int`; `TdsParser.EnableSsl` casts it to `TlsCipherSuite` on .NET when it assigns it to the
 accumulator. `NegotiatedCipherSuiteId` returns the same IANA identifier.
 Managed SNI runs only on `net10.0`; on `net462` this capture is not compiled

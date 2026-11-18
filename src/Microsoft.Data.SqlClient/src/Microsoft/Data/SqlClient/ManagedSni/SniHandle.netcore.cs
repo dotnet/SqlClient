@@ -139,7 +139,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// this handle, or <see langword="null"/> if the certificate validation callback has not
         /// run since TLS was last enabled.
         /// </summary>
-        public virtual ServerCertificateCapture ServerCertificateCapture => null;
+        public virtual ServerCertificate ServerCertificate => null;
 
         #if DEBUG
         /// <summary>

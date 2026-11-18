@@ -389,7 +389,7 @@ namespace Microsoft.Data.SqlClient.Parser
             }
         }
 
-        internal override Connection.ServerCertificateCapture? GetServerCertificateCapture() => _sessionHandle?.ServerCertificateCapture;
+        internal override Connection.ServerCertificate? GetServerCertificate() => _sessionHandle?.ServerCertificate;
 
         internal override int? GetNegotiatedCipherSuite() => _sessionHandle?.NegotiatedCipherSuite;
 

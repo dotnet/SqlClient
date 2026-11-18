@@ -19,15 +19,15 @@ namespace Microsoft.Data.SqlClient.Connection
     /// SqlClient did not evaluate the certificate (<see cref="ValidationErrors"/>), or the original
     /// chain was not consulted or reported no usable status (<see cref="ChainStatus"/>).
     /// </remarks>
-    internal sealed class ServerCertificateCapture
+    internal sealed class ServerCertificate
     {
         /// <summary>
-        /// The largest DER-encoded certificate, in bytes, that is captured. A larger certificate is
-        /// not captured; the connection is unaffected.
+        /// The largest DER-encoded certificate that is captured: 64 KiB (65,536 bytes). A larger
+        /// certificate is not captured; the connection is unaffected.
         /// </summary>
         internal const int MaxRawCertificateSize = 64 * 1024;
 
-        internal ServerCertificateCapture(
+        internal ServerCertificate(
             byte[]? rawCertificate,
             SqlServerCertificateValidationErrors? validationErrors,
             X509ChainStatusFlags? chainStatus,
@@ -42,6 +42,27 @@ namespace Microsoft.Data.SqlClient.Connection
         }
 
         /// <summary>
+        /// Gets the combined status flags of the chain supplied to the certificate validation
+        /// callback, or <see langword="null"/> if the chain was not consulted or is unavailable.
+        /// </summary>
+        public X509ChainStatusFlags? ChainStatus { get; }
+
+        /// <summary>
+        /// Gets the IANA identifier of the cipher suite the transport reported for this handshake,
+        /// or <see langword="null"/> if the transport did not report one. Used only when the cipher
+        /// suite was not otherwise determined for the attempt (for example, when the handshake
+        /// failed).
+        /// </summary>
+        public int? CipherSuite { get; }
+
+        /// <summary>
+        /// Gets the TLS protocol the transport reported for this handshake, or <see langword="null"/>
+        /// if the transport did not report one. Used only when the protocol was not otherwise
+        /// determined for the attempt (for example, when the handshake failed).
+        /// </summary>
+        public SslProtocols? Protocol { get; }
+
+        /// <summary>
         /// Gets the DER encoding of the presented leaf certificate, or <see langword="null"/> if no
         /// certificate was presented or it was larger than <see cref="MaxRawCertificateSize"/>.
         /// The array is owned by this capture and must not be modified.
@@ -53,26 +74,5 @@ namespace Microsoft.Data.SqlClient.Connection
         /// not evaluate the certificate.
         /// </summary>
         public SqlServerCertificateValidationErrors? ValidationErrors { get; }
-
-        /// <summary>
-        /// Gets the combined status flags of the chain supplied to the certificate validation
-        /// callback, or <see langword="null"/> if the chain was not consulted or is unavailable.
-        /// </summary>
-        public X509ChainStatusFlags? ChainStatus { get; }
-
-        /// <summary>
-        /// Gets the TLS protocol the transport reported for this handshake, or <see langword="null"/>
-        /// if the transport did not report one. Used only when the protocol was not otherwise
-        /// determined for the attempt (for example, when the handshake failed).
-        /// </summary>
-        public SslProtocols? Protocol { get; }
-
-        /// <summary>
-        /// Gets the IANA identifier of the cipher suite the transport reported for this handshake,
-        /// or <see langword="null"/> if the transport did not report one. Used only when the cipher
-        /// suite was not otherwise determined for the attempt (for example, when the handshake
-        /// failed).
-        /// </summary>
-        public int? CipherSuite { get; }
     }
 }
