@@ -165,7 +165,7 @@ Variable groups:
 ## SDL and Compliance
 
 - TSA: enabled only in official pipeline; disabled in non-official to avoid spurious alerts
-- ApiScan: enabled in both; `break` follows the `failOnSdlError` parameter
+- ApiScan: enabled in both; `break: false` regardless of `failOnSdlError` because known APIScan issues will not be addressed on this release branch
 - Each package is registered with APIScan under its own name/version pair, so the `globalSdl.apiscan` blocks deliberately omit `softwareName`/`versionNumber`. `build-buildproj-job.yml` is the single place they are set, via `ob_sdl_apiscan_softwareName` (the package's `packageFullName`) and `ob_sdl_apiscan_versionNumber` (the `apiScanSoftwareVersion` parameter)
 - `compute-versions.ps1` derives APIScan registration versions as major.minor from the effective canonical package versions and publishes them as stage outputs. A package name/version pair must still be registered with APIScan before releasing a new major.minor. Consume these as runtime `$(...)` references so values such as `1.0` remain strings rather than being coerced to numbers by template expressions
 - Jobs that produce no assemblies (symbol publishing, signed-package validation, version computation) set `ob_sdl_apiscan_enabled: false` rather than reporting a name/version
