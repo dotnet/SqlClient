@@ -100,6 +100,14 @@ See the [core release notes](release-notes/8.0/8.0.0.md) for platform and depend
 
 #### Fixed
 
+- Removed a socket-poll wait from pooled TCP connection health checks, avoiding an approximately
+  15 ms delay when reopening healthy idle connections on Windows with managed networking.
+  Peer-close detection is retained. The nonblocking check also runs on Unix, where the old
+  timeout already rounded down to zero. Native SNI and .NET Framework are unaffected.
+  (net10.0, managed SNI only)
+  ([#5070](https://github.com/dotnet/SqlClient/issues/5070),
+  [#5071](https://github.com/dotnet/SqlClient/pull/5071),
+  [#5099](https://github.com/dotnet/SqlClient/pull/5099))
 - Fixed managed TCP sends after connection disposal reporting an unexpected
   `NullReferenceException` instead of the existing connection-error path.
   (net10.0, managed SNI only)
