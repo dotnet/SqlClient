@@ -72,6 +72,10 @@ not a reason to ignore socket errors or modify a shared host's TCP settings auto
 
 [`profiles/openasync-extended-100ms.jsonc`](../../../src/Microsoft.Data.SqlClient/tests/PerformanceTests/profiles/openasync-extended-100ms.jsonc)
 is an opt-in, burst-only example. It does not change the default pipeline profile.
+Select it at queue time with `runnerProfile=openasync-extended-100ms`, `platform=linux`,
+and `useConnectionPoolV2=true`. It replaces the full-suite config; normal credential injection
+and redacted config publication still apply. Use `confirmationRuns=1` for one matched pass,
+without changing the configured BDN iterations.
 On the local 16-CPU Linux test host, both the current driver and 7.1.2 produced
 25-second-plus ExtraIteration windows with no missing probes for all six steady cases:
 

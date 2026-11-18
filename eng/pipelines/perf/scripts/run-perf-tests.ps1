@@ -48,6 +48,8 @@ param(
     # Best-of-N: total interleaved passes for a flagged unit before a regression is confirmed.
     [ValidateRange(1, [int]::MaxValue)]
     [int]$ConfirmationRuns = 3,
+    [ValidateSet("default", "openasync-extended-100ms")]
+    [string]$RunnerProfile = "default",
     # Optional SqlClient behaviour flags (true/false, or empty to leave the checked-in
     # runnerconfig.default.jsonc default untouched).  Written into the runner config the benchmarks run
     # against and, via the pipeline's Kusto translation, recorded in PerfRun.Config.
@@ -72,6 +74,9 @@ param(
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 $RunClock = [System.Diagnostics.Stopwatch]::StartNew()
+if ($RunnerProfile -ne "default") {
+    throw "The openasync-extended-100ms profile requires the Linux runner."
+}
 
 function Get-RemainingPerfSeconds {
     # Leave time inside the ADO task deadline for the remote poll and artifact collection.
@@ -422,6 +427,10 @@ $RunnerConfig = Join-Path $RepoRoot "perf-runnerconfig.json"
 $env:RUNNER_CONFIG = $RunnerConfig
 $ResultsRunnerConfig = Join-Path $ResultsDir "runnerconfig.json"
 $SourceRunnerConfig = Join-Path $PerfDir "runnerconfig.jsonc"
+if ($RunnerProfile -ne "default") {
+    $SourceRunnerConfig = Join-Path $PerfDir "profiles\$RunnerProfile.jsonc"
+}
+Write-Host "Runner profile: $RunnerProfile"
 
 # The perf app also loads datatypes.json via the DATATYPES_CONFIG env var, falling back to
 # "datatypes.json" in the working directory.  Each pass runs from an otherwise-empty

@@ -6,6 +6,7 @@ Set BASH and PWSH to select shell executables; unavailable shells are skipped.
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -21,7 +22,7 @@ PASSWORD = 'test;="quoted" and \'single\''
 class RunnerConfigTests(unittest.TestCase):
     """Exercise authentication and per-pass configs without real SQL commands or builds."""
 
-    def check_config(self, shell, switch, local=False, sql_failure=""):
+    def check_config(self, shell, switch, local=False, sql_failure="", profile="default"):
         """Run isolated runner sections with captured SQL calls and temporary config files."""
         if local and os.name != "nt":
             self.skipTest("Local Windows authentication requires Windows")
@@ -31,19 +32,28 @@ class RunnerConfigTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
             (root / "results").mkdir()
-            source = root / "runnerconfig.jsonc"
+            source = (root / "runnerconfig.jsonc" if profile == "default" else
+                      root / "profiles" / f"{profile}.jsonc")
+            source.parent.mkdir(parents=True, exist_ok=True)
             # Include a local tuning value to prove we use the live config, not the default.
             config = {"ConnectionString": "local", "Iterations": 17, "EnableAsyncHealth": False,
                       "Benchmarks": {"ExistingRunnerConfig": {"Enabled": True}},
                       **dict.fromkeys(SWITCHES, False)}
             burst_job = {"Enabled": True, "InvocationCount": 1, "IterationCount": 3,
                          "LaunchCount": 1, "WarmupCount": 1}
+            if profile != "default":
+                actual = (SCRIPTS.parents[3] / "src/Microsoft.Data.SqlClient/tests/"
+                          "PerformanceTests/profiles" / f"{profile}.jsonc")
+                config = json.loads(re.sub(r"(?m)^\s*//.*$", "", actual.read_text()))
+            effective_burst = config["Benchmarks"].get("OpenAsyncBurstRunnerConfig", burst_job)
             (root / "runnerconfig.default.jsonc").write_text(json.dumps({
                 "Benchmarks": {"OpenAsyncBurstRunnerConfig": burst_job}}), encoding="utf-8")
             (root / "template.jsonc").write_text(
                 "// local settings\n" + json.dumps(config), encoding="utf-8")
             env = dict(os.environ, TEST_ROOT=root.as_posix(), SQL_PASSWORD=PASSWORD,
                        TEST_SWITCH=switch, TEST_PYTHON=Path(sys.executable).as_posix(),
+                       TEST_PROFILE=profile,
+                       TEST_POOL_V2="true" if profile != "default" else "false",
                        TEST_SQL_SERVER="127.0.0.1" if local else "192.0.2.1",
                        TEST_SQL_FAILURE=sql_failure)
             ext = "ps1" if shell == "pwsh" else "sh"
@@ -63,9 +73,10 @@ $SqlPassword = $env:SQL_PASSWORD
 $SqlServer = $env:TEST_SQL_SERVER
 $DbName = "perf"
 $SwitchUnderTest = $env:TEST_SWITCH
+$RunnerProfile = $env:TEST_PROFILE
 $UseManagedSniOnWindows = "true"
 $UseOptimizedAsyncBehaviour = ""
-$UseConnectionPoolV2 = "false"
+$UseConnectionPoolV2 = $env:TEST_POOL_V2
 $script:SqlCalls = @()
 function Invoke-TestSqlcmd {
     $script:SqlCalls += ,@($args)
@@ -76,6 +87,7 @@ function Invoke-TestSqlcmd {
 }
 $sqlcmd = @{ Source = "Invoke-TestSqlcmd" }
 ''' + native + authentication + section + '''
+$SourceRunnerConfig | Set-Content (Join-Path $RepoRoot "selected-source.txt")
 if (Test-Path $RunnerConfig) { throw "Config generated before build" }
 Copy-Item (Join-Path $RepoRoot "template.jsonc") $SourceRunnerConfig
 Prepare-RunnerConfig
@@ -90,11 +102,13 @@ PERF_DIR="$REPO_ROOT"
 RESULTS_DIR="$REPO_ROOT/results"
 export SQL_SERVER=localhost DB_NAME=perf
 switchUnderTest="$TEST_SWITCH"
+runnerProfile="$TEST_PROFILE"
 useManagedSniOnWindows=true
 useOptimizedAsyncBehaviour=""
-useConnectionPoolV2=false
+useConnectionPoolV2="$TEST_POOL_V2"
 python3() { "$TEST_PYTHON" "$@"; }
 ''' + section + '''
+printf '%s\\n' "$SOURCE_RUNNER_CONFIG" > "$TEST_ROOT/selected-source.txt"
 [[ ! -f "$RUNNER_CONFIG" ]] || exit 2
 cp "$REPO_ROOT/template.jsonc" "$SOURCE_RUNNER_CONFIG" || exit 3
 prepare_runner_config || exit 4
@@ -134,6 +148,8 @@ prepare_runner_config || exit 6
                 self.assertFalse((root / "perf-runnerconfig.json").exists())
                 return
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            selected = (root / "selected-source.txt").read_text(encoding="utf-8-sig").strip()
+            self.assertEqual(selected.replace("\\", "/"), source.as_posix())
             self.assertFalse(source.exists())  # Preparation is idempotent even without its source.
             variants = ("", "-baseline", "-current") if switch else ("",)
             for variant in variants:
@@ -141,7 +157,7 @@ prepare_runner_config || exit 6
                 redacted = json.loads((root / "results" / f"runnerconfig{variant}.json").read_text(encoding="utf-8-sig"))
                 expected = {**config, "UseManagedSniOnWindows": True, "EnableAsyncHealth": True,
                             "Benchmarks": {**config["Benchmarks"],
-                                           "OpenAsyncBurstRunnerConfig": burst_job}}
+                                           "OpenAsyncBurstRunnerConfig": effective_burst}}
                 if variant:
                     expected[switch] = variant == "-current"
                 self.assertEqual(redacted, {**expected, "ConnectionString": "<redacted>"})
@@ -158,6 +174,14 @@ prepare_runner_config || exit 6
                 else:
                     self.assertIn('Password="' + PASSWORD.replace('"', '""') + '";', connection)
                     self.assertNotIn("Integrated Security=", connection)
+                if profile != "default":
+                    self.assertEqual(list(runtime["Benchmarks"]), ["OpenAsyncBurstRunnerConfig"])
+                    burst = runtime["Benchmarks"]["OpenAsyncBurstRunnerConfig"]
+                    self.assertEqual(burst["AdditionalRttMilliseconds"], 100)
+                    self.assertEqual(burst["SamplingProfile"], "Extended")
+                    self.assertEqual(burst["ProcessIsolation"], "PerCase")
+                    self.assertEqual(burst["SteadyOperationsPerWorker"],
+                                     effective_burst["SteadyOperationsPerWorker"])
 
     def test_bash(self):
         for switch in ("", *SWITCHES):
@@ -170,6 +194,56 @@ prepare_runner_config || exit 6
             for local in (False, True):
                 with self.subTest(switch=switch, local=local):
                     self.check_config("pwsh", switch, local=local)
+
+    def test_bash_selects_calibrated_profile_without_enabling_other_units(self):
+        """The opt-in profile must replace, not merge with, the full-suite configuration."""
+        self.check_config("bash", "", profile="openasync-extended-100ms")
+
+    def test_powershell_profile_config_preserves_work_sizes_and_redaction(self):
+        """The shared config writer retains all profile settings without exposing credentials."""
+        self.check_config("pwsh", "", profile="openasync-extended-100ms")
+
+    def test_pipeline_profile_reaches_both_entrypoints(self):
+        """Each pipeline exposes the same profile selector while retaining the default suite."""
+        for path in SCRIPTS.parent.glob("sqlclient-perf-*.yml"):
+            with self.subTest(pipeline=path.name):
+                text = path.read_text()
+                self.assertIn("- name: runnerProfile", text)
+                self.assertIn("-RunnerProfile ${{ parameters.runnerProfile }}", text)
+                self.assertIn("--runner-profile ${{ parameters.runnerProfile }}", text)
+
+    def test_bash_unknown_profile_fails_before_setup(self):
+        """A misspelled profile must not silently run the default workload."""
+        # Arrange
+        executable = os.environ.get("BASH") or shutil.which("bash")
+        if not executable:
+            self.skipTest("bash is unavailable")
+
+        # Act
+        result = subprocess.run(
+            [executable, (SCRIPTS / "run-perf-tests.sh").as_posix(),
+             "--runner-profile", "unknown"], capture_output=True, text=True, timeout=30)
+
+        # Assert
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("--runner-profile must be", result.stderr)
+
+    def test_powershell_latency_profile_fails_before_setup(self):
+        """The Windows entrypoint rejects Linux-only shaping before provisioning SQL."""
+        # Arrange
+        executable = os.environ.get("PWSH") or shutil.which("pwsh")
+        if not executable:
+            self.skipTest("pwsh is unavailable")
+
+        # Act
+        result = subprocess.run(
+            [executable, "-NoProfile", "-File", str(SCRIPTS / "run-perf-tests.ps1"),
+             "-RunnerProfile", "openasync-extended-100ms"],
+            capture_output=True, text=True, timeout=30)
+
+        # Assert
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("requires the Linux runner", result.stderr)
 
     def test_powershell_authentication_failure_stops_config_generation(self):
         """A failed identity setup or integrated preflight must stop the benchmark run."""

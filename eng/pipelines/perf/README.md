@@ -26,6 +26,16 @@ per-process artifacts, and verifies owned Linux SQL-only shaping when RTT is req
 Execution conditions also participate in ordinary timing comparisons. See the
 [execution protocol and calibrated opt-in profile](async-health.md#execution-and-workload-settings).
 
+To queue the calibrated latency workload, select `platform=linux` and
+`runnerProfile=openasync-extended-100ms`. This loads the checked-in burst-only profile instead
+of merging it into the full suite. Set `useConnectionPoolV2=true` to retain the calibrated V2
+configuration; queue-time behaviour switches still take precedence over profile values.
+`confirmationRuns=1` runs one matched baseline/current pass without additional confirmation
+passes, preserving the profile's warmup and timing iteration counts.
+The default `runnerProfile=default` retains the existing live `runnerconfig.jsonc`.
+Both entrypoints accept the corresponding `--runner-profile` / `-RunnerProfile` option;
+the Windows entrypoint rejects the Linux-only 100ms profile before setup.
+
 ## Contents
 
 | Path | Purpose |
