@@ -248,7 +248,9 @@ namespace Microsoft.Data.SqlClient
                 throw new RetryableEnclaveQueryExecutionException(e.Message, e);
             }
 
-            List<ColumnEncryptionKeyInfo> decryptedKeysToBeSentToEnclave = GetDecryptedKeysToBeSentToEnclave(keysToBeSentToEnclave, connection, command);
+            List<ColumnEncryptionKeyInfo> decryptedKeysToBeSentToEnclave = GetDecryptedKeysToBeSentToEnclave(
+                keysToBeSentToEnclave, connection, command, isAsync: false, CancellationToken.None)
+                .GetAwaiter().GetResult();
             return BuildEnclavePackage(decryptedKeysToBeSentToEnclave, queryText, counter, sqlEnclaveSession, enclaveSessionParameters.ServerName);
         }
 
@@ -302,10 +304,11 @@ namespace Microsoft.Data.SqlClient
                 throw new RetryableEnclaveQueryExecutionException(e.Message, e);
             }
 
-            List<ColumnEncryptionKeyInfo> decryptedKeysToBeSentToEnclave = await GetDecryptedKeysToBeSentToEnclaveAsync(
+            List<ColumnEncryptionKeyInfo> decryptedKeysToBeSentToEnclave = await GetDecryptedKeysToBeSentToEnclave(
                     keysToBeSentToEnclave,
                     connection,
                     command,
+                    isAsync: true,
                     cancellationToken)
                 .ConfigureAwait(false);
 

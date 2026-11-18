@@ -104,10 +104,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
             using SqlConnection connection = NewConnection(provider);
 
             // Act
-            List<ColumnEncryptionKeyInfo> keys = await EnclaveDelegate.Instance.GetDecryptedKeysToBeSentToEnclaveAsync(
+            List<ColumnEncryptionKeyInfo> keys = await EnclaveDelegate.Instance.GetDecryptedKeysToBeSentToEnclave(
                 NewKeyTable(NewCipherInfoEntry()),
                 connection,
                 command: null,
+                isAsync: true,
                 CancellationToken.None);
 
             // Assert
@@ -127,15 +128,19 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
         [Fact]
         public async Task GetDecryptedKeysToBeSentToEnclaveAsync_ResolvesEveryRequestedKey()
         {
+            // Arrange
             TestEnclaveKeyStoreProvider provider = new TestEnclaveKeyStoreProvider { PlaintextKey = NewPlaintextKey(seed: 23) };
             using SqlConnection connection = NewConnection(provider);
 
-            List<ColumnEncryptionKeyInfo> keys = await EnclaveDelegate.Instance.GetDecryptedKeysToBeSentToEnclaveAsync(
+            // Act
+            List<ColumnEncryptionKeyInfo> keys = await EnclaveDelegate.Instance.GetDecryptedKeysToBeSentToEnclave(
                 NewKeyTable(NewCipherInfoEntry(ordinal: 0), NewCipherInfoEntry(ordinal: 1), NewCipherInfoEntry(ordinal: 2)),
                 connection,
                 command: null,
+                isAsync: true,
                 CancellationToken.None);
 
+            // Assert
             Assert.Equal(3, keys.Count);
             Assert.Equal(3, provider.DecryptAsyncCallCount);
             Assert.Equal(0, provider.DecryptCallCount);
@@ -148,14 +153,19 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
         [Fact]
         public void GetDecryptedKeysToBeSentToEnclave_UsesSyncProviderApi()
         {
+            // Arrange
             TestEnclaveKeyStoreProvider provider = new TestEnclaveKeyStoreProvider { PlaintextKey = NewPlaintextKey(seed: 37) };
             using SqlConnection connection = NewConnection(provider);
 
+            // Act
             List<ColumnEncryptionKeyInfo> keys = EnclaveDelegate.Instance.GetDecryptedKeysToBeSentToEnclave(
                 NewKeyTable(NewCipherInfoEntry()),
                 connection,
-                command: null);
+                command: null,
+                isAsync: false,
+                CancellationToken.None).GetAwaiter().GetResult();
 
+            // Assert
             Assert.Single(keys);
             Assert.Equal(1, provider.DecryptCallCount);
             Assert.Equal(0, provider.DecryptAsyncCallCount);
@@ -168,19 +178,21 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
         [Fact]
         public async Task GetDecryptedKeysToBeSentToEnclaveAsync_WhenCancelled_ProducesCancelledTask()
         {
+            // Arrange
             TestEnclaveKeyStoreProvider provider = new TestEnclaveKeyStoreProvider { PlaintextKey = NewPlaintextKey(seed: 53) };
             using SqlConnection connection = NewConnection(provider);
 
             using CancellationTokenSource cts = new();
             cts.Cancel();
 
-            await Assert.ThrowsAnyAsync<OperationCanceledException>(
-                () => EnclaveDelegate.Instance.GetDecryptedKeysToBeSentToEnclaveAsync(
-                    NewKeyTable(NewCipherInfoEntry()),
-                    connection,
-                    command: null,
-                    cts.Token));
+            // Act
+            Task<List<ColumnEncryptionKeyInfo>> keys =
+                EnclaveDelegate.Instance.GetDecryptedKeysToBeSentToEnclave(
+                    NewKeyTable(NewCipherInfoEntry()), connection, command: null,
+                    isAsync: true, cts.Token).AsTask();
 
+            // Assert
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => keys);
             Assert.Equal(0, provider.DecryptAsyncCallCount);
         }
 
@@ -191,19 +203,21 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
         [Fact]
         public async Task GetDecryptedKeysToBeSentToEnclaveAsync_WhenProviderFails_Propagates()
         {
+            // Arrange
             TestEnclaveKeyStoreProvider provider = new TestEnclaveKeyStoreProvider
             {
                 DecryptAsyncCallback = _ => throw new InvalidOperationException("key store unavailable"),
             };
             using SqlConnection connection = NewConnection(provider);
 
-            SqlException exception = await Assert.ThrowsAsync<SqlException>(
-                () => EnclaveDelegate.Instance.GetDecryptedKeysToBeSentToEnclaveAsync(
-                    NewKeyTable(NewCipherInfoEntry()),
-                    connection,
-                    command: null,
-                    CancellationToken.None));
+            // Act
+            Task<List<ColumnEncryptionKeyInfo>> keys =
+                EnclaveDelegate.Instance.GetDecryptedKeysToBeSentToEnclave(
+                    NewKeyTable(NewCipherInfoEntry()), connection, command: null,
+                    isAsync: true, CancellationToken.None).AsTask();
 
+            // Assert
+            SqlException exception = await Assert.ThrowsAsync<SqlException>(() => keys);
             Assert.IsType<InvalidOperationException>(exception.InnerException);
             Assert.Equal("key store unavailable", exception.InnerException.Message);
         }

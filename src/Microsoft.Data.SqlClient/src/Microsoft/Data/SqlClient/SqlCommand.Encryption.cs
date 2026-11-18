@@ -913,13 +913,17 @@ namespace Microsoft.Data.SqlClient
                     verification.IsEnclaveEnabled,
                     verification.Signature,
                     _activeConnection,
-                    this);
+                    this,
+                    isAsync: false,
+                    CancellationToken.None).GetAwaiter().GetResult();
             }
 
             IReadOnlyList<SqlCipherMetadata> keyDecryptions = pending.KeyDecryptions;
             for (int i = 0; i < keyDecryptions.Count; i++)
             {
-                SqlSecurityUtility.DecryptSymmetricKey(keyDecryptions[i], _activeConnection, this);
+                SqlSecurityUtility.DecryptSymmetricKey(
+                    keyDecryptions[i], _activeConnection, this,
+                    isAsync: false, CancellationToken.None).GetAwaiter().GetResult();
             }
 
             CacheQueryMetadataIfNeeded();
@@ -953,13 +957,14 @@ namespace Microsoft.Data.SqlClient
             for (int i = 0; i < verifications.Count; i++)
             {
                 ColumnMasterKeySignatureVerification verification = verifications[i];
-                await SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
+                await SqlSecurityUtility.VerifyColumnMasterKeySignature(
                         verification.KeyStoreName,
                         verification.KeyPath,
                         verification.IsEnclaveEnabled,
                         verification.Signature,
                         _activeConnection,
                         this,
+                        isAsync: true,
                         cancellationToken)
                     .ConfigureAwait(false);
             }
@@ -969,7 +974,8 @@ namespace Microsoft.Data.SqlClient
             IReadOnlyList<SqlCipherMetadata> keyDecryptions = pending.KeyDecryptions;
             for (int i = 0; i < keyDecryptions.Count; i++)
             {
-                await SqlSecurityUtility.DecryptSymmetricKeyAsync(keyDecryptions[i], _activeConnection, this, cancellationToken)
+                await SqlSecurityUtility.DecryptSymmetricKey(
+                    keyDecryptions[i], _activeConnection, this, isAsync: true, cancellationToken)
                     .ConfigureAwait(false);
             }
 

@@ -65,7 +65,9 @@ namespace Microsoft.Data.SqlClient
             {
                 try
                 {
-                    SqlSecurityUtility.DecryptSymmetricKey(keysToLoad[i], sqlCommand.Connection, sqlCommand);
+                    SqlSecurityUtility.DecryptSymmetricKey(
+                        keysToLoad[i], sqlCommand.Connection, sqlCommand,
+                        isAsync: false, CancellationToken.None).GetAwaiter().GetResult();
                 }
                 catch (Exception ex) when (ex is SqlException or ArgumentException)
                 {
@@ -195,10 +197,11 @@ namespace Microsoft.Data.SqlClient
             {
                 try
                 {
-                    await SqlSecurityUtility.DecryptSymmetricKeyAsync(
+                    await SqlSecurityUtility.DecryptSymmetricKey(
                         keysToLoad[i],
                         sqlCommand.Connection,
                         sqlCommand,
+                        isAsync: true,
                         cancellationToken).ConfigureAwait(false);
                 }
                 catch (Exception ex) when (ex is SqlException or ArgumentException)
