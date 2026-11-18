@@ -271,6 +271,40 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             await AssertCommandReusableAsync(command);
         }
 
+        /// <summary>
+        /// Changing the command's connection while the provider's asynchronous key decryption is
+        /// pending must be rejected, and execution must still complete on the original connection.
+        /// </summary>
+        [ConditionalTheory(
+            typeof(DataTestUtility), nameof(DataTestUtility.IsTargetReadyForAeWithKeyStore))]
+        [MemberData(nameof(AEConnectionStrings))]
+        public async Task ExecuteReaderAsync_ConnectionChangedWhileProviderPending_Throws(
+            string connectionString)
+        {
+            // Arrange
+            GatedKeyStoreProvider provider = new();
+            using SqlConnection connection =
+                await OpenWithProviderAsync(connectionString, provider);
+            using SqlConnection otherConnection = new(connectionString);
+            using SqlCommand command = CreateGatedCountCommand(connection);
+
+            // Act
+            // Start execution and wait until the provider is inside its pending decrypt call.
+            Task<SqlDataReader> execution = command.ExecuteReaderAsync();
+            await WaitForProviderEntryAsync(provider);
+            Exception reassignError = Record.Exception(() => command.Connection = otherConnection);
+
+            // Let the provider return the key and finish the execution.
+            provider.Release();
+            using SqlDataReader reader = await execution;
+
+            // Assert
+            Assert.IsType<InvalidOperationException>(reassignError);
+            Assert.Same(connection, command.Connection);
+            Assert.True(await reader.ReadAsync());
+            Assert.Equal(0, reader.GetInt32(0));
+        }
+
         /// <summary>Opens a connection with the given provider registered on it.</summary>
         /// <param name="connectionString">Configured Always Encrypted test connection.</param>
         /// <param name="provider">Provider whose decrypt calls the test observes.</param>
