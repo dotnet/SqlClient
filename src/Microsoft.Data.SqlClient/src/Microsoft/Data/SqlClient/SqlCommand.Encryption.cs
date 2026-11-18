@@ -837,15 +837,9 @@ namespace Microsoft.Data.SqlClient
             IReadOnlyList<SqlCipherMetadata> keyDecryptions = pending.KeyDecryptions;
             for (int i = 0; i < keyDecryptions.Count; i++)
             {
-                if (isAsync)
-                {
-                    await SqlSecurityUtility.DecryptSymmetricKeyAsync(keyDecryptions[i], _activeConnection, this, cancellationToken)
-                        .ConfigureAwait(false);
-                }
-                else
-                {
-                    SqlSecurityUtility.DecryptSymmetricKey(keyDecryptions[i], _activeConnection, this);
-                }
+                await SqlSecurityUtility.DecryptSymmetricKey(
+                        keyDecryptions[i], _activeConnection, this, isAsync, cancellationToken)
+                    .ConfigureAwait(false);
             }
 
             CacheQueryMetadataIfNeeded();
@@ -865,28 +859,16 @@ namespace Microsoft.Data.SqlClient
             for (int i = startIndex; i < verifications.Count; i++)
             {
                 ColumnMasterKeySignatureVerification verification = verifications[i];
-                if (isAsync)
-                {
-                    await SqlSecurityUtility.VerifyColumnMasterKeySignatureAsync(
-                            verification.KeyStoreName,
-                            verification.KeyPath,
-                            verification.IsEnclaveEnabled,
-                            verification.Signature,
-                            _activeConnection,
-                            this,
-                            cancellationToken)
-                        .ConfigureAwait(false);
-                }
-                else
-                {
-                    SqlSecurityUtility.VerifyColumnMasterKeySignature(
+                await SqlSecurityUtility.VerifyColumnMasterKeySignature(
                         verification.KeyStoreName,
                         verification.KeyPath,
                         verification.IsEnclaveEnabled,
                         verification.Signature,
                         _activeConnection,
-                        this);
-                }
+                        this,
+                        isAsync,
+                        cancellationToken)
+                    .ConfigureAwait(false);
             }
 
             return verifications.Count;

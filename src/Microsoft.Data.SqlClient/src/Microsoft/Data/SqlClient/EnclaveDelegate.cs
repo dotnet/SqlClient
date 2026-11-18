@@ -8,6 +8,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -56,7 +57,9 @@ namespace Microsoft.Data.SqlClient
 
             foreach (SqlTceCipherInfoEntry cipherInfo in keysTobeSentToEnclave.Values)
             {
-                SqlSecurityUtility.DecryptSymmetricKey(cipherInfo, out SymmetricKey sqlClientSymmetricKey, out SqlEncryptionKeyInfo encryptionkeyInfoChosen, connection, command);
+                (SymmetricKey sqlClientSymmetricKey, _) = SqlSecurityUtility.DecryptSymmetricKey(
+                    cipherInfo, connection, command, isAsync: false, CancellationToken.None)
+                    .GetAwaiter().GetResult();
 
                 if (sqlClientSymmetricKey == null)
                 {
