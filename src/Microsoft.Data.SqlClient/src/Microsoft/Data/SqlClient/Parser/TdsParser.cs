@@ -11556,7 +11556,9 @@ namespace Microsoft.Data.SqlClient.Parser
                         TdsColumnMetadata md = metadataCollection[col];
                         if (md.IsEncrypted)
                         {
-                            SqlSecurityUtility.DecryptSymmetricKey(md.CipherMetadata, connection, command);
+                            SqlSecurityUtility.DecryptSymmetricKey(
+                                md.CipherMetadata, connection, command,
+                                isAsync: false, CancellationToken.None).GetAwaiter().GetResult();
                         }
                     }
                 }

@@ -1099,7 +1099,9 @@ namespace Microsoft.Data.SqlClient
                         isEnclaveEnabled: isRequestedByEnclave,
                         keySignature,
                         _activeConnection,
-                        this);
+                        this,
+                        isAsync: false,
+                        CancellationToken.None).GetAwaiter().GetResult();
 
                     // Lookup the key, failing which throw an exception
                     // @TODO: Seriously, we *just* did this, why are we looking it up again??
@@ -1190,7 +1192,9 @@ namespace Microsoft.Data.SqlClient
                                 normalizationRuleVersion: columnNormalizationRuleVersion);
 
                             // Decrypt the symmetric key. This will also validate and throw if needed.
-                            SqlSecurityUtility.DecryptSymmetricKey(sqlParameter.CipherMetadata, _activeConnection, this);
+                            SqlSecurityUtility.DecryptSymmetricKey(
+                                sqlParameter.CipherMetadata, _activeConnection, this,
+                                isAsync: false, CancellationToken.None).GetAwaiter().GetResult();
 
                             // This is effective only for _batchRPCMode even though we set it for
                             // non-_batchRPCMode also, since for non-_batchRPCMode, param options
