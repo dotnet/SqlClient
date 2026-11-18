@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.IO;
+
 namespace Microsoft.SqlServer.TDS.EndPoint
 {
     /// <summary>
@@ -27,6 +29,13 @@ namespace Microsoft.SqlServer.TDS.EndPoint
         /// <param name="message">TDS message received</param>
         /// <returns>TDS messages to be respond with</returns>
         TDSMessageCollection OnPreLoginRequest(ITDSServerSession session, TDSMessage message);
+
+        /// <summary>
+        /// It is called before the server starts the TLS handshake on a connection
+        /// </summary>
+        /// <param name="session">The session whose connection is about to be encrypted</param>
+        /// <param name="transport">The unencrypted connection stream the handshake will run over</param>
+        void OnTlsHandshakeStarting(ITDSServerSession session, Stream transport);
 
         /// <summary>
         /// It is called when login request arrives

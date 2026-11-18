@@ -248,6 +248,69 @@ configured file is not a completed pin comparison and is not reported as a misma
 - **Diagnostics only:** the snapshot must not be used to make security decisions; the
   driver's own validation is authoritative.
 
+### Negotiated mode mapping
+
+`NegotiatedEncryptionMode` reflects the final state of the physical connection after
+login, derived from the client `Encrypt` setting and the server's PRELOGIN response:
+
+| Client `Encrypt` | Server PRELOGIN `ENCRYPTION` | Reported mode | Protocol |
+| --- | --- | --- | --- |
+| `Strict` (TDS 8.0) | — (TLS before PRELOGIN) | `Strict` | Negotiated TLS version |
+| `Mandatory` / `true` | `ENCRYPT_OFF`, `ENCRYPT_ON`, `ENCRYPT_REQ` | `Full` | Negotiated TLS version |
+| `Optional` / `false` | `ENCRYPT_REQ` | `Full` | Negotiated TLS version |
+| `Optional` / `false` | `ENCRYPT_OFF` (TLS removed after LOGIN7) | `LoginOnly` | Negotiated TLS version |
+| `Optional` / `false` | `ENCRYPT_ON` / `ENCRYPT_NOT_SUP` | `None` | `null` |
+
+With `Optional`, the client sends `ENCRYPT_OFF` in PRELOGIN. Only a server reply of
+`ENCRYPT_REQ` upgrades the session to full encryption; `ENCRYPT_ON` leaves the client option
+`OFF`, so no TLS handshake runs and the mode is `None`.
+
+**Failure path.** Each value is recorded as soon as it is known for the attempt; the requested
+settings are never used as substitutes for an unknown value. The mode is recorded when it is
+selected, before any TLS handshake: for `Strict` (TDS 8) immediately before the TLS-first
+handshake, because it is a connection invariant, and otherwise when the PRELOGIN response
+selects it. A TLS failure therefore reports the mode with a `null` protocol and cipher suite,
+unless those were observed. A TDS 7.x PRELOGIN failure that happens before the mode is selected
+(including the server rejecting the requested encryption) leaves the mode `null`. When no TLS is
+negotiated (`Optional` against a server that replies `ENCRYPT_NOT_SUP`), the mode `None` is
+recorded at PRELOGIN with a `null` protocol, so a later LOGIN7 failure (for example error 18456)
+reports mode `None` and a `null` protocol. Values are captured per physical login attempt and
+reset for every routing, retry, and failover attempt, and for the reconnect `TdsParser.Connect`
+makes when the server reports an instance failure in its PRELOGIN response, so a mode from an
+earlier attempt never reaches a later attempt's exception.
+**Failure scope.** A `SqlException` thrown while opening a connection carries the encryption
+info whenever any is available, whatever its cause. Failures in the login sequence in
+`SqlConnectionInternal.OpenLoginEnlist` (PRELOGIN, TLS, LOGIN7, routing and failover) carry the
+values of the terminal attempt. Automatic `System.Transactions` enlistment at the end of a
+non-pooled login runs inside that sequence, so its failures carry the values the completed login
+negotiated. When a pooled connection is checked out, its automatic enlistment (`Activate` →
+`Enlist`) can fail without a new login; that exception carries the snapshot the physical
+connection published when it logged in. Exceptions raised before any value was observed, and
+non-`SqlException` failures, keep `Empty`.
+- **Managed SNI** validates the server certificate inside the handshake, so a validation
+  failure fails `EnableSsl`. In this slice Managed SNI does not capture the negotiated protocol
+  on a failed handshake, so the exception reports the mode with a `null` protocol. Slice C adds
+  capture of `SslStream.SslProtocol` from the validation callback.
+- **Native SNI.** With the current SNI package, native SNI also rejects an untrusted server
+  certificate during the handshake, so this slice reports the mode but no protocol for that
+  failure (the tests assert this for both SNI implementations). If a deferred validation
+  failure surfaces after a successful `EnableSsl`, the protocol recorded by `EnableSsl` is kept.
+These rules only touch mode and protocol; certificate fields are never affected. Once login
+completes the accumulator is released, so SSL errors on an open connection never alter a published
+snapshot.
+
+**Cipher suite.** Producers assign the accumulator's `CipherSuite` property directly. On .NET it
+is a `TlsCipherSuite?`, which the accumulator stores and passes to the snapshot constructor
+unchanged. On .NET Framework it is the IANA identifier as an `int?`; the property setter ignores
+values outside 0-0xFFFF instead of failing the login. Likewise, the `Protocol` setter stores
+`SslProtocols.None` as `null`. Both cipher suite properties read the same value. Slice B adds
+only the plumbing: the value is reset with the other fields at the start of every physical login
+attempt and flows into the snapshot published on `SqlConnection` and attached to `SqlException`.
+No transport sets it in this slice, so the property stays `null`; Slice C records it from
+`SslStream.NegotiatedCipherSuite` (Managed SNI) and Slice D from native SNI, which needs a new
+SNI contract. On failure an observed cipher suite is kept, like the protocol. A cipher suite is
+only reported once a ServerHello selected it, so it is not dropped when the protocol is
+unavailable.
 ## 5. Scope
 
 The API reports negotiated encryption, TLS protocol, the server-selected cipher suite, the
