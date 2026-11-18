@@ -352,7 +352,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     sqlClientSymmetricKey = ShouldUseInstanceLevelProviderFlow(keyInfo.keyStoreName, connection, command) ?
                         GetKeyFromLocalProviders(keyInfo, connection, command) :
-                        globalCekCache.GetKey(keyInfo, connection, command);
+                        globalCekCache.GetKey(
+                            keyInfo, connection, command, isAsync: false, CancellationToken.None)
+                            .GetAwaiter().GetResult();
                     encryptionkeyInfoChosen = keyInfo;
                     break;
                 }
