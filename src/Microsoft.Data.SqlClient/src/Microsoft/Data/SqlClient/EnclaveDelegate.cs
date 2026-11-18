@@ -51,10 +51,10 @@ namespace Microsoft.Data.SqlClient
         /// <param name="connection">Connection executing the query</param>
         /// <param name="command">Command executing the query</param>
         /// <param name="isAsync">
-        /// True to resolve keys with the asynchronous key store APIs, so providers performing network
-        /// I/O do not block a thread.
+        /// True to resolve keys with the asynchronous key store APIs, so providers performing
+        /// network I/O do not block a thread.
         /// </param>
-        /// <param name="cancellationToken">Token used to request cancellation of the operation</param>
+        /// <param name="cancellationToken">Token used to cancel the operation</param>
         internal async ValueTask<List<ColumnEncryptionKeyInfo>> GetDecryptedKeysToBeSentToEnclave(
             ConcurrentDictionary<int, SqlTceCipherInfoEntry> keysTobeSentToEnclave,
             SqlConnection connection,
@@ -62,13 +62,14 @@ namespace Microsoft.Data.SqlClient
             bool isAsync,
             CancellationToken cancellationToken)
         {
-            List<ColumnEncryptionKeyInfo> decryptedKeysToBeSentToEnclave = new List<ColumnEncryptionKeyInfo>(keysTobeSentToEnclave.Count);
+            List<ColumnEncryptionKeyInfo> decryptedKeysToBeSentToEnclave = new List<ColumnEncryptionKeyInfo>();
 
             foreach (SqlTceCipherInfoEntry cipherInfo in keysTobeSentToEnclave.Values)
             {
-                (SymmetricKey sqlClientSymmetricKey, _) = await SqlSecurityUtility.DecryptSymmetricKey(
-                    cipherInfo, connection, command, isAsync, cancellationToken)
-                    .ConfigureAwait(false);
+                (SymmetricKey sqlClientSymmetricKey, _) =
+                    await SqlSecurityUtility.DecryptSymmetricKey(
+                            cipherInfo, connection, command, isAsync, cancellationToken)
+                        .ConfigureAwait(false);
 
                 if (sqlClientSymmetricKey == null)
                 {
@@ -84,7 +85,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 //cipherInfo.CekId is always 0, hence used cipherInfo.ColumnEncryptionKeyValues[0].cekId. Even when cek has multiple ColumnEncryptionKeyValues
-                //the cekid and the plaintext value will remain the same, what varies is the encrypted cek value, since the cek can be encrypted by
+                //the cekid and the plaintext value will remain the same, what varies is the encrypted cek value, since the cek can be encrypted by 
                 //multiple CMKs
                 decryptedKeysToBeSentToEnclave.Add(
                     new ColumnEncryptionKeyInfo(

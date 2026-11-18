@@ -216,9 +216,10 @@ namespace Microsoft.Data.SqlClient
         /// Generate the byte package that needs to be sent to the enclave
         /// </summary>
         /// <remarks>
-        /// Only column encryption key decryption uses <paramref name="isAsync"/>. The enclave session
-        /// lookup stays synchronous: it reads the session cached by attestation and does not attest,
-        /// but a cache miss can wait on the provider's session lock. Package cryptography is inline.
+        /// Only column encryption key decryption uses <paramref name="isAsync"/>. The enclave
+        /// session lookup stays synchronous: it reads the session cached by attestation and does
+        /// not attest, but a cache miss can wait on the provider's session lock. Package
+        /// cryptography is inline.
         /// </remarks>
         /// <param name="attestationProtocol">attestation protocol</param>
         /// <param name="keysToBeSentToEnclave">Keys to be sent to enclave</param>
@@ -228,7 +229,7 @@ namespace Microsoft.Data.SqlClient
         /// <param name="connection">connection executing the query</param>
         /// <param name="command">command executing the query</param>
         /// <param name="isAsync">True to decrypt keys with the asynchronous key store APIs.</param>
-        /// <param name="cancellationToken">Token used to request cancellation of the operation</param>
+        /// <param name="cancellationToken">Token used to cancel the operation</param>
         /// <returns></returns>
         internal async ValueTask<EnclavePackage> GenerateEnclavePackage(
             SqlConnectionAttestationProtocol attestationProtocol,
@@ -264,9 +265,10 @@ namespace Microsoft.Data.SqlClient
                 throw new RetryableEnclaveQueryExecutionException(e.Message, e);
             }
 
-            List<ColumnEncryptionKeyInfo> decryptedKeysToBeSentToEnclave = await GetDecryptedKeysToBeSentToEnclave(
-                    keysToBeSentToEnclave, connection, command, isAsync, cancellationToken)
-                .ConfigureAwait(false);
+            List<ColumnEncryptionKeyInfo> decryptedKeysToBeSentToEnclave =
+                await GetDecryptedKeysToBeSentToEnclave(
+                        keysToBeSentToEnclave, connection, command, isAsync, cancellationToken)
+                    .ConfigureAwait(false);
             byte[] queryStringHashBytes = ComputeQueryStringHash(queryText);
             byte[] keyBytePackage = GenerateBytePackageForKeys(counter, queryStringHashBytes, decryptedKeysToBeSentToEnclave);
             byte[] sessionKey = sqlEnclaveSession.GetSessionKey();

@@ -907,8 +907,10 @@ namespace Microsoft.Data.SqlClient
         /// True to decrypt the column encryption keys sent to the enclave with the asynchronous key
         /// store APIs, so a key store performing network I/O does not block a thread.
         /// </param>
-        /// <param name="cancellationToken">Token used to request cancellation of the operation</param>
-        private async ValueTask GenerateEnclavePackage(bool isAsync, CancellationToken cancellationToken)
+        /// <param name="cancellationToken">Token used to cancel the operation</param>
+        private async ValueTask GenerateEnclavePackage(
+            bool isAsync,
+            CancellationToken cancellationToken)
         {
             // Skip processing if there are no keys to send to enclave
             if (keysToBeSentToEnclave is null || keysToBeSentToEnclave.IsEmpty)
@@ -969,8 +971,9 @@ namespace Microsoft.Data.SqlClient
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
-                // Propagate cancellation unwrapped so the returned task is cancelled rather than faulted
-                // with an enclave-specific exception that would suggest an attestation problem.
+                // Propagate cancellation unwrapped so the returned task is cancelled rather than
+                // faulted with an enclave-specific exception that would suggest an attestation
+                // problem.
                 throw;
             }
             catch (Exception e)
@@ -1893,7 +1896,9 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 // Synchronous execution
-                GenerateEnclavePackage(isAsync: false, CancellationToken.None).GetAwaiter().GetResult();
+                GenerateEnclavePackage(isAsync: false, CancellationToken.None)
+                    .GetAwaiter()
+                    .GetResult();
                 return RunExecuteReaderTds(
                     cmdBehavior,
                     runBehavior,
@@ -1966,7 +1971,8 @@ namespace Microsoft.Data.SqlClient
                     preparedDatabase,
                     method);
                 ValidateConnectionForEnclaveExecution(retryConnection);
-                await GenerateEnclavePackage(isAsync: true, cancellationToken).ConfigureAwait(false);
+                await GenerateEnclavePackage(isAsync: true, cancellationToken)
+                    .ConfigureAwait(false);
 
                 ValidateConnectionLifetime(
                     preparedConnection,
