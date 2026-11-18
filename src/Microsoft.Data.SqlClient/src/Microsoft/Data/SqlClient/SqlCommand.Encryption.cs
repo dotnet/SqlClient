@@ -532,7 +532,14 @@ namespace Microsoft.Data.SqlClient
 
                 if (!isAsync)
                 {
-                    if (cache.GetQueryMetadataIfExists(this))
+                    if (cache.TryGetCachedQueryMetadata(
+                            this,
+                            out SqlQueryMetadataCache.CachedQueryMetadata syncMetadata)
+                        && cache.CompleteCachedQueryMetadata(
+                            this,
+                            syncMetadata,
+                            isAsync: false,
+                            CancellationToken.None).GetAwaiter().GetResult())
                     {
                         usedCache = true;
                         return;
@@ -616,7 +623,7 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 bool cacheHit = await SqlQueryMetadataCache.GetInstance()
-                    .CompleteCachedQueryMetadataAsync(this, metadata, cancellationToken)
+                    .CompleteCachedQueryMetadata(this, metadata, isAsync: true, cancellationToken)
                     .ConfigureAwait(false);
 
                 ValidateConnectionLifetime(connection, closeCount, database, method);
