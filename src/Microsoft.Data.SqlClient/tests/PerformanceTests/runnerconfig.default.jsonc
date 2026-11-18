@@ -181,6 +181,16 @@
             "WarmupCount": 1,
             "RowCount": 0
         },
+        // Each iteration times a single checkout, so it needs more iterations than the others
+        // for a stable median.
+        "ConnectionPoolIdleCheckoutRunnerConfig": {
+            "Enabled": true,
+            "LaunchCount": 1,
+            "IterationCount": 50,
+            "InvocationCount": 1,
+            "WarmupCount": 1,
+            "RowCount": 0
+        },
         "ConnectionPoolRampRunnerConfig": {
             "Enabled": true,
             "LaunchCount": 1,
