@@ -1,0 +1,23 @@
+# Explicitly opt out of 1ES Dependabot auto-merge so dependency updates
+# continue to require human review rather than Stamper's automated sign-off.
+# Guidance: https://eng.ms/docs/coreai/devdiv/one-engineering-system-1es/1es-docs/merge-acceleration/auto-merge-enablement-guide
+name: Disable Dependabot API sign-off
+description: Prevent API sign-off without triggering the default configuration
+resource: repository
+
+configuration:
+  pullRequestSignOffSettings:
+    # Keep the policy handler enabled to use this explicit configuration
+    # instead of falling back to the service's default configuration.
+    enabled: true
+    configuration:
+      - name: Dependabot
+        # Disable Stamper's automated sign-off for this scenario.
+        enabled: false
+        pullRequestAllowedAuthors:
+          # Universal Dependabot identity across Azure DevOps organizations.
+          - "00000072-0000-8888-8000-000000000000"
+        # No file paths are eligible for automated sign-off.
+        pathFilter: []
+        # Do not automatically link work items through this scenario.
+        workItemIdsToLink: []

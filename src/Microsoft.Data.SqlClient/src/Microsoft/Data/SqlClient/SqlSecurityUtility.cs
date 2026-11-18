@@ -19,9 +19,6 @@ namespace Microsoft.Data.SqlClient
 
     internal static class SqlSecurityUtility
     {
-
-        static readonly ColumnMasterKeyMetadataSignatureVerificationCache ColumnMasterKeyMetadataSignatureVerificationCache = ColumnMasterKeyMetadataSignatureVerificationCache.Instance;
-
         #nullable enable
 
         /// <summary>
@@ -306,7 +303,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     sqlClientSymmetricKey = ShouldUseInstanceLevelProviderFlow(keyInfo.keyStoreName, connection, command) ?
                         await GetKeyFromLocalProvidersAsync(keyInfo, connection, command, cancellationToken).ConfigureAwait(false) :
-                        await globalCekCache.GetKeyAsync(keyInfo, connection, command, cancellationToken).ConfigureAwait(false);
+                        await globalCekCache.GetKey(
+                            keyInfo, connection, command, isAsync: true, cancellationToken)
+                            .ConfigureAwait(false);
                     encryptionkeyInfoChosen = keyInfo;
                     break;
                 }
@@ -355,7 +354,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     sqlClientSymmetricKey = ShouldUseInstanceLevelProviderFlow(keyInfo.keyStoreName, connection, command) ?
                         GetKeyFromLocalProviders(keyInfo, connection, command) :
-                        globalCekCache.GetKey(keyInfo, connection, command);
+                        globalCekCache.GetKey(
+                            keyInfo, connection, command, isAsync: false, CancellationToken.None)
+                            .GetAwaiter().GetResult();
                     encryptionkeyInfoChosen = keyInfo;
                     break;
                 }

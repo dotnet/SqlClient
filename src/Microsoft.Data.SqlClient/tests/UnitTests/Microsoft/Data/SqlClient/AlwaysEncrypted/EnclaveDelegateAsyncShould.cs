@@ -98,20 +98,23 @@ namespace Microsoft.Data.SqlClient.UnitTests.AlwaysEncrypted
         [Fact]
         public async Task GetDecryptedKeysToBeSentToEnclaveAsync_UsesAsyncProviderApi()
         {
+            // Arrange
             byte[] expectedKey = NewPlaintextKey(seed: 11);
             TestEnclaveKeyStoreProvider provider = new TestEnclaveKeyStoreProvider { PlaintextKey = expectedKey };
             using SqlConnection connection = NewConnection(provider);
 
+            // Act
             List<ColumnEncryptionKeyInfo> keys = await EnclaveDelegate.Instance.GetDecryptedKeysToBeSentToEnclaveAsync(
                 NewKeyTable(NewCipherInfoEntry()),
                 connection,
                 command: null,
                 CancellationToken.None);
 
+            // Assert
             ColumnEncryptionKeyInfo key = Assert.Single(keys);
             Assert.Equal(expectedKey, key.DecryptedKeyBytes);
-            Assert.Equal(DatabaseId, key.DatabaseId);
-            Assert.Equal(CekId, key.KeyId);
+            Assert.Equal((uint)DatabaseId, BitConverter.ToUInt32(key.DatabaseIdBytes, 0));
+            Assert.Equal((ushort)CekId, BitConverter.ToUInt16(key.KeyIdBytes, 0));
             Assert.Equal(CekMdVersion, key.KeyMetadataVersion);
 
             Assert.Equal(1, provider.DecryptAsyncCallCount);

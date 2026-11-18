@@ -379,7 +379,8 @@ namespace Microsoft.Data.SqlClient.Parser
             try
             {
                 SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.EnableSsl | Info | Session Id {0}", sessionHandle.ConnectionId);
-                return sessionHandle.EnableSsl(info);
+                using CancellationTokenSource connectTimeout = new(GetTimeoutRemaining());
+                return sessionHandle.EnableSsl(info, connectTimeout.Token);
             }
             catch (Exception e)
             {

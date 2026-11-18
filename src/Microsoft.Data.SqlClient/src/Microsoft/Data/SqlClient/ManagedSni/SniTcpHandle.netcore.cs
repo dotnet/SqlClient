@@ -752,7 +752,7 @@ namespace Microsoft.Data.SqlClient.ManagedSni
         /// <summary>
         /// Enable SSL
         /// </summary>
-        public override uint EnableSsl(uint options)
+        public override uint EnableSsl(uint options, CancellationToken cancellationToken)
         {
             using (SqlClientSNIEventScope.Create(nameof(SniHandle)))
             {
@@ -760,18 +760,29 @@ namespace Microsoft.Data.SqlClient.ManagedSni
 
                 try
                 {
-                    if (_tlsFirst)
+                    // The handshake reads block on the socket, so closing the transport is what bounds them.
+                    using (cancellationToken.UnsafeRegister(static stream => ((Stream)stream).Dispose(), _tcpStream))
                     {
-                        AuthenticateAsClient(_sslStream, _targetServer, null);
+                        if (_tlsFirst)
+                        {
+                            AuthenticateAsClient(_sslStream, _targetServer, null);
+                        }
+                        else
+                        {
+                            _sslStream.AuthenticateAsClient(_targetServer, null, s_supportedProtocols, false);
+                        }
                     }
-                    else
-                    {
-                        _sslStream.AuthenticateAsClient(_targetServer, null, s_supportedProtocols, false);
-                    }
+                    // A timeout landing after the handshake but before the registration ended has already closed the transport.
+                    cancellationToken.ThrowIfCancellationRequested();
                     if (_sslOverTdsStream is not null)
                     {
                         _sslOverTdsStream.FinishHandshake();
                     }
+                }
+                catch (Exception e) when (cancellationToken.IsCancellationRequested)
+                {
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniTcpHandle), EventType.ERR, "Connection Id {0}, TLS handshake did not complete within the connection timeout: {1}", args0: _connectionId, args1: e.Message);
+                    return ReportTcpSNIError((int)TdsEnums.SNI_WAIT_TIMEOUT, SniCommon.ConnTimeoutError, Strings.SNI_ERROR_11);
                 }
                 catch (AuthenticationException aue)
                 {
@@ -866,7 +877,8 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 {
                     try
                     {
-                        packet.WriteToStream(_stream);
+                        Stream stream = _stream ?? throw new ObjectDisposedException(nameof(SniTcpHandle));
+                        packet.WriteToStream(stream);
                         SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniTcpHandle), EventType.INFO, "Connection Id {0}, Data sent to stream synchronously", args0: _connectionId);
                         return TdsEnums.SNI_SUCCESS;
                     }
@@ -1089,7 +1101,14 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 // Since _socket.Connected alone doesn't guarantee if the connection is still active, we use it in
                 // combination with _socket.Poll method and _socket.Available == 0 check. When both of them
                 // return true we can safely determine that the connection is no longer active.
-                if (!_socket.Connected || (_socket.Poll(100, SelectMode.SelectRead) && _socket.Available == 0))
+                //
+                // Use a zero timeout: this is a best-effort snapshot of socket health, not a
+                // guarantee that the connection will remain usable. Waiting might catch a close
+                // arriving during the poll, but cannot eliminate the race with subsequent I/O.
+                // A positive timeout penalizes healthy idle connections and can take around
+                // 15 ms on Windows due to timer granularity. On Unix, 100 us already truncates
+                // to a zero-millisecond timeout.
+                if (!_socket.Connected || (_socket.Poll(0, SelectMode.SelectRead) && _socket.Available == 0))
                 {
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SniTcpHandle), EventType.INFO, "Connection Id {0}, Socket not usable.", args0: _connectionId);
                     return TdsEnums.SNI_ERROR;
