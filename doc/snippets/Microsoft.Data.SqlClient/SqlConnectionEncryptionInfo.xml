@@ -79,7 +79,7 @@
         A <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptionMode" /> value, or <see langword="null" /> if the negotiated mode is not available.
       </value>
       <remarks>
-        This value reflects what was negotiated, which can differ from the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Encrypt" /> setting that was requested. A value of <see cref="F:Microsoft.Data.SqlClient.SqlConnectionEncryptionMode.None" /> means that no encryption was negotiated, which is distinct from <see langword="null" />.
+        This value reflects what was negotiated, which can differ from the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Encrypt" /> setting that was requested. A value of <see cref="F:Microsoft.Data.SqlClient.SqlConnectionEncryptionMode.None" /> means that no encryption was negotiated, which is distinct from <see langword="null" />. When a connection attempt fails, the mode is available once it was selected, even if the TLS handshake failed afterward.
       </remarks>
     </NegotiatedEncryptionMode>
     <NegotiatedEncryptionProtocol>
