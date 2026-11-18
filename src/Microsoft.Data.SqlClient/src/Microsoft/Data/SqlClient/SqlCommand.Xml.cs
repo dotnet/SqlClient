@@ -371,8 +371,6 @@ namespace Microsoft.Data.SqlClient
             TaskCompletionSource<XmlReader> source,
             Guid operationId)
         {
-            _asyncExecutionCancellationToken = default;
-
             if (task.IsFaulted)
             {
                 Exception e = task.Exception?.InnerException;
@@ -395,7 +393,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private XmlReader EndExecuteXmlReaderAsync(IAsyncResult asyncResult)
+        internal XmlReader EndExecuteXmlReaderAsync(IAsyncResult asyncResult)
         {
             Debug.Assert(!_internalEndExecuteInitiated || _stateObj is null);
 
@@ -513,8 +511,6 @@ namespace Microsoft.Data.SqlClient
                 registration = cancellationToken.Register(callback: s_cancelIgnoreFailure, state: this);
             }
 
-            _asyncExecutionCancellationToken = cancellationToken;
-
             // @TODO: This can be cleaned up to lines if InnerConnection is always SqlInternalConnection
             ExecuteXmlReaderAsyncCallContext context = null;
             Task<XmlReader> returnedTask = source.Task;
@@ -564,7 +560,6 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception e)
             {
-                _asyncExecutionCancellationToken = default;
                 s_diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
 
                 if (context is not null)

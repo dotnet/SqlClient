@@ -254,6 +254,10 @@ namespace Microsoft.Data.SqlClient
             bool isRetry,
             CancellationToken cancellationToken)
         {
+            // The async state is reset below, so keep the command marked busy for the whole method.
+            // This blocks connection changes and overlapping executions while key store calls are pending.
+            bool wasInProgress = _enclaveAttestationInProgress;
+            _enclaveAttestationInProgress = true;
             bool processFinallyBlock = true;
             try
             {
@@ -266,29 +270,18 @@ namespace Microsoft.Data.SqlClient
 
                 // Keep the connection reserved until the worker registers the reader.
                 // Legacy TDS completion is synchronous; provider I/O is awaited separately below.
-                describeParameterEncryptionDataReader = await Task.Run(() => CompleteAsyncExecuteReader(
+                describeParameterEncryptionDataReader = await Task.Run(() => CompleteAsyncExecutionSynchronously(
                     isInternal: false,
                     forDescribeParameterEncryption: true)).ConfigureAwait(false);
                 ReleaseDescribeParameterEncryptionConnection();
                 Debug.Assert(_stateObj is null, "non-null state object in PrepareForTransparentEncryption.");
 
-                // The async state was reset above, so keep the command marked busy while key store calls
-                // are pending. This blocks connection changes and overlapping executions.
-                bool wasInProgress = _enclaveAttestationInProgress;
-                _enclaveAttestationInProgress = true;
-                try
-                {
-                    await ReadDescribeEncryptionParameterResults(
-                        describeParameterEncryptionDataReader,
-                        describeParameterEncryptionRpcOriginalRpcMap,
-                        isRetry,
-                        isAsync: true,
-                        cancellationToken).ConfigureAwait(false);
-                }
-                finally
-                {
-                    _enclaveAttestationInProgress = wasInProgress;
-                }
+                await ReadDescribeEncryptionParameterResults(
+                    describeParameterEncryptionDataReader,
+                    describeParameterEncryptionRpcOriginalRpcMap,
+                    isRetry,
+                    isAsync: true,
+                    cancellationToken).ConfigureAwait(false);
 
                 #if DEBUG
                 // Failpoint to force the thread to halt to simulate cancellation of SqlCommand.
@@ -306,14 +299,21 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                ReleaseDescribeParameterEncryptionConnection();
-                PrepareTransparentEncryptionFinallyBlock(
-                    closeDataReader: processFinallyBlock,
-                    decrementAsyncCount: false,
-                    clearDataStructures: processFinallyBlock,
-                    wasDescribeParameterEncryptionNeeded: describeParameterEncryptionNeeded,
-                    describeParameterEncryptionRpcOriginalRpcMap: describeParameterEncryptionRpcOriginalRpcMap,
-                    describeParameterEncryptionDataReader: describeParameterEncryptionDataReader);
+                try
+                {
+                    ReleaseDescribeParameterEncryptionConnection();
+                    PrepareTransparentEncryptionFinallyBlock(
+                        closeDataReader: processFinallyBlock,
+                        decrementAsyncCount: false,
+                        clearDataStructures: processFinallyBlock,
+                        wasDescribeParameterEncryptionNeeded: describeParameterEncryptionNeeded,
+                        describeParameterEncryptionRpcOriginalRpcMap: describeParameterEncryptionRpcOriginalRpcMap,
+                        describeParameterEncryptionDataReader: describeParameterEncryptionDataReader);
+                }
+                finally
+                {
+                    _enclaveAttestationInProgress = wasInProgress;
+                }
             }
         }
 
@@ -874,7 +874,7 @@ namespace Microsoft.Data.SqlClient
             return verifications.Count;
         }
 
-        private async ValueTask CreateEnclaveSession(
+        internal async ValueTask CreateEnclaveSession(
             byte[] attestationInfo,
             bool isRetry,
             bool isAsync,
