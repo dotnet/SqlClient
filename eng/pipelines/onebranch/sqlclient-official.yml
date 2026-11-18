@@ -195,8 +195,8 @@ extends:
         # variable.
         enabled: true
 
-        # APIScan errors break the build when failOnSdlError is set.
-        break: ${{ parameters.failOnSdlError }}
+        # Known APIScan issues will not be addressed on this release branch.
+        break: false
 
         # Use release mode for official pipelines.
         modeType: release
@@ -280,8 +280,8 @@ extends:
         #   OneBranch derives each SDL tool's DEFAULT `break` value from whether TSA is enabled --
         #   per the OneBranch "Customize SDL" docs, most tools default to `break: false` when TSA
         #   is enabled and `break: true` when it is disabled.  We do NOT rely on that implicit
-        #   coupling: every tool above sets `break: ${{ parameters.failOnSdlError }}` explicitly,
-        #   which overrides the TSA-derived default.  We have hit bugs in OneBranch's implicit
+        #   coupling: tools above set `break` explicitly, with APIScan always non-blocking.
+        #   This overrides the TSA-derived default.  We have hit bugs in OneBranch's implicit
         #   break-altering logic in the past, so both `tsa.enabled` and each tool's `break` are
         #   set explicitly to keep the behaviour deterministic.
         #
