@@ -131,10 +131,9 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
             byte[] plaintextKey;
             try
             {
-                // AKV provider registration supports multi-user scenarios, so it is not safe to
-                // cache the CEK in the global provider. The CEK cache is global and shared across
-                // all connections. To prevent conflicts, global providers must not use their own
-                // CEK caches.
+                // Providers may implement their own instance-level caches. When a provider is
+                // registered globally, disable instance-level caching to prevent conflicts with
+                // the global CEK cache.
                 provider.ColumnEncryptionKeyCacheTtl = TimeSpan.Zero;
                 plaintextKey = isAsync
                     ? await provider.DecryptColumnEncryptionKeyAsync(

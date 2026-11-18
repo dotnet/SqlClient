@@ -16,6 +16,7 @@ using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.ConnectionPool;
 using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.Data.SqlClient.Tests.Common;
+using Microsoft.Data.SqlClient.UnitTests.Utilities;
 using Microsoft.Extensions.Time.Testing;
 using Xunit;
 
@@ -2458,24 +2459,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
         /// <remarks>
         /// Both callers share a single <see cref="FakeTimeProvider"/> so that
         /// advancing virtual time deterministically expires only the short-timeout
-        /// caller's CTS without consuming any wall-clock time.
+        /// caller's CTS without consuming any wall-clock time. Advance only after both
+        /// cancellation timers are registered, so neither relative deadline can move forward.
         /// </remarks>
-        //
-        // Flaky/hang-prone under CI load: caller A runs TryGetConnection on a background
-        // task that blocks on the pool's channel wait. The test then calls
-        // fakeTime.Advance(2s) to fire A's timeout CTS. If Advance runs before A has
-        // subscribed its wait to the fake time provider, A's cancellation is missed and A
-        // blocks forever, so `await callerATask` never returns — the testhost sits idle
-        // until the 10-minute --blame-hang timeout aborts the whole run. This is a
-        // virtual-time-vs-subscription race in the test, not a pool defect; it cannot be
-        // made deterministic without a barrier guaranteeing A is parked before Advance.
-        //
-        //     The active test run was aborted. Reason: Test host process crashed
-        //     Data collector 'Blame' message: The specified inactivity time of 10 minutes has elapsed. Collecting hang dumps from testhost and its child processes.
-        //     The test running when the crash occurred:
-        //     Microsoft.Data.SqlClient.UnitTests.ConnectionPool.ChannelDbConnectionPoolTest.ConcurrentCallers_ShouldTimeoutIndependently
-        //     testhost_7576_20260724T235829_hangdump.dmp
         [Trait("category", "flaky")]
+        [Trait("category", "probation")]
         [Fact]
         public async Task ConcurrentCallers_ShouldTimeoutIndependently()
         {
@@ -2491,14 +2479,27 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
             );
             var pool = ConstructPool(SuccessfulConnectionFactory, poolGroupOptions: poolGroupOptions);
 
-            SqlConnection firstOwner = new();
-            pool.TryGetConnection(firstOwner, taskCompletionSource: null, TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)), out DbConnectionInternal? firstConnection);
+            using SqlConnection firstOwner = new();
+            pool.TryGetConnection(
+                firstOwner,
+                taskCompletionSource: null,
+                TimeoutTimer.StartNew(TimeSpan.FromSeconds(15)),
+                out DbConnectionInternal? firstConnection);
             Assert.NotNull(firstConnection);
 
             // Use a single fake time provider shared by both callers so we can independently
             // expire each caller's timeout via virtual time without any wall-clock waits.
             // Build the timers up-front so they are anchored at virtual time t=0.
-            var fakeTime = new FakeTimeProvider();
+            var timersRegistered = new TaskCompletionSource<bool>(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+            int registeredTimers = 0;
+            var fakeTime = new NotifyingTimeProvider(() =>
+            {
+                if (Interlocked.Increment(ref registeredTimers) == 2)
+                {
+                    timersRegistered.SetResult(true);
+                }
+            });
             TimeoutTimer timerA = TimeoutTimer.StartNew(TimeSpan.FromSeconds(1), fakeTime);
             TimeoutTimer timerB = TimeoutTimer.StartNew(TimeSpan.FromSeconds(10), fakeTime);
 
@@ -2514,41 +2515,62 @@ namespace Microsoft.Data.SqlClient.UnitTests.ConnectionPool
                 return connectionA;
             });
 
+            using SqlConnection secondOwner = new();
             var callerBTask = Task.Run(() =>
             {
                 pool.TryGetConnection(
-                    new SqlConnection(),
+                    secondOwner,
                     taskCompletionSource: null,
                     timerB,
                     out DbConnectionInternal? connectionB);
                 return connectionB;
             });
 
-            // Act: advance virtual time past A's 1s timeout but well within B's 10s timeout.
-            // A's CancellationTokenSource fires (cancelling its channel wait), B's does not.
-            fakeTime.Advance(TimeSpan.FromSeconds(2));
+            bool firstReturned = false;
+            DbConnectionInternal? resultB = null;
+            try
+            {
+                // Act
+                // Both relative cancellation timers must exist before advancing the shared clock.
+                Task ready = await Task.WhenAny(
+                    timersRegistered.Task, Task.Delay(TimeSpan.FromSeconds(30)));
+                Assert.Same(timersRegistered.Task, ready);
+                fakeTime.Advance(TimeSpan.FromSeconds(2));
 
-            // Assert: Caller A should observe the timeout
-            var exA = await Assert.ThrowsAsync<InvalidOperationException>(() => callerATask);
-            Assert.Equal(
-                "Timeout expired.  The timeout period elapsed prior to obtaining a connection from the pool.  This may have occurred because all pooled connections were in use and max pool size was reached.",
-                exA.Message);
+                // Assert
+                Task timedOut = await Task.WhenAny(
+                    callerATask, Task.Delay(TimeSpan.FromSeconds(30)));
+                Assert.Same(callerATask, timedOut);
+                var exA = await Assert.ThrowsAsync<InvalidOperationException>(() => callerATask);
+                Assert.Equal(ADP.PooledOpenTimeout().Message, exA.Message);
+                Assert.False(callerBTask.IsCompleted, "Caller B should still be waiting");
 
-            // Caller B should still be waiting (8s of virtual budget remain)
-            Assert.False(callerBTask.IsCompleted, "Caller B should still be waiting");
+                pool.ReturnInternalConnection(firstConnection, firstOwner);
+                firstReturned = true;
 
-            // Release the connection so caller B can succeed
-            pool.ReturnInternalConnection(firstConnection, firstOwner);
+                Task completed = await Task.WhenAny(
+                    callerBTask, Task.Delay(TimeSpan.FromSeconds(30)));
+                Assert.Same(callerBTask, completed);
+                resultB = await callerBTask;
+                Assert.NotNull(resultB);
+                Assert.Same(firstConnection, resultB);
+            }
+            finally
+            {
+                // Cleanup
+                pool.Shutdown();
+                if (!firstReturned)
+                {
+                    pool.ReturnInternalConnection(firstConnection, firstOwner);
+                }
 
-            // Bound the wait so a regression in the pool can't hang the test suite
-            // indefinitely; a real success completes well under this budget.
-            Task completed = await Task.WhenAny(callerBTask, Task.Delay(TimeSpan.FromSeconds(30)));
-            Assert.Same(callerBTask, completed);
-            var resultB = await callerBTask;
+                if (resultB is not null)
+                {
+                    pool.ReturnInternalConnection(resultB, secondOwner);
+                }
 
-            // Caller B got the connection
-            Assert.NotNull(resultB);
-            Assert.Same(firstConnection, resultB);
+                pool.Clear();
+            }
         }
 
         /// <summary>

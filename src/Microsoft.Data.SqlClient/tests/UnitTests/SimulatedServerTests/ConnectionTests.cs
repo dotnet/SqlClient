@@ -8,14 +8,17 @@ using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Security;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient.Tests.Common;
+using Microsoft.Data.SqlClient.UnitTests.Utilities;
 using Microsoft.SqlServer.TDS;
 using Microsoft.SqlServer.TDS.FeatureExtAck;
 using Microsoft.SqlServer.TDS.Login7;
@@ -323,6 +326,94 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Exception ex = await Assert.ThrowsAsync<SqlException>(async () => await connection.OpenAsync());
             Assert.Contains("The instance of SQL Server you attempted to connect to does not support encryption.", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
+
+#if NET
+        /// <summary>
+        /// With strict encryption (TDS 8) the client runs the TLS handshake before PRELOGIN. A server that
+        /// does the same must accept the login over that TLS session, and the client must not try to
+        /// negotiate TLS again inside PRELOGIN. The certificate is pinned with ServerCertificate because
+        /// strict encryption always validates it.
+        /// </summary>
+        [Fact]
+        public void Open_StrictEncryptionTlsFirstServer_LogsIn()
+        {
+            // Arrange
+            using X509Certificate2 certificate = TestServerCertificate.Create();
+            string certificatePath = Path.GetTempFileName();
+            try
+            {
+                File.WriteAllBytes(certificatePath, certificate.Export(X509ContentType.Cert));
+                using TdsServer server = new(new TdsServerArguments
+                {
+                    TlsFirst = true,
+                    EncryptionCertificate = certificate,
+                });
+                server.Start();
+                using SqlConnection connection = new(new SqlConnectionStringBuilder
+                {
+                    DataSource = $"localhost,{server.EndPoint.Port}",
+                    Encrypt = SqlConnectionEncryptOption.Strict,
+                    ServerCertificate = certificatePath,
+                    Pooling = false,
+                    ConnectRetryCount = 0,
+                }.ConnectionString);
+
+                // Act
+                connection.Open();
+
+                // Assert
+                Assert.Equal(ConnectionState.Open, connection.State);
+                Assert.Equal(1, server.Login7Count);
+            }
+            finally
+            {
+                // Cleanup
+                File.Delete(certificatePath);
+            }
+        }
+
+        /// <summary>
+        /// Async twin of <see cref="Open_StrictEncryptionTlsFirstServer_LogsIn"/>: an asynchronous open with
+        /// strict encryption logs in to a server that runs the TLS handshake before PRELOGIN.
+        /// </summary>
+        [Fact]
+        public async Task OpenAsync_StrictEncryptionTlsFirstServer_LogsIn()
+        {
+            // Arrange
+            using X509Certificate2 certificate = TestServerCertificate.Create();
+            string certificatePath = Path.GetTempFileName();
+            try
+            {
+                File.WriteAllBytes(certificatePath, certificate.Export(X509ContentType.Cert));
+                using TdsServer server = new(new TdsServerArguments
+                {
+                    TlsFirst = true,
+                    EncryptionCertificate = certificate,
+                });
+                server.Start();
+                using SqlConnection connection = new(new SqlConnectionStringBuilder
+                {
+                    DataSource = $"localhost,{server.EndPoint.Port}",
+                    Encrypt = SqlConnectionEncryptOption.Strict,
+                    ServerCertificate = certificatePath,
+                    Pooling = false,
+                    ConnectRetryCount = 0,
+                }.ConnectionString);
+
+                // Act
+                await connection.OpenAsync();
+
+                // Assert
+                Assert.Equal(ConnectionState.Open, connection.State);
+                Assert.Equal(1, server.Login7Count);
+            }
+            finally
+            {
+                // Cleanup
+                File.Delete(certificatePath);
+            }
+        }
+#endif
 
         /// <summary>
         /// Retries one login SQL error on the same server without sharing a pool with another case.
