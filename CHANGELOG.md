@@ -14,27 +14,39 @@ See the [core release notes](release-notes/8.1/8.1.0-preview1.md) for platform a
 
 ### Added
 
-#### Connection encryption information API groundwork
+#### Negotiated connection encryption information
 
 *What Changed:*
 
 - Added `SqlConnection.EncryptionInfo`, `SqlException.EncryptionInfo`,
   `SqlConnectionEncryptionInfo`, `SqlConnectionEncryptionMode`, and
-  `SqlServerCertificateValidationErrors`.
+  `SqlServerCertificateValidationErrors`. Snapshots now report the negotiated encryption
+  mode and the TLS protocol when available.
   ([#2353](https://github.com/dotnet/SqlClient/issues/2353),
   [#4830](https://github.com/dotnet/SqlClient/pull/4830),
-  [#5043](https://github.com/dotnet/SqlClient/pull/5043))
+  [#5043](https://github.com/dotnet/SqlClient/pull/5043),
+  [#4831](https://github.com/dotnet/SqlClient/pull/4831))
 
 *Who Benefits:*
 
-- Tooling authors can compile against the diagnostic snapshot contracts.
+- Tools such as SQL Server Management Studio can display observed encryption details for
+  open connections and diagnose failed opens without parsing localized exception messages.
 
 *Impact:*
 
-- **API surface only:** both getters return a non-null empty snapshot. Fields are unavailable
-  (`null`), and `GetServerCertificate()` returns `null`. TLS mode, protocol, cipher-suite, and
-  certificate capture are not wired into this source version. Do not use the empty values to
-  infer connection security or success.
+- `NegotiatedEncryptionMode` distinguishes `None`, `LoginOnly`, `Full`, and `Strict`;
+  `NegotiatedEncryptionProtocol` reports the TLS version when the transport supplies it.
+  An open connection exposes its physical connection's immutable snapshot, including pooled
+  reuse and MARS. Before a successful open and after close/disposal, the snapshot is empty.
+- A `SqlException` raised during opening carries values observed for the final physical
+  attempt, or the published snapshot if pooled-checkout reset/enlistment fails. Retry, redirect,
+  and failover attempts do not leak earlier values. The selected mode can be available even
+  when the TLS handshake fails; a protocol not observed before failure remains `null`.
+  Exceptions from later commands and deserialized exceptions retain empty snapshots.
+- **Partial implementation:** neither cipher-suite property is populated yet.
+  `ValidationErrors`, `ChainStatus`, and `GetServerCertificate()` also remain `null`.
+  Unavailable values do not establish security or success. These diagnostics do not replace
+  the driver's certificate validation or authorize bypassing it.
 - `NegotiatedCipherSuiteId` is available on both runtime targets; the strongly typed
   `NegotiatedCipherSuite` property is net10.0 only. TLS validation policy is unchanged.
 
@@ -121,6 +133,13 @@ See the [core release notes](release-notes/8.1/8.1.0-preview1.md) for platform a
 
 ### Fixed
 
+- Removed a socket-poll wait from pooled TCP connection health checks, avoiding an approximately
+  15 ms delay when reopening healthy idle connections on Windows with managed networking.
+  Peer-close detection is retained. The nonblocking check also runs on Unix, where the old
+  timeout already rounded down to zero. Native SNI and .NET Framework are unaffected.
+  (net10.0, managed SNI only)
+  ([#5070](https://github.com/dotnet/SqlClient/issues/5070),
+  [#5071](https://github.com/dotnet/SqlClient/pull/5071))
 - Fixed managed SNI TLS handshakes ignoring the remaining login timeout, which could block
   `Open`/`OpenAsync` and pool users for minutes when a server or network stalls after PRELOGIN.
   This bounds the handshake, not every separate pool-wait behavior. (net10.0, managed SNI only)
