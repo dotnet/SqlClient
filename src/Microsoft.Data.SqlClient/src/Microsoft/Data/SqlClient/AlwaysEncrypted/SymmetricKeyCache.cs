@@ -110,8 +110,8 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
             if (cacheTtl == TimeSpan.Zero)
             {
                 return await LoadKeyAsync(
-                    keyInfo, connection, command, serverName!, cacheLookupKey, cacheTtl,
-                    cancellationToken)
+                    isAsync: true, keyInfo, connection, command, serverName!, cacheLookupKey,
+                    cacheTtl, cancellationToken)
                     .ConfigureAwait(false);
             }
 
@@ -122,8 +122,8 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
                 await gate.Semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
                 acquired = true;
                 return await LoadKeyAsync(
-                    keyInfo, connection, command, serverName!, cacheLookupKey, cacheTtl,
-                    cancellationToken)
+                    isAsync: true, keyInfo, connection, command, serverName!, cacheLookupKey,
+                    cacheTtl, cancellationToken)
                     .ConfigureAwait(false);
             }
             finally
@@ -132,38 +132,12 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
             }
         }
 
-        private SymmetricKey LoadKey(
-            SqlEncryptionKeyInfo keyInfo,
-            SqlConnection connection,
-            SqlCommand? command,
-            string serverName,
-            string cacheLookupKey,
-            TimeSpan cacheTtl)
-        {
-            // Another caller may have published this key while we waited for the gate.
-            if (TryGetCachedKey(cacheLookupKey, out SymmetricKey? cachedKey))
-            {
-                return cachedKey;
-            }
-
-            SqlColumnEncryptionKeyStoreProvider provider =
-                GetTrustedProvider(keyInfo, connection, command, serverName);
-
-            byte[] plaintextKey;
-            try
-            {
-                plaintextKey = provider.DecryptColumnEncryptionKey(
-                    keyInfo.keyPath, keyInfo.algorithmName, keyInfo.encryptedKey);
-            }
-            catch (Exception e)
-            {
-                throw KeyDecryptionFailed(keyInfo, e);
-            }
-
-            return CacheKey(cacheLookupKey, new SymmetricKey(plaintextKey), cacheTtl);
-        }
-
+        /// <summary>
+        /// Loads and caches a key. When <paramref name="isAsync"/> is false, the provider is
+        /// called synchronously and the returned task is already complete.
+        /// </summary>
         private async Task<SymmetricKey> LoadKeyAsync(
+            bool isAsync,
             SqlEncryptionKeyInfo keyInfo,
             SqlConnection connection,
             SqlCommand? command,
@@ -185,9 +159,13 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
             byte[] plaintextKey;
             try
             {
-                plaintextKey = await provider.DecryptColumnEncryptionKeyAsync(
-                    keyInfo.keyPath, keyInfo.algorithmName, keyInfo.encryptedKey, cancellationToken)
-                    .ConfigureAwait(false);
+                plaintextKey = isAsync
+                    ? await provider.DecryptColumnEncryptionKeyAsync(
+                        keyInfo.keyPath, keyInfo.algorithmName, keyInfo.encryptedKey,
+                        cancellationToken)
+                        .ConfigureAwait(false)
+                    : provider.DecryptColumnEncryptionKey(
+                        keyInfo.keyPath, keyInfo.algorithmName, keyInfo.encryptedKey);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -201,6 +179,21 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted
             // Cache a completed decryption even if cancellation arrived after the provider
             // returned.
             return CacheKey(cacheLookupKey, new SymmetricKey(plaintextKey), cacheTtl);
+        }
+
+        private SymmetricKey LoadKey(
+            SqlEncryptionKeyInfo keyInfo,
+            SqlConnection connection,
+            SqlCommand? command,
+            string serverName,
+            string cacheLookupKey,
+            TimeSpan cacheTtl)
+        {
+            Task<SymmetricKey> load = LoadKeyAsync(
+                isAsync: false, keyInfo, connection, command, serverName, cacheLookupKey,
+                cacheTtl, CancellationToken.None);
+            Debug.Assert(load.IsCompleted, "A synchronous key load should complete inline.");
+            return load.GetAwaiter().GetResult();
         }
 
         /// <summary>
