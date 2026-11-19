@@ -2507,8 +2507,9 @@ namespace Microsoft.Data.SqlClient
                             }
 
                             object result = await retryTask.ConfigureAwait(false);
-                            // The retry holds its own reservation for End, so release the original
-                            // one. retryConnection is null when a faulted write already released it.
+                            // The retry holds its own reservation for End, so release the
+                            // original one. retryConnection is null when a faulted write already
+                            // released it.
                             retryConnection?.DecrementAsyncCount();
                             globalCompletion.TrySetResult(result);
                         }
