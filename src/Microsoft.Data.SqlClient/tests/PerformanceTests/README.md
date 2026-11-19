@@ -17,7 +17,7 @@ The report preserves phase completeness and raw cohort provenance outside its co
 
 | Unit | Async-health regression coverage |
 | --- | --- |
-| `OpenAsyncBurst` | 64 ThreadPool-dispatched opens against empty, warm, oversubscribed (16-slot), and non-pooled connections, with separate open/close and open/query/close methods |
+| `OpenAsyncBurst` | 64 ThreadPool-dispatched open/query/close workers against empty, warm, oversubscribed (16-slot), and non-pooled connections |
 
 Existing connection, contention and synchronous-pressure workloads remain ordinary benchmarks,
 without async-health annotations or operation-recorder wrappers.
@@ -28,13 +28,17 @@ attribute. The burst default explicitly uses `PerCase`; direct CLI and pipeline 
 the same process dispatcher. Positive RTT is applied by an owned Linux SQL-loopback netem scope,
 never silently ignored on unsupported platforms or endpoints.
 
-`OpenAsyncBurst` runs eight benchmark cases, each with one warmup, three timing iterations,
+`OpenAsyncBurst` runs four benchmark cases, each with one warmup, three timing iterations,
 one invocation per iteration, and a five-minute per-case timeout. It reports per-connection
 cost for a completed 64-operation batch. Empty-pool setup clears just its own pool; warm
 setup holds all connections simultaneously before releasing them. Setup and cleanup are
 outside timing and the extra-iteration window; startup observations include fixture setup.
 No exceptions or unsuccessful opens count as
 completed benchmark operations.
+
+Open/close-only burst workloads are excluded: repeating synchronous warm checkouts in a
+ThreadPool work item creates caller-driven saturation, not evidence of blocked asynchronous I/O.
+Older private extended profiles must remove their `OpenClose/...` work-size entries.
 
 The optional `Extended` sampling profile keeps `Empty` as one cold wave but increases the other
 states to 16 waves with fixed `SteadyOperationsPerWorker` values. At most 64 workers run at once;

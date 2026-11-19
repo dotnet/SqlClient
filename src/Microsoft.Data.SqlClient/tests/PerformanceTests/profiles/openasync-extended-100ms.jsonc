@@ -15,9 +15,6 @@
             // Fixed counts calibrated on 16-CPU Linux against current and 7.1.2 drivers.
             // Adequate sample counts do not imply healthy scheduler tails.
             "SteadyOperationsPerWorker": {
-                "OpenClose/Warm": 32768,
-                "OpenClose/Oversubscribed": 23114,
-                "OpenClose/NonPooled": 1,
                 "OpenQueryClose/Warm": 20,
                 "OpenQueryClose/Oversubscribed": 5,
                 "OpenQueryClose/NonPooled": 1

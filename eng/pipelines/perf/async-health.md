@@ -1,28 +1,33 @@
 # Async health within the performance benchmarks
 
 Async-health measurements are part of the ordinary BenchmarkDotNet perf tests.
-There is no standalone sweep, ramp prerequisite, separate case harness, or network shaping.
+There is no standalone sweep, ramp prerequisite, separate case harness, or default network shaping.
 The existing pipeline flow and trigger conventions are unchanged.
 
 ## Benchmark coverage
 
 | Unit | Regression signals |
 | --- | --- |
-| `OpenAsyncBurst` | 64 queued workers against empty, warm, oversubscribed (16-slot), and non-pooled connections, with separate open/close and open/query/close methods |
+| `OpenAsyncBurst` | 64 queued open/query/close workers against empty, warm, oversubscribed (16-slot), and non-pooled connections |
 
 Only the newly added `OpenAsyncBurstRunner` carries async-health instrumentation.
 Existing single/parallel connection, pool-contention and synchronous-pressure benchmarks
 retain their original workloads and ordinary BDN measurements, without async-health
 annotations or operation-recorder wrappers.
 
-`OpenAsyncBurst` adds eight benchmark cases, not a preliminary suite. Each has one warmup,
+`OpenAsyncBurst` adds four benchmark cases, not a preliminary suite. Each has one warmup,
 three timing iterations and one invocation per iteration by default. Each completed batch
 contains 64 connections; BDN normalizes timing/allocation results using `OperationsPerInvoke`.
 It pins the worker minimum to 16 during each case and restores it afterward; actual minimum,
 maximum and observed thread counts are retained with the diagnostic evidence.
 Warm setup holds all connections simultaneously before returning them. Empty-pool setup
 clears only that benchmark's pool. Query work keeps contention and network-related effects
-visible; open-only work isolates acquisition/return overhead.
+visible.
+
+Open/close-only bursts are excluded. Repeated synchronous warm checkouts can monopolize
+ThreadPool workers, and operation-recorder contention amplifies that pressure; their dispatch
+delay does not by itself establish an asynchronous driver defect. Existing uninstrumented
+connection/churn benchmarks are unchanged.
 
 Pool version, SNI and optimized async behavior come from the normal runner config.
 Use separate process configurations to compare V1/V2; the cached pool switch is not flipped
@@ -50,8 +55,9 @@ apply to the process doing the work.
 - `Extended` preserves that single wave for `Empty`. Other states run 16 successive waves
   of 64 concurrent workers, giving 1,024 distinct worker starts per invocation.
   `SteadyOperationsPerWorker` supplies a fixed positive count keyed by
-  `OpenClose/Warm`, `OpenClose/Oversubscribed`, `OpenClose/NonPooled`, and the corresponding
-  `OpenQueryClose/...` cases. Missing counts fail rather than being silently calibrated.
+  `OpenQueryClose/Warm`, `OpenQueryClose/Oversubscribed`, and `OpenQueryClose/NonPooled`.
+  Missing counts fail rather than being silently calibrated. Remove retired `OpenClose/...`
+  entries from older private extended profiles; unsupported workload keys fail validation.
 
 Burst jobs require `Monitoring`, one launch, one warmup and one invocation per iteration.
 Additional BDN warmups/invocations would mix later warm work into the startup cohort;
@@ -77,28 +83,21 @@ and `useConnectionPoolV2=true`. It replaces the full-suite config; normal creden
 and redacted config publication still apply. Use `confirmationRuns=1` for one matched pass,
 without changing the configured BDN iterations.
 On the local 16-CPU Linux test host, both the current driver and 7.1.2 produced
-25-second-plus ExtraIteration windows with no missing probes for all six steady cases:
+25-second-plus ExtraIteration windows with no missing probes for all three steady query cases:
 
 | Method | State | Operations per worker per wave | ExtraIteration duration, baseline/current |
 | --- | --- | ---: | --- |
-| OpenClose | Warm | 32768 | 36.0s / 35.2s |
-| OpenClose | Oversubscribed | 23114 | 31.6s / 31.4s |
-| OpenClose | NonPooled | 1 | 50.9s / 51.3s |
 | OpenQueryClose | Warm | 20 | 32.9s / 32.9s |
 | OpenQueryClose | Oversubscribed | 5 | 32.8s / 32.8s |
 | OpenQueryClose | NonPooled | 1 | 52.6s / 52.5s |
 
-These windows retained 1,258-2,104 dispatch probes and all 1,024 first-worker starts each.
-The open-only warm/oversubscribed cases still reported scheduler-health failures on both
-drivers: sustained hot-loop scheduling/CPU pressure is not the same scenario as the isolated
-cold-start reproduction. Their ordinary operation records also reached the retention cap;
-first-worker records remained complete. Adequacy is not a promise of health or a confidence
-interval. Always retain those qualifications when comparing the results.
+These windows retained 1,312-2,104 dispatch probes and all 1,024 first-worker starts each.
+Adequacy is not a promise of health or a confidence interval. Always retain those qualifications
+when comparing the results.
 
 Calibration used one warmup, one timing iteration and the normal diagnostic extra iteration,
 with identical fixed work on both sides. The example retains three timing iterations; its
-full three-repetition runtime was not measured. Added RTT also lengthens fixture prewarming,
-which took much more time than short open-only observations during initial calibration.
+full three-repetition runtime was not measured. Added RTT also lengthens fixture prewarming.
 The zero-RTT extended matrix and additional cold-repeat/observer-overhead study were deferred.
 Do not treat this example as a calibrated zero-RTT profile or extrapolate its evidence to a
 different host without checking the recorded adequacy.
@@ -209,6 +208,8 @@ recorded configuration. It reduces Startup, ExtraIteration and available repetit
 independent maxima for dispatch p99, first-worker queue p99, peak ThreadPool threads and peak
 total process threads. It compares existing per-window percentiles; it does not pool samples
 or calculate a new percentile. Different metrics may attain their maxima in different cohorts.
+New runs contain only the four `OpenQueryClose` states. Regenerating historical artifacts
+still reports retired `OpenClose` cases when present; their evidence is not silently discarded.
 
 Each metric cell shows `current maximum (signed percentage delta; signed raw difference)`.
 The difference is current minus baseline; the percentage divides that difference by the

@@ -13,16 +13,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.Config;
 public class OpenAsyncBurstRunnerJobTests
 {
     /// <summary>Extended sampling never pads an empty-pool burst with later warm work.</summary>
-    [Theory]
-    [InlineData("OpenClose")]
-    [InlineData("OpenQueryClose")]
-    public void GetWorkload_EmptyExtended_KeepsSingleBurst(string method)
+    [Fact]
+    public void GetWorkload_EmptyExtended_KeepsSingleBurst()
     {
         // Arrange
         var job = new OpenAsyncBurstRunnerJob { SamplingProfile = "Extended" };
 
         // Act
-        BurstWorkload workload = job.GetWorkload(method, "Empty");
+        BurstWorkload workload = job.GetWorkload("OpenQueryClose", "Empty");
 
         // Assert
         Assert.Equal(1, workload.Waves);
@@ -55,9 +53,10 @@ public class OpenAsyncBurstRunnerJobTests
 
     /// <summary>Unknown or overflowing work sizes must not silently use a different workload.</summary>
     [Theory]
-    [InlineData("OpenClose/Typo", 1)]
-    [InlineData("OpenClose/Warm", 0)]
-    [InlineData("OpenClose/Warm", int.MaxValue)]
+    [InlineData("OpenQueryClose/Typo", 1)]
+    [InlineData("OpenQueryClose/Warm", 0)]
+    [InlineData("OpenQueryClose/Warm", int.MaxValue)]
+    [InlineData("OpenClose/Warm", 1)]
     public void ValidateExecution_InvalidWorkSize_Throws(string key, int operations)
     {
         // Arrange
@@ -79,7 +78,18 @@ public class OpenAsyncBurstRunnerJobTests
         var job = new OpenAsyncBurstRunnerJob { SamplingProfile = "Extended" };
 
         // Act / Assert
-        Assert.Throws<ArgumentException>(() => job.GetWorkload("OpenClose", "Warm"));
+        Assert.Throws<ArgumentException>(() => job.GetWorkload("OpenQueryClose", "Warm"));
+    }
+
+    /// <summary>Retired open-only methods cannot resolve even the default cold-burst workload.</summary>
+    [Fact]
+    public void GetWorkload_RemovedOpenClose_Throws()
+    {
+        // Arrange
+        var job = new OpenAsyncBurstRunnerJob();
+
+        // Act / Assert
+        Assert.Throws<ArgumentException>(() => job.GetWorkload("OpenClose", "Empty"));
     }
 
     /// <summary>Warm repeats cannot silently turn the startup cohort into mostly warm work.</summary>

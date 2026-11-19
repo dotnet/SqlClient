@@ -47,7 +47,7 @@ public sealed class OpenAsyncBurstRunnerJob : RunnerJob
             {
                 string[] parts = setting.Key.Split('/');
                 if (parts.Length != 2 ||
-                    (parts[0] != "OpenClose" && parts[0] != "OpenQueryClose") ||
+                    parts[0] != "OpenQueryClose" ||
                     (parts[1] != "Warm" && parts[1] != "Oversubscribed" && parts[1] != "NonPooled") ||
                     setting.Value <= 0 ||
                     setting.Value > int.MaxValue / (ConcurrentWorkers * ExtendedWaves))
@@ -63,7 +63,7 @@ public sealed class OpenAsyncBurstRunnerJob : RunnerJob
     public BurstWorkload GetWorkload(string method, string state)
     {
         ValidateExecution();
-        if (method != "OpenClose" && method != "OpenQueryClose")
+        if (method != "OpenQueryClose")
         {
             throw new ArgumentException("Unknown burst method.", nameof(method));
         }

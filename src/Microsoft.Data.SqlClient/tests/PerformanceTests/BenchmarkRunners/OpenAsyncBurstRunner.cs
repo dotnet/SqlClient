@@ -9,8 +9,8 @@ using BenchmarkDotNet.Attributes;
 namespace Microsoft.Data.SqlClient.PerformanceTests;
 
 /// <summary>
-/// ThreadPool-dispatched OpenAsync bursts cover empty-pool creation, warm checkout, waiter wakeup
-/// and non-pooled login. Startup observations retain first-open effects; later cases reuse driver state.
+/// ThreadPool-dispatched open/query/close bursts cover empty-pool creation, warm checkout,
+/// waiter wakeup and non-pooled login. Startup observations retain first-open effects.
 /// </summary>
 [AsyncHealthDiagnoser]
 public class OpenAsyncBurstRunner : BaseRunner
@@ -22,29 +22,16 @@ public class OpenAsyncBurstRunner : BaseRunner
 
     private const int Workers = OpenAsyncBurstRunnerJob.ConcurrentWorkers;
     private string _connectionString;
-    private BurstWorkload _openClose;
     private BurstWorkload _openQueryClose;
     private int _originalMinimumWorkers;
     private int _originalMinimumIo;
 
-    [GlobalSetup(Target = nameof(OpenClose))]
-    public void SetupOpenClose()
-    {
-        _openClose = s_config.Benchmarks.OpenAsyncBurstRunnerConfig.GetWorkload(
-            nameof(OpenClose), State.ToString());
-        Setup();
-    }
-
-    [GlobalSetup(Target = nameof(OpenQueryClose))]
+    [GlobalSetup]
     public void SetupOpenQueryClose()
     {
         _openQueryClose = s_config.Benchmarks.OpenAsyncBurstRunnerConfig.GetWorkload(
             nameof(OpenQueryClose), State.ToString());
-        Setup();
-    }
 
-    private void Setup()
-    {
         ThreadPool.GetMinThreads(out _originalMinimumWorkers, out _originalMinimumIo);
         if (!ThreadPool.SetMinThreads(16, _originalMinimumIo))
         {
@@ -109,48 +96,6 @@ public class OpenAsyncBurstRunner : BaseRunner
     {
         using var connection = new SqlConnection(_connectionString);
         SqlConnection.ClearPool(connection);
-    }
-
-    [Benchmark(OperationsPerInvoke = Workers)]
-    public async Task OpenClose()
-    {
-        var invocation = AsyncHealthDiagnoser.BeginInvocation(_openClose.WorkerStarts);
-        for (int wave = 0; wave < _openClose.Waves; wave++)
-        {
-            var tasks = new Task[Workers];
-            for (int i = 0; i < tasks.Length; i++)
-            {
-                int worker = wave * Workers + i;
-                var first = invocation?.Offer(worker);
-                tasks[i] = Task.Run(async () =>
-                {
-                    for (int operationIndex = 0;
-                        operationIndex < _openClose.OperationsPerWorker; operationIndex++)
-                    {
-                        var operation = operationIndex == 0 ? first : invocation?.Offer(worker);
-                        operation?.Start();
-                        try
-                        {
-                            using (var connection = new SqlConnection(_connectionString))
-                            {
-                                Task open = connection.OpenAsync();
-                                operation?.OpenReturned(open.IsCompleted);
-                                await open.ConfigureAwait(false);
-                                operation?.Opened();
-                            }
-                            operation?.Complete();
-                        }
-                        catch (Exception error)
-                        {
-                            operation?.Fail(error);
-                            throw;
-                        }
-                    }
-                });
-            }
-            await Task.WhenAll(tasks).ConfigureAwait(false);
-        }
-        invocation?.Complete();
     }
 
     [Benchmark(OperationsPerInvoke = Workers)]

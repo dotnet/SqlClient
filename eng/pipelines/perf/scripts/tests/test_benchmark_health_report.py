@@ -21,7 +21,7 @@ def window(side, case, phase="Startup", dispatch=100, **changes):
     data = dict(
         SchemaVersion=2, Kind="BenchmarkAsyncHealth", Status="Completed", Error=None,
         CaseId=f"{side}-{case}", Phase=phase,
-        Benchmark="Microsoft.Data.SqlClient.PerformanceTests.OpenAsyncBurstRunner.OpenClose",
+        Benchmark="Microsoft.Data.SqlClient.PerformanceTests.OpenAsyncBurstRunner.OpenQueryClose",
         Parameters="[State=Empty]", ConfiguredInvocationsPerIteration=1, OperationsPerInvoke=64,
         Configuration=dict(
             UseConnectionPoolV2=False, UseManagedSni=True, UseOptimizedAsync=True,
@@ -99,31 +99,35 @@ class BenchmarkHealthReportTests(unittest.TestCase):
             self.assertIn("not pooled", markdown)
             self.assertIn("not best-of-N", markdown)
 
-    def test_only_eight_burst_rows_are_reported(self):
-        """Historical reports containing other instrumented workloads remain burst-only."""
+    def test_current_and_historical_burst_rows_are_reported(self):
+        """Current query cases pair correctly without losing retired historical burst evidence."""
         # Arrange
-        with tempfile.TemporaryDirectory() as temp:
-            root = Path(temp)
-            for side in ("baseline", "current"):
-                for method in ("OpenClose", "OpenQueryClose"):
-                    for state in ("Empty", "Warm", "Oversubscribed", "NonPooled"):
-                        for phase in ("Startup", "ExtraIteration"):
-                            data = window(side, method + state, phase)
-                            data["Benchmark"] = data["Benchmark"].rsplit(".", 1)[0] + "." + method
-                            data["Parameters"] = f"[State={state}]"
-                            write_window(root, side, data)
-                other = window(side, "existing")
-                other["Benchmark"] = "Example.SqlConnectionRunner.OpenAsyncConnection"
-                write_window(root, side, other)
+        for methods in (("OpenQueryClose",), ("OpenClose", "OpenQueryClose")):
+            with self.subTest(methods=methods), tempfile.TemporaryDirectory() as temp:
+                self.check_burst_rows(Path(temp), methods)
 
-            # Act
-            entries = report.build_comparison(root)
-            markdown, _ = report.render(root)
+    def check_burst_rows(self, root, methods):
+        """Build matched phase evidence and check one row per supplied method and pool state."""
+        for side in ("baseline", "current"):
+            for method in methods:
+                for state in ("Empty", "Warm", "Oversubscribed", "NonPooled"):
+                    for phase in ("Startup", "ExtraIteration"):
+                        data = window(side, method + state, phase)
+                        data["Benchmark"] = data["Benchmark"].rsplit(".", 1)[0] + "." + method
+                        data["Parameters"] = f"[State={state}]"
+                        write_window(root, side, data)
+            other = window(side, "existing")
+            other["Benchmark"] = "Example.SqlConnectionRunner.OpenAsyncConnection"
+            write_window(root, side, other)
 
-            # Assert
-            self.assertEqual(len(entries), 8)
-            self.assertNotIn("SqlConnectionRunner", markdown)
-            self.assertTrue(all(entry["status"] == "unchanged" for entry in entries))
+        # Act
+        entries = report.build_comparison(root)
+        markdown, _ = report.render(root)
+
+        # Assert
+        self.assertEqual(len(entries), 4 * len(methods))
+        self.assertNotIn("SqlConnectionRunner", markdown)
+        self.assertTrue(all(entry["status"] == "unchanged" for entry in entries))
 
     def test_configuration_mismatch_is_not_paired(self):
         """A different runtime, pool, worker floor or workload size cannot be compared."""
