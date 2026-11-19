@@ -1216,11 +1216,13 @@ namespace Microsoft.Data.SqlClient
                         isAsync,
                         cancellationToken);
 
-                    // Completed preparation starts execution inline, so the reader reserves the
-                    // connection before this call returns. Pending enclave package keys still
-                    // need the asynchronous continuation, so they never load on this thread.
+                    // Preparation returns default only when it completed inline. Any other task
+                    // is handed to execution even if it has already completed, so execution
+                    // revalidates the connection and stays off the caller's thread. Pending
+                    // enclave package keys also need the asynchronous continuation, so they
+                    // never load on this thread.
                     if (isAsync
-                        && (!preparation.IsCompletedSuccessfully
+                        && (preparation != default
                             || keysToBeSentToEnclave is { IsEmpty: false }))
                     {
                         prepareEncryptionTask = preparation.AsTask();
