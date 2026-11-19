@@ -75,7 +75,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             object[] arguments =
             {
                 CommandBehavior.Default, RunBehavior.ReturnImmediately, true, true, 30, null,
-                true, false, "ExecuteReader", CancellationToken.None, null, preparation.Task
+                true, false, "ExecuteReader", CancellationToken.None, null, preparation.Task, false
             };
             using SqlDataReader pendingReader = (SqlDataReader)typeof(SqlCommand)
                 .GetMethod("RunExecuteReaderTdsWithTransparentParameterEncryption", BindingFlags.NonPublic | BindingFlags.Instance)
@@ -112,7 +112,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             object[] arguments =
             {
                 CommandBehavior.Default, RunBehavior.ReturnImmediately, true, true, 30, null,
-                true, false, "ExecuteReader", CancellationToken.None, null, Task.CompletedTask
+                true, false, "ExecuteReader", CancellationToken.None, null, Task.CompletedTask,
+                false
             };
 
             // Act
@@ -323,13 +324,14 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         }
 
         /// <summary>
-        /// Successful asynchronous preparation keeps the in-progress flag set for the reader
-        /// continuation, which clears it after reserving the connection.
+        /// Successful asynchronous preparation leaves the in-progress flag that execution set, so
+        /// the reader continuation still owns its release.
         /// </summary>
         [Fact]
         public async Task Prepare_Completed_HandsOffInProgressFlag()
         {
             // Arrange
+            // Execution sets the flag before preparation, as RunExecuteReader does.
             using Fixture fixture = new Fixture();
             using SqlCommand command = fixture.CreateCommand();
             fixture.Provider.CacheHit = true;
@@ -337,17 +339,17 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             command.AddBatchCommand(new SqlBatchCommand("SELECT 1",
                 columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled));
             command.SetBatchRPCModeReadyToExecute();
+            SetField(command, "_enclaveAttestationInProgress", true);
 
             // Act
-            await Invoke(command, "PrepareForTransparentEncryptionAsync",
-                30, true, false, CancellationToken.None);
+            await PrepareAsync(command, false, CancellationToken.None);
 
             // Assert
             Assert.True((bool)GetField(command, "_enclaveAttestationInProgress"));
             Assert.Throws<InvalidOperationException>(() => command.Connection = null);
 
             // Cleanup
-            // No reader continuation runs in this test, so release the handed-off flag.
+            // No reader continuation runs in this test, so release the flag.
             SetField(command, "_enclaveAttestationInProgress", false);
         }
 
@@ -372,7 +374,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             object[] arguments =
             {
                 CommandBehavior.Default, RunBehavior.ReturnImmediately, true, true, 30, null,
-                true, false, "ExecuteReader", CancellationToken.None, null, Task.CompletedTask
+                true, false, "ExecuteReader", CancellationToken.None, null, Task.CompletedTask,
+                false
             };
             typeof(SqlCommand)
                 .GetMethod(
@@ -548,66 +551,73 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             command.AddBatchCommand(new SqlBatchCommand("SELECT 2",
                 columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled));
             command.SetBatchRPCModeReadyToExecute();
-            object[] arguments =
-            {
-                true, 30, new TaskCompletionSource<object>(), null, true, false, false,
-                "ExecuteReader", CancellationToken.None
-            };
-            typeof(SqlCommand).GetMethod("PrepareForTransparentEncryption", BindingFlags.NonPublic | BindingFlags.Instance)
-                .Invoke(command, arguments);
-            Assert.Null(arguments[3]);
-            Assert.Equal(false, arguments[5]);
-            Assert.False((bool)GetField(command, "_enclaveAttestationInProgress"));
+            ValueTask preparation = InvokePrepare(command, false, CancellationToken.None);
+            Assert.True(preparation.IsCompletedSuccessfully);
             Assert.Equal(0, GetAsyncCount((SqlConnectionInternal)fixture.Connection.InnerConnection));
             Assert.Equal(1, fixture.Provider.AsyncCalls);
             Assert.Equal(0, fixture.Provider.SyncCalls);
         }
 
         /// <summary>
-        /// Completed preparation with pending enclave keys must keep its task, so package keys load
-        /// on the asynchronous reader continuation instead of the caller's thread.
+        /// Completed preparation with pending enclave keys must still use the asynchronous reader
+        /// continuation, so package keys load through the asynchronous provider API instead of
+        /// the caller's thread.
         /// </summary>
         [Fact]
-        public void Prepare_CompletedWithPendingEnclaveKeys_KeepsAsyncContinuation()
+        public async Task ExecuteReaderAsync_PendingEnclaveKeys_LoadsKeysAsync()
         {
             // Arrange
-            // Seed a pending package key; a warm, parameterless batch makes preparation complete.
+            // A warm session completes preparation inline and seeds a package key that the
+            // provider holds pending; its synchronous API throws.
             using Fixture fixture = new Fixture();
             using SqlCommand command = fixture.CreateCommand();
-            fixture.Provider.CacheHit = true;
-            command.SetBatchRPCMode(true, 2);
+            using CancellationTokenSource cancellation = new CancellationTokenSource();
+            command.SetBatchRPCMode(true, 1);
             command.AddBatchCommand(new SqlBatchCommand("SELECT 1",
                 columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled));
-            command.AddBatchCommand(new SqlBatchCommand("SELECT 2",
-                columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled));
             command.SetBatchRPCModeReadyToExecute();
-            ConcurrentDictionary<int, SqlTceCipherInfoEntry> keys =
-                new ConcurrentDictionary<int, SqlTceCipherInfoEntry>();
-            keys.TryAdd(0, new SqlTceCipherInfoEntry(ordinal: 0));
-            SetField(command, "keysToBeSentToEnclave", keys);
-            object[] arguments =
+            PendingKeyStoreProvider keyProvider = new PendingKeyStoreProvider();
+            fixture.Connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(
+                new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>
+                {
+                    ["PENDING_PACKAGE_KEY"] = keyProvider
+                });
+            SqlTceCipherInfoEntry entry = new SqlTceCipherInfoEntry(0);
+            entry.Add(Guid.NewGuid().ToByteArray(), 42, 7, 1, 3,
+                "pending-package-key", "PENDING_PACKAGE_KEY", "RSA_OAEP");
+            fixture.Provider.CacheHit = true;
+            fixture.Provider.SyncCacheHit = true;
+            fixture.Provider.OnCacheHit = () =>
             {
-                true, 30, new TaskCompletionSource<object>(), null, true, false, false,
-                "ExecuteReader", CancellationToken.None
+                command.keysToBeSentToEnclave =
+                    new ConcurrentDictionary<int, SqlTceCipherInfoEntry>();
+                Assert.True(command.keysToBeSentToEnclave.TryAdd(0, entry));
             };
+            SqlConnectionInternal inner = (SqlConnectionInternal)fixture.Connection.InnerConnection;
 
-            // Act
-            typeof(SqlCommand)
-                .GetMethod(
-                    "PrepareForTransparentEncryption",
-                    BindingFlags.NonPublic | BindingFlags.Instance)
-                .Invoke(command, arguments);
+            try
+            {
+                // Act
+                Task<SqlDataReader> operation = command.ExecuteReaderAsync(cancellation.Token);
+                await await Task.WhenAny(keyProvider.Entered.Task, operation);
 
-            // Assert
-            // The completed task and the in-progress flag both pass to the reader continuation.
-            Task prepareTask = Assert.IsAssignableFrom<Task>(arguments[3]);
-            Assert.Equal(TaskStatus.RanToCompletion, prepareTask.Status);
-            Assert.True((bool)GetField(command, "_enclaveAttestationInProgress"));
-            Assert.Equal(0, fixture.Provider.SyncCalls);
+                // Assert
+                // The key load reached the asynchronous API and holds the execution pending.
+                Assert.False(operation.IsCompleted);
+                Assert.Equal(cancellation.Token, keyProvider.Token);
 
-            // Cleanup
-            // Release the flag that the reader continuation would otherwise clear.
-            SetField(command, "_enclaveAttestationInProgress", false);
+                // Canceling the pending key load releases the execution.
+                cancellation.Cancel();
+                await Assert.ThrowsAnyAsync<OperationCanceledException>(() => operation);
+            }
+            finally
+            {
+                // Cleanup
+                keyProvider.Completion.TrySetResult(new byte[32]);
+            }
+
+            Assert.False((bool)GetField(command, "_enclaveAttestationInProgress"));
+            Assert.Equal(0, GetAsyncCount(inner));
         }
 
         /// <summary>Independent fixtures must not share mutated options even when their server endpoint matches.</summary>
@@ -636,15 +646,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 .SetValue(fixture.Connection.ConnectionOptions, null);
             typeof(SqlConnectionOptions).GetField("_attestationProtocol", BindingFlags.Instance | BindingFlags.NonPublic)
                 .SetValue(fixture.Connection.ConnectionOptions, SqlConnectionAttestationProtocol.NotSpecified);
-            object[] preparationArguments =
-            {
-                true, 30, new TaskCompletionSource<object>(), null, true, false, false,
-                "ExecuteReader", CancellationToken.None
-            };
-            typeof(SqlCommand).GetMethod("PrepareForTransparentEncryption", BindingFlags.NonPublic | BindingFlags.Instance)
-                .Invoke(command, preparationArguments);
-            Assert.Null(preparationArguments[3]);
-            Assert.Equal(false, preparationArguments[5]);
+            ValueTask preparation = InvokePrepare(command, false, CancellationToken.None);
+            Assert.True(preparation.IsCompletedSuccessfully);
             Task<SqlDataReader> operation;
             try
             {
@@ -1441,9 +1444,19 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// </summary>
         private static Task PrepareAsync(
             SqlCommand command, bool isRetry, CancellationToken token) =>
-            Invoke(command, "PrepareForTransparentEncryptionAsync",
-                30, true, isRetry, GetField(command, "_enclaveRetryConnection"),
-                null, null, 0, null, nameof(SqlCommand.ExecuteReader), token);
+            InvokePrepare(command, isRetry, token).AsTask();
+
+        /// <summary>Invokes uncached asynchronous encryption preparation once.</summary>
+        private static ValueTask InvokePrepare(
+            SqlCommand command, bool isRetry, CancellationToken token) =>
+            (ValueTask)typeof(SqlCommand)
+                .GetMethod(
+                    "PrepareForTransparentEncryption",
+                    BindingFlags.NonPublic | BindingFlags.Instance)
+                .Invoke(command, new object[]
+                {
+                    null, 30, true, isRetry, nameof(SqlCommand.ExecuteReader), true, token
+                });
 
         /// <summary>Cold preparation serializes awaited parameters and preserves provider custom data.</summary>
         [Fact]

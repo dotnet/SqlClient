@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Data;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -256,9 +257,7 @@ namespace Microsoft.Data.SqlClient
         {
             // The async state is reset below, so keep the command marked busy for the whole method.
             // This blocks connection changes and overlapping executions while key store calls are pending.
-            // The reader continuation awaiting this task clears the flag after execution reserves the
-            // connection or preparation fails. Restoring it here could clear the flag that continuation
-            // set, before enclave package keys load.
+            bool wasInProgress = _enclaveAttestationInProgress;
             _enclaveAttestationInProgress = true;
             bool processFinallyBlock = true;
             try
@@ -301,14 +300,21 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                ReleaseDescribeParameterEncryptionConnection();
-                PrepareTransparentEncryptionFinallyBlock(
-                    closeDataReader: processFinallyBlock,
-                    decrementAsyncCount: false,
-                    clearDataStructures: processFinallyBlock,
-                    wasDescribeParameterEncryptionNeeded: describeParameterEncryptionNeeded,
-                    describeParameterEncryptionRpcOriginalRpcMap: describeParameterEncryptionRpcOriginalRpcMap,
-                    describeParameterEncryptionDataReader: describeParameterEncryptionDataReader);
+                try
+                {
+                    ReleaseDescribeParameterEncryptionConnection();
+                    PrepareTransparentEncryptionFinallyBlock(
+                        closeDataReader: processFinallyBlock,
+                        decrementAsyncCount: false,
+                        clearDataStructures: processFinallyBlock,
+                        wasDescribeParameterEncryptionNeeded: describeParameterEncryptionNeeded,
+                        describeParameterEncryptionRpcOriginalRpcMap: describeParameterEncryptionRpcOriginalRpcMap,
+                        describeParameterEncryptionDataReader: describeParameterEncryptionDataReader);
+                }
+                finally
+                {
+                    _enclaveAttestationInProgress = wasInProgress;
+                }
             }
         }
 
@@ -498,83 +504,75 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Executes the reader after checking to see if we need to encrypt input parameters and
-        /// then encrypting it if required.
-        /// * TryFetchInputParameterEncryptionInfo() ->
-        /// * ReadDescribeEncryptionParameterResults() ->
-        /// * EncryptInputParameters() ->
-        /// * RunExecuteReaderTds()
+        /// Looks up cached query metadata for this command. Batch RPC commands, retries and
+        /// parameterless commands do not use the cache.
         /// </summary>
-        private void PrepareForTransparentEncryption(
-            bool isAsync,
+        /// <remarks>
+        /// Execution reports a found entry as <c>usedCache</c> before its keys load, even if the
+        /// entry later turns out to be stale. Over-reporting it can only cause one additional retry
+        /// of an already failing execution, whereas under-reporting it would suppress the
+        /// <see cref="TdsEnums.TCE_CONVERSION_ERROR_CLIENT_RETRY"/> retry that a cache hit needs.
+        /// </remarks>
+        private bool TryGetCachedQueryMetadata(
+            bool isRetry,
+            out SqlQueryMetadataCache.CachedQueryMetadata metadata)
+        {
+            if (_batchRPCMode || isRetry || !(_parameters?.Count > 0))
+            {
+                metadata = default;
+                return false;
+            }
+
+            return SqlQueryMetadataCache.GetInstance()
+                .TryGetCachedQueryMetadata(this, out metadata);
+        }
+
+        /// <summary>
+        /// Prepares input parameter encryption before execution. Completes
+        /// <paramref name="cachedMetadata"/> when provided, and otherwise, or when the cached
+        /// entry is stale, runs the describe parameter encryption round trip.
+        /// </summary>
+        /// <remarks>
+        /// Synchronous mode always returns a completed task. Asynchronous mode completes inline
+        /// when there is no key store or network work, and otherwise continues in
+        /// <see cref="ContinueParameterEncryptionAsync"/>. The caller holds the in-progress flag
+        /// for asynchronous preparation.
+        /// </remarks>
+        private ValueTask PrepareForTransparentEncryption(
+            SqlQueryMetadataCache.CachedQueryMetadata? cachedMetadata,
             int timeout,
-            TaskCompletionSource<object> completion, // @TODO: Only used for debug checks
-            out Task returnTask,
             bool asyncWrite,
-            out bool usedCache,
             bool isRetry,
             string method,
-            CancellationToken cancellationToken = default)
+            bool isAsync,
+            CancellationToken cancellationToken)
         {
-            returnTask = null;
-            usedCache = false;
-
-            // If we are not in _batchRPC and not already retrying, attempt to fetch the cipher MD for
-            // each parameter from the cache. If this succeeds then return immediately, otherwise just
-            // fall back to the full crypto MD discovery.
-            if (!_batchRPCMode && !isRetry && _parameters?.Count > 0)
+            if (cachedMetadata is SqlQueryMetadataCache.CachedQueryMetadata metadata)
             {
                 SqlQueryMetadataCache cache = SqlQueryMetadataCache.GetInstance();
-
                 if (!isAsync)
                 {
-                    if (cache.TryGetCachedQueryMetadata(
-                            this,
-                            out SqlQueryMetadataCache.CachedQueryMetadata syncMetadata)
-                        && cache.CompleteCachedQueryMetadata(
-                            this,
-                            syncMetadata,
-                            isAsync: false,
-                            CancellationToken.None).GetAwaiter().GetResult())
+                    if (cache.CompleteCachedQueryMetadata(
+                            this, metadata, isAsync: false, CancellationToken.None)
+                        .GetAwaiter()
+                        .GetResult())
                     {
-                        usedCache = true;
-                        return;
+                        return default;
                     }
+
+                    // The cached key information was stale, so run the full describe parameter
+                    // encryption round trip below.
                 }
-                else if (cache.TryGetCachedQueryMetadata(this, out SqlQueryMetadataCache.CachedQueryMetadata metadata))
+                else if (cache.TryCompleteCachedQueryMetadataInline(this, metadata))
                 {
-                    usedCache = true;
-
                     // With only plaintext parameters and no cached enclave keys there is no key
-                    // store work, so finish inline.
-                    if (cache.TryCompleteCachedQueryMetadataInline(this, metadata))
-                    {
-                        return;
-                    }
-
-                    // The column encryption keys still have to be loaded, which may require key
-                    // store network I/O. Hand the rest of the work to a worker so even
-                    // synchronously completed key loads cannot run the blocking stale-cache
-                    // describe fallback on the caller's thread.
-                    SqlConnectionInternal retryConnection = _enclaveRetryConnection;
-                    SqlConnection connection = _activeConnection;
-                    int closeCount = connection.CloseCount;
-                    string database = connection.Database;
-
-                    // Block command and connection changes until execution has been handed off.
-                    _enclaveAttestationInProgress = true;
-                    returnTask = Task.Run(() => PrepareForTransparentEncryptionAsync(
-                        timeout,
-                        asyncWrite,
-                        isRetry,
-                        retryConnection,
-                        metadata,
-                        connection,
-                        closeCount,
-                        database,
-                        method,
-                        cancellationToken));
-                    return;
+                    // store work.
+                    return default;
+                }
+                else
+                {
+                    return ContinueParameterEncryptionAsync(
+                        metadata, timeout, asyncWrite, isRetry, method, cancellationToken);
                 }
             }
 
@@ -587,48 +585,107 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(_columnEncryptionSetting == SqlCommandColumnEncryptionSetting.Enabled
                          || (_columnEncryptionSetting == SqlCommandColumnEncryptionSetting.UseConnectionSetting && _activeConnection.IsColumnEncryptionSettingEnabled),
                 "ColumnEncryption setting should be enabled for input parameter encryption.");
-            Debug.Assert(isAsync == (completion != null),
-                "completion should be null if and only if mode is async.");
-
-            bool inProgressFlagWasSet = _enclaveAttestationInProgress;
 
             if (isAsync && ShouldUseEnclaveBasedWorkflow)
             {
-                returnTask = PrepareForTransparentEncryptionAsync(
-                    timeout,
-                    asyncWrite,
-                    isRetry,
-                    _enclaveRetryConnection,
-                    cachedMetadata: null,
-                    connection: null,
-                    closeCount: 0,
-                    database: null,
-                    method,
-                    cancellationToken);
-            }
-            else
-            {
-                PrepareForTransparentEncryptionCore(
-                    isAsync, timeout, out returnTask, asyncWrite, isRetry,
-                    serializedAttestationParameters: null, cancellationToken);
+                return ContinueParameterEncryptionAsync(
+                    cachedMetadata: null, timeout, asyncWrite, isRetry, method, cancellationToken);
             }
 
-            // Completed preparation must not queue otherwise unreserved TDS setup. Keep the task
-            // when enclave keys are pending, so the reader continuation loads them asynchronously.
-            if (returnTask?.Status == TaskStatus.RanToCompletion
-                && (keysToBeSentToEnclave is null || keysToBeSentToEnclave.IsEmpty))
-            {
-                returnTask = null;
+            RunDescribeParameterEncryption(
+                isAsync, timeout, out Task describeTask, asyncWrite, isRetry,
+                serializedAttestationParameters: null, cancellationToken);
+            return describeTask is null ? default : new ValueTask(describeTask);
+        }
 
-                // No reader continuation will run, so release a flag that preparation handed off.
-                if (!inProgressFlagWasSet)
+        /// <summary>
+        /// Asynchronous part of <see cref="PrepareForTransparentEncryption"/>. Completes a cache
+        /// hit's key loads on a worker, and on a miss or stale entry prepares enclave attestation
+        /// and runs the describe parameter encryption round trip. Failures surface through the
+        /// returned task.
+        /// </summary>
+        private async ValueTask ContinueParameterEncryptionAsync(
+            SqlQueryMetadataCache.CachedQueryMetadata? cachedMetadata,
+            int timeout,
+            bool asyncWrite,
+            bool isRetry,
+            string method,
+            CancellationToken cancellationToken)
+        {
+            SqlConnectionInternal retryConnection = _enclaveRetryConnection;
+            try
+            {
+                if (cachedMetadata is SqlQueryMetadataCache.CachedQueryMetadata metadata)
                 {
-                    _enclaveAttestationInProgress = false;
+                    SqlConnection connection = _activeConnection;
+                    int closeCount = connection.CloseCount;
+                    string database = connection.Database;
+
+                    // Key loads may need key store network I/O, so even synchronously completed
+                    // loads and the blocking stale-cache describe fallback must not run on the
+                    // caller's thread.
+                    await new ThreadPoolHop();
+
+                    bool cacheHit = await SqlQueryMetadataCache.GetInstance()
+                        .CompleteCachedQueryMetadata(
+                            this, metadata, isAsync: true, cancellationToken)
+                        .ConfigureAwait(false);
+
+                    ValidateConnectionLifetime(connection, closeCount, database, method);
+
+                    if (cacheHit)
+                    {
+                        return;
+                    }
+
+                    // The cached key information was stale, so run the full describe parameter
+                    // encryption round trip.
+                    cancellationToken.ThrowIfCancellationRequested();
                 }
+
+                byte[] serializedAttestationParameters = await PrepareEnclaveAttestationAsync(
+                    isRetry, cancellationToken).ConfigureAwait(false);
+                cancellationToken.ThrowIfCancellationRequested();
+                ValidateConnectionForEnclaveExecution(retryConnection);
+                RunDescribeParameterEncryption(
+                    isAsync: true, timeout, out Task task, asyncWrite, isRetry,
+                    serializedAttestationParameters, cancellationToken);
+                if (task is not null)
+                {
+                    await task.ConfigureAwait(false);
+                }
+            }
+            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
+            {
+                CachedAsyncState?.ResetAsyncState();
+                ReliablePutStateObject();
+                throw;
             }
         }
 
-        private void PrepareForTransparentEncryptionCore(
+        /// <summary>
+        /// Resumes an asynchronous method on a thread pool thread. Unlike
+        /// <see cref="Task.Yield"/>, it ignores any synchronization context, and unlike awaiting a
+        /// completed task, it never continues inline.
+        /// </summary>
+        private readonly struct ThreadPoolHop : INotifyCompletion
+        {
+            private static readonly WaitCallback s_runContinuation =
+                static state => ((Action)state)();
+
+            public ThreadPoolHop GetAwaiter() => this;
+
+            public bool IsCompleted => false;
+
+            public void OnCompleted(Action continuation) =>
+                ThreadPool.QueueUserWorkItem(s_runContinuation, continuation);
+
+            public void GetResult()
+            {
+            }
+        }
+
+        private void RunDescribeParameterEncryption(
             bool isAsync,
             int timeout,
             out Task returnTask,
@@ -758,95 +815,12 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Completes asynchronous encryption preparation. When <paramref name="cachedMetadata"/> is
-        /// set, loads its column encryption keys and falls back to a full describe parameter
-        /// encryption round trip only if the cached key information was stale. Otherwise prepares
-        /// enclave attestation and runs the describe round trip.
-        /// </summary>
-        /// <remarks>
-        /// For cached metadata the caller sets the in-progress flag before dispatch, and execution
-        /// clears it after it reserves the connection; this method clears it only on failure. The
-        /// command reports <c>usedCache = true</c> even when a stale cache entry falls back,
-        /// because the caller has already returned. Over-reporting a cache hit can only cause one
-        /// additional retry of an already failing execution, whereas under-reporting it would
-        /// suppress the <see cref="TdsEnums.TCE_CONVERSION_ERROR_CLIENT_RETRY"/> retry that a
-        /// cache hit needs.
-        /// </remarks>
-        private async Task PrepareForTransparentEncryptionAsync(
-            int timeout,
-            bool asyncWrite,
-            bool isRetry,
-            SqlConnectionInternal retryConnection,
-            SqlQueryMetadataCache.CachedQueryMetadata? cachedMetadata,
-            SqlConnection connection,
-            int closeCount,
-            string database,
-            string method,
-            CancellationToken cancellationToken)
-        {
-            // Cached metadata dispatch sets the flag on this method's behalf. On success, the
-            // reader continuation clears it after reserving the connection.
-            bool ownsInProgressFlag = cachedMetadata is not null || !_enclaveAttestationInProgress;
-            _enclaveAttestationInProgress = true;
-            bool handedOff = false;
-            try
-            {
-                if (cachedMetadata is SqlQueryMetadataCache.CachedQueryMetadata metadata)
-                {
-                    bool cacheHit = await SqlQueryMetadataCache.GetInstance()
-                        .CompleteCachedQueryMetadata(
-                            this, metadata, isAsync: true, cancellationToken)
-                        .ConfigureAwait(false);
-
-                    ValidateConnectionLifetime(connection, closeCount, database, method);
-
-                    if (cacheHit)
-                    {
-                        handedOff = true;
-                        return;
-                    }
-
-                    // The cached key information was stale, so run the full describe parameter
-                    // encryption round trip. It issues blocking TDS writes, but we are already off
-                    // the caller's thread.
-                    cancellationToken.ThrowIfCancellationRequested();
-                }
-
-                byte[] serializedAttestationParameters = await PrepareEnclaveAttestationAsync(isRetry, cancellationToken)
-                    .ConfigureAwait(false);
-                cancellationToken.ThrowIfCancellationRequested();
-                ValidateConnectionForEnclaveExecution(retryConnection);
-                PrepareForTransparentEncryptionCore(
-                    isAsync: true, timeout, out Task task, asyncWrite, isRetry,
-                    serializedAttestationParameters, cancellationToken);
-                if (task is not null)
-                {
-                    await task.ConfigureAwait(false);
-                }
-
-                handedOff = true;
-            }
-            catch (Exception e) when (ADP.IsCatchableExceptionType(e))
-            {
-                CachedAsyncState?.ResetAsyncState();
-                ReliablePutStateObject();
-                throw;
-            }
-            finally
-            {
-                if (ownsInProgressFlag && !handedOff)
-                {
-                    _enclaveAttestationInProgress = false;
-                }
-            }
-        }
-
-        /// <summary>
         /// Rejects execution when the command's connection was replaced, closed and reopened, or
         /// switched to another database while encryption preparation was pending. The query
         /// metadata cache key includes the database, so metadata loaded for one database must not
         /// be used to execute against another. Also repeats the transaction binding checks of
-        /// <see cref="ValidateCommand"/>, because a transaction may have begun meanwhile.
+        /// <see cref="ValidateCommand"/>, because a transaction may have begun or completed
+        /// meanwhile.
         /// </summary>
         private void ValidateConnectionLifetime(
             SqlConnection connection,
@@ -866,9 +840,12 @@ namespace Microsoft.Data.SqlClient
                     nameof(SqlConnection.Database));
             }
 
+            // ValidateCommand cleared any completed transaction before preparation, so this one
+            // completed while preparation was pending. Running without it would leave the
+            // command outside the transaction it was bound to.
             if (_transaction is not null && _transaction.Connection is null)
             {
-                _transaction = null;
+                throw ADP.TransactionZombied(_transaction);
             }
 
             // A closed connection has no transaction; a real close already failed the count check.
