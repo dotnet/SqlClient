@@ -533,10 +533,11 @@ namespace Microsoft.Data.SqlClient
         /// entry is stale, runs the describe parameter encryption round trip.
         /// </summary>
         /// <remarks>
-        /// Synchronous mode always returns a completed task. Asynchronous mode completes inline
-        /// when there is no key store or network work, and otherwise continues in
-        /// <see cref="ContinueParameterEncryptionAsync"/>. The caller holds the in-progress flag
-        /// for asynchronous preparation.
+        /// Returns <see langword="default"/> when preparation completed inline, which is always
+        /// the case in synchronous mode. Asynchronous mode completes inline only when there is no
+        /// key store or network work; otherwise it returns a task for the deferred work, which
+        /// the caller must hand to execution even if it has already completed. The caller holds
+        /// the in-progress flag for asynchronous preparation.
         /// </remarks>
         private ValueTask PrepareForTransparentEncryption(
             SqlQueryMetadataCache.CachedQueryMetadata? cachedMetadata,
@@ -602,7 +603,8 @@ namespace Microsoft.Data.SqlClient
         /// Asynchronous part of <see cref="PrepareForTransparentEncryption"/>. Completes a cache
         /// hit's key loads on a worker, and on a miss or stale entry prepares enclave attestation
         /// and runs the describe parameter encryption round trip. Failures surface through the
-        /// returned task.
+        /// returned task. Cache hits always yield, so they never return
+        /// <see langword="default"/>.
         /// </summary>
         private async ValueTask ContinueParameterEncryptionAsync(
             SqlQueryMetadataCache.CachedQueryMetadata? cachedMetadata,
