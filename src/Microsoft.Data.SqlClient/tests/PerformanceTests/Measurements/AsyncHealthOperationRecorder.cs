@@ -54,7 +54,6 @@ internal sealed class AsyncHealthOperationRecorder
     private readonly List<AsyncHealthOperationObservation> _records = [];
     private readonly HashSet<(int, int)> _offeredWorkers = [];
     private readonly HashSet<(int, int)> _startedWorkers = [];
-    private readonly HashSet<(int, int)> _finishedFirstWorkers = [];
     private int _invocations, _completedInvocations, _expectedWorkers;
     private long _offered, _started, _opened, _completed, _failed, _cancelled;
     private long _openFailures, _inline, _pending;
@@ -95,7 +94,8 @@ internal sealed class AsyncHealthOperationRecorder
             {
                 Invocations = _invocations, CompletedInvocations = _completedInvocations,
                 ExpectedWorkers = _expectedWorkers, WorkersStarted = _startedWorkers.Count,
-                FirstWorkerOutcomesMissing = _expectedWorkers - _finishedFirstWorkers.Count,
+                FirstWorkerOutcomesMissing = _expectedWorkers -
+                    _records.Count(record => record.First && record.EndMs.HasValue),
                 Offered = _offered, Started = _started, Opened = _opened, Completed = _completed,
                 Failed = _failed, Cancelled = _cancelled, OpenFailures = _openFailures,
                 InlineOpens = _inline, PendingOpens = _pending,
@@ -146,7 +146,7 @@ internal sealed class AsyncHealthOperationRecorder
         }
     }
 
-    internal sealed class Operation(
+    internal readonly struct Operation(
         AsyncHealthOperationRecorder owner, AsyncHealthOperationObservation record)
     {
         internal void Start()
@@ -200,10 +200,6 @@ internal sealed class AsyncHealthOperationRecorder
                 }
                 record.EndMs = owner.Timestamp();
                 owner._lastOutcome = record.EndMs.Value;
-                if (record.First)
-                {
-                    owner._finishedFirstWorkers.Add((record.Invocation, record.Worker));
-                }
                 if (error == null)
                 {
                     record.Outcome = "Completed";

@@ -180,13 +180,6 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                             benchmark, operations);
                     }
                 }
-                var selectedCases = childSelection == null
-                    ? selectedIndexes.Select(index => cases[index]).ToArray()
-                    : BenchmarkExecutionPlan.Select(childSelection, unit.Name, cases, job);
-                if (selectedCases.Length == 0)
-                {
-                    continue;
-                }
                 matched = true;
                 if (job is CommandRunnerJob commandJob)
                 {
@@ -211,6 +204,8 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                     continue;
                 }
 
+                BenchmarkCase[] selectedCases = BenchmarkExecutionPlan.Select(
+                    childSelection, unit.Name, cases, job);
                 _ = BenchmarkNetworkScope.ReadAppliedRtt(job);
                 if (job.ProcessIsolation == "PerRunner" && selectedCases.Length > 1 &&
                     selectedCases.Any(AsyncHealthDiagnoser.IsMarked))

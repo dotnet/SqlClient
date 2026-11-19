@@ -84,6 +84,9 @@ class BenchmarkHealthTests(unittest.TestCase):
                 (artifact / f"async-health/{case}.json").write_text('{"Status":"Completed"}')
                 (artifact / "Runner-report-full.json").write_text(json.dumps({
                     "Benchmarks": [{"Type": "Runner", "Parameters": case}]}))
+                (artifact / "Runner-report-github.md").write_text(case)
+                for name in ("process.json", "network.json"):
+                    (artifact.parent / name).write_text(json.dumps({"case": case}))
             types = interleave.collect_results(str(root / "work"), str(root / "results"))
             self.assertEqual(types, {"Runner"})
             reports = list((root / "results").glob("**/*-report-full.json"))
@@ -91,6 +94,12 @@ class BenchmarkHealthTests(unittest.TestCase):
             self.assertEqual({json.loads(path.read_text())["Benchmarks"][0]["Parameters"]
                               for path in reports}, {"first", "second"})
             self.assertEqual(len(list((root / "results/async-health").glob("*.json"))), 2)
+            for case in ("first", "second"):
+                copied = root / "results/processes" / case
+                self.assertEqual(
+                    (copied / "BenchmarkDotNet.Artifacts/Runner-report-github.md").read_text(), case)
+                for name in ("process.json", "network.json"):
+                    self.assertEqual(json.loads((copied / name).read_text()), {"case": case})
 
     def test_missing_diagnostic_evidence_fails(self):
         with tempfile.TemporaryDirectory() as temp:

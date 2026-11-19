@@ -14,7 +14,6 @@ using BenchmarkDotNet.Exporters.Json;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Reports;
 using BenchmarkDotNet.Running;
-using BenchmarkDotNet.Toolchains;
 using BenchmarkDotNet.Toolchains.InProcess.Emit;
 #if WINDOWS
 using BenchmarkDotNet.Diagnostics.Windows;
@@ -32,17 +31,6 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         /// is only set when building on Windows in the PerformanceTests.csproj file).
         /// </summary>
         public static bool UseNativeMemoryAndEtwProfiler { get; set; }
-
-        /// <summary>
-        /// Builds the in-process toolchain; ExecutionTimeout enforces RunnerJob.TimeoutMinutes.
-        ///
-        /// The in-process toolchain is required (rather than merely convenient): the
-        /// AppContext switches applied in <see cref="Program.SetupConfigurations"/> only
-        /// affect the process that runs Main, so an out-of-process toolchain would run the
-        /// benchmarks with those switches at their default values.
-        /// </summary>
-        private static IToolchain BuildToolchain() =>
-            InProcessEmitToolchain.Default;
 
         /// <summary>
         /// Resolves the configured <see cref="RunStrategy"/> name, defaulting to
@@ -69,7 +57,8 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 // pipeline can translate results into the Kusto performance-results schema.
                 .AddExporter(JsonExporter.Full)
                 .AddJob(
-                    Job.MediumRun.WithToolchain(BuildToolchain())
+                    // Keep the AppContext switches applied by Program in the measured process.
+                    Job.MediumRun.WithToolchain(InProcessEmitToolchain.Default)
                     .WithLaunchCount(runnerJob.LaunchCount)
                     .WithInvocationCount(runnerJob.InvocationCount)
                     .WithIterationCount(runnerJob.IterationCount)

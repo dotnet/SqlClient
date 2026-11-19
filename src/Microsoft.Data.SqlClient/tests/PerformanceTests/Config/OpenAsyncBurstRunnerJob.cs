@@ -45,10 +45,8 @@ public sealed class OpenAsyncBurstRunnerJob : RunnerJob
         {
             foreach (var setting in SteadyOperationsPerWorker)
             {
-                string[] parts = setting.Key.Split('/');
-                if (parts.Length != 2 ||
-                    parts[0] != "OpenQueryClose" ||
-                    (parts[1] != "Warm" && parts[1] != "Oversubscribed" && parts[1] != "NonPooled") ||
+                if (setting.Key is not ("OpenQueryClose/Warm" or
+                    "OpenQueryClose/Oversubscribed" or "OpenQueryClose/NonPooled") ||
                     setting.Value <= 0 ||
                     setting.Value > int.MaxValue / (ConcurrentWorkers * ExtendedWaves))
                 {

@@ -40,6 +40,7 @@ public class AsyncHealthOperationRecorderTests
         // Assert
         Assert.Equal(1, result.Completed);
         Assert.Equal(1, result.Cancelled);
+        Assert.Equal(2, result.WorkersStarted);
         Assert.Equal(0, result.InFlight);
         Assert.Equal(0, result.FirstWorkerOutcomesMissing);
         Assert.Equal(1, result.PendingOpens);
@@ -111,6 +112,7 @@ public class AsyncHealthOperationRecorderTests
         Assert.Equal(2, result.Invocations);
         Assert.Equal(2, result.CompletedInvocations);
         Assert.Equal(2, result.ExpectedWorkers);
+        Assert.Equal(2, result.WorkersStarted);
         Assert.Equal(0, result.FirstWorkerOutcomesMissing);
         Assert.Equal(2, result.Observations.Length);
         Assert.NotEqual(result.Observations[0].Invocation, result.Observations[1].Invocation);
@@ -135,6 +137,7 @@ public class AsyncHealthOperationRecorderTests
         // Assert
         Assert.Equal(1, result.Failed);
         Assert.Equal(1, result.OpenFailures);
+        Assert.Equal(0, result.FirstWorkerOutcomesMissing);
         Assert.Equal(0, result.Opened);
         Assert.Equal(100, summary.FailedOpenP99Ms);
         Assert.Null(summary.SuccessfulOpenP99Ms);

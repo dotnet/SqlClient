@@ -41,7 +41,7 @@ public sealed class AsyncHealthDiagnoser : EventProcessor, IInProcessDiagnoser
     private readonly string _handlerId = Guid.NewGuid().ToString("N");
     private readonly List<AsyncHealthSummary> _summaries = [];
     private readonly bool _poolV2, _managedSni, _optimizedAsync;
-    private readonly string? _outputDirectory;
+    private readonly string _outputDirectory;
     private readonly RunnerJob _job;
     private BenchmarkCase? _case;
     private ThreadPoolHealthObserver? _observer;
@@ -52,25 +52,15 @@ public sealed class AsyncHealthDiagnoser : EventProcessor, IInProcessDiagnoser
     private bool _firstBenchmarkInProcess;
     private string? _phase;
 
-    public AsyncHealthDiagnoser(bool poolV2, bool managedSni, bool optimizedAsync)
-        : this(poolV2, managedSni, optimizedAsync, null)
-    {
-    }
-
-    internal AsyncHealthDiagnoser(
-        bool poolV2, bool managedSni, bool optimizedAsync, string? outputDirectory)
-        : this(poolV2, managedSni, optimizedAsync, outputDirectory, new RunnerJob())
-    {
-    }
-
-    internal AsyncHealthDiagnoser(
-        bool poolV2, bool managedSni, bool optimizedAsync, string? outputDirectory, RunnerJob job)
+    public AsyncHealthDiagnoser(
+        bool poolV2, bool managedSni, bool optimizedAsync,
+        string? outputDirectory = null, RunnerJob? job = null)
     {
         _poolV2 = poolV2;
         _managedSni = managedSni;
         _optimizedAsync = optimizedAsync;
-        _outputDirectory = outputDirectory;
-        _job = job;
+        _outputDirectory = outputDirectory ?? Path.Combine("BenchmarkDotNet.Artifacts", "async-health");
+        _job = job ?? new RunnerJob();
     }
 
     internal bool HasFailed { get; private set; }
@@ -134,10 +124,7 @@ public sealed class AsyncHealthDiagnoser : EventProcessor, IInProcessDiagnoser
         {
             return;
         }
-        if (!report.Success || !_windowCompleted || !_startupCompleted)
-        {
-            HasFailed = true;
-        }
+        HasFailed |= !report.Success;
         FinishRun();
         if (HasFailed)
         {
@@ -160,7 +147,8 @@ public sealed class AsyncHealthDiagnoser : EventProcessor, IInProcessDiagnoser
             if (!_windowCompleted || !_startupCompleted || HasFailed)
             {
                 HasFailed = true;
-                Save(null, "Failed", "Benchmark failed or produced no diagnostic iteration.");
+                Save(null, _operations?.Snapshot(), "Failed",
+                    "Benchmark failed or produced no diagnostic iteration.");
             }
         }
         finally
@@ -195,7 +183,7 @@ public sealed class AsyncHealthDiagnoser : EventProcessor, IInProcessDiagnoser
                 $"probes={summary.Samples}; missing={summary.Missing}; " +
                 $"peak process threads={summary.ProcessThreadsPeak?.ToString() ?? "N/A"}");
         }
-        logger.WriteLine(LogKind.Info, "Raw async-health evidence: " + OutputDirectory);
+        logger.WriteLine(LogKind.Info, "Raw async-health evidence: " + _outputDirectory);
     }
 
     public async IAsyncEnumerable<ValidationError> ValidateAsync(
@@ -213,9 +201,6 @@ public sealed class AsyncHealthDiagnoser : EventProcessor, IInProcessDiagnoser
             }
         }
     }
-
-    private string OutputDirectory => _outputDirectory ??
-        Path.Combine("BenchmarkDotNet.Artifacts", "async-health");
 
     internal void StartWindow(string phase)
     {
@@ -254,7 +239,7 @@ public sealed class AsyncHealthDiagnoser : EventProcessor, IInProcessDiagnoser
                     operations.FirstWorkerOutcomesMissing != 0 ||
                     operations.CompletedInvocations != operations.Invocations;
             }
-            Save(window, HasFailed ? "Failed" : "Completed", window.ObserverError);
+            Save(window, operations, HasFailed ? "Failed" : "Completed", window.ObserverError);
             // Continuing with queued callbacks would contaminate later benchmark cases.
             if (window.Probes.Outstanding != 0)
             {
@@ -268,11 +253,11 @@ public sealed class AsyncHealthDiagnoser : EventProcessor, IInProcessDiagnoser
         }
     }
 
-    private void Save(AsyncHealthWindow? measurement, string status, string? error)
+    private void Save(AsyncHealthWindow? measurement, AsyncHealthOperationSnapshot? operations,
+        string status, string? error)
     {
         BenchmarkCase benchmark = _case ??
             throw new InvalidOperationException("Missing async-health benchmark context.");
-        AsyncHealthOperationSnapshot? operations = _operations?.Snapshot();
         AsyncHealthSummary? summary = measurement == null ? null :
             AsyncHealthSummary.Create(measurement, operations);
         if (summary != null)
@@ -321,10 +306,10 @@ public sealed class AsyncHealthDiagnoser : EventProcessor, IInProcessDiagnoser
             },
             Summary = summary, Measurement = measurement, Operations = operations
         };
-        Directory.CreateDirectory(OutputDirectory);
+        Directory.CreateDirectory(_outputDirectory);
         // A later execution failure must not overwrite the already captured failed window.
         string suffix = measurement == null ? "execution-" + status : _phase + "-" + status;
-        string path = Path.Combine(OutputDirectory, $"{_caseId}-{suffix}.json");
+        string path = Path.Combine(_outputDirectory, $"{_caseId}-{suffix}.json");
         File.WriteAllText(path + ".tmp", JsonSerializer.Serialize(result,
             new JsonSerializerOptions { WriteIndented = true }));
         File.Move(path + ".tmp", path, overwrite: true);

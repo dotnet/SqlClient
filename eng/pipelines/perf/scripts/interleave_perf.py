@@ -168,10 +168,6 @@ def run_unit_process(exe_dir, assembly, unit, cwd, cpus, log_path, env_overrides
             raise
 
 
-def _report_files(root):
-    return sorted(glob.glob(os.path.join(root, "**", "*-report-full.json"), recursive=True))
-
-
 def collect_results(cwd, dest):
     """Copy the BenchmarkDotNet reports produced under *cwd* into *dest*.
 
@@ -181,33 +177,27 @@ def collect_results(cwd, dest):
     os.makedirs(dest, exist_ok=True)
     types = set()
     artifacts = os.path.join(cwd, "BenchmarkDotNet.Artifacts")
-    for name in ("process.json", "network.json"):
-        for path in glob.glob(os.path.join(artifacts, "processes", "**", name), recursive=True):
-            target = os.path.join(dest, os.path.relpath(path, artifacts))
-            os.makedirs(os.path.dirname(target), exist_ok=True)
-            shutil.copy2(path, target)
     for health in glob.glob(os.path.join(artifacts, "**", "async-health"), recursive=True):
         shutil.copytree(health, os.path.join(dest, "async-health"), dirs_exist_ok=True)
-    for path in _report_files(artifacts):
-        relative = os.path.relpath(path, artifacts)
-        target = os.path.join(dest, relative if relative.startswith("processes" + os.sep)
-                              else os.path.basename(path))
-        os.makedirs(os.path.dirname(target), exist_ok=True)
-        shutil.copy2(path, target)
-        try:
-            with open(path, "r", encoding="utf-8-sig") as fh:
-                for bench in json.load(fh).get("Benchmarks", []):
-                    if bench.get("Type"):
-                        types.add(bench["Type"])
-        except (OSError, ValueError):
-            pass
-    # Also keep the human-readable GitHub markdown reports alongside, best effort.
-    for md in glob.glob(os.path.join(artifacts, "**", "*-report-github.md"), recursive=True):
-        relative = os.path.relpath(md, artifacts)
-        target = os.path.join(dest, relative if relative.startswith("processes" + os.sep)
-                              else os.path.basename(md))
-        os.makedirs(os.path.dirname(target), exist_ok=True)
-        shutil.copy2(md, target)
+    patterns = (
+        os.path.join("processes", "**", "process.json"),
+        os.path.join("processes", "**", "network.json"),
+        os.path.join("**", "*-report-full.json"),
+        os.path.join("**", "*-report-github.md"))
+    for pattern in patterns:
+        for path in sorted(glob.glob(os.path.join(artifacts, pattern), recursive=True)):
+            relative = os.path.relpath(path, artifacts)
+            target = os.path.join(dest, relative if relative.startswith("processes" + os.sep)
+                                  else os.path.basename(path))
+            os.makedirs(os.path.dirname(target), exist_ok=True)
+            shutil.copy2(path, target)
+            if path.endswith("-report-full.json"):
+                try:
+                    with open(path, "r", encoding="utf-8-sig") as fh:
+                        types.update(bench["Type"] for bench in json.load(fh).get("Benchmarks", [])
+                                     if bench.get("Type"))
+                except (OSError, ValueError):
+                    pass
     return types
 
 

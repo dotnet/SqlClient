@@ -2,74 +2,37 @@
 
 ## Async-health benchmarks and diagnoser
 
-`EnableAsyncHealth` defaults to true and applies only to the new `OpenAsyncBurstRunner`.
-Its workloads record BDN startup/warmup and the extra diagnostic iteration separately;
-normal timing iterations are not observed. Raw queue/open/outcome/probe/resource evidence
-and per-window summaries are exported under
-`BenchmarkDotNet.Artifacts/async-health`. Short or censored windows are insufficient, not healthy.
-There is no separate health sweep before the perf tests.
+`OpenAsyncBurst` runs 64 open/query/close workers against four pool states: `Empty`, `Warm`,
+`Oversubscribed` (16 slots), and `NonPooled`. Only this runner has async-health instrumentation.
+Open/close-only bursts are excluded because tight synchronous checkout loops can themselves
+saturate the ThreadPool. Unrelated connection/churn benchmarks are unchanged.
 
-The pipeline report pairs baseline/current maxima across phases and repetitions for four
-metrics: dispatch p99, first-worker queue p99, peak ThreadPool threads and peak process threads.
-Cells show the current maximum with signed percentage/raw deltas. Status uses the current maximum
-dispatch p99: below 1ms is healthy (green), 1-10ms inclusive is warning (yellow), above 10ms is
-unhealthy (red), and no current value is unknown. It is not majority confirmation or proof of
-sufficient sampling.
-The report preserves phase completeness and raw cohort provenance outside its compact table.
+`EnableAsyncHealth` defaults to true. The diagnoser observes Startup/warmup and ExtraIteration,
+not normal timing iterations. Startup includes fixture setup; ExtraIteration excludes it.
+Raw queue/open/outcome/probe/resource evidence lives under `BenchmarkDotNet.Artifacts/async-health`;
+short, censored or failed windows are not sufficient evidence of health.
 
-| Unit | Async-health regression coverage |
-| --- | --- |
-| `OpenAsyncBurst` | 64 ThreadPool-dispatched open/query/close workers against empty, warm, oversubscribed (16-slot), and non-pooled connections |
+All runner configs support `ProcessIsolation` (`PerRunner` by default, or `PerCase`) and
+`AdditionalRttMilliseconds` (default 0). The burst defaults select `PerCase`, one warmup,
+three timing iterations, one invocation per iteration and a five-minute timeout. Positive RTT
+requires supported Linux SQL-loopback netem; unsupported requests fail explicitly.
 
-Existing connection, contention and synchronous-pressure workloads remain ordinary benchmarks,
-without async-health annotations or operation-recorder wrappers.
-
-All runner configs inherit `ProcessIsolation` (`PerRunner` by default, or explicit `PerCase`)
-and `AdditionalRttMilliseconds` (zero by default). These settings do not depend on the diagnoser
-attribute. The burst default explicitly uses `PerCase`; direct CLI and pipeline execution use
-the same process dispatcher. Positive RTT is applied by an owned Linux SQL-loopback netem scope,
-never silently ignored on unsupported platforms or endpoints.
-
-`OpenAsyncBurst` runs four benchmark cases, each with one warmup, three timing iterations,
-one invocation per iteration, and a five-minute per-case timeout. It reports per-connection
-cost for a completed 64-operation batch. Empty-pool setup clears just its own pool; warm
-setup holds all connections simultaneously before releasing them. Setup and cleanup are
-outside timing and the extra-iteration window; startup observations include fixture setup.
-No exceptions or unsuccessful opens count as
-completed benchmark operations.
-
-Open/close-only burst workloads are excluded: repeating synchronous warm checkouts in a
-ThreadPool work item creates caller-driven saturation, not evidence of blocked asynchronous I/O.
-Older private extended profiles must remove their `OpenClose/...` work-size entries.
-
-The optional `Extended` sampling profile keeps `Empty` as one cold wave but increases the other
-states to 16 waves with fixed `SteadyOperationsPerWorker` values. At most 64 workers run at once;
-1,024 worker starts are retained per invocation. BDN operation normalization uses the complete
-configured workload count. Interleaved extended jobs run all configured repetitions without
-adding another confirmation loop. Counts are not automatically tuned during comparisons.
-Probe and first-worker p99 sample adequacy are reported independently; cold 64-start p99 remains
-an explicitly sparse observed maximum.
-
-See [the opt-in 100ms extended profile](profiles/openasync-extended-100ms.jsonc) and its
+The default `Burst` profile performs one operation per worker. `Extended` keeps that cold
+wave for `Empty`, but uses 16 waves and fixed `SteadyOperationsPerWorker` counts for the other
+states. Work counts drive both execution and BDN normalization; first-worker records survive
+ordinary-record truncation. Remove retired `OpenClose/...` entries from older private profiles.
+See the [opt-in 100ms profile](profiles/openasync-extended-100ms.jsonc) and its
 [measured sampling limits](../../../../eng/pipelines/perf/async-health.md#calibrated-100ms-example).
-It is not a default pipeline cost or a calibrated zero-RTT profile.
 
-BDN uses the run's process-wide `UseConnectionPoolV2` selection, not a per-case switch flip.
-To compare V1/V2 BDN results use separate process configurations. Startup observations retain
-first-open scheduling evidence during BDN's existing warmup. `FirstBenchmarkInProcess`
-identifies the first case; an empty SQL pool in subsequent cases does not imply a cold process.
+The compact report preserves baseline/current deltas, phase coverage and raw provenance.
+Its current dispatch-p99 indicator is green below 1ms, yellow from 1-10ms inclusive, and red
+above 10ms; missing values are unknown. This does not replace sampling qualifications or
+ordinary performance regression policy.
 
-The test-only BenchmarkDotNet packages use `0.16.0-preview.1` because stable `0.15.8`
-lacks the in-process workload-only diagnoser hooks. Per-case timeouts are retained through
-BDN's cancellation API. Do not combine async health with native/interactive profilers;
-set `EnableAsyncHealth=false` for local profiling. Pipelines explicitly enable health.
-
-`JitTieringMode.Skip` avoids the preview's additional automatic tier-promotion invocations.
-Those repeat full SQL batches (and fixtures), beyond the configured warmup. Runtime tiered
-compilation stays enabled, and configured warmup/measurement counts are unchanged.
-Existing `Throughput`/`Monitoring` choices are not reclassified by this change.
-
-See [the pipeline protocol](../../../../eng/pipelines/perf/async-health.md).
+Use separate process configurations to compare pool versions; the switch is cached.
+For local native/interactive profiling, set `EnableAsyncHealth=false`.
+The [pipeline protocol](../../../../eng/pipelines/perf/async-health.md) documents lifecycle
+boundaries, BDN preview/JIT preparation, network ownership/cleanup, reporting and limitations.
 
 ## Command and reader benchmarks
 
