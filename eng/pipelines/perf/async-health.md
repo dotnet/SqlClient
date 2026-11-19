@@ -157,6 +157,8 @@ The shared dedicated-thread observer records intended probe cadence, actual post
 execution, missing/rejected/dropped/outstanding probes, and a bounded recovery interval.
 Raw resources include all process threads (including dedicated threads), ThreadPool threads,
 queue depth, allocated bytes and Gen2 collection counts.
+Missing thread peaks are `null` (`N/A` in comparisons), not measured zeroes. The process-thread
+peak includes the count recorded at observation start, even without later resource samples.
 
 Marked benchmark methods also record their real operations during those diagnostic windows:
 

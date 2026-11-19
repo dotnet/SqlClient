@@ -21,8 +21,8 @@ internal sealed class AsyncHealthSummary
     public int FirstWorkerQueueSamples { get; init; }
     public string FirstWorkerQueueEvidence { get; init; } = "Sparse";
     public bool FirstWorkerQueueP99IsMaximum { get; init; }
-    public int ProcessThreadsPeak { get; init; }
-    public int ThreadPoolThreadsPeak { get; init; }
+    public int? ProcessThreadsPeak { get; init; }
+    public int? ThreadPoolThreadsPeak { get; init; }
     public string OperationEvidence { get; init; } = "NotInstrumented";
     public double? FirstWorkerQueueP99Ms { get; init; }
     public double? FirstWorkerOfferToOpenP99Ms { get; init; }
@@ -73,8 +73,9 @@ internal sealed class AsyncHealthSummary
                 !operationsComplete ? "Incomplete" :
                 firstQueue.Length >= MinimumP99Samples ? "Adequate" : "Sparse",
             FirstWorkerQueueP99IsMaximum = firstQueue.Length > 0 && firstQueue.Length < 100,
-            ProcessThreadsPeak = window.Resources.Select(r => r.ProcessThreads).DefaultIfEmpty().Max(),
-            ThreadPoolThreadsPeak = window.Resources.Select(r => r.Threads).DefaultIfEmpty().Max(),
+            ProcessThreadsPeak = window.Resources.Select(r => (int?)r.ProcessThreads)
+                .Append(window.ProcessThreadsAtStart > 0 ? window.ProcessThreadsAtStart : null).Max(),
+            ThreadPoolThreadsPeak = window.Resources.Select(r => (int?)r.Threads).Max(),
             OperationEvidence = !instrumented ? "NotInstrumented" :
                 !operationsComplete ? "Incomplete" :
                 operations!.Failed != 0 || operations.Cancelled != 0 ? "Failed" :

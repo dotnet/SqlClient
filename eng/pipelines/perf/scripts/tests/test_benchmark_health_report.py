@@ -234,6 +234,32 @@ class BenchmarkHealthReportTests(unittest.TestCase):
                     self.assertIsNone(entry["metrics"]["DispatchP99Ms"]["deltaPct"])
                     self.assertIn(expected, markdown)
 
+    def test_missing_thread_peak_is_not_reported_as_an_improvement(self):
+        """Unsampled thread counts remain N/A instead of a false zero or minus-100% change."""
+        # Arrange
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            for phase in ("Startup", "ExtraIteration"):
+                baseline = window("baseline", "one", phase)
+                current = window("current", "one", phase)
+                current["Summary"]["ThreadPoolThreadsPeak"] = None
+                current["Summary"]["ProcessThreadsPeak"] = 25
+                write_window(root, "baseline", baseline)
+                write_window(root, "current", current)
+
+            # Act
+            entry, = report.build_comparison(root)
+            markdown, failed = report.render(root)
+
+            # Assert
+            self.assertFalse(failed)
+            self.assertEqual(entry["metrics"]["ThreadPoolThreadsPeak"],
+                             dict(baseline=16, current=None, delta=None, deltaPct=None))
+            self.assertEqual(entry["metrics"]["ProcessThreadsPeak"]["current"], 25)
+            self.assertIn("N/A (N/A; N/A)", markdown)
+            self.assertIn("ThreadPoolThreadsPeak=2", markdown)
+            self.assertNotIn("-100.00%", markdown)
+
     def test_health_status_preserves_sorting_and_regular_comparison_policy(self):
         """Health uses current milliseconds; ordering and ordinary percent thresholds stay unchanged."""
         # Arrange

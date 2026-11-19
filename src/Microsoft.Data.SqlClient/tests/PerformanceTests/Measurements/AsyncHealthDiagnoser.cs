@@ -193,7 +193,7 @@ public sealed class AsyncHealthDiagnoser : EventProcessor, IInProcessDiagnoser
             logger.WriteLine(LogKind.Info,
                 $"Async health: {summary.Health}; dispatch p99={summary.DispatchP99Ms:F2} ms; " +
                 $"probes={summary.Samples}; missing={summary.Missing}; " +
-                $"peak process threads={summary.ProcessThreadsPeak}");
+                $"peak process threads={summary.ProcessThreadsPeak?.ToString() ?? "N/A"}");
         }
         logger.WriteLine(LogKind.Info, "Raw async-health evidence: " + OutputDirectory);
     }
