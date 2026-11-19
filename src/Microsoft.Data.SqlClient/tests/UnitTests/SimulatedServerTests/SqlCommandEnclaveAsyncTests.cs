@@ -439,6 +439,61 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(-1, await reusable.ExecuteNonQueryAsync());
         }
 
+        /// <summary>
+        /// A successful retry after a package fault keeps only the retry's reservation. The failed
+        /// write already released the original one, so it is not released again and the caller's
+        /// End leaves the count at zero instead of negative.
+        /// </summary>
+        [Fact]
+        public async Task Retry_PackageFaultRetrySucceeds_KeepsOnlyRetryReservation()
+        {
+            // Arrange
+            using Fixture fixture = new Fixture();
+            using SqlCommand command = fixture.CreateCommand();
+            SqlConnectionInternal inner = (SqlConnectionInternal)fixture.Connection.InnerConnection;
+            var local = new TaskCompletionSource<object>(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+            var global = new TaskCompletionSource<object>(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+            object retryResult = new object();
+            int retries = 0;
+            Func<SqlCommand, IAsyncResult, bool, string, object> end =
+                (cmd, result, internalEnd, name) =>
+                    throw new InvalidOperationException("A failed write must not be read.");
+            Func<SqlCommand, CommandBehavior, AsyncCallback, object, int, bool, bool, IAsyncResult>
+                retry =
+                (cmd, behavior, callback, state, timeout, isRetry, asyncWrite) =>
+                {
+                    retries++;
+                    // Like a real retry, take a reservation for End.
+                    inner.IncrementAsyncCount();
+                    return Task.FromResult(retryResult);
+                };
+            typeof(SqlCommand)
+                .GetMethod(
+                    "CreateLocalCompletionTask",
+                    BindingFlags.NonPublic | BindingFlags.Instance)
+                .Invoke(command, new object[]
+                {
+                    CommandBehavior.Default, null, 30, false, true, global, local, end, retry,
+                    nameof(SqlCommand.EndExecuteReader), ADP.TimerCurrent(), CancellationToken.None
+                });
+
+            // Act
+            local.SetException(
+                new EnclaveDelegate.RetryableEnclaveQueryExecutionException("Package", null));
+            object completed = await global.Task;
+            int countBeforeEnd = GetAsyncCount(inner);
+            // The caller's End releases the retry's reservation.
+            inner.DecrementAsyncCount();
+
+            // Assert
+            Assert.Same(retryResult, completed);
+            Assert.Equal(1, retries);
+            Assert.Equal(1, countBeforeEnd);
+            Assert.Equal(0, GetAsyncCount(inner));
+        }
+
         /// <summary>Revalidation must not mistake an internal retry's own reservation for a competing command.</summary>
         [Theory]
         [InlineData(false)]
@@ -1200,6 +1255,8 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 (cmd, behavior, callback, state, timeout, isRetry, asyncWrite) =>
                 {
                     retries++;
+                    // Like a real retry, take a reservation for End.
+                    inner.IncrementAsyncCount();
                     return Task.FromResult<object>(null);
                 };
             typeof(SqlCommand).GetMethod("CreateLocalCompletionTask", BindingFlags.NonPublic | BindingFlags.Instance)
@@ -1218,6 +1275,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 fixture.Provider.CompleteSessionOperation();
                 await global.Task;
                 Assert.Equal(1, retries);
+                // Only the retry's reservation remains for End.
+                Assert.Equal(1, GetAsyncCount(inner));
+                // The caller's End releases it.
                 inner.DecrementAsyncCount();
             }
             else if (outcome == 1)
