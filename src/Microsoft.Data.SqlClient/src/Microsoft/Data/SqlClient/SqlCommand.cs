@@ -2484,6 +2484,10 @@ namespace Microsoft.Data.SqlClient
                         SqlConnectionInternal retryConnection = task.IsFaulted
                             ? null
                             : _activeConnection.InnerConnection as SqlConnectionInternal;
+                        // A faulted write released the in-progress flag and never marked the
+                        // command pending, so hold the flag until the retry takes it over.
+                        bool holdsInProgress = task.IsFaulted && !_enclaveAttestationInProgress;
+                        _enclaveAttestationInProgress |= holdsInProgress;
                         Task<object> retryTask = null;
                         try
                         {
@@ -2492,6 +2496,14 @@ namespace Microsoft.Data.SqlClient
                             _enclaveRetryConnection = retryConnection;
                             try
                             {
+                                if (holdsInProgress)
+                                {
+                                    // The retry's RunExecuteReader sets and owns the flag again.
+                                    holdsInProgress = false;
+                                    _enclaveAttestationInProgress = false;
+                                }
+
+
                                 retryTask = (Task<object>)retryFunc(
                                     this,
                                     behavior,
@@ -2515,6 +2527,11 @@ namespace Microsoft.Data.SqlClient
                         }
                         catch (Exception e2)
                         {
+                            if (holdsInProgress)
+                            {
+                                _enclaveAttestationInProgress = false;
+                            }
+
                             CachedAsyncState?.ResetAsyncState();
                             // Failed retry setup cannot transfer the original reservation to End.
                             retryConnection?.DecrementAsyncCount();

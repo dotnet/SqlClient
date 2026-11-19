@@ -1353,6 +1353,110 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 .GetValue(inner));
         }
 
+        /// <summary>
+        /// After a package fault, the command stays guarded while the retry invalidates the enclave
+        /// session, and the guard passes to the retry once invalidation completes.
+        /// </summary>
+        [Fact]
+        public async Task Retry_PackageFaultPendingInvalidation_KeepsCommandGuarded()
+        {
+            // Arrange
+            using Fixture fixture = new Fixture();
+            using SqlCommand command = fixture.CreateCommand();
+            Task<object> global = StartPackageFaultRetry(
+                fixture, command, out Func<bool> retryStartedUnguarded, out Func<int> retries);
+            await await Task.WhenAny(fixture.Provider.Entered.Task, global);
+
+            // Act
+            Exception setterError = Record.Exception(() => command.Connection = null);
+            Task<SqlDataReader> second = command.ExecuteReaderAsync();
+
+            // Assert
+            // Invalidation is pending, so the connection and command cannot be reused.
+            Assert.IsType<InvalidOperationException>(setterError);
+            Assert.Same(fixture.Connection, command.Connection);
+            await Assert.ThrowsAsync<InvalidOperationException>(() => second);
+            Assert.True((bool)GetField(command, "_enclaveAttestationInProgress"));
+            Assert.Equal(0, retries());
+
+            // Once invalidation completes, the retry starts and can take the guard itself.
+            fixture.Provider.CompleteSessionOperation();
+            await global;
+            Assert.Equal(1, retries());
+            Assert.True(retryStartedUnguarded());
+            Assert.False((bool)GetField(command, "_enclaveAttestationInProgress"));
+        }
+
+        /// <summary>
+        /// After a package fault, a failed enclave session invalidation releases the guard without
+        /// retrying, so the command can be reused.
+        /// </summary>
+        [Fact]
+        public async Task Retry_PackageFaultInvalidationFails_ReleasesGuard()
+        {
+            // Arrange
+            using Fixture fixture = new Fixture();
+            using SqlCommand command = fixture.CreateCommand();
+            Task<object> global = StartPackageFaultRetry(fixture, command, out _, out Func<int> retries);
+            await await Task.WhenAny(fixture.Provider.Entered.Task, global);
+
+            // Act
+            fixture.Provider.FailSessionOperation();
+
+            // Assert
+            Assert.Same(fixture.Provider.Error,
+                await Assert.ThrowsAsync<InvalidOperationException>(() => global));
+            Assert.Equal(0, retries());
+            Assert.False((bool)GetField(command, "_enclaveAttestationInProgress"));
+            command.Connection = fixture.Connection;
+        }
+
+        /// <summary>
+        /// Starts the internal retry for a package fault raised before the read stage, with enclave
+        /// session invalidation paused in the fixture's provider.
+        /// </summary>
+        /// <param name="fixture">Fixture whose provider pauses invalidation.</param>
+        /// <param name="command">Command being retried.</param>
+        /// <param name="retryStartedUnguarded">Reports whether the retry started without the guard.</param>
+        /// <param name="retries">Reports the number of retry attempts.</param>
+        /// <returns>The caller's completion.</returns>
+        private static Task<object> StartPackageFaultRetry(
+            Fixture fixture,
+            SqlCommand command,
+            out Func<bool> retryStartedUnguarded,
+            out Func<int> retries)
+        {
+            SetField(command, "enclavePackage", new EnclavePackage(Array.Empty<byte>(), fixture.Provider.Session));
+            typeof(SqlCommand).GetMethod("GetStateObject", BindingFlags.NonPublic | BindingFlags.Instance)
+                .Invoke(command, new object[] { null });
+            var local = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var global = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
+            int calls = 0;
+            bool unguarded = false;
+            Func<SqlCommand, IAsyncResult, bool, string, object> end =
+                (cmd, result, internalEnd, name) =>
+                    throw new InvalidOperationException("A failed write must not enter the read stage.");
+            Func<SqlCommand, CommandBehavior, AsyncCallback, object, int, bool, bool, IAsyncResult> retry =
+                (cmd, behavior, callback, state, timeout, isRetry, asyncWrite) =>
+                {
+                    calls++;
+                    unguarded = !(bool)GetField(cmd, "_enclaveAttestationInProgress");
+                    return Task.FromResult<object>(null);
+                };
+            typeof(SqlCommand).GetMethod("CreateLocalCompletionTask", BindingFlags.NonPublic | BindingFlags.Instance)
+                .Invoke(command, new object[]
+                {
+                    CommandBehavior.Default, null, 30, false, true, global, local, end, retry,
+                    nameof(SqlCommand.EndExecuteReader), ADP.TimerCurrent(), CancellationToken.None
+                });
+
+            // The faulted write already released the flag and its reservation.
+            local.SetException(new EnclaveDelegate.RetryableEnclaveQueryExecutionException("Retry", null));
+            retryStartedUnguarded = () => unguarded;
+            retries = () => calls;
+            return global.Task;
+        }
+
         /// <summary>Retry preparation failures release the retained reservation after successful invalidation.</summary>
         [Theory]
         [InlineData(0, false)]
