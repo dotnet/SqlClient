@@ -794,10 +794,17 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// <summary>Starts uncached asynchronous encryption preparation, as execution does.
         /// </summary>
         private static Task PrepareAsync(
-            SqlCommand command, bool isRetry, CancellationToken token) =>
-            Invoke(command, "PrepareForTransparentEncryptionAsync",
-                30, true, isRetry, GetField(command, "_enclaveRetryConnection"),
-                null, null, 0, null, nameof(SqlCommand.ExecuteReader), token);
+            SqlCommand command, bool isRetry, CancellationToken token)
+        {
+            object[] arguments =
+            {
+                true, 30, new TaskCompletionSource<object>(), null, true, false, isRetry,
+                nameof(SqlCommand.ExecuteReader), token
+            };
+            typeof(SqlCommand).GetMethod("PrepareForTransparentEncryption", BindingFlags.NonPublic | BindingFlags.Instance)
+                .Invoke(command, arguments);
+            return (Task)arguments[3] ?? Task.CompletedTask;
+        }
 
         /// <summary>Cold preparation serializes awaited parameters and preserves provider custom data.</summary>
         [Fact]
