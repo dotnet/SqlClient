@@ -158,11 +158,11 @@ namespace Microsoft.Data.SqlClient.UnitTests
         #region CipherSuite
 
         /// <summary>
-        /// The smallest and largest valid IANA identifiers are stored and leave every other value
-        /// unset.
+        /// The smallest and largest IANA identifiers that can be negotiated are stored and leave
+        /// every other value unset.
         /// </summary>
         [Theory]
-        [InlineData(0)]
+        [InlineData(1)]
         [InlineData(0xFFFF)]
         public void CipherSuite_BoundaryValue_StoresValueOnly(int cipherSuite)
         {
@@ -180,6 +180,29 @@ namespace Microsoft.Data.SqlClient.UnitTests
             AssertCertificateFieldsUnset(accumulator);
             Assert.True(accumulator.HasValues);
             Assert.Equal(cipherSuite, accumulator.ToSnapshot().NegotiatedCipherSuiteId);
+        }
+
+        /// <summary>
+        /// The null cipher suite (TLS_NULL_WITH_NULL_NULL, <c>0</c>) is never negotiated, so it means
+        /// none was reported: it is stored as unavailable, replacing an earlier value, and leaves the
+        /// other values unset.
+        /// </summary>
+        [Fact]
+        public void CipherSuite_SetNullCipherSuite_StoresNull()
+        {
+            // Arrange
+            EncryptionInfoAccumulator accumulator = new();
+            accumulator.CipherSuite = ToConstructorCipherSuite(SampleCipherSuite);
+
+            // Act
+            accumulator.CipherSuite = ToConstructorCipherSuite(0);
+
+            // Assert
+            Assert.Null(accumulator.CipherSuite);
+            Assert.Null(accumulator.Mode);
+            Assert.Null(accumulator.Protocol);
+            AssertCertificateFieldsUnset(accumulator);
+            Assert.False(accumulator.HasValues);
         }
 
 #if NETFRAMEWORK
@@ -232,6 +255,50 @@ namespace Microsoft.Data.SqlClient.UnitTests
             AssertNegotiatedValuesUnset(accumulator);
             Assert.True(accumulator.HasValues);
             Assert.Equal(SampleCertificate, Assert.NotNull(accumulator.ToSnapshot().PresentedServerCertificateRawData).ToArray());
+        }
+
+        /// <summary>
+        /// A certificate of exactly the maximum reported size is stored.
+        /// </summary>
+        [Fact]
+        public void ServerCertificateDerBytes_SetMaximumSize_StoresValue()
+        {
+            // Arrange
+            EncryptionInfoAccumulator accumulator = new();
+            byte[] derBytes = new byte[EncryptionInfoAccumulator.MaxServerCertificateDerBytesSize];
+
+            // Act
+            accumulator.ServerCertificateDerBytes = derBytes;
+
+            // Assert
+            Assert.Same(derBytes, accumulator.ServerCertificateDerBytes);
+            Assert.Null(accumulator.ValidationErrors);
+            Assert.Null(accumulator.ChainStatus);
+            AssertNegotiatedValuesUnset(accumulator);
+        }
+
+        /// <summary>
+        /// An empty or oversized certificate is not reported: it is stored as unavailable, replacing
+        /// an earlier value, rather than truncated, and leaves the other values unset.
+        /// </summary>
+        [Theory]
+        [InlineData(0)]
+        [InlineData(EncryptionInfoAccumulator.MaxServerCertificateDerBytesSize + 1)]
+        public void ServerCertificateDerBytes_SetUnreportableSize_StoresNull(int length)
+        {
+            // Arrange
+            EncryptionInfoAccumulator accumulator = new();
+            accumulator.ServerCertificateDerBytes = SampleCertificate;
+
+            // Act
+            accumulator.ServerCertificateDerBytes = new byte[length];
+
+            // Assert
+            Assert.Null(accumulator.ServerCertificateDerBytes);
+            Assert.Null(accumulator.ValidationErrors);
+            Assert.Null(accumulator.ChainStatus);
+            AssertNegotiatedValuesUnset(accumulator);
+            Assert.False(accumulator.HasValues);
         }
 
         /// <summary>

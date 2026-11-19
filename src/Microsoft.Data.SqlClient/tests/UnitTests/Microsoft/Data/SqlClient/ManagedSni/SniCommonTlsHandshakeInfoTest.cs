@@ -410,8 +410,9 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         {
             // Arrange
             using X509Certificate2 serverCert = CreateSelfSignedCertificate(ServerName,
-                TlsHandshakeInfo.MaxDerBytesSize);
-            Assert.True(serverCert.RawData.Length > TlsHandshakeInfo.MaxDerBytesSize);
+                EncryptionInfoAccumulator.MaxServerCertificateDerBytesSize);
+            Assert.True(
+                serverCert.RawData.Length > EncryptionInfoAccumulator.MaxServerCertificateDerBytesSize);
             ServerCertificateVerdict verdict = new(
                 SqlServerCertificateValidationErrors.ChainError, X509ChainStatusFlags.UntrustedRoot);
 
@@ -435,8 +436,11 @@ namespace Microsoft.Data.SqlClient.UnitTests.ManagedSni
         {
             // Arrange
             using X509Certificate2 serverCert = CreateSelfSignedCertificate(ServerName,
-                TlsHandshakeInfo.MaxDerBytesSize / 2);
-            Assert.InRange(serverCert.RawData.Length, 1, TlsHandshakeInfo.MaxDerBytesSize);
+                EncryptionInfoAccumulator.MaxServerCertificateDerBytesSize / 2);
+            Assert.InRange(
+                serverCert.RawData.Length,
+                1,
+                EncryptionInfoAccumulator.MaxServerCertificateDerBytesSize);
 
             // Act
             TlsHandshakeInfo info = CreateInHandshakeCallback(serverCert, default);

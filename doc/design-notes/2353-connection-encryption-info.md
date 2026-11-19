@@ -178,9 +178,17 @@ validity, subject alternative names, and any thumbprint the caller wants to comp
 
 - **Leaf only, public data only:** the certificate is what the server sent in the TLS
   handshake. The chain is not included, and the certificate never has a private key.
-- **Captured on success and on failure:** the certificate is captured whenever the server
-  presents one, including with `TrustServerCertificate=true` and when validation fails
-  (read it from `SqlException.EncryptionInfo`).
+- **Captured on success and on failure:** where the network implementation captures
+  certificates, the certificate is captured when the server presents one, including with
+  `TrustServerCertificate=true` and when validation fails (read it from
+  `SqlException.EncryptionInfo`).
+- **`null` means unavailable:** `GetServerCertificate()` returning `null` does not mean the
+  server presented no certificate. The certificate can be unavailable because the network
+  implementation doesn't capture it, its encoding can't be read or decoded, or it exceeds the
+  capture limit below. `ValidationErrors` and `ChainStatus` can still describe a certificate
+  that is unavailable. Omitting the certificate is not a validation error, so
+  `SqlServerCertificateValidationErrors` has no member for it, and it doesn't change the trust
+  decision. The public docs state this.
 - **Diagnostics only:** returning a certificate is not a trust decision. Validation results
   are reported separately through `ValidationErrors` and `ChainStatus`, and callers must
   not use the certificate to override or bypass the driver's validation.
@@ -201,6 +209,13 @@ validity, subject alternative names, and any thumbprint the caller wants to comp
   - *Above the cap:* the certificate is not captured and `GetServerCertificate()` returns
     `null`. The bytes are never truncated. The handshake, validation, and the other
     encryption-info fields are unaffected.
+  - *Where the rule lives:* `EncryptionInfoAccumulator` owns the rule
+    (`MaxServerCertificateDerBytesSize`, `IsReportableServerCertificateSize`), and its
+    `ServerCertificateDerBytes` setter applies it to every producer. Managed SNI also calls
+    `IsReportableServerCertificateSize` in the validation callback, before creating the
+    handshake record, because the SNI handle keeps that record for the life of the physical
+    connection. Applying the rule only in the accumulator would leave an unbounded copy on
+    the handle.
 
 #### Why a method rather than a property
 
@@ -316,8 +331,10 @@ snapshot.
 **Cipher suite.** Producers assign the accumulator's `CipherSuite` property directly. On .NET it
 is a `TlsCipherSuite?`, which the accumulator stores and passes to the snapshot constructor
 unchanged. On .NET Framework it is the IANA identifier as an `int?`; the property setter ignores
-values outside 0-0xFFFF instead of failing the login. Likewise, the `Protocol` setter stores
-`SslProtocols.None` as `null`. Both cipher suite properties read the same value. Slice B adds
+values outside 0-0xFFFF instead of failing the login. On both, the setter stores `0`
+(`TLS_NULL_WITH_NULL_NULL`, which is never negotiated) as `null`. Likewise, the `Protocol`
+setter stores `SslProtocols.None` as `null`. The accumulator owns these reporting rules;
+transports pass values through as they observed them. Both cipher suite properties read the same value. Slice B adds
 only the plumbing: the value is reset with the other fields at the start of every physical login
 attempt and flows into the snapshot published on `SqlConnection` and attached to `SqlException`.
 Slice C records it from `SslStream.NegotiatedCipherSuite` in the Managed SNI handshake record,
@@ -339,7 +356,8 @@ Three types are involved, each with one role:
   fills in as the login proceeds and converts to a snapshot.
 - `TlsHandshakeInfo` is the internal, immutable record that the TCP and named-pipe handles create
   in the validation callback. It holds the TLS protocol, cipher suite, presented certificate
-  (`DerBytes`), validation errors and chain status. MARS passes the physical handle's record
+  (`DerBytes`), validation errors and chain status as the transport observed them; the
+  accumulator decides which values are reported. MARS passes the physical handle's record
   through.
 
 The handle clears its record at the start of every TLS handshake. Each callback invocation
@@ -355,7 +373,7 @@ completed handshake instead.
 
 | Field | Source | `null` when |
 | --- | --- | --- |
-| `PresentedServerCertificateRawData` / `GetServerCertificate()` | A copy of the presented leaf certificate's DER encoding (`GetRawCertData()`), stored as `TlsHandshakeInfo.DerBytes` and the accumulator's `ServerCertificateDerBytes` | No certificate was presented, its encoding could not be read, or it exceeds the 64 KiB cap (`TlsHandshakeInfo.MaxDerBytesSize`, matching native SNI's `SNI_CERT_MAX_CAPTURED_SIZE`; never truncated, see *Capture limit*). Captured even when `TrustServerCertificate` bypasses validation, and on validation failure. |
+| `PresentedServerCertificateRawData` / `GetServerCertificate()` | A copy of the presented leaf certificate's DER encoding (`GetRawCertData()`), stored as `TlsHandshakeInfo.DerBytes` and the accumulator's `ServerCertificateDerBytes` | No certificate was presented, its encoding could not be read, or it exceeds the 64 KiB cap (`EncryptionInfoAccumulator.MaxServerCertificateDerBytesSize`, matching native SNI's `SNI_CERT_MAX_CAPTURED_SIZE`; never truncated, see *Capture limit*). Captured even when `TrustServerCertificate` bypasses validation, and on validation failure. |
 | `ServerCertificateValidationErrors` | Effective SqlClient verdict: `ServerCertificateMissing`, `ChainError`, `HostNameMismatch` (after `HostNameInCertificate`), `PinnedCertificateMismatch` (`ServerCertificate`); `None` when validation passed | Validation was bypassed, or the configured `ServerCertificate` file could not be read. |
 | `ServerCertificateChainStatus` | Bitwise OR of the original callback chain's `ChainStatus` flags (no chain rebuild); `NoError` when the chain was evaluated cleanly | Validation was bypassed, `ServerCertificate` pinning is used (the chain isn't consulted), no certificate was presented, or the platform reported a chain error without flags. |
 
@@ -375,7 +393,8 @@ confirm it matches the suite a trusted handshake with the same server negotiates
 certificate-validation failure still reports the observed suite. `SslStream.SslProtocol` and
 `SslStream.NegotiatedCipherSuite` cannot throw once the callback is raised, so they are read
 without a `try`/`catch`; only `GetRawCertData()` is guarded, against `CryptographicException`.
-A suite of `0` (`TLS_NULL_WITH_NULL_NULL`, nothing agreed) is treated as unavailable. Without TLS,
+The record keeps the raw value; the accumulator treats a suite of `0` (`TLS_NULL_WITH_NULL_NULL`,
+nothing agreed) as unavailable, and `SslProtocols.None` likewise. Without TLS,
 the properties are `null`. `NegotiatedCipherSuiteId` returns the same IANA identifier. Managed SNI
 runs only on `net10.0`; on `net462` this capture is not compiled and `NegotiatedCipherSuiteId`
 stays `null` until native SNI support (Slice D).

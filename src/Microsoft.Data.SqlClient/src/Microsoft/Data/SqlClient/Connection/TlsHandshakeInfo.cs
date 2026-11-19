@@ -20,24 +20,13 @@ namespace Microsoft.Data.SqlClient.Connection
     /// values for the login attempt.
     /// </summary>
     /// <remarks>
-    /// Each value is <see langword="null"/> when it is unavailable: no certificate was presented
-    /// or it was larger than <see cref="MaxDerBytesSize"/> (<see cref="DerBytes"/>), SqlClient
-    /// did not evaluate the certificate (<see cref="ValidationErrors"/>), the original chain was
-    /// not consulted or reported no usable status (<see cref="ChainStatus"/>), or the transport
-    /// did not report a protocol or cipher suite.
+    /// Values are recorded as the transport observed them. <see cref="EncryptionInfoAccumulator"/>
+    /// owns the rules for which values are reported. The one exception is the certificate size
+    /// rule, which the transport applies before creating the record so that an oversized
+    /// certificate is not retained by the SNI handle.
     /// </remarks>
     internal sealed class TlsHandshakeInfo
     {
-        /// <summary>
-        /// The largest DER-encoded certificate that is captured: 64 KiB (65,536 bytes). A larger
-        /// certificate is not captured; the connection is unaffected.
-        /// </summary>
-        /// <remarks>
-        /// Bounds the memory retained per connection, pooled connection and exception when a
-        /// hostile or misconfigured server presents an oversized certificate. Real leaf
-        /// certificates are a few KiB.
-        /// </remarks>
-        internal const int MaxDerBytesSize = 64 * 1024;
 
         internal TlsHandshakeInfo(
             X509ChainStatusFlags? chainStatus,
@@ -65,28 +54,26 @@ namespace Microsoft.Data.SqlClient.Connection
 
 #if NET
         /// <summary>
-        /// Gets the cipher suite the transport reported for this handshake, or
-        /// <see langword="null"/> if the transport did not report one.
+        /// Gets the cipher suite the transport reported for this handshake.
         /// </summary>
         public TlsCipherSuite? CipherSuite { get; }
 #else
         /// <summary>
-        /// Gets the IANA identifier of the cipher suite the transport reported for this handshake,
-        /// or <see langword="null"/> if the transport did not report one.
+        /// Gets the IANA identifier of the cipher suite the transport reported for this handshake.
         /// </summary>
         public int? CipherSuite { get; }
 #endif
 
         /// <summary>
         /// Gets the DER encoding of the presented leaf certificate, or <see langword="null"/> if no
-        /// certificate was presented or it was larger than <see cref="MaxDerBytesSize"/>.
+        /// certificate was presented, its encoding could not be read, or
+        /// <see cref="EncryptionInfoAccumulator.IsReportableServerCertificateSize"/> rejected it.
         /// The array is owned by this record and must not be modified.
         /// </summary>
         public byte[]? DerBytes { get; }
 
         /// <summary>
-        /// Gets the TLS protocol the transport reported for this handshake, or
-        /// <see langword="null"/> if the transport did not report one.
+        /// Gets the TLS protocol the transport reported for this handshake.
         /// </summary>
         public SslProtocols? Protocol { get; }
 

@@ -8,7 +8,6 @@ using System;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Security;
-using System.Security.Authentication;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -320,30 +319,19 @@ namespace Microsoft.Data.SqlClient.ManagedSni
                 }
 
                 if (derBytes is not null
-                    && (derBytes.Length == 0 || derBytes.Length > TlsHandshakeInfo.MaxDerBytesSize))
+                    && !EncryptionInfoAccumulator.IsReportableServerCertificateSize(derBytes.Length))
                 {
+                    // Applied here so an oversized certificate is not retained by the handle.
                     derBytes = null;
                 }
             }
 
-            SslProtocols? protocol = sslStream.SslProtocol;
-            if (protocol == SslProtocols.None)
-            {
-                protocol = null;
-            }
-
-            // The null cipher suite (TLS_NULL_WITH_NULL_NULL, 0) means none has been agreed.
-            TlsCipherSuite? cipherSuite = sslStream.NegotiatedCipherSuite;
-            if (cipherSuite == TlsCipherSuite.TLS_NULL_WITH_NULL_NULL)
-            {
-                cipherSuite = null;
-            }
-
+            // Reported as observed; EncryptionInfoAccumulator decides which values are reportable.
             return new TlsHandshakeInfo(
                 verdict.ChainStatus,
-                cipherSuite,
+                sslStream.NegotiatedCipherSuite,
                 derBytes,
-                protocol,
+                sslStream.SslProtocol,
                 verdict.ValidationErrors);
         }
 #nullable restore

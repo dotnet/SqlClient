@@ -23,8 +23,9 @@ namespace Microsoft.Data.SqlClient.Connection
     /// recorded by the terminal attempt are ever published.
     /// </para>
     /// <para>
-    /// This type holds values and normalizes ones that cannot be reported (see
-    /// <see cref="Protocol"/> and <see cref="CipherSuite"/>). <see cref="Parser.TdsParser"/>
+    /// This type holds values and owns the rules for ones that cannot be reported (see
+    /// <see cref="Protocol"/>, <see cref="CipherSuite"/> and
+    /// <see cref="ServerCertificateDerBytes"/>); transports pass values through as observed. <see cref="Parser.TdsParser"/>
     /// records each value as soon as it becomes known. Values are only written during
     /// login, never on the per-command hot path. Callers convert the accumulated values into an
     /// immutable <see cref="SqlConnectionEncryptionInfo"/> snapshot via <see cref="ToSnapshot"/>.
@@ -32,6 +33,16 @@ namespace Microsoft.Data.SqlClient.Connection
     /// </remarks>
     internal sealed class EncryptionInfoAccumulator
     {
+        /// <summary>
+        /// The largest DER-encoded server certificate that is reported: 64 KiB (65,536 bytes).
+        /// </summary>
+        /// <remarks>
+        /// Bounds the memory retained per connection, pooled connection and exception when a
+        /// hostile or misconfigured server presents an oversized certificate. Real leaf
+        /// certificates are a few KiB. Matches native SNI's <c>SNI_CERT_MAX_CAPTURED_SIZE</c>.
+        /// </remarks>
+        internal const int MaxServerCertificateDerBytesSize = 64 * 1024;
+
         /// <summary>
         /// Gets or sets the combined chain status flags for the current attempt, or
         /// <see langword="null"/> if the chain was not consulted or is unavailable.
@@ -43,22 +54,44 @@ namespace Microsoft.Data.SqlClient.Connection
         /// Gets or sets the TLS cipher suite negotiated for the current attempt, or
         /// <see langword="null"/> if the transport did not report one.
         /// </summary>
-        public TlsCipherSuite? CipherSuite { get; set; }
+        /// <remarks>
+        /// Setting <see cref="TlsCipherSuite.TLS_NULL_WITH_NULL_NULL"/> stores
+        /// <see langword="null"/>: that suite is never negotiated, so it means none was reported.
+        /// </remarks>
+        public TlsCipherSuite? CipherSuite
+        {
+            get;
+            set
+            {
+                if (value == TlsCipherSuite.TLS_NULL_WITH_NULL_NULL)
+                {
+                    value = null;
+                }
+
+                field = value;
+            }
+        }
 #else
         /// <summary>
         /// Gets or sets the IANA TLS cipher suite identifier negotiated for the current attempt, or
         /// <see langword="null"/> if the transport did not report one.
         /// </summary>
         /// <remarks>
-        /// Values outside <c>0</c>..<c>0xFFFF</c> are not valid identifiers. Setting one is ignored
-        /// rather than failing the login, and the property keeps its previous value.
+        /// Setting <c>0</c> (<c>TLS_NULL_WITH_NULL_NULL</c>) stores <see langword="null"/>: that
+        /// suite is never negotiated, so it means none was reported. Values outside
+        /// <c>0</c>..<c>0xFFFF</c> are not valid identifiers. Setting one is ignored rather than
+        /// failing the login, and the property keeps its previous value.
         /// </remarks>
         public int? CipherSuite
         {
             get;
             set
             {
-                if (value is null or (>= 0 and <= ushort.MaxValue))
+                if (value == 0)
+                {
+                    field = null;
+                }
+                else if (value is null or (> 0 and <= ushort.MaxValue))
                 {
                     field = value;
                 }
@@ -103,7 +136,37 @@ namespace Microsoft.Data.SqlClient.Connection
         /// Gets or sets the DER encoding of the presented server certificate for the current attempt,
         /// or <see langword="null"/> if the transport did not capture a presented certificate.
         /// </summary>
-        public byte[]? ServerCertificateDerBytes { get; set; }
+        /// <remarks>
+        /// Setting an encoding that <see cref="IsReportableServerCertificateSize"/> rejects stores
+        /// <see langword="null"/>; the certificate is never truncated.
+        /// </remarks>
+        public byte[]? ServerCertificateDerBytes
+        {
+            get;
+            set
+            {
+                if (value is not null && !IsReportableServerCertificateSize(value.Length))
+                {
+                    value = null;
+                }
+
+                field = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether a DER-encoded server certificate of
+        /// <paramref name="length"/> bytes is reported: it is not empty and does not exceed
+        /// <see cref="MaxServerCertificateDerBytesSize"/>.
+        /// </summary>
+        /// <remarks>
+        /// Transports call this before retaining a certificate, so an oversized one is never
+        /// held beyond the validation callback.
+        /// </remarks>
+        /// <param name="length">The length of the DER encoding, in bytes.</param>
+        /// <returns><see langword="true"/> if the certificate is reported.</returns>
+        internal static bool IsReportableServerCertificateSize(int length) =>
+            length > 0 && length <= MaxServerCertificateDerBytesSize;
 
         /// <summary>
         /// Gets or sets SqlClient's effective certificate validation verdict for the current attempt,
