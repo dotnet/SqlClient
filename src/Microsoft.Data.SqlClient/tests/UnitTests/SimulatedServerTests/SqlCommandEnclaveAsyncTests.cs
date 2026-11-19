@@ -46,8 +46,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             using ECDiffieHellman key = ECDiffieHellman.Create();
             key.KeySize = 384;
             var parameters = new SqlEnclaveAttestationParameters(1, Array.Empty<byte>(), key);
-            Task preparation = Invoke(command, "PrepareForTransparentEncryptionAsync",
-                30, true, false, CancellationToken.None);
+            Task preparation = PrepareAsync(command, false, CancellationToken.None);
             Assert.False(preparation.IsCompleted);
             using SqlCommand other = new SqlCommand("/* competing reader */", fixture.Connection);
             using (SqlDataReader reader = other.ExecuteReader())
@@ -59,8 +58,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             Assert.Equal(0, GetAsyncCount((SqlConnectionInternal)fixture.Connection.InnerConnection));
             Assert.False((bool)GetField(command, "_enclaveAttestationInProgress"));
             fixture.Provider.CacheHit = true;
-            await Invoke(command, "PrepareForTransparentEncryptionAsync",
-                30, true, false, CancellationToken.None);
+            await PrepareAsync(command, false, CancellationToken.None);
             Assert.Equal(-1, await other.ExecuteNonQueryAsync());
         }
 
@@ -110,8 +108,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
             SetField(command, "_enclaveRetryConnection", inner);
             try
             {
-                Task preparation = Invoke(command, "PrepareForTransparentEncryptionAsync",
-                    30, true, true, CancellationToken.None);
+                Task preparation = PrepareAsync(command, true, CancellationToken.None);
                 SetField(command, "_enclaveRetryConnection", null);
                 if (pending)
                 {
@@ -783,7 +780,7 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
                 fixture.Provider.Attestation = stage == 1;
                 Task preparation = stage == 2
                     ? command.CreateEnclaveSession(new byte[] { 1 }, isRetry: true, isAsync: true, cancellation.Token).AsTask()
-                    : Invoke(command, "PrepareForTransparentEncryptionAsync", 30, true, true, cancellation.Token);
+                    : PrepareAsync(command, true, cancellation.Token);
                 retryEntered.SetResult(null);
                 await preparation;
                 return null;
@@ -793,6 +790,12 @@ namespace Microsoft.Data.SqlClient.UnitTests.SimulatedServerTests
         /// <summary>Invokes command-owned session logic without requiring a real attestation service.</summary>
         private static Task Invoke(SqlCommand command, string method, params object[] args) =>
             (Task)typeof(SqlCommand).GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic).Invoke(command, args);
+
+        /// <summary>Starts uncached asynchronous encryption preparation, as execution does.</summary>
+        private static Task PrepareAsync(SqlCommand command, bool isRetry, CancellationToken token) =>
+            Invoke(command, "PrepareForTransparentEncryptionAsync",
+                30, true, isRetry, GetField(command, "_enclaveRetryConnection"),
+                null, null, 0, null, nameof(SqlCommand.ExecuteReader), token);
 
         /// <summary>Cold preparation serializes awaited parameters and preserves provider custom data.</summary>
         [Fact]
